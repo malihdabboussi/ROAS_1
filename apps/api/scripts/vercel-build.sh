@@ -14,9 +14,12 @@ materialize_workspace_pkg() {
   cp "${src}/package.json" "${API_ROOT}/node_modules/@vibey/${pkg}/"
   cp -r "${src}/dist/." "${API_ROOT}/node_modules/@vibey/${pkg}/dist/"
 
+  # Copy only runtime artifacts — full package copy drags pnpm symlinks under
+  # node_modules that break Vercel includeFiles (ENOENT on modal, etc.).
   rm -rf "${ROOT}/packages/@vibey/${pkg}"
-  mkdir -p "${ROOT}/packages/@vibey"
-  cp -r "${src}" "${ROOT}/packages/@vibey/${pkg}"
+  mkdir -p "${ROOT}/packages/@vibey/${pkg}/dist"
+  cp "${src}/package.json" "${ROOT}/packages/@vibey/${pkg}/"
+  cp -r "${src}/dist/." "${ROOT}/packages/@vibey/${pkg}/dist/"
 }
 
 echo "vercel-build: cleaning workspace package outputs"

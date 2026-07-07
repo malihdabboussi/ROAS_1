@@ -181,3 +181,10 @@ What: Added `SEARCHAPI_API_KEY` (SearchAPI.io — TikTok/Meta/Google ad library)
 Why: `SearchApiService` in roas-api reads `SEARCHAPI_API_KEY` for Spaces ads research; key was missing from ROAS secrets workflow.
 Impact: Section 6 paste block includes the key for Vercel roas-api Production — paste or add `SEARCHAPI_API_KEY` in Vercel dashboard, then redeploy roas-api. Not needed on Fly/web/funnels/Railway. `roas-secrets.env` remains gitignored.
 Files: `scripts/roas/roas-secrets.env.template`, `scripts/roas/sync-roas-secrets-sections.py`, `scripts/roas/roas-secrets.env` (local only), `apps/api/.env.example`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 12:40] - [FIX]
+
+What: roas-api `vercel-build.sh` — materialize `packages/@vibey/*` with only `package.json` + `dist/` (no full `cp -r` of workspace packages).
+Why: Vercel `includeFiles` `../../packages/@vibey/**` followed pnpm symlinks copied into `node_modules` and failed with `ENOENT …/packages/node_modules/.pnpm/modal@0.7.4/node_modules/modal` on deploy `ebe21425`.
+Impact: Serverless bundle includes compiled workspace output without broken dependency symlinks; redeploy roas-api to verify green build.
+Files: `apps/api/scripts/vercel-build.sh`, `.docs/logs/changelog2026-07-07.md`
