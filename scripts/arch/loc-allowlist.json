@@ -129,6 +129,11 @@
       "limit": 400,
       "lines": 419
     },
+    "apps/web/src/features/spaces/components/automations/ActionBuilder.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 2105
+    },
     "apps/web/src/features/mission-control/components/dialogs/DeliverablesCarousel.tsx": {
       "kind": "web-component",
       "limit": 400,
@@ -1092,6 +1097,13 @@
         "@/features/spaces/components/automations/automation-catalog": 1,
         "@/features/spaces/components/automations/AutomationCategorizedSelect": 1,
         "@/features/spaces/types/space-schema": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/automations/ActionBuilder.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/org/services/org.service": 1
       }
     },
     "apps/web/src/features/spaces/components/artifacts/artifact-view-rows.ts": {

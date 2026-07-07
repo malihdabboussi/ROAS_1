@@ -9,6 +9,10 @@ import {
 import { Tooltip } from '@/components/ui/tooltip'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import {
+  buildFlowBuilderActionStepOptions,
+  buildFlowBuilderPriorActionStepOptions,
+} from '@/lib/flows/flow-builder-step-index.utils'
+import {
   searchAutomationArtifacts,
   searchAutomationChannels,
   searchAutomationComposioAccounts,
@@ -22,10 +26,7 @@ import type {
   FieldDef,
   SendToAgentOutputType,
 } from '../../types/space-schema'
-import {
-  buildFlowBuilderActionStepOptions,
-  buildFlowBuilderPriorActionStepOptions,
-} from '@/lib/flows/flow-builder-step-index.utils'
+import { AssigneeCell } from '../cells/AssigneeCell'
 import { SelectCell } from '../cells/SelectCell'
 import { OptionDot } from '../OptionBadge'
 import {
@@ -401,54 +402,54 @@ export function ActionBuilder({
                 </div>
               )}
               {!hideTypeSelect ? (
-              <div className="gap-spacing-2 flex items-center">
-                <div className="flex-1">
-                  <AutomationCategorizedSelect
-                    sections={actionSections}
-                    value={typeSelectValue}
-                    onChange={(type) => {
-                      const newAction = defaultAction(type)
-                      if (newAction) {
-                        if (newAction.type === 'create_contact') {
-                          if (trigger.type === 'external_email_received') {
-                            newAction.email_template = '{{trigger.email}}'
-                            newAction.name_template = '{{trigger.name}}'
+                <div className="gap-spacing-2 flex items-center">
+                  <div className="flex-1">
+                    <AutomationCategorizedSelect
+                      sections={actionSections}
+                      value={typeSelectValue}
+                      onChange={(type) => {
+                        const newAction = defaultAction(type)
+                        if (newAction) {
+                          if (newAction.type === 'create_contact') {
+                            if (trigger.type === 'external_email_received') {
+                              newAction.email_template = '{{trigger.email}}'
+                              newAction.name_template = '{{trigger.name}}'
+                            }
+                            if (trigger.type === 'form_submitted') {
+                              newAction.email_template = '{{trigger.answers.email}}'
+                              newAction.name_template = '{{trigger.answers.name}}'
+                            }
                           }
-                          if (trigger.type === 'form_submitted') {
-                            newAction.email_template = '{{trigger.answers.email}}'
-                            newAction.name_template = '{{trigger.answers.name}}'
+                          if (newAction.type === 'create_task') {
+                            if (trigger.type === 'external_email_received') {
+                              newAction.title_template = '{{trigger.subject}}'
+                              newAction.notes_template =
+                                'From: {{trigger.from}}\nCC: {{trigger.cc}}\n\n{{trigger.body}}'
+                            }
+                            if (trigger.type === 'external_slack_message_received') {
+                              newAction.title_template = '{{trigger.text}}'
+                            }
                           }
+                          const next = [...actions]
+                          next[idx] = newAction
+                          onChange(next)
                         }
-                        if (newAction.type === 'create_task') {
-                          if (trigger.type === 'external_email_received') {
-                            newAction.title_template = '{{trigger.subject}}'
-                            newAction.notes_template =
-                              'From: {{trigger.from}}\nCC: {{trigger.cc}}\n\n{{trigger.body}}'
-                          }
-                          if (trigger.type === 'external_slack_message_received') {
-                            newAction.title_template = '{{trigger.text}}'
-                          }
-                        }
-                        const next = [...actions]
-                        next[idx] = newAction
-                        onChange(next)
-                      }
-                    }}
-                    placeholder="Choose an Action"
-                    searchPlaceholder="Search actions…"
-                  />
+                      }}
+                      placeholder="Choose an Action"
+                      searchPlaceholder="Search actions…"
+                    />
+                  </div>
+                  {!isSingle && (
+                    <button
+                      type="button"
+                      onClick={() => removeAction(idx)}
+                      className="btn-icon-glass shrink-0"
+                      title="Remove"
+                    >
+                      <Trash2 className="icon-sm text-muted-foreground" />
+                    </button>
+                  )}
                 </div>
-                {!isSingle && (
-                  <button
-                    type="button"
-                    onClick={() => removeAction(idx)}
-                    className="btn-icon-glass shrink-0"
-                    title="Remove"
-                  >
-                    <Trash2 className="icon-sm text-muted-foreground" />
-                  </button>
-                )}
-              </div>
               ) : null}
 
               {showTaskTarget && (
@@ -1124,7 +1125,9 @@ export function ActionBuilder({
                       sections={automationStatusSections}
                       value={action.waiting_status ?? 'in_review'}
                       onChange={(v) =>
-                        updateAction(idx, { waiting_status: String(v) } as Partial<AutomationAction>)
+                        updateAction(idx, {
+                          waiting_status: String(v),
+                        } as Partial<AutomationAction>)
                       }
                       placeholder="Select status"
                       searchPlaceholder="Search…"
@@ -1264,7 +1267,12 @@ export function ActionBuilder({
                       value={action.operator ?? 'equals'}
                       onChange={(operator) =>
                         updateAction(idx, {
-                          operator: operator as 'equals' | 'not_equals' | 'contains' | 'is_empty' | 'is_not_empty',
+                          operator: operator as
+                            | 'equals'
+                            | 'not_equals'
+                            | 'contains'
+                            | 'is_empty'
+                            | 'is_not_empty',
                         } as Partial<AutomationAction>)
                       }
                       placeholder="Operator"
@@ -1303,7 +1311,9 @@ export function ActionBuilder({
                           type="text"
                           value={action.value ?? ''}
                           onChange={(e) =>
-                            updateAction(idx, { value: e.target.value } as Partial<AutomationAction>)
+                            updateAction(idx, {
+                              value: e.target.value,
+                            } as Partial<AutomationAction>)
                           }
                           placeholder="Compare value"
                           className="body-3 h-spacing-10 rounded-spacing-2 border-border bg-background px-spacing-3 text-foreground w-full border outline-none"

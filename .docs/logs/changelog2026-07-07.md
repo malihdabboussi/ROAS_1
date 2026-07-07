@@ -267,3 +267,10 @@ What: roas-web — remove unused `cn` import in `FlowBuilderStepSetupPanel.tsx`.
 Why: Web build failed TS6133; api cold start crashed in `StripeService.onModuleInit` on production (ROAS has no Stripe yet).
 Impact: Web should build; api.roas.io `/api` health should return `{status:"ok"}` after redeploy.
 Files: `apps/web/src/features/flows/components/flow-builder/FlowBuilderStepSetupPanel.tsx`, `apps/api/src/modules/billing/services/stripe-service.base.ts`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 14:08] - [FIX]
+
+What: roas-web — add missing `AssigneeCell` import in `ActionBuilder.tsx`.
+Why: Deploy `3acf420e` web build failed TS2304 after `FlowBuilderStepSetupPanel` fix cleared prior error.
+Impact: roas-web should build on next deploy.
+Files: `apps/web/src/features/spaces/components/automations/ActionBuilder.tsx`, `.docs/logs/changelog2026-07-07.md`
