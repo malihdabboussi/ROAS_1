@@ -36,6 +36,10 @@ export type AutomationActionLike = {
   email_template?: string
   field_id?: string
   value_template?: string
+  operator?: 'equals' | 'not_equals' | 'contains' | 'is_empty' | 'is_not_empty'
+  value?: string
+  then_step_index?: number
+  else_step_index?: number
   tag?: string
   contact_id?: string
   artifact_kind?: string

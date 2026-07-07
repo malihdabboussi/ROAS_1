@@ -281,3 +281,10 @@ What: roas-api — add `requireStripe()` guard for optional Stripe client (fixes
 Why: Api nest build failed after making Stripe optional; web build failed TS2304 on next error in chain.
 Impact: Both Vercel projects should build; api health should work without Stripe keys.
 Files: `apps/api/src/modules/billing/services/stripe-service*.ts`, `apps/web/src/features/studio/components/message-bubble/MessageContentBlockSwitchPartB.tsx`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 16:24] - [FIX]
+
+What: roas-web — add `flow_branch` fields (`operator`, `value`, `then_step_index`, `else_step_index`) to `AutomationActionLike`.
+Why: Vercel build `0fec21e1` failed TS2339 in `automation-publishable.ts` flow_branch validation.
+Impact: roas-web should build; unblocks `app.roas.io` deploy.
+Files: `apps/web/src/lib/flows/automation-publishable.ts`, `.docs/logs/changelog2026-07-07.md`
