@@ -111,3 +111,10 @@ What: Extended `apps/api/scripts/vercel-build.sh` to build and materialize `@vib
 Why: roas-api Vercel build passed serverless config then failed with 6× `TS2307: Cannot find module '@vibey/agent-policy'` — the workspace package was never compiled before `nest build`.
 Impact: roas-api compile should resolve `@vibey/agent-policy` on Vercel; redeploy after push.
 Files: `apps/api/scripts/vercel-build.sh`, `apps/api/vercel.json`
+
+## [2026-07-07 11:00] - [FIX]
+
+What: roas-api runtime — fixed `includeFiles` globs (`node_modules/@vibey/*` + repo-root copies, not wrong `../node_modules` path), materialize workspace packages into `apps/api/node_modules`, repo `node_modules/@vibey`, and `packages/@vibey`; added NODE_PATH init + dynamic import in `api/index.ts` before loading `dist/main`. roas-web OOM — added `apps/web/vercel.json` + `scripts/vercel-build.sh` (build workspace deps first, `NODE_OPTIONS=--max-old-space-size=8192`, `NEXT_BUILD_WORKERS=1`); disabled Vercel production client source maps in `next.config.js`.
+Why: API build green but runtime `Cannot find module '@vibey/api-shared'`; web killed at 4m50s on 4GB build memory.
+Impact: API health check should resolve workspace imports; web should complete build on standard Vercel machines without Elastic Build.
+Files: `apps/api/api/index.ts`, `apps/api/scripts/vercel-build.sh`, `apps/api/vercel.json`, `apps/web/vercel.json`, `apps/web/scripts/vercel-build.sh`, `apps/web/next.config.js`

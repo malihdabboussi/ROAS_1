@@ -7,6 +7,7 @@ const pagedjsBundleForTurbo = './node_modules/pagedjs/dist/paged.esm.js'
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  productionBrowserSourceMaps: false,
   transpilePackages: ['@vibey/ui', '@vibey/db'],
   serverExternalPackages: ['@turbodocx/html-to-docx', 'sharp'],
   turbopack: {
@@ -34,7 +35,7 @@ const nextConfig = {
   },
   webpack: (config, { isServer, dev }) => {
     if (!isServer) {
-      if (!dev) config.devtool = 'hidden-source-map'
+      if (!dev && process.env.VERCEL) config.devtool = false
       const webpack = require('webpack')
       config.resolve = config.resolve || {}
       config.resolve.alias = {

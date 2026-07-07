@@ -1,0 +1,4 @@
+{
+  "installCommand": "cd ../.. && npx pnpm@9 install --no-frozen-lockfile",
+  "buildCommand": "bash scripts/vercel-build.sh"
+}
