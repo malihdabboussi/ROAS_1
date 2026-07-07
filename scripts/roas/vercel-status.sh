@@ -13,14 +13,12 @@ fi
 VERCEL_TOKEN="$(grep '^VERCEL_TOKEN=' "${ENV_FILE}" | head -1 | cut -d= -f2-)"
 VERCEL_TEAM_ID="$(grep '^VERCEL_TEAM_ID=' "${ENV_FILE}" | head -1 | cut -d= -f2-)"
 
-declare -A PROJECTS=(
-  [roas-api]=prj_YwUti53Q9vB6rMKPB5cpW8w7h0qL
-  [roas-web]=prj_MTRba5SdYBFbiymrKqieGnGPjcBh
-  [roas-funnels]=prj_QPESSHik40T2659GTyfZSOalJe4T
-)
-
-for name in roas-api roas-web roas-funnels; do
-  pid="${PROJECTS[$name]}"
+for pair in \
+  "roas-api:prj_YwUti53Q9vB6rMKPB5cpW8w7h0qL" \
+  "roas-web:prj_MTRba5SdYBFbiymrKqieGnGPjcBh" \
+  "roas-funnels:prj_QPESSHik40T2659GTyfZSOalJe4T"; do
+  name="${pair%%:*}"
+  pid="${pair##*:}"
   curl -sS -H "Authorization: Bearer ${VERCEL_TOKEN}" \
     "https://api.vercel.com/v6/deployments?projectId=${pid}&teamId=${VERCEL_TEAM_ID}&limit=1" | \
     python3 -c "
@@ -35,7 +33,16 @@ done
 
 if [[ "${1:-}" == "--logs" && -n "${2:-}" ]]; then
   project="${2}"
-  pid="${PROJECTS[$project]:-}"
+  pid=""
+  for pair in \
+    "roas-api:prj_YwUti53Q9vB6rMKPB5cpW8w7h0qL" \
+    "roas-web:prj_MTRba5SdYBFbiymrKqieGnGPjcBh" \
+    "roas-funnels:prj_QPESSHik40T2659GTyfZSOalJe4T"; do
+    if [[ "${pair%%:*}" == "${project}" ]]; then
+      pid="${pair##*:}"
+      break
+    fi
+  done
   if [[ -z "${pid}" ]]; then
     echo "Unknown project: ${project}" >&2
     exit 1

@@ -12,11 +12,7 @@ materialize_workspace_pkg() {
   rm -rf "${API_ROOT}/node_modules/@vibey/${pkg}"
   mkdir -p "${API_ROOT}/node_modules/@vibey/${pkg}/dist"
   cp "${src}/package.json" "${API_ROOT}/node_modules/@vibey/${pkg}/"
-  cp -r "${src}/dist/." "${API_ROOT}/node_modules/@vibey/${pkg}/dist/"
-
-  rm -rf "${ROOT}/node_modules/@vibey/${pkg}"
-  mkdir -p "${ROOT}/node_modules/@vibey"
-  cp -r "${src}" "${ROOT}/node_modules/@vibey/${pkg}"
+  cp -r "${src}/dist/"* "${API_ROOT}/node_modules/@vibey/${pkg}/dist/"
 
   rm -rf "${ROOT}/packages/@vibey/${pkg}"
   mkdir -p "${ROOT}/packages/@vibey"
@@ -41,7 +37,7 @@ export NODE_OPTIONS="${NODE_OPTIONS:-} --max-old-space-size=6144"
 pnpm exec nest build
 
 echo "vercel-build: materializing workspace packages for serverless runtime"
-mkdir -p "${ROOT}/packages/@vibey" "${ROOT}/node_modules/@vibey"
+mkdir -p "${ROOT}/packages/@vibey"
 for pkg in "${WORKSPACE_PKGS[@]}"; do
   materialize_workspace_pkg "${pkg}"
   test -f "${API_ROOT}/node_modules/@vibey/${pkg}/dist/index.js"
