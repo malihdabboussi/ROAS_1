@@ -4,7 +4,7 @@
 # Requires monorepo root as Docker build context (packages/* + apps/mission-worker).
 # Railway roas-platform service must use empty Root Directory + RAILPACK (see railway.json).
 # Build from monorepo root:
-#   docker build -t vibey-mission-worker:latest -f apps/mission-worker/Dockerfile .
+#   docker build -t vibey-mission-worker:latest -f docker/mission-worker.Dockerfile .
 # ──────────────────────────────────────────────────────────────
 
 # ── Stage 1: Build ──────────────────────────────────────────

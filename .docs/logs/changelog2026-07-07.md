@@ -200,4 +200,9 @@ Files: `.docs/plans/roas-lovable-rebuild-provisioning.md`, `.docs/logs/changelog
 What: roas-web — remove unused `campaignIconColor` in `FlowComposerSpaceSelector.tsx`. mission-worker Railway — switch `railway.json` to RAILPACK with monorepo filter build/start commands; add `fix-mission-worker-railway-root.sh` and deploy-script note that Root Directory must be empty (repo root) so `packages/*` are in the build snapshot.
 Why: Deploy poll `a378af44`: roas-web TS6133 unused local; mission-worker Docker failed `"/apps/mission-worker": not found` because Railway Root Directory `apps/mission-worker` limits context and excludes workspace packages.
 Impact: roas-web typecheck unblocks; mission-worker builds once Root Directory is cleared (API script attempts; manual fallback documented).
-Files: `apps/web/src/features/flows/components/FlowComposerSpaceSelector.tsx`, `apps/mission-worker/railway.json`, `apps/mission-worker/Dockerfile`, `scripts/roas/deploy-railway-workers.sh`, `scripts/roas/fix-mission-worker-railway-root.sh`, `.docs/logs/changelog2026-07-07.md`
+## [2026-07-07 12:58] - [FIX]
+
+What: Move mission-worker Dockerfile to `docker/mission-worker.Dockerfile` so Railway does not auto-select Docker over RAILPACK when Root Directory is `apps/mission-worker`.
+Why: Railway builds with any service-root `Dockerfile` even when `railway.json` sets `builder: RAILPACK`; deploy `034d37a4` still ran Docker COPY and failed.
+Impact: roas-platform should use RAILPACK on next deploy; Root Directory must still be cleared for workspace packages.
+Files: `docker/mission-worker.Dockerfile`, `.docs/logs/changelog2026-07-07.md`
