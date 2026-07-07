@@ -1,3 +1,4 @@
+# Fly roas-runtimes build context — includes openclaw (see deploy-fly-runtimes.sh --ignorefile)
 # Dependencies (installed in Docker)
 node_modules
 **/node_modules
@@ -42,19 +43,28 @@ docs
 # CI/CD
 .github
 
-# Other apps — mission-worker Railway image only needs apps/mission-worker + packages/*
+# Other apps (not needed in Fly image — agent-api + openclaw only)
 apps/web
 apps/admin
 apps/site
 apps/website
 apps/queue-worker
+apps/mission-worker
 apps/api
-apps/agent-api
 apps/funnels
-apps/openclaw
 apps/chrome-extension
 apps/docs
 Vibey_legacy
+
+# OpenClaw — include source, exclude build artifacts
+!apps/openclaw/
+!apps/openclaw/**
+apps/openclaw/node_modules
+apps/openclaw/dist
+apps/openclaw/.turbo
+apps/openclaw/.git
+apps/openclaw/.worktrees
+apps/openclaw/.bun-cache
 
 # Lockfiles already copied explicitly
 !pnpm-lock.yaml

@@ -1,33 +1,32 @@
 'use client'
 
 import { useLayoutEffect, useRef, useState, type RefObject } from 'react'
-import { cn } from '@/lib/utils/cn'
 import { CHAT_MARKDOWN_CLASSNAME } from '@/lib/utils/chat-markdown.utils'
+import { cn } from '@/lib/utils/cn'
 import { ChatMarkdownCodeBlockChrome } from './ChatMarkdownCodeBlockChrome'
 
 function scheduleMermaidHydrate(root: HTMLElement) {
   let cancelled = false
-  let retryTimer: ReturnType<typeof window.setTimeout> | null = null
+  let retryTimer: ReturnType<typeof setTimeout> | null = null
   let attempt = 0
   const maxAttempts = 60
 
   const hydrate = async () => {
     if (cancelled) return
     try {
-      const { hasMermaidPlaceholders, hydrateMermaidPlaceholders } = await import(
-        '@/components/ui/mermaid-diagram'
-      )
+      const { hasMermaidPlaceholders, hydrateMermaidPlaceholders } =
+        await import('@/components/ui/mermaid-diagram')
       if (cancelled || !hasMermaidPlaceholders(root)) return
       await hydrateMermaidPlaceholders(root)
       if (cancelled) return
       if (hasMermaidPlaceholders(root) && attempt < maxAttempts) {
         attempt += 1
-        retryTimer = window.setTimeout(() => void hydrate(), 500)
+        retryTimer = setTimeout(() => void hydrate(), 500)
       }
     } catch {
       if (!cancelled && attempt < maxAttempts) {
         attempt += 1
-        retryTimer = window.setTimeout(() => void hydrate(), 500)
+        retryTimer = setTimeout(() => void hydrate(), 500)
       }
     }
   }
@@ -41,7 +40,7 @@ function scheduleMermaidHydrate(root: HTMLElement) {
   const raf = requestAnimationFrame(() => {
     requestAnimationFrame(() => void hydrate())
   })
-  const initialRetry = window.setTimeout(() => void hydrate(), 120)
+  const initialRetry = setTimeout(() => void hydrate(), 120)
 
   return () => {
     cancelled = true

@@ -115,6 +115,7 @@ def main() -> int:
         'OPENCLAW_GATEWAY_URL', 'OPENCLAW_GATEWAY_TOKEN', 'INTERNAL_API_TOKEN',
         'BACKEND_URL', 'MISSION_CALLBACK_URL', 'OPENCLAW_MODEL_PREFIX',
         'MISSIONS_BATCH_SIZE', 'MISSIONS_EXECUTION_TIMEOUT_MS', 'PORT',
+        'COMPOSIO_API_KEY',
     ]
 
     text = SECRETS.read_text()
@@ -181,7 +182,8 @@ def main() -> int:
             '# WHERE: Railway → roas-workers → service → Variables → Raw Editor\n'
             '# Paste KEY=VALUE lines below into BOTH mission-worker AND queue-worker.\n'
             '# REDIS_URL must be internal — use ${{Redis.REDIS_URL}} (rename Redis if needed).\n'
-            '# Do NOT use public .proxy.rlwy.net URL (that is for Vercel roas-api only).',
+            '# Do NOT use public .proxy.rlwy.net URL (that is for Vercel roas-api only).\n'
+            '# COMPOSIO_API_KEY required by queue-worker at boot; include on both services.',
             railway_vars,
             '10',
         )

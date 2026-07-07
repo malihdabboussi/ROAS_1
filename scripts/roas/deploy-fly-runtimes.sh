@@ -28,6 +28,7 @@ echo "Deploying ${APP} (this may take several minutes)..."
   --app "${APP}" \
   --config "${CONFIG}" \
   --dockerfile docker/Dockerfile \
+  --ignorefile docker/fly.dockerignore \
   --strategy immediate
 
 echo "Health check:"

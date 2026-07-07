@@ -146,3 +146,24 @@ What: Expanded section 10 in `roas-secrets.env.template` as a Railway Raw Editor
 Why: Dylan/Cowork needed an exact paste target for Railway workers without mixing Vercel public Redis.
 Impact: Open `roas-secrets.env` section 10 → copy KEY=VALUE lines → paste into mission-worker + queue-worker Raw Editor.
 Files: `scripts/roas/roas-secrets.env.template`, `scripts/roas/sync-roas-secrets-sections.py`
+
+## [2026-07-07 12:22] - [DOCS]
+
+What: Verified Fly app `roas-runtimes` post-deploy (2 machines iad, checks passing); documented health (`/api/health` HTTP 200, JSON `degraded`) and optional search keys gap in provisioning agent notes.
+Why: Close fly-deploy task; confirm no redeploy needed.
+Impact: Cowork/Dylan see live Fly URL and degraded-health expectations; OpenClaw web-search smoke still blocked on Brave/Perplexity keys.
+Files: `.docs/plans/roas-lovable-rebuild-provisioning.md`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 12:32] - [FIX]
+
+What: Added `COMPOSIO_API_KEY` to Railway section 10 (`roas-secrets.env.template` + `sync-roas-secrets-sections.py` `railway_vars`); re-synced gitignored secrets file.
+Why: queue-worker inits Composio at boot and crashed with `ComposioNoAPIKeyError` when the key was missing from the §10 paste block (Dylan had added it manually as a 13th var).
+Impact: Future §10 pastes include Composio for both workers; harmless extra on mission-worker.
+Files: `scripts/roas/roas-secrets.env.template`, `scripts/roas/sync-roas-secrets-sections.py`
+
+## [2026-07-07 12:45] - [FIX]
+
+What: roas-web — fixed `ChatMarkdownView.tsx` timer typing: use `ReturnType<typeof setTimeout>` with `setTimeout()` (not `window.setTimeout`), matching the rest of the web app and avoiding DOM `number` vs Node `Timeout` mismatch under Next's typecheck. roas-api — `vercel-build.sh` now deletes `dist/` + `tsconfig.build.tsbuildinfo` for `@vibey/agent-policy` and `@vibey/api-shared` before building (stale incremental output was leaving `api-shared/dist` without `index.js`, failing materialize `test -f …/index.js`); restored `cp -r dist/.` for empty-safe copy.
+Why: Deploy verification `ef8f5406` — web TS2322 on line 25; api build exited during post-`nest build` materialize when workspace package entrypoints were missing.
+Impact: Local verification: `ChatMarkdownView` typecheck clean; `apps/api/scripts/vercel-build.sh` completes through materialize. Push to main to trigger Vercel redeploy (or redeploy roas-web + roas-api from dashboard).
+Files: `apps/web/src/components/chat/ChatMarkdownView.tsx`, `apps/api/scripts/vercel-build.sh`

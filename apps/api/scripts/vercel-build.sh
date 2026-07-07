@@ -12,12 +12,17 @@ materialize_workspace_pkg() {
   rm -rf "${API_ROOT}/node_modules/@vibey/${pkg}"
   mkdir -p "${API_ROOT}/node_modules/@vibey/${pkg}/dist"
   cp "${src}/package.json" "${API_ROOT}/node_modules/@vibey/${pkg}/"
-  cp -r "${src}/dist/"* "${API_ROOT}/node_modules/@vibey/${pkg}/dist/"
+  cp -r "${src}/dist/." "${API_ROOT}/node_modules/@vibey/${pkg}/dist/"
 
   rm -rf "${ROOT}/packages/@vibey/${pkg}"
   mkdir -p "${ROOT}/packages/@vibey"
   cp -r "${src}" "${ROOT}/packages/@vibey/${pkg}"
 }
+
+echo "vercel-build: cleaning workspace package outputs"
+for pkg in "${WORKSPACE_PKGS[@]}"; do
+  rm -rf "${ROOT}/packages/${pkg}/dist" "${ROOT}/packages/${pkg}/tsconfig.build.tsbuildinfo"
+done
 
 echo "vercel-build: building workspace packages"
 cd "${ROOT}"
