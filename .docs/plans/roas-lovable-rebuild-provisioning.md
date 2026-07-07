@@ -114,7 +114,7 @@ This doc is the shared source of truth between **Cursor** (repo/code/DB/deploys)
 | Cowork → Cursor | Vercel team + 3 projects + member invite (#4, #10) | `apps/api`, `apps/web`, `apps/funnels` deploy |
 | Cowork → Cursor | ~~Railway project + Redis~~ **DONE (Cowork, 2026-07-06):** project `roas-workers` `76ae41c5-bd85-4bf1-9a2a-e099a8ea85dd`, Redis live; member invite still TODO (#10) | Workers |
 | Cowork → Cursor | Fly org member + `FLY_API_TOKEN` in LastPass (#10) | agent-api deploy |
-| Cowork → Cursor | Cloudflare zone ACTIVE, then `api`/`app`/`sites`/`*.sites` CNAMEs (#3) | Custom domains on Vercel |
+| Cowork → Cursor | ~~Cloudflare CNAMEs~~ **DONE (Cowork, 2026-07-06):** zone ACTIVE, `api`/`app`/`sites`/`*.sites` → `cname.vercel-dns.com`, all DNS-only, wildcard verified resolving | Custom domains on Vercel |
 
 ### Shared records (IDs & locations — no secrets)
 
@@ -398,6 +398,9 @@ When Dylan says **"execute the plan"**, agent starts at Phase 1 (Lovable project
 | 2026-07-06 | Fly.io billing confirmed: **Good Standing**, pay-as-you-go, card on file | Cowork + Dylan |
 | 2026-07-06 | **Standalone Supabase created:** **`roas-production`**, ref **`lhfgtsjetcardinpgouq`**, org DVTEST (Pro), us-east-1, Micro (+$10/mo). URL + DB password → LastPass | Cowork + Dylan |
 | 2026-07-06 | **15-min sync:** Agent sync checklist added; Cursor Automation draft opened (every 15 min, read this doc) | Cursor |
+
+| 2026-07-06 | **Cloudflare zone ACTIVE** (NS propagated to conrad/summer). App CNAMEs added, all DNS-only: `api`, `app`, `sites`, `*.sites` → `cname.vercel-dns.com`. Wildcard verified resolving via public DNS. roas.io DNS work COMPLETE | Cowork |
+| 2026-07-06 | Supabase keys run complete: all 5 values + DB password in LastPass (see step #9). DB password rotated once after accidental chat exposure. Cursor migrations UNBLOCKED | Cowork + Dylan |
 
 **Privacy standing rule (Dylan, 2026-07-06):** everything created stays private — new GitHub repo must be private; Vercel Deployment Protection on until launch; Lovable project not community-visible.
 
