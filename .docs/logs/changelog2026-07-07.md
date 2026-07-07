@@ -206,3 +206,10 @@ What: Move mission-worker Dockerfile to `docker/mission-worker.Dockerfile` so Ra
 Why: Railway builds with any service-root `Dockerfile` even when `railway.json` sets `builder: RAILPACK`; deploy `034d37a4` still ran Docker COPY and failed.
 Impact: roas-platform should use RAILPACK on next deploy; Root Directory must still be cleared for workspace packages.
 Files: `docker/mission-worker.Dockerfile`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 12:59] - [FIX]
+
+What: Set `dockerfilePath: null` in mission-worker `railway.json` to override stale dashboard Dockerfile path.
+Why: Deploy `fac52fb1` RAILPACK failed reading removed `apps/mission-worker/Dockerfile` from dashboard config.
+Impact: Railway should run pure RAILPACK build on next deploy.
+Files: `apps/mission-worker/railway.json`, `.docs/logs/changelog2026-07-07.md`
