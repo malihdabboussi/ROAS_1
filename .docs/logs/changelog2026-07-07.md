@@ -253,3 +253,10 @@ What: mission-worker Railway — switch config-as-code from RAILPACK to `DOCKERF
 Why: Latest deploys (`8a07a8aa` @ 13:24 PT) still failed in ~13s with `failed to read Dockerfile at apps/mission-worker/Dockerfile` despite cleared Root Directory; `dockerfilePath: null` did not override dashboard.
 Impact: Next auto-deploy should build from repo-root Dockerfile with slim `.dockerignore`; Root Directory must stay empty.
 Files: `apps/mission-worker/railway.json`, `docker/mission-worker.Dockerfile`, `scripts/roas/deploy-railway-workers.sh`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 13:32] - [FIX]
+
+What: Restore `apps/mission-worker/Dockerfile` (dashboard hardcodes this path; `railway.json` dockerfilePath override ignored).
+Why: Deploy `328d03aa` @ `ddc0104a` still failed `failed to read Dockerfile at apps/mission-worker/Dockerfile`.
+Impact: Railway should enter real Docker build with repo-root context + slim `.dockerignore`.
+Files: `apps/mission-worker/Dockerfile`, `apps/mission-worker/railway.json`, `.docs/logs/changelog2026-07-07.md`
