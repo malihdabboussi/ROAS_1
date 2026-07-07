@@ -104,3 +104,10 @@ What: Restored the missing Vercel serverless entrypoint `apps/api/api/index.ts` 
 Why: roas-api Vercel builds failed with `The pattern "api/index.ts" defined in functions doesn't match any Serverless Functions` — `vercel.json` referenced a handler file dropped during the VibeyV2 → Railway migration fork snapshot.
 Impact: roas-api should pass Vercel function discovery and build; redeploy after push. roas-web / roas-funnels are unaffected (no root `vercel.json`; Next.js auto-detect only).
 Files: `apps/api/api/index.ts` (new), `apps/api/src/main.ts`
+
+## [2026-07-07 09:42] - [FIX]
+
+What: Extended `apps/api/scripts/vercel-build.sh` to build and materialize `@vibey/agent-policy` alongside `@vibey/api-shared` (matching `apps/api/Dockerfile` order). Added agent-policy to `vercel.json` `includeFiles` for serverless bundling.
+Why: roas-api Vercel build passed serverless config then failed with 6× `TS2307: Cannot find module '@vibey/agent-policy'` — the workspace package was never compiled before `nest build`.
+Impact: roas-api compile should resolve `@vibey/agent-policy` on Vercel; redeploy after push.
+Files: `apps/api/scripts/vercel-build.sh`, `apps/api/vercel.json`
