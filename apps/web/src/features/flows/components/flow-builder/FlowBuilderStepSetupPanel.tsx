@@ -43,7 +43,6 @@ import {
   triggerObjectRequiresContextSpace,
   type FlowTriggerContextSpace,
 } from '@/lib/flows/flow-trigger-context-space.utils'
-import { cn } from '@/lib/utils/cn'
 import { FlowCampaignGroupedSpaceSelect } from '../FlowCampaignGroupedSpaceSelect'
 import { FlowBuilderStepIcon } from './FlowBuilderStepIcon'
 import { FlowConnectedAppConnectField } from './FlowConnectedAppConnectField'

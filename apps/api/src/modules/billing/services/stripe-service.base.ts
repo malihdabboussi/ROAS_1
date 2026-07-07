@@ -10,7 +10,7 @@ import type { CreditPack } from './stripe-service.types'
 
 export abstract class StripeServiceBase implements OnModuleInit {
   protected readonly logger = new Logger('StripeService')
-  protected stripe!: Stripe
+  protected stripe?: Stripe
   protected isTestMode = false
 
   constructor(
@@ -25,8 +25,8 @@ export abstract class StripeServiceBase implements OnModuleInit {
   onModuleInit(): void {
     const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY')
     if (!secretKey) {
-      this.logger.error('STRIPE_SECRET_KEY is not configured')
-      throw new Error('STRIPE_SECRET_KEY is not configured')
+      this.logger.warn('STRIPE_SECRET_KEY not configured -- billing Stripe disabled')
+      return
     }
 
     this.stripe = new Stripe(secretKey)
@@ -89,8 +89,7 @@ export abstract class StripeServiceBase implements OnModuleInit {
     if (byId) return byId
 
     // Fall back to slug
-    const { data: bySlug } =
-      await this.stripeCustomerRepository.findCreditPackBySlug(packIdOrSlug)
+    const { data: bySlug } = await this.stripeCustomerRepository.findCreditPackBySlug(packIdOrSlug)
 
     return bySlug ?? null
   }

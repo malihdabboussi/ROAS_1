@@ -260,3 +260,10 @@ What: Restore `apps/mission-worker/Dockerfile` (dashboard hardcodes this path; `
 Why: Deploy `328d03aa` @ `ddc0104a` still failed `failed to read Dockerfile at apps/mission-worker/Dockerfile`.
 Impact: Railway should enter real Docker build with repo-root context + slim `.dockerignore`.
 Files: `apps/mission-worker/Dockerfile`, `apps/mission-worker/railway.json`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 13:58] - [FIX]
+
+What: roas-web — remove unused `cn` import in `FlowBuilderStepSetupPanel.tsx`. roas-api — allow boot without `STRIPE_SECRET_KEY` (warn + disable billing Stripe like `OrgStripeService`).
+Why: Web build failed TS6133; api cold start crashed in `StripeService.onModuleInit` on production (ROAS has no Stripe yet).
+Impact: Web should build; api.roas.io `/api` health should return `{status:"ok"}` after redeploy.
+Files: `apps/web/src/features/flows/components/flow-builder/FlowBuilderStepSetupPanel.tsx`, `apps/api/src/modules/billing/services/stripe-service.base.ts`, `.docs/logs/changelog2026-07-07.md`
