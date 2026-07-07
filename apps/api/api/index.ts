@@ -1,6 +1,7 @@
 import { Module as NodeModule } from 'module'
 import path from 'path'
-import type { Express, Request, Response } from 'express'
+import type { Request, Response } from 'express'
+import type { Express } from 'express-serve-static-core'
 
 function initNodePathFallbacks() {
   const apiRoot = path.join(__dirname, '..')
@@ -20,6 +21,7 @@ function initNodePathFallbacks() {
 initNodePathFallbacks()
 
 let cachedExpress: Express | null = null
+type ExpressHandler = (req: Request, res: Response) => unknown
 
 export default async function handler(req: Request, res: Response) {
   if (!cachedExpress) {
@@ -27,5 +29,5 @@ export default async function handler(req: Request, res: Response) {
     const nestApp = await createNestApp()
     cachedExpress = nestApp.getHttpAdapter().getInstance()
   }
-  return cachedExpress(req, res)
+  return (cachedExpress as unknown as ExpressHandler)(req, res)
 }

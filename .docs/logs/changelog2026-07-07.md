@@ -213,3 +213,29 @@ What: Set `dockerfilePath: null` in mission-worker `railway.json` to override st
 Why: Deploy `fac52fb1` RAILPACK failed reading removed `apps/mission-worker/Dockerfile` from dashboard config.
 Impact: Railway should run pure RAILPACK build on next deploy.
 Files: `apps/mission-worker/railway.json`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 13:05] - [DOCS]
+What: Post-fix deploy monitor note for commit 97ca6967 (Vercel/Railway/smoke) in roas-lovable-rebuild-provisioning.md.
+Why: Hand off 12m poll results to Cowork/Dylan after modal ENOENT fix.
+Impact: Documents mission-worker Dockerfile context failure vs RAILPACK follow-up on main.
+Files: .docs/plans/roas-lovable-rebuild-provisioning.md
+
+## [2026-07-07 13:15] - [DOCS]
+What: Deploy monitor note for commit 065f61d4 (Vercel poll, smoke, Railway root-dir manual step).
+Why: Follow-up after fix-mission-worker-railway-root.sh could not mutate service via API.
+Impact: Provisioning doc records api READY vs web/funnels/smoke/Railway state for Cowork/Dylan.
+Files: .docs/plans/roas-lovable-rebuild-provisioning.md, .docs/logs/changelog2026-07-07.md
+
+## [2026-07-07 13:13] - [UTIL]
+
+What: Added the Perplexity `roas-openclaw-prod` API key to the local ROAS secrets and marked the provider as wired for Fly/OpenClaw.
+Why: OpenClaw web search can use Perplexity as the fallback provider alongside Brave.
+Impact: `PERPLEXITY_API_KEY` syncs into section 9 for Fly `roas-runtimes`; secret remains gitignored and is not committed.
+Files: `scripts/roas/roas-secrets.env` (gitignored), `.docs/plans/roas-lovable-rebuild-provisioning.md`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 13:18] - [FIX]
+
+What: roas-api runtime — stop replacing `node_modules/@vibey/*` during Vercel materialize (keeps pnpm nested deps like `jose`); bundle only `packages/@vibey/**` + `dist/**` in `includeFiles` (avoids modal symlink ENOENT). roas-web — remove unused IconPicker import in `FlowBuilderStepSetupPanel.tsx`. Fix Express handler typing in `api/index.ts`.
+Why: Production api returned 500 `FUNCTION_INVOCATION_FAILED` because flat materialized `@vibey/api-shared` could not resolve `jose` at cold start; web build failed on unused imports.
+Impact: Vercel roas-api should boot Nest on invoke; roas-web build unblocked.
+Files: `apps/api/scripts/vercel-build.sh`, `apps/api/vercel.json`, `apps/api/api/index.ts`, `apps/web/src/features/flows/components/flow-builder/FlowBuilderStepSetupPanel.tsx`, `.docs/logs/changelog2026-07-07.md`

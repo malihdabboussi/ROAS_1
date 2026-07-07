@@ -9,13 +9,8 @@ materialize_workspace_pkg() {
   local pkg="$1"
   local src="${ROOT}/packages/${pkg}"
 
-  rm -rf "${API_ROOT}/node_modules/@vibey/${pkg}"
-  mkdir -p "${API_ROOT}/node_modules/@vibey/${pkg}/dist"
-  cp "${src}/package.json" "${API_ROOT}/node_modules/@vibey/${pkg}/"
-  cp -r "${src}/dist/." "${API_ROOT}/node_modules/@vibey/${pkg}/dist/"
-
-  # Copy only runtime artifacts — full package copy drags pnpm symlinks under
-  # node_modules that break Vercel includeFiles (ENOENT on modal, etc.).
+  # Serverless includeFiles bundle — dist + package.json only (no pnpm symlinks).
+  # Runtime resolution uses pnpm's node_modules/@vibey/* with nested deps (jose, etc.).
   rm -rf "${ROOT}/packages/@vibey/${pkg}"
   mkdir -p "${ROOT}/packages/@vibey/${pkg}/dist"
   cp "${src}/package.json" "${ROOT}/packages/@vibey/${pkg}/"
@@ -48,6 +43,7 @@ echo "vercel-build: materializing workspace packages for serverless runtime"
 mkdir -p "${ROOT}/packages/@vibey"
 for pkg in "${WORKSPACE_PKGS[@]}"; do
   materialize_workspace_pkg "${pkg}"
+  test -f "${ROOT}/packages/@vibey/${pkg}/dist/index.js"
   test -f "${API_ROOT}/node_modules/@vibey/${pkg}/dist/index.js"
 done
 

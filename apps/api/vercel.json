@@ -6,7 +6,7 @@
   "functions": {
     "api/index.ts": {
       "maxDuration": 300,
-      "includeFiles": "{public/**,node_modules/@vibey/**,../../packages/@vibey/**,../../docker/agents/templates/**}"
+      "includeFiles": "{public/**,dist/**,../../packages/@vibey/**,../../docker/agents/templates/**}"
     }
   },
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
