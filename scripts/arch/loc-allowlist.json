@@ -124,6 +124,11 @@
       "limit": 400,
       "lines": 443
     },
+    "apps/web/src/features/flows/components/flow-builder/FlowBuilderStepSetupPanel.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 418
+    },
     "apps/web/src/features/mission-control/components/dialogs/DeliverablesCarousel.tsx": {
       "kind": "web-component",
       "limit": 400,
@@ -1077,6 +1082,16 @@
       "imports": {
         "@/features/properties/constants/tag-picker-colors": 1,
         "@/features/properties/hooks/useCustomFields": 1
+      }
+    },
+    "apps/web/src/features/flows/components/flow-builder/FlowBuilderStepSetupPanel.tsx": {
+      "sourceFeature": "flows",
+      "count": 4,
+      "imports": {
+        "@/features/org/services/org.service": 1,
+        "@/features/spaces/components/automations/automation-catalog": 1,
+        "@/features/spaces/components/automations/AutomationCategorizedSelect": 1,
+        "@/features/spaces/types/space-schema": 1
       }
     },
     "apps/web/src/features/spaces/components/artifacts/artifact-view-rows.ts": {

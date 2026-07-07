@@ -1,6 +1,10 @@
 'use client'
 
 import { useMemo } from 'react'
+import {
+  AutomationSolidSelect,
+  type AutomationSolidOption,
+} from '@/components/ui/forms/AutomationSolidSelect'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import {
   ACTION_SECTIONS,
@@ -17,13 +21,12 @@ import {
   type TriggerObjectKey,
 } from '@/features/spaces/components/automations/automation-catalog'
 import { AutomationCategorizedSelect } from '@/features/spaces/components/automations/AutomationCategorizedSelect'
-import {
-  AutomationSolidSelect,
-  type AutomationSolidOption,
-} from '@/components/ui/forms/AutomationSolidSelect'
-import { FlowCampaignGroupedSpaceSelect } from '../FlowCampaignGroupedSpaceSelect'
-import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
-import type { AutomationAction, AutomationTrigger, FieldDef } from '@/features/spaces/types/space-schema'
+import type {
+  AutomationAction,
+  AutomationTrigger,
+  FieldDef,
+} from '@/features/spaces/types/space-schema'
+import type { FlowBuilderCanvasStep } from '@/lib/flows/flow-builder-canvas.utils'
 import {
   applyFlowConnectedAppEvent,
   buildFlowConnectedAppTrigger,
@@ -34,7 +37,6 @@ import {
   resolveFlowConnectedAppKey,
   type FlowConnectedAppKey,
 } from '@/lib/flows/flow-builder-connected-app-trigger.utils'
-import type { FlowBuilderCanvasStep } from '@/lib/flows/flow-builder-canvas.utils'
 import {
   applyTriggerContextSpaceId,
   resolveTriggerContextSpaceId,
@@ -42,6 +44,7 @@ import {
   type FlowTriggerContextSpace,
 } from '@/lib/flows/flow-trigger-context-space.utils'
 import { cn } from '@/lib/utils/cn'
+import { FlowCampaignGroupedSpaceSelect } from '../FlowCampaignGroupedSpaceSelect'
 import { FlowBuilderStepIcon } from './FlowBuilderStepIcon'
 import { FlowConnectedAppConnectField } from './FlowConnectedAppConnectField'
 
@@ -222,9 +225,7 @@ function TriggerSetupFields({
                   options={connectedAppEventOptions}
                   value={connectedAppEventValue}
                   onChange={(next) =>
-                    onChangeTrigger(
-                      applyFlowConnectedAppEvent(trigger, connectedAppKey, next),
-                    )
+                    onChangeTrigger(applyFlowConnectedAppEvent(trigger, connectedAppKey, next))
                   }
                   placeholder="When…"
                 />
@@ -243,7 +244,9 @@ function TriggerSetupFields({
                     <FlowCampaignGroupedSpaceSelect
                       spaces={triggerContextSpaces}
                       value={contextSpaceId ?? ''}
-                      onChange={(next) => onChangeTrigger(applyTriggerContextSpaceId(trigger, next))}
+                      onChange={(next) =>
+                        onChangeTrigger(applyTriggerContextSpaceId(trigger, next))
+                      }
                       placeholder="Select space"
                     />
                     <p className="body-4 text-muted-foreground mt-spacing-2">
@@ -324,9 +327,7 @@ function ActionSetupFields({
   const typeSelectValue = action?.type === 'choose_action' ? '' : (action?.type ?? '')
 
   const controlStepCategoryLabel =
-    action?.type === 'flow_loop' || action?.type === 'flow_branch'
-      ? 'Flow control'
-      : step.typeLabel
+    action?.type === 'flow_loop' || action?.type === 'flow_branch' ? 'Flow control' : step.typeLabel
 
   return (
     <div className="gap-spacing-4 flex flex-col">
