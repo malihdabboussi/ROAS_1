@@ -1,5 +1,6 @@
 import type { MouseEvent, ReactNode } from 'react'
 import { FolderGit2 } from 'lucide-react'
+import { dispatchFlowClarificationAnswer } from '@/features/flows/lib/flow-clarification-ui'
 import { missionDeliverableFromContentBlock } from '@/lib/missions'
 import { extractMarkdownFromDocumentContent } from '../../lib/document-content-markdown'
 import { fetchDocument } from '../../services/artifact-preview.service'
@@ -18,7 +19,7 @@ import { DocumentCard } from '../chat/DocumentCard'
 import { EmailSendConfirmCard } from '../chat/EmailSendConfirmCard'
 import { EmailSendStatusCard } from '../chat/EmailSendStatusCard'
 import { InlineAgentAccessRequest } from '../chat/InlineAgentAccessRequest'
-import { dispatchFlowClarificationAnswer } from '@/features/flows/lib/flow-clarification-ui'
+import type { ContentBlockRenderContext } from './message-bubble.types'
 
 export function messageContentBlockPartB(
   block: MessageContentBlock,

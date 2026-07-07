@@ -27,8 +27,9 @@ export abstract class StripePaymentBase extends StripeAccountBase {
       return
     }
 
-    const { data: existing } =
-      await this.stripePaymentRepository.findCreditPurchaseByPaymentIntent(paymentIntent.id)
+    const { data: existing } = await this.stripePaymentRepository.findCreditPurchaseByPaymentIntent(
+      paymentIntent.id,
+    )
 
     if ((existing ?? []).length > 0) {
       this.logger.debug(`PaymentIntent ${paymentIntent.id} already recorded, skipping`)
@@ -120,8 +121,7 @@ export abstract class StripePaymentBase extends StripeAccountBase {
         0,
       ) ?? 0
 
-    const { data: orgPiLatestUsage } =
-      await this.stripePaymentRepository.findLatestOrgUsage(orgId)
+    const { data: orgPiLatestUsage } = await this.stripePaymentRepository.findLatestOrgUsage(orgId)
 
     if (orgPiLatestUsage?.id) {
       await this.stripePaymentRepository.updateOrgUsageTotalPurchased(
@@ -155,7 +155,7 @@ export abstract class StripePaymentBase extends StripeAccountBase {
     if (!customerId) return null
 
     // 2. Check for saved payment method
-    const customer = await this.stripe.customers.retrieve(customerId)
+    const customer = await this.requireStripe().customers.retrieve(customerId)
     if (customer.deleted) return null
 
     const defaultPaymentMethod =
@@ -180,7 +180,7 @@ export abstract class StripePaymentBase extends StripeAccountBase {
     const totalCredits = pack.credits * qty
 
     // 4. Create PaymentIntent with off_session + confirm (charges immediately)
-    const paymentIntent = await this.stripe.paymentIntents.create({
+    const paymentIntent = await this.requireStripe().paymentIntents.create({
       amount: totalAmountCents,
       currency: 'usd',
       customer: customerId,
@@ -259,7 +259,7 @@ export abstract class StripePaymentBase extends StripeAccountBase {
 
       if (!customerId || !paymentIntentId) return
 
-      const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId)
+      const paymentIntent = await this.requireStripe().paymentIntents.retrieve(paymentIntentId)
       const paymentMethodId =
         typeof paymentIntent.payment_method === 'string'
           ? paymentIntent.payment_method
@@ -267,7 +267,7 @@ export abstract class StripePaymentBase extends StripeAccountBase {
 
       if (!paymentMethodId) return
 
-      await this.stripe.customers.update(customerId, {
+      await this.requireStripe().customers.update(customerId, {
         invoice_settings: { default_payment_method: paymentMethodId },
       })
 
@@ -290,7 +290,7 @@ export abstract class StripePaymentBase extends StripeAccountBase {
     keepPaymentMethodId: string,
   ): Promise<void> {
     try {
-      const methods = await this.stripe.paymentMethods.list({
+      const methods = await this.requireStripe().paymentMethods.list({
         customer: customerId,
         type: 'card',
         limit: 20,
@@ -307,7 +307,7 @@ export abstract class StripePaymentBase extends StripeAccountBase {
       )
 
       for (const dup of duplicates) {
-        await this.stripe.paymentMethods.detach(dup.id)
+        await this.requireStripe().paymentMethods.detach(dup.id)
         this.logger.log(
           `Detached duplicate payment method ${dup.id} (fingerprint=${keepFingerprint})`,
         )

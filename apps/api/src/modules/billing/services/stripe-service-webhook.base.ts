@@ -20,7 +20,7 @@ export abstract class StripeWebhookBase extends StripeWebhookSubscriptionBase {
 
     let event: Stripe.Event
     try {
-      event = this.stripe.webhooks.constructEvent(body, signature, webhookSecret)
+      event = this.requireStripe().webhooks.constructEvent(body, signature, webhookSecret)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
       this.logger.error(`Webhook signature verification failed: ${message}`)

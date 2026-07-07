@@ -82,7 +82,7 @@ export abstract class StripeAgentBrainBase extends StripeCheckoutBase {
     const needsCheckout = !currentSub?.stripe_subscription_id
 
     if (!needsCheckout) {
-      const customer = await this.stripe.customers.retrieve(customerId)
+      const customer = await this.requireStripe().customers.retrieve(customerId)
       const defaultPaymentMethod =
         !customer.deleted && 'invoice_settings' in customer
           ? customer.invoice_settings?.default_payment_method
@@ -91,7 +91,7 @@ export abstract class StripeAgentBrainBase extends StripeCheckoutBase {
       if (!defaultPaymentMethod) {
         // No payment method — fall through to checkout
       } else {
-        const stripeSub = await this.stripe.subscriptions.retrieve(
+        const stripeSub = await this.requireStripe().subscriptions.retrieve(
           currentSub.stripe_subscription_id,
         )
         if (stripeSub && stripeSub.status !== 'canceled') {
@@ -99,7 +99,7 @@ export abstract class StripeAgentBrainBase extends StripeCheckoutBase {
             id: item.id,
             price: item.price.id,
           }))
-          const updatedSub = await this.stripe.subscriptions.update(
+          const updatedSub = await this.requireStripe().subscriptions.update(
             currentSub.stripe_subscription_id,
             {
               items: [...existingItems, { price: addonPriceId, quantity: 1 }],
@@ -150,7 +150,7 @@ export abstract class StripeAgentBrainBase extends StripeCheckoutBase {
     const successUrl = `${appUrl}/studio?brain=activated&agentId=${encodeURIComponent(trimmedAgentId)}`
     const cancelUrl = `${appUrl}/studio?canceled=true`
 
-    const session = await this.stripe.checkout.sessions.create({
+    const session = await this.requireStripe().checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
       line_items: [{ price: addonPriceId, quantity: 1 }],
@@ -271,7 +271,9 @@ export abstract class StripeAgentBrainBase extends StripeCheckoutBase {
       )
     }
 
-    const stripeSub = await this.stripe.subscriptions.retrieve(orgSub.stripe_subscription_id)
+    const stripeSub = await this.requireStripe().subscriptions.retrieve(
+      orgSub.stripe_subscription_id,
+    )
     if (stripeSub.status === 'canceled') {
       throw new Error('Organization subscription is canceled')
     }
@@ -280,16 +282,19 @@ export abstract class StripeAgentBrainBase extends StripeCheckoutBase {
       id: item.id,
       price: item.price.id,
     }))
-    const updatedSub = await this.stripe.subscriptions.update(orgSub.stripe_subscription_id, {
-      items: [...existingItems, { price: addonPriceId, quantity: 1 }],
-      proration_behavior: 'always_invoice',
-      metadata: {
-        org_id: trimmedOrgId,
-        addon_slug: 'agent-brain',
-        agent_id: trimmedAgentId,
-        added_by_user_id: userId,
+    const updatedSub = await this.requireStripe().subscriptions.update(
+      orgSub.stripe_subscription_id,
+      {
+        items: [...existingItems, { price: addonPriceId, quantity: 1 }],
+        proration_behavior: 'always_invoice',
+        metadata: {
+          org_id: trimmedOrgId,
+          addon_slug: 'agent-brain',
+          agent_id: trimmedAgentId,
+          added_by_user_id: userId,
+        },
       },
-    })
+    )
 
     const existingItemIds = new Set(stripeSub.items.data.map((i) => i.id))
     const addedItem = updatedSub.items.data.find(
@@ -337,7 +342,7 @@ export abstract class StripeAgentBrainBase extends StripeCheckoutBase {
     if (!addon) throw new Error('Active agent brain add-on not found')
 
     if (addon.stripe_subscription_item_id) {
-      await this.stripe.subscriptionItems.del(addon.stripe_subscription_item_id, {
+      await this.requireStripe().subscriptionItems.del(addon.stripe_subscription_item_id, {
         proration_behavior: 'always_invoice',
       })
     }
@@ -392,7 +397,7 @@ export abstract class StripeAgentBrainBase extends StripeCheckoutBase {
 
     if (addon?.stripe_subscription_item_id) {
       try {
-        await this.stripe.subscriptionItems.del(addon.stripe_subscription_item_id, {
+        await this.requireStripe().subscriptionItems.del(addon.stripe_subscription_item_id, {
           proration_behavior: 'always_invoice',
         })
       } catch (err) {

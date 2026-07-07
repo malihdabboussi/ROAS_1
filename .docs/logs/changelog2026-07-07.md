@@ -274,3 +274,10 @@ What: roas-web — add missing `AssigneeCell` import in `ActionBuilder.tsx`.
 Why: Deploy `3acf420e` web build failed TS2304 after `FlowBuilderStepSetupPanel` fix cleared prior error.
 Impact: roas-web should build on next deploy.
 Files: `apps/web/src/features/spaces/components/automations/ActionBuilder.tsx`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 15:42] - [FIX]
+
+What: roas-api — add `requireStripe()` guard for optional Stripe client (fixes 41 TS2532 errors from `70587237` build). roas-web — import `ContentBlockRenderContext` in `MessageContentBlockSwitchPartB.tsx`.
+Why: Api nest build failed after making Stripe optional; web build failed TS2304 on next error in chain.
+Impact: Both Vercel projects should build; api health should work without Stripe keys.
+Files: `apps/api/src/modules/billing/services/stripe-service*.ts`, `apps/web/src/features/studio/components/message-bubble/MessageContentBlockSwitchPartB.tsx`, `.docs/logs/changelog2026-07-07.md`

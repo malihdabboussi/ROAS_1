@@ -70,7 +70,7 @@ export abstract class StripeWebhookCheckoutBase extends StripePaymentBase {
     // Cancel old Stripe subscription if one existed before this checkout
     if (oldStripeSubscriptionId && oldStripeSubscriptionId !== stripeSubscriptionId) {
       try {
-        await this.stripe.subscriptions.cancel(oldStripeSubscriptionId, {
+        await this.requireStripe().subscriptions.cancel(oldStripeSubscriptionId, {
           prorate: true,
         })
         this.logger.log(
@@ -83,7 +83,7 @@ export abstract class StripeWebhookCheckoutBase extends StripePaymentBase {
     }
 
     // Retrieve subscription details for period dates
-    const subscription = await this.stripe.subscriptions.retrieve(stripeSubscriptionId)
+    const subscription = await this.requireStripe().subscriptions.retrieve(stripeSubscriptionId)
     const period = this.getSubscriptionPeriod(subscription)
     const currentPeriodStart = period.start ? new Date(period.start * 1000).toISOString() : null
     const currentPeriodEnd = period.end ? new Date(period.end * 1000).toISOString() : null
@@ -92,14 +92,14 @@ export abstract class StripeWebhookCheckoutBase extends StripePaymentBase {
 
     // Upsert user subscription
     const { error } = await this.stripeCustomerRepository.upsertUserSubscription({
-        user_id: userId,
-        plan_id: planId,
-        status,
-        stripe_subscription_id: stripeSubscriptionId,
-        stripe_customer_id: stripeCustomerId,
-        current_period_start: currentPeriodStart,
-        current_period_end: currentPeriodEnd,
-      })
+      user_id: userId,
+      plan_id: planId,
+      status,
+      stripe_subscription_id: stripeSubscriptionId,
+      stripe_customer_id: stripeCustomerId,
+      current_period_start: currentPeriodStart,
+      current_period_end: currentPeriodEnd,
+    })
 
     if (error) {
       this.logger.error(`Failed to upsert subscription: ${error.message}`)
@@ -123,7 +123,7 @@ export abstract class StripeWebhookCheckoutBase extends StripePaymentBase {
       return
     }
 
-    const subscription = await this.stripe.subscriptions.retrieve(stripeSubscriptionId)
+    const subscription = await this.requireStripe().subscriptions.retrieve(stripeSubscriptionId)
     const stripeCustomerId = session.customer as string
 
     // Persist customer ID
@@ -187,12 +187,12 @@ export abstract class StripeWebhookCheckoutBase extends StripePaymentBase {
     }
 
     await this.stripePaymentRepository.markFastTrackPurchasePaid(session.id, {
-        stripe_customer_id: stripeCustomerId,
-        stripe_subscription_id: stripeSubscriptionId,
-        invite_code_id: inviteCode.id,
-        invite_code: code,
-        status: 'paid',
-      })
+      stripe_customer_id: stripeCustomerId,
+      stripe_subscription_id: stripeSubscriptionId,
+      invite_code_id: inviteCode.id,
+      invite_code: code,
+      status: 'paid',
+    })
 
     await this.stripePaymentRepository.markWaitlistInvited(email, new Date().toISOString())
 
@@ -349,8 +349,7 @@ export abstract class StripeWebhookCheckoutBase extends StripePaymentBase {
         0,
       ) ?? 0
 
-    const { data: latestOrgUsage } =
-      await this.stripePaymentRepository.findLatestOrgUsage(orgId)
+    const { data: latestOrgUsage } = await this.stripePaymentRepository.findLatestOrgUsage(orgId)
 
     if (latestOrgUsage?.id) {
       await this.stripePaymentRepository.updateOrgUsageTotalPurchased(
@@ -377,25 +376,26 @@ export abstract class StripeWebhookCheckoutBase extends StripePaymentBase {
       return
     }
 
-    const subscription = await this.stripe.subscriptions.retrieve(stripeSubscriptionId)
+    const subscription = await this.requireStripe().subscriptions.retrieve(stripeSubscriptionId)
     const period = this.getSubscriptionPeriod(subscription)
     const currentPeriodStart = period.start ? new Date(period.start * 1000).toISOString() : null
     const currentPeriodEnd = period.end ? new Date(period.end * 1000).toISOString() : null
 
     const status = this.mapSubscriptionStatus(subscription.status)
 
-    const { data: plan } =
-      planSlug ? await this.stripeCustomerRepository.findActivePlanBySlug(planSlug) : { data: null }
+    const { data: plan } = planSlug
+      ? await this.stripeCustomerRepository.findActivePlanBySlug(planSlug)
+      : { data: null }
 
     const { error } = await this.stripePaymentRepository.upsertOrgSubscription({
-        org_id: orgId,
-        plan_id: plan?.id ?? null,
-        status,
-        stripe_subscription_id: stripeSubscriptionId,
-        stripe_customer_id: stripeCustomerId,
-        current_period_start: currentPeriodStart,
-        current_period_end: currentPeriodEnd,
-      })
+      org_id: orgId,
+      plan_id: plan?.id ?? null,
+      status,
+      stripe_subscription_id: stripeSubscriptionId,
+      stripe_customer_id: stripeCustomerId,
+      current_period_start: currentPeriodStart,
+      current_period_end: currentPeriodEnd,
+    })
 
     if (error) {
       this.logger.error(`Failed to upsert org subscription: ${error.message}`)

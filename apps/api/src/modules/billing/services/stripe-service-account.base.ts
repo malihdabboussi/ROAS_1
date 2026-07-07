@@ -1,5 +1,6 @@
 import type Stripe from 'stripe'
 import { StripeAgentBrainBase } from './stripe-service-agent-brain.base'
+
 export abstract class StripeAccountBase extends StripeAgentBrainBase {
   // ============================================================
   // SESSION STATUS
@@ -19,7 +20,7 @@ export abstract class StripeAccountBase extends StripeAgentBrainBase {
     creditsAdded?: number
   }> {
     try {
-      const session = await this.stripe.checkout.sessions.retrieve(sessionId)
+      const session = await this.requireStripe().checkout.sessions.retrieve(sessionId)
 
       // Verify the session belongs to this user
       const sessionUserId = session.metadata?.user_id ?? session.client_reference_id
@@ -97,7 +98,7 @@ export abstract class StripeAccountBase extends StripeAgentBrainBase {
       created: number
     }>
   > {
-    const invoices = await this.stripe.invoices.list({
+    const invoices = await this.requireStripe().invoices.list({
       customer: customerId,
       limit,
     })
@@ -171,7 +172,9 @@ export abstract class StripeAccountBase extends StripeAgentBrainBase {
     }
 
     // 5. Retrieve current Stripe subscription to get the item ID
-    const stripeSub = await this.stripe.subscriptions.retrieve(currentSub.stripe_subscription_id)
+    const stripeSub = await this.requireStripe().subscriptions.retrieve(
+      currentSub.stripe_subscription_id,
+    )
 
     if (!stripeSub || stripeSub.status === 'canceled') {
       throw new Error('Current subscription is not active in Stripe')
@@ -187,16 +190,19 @@ export abstract class StripeAccountBase extends StripeAgentBrainBase {
       `[Switch Interval] User: ${userId}, ${currentPlan.slug} → ${targetSlug}, proration=always_invoice`,
     )
 
-    const updatedSub = await this.stripe.subscriptions.update(currentSub.stripe_subscription_id, {
-      items: [{ id: subscriptionItemId, price: targetPriceId }],
-      proration_behavior: 'always_invoice',
-      metadata: {
-        user_id: userId,
-        plan_id: targetPlan.id,
-        previous_plan_slug: currentPlan.slug,
-        switch_type: 'interval_change',
+    const updatedSub = await this.requireStripe().subscriptions.update(
+      currentSub.stripe_subscription_id,
+      {
+        items: [{ id: subscriptionItemId, price: targetPriceId }],
+        proration_behavior: 'always_invoice',
+        metadata: {
+          user_id: userId,
+          plan_id: targetPlan.id,
+          previous_plan_slug: currentPlan.slug,
+          switch_type: 'interval_change',
+        },
       },
-    })
+    )
 
     // 7. Update database with new plan
     const switchPeriod = this.getSubscriptionPeriod(updatedSub)
@@ -206,12 +212,12 @@ export abstract class StripeAccountBase extends StripeAgentBrainBase {
     const periodEnd = switchPeriod.end ? new Date(switchPeriod.end * 1000).toISOString() : null
 
     const { error: dbError } = await this.stripeCustomerRepository.updateUserSubscription(userId, {
-        plan_id: targetPlan.id,
-        status: updatedSub.status,
-        current_period_start: periodStart,
-        current_period_end: periodEnd,
-        cancel_at_period_end: updatedSub.cancel_at_period_end,
-      })
+      plan_id: targetPlan.id,
+      status: updatedSub.status,
+      current_period_start: periodStart,
+      current_period_end: periodEnd,
+      cancel_at_period_end: updatedSub.cancel_at_period_end,
+    })
 
     if (dbError) {
       this.logger.error(`[Switch Interval] DB update failed: ${dbError.message}`)
@@ -249,7 +255,7 @@ export abstract class StripeAccountBase extends StripeAgentBrainBase {
   ): Promise<void> {
     try {
       // 1. Create draft invoice
-      const invoice = await this.stripe.invoices.create({
+      const invoice = await this.requireStripe().invoices.create({
         customer: customerId,
         collection_method: 'charge_automatically',
         auto_advance: false,
@@ -257,7 +263,7 @@ export abstract class StripeAccountBase extends StripeAgentBrainBase {
       })
 
       // 2. Add line item
-      await this.stripe.invoiceItems.create({
+      await this.requireStripe().invoiceItems.create({
         customer: customerId,
         invoice: invoice.id,
         amount: amountCents,
@@ -266,8 +272,8 @@ export abstract class StripeAccountBase extends StripeAgentBrainBase {
       })
 
       // 3. Finalize and mark as paid (out of band — already charged via PaymentIntent)
-      await this.stripe.invoices.finalizeInvoice(invoice.id)
-      await this.stripe.invoices.pay(invoice.id, { paid_out_of_band: true })
+      await this.requireStripe().invoices.finalizeInvoice(invoice.id)
+      await this.requireStripe().invoices.pay(invoice.id, { paid_out_of_band: true })
 
       this.logger.log(`Invoice created for credit purchase: ${invoice.id}`)
     } catch (err) {
@@ -285,7 +291,7 @@ export abstract class StripeAccountBase extends StripeAgentBrainBase {
    * Cancel subscription at period end.
    */
   async cancelSubscription(subscriptionId: string): Promise<{ periodEnd: string }> {
-    const sub = await this.stripe.subscriptions.update(subscriptionId, {
+    const sub = await this.requireStripe().subscriptions.update(subscriptionId, {
       cancel_at_period_end: true,
     })
 
@@ -301,7 +307,7 @@ export abstract class StripeAccountBase extends StripeAgentBrainBase {
    * Reactivate a subscription that was set to cancel at period end.
    */
   async reactivateSubscription(subscriptionId: string): Promise<void> {
-    await this.stripe.subscriptions.update(subscriptionId, {
+    await this.requireStripe().subscriptions.update(subscriptionId, {
       cancel_at_period_end: false,
     })
   }

@@ -38,7 +38,7 @@ export abstract class StripeCheckoutBase extends StripeServiceBase {
     // ── 1-CLICK PATH: Check if customer has saved payment method ──
     if (customerId) {
       try {
-        const customer = await this.stripe.customers.retrieve(customerId)
+        const customer = await this.requireStripe().customers.retrieve(customerId)
 
         if (
           !customer.deleted &&
@@ -62,7 +62,7 @@ export abstract class StripeCheckoutBase extends StripeServiceBase {
 
           if (existingSub?.stripe_subscription_id) {
             // UPDATE existing subscription (swap plan item) — same pattern as switchSubscriptionInterval
-            const stripeSub = await this.stripe.subscriptions.retrieve(
+            const stripeSub = await this.requireStripe().subscriptions.retrieve(
               existingSub.stripe_subscription_id,
             )
 
@@ -76,7 +76,7 @@ export abstract class StripeCheckoutBase extends StripeServiceBase {
                 `[1-Click Subscribe] Updating existing sub=${existingSub.stripe_subscription_id} to plan=${slug}`,
               )
 
-              subscription = await this.stripe.subscriptions.update(
+              subscription = await this.requireStripe().subscriptions.update(
                 existingSub.stripe_subscription_id,
                 {
                   items: [{ id: subscriptionItemId, price: priceId }],
@@ -92,7 +92,7 @@ export abstract class StripeCheckoutBase extends StripeServiceBase {
               )
             } else {
               // Old sub already canceled in Stripe — create fresh
-              subscription = await this.stripe.subscriptions.create({
+              subscription = await this.requireStripe().subscriptions.create({
                 customer: customerId,
                 items: [{ price: priceId }],
                 default_payment_method: paymentMethodId,
@@ -106,7 +106,7 @@ export abstract class StripeCheckoutBase extends StripeServiceBase {
             }
           } else {
             // No existing subscription — create new
-            subscription = await this.stripe.subscriptions.create({
+            subscription = await this.requireStripe().subscriptions.create({
               customer: customerId,
               items: [{ price: priceId }],
               default_payment_method: paymentMethodId,
@@ -125,15 +125,15 @@ export abstract class StripeCheckoutBase extends StripeServiceBase {
           const periodEnd = period.end ? new Date(period.end * 1000).toISOString() : null
 
           await this.stripeCustomerRepository.upsertUserSubscription({
-              user_id: userId,
-              plan_id: plan.id,
-              status: subscription.status === 'active' ? 'active' : subscription.status,
-              stripe_subscription_id: subscription.id,
-              stripe_customer_id: customerId,
-              current_period_start: periodStart,
-              current_period_end: periodEnd,
-              cancel_at_period_end: false,
-            })
+            user_id: userId,
+            plan_id: plan.id,
+            status: subscription.status === 'active' ? 'active' : subscription.status,
+            stripe_subscription_id: subscription.id,
+            stripe_customer_id: customerId,
+            current_period_start: periodStart,
+            current_period_end: periodEnd,
+            cancel_at_period_end: false,
+          })
 
           this.logger.log(
             `[1-Click Subscribe] Success: sub=${subscription.id}, status=${subscription.status}`,
@@ -155,8 +155,7 @@ export abstract class StripeCheckoutBase extends StripeServiceBase {
     this.logger.log(`[Checkout Fallback] User: ${userId}, Plan: ${slug}`)
 
     // Find existing subscription so we can cancel it after checkout completes
-    const { data: oldSub } =
-      await this.stripeCustomerRepository.findActiveUserSubscription(userId)
+    const { data: oldSub } = await this.stripeCustomerRepository.findActiveUserSubscription(userId)
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: 'subscription',
@@ -186,7 +185,7 @@ export abstract class StripeCheckoutBase extends StripeServiceBase {
       sessionParams.customer_email = email
     }
 
-    const session = await this.stripe.checkout.sessions.create(sessionParams)
+    const session = await this.requireStripe().checkout.sessions.create(sessionParams)
 
     return {
       sessionId: session.id,
@@ -261,7 +260,7 @@ export abstract class StripeCheckoutBase extends StripeServiceBase {
       },
     }
 
-    const session = await this.stripe.checkout.sessions.create(sessionParams)
+    const session = await this.requireStripe().checkout.sessions.create(sessionParams)
 
     return {
       sessionId: session.id,
@@ -277,7 +276,7 @@ export abstract class StripeCheckoutBase extends StripeServiceBase {
    * Create a Stripe Customer Portal session for managing subscriptions.
    */
   async createPortalSession(customerId: string, returnUrl: string): Promise<{ url: string }> {
-    const session = await this.stripe.billingPortal.sessions.create({
+    const session = await this.requireStripe().billingPortal.sessions.create({
       customer: customerId,
       return_url: returnUrl,
     })

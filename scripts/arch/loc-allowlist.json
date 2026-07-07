@@ -1016,6 +1016,13 @@
         "@/features/channels/lib/mission-deliverable-from-block": 1
       }
     },
+    "apps/web/src/features/studio/components/message-bubble/MessageContentBlockSwitchPartB.tsx": {
+      "sourceFeature": "studio",
+      "count": 1,
+      "imports": {
+        "@/features/flows/lib/flow-clarification-ui": 1
+      }
+    },
     "apps/web/src/features/studio/components/preview/FunnelToolbar.tsx": {
       "sourceFeature": "studio",
       "count": 1,

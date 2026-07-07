@@ -35,6 +35,17 @@ export abstract class StripeServiceBase implements OnModuleInit {
     this.logger.log(`Stripe client initialized (${this.isTestMode ? 'TEST' : 'LIVE'} mode)`)
   }
 
+  protected isStripeConfigured(): boolean {
+    return Boolean(this.stripe)
+  }
+
+  protected requireStripe(): Stripe {
+    if (!this.stripe) {
+      throw new Error('Stripe is not configured')
+    }
+    return this.stripe
+  }
+
   /** Pick the correct stripe_price_id based on test/live mode */
   protected getPriceId(row: {
     stripe_price_id?: string | null
@@ -107,7 +118,7 @@ export abstract class StripeServiceBase implements OnModuleInit {
     }
 
     // 2. Check Stripe for existing customer by email
-    const customers = await this.stripe.customers.list({ email, limit: 1 })
+    const customers = await this.requireStripe().customers.list({ email, limit: 1 })
     if (customers.data.length > 0) {
       const customerId = customers.data[0].id
       await this.persistCustomerId(userId, customerId)
@@ -115,7 +126,7 @@ export abstract class StripeServiceBase implements OnModuleInit {
     }
 
     // 3. Create a new Stripe customer
-    const customer = await this.stripe.customers.create({
+    const customer = await this.requireStripe().customers.create({
       email,
       metadata: { user_id: userId },
     })
@@ -156,7 +167,10 @@ export abstract class StripeServiceBase implements OnModuleInit {
     const { data: profile } = await this.stripeCustomerRepository.findUserEmail(userId)
 
     if (profile?.email) {
-      const customers = await this.stripe.customers.list({ email: profile.email, limit: 1 })
+      const customers = await this.requireStripe().customers.list({
+        email: profile.email,
+        limit: 1,
+      })
       if (customers.data.length > 0) {
         return customers.data[0].id
       }
@@ -165,7 +179,7 @@ export abstract class StripeServiceBase implements OnModuleInit {
     // 3. Fallback: check auth.users
     const { data: authUser } = await this.stripeCustomerRepository.findAuthUser(userId)
     if (authUser?.user?.email) {
-      const customers = await this.stripe.customers.list({
+      const customers = await this.requireStripe().customers.list({
         email: authUser.user.email,
         limit: 1,
       })
