@@ -246,3 +246,10 @@ What: Vercel roas-api — build `@vibey/agent-policy` as CommonJS in `vercel-bui
 Why: Runtime logs showed `ERR_REQUIRE_ESM` loading `packages/agent-policy/dist/index.js` from Nest CJS `require()` on cold start.
 Impact: Should fix api.roas.io 500 after redeploy; local/agent-policy ESM unchanged outside Vercel build script.
 Files: `apps/api/scripts/vercel-build.sh`, `packages/agent-policy/tsconfig.build.vercel.json`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 13:30] - [FIX]
+
+What: mission-worker Railway — switch config-as-code from RAILPACK to `DOCKERFILE` with `docker/mission-worker.Dockerfile` (override stale dashboard path `apps/mission-worker/Dockerfile`).
+Why: Latest deploys (`8a07a8aa` @ 13:24 PT) still failed in ~13s with `failed to read Dockerfile at apps/mission-worker/Dockerfile` despite cleared Root Directory; `dockerfilePath: null` did not override dashboard.
+Impact: Next auto-deploy should build from repo-root Dockerfile with slim `.dockerignore`; Root Directory must stay empty.
+Files: `apps/mission-worker/railway.json`, `docker/mission-worker.Dockerfile`, `scripts/roas/deploy-railway-workers.sh`, `.docs/logs/changelog2026-07-07.md`
