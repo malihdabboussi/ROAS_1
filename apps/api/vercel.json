@@ -6,7 +6,7 @@
   "functions": {
     "api/index.ts": {
       "maxDuration": 300,
-      "includeFiles": "{public/**,node_modules/@vibey/api-shared/**,node_modules/@vibey/agent-policy/**,../../node_modules/@vibey/api-shared/**,../../node_modules/@vibey/agent-policy/**,../../packages/api-shared/**,../../packages/agent-policy/**,../../packages/@vibey/api-shared/**,../../packages/@vibey/agent-policy/**,../../docker/agents/templates/**}"
+      "includeFiles": "{public/**,node_modules/@vibey/**,../../node_modules/@vibey/**,../../packages/@vibey/**,../../docker/agents/templates/**}"
     }
   },
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],

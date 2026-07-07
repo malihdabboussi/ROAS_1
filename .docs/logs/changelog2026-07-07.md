@@ -118,3 +118,10 @@ What: roas-api runtime — fixed `includeFiles` globs (`node_modules/@vibey/*` +
 Why: API build green but runtime `Cannot find module '@vibey/api-shared'`; web killed at 4m50s on 4GB build memory.
 Impact: API health check should resolve workspace imports; web should complete build on standard Vercel machines without Elastic Build.
 Files: `apps/api/api/index.ts`, `apps/api/scripts/vercel-build.sh`, `apps/api/vercel.json`, `apps/web/vercel.json`, `apps/web/scripts/vercel-build.sh`, `apps/web/next.config.js`
+
+## [2026-07-07 11:07] - [FIX]
+
+What: Shortened `apps/api/vercel.json` `includeFiles` to `@vibey/**` wildcard globs (121 chars) — same three materialization targets, under Vercel's 256-char schema limit.
+Why: `7b5626a9` failed instant schema validation; build never ran.
+Impact: roas-api redeploy can proceed with runtime bundling fix from `7b5626a9`.
+Files: `apps/api/vercel.json`
