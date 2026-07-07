@@ -125,3 +125,10 @@ What: Shortened `apps/api/vercel.json` `includeFiles` to `@vibey/**` wildcard gl
 Why: `7b5626a9` failed instant schema validation; build never ran.
 Impact: roas-api redeploy can proceed with runtime bundling fix from `7b5626a9`.
 Files: `apps/api/vercel.json`
+
+## [2026-07-07 11:14] - [FIX]
+
+What: Direct Vercel log triage via `scripts/roas/vercel-status.sh` (uses local `VERCEL_TOKEN`). roas-api: restructured `vercel-build.sh` (function at top, step logging, `pnpm exec nest build`, 6GB heap) while keeping triple-path workspace materialization. roas-web: fixed `ChatMarkdownView.tsx` TS error (`window.setTimeout` return type vs Node `Timeout`).
+Why: `81e108b7` api build failed silently after reinstall (no nest output); web failed TypeScript check after webpack compile succeeded.
+Impact: Cursor can poll Vercel directly without Cowork relay; next deploy should build both projects.
+Files: `apps/api/scripts/vercel-build.sh`, `apps/web/src/components/chat/ChatMarkdownView.tsx`, `scripts/roas/vercel-status.sh`

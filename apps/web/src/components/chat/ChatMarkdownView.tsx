@@ -7,7 +7,7 @@ import { ChatMarkdownCodeBlockChrome } from './ChatMarkdownCodeBlockChrome'
 
 function scheduleMermaidHydrate(root: HTMLElement) {
   let cancelled = false
-  let retryTimer: ReturnType<typeof setTimeout> | null = null
+  let retryTimer: ReturnType<typeof window.setTimeout> | null = null
   let attempt = 0
   const maxAttempts = 60
 
