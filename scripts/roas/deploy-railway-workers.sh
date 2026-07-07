@@ -40,6 +40,8 @@ if ! command -v railway >/dev/null 2>&1; then
   exit 1
 fi
 
-export RAILWAY_TOKEN
+export RAILWAY_TOKEN="$(grep '^RAILWAY_TOKEN=' "${ENV_FILE}" | head -1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")"
+export RAILWAY_PROJECT_ID="$(grep '^RAILWAY_PROJECT_ID=' "${ENV_FILE}" 2>/dev/null | head -1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")"
+export RAILWAY_PROJECT_ID="${RAILWAY_PROJECT_ID:-76ae41c5-bd85-4bf1-9a2a-e099a8ea85dd}"
 echo
 echo "Railway CLI detected — link services manually first, then set vars from section 10."
