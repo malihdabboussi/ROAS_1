@@ -132,3 +132,10 @@ What: Direct Vercel log triage via `scripts/roas/vercel-status.sh` (uses local `
 Why: `81e108b7` api build failed silently after reinstall (no nest output); web failed TypeScript check after webpack compile succeeded.
 Impact: Cursor can poll Vercel directly without Cowork relay; next deploy should build both projects.
 Files: `apps/api/scripts/vercel-build.sh`, `apps/web/src/components/chat/ChatMarkdownView.tsx`, `scripts/roas/vercel-status.sh`
+
+## [2026-07-07 11:29] - [UTIL]
+
+What: Parallel ROAS deploy prep while Vercel builds: fixed funnels Supabase image hostname (`lhfgtsjetcardinpgouq`); added `docker/fly.roas.runtime.toml`, `scripts/roas/{smoke-deploy,apply-fly-secrets,deploy-fly-runtimes,deploy-railway-workers}.sh`; created Fly app `roas-runtimes` + imported 14 section-9 secrets.
+Why: Unblock Fly/Railway/smoke work without Cowork relay; funnels still pointed at Vibey prod storage host.
+Impact: Fly deploy can run via `bash scripts/roas/deploy-fly-runtimes.sh`; post-Vercel checks via `bash scripts/roas/smoke-deploy.sh`; Railway manual paste documented in deploy script.
+Files: `apps/funnels/next.config.ts`, `docker/fly.roas.runtime.toml`, `scripts/roas/smoke-deploy.sh`, `scripts/roas/apply-fly-secrets.sh`, `scripts/roas/deploy-fly-runtimes.sh`, `scripts/roas/deploy-railway-workers.sh`
