@@ -99,11 +99,13 @@ async function bootstrap() {
   logger.log(`[vibey-api] Running on http://localhost:${port}`)
 }
 
-bootstrap().catch((err: any) => {
-  console.error('[vibey-api] Bootstrap failed:')
-  console.error(err?.stack ?? err?.message ?? err)
-  if (err?.cause) {
-    console.error('caused by:', err.cause?.stack ?? err.cause)
-  }
-  process.exit(1)
-})
+if (require.main === module) {
+  bootstrap().catch((err: any) => {
+    console.error('[vibey-api] Bootstrap failed:')
+    console.error(err?.stack ?? err?.message ?? err)
+    if (err?.cause) {
+      console.error('caused by:', err.cause?.stack ?? err.cause)
+    }
+    process.exit(1)
+  })
+}
