@@ -239,3 +239,10 @@ What: roas-api runtime — stop replacing `node_modules/@vibey/*` during Vercel 
 Why: Production api returned 500 `FUNCTION_INVOCATION_FAILED` because flat materialized `@vibey/api-shared` could not resolve `jose` at cold start; web build failed on unused imports.
 Impact: Vercel roas-api should boot Nest on invoke; roas-web build unblocked.
 Files: `apps/api/scripts/vercel-build.sh`, `apps/api/vercel.json`, `apps/api/api/index.ts`, `apps/web/src/features/flows/components/flow-builder/FlowBuilderStepSetupPanel.tsx`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 13:22] - [FIX]
+
+What: Vercel roas-api — build `@vibey/agent-policy` as CommonJS in `vercel-build.sh` (strip `type: module` for deploy build only) using `tsconfig.build.vercel.json`.
+Why: Runtime logs showed `ERR_REQUIRE_ESM` loading `packages/agent-policy/dist/index.js` from Nest CJS `require()` on cold start.
+Impact: Should fix api.roas.io 500 after redeploy; local/agent-policy ESM unchanged outside Vercel build script.
+Files: `apps/api/scripts/vercel-build.sh`, `packages/agent-policy/tsconfig.build.vercel.json`, `.docs/logs/changelog2026-07-07.md`

@@ -24,7 +24,12 @@ done
 
 echo "vercel-build: building workspace packages"
 cd "${ROOT}"
-npx pnpm@9 --filter=@vibey/agent-policy --filter=@vibey/api-shared run build
+echo "vercel-build: @vibey/agent-policy (CJS for Nest serverless — ESM breaks require() on Vercel)"
+cd "${ROOT}/packages/agent-policy"
+node -e "const fs=require('fs');const p='package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));delete j.type;fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n')"
+pnpm exec tsc -p tsconfig.build.vercel.json
+cd "${ROOT}"
+npx pnpm@9 --filter=@vibey/api-shared run build
 
 echo "vercel-build: rewriting workspace deps to file: paths"
 cd "${API_ROOT}"
