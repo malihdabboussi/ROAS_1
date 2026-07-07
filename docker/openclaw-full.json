@@ -1,0 +1,841 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.13",
+    "lastTouchedAt": "2026-02-15T10:09:57.110Z"
+  },
+  "env": {
+    "vars": {
+      "DEEPGRAM_API_KEY": "SCRUBBED_DEEPGRAM_API_KEY",
+      "GEMINI_API_KEY": "SCRUBBED_GEMINI_API_KEY",
+      "SUPERMEMORY_OPENCLAW_API_KEY": "SCRUBBED_SUPERMEMORY_KEY",
+      "OPENROUTER_API_KEY": "SCRUBBED_OPENROUTER_KEY"
+    },
+    "CAPSOLVER_API_KEY": "SCRUBBED_CAPSOLVER_KEY"
+  },
+  "wizard": {
+    "lastRunAt": "2026-02-10T12:17:17.738Z",
+    "lastRunVersion": "2026.1.30",
+    "lastRunCommand": "configure",
+    "lastRunMode": "local"
+  },
+  "browser": {
+    "enabled": true,
+    "headless": true,
+    "noSandbox": true,
+    "defaultProfile": "openclaw",
+    "profiles": {
+      "wave-remote": {
+        "cdpUrl": "http://127.0.0.1:9222",
+        "color": "#14B8A6"
+      },
+      "atlas-remote": {
+        "cdpUrl": "http://127.0.0.1:9225",
+        "color": "#F59E0B"
+      },
+      "vibe-remote": {
+        "cdpUrl": "http://127.0.0.1:9224",
+        "color": "#8B5CF6"
+      },
+      "pixel-remote": {
+        "cdpUrl": "http://127.0.0.1:9227",
+        "color": "#E85680"
+      },
+      "bolt-remote": {
+        "cdpUrl": "http://127.0.0.1:9226",
+        "color": "#EF4444"
+      },
+      "q-remote": {
+        "cdpUrl": "http://127.0.0.1:9223",
+        "color": "#3B82F6"
+      },
+      "aria-remote": {
+        "cdpUrl": "http://127.0.0.1:9228",
+        "color": "#059669"
+      },
+      "finn-remote": {
+        "cdpUrl": "http://127.0.0.1:9230",
+        "color": "#10B981"
+      },
+      "z-remote": {
+        "cdpUrl": "http://127.0.0.1:9229",
+        "color": "#22C55E"
+      },
+      "vera-remote": {
+        "cdpUrl": "http://127.0.0.1:9231",
+        "color": "#0EA5E9"
+      }
+    }
+  },
+  "auth": {
+    "profiles": {
+      "anthropic:default": {
+        "provider": "anthropic",
+        "mode": "token"
+      },
+      "anthropic:vibe": {
+        "provider": "anthropic",
+        "mode": "token"
+      },
+      "cursor:default": {
+        "provider": "cursor",
+        "mode": "token"
+      },
+      "anthropic:seffyzz": {
+        "provider": "anthropic",
+        "mode": "token"
+      },
+      "anthropic:seffyzz1": {
+        "provider": "anthropic",
+        "mode": "token",
+        "email": "SCRUBBED_EMAIL"
+      },
+      "anthropic:seffyzz2": {
+        "provider": "anthropic",
+        "mode": "token",
+        "email": "SCRUBBED_EMAIL"
+      },
+      "anthropic:anthropic-sefy-sefy": {
+        "provider": "anthropic",
+        "mode": "token"
+      },
+      "anthropic:anthropic-sefy-olympus": {
+        "provider": "anthropic",
+        "mode": "token"
+      },
+      "anthropic:anthropic-seffyzz": {
+        "provider": "anthropic",
+        "mode": "token"
+      }
+    },
+    "order": {
+      "cursor": ["cursor:default"],
+      "anthropic": [
+        "anthropic:seffyzz",
+        "anthropic:vibe",
+        "anthropic:default",
+        "anthropic:seffyzz1",
+        "anthropic:seffyzz2"
+      ]
+    }
+  },
+  "models": {
+    "providers": {
+      "cursor": {
+        "baseUrl": "http://127.0.0.1:3456",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "opus-4.6",
+            "name": "Claude Opus 4.6 (via Cursor)",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 200000
+          },
+          {
+            "id": "opus-4.6-thinking",
+            "name": "Claude Opus 4.6 Thinking (via Cursor)",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 200000
+          },
+          {
+            "id": "sonnet-4.5",
+            "name": "Claude Sonnet 4.5 (via Cursor)",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 200000
+          },
+          {
+            "id": "gpt-5.2",
+            "name": "GPT-5.2 (via Cursor)",
+            "reasoning": false,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 128000
+          }
+        ]
+      },
+      "anthropic": {
+        "baseUrl": "https://api.anthropic.com",
+        "api": "anthropic-messages",
+        "models": [
+          {
+            "id": "claude-opus-4-6",
+            "name": "Claude Opus 4.6",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 200000
+          }
+        ]
+      },
+      "openrouter": {
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "anthropic/claude-opus-4.6",
+            "name": "Claude Opus 4.6 (via OpenRouter)",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 200000
+          },
+          {
+            "id": "openai/gpt-5.3-codex",
+            "name": "GPT-5.3 Codex (via OpenRouter)",
+            "reasoning": false,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 400000,
+            "maxTokens": 200000
+          }
+        ]
+      },
+      "google": {
+        "baseUrl": "https://generativelanguage.googleapis.com",
+        "apiKey": "SCRUBBED_GEMINI_API_KEY",
+        "api": "google-generative-ai",
+        "models": [
+          {
+            "id": "gemini-3-flash-preview",
+            "name": "Gemini 3 Flash Preview",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 65500
+          },
+          {
+            "id": "gemini-3-pro-preview",
+            "name": "Gemini 3 Pro Preview",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-opus-4-6",
+        "fallbacks": []
+      },
+      "models": {},
+      "workspace": "/root/clawd",
+      "memorySearch": {
+        "enabled": true,
+        "sources": ["memory", "sessions"],
+        "experimental": {
+          "sessionMemory": true
+        },
+        "provider": "gemini",
+        "remote": {
+          "apiKey": "SCRUBBED_GEMINI_API_KEY"
+        },
+        "model": "gemini-embedding-001"
+      },
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "1h"
+      },
+      "compaction": {
+        "mode": "safeguard",
+        "memoryFlush": {
+          "enabled": true,
+          "softThresholdTokens": 6000,
+          "prompt": "Context compaction imminent. Write working state to memory/YYYY-MM-DD.md using the structure above. Reply with NO_REPLY when done.",
+          "systemPrompt": "⚠️ SESSION NEARING COMPACTION — Save context now.\n\nWrite to memory/YYYY-MM-DD.md with this EXACT structure:\n\n## Pre-Compaction Context [HH:MM]\n\n### Currently Working On\n- [Bullet 1: specific task/project]\n- [Bullet 2: what stage we're at]\n\n### Recent Decisions Made\n- [Decision 1]\n\n### Next Steps\n- [What to do next]\n\nBe SPECIFIC. Include file paths, variable names, exact values."
+        }
+      },
+      "heartbeat": {
+        "every": "25m",
+        "model": "anthropic/claude-opus-4-6",
+        "target": "last"
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      },
+      "sandbox": {
+        "mode": "off",
+        "workspaceAccess": "rw",
+        "sessionToolsVisibility": "all",
+        "scope": "agent",
+        "docker": {
+          "network": "bridge",
+          "env": {
+            "GEMINI_API_KEY": "SCRUBBED_GEMINI_API_KEY"
+          },
+          "binds": [
+            "/usr/lib/node_modules/mcporter:/usr/lib/node_modules/mcporter:ro",
+            "/root/.mcporter:/root/.mcporter:ro",
+            "/usr/bin/node:/usr/local/bin/node:ro",
+            "/usr/local/bin/mcporter-sandbox:/usr/local/bin/mcporter:ro",
+            "/root/.local/bin/uv:/usr/local/bin/uv:ro",
+            "/opt/moltbot/skills:/opt/moltbot/skills:ro"
+          ]
+        },
+        "browser": {
+          "enabled": true,
+          "autoStart": true
+        }
+      }
+    },
+    "list": [
+      {
+        "id": "pixel",
+        "workspace": "/root/agents/pixel",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "telegram",
+          "accountId": "pixel"
+        }
+      },
+      {
+        "id": "vibe",
+        "workspace": "/root/agents/vibe",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "telegram",
+          "accountId": "vibe"
+        }
+      },
+      {
+        "id": "wave",
+        "workspace": "/root/agents/wave",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "telegram",
+          "accountId": "wave"
+        }
+      },
+      {
+        "id": "a",
+        "workspace": "/root/agents/a",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "telegram",
+          "accountId": "atlas"
+        }
+      },
+      {
+        "id": "bolt",
+        "workspace": "/root/agents/bolt",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "telegram",
+          "accountId": "bolt"
+        }
+      },
+      {
+        "id": "sage",
+        "workspace": "/root/agents/sage",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "telegram",
+          "accountId": "sage"
+        }
+      },
+      {
+        "id": "aria",
+        "workspace": "/root/agents/aria",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "telegram",
+          "accountId": "aria"
+        }
+      },
+      {
+        "id": "z",
+        "workspace": "/root/agents/z",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "telegram",
+          "accountId": "z"
+        }
+      },
+      {
+        "id": "finn",
+        "workspace": "/root/agents/finn",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "telegram",
+          "accountId": "finn"
+        }
+      },
+      {
+        "id": "kai",
+        "workspace": "/root/agents/kai",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "telegram",
+          "accountId": "kai"
+        }
+      },
+      {
+        "id": "vera",
+        "workspace": "/root/agents/vera",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "telegram",
+          "accountId": "vera"
+        }
+      },
+      {
+        "id": "echo",
+        "workspace": "/root/agents/echo",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "none"
+        }
+      },
+      {
+        "id": "nova",
+        "workspace": "/root/agents/nova",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "none"
+        }
+      },
+      {
+        "id": "pulse",
+        "workspace": "/root/agents/pulse",
+        "promptMode": "platform",
+        "heartbeat": {
+          "every": "25m",
+          "target": "none"
+        }
+      },
+      {
+        "id": "vibey",
+        "workspace": "/root/agents/vibey",
+        "promptMode": "platform",
+        "skills": [
+          "offer-builder",
+          "funnel-builder",
+          "lead-magnet-builder",
+          "email-sequence-builder",
+          "avatar-builder",
+          "theme-builder",
+          "meta-publisher",
+          "vibey-api",
+          "brain-memory",
+          "integrations",
+          "pdf-builder"
+        ],
+        "heartbeat": {
+          "every": "25m",
+          "target": "none"
+        }
+      }
+    ]
+  },
+  "tools": {
+    "media": {
+      "audio": {
+        "enabled": true,
+        "providerOptions": {
+          "deepgram": {
+            "detect_language": true,
+            "punctuate": true,
+            "smart_format": true
+          }
+        },
+        "models": [
+          {
+            "provider": "deepgram",
+            "model": "nova-3"
+          }
+        ]
+      }
+    },
+    "agentToAgent": {
+      "enabled": true,
+      "allow": [
+        "main",
+        "vibe",
+        "wave",
+        "atlas",
+        "bolt",
+        "sage",
+        "pixel",
+        "aria",
+        "z",
+        "a",
+        "echo",
+        "nova",
+        "pulse",
+        "finn",
+        "kai",
+        "vera"
+      ]
+    },
+    "sandbox": {
+      "tools": {
+        "allow": [
+          "exec",
+          "process",
+          "read",
+          "write",
+          "edit",
+          "apply_patch",
+          "image",
+          "browser",
+          "canvas",
+          "sessions_list",
+          "sessions_history",
+          "sessions_send",
+          "sessions_spawn",
+          "session_status",
+          "web_search",
+          "web_fetch",
+          "memory_search",
+          "memory_get",
+          "tts",
+          "message"
+        ],
+        "deny": ["nodes", "cron", "gateway"]
+      }
+    }
+  },
+  "bindings": [
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "telegram",
+        "accountId": "default"
+      }
+    },
+    {
+      "agentId": "vibe",
+      "match": {
+        "channel": "telegram",
+        "accountId": "vibe"
+      }
+    },
+    {
+      "agentId": "wave",
+      "match": {
+        "channel": "telegram",
+        "accountId": "wave"
+      }
+    },
+    {
+      "agentId": "a",
+      "match": {
+        "channel": "telegram",
+        "accountId": "atlas"
+      }
+    },
+    {
+      "agentId": "bolt",
+      "match": {
+        "channel": "telegram",
+        "accountId": "bolt"
+      }
+    },
+    {
+      "agentId": "sage",
+      "match": {
+        "channel": "telegram",
+        "accountId": "sage"
+      }
+    },
+    {
+      "agentId": "pixel",
+      "match": {
+        "channel": "telegram",
+        "accountId": "pixel"
+      }
+    },
+    {
+      "agentId": "aria",
+      "match": {
+        "channel": "telegram",
+        "accountId": "aria"
+      }
+    },
+    {
+      "agentId": "z",
+      "match": {
+        "channel": "telegram",
+        "accountId": "z"
+      }
+    },
+    {
+      "agentId": "finn",
+      "match": {
+        "channel": "telegram",
+        "accountId": "finn"
+      }
+    },
+    {
+      "agentId": "kai",
+      "match": {
+        "channel": "telegram",
+        "accountId": "kai"
+      }
+    },
+    {
+      "agentId": "vera",
+      "match": {
+        "channel": "telegram",
+        "accountId": "vera"
+      }
+    }
+  ],
+  "messages": {
+    "inbound": {
+      "debounceMs": 3000
+    },
+    "ackReactionScope": "group-mentions",
+    "tts": {
+      "auto": "tagged",
+      "provider": "openai",
+      "elevenlabs": {
+        "apiKey": "SCRUBBED_ELEVENLABS_KEY",
+        "modelId": "eleven_v3"
+      },
+      "openai": {
+        "model": "gpt-4o-mini-tts",
+        "voice": "nova"
+      }
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto"
+  },
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "state-sync": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "pairing",
+      "botToken": "SCRUBBED_BOT_TOKEN",
+      "groupPolicy": "allowlist",
+      "streamMode": "partial",
+      "accounts": {
+        "default": {
+          "dmPolicy": "pairing",
+          "botToken": "SCRUBBED_BOT_TOKEN",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "vibe": {
+          "dmPolicy": "pairing",
+          "botToken": "SCRUBBED_BOT_TOKEN",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "wave": {
+          "dmPolicy": "pairing",
+          "botToken": "SCRUBBED_BOT_TOKEN",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "atlas": {
+          "dmPolicy": "pairing",
+          "botToken": "SCRUBBED_BOT_TOKEN",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "bolt": {
+          "dmPolicy": "open",
+          "botToken": "SCRUBBED_BOT_TOKEN",
+          "allowFrom": ["*"],
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "sage": {
+          "dmPolicy": "pairing",
+          "botToken": "SCRUBBED_BOT_TOKEN",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "pixel": {
+          "dmPolicy": "open",
+          "botToken": "SCRUBBED_BOT_TOKEN",
+          "allowFrom": ["*"],
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "aria": {
+          "dmPolicy": "pairing",
+          "botToken": "SCRUBBED_BOT_TOKEN",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "z": {
+          "dmPolicy": "pairing",
+          "botToken": "SCRUBBED_BOT_TOKEN",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "finn": {
+          "dmPolicy": "pairing",
+          "botToken": "SCRUBBED_BOT_TOKEN",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "kai": {
+          "dmPolicy": "pairing",
+          "botToken": "SCRUBBED_BOT_TOKEN",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        },
+        "vera": {
+          "dmPolicy": "pairing",
+          "botToken": "SCRUBBED_BOT_TOKEN",
+          "groupPolicy": "allowlist",
+          "streamMode": "partial"
+        }
+      }
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "lan",
+    "auth": {
+      "mode": "token",
+      "token": "SCRUBBED_GATEWAY_TOKEN"
+    },
+    "http": {
+      "endpoints": {
+        "chatCompletions": {
+          "enabled": true
+        },
+        "responses": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "skills": {
+    "entries": {
+      "nano-banana-pro": {
+        "apiKey": "SCRUBBED_GEMINI_API_KEY"
+      },
+      "hcaptcha-solver": {
+        "apiKey": "SCRUBBED_GEMINI_API_KEY"
+      }
+    }
+  },
+  "plugins": {
+    "allow": ["telegram", "google-gemini-cli-auth", "nexus-brain"],
+    "slots": {
+      "memory": "nexus-brain"
+    },
+    "entries": {
+      "telegram": {
+        "enabled": true
+      },
+      "google-gemini-cli-auth": {
+        "enabled": true
+      },
+      "nexus-brain": {
+        "enabled": true,
+        "config": {
+          "apiUrl": "http://127.0.0.1:3200",
+          "apiToken": "SCRUBBED_NEXUS_TOKEN",
+          "autoRecall": true,
+          "autoCapture": true,
+          "maxRecallResults": 3,
+          "minRecallSimilarity": 0.55,
+          "captureMinMessages": 3,
+          "debug": true
+        }
+      }
+    },
+    "installs": {
+      "openclaw-supermemory": {
+        "source": "npm",
+        "spec": "@supermemory/openclaw-supermemory",
+        "installPath": "/root/.openclaw/extensions/openclaw-supermemory",
+        "version": "1.0.4",
+        "installedAt": "2026-02-06T14:33:59.950Z"
+      }
+    }
+  }
+}

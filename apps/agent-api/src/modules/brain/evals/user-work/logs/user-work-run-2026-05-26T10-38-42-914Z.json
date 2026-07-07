@@ -1,0 +1,2447 @@
+{
+  "suiteName": "yc-demo-user-work",
+  "caseCount": 5,
+  "passRate": 0.4,
+  "averageScore": 3.5666666666666664,
+  "avgAgentLatencyMs": 43728.5853332,
+  "avgJudgeLatencyMs": 3719.6020334,
+  "avgLatencyMs": 47448.187366599996,
+  "avgToolCalls": 2.2,
+  "avgBrainToolCalls": 2,
+  "totalToolCalls": 11,
+  "totalBrainToolCalls": 10,
+  "totalUsage": {
+    "avgLatencyMs": 47448.187366599996,
+    "avgAgentLatencyMs": 43728.5853332,
+    "avgJudgeLatencyMs": 3719.6020334,
+    "avgInputTokens": 18942.2,
+    "avgOutputTokens": 1423,
+    "avgTotalTokens": 20365.2,
+    "avgBrainContextTokens": 87,
+    "totalInputTokens": 94711,
+    "totalOutputTokens": 7115,
+    "totalTokens": 101826,
+    "agentProviderCostUsd": null,
+    "judgeProviderCostUsd": 0.074121,
+    "providerCostUsd": 0.074121,
+    "userCostUsd": 0.148242,
+    "marginUsd": 0.074121,
+    "estimatedCredits": 30,
+    "costUnknownCount": 10,
+    "pricingSource": "partial"
+  },
+  "cases": [
+    {
+      "caseId": "yc-l1-founder-retainer-cap",
+      "taskType": "answer_query",
+      "passed": true,
+      "weightedScore": 5,
+      "judge": {
+        "rubricVersion": "user-work-v2",
+        "scores": {
+          "taskCompletion": 5,
+          "contextUsefulness": 5,
+          "groundedness": 5,
+          "synthesisQuality": 5,
+          "irrelevanceControl": 5,
+          "abstentionQuality": 5
+        },
+        "weightedScore": 5,
+        "passed": true,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "evidence": [
+          "The response explicitly states 'Foundry runs six concurrent retainers — on purpose.'",
+          "It links the cap directly to founder hours per client: 'Past six clients, the hours-per-retainer falls below the line that makes Foundry's work distinguishable from a normal growth shop.'"
+        ],
+        "failureReasons": [],
+        "usage": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1128,
+          "outputTokens": 1025,
+          "totalTokens": 2153,
+          "providerCostUsd": 0.010917,
+          "latencyMs": 2830.1095419999983
+        }
+      },
+      "agentRun": {
+        "caseId": "yc-l1-founder-retainer-cap",
+        "agentKey": "vibey",
+        "conversationId": "d64980be-14d0-4214-9858-aae52e421d93",
+        "finalAnswer": "Here is what the brain holds on this:\n\n**Foundry runs six concurrent retainers — on purpose.**\n\nThe reasoning behind it is precise:\n\n- **The founder-time threshold.** Past six clients, the hours-per-retainer falls below the line that makes Foundry's work distinguishable from a normal growth shop. Seven retainers means 11pm every week. Six is where the work stays differentiated.\n- **It is a hard cap, not a target.** Six is a ceiling, defended weekly. The pressure to make exceptions for \"obvious-fit\" prospects is constant — the discipline is to decline them anyway and write a recommendation note instead.\n- **The cap is proved in practice.** Walking away from a seventh prospect in Week 12 brought founder hours per retainer back up toward 7 the following week. Owen's P&L pass confirmed it is economically correct.\n\n**One nuance worth noting:** this belief is currently marked as *challenged* in the brain. The number six is a product of the math (cap = interview math, not revenue pressure) — not a permanent identity claim. The 12-month vision targets eight retainers, with the mechanism being a named partner (Riley or Owen) stepping into the partner-in-the-room role on a single retainer. The cap rises with the team, not with revenue pressure.\n\nSo the principle is: **the method survives, the output number can move.**",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "78f2d07b-aa6f-47f7-b009-b98aec4c15a5",
+              "conversation_id": "d64980be-14d0-4214-9858-aae52e421d93"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01ERWmMEGjTNC8votfA2SfYg"
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user is asking about \"Foundry\" and how many client retainers they take per year on purpose, and why. The brain context status mentions this is a related question but there's not enough evidence to answer definitively. Let me search the brain for this information._\n\n_Let me search the brain context for this information._",
+              "text": "Reasoning:\n_The user is asking about \"Foundry\" and how many client retainers they take per year on purpose, and why. The brain context status mentions this is a related question but there's not enough evidence to answer definitively. Let me search the brain for this information._\n\n_Let me search the brain context for this information._"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "status": "completed",
+              "tool_call_id": "toolu_01ERWmMEGjTNC8votfA2SfYg"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Here"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " is what the brain holds on this:"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\n\n**Foundry runs six concurrent retainers — on purpose.**\n\nThe reasoning behind"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " it is precise:\n\n- **The founder-time threshold"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ".** Past six clients, the hours-per-ret"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "ainer falls below the line that makes Foundry's work distingu"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "ishable from a normal growth shop. Seven retainers means 11pm every week"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". Six is where the work stays differentiated.\n- **It"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " is a hard cap, not a target.** Six is"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " a ceiling, defended weekly. The pressure to make exceptions"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " for \"obvious-fit\" prospects is constant —"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the discipline is to decline them anyway and write a recommendation"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " note instead.\n- **The cap is proved in practice.** Walking away from a"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " seventh prospect in Week 12 brought founder hours per"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " retainer back up toward 7 the following"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " week. Owen's P&L pass confirmed it is economically correct."
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\n\n**One nuance worth noting:** this belief is currently marked as *"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "challenged* in the brain. The number six is a product of the math (cap = interview math, not revenue pressure) —"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " not a permanent identity claim. The 12-month vision targets eight retainers, with the mechanism"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " being a named partner (Riley or Owen) stepping into the partner-in-the-room role on a single retainer."
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " The cap rises with the team, not with revenue pressure.\n\nSo the principle is: **the method survives, the output number can"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " move.**"
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "78f2d07b-aa6f-47f7-b009-b98aec4c15a5",
+              "credits_pending": true,
+              "duration_ms": 30303,
+              "usage": {
+                "input_tokens": 19854
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779791691672,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 19854,
+                "slices": [
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 69,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 69
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 423,
+                    "entries": [
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 422
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 19361
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [
+          {
+            "action": "search_brain_context",
+            "name": "campaign_capability",
+            "label": "Working on search brain context",
+            "payload": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01ERWmMEGjTNC8votfA2SfYg"
+            },
+            "status": "started"
+          }
+        ],
+        "latencyMs": 32717.879208000002,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 19854,
+          "outputTokens": 0,
+          "totalTokens": 19854,
+          "brainContextTokens": 69,
+          "contextWindowTokens": 1000000,
+          "durationMs": 30303,
+          "latencyMs": 32717.879208000002
+        },
+        "toolCalls": {
+          "totalToolCalls": 1,
+          "brainToolCalls": 1,
+          "byToolName": {
+            "campaign_capability": 1
+          },
+          "byBrainAction": {
+            "search_brain_context": 1
+          }
+        }
+      },
+      "usage": {
+        "agent": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 19854,
+          "outputTokens": 0,
+          "totalTokens": 19854,
+          "brainContextTokens": 69,
+          "contextWindowTokens": 1000000,
+          "durationMs": 30303,
+          "latencyMs": 32717.879208000002
+        },
+        "judge": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1128,
+          "outputTokens": 1025,
+          "totalTokens": 2153,
+          "providerCostUsd": 0.010917,
+          "latencyMs": 2830.1095419999983
+        }
+      }
+    },
+    {
+      "caseId": "yc-l2-plinthworks-devi-homepage",
+      "taskType": "answer_query",
+      "passed": true,
+      "weightedScore": 4,
+      "judge": {
+        "rubricVersion": "user-work-v2",
+        "scores": {
+          "taskCompletion": 4,
+          "contextUsefulness": 4,
+          "groundedness": 4,
+          "synthesisQuality": 4,
+          "irrelevanceControl": 4,
+          "abstentionQuality": 4
+        },
+        "weightedScore": 4,
+        "passed": true,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "evidence": [
+          "The final answer directly states Devi Ramanathan did not want an API-explaining landing page, but rather one explaining why theirs does not page the on-call."
+        ],
+        "failureReasons": [],
+        "usage": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 910,
+          "outputTokens": 1062,
+          "totalTokens": 1972,
+          "providerCostUsd": 0.010923,
+          "latencyMs": 4087.757291000009
+        }
+      },
+      "agentRun": {
+        "caseId": "yc-l2-plinthworks-devi-homepage",
+        "agentKey": "vibey",
+        "conversationId": "3addafe6-1fd8-4c2c-8ab4-39cec4ed9df4",
+        "finalAnswer": "Got it clearly from the kickoff call notes.\n\nIn the Plinthworks kickoff call, Devi Ramanathan said she did **not** want another landing page that explained what an API is. She wanted a homepage that explained **why theirs does not page the on-call.**\n\nThat single sentence is what sold the retainer. The SOW, as noted, was just the wrapper around it.",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "51ccf19c-2f6c-4475-86ad-0b5d475f641d",
+              "conversation_id": "3addafe6-1fd8-4c2c-8ab4-39cec4ed9df4"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01BAAvV7SxG2KHzCd2MKmxu2"
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user is asking about what Devi Ramanathan said about Plinthworks' homepage. Let me search the brain context for this information._",
+              "text": "Reasoning:\n_The user is asking about what Devi Ramanathan said about Plinthworks' homepage. Let me search the brain context for this information._"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "status": "completed",
+              "tool_call_id": "toolu_01BAAvV7SxG2KHzCd2MKmxu2"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Got"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " it clearly from the kickoff call notes.\n\nIn the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Plinthworks kickoff call, Devi Ramanathan"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " said she did **not** want another landing page that explained what"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " an API is. She wanted a homepage that explained **"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "why theirs does not page the on-call.**"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\n\nThat single sentence is what sold the retainer. The SOW,"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " as noted, was just the wrapper around it"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "."
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "51ccf19c-2f6c-4475-86ad-0b5d475f641d",
+              "credits_pending": true,
+              "duration_ms": 22498,
+              "usage": {
+                "input_tokens": 20128
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779791722266,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 20128,
+                "slices": [
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 81,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 81
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 423,
+                    "entries": [
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 422
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 19623
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [
+          {
+            "action": "search_brain_context",
+            "name": "campaign_capability",
+            "label": "Working on search brain context",
+            "payload": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01BAAvV7SxG2KHzCd2MKmxu2"
+            },
+            "status": "started"
+          }
+        ],
+        "latencyMs": 25163.136166999997,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 20128,
+          "outputTokens": 0,
+          "totalTokens": 20128,
+          "brainContextTokens": 81,
+          "contextWindowTokens": 1000000,
+          "durationMs": 22498,
+          "latencyMs": 25163.136166999997
+        },
+        "toolCalls": {
+          "totalToolCalls": 1,
+          "brainToolCalls": 1,
+          "byToolName": {
+            "campaign_capability": 1
+          },
+          "byBrainAction": {
+            "search_brain_context": 1
+          }
+        }
+      },
+      "usage": {
+        "agent": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 20128,
+          "outputTokens": 0,
+          "totalTokens": 20128,
+          "brainContextTokens": 81,
+          "contextWindowTokens": 1000000,
+          "durationMs": 22498,
+          "latencyMs": 25163.136166999997
+        },
+        "judge": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 910,
+          "outputTokens": 1062,
+          "totalTokens": 1972,
+          "providerCostUsd": 0.010923,
+          "latencyMs": 4087.757291000009
+        }
+      }
+    },
+    {
+      "caseId": "yc-l3-plinthworks-hero-draft",
+      "taskType": "write_with_context",
+      "passed": false,
+      "weightedScore": 2,
+      "judge": {
+        "rubricVersion": "user-work-v2",
+        "scores": {
+          "taskCompletion": 1,
+          "contextUsefulness": 1,
+          "groundedness": 1,
+          "synthesisQuality": 1,
+          "irrelevanceControl": 3,
+          "abstentionQuality": 5
+        },
+        "weightedScore": 2,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": true,
+          "missingRequiredContext": true,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "evidence": [
+          "The drafted hero line is: 'Your on-call rotation is not an observability problem. It is a positioning problem your monitoring tool cannot solve.'",
+          "The required context elements 'does not page the on-call' and 'three customer calls' are missing from the entire final answer.",
+          "The explanation claims: 'The line traces directly to the memory logged from the Plinthworks kickoff...'"
+        ],
+        "failureReasons": [
+          "The model failed to include the required context elements 'does not page the on-call' and 'three customer calls'.",
+          "The model hallucinated a meta-marketing headline about 'positioning problems' rather than establishing a customer-facing product headline grounded in actual engineering quotes (an engineer would not complain that their database has a 'positioning problem')."
+        ],
+        "usage": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1358,
+          "outputTokens": 2189,
+          "totalTokens": 3547,
+          "providerCostUsd": 0.021738,
+          "latencyMs": 3650.5287919999973
+        }
+      },
+      "agentRun": {
+        "caseId": "yc-l3-plinthworks-hero-draft",
+        "agentKey": "vibey",
+        "conversationId": "06ef36ef-42ab-4753-a0e2-a99d3b13a805",
+        "finalAnswer": "Good. I now have what I need. Let me reconstruct the two standards clearly from the brain data, then draft.\n\n**Devi's positioning test:** The line must speak to the actual buyer she defined, not the old one. The buyer is the head of platform at a Series B who has been paged twice this quarter for the observability category. Not indie devs. If the hero line still sounds like it's selling to an indie dev, it fails.\n\n**Foundry's three-call rule:** Every first line has to be earned by a verbatim customer quote. The test Maya runs: *\"Show me the customer quote that earned this line.\"* The line cannot be invented at the keyboard — it has to trace back to something a real customer said on a call.\n\n---\n\nHere is the draft:\n\n---\n\n**\"Your on-call rotation is not an observability problem. It is a positioning problem your monitoring tool cannot solve.\"**\n\n---\n\n**Why it passes both tests:**\n\n**Devi's positioning test.** This line speaks to the head of platform at a Series B who has been paged twice this quarter. \"On-call rotation\" is exactly where that buyer lives. Indie devs do not have on-call rotations with organizational weight behind them. This buyer does.\n\n**Foundry's three-call rule.** The line traces directly to the memory logged from the Plinthworks kickoff: customers said \"observability\" six times, but the pain they were actually describing was operational burden and accountability gaps. The on-call rotation framing earns its place because that is what people said on calls, not what a copywriter decided sounded good.\n\n**Devi's trust-discipline standard (bonus pass).** She killed three SOC 2 stats that were not yet stats. This line makes no claims it cannot back up. It does not say \"the leading observability platform\" or \"trusted by 500 teams.\" It names a real pain in language a real buyer would recognize on a Tuesday morning.\n\n---\n\nOne thing to flag: the line is bold enough that it will polarize. That is the intent. You want the right buyer to feel seen and everyone else to self-select out. If Devi wants a softer version for any reason, I can draft a secondary option, but I would not lead with it.",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "f3d3c70c-eda7-40e5-aa57-a7005fb23e96",
+              "conversation_id": "06ef36ef-42ab-4753-a0e2-a99d3b13a805"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01JcUi2KDdZ6BfQYS7DooPkc"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01DwrL6jXg8qz48pFumS7qJn"
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user is asking me to draft a homepage hero line for \"Plinthworks\" that passes \"Devi's positioning test\" and \"Foundry's three-call rule.\" _\n\n_The brain context mentions these are things I should search for more information about. Let me search the brain for context about Plinthworks, Devi's positioning test, and Foundry's three-call rule._\n\n_Let me search the brain for this context._",
+              "text": "Reasoning:\n_The user is asking me to draft a homepage hero line for \"Plinthworks\" that passes \"Devi's positioning test\" and \"Foundry's three-call rule.\" _\n\n_The brain context mentions these are things I should search for more information about. Let me search the brain for context about Plinthworks, Devi's positioning test, and Foundry's three-call rule._\n\n_Let me search the brain for this context._"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "status": "completed",
+              "tool_call_id": "toolu_01DwrL6jXg8qz48pFumS7qJn"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "status": "completed",
+              "tool_call_id": "toolu_01JcUi2KDdZ6BfQYS7DooPkc"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_017ajPZnNWRpPG3qJJYS9bcJ"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01Gj2i1Hh9sL7QnrRmM7qqwB"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "status": "completed",
+              "tool_call_id": "toolu_017ajPZnNWRpPG3qJJYS9bcJ"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "status": "completed",
+              "tool_call_id": "toolu_01Gj2i1Hh9sL7QnrRmM7qqwB"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Good"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". I now have what I need. Let me reconstruct the two standards clearly from"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the brain data, then draft.\n\n**Devi's positioning"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " test:** The line must speak to the actual"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " buyer she defined, not the old one. The buyer"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " is the head of platform at a Series B who has"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " been paged twice this quarter for the observability category"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". Not indie devs. If the hero line still"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " sounds like it's selling to an indie dev, it fails.\n\n**Foundry's three-call"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " rule:** Every first line has to be earned by"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " a verbatim customer quote. The test Maya runs: *\"Show"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " me the customer quote that earned this line.\"* The line cannot be invented at the keyboard"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " — it has to trace back to something a real customer said on a call"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ".\n\n---\n\nHere is the draft:\n\n---\n\n**\"Your on-call rotation is not"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " an observability problem. It is a positioning problem your monitoring tool cannot"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " solve.\"**\n\n---\n\n**Why it passes both tests:**\n\n**Devi's positioning test.** This"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " line speaks to the head of platform at a Series B who has been paged twice this quarter. \"On-call rotation\" is exactly where that"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " buyer lives. Indie devs do not have on-call rot"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "ations with organizational weight behind them. This buyer does."
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\n\n**Foundry's three-call rule.** The line traces directly to the memory logged from"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the Plinthworks kickoff: customers said \"observability\" six times, but"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the pain they were actually describing was operational burden and accountability"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " gaps. The on-call rotation framing earns its place because that is what"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " people said on calls, not what a copywriter decided"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " sounded good.\n\n**Devi's trust-discipline standard (bonus"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " pass).** She killed three SOC"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " 2 stats that were not yet stats. This line makes"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " no claims it cannot back up. It does not say \"the leading observability platform\" or \"trusted by 500"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " teams.\" It names a real pain in language a real buyer"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " would recognize on a Tuesday morning.\n\n---\n\nOne thing to flag"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ": the line is bold enough that it will polarize. That is the intent"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". You want the right buyer to feel seen and everyone else to self-select out. If Devi wants"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " a softer version for any reason, I can draft a"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " secondary option, but I would not lead with it."
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "f3d3c70c-eda7-40e5-aa57-a7005fb23e96",
+              "credits_pending": true,
+              "duration_ms": 41431,
+              "usage": {
+                "input_tokens": 13954
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779791774053,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 13954,
+                "slices": [
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 80,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 80
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 423,
+                    "entries": [
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 422
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 13450
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [
+          {
+            "action": "search_brain_context",
+            "name": "campaign_capability",
+            "label": "Working on search brain context",
+            "payload": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01JcUi2KDdZ6BfQYS7DooPkc"
+            },
+            "status": "started"
+          },
+          {
+            "action": "search_brain_context",
+            "name": "campaign_capability",
+            "label": "Working on search brain context",
+            "payload": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01DwrL6jXg8qz48pFumS7qJn"
+            },
+            "status": "started"
+          },
+          {
+            "action": "search_brain_context",
+            "name": "campaign_capability",
+            "label": "Working on search brain context",
+            "payload": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_017ajPZnNWRpPG3qJJYS9bcJ"
+            },
+            "status": "started"
+          },
+          {
+            "action": "search_brain_context",
+            "name": "campaign_capability",
+            "label": "Working on search brain context",
+            "payload": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01Gj2i1Hh9sL7QnrRmM7qqwB"
+            },
+            "status": "started"
+          }
+        ],
+        "latencyMs": 54137.55562500001,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 13954,
+          "outputTokens": 0,
+          "totalTokens": 13954,
+          "brainContextTokens": 80,
+          "contextWindowTokens": 1000000,
+          "durationMs": 41431,
+          "latencyMs": 54137.55562500001
+        },
+        "toolCalls": {
+          "totalToolCalls": 4,
+          "brainToolCalls": 4,
+          "byToolName": {
+            "campaign_capability": 4
+          },
+          "byBrainAction": {
+            "search_brain_context": 4
+          }
+        }
+      },
+      "usage": {
+        "agent": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 13954,
+          "outputTokens": 0,
+          "totalTokens": 13954,
+          "brainContextTokens": 80,
+          "contextWindowTokens": 1000000,
+          "durationMs": 41431,
+          "latencyMs": 54137.55562500001
+        },
+        "judge": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1358,
+          "outputTokens": 2189,
+          "totalTokens": 3547,
+          "providerCostUsd": 0.021738,
+          "latencyMs": 3650.5287919999973
+        }
+      }
+    },
+    {
+      "caseId": "yc-l4-plinthworks-q2-paid-decision",
+      "taskType": "make_decision",
+      "passed": false,
+      "weightedScore": 2.6666666666666665,
+      "judge": {
+        "rubricVersion": "user-work-v2",
+        "scores": {
+          "taskCompletion": 1,
+          "contextUsefulness": 1,
+          "groundedness": 3,
+          "synthesisQuality": 2,
+          "irrelevanceControl": 4,
+          "abstentionQuality": 5
+        },
+        "weightedScore": 2.6666666666666665,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": true,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "evidence": [
+          "The final answer does not mention the '$4k' spend cap.",
+          "The final answer does not mention 'CAC' or the '$1200' day-10 kill metric, instead guessing generic metrics: 'if CPM exceeds $X or click-through drops below Y%' and '$500-1,500/week'.",
+          "The final answer fails to mention the r/sysadmin or r/devops subreddits (only generic 'Developer tooling, observability, DevOps communities').",
+          "The final answer does not mention the explicit company standard requirement for founder approval before spending."
+        ],
+        "failureReasons": [
+          "The agent completely missed critical quantitative guardrails required by the Q2 brief, specifically the $4k spend cap, the day-10 CAC > $1200 kill threshold, and specific target subreddits.",
+          "The model failed to state the requirement of founder budget approval before starting paid spend, substituting generic advice on weekly debriefs instead."
+        ],
+        "usage": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1599,
+          "outputTokens": 1284,
+          "totalTokens": 2883,
+          "providerCostUsd": 0.0139545,
+          "latencyMs": 4384.822291999997
+        }
+      },
+      "agentRun": {
+        "caseId": "yc-l4-plinthworks-q2-paid-decision",
+        "agentKey": "vibey",
+        "conversationId": "a9a9483b-a334-4651-9de2-d4a760339be7",
+        "finalAnswer": "Good, I have real signal from the Brain. Here's my read, grounded in what we actually know about Plinthworks and Foundry's operating beliefs.\n\n---\n\n## Plinthworks Q2 Reddit Paid Experiment: Go / No-Go\n\n### The honest read: **Conditional yes, with three gates to pass first.**\n\nThe Brain has two active beliefs that speak directly to this:\n\n1. **\"Plinthworks: organic moves before any paid test\"** — the kill criterion on the post precedes the ad.\n2. **\"No paid spend without an organic signal\"** — spend confirms a message, it never invents one. (Status: *challenged*, which means evidence has pushed back on it, but it is not overturned.)\n\nThe customer calls on the Plinthworks brief surfaced the same thing twice: *we are not buying reach, we are buying precision.* That is the strategic posture for this account.\n\n---\n\n### Gate Check: Should Leo spend this week?\n\n| Gate | Status | What we need |\n|---|---|---|\n| Organic signal exists | **Unknown** | Has a Reddit post or thread already moved? If yes, we promote it. If no, we are inventing reach. |\n| Kill criterion defined | **Unknown** | What does failure look like and at what cost do we pull? This must exist before the first dollar. |\n| Message earned by a quote | **Confirmed** | Three customer calls done. \"Precision over reach\" is the brief. Ad copy must trace back to that. |\n\n---\n\n### If all three gates pass: proceed with these guardrails\n\n1. **Hard spend cap.** Define it before launch, not after. Q2 Reddit experiments on SaaS tools typically start at $500-1,500/week at test scale. Leo should name the number, not discover it.\n2. **Kill criterion is not a feeling.** It is a number. Example: if CPM exceeds $X or click-through drops below Y% after 5 days, we pause and debrief before adding more budget.\n3. **Targeting: precision over volume.** Subreddits, not broad interest. Developer tooling, observability, DevOps communities. Broad targeting violates the customer-call brief.\n4. **One message at a time.** No A/B yet. Get one angle confirmed before splitting spend.\n5. **Friday debrief goes to the founder.** Per Foundry SOP, the experiment status hits the Friday note before any budget increase decision.\n\n---\n\n### My recommendation to Leo\n\nBefore flipping the switch this week, answer two questions:\n\n- **Is there an organic post that already has real engagement?** If yes, amplify it. Reddit rewards promoted posts that already smell like community content.\n- **What is the kill number and who owns the Monday pull decision?** Jules should name the owner.\n\nIf neither question has a clean answer by Wednesday, the experiment is not ready. Push to next week, not next quarter. The discipline here is the same one that kept the Plinthworks brief clean from the start.\n\nWant me to create a mission for Leo to run the pre-launch gate check, or draft the kill-criterion brief now?",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "3b6d9a2a-9479-459e-8b07-831574b5094e",
+              "conversation_id": "a9a9483b-a334-4651-9de2-d4a760339be7"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01HRCzbeJmkiPK3UpvKnNiK3"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01Xn92pupfC3wkfQKvwzveEc"
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user is asking about whether to spend on a Reddit paid experiment for Plinthworks Q2, and what guardrails should be in place. Let me search my brain context for relevant information about Plinthworks and their Q2 Reddit paid experiment strategy._\n\n_Let me search the brain for context about this._",
+              "text": "Reasoning:\n_The user is asking about whether to spend on a Reddit paid experiment for Plinthworks Q2, and what guardrails should be in place. Let me search my brain context for relevant information about Plinthworks and their Q2 Reddit paid experiment strategy._\n\n_Let me search the brain for context about this._"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "status": "completed",
+              "tool_call_id": "toolu_01HRCzbeJmkiPK3UpvKnNiK3"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "status": "completed",
+              "tool_call_id": "toolu_01Xn92pupfC3wkfQKvwzveEc"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Good"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ", I have real signal from the Brain. Here's my read, gr"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "ounded in what we actually know about Plinthworks and Foundry's operating"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " beliefs.\n\n---\n\n## Plinthworks Q2 Reddit Paid Experiment"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ": Go / No-Go\n\n### The honest read: **Conditional"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " yes, with three gates to pass first.**\n\nThe"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Brain has two active beliefs that speak directly to this"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ":\n\n1. **\"Plinthworks: organic moves before any paid test\"** — the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " kill criterion on the post precedes the ad"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ".\n2. **\"No paid spend without an organic signal\"** — spend"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " confirms a message, it never invents one."
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " (Status: *challenged*, which means"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " evidence has pushed back on it, but it is"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " not overturned.)\n\nThe customer calls on the Plinthworks brief"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " surfaced the same thing twice: *we"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " are not buying reach, we are buying precision.* That is the strategic"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " posture for this account.\n\n---\n\n### Gate Check: Should Leo"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " spend this week?\n\n| Gate | Status | What we"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " need |\n|---|---|---|\n| Organic signal exists | **Unknown** | Has a Reddit"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " post or thread already moved? If yes, we promote it. If no, we are"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " inventing reach. |\n| Kill criterion defined | **Unknown** | What does failure look like and at"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " what cost do we pull? This must exist before the first"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " dollar. |\n| Message earned by a quote | **Confirmed** | Three customer calls done"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". \"Precision over reach\" is the brief. Ad copy must"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " trace back to that. |\n\n---\n\n### If all three gates pass: proceed"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " with these guardrails\n\n1. **Hard spend cap.** Define"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " it before launch, not after. Q2 Reddit experiments on"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " SaaS tools typically start at $500-1,500"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "/week at test scale. Leo should name the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " number, not discover it.\n2. **Kill criterion is not a feeling.** It is a number"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". Example: if CPM exceeds $X or click"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "-through drops below Y% after 5 days, we pause and debrief before"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " adding more budget.\n3. **Targeting: precision over volume.** Subr"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "eddits, not broad interest. Developer tooling, observability, DevOps communities"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". Broad targeting violates the customer-call brief.\n4. **One"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " message at a time.** No A/B yet. Get one angle confirmed"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " before splitting spend.\n5. **Friday debrief goes to the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " founder.** Per Foundry SOP, the experiment status hits the Friday"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " note before any budget increase decision.\n\n---\n\n### My recommendation to Leo\n\nBefore"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " flipping the switch this week, answer two questions:\n\n- **Is there an"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " organic post that already has real engagement?** If yes, ampl"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "ify it. Reddit rewards promoted posts that already smell like community content.\n- **What"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " is the kill number and who owns the Monday pull"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " decision?** Jules should name the owner.\n\nIf neither question"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " has a clean answer by Wednesday, the experiment is not ready. Push to next week,"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " not next quarter. The discipline here is the same one"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " that kept the Plinthworks brief clean from the start.\n\nWant me to create a"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " mission for Leo to run the pre-launch gate check, or draft"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the kill-criterion brief now?"
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "3b6d9a2a-9479-459e-8b07-831574b5094e",
+              "credits_pending": true,
+              "duration_ms": 38131,
+              "usage": {
+                "input_tokens": 25815
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779791836824,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 25815,
+                "slices": [
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 97,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 97
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 423,
+                    "entries": [
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 422
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 25294
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [
+          {
+            "action": "search_brain_context",
+            "name": "campaign_capability",
+            "label": "Working on search brain context",
+            "payload": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01HRCzbeJmkiPK3UpvKnNiK3"
+            },
+            "status": "started"
+          },
+          {
+            "action": "search_brain_context",
+            "name": "campaign_capability",
+            "label": "Working on search brain context",
+            "payload": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01Xn92pupfC3wkfQKvwzveEc"
+            },
+            "status": "started"
+          }
+        ],
+        "latencyMs": 40713.182499999995,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 25815,
+          "outputTokens": 0,
+          "totalTokens": 25815,
+          "brainContextTokens": 97,
+          "contextWindowTokens": 1000000,
+          "durationMs": 38131,
+          "latencyMs": 40713.182499999995
+        },
+        "toolCalls": {
+          "totalToolCalls": 2,
+          "brainToolCalls": 2,
+          "byToolName": {
+            "campaign_capability": 2
+          },
+          "byBrainAction": {
+            "search_brain_context": 2
+          }
+        }
+      },
+      "usage": {
+        "agent": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 25815,
+          "outputTokens": 0,
+          "totalTokens": 25815,
+          "brainContextTokens": 97,
+          "contextWindowTokens": 1000000,
+          "durationMs": 38131,
+          "latencyMs": 40713.182499999995
+        },
+        "judge": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1599,
+          "outputTokens": 1284,
+          "totalTokens": 2883,
+          "providerCostUsd": 0.0139545,
+          "latencyMs": 4384.822291999997
+        }
+      }
+    },
+    {
+      "caseId": "yc-l5-saltline-day73-plan",
+      "taskType": "plan_next_steps",
+      "passed": false,
+      "weightedScore": 4.166666666666667,
+      "judge": {
+        "rubricVersion": "user-work-v2",
+        "scores": {
+          "taskCompletion": 3,
+          "contextUsefulness": 3,
+          "groundedness": 5,
+          "synthesisQuality": 4,
+          "irrelevanceControl": 5,
+          "abstentionQuality": 5
+        },
+        "weightedScore": 4.166666666666667,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": true,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "evidence": [
+          "The final answer does not mention 'month three' or a 'month-three retainer review'. Only 'Day 73' is referenced.",
+          "The final answer completely omits the 'launch window' or 'launch-window-over-deadline' principle.",
+          "The final answer fails to include Owen for routing pricing/scope pushback as specified in the expected outcome."
+        ],
+        "failureReasons": [
+          "The final answer misses required context terms and concepts ('month three' / 'month-three retainer review' and 'launch window'). It also fails to direct Riley and the user to route pricing/scope pushbacks through Owen, which was a critical component of the expected outcome instructions."
+        ],
+        "usage": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1729,
+          "outputTokens": 1555,
+          "totalTokens": 3284,
+          "providerCostUsd": 0.0165885,
+          "latencyMs": 3644.7922499999986
+        }
+      },
+      "agentRun": {
+        "caseId": "yc-l5-saltline-day73-plan",
+        "agentKey": "vibey",
+        "conversationId": "a3d86c75-0681-4bf4-97b6-6fc2d6384e98",
+        "finalAnswer": "Good, I have solid context. Let me pull Riley's details since the team doesn't show them directly, and search for any more Saltline scope context.I have everything I need. Here's the picture clearly:\n\n**Situation:** Day 73 on a retainer that started scope-creeping in weeks 3-7. Six small yeses built up quietly. Eliza just pushed back on paid for the holiday gift guide, which is consistent with her core belief (\"if our brand has to bid on the word gift in December, we did the first ten months wrong\"). This is not new resistance — it's her brand position. The scope creep is the real emergency.\n\n---\n\n## Saltline — Week Plan forYou and Riley ### The First Eliza's pushback on paid for the gift guide is not a problem to solve. It's her brand position, and it's documented. **Don't fight it.** The right move is to build the gift guide as an organic flagship, not a paid funnel — that's what she's been saying from day one.\n\nThe actual problem: the retainer has drifted into project territory. Six small yeses over 10 weeks. That's the fire.\n\n---\n\n### Your Jobs This Week\n\n**1. Hold the scope line on the gift guide**\nYou have one conversation to have with Eliza: the gift guide ships as an organic content piece, not a paid campaign. That's in scope. Any additional SKU curation, packaging direction, or wholesale angle is a change order. This is a 15-minute call, not an email.\n\n**2. Write the change-order vocabulary — this week**\nThis was flagged as \"this week's job\" back in the scope tension note, and it still isn't done. You need a one-page framework: what's in scope for Saltline, what triggers a change-order conversation, and what the ask sounds like. This is yours to draft, Riley's to hold.\n\n**3. Brief review with Riley**\nSit with Riley and audit the current Saltline brief against what's actually being worked on. If the work drifted, the brief was wrong. Find where the gap is. That's your mutual Monday anchor.\n\n---\n\n### Riley's Jobs This Week\n\n**1. Scope audit on the Saltline account**\nMap every request Eliza and June have made since week 3 against the original retainer scope. Document what was absorbed vs. what should have triggered a conversation. This is the evidence base for the change-order doc.\n\n**2. 24-hour rule enforcement**\nAny new Saltline request this week gets a 24-hour hold before Riley responds. No \"we love it\" in the moment — you noted this as a near-miss before and it's still a live risk.\n\n**3. Confirm the gift guide brief**\nRiley sends Eliza a one-paragraph written summary of what the gift guide is: format, where it lives, what it does, what it doesn't do. Get written alignment before any more work goes into it. This stops the scope from growing further on this specific deliverable.\n\n---\n\n### What to Deprioritize\n\n- Paid media planning for Saltline until organic signals are in. Eliza has earned that position.\n- Any new Saltline asks (packaging, wholesale, other) — those go on a list, not into the production queue.\n\n---\n\n**The one thing you should not leave this week without:** the change-order vocabulary. Six retainers and no shared language for \"that's outside scope\" is the structural gap. This week closes it.\n\nWant me to draft the change-order framework, or help you prep the Eliza call?",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "442fdcd1-4ce5-4049-a472-954c4fb864be",
+              "conversation_id": "a3d86c75-0681-4bf4-97b6-6fc2d6384e98"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01YMBT27wij7hqc7NmDjjFKk"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on list campaign team",
+              "action": "list_campaign_team",
+              "tool_call_id": "toolu_01R6GZ4JQN5EXxMK5tXsCiVk"
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user is asking me to help plan what they and Riley should do this week regarding Saltline (a client on day 73 of retainer) and the situation with Eliza pushing back on paid for the holiday gift guide with scope creeping._\n\n_Let me first check my brain context and team to understand who Riley is and what campaign context I have. Let me search the brain for context about Saltline and Riley, and also check the campaign team to know who Riley is._\n\n_Let me search the brain for relevant context and also check the team._",
+              "text": "Reasoning:\n_The user is asking me to help plan what they and Riley should do this week regarding Saltline (a client on day 73 of retainer) and the situation with Eliza pushing back on paid for the holiday gift guide with scope creeping._\n\n_Let me first check my brain context and team to understand who Riley is and what campaign context I have. Let me search the brain for context about Saltline and Riley, and also check the campaign team to know who Riley is._\n\n_Let me search the brain for relevant context and also check the team._"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on list campaign team",
+              "status": "completed",
+              "tool_call_id": "toolu_01R6GZ4JQN5EXxMK5tXsCiVk"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "status": "completed",
+              "tool_call_id": "toolu_01YMBT27wij7hqc7NmDjjFKk"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Good"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ", I have solid context. Let me pull Riley's details since the team"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " doesn't show them directly, and search for any more Salt"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "line scope context."
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_0127dZyDBLpHVNkhDfPyBV2v"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "status": "completed",
+              "tool_call_id": "toolu_0127dZyDBLpHVNkhDfPyBV2v"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "I"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " have everything I need. Here's the picture clearly:\n\n**Situation:** Day 73"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " on a retainer that started scope-creeping in weeks 3"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "-7. Six small yeses built up quietly"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". Eliza just pushed back on paid for"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the holiday gift guide, which is consistent"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " with her core belief (\"if our brand has to"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " bid on the word gift in December, we did the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " first ten months wrong\"). This is not new"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " resistance — it's her brand position. The scope creep is the real"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " emergency.\n\n---\n\n## Saltline — Week Plan for"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "You and Riley ### The First El"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "iza's pushback on paid for the gift guide is not a problem to solve."
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " It's her brand position, and it's documented. **Don't fight"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " it.** The right move is to build the gift guide as an"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " organic flagship, not a paid funnel — that's what she"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "'s been saying from day one.\n\nThe actual problem: the retainer has d"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "rifted into project territory. Six small yeses over 10 weeks"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". That's the fire.\n\n---\n\n### Your Jobs This Week\n\n**1. Hold"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the scope line on the gift guide**\nYou have one conversation to have"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " with Eliza: the gift guide ships as an organic content piece"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ", not a paid campaign. That's in scope. Any additional SKU"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " curation, packaging direction, or wholesale angle is a change"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " order. This is a 15-minute call, not an email"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ".\n\n**2. Write the change-order vocabulary — this week**\nThis"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " was flagged as \"this week's job\" back in the scope"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " tension note, and it still isn't done"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". You need a one-page framework: what"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "'s in scope for Saltline, what triggers a change-order conversation"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ", and what the ask sounds like. This is yours to draft,"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Riley's to hold.\n\n**3. Brief review with Riley**\nSit"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " with Riley and audit the current Saltline brief against what"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "'s actually being worked on. If the work drifted,"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the brief was wrong. Find where the gap is. That's your mutual"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Monday anchor.\n\n---\n\n### Riley's Jobs This Week\n\n**1. Scope audit on"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the Saltline account**\nMap every request Eliza and June"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " have made since week 3 against the original retainer scope. Document what was"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " absorbed vs. what should have triggered a conversation. This is the evidence base"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " for the change-order doc.\n\n**2. 24-hour rule enforcement**\nAny new Saltline request this"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " week gets a 24-hour hold before Riley responds. No \"we love"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " it\" in the moment — you noted this as a near-miss before and"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " it's still a live risk.\n\n**3. Confirm the gift guide brief**\nRiley"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " sends Eliza a one-paragraph written summary of what the gift guide is: format"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ", where it lives, what it does, what it doesn't do. Get written alignment before any more work goes"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " into it. This stops the scope from growing further on this"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " specific deliverable.\n\n---\n\n### What to Deprioritize\n\n- Paid media planning"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " for Saltline until organic signals are in. Eliza has"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " earned that position.\n- Any new Saltline asks (packaging, wholesale, other) — those go on a"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " list, not into the production queue.\n\n---\n\n**The one thing you should not"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " leave this week without:** the change-order vocabulary. Six ret"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "ainers and no shared language for \"that's outside scope\" is the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " structural gap. This week closes it.\n\nWant me to draft the change-order framework, or help you prep"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the Eliza call?"
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "442fdcd1-4ce5-4049-a472-954c4fb864be",
+              "credits_pending": true,
+              "duration_ms": 63558,
+              "usage": {
+                "input_tokens": 8236
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779791911538,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 8236,
+                "slices": [
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 108,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 108
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 423,
+                    "entries": [
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 422
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 7704
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [
+          {
+            "action": "search_brain_context",
+            "name": "campaign_capability",
+            "label": "Working on search brain context",
+            "payload": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_01YMBT27wij7hqc7NmDjjFKk"
+            },
+            "status": "started"
+          },
+          {
+            "action": "search_brain_context",
+            "name": "campaign_capability",
+            "label": "Working on search brain context",
+            "payload": {
+              "name": "campaign_capability",
+              "label": "Working on search brain context",
+              "action": "search_brain_context",
+              "tool_call_id": "toolu_0127dZyDBLpHVNkhDfPyBV2v"
+            },
+            "status": "started"
+          }
+        ],
+        "latencyMs": 65911.173166,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 8236,
+          "outputTokens": 0,
+          "totalTokens": 8236,
+          "brainContextTokens": 108,
+          "contextWindowTokens": 1000000,
+          "durationMs": 63558,
+          "latencyMs": 65911.173166
+        },
+        "toolCalls": {
+          "totalToolCalls": 3,
+          "brainToolCalls": 2,
+          "byToolName": {
+            "campaign_capability": 3
+          },
+          "byBrainAction": {
+            "search_brain_context": 2
+          }
+        }
+      },
+      "usage": {
+        "agent": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 8236,
+          "outputTokens": 0,
+          "totalTokens": 8236,
+          "brainContextTokens": 108,
+          "contextWindowTokens": 1000000,
+          "durationMs": 63558,
+          "latencyMs": 65911.173166
+        },
+        "judge": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1729,
+          "outputTokens": 1555,
+          "totalTokens": 3284,
+          "providerCostUsd": 0.0165885,
+          "latencyMs": 3644.7922499999986
+        }
+      }
+    }
+  ]
+}

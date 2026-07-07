@@ -1,0 +1,49 @@
+{
+  "name": "@vibey/mission-worker",
+  "version": "0.1.0",
+  "description": "Mission Worker Microservice (BullMQ)",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node --enable-source-maps dist/apps/mission-worker/src/main",
+    "start:prod": "node --enable-source-maps dist/apps/mission-worker/src/main",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/ --ext .ts",
+    "lint:fix": "eslint src/ --ext .ts --fix",
+    "clean": "rm -rf dist .turbo node_modules"
+  },
+  "dependencies": {
+    "@bull-board/api": "^6.15.0",
+    "@bull-board/express": "^6.15.0",
+    "@nestjs/bullmq": "^11.0.2",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@sentry/nestjs": "^10.44.0",
+    "@sentry/node": "^10.42.0",
+    "@supabase/supabase-js": "^2.76.1",
+    "@vibey/api-shared": "workspace:^",
+    "@vibey/context-breakdown": "workspace:^",
+    "bullmq": "^5.34.8",
+    "dotenv": "^17.3.1",
+    "ioredis": "^5.8.2",
+    "pg": "^8.19.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.16",
+    "@nestjs/schematics": "^11.0.0",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.12.0",
+    "@types/pg": "^8.18.0",
+    "eslint": "^9.18.0",
+    "typescript": "^5.7.3",
+    "vitest": "^4.0.18"
+  }
+}

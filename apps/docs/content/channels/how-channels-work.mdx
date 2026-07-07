@@ -1,0 +1,95 @@
+---
+title: "External Channels (Slack and Telegram)"
+description: "How Vibey connects to external chat platforms so your agents can be talked to from outside the product. Sessions, identity, context, scoping, and streaming."
+---
+
+## Two Kinds of Channels
+
+The word "channel" inside Vibey refers to two different things. This page is about **external channels**: bridges to Slack and Telegram.
+
+| Type | Where it lives | Covered by |
+|---|---|---|
+| **In-Space Channels** | Inside a Space, in the Channels view. Humans tag agents in threads. | [Space Channels](/spaces/channels) |
+| **External Channels** | Bridges to Slack and Telegram so agents can be reached from outside Vibey | This page |
+
+## What External Channels Are
+
+External channels let your agents be reachable on platforms your team and your customers already use:
+
+- **Team** the Vibey web app itself (full chat with Space context panel)
+- **Slack** workspace integration with DMs, channels, and threads
+- **Telegram** bot integration with private and public modes
+- **Space Channels** in-product chat threads inside a Space (see [Space Channels](/spaces/channels))
+
+Each channel has different capabilities, but the core agent behavior stays the same. Your campaigns, skills, and tools work everywhere.
+
+## Sessions
+
+Every conversation creates a **session**. An independent chat thread with its own message history.
+
+| Interaction | Session behavior |
+|---|---|
+| DM to the Slack bot | One session per DM channel |
+| `@Vibey` mention in a Slack channel | One session per **thread**. Each mention starts a new thread |
+| Follow-up reply in a Slack thread | Continues the same session |
+| Telegram private message | One session per Telegram chat |
+| Telegram `/reset` command | Archives the current session and starts fresh |
+| Team chat | One session per conversation |
+
+Sessions are completely independent. A thread in #marketing and a DM from the same person are two separate conversations with no shared context.
+
+## Identity
+
+Vibey recognizes **who** is talking on each channel:
+
+- **Slack** workspace members are synced when you install the bot. Vibey knows each person's name, role, and timezone.
+- **Telegram** members are learned on their first message. The Telegram API provides name, username, and language.
+- **Team** you are authenticated as your Vibey account.
+
+The agent uses this identity to address people by name and personalize responses.
+
+## Member Notes
+
+On Slack and Telegram, the agent can **save notes** about the people it talks to. These notes persist across conversations. When someone messages again weeks later, the agent remembers what it learned.
+
+Notes include things like:
+
+- The person's role or area of expertise
+- Their preferences ("prefers email over social")
+- Recurring topics they work on
+
+This works for both **team members** in a Slack workspace and **external customers** using a public Telegram bot. Think of it as a lightweight CRM that builds itself.
+
+For real customer signals tied to identified contacts in your CRM, these notes can flow into the [Customer Brain](/brain/customer-brain).
+
+## Context
+
+What the agent sees depends on the interaction type:
+
+| Interaction | Context the agent receives |
+|---|---|
+| DM (Slack or Telegram) | The full conversation history within that session |
+| `@Vibey` in a Slack channel | The mention text **plus the last 10 messages** from the channel for surrounding context |
+| Reply in a Slack thread | The full thread history |
+| Team chat | Full conversation history plus the Space context panel |
+
+## Campaign and Agent Scoping
+
+When you connect an agent to Slack or Telegram, it carries its campaign context and org scope from the connection:
+
+- **Personal agent** connected to Telegram = personal campaigns and credits
+- **Org agent** connected to Slack = org campaigns and credits
+- **Context toggles** (Campaign Context, User Brain, Company Brain, Customer Brain) still apply. If a brain access toggle is off, the agent will not see that context on any channel.
+
+## Streaming
+
+- **Telegram** the agent sends a placeholder message that updates in real-time as content streams in (edited every 1.5 seconds)
+- **Slack** the agent replies in the thread once the full response is ready
+- **Team** real-time streaming character by character
+
+## Related
+
+- [Space Channels (in-Space)](/spaces/channels)
+- [Connecting Slack](/channels/connecting-slack)
+- [Connecting Telegram](/channels/connecting-telegram)
+- [Slack vs Telegram](/channels/slack-vs-telegram)

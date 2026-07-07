@@ -1,0 +1,267 @@
+{
+  "project": "OpenClaw to Platform Runtime Refactor",
+  "branchName": "current",
+  "description": "Refactor core OpenClaw runtime so forward-facing agents are structurally unaware of OpenClaw internals, with strict core failure classification and explicit internal-to-user-safe mapping.",
+  "recommendedAgents": 4,
+  "context": {
+    "currentProblem": "Forward-facing agents can still reason about runtime internals (gateway, toolset, internal tool IDs) and leak infrastructure language to users during failures.",
+    "desiredState": "In platform runtime mode, the model only sees product-domain capabilities and product-safe outcomes. Internal runtime/tool errors are normalized at source and never exposed to model-facing or user-facing content.",
+    "architectureGoal": "Replace direct internal-tool exposure with capability facade + adapter boundary normalization, strict canonical failure envelope, explicit mapping, and core recovery policy."
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Define platform runtime contract",
+      "description": "As a platform engineer, I need a locked runtime contract so implementation and migration happen against one unambiguous source of truth.",
+      "acceptanceCriteria": [
+        "Architecture decision record defines `platform_agent` runtime mode and explicit boundaries",
+        "Contract specifies model-visible, internal-only, and user-visible data classes",
+        "Contract includes forbidden model-visible internal concepts (gateway, plugin, toolset, OpenClaw identity, internal tool IDs)",
+        "Contract includes compatibility notes for existing agents",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [],
+      "notes": "This story gates all implementation stories."
+    },
+    {
+      "id": "US-002",
+      "title": "Add platform_agent runtime mode",
+      "description": "As a runtime maintainer, I need a first-class mode switch so forward-facing agents run with platform-safe core behavior by design.",
+      "acceptanceCriteria": [
+        "Agent runtime supports `platform_agent` mode in config and scope resolution",
+        "`platform_agent` mode is off by default for backward compatibility",
+        "Runtime mode can be enabled per agent (starting with Vibey)",
+        "Legacy mode behavior remains unchanged when flag is off",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [
+        "US-001"
+      ],
+      "notes": "Do not break existing non-platform agents."
+    },
+    {
+      "id": "US-003",
+      "title": "Introduce product capability facade",
+      "description": "As an agent-runtime architect, I need product-domain capabilities so the model no longer depends on internal tool identity.",
+      "acceptanceCriteria": [
+        "Capability facade interface exists with product-domain request/response types",
+        "Model-facing tool surface resolves to capability IDs, not internal tool IDs",
+        "Capability metadata avoids infrastructure language",
+        "Capability facade supports current Vibey critical flows (create, update, publish path primitives)",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [
+        "US-001",
+        "US-002"
+      ],
+      "notes": "This is the core abstraction seam."
+    },
+    {
+      "id": "US-004",
+      "title": "Implement internal adapter layer",
+      "description": "As a runtime engineer, I need adapters so internal tools can still execute while staying hidden behind capability contracts.",
+      "acceptanceCriteria": [
+        "Adapters map capability requests to current internal tool calls",
+        "Adapters map internal tool results to capability results",
+        "No raw internal tool ID is returned to model-facing payloads in `platform_agent` mode",
+        "Adapter failures emit failure envelopes only (no raw internal message passthrough)",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [
+        "US-003"
+      ],
+      "notes": "Initial adapter coverage can focus on Vibey high-frequency capability set."
+    },
+    {
+      "id": "US-005",
+      "title": "Add canonical failure envelope",
+      "description": "As a runtime maintainer, I need one strict failure model so all recovery and user-safe messaging is deterministic.",
+      "acceptanceCriteria": [
+        "Core enum exists with canonical classes: TRANSIENT, INPUT_INVALID, ACCESS_BLOCKED, CAPABILITY_UNAVAILABLE, SYSTEM_FAULT",
+        "Failure envelope type includes class, retryable, retryBudget, userMessageKey, businessNextStepType, internalDebug",
+        "All adapter failures must return this envelope",
+        "No ad-hoc class names are used outside canonical enum",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [
+        "US-004"
+      ],
+      "notes": "Strict typing is mandatory."
+    },
+    {
+      "id": "US-006",
+      "title": "Build strict failure classifier",
+      "description": "As a platform engineer, I need deterministic classification from internal errors to canonical classes so retries and mapping are reliable.",
+      "acceptanceCriteria": [
+        "Classifier maps internal tool/runtime error signatures to canonical failure classes",
+        "Classifier returns deterministic output for the same input",
+        "Classifier populates retryability and retry budget fields",
+        "Classifier never emits user-visible raw internal error text",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [
+        "US-005"
+      ],
+      "notes": "Use table-driven mapping with explicit defaults."
+    },
+    {
+      "id": "US-007",
+      "title": "Implement explicit internal-to-user-safe mapper",
+      "description": "As a product platform owner, I need explicit mapped outcomes so users only receive business-safe guidance.",
+      "acceptanceCriteria": [
+        "Mapper converts failure envelopes to user-safe outcomes with message key and action",
+        "Mapping table is explicit, versioned, and complete for all canonical failure classes",
+        "Mapped copy excludes infrastructure terms (gateway, plugin, toolset, OpenClaw, internal tool IDs)",
+        "Mapper does not allow fallback to raw internal text",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [
+        "US-006"
+      ],
+      "notes": "This is a core contract, not UI filtering."
+    },
+    {
+      "id": "US-008",
+      "title": "Add core retry and fallback policy engine",
+      "description": "As a runtime engineer, I need recovery orchestration before response construction so agent flow continues without infra-language leaks.",
+      "acceptanceCriteria": [
+        "Retry engine uses failure envelope retry fields and bounded budget",
+        "Non-retryable failures skip retries deterministically",
+        "Fallback engine selects business-safe action (`continue`, `ask_input`, `defer`, `stop`) from mapped outcome",
+        "No infrastructure remediation instruction can be emitted by policy engine",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [
+        "US-007"
+      ],
+      "notes": "Recovery must happen before model-visible/user-visible payload assembly."
+    },
+    {
+      "id": "US-009",
+      "title": "Enforce model context boundary in platform mode",
+      "description": "As a platform architect, I need hard context boundaries so the model cannot reason about engine internals.",
+      "acceptanceCriteria": [
+        "System prompt/tool context builder excludes OpenClaw operational identity in `platform_agent` mode",
+        "Internal runtime controls and remediation instructions are excluded from model-visible context",
+        "Internal tool IDs are excluded from model-visible context",
+        "Soul/persona and product behavior guidance remain available",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [
+        "US-002",
+        "US-003"
+      ],
+      "notes": "Boundary should be structural; not only instruction text."
+    },
+    {
+      "id": "US-010",
+      "title": "Refactor payload construction to consume safe outcomes only",
+      "description": "As a runtime maintainer, I need payload assembly to consume only mapped safe outcomes so raw error leakage is impossible.",
+      "acceptanceCriteria": [
+        "Payload builder reads mapped user-safe outcome objects only in `platform_agent` mode",
+        "Raw tool/runtime error strings cannot be inserted into assistant/user payload text",
+        "Mutating action failures still use mapped safe messaging (no raw exception passthrough)",
+        "Legacy mode behavior remains unchanged",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [
+        "US-007",
+        "US-008",
+        "US-009"
+      ],
+      "notes": "Core runtime behavior change; avoid upper-layer patch reliance."
+    },
+    {
+      "id": "US-011",
+      "title": "Add observability without user leakage",
+      "description": "As an operations engineer, I need internal diagnostics preserved for debugging while keeping user output safe.",
+      "acceptanceCriteria": [
+        "Internal debug logs include envelope class, adapter source, retry attempts, and redacted internal details",
+        "Telemetry events separate internal diagnostics from user-facing message keys",
+        "No raw internal error text appears in user-facing event streams in `platform_agent` mode",
+        "Dashboards/queries can monitor class distribution and fallback rates",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "dependsOn": [
+        "US-010"
+      ],
+      "notes": "Must preserve incident-debug capability."
+    },
+    {
+      "id": "US-012",
+      "title": "Migrate Vibey to platform_agent mode",
+      "description": "As a product owner, I need Vibey moved to the new core runtime mode to eliminate infra-language behavior in production paths.",
+      "acceptanceCriteria": [
+        "Vibey config enables `platform_agent` runtime mode behind feature flag",
+        "Vibey critical conversation flows run through capability facade and adapter boundary",
+        "Vibey does not receive internal tool IDs in model-visible context",
+        "Rollback path exists to legacy mode via config flag",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [
+        "US-010"
+      ],
+      "notes": "Vibey is first migration target."
+    },
+    {
+      "id": "US-013",
+      "title": "Add forced-failure test matrix end-to-end",
+      "description": "As a QA engineer, I need deterministic forced-failure tests so the new core contract is proven under real failure scenarios.",
+      "acceptanceCriteria": [
+        "Unit tests cover classifier and mapper completeness for all canonical classes",
+        "Integration tests inject internal failures (including `vibey_backend`) and verify envelope + mapped outcomes",
+        "E2E tests verify conversation output never includes `gateway`, `plugin`, `toolset`, `OpenClaw`, `vibey_backend`, `restart`",
+        "E2E tests verify flow continues or asks only business-relevant next step",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [
+        "US-012"
+      ],
+      "notes": "This is the release gate story."
+    },
+    {
+      "id": "US-014",
+      "title": "Rollout and legacy-path decommission plan",
+      "description": "As a platform lead, I need a controlled rollout and cleanup plan so regressions are contained and old leak-prone paths do not persist.",
+      "acceptanceCriteria": [
+        "Staged rollout plan exists with explicit go/no-go metrics",
+        "Production rollout supports gradual enablement and fast rollback",
+        "Post-stabilization plan removes legacy direct-exposure path for forward-facing agents",
+        "Runbook documents incident response and rollback triggers",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "dependsOn": [
+        "US-013"
+      ],
+      "notes": "No permanent dual-path ambiguity."
+    }
+  ]
+}

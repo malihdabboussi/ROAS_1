@@ -1,0 +1,649 @@
+import type { ActionParamType, ActionSchema } from './artifact-action-schemas'
+
+type RequiredField = string | string[]
+
+const stringType = (keys: string[]): Partial<Record<string, ActionParamType>> =>
+  Object.fromEntries(keys.map((key) => [key, 'string'])) as Partial<Record<string, ActionParamType>>
+
+function schema(
+  required: RequiredField[] = [],
+  optional: string[] = [],
+  types: Partial<Record<string, ActionParamType>> = {},
+  useWhen: string[] = [],
+): ActionSchema {
+  return { required, optional, types, ...(useWhen.length ? { useWhen } : {}) }
+}
+
+const campaignScope = ['campaign_id', 'campaignId', 'space_id', 'scope_override']
+const pagination = ['limit', 'offset']
+const adIds = ['ad_id', 'adId', 'ad_set_id', 'adSetId', 'campaign_id', 'campaignId']
+
+export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> = {
+  dream_inspect_agent: schema(
+    [],
+    ['agent_key'],
+    stringType(['agent_key']),
+    ['Inspect the target agent and its org-owned skills during a Jaime Agent Learning Dream.'],
+  ),
+  dream_search_evidence: schema(
+    [],
+    ['source', 'limit', 'cursor'],
+    {
+      source: 'string',
+      limit: 'number',
+      cursor: 'string',
+    },
+    ['Search the evidence already collected for the active Jaime Agent Learning Dream window.'],
+  ),
+  dream_propose_skill_create: schema(
+    [['target_artifact_key', 'skill_key'], 'reason', 'proposed_patch'],
+    [
+      'target_artifact_key',
+      'skill_key',
+      'name',
+      'description',
+      'priority_score',
+      'evidence_refs',
+      'proposed_patch',
+    ],
+    {
+      ...stringType(['target_artifact_key', 'skill_key', 'name', 'description', 'reason']),
+      priority_score: 'number',
+      evidence_refs: 'object_array',
+      proposed_patch: 'object',
+    },
+    ['Create a pending skill proposal for the dream target agent; never apply changes directly.'],
+  ),
+  dream_propose_skill_update: schema(
+    [['target_artifact_key', 'skill_key'], 'reason', 'proposed_patch'],
+    ['target_artifact_key', 'skill_key', 'priority_score', 'evidence_refs', 'proposed_patch'],
+    {
+      ...stringType(['target_artifact_key', 'skill_key', 'reason']),
+      priority_score: 'number',
+      evidence_refs: 'object_array',
+      proposed_patch: 'object',
+    },
+    ['Create or patch a pending skill update proposal for the dream target agent.'],
+  ),
+  dream_propose_skill_resource_update: schema(
+    [['target_artifact_key', 'skill_key'], 'resource_path', 'reason', 'proposed_patch'],
+    [
+      'target_artifact_key',
+      'skill_key',
+      'resource_path',
+      'priority_score',
+      'evidence_refs',
+      'proposed_patch',
+    ],
+    {
+      ...stringType(['target_artifact_key', 'skill_key', 'resource_path', 'reason']),
+      priority_score: 'number',
+      evidence_refs: 'object_array',
+      proposed_patch: 'object',
+    },
+    ['Create or patch a pending skill resource update proposal for the dream target agent.'],
+  ),
+  dream_propose_agent_file_update: schema(
+    ['target_artifact_key', 'reason', 'proposed_patch'],
+    ['agent_file', 'priority_score', 'evidence_refs', 'proposed_patch'],
+    {
+      ...stringType(['target_artifact_key', 'agent_file', 'reason']),
+      priority_score: 'number',
+      evidence_refs: 'object_array',
+      proposed_patch: 'object',
+    },
+    ['Create or patch a pending agent file update proposal for the dream target agent.'],
+  ),
+  dream_route_out: schema(
+    ['route_out_type', 'reason'],
+    [
+      'route_out_type',
+      'target_artifact_kind',
+      'target_artifact_key',
+      'priority_score',
+      'evidence_refs',
+      'proposed_patch',
+    ],
+    {
+      ...stringType(['route_out_type', 'target_artifact_kind', 'target_artifact_key', 'reason']),
+      priority_score: 'number',
+      evidence_refs: 'object_array',
+      proposed_patch: 'object',
+    },
+    ['Route platform, system, tool schema, or infra issues to internal review, hidden from users.'],
+  ),
+  dream_finish: schema(
+    [],
+    ['summary', 'proposal_count', 'no_action_reason'],
+    {
+      summary: 'string',
+      proposal_count: 'number',
+      no_action_reason: 'string',
+    },
+    ['Finish the active Jaime Agent Learning Dream after proposal tools or no-action reasoning.'],
+  ),
+
+  create_offer: schema([], ['name', 'processing_status', ...campaignScope], stringType(['name'])),
+  list_offers: schema([], [...campaignScope], stringType(campaignScope)),
+  list_custom_fields: schema(),
+
+  create_ad: schema(
+    [],
+    [
+      'ad_set_id',
+      'adSetId',
+      'campaign_id',
+      'campaignId',
+      'headline',
+      'primary_text',
+      'description',
+      'image_url',
+      'image_asset_id',
+      'generated_tsx',
+      'destination_url',
+    ],
+    stringType(adIds),
+  ),
+  list_ads: schema([], [...adIds, ...pagination], {
+    ...stringType(adIds),
+    limit: 'number',
+    offset: 'number',
+  }),
+  create_ad_campaign: schema(
+    [],
+    ['name', 'objective', 'budget_type', 'daily_budget', 'lifetime_budget', ...campaignScope],
+    {
+      ...stringType(['name', 'objective', 'budget_type', ...campaignScope]),
+      daily_budget: 'number',
+      lifetime_budget: 'number',
+    },
+  ),
+  create_ad_set: schema(
+    [],
+    ['ad_campaign_id', 'adCampaignId', 'name', 'budget', 'targeting', ...campaignScope],
+    {
+      ...stringType(['ad_campaign_id', 'adCampaignId', 'name', ...campaignScope]),
+      budget: 'number',
+      targeting: 'object',
+    },
+  ),
+  get_ad_campaign: schema(
+    [['ad_campaign_id', 'adCampaignId']],
+    ['ad_campaign_id', 'adCampaignId'],
+    stringType(['ad_campaign_id', 'adCampaignId']),
+  ),
+  get_ad_set: schema(
+    [['ad_set_id', 'adSetId']],
+    ['ad_set_id', 'adSetId'],
+    stringType(['ad_set_id', 'adSetId']),
+  ),
+  update_ad_campaign: schema(
+    [['ad_campaign_id', 'adCampaignId']],
+    ['ad_campaign_id', 'adCampaignId', 'name', 'objective', 'status'],
+    stringType(['ad_campaign_id', 'adCampaignId', 'name', 'objective', 'status']),
+  ),
+  update_ad_set: schema(
+    [['ad_set_id', 'adSetId']],
+    ['ad_set_id', 'adSetId', 'name', 'status', 'budget', 'targeting'],
+    {
+      ...stringType(['ad_set_id', 'adSetId', 'name', 'status']),
+      budget: 'number',
+      targeting: 'object',
+    },
+  ),
+
+  list_websites: schema([], [...campaignScope], stringType(campaignScope)),
+  list_presentations: schema([], [...campaignScope], stringType(campaignScope)),
+  prepare_email_send: schema(
+    ['email_id'],
+    ['email_id', 'to', 'subject'],
+    stringType(['email_id', 'to', 'subject']),
+  ),
+  prepare_sequence_send: schema(
+    ['sequence_id'],
+    ['sequence_id', 'recipient_id'],
+    stringType(['sequence_id', 'recipient_id']),
+  ),
+
+  create_avatar: schema(
+    [],
+    ['name', 'description', 'image_url', ...campaignScope],
+    stringType(['name', 'description', 'image_url', ...campaignScope]),
+  ),
+  list_avatars: schema([], [...campaignScope], stringType(campaignScope)),
+  create_theme: schema([], ['name', 'description', 'colors', 'fonts', ...campaignScope], {
+    ...stringType(['name', 'description', ...campaignScope]),
+    colors: 'object',
+    fonts: 'object',
+  }),
+  list_themes: schema([], [...campaignScope], stringType(campaignScope)),
+  extract_website_theme: schema(
+    [['website_id', 'funnel_id']],
+    ['website_id', 'funnel_id'],
+    stringType(['website_id', 'funnel_id']),
+  ),
+
+  create_project: schema(['name'], ['description', 'dependencies', 'manifest'], {
+    name: 'string',
+    description: 'string',
+    dependencies: 'object',
+    manifest: 'object',
+  }),
+  list_projects: schema(),
+  import_github_repo: schema(
+    ['repo_url'],
+    ['repo_url', 'name', 'branch'],
+    stringType(['repo_url', 'name', 'branch']),
+  ),
+  fetch_project_url: schema(['project_id'], ['project_id'], stringType(['project_id'])),
+  search_project_files: schema(['project_id', 'query'], ['project_id', 'query', 'limit'], {
+    project_id: 'string',
+    query: 'string',
+    limit: 'number',
+  }),
+  list_project_directory: schema(
+    ['project_id'],
+    ['project_id', 'path'],
+    stringType(['project_id', 'path']),
+  ),
+  get_project_errors: schema(['project_id'], ['project_id'], stringType(['project_id'])),
+
+  define_object_type: schema(['name', 'fields'], ['name', 'slug', 'fields', 'icon'], {
+    name: 'string',
+    slug: 'string',
+    fields: 'object_array',
+    icon: 'string',
+  }),
+  list_object_types: schema(),
+  get_object_type: schema(
+    [['object_type_id', 'slug']],
+    ['object_type_id', 'slug'],
+    stringType(['object_type_id', 'slug']),
+  ),
+  update_object_type: schema(['object_type_id', 'fields'], ['object_type_id', 'fields'], {
+    object_type_id: 'string',
+    fields: 'object_array',
+  }),
+  create_object: schema(['object_type_id', 'data'], ['object_type_id', 'data', 'campaign_id'], {
+    object_type_id: 'string',
+    data: 'object',
+    campaign_id: 'string',
+  }),
+  update_object: schema(['object_id', 'data'], ['object_id', 'data'], {
+    object_id: 'string',
+    data: 'object',
+  }),
+  list_objects: schema(
+    [['object_type_id', 'object_type']],
+    ['object_type_id', 'object_type', 'campaign_id', 'limit'],
+    { object_type_id: 'string', object_type: 'string', campaign_id: 'string', limit: 'number' },
+  ),
+  get_object: schema(['object_id'], ['object_id'], stringType(['object_id'])),
+  delete_object: schema(['object_id'], ['object_id'], stringType(['object_id'])),
+
+  delete_agent_skill: schema(
+    ['agent_key', 'skill_id'],
+    ['agent_key', 'skill_id'],
+    stringType(['agent_key', 'skill_id']),
+  ),
+  update_agent_skill_resource: schema(
+    ['agent_key', 'skill_id', 'resource_id'],
+    ['agent_key', 'skill_id', 'resource_id', 'content', 'metadata'],
+    { ...stringType(['agent_key', 'skill_id', 'resource_id', 'content']), metadata: 'object' },
+  ),
+  delete_agent_skill_resource: schema(
+    ['agent_key', 'skill_id', 'resource_id'],
+    ['agent_key', 'skill_id', 'resource_id'],
+    stringType(['agent_key', 'skill_id', 'resource_id']),
+  ),
+  copy_skill_resource: schema(
+    ['source_skill_id', 'source_resource_id', 'target_skill_id'],
+    ['source_skill_id', 'source_resource_id', 'target_skill_id', 'agent_key'],
+    stringType(['source_skill_id', 'source_resource_id', 'target_skill_id', 'agent_key']),
+  ),
+
+  create_pdf: schema(
+    [],
+    ['title', 'content', 'html', 'markdown', 'filename'],
+    stringType(['title', 'content', 'html', 'markdown', 'filename']),
+  ),
+  patch_state: schema([], ['scope', 'path', 'value', 'patches'], {
+    scope: 'string',
+    path: 'string',
+    patches: 'object_array',
+  }),
+
+  check_meta_connection: schema(),
+  list_meta_ad_accounts: schema(),
+  list_meta_pages: schema(),
+  publish_ad_to_meta: schema(
+    ['ad_id'],
+    ['ad_id', 'ad_account_id', 'page_id'],
+    stringType(['ad_id', 'ad_account_id', 'page_id']),
+  ),
+  save_meta_defaults: schema(
+    [],
+    ['ad_account_id', 'page_id', 'pixel_id'],
+    stringType(['ad_account_id', 'page_id', 'pixel_id']),
+  ),
+  get_meta_ad_status: schema(['meta_ad_id'], ['meta_ad_id'], stringType(['meta_ad_id'])),
+  get_meta_ads_insights: schema([], ['ad_account_id', 'since', 'until', 'level'], {
+    ...stringType(['ad_account_id', 'level']),
+    since: 'iso_date',
+    until: 'iso_date',
+  }),
+  get_delivery_estimate: schema([], ['ad_account_id', 'targeting', 'optimization_goal'], {
+    ad_account_id: 'string',
+    targeting: 'object',
+    optimization_goal: 'string',
+  }),
+  list_meta_audiences: schema([], ['ad_account_id'], stringType(['ad_account_id'])),
+  create_meta_custom_audience: schema(
+    ['name'],
+    ['name', 'description', 'ad_account_id'],
+    stringType(['name', 'description', 'ad_account_id']),
+  ),
+  create_meta_lookalike_audience: schema(
+    ['source_audience_id'],
+    ['source_audience_id', 'name', 'country'],
+    stringType(['source_audience_id', 'name', 'country']),
+  ),
+  list_meta_pixel_events: schema([], ['pixel_id'], stringType(['pixel_id'])),
+  create_meta_pixel_event: schema(['event_name'], ['event_name', 'pixel_id', 'payload'], {
+    event_name: 'string',
+    pixel_id: 'string',
+    payload: 'object',
+  }),
+
+  get_capabilities: schema(),
+  search_available_integrations: schema([], ['query', 'service', 'limit'], {
+    query: 'string',
+    service: 'string',
+    limit: 'number',
+  }),
+
+  get_media_generation_status: schema(['job_id'], ['job_id'], stringType(['job_id'])),
+  generate_image: schema(
+    [],
+    ['prompt', 'model', 'size', 'aspect_ratio', 'image_url', 'image_asset_id'],
+    stringType(['prompt', 'model', 'size', 'aspect_ratio', 'image_url', 'image_asset_id']),
+  ),
+  edit_image: schema(
+    ['prompt'],
+    ['prompt', 'image_url', 'image_asset_id', 'canvas_id', 'node_id'],
+    stringType(['prompt', 'image_url', 'image_asset_id', 'canvas_id', 'node_id']),
+  ),
+  list_canvas_nodes: schema(
+    [['canvas_id', 'ad_set_id']],
+    ['canvas_id', 'ad_set_id'],
+    stringType(['canvas_id', 'ad_set_id']),
+  ),
+  generate_ad_set: schema(['ad_set_id'], ['ad_set_id', 'prompt', 'count'], {
+    ad_set_id: 'string',
+    prompt: 'string',
+    count: 'number',
+  }),
+  generate_video: schema(['prompt'], ['prompt', 'image_url', 'duration_seconds', 'aspect_ratio'], {
+    prompt: 'string',
+    image_url: 'string',
+    duration_seconds: 'number',
+    aspect_ratio: 'string',
+  }),
+  get_video_status: schema(['operation_id'], ['operation_id'], stringType(['operation_id'])),
+  analyze_video: schema(
+    [['media_url', 'file_url', 'url', 'video_url']],
+    [
+      'media_url',
+      'file_url',
+      'url',
+      'video_url',
+      'frame_count',
+      'frame_interval_seconds',
+      'extract_frames',
+      'transcribe',
+      'model',
+    ],
+    {
+      media_url: 'string',
+      file_url: 'string',
+      url: 'string',
+      video_url: 'string',
+      frame_count: 'number',
+      frame_interval_seconds: 'number',
+      extract_frames: 'boolean',
+      transcribe: 'boolean',
+      model: 'string',
+    },
+  ),
+  transcribe_audio: schema(
+    [['media_url', 'file_url', 'url', 'audio_url', 'video_url']],
+    [
+      'media_url',
+      'file_url',
+      'url',
+      'audio_url',
+      'video_url',
+      'language',
+      'lang',
+      'language_code',
+      'model',
+    ],
+    {
+      media_url: 'string',
+      file_url: 'string',
+      url: 'string',
+      audio_url: 'string',
+      video_url: 'string',
+      language: 'string',
+      lang: 'string',
+      language_code: 'string',
+      model: 'string',
+    },
+  ),
+  extract_url_transcript: schema(['url'], ['url'], stringType(['url'])),
+
+  list_campaign_team: schema([], campaignScope, stringType(campaignScope)),
+  assign_agent_to_campaign: schema(
+    ['agent_key'],
+    ['agent_key', ...campaignScope],
+    stringType(['agent_key', ...campaignScope]),
+  ),
+  unassign_agent_from_campaign: schema(
+    ['agent_key'],
+    ['agent_key', ...campaignScope],
+    stringType(['agent_key', ...campaignScope]),
+  ),
+  update_campaign_context: schema([], ['context', 'notes', ...campaignScope], {
+    context: 'object',
+    notes: 'string',
+    ...stringType(campaignScope),
+  }),
+  create_awareness_point: schema(
+    [],
+    ['title', 'body', ...campaignScope],
+    stringType(['title', 'body', ...campaignScope]),
+  ),
+  update_awareness: schema(
+    ['awareness_id'],
+    ['awareness_id', 'title', 'body'],
+    stringType(['awareness_id', 'title', 'body']),
+  ),
+
+  list_social_posts: schema(
+    [],
+    [...campaignScope, 'platform', 'status'],
+    stringType([...campaignScope, 'platform', 'status']),
+  ),
+  create_blog_post: schema(
+    [],
+    ['title', 'content', 'markdown', ...campaignScope],
+    stringType(['title', 'content', 'markdown', ...campaignScope]),
+  ),
+  list_blog_posts: schema([], [...campaignScope], stringType(campaignScope)),
+  get_social_post_template: schema(['template_id'], ['template_id'], stringType(['template_id'])),
+  list_social_post_templates: schema([], ['platform'], stringType(['platform'])),
+  list_campaign_media: schema(
+    [],
+    [...campaignScope, 'media_type'],
+    stringType([...campaignScope, 'media_type']),
+  ),
+
+  get_brain_stats: schema(),
+  ingest_fireflies_transcript: schema(
+    [['meeting_id', 'recording_id', 'call_id']],
+    ['meeting_id', 'recording_id', 'call_id', 'title', ...campaignScope],
+    stringType(['meeting_id', 'recording_id', 'call_id', 'title', ...campaignScope]),
+  ),
+  create_strategy_node: schema(
+    [],
+    ['title', 'content', 'node_type', ...campaignScope],
+    stringType(['title', 'content', 'node_type', ...campaignScope]),
+  ),
+  list_strategy_nodes: schema(
+    [],
+    [...campaignScope, 'node_type'],
+    stringType([...campaignScope, 'node_type']),
+  ),
+  bulk_create_ads: schema(['ads'], ['ads', 'ad_set_id'], {
+    ads: 'object_array',
+    ad_set_id: 'string',
+  }),
+  generate_ad_copy: schema([], ['prompt', 'offer_id', 'ad_set_id', 'count'], {
+    prompt: 'string',
+    offer_id: 'string',
+    ad_set_id: 'string',
+    count: 'number',
+  }),
+  get_daily_report_data: schema([], ['date', ...campaignScope], {
+    date: 'iso_date',
+    ...stringType(campaignScope),
+  }),
+
+  process_media: schema(
+    ['operation'],
+    [
+      'operation',
+      'url',
+      'video_url',
+      'audio_url',
+      'overlay_url',
+      'background_url',
+      'subtitle_url',
+      'subtitle_content',
+      'url2',
+      'inputs',
+      'duration_seconds',
+      'timestamp',
+      'frame_count',
+      'frame_interval_seconds',
+      'interval_seconds',
+      'max_frames',
+      'width',
+      'height',
+      'x',
+      'y',
+      'count',
+      'factor',
+      'strength',
+      'amount',
+      'angle',
+      'resolution',
+      'format',
+      'effect',
+      'transition',
+      'text',
+      'preset',
+    ],
+    {
+      operation: 'string',
+      url: 'string',
+      video_url: 'string',
+      audio_url: 'string',
+      overlay_url: 'string',
+      background_url: 'string',
+      subtitle_url: 'string',
+      subtitle_content: 'string',
+      url2: 'string',
+      inputs: 'object_array',
+      duration_seconds: 'number',
+      timestamp: 'number',
+      frame_count: 'number',
+      frame_interval_seconds: 'number',
+      interval_seconds: 'number',
+      max_frames: 'number',
+      width: 'number',
+      height: 'number',
+      x: 'number',
+      y: 'number',
+      count: 'number',
+      factor: 'number',
+      strength: 'number',
+      amount: 'number',
+      angle: 'number',
+      format: 'string',
+      resolution: 'string',
+      effect: 'string',
+      transition: 'string',
+      text: 'string',
+      preset: 'string',
+    },
+  ),
+
+  send_user_message: schema(
+    ['message'],
+    ['message', 'channel_id', 'user_id'],
+    stringType(['message', 'channel_id', 'user_id']),
+  ),
+  approve_agent_hire: schema(
+    ['agent_key'],
+    ['agent_key', 'campaign_id'],
+    stringType(['agent_key', 'campaign_id']),
+  ),
+  brainstorm_agents: schema(
+    ['brief'],
+    ['brief', 'campaign_id'],
+    stringType(['brief', 'campaign_id']),
+  ),
+  update_campaign: schema(
+    [],
+    ['campaign_id', 'name', 'description', 'status'],
+    stringType(['campaign_id', 'name', 'description', 'status']),
+  ),
+  save_member_note: schema(
+    ['member_id', 'note'],
+    ['member_id', 'note', ...campaignScope],
+    stringType(['member_id', 'note', ...campaignScope]),
+  ),
+  get_member_notes: schema(
+    ['member_id'],
+    ['member_id', ...campaignScope],
+    stringType(['member_id', ...campaignScope]),
+  ),
+
+  supabase_list_tables: schema(['project_id'], ['project_id'], stringType(['project_id'])),
+  supabase_run_sql: schema(
+    ['project_id', 'query'],
+    ['project_id', 'query'],
+    stringType(['project_id', 'query']),
+  ),
+  supabase_create_table: schema(
+    ['project_id', 'table_name', 'columns'],
+    ['project_id', 'table_name', 'columns', 'enable_rls'],
+    { project_id: 'string', table_name: 'string', columns: 'object_array', enable_rls: 'boolean' },
+  ),
+  supabase_insert_rows: schema(['project_id', 'table', 'rows'], ['project_id', 'table', 'rows'], {
+    project_id: 'string',
+    table: 'string',
+    rows: 'object_array',
+  }),
+  supabase_update_rows: schema(
+    ['project_id', 'table', 'primary_keys', 'data'],
+    ['project_id', 'table', 'primary_keys', 'data'],
+    { project_id: 'string', table: 'string', primary_keys: 'object', data: 'object' },
+  ),
+  supabase_delete_rows: schema(
+    ['project_id', 'table', 'primary_keys'],
+    ['project_id', 'table', 'primary_keys'],
+    { project_id: 'string', table: 'string', primary_keys: 'object' },
+  ),
+}

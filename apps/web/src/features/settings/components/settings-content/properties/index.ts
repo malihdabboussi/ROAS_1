@@ -1,0 +1,1 @@
+export { PropertiesPageContainer } from './PropertiesPageContainer'

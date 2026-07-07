@@ -1,0 +1,225 @@
+{
+  "project": "Multi-Agent Organization MVP (Manager + Copywriter + Designer)",
+  "branchName": "current",
+  "description": "Build the first reliable Mission Control MVP in Vibey Manage using BullMQ as control plane and OpenClaw as execution plane with 3 agents (manager, copywriter, designer).",
+  "recommendedAgents": 3,
+  "context": {
+    "currentProblem": "Nexus-style multi-agent execution is not reliable enough (cron-only heartbeats, weak retry/timeout/idempotency), and Vibey Manage has no mission control flow yet.",
+    "desiredState": "A user can submit a mission in Manage, the queue dispatches manager then worker reliably, progress is visible in UI, retries are automatic, and completed output is persisted.",
+    "architectureGoal": "Keep agents in OpenClaw and add reliability in BullMQ/NestJS with mission state machine, idempotency, timeout, and correlation IDs end-to-end, while enforcing Controller->Service->Repository boundaries, feature isolation, and standard guard/validation patterns."
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create mission domain schema",
+      "description": "As the system, I need mission tables and state fields so mission lifecycle is persisted and queryable.",
+      "acceptanceCriteria": [
+        "Supabase migration creates missions table with status enum-like constraint: queued, dispatching, running, done, failed, dead_letter",
+        "Supabase migration creates org_agents table with seeded agents: manager, copywriter, designer",
+        "Supabase migration creates mission_logs table linked to mission_id for timeline events",
+        "missions includes idempotency_key and correlation_id fields",
+        "RLS or ownership rules are aligned with current user-scoped manage model",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [],
+      "notes": "Keep schema minimal for MVP; avoid dead-letter UI schema complexity beyond required fields."
+    },
+    {
+      "id": "US-002",
+      "title": "Add API module for missions and org agents",
+      "description": "As the Manage frontend, I need mission APIs to create, list, view, and track missions.",
+      "acceptanceCriteria": [
+        "NestJS module created in apps/api for missions with routes for create mission, list missions, get mission detail, and mission logs",
+        "Controller methods use guard pattern consistent with backend modules: AuthGuard + RoleGuard (+ ThrottlerGuard if used in module) with power/admin access",
+        "All request bodies, params, and query inputs in new endpoints use Zod DTO validation (via ZodValidationPipe or existing project equivalent)",
+        "Create mission endpoint generates correlation_id and idempotency_key",
+        "API persists mission with initial status queued and enqueues queue job trigger contract payload",
+        "Endpoint for internal progress callback exists for agent/worker updates to mission status and logs",
+        "Code follows strict layering: controllers handle HTTP only, services contain business logic, repositories/integrations contain data/external IO",
+        "Feature isolation is preserved: new mission APIs and services do not modify unrelated feature modules",
+        "Manage role guard behavior matches existing power/admin pattern",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-001"
+      ],
+      "notes": "Reuse existing backend auth conventions from tasks/users modules."
+    },
+    {
+      "id": "US-003",
+      "title": "Implement queue missions processor",
+      "description": "As the platform, I need BullMQ to reliably dispatch mission jobs to OpenClaw and manage retries/timeouts.",
+      "acceptanceCriteria": [
+        "Queue worker adds MissionsModule and processor for mission dispatch jobs",
+        "Queue worker module follows backend architecture layering (controller/trigger -> service logic -> integration client access as applicable)",
+        "Processor transitions mission statuses through queued -> dispatching -> running -> done|failed|dead_letter",
+        "Processor calls OpenClaw gateway chat completions endpoint with mission session key and correlation metadata",
+        "Job timeout is enforced at 5 minutes for MVP",
+        "Retries use existing BullMQ configuration (3 attempts, exponential backoff) and persist retry_count/log events",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [
+        "US-002"
+      ],
+      "notes": "Control plane owns reliability; OpenClaw remains execution plane."
+    },
+    {
+      "id": "US-004",
+      "title": "Register and configure three OpenClaw agents",
+      "description": "As the execution layer, I need manager/copywriter/designer agents to run with distinct roles and tool scopes.",
+      "acceptanceCriteria": [
+        "OpenClaw config includes manager, copywriter, and designer agents",
+        "Each agent has dedicated workspace path and role prompt/skills reference",
+        "Session key pattern includes user_id and mission_id for isolation",
+        "Manager prompt includes explicit routing rule between copywriter and designer based on request type",
+        "Agents can post progress/completion through internal callback endpoint contract",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": true,
+      "dependsOn": [
+        "US-003"
+      ],
+      "notes": "No NeuralSnap brain integration in MVP."
+    },
+    {
+      "id": "US-005",
+      "title": "Support manager to worker delegation",
+      "description": "As a manager agent, I need to create worker sub-missions so routing is real and observable.",
+      "acceptanceCriteria": [
+        "Manager can create a child mission for copywriter OR designer via internal API/queue contract",
+        "Child mission references parent mission id",
+        "Mission logs show delegation decision event with selected worker agent",
+        "Parent mission status waits for child result and then finalizes",
+        "Failure in child mission is surfaced to parent mission with reason",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": true,
+      "dependsOn": [
+        "US-003",
+        "US-004"
+      ],
+      "notes": "Single level delegation only in MVP."
+    },
+    {
+      "id": "US-006",
+      "title": "Build Manage mission inbox UI",
+      "description": "As a power/admin user, I need a mission inbox to submit tasks and view statuses.",
+      "acceptanceCriteria": [
+        "Manage page contains quick capture input to create mission",
+        "Mission list shows status chips and latest updated time",
+        "Mission row displays assigned/current agent when available",
+        "Frontend feature structure follows project architecture: smart container in feature containers and presentational pieces in feature components",
+        "No cross-feature imports are introduced; shared logic uses lib/ or shared components per project architecture",
+        "User-facing text in this feature follows Vibey voice and is centralized in feature message config where appropriate",
+        "UI handles loading/empty/error states consistently with existing Manage components",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": true,
+      "dependsOn": [
+        "US-002"
+      ],
+      "notes": "MVP UI can live under a new Manage route (mission control) without replacing current dashboard.",
+      "visualVerification": {
+        "url": "http://localhost:3000/mission-control",
+        "requiresLogin": true,
+        "lookFor": "Mission quick capture input, mission list rows with status, and no broken layout in Manage shell."
+      }
+    },
+    {
+      "id": "US-007",
+      "title": "Show mission detail and timeline",
+      "description": "As a user, I need to inspect mission progress and output to trust autopilot behavior.",
+      "acceptanceCriteria": [
+        "Mission detail view shows summary, current status, and final output",
+        "Timeline shows mission_logs entries in descending time order",
+        "Timeline includes queue events, delegation events, and completion/failure events",
+        "Retry count and failure reason are visible when applicable",
+        "User-facing labels/messages in mission detail follow Vibey voice conventions",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": true,
+      "dependsOn": [
+        "US-006"
+      ],
+      "notes": "No dead-letter operation controls yet; read-only visibility is enough.",
+      "visualVerification": {
+        "url": "http://localhost:3000/mission-control",
+        "requiresLogin": true,
+        "lookFor": "Selecting a mission reveals detailed timeline and output panel."
+      }
+    },
+    {
+      "id": "US-008",
+      "title": "Add agent status panel for three agents",
+      "description": "As a user, I need to see whether manager/copywriter/designer are online, idle, or working.",
+      "acceptanceCriteria": [
+        "Mission control page shows 3 agent cards: manager, copywriter, designer",
+        "Each card displays current status (online/idle/working/offline) from backend data",
+        "Card status updates without full page reload (polling or existing realtime pattern)",
+        "Agent panel labels/tooltips follow feature message config + Vibey voice conventions",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": true,
+      "dependsOn": [
+        "US-002",
+        "US-006"
+      ],
+      "notes": "Keep status source simple; no full health dashboard in MVP.",
+      "visualVerification": {
+        "url": "http://localhost:3000/mission-control",
+        "requiresLogin": true,
+        "lookFor": "Three agent cards with clearly distinguishable status indicators."
+      }
+    },
+    {
+      "id": "US-009",
+      "title": "Enforce idempotency and correlation tracing",
+      "description": "As operators, we need duplicate protection and traceability across API, queue, gateway, and logs.",
+      "acceptanceCriteria": [
+        "Duplicate create requests with same idempotency_key do not create duplicate missions",
+        "correlation_id is persisted and propagated through mission, queue job payload, and gateway request metadata",
+        "mission_logs contain correlation_id for every lifecycle event",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": true,
+      "dependsOn": [
+        "US-002",
+        "US-003"
+      ],
+      "notes": "MVP can use DB uniqueness on idempotency_key scoped by user."
+    },
+    {
+      "id": "US-010",
+      "title": "Validate MVP success path and retry path",
+      "description": "As the team, we need proof that the happy path and controlled failure path both work end-to-end.",
+      "acceptanceCriteria": [
+        "Happy path test: mission routes manager -> copywriter and completes with visible output in UI",
+        "Happy path test: mission routes manager -> designer and completes with visible output in UI",
+        "Failure path test: simulated worker failure triggers retries and final status is visible",
+        "Simple mission completes within 60 seconds in local/dev environment target",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [
+        "US-005",
+        "US-007",
+        "US-008",
+        "US-009"
+      ],
+      "notes": "This story is the MVP gate; do not expand scope before this passes."
+    }
+  ]
+}

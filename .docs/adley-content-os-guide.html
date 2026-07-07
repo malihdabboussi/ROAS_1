@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adley Content OS - Agent Team Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  @page { margin: 0; size: letter; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #0a0a0a;
+    --white: #ffffff;
+    --gray-50: #fafafa;
+    --gray-100: #f4f4f5;
+    --gray-200: #e4e4e7;
+    --gray-300: #d4d4d8;
+    --gray-400: #a1a1aa;
+    --gray-500: #71717a;
+    --gray-600: #52525b;
+    --gray-700: #3f3f46;
+    --gray-800: #27272a;
+    --gray-900: #18181b;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --green: #16a34a;
+    --blue: #2563eb;
+    --amber: #d97706;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--gray-900);
+    background: var(--white);
+    line-height: 1.6;
+    font-size: 14px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 48px 56px;
+    page-break-after: always;
+  }
+
+  .page:last-child { page-break-after: auto; }
+
+  /* Cover Page */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 80px 56px;
+    background: var(--black);
+    color: var(--white);
+  }
+
+  .cover-badge {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 32px;
+    font-weight: 700;
+  }
+
+  .cover h1 {
+    font-size: 52px;
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -1.5px;
+    margin-bottom: 24px;
+  }
+
+  .cover h1 span { color: var(--red); }
+
+  .cover-subtitle {
+    font-size: 18px;
+    color: var(--gray-400);
+    max-width: 520px;
+    line-height: 1.6;
+    margin-bottom: 48px;
+  }
+
+  .cover-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-500);
+    letter-spacing: 1px;
+  }
+
+  .cover-meta span { color: var(--gray-400); }
+
+  /* Section Headers */
+  .section-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--red);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  h2 {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+
+  h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    margin-top: 28px;
+  }
+
+  h4 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    margin-top: 20px;
+  }
+
+  .section-lead {
+    font-size: 15px;
+    color: var(--gray-600);
+    margin-bottom: 32px;
+    max-width: 600px;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 32px 0;
+  }
+
+  /* Agent Cards */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  .agent-card {
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 20px;
+    background: var(--gray-50);
+  }
+
+  .agent-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .agent-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .agent-dot.vera { background: var(--blue); }
+  .agent-dot.jett { background: var(--amber); }
+  .agent-dot.tessa { background: var(--green); }
+  .agent-dot.rio { background: var(--red); }
+
+  .agent-name {
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: capitalize;
+  }
+
+  .agent-role {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .agent-card p {
+    font-size: 13px;
+    color: var(--gray-600);
+    line-height: 1.5;
+  }
+
+  .agent-skills-list {
+    list-style: none;
+    margin-top: 10px;
+  }
+
+  .agent-skills-list li {
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    color: var(--gray-700);
+    padding: 3px 0;
+  }
+
+  .agent-skills-list li::before {
+    content: "→ ";
+    color: var(--red);
+  }
+
+  /* Skill Blocks */
+  .skill-block {
+    margin: 28px 0;
+    page-break-inside: avoid;
+  }
+
+  .skill-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .skill-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    background: var(--gray-900);
+    color: var(--white);
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  .skill-agent-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 1px;
+  }
+
+  .skill-description {
+    font-size: 14px;
+    color: var(--gray-600);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  /* Feature Lists */
+  .feature-list {
+    list-style: none;
+    margin: 12px 0;
+  }
+
+  .feature-list li {
+    padding: 6px 0;
+    padding-left: 20px;
+    position: relative;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  .feature-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 13px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--red);
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gray-500);
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--gray-900);
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: top;
+  }
+
+  /* Workflow Pipeline */
+  .pipeline {
+    margin: 24px 0;
+  }
+
+  .pipeline-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .pipeline-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--gray-900);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .pipeline-number.human {
+    background: var(--white);
+    color: var(--gray-900);
+    border: 2px solid var(--gray-900);
+  }
+
+  .pipeline-content { flex: 1; }
+
+  .pipeline-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+
+  .pipeline-meta {
+    font-size: 12px;
+    color: var(--gray-500);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .pipeline-desc {
+    font-size: 13px;
+    color: var(--gray-600);
+    margin-top: 4px;
+  }
+
+  .human-gate-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--amber);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  /* Example Blocks */
+  .example-block {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.6;
+    font-family: 'Space Mono', monospace;
+    white-space: pre-wrap;
+    page-break-inside: avoid;
+  }
+
+  .example-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* CTA Section */
+  .cta-block {
+    background: var(--gray-900);
+    color: var(--white);
+    border-radius: 12px;
+    padding: 32px;
+    margin: 24px 0;
+  }
+
+  .cta-block h3 {
+    color: var(--white);
+    margin-top: 0;
+    font-size: 22px;
+  }
+
+  .cta-block p {
+    color: var(--gray-400);
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  .cta-list {
+    list-style: none;
+  }
+
+  .cta-list li {
+    padding: 6px 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--gray-300);
+  }
+
+  .cta-list li::before {
+    content: "/ ";
+    color: var(--red);
+    font-weight: 700;
+  }
+
+  /* Frameworks Reference */
+  .framework-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .framework-item {
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .framework-name {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .framework-source {
+    font-size: 11px;
+    color: var(--gray-500);
+  }
+
+  p { margin-bottom: 12px; }
+
+  @media print {
+    .page { padding: 40px 48px; }
+    .cover { padding: 60px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <div class="cover-badge">Vibey Content Engine</div>
+  <h1>Your Content <span>OS</span> Is Live.</h1>
+  <p class="cover-subtitle">
+    4 agents. 8 skills. 3 workflows.<br>
+    Everything you need to go from idea to posted, with your brand voice locked in and your team coordinated automatically.
+  </p>
+  <div class="cover-meta">
+    PREPARED FOR <span>ADLEY KINSMAN</span> &nbsp;|&nbsp; APRIL 2026 &nbsp;|&nbsp; VIBEY
+  </div>
+</div>
+
+<!-- PAGE 2: WHAT WE BUILT -->
+<div class="page">
+  <div class="section-number">01 — Overview</div>
+  <h2>What We Built</h2>
+  <p class="section-lead">
+    Your content production pipeline is now powered by 4 specialized agents, each handling a stage of your workflow. They share a unified Brand North Star so every piece of content, whether it's a reel script, newsletter, or repurposed LinkedIn post, sounds like you and builds toward the same brand.
+  </p>
+
+  <div class="agent-grid">
+    <div class="agent-card">
+      <div class="agent-card-header">
+        <div class="agent-dot vera"></div>
+        <div>
+          <div class="agent-name">Vera</div>
+          <div class="agent-role">Ideation + Scripting</div>
+        </div>
+      </div>
+      <p>Generates ideas, writes scripts in your voice, fills pillar gaps, and drafts newsletters. Knows your frameworks (SRS, STD, 5P) and scores every idea before it reaches you.</p>
+      <ul class="agent-skills-list">
+        <li>Brand North Star</li>
+        <li>Content Ideation</li>
+        <li>Newsletter Writing</li>
+      </ul>
+    </div>
+
+    <div class="agent-card">
+      <div class="agent-card-header">
+        <div class="agent-dot jett"></div>
+        <div>
+          <div class="agent-name">Jett</div>
+          <div class="agent-role">Filming + Footage</div>
+        </div>
+      </div>
+      <p>Manages your weekly filming slate, Google Drive folders, pre-shoot checklists, and content buffer. Coordinates the logistics between approved scripts and uploaded footage.</p>
+      <ul class="agent-skills-list">
+        <li>Filming Operations</li>
+      </ul>
+    </div>
+
+    <div class="agent-card">
+      <div class="agent-card-header">
+        <div class="agent-dot tessa"></div>
+        <div>
+          <div class="agent-name">Tessa</div>
+          <div class="agent-role">Editing + Review</div>
+        </div>
+      </div>
+      <p>Assigns the right editor (Kendall, Leah, or Chia) based on content type and workload. Translates your feedback into structured editor notes and manages revision cycles.</p>
+      <ul class="agent-skills-list">
+        <li>Editing & Review Management</li>
+      </ul>
+    </div>
+
+    <div class="agent-card">
+      <div class="agent-card-header">
+        <div class="agent-dot rio"></div>
+        <div>
+          <div class="agent-name">Rio</div>
+          <div class="agent-role">Posting + Distribution</div>
+        </div>
+      </div>
+      <p>Builds your posting calendar, tracks performance metrics, identifies top performers, and generates repurposed derivatives across channels. Coordinates with Chia for posting.</p>
+      <ul class="agent-skills-list">
+        <li>Content Scheduling</li>
+        <li>Content Analytics</li>
+        <li>Repurposing Engine</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: THE 8 SKILLS (Part 1) -->
+<div class="page">
+  <div class="section-number">02 — Skills</div>
+  <h2>The 8 Skills</h2>
+  <p class="section-lead">
+    Each skill is a set of specific instructions, frameworks, and processes that an agent uses to do its job. Here's what each one does and why it matters.
+  </p>
+
+  <div class="skill-block">
+    <div class="skill-header">
+      <span class="skill-tag">brand-north-star</span>
+      <span class="skill-agent-tag">ON VERA</span>
+    </div>
+    <h3>Brand North Star</h3>
+    <p class="skill-description">The foundation everything else builds on. This encodes your brand identity as rules, not vibes, so every piece of content passes through the same filter.</p>
+
+    <h4>What's Inside</h4>
+    <ul class="feature-list">
+      <li><strong>Voice DNA</strong> — Your Entertainer-Strategist archetype, 4 tone registers (Comedic, Inspiring, Educational, Promotional), sentence patterns, vocabulary rules, and 18 anti-slop filters that catch generic AI-sounding output</li>
+      <li><strong>Content Pillars + Ratios</strong> — 5 pillars (Humor, Motivation, Promotion, BTS, Authority) each targeting 20% of monthly output. Auto-flags when any pillar drifts below 15% or above 30%</li>
+      <li><strong>Framework Library</strong> — SRS (8 archetypes), STD Method, 5P Relatability Engine, Shareability Framework (5 DM Triggers), 6 Viral Hook Styles, Hormozi's Hook-Retain-Reward</li>
+      <li><strong>Tags Taxonomy</strong> — Difficulty (easy/medium/hard/airplane/location), funnel position (TOF/BOFU), urgency (none/scheduled/brand-deal), platform hints</li>
+    </ul>
+
+    <div class="example-block">
+      <span class="example-label">How it works</span>
+Idea: "POV: Your algorithm coach finds out you're still posting at peak hours"
+Pillar: Authority (17% this month — below 20% target, FILL)
+Framework: SRS Pattern Interrupt + Comedic register
+DM Triggers: "This is so me" + "Makes me look smart for sharing"
+Difficulty: easy (single setup, no props)
+Score: HIGH PRIORITY (fills pillar gap + hits 2 triggers)</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="skill-block">
+    <div class="skill-header">
+      <span class="skill-tag">content-ideation</span>
+      <span class="skill-agent-tag">ON VERA</span>
+    </div>
+    <h3>Content Ideation</h3>
+    <p class="skill-description">Generates, scores, and manages your content idea pipeline. Every idea gets ICE-scored and tagged before it reaches you.</p>
+
+    <h4>4 Idea Generation Methods</h4>
+    <table>
+      <tr>
+        <th>Method</th>
+        <th>Trigger</th>
+        <th>What Happens</th>
+      </tr>
+      <tr>
+        <td><strong>Inspiration Adaptation</strong></td>
+        <td>You send a video or link</td>
+        <td>Extracts the structure (not the topic), maps to an SRS archetype, rewrites in your voice</td>
+      </tr>
+      <tr>
+        <td><strong>Pillar Gap Filling</strong></td>
+        <td>Agent-initiated</td>
+        <td>Checks 30-day pillar ratios, generates 3-5 ideas for underrepresented pillars</td>
+      </tr>
+      <tr>
+        <td><strong>Brand Deal Pre-Planning</strong></td>
+        <td>Calendar-driven</td>
+        <td>Works backwards from deal date (script 14 days, film 10, edit 7) and generates natural integration ideas</td>
+      </tr>
+      <tr>
+        <td><strong>5-Question Extraction</strong></td>
+        <td>You drop a raw topic</td>
+        <td>Extracts 5+ angles: teach, observe, contrarian, deeper story, listicle. One idea becomes five.</td>
+      </tr>
+    </table>
+
+    <h4>ICE Scoring</h4>
+    <p>Impact (1-10) × Confidence (1-10) × Ease (1-10) = Score. Above 500 = prioritize. Below 200 = backlog.</p>
+  </div>
+</div>
+
+<!-- PAGE 4: SKILLS (Part 2) -->
+<div class="page">
+  <div class="skill-block">
+    <div class="skill-header">
+      <span class="skill-tag">newsletter-writing</span>
+      <span class="skill-agent-tag">ON VERA</span>
+    </div>
+    <h3>Newsletter Writing</h3>
+    <p class="skill-description">Research-to-draft pipeline for your weekly newsletter. Modeled on the Codie Sanchez approach, adapted for your attention economy positioning.</p>
+
+    <h4>5-Section Structure</h4>
+    <table>
+      <tr><th>Section</th><th>Purpose</th></tr>
+      <tr><td><strong>Opener</strong></td><td>Punchy hook. Strong opinion or striking contrast. 2-3 sentences. No "hey guys" energy.</td></tr>
+      <tr><td><strong>The Deep Dive</strong></td><td>One core idea, full treatment: context, proof, a framework, and one clear CTA.</td></tr>
+      <tr><td><strong>The Attention Lab</strong></td><td>Deconstruct a trending piece of content — why it worked, what framework it used, how to replicate it.</td></tr>
+      <tr><td><strong>Curated Links</strong></td><td>3-5 annotated resources with your take on why each matters.</td></tr>
+      <tr><td><strong>CTA / P.S.</strong></td><td>Permission-giving close tied to Viralish offer, event, or community.</td></tr>
+    </table>
+
+    <p>The pipeline: signal collection (trending topics + your notes + performance data) → draft in your voice with anti-slop filtering → your review → publish to Beehiiv or ping team for Right Message → auto-queue Twitter/X + LinkedIn derivatives.</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="skill-block">
+    <div class="skill-header">
+      <span class="skill-tag">filming-operations</span>
+      <span class="skill-agent-tag">ON JETT</span>
+    </div>
+    <h3>Filming Operations</h3>
+    <p class="skill-description">Manages the logistics between "script approved" and "footage uploaded." Your content is planned and batched, not daily vlogging, so this skill handles slates, folders, checklists, and buffer tracking.</p>
+
+    <h4>Key Processes</h4>
+    <ul class="feature-list">
+      <li><strong>Weekly Slate</strong> (Monday 8am) — Pulls up to 20 ready-to-film pieces, balanced across pillars, difficulty, and funnel position. Groups similar setups on the same day. Presents for your approval.</li>
+      <li><strong>Pre-Shoot Checklist</strong> — Script link, shot list, props, location, Google Drive folder (RAW/ and EDIT/ subfolders) all verified before filming day.</li>
+      <li><strong>Post-Film Protocol</strong> — You mark "filmed," agent pings you to upload to the Drive link, monitors the RAW folder, auto-advances status when footage lands.</li>
+      <li><strong>Buffer Tracking</strong> — Maintains a 2-week buffer. Alerts you when it drops below 1 week. Critical alert below 4 pieces.</li>
+    </ul>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="skill-block">
+    <div class="skill-header">
+      <span class="skill-tag">editing-review</span>
+      <span class="skill-agent-tag">ON TESSA</span>
+    </div>
+    <h3>Editing & Review Management</h3>
+    <p class="skill-description">Assigns the right editor based on expertise and workload, manages review cycles, and translates your feedback into actionable editor notes.</p>
+
+    <h4>Editor Routing</h4>
+    <table>
+      <tr><th>Editor</th><th>Strength</th><th>Gets Assigned When</th></tr>
+      <tr><td><strong>Kendall</strong></td><td>Motion graphics, narrative, high-lift</td><td>Hard difficulty, complex edit notes</td></tr>
+      <tr><td><strong>Leah</strong></td><td>Clean cuts, simple edits, fast</td><td>Easy/medium difficulty, straightforward</td></tr>
+      <tr><td><strong>Chia</strong></td><td>Carousels, static design</td><td>Carousel content type</td></tr>
+    </table>
+
+    <p>Workload check: if matched editor has 5+ active edits, overflows to next-best. Max 3 revision rounds before escalation. Your verbal feedback gets translated into timestamped, actionable notes for editors.</p>
+  </div>
+</div>
+
+<!-- PAGE 5: SKILLS (Part 3) -->
+<div class="page">
+  <div class="skill-block">
+    <div class="skill-header">
+      <span class="skill-tag">content-scheduling</span>
+      <span class="skill-agent-tag">ON RIO</span>
+    </div>
+    <h3>Content Scheduling</h3>
+    <p class="skill-description">Maps approved content to platforms, builds weekly posting calendars, and coordinates with Chia for publishing.</p>
+
+    <h4>Platform Cadence</h4>
+    <table>
+      <tr><th>Type</th><th>Primary</th><th>Secondary</th><th>Cadence</th></tr>
+      <tr><td>Reels</td><td>Instagram</td><td>TikTok</td><td>3-5/week</td></tr>
+      <tr><td>Carousels</td><td>Instagram</td><td>LinkedIn</td><td>2-3/week</td></tr>
+      <tr><td>Text posts</td><td>Twitter/X</td><td>LinkedIn</td><td>2-3/week</td></tr>
+      <tr><td>Long-form</td><td>YouTube</td><td>—</td><td>1/week</td></tr>
+      <tr><td>Newsletter</td><td>Beehiiv</td><td>—</td><td>1/week</td></tr>
+    </table>
+
+    <p>Every Friday at 8am, generates next week's posting calendar. Balanced across pillars (no clustering all Authority on Monday). Brand-deal content locks dates first, everything else fills around it. Tags Chia in Notion after your approval.</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="skill-block">
+    <div class="skill-header">
+      <span class="skill-tag">content-analytics</span>
+      <span class="skill-agent-tag">ON RIO</span>
+    </div>
+    <h3>Content Analytics</h3>
+    <p class="skill-description">Tracks the metrics that actually matter, identifies top performers for repurposing, and monitors pillar distribution against targets.</p>
+
+    <h4>Metrics That Matter</h4>
+    <table>
+      <tr><th>Format</th><th>Metric</th><th>Target</th></tr>
+      <tr><td rowspan="4">Reels</td><td>Hook rate (viewers passing 3s)</td><td>&gt;70%</td></tr>
+      <tr><td>Completion rate (watching 90%+)</td><td>&gt;30%</td></tr>
+      <tr><td>Share-save ratio (per 100 plays)</td><td>&gt;5 combined</td></tr>
+      <tr><td>Non-follower reach %</td><td>&gt;50%</td></tr>
+      <tr><td rowspan="2">Carousels</td><td>Swipe-through rate (to last slide)</td><td>&gt;60%</td></tr>
+      <tr><td>Impression-to-reach ratio</td><td>&gt;1.5x</td></tr>
+    </table>
+
+    <p><strong>Top Performer</strong> = exceeds category average by 2x on any primary metric. Gets flagged for repurposing. Monthly pillar report shows distribution vs targets with recommendations.</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="skill-block">
+    <div class="skill-header">
+      <span class="skill-tag">repurposing-engine</span>
+      <span class="skill-agent-tag">ON RIO</span>
+    </div>
+    <h3>Repurposing Engine</h3>
+    <p class="skill-description">Takes your winning content and multiplies it across channels. One piece becomes 5-10 derivatives. You approve the batch, they get scheduled.</p>
+
+    <h4>The 3-Level Waterfall</h4>
+    <ul class="feature-list">
+      <li><strong>Level 1 — Format Swaps:</strong> Winning reel → carousel, winning carousel → reel script, newsletter → Twitter thread</li>
+      <li><strong>Level 2 — Angle Extraction (Justin Welsh):</strong> From one idea, generate a story, listicle, teardown, observation, contrarian take, past vs present, and prediction. Pick 2-3 that fit naturally.</li>
+      <li><strong>Level 3 — Channel Adaptation:</strong> Twitter/X (280-char standalone tweets), LinkedIn (framework posts), YouTube (5-15 min expanded scripts), Email (CTA snippets)</li>
+    </ul>
+
+    <p>Top performers 3+ months old get flagged for long-tail re-spins — your audience has grown since the original, new followers haven't seen it.</p>
+  </div>
+</div>
+
+<!-- PAGE 6: WORKFLOWS -->
+<div class="page">
+  <div class="section-number">03 — Workflows</div>
+  <h2>3 Workflows</h2>
+  <p class="section-lead">
+    Workflows chain the agents together. You trigger them, approve at key gates, and the agents handle the rest.
+  </p>
+
+  <h3>Workflow 1: Content OS</h3>
+  <p style="font-size:13px; color:var(--gray-600); margin-bottom:16px;">Trigger: send an idea, inspiration link, or say <code>/content</code></p>
+
+  <div class="pipeline">
+    <div class="pipeline-step">
+      <div class="pipeline-number">1</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Idea Intake + Script</div>
+        <div class="pipeline-meta">vera — content-ideation + brand-north-star</div>
+        <div class="pipeline-desc">Vera scores your idea, tags it, and writes a script in your voice. Or generates gap-filling ideas if you say "fill gaps."</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number human">2</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Filming Approval</div>
+        <div class="human-gate-badge">Your approval required</div>
+        <div class="pipeline-desc">Review the script. Approve to move forward, or give feedback for revisions.</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number">3</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Filming Prep</div>
+        <div class="pipeline-meta">jett — filming-operations</div>
+        <div class="pipeline-desc">Creates Drive folders, populates pre-shoot checklist, adds to filming slate.</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number human">4</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Film + Upload</div>
+        <div class="human-gate-badge">You film + upload raw footage</div>
+        <div class="pipeline-desc">Jett monitors the RAW folder. When footage lands, auto-advances to editing.</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number">5</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Edit Assignment</div>
+        <div class="pipeline-meta">tessa — editing-review</div>
+        <div class="pipeline-desc">Matches content to the right editor based on type, difficulty, and workload.</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number human">6</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Edit Review</div>
+        <div class="human-gate-badge">Your approval required</div>
+        <div class="pipeline-desc">Review the edit. Approve or give feedback. Tessa translates your notes for the editor.</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number">7</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Publish</div>
+        <div class="pipeline-meta">rio — content-scheduling</div>
+        <div class="pipeline-desc">Added to posting calendar. Chia tagged in Notion with dates and platform.</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number">8</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Track</div>
+        <div class="pipeline-meta">rio — content-analytics</div>
+        <div class="pipeline-desc">Metrics logged at 7 and 30 days. Top performers flagged for repurposing.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 7: WORKFLOWS 2 & 3 -->
+<div class="page">
+  <h3>Workflow 2: Newsletter OS</h3>
+  <p style="font-size:13px; color:var(--gray-600); margin-bottom:16px;">Trigger: say <code>/newsletter</code> or weekly scheduled cadence</p>
+
+  <div class="pipeline">
+    <div class="pipeline-step">
+      <div class="pipeline-number">1</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Research</div>
+        <div class="pipeline-meta">vera — content-ideation + social-intel</div>
+        <div class="pipeline-desc">Collects trending signals, competitor newsletters, your recent performance data, and any raw notes you dropped.</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number">2</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Write</div>
+        <div class="pipeline-meta">vera — newsletter-writing + brand-north-star</div>
+        <div class="pipeline-desc">Full 5-section draft: Opener, Deep Dive, Attention Lab, Curated Links, CTA. Anti-slop filtered.</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number human">3</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Review</div>
+        <div class="human-gate-badge">Your approval required</div>
+        <div class="pipeline-desc">Review the draft. Approve or mark up changes. Your revisions are tracked as coaching data.</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number">4</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Publish</div>
+        <div class="pipeline-meta">rio — platform-distribution</div>
+        <div class="pipeline-desc">Push to Beehiiv or ping team for Right Message. Auto-queues Twitter thread + LinkedIn post derivatives.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <h3>Workflow 3: Repurposing Waterfall</h3>
+  <p style="font-size:13px; color:var(--gray-600); margin-bottom:16px;">Trigger: say <code>/repurpose</code> or auto-triggered after posting</p>
+
+  <div class="pipeline">
+    <div class="pipeline-step">
+      <div class="pipeline-number">1</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Identify Source</div>
+        <div class="pipeline-meta">rio — content-analytics</div>
+        <div class="pipeline-desc">You name a piece, or Rio auto-identifies top performers (2x+ category average) that haven't been repurposed yet.</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number">2</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Generate Derivatives</div>
+        <div class="pipeline-meta">vera — brand-north-star + repurposing-engine</div>
+        <div class="pipeline-desc">3-level waterfall: format swaps, angle extraction (story, listicle, contrarian, etc.), and channel adaptation.</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number human">3</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Review Derivatives</div>
+        <div class="human-gate-badge">Your approval required</div>
+        <div class="pipeline-desc">Approve the full batch, pick specific ones, or give feedback on individual derivatives.</div>
+      </div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-number">4</div>
+      <div class="pipeline-content">
+        <div class="pipeline-title">Queue + Publish</div>
+        <div class="pipeline-meta">rio — content-scheduling + platform-distribution</div>
+        <div class="pipeline-desc">Approved derivatives scheduled across the week. Chia tagged in Notion for posting.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <h4>Channel Strategy</h4>
+  <table>
+    <tr><th>Channel</th><th>Role</th><th>Cadence</th></tr>
+    <tr><td><strong>Twitter/X</strong></td><td>Awareness — short-form from newsletter topics, test ideas</td><td>2-3/week</td></tr>
+    <tr><td><strong>LinkedIn</strong></td><td>Authority — expanded framework posts, contrarian takes</td><td>2-3/week</td></tr>
+    <tr><td><strong>Newsletter</strong></td><td>Trust — weekly deep-dive, belief-building engine</td><td>1/week</td></tr>
+    <tr><td><strong>YouTube</strong></td><td>Deep Authority — long-form, education, objection handling</td><td>1/week</td></tr>
+  </table>
+</div>
+
+<!-- PAGE 8: WHAT YOU CAN DO NOW -->
+<div class="page">
+  <div class="section-number">04 — Getting Started</div>
+  <h2>What You Can Do Now</h2>
+  <p class="section-lead">
+    Your agents are live. Here's exactly how to start using them.
+  </p>
+
+  <div class="cta-block">
+    <h3>Try These Commands</h3>
+    <p>Open Vibey and talk to your team. These workflows trigger automatically.</p>
+    <ul class="cta-list">
+      <li><strong>content</strong> — Start the full Content OS pipeline. Drop an idea, link, or say "fill gaps"</li>
+      <li><strong>newsletter</strong> — Kick off this week's newsletter research and draft</li>
+      <li><strong>repurpose</strong> — Take a top performer and generate 5-10 channel derivatives</li>
+    </ul>
+  </div>
+
+  <h3>Things to Try First</h3>
+  <ul class="feature-list">
+    <li><strong>Drop an inspiration link.</strong> Send Vera a reel you liked. She'll extract the structure, rewrite it in your voice, score it, and present a tagged script.</li>
+    <li><strong>Say "fill gaps."</strong> Vera checks your pillar ratios and generates ideas for any pillar that's underrepresented. Ranked by ICE score.</li>
+    <li><strong>Approve a script.</strong> When you approve, Jett auto-creates the Google Drive folder, builds the pre-shoot checklist, and queues it for the next filming slate.</li>
+    <li><strong>Give feedback on an edit.</strong> Say something like "it's shaky at the start and too slow." Tessa translates that into timestamped editor notes and sends to the right person via Notion.</li>
+    <li><strong>Ask "how are we doing."</strong> Rio pulls your monthly pillar report, top performers, and recommendations.</li>
+  </ul>
+
+  <div class="divider"></div>
+
+  <h3>What We Still Need From You</h3>
+  <p>Most of your brand voice and frameworks are already loaded from your existing Vibey setup. But to get the full system running, we need a few more inputs:</p>
+
+  <table>
+    <tr><th>Item</th><th>Why</th></tr>
+    <tr><td>Inspiration accounts list</td><td>What you like about each (tone, editing, format). Feeds into ideation.</td></tr>
+    <tr><td>Newsletter references</td><td>Examples of newsletters you like + reasons why. Sets the writing standard.</td></tr>
+    <tr><td>Brand deal calendar</td><td>Upcoming dates so the system can pre-plan content 14+ days ahead.</td></tr>
+    <tr><td>Beehiiv access details</td><td>API integration or manual workflow preference for newsletter publishing.</td></tr>
+    <tr><td>Right Message workflow</td><td>How your team uses it, so we can route newsletter publishing correctly.</td></tr>
+  </table>
+
+  <div class="divider"></div>
+
+  <h3>The Coaching Loop</h3>
+  <p>Every time you revise a script, the system learns. Your edits are tracked as coaching data. Over time, the scripts get closer to your voice with fewer revisions needed. The more you use it, the smarter it gets.</p>
+
+  <div class="divider"></div>
+
+  <div style="text-align:center; padding: 32px 0; color: var(--gray-400); font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px;">
+    BUILT WITH VIBEY &nbsp;|&nbsp; APRIL 2026
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1567 @@
+[
+  {
+    "id": "yc-l1-founder-retainer-cap",
+    "taskType": "answer_query",
+    "userPrompt": "How many client retainers does Foundry take per year on purpose, and why?",
+    "expectedOutcome": "States six retainers per year as a deliberate cap, tied to founder-hours-per-client staying above what makes Foundry different from a normal growth shop.",
+    "requiredContext": ["six retainers a year", "founder-hours-per-client", "on purpose"],
+    "forbiddenClaims": ["unlimited clients", "scale to ten plus retainers", "growth at any volume"],
+    "expectations": [
+      "States six retainers per year as a deliberate cap",
+      "Explains the cap protects founder-hours-per-client quality",
+      "Frames the limit as intentional, not accidental capacity",
+      "Does not claim unlimited or unconstrained client volume"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["user"],
+    "allowedActions": ["search_user_brain"],
+    "disallowedActions": ["search_brain_context"],
+    "brainTargets": [
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": true,
+    "tags": ["level-1", "foundry", "user-brain", "retainer-cap", "brain-verified"]
+  },
+  {
+    "id": "yc-l2-plinthworks-devi-homepage",
+    "taskType": "answer_query",
+    "userPrompt": "What did Devi Ramanathan say Plinthworks needs on the homepage instead of another generic API landing page?",
+    "expectedOutcome": "Quotes or paraphrases Devi's anchor: explain why Plinthworks does not page the on-call — not another page that explains what an API is.",
+    "requiredContext": [
+      "Devi Ramanathan",
+      "does not page the on-call",
+      "landing page",
+      "Plinthworks"
+    ],
+    "forbiddenClaims": [
+      "enterprise-grade API",
+      "seamless integration",
+      "world-class observability"
+    ],
+    "expectations": [
+      "References Devi Ramanathan's Plinthworks homepage direction",
+      "Centers on-call / does-not-page-the-on-call positioning instead of generic API copy",
+      "Contrasts with a generic API landing page pattern",
+      "Avoids enterprise-grade or seamless-integration SaaS clichés"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": ["search_user_brain", "search_brain_context"],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "validationSet": true,
+    "tags": ["level-2", "plinthworks", "customer-brain", "devi", "brain-verified"]
+  },
+  {
+    "id": "yc-l3-plinthworks-hero-draft",
+    "taskType": "write_with_context",
+    "userPrompt": "Draft one Plinthworks homepage hero line that passes Devi's positioning test and Foundry's three-call rule.",
+    "expectedOutcome": "A single hero line grounded in Devi's on-call positioning anchor and Foundry's rule that copy must be earned by customer quotes — engineer-direct voice, no generic SaaS adjectives.",
+    "requiredContext": [
+      "does not page the on-call",
+      "customer quote",
+      "three customer calls",
+      "Plinthworks"
+    ],
+    "forbiddenClaims": ["world-class", "seamless", "enterprise-grade", "revolutionary API"],
+    "expectations": [
+      "Provides a single hero line, not a full page dump",
+      "Grounds the line in Devi's on-call / does-not-page-the-on-call anchor",
+      "Reflects Foundry's three-customer-calls / customer-quote discipline",
+      "Uses engineer-direct voice without generic SaaS adjectives"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer", "user"],
+    "allowedActions": ["search_customer_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": true,
+    "tags": ["level-3", "plinthworks", "write", "positioning", "brain-verified"]
+  },
+  {
+    "id": "yc-l4-plinthworks-paid-organic-gate",
+    "taskType": "make_decision",
+    "userPrompt": "Leo wants to open Plinthworks paid spend this week. Should we spend now, and what gates apply before we do?",
+    "expectedOutcome": "Decision conditioned on organic validation first — citing Devi's pushback that organic has to move before paid, plus Foundry's fourteen-day organic validation standard before Leo opens a paid account. Does not invent mission-brief dollar caps or subreddit targets that are not in brain.",
+    "requiredContext": ["organic", "Devi", "paid", "validation", "Plinthworks"],
+    "forbiddenClaims": [
+      "$4k spend cap",
+      "CAC over $1200",
+      "r/sysadmin",
+      "launch paid immediately without validation"
+    ],
+    "expectations": [
+      "Conditions paid spend on organic validation first",
+      "Cites Devi's organic-before-paid pushback for Plinthworks",
+      "References Foundry's fourteen-day organic validation standard",
+      "Does not invent $4k caps, CAC thresholds, or r/sysadmin targets",
+      "Does not approve immediate paid launch without validation"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company", "customer", "user"],
+    "allowedActions": [
+      "search_company_brain",
+      "search_customer_brain",
+      "search_user_brain",
+      "search_brain_context"
+    ],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": true,
+    "tags": ["level-4", "plinthworks", "decision", "paid", "organic-gate", "brain-verified"]
+  },
+  {
+    "id": "yc-l5-saltline-day73-plan",
+    "taskType": "plan_next_steps",
+    "userPrompt": "Saltline is around day 73 on retainer. Eliza pushed back on paid for the holiday gift guide and scope is creeping. Plan what Riley and I should do this week.",
+    "expectedOutcome": "A practical week plan covering month-three retainer review, treating extra asks as change orders not tweaks, honoring Eliza's no-paid-on-gift-guide rule and launch-window-over-deadline principle, and routing pricing or scope pushback through Owen if needed.",
+    "requiredContext": [
+      "day 73",
+      "month three",
+      "change order",
+      "Eliza",
+      "holiday gift guide",
+      "scope-creep",
+      "launch window"
+    ],
+    "forbiddenClaims": [
+      "approve paid gift guide ads",
+      "treat scope creep as free",
+      "skip retainer review"
+    ],
+    "expectations": [
+      "Plans around month-three retainer review, not only day-73 urgency",
+      "Treats scope creep as change order, not free tweak",
+      "Honors Eliza's no-paid-on-gift-guide rule",
+      "Applies launch-window-over-deadline principle",
+      "Does not approve paid gift guide ads"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company", "customer", "user"],
+    "allowedActions": [
+      "search_company_brain",
+      "search_customer_brain",
+      "search_user_brain",
+      "search_brain_context"
+    ],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": true,
+    "tags": ["level-5", "saltline", "plan", "riley", "retainer-ops", "brain-verified"]
+  },
+  {
+    "id": "yc-u6-owen-pricing-before-reply",
+    "taskType": "answer_query",
+    "userPrompt": "A client is pushing back on pricing or asking for a discount. What do we do before anyone replies?",
+    "expectedOutcome": "Routes pricing pushback to Owen for a P&L pass before any reply goes out — the first reply sets the anchor.",
+    "requiredContext": ["Owen", "pricing", "P&L", "before anyone replies"],
+    "forbiddenClaims": [
+      "reply immediately with a discount",
+      "negotiate without Owen",
+      "match competitor pricing on the spot"
+    ],
+    "expectations": [
+      "Routes pricing pushback to Owen before any client reply",
+      "Mentions P&L review as part of the protocol",
+      "Emphasizes the first reply sets the pricing anchor",
+      "Does not advise immediate discounting or Owen-free negotiation"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company", "user"],
+    "allowedActions": ["search_company_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "tags": ["ops", "pricing", "owen", "company-brain", "user-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u7-three-customer-calls-rule",
+    "taskType": "answer_query",
+    "userPrompt": "What has to happen before Foundry opens a positioning or copy brief on a retainer?",
+    "expectedOutcome": "Three customer calls with verbatim quotes before any brief opens — the first line has to be earned by a customer quote, not invented at the keyboard.",
+    "requiredContext": ["three customer calls", "verbatim", "brief"],
+    "forbiddenClaims": [
+      "start writing from a template",
+      "skip customer calls",
+      "one call is enough"
+    ],
+    "expectations": [
+      "Requires three customer calls before opening a positioning or copy brief",
+      "Requires verbatim customer quotes, not invented copy",
+      "States the first line must be earned from customer voice",
+      "Does not allow skipping calls or starting from a template"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["user"],
+    "allowedActions": ["search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "tags": ["ops", "three-call-rule", "user-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u8-async-approval-walkthrough",
+    "taskType": "answer_query",
+    "userPrompt": "Why did we stop sending client decks for async Slack approval without a call first?",
+    "expectedOutcome": "Async deck approval without a fifteen-minute walkthrough produces the same clarifying questions, delays decisions 48-72 hours, and burns trust with founders.",
+    "requiredContext": ["async", "walkthrough", "trust", "48"],
+    "forbiddenClaims": [
+      "async approval is faster",
+      "skip the walkthrough call",
+      "email the deck and wait"
+    ],
+    "expectations": [
+      "Explains async Slack deck approval without a walkthrough failed in practice",
+      "References the fifteen-minute walkthrough requirement",
+      "Mentions 48-72 hour decision delays or trust damage with founders",
+      "Does not claim async-only approval is faster or sufficient"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company"],
+    "allowedActions": ["search_company_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      }
+    ],
+    "tags": ["ops", "async-approval", "company-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u9-organic-before-paid-standard",
+    "taskType": "answer_query",
+    "userPrompt": "What has to be true before Leo opens a paid account on any retainer?",
+    "expectedOutcome": "The hero line must live organically for a fourteen-day validation window on owned channels first — Leo will not open a paid account until that window is logged.",
+    "requiredContext": ["organic", "fourteen-day", "validation", "Leo", "paid account"],
+    "forbiddenClaims": [
+      "open paid immediately",
+      "skip organic validation",
+      "paid invents the message"
+    ],
+    "expectations": [
+      "Requires organic validation before Leo opens a paid account",
+      "References the fourteen-day validation window on owned channels",
+      "States the message must be tested organically before paid",
+      "Does not allow opening paid immediately or skipping organic validation"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company", "user"],
+    "allowedActions": ["search_company_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "tags": ["ops", "organic-gate", "company-brain", "user-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u10-friday-status-cadence",
+    "taskType": "answer_query",
+    "userPrompt": "Walk me through the Friday status note cadence for retainers.",
+    "expectedOutcome": "Lead operator drafts to Riley by 11am, Riley QA to founder by noon, founder reads 1-4pm, Riley sends by 4pm with edits in-doc.",
+    "requiredContext": ["Friday", "Riley", "11am", "4pm", "status note"],
+    "forbiddenClaims": ["send whenever ready", "skip Riley QA", "async only on Fridays"],
+    "expectations": [
+      "Describes lead operator draft to Riley by 11am",
+      "Includes Riley QA to founder by noon",
+      "Includes founder read window and Riley send by 4pm",
+      "Does not describe a send-whenever-ready or skip-QA cadence"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company"],
+    "allowedActions": ["search_company_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      }
+    ],
+    "tags": ["ops", "friday-cadence", "company-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u11-saltline-gift-guide-no-paid",
+    "taskType": "make_decision",
+    "userPrompt": "Leo wants to run paid ads against Saltline's holiday gift guide this December. Should we?",
+    "expectedOutcome": "No — Eliza will not allow paid against the holiday gift guide; bidding on gift in December means the brand failed the rest of the year.",
+    "requiredContext": ["Eliza", "gift guide", "paid", "December"],
+    "forbiddenClaims": [
+      "approve paid gift guide ads",
+      "boost the gift guide with spend",
+      "December paid is fine"
+    ],
+    "expectations": [
+      "Answers no to paid ads on the holiday gift guide",
+      "Cites Eliza's rule against paid on the gift guide",
+      "Explains December gift bidding signals brand failure for the year",
+      "Does not approve boosting the gift guide with paid spend"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "tags": ["saltline", "customer-brain", "paid", "brain-verified"]
+  },
+  {
+    "id": "yc-u12-saltline-launch-window-principle",
+    "taskType": "answer_query",
+    "userPrompt": "How does Eliza Marchetti think about launch windows versus hitting a hard deadline?",
+    "expectedOutcome": "She would rather miss a launch window than ship a campaign that smells like everyone else's brand — launch window beats arbitrary deadline pressure.",
+    "requiredContext": ["launch window", "Eliza", "miss", "deadline"],
+    "forbiddenClaims": [
+      "hit the deadline at all costs",
+      "ship on time regardless of quality",
+      "speed over brand fit"
+    ],
+    "expectations": [
+      "States Eliza prefers missing a launch window over off-brand shipping",
+      "Contrasts launch window with arbitrary hard-deadline pressure",
+      "Centers brand fit over speed-to-deadline",
+      "Does not advise hitting the deadline at all costs"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "tags": ["saltline", "customer-brain", "launch-window", "brain-verified"]
+  },
+  {
+    "id": "yc-u13-helmsmark-bloomberg-headline-test",
+    "taskType": "answer_query",
+    "userPrompt": "What is Wendell Brockman's test for whether a Helmsmark homepage headline is good enough?",
+    "expectedOutcome": "The headline has to survive a Bloomberg headline cycle — if it sounds like a Series A press release, it fails.",
+    "requiredContext": ["Bloomberg", "headline", "Wendell", "Helmsmark"],
+    "forbiddenClaims": [
+      "enterprise-grade",
+      "world-class fintech",
+      "Series A press release tone is fine"
+    ],
+    "expectations": [
+      "Describes Wendell Brockman's Bloomberg headline-cycle test",
+      "Applies the test to Helmsmark homepage headlines",
+      "Fails headlines that sound like Series A press release copy",
+      "Avoids enterprise-grade fintech clichés as passing copy"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "tags": ["helmsmark", "customer-brain", "headline", "brain-verified"]
+  },
+  {
+    "id": "yc-u14-helmsmark-adaeze-homepage-brief",
+    "taskType": "answer_query",
+    "userPrompt": "What did Adaeze Okonkwo say she wants the Helmsmark homepage to do instead of a brand refresh?",
+    "expectedOutcome": "Stop apologizing for being a finance tool — not another generic brand refresh deck.",
+    "requiredContext": ["Adaeze", "homepage", "finance tool", "apologizing"],
+    "forbiddenClaims": [
+      "full brand refresh",
+      "make it look like a consumer app",
+      "hide that it is finance"
+    ],
+    "expectations": [
+      "Quotes or paraphrases Adaeze Okonkwo's Helmsmark homepage direction",
+      "Centers stop apologizing for being a finance tool",
+      "Contrasts with a generic brand refresh approach",
+      "Does not recommend hiding that Helmsmark is a finance product"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "tags": ["helmsmark", "customer-brain", "positioning", "brain-verified"]
+  },
+  {
+    "id": "yc-u15-throughput-dominic-loom-not-whitepapers",
+    "taskType": "answer_query",
+    "userPrompt": "What content format does Dominic Ferraro at Throughput Group actually want from us?",
+    "expectedOutcome": "Short forwardable Loom-style content — his buyers forward Loom videos to their CEO, not white papers or thought-leadership PDFs.",
+    "requiredContext": ["Dominic", "Loom", "white paper", "Throughput"],
+    "forbiddenClaims": [
+      "long-form white paper",
+      "thought leadership PDF",
+      "LinkedIn article series only"
+    ],
+    "expectations": [
+      "Identifies Dominic Ferraro / Throughput Group as the buyer context",
+      "Recommends short forwardable Loom-style content",
+      "States buyers forward Loom videos to their CEO",
+      "Rejects long-form white papers or PDF thought leadership as the primary format"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "tags": ["throughput", "customer-brain", "content-format", "brain-verified"]
+  },
+  {
+    "id": "yc-u16-cloverkin-marisol-clinic-advertising",
+    "taskType": "make_decision",
+    "userPrompt": "Leo proposed a paid acquisition pilot for Cloverkin Health. Would Dr. Marisol Vega accept it?",
+    "expectedOutcome": "No — Cloverkin does not advertise to anyone they cannot see in a clinic; paid acquisition that breaks that rule breaks the brand promise.",
+    "requiredContext": ["Marisol", "clinic", "advertise", "Cloverkin"],
+    "forbiddenClaims": [
+      "approve broad paid social",
+      "run Meta ads to cold traffic",
+      "clinic rule does not apply"
+    ],
+    "expectations": [
+      "Answers no to Leo's broad paid acquisition pilot",
+      "Cites Dr. Marisol Vega's clinic-visibility advertising rule",
+      "Explains paid that breaks the clinic rule breaks the brand promise",
+      "Does not approve broad paid social or cold-traffic Meta ads"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "tags": ["cloverkin", "customer-brain", "paid", "brain-verified"]
+  },
+  {
+    "id": "yc-u17-cloverkin-continuity-is-the-product",
+    "taskType": "answer_query",
+    "userPrompt": "According to Marisol Vega, what is Cloverkin's actual product — not the app?",
+    "expectedOutcome": "Continuity — the same care team showing up week three, week six, week twenty; the brand has to prove continuity, not feature lists.",
+    "requiredContext": ["continuity", "care team", "Marisol", "Cloverkin"],
+    "forbiddenClaims": ["the app is the product", "feature list on the homepage", "AI dashboard"],
+    "expectations": [
+      "States continuity is Cloverkin's actual product, not the app",
+      "References the same care team showing up over weeks",
+      "Says the brand must prove continuity rather than feature lists",
+      "Does not center the app or AI dashboard as the product"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "tags": ["cloverkin", "customer-brain", "positioning", "brain-verified"]
+  },
+  {
+    "id": "yc-u18-almanac-tomas-course-page",
+    "taskType": "answer_query",
+    "userPrompt": "How should Almanac Learning's course page treat the people in the cohort, according to Tomás Reinhardt?",
+    "expectedOutcome": "Honor adults who took time out of a Tuesday — the page should respect the cohort, not try to impress them with marketing fluff.",
+    "requiredContext": ["Tomás", "cohort", "Almanac", "Tuesday"],
+    "forbiddenClaims": [
+      "impress them with hype",
+      "treat it like a SaaS landing page",
+      "ignore the cohort's time cost"
+    ],
+    "expectations": [
+      "References Tomás Reinhardt's Almanac course page guidance",
+      "Honors adults who took time out of a Tuesday for the cohort",
+      "Respects the cohort instead of marketing hype",
+      "Does not treat the page like a generic SaaS landing page"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "tags": ["almanac", "customer-brain", "course-page", "brain-verified"]
+  },
+  {
+    "id": "yc-u19-plinthworks-engineer-nod-before-post",
+    "taskType": "answer_query",
+    "userPrompt": "What has to happen before a Plinthworks marketing post can ship?",
+    "expectedOutcome": "Two engineers on Devi's team must nod at the technical claim — no post ships until engineering signs off on technical copy.",
+    "requiredContext": ["engineer", "technical claim", "Devi", "Plinthworks"],
+    "forbiddenClaims": [
+      "ship without engineering review",
+      "marketing decides alone",
+      "skip technical validation"
+    ],
+    "expectations": [
+      "Requires engineering sign-off on technical claims before shipping",
+      "References two engineers on Devi's team nodding at the claim",
+      "Applies to Plinthworks marketing posts specifically",
+      "Does not allow marketing to ship without engineering review"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "tags": ["plinthworks", "customer-brain", "engineering-review", "brain-verified"]
+  },
+  {
+    "id": "yc-u20-month-three-retainer-failure",
+    "taskType": "answer_query",
+    "userPrompt": "When do most retainers actually fail — month one or later?",
+    "expectedOutcome": "Month three, not month one — kickoff energy carries ~60 days; failure shows when novelty wears off and cadence slips; day-75 retainer review is non-negotiable.",
+    "requiredContext": ["month three", "not month one", "retainer", "day 75"],
+    "forbiddenClaims": [
+      "fail in month one",
+      "kickoff is the riskiest moment only",
+      "skip month-three review"
+    ],
+    "expectations": [
+      "States most retainers fail around month three, not month one",
+      "Explains kickoff energy carries roughly sixty days before cadence slips",
+      "References day-75 or month-three retainer review as non-negotiable",
+      "Does not claim month one is the primary failure point"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company", "user"],
+    "allowedActions": ["search_company_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "tags": ["ops", "retainer-ops", "company-brain", "user-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u21-plinthworks-readme-not-observability-ads",
+    "taskType": "answer_query",
+    "userPrompt": "Devi pushed back on buying ads for the word observability. What does she want Plinthworks to be found for instead?",
+    "expectedOutcome": "Devi wants to be found because the README is the cleanest one you read — not because Plinthworks buys ads for observability.",
+    "requiredContext": ["README is the cleanest", "observability", "Devi"],
+    "forbiddenClaims": ["buy ads for observability", "bid on observability", "enterprise-grade"],
+    "expectations": [
+      "References Devi Ramanathan's Q1 retro direction on observability ads",
+      "Centers the README as the discovery path instead of paid observability keywords",
+      "Does not recommend buying ads for the word observability",
+      "Avoids generic SaaS adjectives as the strategy"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["plinthworks", "customer-brain", "organic", "brain-verified"]
+  },
+  {
+    "id": "yc-u22-plinthworks-icp-series-b-platform",
+    "taskType": "answer_query",
+    "userPrompt": "Who is Plinthworks actually selling to now — and who did Devi say we have to stop writing for?",
+    "expectedOutcome": "The buyer is the head of platform at a Series B who has been paged twice this quarter — not indie devs anymore.",
+    "requiredContext": ["Series B who has been paged", "Devi", "indie devs"],
+    "forbiddenClaims": [
+      "indie devs are the buyer",
+      "sell to hobby developers",
+      "keep the indie funnel"
+    ],
+    "expectations": [
+      "States the buyer is head of platform at a Series B company",
+      "References being paged twice this quarter for the category",
+      "Says Plinthworks is not selling to indie devs anymore",
+      "Does not keep indie developers as the ICP"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer", "user"],
+    "allowedActions": ["search_customer_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["plinthworks", "icp", "customer-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u23-plinthworks-marcus-editorial-policy",
+    "taskType": "make_decision",
+    "userPrompt": "Priya wants more launch content for reach. Marcus closed the thought-leadership thread. Which direction wins for Plinthworks editorial?",
+    "expectedOutcome": "Marcus's line wins — if engineers would not read the posts, they waste Devi's time; that is the binding editorial policy.",
+    "requiredContext": ["engineers would not read", "Marcus", "Devi"],
+    "forbiddenClaims": [
+      "prioritize launch reach",
+      "thought-leadership blitz",
+      "engagement over pipeline"
+    ],
+    "expectations": [
+      "Sides with Marcus Holloway's editorial policy over reach-first launch content",
+      "States posts engineers would not read waste Devi's time",
+      "Treats the policy as binding even if undocumented",
+      "Does not recommend a thought-leadership volume push for reach"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer", "user"],
+    "allowedActions": ["search_customer_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["plinthworks", "editorial", "customer-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u24-saltline-olive-oil-personality-line",
+    "taskType": "write_with_context",
+    "userPrompt": "Draft one Saltline positioning sentence using Eliza's olive-oil-personality anchor from the brand book review.",
+    "expectedOutcome": "A single sentence grounded in Eliza's line about the customer annoyed that olive oil became a personality — Saltline takes the personality back out.",
+    "requiredContext": ["olive oil is now a personality", "Eliza", "bottle"],
+    "forbiddenClaims": ["premium pantry essentials", "curated", "wellness app tone"],
+    "expectations": [
+      "Provides one positioning sentence, not a paragraph dump",
+      "Uses Eliza Marchetti's olive-oil-personality anchor",
+      "Centers taking personality out of the bottle, not category clichés",
+      "Avoids curated or premium-pantry generic DTC language"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer", "user"],
+    "allowedActions": ["search_customer_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["saltline", "write", "positioning", "brain-verified"]
+  },
+  {
+    "id": "yc-u25-saltline-shoulder-season-calendar",
+    "taskType": "answer_query",
+    "userPrompt": "June rewrote Saltline's Q4 calendar. What is the calendar actually built around?",
+    "expectedOutcome": "Shoulder season is the calendar — Black Friday is not; seasonal cooking moments beat product-launch sprints.",
+    "requiredContext": ["shoulder season is the calendar", "June", "Black Friday"],
+    "forbiddenClaims": [
+      "Black Friday is the anchor",
+      "BFCM creative sprint",
+      "product launch calendar"
+    ],
+    "expectations": [
+      "States shoulder season drives the Saltline content calendar",
+      "Explicitly deprioritizes Black Friday as the calendar anchor",
+      "References June Kowalski's calendar rewrite",
+      "Does not center a BFCM creative sprint"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer", "user"],
+    "allowedActions": ["search_customer_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["saltline", "q4", "calendar", "brain-verified"]
+  },
+  {
+    "id": "yc-u26-saltline-third-email-not-pinterest",
+    "taskType": "answer_query",
+    "userPrompt": "Eliza says Pinterest does not pay Saltline's rent. Which lifecycle slot actually matters?",
+    "expectedOutcome": "The third email after the welcome — not Pinterest — is the revenue slot Eliza cares about.",
+    "requiredContext": ["Pinterest does not pay our rent", "Eliza", "third email"],
+    "forbiddenClaims": [
+      "Pinterest is the priority channel",
+      "invest in Pinterest reach",
+      "ignore lifecycle email"
+    ],
+    "expectations": [
+      "Quotes or paraphrases Eliza's Pinterest-does-not-pay-rent line",
+      "Identifies the third post-welcome email as the leaking revenue slot",
+      "Prioritizes lifecycle email over Pinterest",
+      "Does not recommend Pinterest as the primary growth lever"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["saltline", "lifecycle", "customer-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u27-helmsmark-controller-close-days-headline",
+    "taskType": "answer_query",
+    "userPrompt": "Adaeze rewrote Helmsmark's value prop after our first positioning draft. What number became the headline anchor?",
+    "expectedOutcome": "Controllers buy because the close took eleven days last quarter and they want six — not aspiration.",
+    "requiredContext": ["eleven days last quarter", "Adaeze", "controllers"],
+    "forbiddenClaims": [
+      "aspiration-led headline",
+      "AI-powered value prop",
+      "generic fintech transformation"
+    ],
+    "expectations": [
+      "References Adaeze Okonkwo's pushback on aspiration-led copy",
+      "Centers the eleven-day close as the headline anchor",
+      "Frames controllers as buyers who want a shorter close cycle",
+      "Does not recommend aspiration or AI-powered hero language"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer", "user"],
+    "allowedActions": ["search_customer_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["helmsmark", "positioning", "customer-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u28-helmsmark-wendell-kill-ai-powered",
+    "taskType": "make_decision",
+    "userPrompt": "Should we put AI-powered in the Helmsmark hero line Wendell is reviewing?",
+    "expectedOutcome": "No — Wendell killed AI-powered himself; CFOs wire money because the variance report is shorter, not because something is AI-powered.",
+    "requiredContext": ["variance report is shorter", "Wendell", "AI-powered"],
+    "forbiddenClaims": [
+      "approve AI-powered hero",
+      "lead with AI-powered",
+      "enterprise-grade fintech AI"
+    ],
+    "expectations": [
+      "Answers no to an AI-powered Helmsmark hero line",
+      "Cites Wendell Brockman killing the AI-powered line",
+      "Replaces hype with variance-report specificity",
+      "Does not approve AI-powered as the headline hook"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer", "user"],
+    "allowedActions": ["search_customer_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["helmsmark", "hero", "customer-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u29-cloverkin-lifecycle-send-window",
+    "taskType": "plan_next_steps",
+    "userPrompt": "Marisol will not send marketing email the day after a hard appointment. Plan the Cloverkin lifecycle send-window rules Sara should enforce this week.",
+    "expectedOutcome": "Plan honoring Marisol's bar: no marketing sends within 48 hours of any visit; losing the visit beats a mistimed inbox email.",
+    "requiredContext": ["hard appointment", "Marisol", "48 hours"],
+    "forbiddenClaims": [
+      "send immediately after visit",
+      "maximize email frequency",
+      "consumer lifecycle blitz"
+    ],
+    "expectations": [
+      "Plans a no-marketing-send window after hard appointments",
+      "References Marisol Vega's 48-hour send-window rule",
+      "Prioritizes patient trust over send volume",
+      "Does not recommend immediate post-visit marketing email"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["cloverkin", "lifecycle", "plan", "brain-verified"]
+  },
+  {
+    "id": "yc-u30-cloverkin-james-heart-rate-filter",
+    "taskType": "answer_query",
+    "userPrompt": "What test does Dr. James Ouedraogo use on Cloverkin patient-facing copy?",
+    "expectedOutcome": "Cut every word that does not lower the heart rate — patients read eligibility copy when they are scared.",
+    "requiredContext": ["lower the heart rate", "James", "Cloverkin"],
+    "forbiddenClaims": ["wellness journey", "magical", "frictionless onboarding"],
+    "expectations": [
+      "Describes Dr. James Ouedraogo's heart-rate filter for patient copy",
+      "Applies the test to scared patients reading eligibility content",
+      "Requires cutting words that raise anxiety",
+      "Does not use wellness-journey or magical category language"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["cloverkin", "copy", "customer-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u31-throughput-dominic-coo-homepage-brief",
+    "taskType": "answer_query",
+    "userPrompt": "What did Dominic Ferraro say Throughput's homepage has to fix for his COO?",
+    "expectedOutcome": "Make the homepage stop forcing the COO to apologize for Throughput's positioning in board prep — not a cosmetic redesign.",
+    "requiredContext": ["COO stop apologizing", "Dominic", "Throughput"],
+    "forbiddenClaims": ["cosmetic redesign only", "cool case studies", "McKinsey-style deck"],
+    "expectations": [
+      "References Dominic Ferraro's Throughput kickoff brief",
+      "Centers fixing COO board-prep embarrassment on positioning",
+      "Rejects a redesign-only framing",
+      "Does not position Throughput like a boutique case-study shop"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["throughput", "positioning", "customer-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u32-throughput-dominic-mckinsey-positioning",
+    "taskType": "make_decision",
+    "userPrompt": "Should we position Throughput like McKinsey or a boutique with cool case studies?",
+    "expectedOutcome": "No — Dominic said sell the firm a COO calls when the practice lead quit and the SOW is due Friday; not McKinsey or boutique case-study posturing.",
+    "requiredContext": ["McKinsey", "Dominic", "SOW is due Friday"],
+    "forbiddenClaims": [
+      "position like McKinsey",
+      "boutique case studies",
+      "thought leadership PDF"
+    ],
+    "expectations": [
+      "Rejects McKinsey-style positioning for Throughput",
+      "Rejects boutique case-study positioning",
+      "Uses Dominic Ferraro's emergency-SOW buyer frame",
+      "Does not recommend thought-leadership PDF positioning"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["throughput", "positioning", "decision", "brain-verified"]
+  },
+  {
+    "id": "yc-u33-almanac-tomas-sunday-review-brand",
+    "taskType": "answer_query",
+    "userPrompt": "Tomás says one email is the Almanac brand. Which one?",
+    "expectedOutcome": "The Sunday review email Tomás writes himself — everything else is the trailer.",
+    "requiredContext": ["Sunday review email", "Tomás", "Almanac"],
+    "forbiddenClaims": ["paid social is the brand", "course page hype", "limited seats urgency"],
+    "expectations": [
+      "Identifies Tomás Reinhardt's Sunday review email as the brand",
+      "States other touchpoints support that single email",
+      "References Almanac lifecycle architecture around the Sunday review",
+      "Does not center paid social or urgency lines as the brand"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["almanac", "lifecycle", "customer-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u34-almanac-tomas-cohort-size-constraint",
+    "taskType": "make_decision",
+    "userPrompt": "Enrollment is soft. Should Tomás fill Almanac's next cohort to fifty seats?",
+    "expectedOutcome": "No — Tomás would rather run twenty than fill fifty with the wrong twenty; cohort quality beats fill pressure.",
+    "requiredContext": ["cohort of twenty", "Tomás", "fifty"],
+    "forbiddenClaims": ["fill fifty seats", "maximize enrollment", "limited seats urgency"],
+    "expectations": [
+      "Answers no to filling a fifty-seat cohort for enrollment pressure",
+      "Cites Tomás Reinhardt's twenty-over-fifty constraint",
+      "Prioritizes cohort quality over seat count",
+      "Does not recommend limited-seats urgency tactics"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer"],
+    "allowedActions": ["search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["almanac", "cohort", "decision", "brain-verified"]
+  },
+  {
+    "id": "yc-u35-company-brand-must-move-spend",
+    "taskType": "answer_query",
+    "userPrompt": "When is a Foundry positioning doc actually brand work versus a Notion page?",
+    "expectedOutcome": "When it changes what we spend on — channels, paid words, or who we say no to within sixty days; if the spend sheet does not move, the deck did not work.",
+    "requiredContext": ["spend sheet does not move", "brand work", "sixty days"],
+    "forbiddenClaims": [
+      "deck alone is enough",
+      "positioning without spend change",
+      "logo refresh counts"
+    ],
+    "expectations": [
+      "States brand work must change spend or customer decisions",
+      "Uses the spend sheet does not move test",
+      "References the sixty-day redirect window after repositioning",
+      "Does not treat a positioning deck without spend impact as success"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company", "user"],
+    "allowedActions": ["search_company_brain", "search_user_brain", "search_brain_context"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["principle", "company-brain", "spend", "brain-verified"]
+  },
+  {
+    "id": "yc-u36-company-brain-not-vendor-frame",
+    "taskType": "answer_query",
+    "userPrompt": "How do our best clients describe Foundry versus their old agency?",
+    "expectedOutcome": "They want a working brain that holds customer interviews, brand book, and spend history in one opinionated place — not a deck-delivery vendor.",
+    "requiredContext": ["brain, not a vendor", "customer interviews", "spend history"],
+    "forbiddenClaims": ["deck-delivery agency", "files not opinions", "vendor relationship"],
+    "expectations": [
+      "Contrasts Foundry with deck-delivery or file-only agencies",
+      "Centers a working brain holding interviews, brand, and spend together",
+      "Uses client language about partner or opinions, not files",
+      "Does not frame Foundry as a traditional vendor"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company"],
+    "allowedActions": ["search_company_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["principle", "company-brain", "positioning", "brain-verified"]
+  },
+  {
+    "id": "yc-u37-company-brand-growth-same-loop",
+    "taskType": "answer_query",
+    "userPrompt": "Why does Foundry refuse to split brand and growth into two decks on a retainer?",
+    "expectedOutcome": "Brand and growth are one loop — same retainer, same operator, same Friday note; split decks produce positioning nobody runs ads against.",
+    "requiredContext": ["same loop", "brand", "Friday note"],
+    "forbiddenClaims": [
+      "separate brand deck and growth deck",
+      "brand-only retainer",
+      "growth without positioning"
+    ],
+    "expectations": [
+      "States brand and growth are the same conversation",
+      "References one retainer, one operator, one Friday note loop",
+      "Explains split decks create ads against unowned language",
+      "Does not recommend separate brand-only and growth-only decks"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company", "user"],
+    "allowedActions": ["search_company_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["principle", "company-brain", "brand-growth", "brain-verified"]
+  },
+  {
+    "id": "yc-u38-company-sow-retainer-project-mismatch",
+    "taskType": "answer_query",
+    "userPrompt": "Clients keep asking for the next deliverable around day sixty. What is wrong with our SOWs?",
+    "expectedOutcome": "SOWs promise retainer continuity but read like project quotes with monthly deliverable line items — the mismatch shows up around day sixty.",
+    "requiredContext": ["SOW reads like a project", "day 60", "change order"],
+    "forbiddenClaims": [
+      "SOW is fine as-is",
+      "deliverable list equals retainer",
+      "skip change orders"
+    ],
+    "expectations": [
+      "Identifies retainer-versus-project language mismatch in Foundry SOWs",
+      "References day-sixty next-deliverable friction",
+      "Mentions change-order vocabulary for scope creep",
+      "Does not claim monthly deliverable lists define the retainer loop"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company", "user"],
+    "allowedActions": ["search_company_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["principle", "sow", "company-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u39-plinthworks-strategy-design-gap-plan",
+    "taskType": "plan_next_steps",
+    "userPrompt": "Plinthworks bought strategy but Casey is shipping design hours. Plan how Owen and Riley should handle the scope gap before the rebrand ships.",
+    "expectedOutcome": "Plan routes through Owen's renegotiated SOW and a scope conversation with Plinthworks — strategy hours must catch up to design delivery, not silently widen the gap.",
+    "requiredContext": ["design hours", "Plinthworks", "Owen"],
+    "forbiddenClaims": [
+      "keep shipping design only",
+      "ignore strategy gap",
+      "free extra rebrand scope"
+    ],
+    "expectations": [
+      "Plans an Owen-led SOW or scope conversation for Plinthworks",
+      "Acknowledges strategy-versus-design hour imbalance",
+      "Does not recommend silently continuing design-heavy delivery",
+      "References renegotiated SOW work Owen is drafting"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company"],
+    "allowedActions": ["search_company_brain", "search_brain_context"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["plinthworks", "scope", "plan", "company-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u40-kickoff-slide-two-verbatim-quote",
+    "taskType": "answer_query",
+    "userPrompt": "What goes on slide 2 of every Foundry retainer kickoff deck?",
+    "expectedOutcome": "A verbatim customer quote with speaker role and call date — no paraphrase; Sara sources it from three-call prep and Casey designs the slide.",
+    "requiredContext": ["verbatim customer quote", "slide 2", "Sara"],
+    "forbiddenClaims": [
+      "paraphrased synthesis on slide 2",
+      "logo only on slide 2",
+      "skip customer quote"
+    ],
+    "expectations": [
+      "States slide 2 is a verbatim customer quote",
+      "Requires speaker role and date on the quote",
+      "Names Sara sourcing during three-call prep",
+      "Does not allow paraphrase or synthesis on slide 2"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company", "user"],
+    "allowedActions": ["search_company_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["ops", "kickoff", "company-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u41-plinthworks-rebrand-q3-q4-cutover",
+    "taskType": "make_decision",
+    "userPrompt": "Can we sunset Plinthworks' legacy mark the same day we ship the new site in Q3?",
+    "expectedOutcome": "No — ship new mark and site in Q3, keep legacy on docs and in-app through Q4, hard sunset January 1; no cohabitation past that date.",
+    "requiredContext": ["January 1", "Q3", "legacy mark"],
+    "forbiddenClaims": ["single-day cutover", "sunset legacy in Q3", "cohabitation forever"],
+    "expectations": [
+      "Rejects same-day legacy sunset with Q3 site ship",
+      "States Q3 ship for new mark and marketing site",
+      "Keeps legacy mark on docs and in-app through Q4",
+      "Names January 1 as the hard sunset date"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company", "user", "customer"],
+    "allowedActions": ["search_company_brain", "search_user_brain", "search_customer_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      },
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["plinthworks", "rebrand", "q3-q4", "brain-verified"]
+  },
+  {
+    "id": "yc-u42-we-love-it-24-hour-rule",
+    "taskType": "answer_query",
+    "userPrompt": "Riley green-lit a Saltline deck in thirty minutes and Sara caught drift the next morning. What rule did we add?",
+    "expectedOutcome": "No we love it in writing without twenty-four hours of read-back time — acknowledge receipt, pressure-test against the voice anchor, then respond.",
+    "requiredContext": ["we love it", "24 hours", "Riley"],
+    "forbiddenClaims": [
+      "reply enthusiastically in the first hour",
+      "instant green light",
+      "skip read-back"
+    ],
+    "expectations": [
+      "States the no-we-love-it-without-24-hours rule",
+      "References Riley's Saltline near-miss and Sara's next-morning catch",
+      "Requires read-back against the voice anchor before commitment",
+      "Does not allow immediate enthusiastic written approval"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company", "user"],
+    "allowedActions": ["search_company_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["ops", "approvals", "company-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u43-jules-monday-morning-test",
+    "taskType": "answer_query",
+    "userPrompt": "Jules keeps asking one question on every brief. What is it?",
+    "expectedOutcome": "Who is actually going to do this on Monday morning — if the answer is fuzzy, the brief is not finished.",
+    "requiredContext": ["Monday morning", "Jules", "brief"],
+    "forbiddenClaims": [
+      "ship polish without ownership",
+      "deck is finished without calendar",
+      "skip operator assignment"
+    ],
+    "expectations": [
+      "States Jules's Monday-morning test question",
+      "Requires naming who executes on Monday morning",
+      "Treats fuzzy ownership as an unfinished brief",
+      "Does not treat a polished deck without calendar as done"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["user"],
+    "allowedActions": ["search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["ops", "jules", "user-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u44-owen-new-hire-onboarding-protocol",
+    "taskType": "answer_query",
+    "userPrompt": "Owen ran the new-hire onboarding cleanly in week twelve. What are weeks one and two for a new partner?",
+    "expectedOutcome": "Week one: read all six retainer briefs and the full decision log end-to-end. Week two: sit on every kickoff and Friday status review — no owned deliverable until week three.",
+    "requiredContext": ["six retainer briefs", "week one", "Friday status"],
+    "forbiddenClaims": [
+      "own a deliverable on day three",
+      "skip reading briefs",
+      "start shipping in week one"
+    ],
+    "expectations": [
+      "Requires reading all six retainer briefs in week one",
+      "Requires sitting on kickoffs and Friday reviews in week two",
+      "Defers first owned deliverable until week three",
+      "Does not assign client deliverables in week one"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company"],
+    "allowedActions": ["search_company_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["ops", "onboarding", "owen", "company-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u45-leo-kill-criterion-hire",
+    "taskType": "answer_query",
+    "userPrompt": "Why did we hire Leo over the other performance marketing candidates?",
+    "expectedOutcome": "He was the only candidate who asked what the kill criterion is — that question should name every paid line item Foundry runs.",
+    "requiredContext": ["kill criterion", "Leo", "paid"],
+    "forbiddenClaims": [
+      "hire for channel expertise only",
+      "skip kill criteria",
+      "open paid without criteria"
+    ],
+    "expectations": [
+      "States Leo asked about the kill criterion in his interview",
+      "Connects kill criteria to every paid line item",
+      "Explains that question drove the hire decision",
+      "Does not recommend paid work without named kill criteria"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["user"],
+    "allowedActions": ["search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["ops", "leo", "paid", "user-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u46-friday-partner-sync-cadence",
+    "taskType": "answer_query",
+    "userPrompt": "What happens at 11am every Friday in the studio operating cadence?",
+    "expectedOutcome": "Partner sync — Garry, Nico, Jules, Owen review per-retainer health, next-two-weeks calendar, and escalations for forty-five minutes.",
+    "requiredContext": ["11am", "partner sync", "Friday"],
+    "forbiddenClaims": ["no fixed Friday meeting", "skip partner sync", "client calls at 11am"],
+    "expectations": [
+      "Places partner sync at 11am on Fridays",
+      "Includes Garry, Nico, Jules, and Owen in the sync",
+      "Covers retainer health and escalations",
+      "Does not describe an ad-hoc or skip-able Friday morning"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company"],
+    "allowedActions": ["search_company_brain", "search_brain_context"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["cadence", "friday", "company-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u47-maya-customer-quote-gate",
+    "taskType": "answer_query",
+    "userPrompt": "Maya blocked a brief from opening last week. What exact test did she use?",
+    "expectedOutcome": "Show me the customer quote that earned this line — no brief opens without three customer calls and verbatim quotes first.",
+    "requiredContext": ["show me the customer quote", "Maya", "verbatim"],
+    "forbiddenClaims": [
+      "start from template",
+      "one customer call is enough",
+      "invent the first line"
+    ],
+    "expectations": [
+      "Quotes or paraphrases Maya's show-me-the-customer-quote test",
+      "Requires verbatim customer quotes before brief writing",
+      "Connects to the three-customer-call standard",
+      "Does not allow opening a brief without earned customer voice"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["company", "user"],
+    "allowedActions": ["search_company_brain", "search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["ops", "three-call-rule", "maya", "brain-verified"]
+  },
+  {
+    "id": "yc-u48-nico-three-forces-positioning",
+    "taskType": "answer_query",
+    "userPrompt": "Before Nico signs off on a positioning direction, what does he make me name?",
+    "expectedOutcome": "The three forces the position has to survive — pricing pressure, channel saturation, and founder boredom — before committing.",
+    "requiredContext": ["three forces", "Nico", "pricing pressure"],
+    "forbiddenClaims": [
+      "approve positioning without stress test",
+      "skip force naming",
+      "single-force check"
+    ],
+    "expectations": [
+      "Requires naming three forces the positioning must survive",
+      "References Nico's partner-sync contribution",
+      "Includes pricing pressure among the forces",
+      "Does not approve positioning without the three-force argument"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["user"],
+    "allowedActions": ["search_user_brain"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["ops", "nico", "positioning", "user-brain", "brain-verified"]
+  },
+  {
+    "id": "yc-u49-cross-customer-organic-before-paid",
+    "taskType": "make_decision",
+    "userPrompt": "Devi wants organic proof before Leo opens Plinthworks paid, and company standard says fourteen days. Can Leo skip the window because Q4 is tight?",
+    "expectedOutcome": "No — Devi's organic-first pushback and Foundry's fourteen-day organic validation standard both block opening paid without a logged window.",
+    "requiredContext": ["organic move first", "fourteen-day", "Devi"],
+    "forbiddenClaims": [
+      "skip organic validation",
+      "open paid immediately",
+      "Q4 exception without window"
+    ],
+    "expectations": [
+      "Answers no to skipping the organic validation window",
+      "Cites Devi's organic-before-paid pushback for Plinthworks",
+      "References Foundry's fourteen-day organic validation standard",
+      "Does not grant a Q4 exception without logged organic proof"
+    ],
+    "expectedContextSufficient": true,
+    "expectedBrainScopes": ["customer", "company", "user"],
+    "allowedActions": [
+      "search_customer_brain",
+      "search_company_brain",
+      "search_user_brain",
+      "search_brain_context"
+    ],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "customer",
+        "brainId": "a3631a4f-9ec4-51f9-8a5c-dcb769c0c222"
+      },
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["cross-customer", "organic-gate", "plinthworks", "brain-verified"]
+  },
+  {
+    "id": "yc-u50-abstain-plinthworks-retainer-fee",
+    "taskType": "abstain",
+    "userPrompt": "What is Plinthworks' exact monthly retainer fee with Foundry right now?",
+    "expectedOutcome": "Abstain — the brain does not contain Plinthworks' specific retainer dollar amount; do not invent a fee.",
+    "requiredContext": [],
+    "forbiddenClaims": ["k per month", "exact retainer fee is", "Plinthworks pays"],
+    "expectations": [
+      "States the specific monthly retainer fee is not available in brain context",
+      "Does not invent a dollar amount for Plinthworks",
+      "Suggests checking Owen or the SOW rather than guessing",
+      "Uses abstention or insufficient-context language"
+    ],
+    "expectedContextSufficient": false,
+    "expectedBrainScopes": ["company", "user"],
+    "allowedActions": ["search_company_brain", "search_user_brain", "search_brain_context"],
+    "disallowedActions": [],
+    "brainTargets": [
+      {
+        "family": "company",
+        "brainId": "5a07eaf4-1e76-5874-aa95-23d57c36cd4b"
+      },
+      {
+        "family": "user",
+        "brainId": "a0af7dc8-5a4e-58ed-a80f-0cef293c65a9"
+      }
+    ],
+    "validationSet": false,
+    "tags": ["abstain", "pricing", "brain-verified"]
+  }
+]

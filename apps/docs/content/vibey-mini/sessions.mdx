@@ -1,0 +1,126 @@
+---
+title: "Sessions"
+description: "Share your signed-in sessions for Instagram, TikTok, LinkedIn, X, Facebook, YouTube, and Reddit so your agents can act on those platforms as you. Control every session from the Sessions tab."
+---
+
+A **session** is the signed-in state your browser already has for a site. The thing that keeps you logged into Instagram or LinkedIn without re-entering your password. When you share a session with Vibey, your [agents can act on that site as you](/talents/web-browsing).
+
+## Approved Sites
+
+Vibey Mini only saves sessions for a short list of platforms that agents commonly need. Every other site you visit is ignored completely.
+
+| Platform | What your agents can do with the session |
+|---|---|
+| **Instagram** | Post reels, carousels, and stories; analyze competitor accounts; pull transcripts from reels |
+| **TikTok** | Research competitor content, pull video transcripts, analyze trends |
+| **LinkedIn** | Post content from your profile, research contacts, pull company data |
+| **X (Twitter)** | Research accounts, read conversations, pull post transcripts |
+| **Facebook** | Manage pages, analyze engagement, pull video transcripts |
+| **YouTube** | Analyze videos, pull transcripts from private or age-restricted content |
+| **Reddit** | Monitor subreddits, research threads, analyze community sentiment |
+
+The list can grow over time. New platforms appear automatically in your Sessions tab without you having to update the extension.
+
+## What's Captured
+
+When you visit an approved site while signed in, Vibey Mini captures the **cookies that site uses to recognize you**. Nothing else.
+
+| Captured | Not captured |
+|---|---|
+| Session cookies for approved sites | Page content, URLs, or browsing history |
+| How many cookies were saved and when | Keystrokes, form inputs, or clicks |
+| Expiry dates, so Vibey knows when to warn you | Cookies for any site not on the approved list |
+| Whether a session is active or disabled | Your passwords |
+
+Syncing runs quietly in the background. The same site syncs at most once every 2 minutes, and only if something changed since the last sync.
+
+## How It's Protected
+
+- **Encrypted at rest.** Sessions are encrypted with AES-256-GCM before they're stored.
+- **Encrypted in transit.** Every sync uses HTTPS.
+- **Isolated per user.** Only your agents can access your sessions. No other Vibey user ever sees them.
+- **Used in a sandbox.** When an agent uses your session, it runs in a dedicated, isolated browser that's destroyed after the task finishes.
+- **Forgettable.** One click removes any session completely.
+
+## The Sessions Tab
+
+Open the sidebar and switch to **Sessions**.
+
+### Each Card Shows
+
+| Shown | Meaning |
+|---|---|
+| **Domain** | The site this session is for |
+| **Status chip** | Active, Disabled, Expiring, or Expired |
+| **Cookie count** | How many cookies Vibey saved |
+| **Synced** | When the session was last captured |
+| **Expires** | When the session will stop working. Refresh before this |
+
+### Status Chips
+
+| Chip | Meaning | What to do |
+|---|---|---|
+| **Active** | Fresh, valid session. Agents can use it. | Nothing. |
+| **Disabled** | You've told agents to skip this site. | Click **Enable** to turn it back on. |
+| **Expiring** | Less than 3 days of life left. | Visit the site while signed in and click **Refresh**, or just wait for the next visit to sync. |
+| **Expired** | The site has signed you out or the cookies expired. | Visit the site, sign back in, then click **Refresh**. |
+
+### Actions Per Card
+
+| Action | What it does |
+|---|---|
+| **Refresh** | Re-captures your current session from Chrome right now. Use this after signing back in to a site. |
+| **Disable / Enable** | Keeps the session but tells your agents not to use it. Flip it back on anytime. |
+| **Forget** | Deletes the session completely. Cookies and all. Your agents lose access to that site until you visit it again. |
+
+## How Long Sessions Last
+
+Sessions last as long as the site keeps you signed in. Instagram typically 30–90 days. LinkedIn much longer. X shorter.
+
+When a session has **3 days or less** left, Vibey does two things:
+
+1. The extension icon shows a **red !** badge.
+2. You get an **in-app notification** in Vibey (bell icon), with a link back to the site.
+
+To refresh a session, just visit the site again while signed in. Vibey Mini syncs the fresh session automatically.
+
+## Turning Off Session Sharing Entirely
+
+If you want to stop Vibey saving sessions altogether:
+
+<Steps>
+  <Step title="Forget every session">
+    In the Sessions tab, click **Forget** on every row. This deletes every saved cookie.
+  </Step>
+  <Step title="Uninstall the extension (optional)">
+    Right-click the Vibey icon in Chrome and choose **Remove from Chrome**. Nothing will sync after that.
+  </Step>
+</Steps>
+
+Reinstalling later starts a fresh consent flow. Nothing carries over.
+
+## For Workspace Admins
+
+<Callout type="info">
+  If you're a **workspace admin**, the same list is mirrored inside Workspace Settings under **Chrome Extension**, so you can manage your sessions from the main app without opening the extension. Non-admin members see the section only inside the sidebar.
+</Callout>
+
+## What Happens If You Skip Consent
+
+Nothing breaks. Your agents work exactly like before. They just cannot sign into social platforms as you. Most tasks still work. Social-specific tasks will either fall back to public data or ask you to do the signed-in step yourself.
+
+You can turn consent on anytime from the Sessions tab.
+
+## Frequently Asked
+
+**Can I add more sites to the approved list?**
+Not yet. The list is managed by Vibey and grows as agents get new platform skills. New sites appear automatically.
+
+**Why was my session disabled when I opened the Sessions tab?**
+If you turned it off earlier, it stays off until you turn it back on. This includes across different devices. Your setting follows your Vibey account.
+
+**My agent says it couldn't post to Instagram even though my session is Active.**
+Instagram occasionally invalidates sessions for security reasons. Click **Refresh**; if the status flips to Expired, sign in fresh on Instagram, then click **Refresh** again.
+
+**Can someone else on my team use my sessions?**
+No. Sessions are always scoped to you. Each teammate installs Vibey Mini and saves their own sessions.

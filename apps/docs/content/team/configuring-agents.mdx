@@ -1,0 +1,148 @@
+---
+title: "Configuring and Training Agents"
+description: "Set up each agent's model, brain access, campaign assignments, communication channels, and skills - then train them to produce excellent work."
+---
+
+Once you've [hired](/team/hiring-and-managing) an agent, configuration and training is what turns them from a generic specialist into someone who produces work that matches your standards. Open any agent's profile from the **Team** page to start.
+
+## Model Strategy
+
+Choose how the agent's brain adapts to different tasks:
+
+| Strategy | Best for | How it works |
+|---|---|---|
+| **Economy** | Interns and routine tasks | Uses the fastest, most cost-efficient model for simple work |
+| **Auto** (default) | Most team members | Picks the right model for each task automatically. Fast for simple work, powerful for complex work |
+| **Power** | Managers and complex decisions | Uses the most capable model for deep analysis, multi-step reasoning, and strategic thinking |
+
+You can also pin a **specific model** instead of a strategy. Open the agent's profile, go to the **Comms** tab, and click the model chip. Strategies are listed first, with specific models below.
+
+### Best Practices for Model Selection
+
+| Agent role | Start with | Upgrade to Power if... |
+|---|---|---|
+| Content writer | Auto | They struggle with nuanced tone or complex briefs |
+| Research analyst | Auto | Reports feel shallow or miss connections |
+| Developer | Auto | Complex multi-step builds get confused |
+| Customer support | Auto | Responses lack empathy or context |
+| Finance agent | Auto | Analysis misses edge cases or nuance |
+| Social media | Auto | They need to coordinate across platforms |
+| Project manager | Power | Start on Power. They coordinate others |
+| Brand strategist | Power | Start on Power. Strategic thinking |
+
+**Signs you should upgrade:** Output feels generic despite good [brain](/brain/agent-brain) content. Agent struggles to connect multiple pieces of information. Complex tasks produce errors.
+
+**Signs you should downgrade:** Agent is doing simple repetitive work. Speed matters more than depth. The task has very clear, straightforward instructions.
+
+## Brain Access
+
+Each agent has toggles that control which brains they can read from:
+
+| Toggle | What it controls | Default |
+|---|---|---|
+| **User Brain** | Whether this agent can access your [personal knowledge](/brain/user-brain) | On (off for support-domain agents) |
+| **Company Brain** | Whether this agent can read org-level institutional knowledge | On (in orgs) |
+| **Customer Brain** | Whether this agent can read real customer signals | On for customer-facing roles |
+| **Campaign Context** | Whether this agent pulls context from assigned [campaigns](/campaigns/organizing-with-campaigns) | On |
+
+Support-domain agents have User Brain access disabled by default. This prevents personal business context from leaking into client-facing work like support tickets or customer communications.
+
+### When to Toggle Brain Access Off
+
+- Turn off **User Brain** for agents handling external-facing work where your internal context should not appear
+- Turn off **Company Brain** for client-facing agents that should not leak internal processes
+- Turn off **Customer Brain** for back-office agents that should not see customer-identifiable signals
+- Turn off **Campaign Context** for agents that should work from general knowledge only, not project-specific data
+
+## Campaign Assignment
+
+Assign agents to specific [campaigns](/campaigns/organizing-with-campaigns). This controls two things:
+
+1. **What campaign context they access** Agents use the campaign's strategy, Spaces, docs, and deliverables as active work context
+2. **What work they can do** - only assigned agents can execute [missions](/missions/what-are-missions) for that campaign
+
+### Best Practice: Match Agents to Campaigns Intentionally
+
+Do not assign every agent to every campaign. A content writer working on your SaaS product launch does not need access to your event planning campaign's knowledge. It just adds noise.
+
+Assign agents to the campaigns where their [skills](/team/agent-skills) and training are relevant. If you need the same role for two very different campaigns, consider hiring two separate agents with different skills and brain training for each. (Jaime can build the second one in one conversation. See [Hiring with Jaime](/team/hiring-with-jaime).)
+
+## Communication Channels
+
+Set up how agents reach you:
+
+| Channel | What it does |
+|---|---|
+| **Telegram** | Agent sends updates, asks questions, and shares deliverables via Telegram |
+| **Slack** | Same, through a connected Slack channel |
+
+Configure channels in the agent's profile under **Communication**.
+
+### Daily Digest (CEO and Executive Agents Only)
+
+If your agent is a C-level executive (like Vibey), the Communication tab shows two additional settings:
+
+**Default Channel** Where the agent sends proactive updates: Team Chat, Telegram, or Slack. This is where [Autopilot](/autopilot/how-autopilot-works) notifications and status updates are delivered.
+
+**Daily Digest** A daily summary of all awareness points the agent tracked. Toggle it on and pick a delivery time. The agent sends the digest to your default channel at the time you set.
+
+These settings only appear for C-level agents because they are the ones sending proactive updates and coordinating across your team.
+
+## Agent Brain
+
+Give agents their own specialized memory. This is separate from campaign assignments. It stays with the agent across all campaigns.
+
+Upload the best content in their specialty:
+- A copywriter gets the top copywriters' portfolios and swipe files
+- A researcher gets the best analysis frameworks and methodologies
+- A developer gets architecture patterns and coding standards
+
+More in [Agent Brain](/brain/agent-brain).
+
+## Skills
+
+[Skills](/team/agent-skills) are reusable instruction sets that tell agents how to do specific tasks your way. The more specific the instructions and references, the more consistent the output.
+
+Every agent from the [library](/team/hiring-and-managing) comes with starter skills. Replace them with skills trained on your content and your standards.
+
+## Training: The Full Loop
+
+Hiring is step one. Training is what makes agents excellent.
+
+<Steps>
+  <Step title="Feed their brain">
+    Upload expert content to their [Agent Brain](/brain/agent-brain). Quality over quantity. 3-5 world-class references beat 50 mediocre ones.
+  </Step>
+  <Step title="Build their skills">
+    Create [skills](/team/agent-skills) for recurring tasks. Include instructions AND reference examples.
+  </Step>
+  <Step title="Test one-on-one">
+    Chat with the agent directly on the Team page. Give them a real task. Review the output.
+  </Step>
+  <Step title="Give specific feedback">
+    Do not say "make it better." Say "our analysis reports always include a competitor comparison table and end with three actionable recommendations. Here are two examples."
+  </Step>
+  <Step title="Refine the skill">
+    Update the skill based on what worked and what did not. After 5-10 iterations, the agent is dialed in.
+  </Step>
+  <Step title="Deploy via missions">
+    Once you trust the output, start delegating through [missions](/missions/what-are-missions). Check [deliverables](/campaigns/campaign-deliverables), then save durable lessons to the right brain or turn repeatable patterns into skills.
+  </Step>
+</Steps>
+
+## Performance and Scoring
+
+Every agent is [scored](/team/meet-your-agents) after completing missions across seven dimensions: quality, reliability, initiative, communication, spec adherence, learning rate, and execution speed.
+
+Use scores to identify:
+- Which agents need more brain content or better skills
+- Which agents are performing well and should handle more complex work
+- Whether a model tier upgrade would help
+
+## Firing Agents
+
+If an agent is not working out after training, you can fire them from their profile. Their skills and brain content are removed. You can always hire a new agent for the same role and start fresh (Jaime can build a redesigned version in one conversation).
+
+<Callout type="tip">
+  The most impactful thing you can do for agent quality: train their brain and build good skills. A well-trained agent with great skills produces work that matches your standards. An untrained agent produces generic output anyone could have gotten.
+</Callout>

@@ -1,0 +1,49 @@
+@import 'tailwindcss';
+@source "./scenes/**/*.{ts,tsx}";
+@source "./ui/**/*.{ts,tsx}";
+@source "./*.{ts,tsx}";
+@source not "./web-library/**";
+@import './web-library/app/globals.css';
+@import './vibey-port.css';
+
+@font-face {
+  font-family: 'Futura LT';
+  src: url('../public/Fonts/futura-lt/FuturaLT.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Futura LT';
+  src: url('../public/Fonts/futura-lt/FuturaLT-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Futura LT';
+  src: url('../public/Fonts/futura-lt/FuturaLT-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Futura LT Condensed';
+  src: url('../public/Fonts/futura-lt/FuturaLT-Condensed.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  background: var(--bg-deep, #0a0a0a);
+  color: var(--text-primary, #f5f5f5);
+}

@@ -1,0 +1,21 @@
+{
+  "skill_name": "perf-optimize",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "home-page-audit",
+      "prompt": "The home page feels slow when it first loads - spinners everywhere and it takes a while before anything is usable. Can you analyze what loads when the home page (apps/web/src/app/(dashboard)/home) mounts and give me a TL;DR breakdown of every request and what triggers it, plus an optimization plan? Don't change any code yet, just the analysis.",
+      "expected_output": "A performance audit report: ordered list of network requests with source file:line and trigger, identified multipliers (duplicate mounts, dependency churn, N+1), bundle findings, and a ranked optimization plan referencing the project's established caching patterns. No code changes.",
+      "files": [],
+      "assertions": [
+        "Report enumerates concrete network requests with their source file (and ideally line) references, not vague categories",
+        "Report explicitly checks for request multipliers: duplicate component mounts, StrictMode double-effects, keyed remounts, or effect dependency churn",
+        "Optimization plan is ranked and references the project's existing caching utilities (cachedFetch / keyed-fetch-cache, createCachedResource, or snapshot/restore store caches) rather than proposing new or generic infrastructure",
+        "Report includes at least one backend-side finding or explicit confirmation backend handlers were checked",
+        "Report distinguishes dev-only noise (StrictMode, dev proxy/compile overhead) from costs that persist in production",
+        "No repository files were modified by the run",
+        "Report follows the template structure: TL;DR what-loads breakdown, why-it-feels-slow section, ranked optimization plan"
+      ]
+    }
+  ]
+}

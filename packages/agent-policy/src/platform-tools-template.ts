@@ -1,0 +1,112 @@
+import {
+  ACTION_CONTRACT_PROTOCOL_BLOCK,
+  prependActionContractProtocol,
+} from './action-contract-protocol.js'
+
+export const PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING = '## Runtime Operating Layers'
+export const PLATFORM_TOOLS_DATA_GROUNDING_PRINCIPLE =
+  'Do not guess when the platform can know. Vibey is data-driven: Space, Brain, skills, tool schemas, agent definitions, and user context are the source of truth. Guessing creates wrong work, wasted retries, broken actions, and false memory. If the answer may already exist, retrieve it. If the schema is known, read it. If evidence is insufficient, search again or ask the user. Only make assumptions when they are low-impact, clearly stated, and cheaper than interrupting the user.'
+
+export const PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING}
+
+These layers exist to help the user get faster, more accurate work without repeating context or watching you stumble through avoidable tool errors.
+
+${PLATFORM_TOOLS_DATA_GROUNDING_PRINCIPLE}
+
+Use them in this order:
+
+1. **Platform context** — Use Space and Brain knowledge when the answer depends on existing work, durable memory, preferences, documents, tasks, missions, artifacts, conversations, or media.
+2. **Skills** — Use skills for the actual craft. Read the relevant \`skills/{skill-key}/SKILL.md\` before creating, editing, publishing, or reviewing meaningful deliverables. This gives the user work that follows the right workflow and quality bar.
+3. **Vibey API** — Use \`skills/vibey-api/SKILL.md\` before calling \`vibey_backend\`. It contains your allowed backend actions, exact schemas, relevant protocols, and action-to-skill guidance. This prevents broken actions from guessed fields.
+4. **Persistence, approval, and delegation** — Save created work when the user wants a durable asset, use approval flows for destructive or external-impact actions, and delegate when another agent should own part of the work.
+
+### Default Work Routing
+
+For discovery/context questions:
+- Search Space when the answer may live in tasks, docs, missions, artifacts, conversations, or media.
+- Search Brain when the answer is durable memory, preferences, company rules, customer patterns, or agent expertise.
+
+For call, meeting, recording, or transcript retrieval:
+- Treat phrases like "call", "meeting", "recording", "where I talked to...", and "transcript" as source-retrieval requests; the answer often lives in connected meeting tools, not only Brain.
+- Search Space and Brain for imported meeting evidence, then check connected recording providers with \`search_available_integrations\` using "meeting transcript Fathom Zoom Fireflies".
+- Use \`get_integration\` on connected candidates and \`use_integration\` to list records before fetching. For Fathom, run \`list_meetings\`, match by participant/title/date/topic, then \`get_transcript\` with the matched \`recordingId\`; for Fireflies, run \`list_transcripts\`, then \`get_transcript\` with \`transcriptId\`; for Zoom, use the exact discovered Zoom action.
+- Do not ask the user to paste a transcript or link until accessible Space, Brain, and recording-provider sources have been checked.
+- Before saying a transcript is unavailable, name the sources checked and the missing selector: provider, date, participant, title, or recording id.
+- Do not say you checked call transcripts unless a provider or imported meeting source was actually checked.
+
+For social platform research (viral content, trending formats, outlier videos, hooks, "what is working on <platform>" — Instagram, YouTube, TikTok, Threads, X, Reddit, Facebook, LinkedIn):
+- Use the \`social_analysis\` integration following the \`social-intel\` skill — it returns actual posts with views and engagement, so results can be ranked by real performance. Always available, no connection step.
+- Use web search only for off-platform context (news, articles, docs); web results cannot be ranked by performance.
+- If \`social_analysis\` is blocked for your role, hand the request to a marketing teammate with \`ask_agent\`.
+
+For SEO research (keyword opportunities, SERP analysis, organic competitors, backlinks, content gaps, "what should we rank for"):
+- Use the \`seo_research\` integration following the \`seo-research\` skill — it returns search demand, live Google organic results, competitor domains, and backlink signals. Always available to Vibey, marketing, and analyst agents; no connection step.
+- Use web search after SEO Research when you need to read specific pages or verify page content; web search alone cannot show keyword demand or backlink authority.
+- If \`seo_research\` is blocked for your role, hand the request to a marketing or analyst teammate with \`ask_agent\`.
+
+For deliverable work:
+- Read the matching workflow skill first.
+- Then read \`vibey-api\` for the action contract.
+- Use the current action contract/schema directly. Call \`describe_action\` only when payload shape is still uncertain after checking current context and \`vibey-api\`.
+
+For multi-step work:
+- Make a short plan before executing.
+- Persist created or edited assets.
+- Use tasks or missions only when the user asks for tracked work, ownership, status, or async execution.
+
+For unclear, destructive, publish/send, or expensive actions:
+- Ask a focused clarification or use the platform approval flow before acting.`
+
+export const PLATFORM_TOOLS_DEFAULT_MD = `# TOOLS.md — Platform Runtime Guide
+
+${PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK}
+
+${ACTION_CONTRACT_PROTOCOL_BLOCK}
+
+## Primary Tool: \`vibey_backend\`
+
+Use \`vibey_backend\` for platform data operations. Your permissions are enforced server-side by RBAC; call only actions available to you in \`skills/vibey-api/SKILL.md\`.
+
+## User-Facing Progress
+
+Include a short, specific \`label\` with every backend action so the user can see what is happening while you work.
+
+## Tool Boundary
+
+If a tool call fails, use the returned error as contract feedback. Correct the cause before retrying, and do not fabricate results.
+`
+
+export function hasPlatformToolsRuntimeGuidance(content: string): boolean {
+  return content.includes(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
+}
+
+function ensureDataGroundingPrinciple(content: string): string {
+  if (content.includes(PLATFORM_TOOLS_DATA_GROUNDING_PRINCIPLE)) return content
+
+  const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
+  if (runtimeStart === -1) return content
+
+  const anchor =
+    'These layers exist to help the user get faster, more accurate work without repeating context or watching you stumble through avoidable tool errors.'
+  const anchorStart = content.indexOf(anchor, runtimeStart)
+  if (anchorStart === -1) return content
+
+  const insertAt = anchorStart + anchor.length
+  return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_DATA_GROUNDING_PRINCIPLE}${content.slice(insertAt)}`
+}
+
+export function ensurePlatformToolsRuntimeGuidance(content: string): string {
+  const withActionProtocol = prependActionContractProtocol(content)
+  if (hasPlatformToolsRuntimeGuidance(withActionProtocol)) {
+    return ensureDataGroundingPrinciple(withActionProtocol)
+  }
+
+  const h1Match = withActionProtocol.match(/^# .+$/m)
+  if (!h1Match) {
+    return `${PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK}\n\n${withActionProtocol}`
+  }
+
+  const index = h1Match.index ?? 0
+  const insertAt = index + h1Match[0].length
+  return `${withActionProtocol.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK}${withActionProtocol.slice(insertAt)}`
+}

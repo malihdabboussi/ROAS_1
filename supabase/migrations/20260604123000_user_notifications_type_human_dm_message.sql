@@ -1,0 +1,32 @@
+-- Allow human DM messages to emit in-app notifications for the recipient.
+ALTER TABLE public.user_notifications
+  DROP CONSTRAINT IF EXISTS user_notifications_type_check;
+
+ALTER TABLE public.user_notifications
+  ADD CONSTRAINT user_notifications_type_check CHECK (
+    type = ANY (ARRAY[
+      'mission_blocked',
+      'mission_completed',
+      'mission_failed',
+      'deliverable_ready',
+      'subtask_blocked',
+      'plan_approval_required',
+      'space_task_assigned',
+      'space_task_unassigned',
+      'space_task_status_changed',
+      'space_task_comment',
+      'space_task_mention',
+      'human_subtask_awaiting',
+      'human_subtask_sla_escalated',
+      'human_subtask_cancelled',
+      'human_dm_message',
+      'awareness_paused',
+      'space_automation_disabled',
+      'org_invitation',
+      'browser_session_expiring',
+      'brain_import_succeeded',
+      'brain_import_failed',
+      'brain_cross_suggestion',
+      'agent_message'
+    ])
+  );

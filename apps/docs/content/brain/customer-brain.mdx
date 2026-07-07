@@ -1,0 +1,151 @@
+---
+title: "Customer Brain"
+description: "Real customer signals from real interactions. Not invented personas. Built from contacts, conversations, meetings, and emails so your agents know what customers actually say, need, and care about."
+---
+
+The Customer Brain is the most differentiating brain Vibey ships. Every other AI tool asks you to invent a customer avatar and hope agents apply it. Vibey builds the customer picture **from real evidence**: contacts, transcripts, support threads, sales calls.
+
+When a customer-facing agent (sales, support, success, marketing) does work, the Customer Brain is what makes them sound like they actually know your customers.
+
+## What Belongs Here
+
+Anything that captures **what real customers say, do, need, object to, and care about**:
+
+- **Customer conversations** Fathom or Fireflies recordings tagged to a contact
+- **Support threads** how a customer asked for help, what they were stuck on
+- **Sales calls** objections raised, language used, pain points expressed
+- **Email exchanges** notes from inbound emails or threads with a contact
+- **Survey responses and feedback** raw or summarized
+- **Internal notes** observations the team makes about a contact
+- **Behavioral signals** what they did, what they bought, what they churned from
+
+You can attach memories to specific contacts (via the **Tag a customer** picker when capturing) or save general customer intelligence without tagging a contact.
+
+## What Does NOT Belong Here
+
+| Type | Belongs in |
+|---|---|
+| Your personal context | [User Brain](/brain/user-brain) |
+| How the org operates | [Company Brain](/brain/company-brain) |
+| Expert frameworks for one role | [Agent Brain](/brain/agent-brain) |
+| Project-specific knowledge tied to one campaign | Campaign and Space context |
+| Top-down marketing personas you invented | The campaign's Avatars artifact (not the Customer Brain) |
+
+## Real Customers vs Declared Avatars
+
+This distinction is important.
+
+| | Declared Avatar | Customer Brain |
+|---|---|---|
+| **Origin** | Top-down. You wrote it. | Bottom-up. Built from real interactions. |
+| **Lives in** | A campaign's Avatar artifact | The Customer Brain |
+| **What it is** | A hypothesis about who you serve | An observed picture of who you serve |
+| **Best for** | Targeting decisions, positioning, ad copy concepts | Real objection handling, real language, real evidence |
+
+You can have both. They are complements, not competitors. The Customer Brain's emergent avatars often **validate or contradict** your declared avatars. That gap is where real insight lives.
+
+## Emergent Customer Avatars
+
+Once you have enough customer memories, Atlas starts surfacing **emergent customer avatars**. These are bottom-up clusters of belief, perspective, and behavior that show up across multiple real customers.
+
+Each emergent avatar can have:
+
+- **A summary** of who the cluster represents
+- **Member contacts** the actual people who belong to it
+- **Dominant beliefs and perspectives** what they share
+- **Pain points and needs** what shows up over and over
+- **Discriminator questions** the questions that would tell you which avatar a new customer belongs to
+- **Lineage** the specific memories and contacts that informed the avatar
+
+Emergent avatars are stored as `CustomerAvatar` objects and can be linked to declared avatars to track how reality lines up with hypothesis.
+
+## How to Enable Customer Brain
+
+Customer Brain is opt-in. To turn it on:
+
+1. Open **Workspace Settings → Brain**
+2. Toggle **Customer Brain** on
+3. The Customer Brain appears as a separate scope in the Brain page picker
+
+Once enabled, you can start capturing customer memories.
+
+<Callout type="info">
+  Customer Brain requires at least 10 memories before Atlas attempts to crystallize emergent avatars. Capture a few real interactions first.
+</Callout>
+
+## How to Add Knowledge
+
+Go to the **Brain** page and pick the **Customer Brain** in the scope picker. Click **Add Information** in the top right corner.
+
+The Add Information panel for the Customer Brain has one extra control:
+
+### Tag a Customer (Optional)
+
+A contact picker lets you attach the memory to one specific contact in your CRM. Tagging is optional. Untagged memories still live in the Customer Brain as general customer intelligence.
+
+When you tag a contact:
+
+- The memory is linked to that contact
+- The contact's profile shows the memory in their history
+- Atlas uses the tag when clustering emergent avatars
+
+### Input modes
+
+| Mode | Best for |
+|---|---|
+| **Text** | Notes about a customer, patterns you noticed, quotes you want to remember |
+| **Link** | A YouTube video the customer shared, a public post they wrote, an article that explains them |
+
+You can also import customer memories via:
+
+- **Fathom / Fireflies** with a tagged contact, every meeting recording becomes contact-specific customer evidence
+- **Slack and email integrations** (where supported) for inbound conversations tied to a known contact
+
+## Managing the Customer Brain
+
+- **Search** by topic, keyword, contact, or meaning
+- **Delete** memories or full sources (cascade applies)
+- **Copy or move** memories to or from the User Brain, Company Brain, or Agent Brain
+- **Talk to Atlas** to ask questions like "what do customers say about pricing?" or "what pain points show up across all my support contacts?"
+- **Crystallize** to surface emergent avatars and refresh customer beliefs
+
+## Cortex Max for the Customer Brain
+
+Cortex Max on the Customer Brain organizes memories into:
+
+- **Topic pages** themes that show up across many customers (objections to pricing, hesitation around onboarding)
+- **Entity pages** specific high-signal customers, with everything you know about them in one place
+- **Synthesis pages** patterns across the whole customer base (what changed in the last quarter, what is the typical buying journey)
+
+This is what turns the Customer Brain from a pile of notes into a living model of your customers.
+
+## How Agents Use It
+
+When a sales agent drafts a follow-up email to a known contact, they pull:
+
+1. The contact's profile from the CRM
+2. Every memory tagged to that contact from the Customer Brain
+3. Any emergent avatar the contact belongs to
+4. The relevant campaign context (offer, positioning)
+5. The Company Brain (brand voice, sales playbook)
+
+The result is an email that sounds like someone who actually knows the customer wrote it, because in a meaningful sense, your team and Atlas did.
+
+## Why This Matters
+
+Generic AI hallucinates customer voices. It writes copy that pattern-matches "what a customer might say" rather than what your customers actually say.
+
+The Customer Brain replaces hallucination with evidence. Every objection you handle, every pain point you address, every benefit you emphasize is grounded in something a real customer said.
+
+<Callout type="tip">
+  The biggest unlock: once the Customer Brain is rich enough, you stop guessing what customers want. You read your own Brain.
+</Callout>
+
+## Related
+
+- [User Brain](/brain/user-brain)
+- [Company Brain](/brain/company-brain)
+- [Agent Brain](/brain/agent-brain)
+- [Atlas the Brain Scholar](/brain/atlas-the-brain-scholar)
+- [Customer Avatars](/talents/avatars)
+- [Managing Contacts](/contacts/managing-your-contacts)

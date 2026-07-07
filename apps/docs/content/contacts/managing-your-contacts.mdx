@@ -1,0 +1,111 @@
+---
+title: "Managing Your Contacts"
+description: "Your built-in CRM - track leads and customers, manage tags, segments, and custom fields, import from other CRMs, and see where everyone came from."
+---
+
+Every lead captured through a [funnel](/talents/funnels), every customer who takes action, every contact imported from your CRM. They all live in your Contacts.
+
+Contacts are also the source material for the [Customer Brain](/brain/customer-brain). When you save a memory and tag a contact, that memory flows into the Customer Brain attached to that contact. Over time, Atlas surfaces emergent customer avatars from the patterns across your tagged contacts.
+
+## Contact Fields
+
+Each contact record includes:
+
+| Field | Description |
+|---|---|
+| **Name** | First and last name |
+| **Email** | Primary email address |
+| **Phone** | Phone number (if provided) |
+| **Tags** | Labels you assign for organization |
+| **Contact type** | Lead, customer, or archived |
+| **Contact source** | How they were captured (funnel, manual, CRM import) |
+| **Source funnel** | Which funnel brought them in |
+| **Source domain** | Where the traffic came from |
+| **Business name** | Company or business (if provided) |
+| **Location** | City, state, country |
+| **Custom fields** | Any additional fields you define |
+| **Date created** | When they first appeared |
+
+## How Contacts Are Created
+
+| Source | What happens |
+|---|---|
+| **Funnel submission** | Someone fills a form on your [funnel](/talents/funnels). A lead is created, a contact is upserted, and they are linked to the funnel and campaign with full UTM and ad attribution. |
+| **Manual entry** | Add a contact directly from the Contacts page with name, email, phone, and tags. |
+| **CSV import** | Upload a CSV file to import contacts in bulk. |
+| **GoHighLevel sync** | Import contacts from your GHL account. Set up a recurring sync job to keep them in sync. |
+| **ActiveCampaign sync** | Import contacts from ActiveCampaign. Paginated import with search for large accounts. |
+
+## Searching and Filtering
+
+The CRM page supports:
+
+- **Search** by name, email, phone, business name, or any text field
+- **Sort** by any column
+- **Pagination** for large contact lists
+- **Filters** including:
+
+| Filter | What it does |
+|---|---|
+| **Contact type** | Show leads, customers, or archived |
+| **Funnel** | See contacts from a specific funnel |
+| **Tags** | Filter by tags you've assigned |
+| **Source domain** | See where traffic came from |
+| **Contact source** | Filter by how they were captured |
+| **Date range** | Filter by creation date |
+| **Campaign** | See contacts linked to a specific campaign |
+| **Include archived** | Show or hide archived contacts |
+
+## Tags, Segments, and Custom Fields
+
+### Tags
+
+Create custom tags to organize your contacts: "Hot lead," "Webinar attendee," "VIP client," "Q2 campaign," whatever categories matter to you. Assign tags to individual contacts from their detail view, or define tag colors and structure in **Workspace Settings → Properties → Tags**.
+
+### Segments
+
+Define reusable audience segments based on criteria. Create and manage segments in **Workspace Settings → Properties → Segments**.
+
+### Custom Fields
+
+Add custom data fields beyond the defaults. Define custom fields in **Workspace Settings → Properties → Custom Fields**, then fill them in on individual contact records.
+
+## Contact Detail View
+
+Click any contact to open their detail panel. From there you can:
+
+- Edit name, email, phone
+- Add or remove tags
+- Fill in custom field values
+- See their source funnel and campaign
+- View their full history
+
+## Importing from Other CRMs
+
+### GoHighLevel
+
+1. Connect GHL in **Workspace Settings → [Integrations](/integrations/setting-up-integrations)**
+2. Open the import dialog from the Contacts page
+3. Browse your GHL contacts and select who to import
+4. Start a sync job to keep contacts updated on a schedule
+
+### ActiveCampaign
+
+1. Connect ActiveCampaign with your API URL and key
+2. Open the import dialog from the Contacts page
+3. Search and paginate through your ActiveCampaign contacts
+4. Import selected contacts or start a full sync
+
+<Callout type="tip">
+  Contacts are automatically linked to campaigns through the funnels that captured them. Inside a [Space](/spaces/what-is-a-space), add the **Contacts view** to see contacts specific to that Space and its campaign.
+</Callout>
+
+## Contacts and the Customer Brain
+
+When you save a memory and tag a contact, the memory flows into the [Customer Brain](/brain/customer-brain) attached to that contact. This is how Vibey builds an evidence-based picture of your customers, not invented personas.
+
+Practical workflow:
+
+- Connect Fathom and tag the contact on each meeting recording, so customer call transcripts feed the Customer Brain
+- Use the Add Information panel in the Customer Brain to capture observations and tag the right contact
+- Ask Atlas about a contact: "what do we know about [contact name]?" Atlas pulls everything tagged to them across the brain.

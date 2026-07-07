@@ -1,0 +1,187 @@
+export interface SlackOAuthAccessResponse {
+  ok: boolean
+  error?: string
+  app_id?: string
+  authed_user?: {
+    id?: string
+    scope?: string
+    access_token?: string
+    token_type?: string
+  }
+  scope?: string
+  token_type?: string
+  access_token?: string
+  bot_user_id?: string
+  team?: {
+    id?: string
+    name?: string
+  }
+}
+
+export interface SlackApiListConversationsResponse {
+  ok: boolean
+  error?: string
+  channels?: Array<{
+    id: string
+    name: string
+    is_channel?: boolean
+    is_private?: boolean
+    is_im?: boolean
+    is_member?: boolean
+  }>
+}
+
+export interface SlackApiPostMessageResponse {
+  ok: boolean
+  error?: string
+  channel?: string
+  ts?: string
+  message?: Record<string, unknown>
+}
+
+export interface SlackGetUploadUrlExternalResponse {
+  ok: boolean
+  error?: string
+  upload_url?: string
+  file_id?: string
+}
+
+export interface SlackCompleteUploadExternalResponse {
+  ok: boolean
+  error?: string
+  files?: Array<{ id?: string; title?: string; permalink?: string }>
+}
+
+export interface SlackEventEnvelope {
+  token?: string
+  team_id?: string
+  api_app_id?: string
+  type?: string
+  event_id?: string
+  event_time?: number
+  challenge?: string
+  event?: SlackEvent
+}
+
+export interface SlackEvent {
+  type?: string
+  user?: string
+  text?: string
+  channel?: string
+  channel_type?: string
+  ts?: string
+  thread_ts?: string
+  bot_id?: string
+  subtype?: string
+  file_id?: string
+  files?: SlackFileAttachment[]
+}
+
+export interface SlackFileAttachment {
+  id: string
+  name?: string
+  title?: string
+  mimetype?: string
+  filetype?: string
+  size?: number
+  url_private?: string
+  url_private_download?: string
+  permalink?: string
+}
+
+export interface SlackFileInfoResponse {
+  ok: boolean
+  error?: string
+  file?: SlackFileAttachment
+}
+
+export type SlackBlock =
+  | { type: 'header'; text: { type: 'plain_text'; text: string; emoji?: boolean } }
+  | { type: 'section'; text: { type: 'mrkdwn'; text: string } }
+  | { type: 'divider' }
+  | { type: 'context'; elements: Array<{ type: 'mrkdwn'; text: string }> }
+  | {
+      type: 'image'
+      image_url: string
+      alt_text: string
+      title?: { type: 'plain_text'; text: string }
+    }
+
+export interface AgentChannel {
+  id: string
+  user_id: string
+  agent_key: string
+  channel_type: string
+  provider_config: Record<string, unknown>
+  webhook_secret: string | null
+  is_active: boolean
+  org_id: string | null
+  last_message_at: string | null
+  error_message: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SlackWorkspaceChannel {
+  id: string
+  name: string
+}
+
+export interface SlackUserProfile {
+  display_name?: string
+  real_name?: string
+  title?: string
+  image_72?: string
+  email?: string
+}
+
+export interface SlackWorkspaceUser {
+  id: string
+  name: string
+  real_name?: string
+  profile?: SlackUserProfile
+  is_bot?: boolean
+  tz?: string
+  deleted?: boolean
+}
+
+export type SlackBrainTargetKind = 'user' | 'campaign' | 'agent' | 'customer'
+export type SlackBrainCadence = 'daily' | 'weekly' | 'monthly'
+
+export interface SlackBrainMapping {
+  id: string
+  user_id: string
+  org_id: string | null
+  slack_team_id: string
+  slack_channel_id: string
+  slack_channel_name: string
+  target_kind: SlackBrainTargetKind
+  target_brain_id: string | null
+  target_campaign_id: string | null
+  cadence: SlackBrainCadence
+  last_synced_at: string | null
+  last_message_ts: string | null
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface SlackResolvedSender {
+  slackUserId: string
+  displayName: string
+  email: string | null
+  contactId: string | null
+  contactRole: string | null
+  qualifiesForCustomerBrain: boolean
+  vibeyUserId: string | null
+}
+
+export interface SlackHistoryMessage {
+  user?: string
+  text?: string
+  ts?: string
+  thread_ts?: string
+  bot_id?: string
+  reply_count?: number
+  subtype?: string
+}

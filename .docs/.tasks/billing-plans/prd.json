@@ -1,0 +1,187 @@
+{
+  "project": "Billing Plans — Rename Tiers + Monthly-to-Yearly Switch",
+  "branchName": "current",
+  "description": "Rename subscription plans from Free/Starter/Pro/Business to Free/Basic/Pro/Ultra. Add backend endpoint for existing subscribers to switch from monthly to yearly billing. Update frontend billing page and website pricing page to match.",
+  "recommendedAgents": 2,
+  "context": {
+    "currentProblem": "Database has plans named Free/Starter/Pro/Business but user wants Free/Basic/Pro/Ultra. No backend endpoint exists for switching an existing subscription from monthly to yearly (current checkout creates NEW subscriptions instead of updating existing ones). Website pricing page and app billing page both reference old plan names.",
+    "desiredState": "4 plan tiers (Free, Basic, Pro, Ultra) each with monthly + yearly variants. Existing monthly subscribers can switch to yearly via in-app button (Stripe subscription update, not new checkout). All UI surfaces show correct plan names.",
+    "architectureGoal": "Minimal changes. BillingModule is in apps/api (Platform Backend on Vercel) per backend-separation. Stripe webhook already handles subscription.updated events. Frontend billing page already has monthly/annual toggle."
+  },
+  "decisions": {
+    "backendLocation": "apps/api (Platform Backend) — BillingModule stays here per backend-separation PRD",
+    "switchMethod": "stripe.subscriptions.update() to change price ID — NOT a new checkout session (which would create duplicate subscriptions)",
+    "planNaming": "Slugs follow pattern: {tier}-{interval} e.g. basic-monthly, basic-annual, pro-monthly, pro-annual, ultra-monthly, ultra-annual. Free plan has no interval variant (just 'free')",
+    "stripeSync": "Stripe products/prices must be created manually in Stripe Dashboard. Price IDs stored in subscription_plans.stripe_price_id column. This is a manual step after DB migration.",
+    "websiteUpdate": "Website pricing page (apps/website) has hardcoded plan data — rename Starter→Basic, Business→Ultra there too"
+  },
+  "currentDatabaseState": {
+    "plans": [
+      { "name": "Free", "slug": "free", "interval": "month", "price": "$0", "credits": 1000 },
+      {
+        "name": "Starter",
+        "slug": "starter-monthly",
+        "interval": "month",
+        "price": "$20",
+        "credits": 4000
+      },
+      {
+        "name": "Starter",
+        "slug": "starter-annual",
+        "interval": "year",
+        "price": "$192/yr",
+        "credits": 4000
+      },
+      {
+        "name": "Pro",
+        "slug": "pro-monthly",
+        "interval": "month",
+        "price": "$40",
+        "credits": 8000
+      },
+      {
+        "name": "Pro",
+        "slug": "pro-annual",
+        "interval": "year",
+        "price": "$384/yr",
+        "credits": 8000
+      },
+      {
+        "name": "Business",
+        "slug": "business-monthly",
+        "interval": "month",
+        "price": "$200",
+        "credits": 40000
+      },
+      {
+        "name": "Business",
+        "slug": "business-annual",
+        "interval": "year",
+        "price": "$1920/yr",
+        "credits": 40000
+      }
+    ],
+    "note": "stripe_price_id is NULL for all plans — needs to be set after creating Stripe products"
+  },
+  "affectedFiles": {
+    "database": "subscription_plans table (rename + slug update)",
+    "backend": [
+      "apps/api/src/modules/billing/billing.controller.ts (add switch-interval endpoint)",
+      "apps/api/src/modules/billing/services/stripe.service.ts (add switchSubscriptionInterval method)"
+    ],
+    "frontend": [
+      "apps/web/src/features/settings/components/settings-content/BillingPageContent.tsx (add switch-to-annual button for monthly subscribers)",
+      "apps/web/src/features/settings/services/billing-api.ts (add switchInterval API call)",
+      "apps/web/src/features/settings/types/billing.types.ts (add SwitchIntervalResponse type)"
+    ],
+    "website": ["apps/website/src/app/pricing/page.tsx (rename Starter→Basic, Business→Ultra)"]
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Rename database plans from Starter/Business to Basic/Ultra",
+      "description": "Update subscription_plans table: rename Starter→Basic (update name and slug) and Business→Ultra (update name and slug). Free and Pro stay unchanged.",
+      "acceptanceCriteria": [
+        "Plan named 'Starter' renamed to 'Basic' (both monthly and annual rows)",
+        "Slug 'starter-monthly' renamed to 'basic-monthly'",
+        "Slug 'starter-annual' renamed to 'basic-annual'",
+        "Plan named 'Business' renamed to 'Ultra' (both monthly and annual rows)",
+        "Slug 'business-monthly' renamed to 'ultra-monthly'",
+        "Slug 'business-annual' renamed to 'ultra-annual'",
+        "Free and Pro plans unchanged",
+        "Migration applied via Supabase MCP apply_migration",
+        "SELECT query confirms 7 plans with correct names and slugs"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [],
+      "notes": "This is a data migration only — no schema changes. The slug column has a UNIQUE constraint so we can't have collisions during rename. Update in order: starter→basic first, then business→ultra."
+    },
+    {
+      "id": "US-002",
+      "title": "Add switch-interval endpoint to billing backend",
+      "description": "Add POST /api/billing/switch-interval endpoint that uses stripe.subscriptions.update() to change an existing subscription's price from monthly to yearly (or yearly to monthly). Updates DB record with new plan_id and period.",
+      "acceptanceCriteria": [
+        "POST /api/billing/switch-interval endpoint exists in billing.controller.ts",
+        "Accepts body: { targetInterval: 'month' | 'year' }",
+        "Looks up user's current subscription + plan from DB",
+        "Finds the matching plan with same tier but target interval (e.g., pro-monthly → pro-annual)",
+        "Calls stripe.subscriptions.update() with new price_id and proration_behavior: 'create_prorations'",
+        "Updates user_subscriptions row: plan_id, current_period_start, current_period_end",
+        "Returns { success: true, newPlan: { name, slug, interval, price_amount } }",
+        "Returns error if user has no active subscription",
+        "Returns error if target plan has no stripe_price_id configured",
+        "Returns error if already on target interval",
+        "Protected by AuthGuard and ThrottlerGuard",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "dependsOn": ["US-001"],
+      "notes": "stripe.subscriptions.update() handles proration automatically. The existing webhook handler (customer.subscription.updated) will also fire and update the DB, but we update immediately for responsiveness. Method goes in stripe.service.ts as switchSubscriptionInterval(). Controller in billing.controller.ts."
+    },
+    {
+      "id": "US-003",
+      "title": "Add switch-interval to frontend billing API + types",
+      "description": "Add the switchInterval function to billing-api.ts and the response type to billing.types.ts so the frontend can call the new endpoint.",
+      "acceptanceCriteria": [
+        "billing-api.ts has switchInterval(targetInterval: 'month' | 'year') function",
+        "Calls POST /api/billing/switch-interval via backendPost",
+        "billing.types.ts has SwitchIntervalResponse type: { success: boolean, newPlan: { name: string, slug: string, interval: string, price_amount: number } }",
+        "billingApi object exports switchInterval",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "dependsOn": ["US-002"],
+      "notes": "Simple additions to existing files. No new files needed."
+    },
+    {
+      "id": "US-004",
+      "title": "Add 'Switch to Annual' button in billing page for monthly subscribers",
+      "description": "In BillingPageContent.tsx, when a paid user is on a monthly plan, show an 'Upgrade to Annual (Save 20%)' button in the Plan Details tab. Clicking it calls switchInterval('year') and refreshes the page data.",
+      "acceptanceCriteria": [
+        "Monthly subscribers see 'Upgrade to Annual (Save 20%)' button in Plan Details tab",
+        "Annual subscribers see 'Switch to Monthly' button (or no button — confirm with user)",
+        "Button calls billingApi.switchInterval() with the target interval",
+        "Shows loading state while switching",
+        "On success: reloads billing status data to reflect new plan",
+        "On error: shows inline error message",
+        "Free users do NOT see this button (they use the plan comparison to pick a plan)",
+        "Button sits next to existing 'Buy more Credits' and 'Change Plan' buttons",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": false,
+      "dependsOn": ["US-003"],
+      "notes": "The plan interval is available from status.plan.interval. Monthly = 'month', yearly = 'year'. The button should only appear when user has an active paid subscription (not free, not canceled).",
+      "visualVerification": {
+        "url": "http://localhost:3000/settings/billing",
+        "requiresLogin": true,
+        "lookFor": "Monthly subscribers should see 'Upgrade to Annual' button. Annual subscribers should see 'Switch to Monthly' or no interval switch button."
+      }
+    },
+    {
+      "id": "US-005",
+      "title": "Update website pricing page plan names",
+      "description": "In apps/website/src/app/pricing/page.tsx, rename the hardcoded plan names from Starter→Basic and Business→Ultra. Keep all features, prices, and credits the same.",
+      "acceptanceCriteria": [
+        "Plan name 'Starter' changed to 'Basic' in plans array",
+        "Plan name 'Business' changed to 'Ultra' in plans array",
+        "Register links use correct plan names: ?plan=basic and ?plan=ultra",
+        "Pro plan 'highlighted: true' unchanged",
+        "All prices, credits, features, descriptions unchanged",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": false,
+      "dependsOn": ["US-001"],
+      "notes": "Simple find-and-replace in the hardcoded plans array. Also update the register link query params.",
+      "visualVerification": {
+        "url": "http://localhost:3002/pricing",
+        "requiresLogin": false,
+        "lookFor": "Four plan cards should show: Free, Basic, Pro, Ultra (not Starter or Business)"
+      }
+    }
+  ]
+}

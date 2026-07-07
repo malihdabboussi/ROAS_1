@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 400px;
+    height: 400px;
+    background: #0a0a0a;
+    overflow: hidden;
+  }
+
+  .canvas {
+    width: 400px;
+    height: 400px;
+    position: relative;
+  }
+
+  .purple-shadow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 180px;
+    height: 180px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, rgba(139, 92, 246, 0.18) 35%, rgba(124, 58, 237, 0.07) 60%, transparent 80%);
+    border-radius: 50%;
+    filter: blur(20px);
+  }
+
+  .orb {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 200px;
+    transform: translate(-50%, -50%);
+  }
+
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 3px solid;
+    background: transparent;
+  }
+
+  .ring-1 {
+    width: 160px;
+    height: 160px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-color: rgba(52, 211, 153, 0.9);
+    box-shadow:
+      0 0 12px rgba(16, 185, 129, 0.6),
+      0 0 24px rgba(16, 185, 129, 0.3),
+      inset 0 0 12px rgba(16, 185, 129, 0.15),
+      0 0 16px rgba(168, 85, 247, 0.3),
+      0 0 32px rgba(139, 92, 246, 0.15);
+  }
+
+  .ring-2 {
+    width: 90px;
+    height: 90px;
+    top: 50%;
+    left: 50%;
+    transform: translate(calc(-50% + 20px), calc(-50% + 20px));
+    border-color: rgba(16, 185, 129, 0.85);
+    box-shadow:
+      0 0 10px rgba(16, 185, 129, 0.5),
+      0 0 20px rgba(16, 185, 129, 0.25),
+      inset 0 0 10px rgba(16, 185, 129, 0.12),
+      0 0 14px rgba(168, 85, 247, 0.3),
+      0 0 24px rgba(139, 92, 246, 0.15);
+  }
+
+  .dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    background: radial-gradient(circle, #6ee7b7 0%, #10b981 50%, #059669 100%);
+  }
+
+  .dot-main {
+    width: 8px;
+    height: 8px;
+    box-shadow: 0 0 4px rgba(16, 185, 129, 0.4), 0 0 10px rgba(168, 85, 247, 0.5), 0 0 16px rgba(139, 92, 246, 0.3);
+    transform: translate(calc(-50% - 70px), calc(-50% - 70px));
+  }
+  .dot-left {
+    width: 4px;
+    height: 4px;
+    box-shadow: 0 0 3px rgba(16, 185, 129, 0.4), 0 0 8px rgba(168, 85, 247, 0.4);
+    transform: translate(calc(-50% - 80px), calc(-50% - 60px));
+  }
+  .dot-right {
+    width: 4px;
+    height: 4px;
+    box-shadow: 0 0 3px rgba(16, 185, 129, 0.4), 0 0 8px rgba(168, 85, 247, 0.4);
+    transform: translate(calc(-50% - 60px), calc(-50% - 80px));
+  }
+
+  .ring-3 {
+    width: 40px;
+    height: 40px;
+    top: 50%;
+    left: 50%;
+    transform: translate(calc(-50% + 30px), calc(-50% + 35px));
+    border-color: rgba(5, 150, 105, 0.8);
+    box-shadow:
+      0 0 8px rgba(5, 150, 105, 0.5),
+      0 0 16px rgba(5, 150, 105, 0.2),
+      inset 0 0 8px rgba(5, 150, 105, 0.1),
+      0 0 12px rgba(168, 85, 247, 0.3),
+      0 0 20px rgba(139, 92, 246, 0.15);
+  }
+</style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="purple-shadow"></div>
+    <div class="orb">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div class="dot dot-main"></div>
+      <div class="dot dot-left"></div>
+      <div class="dot dot-right"></div>
+    </div>
+  </div>
+</body>
+</html>

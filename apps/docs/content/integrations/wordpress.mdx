@@ -1,0 +1,58 @@
+---
+title: "WordPress"
+description: "Connect WordPress.com, Jetpack-connected, or self-hosted WordPress sites so agents can publish and manage content."
+---
+
+## What It Connects
+
+WordPress supports two connection methods:
+
+| Method | Use it for |
+|---|---|
+| **WordPress.com** | WordPress.com sites and Jetpack-connected sites |
+| **Self-hosted WordPress** | GoDaddy, Bluehost, WP Engine, Kinsta, and other WordPress installs |
+
+Self-hosted sites connect with WordPress Application Passwords. WordPress.com and Jetpack-connected sites connect with WordPress.com OAuth.
+
+## What Agents Can Do
+
+After WordPress is connected, agents can:
+
+- List, create, update, and publish posts
+- List, create, and update pages
+- Upload media
+- List and create categories
+- List and create tags
+- Read connected site information
+- Publish Vibey blog posts to WordPress without duplicating an existing synced post
+
+## Connecting WordPress
+
+<Steps>
+  <Step title="Open Integrations">
+    Go to **Workspace Settings → Integrations**.
+  </Step>
+  <Step title="Choose WordPress">
+    Find **WordPress** in the Library and click **Connect**.
+  </Step>
+  <Step title="Choose connection method">
+    Pick **WordPress.com** for WordPress.com or Jetpack sites. Pick **Self-hosted WordPress** for your own WordPress install.
+  </Step>
+  <Step title="Authorize the site">
+    WordPress redirects you back to Vibey after authorization. The connection appears in the **Manage** tab.
+  </Step>
+</Steps>
+
+## Credential Storage
+
+WordPress credentials are encrypted in Vibey's vault. The integration connection row stores only non-secret metadata such as site URL, connection method, site name, and sync IDs.
+
+## Blog Publishing
+
+When an agent publishes a Vibey blog post to WordPress, Vibey stores sync metadata on the blog post:
+
+- `wordpress_post_id`
+- `wordpress_post_url`
+- `wordpress_synced_at`
+
+Future updates use that post ID to update the existing WordPress post instead of creating a duplicate.

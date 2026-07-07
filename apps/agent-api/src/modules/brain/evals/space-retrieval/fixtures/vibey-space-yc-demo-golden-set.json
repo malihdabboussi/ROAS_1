@@ -1,0 +1,293 @@
+[
+  {
+    "id": "yc-space-wiki-retainer-guardrails",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "In the Company Wiki, what does the retainer scope guardrails doc define as the yearly client cap?",
+    "expectedAnswer": "six retainers",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:9ccdb39d-2369-5b87-a35c-fe504369ef0e",
+      "source:space_doc:9e9325ca-0d54-5230-9d79-e68ebcce9896",
+      "space_doc",
+      "factual_recall"
+    ],
+    "category": "factual_recall",
+    "difficulty": "easy"
+  },
+  {
+    "id": "yc-space-wiki-brand-voice-exact",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "Find the Foundry — brand voice cheatsheet document in the wiki.",
+    "expectedAnswer": "brand voice cheatsheet",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:9ccdb39d-2369-5b87-a35c-fe504369ef0e",
+      "source:space_doc:564ae49b-4967-5389-bc2e-6ada59925d4d",
+      "space_doc",
+      "exact_title"
+    ],
+    "category": "exact_title",
+    "difficulty": "easy"
+  },
+  {
+    "id": "yc-space-wiki-kickoff-paraphrase",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "Where is the wiki SOP for kicking off a new client engagement?",
+    "expectedAnswer": "kickoff SOP",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:9ccdb39d-2369-5b87-a35c-fe504369ef0e",
+      "source:space_doc:3dec677a-a766-54eb-b003-33d45afa83c0",
+      "space_doc",
+      "paraphrase"
+    ],
+    "category": "paraphrase",
+    "difficulty": "medium"
+  },
+  {
+    "id": "yc-space-helmsmark-positioning-mission",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "What buyer was Helmsmark accidentally targeting before the controller repositioning mission?",
+    "expectedAnswer": "solo founders",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:8ffb35ec-4728-5821-9926-7cfddde683f4",
+      "source:mission:c72c7085-bd26-59fe-8ddf-9437d00813ca",
+      "mission",
+      "factual_recall"
+    ],
+    "category": "factual_recall",
+    "difficulty": "easy"
+  },
+  {
+    "id": "yc-space-helmsmark-site-copy-rules",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "In the Helmsmark new site mission, which phrase is banned from the copy?",
+    "expectedAnswer": "frictionless",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:8ffb35ec-4728-5821-9926-7cfddde683f4",
+      "source:mission:afd30097-4168-5270-a547-d38d7e632b61",
+      "mission",
+      "exact_title"
+    ],
+    "category": "exact_title",
+    "difficulty": "medium"
+  },
+  {
+    "id": "yc-space-helmsmark-controller-paraphrase",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "What finance role is the Helmsmark narrative rebuilt around?",
+    "expectedAnswer": "controller",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:8ffb35ec-4728-5821-9926-7cfddde683f4",
+      "source:mission:c72c7085-bd26-59fe-8ddf-9437d00813ca",
+      "mission",
+      "paraphrase"
+    ],
+    "category": "paraphrase",
+    "difficulty": "medium"
+  },
+  {
+    "id": "yc-space-helmsmark-multi-hop",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "In Helmsmark workspace, what v2 narrative work and site IA rebuild are in flight together?",
+    "expectedAnswer": "controller repositioning and new site IA",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:8ffb35ec-4728-5821-9926-7cfddde683f4",
+      "source:mission:c72c7085-bd26-59fe-8ddf-9437d00813ca",
+      "source:mission:afd30097-4168-5270-a547-d38d7e632b61",
+      "mission",
+      "multi_hop"
+    ],
+    "category": "multi_hop",
+    "difficulty": "hard"
+  },
+  {
+    "id": "yc-space-wiki-negative-decoy",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "In the Company Wiki, which doc covers Foundry retainer scope guardrails?",
+    "expectedAnswer": "retainer scope guardrails",
+    "expectedEvidenceIds": [],
+    "decoyEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:9ccdb39d-2369-5b87-a35c-fe504369ef0e",
+      "source:space_doc:9e9325ca-0d54-5230-9d79-e68ebcce9896",
+      "decoy:space_doc:cbd0b3e6-b7d2-5125-adb1-5066a4166d92",
+      "negative_decoy"
+    ],
+    "category": "negative_decoy",
+    "difficulty": "hard"
+  },
+  {
+    "id": "yc-space-helmsmark-decoy-from-wiki",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "In the Helmsmark workspace, which mission covers controller repositioning?",
+    "expectedAnswer": "Helmsmark controller repositioning narrative",
+    "expectedEvidenceIds": [],
+    "decoyEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:8ffb35ec-4728-5821-9926-7cfddde683f4",
+      "source:mission:c72c7085-bd26-59fe-8ddf-9437d00813ca",
+      "decoy:space_doc:9e9325ca-0d54-5230-9d79-e68ebcce9896",
+      "negative_decoy"
+    ],
+    "category": "negative_decoy",
+    "difficulty": "hard"
+  },
+  {
+    "id": "yc-space-wiki-abstention",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "What is the approved Meta Ads spend cap for the Company Wiki Space?",
+    "expectedAnswer": "No Meta Ads spend cap is documented",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": false,
+    "tags": ["yc-demo", "space:9ccdb39d-2369-5b87-a35c-fe504369ef0e", "abstention"],
+    "category": "abstention",
+    "difficulty": "hard"
+  },
+  {
+    "id": "yc-space-helmsmark-abstention",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "What is Plinthworks positioning v3 in the Helmsmark workspace?",
+    "expectedAnswer": "Plinthworks positioning is not in Helmsmark workspace",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": false,
+    "tags": ["yc-demo", "space:8ffb35ec-4728-5821-9926-7cfddde683f4", "abstention"],
+    "category": "abstention",
+    "difficulty": "medium"
+  },
+  {
+    "id": "yc-space-wiki-approvals-sop",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "Where is the Foundry approvals SOP in the wiki?",
+    "expectedAnswer": "approvals SOP",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:9ccdb39d-2369-5b87-a35c-fe504369ef0e",
+      "source:space_doc:5b0cec22-148f-55a0-9ae5-3bd91e21f81a",
+      "space_doc",
+      "exact_title"
+    ],
+    "category": "exact_title",
+    "difficulty": "easy"
+  },
+  {
+    "id": "yc-space-wiki-retro-standard",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "Which wiki doc defines how Foundry runs retros?",
+    "expectedAnswer": "retro standard",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:9ccdb39d-2369-5b87-a35c-fe504369ef0e",
+      "source:space_doc:3db26834-c444-54b2-95c1-29d317ba9f61",
+      "space_doc",
+      "paraphrase"
+    ],
+    "category": "paraphrase",
+    "difficulty": "medium"
+  },
+  {
+    "id": "yc-space-wiki-who-we-are-not",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "Find the Foundry — who we are not wiki page.",
+    "expectedAnswer": "who we are not",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:9ccdb39d-2369-5b87-a35c-fe504369ef0e",
+      "source:space_doc:ecd3212c-3473-5f0e-9227-db8a820fd283",
+      "space_doc",
+      "exact_title"
+    ],
+    "category": "exact_title",
+    "difficulty": "easy"
+  },
+  {
+    "id": "yc-space-wiki-task-stale-scope",
+    "level": "yc_demo",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "Which wiki task is about auditing stale scope language?",
+    "expectedAnswer": "Audit wiki pages for stale scope language",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": true,
+    "tags": [
+      "yc-demo",
+      "space:9ccdb39d-2369-5b87-a35c-fe504369ef0e",
+      "source:space_task:ced17bcb-5ae2-5f0d-a530-118ade7ab71d",
+      "space_task",
+      "factual_recall"
+    ],
+    "category": "factual_recall",
+    "difficulty": "medium"
+  }
+]

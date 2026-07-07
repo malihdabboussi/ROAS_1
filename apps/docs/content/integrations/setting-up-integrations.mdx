@@ -1,0 +1,81 @@
+---
+title: "Setting Up Integrations"
+description: "How to connect platforms, manage connections, and add custom MCP servers so your agents can use real tools."
+---
+
+## Connecting a Platform
+
+<Steps>
+  <Step title="Open Workspace Settings">
+    Navigate to **Workspace Settings → Integrations**.
+  </Step>
+  <Step title="Browse the Library">
+    The **Library** tab shows all available integrations organized by category: Social, Ads and Analytics, Email Marketing, CRM, Payments, Productivity, Developer. Browse or search for the platform you need.
+  </Step>
+  <Step title="Click Connect">
+    Each integration has a Connect button. Most platforms use OAuth - you'll be redirected to log in and approve access. Some (like ActiveCampaign and Fireflies) use API keys instead.
+  </Step>
+  <Step title="Choose scope in org context">
+    If you're inside an organization, choose connection scope:
+    - **Personal** (default): only you can use this connection in the org.
+    - **All Org**: shared with everyone in the org (admin/owner only).
+  </Step>
+  <Step title="Confirm the connection">
+    Once authorized, the integration moves to your **Manage** tab with status: Connected, Pending, or Error.
+  </Step>
+</Steps>
+
+## Connection Methods
+
+| Method | Platforms | How it works |
+|---|---|---|
+| **OAuth (redirect)** | Meta, Stripe, GoHighLevel, PayPal, WordPress.com, Calendly, Dropbox, Fathom, Slack, and most Composio-powered integrations | Click Connect, authorize in the platform's login page, redirected back |
+| **API key** | ActiveCampaign, Fireflies, Fanbasis | Enter your API URL and/or key directly |
+| **Application Password** | Self-hosted WordPress | Enter the site URL, authorize Vibey in WordPress, redirected back |
+
+## Managing Connections
+
+The **Manage** tab shows all your connected platforms. From here you can:
+
+- See connection status (Connected, Pending, Error, Disconnected)
+- Expand each integration group to see individual accounts/connections
+- Add multiple connections for the same integration
+- Disconnect or remove a specific connection
+- Set the default shared connection for an integration (admin/owner, All Org only)
+- Re-authorize if access has expired
+
+## Scope Rules in Organizations
+
+- **Personal** is the default scope when connecting in org context.
+- **All Org** connections can have multiple accounts per integration, but only one default.
+- **Owner/Admin** can manage All Org connections.
+- **Fathom** and **Fireflies** remain personal-only.
+
+## MCP Servers
+
+Beyond built-in integrations, you can add custom **MCP (Model Context Protocol) servers** that your agents can use as tools:
+
+1. Go to **Workspace Settings → MCP Servers**
+2. Add a server URL with a name
+3. Assign a domain (shared, marketing, analyst, or developer) so the right agents get access
+4. Toggle per-agent access on or off
+5. Optionally import server configurations in bulk via JSON
+
+MCP servers let you extend your agents' capabilities to any service that supports the protocol.
+
+## Which Integrations to Connect First
+
+| Your goal | Connect these first |
+|---|---|
+| [Content creation](/talents/social-content) | LinkedIn, Instagram |
+| Team communication | Slack |
+| File management | Google Drive or Dropbox |
+| [Meeting knowledge](/brain/how-the-brain-works) | Fathom or Fireflies |
+| [Running ads](/talents/ads) | Meta Ads |
+| [Sending emails](/talents/emails) | SendGrid, GoHighLevel, or ActiveCampaign |
+| Scheduling | Calendly, Google Calendar |
+| [Payments](/campaigns/campaign-dashboard) | Stripe |
+
+<Callout type="tip">
+  You don't need to connect everything at once. Start with 2-3 integrations that match your most important workflows, and add more as you need them.
+</Callout>

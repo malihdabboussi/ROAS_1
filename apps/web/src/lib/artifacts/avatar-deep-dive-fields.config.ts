@@ -1,0 +1,21 @@
+/** Ordered deep-dive persona keys for Avatar preview + PDF export */
+export const AVATAR_DEEP_DIVE_FIELDS: [string, string][] = [
+  ['core_problem', 'Core Problem'],
+  ['key_frustrations', 'Key Frustrations'],
+  ['powerful_emotions', 'Powerful Emotions'],
+  ['biggest_fears', 'Biggest Fears'],
+  ['fear_impact_on_relationships', 'Fear Impact on Relationships'],
+  ['hurtful_comments', 'Hurtful Comments'],
+  ['main_objections', 'Main Objections'],
+  ['secondary_gains', 'Secondary Gains'],
+  ['success_markers', 'Success Markers'],
+  ['perfect_outcomes', 'Perfect Outcomes'],
+  ['past_attempts_to_solve', 'Past Attempts to Solve'],
+  ['avoidance_behaviors', 'Avoidance Behaviors'],
+  ['transformation_impact', 'Transformation Impact'],
+  ['transformation_outcomes', 'Transformation Outcomes'],
+  ['blame_targets', 'Blame Targets'],
+  ['internal_voice', 'Internal Voice'],
+  ['content_preferences', 'Content Preferences'],
+  ['psychological_drivers', 'Psychological Drivers'],
+]

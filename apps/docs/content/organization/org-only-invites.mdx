@@ -1,0 +1,101 @@
+---
+title: "Org-Only Invites"
+description: "When you accept an org invitation as a brand new user, you skip personal-account setup and land directly inside the organization. Here is how it works."
+---
+
+## What This Is
+
+If you sign up for Vibey by accepting an **organization invitation link** (instead of registering yourself), your account is created in **org-only mode**.
+
+This means:
+
+- You skip personal-account onboarding
+- You do not have a Personal Brain by default (you read from the org's Company Brain)
+- The Personal Account UI is hidden
+- You land directly on **Home** with the org context already loaded
+- Your runtime machine provisions inside the org from day one
+
+You still get a real user account; it is just scoped to operate inside the org rather than dual-purpose for personal work.
+
+## When Does Org-Only Mode Apply
+
+| Scenario | Account mode |
+|---|---|
+| You signed up directly at app.vibey.im/register | Personal account (with optional org membership later) |
+| You accepted an org invite link as a brand-new user | **Org-only** |
+| You already had a personal account and accepted an org invite | Personal account (your existing personal data stays) |
+
+The `profiles.account_mode` field on your user record stores this. Owners and admins can see who is org-only.
+
+## What You See
+
+A typical org-only user experience:
+
+<Steps>
+  <Step title="Click the invite link">
+    The link goes to `/invite/[token]`. The page detects you have no Vibey account yet.
+  </Step>
+  <Step title="Sign up">
+    Create your credentials (email + password, or OAuth). The signup creates your `profiles` row with `account_mode = 'org_only'`.
+  </Step>
+  <Step title="Accept the invitation">
+    A single endpoint creates the membership in the org, accepts the invite, and triggers your machine provisioning.
+  </Step>
+  <Step title="Wait at /setting-up">
+    A loading page polls the API until your machine is ready (usually a few seconds to a minute).
+  </Step>
+  <Step title="Land on Home">
+    Once ready, you redirect to `/home` with the org context already loaded.
+  </Step>
+</Steps>
+
+## What Is Hidden
+
+In org-only mode, the following Personal Account UI is hidden:
+
+- The "Personal Account" item in the avatar dropdown
+- The Personal Account section in Account Settings
+- Personal billing controls (your billing is the org's)
+- The Personal Space picker on the Brain scope (you start with the org's brains)
+
+## What You Can Still Do
+
+You can still:
+
+- Switch your active org if you have multiple memberships
+- Manage your profile (name, avatar, password)
+- Configure your communication preferences (digest channel, voice settings)
+- Open conversations with org agents
+- Create and use org Spaces
+
+## Org-Only Plus Personal Later
+
+If an org-only user later wants a personal account (for personal work outside any org), they can upgrade. The `account_mode` flips and Personal Account UI becomes visible. The flow is in **Account Settings**.
+
+## Re-Inviting Existing Users
+
+When you invite someone who **already has** a Vibey account (via the org invite flow), they do not become org-only. They join your org as an additional membership and keep their existing personal data.
+
+The org-only mode is reserved for **brand-new users** who arrived via an org link.
+
+## Why This Exists
+
+Before org-only mode, every new user went through personal onboarding even if they were invited to an org by an admin. They got a Personal Brain they did not want, a Personal Space they did not need, and a Personal Account billing page that was irrelevant.
+
+Org-only mode removes the friction. Org-invited users land where they actually need to be: inside the org, with the org's context.
+
+## For Owners and Admins
+
+If you are inviting teammates to your org and you want them in org-only mode by default:
+
+- Use the org invite flow from **Team Settings → Members → Invite**
+- The invite link automatically creates an org-only account for brand-new users
+- No additional steps required
+
+To revoke a pending invite, use the same Members page. Re-invites are deduplicated by normalized email; only one pending invite per email at a time.
+
+## Related
+
+- [How Organizations Work](/organization/how-organizations-work)
+- [Organization Billing](/organization/organization-billing)
+- [The Home Page](/getting-started/the-home-page)

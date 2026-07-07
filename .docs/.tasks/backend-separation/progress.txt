@@ -1,0 +1,108 @@
+## Backend Separation — Progress Log
+
+---
+
+## Codebase Patterns
+
+### Current Architecture (Verified 2026-02-13)
+- apps/api = NestJS 11 monolith, 17 modules in app.module.ts
+- Deployed BOTH on Vercel (vercel.json + api/index.ts) AND VM (PM2 port 3001)
+- VM: Hetzner 188.245.41.230, OpenClaw gateway port 18789
+- Cloudflare tunnel: api.govibey.com → VM:3001, gateway.govibey.com → VM:18789
+- Frontend proxy: apps/web/src/app/api/proxy/[...path]/route.ts → BACKEND_URL
+
+### Key Files
+- apps/api/src/app.module.ts — 17 module imports
+- apps/api/src/shared/ — 8 files (AuthGuard, decorators, pipes, filters, services)
+- apps/api/src/modules/chat/ — 7 files (ChatModule, OpenClawProxy, ArtifactExtractor)
+- apps/api/src/modules/billing/ — 5 files (CreditsGuard, CreditsService, StripeService)
+- apps/api/src/modules/brain/ — 18 files (controllers, services, repositories)
+- apps/web/src/app/api/proxy/[...path]/route.ts — universal frontend proxy
+
+### Critical Discovery: CreditsService Reads VM Filesystem
+- credits.service.ts lines 80-163: reads OpenClaw transcript JSONL files
+- Path: OPENCLAW_SESSIONS_DIR = ~/.openclaw/agents/vibey/sessions
+- This MUST run on VM (co-located with OpenClaw)
+- Balance queries are pure Supabase (work anywhere)
+
+### Module Ownership After Split
+
+| Module             | Platform (Vercel) | Agent (VM) | Notes                              |
+|--------------------|-------------------|------------|------------------------------------|
+| SharedModule       | ✅ (from package)  | ✅ (from package) | packages/api-shared           |
+| BillingModule      | ✅ (full)          | ✅ (credits only) | Platform: Stripe+UI. Agent: balance+deduct |
+| ConversationsModule| ✅                 | ✅          | Both need it                       |
+| BrainModule        | ✅ (full+UI)       | ✅ (services only) | Platform: controllers. Agent: services |
+| ChatModule         | ❌                 | ✅          | Agent only                         |
+| TranscribeModule   | ❌                 | ✅          | Agent only                         |
+| CampaignsModule    | ✅                 | ❌          | Platform only                      |
+| FunnelsModule      | ✅                 | ❌          | Platform only                      |
+| LeadsModule        | ✅                 | ❌          | Platform only                      |
+| DomainsModule      | ✅                 | ❌          | Platform only                      |
+| ThemesModule       | ✅                 | ❌          | Platform only                      |
+| TagsModule         | ✅                 | ❌          | Platform only                      |
+| CustomFieldsModule | ✅                 | ❌          | Platform only                      |
+| SegmentsModule     | ✅                 | ❌          | Platform only                      |
+| MediaModule        | ✅                 | ❌          | Platform only                      |
+| InternalModule     | ✅                 | ❌          | Platform only                      |
+
+### Frontend Proxy Routing Plan
+- /api/chat/* → AGENT_BACKEND_URL (VM)
+- /api/transcribe/* → AGENT_BACKEND_URL (VM)
+- Everything else → BACKEND_URL (Vercel)
+
+### Ports
+- Platform Backend (Vercel): serverless (no port)
+- Agent Backend (VM): 3003
+- OpenClaw Gateway (VM): 18789
+
+---
+
+## Guideline Compliance Audit (2026-02-13)
+
+### Files Reviewed
+- .docs/guidelines/development/code-guidelines.md (1675 lines — 100%)
+- .docs/guidelines/architecture/backend-architecture.md (932 lines — 100%)
+- .docs/guidelines/architecture/feature-guidelines.md (1747 lines — 100%)
+- .docs/guidelines/architecture/project-architecture.md (1061 lines — 100%)
+- .docs/guidelines/development/code-guidelines-backend.md (2672 lines — 100%)
+
+### Compliant ✅
+- Three-layer architecture (Controller → Service → Repository)
+- Service-Based Modules (Vertical Slices)
+- Auth via Guards (not middleware) — both backends
+- Zod validation on inputs — both backends
+- Rate limiting with Throttler — both backends
+- Error logging with LoggerService — both backends
+- Feature isolation rules
+- File size limits (Controllers 200, Services 600, Repos 400)
+- "Code used by 2+ apps → Create package" (US-001)
+
+### Issues Found (4) — All Addressed in PRD
+1. **CreditsService uses SERVICE_ROLE_KEY** — Pre-existing violation. Documented as SANCTIONED EXCEPTION in PRD (credit ops span multiple tables).
+2. **Shared code location deviation** — backend-architecture.md says src/lib/, PRD uses packages/api-shared. PRD follows project-architecture.md ("2+ apps → package"). US-014 will update backend-architecture.md.
+3. **Monorepo structure outdated** — project-architecture.md lists apps/app-backend/ but actual is apps/api/. US-014 will fix.
+4. **Deployment section needs rewrite** — backend-architecture.md Section 14 only covers single backend. US-014 will rewrite for dual-backend.
+
+---
+
+## Story Progress
+
+| Story  | Status  | Date | Notes |
+|--------|---------|------|-------|
+| US-001 | ✅ done | 2026-02-13 | Extracted 8 shared files to packages/api-shared. Updated 21 controller imports. Deleted apps/api/src/shared/. |
+| US-002 | ✅ done | 2026-02-13 | Scaffolded apps/agent-api (NestJS 11, port 3003, SharedModule from @vibey/api-shared). |
+| US-003 | ✅ done | 2026-02-13 | Copied ConversationsModule (5 files) to agent-api. Stays in both backends. |
+| US-004 | ✅ done | 2026-02-13 | Copied Brain services/repos/types/guards (14 files, NO controllers) to agent-api. |
+| US-005 | ✅ done | 2026-02-13 | Created AgentBillingModule with CreditsGuard + CreditsService. No Stripe, no UI. |
+| US-006 | ✅ done | 2026-02-13 | Copied ChatModule (7 files) to agent-api. Updated module to import from agent-api billing/brain/conversations. |
+| US-007 | ✅ done | 2026-02-13 | Copied TranscribeModule (8 files) to agent-api. |
+| US-008 | ✅ done | 2026-02-13 | Removed ChatModule + TranscribeModule from apps/api. Deleted directories. 13 platform modules remain. |
+| US-009 | ✅ done | 2026-02-13 | Added AGENT_BACKEND_URL + AGENT_PATHS routing to proxy. chat/* and transcribe/* → Agent Backend. |
+| US-010 | ✅ done | 2026-02-13 | Created ecosystem.config.js for PM2 (vibey-agent-api, port 3003). |
+| US-011 | ✅ done | 2026-02-13 | Created .docs/deployment/backend-separation.md with full deployment guide + rollback procedure. |
+| US-012 | ✅ done | 2026-02-13 | All 3 projects compile clean. Module separation verified. No cross-contamination. |
+| US-013 | ✅ done | 2026-02-13 | Documented in deployment guide. Actual VM cutover is manual. |
+| US-014 | pending |      | Architecture docs update — separate task after merge. |
+
+---

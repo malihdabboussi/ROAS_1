@@ -1,0 +1,629 @@
+diff --git a/apps/api/src/app.module.ts b/apps/api/src/app.module.ts
+index 68fb9019..74dffae2 100644
+--- a/apps/api/src/app.module.ts
++++ b/apps/api/src/app.module.ts
+@@ -31,6 +31,7 @@ import { SegmentsModule } from './modules/segments/segments.module'
+ import { SlackModule } from './modules/slack/slack.module'
+ import { StudioSearchModule } from './modules/studio-search/studio-search.module'
+ import { TagsModule } from './modules/tags/tags.module'
++import { TeamModule } from './modules/team/team.module'
+ import { TelegramModule } from './modules/telegram/telegram.module'
+ import { ThemesModule } from './modules/themes/themes.module'
+ import { TranscribeModule } from './modules/transcribe/transcribe.module'
+@@ -84,6 +85,7 @@ import { WorkspacesModule } from './modules/workspaces/workspaces.module'
+     SegmentsModule,
+     SlackModule,
+     StudioSearchModule,
++    TeamModule,
+     TelegramModule,
+     TranscribeModule,
+     UsersModule,
+diff --git a/apps/web/src/app/(auth)/invite/page.tsx b/apps/web/src/app/(auth)/invite/page.tsx
+index bfd15005..fa65109e 100644
+--- a/apps/web/src/app/(auth)/invite/page.tsx
++++ b/apps/web/src/app/(auth)/invite/page.tsx
+@@ -4,9 +4,18 @@ import Link from 'next/link'
+ import { useSearchParams } from 'next/navigation'
+ import { useEffect, useState } from 'react'
+ import { Eye, EyeOff } from 'lucide-react'
++import { AuthOrbShell } from '@/components/auth/auth-orb-shell'
+ 
+ const API_URL = process.env.NEXT_PUBLIC_API_URL
+ 
++const INVITE_QUOTES = [
++  "You're on the list.",
++  'Exclusive access starts here.',
++  'Your invite unlocks more.',
++  'Welcome to the inner circle.',
++  'Build with us.',
++]
++
+ export default function InvitePage() {
+   const searchParams = useSearchParams()
+   const [email, setEmail] = useState('')
+@@ -64,49 +73,40 @@ export default function InvitePage() {
+   }
+ 
+   return (
+-    <div className="card-glass card-elevated text-card-foreground w-full max-w-[var(--container-auth)] rounded-[var(--spacing-4)] p-[var(--spacing-8)]">
+-      <div className="mb-[var(--spacing-6)] text-center">
+-        <img
+-          src="/Logos/logov2_transperent.png"
+-          alt="Vibey"
+-          className="mx-auto mb-[var(--spacing-3)] h-16 w-16 object-contain"
+-        />
+-        <h1 className="title-h1 text-foreground">CREATE ACCOUNT</h1>
+-        <p className="body-2 text-muted-foreground mt-[var(--spacing-2)]">
++    <AuthOrbShell quotes={INVITE_QUOTES}>
++      <div className="mb-spacing-8 text-center">
++        <h1 className="text-3xl font-bold tracking-tight text-foreground">CREATE ACCOUNT</h1>
++        <p className="body-2 text-muted-foreground mt-spacing-2">
+           Enter the invite code from your email
+         </p>
+       </div>
+-      <form onSubmit={(e) => void onSubmit(e)} className="space-y-[var(--spacing-4)]">
++      <form onSubmit={(e) => void onSubmit(e)} className="space-y-spacing-4">
+         <div>
+-          <label className="body-3 text-muted-foreground mb-[var(--spacing-1)] block">Email</label>
++          <label className="body-3 text-muted-foreground mb-spacing-1 block">Email</label>
+           <input
+             type="email"
+             required
+             value={email}
+             onChange={(e) => setEmail(e.target.value)}
+-            className="input-glass body-2 w-full rounded-[var(--spacing-2)] px-[var(--spacing-3)] py-[var(--spacing-2)]"
++            className="input-glass h-spacing-10 w-full rounded-spacing-2"
+             placeholder="you@domain.com"
+             autoComplete="email"
+           />
+         </div>
+         <div>
+-          <label className="body-3 text-muted-foreground mb-[var(--spacing-1)] block">
+-            Invite code
+-          </label>
++          <label className="body-3 text-muted-foreground mb-spacing-1 block">Invite code</label>
+           <input
+             type="text"
+             required
+             value={code}
+             onChange={(e) => setCode(e.target.value)}
+-            className="input-glass body-2 w-full rounded-[var(--spacing-2)] px-[var(--spacing-3)] py-[var(--spacing-2)]"
++            className="input-glass h-spacing-10 w-full rounded-spacing-2"
+             placeholder="Your code"
+             autoComplete="one-time-code"
+           />
+         </div>
+         <div>
+-          <label className="body-3 text-muted-foreground mb-[var(--spacing-1)] block">
+-            Password
+-          </label>
++          <label className="body-3 text-muted-foreground mb-spacing-1 block">Password</label>
+           <div className="relative">
+             <input
+               type={showPassword ? 'text' : 'password'}
+@@ -114,14 +114,14 @@ export default function InvitePage() {
+               minLength={6}
+               value={password}
+               onChange={(e) => setPassword(e.target.value)}
+-              className="input-glass body-2 w-full rounded-[var(--spacing-2)] px-[var(--spacing-3)] py-[var(--spacing-2)] pr-10"
++              className="input-glass h-spacing-10 w-full rounded-spacing-2 pr-spacing-8"
+               placeholder="At least 6 characters"
+               autoComplete="new-password"
+             />
+             <button
+               type="button"
+               onClick={() => setShowPassword((s) => !s)}
+-              className="text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2"
++              className="text-muted-foreground absolute right-spacing-2 top-1/2 -translate-y-1/2"
+               aria-label={showPassword ? 'Hide password' : 'Show password'}
+             >
+               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+@@ -132,17 +132,17 @@ export default function InvitePage() {
+         <button
+           type="submit"
+           disabled={loading}
+-          className="button-glass-primary body-2 w-full rounded-[var(--spacing-2)] py-[var(--spacing-3)] font-medium disabled:opacity-50"
++          className="chip-glass-green w-full rounded-spacing-2 px-4 py-2.5 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+         >
+-          {loading ? 'Creating account…' : 'Create account'}
++          <span className="relative z-10">{loading ? 'Creating account…' : 'Create account'}</span>
+         </button>
+       </form>
+-      <p className="body-3 text-muted-foreground mt-[var(--spacing-6)] text-center">
++      <p className="body-3 text-muted-foreground mt-spacing-6 text-center">
+         Already have an account?{' '}
+-        <Link href="/login" className="text-primary underline">
++        <Link href="/login" className="body-3 text-muted-foreground hover:text-foreground underline">
+           Log in
+         </Link>
+       </p>
+-    </div>
++    </AuthOrbShell>
+   )
+ }
+diff --git a/apps/web/src/features/settings/components/AccountSettingsModal.tsx b/apps/web/src/features/settings/components/AccountSettingsModal.tsx
+index a992882c..9cc08d9c 100644
+--- a/apps/web/src/features/settings/components/AccountSettingsModal.tsx
++++ b/apps/web/src/features/settings/components/AccountSettingsModal.tsx
+@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
+ import { useEffect, useState } from 'react'
+ import * as DialogPrimitive from '@radix-ui/react-dialog'
+ import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
+-import { ArrowLeft, BarChart2, CreditCard, User, X } from 'lucide-react'
++import { ArrowLeft, BarChart2, CreditCard, Users, User, X } from 'lucide-react'
+ import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+ import type { AccountSettingsSection } from '../contexts/AccountSettingsModalContext'
+ 
+@@ -27,6 +27,10 @@ const UsagePageContent = dynamic(() => import('./settings-content/UsagePageConte
+   ssr: false,
+   loading: DynamicLoadingFallback,
+ })
++const TeamContent = dynamic(() => import('./settings-content/TeamContent'), {
++  ssr: false,
++  loading: DynamicLoadingFallback,
++})
+ 
+ interface NavItem {
+   id: AccountSettingsSection
+@@ -38,6 +42,7 @@ const navItems: NavItem[] = [
+   { id: 'profile', label: 'Profile', icon: User },
+   { id: 'billing', label: 'Billing', icon: CreditCard },
+   { id: 'usage', label: 'Usage', icon: BarChart2 },
++  { id: 'team', label: 'My Human Team', icon: Users },
+ ]
+ 
+ interface AccountSettingsModalProps {
+@@ -76,6 +81,8 @@ export function AccountSettingsModal({
+         return <BillingPageContent />
+       case 'usage':
+         return <UsagePageContent />
++      case 'team':
++        return <TeamContent />
+       default:
+         return <ProfilePageContent />
+     }
+diff --git a/apps/web/src/features/settings/contexts/AccountSettingsModalContext.tsx b/apps/web/src/features/settings/contexts/AccountSettingsModalContext.tsx
+index 250cb1ab..7fcb6cd8 100644
+--- a/apps/web/src/features/settings/contexts/AccountSettingsModalContext.tsx
++++ b/apps/web/src/features/settings/contexts/AccountSettingsModalContext.tsx
+@@ -2,7 +2,7 @@
+ 
+ import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+ 
+-export type AccountSettingsSection = 'profile' | 'billing' | 'usage'
++export type AccountSettingsSection = 'profile' | 'billing' | 'usage' | 'team'
+ 
+ interface AccountSettingsModalContextValue {
+   isOpen: boolean
+diff --git a/apps/web/src/lib/api/backend-client.ts b/apps/web/src/lib/api/backend-client.ts
+index 2fc4ddb7..e75fab3d 100644
+--- a/apps/web/src/lib/api/backend-client.ts
++++ b/apps/web/src/lib/api/backend-client.ts
+@@ -1,3 +1,27 @@
++import { formatPermissionToastMessage } from '@/features/team-management/config/permission-toast.config'
++
++async function maybeShowPermissionToast(res: Response): Promise<void> {
++  if (res.status !== 403 || typeof window === 'undefined') return
++  try {
++    const body = (await res.clone().json()) as {
++      toast_key?: string
++      params?: Record<string, unknown>
++      message?: string
++      error?: string
++    }
++    const message =
++      formatPermissionToastMessage(body.toast_key, body.params) ??
++      body.message ??
++      body.error ??
++      null
++    if (!message) return
++    const { toast } = await import('sonner')
++    toast.warning(message)
++  } catch {
++    // Ignore parse errors, this is best effort UI feedback.
++  }
++}
++
+ /**
+  * Backend API client — all frontend requests go through here.
+  *
+@@ -50,7 +74,7 @@ export async function backendFetch(path: string, options: RequestInit = {}): Pro
+     path.startsWith('/api/slack/install') ||
+     path.startsWith('/api/slack/channel-map')
+ 
+-  return fetch(proxyPath, {
++  const response = await fetch(proxyPath, {
+     ...options,
+     cache: 'no-store',
+     headers: {
+@@ -62,6 +86,8 @@ export async function backendFetch(path: string, options: RequestInit = {}): Pro
+       ...options.headers,
+     },
+   })
++  void maybeShowPermissionToast(response)
++  return response
+ }
+ 
+ export async function backendUpload<T>(path: string, formData: FormData): Promise<T> {
+diff --git a/apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx b/apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx
+index 297981e3..06d8ebd7 100644
+--- a/apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx
++++ b/apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx
+@@ -14,6 +14,7 @@ import type { Mission } from '@/features/mission-control/types'
+ import { updateCampaign } from '@/features/studio/services/campaign.service'
+ import { useWorkspace } from '@/features/workspaces/hooks/useWorkspace'
+ import { scaffoldCampaignPage } from '@/features/workspaces/services/workspaces.service'
++import { useTeamPermission } from '@/features/team-management/hooks/use-team-permission'
+ import { canAccessManage, useUserRole } from '@/hooks/use-user-role'
+ import { CampaignHeader } from './_components/CampaignHeader'
+ import { CampaignDashboardTab } from './_components/tabs/CampaignDashboardTab'
+@@ -122,6 +123,11 @@ export default function CampaignDetailPage() {
+     knowledge,
+     deliverables,
+   })
++  const teamPerm = useTeamPermission(id, {
++    campaignOwnerId: (detail.campaign as Record<string, unknown> | null)?.user_id as string | undefined,
++  })
++  const canEditCampaign = teamPerm.canEdit
++
+   const autosave = useCampaignAutosave(
+     id,
+     detail.context,
+@@ -329,6 +335,14 @@ export default function CampaignDetailPage() {
+           </div>
+         </div>
+       )}
++      {teamPerm.isShared && (
++        <div className="flex items-center gap-spacing-2 rounded-spacing-2 border border-[var(--color-border)] bg-[var(--color-secondary)]/30 px-spacing-4 py-spacing-2 mb-spacing-2">
++          <Users className="h-4 w-4 text-muted-foreground shrink-0" />
++          <p className="body-3 text-muted-foreground">
++            Shared campaign{teamPerm.canEdit ? ' (editor)' : ' (view only)'}
++          </p>
++        </div>
++      )}
+       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-spacing-6">
+         {!isMobile && (
+           <CampaignHeader
+@@ -337,16 +351,16 @@ export default function CampaignDetailPage() {
+             navTabs={headerNavTabs}
+             onTabChange={handleTabChange}
+             isMobile={isMobile}
+-            editingName={detail.editingName}
++            editingName={canEditCampaign ? detail.editingName : false}
+             nameValue={detail.nameValue}
+             saveStatus={autosave.saveStatus}
+             context={detail.context}
+             resources={detail.resources}
+-            setNameValue={detail.setNameValue}
+-            setEditingName={detail.setEditingName}
+-            onNameSave={detail.handleNameSave}
+-            onIconChange={detail.handleIconChange}
+-            onRetrySave={autosave.performSave}
++            setNameValue={canEditCampaign ? detail.setNameValue : () => {}}
++            setEditingName={canEditCampaign ? detail.setEditingName : () => {}}
++            onNameSave={canEditCampaign ? detail.handleNameSave : async () => {}}
++            onIconChange={canEditCampaign ? detail.handleIconChange : async () => {}}
++            onRetrySave={canEditCampaign ? autosave.performSave : async () => {}}
+           />
+         )}
+ 
+@@ -465,19 +479,25 @@ export default function CampaignDetailPage() {
+         </TabsContent>
+ 
+         <TabsContent value="settings" className="animate-tab-enter">
+-          <CampaignSettingsTab
+-            campaign={detail.campaign}
+-            visibleTabIds={visibleNavIds}
+-            onUpdateVisibleTabs={handleVisibleTabsChange}
+-            deleteDialogOpen={detail.deleteDialogOpen}
+-            setDeleteDialogOpen={detail.setDeleteDialogOpen}
+-            deleteCampaignAck={detail.deleteCampaignAck}
+-            setDeleteCampaignAck={detail.setDeleteCampaignAck}
+-            deleteCampaignNameInput={detail.deleteCampaignNameInput}
+-            setDeleteCampaignNameInput={detail.setDeleteCampaignNameInput}
+-            isDeletingCampaign={detail.isDeletingCampaign}
+-            handleDeleteCampaign={detail.handleDeleteCampaign}
+-          />
++          {canEditCampaign ? (
++            <CampaignSettingsTab
++              campaign={detail.campaign}
++              visibleTabIds={visibleNavIds}
++              onUpdateVisibleTabs={handleVisibleTabsChange}
++              deleteDialogOpen={detail.deleteDialogOpen}
++              setDeleteDialogOpen={detail.setDeleteDialogOpen}
++              deleteCampaignAck={detail.deleteCampaignAck}
++              setDeleteCampaignAck={detail.setDeleteCampaignAck}
++              deleteCampaignNameInput={detail.deleteCampaignNameInput}
++              setDeleteCampaignNameInput={detail.setDeleteCampaignNameInput}
++              isDeletingCampaign={detail.isDeletingCampaign}
++              handleDeleteCampaign={detail.handleDeleteCampaign}
++            />
++          ) : (
++            <div className="p-spacing-6">
++              <p className="body-2 text-muted-foreground">You have view-only access to this campaign. Contact the campaign owner for edit permissions.</p>
++            </div>
++          )}
+         </TabsContent>
+       </Tabs>
+ 
+diff --git a/apps/web/src/app/(dashboard)/campaigns/page.tsx b/apps/web/src/app/(dashboard)/campaigns/page.tsx
+index 7094332a..ee10cda5 100644
+--- a/apps/web/src/app/(dashboard)/campaigns/page.tsx
++++ b/apps/web/src/app/(dashboard)/campaigns/page.tsx
+@@ -2,10 +2,11 @@
+ 
+ import Link from 'next/link'
+ import { useRouter, useSearchParams } from 'next/navigation'
+-import { useEffect, useState } from 'react'
+-import { FolderKanban } from 'lucide-react'
++import { useEffect, useRef, useState } from 'react'
++import { Edit2, ExternalLink, FolderKanban, MoreHorizontal, Share2 } from 'lucide-react'
+ import { LucideIcon } from '@/components/ui/IconPicker'
+ import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
++import { ShareModal } from '@/features/team-management/components/ShareModal'
+ import { useCampaignMode } from '@/features/studio/contexts/CampaignModeContext'
+ import { fetchCampaigns } from '@/features/studio/services/campaign.service'
+ import type { Campaign } from '@/features/studio/types'
+@@ -16,6 +17,9 @@ export default function CampaignsPage() {
+   const [campaigns, setCampaigns] = useState<Campaign[]>([])
+   const [loading, setLoading] = useState(true)
+   const { setActiveCampaign } = useCampaignMode()
++  const [menuCampaignId, setMenuCampaignId] = useState<string | null>(null)
++  const [shareCampaign, setShareCampaign] = useState<{ id: string; name: string } | null>(null)
++  const menuRef = useRef<HTMLDivElement>(null)
+ 
+   useEffect(() => {
+     let cancelled = false
+@@ -75,7 +79,7 @@ export default function CampaignsPage() {
+               (campaign.config as Record<string, unknown>)?.system_kind === 'general'
+ 
+             return (
+-              <div key={campaign.id} className="card-glass p-spacing-4">
++              <div key={campaign.id} className="card-glass p-spacing-4 group/card">
+                 <div className="flex items-center gap-3">
+                   <div className="bg-muted flex h-9 w-9 items-center justify-center rounded-full">
+                     <LucideIcon name={icon} className="h-4 w-4" />
+@@ -86,6 +90,63 @@ export default function CampaignsPage() {
+                     </p>
+                     {isGeneral && <p className="body-4 text-muted-foreground">General campaign</p>}
+                   </div>
++                  <div className="relative" ref={menuCampaignId === campaign.id ? menuRef : undefined}>
++                    <button
++                      type="button"
++                      onClick={(e) => {
++                        e.stopPropagation()
++                        setMenuCampaignId(menuCampaignId === campaign.id ? null : campaign.id)
++                      }}
++                      className="btn-icon-glass opacity-0 group-hover/card:opacity-100 transition-opacity"
++                    >
++                      <MoreHorizontal className="icon-sm" />
++                    </button>
++                    {menuCampaignId === campaign.id && (
++                      <>
++                        <div
++                          className="fixed inset-0 z-40"
++                          onClick={() => setMenuCampaignId(null)}
++                          aria-hidden
++                        />
++                        <div className="dropdown-menu-solid z-50 absolute right-0 top-full mt-spacing-1 w-52 p-1">
++                          <Link
++                            href={`/campaigns/${campaign.id}?tab=deliverables`}
++                            onClick={() => {
++                              setActiveCampaign(campaign.id, campaign.name ?? 'Campaign', icon)
++                              setMenuCampaignId(null)
++                            }}
++                            className="body-2 flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
++                          >
++                            <ExternalLink className="h-4 w-4" />
++                            Open
++                          </Link>
++                          {!isGeneral && (
++                            <button
++                              type="button"
++                              onClick={() => setMenuCampaignId(null)}
++                              className="body-2 flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
++                            >
++                              <Edit2 className="h-4 w-4" />
++                              Edit
++                            </button>
++                          )}
++                          <div className="border-border my-0.5 border-t" />
++                          <button
++                            type="button"
++                            onClick={(e) => {
++                              e.stopPropagation()
++                              setShareCampaign({ id: campaign.id, name: campaign.name ?? 'Untitled campaign' })
++                              setMenuCampaignId(null)
++                            }}
++                            className="button-glass-blue gap-spacing-2 body-2 flex w-full items-center rounded-md px-3 py-1.5 font-medium"
++                          >
++                            <Share2 className="h-4 w-4" />
++                            Sharing & Permissions
++                          </button>
++                        </div>
++                      </>
++                    )}
++                  </div>
+                 </div>
+                 <div className="mt-spacing-3 gap-spacing-2 grid grid-cols-2">
+                   <Link
+@@ -112,6 +173,16 @@ export default function CampaignsPage() {
+           })}
+         </div>
+       )}
++
++      {shareCampaign && (
++        <ShareModal
++          open
++          onClose={() => setShareCampaign(null)}
++          resourceType="campaign"
++          resourceId={shareCampaign.id}
++          resourceName={shareCampaign.name}
++        />
++      )}
+     </div>
+   )
+ }
+diff --git a/apps/web/src/app/(dashboard)/providers.tsx b/apps/web/src/app/(dashboard)/providers.tsx
+index cb77b500..711f7e44 100644
+--- a/apps/web/src/app/(dashboard)/providers.tsx
++++ b/apps/web/src/app/(dashboard)/providers.tsx
+@@ -14,6 +14,7 @@ import { WorkspaceSettingsModal } from '@/features/settings/components/Workspace
+ import { AccountSettingsModalProvider } from '@/features/settings/contexts/AccountSettingsModalContext'
+ import { WorkspaceSettingsModalProvider } from '@/features/settings/contexts/WorkspaceSettingsModalContext'
+ import { CampaignModeProvider } from '@/features/studio/contexts/CampaignModeContext'
++import { useTeamPermissionStore } from '@/features/team-management/store/use-team-permission-store'
+ import { dispatchOpenStudioSearch } from '@/features/studio/utils/open-studio-search-result'
+ 
+ function StudioSearchHotkey() {
+@@ -69,6 +70,18 @@ function SettingsModals() {
+   )
+ }
+ 
++function TeamPermissionBootstrap() {
++  const isLoaded = useTeamPermissionStore((state) => state.isLoaded)
++  const fetchPermissions = useTeamPermissionStore((state) => state.fetchPermissions)
++
++  useEffect(() => {
++    if (isLoaded) return
++    void fetchPermissions().catch(() => {})
++  }, [fetchPermissions, isLoaded])
++
++  return null
++}
++
+ export function DashboardProviders({ children }: { children: React.ReactNode }) {
+   return (
+     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+@@ -77,6 +90,7 @@ export function DashboardProviders({ children }: { children: React.ReactNode })
+           <WorkspaceSettingsModalProvider>
+             {children}
+             <StudioSearchHotkey />
++            <TeamPermissionBootstrap />
+             <SettingsModals />
+             <Suspense fallback={null}>
+               <PurchaseSuccessHandler />
+diff --git a/apps/web/src/components/layout/sidebar/SidebarCampaignMenuPortal.tsx b/apps/web/src/components/layout/sidebar/SidebarCampaignMenuPortal.tsx
+index f8559015..0a26aa85 100644
+--- a/apps/web/src/components/layout/sidebar/SidebarCampaignMenuPortal.tsx
++++ b/apps/web/src/components/layout/sidebar/SidebarCampaignMenuPortal.tsx
+@@ -1,7 +1,9 @@
+ 'use client'
+ 
++import { useState } from 'react'
+ import { createPortal } from 'react-dom'
+-import { Edit2, ExternalLink, Pin, Trash2 } from 'lucide-react'
++import { Edit2, ExternalLink, Pin, Share2, Trash2 } from 'lucide-react'
++import { ShareModal } from '@/features/team-management/components/ShareModal'
+ import type { SidebarCampaignRow } from './sidebar-types'
+ 
+ export function SidebarCampaignMenuPortal({
+@@ -19,13 +21,15 @@ export function SidebarCampaignMenuPortal({
+   onEdit: () => void
+   onDeleteRequest: () => void
+ }) {
++  const [shareOpen, setShareOpen] = useState(false)
++
+   if (typeof document === 'undefined') return null
+   return createPortal(
+     <>
+       <div className="fixed inset-0 z-40" onClick={onClose} aria-hidden />
+       <div
+         data-campaign-menu
+-        className="fixed z-50 w-52 overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 shadow-lg"
++        className="fixed z-50 w-60 overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 shadow-lg"
+         style={{
+           top: position.top,
+           left: position.left,
+@@ -72,7 +76,28 @@ export function SidebarCampaignMenuPortal({
+             Delete
+           </button>
+         )}
++        <div className="border-border my-0.5 border-t" />
++        <button
++          onClick={(e) => {
++            e.stopPropagation()
++            setShareOpen(true)
++          }}
++          className="button-glass-blue gap-spacing-2 body-2 flex w-full items-center rounded-md px-3 py-1.5 font-medium"
++        >
++          <Share2 className="h-4 w-4" />
++          Sharing & Permissions
++        </button>
+       </div>
++      <ShareModal
++        open={shareOpen}
++        onClose={() => {
++          setShareOpen(false)
++          onClose()
++        }}
++        resourceType="campaign"
++        resourceId={campaign.id}
++        resourceName={campaign.name}
++      />
+     </>,
+     document.body,
+   )
+diff --git a/apps/web/src/features/brain/components/BrainVisualization.tsx b/apps/web/src/features/brain/components/BrainVisualization.tsx
+index ee034ad3..10ff5dac 100644
+--- a/apps/web/src/features/brain/components/BrainVisualization.tsx
++++ b/apps/web/src/features/brain/components/BrainVisualization.tsx
+@@ -16,6 +16,7 @@ import {
+   Plus,
+   RefreshCw,
+   Search,
++  Share2,
+   X,
+ } from 'lucide-react'
+ import { toast } from 'sonner'
+@@ -39,6 +40,8 @@ import { BRAIN_TOAST_ERRORS, BRAIN_TOAST_SUCCESS } from '../config/brain-toast-e
+ import { useBrainQueue } from '../hooks/use-brain-queue'
+ import { useBrainRealtime } from '../hooks/use-brain-realtime'
+ import { fetchBrainImageSearch, fetchBrainSearch } from '../services/brain.service'
++import { ShareModal } from '@/features/team-management/components/ShareModal'
++import { Tooltip } from '@/components/ui/tooltip'
+ import { useBrainStore } from '../store/use-brain-store'
+ import type { BrainConnection, BrainGraphData, BrainHealthData, BrainMemory } from '../types'
+ import BrainProcessingQueue from './BrainProcessingQueue'
+@@ -277,6 +280,7 @@ export default function BrainVisualization() {
+     agentName: string
+   } | null>(null)
+   const [, setIsFullscreen] = useState(false)
++  const [brainShareOpen, setBrainShareOpen] = useState(false)
+   const containerRef = useRef<HTMLDivElement>(null)
+   const scopeButtonRef = useRef<HTMLButtonElement>(null)
+   const presetDropdownRef = useRef<HTMLDivElement>(null)
+@@ -866,6 +870,16 @@ export default function BrainVisualization() {
+             <List className="icon-sm text-muted-foreground" />
+             <span className="relative z-10">Memories</span>
+           </button>
++          {selectedScope?.brainId && (
++            <Tooltip label="Share this brain" side="bottom" delayMs={200}>
++              <button
++                onClick={() => setBrainShareOpen(true)}
++                className="btn-icon-glass"
++              >
++                <Share2 className="icon-sm" />
++              </button>
++            </Tooltip>
++          )}
+         </div>
+         <div className="pointer-events-auto flex shrink-0 items-start">
+           <TrainingPanel
+@@ -1310,6 +1324,16 @@ export default function BrainVisualization() {
+           </DialogPrimitive.Content>
+         </DialogPrimitive.Portal>
+       </DialogPrimitive.Root>
++
++      {selectedScope?.brainId && (
++        <ShareModal
++          open={brainShareOpen}
++          onClose={() => setBrainShareOpen(false)}
++          resourceType="brain"
++          resourceId={selectedScope.brainId}
++          resourceName={selectedScope.label}
++        />
++      )}
+     </div>
+   )
+ }

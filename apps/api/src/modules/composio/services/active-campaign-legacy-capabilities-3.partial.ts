@@ -1,0 +1,242 @@
+import type { LegacyCapabilityRow } from './composio-capability-catalog.types'
+
+export const ACTIVE_CAMPAIGN_LEGACY_CAPABILITIES_3: LegacyCapabilityRow[] = [
+  {
+      action_slug: 'list_custom_fields',
+      display_name: 'List Custom Fields',
+      description: 'List all contact custom fields.',
+      parameters: { limit: { type: 'number' } },
+    },
+  {
+      action_slug: 'get_custom_field',
+      display_name: 'Get Custom Field',
+      description: 'Retrieve a custom field by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'create_custom_field',
+      display_name: 'Create Custom Field',
+      description: 'Create a contact custom field.',
+      parameters: { field: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'update_custom_field',
+      display_name: 'Update Custom Field',
+      description: 'Update a custom field by ID.',
+      parameters: {
+        id: { type: 'string', required: true },
+        field: { type: 'object', required: true },
+      },
+    },
+  {
+      action_slug: 'list_webhooks',
+      display_name: 'List Webhooks',
+      description: 'List all webhooks.',
+      parameters: { limit: { type: 'number' } },
+    },
+  {
+      action_slug: 'get_webhook',
+      display_name: 'Get Webhook',
+      description: 'Retrieve a webhook by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'create_webhook',
+      display_name: 'Create Webhook',
+      description: 'Create a new webhook.',
+      parameters: { webhook: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'update_webhook',
+      display_name: 'Update Webhook',
+      description: 'Update a webhook by ID.',
+      parameters: {
+        id: { type: 'string', required: true },
+        webhook: { type: 'object', required: true },
+      },
+    },
+  {
+      action_slug: 'delete_webhook',
+      display_name: 'Delete Webhook',
+      description: 'Delete a webhook by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'list_tasks',
+      display_name: 'List Tasks',
+      description: 'List all deal tasks.',
+      parameters: { limit: { type: 'number' } },
+    },
+  {
+      action_slug: 'get_task',
+      display_name: 'Get Task',
+      description: 'Retrieve a deal task by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'create_task',
+      display_name: 'Create Task',
+      description: 'Create a deal task.',
+      parameters: { dealTask: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'update_task',
+      display_name: 'Update Task',
+      description: 'Update a deal task by ID.',
+      parameters: {
+        id: { type: 'string', required: true },
+        dealTask: { type: 'object', required: true },
+      },
+    },
+  {
+      action_slug: 'list_users',
+      display_name: 'List Users',
+      description: 'List all ActiveCampaign users.',
+      parameters: {},
+    },
+  {
+      action_slug: 'get_user',
+      display_name: 'Get User',
+      description: 'Retrieve an ActiveCampaign user by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'list_forms',
+      display_name: 'List Forms',
+      description: 'List all forms.',
+      parameters: {},
+    },
+  {
+      action_slug: 'get_form',
+      display_name: 'Get Form',
+      description: 'Retrieve a form by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'list_segments',
+      display_name: 'List Segments',
+      description: 'List all segments.',
+      parameters: {},
+    },
+  {
+      action_slug: 'get_segment',
+      display_name: 'Get Segment',
+      description: 'Retrieve a segment by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'list_scores',
+      display_name: 'List Scores',
+      description: 'List all lead scores.',
+      parameters: {},
+    },
+  {
+      action_slug: 'get_score',
+      display_name: 'Get Score',
+      description: 'Retrieve a score by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'list_saved_responses',
+      display_name: 'List Saved Responses',
+      description: 'List all saved email responses.',
+      parameters: {},
+    },
+  {
+      action_slug: 'get_saved_response',
+      display_name: 'Get Saved Response',
+      description: 'Retrieve a saved response by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'create_saved_response',
+      display_name: 'Create Saved Response',
+      description: 'Create a saved email response.',
+      parameters: { savedResponse: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'update_saved_response',
+      display_name: 'Update Saved Response',
+      description: 'Update a saved response by ID.',
+      parameters: {
+        id: { type: 'string', required: true },
+        savedResponse: { type: 'object', required: true },
+      },
+    },
+  {
+      action_slug: 'delete_saved_response',
+      display_name: 'Delete Saved Response',
+      description: 'Delete a saved response by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'track_event',
+      display_name: 'Track Event',
+      description: 'Track a custom event for a contact.',
+      parameters: {
+        event: { type: 'string', required: true },
+        eventdata: { type: 'string' },
+        actid: { type: 'string' },
+        key: { type: 'string' },
+        visit: { type: 'object' },
+      },
+    },
+  {
+      action_slug: 'list_orders',
+      display_name: 'List E-Commerce Orders',
+      description: 'List all e-commerce orders.',
+      parameters: { limit: { type: 'number' } },
+    },
+  {
+      action_slug: 'get_order',
+      display_name: 'Get E-Commerce Order',
+      description: 'Retrieve an e-commerce order by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'create_order',
+      display_name: 'Create E-Commerce Order',
+      description: 'Create an e-commerce order.',
+      parameters: { ecomOrder: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'update_order',
+      display_name: 'Update E-Commerce Order',
+      description: 'Update an e-commerce order.',
+      parameters: {
+        id: { type: 'string', required: true },
+        ecomOrder: { type: 'object', required: true },
+      },
+    },
+  {
+      action_slug: 'delete_order',
+      display_name: 'Delete E-Commerce Order',
+      description: 'Delete an e-commerce order.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'list_ecom_customers',
+      display_name: 'List E-Commerce Customers',
+      description: 'List all e-commerce customers.',
+      parameters: { limit: { type: 'number' } },
+    },
+  {
+      action_slug: 'list_addresses',
+      display_name: 'List Addresses',
+      description: 'List all addresses.',
+      parameters: {},
+    },
+  {
+      action_slug: 'create_address',
+      display_name: 'Create Address',
+      description: 'Create an address.',
+      parameters: { address: { type: 'object', required: true } },
+    }
+].map((entry) => ({
+  integration_id: 'active_campaign',
+  execution_mode: 'legacy',
+  examples: [],
+  metadata: {},
+  domains: [],
+  ...entry,
+}))

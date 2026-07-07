@@ -1,0 +1,118 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { OpenClawGatewayRequestService } from './openclaw-gateway-request.service'
+
+describe('OpenClawGatewayRequestService', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.clearAllMocks()
+  })
+
+  it('retries without scoped payload fields when the gateway rejects compatibility keys', async () => {
+    vi.stubEnv('OPENCLAW_GATEWAY_URL', 'http://gateway.local')
+    vi.stubEnv('OPENCLAW_GATEWAY_TOKEN', 'gateway-token')
+    const postResponses = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response('Unrecognized key: "enabled_toolkits"', {
+          status: 400,
+          statusText: 'Bad Request',
+        }),
+      )
+      .mockResolvedValueOnce(new Response('ok', { status: 200, statusText: 'OK' }))
+
+    const service = new OpenClawGatewayRequestService(
+      { report: vi.fn() } as never,
+      { resolveRuntimeCredential: vi.fn() } as never,
+      { resolveRuntimeCredential: vi.fn() } as never,
+      { postResponses } as never,
+    )
+    const result = await service.openGatewayStream({
+      agentId: 'agent-1',
+      logger: { log: vi.fn(), warn: vi.fn(), error: vi.fn() } as never,
+      logStreamTiming: vi.fn(),
+      options: {
+        conversationId: 'conversation-1',
+        traceId: 'trace-1',
+        messageId: 'message-1',
+        runId: 'run-1',
+        requestId: 'request-1',
+        disabledNativeActions: ['delete_everything'],
+        enabledToolkits: ['brain'],
+        input: 'hello',
+        model: 'openclaw:agent-1',
+        send: vi.fn(async () => undefined),
+        sessionKey: 'session-1',
+        skillCatalog: { entries: [{ name: 'skill' }] },
+        userId: 'user-1',
+      } as never,
+      requestTimeoutMs: 1000,
+      resolvedModel: 'openclaw:agent-1',
+      streamTimingLogsEnabled: false,
+    })
+
+    clearTimeout(result.timeoutHandle)
+    expect(result.response.status).toBe(200)
+    expect(postResponses).toHaveBeenCalledTimes(2)
+    const firstPayload = postResponses.mock.calls[0]?.[0]?.payload
+    const firstHeaders = postResponses.mock.calls[0]?.[0]?.headers
+    const secondPayload = postResponses.mock.calls[1]?.[0]?.payload
+    expect(firstHeaders).toMatchObject({
+      'x-vibey-trace-id': 'trace-1',
+      'x-vibey-message-id': 'message-1',
+      'x-vibey-run-id': 'run-1',
+      'x-vibey-request-id': 'request-1',
+      'x-vibey-conversation-id': 'conversation-1',
+    })
+    expect(firstPayload).toMatchObject({
+      enabled_toolkits: ['brain'],
+      disabled_native_actions: ['delete_everything'],
+      lane: 'chat:conversation-1',
+      skill_catalog: { entries: [{ name: 'skill' }] },
+    })
+    expect(secondPayload).not.toHaveProperty('enabled_toolkits')
+    expect(secondPayload).not.toHaveProperty('disabled_native_actions')
+    expect(secondPayload).not.toHaveProperty('lane')
+    expect(secondPayload).not.toHaveProperty('skill_catalog')
+  })
+
+  it('does not retry without disabled native actions for strict requests', async () => {
+    vi.stubEnv('OPENCLAW_GATEWAY_URL', 'http://gateway.local')
+    vi.stubEnv('OPENCLAW_GATEWAY_TOKEN', 'gateway-token')
+    const postResponses = vi.fn().mockResolvedValue(
+      new Response('Unrecognized key: "disabled_native_actions"', {
+        status: 400,
+        statusText: 'Bad Request',
+      }),
+    )
+
+    const service = new OpenClawGatewayRequestService(
+      { report: vi.fn() } as never,
+      { resolveRuntimeCredential: vi.fn() } as never,
+      { resolveRuntimeCredential: vi.fn() } as never,
+      { postResponses } as never,
+    )
+
+    await expect(
+      service.openGatewayStream({
+        agentId: 'agent-1',
+        logger: { log: vi.fn(), warn: vi.fn(), error: vi.fn() } as never,
+        logStreamTiming: vi.fn(),
+        options: {
+          conversationId: 'conversation-1',
+          disabledNativeActions: ['ask_agent'],
+          strictDisabledNativeActions: true,
+          input: 'hello',
+          model: 'openclaw:agent-1',
+          send: vi.fn(async () => undefined),
+          sessionKey: 'session-1',
+          userId: 'user-1',
+        } as never,
+        requestTimeoutMs: 1000,
+        resolvedModel: 'openclaw:agent-1',
+        streamTimingLogsEnabled: false,
+      }),
+    ).rejects.toThrow('Gateway connection error')
+
+    expect(postResponses).toHaveBeenCalledTimes(1)
+  })
+})

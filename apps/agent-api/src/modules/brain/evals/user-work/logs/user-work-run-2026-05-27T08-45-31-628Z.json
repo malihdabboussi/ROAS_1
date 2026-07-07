@@ -1,0 +1,481 @@
+{
+  "suiteName": "yc-demo-user-work",
+  "caseCount": 10,
+  "passRate": 0,
+  "averageScore": 0,
+  "validationPassRate": 0,
+  "validationCaseCount": 5,
+  "validationAverageScore": 0,
+  "retrievalPassRate": 0,
+  "synthesisPassRate": 0,
+  "synthesisPassRateWhenRetrieved": null,
+  "failureBreakdown": {
+    "retrieval": 0,
+    "synthesis": 0,
+    "both": 10
+  },
+  "avgAgentLatencyMs": 0,
+  "avgJudgeLatencyMs": 0,
+  "avgLatencyMs": 0,
+  "avgToolCalls": 0,
+  "avgBrainToolCalls": 0,
+  "totalToolCalls": 0,
+  "totalBrainToolCalls": 0,
+  "cases": [
+    {
+      "caseId": "yc-l1-founder-retainer-cap",
+      "taskType": "answer_query",
+      "validationSet": true,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "both"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: fetch failed"]
+      },
+      "agentRun": {
+        "caseId": "yc-l1-founder-retainer-cap",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-l2-plinthworks-devi-homepage",
+      "taskType": "answer_query",
+      "validationSet": true,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "both"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: fetch failed"]
+      },
+      "agentRun": {
+        "caseId": "yc-l2-plinthworks-devi-homepage",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-l3-plinthworks-hero-draft",
+      "taskType": "write_with_context",
+      "validationSet": true,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "both"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: fetch failed"]
+      },
+      "agentRun": {
+        "caseId": "yc-l3-plinthworks-hero-draft",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-l4-plinthworks-paid-organic-gate",
+      "taskType": "make_decision",
+      "validationSet": true,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "both"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: fetch failed"]
+      },
+      "agentRun": {
+        "caseId": "yc-l4-plinthworks-paid-organic-gate",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-l5-saltline-day73-plan",
+      "taskType": "plan_next_steps",
+      "validationSet": true,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "both"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: fetch failed"]
+      },
+      "agentRun": {
+        "caseId": "yc-l5-saltline-day73-plan",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-u6-owen-pricing-before-reply",
+      "taskType": "answer_query",
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "both"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: fetch failed"]
+      },
+      "agentRun": {
+        "caseId": "yc-u6-owen-pricing-before-reply",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-u7-three-customer-calls-rule",
+      "taskType": "answer_query",
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "both"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: fetch failed"]
+      },
+      "agentRun": {
+        "caseId": "yc-u7-three-customer-calls-rule",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-u8-async-approval-walkthrough",
+      "taskType": "answer_query",
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "both"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: fetch failed"]
+      },
+      "agentRun": {
+        "caseId": "yc-u8-async-approval-walkthrough",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-u9-organic-before-paid-standard",
+      "taskType": "answer_query",
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "both"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: fetch failed"]
+      },
+      "agentRun": {
+        "caseId": "yc-u9-organic-before-paid-standard",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-u10-friday-status-cadence",
+      "taskType": "answer_query",
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "both"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: fetch failed"]
+      },
+      "agentRun": {
+        "caseId": "yc-u10-friday-status-cadence",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    }
+  ]
+}

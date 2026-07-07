@@ -1,0 +1,77 @@
+[
+  {
+    "id": "space-doc-semantic-pricing",
+    "level": "tiny_golden_fixture",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "What does the retainer scope guardrails wiki doc say we cap per year?",
+    "expectedAnswer": "six retainers",
+    "expectedEvidenceIds": ["tiny-chunk-retainer-guardrails"],
+    "expectedContextSufficient": true,
+    "tags": [
+      "space-retrieval",
+      "space:9ccdb39d-2369-5b87-a35c-fe504369ef0e",
+      "source:space_doc:9e9325ca-0d54-5230-9d79-e68ebcce9896",
+      "semantic",
+      "space_doc"
+    ],
+    "category": "paraphrase",
+    "difficulty": "medium"
+  },
+  {
+    "id": "space-task-exact-title",
+    "level": "tiny_golden_fixture",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "What does the Audit wiki pages for stale scope language task say?",
+    "expectedAnswer": "Audit wiki pages",
+    "expectedEvidenceIds": ["tiny-chunk-wiki-task"],
+    "expectedContextSufficient": true,
+    "tags": [
+      "space-retrieval",
+      "space:9ccdb39d-2369-5b87-a35c-fe504369ef0e",
+      "source:space_task:ced17bcb-5ae2-5f0d-a530-118ade7ab71d",
+      "exact_title",
+      "space_task"
+    ],
+    "category": "exact_title",
+    "difficulty": "easy"
+  },
+  {
+    "id": "space-negative-decoy",
+    "level": "tiny_golden_fixture",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "Which positioning doc belongs to the Helmsmark workspace?",
+    "expectedAnswer": "Helmsmark controller repositioning",
+    "expectedEvidenceIds": ["tiny-chunk-helms-mission"],
+    "decoyEvidenceIds": ["tiny-chunk-plinth-decoy"],
+    "expectedContextSufficient": true,
+    "tags": [
+      "space-retrieval",
+      "space:8ffb35ec-4728-5821-9926-7cfddde683f4",
+      "source:mission:c72c7085-bd26-59fe-8ddf-9437d00813ca",
+      "decoy:space_doc:cbd0b3e6-b7d2-5125-adb1-5066a4166d92",
+      "negative_decoy"
+    ],
+    "category": "negative_decoy",
+    "difficulty": "hard"
+  },
+  {
+    "id": "space-insufficient-context",
+    "level": "tiny_golden_fixture",
+    "family": "user",
+    "userId": "ea216be9-d4c1-501a-b74e-4daf55e8d2ff",
+    "orgId": "9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800",
+    "question": "What final TikTok budget did we approve in this Space?",
+    "expectedAnswer": "No approved TikTok budget is available",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": false,
+    "tags": ["space-retrieval", "space:9ccdb39d-2369-5b87-a35c-fe504369ef0e", "insufficient"],
+    "category": "abstention",
+    "difficulty": "hard"
+  }
+]

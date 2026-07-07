@@ -1,0 +1,78 @@
+import type { LegacyCapabilityRow } from './composio-capability-catalog.types'
+
+export const FATHOM_LEGACY_CAPABILITIES: LegacyCapabilityRow[] = [
+  {
+    integration_id: 'fathom',
+    action_slug: 'list_meetings',
+    execution_mode: 'legacy',
+    display_name: 'List Meetings',
+    description: 'Retrieve recent Fathom meetings with titles, dates, participants.',
+    parameters: { cursor: { type: 'string' } },
+    examples: [],
+    metadata: {},
+    domains: [],
+  },
+  {
+    integration_id: 'fathom',
+    action_slug: 'get_transcript',
+    execution_mode: 'legacy',
+    display_name: 'Get Meeting Transcript',
+    description:
+      'Retrieve the FULL word-for-word transcript of a Fathom recording. Returns every speaker turn with timestamps. Use this by DEFAULT when the user asks about a meeting, call, or conversation — always get the full transcript unless the user explicitly asks for a summary only. Requires a recording_id from list_meetings.',
+    parameters: { recordingId: { type: 'string', required: true } },
+    examples: [],
+    metadata: {},
+    domains: [],
+  },
+  {
+    integration_id: 'fathom',
+    action_slug: 'get_summary',
+    execution_mode: 'legacy',
+    display_name: 'Get Meeting Summary',
+    description:
+      'Retrieve the AI-generated summary of a Fathom recording. ONLY use this when the user explicitly asks for a summary — do NOT use as a shortcut instead of get_transcript. If the user wants to know what was discussed, extract insights, or build deliverables from a call, use get_transcript instead. Requires a recording_id from list_meetings.',
+    parameters: { recordingId: { type: 'string', required: true } },
+    examples: [],
+    metadata: {},
+    domains: [],
+  },
+  {
+    integration_id: 'fathom',
+    action_slug: 'list_webhooks',
+    execution_mode: 'legacy',
+    display_name: 'List Webhooks',
+    description: 'List configured Fathom webhooks.',
+    parameters: {},
+    examples: [],
+    metadata: {},
+    domains: [],
+  },
+  {
+    integration_id: 'fathom',
+    action_slug: 'create_webhook',
+    execution_mode: 'legacy',
+    display_name: 'Create Webhook',
+    description: 'Set up a webhook for Fathom meeting data.',
+    parameters: {
+      destinationUrl: { type: 'string', required: true },
+      triggeredFor: { type: 'array' },
+      includeTranscript: { type: 'boolean' },
+      includeSummary: { type: 'boolean' },
+      includeActionItems: { type: 'boolean' },
+    },
+    examples: [],
+    metadata: {},
+    domains: [],
+  },
+  {
+    integration_id: 'fathom',
+    action_slug: 'delete_webhook',
+    execution_mode: 'legacy',
+    display_name: 'Delete Webhook',
+    description: 'Remove a Fathom webhook.',
+    parameters: { webhookId: { type: 'string', required: true } },
+    examples: [],
+    metadata: {},
+    domains: [],
+  }
+]

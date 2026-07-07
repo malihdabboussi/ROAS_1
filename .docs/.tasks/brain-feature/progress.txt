@@ -1,0 +1,36 @@
+## Codebase Patterns
+
+### Confirmed Architecture (2026-02-10)
+- Brain data in NeuralSnap Supabase (lmwfgqhtogjbqpvzckua), NOT Vibey2.0
+- NestJS is single gateway: frontend + Vibey agent both call NestJS
+- NestJS brain module uses second Supabase client (NeuralSnap)
+- Two auth paths: Supabase JWT (frontend) + service token (Vibey agent)
+- Single agent (Vibey) — no multi-agent system
+- Production-first: agent brain works in prod, not in dev (VM can't reach localhost)
+
+### NeuralSnap Supabase — Current State
+- Project ID: lmwfgqhtogjbqpvzckua
+- pgvector: v0.8.0 (already enabled)
+- Existing tables (13): ns_profiles, ns_brains, ns_snapshots (29 cols), ns_snapshot_edges, ns_connections, ns_pending_captures, ns_jobs, ns_meeting_imports, ns_usage, ns_api_usage, ns_errors, ns_search_feedback, ns_content_hashes
+- MISSING (to migrate): memories, memory_connections, memory_versions, memory_sessions + RPC functions
+
+### Source System (VM 188.245.41.230)
+- nexus-api: Hono on port 3200, tsx runtime, service-role Supabase client
+- The-Nexus frontend: Next.js 16, React 19, Tailwind 4, Phosphor Icons
+- Source code locations: /root/nexus-api/src/, /root/repos/The-Nexus/app/src/
+
+### Target System (Vibey v2)
+- apps/api: NestJS 11, 3-layer (Controller → Service → Repository)
+- apps/web: Next.js 15, React, Tailwind, Zustand, globals.css utilities
+- Existing Supabase: qfrvykscoymiwwgysvsr (conversations, campaigns, users)
+- Second Supabase needed: lmwfgqhtogjbqpvzckua (brain data)
+
+### Key Porting Differences
+1. Hono routes → NestJS controllers/services/repositories
+2. Global supabase client → NeuralSnap client factory (service-role for brain)
+3. Agent token auth (4 agents) → dual auth guard (JWT + single service token)
+4. Phosphor Icons → Lucide Icons
+5. Tailwind 4 → Vibey Tailwind + globals.css
+6. Gemini API key needed in apps/api/.env
+
+---

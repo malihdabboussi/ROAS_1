@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vibey Widget — Dev Test</title>
+    <style>
+      :root { color-scheme: dark light; }
+      html, body { margin: 0; padding: 0; min-height: 100vh; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0b0c10; color: #e6e7ea; }
+      .wrap { max-width: 720px; margin: 0 auto; padding: 64px 24px; }
+      h1 { font-size: 22px; margin: 0 0 8px; }
+      p { color: #9aa0a6; line-height: 1.55; margin: 0 0 12px; }
+      code { background: #1a1c22; padding: 2px 6px; border-radius: 6px; font-size: 12px; }
+      .err { color: #ff6b6b; margin-top: 16px; }
+      .hint { background: #14161c; border: 1px solid #232730; border-radius: 12px; padding: 16px; margin-top: 24px; font-size: 13px; }
+      .hint b { color: #fff; }
+      ul { padding-left: 18px; margin: 8px 0 0; }
+      li { margin-bottom: 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Vibey Widget — Dev Test Page</h1>
+      <p>This is a sample host page. Use it to verify the embed widget against your local <code>apps/web</code> + <code>agent-api</code> dev servers.</p>
+
+      <div class="hint">
+        <b>Required URL params</b>
+        <ul>
+          <li><code>?slug</code> — your <code>profiles.public_agent_slug</code></li>
+          <li><code>&amp;agent</code> — the agent's <code>agent_key</code></li>
+          <li><code>&amp;token</code> — the agent's <code>public_page_token</code> (only used in local/dev, never share publicly)</li>
+        </ul>
+        <b>Optional</b>
+        <ul>
+          <li><code>&amp;apiBase</code> — defaults to <code>http://localhost:3003</code></li>
+          <li><code>&amp;pageBase</code> — defaults to current origin (the iframe page)</li>
+        </ul>
+      </div>
+
+      <p style="margin-top:24px">If everything is wired correctly, a launcher button appears in the bottom-right corner.</p>
+
+      <div id="status"></div>
+    </div>
+
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search)
+        var slug = params.get('slug') || ''
+        var agent = params.get('agent') || ''
+        var token = params.get('token') || ''
+        var apiBase = params.get('apiBase') || 'http://localhost:3003'
+        var pageBase = params.get('pageBase') || window.location.origin
+        var status = document.getElementById('status')
+
+        if (!slug || !agent || !token) {
+          status.innerHTML =
+            '<p class="err">Missing required params. Append <code>?slug=...&amp;agent=...&amp;token=...</code> to the URL.</p>'
+          return
+        }
+
+        var s = document.createElement('script')
+        s.src = '/widget.js'
+        s.async = true
+        s.setAttribute('data-slug', slug)
+        s.setAttribute('data-agent', agent)
+        s.setAttribute('data-api-base', apiBase)
+        s.setAttribute('data-token', token)
+        s.setAttribute('data-page-base', pageBase)
+        document.body.appendChild(s)
+      })()
+    </script>
+  </body>
+</html>

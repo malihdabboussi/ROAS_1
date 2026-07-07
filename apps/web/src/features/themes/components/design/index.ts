@@ -1,0 +1,7 @@
+export { DesignSettingsPanel } from './DesignSettingsPanel'
+export { SlidesDesignTab } from './SlidesDesignTab'
+export { BlocksContentTab } from './BlocksContentTab'
+export { ButtonsLinksTab } from './ButtonsLinksTab'
+export { SpacingTab } from './SpacingTab'
+export { TypographyTab } from './TypographyTab'
+export { ImageShapeSelector } from './ImageShapeSelector'

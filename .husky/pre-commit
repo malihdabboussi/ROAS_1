@@ -1,0 +1,2 @@
+pnpm architecture:check -- --staged
+pnpm lint-staged

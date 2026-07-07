@@ -1,0 +1,697 @@
+{
+  "suiteName": "yc-demo-user-work",
+  "caseCount": 1,
+  "passRate": 0,
+  "averageScore": 4,
+  "avgAgentLatencyMs": 60364.256417,
+  "avgJudgeLatencyMs": 3300.491541000003,
+  "avgLatencyMs": 63664.747958,
+  "avgToolCalls": 0,
+  "avgBrainToolCalls": 0,
+  "totalToolCalls": 0,
+  "totalBrainToolCalls": 0,
+  "totalUsage": {
+    "avgLatencyMs": 63664.747958,
+    "avgAgentLatencyMs": 60364.256417,
+    "avgJudgeLatencyMs": 3300.491541000003,
+    "avgInputTokens": 29623,
+    "avgOutputTokens": 1714,
+    "avgTotalTokens": 31337,
+    "avgBrainContextTokens": 12864,
+    "totalInputTokens": 29623,
+    "totalOutputTokens": 1714,
+    "totalTokens": 31337,
+    "agentProviderCostUsd": null,
+    "judgeProviderCostUsd": 0.017904,
+    "providerCostUsd": 0.017904,
+    "userCostUsd": 0.035808,
+    "marginUsd": 0.017904,
+    "estimatedCredits": 8,
+    "costUnknownCount": 2,
+    "pricingSource": "partial"
+  },
+  "cases": [
+    {
+      "caseId": "yc-l5-saltline-day73-plan",
+      "taskType": "plan_next_steps",
+      "passed": false,
+      "weightedScore": 4,
+      "judge": {
+        "rubricVersion": "user-work-v2",
+        "scores": {
+          "taskCompletion": 3,
+          "contextUsefulness": 3,
+          "groundedness": 4,
+          "synthesisQuality": 4,
+          "irrelevanceControl": 5,
+          "abstentionQuality": 5
+        },
+        "weightedScore": 4,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": true,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "evidence": [
+          "The final answer details a day-by-day plan: 'Route the gift guide ask to Jules for scope classification', 'If the gift guide is a change order...', 'Day 73 = month three.'",
+          "There is no mention of the 'launch window' or 'launch-window-over-deadline principle' anywhere in the final answer.",
+          "The answer routes the scope check to 'Jules' instead of 'Owen' as specified in the expected outcome."
+        ],
+        "failureReasons": [
+          "The final answer completely omits the required context 'launch window' (or the launch-window-over-deadline principle).",
+          "The plan routes pricing/scope pushback to Jules instead of Owen, which misses the expected routing structure."
+        ],
+        "usage": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1652,
+          "outputTokens": 1714,
+          "totalTokens": 3366,
+          "providerCostUsd": 0.017904,
+          "latencyMs": 3300.491541000003
+        }
+      },
+      "agentRun": {
+        "caseId": "yc-l5-saltline-day73-plan",
+        "agentKey": "vibey",
+        "conversationId": "c2643e68-ada4-4467-a2b0-688b4f93989f",
+        "finalAnswer": "Here's what the brain is telling me about this situation, and a concrete plan for the week.\n\n---\n\n## Saltline Week — Garry + Riley Plan\n\n### What's actually happening\n\nThree things are live at once, and they're connected:\n\n- **Paid pushback** is not a surprise. Eliza said it in minute 12 of the kickoff: *\"If our brand has to bid on the word 'gift' in December, we did the first ten months wrong.\"* This isn't a new objection — it's her operating principle. Don't try to win the paid debate.\n- **Scope creep** is the real risk. The holiday gift guide is being framed as a deliverable add, which is the exact pattern from day 73 in the cortex. It needs to go through Jules for a calendar check before anyone says yes to anything.\n- **Day 73 = month three.** This is the danger window — the retainer anniversary where clients start counting deliverables and Foundry wants to talk about the operating loop. That conversation has to happen this week, not after the gift guide lands.\n\n---\n\n### Your week\n\n**Monday**\n- You (Garry) read the retainer calendar before responding to Eliza. Full stop. No reply until you have seen what's budgeted for Q3/Q4.\n- Route the gift guide ask to Jules for scope classification: is this inside the retainer or a change order? Riley does not respond to Eliza until Jules clears it.\n\n**Tuesday / Wednesday**\n- You have the operating loop conversation with Eliza — not about the gift guide specifically, but about how Foundry runs Q4 with her. She signaled at Week 11 that she wants Foundry to own the Q4 product story calendar end-to-end. That's your opening. Lead with that expansion frame, not with \"here's what's in/out of scope.\"\n- If the gift guide is a change order, Riley prepares the routing. If it fits inside retainer, it goes on the calendar with a clear slot — not a yes-and-figure-it-out-later.\n\n**Thursday**\n- Riley drafts the Friday status note. It opens with a verbatim quote from this week's Eliza interaction (per the Friday cadence protocol). Given Eliza's paid pushback, the note should surface the Q4 content direction clearly — organic-first, voice-led, seasonal calendar framing. Sarah's shoulder-season framing is the right tone here.\n\n**Friday**\n- Riley to you by 11am. You review 1–4pm. Sent by 4pm.\n\n---\n\n### The one thing to not do\n\nDon't say yes to the gift guide scope until the calendar is checked. The Week 10 Saltline kitchenware miss cost six unbudgeted hours. Same pattern. Same fix.\n\n---\n\nOne thing I want to flag: the Week 11 expansion signal (Eliza asking if Foundry can own the full Q4 product story calendar) is actually an asset here. If you frame Tuesday's conversation around that — *\"we want to build the operating structure that lets us run Q4 with you properly\"* — the scope conversation becomes a planning conversation, not a negotiation. That's the stronger position.\n\nWant me to draft talking points for the Tuesday conversation with Eliza, or prep the change-order language for Riley to route the gift guide?",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "880ed077-19e5-4832-be39-398132907ddd",
+              "conversation_id": "c2643e68-ada4-4467-a2b0-688b4f93989f"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Here's what the brain is telling me about"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " this situation, and a concrete plan for the week.\n\n---\n\n##"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Saltline Week — Garry + Riley Plan\n\n### What's actually"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " happening\n\nThree things are live at once, and they're connected"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ":\n\n- **Paid pushback** is not a surprise"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". Eliza said it in minute 12 of the kickoff: *\"If"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " our brand has to bid on the word 'gift' in December, we did the first ten months wrong.\"* This isn't a new objection — it's her operating principle. Don"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "'t try to win the paid debate.\n- **Scope creep** is the real risk. The holiday gift guide is"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " being framed as a deliverable add, which is the exact pattern from day"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " 73 in the cortex. It needs to go through Jules for a calendar check before anyone"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " says yes to anything.\n- **Day 73 = month three.** This is the danger window —"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the retainer anniversary where clients start counting deliverables and Foundry wants"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " to talk about the operating loop. That conversation has to happen this"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " week, not after the gift guide lands.\n\n---\n\n### Your week\n\n**Monday**"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\n- You (Garry) read the retainer calendar before responding to Eliza. Full stop."
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " No reply until you have seen what's budgeted for Q3/Q4.\n- Route"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the gift guide ask to Jules for scope classification: is this inside"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the retainer or a change order? Riley does not respond to Eliza until"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Jules clears it.\n\n**Tuesday / Wednesday**\n- You have the operating loop conversation with Eliza — not"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " about the gift guide specifically, but about how Foundry runs Q4 with her. She sign"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "aled at Week 11 that she wants Foundry to own the Q4 product story calendar end-to-end. That's your opening"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". Lead with that expansion frame, not with \"here"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "'s what's in/out of scope.\"\n- If the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " gift guide is a change order, Riley prepares the routing. If it fits inside ret"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "ainer, it goes on the calendar with a clear slot —"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " not a yes-and-figure-it-out-later.\n\n**Thursday**\n- Riley"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " drafts the Friday status note. It opens with a verbatim quote from this week's Eliza interaction ("
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "per the Friday cadence protocol). Given Eliza's paid pushback, the note should surface"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the Q4 content direction clearly — organic-"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "first, voice-led, seasonal calendar framing. Sarah's shoulder-season"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " framing is the right tone here.\n\n**Friday**\n- Riley to you by 11am. You"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " review 1–4pm. Sent by 4pm.\n\n---"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\n\n### The one thing to not do\n\nDon't say yes to the gift guide scope until the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " calendar is checked. The Week 10 Saltline kit"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "chenware miss cost six unbudgeted hours"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". Same pattern. Same fix.\n\n---\n\nOne thing I want to flag: the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Week 11 expansion signal (Eliza asking if Foundry can own the full Q4 product story calendar)"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " is actually an asset here. If you frame Tuesday's conversation around that — *\"we"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " want to build the operating structure that lets us run Q4 with you"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " properly\"* — the scope conversation becomes a planning conversation, not a negotiation. That"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "'s the stronger position.\n\nWant me to draft talking points for the Tuesday conversation with Eliza, or prep the change-order language"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " for Riley to route the gift guide?"
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user wants a plan for what they (Garry) and Riley should do this week regarding the Saltline retainer situation. Let me think about what I know from the brain context:_\n\n_Key facts from the brain:_\n_1. Saltline is day 73 on retainer - this is past the \"month 3\" danger zone that Foundry has identified as when most retainers fail_\n_2. Eliza pushed back on paid for the holiday gift guide - this is consistent with her known pattern (\"If our brand has to bid on the word 'gift' in December, we did the first ten months wrong\")_\n\n\n_3. Scope is creeping in a familiar way - the SOW reads like a project rather than a retainer, and there's already a logged tension around a scope-creep email framed as a deliverable add. The protocol is clear: any scope email goes to Jules for a calendar check before we commit to anything, and Riley handles the change-order routing. We've got the Friday cadence locked in too - status note to Riley by 11am, founder review by 1pm, sent by 4pm. The real risk here is that most retainers don't fail at month one, they fail at month three, and we're right in that window._\n\n_Eliza's constraints are pretty specific - she won't run paid against the holiday gift guide, that's non-negotiable. She's focused on voice over the launch window and wants sensory copy, not benefit copy. She reads support tickets every Monday and isn't interested in tier loyalty programs. The expansion signal at week 11 when she asked if Foundry could own the Q4 product story calendar end-to-end tells me she's thinking bigger picture._\n\n_So the real situation is this: we're at day 73, which is the danger zone for retainer health. Eliza's pushback on paid for the holiday gift guide isn't a crisis - she said this on the kickoff call - but the holiday gift guide content work being framed as a deliverable add is the actual problem. That's scope creep, and saying yes to it before checking the retainer calendar would be the wrong move._\n\n_Garry needs to review the retainer calendar before responding to any scope request, then have the retainer-vs-project framing conversation with Eliza. At day 73, this is the moment to talk about the operating loop, not just ship deliverables. That expansion signal about owning Q4 end-to-end is actually an opportunity if we handle it right._\n\n_Riley should route any scope request through Jules for a calendar check before committing to anything, get the Friday status note prepped by 11am, and handle the change-order routing on the gift guide ask. The week needs to address the scope creep through Jules and potentially as a change order, accept that Eliza won't do paid for the gift guide and redirect to organic and earned approaches instead, and figure out the retainer health piece._",
+              "text": "Reasoning:\n_The user wants a plan for what they (Garry) and Riley should do this week regarding the Saltline retainer situation. Let me think about what I know from the brain context:_\n\n_Key facts from the brain:_\n_1. Saltline is day 73 on retainer - this is past the \"month 3\" danger zone that Foundry has identified as when most retainers fail_\n_2. Eliza pushed back on paid for the holiday gift guide - this is consistent with her known pattern (\"If our brand has to bid on the word 'gift' in December, we did the first ten months wrong\")_\n\n\n_3. Scope is creeping in a familiar way - the SOW reads like a project rather than a retainer, and there's already a logged tension around a scope-creep email framed as a deliverable add. The protocol is clear: any scope email goes to Jules for a calendar check before we commit to anything, and Riley handles the change-order routing. We've got the Friday cadence locked in too - status note to Riley by 11am, founder review by 1pm, sent by 4pm. The real risk here is that most retainers don't fail at month one, they fail at month three, and we're right in that window._\n\n_Eliza's constraints are pretty specific - she won't run paid against the holiday gift guide, that's non-negotiable. She's focused on voice over the launch window and wants sensory copy, not benefit copy. She reads support tickets every Monday and isn't interested in tier loyalty programs. The expansion signal at week 11 when she asked if Foundry could own the Q4 product story calendar end-to-end tells me she's thinking bigger picture._\n\n_So the real situation is this: we're at day 73, which is the danger zone for retainer health. Eliza's pushback on paid for the holiday gift guide isn't a crisis - she said this on the kickoff call - but the holiday gift guide content work being framed as a deliverable add is the actual problem. That's scope creep, and saying yes to it before checking the retainer calendar would be the wrong move._\n\n_Garry needs to review the retainer calendar before responding to any scope request, then have the retainer-vs-project framing conversation with Eliza. At day 73, this is the moment to talk about the operating loop, not just ship deliverables. That expansion signal about owning Q4 end-to-end is actually an opportunity if we handle it right._\n\n_Riley should route any scope request through Jules for a calendar check before committing to anything, get the Friday status note prepped by 11am, and handle the change-order routing on the gift guide ask. The week needs to address the scope creep through Jules and potentially as a change order, accept that Eliza won't do paid for the gift guide and redirect to organic and earned approaches instead, and figure out the retainer health piece._"
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "880ed077-19e5-4832-be39-398132907ddd",
+              "credits_pending": true,
+              "duration_ms": 57424,
+              "usage": {
+                "input_tokens": 27971
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779793790621,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 27971,
+                "slices": [
+                  {
+                    "id": "system",
+                    "label": "System",
+                    "tokens": 25761,
+                    "entries": [
+                      {
+                        "id": "openclaw_system_prompt",
+                        "label": "OpenClaw system prompt",
+                        "tokens": 19537
+                      },
+                      {
+                        "id": "injected_workspace_files",
+                        "label": "Injected workspace files",
+                        "tokens": 6224
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 1983,
+                    "entries": [
+                      {
+                        "id": "read",
+                        "label": "read",
+                        "tokens": 173
+                      },
+                      {
+                        "id": "session_status",
+                        "label": "session_status",
+                        "tokens": 74
+                      },
+                      {
+                        "id": "web_search",
+                        "label": "web_search",
+                        "tokens": 217
+                      },
+                      {
+                        "id": "web_fetch",
+                        "label": "web_fetch",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "wait",
+                        "label": "wait",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "campaign_capability",
+                        "label": "campaign_capability",
+                        "tokens": 1164
+                      },
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 388
+                      }
+                    ]
+                  },
+                  {
+                    "id": "skills",
+                    "label": "Skills",
+                    "tokens": 4164,
+                    "entries": [
+                      {
+                        "id": "skill-creator",
+                        "label": "skill-creator",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "ad-builder",
+                        "label": "ad-builder",
+                        "tokens": 61
+                      },
+                      {
+                        "id": "avatar-builder",
+                        "label": "avatar-builder",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "awareness-evaluator",
+                        "label": "awareness-evaluator",
+                        "tokens": 83
+                      },
+                      {
+                        "id": "blog-writing",
+                        "label": "blog-writing",
+                        "tokens": 111
+                      },
+                      {
+                        "id": "brain-memory",
+                        "label": "brain-memory",
+                        "tokens": 116
+                      },
+                      {
+                        "id": "campaign-performance-reporting",
+                        "label": "campaign-performance-reporting",
+                        "tokens": 165
+                      },
+                      {
+                        "id": "chat-plan-management",
+                        "label": "chat-plan-management",
+                        "tokens": 98
+                      },
+                      {
+                        "id": "email-campaign-publisher",
+                        "label": "email-campaign-publisher",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "email-sequence-builder",
+                        "label": "email-sequence-builder",
+                        "tokens": 117
+                      },
+                      {
+                        "id": "funnel-builder",
+                        "label": "funnel-builder",
+                        "tokens": 134
+                      },
+                      {
+                        "id": "image-production",
+                        "label": "image-production",
+                        "tokens": 113
+                      },
+                      {
+                        "id": "integrations",
+                        "label": "integrations",
+                        "tokens": 121
+                      },
+                      {
+                        "id": "meta-publisher",
+                        "label": "meta-publisher",
+                        "tokens": 119
+                      },
+                      {
+                        "id": "mission-planner",
+                        "label": "mission-planner",
+                        "tokens": 219
+                      },
+                      {
+                        "id": "mission-quality-evaluator",
+                        "label": "mission-quality-evaluator",
+                        "tokens": 96
+                      },
+                      {
+                        "id": "mission-reviewer",
+                        "label": "mission-reviewer",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "mission-worker-executor",
+                        "label": "mission-worker-executor",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "offer-builder",
+                        "label": "offer-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "onboarding-discovery",
+                        "label": "onboarding-discovery",
+                        "tokens": 168
+                      },
+                      {
+                        "id": "pdf-builder",
+                        "label": "pdf-builder",
+                        "tokens": 125
+                      },
+                      {
+                        "id": "presentation-builder",
+                        "label": "presentation-builder",
+                        "tokens": 152
+                      },
+                      {
+                        "id": "social-content-builder",
+                        "label": "social-content-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "social-publisher",
+                        "label": "social-publisher",
+                        "tokens": 99
+                      },
+                      {
+                        "id": "strategy-planner",
+                        "label": "strategy-planner",
+                        "tokens": 172
+                      },
+                      {
+                        "id": "team-management",
+                        "label": "team-management",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "theme-builder",
+                        "label": "theme-builder",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "vibey-api",
+                        "label": "vibey-api",
+                        "tokens": 56
+                      },
+                      {
+                        "id": "video-analyzer",
+                        "label": "video-analyzer",
+                        "tokens": 166
+                      },
+                      {
+                        "id": "video-producer",
+                        "label": "video-producer",
+                        "tokens": 85
+                      },
+                      {
+                        "id": "video-production",
+                        "label": "video-production",
+                        "tokens": 170
+                      },
+                      {
+                        "id": "website-builder",
+                        "label": "website-builder",
+                        "tokens": 151
+                      }
+                    ]
+                  },
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 12864,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 12864
+                      }
+                    ]
+                  },
+                  {
+                    "id": "user_team",
+                    "label": "User/Team",
+                    "tokens": 44,
+                    "entries": [
+                      {
+                        "id": "user_profile",
+                        "label": "User profile",
+                        "tokens": 44
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 0
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [],
+        "latencyMs": 60364.256417,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 27971,
+          "outputTokens": 0,
+          "totalTokens": 27971,
+          "brainContextTokens": 12864,
+          "contextWindowTokens": 1000000,
+          "durationMs": 57424,
+          "latencyMs": 60364.256417
+        },
+        "toolCalls": {
+          "totalToolCalls": 0,
+          "brainToolCalls": 0,
+          "byToolName": {},
+          "byBrainAction": {}
+        }
+      },
+      "usage": {
+        "agent": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 27971,
+          "outputTokens": 0,
+          "totalTokens": 27971,
+          "brainContextTokens": 12864,
+          "contextWindowTokens": 1000000,
+          "durationMs": 57424,
+          "latencyMs": 60364.256417
+        },
+        "judge": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1652,
+          "outputTokens": 1714,
+          "totalTokens": 3366,
+          "providerCostUsd": 0.017904,
+          "latencyMs": 3300.491541000003
+        }
+      }
+    }
+  ]
+}

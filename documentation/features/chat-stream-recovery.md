@@ -1,0 +1,110 @@
+# Chat Stream Recovery
+
+Last Modified: 2026-06-29
+
+## Overview
+
+Chat streaming uses Supabase messages as the canonical record and Redis as the live event buffer. When Redis is configured for Agent API, each assistant turn is tracked as a run using the assistant message id as `run_id`. Chat can run in the original in-process mode, or in queued worker mode behind `AGENT_RUNTIME_QUEUE_EXECUTION=1`.
+
+## Data Flow
+
+1. `POST /api/chat` verifies access and acquires the Redis conversation lock.
+2. Public widgets can call `/api/chat/prewarm-agent` on page load to build agent-scoped stable context before a conversation exists.
+3. Public widget conversation preparation calls `/api/chat/prewarm` after the conversation id exists, joining or reusing the page-load agent prewarm before adding conversation-scoped context.
+4. Agent API buffers setup/platform events that are emitted before `message_start`.
+5. After `startRun`, Agent API flushes those buffered events to `chat:run:{runId}:events` in the same order, without re-sending them to the live client.
+6. Agent API appends live run events to `chat:run:{runId}:events`.
+7. In direct mode, Agent API creates the assistant message and runs `ChatService.processMessage` in-process.
+8. In queued mode, Agent API creates a deterministic `runId/messageId`, persists `agent_runtime_runs`, enqueues `chat-run`, and streams the browser from Redis starting at cursor `0-0`.
+9. `mission-worker` claims `chat-run`, records worker/claim metadata, and calls `POST /api/internal/chat/runs/:runId/execute` with internal auth.
+10. The internal executor rebuilds the user-scoped Supabase client, runs the existing `ChatService.processMessage`, emits the same Redis run events, and streams NDJSON heartbeats back to mission-worker.
+11. Chat builds the OpenClaw transcript session from agent, user, conversation, and org identity only.
+12. Before the OpenClaw call, Agent API checks session-history confidence against DB messages; if the DB has prior assistant context and confidence is missing or stale, it injects bounded DB conversation history into the request.
+13. Campaign and Space are passed through request context, instructions, and message metadata as the active working scope.
+14. If the selected model is `openai-codex/...` or `anthropic-subscription/...`, Agent API resolves an admin-owned subscription credential from `vault_secrets`, forwards it to OpenClaw as a request-scoped runtime credential, and disables model fallback for that request.
+15. Before the OpenClaw request, Agent API persists model routing observability to `agent_runtime_runs` and `vb_agent_traces`, including the selected model input, requested/resolved model ids, gateway model id, subscription provider, and normalized model settings.
+16. `POST /api/chat/stop` marks the active Redis/DB run as cancelled, so cancellation works across Agent API and worker instances.
+17. The browser stores `run_id` and the last Redis cursor per conversation.
+18. On refresh or reconnect, the browser checks `/api/chat/status/:conversationId`.
+19. If an active Redis run exists, the browser resumes from `/api/chat/runs/:runId/stream?after={cursor}`.
+20. If Redis is unavailable or expired, the browser falls back to the existing DB polling recovery path.
+21. Provider billing and insufficient-balance failures are classified as `provider_billing` before they reach the web client, so billing exhaustion does not look like a retryable transport interruption.
+22. Subscription credential failures are classified as first-class request errors. Missing OpenAI Codex auth prompts the admin reconnect action; missing Claude Subscription auth stops retrying and explains the required admin connection.
+23. `ChatService.processMessage` returns the terminal status it actually reached, so the queued internal executor writes `done`, `failed`, `failed_recoverable`, or `cancelled` from the same source of truth as the live stream.
+24. When `CHAT_RUN_CHECKPOINTS_ENABLED` is on, Agent API writes compact `agent_runtime_run_checkpoints` rows at coarse tool batches, recoverable failures, and final success. OpenClaw context compaction state arrives through stream events rather than Agent API checkpoint retries.
+25. Context-window failures are recovered inside OpenClaw. The runner emits `response.compaction` phases, compacts the transcript or truncates oversized tool results, retries the same run, and only returns `context_window_exceeded` if recovery cannot shrink the next model request.
+26. Ordered tool/generation blocks are idempotent by `tool_call_id` or matching active label/action, so replayed or repeated start events update the same visible row instead of rendering duplicate tool calls.
+27. Mission Worker can run the Railway chat autoscaler, which watches BullMQ chat queue pressure and updates the shared Railway Agent API replica count through Railway's GraphQL API.
+
+## Contracts
+
+- Redis is optional for direct mode. Queued mode requires shared Redis because the browser stream reads Redis and mission-worker claims BullMQ jobs from the same Redis.
+- Supabase `messages` remains the source of truth for final assistant content.
+- `vb_message_timeline_events` remains the durable timeline for non-token recovery.
+- Redis-backed SSE events preserve the existing event payload and add `run_id` plus `cursor`.
+- `run_id` is the assistant `messageId` in the first implementation.
+- Setup/platform events emitted before `message_start` are part of Redis replay.
+- `credit_update` remains live-only because it can arrive after `done`; balance recovery is not part of the active run replay contract.
+- `CHAT_STREAM_SHADOW_VERIFY=1` compares live stream events to Redis appends without changing the client path.
+- `CHAT_STREAM_REDIS_READER=1` moves direct-mode post-`message_start` browser streaming to Redis while execution still stays in-process; queued mode always streams the browser from Redis starting at `0-0`.
+- `AGENT_RUNTIME_QUEUE_SHADOW=1` enqueues no-op BullMQ shadow jobs for claim-latency measurement only.
+- `AGENT_RUNTIME_QUEUE_EXECUTION=1` routes live chat execution through `agent-runtime-queue-chat`; direct in-process chat remains the rollback path when the flag is off.
+- Real `chat-run` jobs use one BullMQ attempt to avoid duplicate assistant message creation after partial execution.
+- Mission-worker needs `AGENT_API_URL` and `INTERNAL_API_TOKEN` to call the Agent API internal executor.
+- Runtime queue Redis resolution is `REDIS_URL_AGENT_QUEUE`, then `REDIS_URL_AGENT_STREAM`, then `REDIS_URL_MISSIONS`, then `REDIS_URL`; Agent API and mission-worker must resolve to the same Redis and `REDIS_QUEUE_PREFIX` for shadow and real jobs to be claimed.
+- Agent API sends OpenClaw `lane: chat:{conversationId}` so unrelated chat conversations do not share the default `main` lane.
+- OpenClaw chat transcript identity must not include `campaign_id` or `space_id`; moving a conversation between Spaces/Campaigns changes active tool scope, not memory continuity.
+- Session-history confidence is keyed by the actual OpenClaw `sessionKey`, refreshed only when OpenClaw returns a non-empty traced message input, and expires after a short idle window. New, migrated, stale, or empty-trace transcript buckets reconstruct prior DB conversation history before the next model call. First-turn conversations without a prior assistant reply do not reconstruct history.
+- Admin subscription auth is admin-only. `user_integrations` stores visible connection metadata with null raw token columns; OpenAI Codex stores the OAuth access/refresh bundle in `vault_secrets`, and Claude Subscription stores the Claude setup token in `vault_secrets`. The Claude setup token is generated by the Claude Code CLI command `claude setup-token`; it is not an Anthropic Console API key. Claude setup-token vault rows use the generic DB-safe `secret_type = 'token'` and preserve the provider-specific subtype in `metadata.token_type = 'setup_token'`. API writes those vault rows and Agent API decrypts them at request time, so both services must resolve the same `VAULT_ENCRYPTION_KEY`. Agent API loads subscription credentials only for platform admins and passes them to OpenClaw only in-memory for the selected subscription-model request. The OpenAI OAuth state signer uses `OPENAI_CODEX_OAUTH_STATE_SECRET` when set, otherwise an OpenAI-specific derived signer from `VAULT_ENCRYPTION_KEY`.
+- Subscription-backed chat model usage is tracked for tokens but is not charged to the Vibey credit wallet. `ai_usage_events.computed_cost` and `credits_charged` stay `0` for `openai-codex/...` and `anthropic-subscription/...`; the token-based equivalent value is stored in `metadata_json.equivalent_cost_usd`.
+- `agent_runtime_runs.observability.chat_model_routing` and `vb_agent_traces.observability.chat_model_routing` must be written before the gateway request, so failed subscription-model requests keep the actual requested model instead of inheriting database defaults.
+- Runtime run terminal statuses are `done`, `failed`, `failed_recoverable`, `cancelled`, and `continued`; `error` events must not be followed by `done`.
+- `context_window_exceeded` is the explicit user-facing code for unrecovered context overflow. `stream_interrupted` remains the recoverable transport/bridge interruption code.
+- OpenClaw may emit `response.compaction` events with phases such as `overflow_detected`, `start`, `end`, `retrying`, `recovered`, and `failed`. Agent API records these as trace recovery events and forwards `phase: "compacting"` status to the browser while the same run continues.
+- Failed and recoverable assistant messages do not receive `metadata.duration_ms`; successful persisted assistant content does.
+- Checkpoints store compact summaries and counters only. Large raw transcripts stay out of `agent_runtime_run_checkpoints.raw_snapshot`.
+- Replayed or duplicate `tool_start`/`generation_start` events must be idempotent in both persisted backend ordered blocks and live frontend ordered blocks. Repeated runtime skill reads are grouped with other context-read rows for display.
+- Railway autoscaling is queue-pressure based, not CPU based. The default active policy keeps the shared Railway Agent API between two and four replicas, scales up after two samples where the oldest ready chat job has waited at least 10 seconds, and scales down only after 15 minutes with no ready or active chat jobs.
+- Railway autoscaling requires Mission Worker env vars for Railway project, environment, service, region, and a Railway project or API token. Missing config fails closed and does not mutate Railway.
+- Autoscaler state and the cross-replica lock live in the same Redis connection used by Agent Runtime queues.
+- Public widget agent prewarm is conversation-independent. It may include runtime readiness, model routing, policy, agent registration, user/team/integration summaries, and agent Brain presence, but conversation history, campaign team/theme, and previous images wait for the conversation-level prewarm or Send path.
+- Conversation-level public widget prewarm and Send must join an in-flight agent prewarm or reuse the completed agent cache entry before building conversation-scoped stable context.
+
+## Recovery Behavior
+
+The browser tracks raw stream byte activity separately from visible assistant events, so SSE heartbeats keep a long-running answer marked healthy even when no assistant text is being rendered. If an active stream is silent for more than 60 seconds, the browser aborts the stale local reader, preserves the saved `run_id`/cursor, marks the conversation reconnecting, and starts the existing recovery flow.
+
+Transport failures auto-recover first. Redis resume is attempted for active runs, then DB polling recovery runs if resume cannot complete. If the answer still cannot recover, the interrupted banner shows one `Resume` action. `Resume` retries recovery once; if that cannot resume the run, the banner clears and the user can write their own follow-up.
+
+Context-window failures are model failures, not transport failures. OpenClaw owns the recovery loop: it detects overflow, emits structured compaction progress, compacts session history or truncates oversized tool results, then retries the same assistant run without Agent API synthesizing a compact user prompt. If recovery still fails, the gateway emits a failed OpenResponses result with `context_window_exceeded`; Agent API marks the run `failed_recoverable`, and the frontend shows the recoverable context message instead of a fake completed answer. Model overload, model/context settings, workspace billing, provider billing, missing OpenAI Codex subscription auth, missing Claude Subscription auth, and runtime availability failures show specific messages instead of interrupted-answer controls.
+
+## Decision Log
+
+- 2026-06-29: Mapped missing OpenAI Codex subscription auth to `openai_codex_not_connected` and the existing OpenAI Codex reconnect banner, preventing generic resend failures for subscription-model chats.
+- 2026-06-25: Persisted chat model routing observability before gateway execution and added first-class OpenAI Codex/Claude subscription gate classifications so failed runs show the right admin action and traces do not inherit the database default model.
+- 2026-06-24: Moved context-window recovery ownership back into OpenClaw: overflow now emits `response.compaction` events, compacts or truncates inside the runner, retries the same run, and lets Agent API classify unrecovered overflow without creating synthetic compact prompts.
+- 2026-06-22: Split public widget prewarm into page-load agent context and conversation-scoped context so Send can reuse or join prebuilt stable context without lowering prompt quality.
+- 2026-06-22: Added a Mission Worker Railway autoscaler for queued chat, driven by BullMQ queue pressure with Redis locking and Railway GraphQL replica updates.
+- 2026-06-19: Made ordered tool/generation block starts idempotent and classified `read_skill` as read-context display activity, preventing replayed stream events from appearing as duplicate tool calls.
+- 2026-06-19: Added explicit terminal run semantics, context-window classification, compact checkpoint rows, flag-gated context recovery, and `failed_recoverable`/`continued` status support so failed agent runs cannot store fake success.
+- 2026-06-19: Added provider billing classification for provider insufficient-balance errors so chat surfaces a non-retryable model-billing message instead of generic temporary availability copy.
+- 2026-06-08: Added optional Redis stream replay for chat-only reconnects. Brain Live/WebSocket reconnect remains unchanged.
+- 2026-06-08: Mirrored pre-run setup/platform events into Redis before stored `message_start`, with a regression test preserving live event order.
+- 2026-06-08: Added durable `agent_runtime_runs` shadow rows and no-op BullMQ chat shadow jobs so queue claim latency can be measured before live worker routing.
+- 2026-06-09: Moved the no-op BullMQ chat shadow processor from queue-worker to mission-worker and allowed runtime queue Redis to reuse `REDIS_URL_AGENT_STREAM`.
+- 2026-06-09: Switched runtime queue names from colon-separated strings to BullMQ-safe hyphenated strings.
+- 2026-06-09: Made mission-worker the sole writer for shadow claim metadata so fast claims cannot be overwritten by Agent API queue metadata persistence.
+- 2026-06-09: Added queued chat execution behind `AGENT_RUNTIME_QUEUE_EXECUTION=1`, mission-worker real `chat-run` processing, distributed cancel state, internal Agent API NDJSON execution, and OpenClaw `chat:{conversationId}` lanes.
+- 2026-06-12: Made chat transcript keys stable across Campaign/Space changes while preserving active Campaign/Space through request context and tool scope.
+- 2026-06-16: Replaced durable-count session integrity with short-lived trace-verified session-history confidence, so empty OpenClaw traces clear confidence and stale sessions rebuild prior DB context before the next model call.
+- 2026-06-17: Added admin-only OpenAI Codex subscription runtime credentials for `openai-codex` models, with vault-backed token storage and no model fallback to Vibey-paid providers.
+- 2026-06-17: Allowed OpenAI Codex OAuth state signing to derive from the existing vault key when no dedicated OpenAI state secret is configured, avoiding unsafe reuse of another provider's state secret.
+- 2026-06-18: Added admin-only Claude Subscription setup-token runtime credentials for `anthropic-subscription` models, with vault-backed token storage and no model fallback to Vibey-paid providers.
+- 2026-06-18: Fixed subscription model sends so same-conversation default-model refreshes cannot overwrite a user picker selection, and prewarm cache hits recompute model routing from the live chat request before calling OpenClaw.
+- 2026-06-18: Fixed queued subscription model settings validation so `openai-codex/...` and `anthropic-subscription/...` IDs validate against their base model capability profiles while preserving the subscription model ID for OpenClaw routing.
+- 2026-06-18: Made Agent API load the sibling API env file as a local fallback for vault decryption and preserve vault configuration errors instead of misreporting connected subscriptions as disconnected.
+- 2026-06-18: Changed subscription-backed chat accounting so subscription model rows record token usage without actual Vibey cost or credit deduction, while keeping equivalent token value in metadata for visibility.
+- 2026-06-18: Added Claude Subscription connection instructions in Workspace Settings so admins know to run `claude setup-token` and paste the `sk-ant-oat01-...` setup token.
+- 2026-06-18: Fixed Claude Subscription vault writes to use the existing `token` vault secret type, while keeping `setup_token` as metadata, so the database check constraint accepts the connection.
+- 2026-06-18: Added open-tab stream stall detection, recoverable proxy stream interruption codes, and structured chat failure categories so transport drops auto-recover while model/context/runtime failures show specific user actions.
+- 2026-06-18: Simplified interrupted-answer fallback UX to a single `Resume` action and removed the separate continuation-message button.

@@ -1,0 +1,134 @@
+---
+title: "The Vibey MCP"
+description: "Connect Vibey to Claude, ChatGPT, Cursor, and other AI tools so they can work with your Brain, Spaces, campaigns, and missions."
+---
+
+Vibey has its own MCP server at **`https://mcp.vibey.im`**. Add it to your favorite AI tool — Claude, ChatGPT, Cursor, and others — and that tool can work with your Vibey workspace directly.
+
+This means you can sit in Claude and ask it to search your Company Brain, save a note to your memories, create a campaign, or kick off a mission — and it all lands in Vibey, exactly as if you'd done it in the app.
+
+<Callout type="info">
+  Looking for the opposite — connecting outside tools *into* your Vibey agents? That's covered in [MCP Servers](/integrations/mcp-servers).
+</Callout>
+
+## What You Can Do
+
+Once connected, your AI tool can:
+
+| Area | What it can do |
+|---|---|
+| **The Brain** | Search your Personal, Company, Customer, and Agent Brains, and save new memories and knowledge |
+| **Documents** | Read, search, and save documents in your Spaces, including downloadable Word docs |
+| **Spaces & Tasks** | Browse your Spaces, views, items, and tasks |
+| **Campaigns** | View your campaigns and create new ones |
+| **Marketing** | View and create funnels, websites, pages, and email sequences |
+| **Missions** | View your missions and send new ones to your team |
+| **Agent Skills** | View your agents' skills and teach them new ones |
+
+## What It Will Never Do
+
+The Vibey MCP only exposes safe actions. It can read and create — it cannot destroy:
+
+- ❌ No deleting anything
+- ❌ No publishing pages or sending emails
+- ❌ No billing or account changes
+
+Every action also runs through the same permission checks as the Vibey app itself, so a connected tool can never do more than you can.
+
+## Connecting
+
+The address is the same everywhere: `https://mcp.vibey.im`
+
+<Tabs>
+  <Tab label="Claude">
+    <Steps>
+      <Step title="Open Connector Settings">
+        In Claude (web or desktop), go to **Settings → Connectors**.
+      </Step>
+      <Step title="Add a Custom Connector">
+        Click **Add custom connector**, name it **Vibey**, and paste `https://mcp.vibey.im` as the URL.
+      </Step>
+      <Step title="Sign In to Vibey">
+        Claude opens the Vibey approval screen. Sign in, choose your account, pick the permissions, and click **Allow**.
+      </Step>
+      <Step title="Start Talking">
+        Try: *"Search my Vibey Company Brain for our pricing strategy."*
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab label="ChatGPT">
+    <Steps>
+      <Step title="Open Connector Settings">
+        In ChatGPT, go to **Settings → Connectors**. (Availability depends on your ChatGPT plan — connectors may be under **Apps & Connectors**.)
+      </Step>
+      <Step title="Add Vibey">
+        Add a new connector with the URL `https://mcp.vibey.im` and name it **Vibey**.
+      </Step>
+      <Step title="Sign In to Vibey">
+        ChatGPT opens the Vibey approval screen. Sign in, choose your account, pick the permissions, and click **Allow**.
+      </Step>
+      <Step title="Start Talking">
+        Try: *"List my Vibey campaigns and summarize what's active."*
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab label="Cursor">
+    <Steps>
+      <Step title="Open MCP Settings">
+        In Cursor, go to **Settings → MCP** and click **Add new MCP server**.
+      </Step>
+      <Step title="Add Vibey">
+        Name it **Vibey**, choose the **HTTP** type, and paste `https://mcp.vibey.im` as the URL.
+      </Step>
+      <Step title="Sign In to Vibey">
+        Cursor opens the Vibey approval screen in your browser. Sign in, choose your account, pick the permissions, and click **Allow**.
+      </Step>
+      <Step title="Start Talking">
+        Try: *"Save this architecture decision to my Vibey user brain."*
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab label="Claude Code">
+    <Steps>
+      <Step title="Add the Server">
+        In your terminal, run: `claude mcp add --transport http vibey https://mcp.vibey.im`
+      </Step>
+      <Step title="Authenticate">
+        Inside Claude Code, run `/mcp` and follow the sign-in flow for **vibey**.
+      </Step>
+      <Step title="Start Talking">
+        Try: *"Create a Vibey mission to review this week's funnel performance."*
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+<Callout type="tip">
+  Any other app that supports remote MCP servers works too — just give it the address `https://mcp.vibey.im` and sign in when asked.
+</Callout>
+
+## The Approval Screen
+
+The first time a tool connects, Vibey shows you an approval screen before anything happens. This is where you stay in control:
+
+1. **Choose the account** — your personal account or one of your organizations. The tool only sees that account's data.
+2. **Set permissions per area** — for each area (Personal Brain, Campaigns, Marketing, and so on), choose **None**, **Read**, or **Write**. Want Claude to read your Brain but never change it? Set it to Read.
+3. **Click Allow** — the tool is connected with exactly the access you granted, nothing more.
+
+If you connect through an organization, your role there caps what you can grant — viewers can only grant read access, while owners and admins can grant everything.
+
+## Built-In Guidance
+
+The Vibey MCP doesn't just hand over tools — it teaches the connected AI how to use them well:
+
+- Every connected tool receives instructions explaining what's safe, what each permission means, and how to call Vibey correctly.
+- A built-in **docs search** tool lets the AI look up these very docs before acting, so it answers questions about Vibey accurately.
+- A **describe action** tool lets the AI check exactly what an action needs before calling it, so fewer things go wrong.
+
+## Good Things to Try
+
+- *"Search my Customer Brain — what objections come up most on sales calls?"*
+- *"Save this competitor research to my Company Brain."*
+- *"Create a funnel for the spring webinar and add a registration page."*
+- *"What tasks are open in my Launch space?"*
+- *"Send a mission to write three email subject lines for the new offer."*

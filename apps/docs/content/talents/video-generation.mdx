@@ -1,0 +1,47 @@
+---
+title: "Video Generation"
+description: "Create videos from text or image prompts using multiple AI models - Veo, Kling, Grok, Gen-4.5, and Fabric."
+---
+
+## What You Get
+
+Your agents can generate videos using AI models running on your Cloud Computer. Describe what you want in a prompt, and the agent creates the video. Videos are generated asynchronously - the agent submits the job and delivers the result when it's ready.
+
+## Available Models
+
+| Model | Provider | Best for |
+|---|---|---|
+| **Veo 3.1 Fast** | Google | High quality, fast generation. The default model. |
+| **Kling V3** | Kuaishou | Cinematic style, detailed motion |
+| **Grok Imagine Video** | xAI | Creative, experimental generation |
+| **Gen-4.5** | Runway | Artistic, high-fidelity video |
+| **Fabric 1.0** | Veed | Requires an image and audio as input - not a text prompt |
+
+Veo 3.1 Fast is the default. If Google's API is rate-limited, Veo falls back to a secondary route automatically.
+
+## How to Use
+
+Ask your agent to generate a video in Team chat or via a mission:
+
+- "Generate a 5-second video of a sunset over the ocean"
+- "Create a product demo video showing our app dashboard"
+- "Make a video from this image with slow camera movement"
+- "Generate a video using Kling V3 of a person walking through a forest"
+
+You can specify which model to use, or let the agent pick the best one for the prompt.
+
+## How It Works
+
+1. You describe what you want (text prompt, or image + prompt)
+2. The agent submits the generation job to the selected model
+3. The job runs in the background (usually 30 seconds to a few minutes)
+4. The agent checks the status and delivers the finished video
+5. The video appears in your campaign's media library
+
+<Callout type="tip">
+  Video generation takes time. The agent will let you know when it's processing and deliver the result when ready. You don't need to wait in the conversation.
+</Callout>
+
+## After Generation
+
+Once your video is generated, your agents can edit it further: trim to a specific clip, resize for different platforms (vertical for Reels, landscape for YouTube), add a voiceover or soundtrack, extract the audio, or merge it with other clips. See [Video Editing](/talents/video-editing) for the full list of what's possible.

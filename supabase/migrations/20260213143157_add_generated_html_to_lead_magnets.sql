@@ -1,0 +1,1 @@
+ALTER TABLE lead_magnets ADD COLUMN IF NOT EXISTS generated_html TEXT DEFAULT NULL;;

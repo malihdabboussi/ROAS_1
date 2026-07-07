@@ -1,0 +1,214 @@
+---
+title: 'Flows'
+description: 'The trigger-and-action engine inside a Space. A Fathom meeting finishes, an agent suggests follow-up tasks. A form gets submitted, a contact gets created. Repetitive operations run themselves.'
+---
+
+## What a Flow Is
+
+A **Flow** is a trigger plus one or more actions that runs by itself inside a Space.
+
+It is how the workspace reacts when things happen, without anyone having to initiate it.
+
+| Part           | What it is                                                     |
+| -------------- | -------------------------------------------------------------- |
+| **Trigger**    | The event that fires the flow                            |
+| **Conditions** | Optional filters that must match before actions run            |
+| **Actions**    | What happens when the trigger fires (one or many, in sequence) |
+
+Example: **When a Fathom recording becomes ready** (trigger), **ask the sales agent to suggest follow-up tasks for the call owner** (action).
+
+## Triggers
+
+Triggers are grouped by the object they watch.
+
+### Task Triggers
+
+| Trigger                  | Fires when                                               |
+| ------------------------ | -------------------------------------------------------- |
+| **Task created**         | A new task is added to the Space                         |
+| **Status changed**       | An item's status changes (with optional from/to filters) |
+| **Priority changed**     | Priority value changes                                   |
+| **Assignee changed**     | The assignee on a task changes                           |
+| **Custom field changed** | A custom field value changes                             |
+| **Due date changed**     | The due date is updated                                  |
+| **Start date changed**   | The start date is updated                                |
+| **Tag added**            | A tag is attached to a task                              |
+| **Tag removed**          | A tag is removed from a task                             |
+| **Mission completed**    | A mission attached to a task finishes                    |
+| **Mission failed**       | A mission attached to a task errors out                  |
+
+Task triggers can be scoped to **tasks**, **subtasks**, or **all tasks or subtasks**.
+
+### Form Triggers
+
+| Trigger            | Fires when                                                   |
+| ------------------ | ------------------------------------------------------------ |
+| **Form submitted** | A specific form (or any form in the Space) gets a submission |
+
+### Contact Triggers
+
+| Trigger             | Fires when                                    |
+| ------------------- | --------------------------------------------- |
+| **Contact created** | A contact is added to the Space (or globally) |
+
+### Artifact Triggers
+
+| Trigger                | Fires when                                                 |
+| ---------------------- | ---------------------------------------------------------- |
+| **Artifact lifecycle** | An artifact is created, published, unpublished, or updated |
+
+### Schedule Triggers
+
+| Trigger      | Fires when                                                               |
+| ------------ | ------------------------------------------------------------------------ |
+| **Schedule** | A cron schedule fires (every Monday at 9am, every day at midnight, etc.) |
+
+### Connected App Triggers
+
+| Trigger                             | Fires when                                                 |
+| ----------------------------------- | ---------------------------------------------------------- |
+| **External email received**         | An inbound email arrives at the connected Gmail or Outlook |
+| **External Slack message received** | A new message arrives in a watched Slack channel           |
+| **Fathom recording ready**          | A Fathom call completes and the transcript is available    |
+
+## Actions
+
+Actions are what the flow does after the trigger fires.
+
+### Task Actions
+
+| Action              | What it does                                             |
+| ------------------- | -------------------------------------------------------- |
+| **Create task**     | Create a new task with templated title, status, priority |
+| **Create subtask**  | Add a subtask to an existing task                        |
+| **Assign to**       | Assign one or more humans or agents                      |
+| **Change status**   | Move the task to a target status                         |
+| **Change priority** | Update the priority                                      |
+| **Add comment**     | Post a comment from the flow                       |
+
+### Agent Actions
+
+| Action                            | What it does                                                                                                                                                                                          |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Send to agent**                 | Hand the trigger payload to an agent and let them act on it                                                                                                                                           |
+| **Agent suggest tasks**           | Ask an agent to read the trigger payload and propose follow-up tasks. Tasks land in the Space as `source: 'agent_suggested'` and surface in the **Waiting on You** card on Home for accept-or-dismiss |
+| **Ask agent to improve artifact** | Hand an existing artifact to an agent for a revision pass                                                                                                                                             |
+
+### Contact Actions
+
+| Action                     | What it does                                          |
+| -------------------------- | ----------------------------------------------------- |
+| **Create contact**         | Create a contact in your CRM from the trigger payload |
+| **Update contact field**   | Set a custom field on a contact                       |
+| **Add contact tag**        | Tag a contact                                         |
+| **Remove contact tag**     | Remove a tag from a contact                           |
+| **Attach note to contact** | Save a note (and optionally feed the Customer Brain)  |
+| **Link item to contact**   | Associate an item with a contact                      |
+
+### Artifact Actions
+
+| Action                      | What it does                                               |
+| --------------------------- | ---------------------------------------------------------- |
+| **Create artifact**         | Spin up a new artifact (presentation, funnel, email, etc.) |
+| **Publish artifact**        | Publish an artifact (funnel goes live, email schedules)    |
+| **Unpublish artifact**      | Take an artifact offline                                   |
+| **Attach artifact to item** | Link an artifact to a task                                 |
+
+### Messaging Actions
+
+| Action                   | What it does                                       |
+| ------------------------ | -------------------------------------------------- |
+| **Send email**           | Send a templated email through a connected mailbox |
+| **Send Slack message**   | Post a message to a connected Slack channel        |
+| **Send channel message** | Post a message into a Space Channel                |
+
+### Social Research Actions
+
+Schedule-safe. Run on IG/TikTok research views in the Space.
+
+| Action                         | What it does                                                                 |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| **Sync social research**       | Use existing synced items or re-fetch the last 30 days for tracked accounts |
+| **Find top outliers**          | Pick items by outlier score, platform, and limit (outputs a digest)          |
+| **Extract hook/transcript**    | Enrich selected items with caption, hook, and/or transcript                  |
+
+Typical weekly flow: **Schedule** → sync → find outliers → enrich → **Create task** (notes = `{{steps.N.digest}}`) → **Send to agent**.
+
+If a scheduled social research step fails, the flow stops there and records the error in run history. Outlier selection only uses posts with valid dates inside the selected window, and enrichment counts only items where the requested caption, hook, or transcript is available.
+
+## Templating with Tokens
+
+Every action that takes text (title, message, body) supports **template tokens**. Tokens are inserted via the `${token.path}` syntax inside any text input.
+
+Available token sources include:
+
+- **Task tokens** title, status, priority, assignees, due date
+- **Contact tokens** name, email, phone, tag list
+- **Form tokens** the form name plus every field value
+- **Fathom tokens** meeting title, transcript, action items, attendees, URL, owner
+- **Email tokens** sender, subject, body
+- **Slack tokens** sender, message text, channel name
+- **Space and mission tokens** Space name, current mission ID
+- **Social research step tokens** `synced_count`, `selected_item_ids`, `outlier_count`, `enriched_count`, `digest`
+
+The trigger you pick determines which token sources are available. The template editor surfaces them in an autocomplete menu.
+
+## Building a Flow
+
+<Steps>
+  <Step title="Open the Space and go to the Flows panel">
+    Open the Space, find the Flows panel (sidebar or settings).
+  </Step>
+  <Step title="Pick a trigger object">
+    Choose what the flow watches: Tasks, Subtasks, Forms, Contacts, Artifacts, Schedule, or
+    Connected Apps.
+  </Step>
+  <Step title="Pick a trigger type">
+    The available triggers narrow to those that make sense for the object.
+  </Step>
+  <Step title="Add conditions (optional)">
+    Filter when the trigger should fire. "Only when status moves to Done." "Only when the assignee
+    is an agent."
+  </Step>
+  <Step title="Add actions">
+    Stack actions in sequence. Each action can use tokens from the trigger and from previous actions
+    in the chain.
+  </Step>
+  <Step title="Name and enable">
+    Give the flow a clear name. Enable it. The flow runs from now on.
+  </Step>
+</Steps>
+
+## Templates
+
+The Flows panel **Browse** tab loads ready-to-use flow templates from the workspace catalog (meetings, email, Slack, forms, contacts, task handoffs, artifacts, and scheduled digests). Click a card to install it into the current Space. For example:
+
+- **Suggest follow-ups from Fathom calls** When a Fathom recording is ready, ask an agent to suggest follow-up tasks for the call owner. The tasks land in **Waiting on You** for accept-or-dismiss.
+- **Inbound Email To Task** When Gmail or Outlook receives an email, create a task from the sender, subject, and body.
+- **Weekly Space Digest** On a schedule, create a recurring digest task for reviewing the Space.
+
+Templates are good starting points. Some install ready-to-run, while templates that need your connected account, form, channel, tag, or artifact install as drafts so you can fill in the missing field before enabling them.
+
+## Where Completed flows Show Up
+
+When an flow finishes, the run is recorded against the Space. You see:
+
+- The run in the Space's flows history
+- The completed run in the **Completed flows** card on Home
+
+If the run succeeded, you see the deliverables it produced. If it failed or partially succeeded, you see the error so you can fix and re-run.
+
+## Best Practices
+
+**Start with high-frequency operations.** Flows earn their keep when they fire often. Look for repetitive triggers (every meeting, every form submission, every weekly schedule).
+
+**One trigger, one outcome.** If you want a Fathom call to create tasks, notify Slack, and tag the contact, build all three actions on one flow rather than three separate ones.
+
+**Use agent actions for judgment.** Pure trigger-action chains are great for mechanical work. For anything that needs reasoning (summarize this call, suggest follow-ups, draft a response), use `send_to_agent` or `agent_suggest_tasks` so the agent decides what to do.
+
+## Related
+
+- [What a Space Is](/spaces/what-is-a-space)
+- [Views](/spaces/views)
+- [The Home Page](/getting-started/the-home-page)
+- [How Autopilot Works](/autopilot/how-autopilot-works)

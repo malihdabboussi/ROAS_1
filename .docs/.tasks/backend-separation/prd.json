@@ -1,0 +1,380 @@
+{
+  "project": "Backend Separation — Platform (Vercel) + Agent (VM/OpenClaw)",
+  "branchName": "feat/backend-separation",
+  "description": "Split the monolithic apps/api NestJS backend into two: Platform Backend (Vercel) for auth, billing, CRUD; Agent Backend (VM) for chat, AI agents, OpenClaw, transcription. Brain module shared in both. Credits balance check via direct Supabase (no inter-service calls).",
+  "recommendedAgents": 3,
+  "completionStatus": {
+    "codeComplete": "US-001 through US-013 — ALL code changes done, all 3 projects compile clean (0 errors)",
+    "remainingWork": "US-014 (architecture doc updates) + manual deployment steps on VM",
+    "lastUpdated": "2026-02-13"
+  },
+  "nextSteps": {
+    "summary": "Code split is DONE. Two tasks remain: (1) Update architecture guideline docs, (2) Deploy to production. Both can be done independently.",
+    "step1_updateDocs": {
+      "story": "US-014",
+      "priority": "Do before next architecture-related work",
+      "what": "Update 2 guideline files to reflect the new dual-backend architecture",
+      "files_to_edit": [
+        ".docs/guidelines/architecture/project-architecture.md — Section 12 (Monorepo Organization)",
+        ".docs/guidelines/architecture/backend-architecture.md — Sections 2, 11, 14 + new sections"
+      ],
+      "specific_changes": [
+        "project-architecture.md Section 12: Change 'apps/app-backend/' to 'apps/api/' (Platform Backend) and add 'apps/agent-api/' (Agent Backend). Add 'packages/api-shared/' to packages list.",
+        "backend-architecture.md Section 2: Add paragraph noting architecture applies to BOTH backends (Platform and Agent). Each backend follows same three-layer pattern independently.",
+        "backend-architecture.md Section 11: Add note that cross-backend shared code goes in packages/api-shared (not src/lib/). Single-backend shared code stays in src/lib/ per existing pattern.",
+        "backend-architecture.md Section 14: REWRITE deployment section. Current: single backend on localhost:3001. New: Platform Backend on Vercel (serverless), Agent Backend on Hetzner VM (PM2 port 3003), OpenClaw Gateway on VM (port 18789). Add Cloudflare tunnel routing table.",
+        "backend-architecture.md NEW SECTION after Section 10: 'CreditsService Exception' — Document that CreditsService uses SUPABASE_SERVICE_ROLE_KEY as a sanctioned exception to RLS-only rule. Reason: credit operations span multiple tables (monthly_credit_usage, credit_purchases, ai_usage_events, user_subscriptions, user_trials, subscription_plans) and need cross-user atomic writes.",
+        "backend-architecture.md NEW SECTION after Section 11: 'Inter-Backend Data Flow' — Both backends connect to same Supabase DB directly. Zero HTTP calls between backends. Frontend proxy determines routing by path prefix (chat/*, transcribe/* → Agent; everything else → Platform).",
+        "backend-architecture.md NEW SECTION: 'Module Ownership Table' — Copy the table from progress.txt showing which module belongs to which backend."
+      ],
+      "verification": "After editing, read both files fully to ensure no contradictions with existing content. All existing guidelines (three-layer, vertical slices, file size limits, RLS-only) remain unchanged."
+    },
+    "step2_deployToProduction": {
+      "story": "US-013 (manual execution)",
+      "priority": "Do when ready to go live with the split",
+      "what": "Deploy agent-api to VM, update DNS, update frontend env vars",
+      "guide": ".docs/deployment/backend-separation.md — contains full step-by-step instructions with rollback procedure",
+      "steps": [
+        "1. SSH into VM (188.245.41.230), pull code, pnpm install, build agent-api, create .env, start with PM2",
+        "2. Verify: curl http://localhost:3003/api → should return { status: 'ok', service: 'vibey-agent-api' }",
+        "3. Add agent-api.govibey.com DNS CNAME → 8c95a516.cfargotunnel.com in Cloudflare",
+        "4. Update /root/.cloudflared/config.yml to add agent-api.govibey.com → localhost:3003",
+        "5. Restart cloudflared tunnel",
+        "6. In Vercel dashboard: add AGENT_BACKEND_URL=https://agent-api.govibey.com to apps/web env vars",
+        "7. Deploy frontend (push to trigger Vercel build)",
+        "8. Test end-to-end: chat works via agent backend, all other features work via platform backend",
+        "9. After 24h monitoring: stop old vibey-api PM2 process (port 3001), remove api.govibey.com tunnel route"
+      ]
+    }
+  },
+  "context": {
+    "currentProblem": "Single NestJS backend (apps/api) deployed as duplicate on both Vercel AND VM. 17 modules handle everything from billing to AI chat. Agent modules (chat, transcribe) can only run on VM because OpenClaw gateway and transcript files are local. Platform modules (billing UI, CRUD) don't need VM and could deploy cheaper/faster on Vercel serverless.",
+    "desiredState": "Two independent backends: (1) apps/api stays on Vercel as Platform Backend handling billing, campaigns, funnels, leads, domains, themes, tags, segments, custom-fields, media, internal. (2) New apps/agent-api on VM handling chat, conversations, brain, transcribe — co-located with OpenClaw gateway. Frontend proxy routes requests to correct backend by path. Both authenticate via Supabase JWT independently. Both access same Supabase DB directly.",
+    "architectureGoal": "Separation of concerns. Agent backend scales independently on VM. Platform backend is stateless on Vercel. No inter-service HTTP calls. Database is single source of truth for shared data (credits, brain, conversations)."
+  },
+  "decisions": {
+    "platformDeploy": "Vercel serverless (already has vercel.json + api/index.ts)",
+    "agentDeploy": "Hetzner VM via PM2 (co-located with OpenClaw gateway on port 18789)",
+    "authPattern": "Both backends validate Supabase JWT independently — no shared auth service needed",
+    "creditsPattern": "Direct Supabase access. Agent Backend has lightweight CreditsGuard (Supabase balance query) + full CreditsService (reads OpenClaw transcript files from VM filesystem, calculates cost, deducts credits). Platform Backend has CreditsService for balance display + StripeService for payments. NOTE: CreditsService uses SUPABASE_SERVICE_ROLE_KEY — this is a SANCTIONED EXCEPTION to the RLS-only rule because credit operations span multiple tables (monthly_credit_usage, credit_purchases, ai_usage_events, user_subscriptions, user_trials, subscription_plans) and need cross-user atomic writes that RLS cannot scope correctly.",
+    "brainPattern": "Brain module exists in BOTH backends. Platform Backend: Brain controllers (UI endpoints for graph, memories, snapshots) + Brain services. Agent Backend: Brain services only (no controllers, just imported by ChatModule for AI context).",
+    "communicationPattern": "Zero inter-service HTTP calls. Both backends talk to Supabase directly. Frontend decides which backend to call based on URL path."
+  },
+  "moduleClassification": {
+    "platformBackend_vercel": {
+      "modules": [
+        "BillingModule (Stripe webhooks, balance display, plans, credit packs)",
+        "CampaignsModule (CRUD, artifacts, analytics)",
+        "FunnelsModule (CRUD, page management)",
+        "LeadsModule (lead capture, listing)",
+        "DomainsModule (domain management, verification, DNS)",
+        "ThemesModule (theme CRUD)",
+        "TagsModule (tag CRUD)",
+        "CustomFieldsModule (custom field CRUD)",
+        "SegmentsModule (segment CRUD)",
+        "MediaModule (asset management, image generation)",
+        "InternalModule (internal endpoints)",
+        "BrainModule (UI controllers: graph, memories, snapshots, emotional)"
+      ],
+      "count": 12,
+      "sharedModules": ["SharedModule (AuthGuard, LoggerService, SupabaseClientFactory)"]
+    },
+    "agentBackend_vm": {
+      "modules": [
+        "ChatModule (OpenClaw proxy, artifact extraction, response filtering)",
+        "ConversationsModule (conversation CRUD — needed by ChatModule)",
+        "TranscribeModule (audio transcription — needs VM resources)",
+        "BrainModule (services only — MemoriesService, EmbeddingService, ConversationProcessingService, EmotionalTaggingService for AI context)"
+      ],
+      "count": 4,
+      "sharedModules": ["SharedModule (AuthGuard, LoggerService, SupabaseClientFactory)"],
+      "additionalServices": [
+        "CreditsGuard (lightweight — checks balance via Supabase)",
+        "CreditsService (full — reads OpenClaw transcripts from filesystem, calculates cost, deducts)"
+      ]
+    }
+  },
+  "couplingPoints": [
+    {
+      "name": "CreditsGuard in ChatModule",
+      "current": "ChatModule imports BillingModule which provides CreditsGuard + CreditsService",
+      "solution": "Agent Backend gets its own CreditsGuard + CreditsService. CreditsService reads transcripts from local VM filesystem and queries Supabase directly for balance/deduction. No dependency on BillingModule.",
+      "effort": "medium"
+    },
+    {
+      "name": "BrainModule in ChatModule",
+      "current": "ChatModule imports BrainModule for AI context (memories, emotional tagging, conversation processing)",
+      "solution": "Brain module duplicated in Agent Backend (services + repositories only, no controllers). Both backends read/write to same Supabase brain tables.",
+      "effort": "low"
+    },
+    {
+      "name": "SharedModule (AuthGuard, decorators)",
+      "current": "Global SharedModule provides AuthGuard, Supabase decorators, logger to all modules",
+      "solution": "Extract to packages/api-shared as shared NestJS library. Both backends import from package. AuthGuard validates Supabase JWT independently (stateless, no shared state).",
+      "effort": "medium"
+    }
+  ],
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Extract shared NestJS code into packages/api-shared",
+      "description": "Extract SharedModule (AuthGuard, decorators, pipes, filters, logger, SupabaseClientFactory) into a shared package that both backends can import.",
+      "acceptanceCriteria": [
+        "packages/api-shared/src/ contains AuthGuard, CurrentUser decorator, Supabase decorator, ZodValidationPipe, GlobalExceptionFilter, LoggerService, SupabaseClientFactory",
+        "packages/api-shared/package.json has correct NestJS peer dependencies",
+        "packages/api-shared exports SharedModule that registers all providers",
+        "apps/api imports SharedModule from @vibey/api-shared instead of local ./shared/",
+        "apps/api builds and runs correctly with the shared package",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": [],
+      "notes": "Files to extract: shared/shared.module.ts, shared/guards/auth.guard.ts, shared/decorators/current-user.decorator.ts, shared/decorators/supabase.decorator.ts, shared/pipes/zod-validation.pipe.ts, shared/filters/global-exception.filter.ts, shared/services/supabase-client.factory.ts, shared/services/logger.service.ts. GUIDELINE NOTE: backend-architecture.md Section 11 says shared code goes in src/lib/. Extracting to packages/api-shared follows project-architecture.md Section 12 rule ('Code used by 2+ apps → Create package'). US-014 must update backend-architecture.md to document this new cross-backend shared code pattern."
+    },
+    {
+      "id": "US-002",
+      "title": "Scaffold Agent Backend NestJS app (apps/agent-api)",
+      "description": "Create new NestJS application for agent-related modules. Same NestJS 11 version, same tsconfig patterns, same middleware setup (CORS, cookie-parser, body-parser).",
+      "acceptanceCriteria": [
+        "apps/agent-api/ exists with NestJS 11 project structure",
+        "package.json name is @vibey/agent-api",
+        "main.ts has same middleware as apps/api (CORS, cookie-parser, 10MB body limit, validation pipe)",
+        "Port defaults to 3003 (different from apps/api port 3001)",
+        "Imports SharedModule from @vibey/api-shared",
+        "Has health check endpoint at GET /health",
+        "pnpm-workspace.yaml includes apps/agent-api",
+        "turbo.json includes agent-api tasks",
+        "pnpm install succeeds",
+        "App starts without errors on port 3003",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": true,
+      "dependsOn": ["US-001"],
+      "notes": "Copy main.ts middleware setup from apps/api/src/main.ts. Keep same NestJS version (11.0.1). Same TypeScript config patterns."
+    },
+    {
+      "id": "US-003",
+      "title": "Move ConversationsModule to Agent Backend",
+      "description": "Copy ConversationsModule to agent-api. ChatModule depends on it for conversation CRUD (verify access, save messages).",
+      "acceptanceCriteria": [
+        "apps/agent-api/src/modules/conversations/ contains full module (controllers, services, repositories)",
+        "ConversationsModule registered in agent-api AppModule",
+        "Conversation endpoints respond correctly (/api/conversations/*)",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": true,
+      "dependsOn": ["US-002"],
+      "notes": "ConversationsModule stays in BOTH backends initially. Platform needs it for conversation listing in the UI. Agent needs it for chat operations."
+    },
+    {
+      "id": "US-004",
+      "title": "Move BrainModule (services only) to Agent Backend",
+      "description": "Copy Brain services and repositories to agent-api for AI context. No controllers (UI endpoints stay in Platform). ChatModule imports BrainModule for MemoriesService, EmbeddingService, ConversationProcessingService, EmotionalTaggingService.",
+      "acceptanceCriteria": [
+        "apps/agent-api/src/modules/brain/ contains services, repositories, types, guards",
+        "Brain module exports: NeuralSnapClientFactory, BrainAuthGuard, MemoriesService, EmbeddingService, ConversationProcessingService, EmotionalTaggingService",
+        "No brain controllers in agent-api (UI stays in Platform)",
+        "BrainModule registered in agent-api AppModule",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": true,
+      "dependsOn": ["US-002"],
+      "notes": "Brain controllers (graph, memories, snapshots, emotional) stay ONLY in apps/api (Platform). Brain services exist in BOTH. Both read/write same Supabase tables."
+    },
+    {
+      "id": "US-005",
+      "title": "Create Agent CreditsGuard + CreditsService for Agent Backend",
+      "description": "Agent Backend needs its own credits system: lightweight CreditsGuard (checks balance via Supabase) and full CreditsService (reads OpenClaw transcripts from filesystem, calculates costs, deducts credits). No dependency on BillingModule.",
+      "acceptanceCriteria": [
+        "apps/agent-api/src/modules/billing/ contains CreditsGuard and CreditsService",
+        "CreditsGuard checks user balance via Supabase (getBalance query)",
+        "CreditsService.processUsage reads OpenClaw transcript files from OPENCLAW_SESSIONS_DIR",
+        "CreditsService.calculateTextCredits, calculateImageCredits, calculateTranscribeCredits work",
+        "CreditsService.deductCredits works via Supabase",
+        "No StripeService in agent-api (payments stay in Platform)",
+        "No BillingController in agent-api (billing UI stays in Platform)",
+        "Uses SUPABASE_SERVICE_ROLE_KEY for credit operations (SANCTIONED EXCEPTION to RLS-only rule — credit ops span multiple tables and need cross-user writes)",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": true,
+      "dependsOn": ["US-002"],
+      "notes": "Current CreditsService at apps/api/src/modules/billing/services/credits.service.ts reads OpenClaw files from filesystem (lines 80-163). This can ONLY work on VM. Platform CreditsService keeps balance queries + Stripe. Agent CreditsService keeps transcript reading + balance queries + deduction."
+    },
+    {
+      "id": "US-006",
+      "title": "Move ChatModule to Agent Backend",
+      "description": "Move the entire ChatModule (chat controller, chat service, OpenClaw proxy, artifact extractor, artifact stream filter, response filter) to agent-api.",
+      "acceptanceCriteria": [
+        "apps/agent-api/src/modules/chat/ contains full module",
+        "ChatModule imports ConversationsModule and BrainModule from agent-api",
+        "ChatModule uses agent-api CreditsGuard (not BillingModule)",
+        "ChatController at POST /api/chat works with SSE streaming",
+        "OpenClawProxyService connects to OPENCLAW_GATEWAY_URL",
+        "ArtifactExtractorService persists artifacts to Supabase",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": true,
+      "dependsOn": ["US-003", "US-004", "US-005"],
+      "notes": "ChatModule is the core agent module. Currently at apps/api/src/modules/chat/. Has 7 files: chat.module.ts, controllers/chat.controller.ts, services/chat.service.ts, services/openclaw-proxy.service.ts, services/artifact-extractor.service.ts, services/artifact-stream-filter.ts, services/response-filter.service.ts"
+    },
+    {
+      "id": "US-007",
+      "title": "Move TranscribeModule to Agent Backend",
+      "description": "Move TranscribeModule to agent-api. Transcription may need VM resources and is agent-related functionality.",
+      "acceptanceCriteria": [
+        "apps/agent-api/src/modules/transcribe/ contains full module",
+        "TranscribeModule registered in agent-api AppModule",
+        "Transcribe endpoints respond correctly",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": true,
+      "dependsOn": ["US-002"],
+      "notes": "TranscribeModule currently at apps/api/src/modules/transcribe/. Has controllers, services, dto, integrations."
+    },
+    {
+      "id": "US-008",
+      "title": "Remove agent modules from Platform Backend (apps/api)",
+      "description": "Remove ChatModule and TranscribeModule from apps/api. These are now exclusively in agent-api. Keep ConversationsModule and BrainModule (both backends need them).",
+      "acceptanceCriteria": [
+        "ChatModule removed from apps/api/src/app.module.ts imports",
+        "TranscribeModule removed from apps/api/src/app.module.ts imports",
+        "apps/api/src/modules/chat/ directory deleted",
+        "apps/api/src/modules/transcribe/ directory deleted",
+        "ConversationsModule still in apps/api (needed for conversation listing UI)",
+        "BrainModule still in apps/api with all controllers (needed for brain UI)",
+        "BillingModule in apps/api keeps StripeService + BillingController (billing UI)",
+        "BillingModule in apps/api CreditsService simplified (no transcript reading — remove getUsageFromTranscript, processUsage methods that read filesystem)",
+        "apps/api builds and deploys on Vercel without errors",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 4,
+      "passes": true,
+      "dependsOn": ["US-006", "US-007"],
+      "notes": "CAREFUL: Only remove chat and transcribe. Keep everything else. Verify apps/api still works on Vercel after removal."
+    },
+    {
+      "id": "US-009",
+      "title": "Update frontend proxy for dual-backend routing",
+      "description": "Update the universal proxy route in apps/web to route requests to the correct backend based on URL path. Agent paths go to Agent Backend (VM), everything else goes to Platform Backend (Vercel).",
+      "acceptanceCriteria": [
+        "apps/web/src/app/api/proxy/[...path]/route.ts routes agent paths to AGENT_BACKEND_URL",
+        "Agent paths: /api/chat/*, /api/transcribe/*",
+        "All other paths route to BACKEND_URL (Platform Backend on Vercel)",
+        "New env var AGENT_BACKEND_URL (defaults to http://localhost:3003)",
+        "SSE streaming works through agent proxy",
+        "Auth token forwarded to both backends",
+        "apps/web/.env.example updated with AGENT_BACKEND_URL",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 4,
+      "passes": true,
+      "dependsOn": ["US-006", "US-007"],
+      "notes": "Current proxy at apps/web/src/app/api/proxy/[...path]/route.ts uses BACKEND_URL for everything. Add AGENT_BACKEND_URL and route by path prefix. Agent paths: chat, transcribe. Conversations and brain stay in Platform backend (they have UI endpoints)."
+    },
+    {
+      "id": "US-010",
+      "title": "Configure Agent Backend deployment (PM2 on VM)",
+      "description": "Set up PM2 ecosystem config for agent-api on the Hetzner VM. Configure alongside existing OpenClaw gateway.",
+      "acceptanceCriteria": [
+        "apps/agent-api/ecosystem.config.js exists with PM2 config",
+        "Process name: vibey-agent-api",
+        "Port: 3003",
+        "Node args include required flags",
+        "Environment variables documented in .env.example (SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENCLAW_GATEWAY_URL, OPENCLAW_GATEWAY_TOKEN, OPENCLAW_SESSIONS_DIR, PORT, CORS_ORIGIN)",
+        ".env.example created for agent-api",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 5,
+      "passes": true,
+      "dependsOn": ["US-006", "US-007"],
+      "notes": "Current VM runs: NestJS (PM2 port 3001), OpenClaw gateway (port 18789). New agent-api will be port 3003. Cloudflare tunnel needs updating (US-011)."
+    },
+    {
+      "id": "US-011",
+      "title": "Document Cloudflare tunnel + DNS routing updates",
+      "description": "Document the required Cloudflare tunnel configuration changes. New subdomain for agent-api (e.g., agent-api.govibey.com) routing to VM:3003.",
+      "acceptanceCriteria": [
+        "Documentation file .docs/deployment/backend-separation.md created",
+        "Documents current tunnel config (api.govibey.com → 3001, gateway.govibey.com → 18789)",
+        "Documents new tunnel config (agent-api.govibey.com → 3003)",
+        "Documents environment variables for each backend",
+        "Documents PM2 process list after split",
+        "Documents rollback procedure",
+        "Documents frontend env var changes (AGENT_BACKEND_URL = https://agent-api.govibey.com)"
+      ],
+      "priority": 5,
+      "passes": true,
+      "dependsOn": ["US-010"],
+      "notes": "Cloudflare tunnel config is on VM at /root/.cloudflared/config.yml. This story only creates documentation — actual tunnel changes are manual on VM."
+    },
+    {
+      "id": "US-012",
+      "title": "End-to-end validation of split architecture",
+      "description": "Verify the complete flow: frontend → platform backend (Vercel) for CRUD + frontend → agent backend (VM) for chat. Both authenticate independently. Credits check works on agent backend. Brain accessible from both.",
+      "acceptanceCriteria": [
+        "Platform Backend: All CRUD endpoints work (campaigns, funnels, leads, domains, themes, tags, segments, custom-fields, media)",
+        "Platform Backend: Billing endpoints work (balance, plans, credit packs, usage history)",
+        "Platform Backend: Brain UI endpoints work (graph, memories, snapshots, emotional)",
+        "Platform Backend: Conversations listing works",
+        "Agent Backend: Chat streaming works (POST /api/chat → SSE)",
+        "Agent Backend: CreditsGuard blocks when credits = 0",
+        "Agent Backend: Credits deducted after chat (transcript reading works)",
+        "Agent Backend: Transcribe endpoints work",
+        "Agent Backend: Brain services load user context for AI",
+        "Frontend: Proxy routes correctly based on path",
+        "Frontend: Chat works end-to-end",
+        "Frontend: All dashboard pages load correctly",
+        "No broken imports or missing modules",
+        "TypeScript compiles without errors in all apps"
+      ],
+      "priority": 6,
+      "passes": true,
+      "dependsOn": ["US-008", "US-009", "US-010", "US-011"],
+      "notes": "This is the final validation story. Run through every major user flow to verify nothing is broken."
+    },
+    {
+      "id": "US-013",
+      "title": "Remove duplicate VM deployment of full backend",
+      "description": "After validation, remove the old monolithic apps/api from the VM PM2 process. Platform Backend runs on Vercel only. Agent Backend runs on VM only.",
+      "acceptanceCriteria": [
+        "Documentation updated with steps to stop old PM2 process (vibey-api on port 3001)",
+        "Cloudflare tunnel updated: api.govibey.com routes to Vercel (remove VM tunnel for api)",
+        "Only agent-api PM2 process running on VM (port 3003)",
+        "OpenClaw gateway still running on VM (port 18789)",
+        "Frontend BACKEND_URL points to Vercel deployment",
+        "Frontend AGENT_BACKEND_URL points to agent-api.govibey.com",
+        "No downtime during cutover (documented blue-green procedure)"
+      ],
+      "priority": 7,
+      "passes": true,
+      "dependsOn": ["US-012"],
+      "notes": "This is the final cleanup. Current state: apps/api runs on BOTH Vercel AND VM (duplicate). After split: Platform on Vercel only, Agent on VM only. This story documents the cutover — actual execution is manual."
+    },
+    {
+      "id": "US-014",
+      "title": "Update architecture documentation",
+      "description": "Update all architecture docs to reflect the new dual-backend setup.",
+      "acceptanceCriteria": [
+        "project-architecture.md Section 12: Fix monorepo listing — change 'apps/app-backend/' to actual folder names 'apps/api/' (Platform) and 'apps/agent-api/' (Agent). Add packages/api-shared.",
+        "backend-architecture.md Section 2: Add note that architecture applies to BOTH backends (Platform and Agent)",
+        "backend-architecture.md Section 11: Update shared code pattern — cross-backend shared code goes in packages/api-shared, single-backend shared code stays in src/lib/",
+        "backend-architecture.md Section 14: COMPLETE REWRITE — dual-backend deployment topology: Platform on Vercel (serverless), Agent on Hetzner VM (PM2 port 3003), OpenClaw Gateway (VM port 18789). Document Cloudflare tunnel routing.",
+        "backend-architecture.md: Add new section documenting CreditsService as SANCTIONED EXCEPTION to RLS-only rule (uses service role key for cross-table credit operations)",
+        "New section in backend-architecture.md: inter-backend data flow (both → Supabase directly, zero HTTP calls between backends)",
+        "Module ownership table added (which module belongs to which backend)",
+        "Frontend proxy routing documented (path-based routing to correct backend)"
+      ],
+      "priority": 7,
+      "passes": false,
+      "dependsOn": ["US-012"],
+      "notes": "Keep existing architecture principles (three-layer, vertical slices, file size limits). Specific sections to update: project-architecture.md Section 12 (monorepo), backend-architecture.md Sections 2, 11, 14 + new sections. Also document the service-role-key exception for CreditsService."
+    }
+  ]
+}

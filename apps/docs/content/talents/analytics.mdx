@@ -1,0 +1,71 @@
+---
+title: "Analytics"
+description: "What Vibey measures across your funnels, emails, and ads, and where to find it."
+---
+
+## Where to Find Analytics
+
+Campaign analytics live in Team chat's **Dashboard** tab in the preview panel. Switch between three views: **Funnel**, **Email**, and **Ads**.
+
+## Funnel Analytics
+
+Tracked automatically for every published funnel.
+
+| Metric | What it measures |
+|---|---|
+| **Visitors** | Unique visitors (fingerprinted by IP + user agent) |
+| **Total Views** | Total page views across all funnel pages |
+| **Leads** | Form submissions captured |
+| **Conversion Rate** | Leads divided by visitors |
+
+The daily chart shows visitors and leads over time. Every page view records the referrer, user agent, and UTM parameters (source, medium, campaign, content, ad set) for attribution.
+
+## Email Analytics
+
+Tracked via SendGrid webhooks for every email sent through your sequences.
+
+| Metric | What it measures |
+|---|---|
+| **Sent** | Total emails dispatched |
+| **Delivered** | Emails that reached the inbox |
+| **Opened** | Emails opened (tracked via pixel) |
+| **Clicked** | Links clicked inside emails |
+| **Bounced** | Emails that bounced or failed delivery |
+| **Open Rate** | Opened divided by delivered |
+| **Click Rate** | Clicked divided by delivered |
+
+The daily chart shows opens and clicks over time. Hard bounces and spam reports automatically add the address to your suppression list.
+
+## Ads Analytics
+
+When Meta Ads are connected, Vibey pulls live performance data from Meta's reporting API.
+
+| Metric | What it measures |
+|---|---|
+| **Spend** | Total ad spend |
+| **Impressions** | Times your ad was shown |
+| **Reach** | Unique people who saw your ad |
+| **Clicks** | Total clicks on your ad |
+| **CTR** | Click-through rate |
+| **CPC** | Cost per click |
+| **CPM** | Cost per 1,000 impressions |
+| **Leads** | Lead conversions attributed to the ad |
+| **Conversions** | Purchase or other conversion events |
+| **Revenue** | Revenue from conversion events |
+| **ROAS** | Return on ad spend |
+| **Cost per Result** | Cost per lead or conversion |
+
+The Ads view also shows ad-attributed funnel traffic: how many visitors and leads each ad campaign generated, broken down by campaign with daily budget and lead count.
+
+## How It All Connects
+
+The analytics chain works like this:
+
+1. A [Meta ad](/talents/ads) drives traffic to your [funnel](/talents/funnels) (UTM parameters track which ad)
+2. The funnel records the **page view** with visitor fingerprint and UTM data
+3. A visitor fills out the form and becomes a **lead**, linked to the funnel, campaign, and originating ad
+4. A [contact](/contacts/managing-your-contacts) is created with source tracking
+5. An [email sequence](/talents/emails) triggers and sends follow-ups
+6. Email events (delivered, opened, clicked) are tracked via SendGrid webhooks
+
+Every step is measured. You can see the full picture from ad spend through to email engagement in the Dashboard tab.

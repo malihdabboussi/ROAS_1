@@ -1,0 +1,75 @@
+'use client'
+
+import { ChevronUp, MoreHorizontal } from 'lucide-react'
+import { stripCopyFromAdHeadline } from '@/features/studio/utils/ad-headline'
+import { AdPreviewAvatar } from './ad-preview-avatar'
+import { CreativeMedia, DropOverlay, UploadingOverlay } from './ad-preview-creative-media'
+import type { AdFormatPreviewSharedProps } from './ad-preview.types'
+import { EditableAdText } from './editable-ad-text'
+import { useDropZone } from './use-ad-drop-zone'
+
+export function AdPreviewIgStory({
+  ad,
+  pageDisplay,
+  onFieldChange,
+  onEditingChange,
+  onImageDropped,
+}: AdFormatPreviewSharedProps) {
+  const username = pageDisplay.igName
+  const { dragOver, uploading, handlers } = useDropZone('story', onImageDropped, ad)
+  return (
+    <div
+      className="relative w-full overflow-hidden rounded-xl bg-black"
+      style={{ aspectRatio: '9 / 16' }}
+      {...handlers}
+    >
+      <CreativeMedia ad={ad} placement="story" />
+      <div className="pointer-events-none absolute inset-0 flex flex-col justify-between">
+        <div className="p-3 pt-2">
+          <div className="mb-2 flex gap-[3px]">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className={`h-[2px] flex-1 rounded-full ${i === 1 ? 'bg-white' : 'bg-white/30'}`}
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <AdPreviewAvatar
+              letter={username.slice(0, 1)}
+              size={32}
+              ring
+              imageUrl={pageDisplay.pictureUrl}
+            />
+            <span className="text-[13px] font-semibold text-white drop-shadow-sm">{username}</span>
+            <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white">
+              Sponsored
+            </span>
+            <MoreHorizontal className="ml-auto h-5 w-5 text-white/80" />
+          </div>
+        </div>
+        <div className="pointer-events-auto bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-5 pt-16">
+          <EditableAdText
+            value={stripCopyFromAdHeadline(ad.headline)}
+            field="headline"
+            onFieldChange={onFieldChange}
+            onEditingChange={onEditingChange}
+            darkBg
+            className="mb-3 line-clamp-2 text-center text-[14px] leading-snug text-white drop-shadow"
+          />
+          <a
+            href={ad.destination_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-white py-2.5 text-[14px] font-semibold text-[#262626]"
+          >
+            <ChevronUp className="h-4 w-4" />
+            {ad.cta_text || 'Shop Now'}
+          </a>
+        </div>
+      </div>
+      {dragOver && <DropOverlay />}
+      {uploading && <UploadingOverlay />}
+    </div>
+  )
+}

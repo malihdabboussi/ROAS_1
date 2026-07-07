@@ -1,0 +1,49 @@
+## Codebase Patterns
+(Patterns discovered during this task)
+
+### Docker Build Issues Found (US-009)
+1. **NestJS build output path is nested:** `dist/apps/agent-api/src/main.js` instead of `dist/main.js`. This is because the monorepo tsconfig resolves paths relative to root. Fix options: (a) add a wrapper script `start.sh` that sets NODE_PATH and runs the correct entry, (b) change tsconfig outDir to flatten, (c) use `cd /app/agent-api && node -e "require('./dist/apps/agent-api/src/main')"` with NODE_PATH set
+2. **OpenClaw plugin path:** Dockerfile copies to `extensions/vibey-backend` but config initially referenced `tools/vibey-backend`. Fixed to `extensions/vibey-backend` in openclaw.json.
+3. **OpenClaw gateway command:** Not `node /app/dist/index.js --allow-unconfigured` — it's `node /app/dist/index.js gateway`. The `--allow-unconfigured` flag doesn't exist.
+4. **Pre-existing TS error:** `document-parser.service.ts` pdf-parse import needed `as any` cast.
+5. **LoggerService API:** Method is `logError()` not `error()`, and doesn't have `app` parameter.
+6. **Platform mismatch warning:** OpenClaw image is linux/amd64, Mac is arm64. Docker runs via emulation — works but slower. Not an issue on Fly.io (amd64 native).
+
+### Backend Patterns (agent-api)
+- NestJS 3-layer: Controller → Service → Repository
+- Zod validation via ZodValidationPipe on all @Body(), @Query(), @Param()
+- AuthGuard + ThrottlerGuard on all controllers
+- LoggerService injected in every service
+- Module structure: modules/{feature}/controllers/, services/, dtos/, repositories/
+- File limits: controllers 200 LOC, services 600 LOC, repositories 400 LOC
+- Error responses sanitized (no internal details to client)
+
+### Docker Patterns
+- Base image: ghcr.io/openclaw/openclaw:main (amd64, Node 22)
+- supervisord to run OpenClaw gateway + agent-api in one container
+- Agent workspace at /app/agents/vibey/ (read-only)
+- OpenClaw config at /home/node/.openclaw/openclaw.json
+- Custom tools at /home/node/.openclaw/tools/
+
+### OpenClaw Patterns
+- Config file: openclaw.json (JSON5 format)
+- Agent definition: agents.list[] with id, workspace
+- Tool permissions: tools.sandbox.tools.allow[] and deny[]
+- Custom tools: installed under ~/.openclaw/tools/{tool-name}/
+- Gateway port: 18789 (internal), agent-api port: 3003 (exposed)
+
+### Key Files
+- Plan: .cursor/plans/per-user_docker_fly.io_66a266f6.plan.md
+- PRD (full org): .docs/.tasks/vibey_machine/prd.md
+- Agent-api entry: apps/agent-api/src/main.ts
+- OpenClaw proxy: apps/agent-api/src/modules/chat/services/openclaw-proxy.service.ts
+- Current skills: VM at /root/agents/vibey/skills/
+- Current config: VM at /root/.openclaw/openclaw.json
+
+### VM Access
+- SSH: root@188.245.41.230
+- OpenClaw config: ~/.openclaw/openclaw.json
+- Vibey workspace: /root/agents/vibey/
+- Vibey sessions: ~/.openclaw/agents/vibey/sessions/
+
+---

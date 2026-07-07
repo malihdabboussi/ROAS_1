@@ -1,0 +1,82 @@
+---
+title: "Building a Funnel"
+description: "Create landing pages that capture leads and drive conversions - published to your own domain."
+---
+
+## What's a Funnel?
+
+A funnel is one or more web pages designed to guide visitors toward a specific action: signing up, booking a call, registering for an event, or buying something. Vibey builds the pages, handles the design, and publishes them to your domain.
+
+## Funnel Types
+
+| Type | Best for |
+|---|---|
+| **Lead Magnet** | Capturing emails in exchange for free content (guides, checklists, templates) |
+| **Call Booking** | Scheduling sales calls or consultations |
+| **Webinar** | Registering attendees for live or recorded webinars |
+| **VSL** | Video sales letter with opt-in |
+| **Home Page** | A branded home page for your business or campaign |
+| **Live Event** | Registrations for in-person or virtual live events |
+| **Ecommerce Product** | Product pages with purchase flow |
+| **Cart / Checkout** | Shopping cart and checkout pages |
+| **Custom** | Any page type that doesn't fit the others |
+
+## Building a Funnel
+
+Tell Vibey what you need in Team chat:
+
+- "Build a lead magnet funnel for my free guide"
+- "Create a call booking page for my consulting business"
+- "Build a home page for my brand"
+- "Make a webinar registration funnel"
+- "Create an ecommerce product page for our new course"
+
+Vibey picks the right funnel type based on your goal, builds the pages, and applies your campaign's [theme](/talents/themes) if one exists. If you've already built an [offer](/talents/offers), the funnel pulls copy from it automatically.
+
+## Lead Capture and Conversion
+
+When someone fills out a form on your funnel, this is what happens:
+
+1. Their email (and any other fields) are captured as a **lead** tied to that funnel and campaign
+2. A **contact** is created (or updated if they already exist) with `source: funnel` and the funnel ID
+3. They're added to **contact memberships** for both the funnel and the campaign
+4. If the campaign has an active [email sequence](/talents/emails), it triggers automatically
+5. UTM parameters are tracked (source, medium, campaign, content, ad set) for attribution
+6. If the visitor came from a [Meta ad](/talents/ads), the lead is linked to the specific ad campaign, ad set, and ad
+
+Leads show up in your [Contacts](/contacts/managing-your-contacts) and in the campaign's **Leads** view with full source tracking.
+
+## Funnel Analytics
+
+Every funnel tracks performance automatically. In Team chat's **Dashboard** tab (under Funnel view), you can see:
+
+| Metric | What it measures |
+|---|---|
+| **Visitors** | Unique visitors to your funnel pages (by visitor hash) |
+| **Total Views** | Total page views across all funnel pages |
+| **Leads** | Number of form submissions |
+| **Conversion Rate** | Leads divided by visitors |
+| **Daily Chart** | Visitors and leads over time |
+
+Page views are tracked per page with visitor fingerprinting, referrer, user agent, and full UTM data.
+
+If you're running [Meta ads](/talents/ads) to your funnel, the **Ads** view in the same Dashboard tab shows ad-attributed traffic: which ad campaigns are driving visitors, how many leads each ad generated, and cost per lead. See [Analytics](/talents/analytics) for the full metrics breakdown.
+
+## Publishing and Custom Domains
+
+One click and your funnel is live. You can publish to:
+
+- A generated Vibey URL
+- Your own [custom domain](/settings/connecting-your-domain) (set up in **Workspace Settings → Domains**)
+
+Once a domain is connected, any funnel can be published to your branded URL.
+
+## Where Funnels Live
+
+Every funnel is an artifact inside a campaign. You can find all your funnels in:
+- The **Artifacts** tab in Team chat preview panel
+- The **Campaign Dashboard → Deliverables** tab
+
+<Callout type="tip">
+  Build your offer first, then your funnel. When a funnel is created after an offer exists, Vibey uses the power offer statement, buyer persona, and positioning to write landing page copy that actually converts.
+</Callout>

@@ -1,0 +1,66 @@
+---
+title: "Connecting Telegram"
+description: "Connect a Telegram bot to your Vibey agent so it can chat with people on Telegram."
+---
+
+## Prerequisites
+
+- A Vibey account with at least one agent
+- A Telegram account
+
+## Setup
+
+<Steps>
+  <Step title="Create a Bot with BotFather">
+    Open Telegram and search for **@BotFather**. Send `/newbot` and follow the prompts to create a new bot. BotFather gives you a **bot token**. Copy it.
+  </Step>
+  <Step title="Open Agent Settings">
+    Go to your agent's card in the **Team** page and find the **Communication** tab. Click **Connect Telegram**.
+  </Step>
+  <Step title="Paste the Token">
+    Enter the bot token from BotFather and click **Validate**. Vibey verifies the token and shows the bot's name.
+  </Step>
+  <Step title="Connect and Verify">
+    Click **Connect**. Then open your bot on Telegram and press **Start**. Come back to Vibey and click **Verify** to confirm you're the bot owner.
+  </Step>
+</Steps>
+
+## Owner Verification
+
+When you connect a Telegram bot, Vibey asks you to press **Start** on the bot to verify ownership. This:
+
+- Proves you have Telegram access to the bot
+- Locks your Telegram ID as the **owner** of the bot
+- Prevents strangers from claiming ownership if they find the bot before you
+
+## Public vs Private Mode
+
+After connecting, you can toggle **Public Bot** mode:
+
+| Mode | Behavior |
+|---|---|
+| **Private** (default) | Only the verified owner can message the bot. Anyone else gets "This bot is private." |
+| **Public** | Anyone on Telegram can message the bot. Each person gets their own conversation and profile. |
+
+Public mode is ideal for **customer support** agents. The bot learns about each customer over time.
+
+## How It Works
+
+- **Private mode** your messages go to the connected agent, using your campaigns and context. Like a personal Team chat session on Telegram.
+- **Public mode** each customer gets a separate conversation. The agent does not access the owner's personal brain or campaigns (only the agent's own knowledge and campaign context if enabled).
+- **Streaming** the bot sends an initial message that updates in real-time as the agent responds.
+
+## Commands
+
+The bot registers these commands automatically:
+
+| Command | What it does |
+|---|---|
+| `/reset` or `/new` | Start a fresh conversation |
+| `/help` | Show available commands |
+| `/status` | Show current campaign, active missions, and session info |
+| `/campaign` | List campaigns or switch to a different one |
+
+## Disconnecting
+
+Go to the agent's Communication tab and click **Disconnect**. This removes the webhook from the bot. You can reconnect at any time with the same or a different bot token.

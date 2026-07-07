@@ -1,0 +1,155 @@
+diff --git a/dist/providers/openai-completions.js b/dist/providers/openai-completions.js
+index 8c97431..400577f 100644
+--- a/dist/providers/openai-completions.js
++++ b/dist/providers/openai-completions.js
+@@ -68,7 +68,12 @@ export const streamOpenAICompletions = (model, context, options) => {
+             const client = createClient(model, context, apiKey, options?.headers);
+             const params = buildParams(model, context, options);
+             options?.onPayload?.(params);
+-            const openaiStream = await client.chat.completions.create(params, { signal: options?.signal });
++            const openaiRequest = client.chat.completions.create(params, { signal: options?.signal });
++            const openaiResult = typeof openaiRequest.withResponse === "function"
++                ? await openaiRequest.withResponse()
++                : { data: await openaiRequest, response: undefined };
++            notifyResponseMetadata(options, openaiResult.response);
++            const openaiStream = openaiResult.data;
+             stream.push({ type: "start", partial: output });
+             let currentBlock = null;
+             const blocks = output.content;
+@@ -104,6 +109,9 @@ export const streamOpenAICompletions = (model, context, options) => {
+                 }
+             };
+             for await (const chunk of openaiStream) {
++                if (chunk.id && !output.providerResponseId) {
++                    output.providerResponseId = chunk.id;
++                }
+                 if (chunk.usage) {
+                     const cachedTokens = chunk.usage.prompt_tokens_details?.cached_tokens || 0;
+                     const reasoningTokens = chunk.usage.completion_tokens_details?.reasoning_tokens || 0;
+@@ -307,6 +315,19 @@ function createClient(model, context, apiKey, optionsHeaders) {
+         defaultHeaders: headers,
+     });
+ }
++function notifyResponseMetadata(options, response) {
++    if (!options?.onResponseMetadata || !response) {
++        return;
++    }
++    const headers = response.headers;
++    options.onResponseMetadata({
++        providerGenerationId: headers?.get?.("x-generation-id") ??
++            headers?.get?.("x-openrouter-generation-id") ??
++            undefined,
++        providerRequestId: headers?.get?.("x-request-id") ?? headers?.get?.("cf-ray") ?? undefined,
++        status: response.status,
++    });
++}
+ function buildParams(model, context, options) {
+     const compat = getCompat(model);
+     const messages = convertMessages(model, context, compat);
+@@ -377,8 +398,29 @@ function buildParams(model, context, options) {
+ function maybeAddOpenRouterAnthropicCacheControl(model, messages) {
+     if (model.provider !== "openrouter" || !model.id.startsWith("anthropic/"))
+         return;
+-    // Anthropic-style caching requires cache_control on a text part. Add a breakpoint
+-    // on the last user/assistant message (walking backwards until we find text content).
++    const CACHE_TAG = { cache_control: { type: "ephemeral", ttl: "1h" } };
++    // Breakpoint 1: system/developer message (stable prefix, largest cache win)
++    for (let i = 0; i < messages.length; i++) {
++        const msg = messages[i];
++        if (msg.role !== "system" && msg.role !== "developer")
++            continue;
++        const content = msg.content;
++        if (typeof content === "string") {
++            msg.content = [
++                Object.assign({ type: "text", text: content }, CACHE_TAG),
++            ];
++        }
++        else if (Array.isArray(content)) {
++            for (let j = content.length - 1; j >= 0; j--) {
++                if (content[j]?.type === "text") {
++                    Object.assign(content[j], CACHE_TAG);
++                    break;
++                }
++            }
++        }
++        break;
++    }
++    // Breakpoint 2: last user/assistant message (conversation history prefix)
+     for (let i = messages.length - 1; i >= 0; i--) {
+         const msg = messages[i];
+         if (msg.role !== "user" && msg.role !== "assistant")
+@@ -386,17 +428,16 @@ function maybeAddOpenRouterAnthropicCacheControl(model, messages) {
+         const content = msg.content;
+         if (typeof content === "string") {
+             msg.content = [
+-                Object.assign({ type: "text", text: content }, { cache_control: { type: "ephemeral" } }),
++                Object.assign({ type: "text", text: content }, CACHE_TAG),
+             ];
+             return;
+         }
+         if (!Array.isArray(content))
+             continue;
+-        // Find last text part and add cache_control
+         for (let j = content.length - 1; j >= 0; j--) {
+             const part = content[j];
+             if (part?.type === "text") {
+-                Object.assign(part, { cache_control: { type: "ephemeral" } });
++                Object.assign(part, CACHE_TAG);
+                 return;
+             }
+         }
+diff --git a/dist/providers/openai-responses-shared.js b/dist/providers/openai-responses-shared.js
+index 00c5801..d4534c1 100644
+--- a/dist/providers/openai-responses-shared.js
++++ b/dist/providers/openai-responses-shared.js
+@@ -372,6 +372,12 @@ export async function processResponsesStream(openaiStream, output, stream, model
+         }
+         else if (event.type === "response.completed") {
+             const response = event.response;
++            if (response?.id && !output.providerResponseId) {
++                output.providerResponseId = response.id;
++            }
++            if (typeof response?.usage?.cost === "number") {
++                output.providerCost = response.usage.cost;
++            }
+             if (response?.usage) {
+                 const cachedTokens = response.usage.input_tokens_details?.cached_tokens || 0;
+                 output.usage = {
+diff --git a/dist/providers/openai-responses.js b/dist/providers/openai-responses.js
+index ebb642d..bf525a3 100644
+--- a/dist/providers/openai-responses.js
++++ b/dist/providers/openai-responses.js
+@@ -62,7 +62,12 @@ export const streamOpenAIResponses = (model, context, options) => {
+             const client = createClient(model, context, apiKey, options?.headers);
+             const params = buildParams(model, context, options);
+             options?.onPayload?.(params);
+-            const openaiStream = await client.responses.create(params, options?.signal ? { signal: options.signal } : undefined);
++            const openaiRequest = client.responses.create(params, options?.signal ? { signal: options.signal } : undefined);
++            const openaiResult = typeof openaiRequest.withResponse === "function"
++                ? await openaiRequest.withResponse()
++                : { data: await openaiRequest, response: undefined };
++            notifyResponseMetadata(options, openaiResult.response);
++            const openaiStream = openaiResult.data;
+             stream.push({ type: "start", partial: output });
+             await processResponsesStream(openaiStream, output, stream, model, {
+                 serviceTier: options?.serviceTier,
+@@ -88,6 +93,19 @@ export const streamOpenAIResponses = (model, context, options) => {
+     })();
+     return stream;
+ };
++function notifyResponseMetadata(options, response) {
++    if (!options?.onResponseMetadata || !response) {
++        return;
++    }
++    const headers = response.headers;
++    options.onResponseMetadata({
++        providerGenerationId: headers?.get?.("x-generation-id") ??
++            headers?.get?.("x-openrouter-generation-id") ??
++            undefined,
++        providerRequestId: headers?.get?.("x-request-id") ?? headers?.get?.("cf-ray") ?? undefined,
++        status: response.status,
++    });
++}
+ export const streamSimpleOpenAIResponses = (model, context, options) => {
+     const apiKey = options?.apiKey || getEnvApiKey(model.provider);
+     if (!apiKey) {

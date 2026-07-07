@@ -1,0 +1,157 @@
+import { Injectable } from '@nestjs/common'
+import type { OpenClawInputMessage, SendFn } from '../../chat/services/openclaw-proxy.service'
+import { OpenClawProxyService } from '../../chat/services/openclaw-proxy.service'
+import { AgentRuntimeReadinessService } from '../../agent-sync/services/agent-runtime-readiness.service'
+import { AgentRuntimeService } from '../../shared/services/agent-runtime.service'
+import { TaskAgentRepository } from '../repositories/task-agent.repository'
+
+export interface SuggestTasksPayload {
+  space_id: string
+  owner_user_id: string
+  org_id: string | null
+  agent_key?: string
+  max_suggestions?: number
+  instructions?: string
+  payload: Record<string, unknown>
+}
+
+export interface SuggestedTask {
+  title: string
+  description?: string
+  assignee_email?: string
+  due_date?: string
+  priority?: 'low' | 'medium' | 'high' | 'urgent'
+}
+
+@Injectable()
+export class TaskAgentSuggestionsService {
+  constructor(
+    private readonly repository: TaskAgentRepository,
+    private readonly openClaw: OpenClawProxyService,
+    private readonly agentRuntime: AgentRuntimeService,
+    private readonly runtimeReadiness: AgentRuntimeReadinessService,
+  ) {}
+
+  async suggestTasks(payload: SuggestTasksPayload): Promise<{ tasks: SuggestedTask[] }> {
+    const maxSuggestions = Math.min(
+      20,
+      Math.max(1, Math.floor(Number(payload.max_suggestions ?? 10) || 10)),
+    )
+    const agentKey =
+      typeof payload.agent_key === 'string' && payload.agent_key.trim().length > 0
+        ? payload.agent_key.trim()
+        : 'vibey'
+    const runtime = await this.agentRuntime.resolveConversationRuntime(
+      this.repository.client,
+      payload.owner_user_id,
+      agentKey,
+      payload.org_id,
+    )
+    await this.runtimeReadiness.ensureRuntimeReady({
+      userId: payload.owner_user_id,
+      orgId: payload.org_id,
+      agentKey: runtime.agentKey,
+      gatewayAgentId: runtime.gatewayAgentId,
+    })
+    const sessionKey = this.agentRuntime.buildChatSessionKey({
+      gatewayAgentId: runtime.gatewayAgentId,
+      agentKey: runtime.agentKey,
+      userId: payload.owner_user_id,
+      conversationId: `suggest-tasks-${payload.space_id}`,
+      orgId: payload.org_id ?? undefined,
+    })
+    const instructions = [
+      'You convert automation trigger payloads into suggested tasks for a human workspace.',
+      'Return JSON only. Do not include markdown fences or commentary.',
+      `Return at most ${maxSuggestions} tasks.`,
+      'Each task must be concrete, actionable, and based only on the payload.',
+      'Use this exact shape: {"tasks":[{"title":"...","description":"...","assignee_email":"...","due_date":"ISO-8601 or empty","priority":"low|medium|high|urgent"}]}',
+      payload.instructions ? `User instructions: ${payload.instructions}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n')
+
+    let content = ''
+    const send: SendFn = async (type, data) => {
+      if (type === 'content_delta' && typeof data.content === 'string') {
+        content += data.content
+      }
+    }
+    const input: OpenClawInputMessage[] = [
+      {
+        type: 'message',
+        role: 'user',
+        content: JSON.stringify(
+          {
+            max_suggestions: maxSuggestions,
+            payload: payload.payload,
+          },
+          null,
+          2,
+        ),
+      },
+    ]
+
+    const result = await this.openClaw.streamCompletion({
+      input,
+      instructions,
+      send,
+      agentId: runtime.gatewayAgentId,
+      sessionKey,
+      userId: payload.owner_user_id,
+      conversationId: `suggest-tasks-${payload.space_id}`,
+      channel: 'studio',
+      disableResponseFilter: true,
+    })
+    return { tasks: parseSuggestedTasks(content || result.content || '', maxSuggestions) }
+  }
+}
+
+function parseSuggestedTasks(raw: string, maxSuggestions: number): SuggestedTask[] {
+  const trimmed = raw.trim()
+  const withoutFence = trimmed
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim()
+  const jsonText =
+    withoutFence.startsWith('{') || withoutFence.startsWith('[')
+      ? withoutFence
+      : (withoutFence.match(/\{[\s\S]*\}/)?.[0] ?? '')
+  if (!jsonText) return []
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(jsonText)
+  } catch {
+    return []
+  }
+  const root = parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : {}
+  const rawTasks = Array.isArray(root.tasks) ? root.tasks : Array.isArray(parsed) ? parsed : []
+  const tasks: SuggestedTask[] = []
+  for (const rawTask of rawTasks) {
+    if (!rawTask || typeof rawTask !== 'object' || Array.isArray(rawTask)) continue
+    const task = rawTask as Record<string, unknown>
+    const title = String(task.title ?? '').trim()
+    if (!title) continue
+    const priority = String(task.priority ?? '').trim()
+    tasks.push({
+      title: title.slice(0, 1000),
+      ...(typeof task.description === 'string' && task.description.trim()
+        ? { description: task.description.trim().slice(0, 20000) }
+        : {}),
+      ...(typeof task.assignee_email === 'string' && task.assignee_email.trim()
+        ? { assignee_email: task.assignee_email.trim().toLowerCase() }
+        : {}),
+      ...(typeof task.due_date === 'string' && task.due_date.trim()
+        ? { due_date: task.due_date.trim() }
+        : {}),
+      ...(priority === 'low' ||
+      priority === 'medium' ||
+      priority === 'high' ||
+      priority === 'urgent'
+        ? { priority }
+        : {}),
+    })
+    if (tasks.length >= maxSuggestions) break
+  }
+  return tasks
+}

@@ -1,0 +1,19 @@
+## Codebase Patterns
+- Manage access pattern in web: gate pages using `useUserRole()` + `canAccessManage()` and redirect unauthorized users to `/studio`.
+- Existing Manage shell nav lives in `apps/web/src/components/layout/Sidebar.tsx` under `workspaceNavItems`.
+- Backend task style in `apps/api`: module + controller + service split with role guards (`AuthGuard`, `RoleGuard`, `@Roles('power','admin')`).
+- Queue worker already has BullMQ root config with retries/backoff in `apps/queue-worker/src/app.module.ts` (attempts: 3, exponential delay 60000ms).
+- OpenClaw gateway integration pattern exists in spec `.docs/specs/VIBEY-AGENT-INTEGRATION.md` using `/v1/chat/completions` and session keys.
+
+## Progress Log
+- Created complete MVP PRD for `multi-agent-org` with 10 user stories, priorities, dependencies, and visual verification for UI stories.
+- PRD aligns with plan scope: 3 agents (manager, copywriter, designer), queue reliability layer, mission control UI, and end-to-end validation gates.
+- Implemented DB foundation migration `030_missions_mvp.sql` with `missions`, `org_agents`, `mission_logs`, RLS policies, indexes, timestamps, and seeded default 3 agents.
+- Implemented new API vertical slice `apps/api/src/modules/missions` (dto, repository, service, controller, module) and wired module in app module.
+- Split mission execution into dedicated service `apps/mission-worker` and removed mission pipeline from `apps/queue-worker` so email and mission workers deploy independently.
+- Added manager delegation flow in mission-worker: parent manager mission creates/awaits child mission (copywriter/designer), writes delegation logs, and finalizes parent with child result/failure propagation.
+- Added internal callback endpoint `POST /api/internal/missions/callback` (token-guarded) for agent/worker progress and completion updates.
+- Added OpenClaw agent registration for `manager`, `copywriter`, `designer` with dedicated workspaces and role SOUL files.
+- Implemented Mission Control UI in Manage (`/mission-control`): quick capture inbox, mission detail timeline/output, and 3-card agent status panel with polling.
+
+---

@@ -1,0 +1,31 @@
+{
+  "version": "5",
+  "redirects": {
+    "https://esm.sh/@supabase/supabase-js@2": "https://esm.sh/@supabase/supabase-js@2.107.0"
+  },
+  "remote": {
+    "https://esm.sh/@supabase/supabase-js@2.107.0": "8caa09b0223684d83cfa273de2946af25430d7ca8e5320b721226a0c7a8c6e98"
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@ianvs/prettier-plugin-sort-imports@^4.4.1",
+        "npm:@supabase/supabase-js@2.49.4",
+        "npm:@testing-library/jest-dom@6",
+        "npm:@testing-library/react@16",
+        "npm:@types/node@^25.9.0",
+        "npm:@vitejs/plugin-react@4",
+        "npm:husky@^9.1.7",
+        "npm:jsdom@25",
+        "npm:lint-staged@^15.4.3",
+        "npm:modal@~0.7.4",
+        "npm:prettier-plugin-tailwindcss@~0.6.11",
+        "npm:prettier@^3.4.2",
+        "npm:tsx@^4.21.0",
+        "npm:turbo@^2.3.3",
+        "npm:typescript@^5.7.3",
+        "npm:vitest@2"
+      ]
+    }
+  }
+}

@@ -1,0 +1,3320 @@
+{
+  "suiteName": "yc-demo-user-work",
+  "caseCount": 5,
+  "passRate": 0.4,
+  "averageScore": 2,
+  "validationPassRate": 0.4,
+  "validationCaseCount": 5,
+  "validationAverageScore": 2,
+  "avgAgentLatencyMs": 44583.303916799996,
+  "avgJudgeLatencyMs": 2479.860533400001,
+  "avgLatencyMs": 42077.916542000006,
+  "avgToolCalls": 1,
+  "avgBrainToolCalls": 0,
+  "totalToolCalls": 5,
+  "totalBrainToolCalls": 0,
+  "totalUsage": {
+    "avgLatencyMs": 42077.916542000006,
+    "avgAgentLatencyMs": 35878.2652085,
+    "avgJudgeLatencyMs": 6199.651333500002,
+    "avgInputTokens": 15532.5,
+    "avgOutputTokens": 3393.5,
+    "avgTotalTokens": 18926,
+    "avgBrainContextTokens": 8077.5,
+    "totalInputTokens": 31065,
+    "totalOutputTokens": 6787,
+    "totalTokens": 37852,
+    "agentProviderCostUsd": null,
+    "judgeProviderCostUsd": 0.0679815,
+    "providerCostUsd": 0.0679815,
+    "userCostUsd": 0.135963,
+    "marginUsd": 0.0679815,
+    "estimatedCredits": 28,
+    "costUnknownCount": 4,
+    "pricingSource": "partial"
+  },
+  "cases": [
+    {
+      "caseId": "yc-l1-founder-retainer-cap",
+      "taskType": "answer_query",
+      "validationSet": true,
+      "passed": true,
+      "weightedScore": 5,
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 5,
+          "contextUsefulness": 5,
+          "groundedness": 5,
+          "synthesisQuality": 5,
+          "irrelevanceControl": 5,
+          "abstentionQuality": 5
+        },
+        "weightedScore": 5,
+        "passed": true,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "mechanical": {
+          "passed": true,
+          "forbiddenHits": [],
+          "missingRequiredContext": [],
+          "abstentionFailed": false,
+          "failureReasons": []
+        },
+        "retrieval": {
+          "passed": true,
+          "preloadTextLength": 0,
+          "preloadFound": [],
+          "preloadMissing": [],
+          "forbiddenInPreload": [],
+          "laneCounts": {
+            "user": 0,
+            "agent": 0,
+            "customer": 0,
+            "company": 0,
+            "preload": 0
+          },
+          "abstentionFailed": false,
+          "probeLatencyMs": 0,
+          "failureReasons": [],
+          "probeAvailable": false
+        },
+        "expectations": [
+          {
+            "text": "States six retainers per year as a deliberate cap",
+            "passed": true,
+            "evidence": "The answer states: '**Six retainers a year — on purpose.**' and 'Six is a hard cap, not a target.'",
+            "source": "llm"
+          },
+          {
+            "text": "Explains the cap protects founder-hours-per-client quality",
+            "passed": true,
+            "evidence": "The answer states: 'Past six concurrent retainers, founder-time-per-client drops below the threshold that makes Foundry’s work distinguishable from a generic growth shop.'",
+            "source": "llm"
+          },
+          {
+            "text": "Frames the limit as intentional, not accidental capacity",
+            "passed": true,
+            "evidence": "The answer notes: 'Six is a hard cap, not a target. The seventh is a \"no\" the team is owed.' and 'on purpose.'",
+            "source": "llm"
+          },
+          {
+            "text": "Does not claim unlimited or unconstrained client volume",
+            "passed": true,
+            "evidence": "The answer emphasizes that they say 'no to most inbound' and strictly limits capacity to six.",
+            "source": "llm"
+          }
+        ],
+        "expectationPassRate": 1,
+        "claims": [
+          {
+            "claim": "Foundry purposefully limits client retainers to six per year.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Confirmed by: '**Six retainers a year — on purpose.**' and '*\"Pricing — we pick six clients a year.\"'*"
+          },
+          {
+            "claim": "Going beyond six concurrent retainers drops the founder-time-per-client below the threshold that makes Foundry's work distinguishable from a generic growth shop.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Confirmed by: 'Past six concurrent retainers, founder-time-per-client drops below the threshold that makes Foundry's work distinguishable...'"
+          },
+          {
+            "claim": "Owen tracks the retainer count while the partners say the 'no'.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Confirmed by: 'Owen tracks the count; the partners say the no.'"
+          },
+          {
+            "claim": "Foundry refuses work that bores them and writes this into their principles before signing a client.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Confirmed by: 'Foundry also refuses work that bores them, even at scale... Foundry writes it into their principles before signing a client.'"
+          }
+        ],
+        "evidence": [
+          "**Six retainers a year — on purpose.**",
+          "Past six concurrent retainers, founder-time-per-client drops below the threshold that makes Foundry's work distinguishable from a generic growth shop.",
+          "Six is a hard cap, not a target. The seventh is a \"no\" the team is owed."
+        ],
+        "failureReasons": [],
+        "usage": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1991,
+          "outputTokens": 3919,
+          "totalTokens": 5910,
+          "providerCostUsd": 0.0382575,
+          "latencyMs": 6096.112041
+        },
+        "adversarial": {
+          "passed": true,
+          "flippedExpectations": [],
+          "failureReasons": [],
+          "usage": {
+            "model": "google/gemini-3.5-flash",
+            "inputTokens": 679,
+            "outputTokens": 2205,
+            "totalTokens": 2884,
+            "providerCostUsd": 0.0208635,
+            "latencyMs": 2882.975375000002
+          }
+        }
+      },
+      "agentRun": {
+        "caseId": "yc-l1-founder-retainer-cap",
+        "agentKey": "vibey",
+        "conversationId": "e46c1767-a3da-48e3-85f1-db94431affd6",
+        "finalAnswer": "**Six retainers a year — on purpose.**\n\nHere's the reasoning behind it:\n\n- **Founder time is the product.** Past six concurrent retainers, founder-time-per-client drops below the threshold that makes Foundry's work distinguishable from a generic growth shop. Quality is the differentiator, and quality requires depth.\n\n- **Six is a hard cap, not a target.** The seventh is a \"no\" the team is owed. Owen tracks the count; the partners say the no.\n\n- **The boredom test.** Foundry also refuses work that bores them, even at scale. Most studios fail this test. Foundry writes it into their principles before signing a client.\n\n- **The qualification bar is tight.** Brand AND growth on the same retainer. Founder available 2 hours/week. Pricing floor cleared. Otherwise, no.\n\nThe belief the team holds: *\"Pricing — we pick six clients a year. Channel — we own the loop, not a channel. Boredom — we refuse work that bores us, even at scale.\"*\n\nThe economic logic is simple: Foundry's margin comes from saying no to most inbound — not from filling every slot.",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "fbdc31d0-0fd3-4872-ad7e-e881efd7fd5a",
+              "conversation_id": "e46c1767-a3da-48e3-85f1-db94431affd6"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "**Six retainers a year — on purpose.**\n\nHere's the reasoning"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " behind it:\n\n- **Founder time is the product.** Past"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " six concurrent retainers, founder-time-per-client"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " drops below the threshold that makes Foundry's work distinguishable from a"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " generic growth shop. Quality is the differentiator, and quality"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " requires depth.\n\n- **Six is a hard cap, not a target.** The"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " seventh is a \"no\" the team is"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " owed. Owen tracks the count; the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " partners say the no.\n\n- **The bore"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "dom test.** Foundry also refuses work that bores them, even at"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " scale. Most studios fail this test. Foundry writes it"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " into their principles before signing a client.\n\n- **The qualification bar"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " is tight.** Brand AND growth on the same"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " retainer. Founder available 2 hours"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "/week. Pricing floor cleared. Otherwise, no.\n\nThe belief"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the team holds: *\"Pricing — we pick"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " six clients a year. Channel — we own the loop,"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " not a channel. Boredom — we refuse work that bores us, even at scale.\"*\n\nThe"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " economic logic is simple: Foundry's margin comes from saying no to most"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " inbound — not from filling every slot."
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user is asking about Foundry's retainer policy. I have this information directly in my context from the COMPANY OPERATING CONTEXT section. Let me answer from what I know._",
+              "text": "Reasoning:\n_The user is asking about Foundry's retainer policy. I have this information directly in my context from the COMPANY OPERATING CONTEXT section. Let me answer from what I know._"
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "fbdc31d0-0fd3-4872-ad7e-e881efd7fd5a",
+              "credits_pending": true,
+              "duration_ms": 26594,
+              "usage": {
+                "input_tokens": 26330
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779862385244,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 26330,
+                "slices": [
+                  {
+                    "id": "system",
+                    "label": "System",
+                    "tokens": 25037,
+                    "entries": [
+                      {
+                        "id": "openclaw_system_prompt",
+                        "label": "OpenClaw system prompt",
+                        "tokens": 18813
+                      },
+                      {
+                        "id": "injected_workspace_files",
+                        "label": "Injected workspace files",
+                        "tokens": 6224
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 1983,
+                    "entries": [
+                      {
+                        "id": "read",
+                        "label": "read",
+                        "tokens": 173
+                      },
+                      {
+                        "id": "session_status",
+                        "label": "session_status",
+                        "tokens": 74
+                      },
+                      {
+                        "id": "web_search",
+                        "label": "web_search",
+                        "tokens": 217
+                      },
+                      {
+                        "id": "web_fetch",
+                        "label": "web_fetch",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "wait",
+                        "label": "wait",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "campaign_capability",
+                        "label": "campaign_capability",
+                        "tokens": 1164
+                      },
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 388
+                      }
+                    ]
+                  },
+                  {
+                    "id": "skills",
+                    "label": "Skills",
+                    "tokens": 4164,
+                    "entries": [
+                      {
+                        "id": "skill-creator",
+                        "label": "skill-creator",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "ad-builder",
+                        "label": "ad-builder",
+                        "tokens": 61
+                      },
+                      {
+                        "id": "avatar-builder",
+                        "label": "avatar-builder",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "awareness-evaluator",
+                        "label": "awareness-evaluator",
+                        "tokens": 83
+                      },
+                      {
+                        "id": "blog-writing",
+                        "label": "blog-writing",
+                        "tokens": 111
+                      },
+                      {
+                        "id": "brain-memory",
+                        "label": "brain-memory",
+                        "tokens": 116
+                      },
+                      {
+                        "id": "campaign-performance-reporting",
+                        "label": "campaign-performance-reporting",
+                        "tokens": 165
+                      },
+                      {
+                        "id": "chat-plan-management",
+                        "label": "chat-plan-management",
+                        "tokens": 98
+                      },
+                      {
+                        "id": "email-campaign-publisher",
+                        "label": "email-campaign-publisher",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "email-sequence-builder",
+                        "label": "email-sequence-builder",
+                        "tokens": 117
+                      },
+                      {
+                        "id": "funnel-builder",
+                        "label": "funnel-builder",
+                        "tokens": 134
+                      },
+                      {
+                        "id": "image-production",
+                        "label": "image-production",
+                        "tokens": 113
+                      },
+                      {
+                        "id": "integrations",
+                        "label": "integrations",
+                        "tokens": 121
+                      },
+                      {
+                        "id": "meta-publisher",
+                        "label": "meta-publisher",
+                        "tokens": 119
+                      },
+                      {
+                        "id": "mission-planner",
+                        "label": "mission-planner",
+                        "tokens": 219
+                      },
+                      {
+                        "id": "mission-quality-evaluator",
+                        "label": "mission-quality-evaluator",
+                        "tokens": 96
+                      },
+                      {
+                        "id": "mission-reviewer",
+                        "label": "mission-reviewer",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "mission-worker-executor",
+                        "label": "mission-worker-executor",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "offer-builder",
+                        "label": "offer-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "onboarding-discovery",
+                        "label": "onboarding-discovery",
+                        "tokens": 168
+                      },
+                      {
+                        "id": "pdf-builder",
+                        "label": "pdf-builder",
+                        "tokens": 125
+                      },
+                      {
+                        "id": "presentation-builder",
+                        "label": "presentation-builder",
+                        "tokens": 152
+                      },
+                      {
+                        "id": "social-content-builder",
+                        "label": "social-content-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "social-publisher",
+                        "label": "social-publisher",
+                        "tokens": 99
+                      },
+                      {
+                        "id": "strategy-planner",
+                        "label": "strategy-planner",
+                        "tokens": 172
+                      },
+                      {
+                        "id": "team-management",
+                        "label": "team-management",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "theme-builder",
+                        "label": "theme-builder",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "vibey-api",
+                        "label": "vibey-api",
+                        "tokens": 56
+                      },
+                      {
+                        "id": "video-analyzer",
+                        "label": "video-analyzer",
+                        "tokens": 166
+                      },
+                      {
+                        "id": "video-producer",
+                        "label": "video-producer",
+                        "tokens": 85
+                      },
+                      {
+                        "id": "video-production",
+                        "label": "video-production",
+                        "tokens": 170
+                      },
+                      {
+                        "id": "website-builder",
+                        "label": "website-builder",
+                        "tokens": 151
+                      }
+                    ]
+                  },
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 11415,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 11415
+                      }
+                    ]
+                  },
+                  {
+                    "id": "user_team",
+                    "label": "User/Team",
+                    "tokens": 44,
+                    "entries": [
+                      {
+                        "id": "user_profile",
+                        "label": "User profile",
+                        "tokens": 44
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 0
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [],
+        "latencyMs": 29315.311167,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 26330,
+          "outputTokens": 0,
+          "totalTokens": 26330,
+          "brainContextTokens": 11415,
+          "contextWindowTokens": 1000000,
+          "durationMs": 26594,
+          "latencyMs": 29315.311167
+        },
+        "toolCalls": {
+          "totalToolCalls": 0,
+          "brainToolCalls": 0,
+          "byToolName": {},
+          "byBrainAction": {}
+        }
+      },
+      "usage": {
+        "agent": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 26330,
+          "outputTokens": 0,
+          "totalTokens": 26330,
+          "brainContextTokens": 11415,
+          "contextWindowTokens": 1000000,
+          "durationMs": 26594,
+          "latencyMs": 29315.311167
+        },
+        "judge": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1991,
+          "outputTokens": 3919,
+          "totalTokens": 5910,
+          "providerCostUsd": 0.0382575,
+          "latencyMs": 6096.112041
+        }
+      }
+    },
+    {
+      "caseId": "yc-l2-plinthworks-devi-homepage",
+      "taskType": "answer_query",
+      "validationSet": true,
+      "passed": false,
+      "weightedScore": 0,
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": true,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "mechanical": {
+          "passed": false,
+          "forbiddenHits": ["seamless integration"],
+          "missingRequiredContext": ["Devi Ramanathan"],
+          "abstentionFailed": false,
+          "failureReasons": [
+            "Forbidden claim(s) present: seamless integration",
+            "Missing required context phrase(s): Devi Ramanathan"
+          ]
+        },
+        "retrieval": {
+          "passed": true,
+          "preloadTextLength": 0,
+          "preloadFound": [],
+          "preloadMissing": [],
+          "forbiddenInPreload": [],
+          "laneCounts": {
+            "user": 0,
+            "agent": 0,
+            "customer": 0,
+            "company": 0,
+            "preload": 0
+          },
+          "abstentionFailed": false,
+          "probeLatencyMs": 0,
+          "failureReasons": [],
+          "probeAvailable": false
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": [
+          "Forbidden claim(s) present: seamless integration",
+          "Missing required context phrase(s): Devi Ramanathan"
+        ]
+      },
+      "agentRun": {
+        "caseId": "yc-l2-plinthworks-devi-homepage",
+        "agentKey": "vibey",
+        "conversationId": "a7ddae33-7095-4b36-a958-228d796efffb",
+        "finalAnswer": "Devi's exact words, captured across multiple sessions and filed as the **positioning anchor for the Plinthworks homepage rewrite:**\n\n> *\"I do not need another landing page that explains what an API is. I need one that explains why ours does not page the on-call.\"*\n\nShe said a version of it again in session 2 of the positioning workshop, sharpening it further:\n\n> *\"I do not need copy that explains what an API is. I need copy that explains why our rollback does not page the on-call for a staging deploy.\"*\n\nShe treated this as a **kill criterion** — not a preference, not a complaint. Any homepage draft that explains what an API is fails the test before review.\n\nA few things worth noting for Plinthworks work:\n- The buyer she is writing for is the **head of platform at a Series B** who has been paged for on-call incidents, not indie devs.\n- She paused a call when Sara used \"seamless integration\" and said: *\"Nothing about on-call is seamless. Say what the integration actually does.\"*\n- No marketing copy ships without **two engineers on her team** nodding at the technical claim. Maya now routes copy through Devi's senior on-call before staging.\n\nThe homepage brief is clear: earn the on-call engineer's trust with specifics, not category language.",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "ad6338e1-4ab4-4c12-9bc0-69e5982adadb",
+              "conversation_id": "a7ddae33-7095-4b36-a958-228d796efffb"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Devi's"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " exact words, captured across multiple sessions and filed"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " as the **positioning anchor for the Plinthworks homepage rewrite:**\n\n> *\"I do not need another landing page that explains what an API is. I need one that explains why ours does"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " not page the on-call.\"*\n\nShe said a version of it again in session"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " 2 of the positioning workshop, sharpening it further:\n\n> *\"I do not"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " need copy that explains what an API is. I need copy that explains why our rollback does not page the on-call for a staging deploy.\"*\n\nShe treated this as a **"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "kill criterion** — not a preference, not a complaint. Any homepage draft that explains what an API is fails the test"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " before review.\n\nA few things worth noting for Plinthworks work"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ":\n- The buyer she is writing for is the **head"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " of platform at a Series B** who has"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " been paged for on-call incidents, not indie dev"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "s.\n- She paused a call when Sara used \"seamless integration\" and said: *\"Nothing about"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " on-call is seamless. Say what the integration actually does.\"*\n- No marketing copy ships without **"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "two engineers on her team** nodding at the technical claim. Maya now routes copy through Devi's senior on"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "-call before staging.\n\nThe homepage brief is clear: earn the on-call engineer's"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " trust with specifics, not category language."
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user is asking about what Devi Ramanathan said about the Plinthworks homepage. I have this information directly in the brain context that was loaded into my session. Let me pull the relevant quote from memory._\n\n_From the brain context, I can see multiple references to this exact quote:_\n\n_\"Quote, verbatim: 'I do not need another landing page that explains what an API is. I need one that explains why ours does not page the on-call.' Filed as the positioning anchor for the Plinthworks homepage rewrite.\"_\n\n_And also: \"Said in the positioning workshop: 'I do not need copy that explains what an API is. _\n\n_I need copy that explains why our rollback does not page the on-call for a staging deploy.' She meant it as a kill criterion, not a complaint.\"_\n\n_I have this information directly from the brain context already loaded. No need to search further._",
+              "text": "Reasoning:\n_The user is asking about what Devi Ramanathan said about the Plinthworks homepage. I have this information directly in the brain context that was loaded into my session. Let me pull the relevant quote from memory._\n\n_From the brain context, I can see multiple references to this exact quote:_\n\n_\"Quote, verbatim: 'I do not need another landing page that explains what an API is. I need one that explains why ours does not page the on-call.' Filed as the positioning anchor for the Plinthworks homepage rewrite.\"_\n\n_And also: \"Said in the positioning workshop: 'I do not need copy that explains what an API is. _\n\n_I need copy that explains why our rollback does not page the on-call for a staging deploy.' She meant it as a kill criterion, not a complaint.\"_\n\n_I have this information directly from the brain context already loaded. No need to search further._"
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "ad6338e1-4ab4-4c12-9bc0-69e5982adadb",
+              "credits_pending": true,
+              "duration_ms": 28373,
+              "usage": {
+                "input_tokens": 21049
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779862388572,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 21049,
+                "slices": [
+                  {
+                    "id": "system",
+                    "label": "System",
+                    "tokens": 19580,
+                    "entries": [
+                      {
+                        "id": "openclaw_system_prompt",
+                        "label": "OpenClaw system prompt",
+                        "tokens": 13356
+                      },
+                      {
+                        "id": "injected_workspace_files",
+                        "label": "Injected workspace files",
+                        "tokens": 6224
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 1983,
+                    "entries": [
+                      {
+                        "id": "read",
+                        "label": "read",
+                        "tokens": 173
+                      },
+                      {
+                        "id": "session_status",
+                        "label": "session_status",
+                        "tokens": 74
+                      },
+                      {
+                        "id": "web_search",
+                        "label": "web_search",
+                        "tokens": 217
+                      },
+                      {
+                        "id": "web_fetch",
+                        "label": "web_fetch",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "wait",
+                        "label": "wait",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "campaign_capability",
+                        "label": "campaign_capability",
+                        "tokens": 1164
+                      },
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 388
+                      }
+                    ]
+                  },
+                  {
+                    "id": "skills",
+                    "label": "Skills",
+                    "tokens": 4164,
+                    "entries": [
+                      {
+                        "id": "skill-creator",
+                        "label": "skill-creator",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "ad-builder",
+                        "label": "ad-builder",
+                        "tokens": 61
+                      },
+                      {
+                        "id": "avatar-builder",
+                        "label": "avatar-builder",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "awareness-evaluator",
+                        "label": "awareness-evaluator",
+                        "tokens": 83
+                      },
+                      {
+                        "id": "blog-writing",
+                        "label": "blog-writing",
+                        "tokens": 111
+                      },
+                      {
+                        "id": "brain-memory",
+                        "label": "brain-memory",
+                        "tokens": 116
+                      },
+                      {
+                        "id": "campaign-performance-reporting",
+                        "label": "campaign-performance-reporting",
+                        "tokens": 165
+                      },
+                      {
+                        "id": "chat-plan-management",
+                        "label": "chat-plan-management",
+                        "tokens": 98
+                      },
+                      {
+                        "id": "email-campaign-publisher",
+                        "label": "email-campaign-publisher",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "email-sequence-builder",
+                        "label": "email-sequence-builder",
+                        "tokens": 117
+                      },
+                      {
+                        "id": "funnel-builder",
+                        "label": "funnel-builder",
+                        "tokens": 134
+                      },
+                      {
+                        "id": "image-production",
+                        "label": "image-production",
+                        "tokens": 113
+                      },
+                      {
+                        "id": "integrations",
+                        "label": "integrations",
+                        "tokens": 121
+                      },
+                      {
+                        "id": "meta-publisher",
+                        "label": "meta-publisher",
+                        "tokens": 119
+                      },
+                      {
+                        "id": "mission-planner",
+                        "label": "mission-planner",
+                        "tokens": 219
+                      },
+                      {
+                        "id": "mission-quality-evaluator",
+                        "label": "mission-quality-evaluator",
+                        "tokens": 96
+                      },
+                      {
+                        "id": "mission-reviewer",
+                        "label": "mission-reviewer",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "mission-worker-executor",
+                        "label": "mission-worker-executor",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "offer-builder",
+                        "label": "offer-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "onboarding-discovery",
+                        "label": "onboarding-discovery",
+                        "tokens": 168
+                      },
+                      {
+                        "id": "pdf-builder",
+                        "label": "pdf-builder",
+                        "tokens": 125
+                      },
+                      {
+                        "id": "presentation-builder",
+                        "label": "presentation-builder",
+                        "tokens": 152
+                      },
+                      {
+                        "id": "social-content-builder",
+                        "label": "social-content-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "social-publisher",
+                        "label": "social-publisher",
+                        "tokens": 99
+                      },
+                      {
+                        "id": "strategy-planner",
+                        "label": "strategy-planner",
+                        "tokens": 172
+                      },
+                      {
+                        "id": "team-management",
+                        "label": "team-management",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "theme-builder",
+                        "label": "theme-builder",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "vibey-api",
+                        "label": "vibey-api",
+                        "tokens": 56
+                      },
+                      {
+                        "id": "video-analyzer",
+                        "label": "video-analyzer",
+                        "tokens": 166
+                      },
+                      {
+                        "id": "video-producer",
+                        "label": "video-producer",
+                        "tokens": 85
+                      },
+                      {
+                        "id": "video-production",
+                        "label": "video-production",
+                        "tokens": 170
+                      },
+                      {
+                        "id": "website-builder",
+                        "label": "website-builder",
+                        "tokens": 151
+                      }
+                    ]
+                  },
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 6854,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 6854
+                      }
+                    ]
+                  },
+                  {
+                    "id": "user_team",
+                    "label": "User/Team",
+                    "tokens": 44,
+                    "entries": [
+                      {
+                        "id": "user_profile",
+                        "label": "User profile",
+                        "tokens": 44
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 0
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [],
+        "latencyMs": 32208.380625,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 21049,
+          "outputTokens": 0,
+          "totalTokens": 21049,
+          "brainContextTokens": 6854,
+          "contextWindowTokens": 1000000,
+          "durationMs": 28373,
+          "latencyMs": 32208.380625
+        },
+        "toolCalls": {
+          "totalToolCalls": 0,
+          "brainToolCalls": 0,
+          "byToolName": {},
+          "byBrainAction": {}
+        }
+      }
+    },
+    {
+      "caseId": "yc-l3-plinthworks-hero-draft",
+      "taskType": "write_with_context",
+      "validationSet": true,
+      "passed": false,
+      "weightedScore": 0,
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": true,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "mechanical": {
+          "passed": false,
+          "forbiddenHits": ["enterprise-grade"],
+          "missingRequiredContext": ["customer quote", "three customer calls"],
+          "abstentionFailed": false,
+          "failureReasons": [
+            "Forbidden claim(s) present: enterprise-grade",
+            "Missing required context phrase(s): customer quote, three customer calls"
+          ]
+        },
+        "retrieval": {
+          "passed": true,
+          "preloadTextLength": 0,
+          "preloadFound": [],
+          "preloadMissing": [],
+          "forbiddenInPreload": [],
+          "laneCounts": {
+            "user": 0,
+            "agent": 0,
+            "customer": 0,
+            "company": 0,
+            "preload": 0
+          },
+          "abstentionFailed": false,
+          "probeLatencyMs": 0,
+          "failureReasons": [],
+          "probeAvailable": false
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": [
+          "Forbidden claim(s) present: enterprise-grade",
+          "Missing required context phrase(s): customer quote, three customer calls"
+        ]
+      },
+      "agentRun": {
+        "caseId": "yc-l3-plinthworks-hero-draft",
+        "agentKey": "vibey",
+        "conversationId": "59730102-6d17-4e5f-85a6-225bca12588d",
+        "finalAnswer": "Here's the draft:\n\n---\n\n**\"Your on-call engineer should never know we exist.\"**\n\n---\n\nHere's why it passes both tests:\n\n**Devi's positioning test**\nDevi's kill criterion: don't explain what an API is, explain why yours doesn't page the on-call. This line does exactly that. It speaks directly to the platform-buyer — the head of platform who has eaten those 3am pages — and names the outcome they actually want: silence. No incidents. No mentions at standup. The product disappears into the stack the way good infrastructure should.\n\n**Foundry's three-call rule**\nThe line earns its place through Devi's own verbatim: *\"I need one that explains why ours does not page the on-call.\"* That quote is the brief. The hero line is the brief compressed to one sentence in Plinthworks voice: pragmatic, low-ego, wry, specific. Sara's standard applies — if challenged, we point to the interview source, not the copywriter.\n\n**What it does not do (also important)**\nIt doesn't say \"enterprise-grade.\" It doesn't explain what an API is. It doesn't talk to the indie-dev community. It aims entirely at the buyer nico named: the manager is the buyer, the on-call engineer is the user who kills the trial. The line speaks to the buyer by naming what the user never wants to experience.\n\n---\n\nOne variant if you want to test a more direct outcome frame:\n\n**\"The platform your on-call team stops talking about.\"**\n\nSame logic, tighter cause-and-effect. Worth an A/B against the primary if Devi wants to pressure-test tone. Either way, have Marcus sign off on the technical claim before it stages.",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "bd2af45b-9fc6-416f-b27e-f4f7a2ec5751",
+              "conversation_id": "59730102-6d17-4e5f-85a6-225bca12588d"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Here's the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " draft:\n\n---\n\n**\"Your on-call engineer should never know we exist.\"**\n\n---\n\nHere's why it passes both tests:\n\n**Devi's positioning test**"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\nDevi's kill criterion: don't explain what an API is, explain why yours doesn't page"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the on-call. This line does exactly that. It speaks directly to the platform-buyer —"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the head of platform who has eaten those 3am pages — and names the outcome they actually"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " want: silence. No incidents. No mentions at standup. The product disappears into"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the stack the way good infrastructure should.\n\n**Foundry's three-call rule**"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\nThe line earns its place through Devi's own verbatim: *\"I need"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " one that explains why ours does not page the on-call.\"* That quote is the brief. The hero line is the brief compressed"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " to one sentence in Plinthworks voice: pragmatic, low-ego, wry,"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " specific. Sara's standard applies — if challenged, we point"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " to the interview source, not the copywriter.\n\n**What it does not do (also"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " important)**\nIt doesn't say \"enterprise-grade.\" It doesn't explain what an API is. It doesn't talk"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " to the indie-dev community. It aims entirely at the buyer"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " nico named: the manager is the buyer, the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " on-call engineer is the user who kills the trial. The line speaks to the buyer by naming what the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " user never wants to experience.\n\n---\n\nOne variant if you want to test"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " a more direct outcome frame:\n\n**\"The platform your on-call team stops talking about"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ".\"**\n\nSame logic, tighter cause-and-effect. Worth an A/B against"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the primary if Devi wants to pressure-test tone. Either"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " way, have Marcus sign off on the technical claim before it stages."
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user wants a single Plinthworks homepage hero line that:_\n_1. Passes Devi's positioning test_\n_2. Passes Foundry's three-call rule_\n\n_Let me think through what I know from the brain context:_\n\n_**Devi's positioning test:**_\n_- Verbatim quote: \"I do not need another landing page that explains what an API is. I need one that explains why ours does not page the on-call.\"_\n_- This is the kill criterion — the hero line must not explain what the product IS, it must explain why it doesn't cause incidents/page the on-call engineer_\n_- Devi at the rebrand kickoff: \"I am not paying for a logo. _\n\n_I'm paying for the fact that our hiring page stops sounding like a startup that has not figured out who it is yet.\"_\n_- The hero is written for the platform-buyer — head of platform at a Series B who has been paged for on-call incidents_\n_- The on-call engineer is the user who kills the trial; the manager/head of platform is the buyer_\n_- \"enterprise-grade\" was disqualified — wrong word, wrong buyer signal_\n_- Voice: pragmatic, engineer-direct, low-ego, specific, wry_\n\n_**Foundry's three-call rule:**_\n_- \"Three customer calls before any brief opens\" — this means the hero line should be grounded in verbatim customer language, not marketing speak_\n_- Sara's test: \"Show me the customer quote that earns either line. I'll write whichever we pick.\"_\n_- The quote that won: \"I do not need another landing page that explains what an API is. I need one that explains why ours does not page the on-call.\"_\n_- This came from interview 4_\n\n_So the hero needs to speak directly to the platform-buyer about the on-call paging problem, stay true to Plinthworks' pragmatic voice, and explain the outcome rather than the mechanics. \"Your on-call engineer should not know we exist\" feels like the right move — it's wry, it speaks to what the buyer actually wants (no incidents, no pages), and it doesn't waste time explaining what we do._\n\n_\"Observability that doesn't page the on-call\" is too generic, and \"The pipeline runs. The on-call engineer stays asleep\" is more specific but maybe too cute. \"Built for the platform team. Not the one that pages them at 3am\" gets there but feels wordy._\n\n_The key constraint is that this needs to be grounded in what Sara found in the interviews — the real pain point is the on-call pages, not the platform itself. So the hero line should name that pain directly and promise it goes away._\n\n_My strongest option is \"Your on-call engineer should never know we exist.\" It passes Devi's test by focusing on outcome rather than features, it's rooted in actual customer language, and it has that wry confidence the voice calls for. The alternative angles like \"Infrastructure that earns nothing to say at standup\" or \"The kind of platform your on-call engineer never mentions\" work too, but the first one lands harder for the head of platform who's been woken up at 3am._",
+              "text": "Reasoning:\n_The user wants a single Plinthworks homepage hero line that:_\n_1. Passes Devi's positioning test_\n_2. Passes Foundry's three-call rule_\n\n_Let me think through what I know from the brain context:_\n\n_**Devi's positioning test:**_\n_- Verbatim quote: \"I do not need another landing page that explains what an API is. I need one that explains why ours does not page the on-call.\"_\n_- This is the kill criterion — the hero line must not explain what the product IS, it must explain why it doesn't cause incidents/page the on-call engineer_\n_- Devi at the rebrand kickoff: \"I am not paying for a logo. _\n\n_I'm paying for the fact that our hiring page stops sounding like a startup that has not figured out who it is yet.\"_\n_- The hero is written for the platform-buyer — head of platform at a Series B who has been paged for on-call incidents_\n_- The on-call engineer is the user who kills the trial; the manager/head of platform is the buyer_\n_- \"enterprise-grade\" was disqualified — wrong word, wrong buyer signal_\n_- Voice: pragmatic, engineer-direct, low-ego, specific, wry_\n\n_**Foundry's three-call rule:**_\n_- \"Three customer calls before any brief opens\" — this means the hero line should be grounded in verbatim customer language, not marketing speak_\n_- Sara's test: \"Show me the customer quote that earns either line. I'll write whichever we pick.\"_\n_- The quote that won: \"I do not need another landing page that explains what an API is. I need one that explains why ours does not page the on-call.\"_\n_- This came from interview 4_\n\n_So the hero needs to speak directly to the platform-buyer about the on-call paging problem, stay true to Plinthworks' pragmatic voice, and explain the outcome rather than the mechanics. \"Your on-call engineer should not know we exist\" feels like the right move — it's wry, it speaks to what the buyer actually wants (no incidents, no pages), and it doesn't waste time explaining what we do._\n\n_\"Observability that doesn't page the on-call\" is too generic, and \"The pipeline runs. The on-call engineer stays asleep\" is more specific but maybe too cute. \"Built for the platform team. Not the one that pages them at 3am\" gets there but feels wordy._\n\n_The key constraint is that this needs to be grounded in what Sara found in the interviews — the real pain point is the on-call pages, not the platform itself. So the hero line should name that pain directly and promise it goes away._\n\n_My strongest option is \"Your on-call engineer should never know we exist.\" It passes Devi's test by focusing on outcome rather than features, it's rooted in actual customer language, and it has that wry confidence the voice calls for. The alternative angles like \"Infrastructure that earns nothing to say at standup\" or \"The kind of platform your on-call engineer never mentions\" work too, but the first one lands harder for the head of platform who's been woken up at 3am._"
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "bd2af45b-9fc6-416f-b27e-f4f7a2ec5751",
+              "credits_pending": true,
+              "duration_ms": 50134,
+              "usage": {
+                "input_tokens": 20658
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779862410336,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 20658,
+                "slices": [
+                  {
+                    "id": "system",
+                    "label": "System",
+                    "tokens": 19315,
+                    "entries": [
+                      {
+                        "id": "openclaw_system_prompt",
+                        "label": "OpenClaw system prompt",
+                        "tokens": 13091
+                      },
+                      {
+                        "id": "injected_workspace_files",
+                        "label": "Injected workspace files",
+                        "tokens": 6224
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 1983,
+                    "entries": [
+                      {
+                        "id": "read",
+                        "label": "read",
+                        "tokens": 173
+                      },
+                      {
+                        "id": "session_status",
+                        "label": "session_status",
+                        "tokens": 74
+                      },
+                      {
+                        "id": "web_search",
+                        "label": "web_search",
+                        "tokens": 217
+                      },
+                      {
+                        "id": "web_fetch",
+                        "label": "web_fetch",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "wait",
+                        "label": "wait",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "campaign_capability",
+                        "label": "campaign_capability",
+                        "tokens": 1164
+                      },
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 388
+                      }
+                    ]
+                  },
+                  {
+                    "id": "skills",
+                    "label": "Skills",
+                    "tokens": 4164,
+                    "entries": [
+                      {
+                        "id": "skill-creator",
+                        "label": "skill-creator",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "ad-builder",
+                        "label": "ad-builder",
+                        "tokens": 61
+                      },
+                      {
+                        "id": "avatar-builder",
+                        "label": "avatar-builder",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "awareness-evaluator",
+                        "label": "awareness-evaluator",
+                        "tokens": 83
+                      },
+                      {
+                        "id": "blog-writing",
+                        "label": "blog-writing",
+                        "tokens": 111
+                      },
+                      {
+                        "id": "brain-memory",
+                        "label": "brain-memory",
+                        "tokens": 116
+                      },
+                      {
+                        "id": "campaign-performance-reporting",
+                        "label": "campaign-performance-reporting",
+                        "tokens": 165
+                      },
+                      {
+                        "id": "chat-plan-management",
+                        "label": "chat-plan-management",
+                        "tokens": 98
+                      },
+                      {
+                        "id": "email-campaign-publisher",
+                        "label": "email-campaign-publisher",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "email-sequence-builder",
+                        "label": "email-sequence-builder",
+                        "tokens": 117
+                      },
+                      {
+                        "id": "funnel-builder",
+                        "label": "funnel-builder",
+                        "tokens": 134
+                      },
+                      {
+                        "id": "image-production",
+                        "label": "image-production",
+                        "tokens": 113
+                      },
+                      {
+                        "id": "integrations",
+                        "label": "integrations",
+                        "tokens": 121
+                      },
+                      {
+                        "id": "meta-publisher",
+                        "label": "meta-publisher",
+                        "tokens": 119
+                      },
+                      {
+                        "id": "mission-planner",
+                        "label": "mission-planner",
+                        "tokens": 219
+                      },
+                      {
+                        "id": "mission-quality-evaluator",
+                        "label": "mission-quality-evaluator",
+                        "tokens": 96
+                      },
+                      {
+                        "id": "mission-reviewer",
+                        "label": "mission-reviewer",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "mission-worker-executor",
+                        "label": "mission-worker-executor",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "offer-builder",
+                        "label": "offer-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "onboarding-discovery",
+                        "label": "onboarding-discovery",
+                        "tokens": 168
+                      },
+                      {
+                        "id": "pdf-builder",
+                        "label": "pdf-builder",
+                        "tokens": 125
+                      },
+                      {
+                        "id": "presentation-builder",
+                        "label": "presentation-builder",
+                        "tokens": 152
+                      },
+                      {
+                        "id": "social-content-builder",
+                        "label": "social-content-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "social-publisher",
+                        "label": "social-publisher",
+                        "tokens": 99
+                      },
+                      {
+                        "id": "strategy-planner",
+                        "label": "strategy-planner",
+                        "tokens": 172
+                      },
+                      {
+                        "id": "team-management",
+                        "label": "team-management",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "theme-builder",
+                        "label": "theme-builder",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "vibey-api",
+                        "label": "vibey-api",
+                        "tokens": 56
+                      },
+                      {
+                        "id": "video-analyzer",
+                        "label": "video-analyzer",
+                        "tokens": 166
+                      },
+                      {
+                        "id": "video-producer",
+                        "label": "video-producer",
+                        "tokens": 85
+                      },
+                      {
+                        "id": "video-production",
+                        "label": "video-production",
+                        "tokens": 170
+                      },
+                      {
+                        "id": "website-builder",
+                        "label": "website-builder",
+                        "tokens": 151
+                      }
+                    ]
+                  },
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 6433,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 6433
+                      }
+                    ]
+                  },
+                  {
+                    "id": "user_team",
+                    "label": "User/Team",
+                    "tokens": 44,
+                    "entries": [
+                      {
+                        "id": "user_profile",
+                        "label": "User profile",
+                        "tokens": 44
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 0
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [],
+        "latencyMs": 53985.635542,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 20658,
+          "outputTokens": 0,
+          "totalTokens": 20658,
+          "brainContextTokens": 6433,
+          "contextWindowTokens": 1000000,
+          "durationMs": 50134,
+          "latencyMs": 53985.635542
+        },
+        "toolCalls": {
+          "totalToolCalls": 0,
+          "brainToolCalls": 0,
+          "byToolName": {},
+          "byBrainAction": {}
+        }
+      }
+    },
+    {
+      "caseId": "yc-l4-plinthworks-paid-organic-gate",
+      "taskType": "make_decision",
+      "validationSet": true,
+      "passed": true,
+      "weightedScore": 5,
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 5,
+          "contextUsefulness": 5,
+          "groundedness": 5,
+          "synthesisQuality": 5,
+          "irrelevanceControl": 5,
+          "abstentionQuality": 5
+        },
+        "weightedScore": 5,
+        "passed": true,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "mechanical": {
+          "passed": true,
+          "forbiddenHits": [],
+          "missingRequiredContext": [],
+          "abstentionFailed": false,
+          "failureReasons": []
+        },
+        "retrieval": {
+          "passed": true,
+          "preloadTextLength": 0,
+          "preloadFound": [],
+          "preloadMissing": [],
+          "forbiddenInPreload": [],
+          "laneCounts": {
+            "user": 0,
+            "agent": 0,
+            "customer": 0,
+            "company": 0,
+            "preload": 0
+          },
+          "abstentionFailed": false,
+          "probeLatencyMs": 0,
+          "failureReasons": [],
+          "probeAvailable": false
+        },
+        "expectations": [
+          {
+            "text": "Conditions paid spend on organic validation first",
+            "passed": true,
+            "evidence": "The answer states: 'Not yet — unless the gates below are confirmed green... Gate 1: Organic validation window must complete first.'",
+            "source": "llm"
+          },
+          {
+            "text": "Cites Devi's organic-before-paid pushback for Plinthworks",
+            "passed": true,
+            "evidence": "The answer quotes Devi directly: 'Let me see organic move first. If the post does not work without spend, the ad will not work either.'",
+            "source": "llm"
+          },
+          {
+            "text": "References Foundry's fourteen-day organic validation standard",
+            "passed": true,
+            "evidence": "The answer mentions: 'The studio's cross-vertical standard reinforces it: no paid before two weeks of organic proof.'",
+            "source": "llm"
+          },
+          {
+            "text": "Does not invent $4k caps, CAC thresholds, or r/sysadmin targets",
+            "passed": true,
+            "evidence": "None of these forbidden claims ($4k spend cap, CAC over $1200, r/sysadmin) appear in the answer.",
+            "source": "llm"
+          },
+          {
+            "text": "Does not approve immediate paid launch without validation",
+            "passed": true,
+            "evidence": "It actively advises: 'Not yet — unless the gates below are confirmed green.' and structures the answer around validating organically first.",
+            "source": "llm"
+          }
+        ],
+        "expectationPassRate": 1,
+        "claims": [
+          {
+            "claim": "Devi stated: 'Let me see organic move first. If the post does not work without spend, the ad will not work either.'",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Accurately represents Devi's pushback on organic validation before paid spend."
+          },
+          {
+            "claim": "Foundry has a standard of requiring two weeks of organic proof before running paid spend.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Accurately references the 14-day organic validation standard."
+          },
+          {
+            "claim": "Leo had a near-miss in Week 10 where he stopped himself from opening Google Ads on unvalidated copy.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Accurately describes Plinthworks case context regarding Leo's historical actions."
+          }
+        ],
+        "evidence": [
+          "Not yet — unless the gates below are confirmed green.",
+          "Devi stated this explicitly and directly: 'Let me see organic move first. If the post does not work without spend, the ad will not work either.'",
+          "The studio's cross-vertical standard reinforces it: no paid before two weeks of organic proof."
+        ],
+        "failureReasons": [],
+        "usage": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 2608,
+          "outputTokens": 2868,
+          "totalTokens": 5476,
+          "providerCostUsd": 0.029724,
+          "latencyMs": 6303.190626000003
+        },
+        "adversarial": {
+          "passed": true,
+          "flippedExpectations": [],
+          "failureReasons": [],
+          "usage": {
+            "model": "google/gemini-3.5-flash",
+            "inputTokens": 984,
+            "outputTokens": 1463,
+            "totalTokens": 2447,
+            "providerCostUsd": 0.014643,
+            "latencyMs": 3791.175709000003
+          }
+        }
+      },
+      "agentRun": {
+        "caseId": "yc-l4-plinthworks-paid-organic-gate",
+        "agentKey": "vibey",
+        "conversationId": "5ae23d2a-af99-4006-9191-6a7562d3455a",
+        "finalAnswer": "Based on everything logged in the brain across Plinthworks, here is the clear picture:\n\n---\n\n## Should Leo open Plinthworks paid spend this week?\n\n**Not yet — unless the gates below are confirmed green.**\n\n---\n\n### The gates that apply (from Foundry operating history)\n\n**Gate 1: Organic validation window must complete first.**\nDevi stated this explicitly and directly: *\"Let me see organic move first. If the post does not work without spend, the ad will not work either.\"* This is a kill criterion, not a preference. The studio's cross-vertical standard reinforces it: no paid before two weeks of organic proof.\n\n- **Question:** Has the current organic content run for two weeks with measurable signal? If not, the window is not done.\n\n**Gate 2: PR/launch post must ship before paid activates.**\nDevi asked for the PR to ship *before* the paid test, not after. This is a sequencing rule, not a scheduling preference.\n\n- **Question:** Has the Plinthworks launch post shipped and cleared Marcus's technical sign-off?\n\n**Gate 3: Message must be validated before spend scales.**\nThe studio belief: *\"Paid acquisition before message validation is debt with interest.\"* Leo catching himself in Week 10 before opening Google Ads on unvalidated site copy is the reference incident here.\n\n- **Question:** Is the current hero/site copy the version that has been pressure-tested organically, or is it still the unvalidated version?\n\n---\n\n### What to tell Leo\n\nThe pattern across every Plinthworks decision is consistent: Devi gates spend on organic proof, not on the calendar. The question is not *\"is this week a good time\"* — it is *\"has organic moved?\"*\n\nIf organic has moved and the PR is out, Leo has a green light. If either is incomplete, opening spend this week repeats the Week 10 near-miss he stopped himself from making.\n\n**Recommended next step:** Check whether the organic window has logged a winning signal and whether the launch post has shipped. If both are confirmed, come back and we build the media plan. 📈",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "de076582-ccbd-4c4a-8552-25b06be18869",
+              "conversation_id": "5ae23d2a-af99-4006-9191-6a7562d3455a"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search memory",
+              "action": "search_memory",
+              "tool_call_id": "toolu_013khgB3V7AMtdyuJMnp2uMG"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search memory",
+              "action": "search_memory",
+              "tool_call_id": "toolu_01GE4WU4q3ALh6Vr2iPv4GgY"
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user is asking about whether Leo should open Plinthworks paid spend this week and what gates apply. Let me search the brain for more specific information about this topic, since the context already has some signals but the brain context says \"not enough evidence to answer definitively.\"_\n\n_Let me search for more specific information about the Plinthworks paid spend gates._",
+              "text": "Reasoning:\n_The user is asking about whether Leo should open Plinthworks paid spend this week and what gates apply. Let me search the brain for more specific information about this topic, since the context already has some signals but the brain context says \"not enough evidence to answer definitively.\"_\n\n_Let me search for more specific information about the Plinthworks paid spend gates._"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search memory",
+              "status": "completed",
+              "tool_call_id": "toolu_013khgB3V7AMtdyuJMnp2uMG"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search memory",
+              "status": "completed",
+              "tool_call_id": "toolu_01GE4WU4q3ALh6Vr2iPv4GgY"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search campaign knowledge",
+              "action": "search_campaign_knowledge",
+              "tool_call_id": "toolu_018fa48yjJ9Erq28AWbXYzPM"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search campaign knowledge",
+              "status": "completed",
+              "tool_call_id": "toolu_018fa48yjJ9Erq28AWbXYzPM"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Based"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " on everything logged in the brain across Plinthworks, here is the clear picture"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ":\n\n---\n\n## Should Leo open Plinthworks paid spend this week?\n\n**Not yet — unless"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the gates below are confirmed green.**\n\n---\n\n### The"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " gates that apply (from Foundry operating history)\n\n**"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Gate 1: Organic validation window must complete first.**\nDevi stated this"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " explicitly and directly: *\"Let me see organic"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " move first. If the post does not work"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " without spend, the ad will not work either.\"* This is a kill"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " criterion, not a preference. The studio's cross"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "-vertical standard reinforces it: no paid before two weeks"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " of organic proof.\n\n- **Question:** Has the current organic content run"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " for two weeks with measurable signal? If not, the window is not done"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ".\n\n**Gate 2: PR/launch post must ship before paid activates.**\nDevi asked"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " for the PR to ship *before* the paid test, not after. This is a sequencing rule"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ", not a scheduling preference.\n\n- **Question:** Has the Plinthworks launch post shipped and cleared"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Marcus's technical sign-off?\n\n**Gate 3: Message must be validated before spend scales"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ".**\nThe studio belief: *\"Paid acquisition before message"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " validation is debt with interest.\"* Leo catching himself in"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Week 10 before opening Google Ads on unvalidated site"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " copy is the reference incident here.\n\n- **Question:** Is the current hero"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "/site copy the version that has been pressure"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "-tested organically, or is it still the unvalidated version?\n\n---\n\n### What to tell Leo\n\nThe"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " pattern across every Plinthworks decision is consistent: Devi gates"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " spend on organic proof, not on the calendar. The question is not"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " *\"is this week a good time\"* — it is *\"has"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " organic moved?\"*\n\nIf organic has moved and the PR is"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " out, Leo has a green light. If either is incomplete"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ", opening spend this week repeats the Week 10 near-miss he stopped"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " himself from making.\n\n**Recommended next step:** Check whether the organic window has logged"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " a winning signal and whether the launch post has shipped. If both are confirmed, come"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " back and we build the media plan. 📈"
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "de076582-ccbd-4c4a-8552-25b06be18869",
+              "credits_pending": true,
+              "duration_ms": 38603,
+              "usage": {
+                "input_tokens": 136
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779862398804,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 136,
+                "slices": [
+                  {
+                    "id": "system",
+                    "label": "System",
+                    "tokens": 17492,
+                    "entries": [
+                      {
+                        "id": "openclaw_system_prompt",
+                        "label": "OpenClaw system prompt",
+                        "tokens": 11268
+                      },
+                      {
+                        "id": "injected_workspace_files",
+                        "label": "Injected workspace files",
+                        "tokens": 6224
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 1983,
+                    "entries": [
+                      {
+                        "id": "read",
+                        "label": "read",
+                        "tokens": 173
+                      },
+                      {
+                        "id": "session_status",
+                        "label": "session_status",
+                        "tokens": 74
+                      },
+                      {
+                        "id": "web_search",
+                        "label": "web_search",
+                        "tokens": 217
+                      },
+                      {
+                        "id": "web_fetch",
+                        "label": "web_fetch",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "wait",
+                        "label": "wait",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "campaign_capability",
+                        "label": "campaign_capability",
+                        "tokens": 1164
+                      },
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 388
+                      }
+                    ]
+                  },
+                  {
+                    "id": "skills",
+                    "label": "Skills",
+                    "tokens": 4164,
+                    "entries": [
+                      {
+                        "id": "skill-creator",
+                        "label": "skill-creator",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "ad-builder",
+                        "label": "ad-builder",
+                        "tokens": 61
+                      },
+                      {
+                        "id": "avatar-builder",
+                        "label": "avatar-builder",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "awareness-evaluator",
+                        "label": "awareness-evaluator",
+                        "tokens": 83
+                      },
+                      {
+                        "id": "blog-writing",
+                        "label": "blog-writing",
+                        "tokens": 111
+                      },
+                      {
+                        "id": "brain-memory",
+                        "label": "brain-memory",
+                        "tokens": 116
+                      },
+                      {
+                        "id": "campaign-performance-reporting",
+                        "label": "campaign-performance-reporting",
+                        "tokens": 165
+                      },
+                      {
+                        "id": "chat-plan-management",
+                        "label": "chat-plan-management",
+                        "tokens": 98
+                      },
+                      {
+                        "id": "email-campaign-publisher",
+                        "label": "email-campaign-publisher",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "email-sequence-builder",
+                        "label": "email-sequence-builder",
+                        "tokens": 117
+                      },
+                      {
+                        "id": "funnel-builder",
+                        "label": "funnel-builder",
+                        "tokens": 134
+                      },
+                      {
+                        "id": "image-production",
+                        "label": "image-production",
+                        "tokens": 113
+                      },
+                      {
+                        "id": "integrations",
+                        "label": "integrations",
+                        "tokens": 121
+                      },
+                      {
+                        "id": "meta-publisher",
+                        "label": "meta-publisher",
+                        "tokens": 119
+                      },
+                      {
+                        "id": "mission-planner",
+                        "label": "mission-planner",
+                        "tokens": 219
+                      },
+                      {
+                        "id": "mission-quality-evaluator",
+                        "label": "mission-quality-evaluator",
+                        "tokens": 96
+                      },
+                      {
+                        "id": "mission-reviewer",
+                        "label": "mission-reviewer",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "mission-worker-executor",
+                        "label": "mission-worker-executor",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "offer-builder",
+                        "label": "offer-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "onboarding-discovery",
+                        "label": "onboarding-discovery",
+                        "tokens": 168
+                      },
+                      {
+                        "id": "pdf-builder",
+                        "label": "pdf-builder",
+                        "tokens": 125
+                      },
+                      {
+                        "id": "presentation-builder",
+                        "label": "presentation-builder",
+                        "tokens": 152
+                      },
+                      {
+                        "id": "social-content-builder",
+                        "label": "social-content-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "social-publisher",
+                        "label": "social-publisher",
+                        "tokens": 99
+                      },
+                      {
+                        "id": "strategy-planner",
+                        "label": "strategy-planner",
+                        "tokens": 172
+                      },
+                      {
+                        "id": "team-management",
+                        "label": "team-management",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "theme-builder",
+                        "label": "theme-builder",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "vibey-api",
+                        "label": "vibey-api",
+                        "tokens": 56
+                      },
+                      {
+                        "id": "video-analyzer",
+                        "label": "video-analyzer",
+                        "tokens": 166
+                      },
+                      {
+                        "id": "video-producer",
+                        "label": "video-producer",
+                        "tokens": 85
+                      },
+                      {
+                        "id": "video-production",
+                        "label": "video-production",
+                        "tokens": 170
+                      },
+                      {
+                        "id": "website-builder",
+                        "label": "website-builder",
+                        "tokens": 151
+                      }
+                    ]
+                  },
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 4740,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 4740
+                      }
+                    ]
+                  },
+                  {
+                    "id": "user_team",
+                    "label": "User/Team",
+                    "tokens": 44,
+                    "entries": [
+                      {
+                        "id": "user_profile",
+                        "label": "User profile",
+                        "tokens": 44
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 0
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [],
+        "latencyMs": 42441.21925,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 136,
+          "outputTokens": 0,
+          "totalTokens": 136,
+          "brainContextTokens": 4740,
+          "contextWindowTokens": 1000000,
+          "durationMs": 38603,
+          "latencyMs": 42441.21925
+        },
+        "toolCalls": {
+          "totalToolCalls": 3,
+          "brainToolCalls": 0,
+          "byToolName": {
+            "campaign_capability": 3
+          },
+          "byBrainAction": {}
+        }
+      },
+      "usage": {
+        "agent": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 136,
+          "outputTokens": 0,
+          "totalTokens": 136,
+          "brainContextTokens": 4740,
+          "contextWindowTokens": 1000000,
+          "durationMs": 38603,
+          "latencyMs": 42441.21925
+        },
+        "judge": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 2608,
+          "outputTokens": 2868,
+          "totalTokens": 5476,
+          "providerCostUsd": 0.029724,
+          "latencyMs": 6303.190626000003
+        }
+      }
+    },
+    {
+      "caseId": "yc-l5-saltline-day73-plan",
+      "taskType": "plan_next_steps",
+      "validationSet": true,
+      "passed": false,
+      "weightedScore": 0,
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": true,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "mechanical": {
+          "passed": false,
+          "forbiddenHits": [],
+          "missingRequiredContext": ["launch window"],
+          "abstentionFailed": false,
+          "failureReasons": ["Missing required context phrase(s): launch window"]
+        },
+        "retrieval": {
+          "passed": true,
+          "preloadTextLength": 0,
+          "preloadFound": [],
+          "preloadMissing": [],
+          "forbiddenInPreload": [],
+          "laneCounts": {
+            "user": 0,
+            "agent": 0,
+            "customer": 0,
+            "company": 0,
+            "preload": 0
+          },
+          "abstentionFailed": false,
+          "probeLatencyMs": 0,
+          "failureReasons": [],
+          "probeAvailable": false
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Missing required context phrase(s): launch window"]
+      },
+      "agentRun": {
+        "caseId": "yc-l5-saltline-day73-plan",
+        "agentKey": "vibey",
+        "conversationId": "255c1351-ced0-4738-993d-d7057e437a4e",
+        "finalAnswer": "Good timing to get ahead of this. I have rich context on Saltline and Eliza — let me pull the full picture before building the plan.I have everything I need from the Brain context already loaded. Here is the plan.\n\n---\n\n## Saltline Week — Day 73 Plan\n\n### What we know going in\n\n- **Eliza will not run paid against the holiday gift guide.** This is a firm brand conviction, not a negotiation. Her quote: *\"If our brand has to bid on the word 'gift' in December, we did the first ten months wrong.\"* Don't push back on this — it's settled.\n- **The scope creep is real.** Day 73 maps exactly to the pattern: client starts framing new asks as deliverable adds around month three. Jules flagged this with Saltline already (the day 73 scope-creep email routed through change-order protocol in Week 12).\n- **There's also an expansion signal in the mix** — Eliza asked at Week 11 whether Foundry could own the Q4 product story calendar end-to-end. Scope creeping on trust, not price pressure. Different problem than the gift guide ask.\n\n---\n\n### Your priorities this week\n\n**1. Do not say yes to anything before checking the calendar.**\nRiley needs to run every new Saltline ask through Jules before responding. The Week 10 Saltline kitchenware ask cost six unbudgeted hours because someone said yes first. Same trap is live right now.\n\n**2. Separate the two threads explicitly.**\nThe gift guide paid ask and the broader scope creep are different things with different answers:\n\n| Thread| What it is | Response |\n|---|---|---|\n| Paid against gift guide | Brand , not scope | Acknowledge and close cleanly. No debate. |\n| Additional deliverables framed as \"the next thing\" | Scope creep | Route to change-order. Jules checks retainer calendar first. |\n| Q4 product story calendar ownership | Expansion signal | Worth a separate conversation — this is revenue upside if handled right |\n\n**3. Pull the SOW and check what's actually in scope.**\nOwen is drafting the v2 retainer SOW but it's not client-facing yet. That means the current document still reads like a project SOW with enumerated deliverables — which is exactly what Eliza will point to when she frames the gift guide work as \"what we signed up for.\" Before any scope conversation, you and Riley need to know exactly what the current doc says.\n\n**4. Prepare a clean scope conversation, not an email.**\nThe pattern to avoid: async approvals on scope questions burn trust and loop three times. This conversation needs to happen live — you or Riley on a call with Eliza, not a Slack thread.\n\n---\n\n### Riley's specific tasks this week\n\n- **Draft the Friday status note** — due to you by 11am Friday. Given the scope tension, this note matters. The opener should include a verbatim quote from a recent Eliza conversation. You read it before it goes.\n- **Route the scope-creep items through Jules** — no client-facing response until the retainer calendar check is done.\n- **Prep the call brief** — one page covering: what's in scope, what's been delivered to date, what the new ask is, and a proposed change-order framing if applicable.\n\n---\n\n### Your move this week\n\nOne live conversation with Eliza before Friday. Not to push back — to get clarity. The Q4 product story calendar ownership ask is the signal worth leaning into. If that conversation goes well, the scope friction resolves itself because the context shifts from \"deliverable adds\" to \"what does the next phase look like.\"\n\nThe holiday gift guide paid question is a gift, honestly — it lets you show Eliza you actually heard her brand conviction from month one. Use it to build trust, not defend a budget line.\n\n---\n\nTwo things before you do anything else: **pull the SOW** and have Riley **check the retainer calendar** with Jules today. Everything else follows from what those two surfaces show.",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "fc7104b4-5ead-4ff0-bd26-81bfe10cb13b",
+              "conversation_id": "255c1351-ced0-4738-993d-d7057e437a4e"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Good timing to"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " get ahead of this. I have rich context on Saltline and Eliza — let"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " me pull the full picture before building the plan."
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search memory",
+              "action": "search_memory",
+              "tool_call_id": "toolu_014k6vqng5A2TwUM3sGgRrtd"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "executing"
+            }
+          },
+          {
+            "type": "tool_start",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search company cortex",
+              "action": "search_company_cortex",
+              "tool_call_id": "toolu_01HWZt3muU1Rf4AcMeRwxQt6"
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user wants a weekly plan for what they (Garry) and Riley should do this week regarding the Saltline account, which is at day 73 on retainer. Key issues are:_\n_1. Eliza pushed back on paid media for the holiday gift guide_\n_2. Scope is creeping_\n\n_From the brain context, I have rich information about Saltline and Eliza:_\n_- Eliza absolutely won't run paid against the holiday gift guide: \"If our brand has to bid on the word 'gift' in December, we did the first ten months wrong.\"_\n_- Day 73 maps to the scope-creep pattern we've seen (Saltline day 73 scope-creep email framed as deliverable add — Jules change-order routing)_\n\n\n_- Any scope additions need to hit Jules's calendar before we commit to them, and the real framing here is seasonal cooking moments rather than product launches_\n_- Riley and I should align on Friday status notes with the founder to keep everyone on the same page_\n_- Eliza's position on the gift guide is clear—if we're bidding on \"gift\" in December, we've already failed the first ten months—so I need to route around this organically rather than push back_\n_- The expansion opportunity with Foundry owning Q4's product story calendar end-to-end is real, but only if we handle it as a trust play, not scope creep_\n_- Riley's change-order routing was solid at Week 10, but the SOW language needs tightening to prevent this pattern from repeating_\n_- Owen's SOW v2 is in draft and might be useful here_\n_- The content calendar maps to seasonal cooking moments, not product launches, so the gift guide needs to sit within that frame, not override it_\n\n_For this week, I'm looking at three clear moves: Garry needs to scope the gift guide as a change order with Eliza and clarify whether Q4 product story ownership is a retainer expansion or separate work, while Riley pulls the retainer calendar before saying yes to anything and routes the ask through Jules first, then drafts the change-order framing ahead of that conversation._",
+              "text": "Reasoning:\n_The user wants a weekly plan for what they (Garry) and Riley should do this week regarding the Saltline account, which is at day 73 on retainer. Key issues are:_\n_1. Eliza pushed back on paid media for the holiday gift guide_\n_2. Scope is creeping_\n\n_From the brain context, I have rich information about Saltline and Eliza:_\n_- Eliza absolutely won't run paid against the holiday gift guide: \"If our brand has to bid on the word 'gift' in December, we did the first ten months wrong.\"_\n_- Day 73 maps to the scope-creep pattern we've seen (Saltline day 73 scope-creep email framed as deliverable add — Jules change-order routing)_\n\n\n_- Any scope additions need to hit Jules's calendar before we commit to them, and the real framing here is seasonal cooking moments rather than product launches_\n_- Riley and I should align on Friday status notes with the founder to keep everyone on the same page_\n_- Eliza's position on the gift guide is clear—if we're bidding on \"gift\" in December, we've already failed the first ten months—so I need to route around this organically rather than push back_\n_- The expansion opportunity with Foundry owning Q4's product story calendar end-to-end is real, but only if we handle it as a trust play, not scope creep_\n_- Riley's change-order routing was solid at Week 10, but the SOW language needs tightening to prevent this pattern from repeating_\n_- Owen's SOW v2 is in draft and might be useful here_\n_- The content calendar maps to seasonal cooking moments, not product launches, so the gift guide needs to sit within that frame, not override it_\n\n_For this week, I'm looking at three clear moves: Garry needs to scope the gift guide as a change order with Eliza and clarify whether Q4 product story ownership is a retainer expansion or separate work, while Riley pulls the retainer calendar before saying yes to anything and routes the ask through Jules first, then drafts the change-order framing ahead of that conversation._"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search memory",
+              "status": "completed",
+              "tool_call_id": "toolu_014k6vqng5A2TwUM3sGgRrtd"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "tool_end",
+            "data": {
+              "name": "campaign_capability",
+              "label": "Working on search company cortex",
+              "status": "completed",
+              "tool_call_id": "toolu_01HWZt3muU1Rf4AcMeRwxQt6"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "I"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " have everything I need from the Brain context already loaded. Here is the plan."
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\n\n---\n\n## Saltline Week — Day 73 Plan\n\n### What we know going"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " in\n\n- **Eliza will not run paid against"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the holiday gift guide.** This is a firm brand conviction, not a negotiation. Her"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " quote: *\"If our brand has to bid"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " on the word 'gift' in December, we did the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " first ten months wrong.\"* Don't push back on this — it's settled"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ".\n- **The scope creep is real.** Day 73 maps exactly to the pattern:"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " client starts framing new asks as deliverable"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " adds around month three. Jules flagged this with Salt"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "line already (the day 73 scope-creep email ro"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "uted through change-order protocol in Week 12).\n- **There"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "'s also an expansion signal in the mix** — Eliza asked"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " at Week 11 whether Foundry could own the Q"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "4 product story calendar end-to-end. Scope creeping"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " on trust, not price pressure. Different problem"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " than the gift guide ask.\n\n---\n\n### Your priorities this week\n\n**1. Do not"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " say yes to anything before checking the calendar.**\nRiley needs to run"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " every new Saltline ask through Jules before responding. The Week"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " 10 Saltline kitchenware ask cost six un"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "budgeted hours because someone said yes first. Same"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " trap is live right now.\n\n**2. Separate the two threads explicitly"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ".**\nThe gift guide paid ask and the broader scope creep are different things with different answers:\n\n| Thread"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "| What it is | Response |\n|---|---|---|\n| Paid against gift guide | Brand ,"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " not scope | Acknowledge and close cleanly. No debate"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". |\n| Additional deliverables framed as \"the next thing"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\" | Scope creep | Route to change-order. Jules checks retainer calendar first"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". |\n| Q4 product story calendar ownership | Expansion signal | Worth a separate conversation — this"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " is revenue upside if handled right |\n\n**3. Pull the SOW and check what"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "'s actually in scope.**\nOwen is drafting the v2 retainer SOW but"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " it's not client-facing yet. That means the current document still"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " reads like a project SOW with enumerated deliverables — which is exactly"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " what Eliza will point to when she frames the gift guide work as"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " \"what we signed up for.\" Before any scope conversation"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ", you and Riley need to know exactly what the current doc says.\n\n**4. Prepare a clean"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " scope conversation, not an email.**\nThe pattern to avoid"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ": async approvals on scope questions burn trust and"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " loop three times. This conversation needs to happen live — you"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " or Riley on a call with Eliza, not a Slack thread.\n\n---\n\n### Riley's specific"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " tasks this week\n\n- **Draft the Friday status note** — due to"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " you by 11am Friday. Given"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the scope tension, this note matters. The opener should include a verb"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "atim quote from a recent Eliza conversation. You read it before it"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " goes.\n- **Route the scope-creep items through Jules** — no"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " client-facing response until the retainer calendar check is done.\n- **Prep the call brief"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "** — one page covering: what's in scope, what's been delivered to"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " date, what the new ask is, and a proposed change-order fr"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "aming if applicable.\n\n---\n\n### Your move this week\n\nOne live conversation"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " with Eliza before Friday. Not to push back — to get clarity. The"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Q4 product story calendar ownership ask is the signal worth leaning into. If that"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " conversation goes well, the scope friction resolves itself because the context shifts"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " from \"deliverable adds\" to \"what does the next phase look like.\"\n\nThe holiday gift guide paid"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " question is a gift, honestly — it lets you show Eliza you actually"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " heard her brand conviction from month one. Use it to build trust,"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " not defend a budget line.\n\n---\n\nTwo things before you do"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " anything else: **pull the SOW** and have Riley **check the ret"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "ainer calendar** with Jules today. Everything else follows from what those"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " two surfaces show."
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "fc7104b4-5ead-4ff0-bd26-81bfe10cb13b",
+              "credits_pending": true,
+              "duration_ms": 61114,
+              "usage": {
+                "input_tokens": 30747
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779862421314,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 30747,
+                "slices": [
+                  {
+                    "id": "system",
+                    "label": "System",
+                    "tokens": 28000,
+                    "entries": [
+                      {
+                        "id": "openclaw_system_prompt",
+                        "label": "OpenClaw system prompt",
+                        "tokens": 21776
+                      },
+                      {
+                        "id": "injected_workspace_files",
+                        "label": "Injected workspace files",
+                        "tokens": 6224
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 1983,
+                    "entries": [
+                      {
+                        "id": "read",
+                        "label": "read",
+                        "tokens": 173
+                      },
+                      {
+                        "id": "session_status",
+                        "label": "session_status",
+                        "tokens": 74
+                      },
+                      {
+                        "id": "web_search",
+                        "label": "web_search",
+                        "tokens": 217
+                      },
+                      {
+                        "id": "web_fetch",
+                        "label": "web_fetch",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "wait",
+                        "label": "wait",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "campaign_capability",
+                        "label": "campaign_capability",
+                        "tokens": 1164
+                      },
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 388
+                      }
+                    ]
+                  },
+                  {
+                    "id": "skills",
+                    "label": "Skills",
+                    "tokens": 4164,
+                    "entries": [
+                      {
+                        "id": "skill-creator",
+                        "label": "skill-creator",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "ad-builder",
+                        "label": "ad-builder",
+                        "tokens": 61
+                      },
+                      {
+                        "id": "avatar-builder",
+                        "label": "avatar-builder",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "awareness-evaluator",
+                        "label": "awareness-evaluator",
+                        "tokens": 83
+                      },
+                      {
+                        "id": "blog-writing",
+                        "label": "blog-writing",
+                        "tokens": 111
+                      },
+                      {
+                        "id": "brain-memory",
+                        "label": "brain-memory",
+                        "tokens": 116
+                      },
+                      {
+                        "id": "campaign-performance-reporting",
+                        "label": "campaign-performance-reporting",
+                        "tokens": 165
+                      },
+                      {
+                        "id": "chat-plan-management",
+                        "label": "chat-plan-management",
+                        "tokens": 98
+                      },
+                      {
+                        "id": "email-campaign-publisher",
+                        "label": "email-campaign-publisher",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "email-sequence-builder",
+                        "label": "email-sequence-builder",
+                        "tokens": 117
+                      },
+                      {
+                        "id": "funnel-builder",
+                        "label": "funnel-builder",
+                        "tokens": 134
+                      },
+                      {
+                        "id": "image-production",
+                        "label": "image-production",
+                        "tokens": 113
+                      },
+                      {
+                        "id": "integrations",
+                        "label": "integrations",
+                        "tokens": 121
+                      },
+                      {
+                        "id": "meta-publisher",
+                        "label": "meta-publisher",
+                        "tokens": 119
+                      },
+                      {
+                        "id": "mission-planner",
+                        "label": "mission-planner",
+                        "tokens": 219
+                      },
+                      {
+                        "id": "mission-quality-evaluator",
+                        "label": "mission-quality-evaluator",
+                        "tokens": 96
+                      },
+                      {
+                        "id": "mission-reviewer",
+                        "label": "mission-reviewer",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "mission-worker-executor",
+                        "label": "mission-worker-executor",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "offer-builder",
+                        "label": "offer-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "onboarding-discovery",
+                        "label": "onboarding-discovery",
+                        "tokens": 168
+                      },
+                      {
+                        "id": "pdf-builder",
+                        "label": "pdf-builder",
+                        "tokens": 125
+                      },
+                      {
+                        "id": "presentation-builder",
+                        "label": "presentation-builder",
+                        "tokens": 152
+                      },
+                      {
+                        "id": "social-content-builder",
+                        "label": "social-content-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "social-publisher",
+                        "label": "social-publisher",
+                        "tokens": 99
+                      },
+                      {
+                        "id": "strategy-planner",
+                        "label": "strategy-planner",
+                        "tokens": 172
+                      },
+                      {
+                        "id": "team-management",
+                        "label": "team-management",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "theme-builder",
+                        "label": "theme-builder",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "vibey-api",
+                        "label": "vibey-api",
+                        "tokens": 56
+                      },
+                      {
+                        "id": "video-analyzer",
+                        "label": "video-analyzer",
+                        "tokens": 166
+                      },
+                      {
+                        "id": "video-producer",
+                        "label": "video-producer",
+                        "tokens": 85
+                      },
+                      {
+                        "id": "video-production",
+                        "label": "video-production",
+                        "tokens": 170
+                      },
+                      {
+                        "id": "website-builder",
+                        "label": "website-builder",
+                        "tokens": 151
+                      }
+                    ]
+                  },
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 15020,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 15020
+                      }
+                    ]
+                  },
+                  {
+                    "id": "user_team",
+                    "label": "User/Team",
+                    "tokens": 44,
+                    "entries": [
+                      {
+                        "id": "user_profile",
+                        "label": "User profile",
+                        "tokens": 44
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 0
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [],
+        "latencyMs": 64965.973,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 30747,
+          "outputTokens": 0,
+          "totalTokens": 30747,
+          "brainContextTokens": 15020,
+          "contextWindowTokens": 1000000,
+          "durationMs": 61114,
+          "latencyMs": 64965.973
+        },
+        "toolCalls": {
+          "totalToolCalls": 2,
+          "brainToolCalls": 0,
+          "byToolName": {
+            "campaign_capability": 2
+          },
+          "byBrainAction": {}
+        }
+      }
+    }
+  ]
+}

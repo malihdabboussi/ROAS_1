@@ -1,0 +1,193 @@
+{
+  "project": "Brain Finalize — Complete Missing Brain Implementation",
+  "branchName": "current",
+  "description": "Complete all critical missing gaps in the Brain system: BRAIN_MARGIN credits fix, Stripe agent-brain product creation, user brain access toggle, free plan gating, pending captures queue, SK backend, multi-mode search, agent brain cancel/grace period, and search feedback.",
+  "recommendedAgents": 4,
+  "context": {
+    "currentProblem": "The Brain DB schema is fully in place (ns_* tables, RPCs, RLS) and the UI visualization is built. However the backend services for SK, multi-mode search, pending captures, and search feedback are completely missing. Brain ops charge 4x credits instead of 2x. The Stripe agent-brain product has never been created in live or test accounts so checkout fails. The user brain access toggle (per-agent) does not exist. Free plan has no brain guard. Agent brain cancel/deletion grace period is not implemented.",
+    "desiredState": "Every brain feature listed in brain-integration.md is wired end-to-end. Brain ops cost 2x credits. Agents respect the user-brain-access toggle. Free users are blocked from brain. Pending captures queue gives users oversight of what enters their brain. SK ingestion lets users teach agent brains. Multi-mode search (semantic, hybrid, graph, chain, auto, summary) works. Agent brain cancel triggers a 14-day grace then deletes data.",
+    "architectureGoal": "All ns_* tables already exist. Backend changes live in apps/api (user-facing) and apps/agent-api (agent-side). Frontend changes live in apps/web. No new DBs, no new env vars. Follow existing module/controller/service/repository pattern for each new vertical. Stripe add-on products must be created in BOTH live (AmY2Dy43Cs) and test (I08CkoZlhA) accounts before any checkout works."
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Fix BRAIN_MARGIN to 2x in credits service",
+      "description": "As the platform, brain AI operations should cost 2x credits (not 4x TEXT_MARGIN) so brain usage feels cheap and users ingest more, making agents smarter.",
+      "acceptanceCriteria": [
+        "Add BRAIN_MARGIN = 2 constant to apps/agent-api/src/modules/billing/services/credits.service.ts",
+        "Brain embedding calls (feature: 'brain') use BRAIN_MARGIN not TEXT_MARGIN",
+        "Brain crystallization calls use BRAIN_MARGIN",
+        "TEXT_MARGIN = 4 still applies for all non-brain features",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [],
+      "notes": "Currently chat.service.ts logs feature: 'brain' but credits.service.ts only has TEXT_MARGIN=4. Brain-specific operations in conversation-processing.service.ts and embedding.service.ts need to pass a separate margin. Look at how apiCost is passed to deductCredits and add an optional overrideMargin param, or add a dedicated deductBrainCredits method."
+    },
+    {
+      "id": "US-002",
+      "title": "Create Stripe Agent Brain add-on products in both live and test accounts",
+      "description": "As a user, I need to be able to purchase an agent brain add-on for $10/mo. This requires the Stripe product and price to exist in both live and test Stripe accounts.",
+      "acceptanceCriteria": [
+        "Stripe product 'Agent Brain' created in LIVE account (AmY2Dy43Cs) at $10/mo recurring",
+        "Stripe product 'Agent Brain' created in TEST account (I08CkoZlhA) at $10/mo recurring",
+        "addon_products table has a row with slug='agent-brain', stripe_price_id=<LIVE>, stripe_test_price_id=<TEST>",
+        "A migration inserts the row into addon_products with the correct IDs",
+        "addAgentBrainAddon in stripe.service.ts successfully retrieves the price ID without error",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [],
+      "notes": "CREATE the Stripe products manually in both dashboards first, then store the price IDs in a new migration. See brain-integration.md > Stripe Implementation > Step 1 for exact SQL. The addon_products table already exists from migration 047. This just needs the data row inserted with real Stripe IDs."
+    },
+    {
+      "id": "US-003",
+      "title": "Gate brain features — free plan users cannot use brain",
+      "description": "As the platform, free plan users should not have access to the brain. Brain is a Basic+ feature.",
+      "acceptanceCriteria": [
+        "Backend brain controllers (memories, snapshots, graph) return 403 for users on free plan",
+        "Guard checks user subscription plan against subscription_plans.max_brain_entries (0 = no brain)",
+        "Frontend brain page shows an upgrade prompt for free users instead of the visualization",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "dependsOn": [],
+      "notes": "Add a BrainPlanGuard in apps/api/src/modules/brain/guards/ that checks the user's subscription_plans row. In the frontend BrainVisualization or the brain page, check billing status and show upgrade prompt if no brain access. Look at how other plan gates work (e.g. max_campaigns check in billing.controller.ts)."
+    },
+    {
+      "id": "US-004",
+      "title": "User Brain Access toggle — per agent in Team page",
+      "description": "As a user, I need a toggle per agent in the Team page that controls whether that agent can read my personal user brain (memories + snapshots) in addition to its own SK brain.",
+      "acceptanceCriteria": [
+        "DB: agents_registry table has user_brain_access boolean column (default false) via migration",
+        "API: PATCH /api/agents/:agentKey/brain-access endpoint accepts { userBrainAccess: boolean } and updates the column",
+        "Team page shows a toggle 'Give access to my brain' per agent (visible only for agents with active brain add-on)",
+        "Toggle state is persisted and loaded from agents_registry.user_brain_access",
+        "agent-api: when building agent context, if user_brain_access=true, fetch and inject top-N user brain memories/snapshots alongside SK entries",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "dependsOn": ["US-002"],
+      "notes": "This is the core architecture toggle from brain-integration.md. The Team page already has the per-agent layout. Add a Switch component (see design guidelines section 30) below the Agent Brain Active badge. The agent-api context builder needs to check this flag and optionally query ns_memories/ns_snapshots for the user's default brain."
+    },
+    {
+      "id": "US-005",
+      "title": "Pending captures queue — backend service + agent integration",
+      "description": "As a user, I want agent memory captures to go to a pending review queue instead of saving directly to my brain, so I maintain oversight of what enters my knowledge store.",
+      "acceptanceCriteria": [
+        "PendingCapturesService in apps/agent-api with methods: submitPending(brainId, profileId, snapshots, context), listPending(profileId), acceptCapture(id), rejectCapture(id)",
+        "PendingCapturesService in apps/api (user-facing) with list, accept, reject endpoints",
+        "POST /api/brain/pending — list pending captures for current user",
+        "POST /api/brain/pending/:id/accept — moves snapshots from pending to ns_snapshots",
+        "POST /api/brain/pending/:id/reject — marks capture as rejected",
+        "agent-api conversation-processing.service.ts submits to ns_pending_captures instead of saving directly to ns_snapshots",
+        "auto_accept_at set to now() + 24h on insert",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "dependsOn": [],
+      "notes": "ns_pending_captures table already exists in DB. The agent-api currently calls crystallization.service.ts which saves directly. Change that to call a PendingCapturesService.submitPending() instead. The user-facing accept/reject endpoints in apps/api will move the approved snapshot data from pending into ns_snapshots."
+    },
+    {
+      "id": "US-006",
+      "title": "Pending captures UI — review queue in Brain page",
+      "description": "As a user, I want to see pending captures in the Brain UI so I can review, accept, or reject what agents want to add to my brain.",
+      "acceptanceCriteria": [
+        "Brain page has a 'Pending' tab or panel showing pending captures count badge",
+        "Each pending capture shows: source agent, capture date, preview of snapshot content",
+        "Accept and Reject buttons per capture",
+        "Accepted captures appear in the brain graph on next refresh",
+        "Empty state shown when no pending captures",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": false,
+      "dependsOn": ["US-005"],
+      "notes": "Add a pending captures service to apps/web/src/features/brain/services/. Add a panel or tab to BrainVisualization. Use the design guidelines for the panel layout (surface-card, body-3 text, button-glass-accent for accept, button-glass-destructive for reject).",
+      "visualVerification": {
+        "url": "http://localhost:3000/brain",
+        "requiresLogin": true,
+        "lookFor": "Brain page should show a pending captures section or tab with a count badge, and individual captures with Accept/Reject controls"
+      }
+    },
+    {
+      "id": "US-007",
+      "title": "Multi-mode search backend — hybrid, graph, chain, auto, summary",
+      "description": "As the platform, brain search should support 6 modes: semantic (existing), hybrid, graph, chain, auto, summary — so agents and users find knowledge more effectively.",
+      "acceptanceCriteria": [
+        "SearchService in apps/api/src/modules/brain/services/search.service.ts with mode dispatcher",
+        "hybrid mode: 70% semantic + 30% graph scores merged",
+        "graph mode: seeds from semantic, traverses traverse_edges RPC 2 hops",
+        "summary mode: uses search_snapshots_fts RPC for full-text search",
+        "chain mode: Gemini decomposes query into 2-3 sub-questions, runs parallel searches, merges with boost for snapshots appearing in multiple results",
+        "auto mode: Gemini selects best mode based on query analysis",
+        "GET /api/brain/search?q=...&mode=hybrid (default) works",
+        "Existing semantic search still works as mode=semantic",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": false,
+      "dependsOn": [],
+      "notes": "traverse_edges and search_snapshots_fts RPCs already exist in DB (migration 047). The existing search in memories.repository.ts uses search_ns_memories RPC for semantic. Build SearchService as a new service, new controller endpoint /api/brain/search. Reference apps/nexus/apps/neuralsnap/apps/app-backend/src/modules/search/services/search.service.ts"
+    },
+    {
+      "id": "US-008",
+      "title": "SK system backend — ingest, search, sources, gaps, stats",
+      "description": "As a user, I want to ingest curated sources (text, URLs, documents) into an agent's SK brain so that agent becomes a domain expert.",
+      "acceptanceCriteria": [
+        "SkIngestionService: ingest(text, sourceMetadata, brainId) — chunks text, Gemini extraction, embed, store to ns_sk_entries",
+        "SkService: search(query, brainId), getSources(brainId), getGaps(brainId), getStats(brainId), updateMastery(entryId, score)",
+        "POST /api/brain/sk/ingest — accepts { text, sourceType, title, domain, brainId }",
+        "GET /api/brain/sk/sources?brainId=... — list sources",
+        "GET /api/brain/sk/search?q=...&brainId=... — semantic search over ns_sk_entries",
+        "GET /api/brain/sk/gaps?brainId=... — list detected knowledge gaps",
+        "GET /api/brain/sk/stats?brainId=... — entry counts, mastery avg, domain breakdown",
+        "Ingest deduplicates via content_hash (skip if hash already in ns_sk_entries for brain)",
+        "Usage logged to ai_usage_events with feature=brain, action=sk_ingest using BRAIN_MARGIN",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": false,
+      "dependsOn": ["US-001"],
+      "notes": "All ns_sk_* tables exist in DB. Reference apps/nexus/apps/neuralsnap/apps/app-backend/src/modules/specific-knowledge/ for the ingestion logic. Create a new SkModule in apps/api/src/modules/brain/ (or as its own module). The agent-api will also need a lightweight SkQueryService to search SK entries during mission execution."
+    },
+    {
+      "id": "US-009",
+      "title": "Agent brain cancel + 14-day grace period deletion",
+      "description": "As a user, when I cancel an agent brain add-on, the agent loses access immediately and brain data is deleted after 14 days.",
+      "acceptanceCriteria": [
+        "DELETE /api/billing/agent-brain/:agentId — removes Stripe subscription item, sets user_addons.status=canceling, user_addons.canceled_at=now()",
+        "On cancel: agent immediately loses brain access (hasBrain returns false)",
+        "ns_brains row for the agent gets a pending_deletion_at = now() + 14 days column set",
+        "A scheduled cron or webhook handler deletes ns_sk_entries, ns_sk_sources, and sets ns_brains.status=deleted after 14 days",
+        "Team page shows cancel button next to Agent Brain Active badge",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 4,
+      "passes": false,
+      "dependsOn": ["US-002"],
+      "notes": "Need to add pending_deletion_at column to ns_brains via migration. The webhook handler for customer.subscription.updated should check for removed agent-brain items and trigger the cancel flow. See brain-integration.md > Corrections > Agent Brain Cancellation section."
+    },
+    {
+      "id": "US-010",
+      "title": "Search feedback — thumbs up/down on brain search results",
+      "description": "As a user, I can rate brain search results so the brain learns which snapshots are most useful and re-ranks them higher over time.",
+      "acceptanceCriteria": [
+        "FeedbackService in apps/api: submitFeedback(profileId, query, snapshotId, rating, searchMode, position)",
+        "POST /api/brain/search/feedback — accepts { snapshotId, query, rating: 1|-1, searchMode, position }",
+        "ns_search_feedback table receives the row",
+        "Search results in future queries apply a boost based on aggregated positive feedback for that snapshot",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 4,
+      "passes": false,
+      "dependsOn": ["US-007"],
+      "notes": "ns_search_feedback table exists in DB. This is lower priority than the core search modes but should be added once the search endpoint exists. The boost logic can be simple: aggregate positive - negative ratings per snapshot_id, add as a score bonus in search result ranking."
+    }
+  ]
+}

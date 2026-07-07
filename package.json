@@ -1,0 +1,85 @@
+{
+  "name": "vibey-v2",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:app": "turbo dev --filter=@vibey/web",
+    "dev:admin": "turbo dev --filter=@vibey/admin",
+    "dev:back": "turbo dev --filter=@vibey/api",
+    "dev:agentapi": "OPENROUTER_API_KEY=$(node -p \"require('fs').readFileSync('apps/api/.env','utf8').match(/^OPENROUTER_API_KEY=(.*)$/m)[1].trim()\") OPENCLAW_CONFIG_PATH=$PWD/docker/openclaw.json AGENTS_BASE_DIR=$PWD/docker/agents PROJECTS_BASE_DIR=$PWD/.runtime/user-projects OPENCLAW_GATEWAY_TOKEN=local-dev-gateway-token pnpm --filter @vibey/agent-api run dev",
+    "dev:agent": "OPENROUTER_API_KEY=$(node -p \"require('fs').readFileSync('apps/api/.env','utf8').match(/^OPENROUTER_API_KEY=(.*)$/m)[1].trim()\") OPENCLAW_CONFIG_PATH=$PWD/docker/openclaw.json AGENTS_BASE_DIR=$PWD/docker/agents PROJECTS_BASE_DIR=$PWD/.runtime/user-projects VIBEY_PLUGIN_PATH=$PWD/docker/tools/vibey-backend VIBEY_BACKEND_URL=http://localhost:3003 OPENCLAW_GATEWAY_TOKEN=local-dev-gateway-token pnpm --filter openclaw run gateway:dev:headless",
+    "dev:website": "turbo dev --filter=@vibey/website",
+    "dev:docs": "turbo dev --filter=@vibey/docs",
+    "build": "turbo build",
+    "test": "turbo test",
+    "test:e2e": "turbo test:e2e",
+    "typecheck": "turbo typecheck",
+    "lint": "turbo lint",
+    "lint:fix": "turbo lint:fix",
+    "architecture:check": "node scripts/arch/check-loc.mjs",
+    "architecture:baseline": "node scripts/arch/check-loc.mjs --write-baseline",
+    "architecture:self-test": "node --test scripts/arch/*.test.mjs",
+    "architecture:contracts": "node scripts/arch/http-contract-harness.mjs",
+    "architecture:parity": "node scripts/arch/parity-diff.mjs",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "smoke:chat-context": "tsx scripts/smoke/chat-context-window-smoke.ts",
+    "smoke:railway-chat-autoscale": "tsx scripts/smoke/railway-chat-autoscale-smoke.ts",
+    "smoke:customer-signal": "tsx scripts/smoke/customer-signal-loop-smoke.ts",
+    "security:openclaw-workspaces:check": "node scripts/security/check-openclaw-workspaces.mjs",
+    "security:predeploy:check": "node scripts/security/predeploy-health-gate.mjs",
+    "seed:system-agents": "tsx scripts/seed-system-agents.ts",
+    "seed:yc-demo": "tsx scripts/seed-yc-demo/index.ts",
+    "clean": "turbo clean",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
+    "@supabase/supabase-js": "2.49.4",
+    "@testing-library/jest-dom": "6",
+    "@testing-library/react": "16",
+    "@types/node": "^25.9.0",
+    "@vitejs/plugin-react": "4",
+    "husky": "^9.1.7",
+    "jsdom": "25",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "tsx": "^4.21.0",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.3",
+    "vitest": "2"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,md,css}": [
+      "prettier --write"
+    ]
+  },
+  "packageManager": "pnpm@9.15.4",
+  "pnpm": {
+    "neverBuiltDependencies": [
+      "node-llama-cpp"
+    ],
+    "patchedDependencies": {
+      "@mariozechner/pi-ai@0.52.12": "patches/@mariozechner__pi-ai@0.52.12.patch",
+      "@mariozechner/pi-agent-core@0.52.12": "patches/@mariozechner__pi-agent-core@0.52.12.patch"
+    },
+    "allowNonAppliedPatches": true,
+    "overrides": {
+      "@nestjs/common": "11.1.14",
+      "@nestjs/core": "11.1.14",
+      "@nestjs/platform-express": "11.1.14",
+      "@supabase/supabase-js": "2.49.4"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "modal": "^0.7.4"
+  }
+}

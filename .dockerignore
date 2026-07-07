@@ -1,0 +1,64 @@
+# Dependencies (installed in Docker)
+node_modules
+**/node_modules
+
+# Build outputs (built in Docker)
+**/dist
+**/.turbo
+
+# Git
+.git
+.gitignore
+.gitmodules
+
+# IDE
+.cursor
+.claude
+.vscode
+**/.DS_Store
+
+# Environment files (secrets passed as env vars)
+.env
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs
+*.log
+**/*.log
+
+# Test files
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+**/test
+
+# Documentation (not needed in image)
+.docs
+docs
+*.md
+!docker/agents/**/*.md
+
+# CI/CD
+.github
+
+# Other apps (not needed in Docker images — except apps/api + apps/mission-worker for Railway)
+apps/web
+apps/admin
+apps/site
+apps/website
+apps/queue-worker
+Vibey_legacy
+
+# OpenClaw — include source, exclude build artifacts
+!apps/openclaw/
+!apps/openclaw/**
+apps/openclaw/node_modules
+apps/openclaw/dist
+apps/openclaw/.turbo
+apps/openclaw/.git
+apps/openclaw/.worktrees
+apps/openclaw/.bun-cache
+
+# Lockfiles already copied explicitly
+!pnpm-lock.yaml

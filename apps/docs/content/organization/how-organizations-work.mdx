@@ -1,0 +1,128 @@
+---
+title: "How Organizations Work"
+description: "Organizations are shared workspaces for teams. Understand what's shared, what's separate, and how the personal and organization contexts differ."
+---
+
+An organization is your shared workspace. When you work with partners, employees, or clients, an organization lets everyone access the same campaigns, Spaces, agents, and credit pool, while keeping your personal account separate.
+
+## Personal vs Organization
+
+Vibey has two contexts: your **personal account** and your **organization**. You switch between them from the sidebar. Almost everything in Vibey is scoped to whichever context you are in.
+
+| What | Personal | Organization |
+|---|---|---|
+| **Vibey (CEO)** | Your personal Vibey | A separate Vibey for the org |
+| **[Agents](/team/meet-your-agents)** | Your personal team | A separate team for the org |
+| **[Skills](/team/agent-skills)** | Skills on your personal agents | Skills on the org's agents |
+| **[Campaigns](/campaigns/organizing-with-campaigns)** | Your personal campaigns | The org's shared campaigns |
+| **[Spaces](/spaces/what-is-a-space)** | Your personal Spaces (including Personal Space) | The org's shared Spaces |
+| **[Missions](/missions/what-are-missions)** | Missions in personal Spaces | Missions in org Spaces |
+| **[Deliverables](/campaigns/campaign-deliverables)** | Deliverables from personal work | Deliverables from org work |
+| **[Integrations](/integrations/connected-platforms)** | Your personal integrations | The org's shared integrations |
+| **[Company Brain](/brain/company-brain)** | Not applicable | Shared across the org |
+| **[Customer Brain](/brain/customer-brain)** | Yours alone | Org-scoped, shared across the org |
+| **[Agent Brain](/brain/agent-brain)** | On personal agents | On org agents |
+| **Conversations** | Private to you | Shared across all org members |
+| **[Credits](/settings/how-billing-works)** | Your personal credits | The org's shared credit pool |
+
+### What IS shared across both
+
+| What | How it works |
+|---|---|
+| **[User Brain](/brain/user-brain)** | Your User Brain is yours. It follows you across personal and organization contexts. Every agent in both contexts can access it (unless you toggle access off). |
+| **Your profile** | Your name, email, avatar stay the same everywhere |
+| **Your [Personal Space](/spaces/personal-space)** | Your private Space stays yours, even when you switch into an org context |
+
+### What this means in practice
+
+When you switch to your organization context:
+
+- You see the **org's agents**, not your personal ones. You may have hired a copywriter for your personal account and a different copywriter for the org. They are separate employees with separate skills and brain training.
+- You see the **org's campaigns and Spaces**, not your personal ones. Work done in org Spaces is visible to all org members.
+- You see **all org conversations** with each agent, not just your own. Every member's chat threads are visible. You can toggle between "all" and "mine" in the sidebar.
+- You can use **org-context integrations** in two scopes: **Personal** (only you in that org) or **All Org** (shared with everyone in the org).
+- **Credits** come from the org's shared pool, not your personal balance.
+- The org's **Company Brain** and **Customer Brain** are available to org agents.
+
+## Roles and Permissions
+
+| Role | What they can do |
+|---|---|
+| **Owner** | Everything: [billing](/settings/how-billing-works), team management, campaigns, settings, invitations. Can delete the organization. |
+| **Admin** | Manage team, campaigns, and agents. Can invite members. Cannot change billing. |
+| **Creator** | Create and edit campaigns and Spaces, send [missions](/missions/what-are-missions), work in [Team](/team/talking-to-vibey). The default working role. |
+| **Editor** | Edit existing work, cannot create new campaigns |
+| **Viewer** | Read-only access to campaigns and [deliverables](/campaigns/campaign-deliverables) |
+
+## Inviting Members
+
+<Steps>
+  <Step title="Open Account Settings">
+    Navigate to **Account Settings → Organization**.
+  </Step>
+  <Step title="Invite by email">
+    Enter the email address of the person you want to add.
+  </Step>
+  <Step title="Assign a role">
+    Choose their access level from the roles above.
+  </Step>
+  <Step title="They accept">
+    The invitee gets an email and joins your organization once they accept. If they do not already have a Vibey account, they go through the [org-only invite flow](/organization/org-only-invites) and land directly inside the org.
+  </Step>
+</Steps>
+
+<Callout type="info">
+  Pending invitations are deduplicated. You can only have one pending invite per email at a time. Revoke or update via Members.
+</Callout>
+
+## Managing Members
+
+From **Account Settings → Organization**, you can:
+
+- See all current members, their roles, and status
+- Change a member's role
+- Remove members from the organization
+- View and manage pending invitations
+
+## How Access Works Across the Org
+
+- **Campaigns** are visible to all members based on role permissions
+- **Agents** are shared. The [team](/team/meet-your-agents) you build in the org is available to all members
+- **Conversations** are shared. Every member can read every conversation with an agent in the org. You can only edit or delete your own conversations. Use the toggle in the sidebar to switch between viewing all conversations or just yours.
+- **[Company Brain](/brain/company-brain)** and **[Customer Brain](/brain/customer-brain)** are shared at the org level. Campaigns provide active project context through their Spaces, strategy, and deliverables.
+- **Credits** come from a shared pool managed by the owner
+
+## Integration Scoping
+
+In organization context, each new integration connection has a scope:
+
+- **Personal** (default): visible and usable only by the member who connected it, inside that org.
+- **All Org**: shared with all org members.
+
+### Multiple Connections Per Integration
+
+You can connect multiple accounts for the same integration in one org (for example, two Instagram accounts or two Gmail accounts).
+
+- The Manage view groups each integration and lists each connection separately.
+- Org shared connections support a single **default** per integration (used as fallback).
+
+### Permissions for All Org Connections
+
+- Only **Owner** and **Admin** can create, disconnect, or set default for **All Org** connections.
+- Any member can connect and manage their own **Personal** org-context connections.
+
+### Personal-Only Exceptions
+
+- **Fathom**: Personal-only.
+- **Fireflies**: Personal-only.
+
+## Organization Settings
+
+Manage your org from **Account Settings → Organization**:
+
+- **Organization name and slug** Your team's identity
+- **Delete organization** Permanently removes the org and all associated data (owner only)
+
+<Callout type="tip">
+  Start by inviting one or two key team members with the **Creator** role. This gives them enough access to work independently (creating campaigns, sending missions, working in Spaces) without touching billing or org settings.
+</Callout>

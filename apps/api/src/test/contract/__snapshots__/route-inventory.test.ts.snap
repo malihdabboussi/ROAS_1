@@ -1,0 +1,5382 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`API route inventory contract > matches the committed method + path inventory 1`] = `
+[
+  {
+    "method": "GET",
+    "path": "/.well-known/oauth-authorization-server",
+  },
+  {
+    "method": "GET",
+    "path": "/.well-known/openid-configuration",
+  },
+  {
+    "method": "GET",
+    "path": "/api",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/ad-campaigns/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/ad-campaigns/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/ad-campaigns/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ad-campaigns/:id/ad-sets",
+  },
+  {
+    "method": "GET",
+    "path": "/api/ad-campaigns/:id/ads",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ad-campaigns/:id/duplicate",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ad-campaigns/:id/refresh-meta-status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ad-campaigns/:id/set-meta-status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ad-sets/:adSetId/ads/bulk",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ad-sets/:adSetId/ads/generate-copy",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ad-sets/:adSetId/ads/generate-variations",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ad-sets/:adSetId/ads/regenerate-variation",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/ad-sets/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/ad-sets/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/ad-sets/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/ad-sets/:id/ads",
+  },
+  {
+    "method": "GET",
+    "path": "/api/ad-sets/:id/delivery-estimate",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ad-sets/:id/duplicate",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ad-sets/:id/refresh-meta-status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ad-sets/:id/set-meta-status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/billing-health",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/billing-health/:id/resolve",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/billing-health/reconcile",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/check",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/dashboard",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/enterprise/skill-builder/agents",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/enterprise/skill-builder/agents/:agentKey/skills",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/enterprise/skill-builder/sessions",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/enterprise/skill-builder/sessions",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/enterprise/skill-builder/sessions/:sessionId/chat",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/enterprise/skill-builder/sessions/:sessionId/messages",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/enterprise/skill-builder/skills",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/enterprise/skill-builder/skills/:skillId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/enterprise/skill-builder/skills/:skillId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/enterprise/skill-builder/skills/:skillKey/resources",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/enterprise/skill-builder/sync",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/enterprise/skill-builder/users/:userId/scopes",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/enterprise/skill-builder/users/search",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/errors",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/errors/:id/resolve",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/finances",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/instruction-governance",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/instruction-governance/repair",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/invite-codes",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/invite-codes",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/admin/invite-codes/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/admin/invite-codes/:id/revoke",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/machine-pool-status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/machine-pool/replenish",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/machines",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/mission-reliability",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/operations",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/orgs",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/orgs/:id/dashboard",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/platform-email",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/platform-email/domain",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/platform-email/sender",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/platform-email/sync-sender",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/platform-email/verify-domain",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/purge-orphan-agent-brains",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/traces",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/traces/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/unit-economics",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/users",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/users/:id/dashboard",
+  },
+  {
+    "method": "GET",
+    "path": "/api/admin/waitlist",
+  },
+  {
+    "method": "POST",
+    "path": "/api/admin/waitlist/:id/invite",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/ads/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/ads/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/ads/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ads/:id/clone",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ads/:id/duplicate",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ads/:id/refresh-meta-status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/ads/:id/set-meta-status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agent-teams",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agent-teams",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/agent-teams/:teamId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agent-teams/:teamId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agent-teams/:teamId/grants",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/agent-teams/:teamId/grants",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agent-teams/:teamId/members",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/agent-teams/:teamId/members",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/agent-teams/:teamId/members/:userId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agent-teams/:teamId/overview",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agent-teams/:teamId/spending",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agent-teams/agents/:agentKey/overrides",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/agent-teams/agents/:agentKey/overrides",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agent-teams/agents/:agentKey/policy",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/agent-teams/agents/:agentKey/skill-overrides/:skillKey",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agent-teams/agents/:agentKey/skill-overrides/:skillKey",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agent-teams/agents/:agentKey/team",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agent-teams/memberships/me",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/agents/:agentKey",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/:agentKey/active",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents/:agentKey/checkpoints",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents/:agentKey/checkpoints/:checkpointId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/:agentKey/checkpoints/:checkpointId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/:agentKey/checkpoints/:checkpointId/restore",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/:agentKey/communication",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents/:agentKey/documents",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/:agentKey/image",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/:agentKey/name",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/:agentKey/onboarding-complete",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/:agentKey/public-page",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/:agentKey/repair-setup",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents/:agentKey/skills",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/:agentKey/skills",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/agents/:agentKey/skills/:skillId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/:agentKey/skills/:skillId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/:agentKey/skills/:skillKey/assets",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/:agentKey/skills/:skillKey/resources",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/agents/:agentKey/skills/:skillKey/resources/:resourceId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/:agentKey/skills/:skillKey/resources/:resourceId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/:agentKey/user-state",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents/:agentKey/widget",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/:agentKey/widget",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents/:agentKey/workflows",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/:agentKey/workflows",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/agents/:agentKey/workflows/:workflowId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/:agentKey/workflows/:workflowId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents/awareness-points",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/awareness-points/read-all",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/backfill-avatars",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/backfill-brain-scholar",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/generate-avatar/onboarding",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/hire-ready",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/onboard",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents/onboarding-status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents/ready-library",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/agents/reorder",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents/skills",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents/slim",
+  },
+  {
+    "method": "GET",
+    "path": "/api/agents/user-state",
+  },
+  {
+    "method": "POST",
+    "path": "/api/artifacts/:table/:id/copy",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/artifacts/:table/:id/move",
+  },
+  {
+    "method": "POST",
+    "path": "/api/artifacts/delete",
+  },
+  {
+    "method": "POST",
+    "path": "/api/artifacts/resolve-campaigns",
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/forgot-password",
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/invite-codes/:code",
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/login",
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/oauth",
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/register",
+  },
+  {
+    "method": "POST",
+    "path": "/api/auth/register-with-invite",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/avatars/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/avatars/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/avatars/:id",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/billing/agent-brain/:agentId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/billing/agent-brain/checkout",
+  },
+  {
+    "method": "GET",
+    "path": "/api/billing/agent-brain/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/billing/agent-brains/batch",
+  },
+  {
+    "method": "GET",
+    "path": "/api/billing/agent-spending",
+  },
+  {
+    "method": "GET",
+    "path": "/api/billing/auto-recharge",
+  },
+  {
+    "method": "POST",
+    "path": "/api/billing/auto-recharge",
+  },
+  {
+    "method": "POST",
+    "path": "/api/billing/cancel-subscription",
+  },
+  {
+    "method": "POST",
+    "path": "/api/billing/checkout",
+  },
+  {
+    "method": "GET",
+    "path": "/api/billing/credit-history",
+  },
+  {
+    "method": "GET",
+    "path": "/api/billing/invoices",
+  },
+  {
+    "method": "GET",
+    "path": "/api/billing/plans",
+  },
+  {
+    "method": "POST",
+    "path": "/api/billing/portal",
+  },
+  {
+    "method": "POST",
+    "path": "/api/billing/purchase-credits",
+  },
+  {
+    "method": "POST",
+    "path": "/api/billing/reactivate-subscription",
+  },
+  {
+    "method": "POST",
+    "path": "/api/billing/redeem-promo",
+  },
+  {
+    "method": "GET",
+    "path": "/api/billing/session-status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/billing/status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/billing/switch-interval",
+  },
+  {
+    "method": "GET",
+    "path": "/api/billing/usage",
+  },
+  {
+    "method": "GET",
+    "path": "/api/billing/usage-analytics",
+  },
+  {
+    "method": "POST",
+    "path": "/api/billing/webhook",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/blog-posts/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/blog-posts/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/blog-posts/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/brain/:brainId/cortex-max",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/:brainId/cortex-max/crystallize",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/brain/:brainId/image",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/:brainId/narrative-pages",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/avatars",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/brains",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/company/objects",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/brain/company/settings",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/company/signals",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/brain/company/signals/:signalId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/company/status",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/brain/connections/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/cross-suggestions",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/cross-suggestions/:id/accept",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/cross-suggestions/:id/reject",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/brain/customer/enabled",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/customer/memories/link",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/customer/memories/text",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/customer/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/emotional-profile",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/graph",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/health",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/health/batch",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/brain/import-jobs/:jobId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/import-jobs/:jobId",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/brain/import-jobs/:jobId/dismiss",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/import-jobs/:jobId/retry",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/import-jobs/active",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/import-jobs/campaign-fathom",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/import-jobs/campaign-file",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/import-jobs/campaign-fireflies",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/import-jobs/campaign-url",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/import-jobs/fathom-meeting",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/import-jobs/fireflies-transcript",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/import-jobs/notifications/ack",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/import-jobs/notifications/pending",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/import-jobs/remember-document",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/import-jobs/remember-link",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/import-jobs/sk-ingest",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/import-jobs/sk-ingest-link",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/brain/memories/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/memories/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/brain/memories/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/memories/:id/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/nodes/transfer",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/observe",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/patterns",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/patterns/detect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/pending",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/pending/:id/accept",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/pending/:id/reject",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/perspectives",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/process/conversation",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/remember",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/remember-link",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/search",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/search",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/search/feedback",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/search/image",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/brain/sk/entries/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/sk/extract-text",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/sk/gaps",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/sk/ingest",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/sk/ingest-link",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/brain/sk/mastery",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/sk/search",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/sk/sources",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/brain/sk/sources/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/sk/stats",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/snapshots",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/snapshots",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/brain/snapshots/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/snapshots/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/brain/snapshots/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/snapshots/crystallize",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/snapshots/search",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/snapshots/stats",
+  },
+  {
+    "method": "GET",
+    "path": "/api/brain/stats",
+  },
+  {
+    "method": "GET",
+    "path": "/api/browser-sessions",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/browser-sessions/:domain",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/browser-sessions/:domain",
+  },
+  {
+    "method": "GET",
+    "path": "/api/browser-sessions/config",
+  },
+  {
+    "method": "GET",
+    "path": "/api/browser-sessions/consent",
+  },
+  {
+    "method": "POST",
+    "path": "/api/browser-sessions/consent",
+  },
+  {
+    "method": "POST",
+    "path": "/api/browser-sessions/sync",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/ad-campaigns",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:campaignId/ad-campaigns",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/ads",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/assets/summary",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/avatars",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:campaignId/avatars",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/documents",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/emails",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:campaignId/emails",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/offers",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:campaignId/offers",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/presentations",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:campaignId/presentations",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/schedule",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/sequences",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:campaignId/sequences",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/social-posts",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:campaignId/social-posts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/strategy-nodes",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:campaignId/strategy-nodes",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/campaigns/:campaignId/strategy-nodes/:nodeId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/campaigns/:campaignId/strategy-nodes/:nodeId",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/campaigns/:campaignId/ungrouped-ads",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:campaignId/workflow",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:campaignId/workflow/edges",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/campaigns/:campaignId/workflow/edges/:edgeId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/campaigns/:campaignId/workflow/edges/:edgeId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/campaigns/:campaignId/workflow/layout",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/campaigns/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/campaigns/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:id/ad-analytics",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:id/agents",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:id/agents",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/campaigns/:id/agents/:agentKey",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:id/analytics",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/campaigns/:id/context",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:id/email-analytics",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:id/generate-context",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:id/knowledge/from-deliverable",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:id/knowledge/graph",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:id/knowledge/import-fathom-meeting",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:id/knowledge/import-fireflies-transcript",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:id/knowledge/import-url",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:id/knowledge/nodes",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/campaigns/:id/knowledge/nodes/:nodeId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:id/knowledge/nodes/manual",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:id/knowledge/organize",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:id/knowledge/search",
+  },
+  {
+    "method": "POST",
+    "path": "/api/campaigns/:id/knowledge/sync-assets",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:id/main-dashboard",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:id/reporting-widgets",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/campaigns/:id/restore",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:id/social-analytics",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/:id/social-connection-options",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/campaigns/:id/user-state",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/assignments/by-agent/:agentKey",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/leaderboard",
+  },
+  {
+    "method": "GET",
+    "path": "/api/campaigns/user-state",
+  },
+  {
+    "method": "GET",
+    "path": "/api/canvas/ad-sets/:adSetId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/canvas/ad-sets/:adSetId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/canvas/delegate-to-agent",
+  },
+  {
+    "method": "POST",
+    "path": "/api/canvas/nodes",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/canvas/nodes/:nodeId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/canvas/nodes/:nodeId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/canvas/nodes/:nodeId/edit",
+  },
+  {
+    "method": "POST",
+    "path": "/api/canvas/nodes/:nodeId/generate",
+  },
+  {
+    "method": "POST",
+    "path": "/api/canvas/nodes/:nodeId/promote",
+  },
+  {
+    "method": "POST",
+    "path": "/api/canvas/nodes/:nodeId/variation",
+  },
+  {
+    "method": "GET",
+    "path": "/api/channels",
+  },
+  {
+    "method": "POST",
+    "path": "/api/channels",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/channels/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/channels/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/channels/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/channels/:id/brainstorm",
+  },
+  {
+    "method": "GET",
+    "path": "/api/channels/:id/members",
+  },
+  {
+    "method": "POST",
+    "path": "/api/channels/:id/members",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/channels/:id/members/:memberId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/channels/:id/members/:memberId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/channels/:id/messages",
+  },
+  {
+    "method": "POST",
+    "path": "/api/channels/:id/messages",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/channels/:id/messages/:messageId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/channels/:id/messages/:messageId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/channels/:id/messages/:messageId/metadata",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/channels/:id/messages/:messageId/pin",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/channels/:id/messages/:messageId/rename",
+  },
+  {
+    "method": "POST",
+    "path": "/api/channels/:id/messages/:messageId/retry-agent",
+  },
+  {
+    "method": "POST",
+    "path": "/api/channels/:id/read",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/channels/:id/user-state",
+  },
+  {
+    "method": "GET",
+    "path": "/api/channels/unread-counts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/channels/user-state",
+  },
+  {
+    "method": "GET",
+    "path": "/api/conversations",
+  },
+  {
+    "method": "POST",
+    "path": "/api/conversations",
+  },
+  {
+    "method": "GET",
+    "path": "/api/conversations/:conversationId/documents",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/conversations/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/conversations/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/conversations/:id/fork",
+  },
+  {
+    "method": "GET",
+    "path": "/api/conversations/:id/messages",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/conversations/:id/messages-from/:messageId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/conversations/:id/messages/:messageId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/conversations/:id/shares",
+  },
+  {
+    "method": "POST",
+    "path": "/api/conversations/:id/shares",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/conversations/:id/shares/:shareId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/conversations/assets",
+  },
+  {
+    "method": "GET",
+    "path": "/api/conversations/shared-with-me",
+  },
+  {
+    "method": "POST",
+    "path": "/api/conversations/suggest-title",
+  },
+  {
+    "method": "GET",
+    "path": "/api/custom-fields",
+  },
+  {
+    "method": "POST",
+    "path": "/api/custom-fields",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/custom-fields/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/custom-fields/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/custom-fields/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/dm/:id/messages",
+  },
+  {
+    "method": "POST",
+    "path": "/api/dm/:id/messages",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/dm/:id/messages/:messageId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/dm/:id/messages/:messageId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/dm/:id/read",
+  },
+  {
+    "method": "GET",
+    "path": "/api/dm/list",
+  },
+  {
+    "method": "POST",
+    "path": "/api/dm/open",
+  },
+  {
+    "method": "GET",
+    "path": "/api/dm/unread-counts",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/documents/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/documents/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/documents/:id",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/domains",
+  },
+  {
+    "method": "GET",
+    "path": "/api/domains",
+  },
+  {
+    "method": "POST",
+    "path": "/api/domains",
+  },
+  {
+    "method": "GET",
+    "path": "/api/domains/config",
+  },
+  {
+    "method": "POST",
+    "path": "/api/domains/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/domains/connect-funnel",
+  },
+  {
+    "method": "POST",
+    "path": "/api/domains/connect-presentation",
+  },
+  {
+    "method": "POST",
+    "path": "/api/domains/connect-project",
+  },
+  {
+    "method": "POST",
+    "path": "/api/domains/disconnect-funnel",
+  },
+  {
+    "method": "POST",
+    "path": "/api/domains/disconnect-presentation",
+  },
+  {
+    "method": "POST",
+    "path": "/api/domains/disconnect-project",
+  },
+  {
+    "method": "POST",
+    "path": "/api/domains/generate",
+  },
+  {
+    "method": "POST",
+    "path": "/api/domains/verify",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email-campaigns/approve",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email-campaigns/cancel",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email-campaigns/capabilities",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email-campaigns/provider-audiences",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email-campaigns/provider-senders",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email-campaigns/providers",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email-campaigns/send",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email/domains",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/domains",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/email/domains/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email/domains/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/domains/:id/default",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/domains/:id/reply-tracking/disable",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/domains/:id/reply-tracking/enable",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/domains/:id/reply-tracking/verify-mx",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/domains/:id/verify",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email/domains/status/verified",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email/logs",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/email/logs/:id/archive",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email/logs/schedules/count",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email/sender-identities",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/sender-identities",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/email/sender-identities/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email/sender-identities/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/email/sender-identities/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/sender-identities/:id/default",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/sender-identities/:id/sync-status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/sender-identities/sync",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email/unsubscribe/:token",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/unsubscribe/:token",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/unsubscribe/:token/all",
+  },
+  {
+    "method": "GET",
+    "path": "/api/email/unsubscribe/:token/preferences",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/unsubscribe/:token/preferences",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/webhooks/events",
+  },
+  {
+    "method": "POST",
+    "path": "/api/email/webhooks/inbound",
+  },
+  {
+    "method": "POST",
+    "path": "/api/emails",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/emails/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/emails/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/emails/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/enterprise-applications/apply",
+  },
+  {
+    "method": "POST",
+    "path": "/api/enterprise-applications/apply-public",
+  },
+  {
+    "method": "GET",
+    "path": "/api/enterprise-applications/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/entity-search",
+  },
+  {
+    "method": "GET",
+    "path": "/api/feature-updates",
+  },
+  {
+    "method": "GET",
+    "path": "/api/forms",
+  },
+  {
+    "method": "POST",
+    "path": "/api/forms",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/forms/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/forms/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/forms/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/forms/:id/publish",
+  },
+  {
+    "method": "GET",
+    "path": "/api/forms/:id/responses",
+  },
+  {
+    "method": "POST",
+    "path": "/api/forms/:id/unpublish",
+  },
+  {
+    "method": "GET",
+    "path": "/api/forms/aggregates",
+  },
+  {
+    "method": "GET",
+    "path": "/api/funnels",
+  },
+  {
+    "method": "POST",
+    "path": "/api/funnels",
+  },
+  {
+    "method": "GET",
+    "path": "/api/funnels/:funnelId/blog-posts",
+  },
+  {
+    "method": "POST",
+    "path": "/api/funnels/:funnelId/blog-posts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/funnels/:funnelId/blog-posts/:id",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/funnels/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/funnels/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/funnels/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/funnels/:id/conversion-points",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/funnels/:id/conversion-points/email-capture",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/funnels/:id/conversion-points/email-capture/:pageId",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/funnels/:id/files",
+  },
+  {
+    "method": "POST",
+    "path": "/api/funnels/:id/pages",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/funnels/:id/pages/:pageId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/funnels/:id/pages/:pageId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/funnels/:id/pages/:pageId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/funnels/:id/pages/:pageId/bundle",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/funnels/:id/pages/:pageId/move",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/funnels/:id/pages/reorder",
+  },
+  {
+    "method": "POST",
+    "path": "/api/funnels/:id/publish",
+  },
+  {
+    "method": "POST",
+    "path": "/api/funnels/:id/unpublish",
+  },
+  {
+    "method": "GET",
+    "path": "/api/home/recent-communications",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/account-notes",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/accounts",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/accounts",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/accounts/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/accounts/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/accounts/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/addresses",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/addresses",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/addresses/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/automations",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/campaigns",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/campaigns",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/campaigns/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/campaigns/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/campaigns/:id/links",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/contact-automations",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/contact-automations/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/contact-lists",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/contact-tags",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/contact-tags/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/contacts",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/contacts",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/contacts/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/contacts/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/contacts/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/contacts/:id/automations",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/contacts/:id/deals",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/contacts/:id/field-values",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/contacts/:id/score",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/contacts/sync",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/crm-import-contacts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/deal-activities",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/deal-custom-fields",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/deal-custom-fields",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/deal-custom-fields/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/deal-custom-fields/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/deal-custom-fields/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/deal-notes",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/deal-notes/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/deal-notes/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/deals",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/deals",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/deals/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/deals/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/deals/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/disconnect",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/ecom-customers",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/ecom-orders",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/ecom-orders",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/ecom-orders/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/ecom-orders/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/ecom-orders/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/fields",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/fields",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/fields/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/fields/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/forms",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/forms/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/lists",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/lists",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/lists/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/lists/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/lists/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/messages",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/messages",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/messages/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/messages/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/messages/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/notes",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/notes",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/notes/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/notes/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/notes/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/pipelines",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/pipelines",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/pipelines/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/pipelines/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/saved-responses",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/saved-responses",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/saved-responses/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/saved-responses/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/saved-responses/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/scores",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/scores/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/segments",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/segments/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/stages",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/stages",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/stages/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/stages/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/stages/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/tags",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/tags",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/tags/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/tags/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/tags/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/tasks",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/tasks",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/tasks/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/tasks/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/tracking/events",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/users",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/users/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/webhooks",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/active-campaign/webhooks",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/active-campaign/webhooks/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/active-campaign/webhooks/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/active-campaign/webhooks/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/agent-toggle",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/agent-toggles",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/backfill-labels",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/calendar/agenda",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/calendly/available-times",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/calendly/callback",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/calendly/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/calendly/disconnect",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/calendly/event-types",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/calendly/event-types",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/calendly/event-types/:uuid",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/calendly/event-types/:uuid",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/calendly/one-off-event-types",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/calendly/scheduled-events",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/calendly/scheduled-events",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/calendly/scheduled-events/:uuid/cancel",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/calendly/status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/calendly/webhooks",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/campaign/:campaignId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/capabilities/sync",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/composio/accounts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/composio/callback",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/composio/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/composio/connect-campaign",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/composio/disconnect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/composio/disconnect-campaign",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/composio/execute",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/composio/toolkits/search",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/composio/toolkits/sync",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/composio/webhook",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/connection/default",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/connection/label",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/connection/scope",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/cursor/connect",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/cursor/connections",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/cursor/disconnect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/cursor/webhook",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/dropbox/callback",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/dropbox/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/dropbox/disconnect",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/dropbox/files",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/dropbox/files",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/dropbox/files/download",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/dropbox/files/share",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/dropbox/files/upload",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/dropbox/search",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/dropbox/status",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/facebook/page",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/facebook/pages",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fanbasis/checkout-sessions",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/fanbasis/checkout-sessions/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/checkout-sessions/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/checkout-sessions/:id/session-subscriptions",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/checkout-sessions/:id/transactions",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/checkout-sessions/:productId/subscriptions",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fanbasis/checkout-sessions/:sessionId/extend-subscription",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/fanbasis/checkout-sessions/:sessionId/subscriptions/:subscriptionId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fanbasis/checkout-sessions/embedded",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fanbasis/checkout-sessions/transactions/:transactionId/refund",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fanbasis/connect",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/customers",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fanbasis/customers/:customerId/charge",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/customers/:customerId/payment-methods",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fanbasis/disconnect",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/discount-codes",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fanbasis/discount-codes",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/fanbasis/discount-codes/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/discount-codes/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/integrations/fanbasis/discount-codes/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/products",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/subscribers",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/transactions",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/transactions/:transactionId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fanbasis/webhook-subscriptions",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fanbasis/webhook-subscriptions",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/fanbasis/webhook-subscriptions/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fanbasis/webhook-subscriptions/:id/test",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fathom/callback",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fathom/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fathom/disconnect",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fathom/meetings",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fathom/meetings/import",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fathom/recordings/:recordingId/summary",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fathom/recordings/:recordingId/transcript",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fathom/settings/auto-ingest",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fathom/status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fathom/webhook",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fathom/webhooks",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fathom/webhooks",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/fathom/webhooks/:webhookId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fireflies/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fireflies/disconnect",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fireflies/status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fireflies/sync",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fireflies/transcripts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fireflies/transcripts/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/fireflies/transcripts/:id/import",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/fireflies/user",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/github/callback",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/github/disconnect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/github/install",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/github/repos",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/github/repos",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/github/repos/:owner/:repo/branch",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/github/repos/:owner/:repo/commit",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/github/repos/:owner/:repo/contents",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/github/repos/:owner/:repo/pr",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/github/repos/:owner/:repo/prs",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/github/status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/google-drive/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/google-drive/disconnect",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/google-drive/files",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/google-drive/files/:fileId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/google-drive/files/:fileId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/google-drive/files/:fileId/content",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/google-drive/files/:fileId/download",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/google-drive/files/:fileId/rename",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/google-drive/files/:fileId/share",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/google-drive/files/upload",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/google-drive/push/webhook",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/google-drive/shared-drives",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/google-drive/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/lhg/callback",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/lhg/connect",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/lhg/contacts",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/lhg/disconnect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/lhg/refresh",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/lhg/status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/lhg/upsert-lead-contact",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/linkedin/company-page",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/linkedin/company-pages",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/ad-accounts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/ad-accounts/:adAccountId/adimages",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/ad-accounts/:adAccountId/campaigns",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/ad-accounts/:adAccountId/customaudiences",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/meta/ad-accounts/:adAccountId/customaudiences",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/meta/ad-accounts/:adAccountId/customaudiences/lookalike",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/ad-accounts/:adAccountId/customconversions",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/meta/ad-accounts/:adAccountId/customconversions",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/ad-accounts/:adAccountId/hierarchy",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/ad-accounts/:adAccountId/pixels",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/meta/ad-accounts/:adAccountId/pixels",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/meta/ad-accounts/:adAccountId/sync",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/meta/adset",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/meta/adset-budget",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/callback",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/meta/campaign",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/meta/campaign-budget",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/meta/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/meta/data-deletion",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/meta/disconnect",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/insights",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/meta-adsets/:metaAdSetId/ads",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/meta-campaigns/:metaCampaignId/adsets",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/pages",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/pages/:pageId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/pages/:pageId/instagram-accounts",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/meta/publish-ad",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/meta/publish-campaign",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/search-countries",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/search-interests",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/search-locations",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/meta/webhook",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/meta/webhook",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/org/connected-accounts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/overview",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/paypal/balance",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/paypal/callback",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/paypal/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/paypal/disconnect",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/paypal/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/paypal/transactions",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/paypal/transactions/:transactionId",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/remove-connection/:userIntegrationId",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/remove/:integrationId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/facebook/comments",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/facebook/group/posts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/facebook/post",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/facebook/post/transcript",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/facebook/profile",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/facebook/profile/posts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/facebook/video/transcript",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/instagram/comments",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/instagram/highlight/details",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/instagram/highlights",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/instagram/media/transcript",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/instagram/post/info",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/instagram/posts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/instagram/profile",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/instagram/profile/basic",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/instagram/reels",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/instagram/reels/paginated",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/instagram/reels/search",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/linkedin/company",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/linkedin/company/posts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/linkedin/post",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/linkedin/profile",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/reddit/ad",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/reddit/ads/search",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/reddit/comments/simple",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/reddit/post/comments",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/reddit/search",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/reddit/subreddit/posts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/threads/post",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/threads/posts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/threads/profile",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/threads/search/keyword",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/threads/search/users",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/comment/replies",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/comments",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/feed/trending",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/followers",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/following",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/live",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/profile",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/profile/videos",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/search/hashtag",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/search/keyword",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/search/top",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/search/users",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/songs/details",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/songs/videos",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/user/audience",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/video/info",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/tiktok/video/transcript",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/twitter/community/tweets",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/twitter/profile",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/twitter/tweet/details",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/twitter/tweet/transcript",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/twitter/user/tweets",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/youtube/channel",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/youtube/channel/shorts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/youtube/channel/videos",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/youtube/playlist",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/youtube/search",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/youtube/search/hashtag",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/youtube/shorts/trending",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/youtube/video/comments",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/youtube/video/details",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/scrapecreators/youtube/video/transcript",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/slack/add-reaction",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/slack/brain-mappings",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/slack/brain-mappings",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/slack/brain-mappings/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/slack/brain-mappings/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/slack/brain-mappings/:id/sync-now",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/slack/brain-mappings/sender-resolution",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/slack/brain-mappings/sender-resolution/attach",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/slack/channel-history",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/slack/channels",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/slack/delete-message",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/slack/file-info",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/slack/open-dm",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/slack/remove-reaction",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/slack/search-files",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/slack/search-messages",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/slack/send-message",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/slack/settings/auto-ingest",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/slack/thread-replies",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/slack/update-message",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/slack/upload-file",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/slack/user-by-email",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/slack/user-info",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/slack/users",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/status/:integrationId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/analytics/campaign-overview",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/analytics/overview",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/callback",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/campaigns/:campaignId/coupons",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/stripe/campaigns/:campaignId/coupons",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/campaigns/:campaignId/payment-links",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/stripe/campaigns/:campaignId/payment-links",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/stripe/campaigns/:campaignId/prices",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/campaigns/:campaignId/products",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/stripe/campaigns/:campaignId/products",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/charges",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/stripe/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/stripe/coupons",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/customers",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/stripe/disconnect",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/invoices",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/payment-links",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/stripe/payment-links",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/prices",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/stripe/prices",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/products",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/stripe/products",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/stripe/products/:productId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/stripe/products/:productId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/products/:productId/prices",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/stripe/refunds",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/stripe/subscriptions",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/supabase/auth/config",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/supabase/auth/config",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/supabase/auth/users",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/supabase/auth/users",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/supabase/auth/users/:userId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/supabase/auth/users/:userId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/supabase/auth/users/:userId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/supabase/callback",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/supabase/connect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/supabase/database/query",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/supabase/database/tables",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/integrations/supabase/database/tables/:table/rows",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/supabase/database/tables/:table/rows",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/supabase/database/tables/:table/rows",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/supabase/database/tables/:table/rows",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/supabase/disconnect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/supabase/link-existing",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/supabase/organizations",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/supabase/projects",
+  },
+  {
+    "method": "POST",
+    "path": "/api/integrations/supabase/provision",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/supabase/status",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/integrations/youtube/channel",
+  },
+  {
+    "method": "GET",
+    "path": "/api/integrations/youtube/channels",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/internal/agents/:agentKey/definitions/:fileName",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/internal/agents/:agentKey/skills/:skillKey",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/agents/backfill-avatars",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/agents/backfill-system-agents",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/agents/create",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/agents/hire-ready",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/billing/auto-recharge",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain/import-jobs/:jobId/claim",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain/import-jobs/:jobId/fail",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain/import-jobs/:jobId/process",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain/import-jobs/:jobId/progress",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain/import-jobs/:jobId/succeed",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain/import-jobs/enqueue-due",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain/import-jobs/fathom-meeting",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain/nodes/assign-source",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain/nodes/delete",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain/nodes/transfer",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain/nodes/transfer-by-source",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/campaign-knowledge/ingest",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/contacts/resolve",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/documents",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/enterprise/skills/create",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/enterprise/skills/delete",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/enterprise/skills/list",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/enterprise/skills/resource",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/enterprise/skills/update",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/enterprise/skills/upsert",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/funnels",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/funnels/:id/pages",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/integrations/google-drive/drive-mappings/:id/run-sync",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/integrations/google-drive/push/renew-due",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/machines/ensure-running",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/media/generate",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/amend",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/append-subtasks",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/cancel-subtask",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/comment",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/edit-subtask",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/nudge-subtask",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/pause",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/progress-notes",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/reassign",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/replan",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/retry",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/retry-subtask",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/awareness/telegram-push",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/callback",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/create",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/deliverable",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/manager/append-subtasks",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/manager/cancel-subtask",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/manager/edit-subtask",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/manager/mission-fields",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/manager/prepare-replan",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/manager/retry-subtask",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/notification-push",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/missions/plan",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/offers",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/offers/:id/steps",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/sequences",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/sequences/:id/emails",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/spaces/:id/automations/resume",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/storage/upload",
+  },
+  {
+    "method": "GET",
+    "path": "/api/leads",
+  },
+  {
+    "method": "POST",
+    "path": "/api/leads/campaign-import",
+  },
+  {
+    "method": "GET",
+    "path": "/api/leads/contacts",
+  },
+  {
+    "method": "POST",
+    "path": "/api/leads/contacts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/leads/contacts/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/leads/contacts/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/leads/contacts/:id/activity",
+  },
+  {
+    "method": "GET",
+    "path": "/api/leads/contacts/:id/conversations",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/leads/contacts/:id/conversations/:conversationId/link",
+  },
+  {
+    "method": "GET",
+    "path": "/api/leads/contacts/:id/emails",
+  },
+  {
+    "method": "GET",
+    "path": "/api/leads/contacts/:id/emails/:emailId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/leads/contacts/:id/notes",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/leads/contacts/:id/notes/:noteId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/leads/contacts/:id/reclassify",
+  },
+  {
+    "method": "POST",
+    "path": "/api/leads/contacts/:id/send-email",
+  },
+  {
+    "method": "GET",
+    "path": "/api/leads/contacts/basics",
+  },
+  {
+    "method": "POST",
+    "path": "/api/leads/contacts/import-batch",
+  },
+  {
+    "method": "POST",
+    "path": "/api/leads/crm-sync",
+  },
+  {
+    "method": "GET",
+    "path": "/api/leads/crm-sync/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/leads/crm/funnels",
+  },
+  {
+    "method": "GET",
+    "path": "/api/leads/crm/list",
+  },
+  {
+    "method": "POST",
+    "path": "/api/leads/ingest",
+  },
+  {
+    "method": "POST",
+    "path": "/api/link-preview/resolve",
+  },
+  {
+    "method": "POST",
+    "path": "/api/log/client-error",
+  },
+  {
+    "method": "POST",
+    "path": "/api/machines/ensure-running",
+  },
+  {
+    "method": "GET",
+    "path": "/api/machines/idle-check",
+  },
+  {
+    "method": "POST",
+    "path": "/api/machines/idle-check",
+  },
+  {
+    "method": "GET",
+    "path": "/api/machines/pool-replenish",
+  },
+  {
+    "method": "POST",
+    "path": "/api/machines/pool-replenish",
+  },
+  {
+    "method": "POST",
+    "path": "/api/machines/provision",
+  },
+  {
+    "method": "GET",
+    "path": "/api/machines/reconcile",
+  },
+  {
+    "method": "POST",
+    "path": "/api/machines/reconcile",
+  },
+  {
+    "method": "GET",
+    "path": "/api/mcp/oauth/authorize",
+  },
+  {
+    "method": "GET",
+    "path": "/api/mcp/oauth/authorize-request/:requestId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/mcp/oauth/consent",
+  },
+  {
+    "method": "POST",
+    "path": "/api/mcp/oauth/deny",
+  },
+  {
+    "method": "POST",
+    "path": "/api/mcp/oauth/introspect",
+  },
+  {
+    "method": "POST",
+    "path": "/api/mcp/oauth/register",
+  },
+  {
+    "method": "POST",
+    "path": "/api/mcp/oauth/revoke",
+  },
+  {
+    "method": "POST",
+    "path": "/api/mcp/oauth/token",
+  },
+  {
+    "method": "GET",
+    "path": "/api/mcp/servers",
+  },
+  {
+    "method": "POST",
+    "path": "/api/mcp/servers",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/mcp/servers/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/mcp/servers/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/mcp/servers/:id/refresh",
+  },
+  {
+    "method": "POST",
+    "path": "/api/mcp/servers/:id/test",
+  },
+  {
+    "method": "GET",
+    "path": "/api/media/assets",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/media/assets/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/media/assets/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/media/assets/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/assets/:id/copy",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/assets/:id/refresh-url",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/cache-instagram-images",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/cache-social-images",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/campaigns/upload",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/confirm",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/edit-image-stream",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/generate",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/generate-ad-concepts",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/generate-stream",
+  },
+  {
+    "method": "GET",
+    "path": "/api/media/generate/models",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/import-url",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/presign",
+  },
+  {
+    "method": "POST",
+    "path": "/api/media/upload",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/missions/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/missions/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions/:id/access-requests",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/:id/access-requests/approve",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/:id/approve-plan",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/:id/attachments",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/:id/comment",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions/:id/deliverables",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions/:id/logs",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions/:id/plan",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/:id/rate",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/:id/reject-plan",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/:id/retry",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/missions/:id/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions/:id/subtasks",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/missions/:id/subtasks/:subtaskId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/:id/subtasks/:subtaskId/block-human",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/:id/subtasks/:subtaskId/bounce-to-agent",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/:id/subtasks/:subtaskId/complete-human",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/:id/subtasks/:subtaskId/reassign-human",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions/agents/:agentKey/checkpoints",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions/agents/:agentKey/checkpoints/:checkpointId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/missions/agents/:agentKey/checkpoints/:checkpointId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/agents/:agentKey/checkpoints/:checkpointId/restore",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/missions/auto-approve-toggle",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/missions/awareness-toggle",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/missions/bulk",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/missions/deliverables/:deliverableId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions/deliverables/batch",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions/notifications",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/missions/notifications/:notificationId/read",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/missions/notifications/read",
+  },
+  {
+    "method": "POST",
+    "path": "/api/missions/notifications/read-all",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions/notifications/unread-count",
+  },
+  {
+    "method": "GET",
+    "path": "/api/missions/profile/settings",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/missions/profile/settings",
+  },
+  {
+    "method": "GET",
+    "path": "/api/models",
+  },
+  {
+    "method": "GET",
+    "path": "/api/models/strategies",
+  },
+  {
+    "method": "GET",
+    "path": "/api/models/workspace",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/models/workspace",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/offers/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/offers/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/offers/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/offers/:id/avatar",
+  },
+  {
+    "method": "POST",
+    "path": "/api/onboarding/retry",
+  },
+  {
+    "method": "GET",
+    "path": "/api/onboarding/status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/org/:orgId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/org/:orgId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org/:orgId/agents/import",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/billing/agent-spending",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/billing/auto-recharge",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org/:orgId/billing/auto-recharge",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org/:orgId/billing/checkout",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/billing/human-spending",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/billing/invoices",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/billing/members",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org/:orgId/billing/portal",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org/:orgId/billing/purchase-credits",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/billing/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/billing/usage",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/billing/usage-analytics",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/org/:orgId/brains/:brainId/share",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org/:orgId/brains/share",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/brains/shared",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org/:orgId/campaigns/transfer",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org/:orgId/campaigns/transfer/preview",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/invitations",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org/:orgId/invitations",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/org/:orgId/invitations/:invitationId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/members",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/org/:orgId/members/:memberId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/org/:orgId/members/:memberId/credit-limit",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/org/:orgId/members/:memberId/role",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org/:orgId/restore",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/sharing/brains",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/org/:orgId/sharing/brains/:brainId",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/org/:orgId/sharing/brains/:brainId",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/org/:orgId/sharing/brains/:brainId/shares/:shareId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/:orgId/sharing/campaigns/:campaignId/permissions",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/org/:orgId/sharing/campaigns/:campaignId/permissions/:memberId",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/org/:orgId/sharing/campaigns/:campaignId/permissions/:memberId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/invitations/:token",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org/invitations/accept",
+  },
+  {
+    "method": "POST",
+    "path": "/api/org/invitations/accept-and-bootstrap",
+  },
+  {
+    "method": "GET",
+    "path": "/api/org/my",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/presentations/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/presentations/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/presentations/:id",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/presentations/:id/assets",
+  },
+  {
+    "method": "GET",
+    "path": "/api/presentations/:id/assets",
+  },
+  {
+    "method": "POST",
+    "path": "/api/presentations/:id/assets",
+  },
+  {
+    "method": "GET",
+    "path": "/api/presentations/:id/bundle",
+  },
+  {
+    "method": "GET",
+    "path": "/api/presentations/:id/comments",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/presentations/:id/comments/:commentId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/presentations/:id/comments/:commentId",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/presentations/:id/comments/:commentId",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/presentations/:id/files",
+  },
+  {
+    "method": "GET",
+    "path": "/api/presentations/:id/files",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/presentations/:id/files",
+  },
+  {
+    "method": "POST",
+    "path": "/api/presentations/:id/publish",
+  },
+  {
+    "method": "POST",
+    "path": "/api/presentations/:id/unpublish",
+  },
+  {
+    "method": "GET",
+    "path": "/api/preview/pages/:pageId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/profile",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/profile",
+  },
+  {
+    "method": "GET",
+    "path": "/api/profile/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/profile/avatar",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/profile/default-account",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/profile/onboarding",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/profile/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/projects",
+  },
+  {
+    "method": "POST",
+    "path": "/api/projects",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/projects/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/projects/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/projects/:id",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/projects/:id/files",
+  },
+  {
+    "method": "GET",
+    "path": "/api/projects/:id/files",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/projects/:id/files",
+  },
+  {
+    "method": "POST",
+    "path": "/api/projects/:id/publish",
+  },
+  {
+    "method": "POST",
+    "path": "/api/projects/:id/unpublish",
+  },
+  {
+    "method": "POST",
+    "path": "/api/projects/import/github",
+  },
+  {
+    "method": "GET",
+    "path": "/api/public/forms/:token",
+  },
+  {
+    "method": "POST",
+    "path": "/api/public/forms/:token/submit",
+  },
+  {
+    "method": "POST",
+    "path": "/api/sandboxes/:projectId/ensure-running",
+  },
+  {
+    "method": "GET",
+    "path": "/api/sandboxes/:projectId/status",
+  },
+  {
+    "method": "POST",
+    "path": "/api/sandboxes/:projectId/terminate",
+  },
+  {
+    "method": "GET",
+    "path": "/api/sandboxes/idle-check",
+  },
+  {
+    "method": "POST",
+    "path": "/api/sandboxes/idle-check",
+  },
+  {
+    "method": "ALL",
+    "path": "/api/sdk-proxy/:projectId",
+  },
+  {
+    "method": "ALL",
+    "path": "/api/sdk-proxy/:projectId/*path",
+  },
+  {
+    "method": "GET",
+    "path": "/api/segments",
+  },
+  {
+    "method": "POST",
+    "path": "/api/segments",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/segments/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/segments/:id",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/segments/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/segments/filter-options",
+  },
+  {
+    "method": "POST",
+    "path": "/api/segments/preview",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/sequences/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/sequences/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/sequences/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/sequences/:id/emails",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/sequences/:id/emails/:emailId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/sequences/:id/emails/:emailId/move",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/sequences/:id/emails/reorder",
+  },
+  {
+    "method": "POST",
+    "path": "/api/sequences/:id/sync-unsent",
+  },
+  {
+    "method": "GET",
+    "path": "/api/settings/email",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/settings/email",
+  },
+  {
+    "method": "GET",
+    "path": "/api/sidebar/people",
+  },
+  {
+    "method": "GET",
+    "path": "/api/sidebar/team2-bootstrap",
+  },
+  {
+    "method": "GET",
+    "path": "/api/skill-recommendations/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/skill-recommendations/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/skill-recommendations/home",
+  },
+  {
+    "method": "GET",
+    "path": "/api/skill-recommendations/settings",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/skill-recommendations/settings",
+  },
+  {
+    "method": "POST",
+    "path": "/api/slack/channel-map",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/slack/channel/:agentKey/toggle",
+  },
+  {
+    "method": "GET",
+    "path": "/api/slack/channels",
+  },
+  {
+    "method": "POST",
+    "path": "/api/slack/disconnect",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/slack/disconnect/:agentKey",
+  },
+  {
+    "method": "GET",
+    "path": "/api/slack/install",
+  },
+  {
+    "method": "GET",
+    "path": "/api/slack/oauth/callback",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/slack/remove",
+  },
+  {
+    "method": "GET",
+    "path": "/api/slack/status",
+  },
+  {
+    "method": "GET",
+    "path": "/api/slack/workspace-channels",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/social-posts/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/social-posts/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/social-posts/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/social-posts/:id/schedule",
+  },
+  {
+    "method": "POST",
+    "path": "/api/social-posts/:id/unschedule",
+  },
+  {
+    "method": "GET",
+    "path": "/api/space-retrieval/knowledge/campaigns/:campaignId/graph",
+  },
+  {
+    "method": "GET",
+    "path": "/api/space-retrieval/knowledge/spaces/:spaceId/graph",
+  },
+  {
+    "method": "GET",
+    "path": "/api/space-retrieval/knowledge/stats/batch",
+  },
+  {
+    "method": "GET",
+    "path": "/api/space-templates",
+  },
+  {
+    "method": "GET",
+    "path": "/api/space-templates/:slug",
+  },
+  {
+    "method": "POST",
+    "path": "/api/space-templates/:slug/instantiate",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/spaces/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/spaces/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/spaces/:id/automations/:automationId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/spaces/:id/automations/:automationId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/:automationId/test",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/capabilities/:capabilityId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/capabilities/search",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/connected-app-triggers",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/fathom-sources",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/flows",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/flows/:automationId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/spaces/:id/automations/flows/:automationId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/:automationId/publish",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/flows/blueprints",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/blueprints/:blueprintId/activate",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/blueprints/:blueprintId/validate",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/blueprints/drafts",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/flows/build-context",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/build-sessions",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/flows/build-sessions/:sessionId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/build-sessions/:sessionId/clarifications",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/build-sessions/:sessionId/clarifications/answers",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/flows/build-sessions/latest",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/drafts",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/plans",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/flows/plans/:sessionId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/spaces/:id/automations/flows/plans/:sessionId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/plans/:sessionId/clarifications",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/plans/:sessionId/compile",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/plans/:sessionId/evaluations",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/plans/:sessionId/validate",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/flows/plans/latest",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/flows/validate",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/runs",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/automations/templates",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/automations/templates/:templateKey/install",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/items",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/spaces/:id/items/:itemId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/items/:itemId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/spaces/:id/items/:itemId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items/:itemId/accept-suggestion",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/items/:itemId/activity",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items/:itemId/activity",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/spaces/:id/items/:itemId/activity/:activityId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/spaces/:id/items/:itemId/activity/:activityId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items/:itemId/dismiss-suggestion",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items/:itemId/duplicate",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items/:itemId/invoke-agent",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items/:itemId/push-to-agent",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items/:itemId/share-invite",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/spaces/:id/items/:itemId/share-link",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items/:itemId/share-link",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/items/:itemId/shares",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items/:itemId/shares",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/spaces/:id/items/:itemId/shares/:shareId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/items/:itemId/subtasks",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items/:itemId/transfer-to-space",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items/:itemId/visualize-doc",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/spaces/:id/items/batch",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/items/undo",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/make-private",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/make-team",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/spaces/:id/share-link",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/share-link",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/shares",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/shares",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/spaces/:id/shares/:shareId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/social-research/:platform/accounts",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/spaces/:id/social-research/:platform/accounts/:handle",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/social-research/:platform/accounts/:handle/sync",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/social-research/:platform/items/:itemId/analyze",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/spaces/:id/user-state",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/view-overrides",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/spaces/:id/view-overrides/:viewId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/spaces/:id/view-overrides/:viewId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/views/:viewId/save-for-everyone",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:id/views/:viewId/shares",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:id/views/:viewId/shares",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/spaces/:id/views/:viewId/shares/:shareId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/:spaceId/drive-mappings",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:spaceId/drive-mappings",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/spaces/:spaceId/drive-mappings/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/spaces/:spaceId/drive-mappings/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/:spaceId/drive-mappings/:id/sync-now",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/ensure-default",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/ensure-general",
+  },
+  {
+    "method": "POST",
+    "path": "/api/spaces/ensure-view",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/items/:itemId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/recent-automation-runs",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/shared-with-me",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/shared/item/:token",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/shared/space/:token",
+  },
+  {
+    "method": "GET",
+    "path": "/api/spaces/user-state",
+  },
+  {
+    "method": "GET",
+    "path": "/api/studio/search",
+  },
+  {
+    "method": "GET",
+    "path": "/api/team-roster",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/team-roster/:userId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/team-roster/:userId/learn-from-slack",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/team-roster/me",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/telegram/channel/:agentKey/settings",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/telegram/channel/:agentKey/toggle",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/telegram/channel/:agentKey/visibility",
+  },
+  {
+    "method": "GET",
+    "path": "/api/telegram/channels",
+  },
+  {
+    "method": "POST",
+    "path": "/api/telegram/connect",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/telegram/disconnect/:agentKey",
+  },
+  {
+    "method": "POST",
+    "path": "/api/telegram/validate-token",
+  },
+  {
+    "method": "GET",
+    "path": "/api/telegram/verify-status/:agentKey",
+  },
+  {
+    "method": "GET",
+    "path": "/api/themes",
+  },
+  {
+    "method": "POST",
+    "path": "/api/themes",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/themes/:themeId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/themes/:themeId",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/themes/:themeId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/themes/:themeId/usage",
+  },
+  {
+    "method": "POST",
+    "path": "/api/themes/extract/website",
+  },
+  {
+    "method": "POST",
+    "path": "/api/themes/generate-image-style",
+  },
+  {
+    "method": "POST",
+    "path": "/api/transcribe/file",
+  },
+  {
+    "method": "POST",
+    "path": "/api/transcribe/stream-config",
+  },
+  {
+    "method": "POST",
+    "path": "/api/transcribe/stream-usage",
+  },
+  {
+    "method": "GET",
+    "path": "/api/transcribe/test",
+  },
+  {
+    "method": "POST",
+    "path": "/api/transfer/execute",
+  },
+  {
+    "method": "POST",
+    "path": "/api/transfer/preview",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/users/:id/role",
+  },
+  {
+    "method": "GET",
+    "path": "/api/users/me",
+  },
+  {
+    "method": "GET",
+    "path": "/api/vault/secrets",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/vault/secrets/:provider/:label",
+  },
+  {
+    "method": "GET",
+    "path": "/api/waitlist/count",
+  },
+  {
+    "method": "POST",
+    "path": "/api/waitlist/fast-track-checkout",
+  },
+  {
+    "method": "POST",
+    "path": "/api/waitlist/fast-track-link",
+  },
+  {
+    "method": "GET",
+    "path": "/api/waitlist/fast-track-status/:sessionId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/waitlist/join",
+  },
+  {
+    "method": "POST",
+    "path": "/api/webhooks/slack/events",
+  },
+  {
+    "method": "POST",
+    "path": "/api/webhooks/telegram/:agentKey",
+  },
+  {
+    "method": "GET",
+    "path": "/api/your-turn",
+  },
+]
+`;

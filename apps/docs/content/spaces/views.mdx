@@ -1,0 +1,124 @@
+---
+title: "Views"
+description: "Every surface your team needs, already inside a Space. Tasks, contacts, media, funnels, emails, ads, analytics, presentations, social, and more."
+---
+
+## What a View Is
+
+A **view** is one way of looking at the work inside a Space. Tasks can be a list, a board, or a calendar. The same items can also show up grouped by status, by assignee, or by date.
+
+Every Space has multiple views. You add the views you need, arrange them in the order that matches your workflow, and your team toggles between them in the view tab strip at the top of the Space.
+
+## The View Catalog
+
+Spaces ship with the following view types. Pick the ones your team needs.
+
+### Core Work Views
+
+| View | What it shows |
+|---|---|
+| **List** | Items as rows, columns for fields you care about. The most flexible view. |
+| **Table** | Items as a dense spreadsheet with editable cells |
+| **Kanban (Board)** | Items as cards in columns grouped by status |
+| **Calendar** | Tasks, scheduled social content, and connected Google/Outlook events on a Day, Week, or Month canvas |
+| **Missions** | Just the missions inside this Space, with status, subtasks, and deliverables |
+
+### People and Media
+
+| View | What it shows |
+|---|---|
+| **Contacts** | The Space's contacts (lightweight CRM rows) |
+| **Media** | Image and video library scoped to the Space. Grid, gallery, or list. |
+| **Docs** | The unified Docs library (see [Docs](/spaces/docs)) |
+| **Channels** | The Space's channels list (see [Channels](/spaces/channels)) |
+
+### Marketing Artifact Views
+
+| View | What it shows |
+|---|---|
+| **Funnels** | Landing pages in the Space, with status, lead count, conversion |
+| **Forms** | Forms inside funnels |
+| **Form Responses** | Submissions across all forms in the Space |
+| **Emails** | Single emails (broadcasts) |
+| **Email Sequences** | Multi-email nurture series |
+| **Ads** | Ad creatives and copy |
+| **Ad Campaigns** | Campaign structures published to Meta or Google |
+| **Offers** | Offer artifacts built with the offer workbook |
+| **Avatars** | Declared customer avatars (top-down marketing personas) |
+| **Themes** | Brand themes (visual identity packages) |
+| **Presentations** | Branded slide-based documents |
+| **Social Posts** | Posts created, scheduled, and published |
+| **Websites** | Multi-page sites |
+
+### Research Views
+
+| View | What it shows |
+|---|---|
+| **Instagram Research** | Saved Instagram accounts and posts with structured research notes |
+| **TikTok Research** | Saved TikTok accounts and posts |
+
+### Reporting Views
+
+| View | What it shows |
+|---|---|
+| **Campaign Overview** | KPIs and trend charts for the whole campaign |
+| **Social Reporting** | Social performance across LinkedIn and Instagram |
+| **Funnel Analytics** | Visitors, conversion rates, lead source breakdown |
+| **Email Analytics** | Open rates, click rates, sequence performance |
+| **Ads Performance** | Ad spend, ROAS, click-through rates from Meta and Google |
+| **Finance Overview** | Revenue, products, Stripe data |
+
+## Adding a View
+
+Click **+ View** on the right side of the view tab strip. The Add panel groups views into:
+
+- **Common** the views most teams add first (List, Board, Calendar, Docs, Channels)
+- **Artifacts** the marketing artifact views
+- **Reporting** the analytics views
+- **Research** Instagram and TikTok research
+
+Pick a view, give it a name and an icon, and it appears as a new tab.
+
+## Customizing a View
+
+Every view has a **Customize** button in the toolbar. From there you can:
+
+- Edit the **fields** shown on cards (title, status, priority, dates, custom fields)
+- Change the **statuses** available (e.g. To Do → In Progress → In Review → Done)
+- Define **custom fields** (text, number, select, multi-select, checkbox, date, etc.)
+- Set the default **group by** dimension
+- Pick the default **sort order**
+- Tune view-specific options (Media: type filter, card size; Calendar: week start day, time format, visible sources; Kanban: column visibility)
+
+Customizations are saved per view, not per user. Everyone in the Space sees the same view as you configured it.
+
+## The Same Items, Multiple Views
+
+Every view in a Space reads from the same underlying items. If you create a task in the List view, it appears on the Kanban board the moment its status matches a column. If you add or move a task on the calendar, the new date shows up in the List view.
+
+Calendar views can also show scheduled social content and connected Google Calendar or Outlook events alongside tasks. All-day provider events appear in the all-day strip, and timed provider events show their time, source, color cue, and meeting or event links when available. Provider events stay owned by Google or Outlook; moving a timed provider event updates the provider calendar, then Vibey refreshes the visible calendar window.
+
+This means you do not have to choose one layout. You add three: a list for daily detail, a board for weekly review, a calendar for scheduling.
+
+## Reordering and Pinning
+
+Drag view tabs left or right to reorder them. The leftmost view is the default that opens when someone enters the Space.
+
+Pin a view to keep it visible in the tab strip even when many other views are open and the strip fades at the edges.
+
+## Agents and Views
+
+Agents see what you see. When a subtask is assigned to an agent and they update status, the change shows in every view immediately. Agents can list, create, update, and delete connected calendar events when they have integration permission. The agent actions are `list_calendar_events`, `create_calendar_event`, `update_calendar_event`, and `delete_calendar_event`; they require the `use_integrations` access family, while Space tasks still use task actions with `start_date` and `due_date`. Agents create artifacts (an offer, a funnel, a presentation), and the matching artifact view picks them up.
+
+This is the point of Spaces: agents work in the same views as the humans, not in a separate "AI dashboard."
+
+## Templates
+
+When you add a new view, you can start from a **template** (a pre-configured field set and status list for that view type) or from scratch. Templates are good starting points; you can customize after creation.
+
+## Related
+
+- [What a Space Is](/spaces/what-is-a-space)
+- [Docs](/spaces/docs)
+- [Channels](/spaces/channels)
+- [Flows](/spaces/automations)

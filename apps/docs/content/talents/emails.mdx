@@ -1,0 +1,78 @@
+---
+title: "Email Sequences"
+description: "Build multi-email sequences that nurture leads through a journey - sent through SendGrid, GoHighLevel, or ActiveCampaign."
+---
+
+## What You Get
+
+Vibey creates complete email sequences - a series of emails with individual subjects, body content, and timing. Sequences are structured as a parent container holding multiple emails, each one editable independently.
+
+## How Sequences Work
+
+A sequence has a lifecycle:
+
+| Status | Meaning |
+|---|---|
+| **Draft** | Being written or edited, not sending yet |
+| **Active** | Live and sending to leads based on triggers |
+| **Paused** | Temporarily stopped, can be resumed |
+| **Completed** | Finished sending to all recipients |
+
+Each email in the sequence has its own subject line, body content, and position in the series. You can add, edit, reorder, or remove individual emails without rebuilding the whole sequence.
+
+## How to Create a Sequence
+
+In Team chat, describe what you need:
+
+- "Create a 5-email welcome sequence for new funnel leads"
+- "Build a nurture series for people who downloaded our guide"
+- "Write a launch sequence leading up to our course opening"
+- "Create a re-engagement sequence for cold leads"
+
+Vibey uses your [offer](/talents/offers), [buyer persona](/talents/avatars), and campaign/Space context to write emails that match your audience and positioning.
+
+## Email Providers
+
+Vibey supports multiple email providers. You choose which one sends your emails:
+
+| Provider | How to connect |
+|---|---|
+| **SendGrid** | Connect in **Workspace Settings → Integrations**. Set up a sender identity with your domain. |
+| **GoHighLevel (GHL)** | Connect via OAuth in **Workspace Settings → Integrations**. Uses your GHL location and contacts. |
+| **ActiveCampaign** | Connect with your API URL and key in **Workspace Settings → Integrations**. |
+
+Your default provider is set in your account settings. SendGrid is the default if no preference is set.
+
+## CRM Sync
+
+When you connect GoHighLevel or ActiveCampaign, Vibey can sync contacts between your CRM and your campaigns:
+
+- Import [contacts](/contacts/managing-your-contacts) from GHL or ActiveCampaign into your campaign
+- Keep contact data in sync with scheduled CRM sync jobs
+- Push leads captured through [funnels](/talents/funnels) back to your CRM
+
+## Email Analytics
+
+Every email sent is tracked. In Team chat's **Dashboard** tab (Email view), you can see:
+
+| Metric | What it measures |
+|---|---|
+| **Sent** | Total emails dispatched |
+| **Delivered** | Emails that reached the inbox |
+| **Opened** | Emails opened (tracked via pixel) |
+| **Clicked** | Links clicked inside emails |
+| **Bounced** | Emails that bounced or failed delivery |
+| **Open Rate** | Opened divided by delivered |
+| **Click Rate** | Clicked divided by delivered |
+
+The daily chart shows opens and clicks over time. Hard bounces and spam reports automatically add the address to your suppression list.
+
+For the full analytics picture across funnels, emails, and ads, see [Analytics](/talents/analytics).
+
+<Callout type="tip">
+  The more campaign context you provide (your offer, buyer persona, brand voice), the more natural the emails sound. Generic emails come from generic context.
+</Callout>
+
+## Where Emails Live
+
+Sequences are saved as artifacts in your campaign. Preview them in the **Artifacts** tab, edit individual emails, adjust the flow, and prepare sends from there.

@@ -1,0 +1,85 @@
+---
+title: "Organization Billing"
+description: "How credits, plans, auto-recharge, and usage tracking work for organizations - separate from your personal billing."
+---
+
+Organization billing is completely separate from your personal account billing. When you're working in an [organization](/organization/how-organizations-work), all credit usage comes from the org's shared pool - not your personal balance.
+
+## How Org Credits Work
+
+Organization credits have three sources:
+
+| Source | How it works |
+|---|---|
+| **Base credits** | Included with your org's plan each month |
+| **Rollover credits** | Unused base credits that roll over from previous months (up to the plan's rollover cap) |
+| **Purchased credits** | Credits you buy on top of the plan allowance |
+
+When agents work on org campaigns, credits are deducted in this order: base credits first, then rollover, then purchased.
+
+**200 credits = $1** (same rate as personal accounts)
+
+## Plans
+
+Organizations have their own subscription plan, separate from any personal plan. The plan determines:
+
+- **Base credits per month** - How many credits the org gets each billing cycle
+- **Rollover cap** - Maximum unused credits that carry over month to month
+- **Billing period** - Monthly or annual
+
+Manage your org plan from **Account Settings → Organization → Billing**, or through the Stripe billing portal.
+
+## Purchasing Credits
+
+When the org needs more credits beyond the plan allowance, owners can purchase credit packs. Purchased credits are added to the org pool immediately and are available to all members.
+
+Only **owners** can purchase credits for the organization.
+
+## Auto-Recharge
+
+Set up auto-recharge so the org never runs out mid-task. When the credit balance drops below a threshold, credits are automatically purchased.
+
+This is critical for [Autopilot](/autopilot/how-autopilot-works) - if the org runs out of credits, all autonomous work pauses until credits are added.
+
+## Per-Member Credit Limits
+
+Organization owners can set credit limits per member. This prevents any single member from consuming a disproportionate share of the org's credit pool.
+
+## Usage Tracking
+
+The org billing dashboard shows:
+
+- **Current balance** - Base, rollover, and purchased credits available
+- **Total used this month** - How many credits have been consumed
+- **Usage history** - Credit consumption over time
+- **Per-member usage** - See which members are consuming what
+- **Invoices** - Past invoices and payment history
+
+## Who Can Manage Billing
+
+| Action | Required role |
+|---|---|
+| View balance and usage | **Admin** or higher |
+| Purchase credits | **Owner** only |
+| Change plan | **Owner** only |
+| Manage auto-recharge | **Owner** only |
+| Set member credit limits | **Owner** only |
+| Access Stripe portal | **Owner** only |
+| View invoices | **Owner** only |
+
+## Personal vs Org Billing
+
+| | Personal | Organization |
+|---|---|---|
+| **Credit pool** | Yours only | Shared across all members |
+| **Plan** | Your personal subscription | The org's subscription |
+| **Auto-recharge** | Your personal setting | Org-level setting |
+| **Usage tracking** | Your usage only | Per-member breakdown |
+| **Who pays** | You | The org owner |
+| **What it covers** | Work in your personal context | Work in the org context |
+
+When you switch between personal and org contexts, the billing source switches too. Personal campaigns use your personal credits. Org campaigns use the org's credits.
+
+<Callout type="tip">
+  If your team uses [Autopilot](/autopilot/how-autopilot-works) heavily, enable auto-recharge on the org to prevent work from stalling when credits run low. Set per-member limits to keep spending predictable.
+</Callout>

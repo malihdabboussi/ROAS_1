@@ -1,0 +1,109 @@
+{
+  "project": "Credential Proxy — Secure Integration System",
+  "branchName": "feature/credential-proxy",
+  "description": "Build credential proxy module in agent-api that stores encrypted user API keys, returns capability lists to the agent, and proxies external API calls so the agent never sees raw credentials.",
+  "recommendedAgents": 2,
+  "context": {
+    "currentProblem": "Users cannot connect external services (Shopify, Mailchimp, etc.) to Vibey. The agent has no way to make authenticated external API calls on behalf of users.",
+    "desiredState": "Users add API keys via settings UI. Keys are encrypted in DB (AES-256). Agent sees a capability list only ('Shopify: read_products'). Agent requests actions via vibey_backend tool. Backend decrypts key, makes the API call, returns result. Agent never sees raw keys. All usage is logged in audit trail.",
+    "architectureGoal": "New NestJS module: apps/agent-api/src/modules/credentials/. Controller + Service + DTOs. Encryption via Node.js crypto (AES-256-GCM). ENCRYPTION_KEY from env var. Follows 3-layer architecture from backend guidelines.",
+    "referenceDocs": [
+      ".docs/.tasks/vibey_machine/prd.md (Section 4.4 Credential Architecture)",
+      ".docs/.tasks/vibey_machine/prd.md (Section 9.1 Core Tables — credentials + credential_usage)",
+      ".docs/guidelines/development/code-guidelines-backend.md"
+    ]
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create credentials DB table with encryption",
+      "description": "As a developer, I need a credentials table in Supabase that stores encrypted API keys with capability metadata.",
+      "acceptanceCriteria": [
+        "Migration creates 'credentials' table with columns: id (UUID PK), user_id (UUID FK), service_name (TEXT), encrypted_value (TEXT — base64 encoded AES-256-GCM), capabilities (TEXT[]), revoked (BOOLEAN DEFAULT false), created_at (TIMESTAMPTZ)",
+        "Migration creates 'credential_usage' audit table with columns: id (UUID PK), credential_id (UUID FK), agent_id (TEXT), action (TEXT), params (JSONB), response_status (INT), created_at (TIMESTAMPTZ)",
+        "RLS policies on both tables: users can only see their own credentials",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [],
+      "notes": "Use Supabase MCP apply_migration tool. Schema from PRD section 9.1."
+    },
+    {
+      "id": "US-002",
+      "title": "Build credentials NestJS module with encryption service",
+      "description": "As a developer, I need a NestJS module that encrypts/decrypts credentials using AES-256-GCM and provides CRUD operations.",
+      "acceptanceCriteria": [
+        "New module at apps/agent-api/src/modules/credentials/ with controllers/, services/, dtos/",
+        "credentials.module.ts registered in app.module.ts",
+        "Encryption uses Node.js crypto: AES-256-GCM with random IV per credential",
+        "ENCRYPTION_KEY read from env var (32-byte key, base64 encoded)",
+        "encrypt(plaintext) returns base64 string (IV + ciphertext + auth tag)",
+        "decrypt(encrypted) returns original plaintext",
+        "Service file under 600 LOC, controller under 200 LOC",
+        "Zod validation on all inputs",
+        "LoggerService for error logging",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": ["US-001"],
+      "notes": "Follow backend-architecture.md 3-layer pattern. Use InternalAuthGuard for agent endpoints, AuthGuard for user endpoints."
+    },
+    {
+      "id": "US-003",
+      "title": "Build GET /api/capabilities endpoint",
+      "description": "As a developer, I need an endpoint that returns available integrations and their capabilities for the current user (called by agent via vibey_backend tool).",
+      "acceptanceCriteria": [
+        "GET /api/capabilities returns { capabilities: [{ service: 'shopify', actions: ['read_products'] }] }",
+        "Only returns non-revoked credentials",
+        "Never returns the actual encrypted key — only service name + capabilities array",
+        "Uses InternalAuthGuard (agent requests) and reads USER_ID from env",
+        "Returns empty array if no credentials exist",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "dependsOn": ["US-002"],
+      "notes": "This replaces the stubbed get_capabilities action in artifacts.service.ts"
+    },
+    {
+      "id": "US-004",
+      "title": "Build POST /api/integrations/execute proxy endpoint",
+      "description": "As a developer, I need an endpoint that decrypts a credential, makes an external API call on behalf of the user, and returns the result.",
+      "acceptanceCriteria": [
+        "POST /api/integrations/execute accepts { service: string, action: string, params: object }",
+        "Looks up credential by service_name + user_id where revoked=false",
+        "Decrypts the API key using AES-256-GCM",
+        "Makes the external API call using the decrypted key",
+        "Logs usage in credential_usage table (credential_id, action, params sanitized, response_status)",
+        "Returns the API response data to the agent — NOT the raw key",
+        "If credential not found: returns { success: false, error: 'Integration not available' }",
+        "If credential revoked: returns { success: false, error: 'Integration is disabled' }",
+        "Rate limited: 10 requests per minute per user",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "dependsOn": ["US-002"],
+      "notes": "This replaces the stubbed use_integration action in artifacts.service.ts. Start with Shopify as first supported integration."
+    },
+    {
+      "id": "US-005",
+      "title": "Build user-facing credential management endpoints",
+      "description": "As a developer, I need endpoints for users to add, list, and revoke their API credentials from the settings UI.",
+      "acceptanceCriteria": [
+        "POST /api/credentials — add new credential (encrypts and stores)",
+        "GET /api/credentials — list user's credentials (returns service_name, capabilities, revoked — NEVER the key)",
+        "DELETE /api/credentials/:id — revoke credential (sets revoked=true, does NOT delete)",
+        "Uses AuthGuard (user JWT authentication, not internal agent auth)",
+        "Zod validation on all inputs",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": false,
+      "dependsOn": ["US-002"],
+      "notes": "These are called from the frontend settings UI, not from the agent."
+    }
+  ]
+}

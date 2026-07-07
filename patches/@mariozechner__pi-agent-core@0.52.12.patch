@@ -1,0 +1,121 @@
+diff --git a/dist/agent-loop.js b/dist/agent-loop.js
+index b26d45753809da14df6409354e8c537684b9acd7..954b4e28d6f8f3a8b5c233f8343d155cbdebb19b 100644
+--- a/dist/agent-loop.js
++++ b/dist/agent-loop.js	
+@@ -206,71 +206,65 @@ async function streamAssistantResponse(context, config, signal, stream, streamFn
+  */
+ async function executeToolCalls(tools, assistantMessage, signal, stream, getSteeringMessages) {
+     const toolCalls = assistantMessage.content.filter((c) => c.type === "toolCall");
+-    const results = [];
+-    let steeringMessages;
+-    for (let index = 0; index < toolCalls.length; index++) {
+-        const toolCall = toolCalls[index];
++    if (toolCalls.length === 0) {
++        return { toolResults: [], steeringMessages: undefined };
++    }
++    if (toolCalls.length === 1) {
++        const toolCall = toolCalls[0];
+         const tool = tools?.find((t) => t.name === toolCall.name);
+-        stream.push({
+-            type: "tool_execution_start",
+-            toolCallId: toolCall.id,
+-            toolName: toolCall.name,
+-            args: toolCall.arguments,
+-        });
++        stream.push({ type: "tool_execution_start", toolCallId: toolCall.id, toolName: toolCall.name, args: toolCall.arguments });
+         let result;
+         let isError = false;
+         try {
+-            if (!tool)
+-                throw new Error(`Tool ${toolCall.name} not found`);
++            if (!tool) throw new Error(`Tool ${toolCall.name} not found`);
+             const validatedArgs = validateToolArguments(tool, toolCall);
+             result = await tool.execute(toolCall.id, validatedArgs, signal, (partialResult) => {
+-                stream.push({
+-                    type: "tool_execution_update",
+-                    toolCallId: toolCall.id,
+-                    toolName: toolCall.name,
+-                    args: toolCall.arguments,
+-                    partialResult,
+-                });
++                stream.push({ type: "tool_execution_update", toolCallId: toolCall.id, toolName: toolCall.name, args: toolCall.arguments, partialResult });
+             });
+-        }
+-        catch (e) {
+-            result = {
+-                content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }],
+-                details: {},
+-            };
++        } catch (e) {
++            result = { content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }], details: {} };
+             isError = true;
+         }
+-        stream.push({
+-            type: "tool_execution_end",
+-            toolCallId: toolCall.id,
+-            toolName: toolCall.name,
+-            result,
+-            isError,
+-        });
+-        const toolResultMessage = {
+-            role: "toolResult",
+-            toolCallId: toolCall.id,
+-            toolName: toolCall.name,
+-            content: result.content,
+-            details: result.details,
+-            isError,
+-            timestamp: Date.now(),
+-        };
+-        results.push(toolResultMessage);
++        stream.push({ type: "tool_execution_end", toolCallId: toolCall.id, toolName: toolCall.name, result, isError });
++        const toolResultMessage = { role: "toolResult", toolCallId: toolCall.id, toolName: toolCall.name, content: result.content, details: result.details, isError, timestamp: Date.now() };
+         stream.push({ type: "message_start", message: toolResultMessage });
+         stream.push({ type: "message_end", message: toolResultMessage });
+-        // Check for steering messages - skip remaining tools if user interrupted
++        let steeringMessages;
+         if (getSteeringMessages) {
+             const steering = await getSteeringMessages();
+-            if (steering.length > 0) {
+-                steeringMessages = steering;
+-                const remainingCalls = toolCalls.slice(index + 1);
+-                for (const skipped of remainingCalls) {
+-                    results.push(skipToolCall(skipped, stream));
+-                }
+-                break;
+-            }
++            if (steering.length > 0) steeringMessages = steering;
+         }
++        return { toolResults: [toolResultMessage], steeringMessages };
++    }
++    const settled = await Promise.all(toolCalls.map(async (toolCall) => {
++        const tool = tools?.find((t) => t.name === toolCall.name);
++        stream.push({ type: "tool_execution_start", toolCallId: toolCall.id, toolName: toolCall.name, args: toolCall.arguments });
++        let result;
++        let isError = false;
++        try {
++            if (!tool) throw new Error(`Tool ${toolCall.name} not found`);
++            const validatedArgs = validateToolArguments(tool, toolCall);
++            result = await tool.execute(toolCall.id, validatedArgs, signal, (partialResult) => {
++                stream.push({ type: "tool_execution_update", toolCallId: toolCall.id, toolName: toolCall.name, args: toolCall.arguments, partialResult });
++            });
++        } catch (e) {
++            result = { content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }], details: {} };
++            isError = true;
++        }
++        stream.push({ type: "tool_execution_end", toolCallId: toolCall.id, toolName: toolCall.name, result, isError });
++        return { toolCall, result, isError };
++    }));
++    const results = [];
++    for (const { toolCall, result, isError } of settled) {
++        const toolResultMessage = { role: "toolResult", toolCallId: toolCall.id, toolName: toolCall.name, content: result.content, details: result.details, isError, timestamp: Date.now() };
++        results.push(toolResultMessage);
++        stream.push({ type: "message_start", message: toolResultMessage });
++        stream.push({ type: "message_end", message: toolResultMessage });
++    }
++    let steeringMessages;
++    if (getSteeringMessages) {
++        const steering = await getSteeringMessages();
++        if (steering.length > 0) steeringMessages = steering;
+     }
+     return { toolResults: results, steeringMessages };
+ }

@@ -1,0 +1,53 @@
+## Billing Plans — Progress Log
+
+---
+
+## Codebase Patterns
+
+### Backend Architecture (Verified 2026-02-13)
+- BillingModule is in apps/api (Platform Backend, Vercel) — per backend-separation PRD
+- Agent Backend (apps/agent-api) has ONLY CreditsGuard + CreditsService — no Stripe, no billing UI
+- SharedModule imported from packages/api-shared in both backends
+
+### Key Files
+- apps/api/src/modules/billing/billing.controller.ts — 480 lines, 9 endpoints
+- apps/api/src/modules/billing/services/stripe.service.ts — 668 lines, checkout + portal + webhooks
+- apps/web/src/features/settings/components/settings-content/BillingPageContent.tsx — 927 lines, main billing UI
+- apps/web/src/features/settings/services/billing-api.ts — 109 lines, API client
+- apps/web/src/features/settings/types/billing.types.ts — 149 lines, types
+- apps/website/src/app/pricing/page.tsx — 345 lines, public pricing page
+
+### Checkout Flow Pattern
+- Frontend sends planSlug (e.g., "pro") + billingPeriod ("monthly" | "annual")
+- Backend constructs slug: `${planSlug}-${billingPeriod}` → looks up in subscription_plans table
+- Creates Stripe Checkout session with plan's stripe_price_id
+- Webhook (checkout.session.completed) upserts user_subscriptions
+
+### Webhook Pattern (subscription.updated)
+- stripe.service.ts handleSubscriptionUpdated() already handles plan changes
+- Updates: status, stripe_subscription_id, stripe_customer_id, current_period_start, current_period_end, cancel_at_period_end
+- This means switching interval via stripe.subscriptions.update() will be auto-handled by webhook
+
+### Database State (Verified 2026-02-13)
+- 7 plans: Free, Starter (mo/yr), Pro (mo/yr), Business (mo/yr)
+- All stripe_price_id values are NULL — need to be set after creating Stripe products
+- Supabase project: qfrvykscoymiwwgysvsr
+
+### Plan Slug Convention
+- Free: "free" (no interval suffix)
+- Paid: "{tier}-{interval}" e.g., "pro-monthly", "pro-annual"
+- Checkout resolves: planSlug="pro" + billingPeriod="monthly" → slug="pro-monthly"
+
+---
+
+## Story Progress
+
+| Story  | Status  | Date | Notes |
+|--------|---------|------|-------|
+| US-001 | ✅ done | 2026-02-14 | Migrated via Supabase MCP. 7 plans confirmed: Free, Basic (mo/yr), Pro (mo/yr), Ultra (mo/yr). |
+| US-002 | ✅ done | 2026-02-14 | Added switchSubscriptionInterval() to stripe.service.ts + POST /api/billing/switch-interval to controller. |
+| US-003 | ✅ done | 2026-02-14 | Added switchInterval() to billing-api.ts, SwitchIntervalResponse to billing.types.ts. |
+| US-004 | ✅ done | 2026-02-14 | Added "Upgrade to Annual (Save 20%)" / "Switch to Monthly" button in PlanDetailsTab. |
+| US-005 | ✅ done | 2026-02-14 | Renamed Starter→Basic, Business→Ultra in website pricing page. |
+
+---

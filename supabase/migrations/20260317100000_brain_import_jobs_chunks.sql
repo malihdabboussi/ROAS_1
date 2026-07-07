@@ -1,0 +1,3 @@
+ALTER TABLE brain_import_jobs
+  ADD COLUMN IF NOT EXISTS chunks_total INTEGER,
+  ADD COLUMN IF NOT EXISTS chunks_completed INTEGER DEFAULT 0;

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 250px;
+    height: 250px;
+    background: #161616;
+    overflow: visible;
+  }
+
+  .canvas {
+    width: 250px;
+    height: 250px;
+    position: relative;
+    background: transparent;
+  }
+
+  .purple-shadow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 180px;
+    height: 180px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.5) 0%, rgba(139, 92, 246, 0.3) 35%, rgba(124, 58, 237, 0.12) 60%, transparent 80%);
+    border-radius: 50%;
+    filter: blur(20px);
+  }
+
+  .orb {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 200px;
+    transform: translate(-50%, -50%);
+  }
+
+  .core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px;
+    height: 80px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, #6ee7b7 0%, #10b981 50%, #059669 100%);
+    border-radius: 50%;
+    box-shadow:
+      0 0 16px rgba(16, 185, 129, 0.8),
+      0 0 32px rgba(16, 185, 129, 0.5),
+      0 0 48px rgba(16, 185, 129, 0.2);
+  }
+
+  .dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+  }
+
+  .dot-1 {
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle, #6ee7b7 0%, #10b981 50%, #059669 100%);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.6), 0 0 16px rgba(168, 85, 247, 0.5), 0 0 28px rgba(139, 92, 246, 0.3);
+    transform: translate(calc(-50% + 52px), calc(-50% - 4px));
+  }
+  .dot-2 {
+    width: 16px;
+    height: 16px;
+    background: radial-gradient(circle, #6ee7b7 0%, #10b981 50%, #059669 100%);
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.5), 0 0 12px rgba(168, 85, 247, 0.5), 0 0 20px rgba(139, 92, 246, 0.3);
+    transform: translate(calc(-50% - 40px), calc(-50% + 40px));
+  }
+  .dot-3 {
+    width: 8px;
+    height: 8px;
+    background: radial-gradient(circle, #6ee7b7 0%, #10b981 50%, #059669 100%);
+    box-shadow: 0 0 4px rgba(16, 185, 129, 0.4), 0 0 10px rgba(168, 85, 247, 0.5), 0 0 16px rgba(139, 92, 246, 0.3);
+    transform: translate(calc(-50% - 42px), calc(-50% - 42px));
+  }
+</style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="purple-shadow"></div>
+    <div class="orb">
+      <div class="core"></div>
+      <div class="dot dot-1"></div>
+      <div class="dot dot-2"></div>
+      <div class="dot dot-3"></div>
+    </div>
+  </div>
+  <button onclick="exportPNG()" style="position:fixed;bottom:20px;right:20px;padding:8px 16px;background:#059669;color:#0a0a0a;border:none;border-radius:6px;cursor:pointer;font-weight:bold;z-index:999;">Export PNG</button>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+  <script>
+    function exportPNG() {
+      const node = document.querySelector('.canvas');
+      node.style.background = 'transparent';
+      domtoimage.toPng(node, { bgcolor: null, width: 500, height: 500, style: { transform: 'scale(2)', transformOrigin: 'top left', background: 'transparent' } }).then(dataUrl => {
+        node.style.background = 'transparent';
+        const a = document.createElement('a');
+        a.download = 'vibey-orb-transparent.png';
+        a.href = dataUrl;
+        a.click();
+      });
+    }
+  </script>
+</body>
+</html>

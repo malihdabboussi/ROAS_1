@@ -1,0 +1,71 @@
+---
+title: "Web Browsing"
+description: "Your agents can browse the live web during chat and missions. Research competitors, pull transcripts, post to social platforms, fill forms, and take screenshots."
+---
+
+Your agents are not limited to what is in their [Brain](/brain/how-the-brain-works) or the documents you have uploaded. When a task needs live information, or a live action on a site, they open a real browser and do it.
+
+## What Agents Can Do on the Web
+
+| Task | Example prompt |
+|---|---|
+| **Research** | "Look at what our top three competitors posted on LinkedIn this week" |
+| **Pull transcripts** | "Give me the transcript of this Instagram reel" |
+| **Scrape content** | "Read this article and save the key points to my brain" |
+| **Verify live data** | "Check my Shopify dashboard and tell me today's sales" |
+| **Post and comment** | "Post this to my LinkedIn" or "Reply to the top comment on my last reel" |
+| **Fill out forms** | "Sign me up for this waitlist" |
+| **Take screenshots** | "Show me what this page looks like right now" |
+| **Navigate multi-step flows** | "Book a call on their Calendly for Tuesday afternoon" |
+
+You do not need to tell the agent to "use the browser". They pick the right tool for the task.
+
+## Public Sites vs Signed-In Sites
+
+| Type | What agents can do | Needs |
+|---|---|---|
+| **Public pages** | Read articles, watch YouTube, check company sites, view public LinkedIn profiles | Nothing. Works out of the box |
+| **Signed-in actions** | Post to your accounts, comment on your reels, pull private Instagram transcripts, read gated dashboards | A saved session from the [Vibey Mini extension](/vibey-mini/what-it-does) |
+
+Without the extension, agents still browse the open web. With the extension, they can also **act as you** on the platforms you have approved: Instagram, LinkedIn, TikTok, X, Facebook, YouTube, and Reddit.
+
+## What It Looks Like in Chat
+
+While the agent works, you'll see live progress in the conversation:
+
+- **"Opening instagram.com..."** the agent started a browser
+- **"Reading the page..."** the agent pulled the content
+- **"Taking a screenshot"** an image appears in chat when done
+- **"Filling the form..."** the agent is interacting with inputs
+
+Once finished, the agent replies with the results: text, screenshots, a saved artifact, or a confirmation the action is done.
+
+## Safety and Control
+
+The browser your agent uses is **not** your Chrome window. It runs in a dedicated, isolated environment Vibey creates per task and destroys when the task finishes. Nothing the agent does affects the tabs you have open.
+
+- **Signed-in actions require your consent.** The agent only uses a saved session if you've [enabled it](/vibey-mini/sessions) and you haven't disabled that domain.
+- **Destructive actions usually pause for your OK.** If an action could send a message, submit a form, or spend money, the agent typically asks before doing it.
+- **Full audit in chat.** Every navigation, click, and screenshot appears in the conversation. You can review the whole path.
+
+## What Agents Can't Do
+
+- **Bypass logins.** Without a saved session, the agent sees public content only.
+- **Solve captchas or 2FA.** If a site throws a challenge, the agent surfaces it and asks you to complete it.
+- **Use sessions you've disabled.** If a site is **Disabled** in your [Sessions tab](/vibey-mini/sessions), it's off-limits.
+- **Use sessions for random websites.** Only the platforms on the [approved list](/vibey-mini/sessions) get session sharing.
+
+## How to Use It
+
+Just ask. A few examples:
+
+- "Read this article and pull the three strongest arguments: `<link>`"
+- "Look at the last 10 reels on @competitor_handle and tell me which ones got the most reach"
+- "Transcribe this Instagram reel and turn it into five LinkedIn posts"
+- "Book a 30-minute call on this Calendly for Wednesday afternoon: `<link>`"
+- "Post this draft to my LinkedIn"
+- "Take a screenshot of my competitor's pricing page"
+
+<Callout type="tip">
+  For the richest results on social platforms, install [Vibey Mini](/vibey-mini/installing) and enable session sharing. Without it, agents are limited to what's publicly visible.
+</Callout>

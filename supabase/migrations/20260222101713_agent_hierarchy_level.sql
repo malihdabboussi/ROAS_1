@@ -1,0 +1,1 @@
+ALTER TABLE agents_registry ADD COLUMN IF NOT EXISTS level TEXT NOT NULL DEFAULT 'employee' CHECK (level IN ('c_level', 'manager', 'employee')); UPDATE agents_registry SET level = 'c_level' WHERE agent_key = 'manager';;

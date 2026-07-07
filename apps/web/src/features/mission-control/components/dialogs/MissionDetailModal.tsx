@@ -1,0 +1,386 @@
+'use client'
+
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
+import { backendPost } from '@/lib/api/backend-client'
+import { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
+import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
+import { useMissionDetailData } from '../../hooks/useMissionDetailData'
+import {
+  approveMissionAccessRequests,
+  approveMissionPlan,
+  fetchProfileSettings,
+  rejectMissionPlan,
+  retryMission,
+  toggleAutoApprovePlans,
+  trashMission,
+  updateMission,
+  updateMissionStatus,
+} from '../../services/missions.service'
+import type {
+  Mission,
+  MissionDeliverable,
+  MissionLog,
+  MissionPriority,
+  MissionStatus,
+  PrdContent,
+  RecommendedHire,
+} from '../../types'
+import { MISSION_DETAIL_ERRORS } from '../../types'
+import { MissionDetailModalView } from './MissionDetailModalView'
+import { useMissionDetailCommentAttachments } from './useMissionDetailCommentAttachments'
+
+interface MissionDetailModalProps {
+  mission: Mission
+  onClose: () => void
+  onUpdated: () => void
+  /** Stack above another modal (e.g. deliverable preview uses z-[60]) */
+  elevatedStacking?: boolean
+}
+
+export function MissionDetailModal({
+  mission,
+  onClose,
+  onUpdated,
+  elevatedStacking = false,
+}: MissionDetailModalProps) {
+  const [title, setTitle] = useState(mission.title)
+  const [description, setDescription] = useState(mission.brief ?? mission.description ?? '')
+  const [currentStatus, setCurrentStatus] = useState<MissionStatus>(mission.status)
+  const [currentPriority, setCurrentPriority] = useState<MissionPriority>(mission.priority)
+  const [, setDeleting] = useState(false)
+  const [, setArchiving] = useState(false)
+  const [previewDeliverable, setPreviewDeliverable] = useState<MissionDeliverable | null>(null)
+  const [planModalOpen, setPlanModalOpen] = useState(false)
+  const [approvingPlan, setApprovingPlan] = useState(false)
+  const [approvingAccess, setApprovingAccess] = useState(false)
+  const [autoApprovePlans, setAutoApprovePlans] = useState(false)
+  const [ratingSending, setRatingSending] = useState(false)
+  const [ratingSubmitted, setRatingSubmitted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [mobileScreen, setMobileScreen] = useState<'detail' | 'activity'>('detail')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
+  const activityEndRef = useRef<HTMLDivElement>(null)
+
+  const {
+    prd,
+    prdLoading,
+    liveMission,
+    missionLogs,
+    deliverables,
+    accessRequests,
+    logsLoading,
+    subtasks,
+    agents,
+    userProfile,
+    setMissionLogs,
+    setSubtasks,
+    setAccessRequests,
+  } = useMissionDetailData({ mission })
+  const {
+    commentText,
+    setCommentText,
+    sendingComment,
+    attachedFiles,
+    showLibraryPicker,
+    setShowLibraryPicker,
+    fileInputRef,
+    maxFiles,
+    acceptedTypes,
+    handleFileSelect,
+    handleRemoveFile,
+    handleFileButtonClick,
+    handleFileFromCloud,
+    handlePasteCommentImages,
+    handleLibrarySelect,
+    handleSendComment,
+  } = useMissionDetailCommentAttachments({ mission, setMissionLogs, activityEndRef })
+
+  useEffect(() => {
+    if (!liveMission) return
+    setTitle(liveMission.title)
+    setDescription(liveMission.brief ?? liveMission.description ?? '')
+    setCurrentStatus(liveMission.status)
+    setCurrentPriority(liveMission.priority)
+  }, [liveMission])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const apply = () => setIsMobile(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+    fetchProfileSettings()
+      .then((s) => {
+        if (mounted) setAutoApprovePlans(s?.auto_approve_plans ?? false)
+      })
+      .catch(() => {})
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const handleToggleAutoApprove = useCallback(async (enabled: boolean) => {
+    setAutoApprovePlans(enabled)
+    try {
+      const result = await toggleAutoApprovePlans(enabled)
+      setAutoApprovePlans(result.auto_approve_plans)
+    } catch {
+      setAutoApprovePlans(!enabled)
+    }
+  }, [])
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      await trashMission(mission.id)
+      onUpdated()
+      onClose()
+    } catch (err) {
+      toast.error(sanitizeUserError(err, MISSION_DETAIL_ERRORS.DELETE_FAILED.userMessage))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const handleArchive = async () => {
+    setArchiving(true)
+    try {
+      const newStatus: MissionStatus = currentStatus === 'archived' ? 'backlog' : 'archived'
+      await updateMissionStatus(mission.id, { status: newStatus })
+      setCurrentStatus(newStatus)
+      onUpdated()
+      if (newStatus === 'archived') onClose()
+    } catch (err) {
+      toast.error(sanitizeUserError(err, MISSION_DETAIL_ERRORS.UPDATE_FAILED.userMessage))
+    } finally {
+      setArchiving(false)
+    }
+  }
+
+  const handleRetry = async () => {
+    try {
+      await retryMission(mission.id)
+      onUpdated()
+    } catch {
+      /* noop */
+    }
+  }
+
+  const handleApprovePlan = useCallback(async () => {
+    setApprovingPlan(true)
+    try {
+      await approveMissionPlan(mission.id)
+      toast.success('Plan approved')
+      setPlanModalOpen(false)
+      onUpdated()
+    } catch (err) {
+      toast.error(sanitizeUserError(err, 'Failed to approve plan'))
+    } finally {
+      setApprovingPlan(false)
+    }
+  }, [mission.id, onUpdated])
+
+  const handleRejectPlan = useCallback(async () => {
+    try {
+      await rejectMissionPlan(mission.id)
+      setPlanModalOpen(false)
+      toast.success('Plan rejected — replanning in progress')
+      onUpdated?.()
+    } catch {
+      toast.error('Failed to reject plan')
+    }
+  }, [mission.id, onUpdated])
+
+  const pendingAccessRequests = accessRequests.filter((request) => request.status === 'pending')
+
+  const handleApproveAccess = useCallback(async () => {
+    if (pendingAccessRequests.length === 0) return
+    setApprovingAccess(true)
+    try {
+      const requestIds = pendingAccessRequests.map((request) => request.id)
+      await approveMissionAccessRequests(mission.id, requestIds)
+      setAccessRequests((prev) =>
+        prev.map((request) =>
+          requestIds.includes(request.id)
+            ? {
+                ...request,
+                status: 'approved',
+                approved_at: new Date().toISOString(),
+              }
+            : request,
+        ),
+      )
+      toast.success('Access approved')
+      onUpdated()
+    } catch (err) {
+      toast.error(sanitizeUserError(err, 'Failed to approve access'))
+    } finally {
+      setApprovingAccess(false)
+    }
+  }, [mission.id, onUpdated, pendingAccessRequests, setAccessRequests])
+
+  const handlePriorityChange = async (newPriority: MissionPriority) => {
+    setCurrentPriority(newPriority)
+    try {
+      await updateMission(mission.id, { priority: newPriority })
+      onUpdated()
+    } catch (err) {
+      setCurrentPriority(mission.priority)
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : MISSION_DETAIL_ERRORS.PRIORITY_CHANGE_FAILED.userMessage,
+      )
+    }
+  }
+
+  const {
+    showDrivePicker,
+    setShowDrivePicker,
+    showDropboxPicker,
+    setShowDropboxPicker,
+    openDrive,
+    openDropbox,
+  } = useCloudAttach({
+    behavior: 'toast_if_disconnected',
+    onDriveDisconnectedToast: 'Connect Google Drive to attach files.',
+    onDropboxDisconnectedToast: 'Connect Dropbox to attach files.',
+    onDriveStatusErrorToast: 'Connect Google Drive to attach files.',
+    onDropboxStatusErrorToast: 'Connect Dropbox to attach files.',
+  })
+
+  const handleRatingSubmit = useCallback(
+    async (payload: { thumbs_up: boolean | null; rating: number | null; feedback: string }) => {
+      setRatingSending(true)
+      try {
+        await backendPost(`/api/missions/${mission.id}/rate`, payload)
+        const localLog: MissionLog = {
+          id: `local-rating-${Date.now()}`,
+          mission_id: mission.id,
+          user_id: '',
+          event_type: 'user.rating',
+          from_status: null,
+          to_status: null,
+          agent_key: null,
+          correlation_id: null,
+          payload: {
+            thumbs_up: payload.thumbs_up,
+            rating: payload.rating,
+            feedback: payload.feedback || undefined,
+          },
+          created_at: new Date().toISOString(),
+        }
+        setMissionLogs((prev) => [...prev, localLog])
+        setRatingSubmitted(true)
+        setTimeout(() => activityEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+      } catch {
+        toast.error('Failed to save rating')
+      } finally {
+        setRatingSending(false)
+      }
+    },
+    [mission.id, setMissionLogs],
+  )
+
+  const handleStatusChange = async (_newStatus: MissionStatus) => {
+    // Status is managed by mission lifecycle
+  }
+
+  const planContent = prd?.content as PrdContent | null
+  const recommendedHires = ((planContent as { recommended_hires?: RecommendedHire[] } | null)
+    ?.recommended_hires ?? []) as RecommendedHire[]
+  const sortedLogs = [...missionLogs].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  )
+
+  return (
+    <MissionDetailModalView
+      mission={mission}
+      liveMission={liveMission}
+      title={title}
+      setTitle={setTitle}
+      description={description}
+      setDescription={setDescription}
+      currentStatus={currentStatus}
+      currentPriority={currentPriority}
+      elevatedStacking={elevatedStacking}
+      onClose={onClose}
+      onUpdated={onUpdated}
+      isMobile={isMobile}
+      mobileScreen={mobileScreen}
+      setMobileScreen={setMobileScreen}
+      mobileMenuOpen={mobileMenuOpen}
+      setMobileMenuOpen={setMobileMenuOpen}
+      menuAnchor={menuAnchor}
+      setMenuAnchor={setMenuAnchor}
+      prdLoading={prdLoading}
+      logsLoading={logsLoading}
+      planContent={planContent}
+      planModalOpen={planModalOpen}
+      onClosePlan={() => setPlanModalOpen(false)}
+      recommendedHires={recommendedHires}
+      sortedLogs={sortedLogs}
+      subtasks={subtasks}
+      setSubtasks={setSubtasks}
+      agents={agents}
+      userProfile={userProfile}
+      deliverables={deliverables}
+      previewDeliverable={previewDeliverable}
+      setPreviewDeliverable={setPreviewDeliverable}
+      pendingAccessRequests={pendingAccessRequests}
+      approvingAccess={approvingAccess}
+      onApproveAccess={handleApproveAccess}
+      commentText={commentText}
+      sendingComment={sendingComment}
+      setCommentText={setCommentText}
+      onSendComment={handleSendComment}
+      activityEndRef={activityEndRef}
+      attachedFiles={attachedFiles}
+      onRemoveFile={handleRemoveFile}
+      onFileButtonClick={handleFileButtonClick}
+      openDrive={openDrive}
+      openDropbox={openDropbox}
+      setShowLibraryPicker={setShowLibraryPicker}
+      maxFiles={maxFiles}
+      fileInputRef={fileInputRef}
+      acceptedTypes={acceptedTypes}
+      onFileSelect={handleFileSelect}
+      onPasteFiles={handlePasteCommentImages}
+      onRatingSubmit={handleRatingSubmit}
+      ratingSending={ratingSending}
+      ratingSubmitted={ratingSubmitted}
+      onViewPlan={() => setPlanModalOpen(true)}
+      onApprovePlan={handleApprovePlan}
+      onRejectPlan={handleRejectPlan}
+      approvingPlan={approvingPlan}
+      autoApprovePlans={autoApprovePlans}
+      onToggleAutoApprove={handleToggleAutoApprove}
+      showDrivePicker={showDrivePicker}
+      setShowDrivePicker={setShowDrivePicker}
+      onSelectCloudFile={handleFileFromCloud}
+      showDropboxPicker={showDropboxPicker}
+      setShowDropboxPicker={setShowDropboxPicker}
+      showLibraryPicker={showLibraryPicker}
+      onSelectLibrary={handleLibrarySelect}
+      onRetry={handleRetry}
+      onArchive={handleArchive}
+      onDelete={handleDelete}
+      onStatusChange={handleStatusChange}
+      onPriorityChange={handlePriorityChange}
+    />
+  )
+}

@@ -1,0 +1,99 @@
+---
+title: "MCP Servers"
+description: "Connect custom MCP (Model Context Protocol) servers to extend your agents' capabilities beyond built-in integrations."
+---
+
+MCP servers let you connect any tool or service that supports the Model Context Protocol to your agents. This extends your team's capabilities beyond the [built-in integrations](/integrations/connected-platforms) to anything you can expose through an MCP interface.
+
+<Callout type="info">
+  This page is about connecting outside MCP servers *into* Vibey. Looking for the opposite — using Vibey from Claude, ChatGPT, or Cursor? See [The Vibey MCP](/integrations/vibey-mcp).
+</Callout>
+
+## What is MCP?
+
+The Model Context Protocol is a standard for connecting AI agents to external tools and data sources. If a service exposes an MCP server, your Vibey agents can use it - browse available tools, call them, and work with the results.
+
+## Adding an MCP Server
+
+<Steps>
+  <Step title="Open Workspace Settings">
+    Navigate to **Workspace Settings → MCP Servers**.
+  </Step>
+  <Step title="Add a server">
+    You can add servers in two ways:
+    
+    **Form mode** - Enter the server name, URL, optional description, and domain assignment one at a time.
+    
+    **JSON mode** - Paste a JSON array to import multiple servers at once.
+  </Step>
+  <Step title="Assign a domain">
+    Choose which agents can access this server based on their domain:
+    
+    | Domain | Who gets access |
+    |---|---|
+    | **Shared** | All agents |
+    | **Marketing** | Marketing-domain agents only |
+    | **Analyst** | Analyst-domain agents only |
+    | **Developer** | Developer-domain agents only |
+  </Step>
+  <Step title="Enable for agents">
+    Toggle **Agent Enabled** to make the server's tools available to your agents during [missions](/missions/what-are-missions) and [Team](/team/talking-to-vibey) conversations.
+  </Step>
+</Steps>
+
+## Server Configuration
+
+Each MCP server has:
+
+| Field | Description |
+|---|---|
+| **Name** | Display name for the server |
+| **Server URL** | The MCP endpoint URL |
+| **Description** | Optional description of what the server provides |
+| **Domain** | Which agent domain gets access (shared, marketing, analyst, developer) |
+| **API Key** | Optional authentication key |
+| **Headers** | Optional custom HTTP headers |
+| **Enabled** | Whether the server is active |
+| **Agent Enabled** | Whether agents can use the server's tools |
+
+## Managing Servers
+
+From the MCP settings page you can:
+
+- See all connected servers with their tool count and last connection time
+- Browse cached tools for each server (name and description)
+- Toggle servers on/off
+- Toggle agent access per server
+- Edit server configuration
+- Delete servers
+
+## JSON Bulk Import
+
+For adding multiple servers at once, switch to JSON mode and paste an array:
+
+```json
+[
+  {
+    "name": "My Custom Tool",
+    "url": "https://mcp.example.com",
+    "description": "Custom data processing tools",
+    "domain": "analyst",
+    "agent_enabled": true
+  }
+]
+```
+
+Each entry supports: `name`, `url`, `description`, `domain`, `api_key`, `headers`, `enabled`, `agent_enabled`.
+
+## Use Cases
+
+| What you want | MCP server to connect |
+|---|---|
+| Custom internal APIs | Your company's API wrapped in an MCP server |
+| Specialized data sources | Industry databases, research tools |
+| Custom automation | Workflow tools, internal systems |
+| Third-party tools not in the built-in library | Any service with MCP support |
+
+<Callout type="tip">
+  MCP servers are the escape hatch for when the [built-in integrations](/integrations/connected-platforms) don't cover what you need. If a tool has an MCP server, your agents can use it.
+</Callout>

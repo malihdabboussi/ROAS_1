@@ -1,0 +1,1589 @@
+{
+  "suiteName": "yc-demo-user-work",
+  "caseCount": 10,
+  "passRate": 0.1,
+  "averageScore": 0.5,
+  "validationPassRate": null,
+  "validationCaseCount": 0,
+  "validationAverageScore": null,
+  "retrievalPassRate": 0.1,
+  "synthesisPassRate": 0.1,
+  "synthesisPassRateWhenRetrieved": 1,
+  "avgRetrievalRecall": 0.16666666666666666,
+  "avgBrainCoverage": 0.2,
+  "failureBreakdown": {
+    "retrievalRecall": 1,
+    "notInBrain": 0,
+    "synthesis": 0,
+    "mixed": 0,
+    "errored": 8
+  },
+  "avgAgentLatencyMs": 16876.2192292,
+  "avgJudgeLatencyMs": 591.3646666999964,
+  "avgLatencyMs": 98171.10408399996,
+  "avgToolCalls": 0,
+  "avgBrainToolCalls": 0,
+  "totalToolCalls": 0,
+  "totalBrainToolCalls": 0,
+  "totalUsage": {
+    "avgLatencyMs": 98171.10408399996,
+    "avgAgentLatencyMs": 92257.457417,
+    "avgJudgeLatencyMs": 5913.6466669999645,
+    "avgInputTokens": 24132,
+    "avgOutputTokens": 3111,
+    "avgTotalTokens": 27243,
+    "avgBrainContextTokens": 7676,
+    "totalInputTokens": 24132,
+    "totalOutputTokens": 3111,
+    "totalTokens": 27243,
+    "agentProviderCostUsd": null,
+    "judgeProviderCostUsd": 0.0311745,
+    "providerCostUsd": 0.0311745,
+    "userCostUsd": 0.062349,
+    "marginUsd": 0.0311745,
+    "estimatedCredits": 13,
+    "costUnknownCount": 2,
+    "pricingSource": "partial"
+  },
+  "cases": [
+    {
+      "caseId": "yc-u41-plinthworks-rebrand-q3-q4-cutover",
+      "taskType": "make_decision",
+      "validationSet": false,
+      "passed": true,
+      "weightedScore": 5,
+      "diagnostics": {
+        "retrievalScore": 1,
+        "retrievalPassed": true,
+        "retrievalRecall": 1,
+        "brainCoverage": 1,
+        "synthesisScore": 1,
+        "synthesisPassed": true,
+        "failureType": "none"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 5,
+          "contextUsefulness": 5,
+          "groundedness": 5,
+          "synthesisQuality": 5,
+          "irrelevanceControl": 5,
+          "abstentionQuality": 5
+        },
+        "weightedScore": 5,
+        "passed": true,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "retrieval": {
+          "passed": true,
+          "preloadTextLength": 39662,
+          "phrases": [
+            {
+              "phrase": "January 1",
+              "location": "retrieved",
+              "family": "company",
+              "sourceTitle": "Plinthworks rebrand: ship the new mark in Q3, sunset the old in Q4",
+              "snippet": "Legacy mark stays on docs, in-app, and customer assets through Q4; full sunset January 1. No cohabitation past that date. Week 11 partner sync with Plinthworks founder,"
+            },
+            {
+              "phrase": "Q3",
+              "location": "retrieved",
+              "family": "company",
+              "sourceTitle": "Plinthworks rebrand: ship the new mark in Q3, sunset the old in Q4",
+              "snippet": "Plinthworks rebrand: ship the new mark in Q3, sunset the old in Q4 Plinthworks ships new logo, type system, and marketing si"
+            },
+            {
+              "phrase": "legacy mark",
+              "location": "retrieved",
+              "family": "company",
+              "sourceTitle": "Plinthworks rebrand: ship the new mark in Q3, sunset the old in Q4",
+              "snippet": "he old in Q4 Plinthworks ships new logo, type system, and marketing site in Q3. Legacy mark stays on docs, in-app, and customer assets through Q4; full sunset January 1. N"
+            }
+          ],
+          "preloadFound": [
+            {
+              "phrase": "January 1",
+              "family": "company",
+              "sourceTitle": "Plinthworks rebrand: ship the new mark in Q3, sunset the old in Q4",
+              "snippet": "Legacy mark stays on docs, in-app, and customer assets through Q4; full sunset January 1. No cohabitation past that date. Week 11 partner sync with Plinthworks founder,"
+            },
+            {
+              "phrase": "Q3",
+              "family": "company",
+              "sourceTitle": "Plinthworks rebrand: ship the new mark in Q3, sunset the old in Q4",
+              "snippet": "Plinthworks rebrand: ship the new mark in Q3, sunset the old in Q4 Plinthworks ships new logo, type system, and marketing si"
+            },
+            {
+              "phrase": "legacy mark",
+              "family": "company",
+              "sourceTitle": "Plinthworks rebrand: ship the new mark in Q3, sunset the old in Q4",
+              "snippet": "he old in Q4 Plinthworks ships new logo, type system, and marketing site in Q3. Legacy mark stays on docs, in-app, and customer assets through Q4; full sunset January 1. N"
+            }
+          ],
+          "preloadMissing": [],
+          "preloadMissingInBrain": [],
+          "preloadMissingNotInBrain": [],
+          "forbiddenInPreload": [
+            {
+              "phrase": "sunset legacy in Q3",
+              "family": "company",
+              "sourceTitle": "Plinthworks rebrand: ship the new mark in Q3, sunset the old in Q4",
+              "snippet": "Plinthworks rebrand: ship the new mark in Q3, sunset the old in Q4 Plinthworks ships new logo, type system, and marketing site in Q3. Legacy mark stays on docs,"
+            }
+          ],
+          "laneCounts": {
+            "user": 0,
+            "agent": 0,
+            "customer": 20,
+            "company": 20,
+            "preload": 1
+          },
+          "abstentionFailed": false,
+          "retrievalRecall": 1,
+          "brainCoverage": 1,
+          "probeLatencyMs": 64155,
+          "failureReasons": [],
+          "probeAvailable": true,
+          "groundTruthAvailable": true
+        },
+        "expectations": [
+          {
+            "text": "Rejects same-day legacy sunset with Q3 site ship",
+            "passed": true,
+            "evidence": "Short answer: **No, and there's a specific reason that split was locked in.**",
+            "source": "llm"
+          },
+          {
+            "text": "States Q3 ship for new mark and marketing site",
+            "passed": true,
+            "evidence": "New logo, type system, and marketing site ship in Q3.",
+            "source": "llm"
+          },
+          {
+            "text": "Keeps legacy mark on docs and in-app through Q4",
+            "passed": true,
+            "evidence": "Legacy mark stays on docs, in-app, and customer assets through Q4.",
+            "source": "llm"
+          },
+          {
+            "text": "Names January 1 as the hard sunset date",
+            "passed": true,
+            "evidence": "Full sunset is January 1 — no cohabitation past that date.",
+            "source": "llm"
+          }
+        ],
+        "expectationPassRate": 1,
+        "claims": [
+          {
+            "claim": "The new logo, type system, and marketing site will ship in Q3.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Matches the expected outcome of shipping the new mark and site in Q3."
+          },
+          {
+            "claim": "The legacy mark will stay on docs and in-app through Q4.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Matches the expected outcome of keeping the legacy mark on docs and in-app through Q4."
+          },
+          {
+            "claim": "The hard sunset date for the legacy mark is January 1, with no cohabitation past that date.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Matches the expected outcome's hard sunset of January 1 and no cohabitation rule."
+          },
+          {
+            "claim": "The request for a same-day legacy sunset with the Q3 site launch is rejected.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Matches the expected negative response ('No') to the prompt."
+          }
+        ],
+        "evidence": [
+          "Final answer clearly states: 'New logo, type system, and marketing site ship in Q3. Legacy mark stays on docs, in-app, and customer assets through Q4. Full sunset is January 1 — no cohabitation past that date.'"
+        ],
+        "failureReasons": [],
+        "usage": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 2117,
+          "outputTokens": 3111,
+          "totalTokens": 5228,
+          "providerCostUsd": 0.0311745,
+          "latencyMs": 5913.6466669999645
+        },
+        "adversarial": {
+          "passed": true,
+          "flippedExpectations": [],
+          "failureReasons": [],
+          "usage": {
+            "model": "google/gemini-3.5-flash",
+            "inputTokens": 717,
+            "outputTokens": 1177,
+            "totalTokens": 1894,
+            "providerCostUsd": 0.0116685,
+            "latencyMs": 2989.2021669999813
+          }
+        }
+      },
+      "agentRun": {
+        "caseId": "yc-u41-plinthworks-rebrand-q3-q4-cutover",
+        "agentKey": "vibey",
+        "conversationId": "d3e22a55-0e60-4cd0-a5b9-38cf136a6076",
+        "finalAnswer": "Short answer: **No, and there's a specific reason that split was locked in.**\n\nHere's what the operating record shows:\n\n**The locked decision**\nNew logo, type system, and marketing site ship in Q3. Legacy mark stays on docs, in-app, and customer assets through Q4. Full sunset is January 1 — no cohabitation past that date.\n\n**Why the split exists**\nThe Q3/Q4 timeline was explicitly tied to two risk factors:\n- **Docs deploy cadence** — the legacy mark needs to remain while documentation is being migrated, not retired the moment the new site goes live.- **Spend risk** — collapsing the timeline severs the linkage between the rebrand and any active spend tied to the old mark.\n\n**This was already tested**\nA site-only ask in Week 12 — essentially the same question — was declined in partner sync because it would have severed spend linkage. That rejection is on record.\n\n**The practical implication**\nSunsetting the mark the same day the site ships treats the new site as the finish line. It isn't. The finish line is January 1, after docs, in-app assets, and customer-facing materials have all been migrated cleanly.\n\nIf something has changed — a new docs deploy schedule, a spend structure that no longer depends on the old mark — that's worth a partner sync. But as it stands, the Q3/Q4 split holds and the rationale is solid.",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "aa6c4a06-0bde-439f-9c77-3d08e0775055",
+              "conversation_id": "d3e22a55-0e60-4cd0-a5b9-38cf136a6076"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Short answer: **No, and there's a specific"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " reason that split was locked in.**\n\nHere's what the operating record shows"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ":\n\n**The locked decision**\nNew logo, type system, and marketing site ship in Q3. Legacy mark stays on docs, in-app, and customer assets through Q4. Full sunset is"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " January 1 — no cohabitation past that date.\n\n**Why the split exists**\nThe Q3/Q4 timeline"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " was explicitly tied to two risk factors:\n- **Docs deploy cadence** — the legacy mark needs to remain"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " while documentation is being migrated, not retired the moment the new site goes live."
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "- **Spend risk** — collapsing the timeline severs the linkage between the rebrand and any active spend tied"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " to the old mark.\n\n**This was already tested**\nA site-only ask in"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Week 12 — essentially the same question — was declined in partner sync because it would have severed spend linkage."
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " That rejection is on record.\n\n**The practical implication**\nSu"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "nsetting the mark the same day the site ships treats the new site as the finish line. It"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " isn't. The finish line is January 1, after docs, in-app assets"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ", and customer-facing materials have all been migrated cleanly.\n\nIf something has"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " changed — a new docs deploy schedule, a spend structure that no longer depends"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " on the old mark — that's worth a partner sync. But as it stands, the Q"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "3/Q4 split holds and the rationale is solid."
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user is asking about whether they can sunset Plinthworks' legacy mark the same day they ship the new site in Q3. Let me look at what I know from the context provided._\n\n_From the COMPANY OPERATING CONTEXT, I can see:_\n\n_1. **The established decision**: \"Plinthworks ships new logo, type system, and marketing site in Q3. Legacy mark stays on docs, in-app, and customer assets through Q4; full sunset January 1. No cohabitation past that date.\"_\n\n_2. **Brain context status**: \"Related information found, but not enough evidence to answer definitively. Missing: No strong direct evidence found.\"_\n\n\n_The decision to split the rollout across Q3 and Q4 was intentional, not arbitrary. The brain context shows this was tied to specific constraints around docs deployment timing and the risks involved in migrating spend tracking simultaneously. There was even a rejected proposal to do the site-only in Q3, which would've decoupled the spend migration but didn't get approved in the partner sync. I have enough context to answer this directly. The Q3/Q4 split is locked in—there's no flexibility here. The legacy mark stays through Q4 across docs, in-app, and customer assets, then fully sunsets on January 1._",
+              "text": "Reasoning:\n_The user is asking about whether they can sunset Plinthworks' legacy mark the same day they ship the new site in Q3. Let me look at what I know from the context provided._\n\n_From the COMPANY OPERATING CONTEXT, I can see:_\n\n_1. **The established decision**: \"Plinthworks ships new logo, type system, and marketing site in Q3. Legacy mark stays on docs, in-app, and customer assets through Q4; full sunset January 1. No cohabitation past that date.\"_\n\n_2. **Brain context status**: \"Related information found, but not enough evidence to answer definitively. Missing: No strong direct evidence found.\"_\n\n\n_The decision to split the rollout across Q3 and Q4 was intentional, not arbitrary. The brain context shows this was tied to specific constraints around docs deployment timing and the risks involved in migrating spend tracking simultaneously. There was even a rejected proposal to do the site-only in Q3, which would've decoupled the spend migration but didn't get approved in the partner sync. I have enough context to answer this directly. The Q3/Q4 split is locked in—there's no flexibility here. The legacy mark stays through Q4 across docs, in-app, and customer assets, then fully sunsets on January 1._"
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "aa6c4a06-0bde-439f-9c77-3d08e0775055",
+              "credits_pending": true,
+              "duration_ms": 89443,
+              "usage": {
+                "input_tokens": 22015
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779883705817,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 22015,
+                "slices": [
+                  {
+                    "id": "system",
+                    "label": "System",
+                    "tokens": 20721,
+                    "entries": [
+                      {
+                        "id": "openclaw_system_prompt",
+                        "label": "OpenClaw system prompt",
+                        "tokens": 14497
+                      },
+                      {
+                        "id": "injected_workspace_files",
+                        "label": "Injected workspace files",
+                        "tokens": 6224
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 1983,
+                    "entries": [
+                      {
+                        "id": "read",
+                        "label": "read",
+                        "tokens": 173
+                      },
+                      {
+                        "id": "session_status",
+                        "label": "session_status",
+                        "tokens": 74
+                      },
+                      {
+                        "id": "web_search",
+                        "label": "web_search",
+                        "tokens": 217
+                      },
+                      {
+                        "id": "web_fetch",
+                        "label": "web_fetch",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "wait",
+                        "label": "wait",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "campaign_capability",
+                        "label": "campaign_capability",
+                        "tokens": 1164
+                      },
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 388
+                      }
+                    ]
+                  },
+                  {
+                    "id": "skills",
+                    "label": "Skills",
+                    "tokens": 4164,
+                    "entries": [
+                      {
+                        "id": "skill-creator",
+                        "label": "skill-creator",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "ad-builder",
+                        "label": "ad-builder",
+                        "tokens": 61
+                      },
+                      {
+                        "id": "avatar-builder",
+                        "label": "avatar-builder",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "awareness-evaluator",
+                        "label": "awareness-evaluator",
+                        "tokens": 83
+                      },
+                      {
+                        "id": "blog-writing",
+                        "label": "blog-writing",
+                        "tokens": 111
+                      },
+                      {
+                        "id": "brain-memory",
+                        "label": "brain-memory",
+                        "tokens": 116
+                      },
+                      {
+                        "id": "campaign-performance-reporting",
+                        "label": "campaign-performance-reporting",
+                        "tokens": 165
+                      },
+                      {
+                        "id": "chat-plan-management",
+                        "label": "chat-plan-management",
+                        "tokens": 98
+                      },
+                      {
+                        "id": "email-campaign-publisher",
+                        "label": "email-campaign-publisher",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "email-sequence-builder",
+                        "label": "email-sequence-builder",
+                        "tokens": 117
+                      },
+                      {
+                        "id": "funnel-builder",
+                        "label": "funnel-builder",
+                        "tokens": 134
+                      },
+                      {
+                        "id": "image-production",
+                        "label": "image-production",
+                        "tokens": 113
+                      },
+                      {
+                        "id": "integrations",
+                        "label": "integrations",
+                        "tokens": 121
+                      },
+                      {
+                        "id": "meta-publisher",
+                        "label": "meta-publisher",
+                        "tokens": 119
+                      },
+                      {
+                        "id": "mission-planner",
+                        "label": "mission-planner",
+                        "tokens": 219
+                      },
+                      {
+                        "id": "mission-quality-evaluator",
+                        "label": "mission-quality-evaluator",
+                        "tokens": 96
+                      },
+                      {
+                        "id": "mission-reviewer",
+                        "label": "mission-reviewer",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "mission-worker-executor",
+                        "label": "mission-worker-executor",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "offer-builder",
+                        "label": "offer-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "onboarding-discovery",
+                        "label": "onboarding-discovery",
+                        "tokens": 168
+                      },
+                      {
+                        "id": "pdf-builder",
+                        "label": "pdf-builder",
+                        "tokens": 125
+                      },
+                      {
+                        "id": "presentation-builder",
+                        "label": "presentation-builder",
+                        "tokens": 152
+                      },
+                      {
+                        "id": "social-content-builder",
+                        "label": "social-content-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "social-publisher",
+                        "label": "social-publisher",
+                        "tokens": 99
+                      },
+                      {
+                        "id": "strategy-planner",
+                        "label": "strategy-planner",
+                        "tokens": 172
+                      },
+                      {
+                        "id": "team-management",
+                        "label": "team-management",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "theme-builder",
+                        "label": "theme-builder",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "vibey-api",
+                        "label": "vibey-api",
+                        "tokens": 56
+                      },
+                      {
+                        "id": "video-analyzer",
+                        "label": "video-analyzer",
+                        "tokens": 166
+                      },
+                      {
+                        "id": "video-producer",
+                        "label": "video-producer",
+                        "tokens": 85
+                      },
+                      {
+                        "id": "video-production",
+                        "label": "video-production",
+                        "tokens": 170
+                      },
+                      {
+                        "id": "website-builder",
+                        "label": "website-builder",
+                        "tokens": 151
+                      }
+                    ]
+                  },
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 7676,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 7676
+                      }
+                    ]
+                  },
+                  {
+                    "id": "user_team",
+                    "label": "User/Team",
+                    "tokens": 44,
+                    "entries": [
+                      {
+                        "id": "user_profile",
+                        "label": "User profile",
+                        "tokens": 44
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 0
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [],
+        "latencyMs": 92257.457417,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 22015,
+          "outputTokens": 0,
+          "totalTokens": 22015,
+          "brainContextTokens": 7676,
+          "contextWindowTokens": 1000000,
+          "durationMs": 89443,
+          "latencyMs": 92257.457417
+        },
+        "toolCalls": {
+          "totalToolCalls": 0,
+          "brainToolCalls": 0,
+          "byToolName": {},
+          "byBrainAction": {}
+        }
+      },
+      "usage": {
+        "agent": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 22015,
+          "outputTokens": 0,
+          "totalTokens": 22015,
+          "brainContextTokens": 7676,
+          "contextWindowTokens": 1000000,
+          "durationMs": 89443,
+          "latencyMs": 92257.457417
+        },
+        "judge": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 2117,
+          "outputTokens": 3111,
+          "totalTokens": 5228,
+          "providerCostUsd": 0.0311745,
+          "latencyMs": 5913.6466669999645
+        }
+      }
+    },
+    {
+      "caseId": "yc-u42-we-love-it-24-hour-rule",
+      "taskType": "answer_query",
+      "validationSet": false,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0.6666666666666666,
+        "retrievalPassed": false,
+        "retrievalRecall": 0.6666666666666666,
+        "brainCoverage": 1,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "retrieval_recall"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": true,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "retrieval": {
+          "passed": false,
+          "preloadTextLength": 46434,
+          "phrases": [
+            {
+              "phrase": "we love it",
+              "location": "in_brain_but_missed",
+              "inBrainCount": 19,
+              "inMemories": 4,
+              "inCortex": 14,
+              "inPages": 1
+            },
+            {
+              "phrase": "24 hours",
+              "location": "retrieved",
+              "family": "customer",
+              "sourceTitle": "Email reply re: Saltline brand brief — follow-up the next day",
+              "snippet": "Follow-up note (re: cm-saltline-founder-05). Re-reading what Sara said: \"She has Follow-up note (re: cm-saltline-founder-05). Re-reading what Sara said: \"She ha"
+            },
+            {
+              "phrase": "Riley",
+              "location": "retrieved",
+              "family": "customer",
+              "sourceTitle": "Throughput weekly status",
+              "snippet": ", he is asking her. Her nods are decisions. The actual approver, undocumented — Riley should always route deliverables past Aliyah before Dominic. Aliyah is the sile"
+            }
+          ],
+          "preloadFound": [
+            {
+              "phrase": "24 hours",
+              "family": "customer",
+              "sourceTitle": "Email reply re: Saltline brand brief — follow-up the next day",
+              "snippet": "Follow-up note (re: cm-saltline-founder-05). Re-reading what Sara said: \"She has Follow-up note (re: cm-saltline-founder-05). Re-reading what Sara said: \"She ha"
+            },
+            {
+              "phrase": "Riley",
+              "family": "customer",
+              "sourceTitle": "Throughput weekly status",
+              "snippet": ", he is asking her. Her nods are decisions. The actual approver, undocumented — Riley should always route deliverables past Aliyah before Dominic. Aliyah is the sile"
+            }
+          ],
+          "preloadMissing": ["we love it"],
+          "preloadMissingInBrain": ["we love it"],
+          "preloadMissingNotInBrain": [],
+          "forbiddenInPreload": [],
+          "laneCounts": {
+            "user": 0,
+            "agent": 0,
+            "customer": 20,
+            "company": 20,
+            "preload": 1
+          },
+          "abstentionFailed": false,
+          "retrievalRecall": 0.6666666666666666,
+          "brainCoverage": 1,
+          "probeLatencyMs": 2963,
+          "failureReasons": [
+            "Required phrase(s) IN BRAIN but not retrieved (recall miss): we love it"
+          ],
+          "probeAvailable": true,
+          "groundTruthAvailable": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": [
+          "Required phrase(s) IN BRAIN but not retrieved (recall miss): we love it"
+        ]
+      },
+      "agentRun": {
+        "caseId": "yc-u42-we-love-it-24-hour-rule",
+        "agentKey": "vibey",
+        "conversationId": "6596dded-d955-48b2-ac94-f41df67c69b4",
+        "finalAnswer": "The rule: **no \"we love it\" in writing without 24 hours of read-back time.**\n\nRiley approved the Saltline deck inside the first hour. Sara caught the drift the next morning, but the written green-light had already locked Foundry into a position nobody had pressure-tested. The protocol added as a result:\n\n- **24-hour read-back before any written approval on a client deliverable**\n- After 24 hours without a written sign-off, Riley schedules a call instead\n- No exceptions — founder locked it in #wiki on April 18th: *\"No client approval lives in Slack longer than 24 hours.\"*\n\nIt's now one of the studio's hard anti-patterns. The trigger was exactly that sequence: fast enthusiasm in writing, drift caught too late to walk it back cleanly.",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "f684aaee-0898-4f61-afac-042d5a2bfe32",
+              "conversation_id": "6596dded-d955-48b2-ac94-f41df67c69b4"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "The rule: **no \"we love it\" in writing without 24 hours of read-back time.**\n\nRiley approved the Saltline deck inside the first hour."
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Sara caught the drift the next morning, but the written green-light had already locked"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Foundry into a position nobody had pressure-tested. The protocol added as a result:"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\n\n- **24-hour read-back before any written approval on a client deliverable**\n- After 24 hours without"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " a written sign-off, Riley schedules a call instead\n- No exceptions — founder locked it in #wiki on April 18th"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ": *\"No client approval lives in Slack longer than 24 hours.\"*\n\nIt's now one"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " of the studio's hard anti-patterns. The trigger was exactly that sequence:"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " fast enthusiasm in writing, drift caught too late to"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " walk it back cleanly."
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user is asking about a specific rule that was added after Riley green-lit a Saltline deck in thirty minutes and Sara caught drift the next morning. Let me look at the context I have available._\n\n_From the COMPANY OPERATING CONTEXT, I can see:_\n\n_- [company_object] Saying \"we love it\" in writing without 24 hours of read-back time: \"Replying to a client deliverable with enthusiasm in writing inside the first hour locks us into a position we have not pressure-tested. Twenty-four hours of read-back time, then a written response. Saltline Week 10: Riley green-lit deck in...\"_\n\n_This is clearly the rule. Riley green-lit a Saltline deck quickly (in 30 minutes), and Sara caught drift the next morning. _\n\n_So the rule they locked in was no written \"we love it\" responses to clients without a full 24-hour read-back period first—and there's also a protocol that client approvals can't sit in Slack longer than 24 hours before Riley schedules a call to move it forward. The founder posted this protocol in the wiki back in April 2026._",
+              "text": "Reasoning:\n_The user is asking about a specific rule that was added after Riley green-lit a Saltline deck in thirty minutes and Sara caught drift the next morning. Let me look at the context I have available._\n\n_From the COMPANY OPERATING CONTEXT, I can see:_\n\n_- [company_object] Saying \"we love it\" in writing without 24 hours of read-back time: \"Replying to a client deliverable with enthusiasm in writing inside the first hour locks us into a position we have not pressure-tested. Twenty-four hours of read-back time, then a written response. Saltline Week 10: Riley green-lit deck in...\"_\n\n_This is clearly the rule. Riley green-lit a Saltline deck quickly (in 30 minutes), and Sara caught drift the next morning. _\n\n_So the rule they locked in was no written \"we love it\" responses to clients without a full 24-hour read-back period first—and there's also a protocol that client approvals can't sit in Slack longer than 24 hours before Riley schedules a call to move it forward. The founder posted this protocol in the wiki back in April 2026._"
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "f684aaee-0898-4f61-afac-042d5a2bfe32",
+              "credits_pending": true,
+              "duration_ms": 73907,
+              "usage": {
+                "input_tokens": 23486
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779883863101,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 23486,
+                "slices": [
+                  {
+                    "id": "system",
+                    "label": "System",
+                    "tokens": 22032,
+                    "entries": [
+                      {
+                        "id": "openclaw_system_prompt",
+                        "label": "OpenClaw system prompt",
+                        "tokens": 15808
+                      },
+                      {
+                        "id": "injected_workspace_files",
+                        "label": "Injected workspace files",
+                        "tokens": 6224
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 1983,
+                    "entries": [
+                      {
+                        "id": "read",
+                        "label": "read",
+                        "tokens": 173
+                      },
+                      {
+                        "id": "session_status",
+                        "label": "session_status",
+                        "tokens": 74
+                      },
+                      {
+                        "id": "web_search",
+                        "label": "web_search",
+                        "tokens": 217
+                      },
+                      {
+                        "id": "web_fetch",
+                        "label": "web_fetch",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "wait",
+                        "label": "wait",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "campaign_capability",
+                        "label": "campaign_capability",
+                        "tokens": 1164
+                      },
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 388
+                      }
+                    ]
+                  },
+                  {
+                    "id": "skills",
+                    "label": "Skills",
+                    "tokens": 4164,
+                    "entries": [
+                      {
+                        "id": "skill-creator",
+                        "label": "skill-creator",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "ad-builder",
+                        "label": "ad-builder",
+                        "tokens": 61
+                      },
+                      {
+                        "id": "avatar-builder",
+                        "label": "avatar-builder",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "awareness-evaluator",
+                        "label": "awareness-evaluator",
+                        "tokens": 83
+                      },
+                      {
+                        "id": "blog-writing",
+                        "label": "blog-writing",
+                        "tokens": 111
+                      },
+                      {
+                        "id": "brain-memory",
+                        "label": "brain-memory",
+                        "tokens": 116
+                      },
+                      {
+                        "id": "campaign-performance-reporting",
+                        "label": "campaign-performance-reporting",
+                        "tokens": 165
+                      },
+                      {
+                        "id": "chat-plan-management",
+                        "label": "chat-plan-management",
+                        "tokens": 98
+                      },
+                      {
+                        "id": "email-campaign-publisher",
+                        "label": "email-campaign-publisher",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "email-sequence-builder",
+                        "label": "email-sequence-builder",
+                        "tokens": 117
+                      },
+                      {
+                        "id": "funnel-builder",
+                        "label": "funnel-builder",
+                        "tokens": 134
+                      },
+                      {
+                        "id": "image-production",
+                        "label": "image-production",
+                        "tokens": 113
+                      },
+                      {
+                        "id": "integrations",
+                        "label": "integrations",
+                        "tokens": 121
+                      },
+                      {
+                        "id": "meta-publisher",
+                        "label": "meta-publisher",
+                        "tokens": 119
+                      },
+                      {
+                        "id": "mission-planner",
+                        "label": "mission-planner",
+                        "tokens": 219
+                      },
+                      {
+                        "id": "mission-quality-evaluator",
+                        "label": "mission-quality-evaluator",
+                        "tokens": 96
+                      },
+                      {
+                        "id": "mission-reviewer",
+                        "label": "mission-reviewer",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "mission-worker-executor",
+                        "label": "mission-worker-executor",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "offer-builder",
+                        "label": "offer-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "onboarding-discovery",
+                        "label": "onboarding-discovery",
+                        "tokens": 168
+                      },
+                      {
+                        "id": "pdf-builder",
+                        "label": "pdf-builder",
+                        "tokens": 125
+                      },
+                      {
+                        "id": "presentation-builder",
+                        "label": "presentation-builder",
+                        "tokens": 152
+                      },
+                      {
+                        "id": "social-content-builder",
+                        "label": "social-content-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "social-publisher",
+                        "label": "social-publisher",
+                        "tokens": 99
+                      },
+                      {
+                        "id": "strategy-planner",
+                        "label": "strategy-planner",
+                        "tokens": 172
+                      },
+                      {
+                        "id": "team-management",
+                        "label": "team-management",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "theme-builder",
+                        "label": "theme-builder",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "vibey-api",
+                        "label": "vibey-api",
+                        "tokens": 56
+                      },
+                      {
+                        "id": "video-analyzer",
+                        "label": "video-analyzer",
+                        "tokens": 166
+                      },
+                      {
+                        "id": "video-producer",
+                        "label": "video-producer",
+                        "tokens": 85
+                      },
+                      {
+                        "id": "video-production",
+                        "label": "video-production",
+                        "tokens": 170
+                      },
+                      {
+                        "id": "website-builder",
+                        "label": "website-builder",
+                        "tokens": 151
+                      }
+                    ]
+                  },
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 9104,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 9104
+                      }
+                    ]
+                  },
+                  {
+                    "id": "user_team",
+                    "label": "User/Team",
+                    "tokens": 44,
+                    "entries": [
+                      {
+                        "id": "user_profile",
+                        "label": "User profile",
+                        "tokens": 44
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 0
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [],
+        "latencyMs": 76504.734875,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 23486,
+          "outputTokens": 0,
+          "totalTokens": 23486,
+          "brainContextTokens": 9104,
+          "contextWindowTokens": 1000000,
+          "durationMs": 73907,
+          "latencyMs": 76504.734875
+        },
+        "toolCalls": {
+          "totalToolCalls": 0,
+          "brainToolCalls": 0,
+          "byToolName": {},
+          "byBrainAction": {}
+        }
+      }
+    },
+    {
+      "caseId": "yc-u43-jules-monday-morning-test",
+      "taskType": "answer_query",
+      "validationSet": false,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "retrievalRecall": 0,
+        "brainCoverage": 0,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "errored"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: terminated"]
+      },
+      "agentRun": {
+        "caseId": "yc-u43-jules-monday-morning-test",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-u44-owen-new-hire-onboarding-protocol",
+      "taskType": "answer_query",
+      "validationSet": false,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "retrievalRecall": 0,
+        "brainCoverage": 0,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "errored"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: terminated"]
+      },
+      "agentRun": {
+        "caseId": "yc-u44-owen-new-hire-onboarding-protocol",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-u45-leo-kill-criterion-hire",
+      "taskType": "answer_query",
+      "validationSet": false,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "retrievalRecall": 0,
+        "brainCoverage": 0,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "errored"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: terminated"]
+      },
+      "agentRun": {
+        "caseId": "yc-u45-leo-kill-criterion-hire",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-u46-friday-partner-sync-cadence",
+      "taskType": "answer_query",
+      "validationSet": false,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "retrievalRecall": 0,
+        "brainCoverage": 0,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "errored"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: terminated"]
+      },
+      "agentRun": {
+        "caseId": "yc-u46-friday-partner-sync-cadence",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-u47-maya-customer-quote-gate",
+      "taskType": "answer_query",
+      "validationSet": false,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "retrievalRecall": 0,
+        "brainCoverage": 0,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "errored"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: terminated"]
+      },
+      "agentRun": {
+        "caseId": "yc-u47-maya-customer-quote-gate",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-u48-nico-three-forces-positioning",
+      "taskType": "answer_query",
+      "validationSet": false,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "retrievalRecall": 0,
+        "brainCoverage": 0,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "errored"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: terminated"]
+      },
+      "agentRun": {
+        "caseId": "yc-u48-nico-three-forces-positioning",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-u49-cross-customer-organic-before-paid",
+      "taskType": "make_decision",
+      "validationSet": false,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "retrievalRecall": 0,
+        "brainCoverage": 0,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "errored"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: terminated"]
+      },
+      "agentRun": {
+        "caseId": "yc-u49-cross-customer-organic-before-paid",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    },
+    {
+      "caseId": "yc-u50-abstain-plinthworks-retainer-fee",
+      "taskType": "abstain",
+      "validationSet": false,
+      "passed": false,
+      "weightedScore": 0,
+      "diagnostics": {
+        "retrievalScore": 0,
+        "retrievalPassed": false,
+        "retrievalRecall": 0,
+        "brainCoverage": 0,
+        "synthesisScore": 0,
+        "synthesisPassed": false,
+        "failureType": "errored"
+      },
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 0,
+          "contextUsefulness": 0,
+          "groundedness": 0,
+          "synthesisQuality": 0,
+          "irrelevanceControl": 0,
+          "abstentionQuality": 0
+        },
+        "weightedScore": 0,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": true
+        },
+        "expectations": [],
+        "expectationPassRate": 0,
+        "claims": [],
+        "evidence": [],
+        "failureReasons": ["Case errored before completion: terminated"]
+      },
+      "agentRun": {
+        "caseId": "yc-u50-abstain-plinthworks-retainer-fee",
+        "agentKey": "unknown",
+        "finalAnswer": "",
+        "events": [],
+        "brainActionCalls": [],
+        "latencyMs": 0
+      }
+    }
+  ]
+}

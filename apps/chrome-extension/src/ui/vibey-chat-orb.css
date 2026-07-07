@@ -1,0 +1,1025 @@
+/* ============================================================================
+   SECTION 29: VIBEY CHAT ORB (CSS-only animated orb)
+   ============================================================================ */
+
+/* === KEYFRAMES === */
+@keyframes chat-orb-float {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(1px, -1px);
+  }
+  50% {
+    transform: translate(0, 1px);
+  }
+  75% {
+    transform: translate(-1px, -0.5px);
+  }
+}
+@keyframes chat-orb-elastic-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  8% {
+    transform: translate(3px, 0) scale(0.6);
+    opacity: 0.6;
+  }
+  15% {
+    transform: translate(6.5px, 0) scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(0, -6.5px) scale(1);
+    opacity: 1;
+  }
+  48% {
+    transform: translate(-6.5px, 0) scale(1);
+    opacity: 1;
+  }
+  65% {
+    transform: translate(0, 6.5px) scale(1);
+    opacity: 1;
+  }
+  80% {
+    transform: translate(6.5px, 0) scale(1);
+    opacity: 1;
+  }
+  90% {
+    transform: translate(3px, 0) scale(0.5);
+    opacity: 0.4;
+  }
+}
+@keyframes chat-orb-elastic-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    transform: translate(-3px, 0) scale(0.6);
+    opacity: 0.6;
+  }
+  18% {
+    transform: translate(-7.5px, 0) scale(1);
+    opacity: 1;
+  }
+  34% {
+    transform: translate(0, 7.5px) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(7.5px, 0) scale(1);
+    opacity: 1;
+  }
+  66% {
+    transform: translate(0, -7.5px) scale(1);
+    opacity: 1;
+  }
+  82% {
+    transform: translate(-7.5px, 0) scale(1);
+    opacity: 1;
+  }
+  92% {
+    transform: translate(-2px, 0) scale(0.4);
+    opacity: 0.3;
+  }
+}
+@keyframes chat-orb-elastic-3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(0, -2px) scale(0.5);
+    opacity: 0.5;
+  }
+  20% {
+    transform: translate(0, -5.5px) scale(1);
+    opacity: 1;
+  }
+  36% {
+    transform: translate(5.5px, 0) scale(1);
+    opacity: 1;
+  }
+  52% {
+    transform: translate(0, 5.5px) scale(1);
+    opacity: 1;
+  }
+  68% {
+    transform: translate(-5.5px, 0) scale(1);
+    opacity: 1;
+  }
+  84% {
+    transform: translate(0, -5.5px) scale(1);
+    opacity: 1;
+  }
+  93% {
+    transform: translate(0, -1px) scale(0.3);
+    opacity: 0.2;
+  }
+}
+@keyframes chat-orb-elastic-4 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  14% {
+    transform: translate(2px, 2px) scale(0.5);
+    opacity: 0.4;
+  }
+  22% {
+    transform: translate(0, 8px) scale(1);
+    opacity: 0.7;
+  }
+  38% {
+    transform: translate(-8px, 0) scale(1);
+    opacity: 0.7;
+  }
+  54% {
+    transform: translate(0, -8px) scale(1);
+    opacity: 0.7;
+  }
+  70% {
+    transform: translate(8px, 0) scale(1);
+    opacity: 0.7;
+  }
+  85% {
+    transform: translate(0, 8px) scale(0.8);
+    opacity: 0.5;
+  }
+  94% {
+    transform: translate(0, 2px) scale(0.3);
+    opacity: 0.2;
+  }
+}
+@keyframes chat-orb-core-gentle {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 1;
+  }
+}
+@keyframes chat-orb-trail-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  8% {
+    transform: translate(4px, 0) scale(0.8);
+    opacity: 0.8;
+  }
+  15% {
+    transform: translate(8px, 0) scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(4px, -6px) scale(1);
+    opacity: 1;
+  }
+  48% {
+    transform: translate(-8px, 0) scale(1);
+    opacity: 1;
+  }
+  65% {
+    transform: translate(-4px, 6px) scale(1);
+    opacity: 1;
+  }
+  80% {
+    transform: translate(8px, 0) scale(1);
+    opacity: 1;
+  }
+  90% {
+    transform: translate(3px, 0) scale(0.5);
+    opacity: 0.4;
+  }
+}
+@keyframes chat-orb-trail-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    transform: translate(-4px, 0) scale(0.8);
+    opacity: 0.8;
+  }
+  18% {
+    transform: translate(-8px, 0) scale(1);
+    opacity: 1;
+  }
+  34% {
+    transform: translate(-4px, 5px) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(8px, 0) scale(1);
+    opacity: 1;
+  }
+  66% {
+    transform: translate(4px, -5px) scale(1);
+    opacity: 1;
+  }
+  82% {
+    transform: translate(-8px, 0) scale(1);
+    opacity: 1;
+  }
+  92% {
+    transform: translate(-3px, 0) scale(0.5);
+    opacity: 0.4;
+  }
+}
+@keyframes chat-orb-trail-3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(0, 3px) scale(0.8);
+    opacity: 0.7;
+  }
+  20% {
+    transform: translate(0, 7px) scale(1);
+    opacity: 1;
+  }
+  36% {
+    transform: translate(6px, 0) scale(1);
+    opacity: 1;
+  }
+  52% {
+    transform: translate(0, -7px) scale(1);
+    opacity: 1;
+  }
+  68% {
+    transform: translate(-6px, 0) scale(1);
+    opacity: 1;
+  }
+  84% {
+    transform: translate(0, 7px) scale(1);
+    opacity: 1;
+  }
+  93% {
+    transform: translate(0, 2px) scale(0.5);
+    opacity: 0.4;
+  }
+}
+@keyframes chat-orb-trail-4 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  14% {
+    transform: translate(3px, 3px) scale(0.7);
+    opacity: 0.6;
+  }
+  22% {
+    transform: translate(5px, 5px) scale(1);
+    opacity: 0.8;
+  }
+  38% {
+    transform: translate(-5px, 5px) scale(1);
+    opacity: 0.8;
+  }
+  54% {
+    transform: translate(-5px, -5px) scale(1);
+    opacity: 0.8;
+  }
+  70% {
+    transform: translate(5px, -5px) scale(1);
+    opacity: 0.8;
+  }
+  85% {
+    transform: translate(5px, 5px) scale(0.8);
+    opacity: 0.6;
+  }
+  94% {
+    transform: translate(2px, 2px) scale(0.3);
+    opacity: 0.2;
+  }
+}
+@keyframes chat-orb-core-wave {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scaleX(1) scaleY(1);
+  }
+  25% {
+    transform: translate(-50%, -50%) scaleX(1.1) scaleY(0.95);
+  }
+  50% {
+    transform: translate(-50%, -50%) scaleX(0.95) scaleY(1.1);
+  }
+  75% {
+    transform: translate(-50%, -50%) scaleX(1.05) scaleY(0.98);
+  }
+}
+@keyframes chat-orb-constellation-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    transform: translate(3px, -3px) scale(0.8);
+    opacity: 0.6;
+  }
+  35% {
+    transform: translate(10px, -8px) scale(1.1);
+    opacity: 1;
+  }
+  55% {
+    transform: translate(4px, -3px) scale(0.8);
+    opacity: 0.6;
+  }
+  78% {
+    transform: translate(10px, -8px) scale(1.1);
+    opacity: 1;
+  }
+  92% {
+    transform: translate(3px, -2px) scale(0.4);
+    opacity: 0.3;
+  }
+}
+@keyframes chat-orb-constellation-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(-3px, -3px) scale(0.8);
+    opacity: 0.6;
+  }
+  38% {
+    transform: translate(-9px, -9px) scale(1.1);
+    opacity: 1;
+  }
+  58% {
+    transform: translate(-3px, -3px) scale(0.8);
+    opacity: 0.6;
+  }
+  80% {
+    transform: translate(-9px, -9px) scale(1.1);
+    opacity: 1;
+  }
+  93% {
+    transform: translate(-2px, -2px) scale(0.4);
+    opacity: 0.3;
+  }
+}
+@keyframes chat-orb-constellation-3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  14% {
+    transform: translate(-3px, 3px) scale(0.8);
+    opacity: 0.6;
+  }
+  40% {
+    transform: translate(-10px, 8px) scale(1.1);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(-3px, 3px) scale(0.8);
+    opacity: 0.6;
+  }
+  82% {
+    transform: translate(-10px, 8px) scale(1.1);
+    opacity: 1;
+  }
+  94% {
+    transform: translate(-2px, 2px) scale(0.4);
+    opacity: 0.3;
+  }
+}
+@keyframes chat-orb-constellation-4 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  16% {
+    transform: translate(3px, 3px) scale(0.8);
+    opacity: 0.6;
+  }
+  42% {
+    transform: translate(9px, 9px) scale(1.1);
+    opacity: 1;
+  }
+  62% {
+    transform: translate(3px, 3px) scale(0.8);
+    opacity: 0.6;
+  }
+  84% {
+    transform: translate(9px, 9px) scale(1.1);
+    opacity: 1;
+  }
+  95% {
+    transform: translate(2px, 2px) scale(0.4);
+    opacity: 0.3;
+  }
+}
+@keyframes chat-orb-core-breathe {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow:
+      0 0 6px rgba(52, 211, 153, 0.6),
+      0 0 12px rgba(52, 211, 153, 0.3);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.25);
+    box-shadow:
+      0 0 12px rgba(52, 211, 153, 0.9),
+      0 0 24px rgba(52, 211, 153, 0.5),
+      0 0 36px rgba(52, 211, 153, 0.2);
+  }
+}
+@keyframes chat-orb-liquid-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    transform: translate(4px, 0) scale(0.7);
+    opacity: 0.8;
+  }
+  25% {
+    transform: translate(2px, -8px) scale(1);
+    opacity: 1;
+  }
+  40% {
+    transform: translate(-10px, -2px) scale(1);
+    opacity: 1;
+  }
+  55% {
+    transform: translate(-3px, 8px) scale(1);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(9px, 4px) scale(1);
+    opacity: 1;
+  }
+  85% {
+    transform: translate(5px, -2px) scale(0.7);
+    opacity: 0.6;
+  }
+  93% {
+    transform: translate(1px, 0) scale(0.3);
+    opacity: 0.2;
+  }
+}
+@keyframes chat-orb-liquid-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(-3px, -2px) scale(0.7);
+    opacity: 0.8;
+  }
+  28% {
+    transform: translate(-9px, 3px) scale(1);
+    opacity: 1;
+  }
+  44% {
+    transform: translate(2px, 9px) scale(1);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(8px, -4px) scale(1);
+    opacity: 1;
+  }
+  76% {
+    transform: translate(-4px, -8px) scale(1);
+    opacity: 1;
+  }
+  88% {
+    transform: translate(-2px, -1px) scale(0.5);
+    opacity: 0.4;
+  }
+}
+@keyframes chat-orb-liquid-3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  14% {
+    transform: translate(0, -3px) scale(0.7);
+    opacity: 0.8;
+  }
+  30% {
+    transform: translate(7px, -7px) scale(1);
+    opacity: 1;
+  }
+  46% {
+    transform: translate(5px, 6px) scale(1);
+    opacity: 1;
+  }
+  62% {
+    transform: translate(-8px, 3px) scale(1);
+    opacity: 1;
+  }
+  78% {
+    transform: translate(-3px, -9px) scale(1);
+    opacity: 1;
+  }
+  90% {
+    transform: translate(0, -2px) scale(0.4);
+    opacity: 0.3;
+  }
+}
+@keyframes chat-orb-liquid-4 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  16% {
+    transform: translate(2px, 3px) scale(0.7);
+    opacity: 0.7;
+  }
+  32% {
+    transform: translate(-5px, 8px) scale(1);
+    opacity: 0.8;
+  }
+  48% {
+    transform: translate(-8px, -3px) scale(1);
+    opacity: 0.8;
+  }
+  64% {
+    transform: translate(3px, -7px) scale(1);
+    opacity: 0.8;
+  }
+  80% {
+    transform: translate(7px, 5px) scale(1);
+    opacity: 0.8;
+  }
+  92% {
+    transform: translate(1px, 1px) scale(0.3);
+    opacity: 0.2;
+  }
+}
+@keyframes chat-orb-core-spiral {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15) rotate(180deg);
+  }
+}
+@keyframes chat-orb-firefly-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    transform: translate(5px, -3px) scale(0.5);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translate(9px, -5px) scale(1.3);
+    opacity: 1;
+  }
+  40% {
+    transform: translate(9px, -5px) scale(0.5);
+    opacity: 0.3;
+  }
+  58% {
+    transform: translate(9px, -5px) scale(1.3);
+    opacity: 1;
+  }
+  75% {
+    transform: translate(9px, -5px) scale(0.5);
+    opacity: 0.3;
+  }
+  90% {
+    transform: translate(4px, -2px) scale(0.3);
+    opacity: 0.15;
+  }
+}
+@keyframes chat-orb-firefly-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(-5px, -2px) scale(0.5);
+    opacity: 0.3;
+  }
+  20% {
+    transform: translate(-10px, -4px) scale(0.5);
+    opacity: 0.3;
+  }
+  35% {
+    transform: translate(-10px, -4px) scale(1.2);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-10px, -4px) scale(0.5);
+    opacity: 0.3;
+  }
+  68% {
+    transform: translate(-10px, -4px) scale(1.2);
+    opacity: 1;
+  }
+  82% {
+    transform: translate(-10px, -4px) scale(0.5);
+    opacity: 0.3;
+  }
+  93% {
+    transform: translate(-4px, -1px) scale(0.2);
+    opacity: 0.1;
+  }
+}
+@keyframes chat-orb-firefly-3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  14% {
+    transform: translate(-4px, 4px) scale(0.5);
+    opacity: 0.3;
+  }
+  30% {
+    transform: translate(-7px, 8px) scale(1.4);
+    opacity: 1;
+  }
+  45% {
+    transform: translate(-7px, 8px) scale(0.5);
+    opacity: 0.3;
+  }
+  65% {
+    transform: translate(-7px, 8px) scale(1.4);
+    opacity: 1;
+  }
+  80% {
+    transform: translate(-7px, 8px) scale(0.5);
+    opacity: 0.3;
+  }
+  92% {
+    transform: translate(-3px, 3px) scale(0.2);
+    opacity: 0.1;
+  }
+}
+@keyframes chat-orb-firefly-4 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  16% {
+    transform: translate(4px, 4px) scale(0.5);
+    opacity: 0.3;
+  }
+  28% {
+    transform: translate(8px, 7px) scale(1.1);
+    opacity: 0.9;
+  }
+  42% {
+    transform: translate(8px, 7px) scale(0.4);
+    opacity: 0.2;
+  }
+  60% {
+    transform: translate(8px, 7px) scale(1.1);
+    opacity: 0.9;
+  }
+  76% {
+    transform: translate(8px, 7px) scale(0.4);
+    opacity: 0.2;
+  }
+  93% {
+    transform: translate(3px, 3px) scale(0.2);
+    opacity: 0.1;
+  }
+}
+@keyframes chat-orb-core-sparkle {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: brightness(1);
+  }
+  20% {
+    transform: translate(-50%, -50%) scale(1.05);
+    filter: brightness(1.3);
+  }
+  40% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: brightness(1);
+  }
+  60% {
+    transform: translate(-50%, -50%) scale(1.08);
+    filter: brightness(1.2);
+  }
+  80% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: brightness(1.1);
+  }
+}
+
+/* === CONTAINER BASE === */
+.vibey-chat-orb {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  animation: chat-orb-float 6s ease-in-out infinite;
+  --orbit-speed: 3s;
+  --core-speed: 2.5s;
+  --cycle-duration: var(--orbit-speed);
+  --glow-opacity: 0.6;
+}
+.vibey-chat-orb--processing {
+  --orbit-speed: 2s;
+  --core-speed: 1.8s;
+  --glow-opacity: 0.8;
+}
+.vibey-chat-orb--thinking {
+  --orbit-speed: 4s;
+  --core-speed: 3.5s;
+  --glow-opacity: 0.5;
+}
+
+/* === CORE === */
+.vibey-chat-orb-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, #6ee7b7 0%, #34d399 50%, #059669 100%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 6px rgba(52, 211, 153, var(--glow-opacity)),
+    0 0 12px rgba(52, 211, 153, calc(var(--glow-opacity) * 0.6)),
+    0 0 18px rgba(52, 211, 153, calc(var(--glow-opacity) * 0.3));
+  transition:
+    background 0.6s ease-out,
+    box-shadow 0.6s ease-out,
+    border-radius 1s ease-in-out,
+    transform 1s ease-in-out,
+    filter 1s ease-in-out;
+}
+
+/* === DOTS === */
+.vibey-chat-orb-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2.5px;
+  height: 2.5px;
+  margin: -1.25px 0 0 -1.25px;
+  background: #34d399;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(52, 211, 153, 0.8);
+  transition:
+    background 0.6s ease-out,
+    box-shadow 0.6s ease-out,
+    transform 1s ease-in-out,
+    opacity 1s ease-in-out,
+    width 0.5s ease-in-out,
+    height 0.5s ease-in-out;
+}
+
+/* === EXECUTING STATE (Orange core + orange dots) === */
+.vibey-chat-orb--executing {
+  --orbit-speed: 2s;
+  --core-speed: 1.8s;
+  --glow-opacity: 0.8;
+}
+.vibey-chat-orb--executing .vibey-chat-orb-core {
+  background: radial-gradient(circle, #ffb366 0%, #ff9933 50%, #f97316 100%);
+  box-shadow:
+    0 0 6px rgba(249, 115, 22, var(--glow-opacity)),
+    0 0 12px rgba(249, 115, 22, calc(var(--glow-opacity) * 0.6)),
+    0 0 18px rgba(249, 115, 22, calc(var(--glow-opacity) * 0.3));
+}
+.vibey-chat-orb--executing .vibey-chat-orb-dot {
+  background: #ffb366;
+  box-shadow: 0 0 4px rgba(255, 179, 102, 0.8);
+}
+
+/* === RECONNECTING STATE (Red core + red dots) — uses .vibey-chat-orb chained for specificity over animation-style dot overrides === */
+.vibey-chat-orb--reconnecting {
+  --orbit-speed: 2s;
+  --core-speed: 1.8s;
+  --glow-opacity: 0.8;
+}
+.vibey-chat-orb.vibey-chat-orb--reconnecting .vibey-chat-orb-core {
+  background: radial-gradient(circle, #fca5a5 0%, #ef4444 50%, #dc2626 100%);
+  box-shadow:
+    0 0 6px rgba(239, 68, 68, var(--glow-opacity)),
+    0 0 12px rgba(239, 68, 68, calc(var(--glow-opacity) * 0.6)),
+    0 0 18px rgba(239, 68, 68, calc(var(--glow-opacity) * 0.3));
+}
+.vibey-chat-orb.vibey-chat-orb--reconnecting .vibey-chat-orb-dot {
+  background: #fca5a5;
+  box-shadow: 0 0 4px rgba(252, 165, 165, 0.8);
+}
+.vibey-chat-orb.vibey-chat-orb--reconnecting .vibey-chat-orb-dot--1 {
+  background: #fca5a5;
+  box-shadow: 0 0 4px rgba(252, 165, 165, 0.8);
+}
+.vibey-chat-orb.vibey-chat-orb--reconnecting .vibey-chat-orb-dot--2 {
+  background: #f87171;
+  box-shadow: 0 0 4px rgba(248, 113, 113, 0.8);
+}
+.vibey-chat-orb.vibey-chat-orb--reconnecting .vibey-chat-orb-dot--3 {
+  background: #ef4444;
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.8);
+}
+.vibey-chat-orb.vibey-chat-orb--reconnecting .vibey-chat-orb-dot--4 {
+  background: #fca5a5;
+  box-shadow: 0 0 4px rgba(252, 165, 165, 0.6);
+}
+
+/* === COMPLETE STATE (Static green core, dots fade out) === */
+.vibey-chat-orb--complete {
+  animation: none;
+}
+.vibey-chat-orb--complete .vibey-chat-orb-core {
+  background: radial-gradient(circle, #6ee7b7 0%, #34d399 50%, #059669 100%);
+  box-shadow:
+    0 0 4px rgba(52, 211, 153, 0.5),
+    0 0 8px rgba(52, 211, 153, 0.3);
+  animation: none;
+}
+.vibey-chat-orb--complete .vibey-chat-orb-dot {
+  opacity: 0;
+  transform: translate(0, 0) scale(0);
+  animation: none;
+}
+
+/* === STYLE A: ELASTIC === */
+.vibey-chat-orb--elastic .vibey-chat-orb-core {
+  animation: chat-orb-core-gentle var(--core-speed) ease-in-out infinite;
+}
+.vibey-chat-orb--elastic .vibey-chat-orb-dot--1 {
+  animation: chat-orb-elastic-1 var(--cycle-duration) ease-in-out infinite;
+  background: #6ee7b7;
+}
+.vibey-chat-orb--elastic .vibey-chat-orb-dot--2 {
+  animation: chat-orb-elastic-2 var(--cycle-duration) ease-in-out infinite;
+  background: #34d399;
+}
+.vibey-chat-orb--elastic .vibey-chat-orb-dot--3 {
+  animation: chat-orb-elastic-3 var(--cycle-duration) ease-in-out infinite;
+  background: #059669;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+}
+.vibey-chat-orb--elastic .vibey-chat-orb-dot--4 {
+  animation: chat-orb-elastic-4 var(--cycle-duration) ease-in-out infinite;
+  background: #6ee7b7;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+}
+
+/* === STYLE B: TRAILS === */
+.vibey-chat-orb--trails .vibey-chat-orb-core {
+  animation: chat-orb-core-wave calc(var(--core-speed) * 1.2) ease-in-out infinite;
+}
+.vibey-chat-orb--trails .vibey-chat-orb-dot--1 {
+  animation: chat-orb-trail-1 var(--cycle-duration) ease-in-out infinite;
+  background: #6ee7b7;
+}
+.vibey-chat-orb--trails .vibey-chat-orb-dot--2 {
+  animation: chat-orb-trail-2 var(--cycle-duration) ease-in-out infinite;
+  background: #34d399;
+}
+.vibey-chat-orb--trails .vibey-chat-orb-dot--3 {
+  animation: chat-orb-trail-3 var(--cycle-duration) ease-in-out infinite;
+  background: #059669;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+}
+.vibey-chat-orb--trails .vibey-chat-orb-dot--4 {
+  animation: chat-orb-trail-4 var(--cycle-duration) ease-in-out infinite;
+  background: #6ee7b7;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+}
+
+/* === STYLE C: CONSTELLATION === */
+.vibey-chat-orb--constellation .vibey-chat-orb-core {
+  animation: chat-orb-core-breathe var(--core-speed) ease-in-out infinite;
+}
+.vibey-chat-orb--constellation .vibey-chat-orb-dot--1 {
+  animation: chat-orb-constellation-1 var(--cycle-duration) ease-in-out infinite;
+  background: #6ee7b7;
+}
+.vibey-chat-orb--constellation .vibey-chat-orb-dot--2 {
+  animation: chat-orb-constellation-2 var(--cycle-duration) ease-in-out infinite;
+  background: #34d399;
+}
+.vibey-chat-orb--constellation .vibey-chat-orb-dot--3 {
+  animation: chat-orb-constellation-3 var(--cycle-duration) ease-in-out infinite;
+  background: #059669;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+}
+.vibey-chat-orb--constellation .vibey-chat-orb-dot--4 {
+  animation: chat-orb-constellation-4 var(--cycle-duration) ease-in-out infinite;
+  background: #6ee7b7;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+}
+
+/* === STYLE D: LIQUID === */
+.vibey-chat-orb--liquid .vibey-chat-orb-core {
+  animation: chat-orb-core-spiral calc(var(--core-speed) * 1.5) ease-in-out infinite;
+}
+.vibey-chat-orb--liquid .vibey-chat-orb-dot--1 {
+  animation: chat-orb-liquid-1 var(--cycle-duration) ease-in-out infinite;
+  background: #6ee7b7;
+}
+.vibey-chat-orb--liquid .vibey-chat-orb-dot--2 {
+  animation: chat-orb-liquid-2 var(--cycle-duration) ease-in-out infinite;
+  background: #34d399;
+}
+.vibey-chat-orb--liquid .vibey-chat-orb-dot--3 {
+  animation: chat-orb-liquid-3 var(--cycle-duration) ease-in-out infinite;
+  background: #059669;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+}
+.vibey-chat-orb--liquid .vibey-chat-orb-dot--4 {
+  animation: chat-orb-liquid-4 var(--cycle-duration) ease-in-out infinite;
+  background: #6ee7b7;
+  width: 2px;
+  height: 2px;
+  margin: -1px 0 0 -1px;
+}
+
+/* === STYLE E: FIREFLY === */
+.vibey-chat-orb--firefly .vibey-chat-orb-core {
+  animation: chat-orb-core-sparkle calc(var(--core-speed) * 1.3) ease-in-out infinite;
+}
+.vibey-chat-orb--firefly .vibey-chat-orb-dot--1 {
+  animation: chat-orb-firefly-1 var(--cycle-duration) ease-in-out infinite;
+  background: #6ee7b7;
+}
+.vibey-chat-orb--firefly .vibey-chat-orb-dot--2 {
+  animation: chat-orb-firefly-2 var(--cycle-duration) ease-in-out infinite;
+  background: #34d399;
+}
+.vibey-chat-orb--firefly .vibey-chat-orb-dot--3 {
+  animation: chat-orb-firefly-3 var(--cycle-duration) ease-in-out infinite;
+  background: #059669;
+  width: 2.5px;
+  height: 2.5px;
+  margin: -1.25px 0 0 -1.25px;
+}
+.vibey-chat-orb--firefly .vibey-chat-orb-dot--4 {
+  animation: chat-orb-firefly-4 var(--cycle-duration) ease-in-out infinite;
+  background: #6ee7b7;
+  width: 2.5px;
+  height: 2.5px;
+  margin: -1.25px 0 0 -1.25px;
+}
+
+/* === EXECUTING overrides per-style dot colors to orange === */
+.vibey-chat-orb--executing .vibey-chat-orb-dot--1 {
+  background: #ffb366;
+  box-shadow: 0 0 4px rgba(255, 179, 102, 0.8);
+}
+.vibey-chat-orb--executing .vibey-chat-orb-dot--2 {
+  background: #ff9933;
+  box-shadow: 0 0 4px rgba(255, 153, 51, 0.8);
+}
+.vibey-chat-orb--executing .vibey-chat-orb-dot--3 {
+  background: #f97316;
+  box-shadow: 0 0 4px rgba(249, 115, 22, 0.8);
+}
+.vibey-chat-orb--executing .vibey-chat-orb-dot--4 {
+  background: #ffb366;
+  box-shadow: 0 0 4px rgba(255, 179, 102, 0.6);
+}

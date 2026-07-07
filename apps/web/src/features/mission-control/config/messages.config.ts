@@ -1,0 +1,16 @@
+export const MISSION_CONTROL_MESSAGES = {
+  TITLE: 'MISSION CONTROL',
+  SUBTITLE: 'Run missions, watch delegation, and keep momentum moving.',
+  QUICK_CAPTURE_HEADING: 'NEW MISSION',
+  QUICK_CAPTURE_PLACEHOLDER: 'Tell me what to run...',
+  QUICK_CAPTURE_BUTTON_IDLE: 'Send Mission',
+  QUICK_CAPTURE_BUTTON_LOADING: 'Sending...',
+  EMPTY_MISSIONS_TITLE: 'No missions yet',
+  EMPTY_MISSIONS_DESCRIPTION: "Drop your first mission above and I'll keep it moving.",
+  LOAD_ERROR: "I couldn't load mission control right now. Try a quick refresh.",
+  INBOX_TITLE: 'Inbox',
+  MISSION_LIST_TITLE: 'Mission Inbox',
+  MISSION_DETAIL_TITLE: 'Mission Detail',
+  AGENT_PANEL_TITLE: 'Agent Status',
+  DETAIL_EMPTY: 'Select a mission to see plan, timeline, and output.',
+} as const

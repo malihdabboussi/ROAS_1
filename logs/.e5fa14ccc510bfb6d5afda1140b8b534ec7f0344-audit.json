@@ -1,0 +1,45 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/2fun/Documents/1 - Creation/vibey2.0/logs/.e5fa14ccc510bfb6d5afda1140b8b534ec7f0344-audit.json",
+    "files": [
+        {
+            "date": 1781677047257,
+            "name": "/Users/2fun/Documents/1 - Creation/vibey2.0/logs/mcp-puppeteer-2026-06-17.log",
+            "hash": "b372426ec93afc207c8e74aec73444fef9efe43ab508b0e3639441944be429cb"
+        },
+        {
+            "date": 1781777649585,
+            "name": "/Users/2fun/Documents/1 - Creation/vibey2.0/logs/mcp-puppeteer-2026-06-18.log",
+            "hash": "2ecb89d239f2858aef5ba64b408bf56189a35784cdd29cf9b0867186f9231b26"
+        },
+        {
+            "date": 1781859934468,
+            "name": "/Users/2fun/Documents/1 - Creation/vibey2.0/logs/mcp-puppeteer-2026-06-19.log",
+            "hash": "84aeba03b3247387269cb99be6eaebf91794c0eaef06ca48be53032b4d7835f5"
+        },
+        {
+            "date": 1781986205482,
+            "name": "/Users/2fun/Documents/1 - Creation/vibey2.0/logs/mcp-puppeteer-2026-06-20.log",
+            "hash": "0f2ee6a02cb5c6e27bea33563717081499405a6cc0ce665ba403920fd6b802d2"
+        },
+        {
+            "date": 1782033666332,
+            "name": "/Users/2fun/Documents/1 - Creation/vibey2.0/logs/mcp-puppeteer-2026-06-21.log",
+            "hash": "86dfa955a10071216b3ac16732bba34a0cee63b62a6a92920db27ae21ac4cec1"
+        },
+        {
+            "date": 1782737214564,
+            "name": "/Users/2fun/Documents/1 - Creation/vibey2.0/logs/mcp-puppeteer-2026-06-29.log",
+            "hash": "6889d5bcf1a2d75f878942222a61c66985639e3e4091fc6e23d90cae1a131037"
+        },
+        {
+            "date": 1782799082193,
+            "name": "/Users/2fun/Documents/1 - Creation/vibey2.0/logs/mcp-puppeteer-2026-06-30.log",
+            "hash": "67df2a55b25b53025961b5a61b9e22d533139bda401ba6b220586d49d2300bee"
+        }
+    ],
+    "hashType": "sha256"
+}

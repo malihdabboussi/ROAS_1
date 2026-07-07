@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "target": "ES2022",
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": {
+      "@vibey/api-shared": ["../../packages/api-shared/src"],
+      "@vibey/api-shared/*": ["../../packages/api-shared/src/*"],
+      "@vibey/agent-policy": ["../../packages/agent-policy/src"],
+      "@vibey/agent-policy/*": ["../../packages/agent-policy/src/*"],
+      "@vibey/context-breakdown": ["../../packages/context-breakdown/src"],
+      "@vibey/context-breakdown/*": ["../../packages/context-breakdown/src/*"]
+    },
+    "sourceMap": true,
+    "declaration": true,
+    "removeComments": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true,
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "test", "**/*.test.ts", "**/*.spec.ts"]
+}

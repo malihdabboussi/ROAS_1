@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vibey.ai/schemas/widget-definition.json",
+  "title": "Vibey Widget Definition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "root", "components"],
+  "properties": {
+    "version": { "type": "integer", "const": 2 },
+    "root": { "type": "string", "minLength": 1 },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/componentNode" }
+    },
+    "actions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/actionMapping" }
+    },
+    "dataModel": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "value"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "value": {}
+        }
+      }
+    },
+    "styles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "font": { "type": "string" },
+        "primaryColor": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "componentNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "component"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "weight": { "type": "number" },
+        "component": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 1,
+          "additionalProperties": true
+        }
+      }
+    },
+    "actionMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "backendAction", "dataTemplate"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "backendAction": { "type": "string", "minLength": 1 },
+        "dataTemplate": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

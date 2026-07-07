@@ -1,0 +1,22 @@
+{
+  "id": "vibey-backend",
+  "name": "Vibey Backend Tool",
+  "version": "1.0.0",
+  "description": "Routes agent artifact operations (offers, funnels, presentations, etc.) through the local agent-api backend. Replaces direct database access.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "backendUrl": {
+        "type": "string",
+        "default": "http://localhost:3003"
+      }
+    }
+  },
+  "uiHints": {
+    "backendUrl": {
+      "label": "Backend URL",
+      "placeholder": "http://localhost:3003"
+    }
+  }
+}

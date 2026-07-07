@@ -1,0 +1,24 @@
+import { Module } from '@nestjs/common'
+import { MissionsModule } from '../missions/missions.module'
+import { AgentConfigController } from './controllers/agent-config.controller'
+import { AgentCheckpointsController } from './controllers/agent-checkpoints.controller'
+import { AgentSkillsController } from './controllers/agent-skills.controller'
+import { AgentWidgetController } from './controllers/agent-widget.controller'
+import { AgentWorkflowsController } from './controllers/agent-workflows.controller'
+import { AgentsController } from './controllers/agents.controller'
+import { AgentsRepository } from './repositories/agents.repository'
+import { AgentsService } from './services/agents.service'
+
+@Module({
+  imports: [MissionsModule],
+  controllers: [
+    AgentsController,
+    AgentConfigController,
+    AgentWidgetController,
+    AgentSkillsController,
+    AgentWorkflowsController,
+    AgentCheckpointsController,
+  ],
+  providers: [AgentsService, AgentsRepository],
+})
+export class AgentsModule {}

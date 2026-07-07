@@ -1,0 +1,693 @@
+{
+  "suiteName": "yc-demo-user-work",
+  "caseCount": 1,
+  "passRate": 1,
+  "averageScore": 5,
+  "validationPassRate": 1,
+  "validationCaseCount": 1,
+  "validationAverageScore": 5,
+  "avgAgentLatencyMs": 21805.293792,
+  "avgJudgeLatencyMs": 6355.1731249999975,
+  "avgLatencyMs": 28160.466916999998,
+  "avgToolCalls": 0,
+  "avgBrainToolCalls": 0,
+  "totalToolCalls": 0,
+  "totalBrainToolCalls": 0,
+  "totalUsage": {
+    "avgLatencyMs": 28160.466916999998,
+    "avgAgentLatencyMs": 21805.293792,
+    "avgJudgeLatencyMs": 6355.1731249999975,
+    "avgInputTokens": 28333,
+    "avgOutputTokens": 4515,
+    "avgTotalTokens": 32848,
+    "avgBrainContextTokens": 11415,
+    "totalInputTokens": 28333,
+    "totalOutputTokens": 4515,
+    "totalTokens": 32848,
+    "agentProviderCostUsd": null,
+    "judgeProviderCostUsd": 0.043644,
+    "providerCostUsd": 0.043644,
+    "userCostUsd": 0.087288,
+    "marginUsd": 0.043644,
+    "estimatedCredits": 18,
+    "costUnknownCount": 2,
+    "pricingSource": "partial"
+  },
+  "cases": [
+    {
+      "caseId": "yc-l1-founder-retainer-cap",
+      "taskType": "answer_query",
+      "validationSet": true,
+      "passed": true,
+      "weightedScore": 5,
+      "judge": {
+        "rubricVersion": "user-work-v3",
+        "scores": {
+          "taskCompletion": 5,
+          "contextUsefulness": 5,
+          "groundedness": 5,
+          "synthesisQuality": 5,
+          "irrelevanceControl": 5,
+          "abstentionQuality": 5
+        },
+        "weightedScore": 5,
+        "passed": true,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": false,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "retrieval": {
+          "passed": true,
+          "preloadTextLength": 50324,
+          "preloadFound": [
+            {
+              "phrase": "six retainers a year",
+              "family": "company",
+              "sourceTitle": "Six retainers a year is a ceiling, not a target",
+              "snippet": "Six retainers a year is a ceiling, not a target Foundry economics work because we say no to most inb"
+            },
+            {
+              "phrase": "founder-hours-per-client",
+              "family": "company",
+              "sourceTitle": "Six retainers a year is a ceiling, not a target",
+              "snippet": "Six retainers a year is a ceiling, not a target Foundry economics work because we say no to most inbound. Past six concurrent retainers, founder-time-per-client"
+            },
+            {
+              "phrase": "on purpose",
+              "family": "company",
+              "sourceTitle": "Campaign node in \"Internal Ops\" (type: document): \"Foundry — six clients a year We pick six retainers a year…",
+              "snippet": "\" (type: document): \"Foundry — six clients a year We pick six retainers a year on purpose. The seventh is a \"no\" we owe the team. Owen tracks the count and the partners"
+            }
+          ],
+          "preloadMissing": [],
+          "forbiddenInPreload": [
+            {
+              "phrase": "scale to ten plus retainers",
+              "family": "preload",
+              "sourceTitle": null,
+              "snippet": "COMPANY OPERATING CONTEXT - [company_object] Six retainers a year is a ceiling, not a target: Foundry economics work because we say no to most inbound. Past six"
+            },
+            {
+              "phrase": "growth at any volume",
+              "family": "preload",
+              "sourceTitle": null,
+              "snippet": "COMPANY OPERATING CONTEXT - [company_object] Six retainers a year is a ceiling, not a target: Foundry economics work because we say no to most inbound. Past six"
+            }
+          ],
+          "laneCounts": {
+            "user": 0,
+            "agent": 0,
+            "customer": 20,
+            "company": 20,
+            "preload": 1
+          },
+          "abstentionFailed": false,
+          "probeLatencyMs": 2692,
+          "failureReasons": [],
+          "probeAvailable": true
+        },
+        "expectations": [
+          {
+            "text": "States six retainers per year as a deliberate cap",
+            "passed": true,
+            "evidence": "The answer starts with '**Six retainers a year — on purpose.**' and later confirms 'It's a hard cap, not an aspiration.'",
+            "source": "llm"
+          },
+          {
+            "text": "Explains the cap protects founder-hours-per-client quality",
+            "passed": true,
+            "evidence": "The answer states: 'founder time per client drops below the threshold that makes Foundry's work distinguishable from a standard growth shop.'",
+            "source": "llm"
+          },
+          {
+            "text": "Frames the limit as intentional, not accidental capacity",
+            "passed": true,
+            "evidence": "The answer notes: 'Six retainers a year — on purpose.' and 'The seventh prospect gets declined regardless of how attractive the opportunity looks.'",
+            "source": "llm"
+          },
+          {
+            "text": "Does not claim unlimited or unconstrained client volume",
+            "passed": true,
+            "evidence": "The answer strictly states that pricing and positioning depend on selectivity and saying yes to a seventh is a dilution.",
+            "source": "llm"
+          }
+        ],
+        "expectationPassRate": 1,
+        "claims": [
+          {
+            "claim": "Foundry purposefully takes only six retainers a year as a hard cap.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Matched by the statements: 'Six retainers a year — on purpose' and 'It's a hard cap, not an aspiration.'"
+          },
+          {
+            "claim": "Exceeding six concurrent retainers drops founder time per client below the threshold of a standard growth shop.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Matched by: 'Past six concurrent retainers, founder time per client drops below the threshold that makes Foundry's work distinguishable from a standard growth shop.'"
+          },
+          {
+            "claim": "Owen tracks the client count and a seventh client is declined regardless of the opportunity size.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Matched by: 'Owen tracks the count. The partners say the no. The seventh prospect gets declined regardless of how attractive the opportunity looks.'"
+          },
+          {
+            "claim": "Foundry's qualification criteria requires both brand and growth on the same retainer.",
+            "type": "factual",
+            "verified": true,
+            "evidence": "Matched by: 'The qualifying rubric is tight too: brand AND growth on the same retainer...'"
+          }
+        ],
+        "evidence": [
+          "**Six retainers a year — on purpose.**",
+          "Past six concurrent retainers, founder time per client drops below the threshold that makes Foundry's work distinguishable from a standard growth shop."
+        ],
+        "failureReasons": [],
+        "usage": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 2006,
+          "outputTokens": 4515,
+          "totalTokens": 6521,
+          "providerCostUsd": 0.043644,
+          "latencyMs": 6355.1731249999975
+        },
+        "adversarial": {
+          "passed": true,
+          "flippedExpectations": [],
+          "failureReasons": [],
+          "usage": {
+            "model": "google/gemini-3.5-flash",
+            "inputTokens": 683,
+            "outputTokens": 2949,
+            "totalTokens": 3632,
+            "providerCostUsd": 0.0275655,
+            "latencyMs": 3046.993499999997
+          }
+        }
+      },
+      "agentRun": {
+        "caseId": "yc-l1-founder-retainer-cap",
+        "agentKey": "vibey",
+        "conversationId": "ff739b82-f883-4c41-bc66-5d150702b662",
+        "finalAnswer": "**Six retainers a year — on purpose.**\n\nHere's the thinking behind it:\n\n- **Quality over volume.** Past six concurrent retainers, founder time per client drops below the threshold that makes Foundry's work distinguishable from a standard growth shop. Six is where the work stays exceptional.\n- **The economics work because of the \"no.\"** Foundry's pricing and positioning depend on selectivity. Saying yes to a seventh client isn't a win — it's a dilution.\n- **It's a hard cap, not an aspiration.** Owen tracks the count. The partners say the no. The seventh prospect gets declined regardless of how attractive the opportunity looks.\n\nThe qualifying rubric is tight too: brand AND growth on the same retainer, founder available 2 hours per week minimum, pricing floor cleared. If any of those conditions don't hold, it's a pass.\n\nThe underlying belief, as the founder put it: *\"Pricing — we pick six clients a year. Channel — we own the loop, not a channel. Boredom — we refuse work that bores us, even at scale.\"*\n\nThat last part matters. The boredom test is what most studios fail. Foundry writes it into the principles before signing.",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "a9dc3d53-3f0e-4932-98bd-218cd5dd4be2",
+              "conversation_id": "ff739b82-f883-4c41-bc66-5d150702b662"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "**Six retainers a year — on purpose.**\n\nHere's the thinking"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " behind it:\n\n- **Quality over volume.** Past six"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " concurrent retainers, founder time per client drops below"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the threshold that makes Foundry's work distinguishable from a standard"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " growth shop. Six is where the work stays exceptional."
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\n- **The economics work because of the \"no"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ".\"** Foundry's pricing and positioning depend on selectivity."
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Saying yes to a seventh client isn't a win — it's a dil"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "ution.\n- **It's a hard cap, not an asp"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "iration.** Owen tracks the count. The partners say"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the no. The seventh prospect gets declined regardless of how attractive"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the opportunity looks.\n\nThe qualifying rubric is tight too: brand"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " AND growth on the same retainer, founder"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " available 2 hours per week minimum,"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " pricing floor cleared. If any of those conditions don't hold, it's a pass"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ".\n\nThe underlying belief, as the founder put it: *"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "\"Pricing — we pick six clients a year. Channel"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " — we own the loop, not a channel. Bore"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "dom — we refuse work that bores us, even at scale.\"*\n\nThat"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " last part matters. The boredom test is what most studios"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " fail. Foundry writes it into the principles before"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " signing."
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user is asking about Foundry's retainer policy. I have this information directly in my context from the COMPANY OPERATING CONTEXT section. Let me answer from what I know._",
+              "text": "Reasoning:\n_The user is asking about Foundry's retainer policy. I have this information directly in my context from the COMPANY OPERATING CONTEXT section. Let me answer from what I know._"
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "a9dc3d53-3f0e-4932-98bd-218cd5dd4be2",
+              "credits_pending": true,
+              "duration_ms": 19137,
+              "usage": {
+                "input_tokens": 26327
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779864320006,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 26327,
+                "slices": [
+                  {
+                    "id": "system",
+                    "label": "System",
+                    "tokens": 25037,
+                    "entries": [
+                      {
+                        "id": "openclaw_system_prompt",
+                        "label": "OpenClaw system prompt",
+                        "tokens": 18813
+                      },
+                      {
+                        "id": "injected_workspace_files",
+                        "label": "Injected workspace files",
+                        "tokens": 6224
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 1983,
+                    "entries": [
+                      {
+                        "id": "read",
+                        "label": "read",
+                        "tokens": 173
+                      },
+                      {
+                        "id": "session_status",
+                        "label": "session_status",
+                        "tokens": 74
+                      },
+                      {
+                        "id": "web_search",
+                        "label": "web_search",
+                        "tokens": 217
+                      },
+                      {
+                        "id": "web_fetch",
+                        "label": "web_fetch",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "wait",
+                        "label": "wait",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "campaign_capability",
+                        "label": "campaign_capability",
+                        "tokens": 1164
+                      },
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 388
+                      }
+                    ]
+                  },
+                  {
+                    "id": "skills",
+                    "label": "Skills",
+                    "tokens": 4164,
+                    "entries": [
+                      {
+                        "id": "skill-creator",
+                        "label": "skill-creator",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "ad-builder",
+                        "label": "ad-builder",
+                        "tokens": 61
+                      },
+                      {
+                        "id": "avatar-builder",
+                        "label": "avatar-builder",
+                        "tokens": 123
+                      },
+                      {
+                        "id": "awareness-evaluator",
+                        "label": "awareness-evaluator",
+                        "tokens": 83
+                      },
+                      {
+                        "id": "blog-writing",
+                        "label": "blog-writing",
+                        "tokens": 111
+                      },
+                      {
+                        "id": "brain-memory",
+                        "label": "brain-memory",
+                        "tokens": 116
+                      },
+                      {
+                        "id": "campaign-performance-reporting",
+                        "label": "campaign-performance-reporting",
+                        "tokens": 165
+                      },
+                      {
+                        "id": "chat-plan-management",
+                        "label": "chat-plan-management",
+                        "tokens": 98
+                      },
+                      {
+                        "id": "email-campaign-publisher",
+                        "label": "email-campaign-publisher",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "email-sequence-builder",
+                        "label": "email-sequence-builder",
+                        "tokens": 117
+                      },
+                      {
+                        "id": "funnel-builder",
+                        "label": "funnel-builder",
+                        "tokens": 134
+                      },
+                      {
+                        "id": "image-production",
+                        "label": "image-production",
+                        "tokens": 113
+                      },
+                      {
+                        "id": "integrations",
+                        "label": "integrations",
+                        "tokens": 121
+                      },
+                      {
+                        "id": "meta-publisher",
+                        "label": "meta-publisher",
+                        "tokens": 119
+                      },
+                      {
+                        "id": "mission-planner",
+                        "label": "mission-planner",
+                        "tokens": 219
+                      },
+                      {
+                        "id": "mission-quality-evaluator",
+                        "label": "mission-quality-evaluator",
+                        "tokens": 96
+                      },
+                      {
+                        "id": "mission-reviewer",
+                        "label": "mission-reviewer",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "mission-worker-executor",
+                        "label": "mission-worker-executor",
+                        "tokens": 137
+                      },
+                      {
+                        "id": "offer-builder",
+                        "label": "offer-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "onboarding-discovery",
+                        "label": "onboarding-discovery",
+                        "tokens": 168
+                      },
+                      {
+                        "id": "pdf-builder",
+                        "label": "pdf-builder",
+                        "tokens": 125
+                      },
+                      {
+                        "id": "presentation-builder",
+                        "label": "presentation-builder",
+                        "tokens": 152
+                      },
+                      {
+                        "id": "social-content-builder",
+                        "label": "social-content-builder",
+                        "tokens": 127
+                      },
+                      {
+                        "id": "social-publisher",
+                        "label": "social-publisher",
+                        "tokens": 99
+                      },
+                      {
+                        "id": "strategy-planner",
+                        "label": "strategy-planner",
+                        "tokens": 172
+                      },
+                      {
+                        "id": "team-management",
+                        "label": "team-management",
+                        "tokens": 135
+                      },
+                      {
+                        "id": "theme-builder",
+                        "label": "theme-builder",
+                        "tokens": 122
+                      },
+                      {
+                        "id": "vibey-api",
+                        "label": "vibey-api",
+                        "tokens": 56
+                      },
+                      {
+                        "id": "video-analyzer",
+                        "label": "video-analyzer",
+                        "tokens": 166
+                      },
+                      {
+                        "id": "video-producer",
+                        "label": "video-producer",
+                        "tokens": 85
+                      },
+                      {
+                        "id": "video-production",
+                        "label": "video-production",
+                        "tokens": 170
+                      },
+                      {
+                        "id": "website-builder",
+                        "label": "website-builder",
+                        "tokens": 151
+                      }
+                    ]
+                  },
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 11415,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 11415
+                      }
+                    ]
+                  },
+                  {
+                    "id": "user_team",
+                    "label": "User/Team",
+                    "tokens": 44,
+                    "entries": [
+                      {
+                        "id": "user_profile",
+                        "label": "User profile",
+                        "tokens": 44
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 0
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [],
+        "latencyMs": 21805.293792,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 26327,
+          "outputTokens": 0,
+          "totalTokens": 26327,
+          "brainContextTokens": 11415,
+          "contextWindowTokens": 1000000,
+          "durationMs": 19137,
+          "latencyMs": 21805.293792
+        },
+        "toolCalls": {
+          "totalToolCalls": 0,
+          "brainToolCalls": 0,
+          "byToolName": {},
+          "byBrainAction": {}
+        }
+      },
+      "usage": {
+        "agent": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 26327,
+          "outputTokens": 0,
+          "totalTokens": 26327,
+          "brainContextTokens": 11415,
+          "contextWindowTokens": 1000000,
+          "durationMs": 19137,
+          "latencyMs": 21805.293792
+        },
+        "judge": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 2006,
+          "outputTokens": 4515,
+          "totalTokens": 6521,
+          "providerCostUsd": 0.043644,
+          "latencyMs": 6355.1731249999975
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cortex Max 3D Icon</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/"
+  }
+}
+</script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0f; color: #e0e0e0; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 40px; gap: 48px; }
+  h1 { font-size: 12px; text-transform: uppercase; letter-spacing: 4px; color: #444; }
+  .row { display: flex; gap: 48px; align-items: flex-end; }
+  .icon-card { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .icon-card canvas { border-radius: 12px; }
+  .label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #555; }
+  .btn-row { display: flex; gap: 24px; align-items: center; }
+  .btn-preview { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px 6px 6px; border-radius: 10px; font-size: 13px; font-weight: 500; border: none; position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(147,51,234,0.1) 0%, rgba(199,126,255,0.16) 50%, rgba(147,51,234,0.08) 100%); border: 1px solid rgba(199,126,255,0.2); color: #c87eff; }
+  .modal-preview { max-width: 500px; background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 48px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .modal-title { display: flex; align-items: center; gap: 8px; }
+  .modal-title .cortex { font-size: 24px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+  .modal-title .max { font-size: 24px; font-weight: 700; letter-spacing: 1px; background: linear-gradient(90deg, #818cf8, #a78bfa, #c084fc, #818cf8); background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 3s linear infinite; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  .modal-sub { font-size: 13px; color: #555; }
+</style>
+</head>
+<body>
+
+<h1>Cortex Max — 3D M&ouml;bius Icon (v2)</h1>
+
+<div class="row">
+  <div class="icon-card">
+    <canvas id="icon-lg" width="200" height="200"></canvas>
+    <span class="label">Hero (80px)</span>
+  </div>
+  <div class="icon-card">
+    <canvas id="icon-md" width="120" height="120"></canvas>
+    <span class="label">Modal (48px)</span>
+  </div>
+  <div class="icon-card">
+    <canvas id="icon-sm" width="60" height="60"></canvas>
+    <span class="label">Button (20px)</span>
+  </div>
+</div>
+
+<div class="btn-row">
+  <div class="btn-preview">
+    <canvas id="icon-btn" width="48" height="48"></canvas>
+    Cortex Max
+  </div>
+</div>
+
+<div class="modal-preview">
+  <canvas id="icon-hero" width="200" height="200"></canvas>
+  <div class="modal-title">
+    <span class="cortex">CORTEX</span>
+    <span class="max">MAX</span>
+  </div>
+  <div class="modal-sub">Unlock deeper understanding</div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+function createInfinityTube() {
+  // Lemniscate curve — wide, clear infinity shape
+  const points = [];
+  const N = 300;
+  for (let i = 0; i <= N; i++) {
+    const t = (i / N) * Math.PI * 2;
+    const s = Math.sin(t);
+    const c = Math.cos(t);
+    const denom = 1 + s * s;
+    const x = c / denom;
+    const y = (s * c) / denom;
+    points.push(new THREE.Vector3(x * 0.85, y * 0.65, 0));
+  }
+
+  const curve = new THREE.CatmullRomCurve3(points, true);
+  // Wide, flat ribbon tube — not round, elliptical cross-section
+  const tubeSegments = 300;
+  const radialSegments = 24;
+  const tubeRadius = 0.18;
+
+  const frames = curve.computeFrenetFrames(tubeSegments, true);
+  const vertices = [];
+  const normals = [];
+  const uvs = [];
+  const indices = [];
+
+  for (let i = 0; i <= tubeSegments; i++) {
+    const t = i / tubeSegments;
+    const point = curve.getPointAt(t);
+    const N = frames.normals[i % tubeSegments];
+    const B = frames.binormals[i % tubeSegments];
+
+    // Twist along the path — half turn over full loop = Möbius
+    const twist = t * Math.PI;
+
+    for (let j = 0; j <= radialSegments; j++) {
+      const angle = (j / radialSegments) * Math.PI * 2;
+
+      // Elliptical cross-section: wider than tall (ribbon feel)
+      const widthScale = 2.2;
+      const heightScale = 0.7;
+      const cosA = Math.cos(angle + twist) * widthScale;
+      const sinA = Math.sin(angle + twist) * heightScale;
+
+      const r = tubeRadius;
+      const vx = point.x + r * (cosA * N.x + sinA * B.x);
+      const vy = point.y + r * (cosA * N.y + sinA * B.y);
+      const vz = point.z + r * (cosA * N.z + sinA * B.z);
+      vertices.push(vx, vy, vz);
+
+      const nx = cosA * N.x + sinA * B.x;
+      const ny = cosA * N.y + sinA * B.y;
+      const nz = cosA * N.z + sinA * B.z;
+      const len = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1;
+      normals.push(nx/len, ny/len, nz/len);
+
+      uvs.push(t, j / radialSegments);
+    }
+  }
+
+  const rs1 = radialSegments + 1;
+  for (let i = 0; i < tubeSegments; i++) {
+    for (let j = 0; j < radialSegments; j++) {
+      const a = i * rs1 + j;
+      const b = a + rs1;
+      const c = a + 1;
+      const d = b + 1;
+      indices.push(a, b, c, b, d, c);
+    }
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function setupScene(canvas, enableBloom = true) {
+  const w = canvas.width;
+  const h = canvas.height;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(2);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.6;
+  renderer.setClearColor(0x000000, 0);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(28, w / h, 0.1, 100);
+  camera.position.set(0, 0.05, 3.8);
+  camera.lookAt(0, 0, 0);
+
+  // Lighting — bright, multi-directional for metallic pop
+  const keyLight = new THREE.DirectionalLight(0xf4eaff, 2.5);
+  keyLight.position.set(3, 4, 5);
+  scene.add(keyLight);
+
+  const fillLight = new THREE.DirectionalLight(0x9b8af8, 1.5);
+  fillLight.position.set(-4, 1, 3);
+  scene.add(fillLight);
+
+  const rimLight = new THREE.DirectionalLight(0xd4a8ff, 2.0);
+  rimLight.position.set(0, -3, -2);
+  scene.add(rimLight);
+
+  const topLight = new THREE.PointLight(0xe8d4ff, 2.0, 10);
+  topLight.position.set(0.5, 3, 3);
+  scene.add(topLight);
+
+  const bottomFill = new THREE.DirectionalLight(0x7c5ce8, 0.8);
+  bottomFill.position.set(0, 3, 0);
+  scene.add(bottomFill);
+
+  const ambient = new THREE.AmbientLight(0x4a3a6a, 0.6);
+  scene.add(ambient);
+
+  const geo = createInfinityTube();
+  const mat = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(0xab8aea),
+    emissive: new THREE.Color(0x6b3fa0),
+    emissiveIntensity: 0.25,
+    metalness: 0.92,
+    roughness: 0.1,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.02,
+    reflectivity: 1.0,
+    envMapIntensity: 1.5,
+    side: THREE.DoubleSide,
+  });
+
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.rotation.x = 0.15;
+  mesh.rotation.z = 0.03;
+  scene.add(mesh);
+
+  // Subtle glow plane beneath
+  const glowGeo = new THREE.PlaneGeometry(3, 1.5);
+  const glowMat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(0x7c3aed),
+    transparent: true,
+    opacity: 0.06,
+    side: THREE.DoubleSide,
+  });
+  const glowPlane = new THREE.Mesh(glowGeo, glowMat);
+  glowPlane.position.y = -0.5;
+  glowPlane.position.z = -0.3;
+  glowPlane.rotation.x = -Math.PI / 2;
+  scene.add(glowPlane);
+
+  let composer = null;
+  if (enableBloom) {
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloom = new UnrealBloomPass(new THREE.Vector2(w, h), 0.45, 0.5, 0.25);
+    composer.addPass(bloom);
+  }
+
+  // Render loop — subtle breathing, NO rotation
+  let frame = 0;
+  function render() {
+    frame++;
+    const t = frame * 0.006;
+    const s = 1.0 + Math.sin(t) * 0.006;
+    mesh.scale.setScalar(s);
+    mesh.rotation.x = 0.15 + Math.sin(t * 0.7) * 0.015;
+
+    if (composer) composer.render();
+    else renderer.render(scene, camera);
+    requestAnimationFrame(render);
+  }
+  render();
+}
+
+setupScene(document.getElementById('icon-lg'), true);
+setupScene(document.getElementById('icon-md'), true);
+setupScene(document.getElementById('icon-sm'), false);
+setupScene(document.getElementById('icon-btn'), false);
+setupScene(document.getElementById('icon-hero'), true);
+</script>
+
+</body>
+</html>

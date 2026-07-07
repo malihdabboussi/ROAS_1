@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "alerts": [
+    {
+      "name": "auth-failure-burst",
+      "signal": "logs.[AUTH]",
+      "condition": "count_over_5m >= 20 grouped_by_code",
+      "severity": "high"
+    },
+    {
+      "name": "supabase-transport-retry-burst",
+      "signal": "logs.[supabase_fetch]",
+      "condition": "count_over_5m >= 25",
+      "severity": "high"
+    },
+    {
+      "name": "outbox-lag-high",
+      "signal": "mission_outbox.oldest_pending_age_seconds",
+      "condition": "value > 180 for 10m",
+      "severity": "critical"
+    },
+    {
+      "name": "outbox-dead-letter",
+      "signal": "logs.outbox_dead_letter",
+      "condition": "count_over_5m >= 1",
+      "severity": "critical"
+    }
+  ]
+}

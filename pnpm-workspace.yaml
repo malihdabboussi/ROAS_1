@@ -1,0 +1,13 @@
+packages:
+  - "apps/agent-api"
+  - "apps/admin"
+  - "apps/api"
+  - "apps/chrome-extension"
+  - "apps/funnels"
+  - "apps/openclaw"
+  - "apps/queue-worker"
+  - "apps/mission-worker"
+  - "apps/web"
+  - "apps/website"
+  - "apps/docs"
+  - "packages/*"

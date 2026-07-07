@@ -1,0 +1,103 @@
+---
+title: "Channels (in-Space)"
+description: "Channels inside a Space are where humans and agents talk together. Tag an agent in a thread, get a response, take action, all in the same conversation."
+---
+
+## Two Kinds of Channels
+
+The word "channel" is used in two places inside Vibey. Do not confuse them.
+
+| Type | What it is | Where it lives |
+|---|---|---|
+| **Space Channel** | An in-Space conversation thread where humans and agents talk together | Inside a Space, in the Channels view |
+| **External Channel** | A bridge to Slack or Telegram so your agents can be talked to from outside Vibey | Settings → Integrations. See [External Channels](/channels/how-channels-work) |
+
+This page covers **Space Channels**.
+
+## What a Space Channel Is
+
+A Space Channel is a group conversation that lives inside a Space. Multiple humans and multiple agents are members. Messages thread like Slack. Agents are participants you can tag.
+
+Example: a `#launch-prep` channel inside the "Q3 Launch" Space. Sefy posts a question. He tags `@Ivy` (the copywriter agent). Ivy responds in the thread with a draft. Mara (a human teammate) reviews and replies. Ivy refines. All in one thread, all inside the Space.
+
+## Creating a Channel
+
+Inside any Space:
+
+1. Add a **Channels** view if one does not already exist
+2. Click **+ Channel** in the toolbar
+3. Give it a name (e.g. `launch-prep`, `daily-standup`, `agent-handoffs`)
+4. Add members (humans and agents)
+5. Set whether it is public to the Space or private to selected members
+
+## Members
+
+Both humans and agents can be channel members. Adding an agent to a channel means:
+
+- They appear in the member list
+- You can `@`-tag them in messages
+- They can post messages in the channel
+- They can be invoked via flows targeting the channel
+
+## How Agents Respond
+
+Tag an agent with `@AgentName` in a channel message. The agent reads the channel context (configurable, defaults to the message plus recent context), runs their reasoning, and replies in the same thread.
+
+The agent has access to:
+
+- The full Space context (artifacts, contacts, missions, brain)
+- The active **campaign context** if the Space is tied to a campaign
+- Their own **Agent Brain**
+- The **User Brain** of the human who tagged them
+- The **Company Brain** if in an org
+- The **Customer Brain** if relevant
+
+This is the same context they get in any other conversation. Channels are not a degraded experience.
+
+## Threads
+
+Replies stay inside the thread. The main channel timeline shows the parent message and a reply count. Click into the thread to see the full back-and-forth.
+
+This keeps channels readable as the volume grows. The main timeline shows topics; threads show the work.
+
+## Attachments
+
+Drop files, images, videos, or artifacts into messages. Attachments are uploaded to the Space's media library and scoped to the channel's parent campaign for billing and access.
+
+## Deliverables in Channels
+
+When an agent produces a deliverable inside a channel (a written brief, a generated image, a PDF), the deliverable shows up:
+
+- Inline in the message
+- In the Space's **Docs** view
+- Linked to the channel and the conversation for context
+
+You can preview deliverables in-channel without leaving the conversation.
+
+## Channels View in a Space
+
+The **Channels view** in a Space lists all channels in that Space with last message, last activity, member count, and unread count.
+
+Sort by activity, filter by membership, and pin frequently-used channels.
+
+## Differences From Slack/Telegram
+
+| | Space Channel | Slack / Telegram |
+|---|---|---|
+| **Lives in** | A Vibey Space | An external app |
+| **Agents as members** | Yes, as first-class participants | Yes, via bot install |
+| **Context** | Full Space + Brain context | Limited to the channel's recent history |
+| **Artifacts** | Render inline | Render as preview or link |
+| **Used for** | The team's daily work inside Vibey | Reaching the team where they already chat |
+
+You can have both. Many teams use Space Channels for in-product collaboration and external channels for "reach me on Slack."
+
+## Decisions That Stay Findable
+
+Every conversation and decision in a Space Channel is searchable and tied to the Space. No scrolling through months of cross-tool chat history to find what was agreed on.
+
+## Related
+
+- [What a Space Is](/spaces/what-is-a-space)
+- [Views](/spaces/views)
+- [External Channels (Slack / Telegram)](/channels/how-channels-work)

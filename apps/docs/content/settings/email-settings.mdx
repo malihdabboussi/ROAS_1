@@ -1,0 +1,78 @@
+---
+title: "Email Settings"
+description: "Configure your sending domains, sender identities, default schedule, email provider, and view delivery logs."
+---
+
+Open **Workspace Settings → Email** to manage how your [email sequences](/talents/emails) are sent. These are your workspace-level defaults - individual sequences can override the default provider.
+
+## Three Tabs
+
+### Domains and Senders
+
+Before you can send emails, you need a verified domain and at least one sender identity.
+
+**Sending Domains**
+
+1. Click **Add Domain**
+2. Enter your domain (e.g., `yourbrand.com`)
+3. Vibey provides DNS records to add at your domain registrar
+4. Wait for verification - Vibey checks automatically
+
+Once verified, you can create sender addresses on that domain.
+
+**Sender Emails**
+
+After verifying at least one domain:
+
+1. Click **Add Sender Email**
+2. Enter the from address (e.g., `hello@yourbrand.com`), from name, reply-to address, and reply-to name
+3. The sender is ready to use in your sequences
+
+You can also click **Sync from my Domains** to pull in senders from SendGrid if you've already configured them there.
+
+### General Settings
+
+Your workspace-wide email defaults:
+
+**Default Sending Schedule**
+- **Sending days** - Toggle which days of the week emails can be sent
+- **Sending window** - Set the time range (e.g., 9 AM to 6 PM)
+- **Timezone** - Choose your timezone for the schedule
+
+**Email Branding**
+- **Hide Powered by Vibey** - Toggle off the Vibey footer in sent emails
+
+**Default Email Provider**
+- **Vibey (SendGrid)** - The default provider
+- **GoHighLevel** - Available if you've [connected GHL](/integrations/setting-up-integrations)
+
+Individual sequences can override this default and use a different provider.
+
+**Reply Detection**
+- **Pause on reply** - Automatically pause a sequence when someone replies
+- **Stop keywords** - Define keywords that stop the sequence (e.g., "unsubscribe," "stop," "remove me")
+
+### Email Logs
+
+A searchable log of every email sent from your workspace:
+
+- **Filter by type** - Single emails, sequence emails, broadcast emails, or archived
+- **Filter by status** - Delivered, opened, clicked, bounced, failed
+- **Filter by date range**
+- **Search** by recipient, subject, or sender address
+
+Click any log entry to see the full detail:
+- Status timeline (created → sent → delivered → opened → clicked)
+- Subject and recipient
+- From address
+- Full HTML body preview
+
+You can archive individual email logs to keep things clean.
+
+## Campaign-Level Overrides
+
+The workspace email settings are the defaults. When you prepare an email send from a specific campaign, you can choose which sender identity and provider to use at send time - overriding the workspace defaults for that specific send.
+
+<Callout type="tip">
+  Set up your domains and senders in Workspace Settings before creating email sequences. When agents build sequences, they'll have verified senders ready to go instead of hitting "no sender configured" errors.
+</Callout>

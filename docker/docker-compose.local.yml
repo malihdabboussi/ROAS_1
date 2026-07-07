@@ -1,0 +1,10 @@
+services:
+  vibey-machine:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.local
+    ports:
+      - "3003:3003"
+    env_file:
+      - .env.docker
+    restart: unless-stopped

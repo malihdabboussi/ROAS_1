@@ -1,0 +1,241 @@
+import type { LegacyCapabilityRow } from './composio-capability-catalog.types'
+
+export const ACTIVE_CAMPAIGN_LEGACY_CAPABILITIES_1: LegacyCapabilityRow[] = [
+  {
+      action_slug: 'list_contacts',
+      display_name: 'List Contacts',
+      description: 'List, search, and filter contacts in ActiveCampaign.',
+      parameters: {
+        limit: { type: 'number' },
+        offset: { type: 'number' },
+        email: { type: 'string' },
+        search: { type: 'string' },
+      },
+    },
+  {
+      action_slug: 'get_contact',
+      display_name: 'Get Contact',
+      description: 'Retrieve a specific contact by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'create_contact',
+      display_name: 'Create Contact',
+      description: 'Create a new contact. Email is required.',
+      parameters: { contact: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'update_contact',
+      display_name: 'Update Contact',
+      description: 'Update an existing contact by ID.',
+      parameters: {
+        id: { type: 'string', required: true },
+        contact: { type: 'object', required: true },
+      },
+    },
+  {
+      action_slug: 'delete_contact',
+      display_name: 'Delete Contact',
+      description: 'Delete a contact by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'sync_contact',
+      display_name: 'Sync Contact',
+      description: 'Create or update a contact by email. If existing, updates; otherwise creates.',
+      parameters: { contact: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'get_contact_field_values',
+      display_name: 'Get Contact Field Values',
+      description: 'Retrieve custom field values for a contact.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'get_contact_automations',
+      display_name: 'Get Contact Automations',
+      description: 'List all automations a contact is enrolled in.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'get_contact_deals',
+      display_name: 'Get Contact Deals',
+      description: 'Retrieve deals associated with a contact.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'get_contact_score',
+      display_name: 'Get Contact Score',
+      description: "Retrieve a contact's score value.",
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'add_contact_tag',
+      display_name: 'Add Tag to Contact',
+      description: 'Associate a tag with a contact.',
+      parameters: { contactTag: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'remove_contact_tag',
+      display_name: 'Remove Tag from Contact',
+      description: 'Remove a tag from a contact by contactTag ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'update_list_status',
+      display_name: 'Update List Status',
+      description: 'Subscribe or unsubscribe a contact from a list.',
+      parameters: { contactList: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'list_notes',
+      display_name: 'List Notes',
+      description: 'Retrieve all notes.',
+      parameters: { limit: { type: 'number' }, offset: { type: 'number' } },
+    },
+  {
+      action_slug: 'get_note',
+      display_name: 'Get Note',
+      description: 'Retrieve a note by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'create_note',
+      display_name: 'Create Note',
+      description: 'Create a note for a contact.',
+      parameters: { note: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'update_note',
+      display_name: 'Update Note',
+      description: 'Update a note by ID.',
+      parameters: {
+        id: { type: 'string', required: true },
+        note: { type: 'object', required: true },
+      },
+    },
+  {
+      action_slug: 'delete_note',
+      display_name: 'Delete Note',
+      description: 'Delete a note by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'list_tags',
+      display_name: 'List Tags',
+      description: 'Retrieve all tags.',
+      parameters: { limit: { type: 'number' }, search: { type: 'string' } },
+    },
+  {
+      action_slug: 'get_tag',
+      display_name: 'Get Tag',
+      description: 'Retrieve a tag by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'create_tag',
+      display_name: 'Create Tag',
+      description: 'Create a new tag.',
+      parameters: { tag: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'update_tag',
+      display_name: 'Update Tag',
+      description: 'Update a tag by ID.',
+      parameters: {
+        id: { type: 'string', required: true },
+        tag: { type: 'object', required: true },
+      },
+    },
+  {
+      action_slug: 'delete_tag',
+      display_name: 'Delete Tag',
+      description: 'Delete a tag by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'list_lists',
+      display_name: 'List Lists',
+      description: 'Retrieve all mailing lists.',
+      parameters: { limit: { type: 'number' }, offset: { type: 'number' } },
+    },
+  {
+      action_slug: 'get_list',
+      display_name: 'Get List',
+      description: 'Retrieve a mailing list by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'create_list',
+      display_name: 'Create List',
+      description: 'Create a new mailing list.',
+      parameters: { list: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'update_list',
+      display_name: 'Update List',
+      description: 'Update a mailing list by ID.',
+      parameters: {
+        id: { type: 'string', required: true },
+        list: { type: 'object', required: true },
+      },
+    },
+  {
+      action_slug: 'delete_list',
+      display_name: 'Delete List',
+      description: 'Delete a mailing list by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'list_deals',
+      display_name: 'List Deals',
+      description: 'Retrieve all deals.',
+      parameters: { limit: { type: 'number' }, offset: { type: 'number' } },
+    },
+  {
+      action_slug: 'get_deal',
+      display_name: 'Get Deal',
+      description: 'Retrieve a deal by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'create_deal',
+      display_name: 'Create Deal',
+      description: 'Create a new deal.',
+      parameters: { deal: { type: 'object', required: true } },
+    },
+  {
+      action_slug: 'update_deal',
+      display_name: 'Update Deal',
+      description: 'Update a deal by ID.',
+      parameters: {
+        id: { type: 'string', required: true },
+        deal: { type: 'object', required: true },
+      },
+    },
+  {
+      action_slug: 'delete_deal',
+      display_name: 'Delete Deal',
+      description: 'Delete a deal by ID.',
+      parameters: { id: { type: 'string', required: true } },
+    },
+  {
+      action_slug: 'list_deal_activities',
+      display_name: 'List Deal Activities',
+      description: 'List all deal activities.',
+      parameters: { limit: { type: 'number' } },
+    },
+  {
+      action_slug: 'create_deal_note',
+      display_name: 'Create Deal Note',
+      description: 'Add a note to a deal.',
+      parameters: { dealNote: { type: 'object', required: true } },
+    }
+].map((entry) => ({
+  integration_id: 'active_campaign',
+  execution_mode: 'legacy',
+  examples: [],
+  metadata: {},
+  domains: [],
+  ...entry,
+}))

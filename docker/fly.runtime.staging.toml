@@ -1,0 +1,45 @@
+app = "vibey-runtimes-staging"
+primary_region = "iad"
+
+[env]
+  NODE_ENV = "production"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 3003
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 25
+
+  [[http_service.checks]]
+    grace_period = "180s"
+    interval = "30s"
+    method = "get"
+    timeout = "15s"
+    path = "/api/health"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 18789
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[services.ports]]
+    port = 18789
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "connections"
+    soft_limit = 200
+    hard_limit = 500
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "4096mb"

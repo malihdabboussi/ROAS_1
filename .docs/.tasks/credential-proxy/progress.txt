@@ -1,0 +1,14 @@
+## Codebase Patterns
+(Patterns discovered during this task will be added here)
+
+### Prerequisites
+- US-006 from vibey-machine-docker PRD must be complete (artifacts module provides the pattern)
+- Stubbed get_capabilities and use_integration actions in artifacts.service.ts need to be replaced with calls to this module
+
+### Key Files
+- Artifacts service (has stubs): apps/agent-api/src/modules/artifacts/services/artifacts.service.ts
+- Internal auth guard (reuse): apps/agent-api/src/modules/artifacts/guards/internal-auth.guard.ts
+- User auth guard (reuse): packages/api-shared/src/guards/auth.guard.ts
+- PRD reference: .docs/.tasks/vibey_machine/prd.md (section 4.4 + 9.1)
+
+---

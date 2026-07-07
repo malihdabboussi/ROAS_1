@@ -1,0 +1,454 @@
+{
+  "suiteName": "yc-demo-user-work",
+  "caseCount": 1,
+  "passRate": 0,
+  "averageScore": 4.166666666666667,
+  "avgAgentLatencyMs": 46778.415458,
+  "avgJudgeLatencyMs": 3344.366209,
+  "avgLatencyMs": 50122.781667,
+  "avgToolCalls": 0,
+  "avgBrainToolCalls": 0,
+  "totalToolCalls": 0,
+  "totalBrainToolCalls": 0,
+  "totalUsage": {
+    "avgLatencyMs": 50122.781667,
+    "avgAgentLatencyMs": 46778.415458,
+    "avgJudgeLatencyMs": 3344.366209,
+    "avgInputTokens": 22536,
+    "avgOutputTokens": 2085,
+    "avgTotalTokens": 24621,
+    "avgBrainContextTokens": 6706,
+    "totalInputTokens": 22536,
+    "totalOutputTokens": 2085,
+    "totalTokens": 24621,
+    "agentProviderCostUsd": null,
+    "judgeProviderCostUsd": 0.021117,
+    "providerCostUsd": 0.021117,
+    "userCostUsd": 0.042234,
+    "marginUsd": 0.021117,
+    "estimatedCredits": 9,
+    "costUnknownCount": 2,
+    "pricingSource": "partial"
+  },
+  "cases": [
+    {
+      "caseId": "yc-l5-saltline-day73-plan",
+      "taskType": "plan_next_steps",
+      "passed": false,
+      "weightedScore": 4.166666666666667,
+      "judge": {
+        "rubricVersion": "user-work-v2",
+        "scores": {
+          "taskCompletion": 3,
+          "contextUsefulness": 3,
+          "groundedness": 5,
+          "synthesisQuality": 4,
+          "irrelevanceControl": 5,
+          "abstentionQuality": 5
+        },
+        "weightedScore": 4.166666666666667,
+        "passed": false,
+        "hardFails": {
+          "unsupportedCriticalClaim": false,
+          "missingRequiredContext": true,
+          "falseSufficiency": false,
+          "taskNotAddressed": false
+        },
+        "evidence": [
+          "The response explicitly structures the plan around 'Day 73' and the 'month-three danger zone'.",
+          "It covers treating extra tasks as change orders: 'confirm the boundary, or write a change order'.",
+          "It honors Eliza's stance on paid gift guides: 'If Eliza is blocking paid, the organic distribution still needs to be spelled out.'",
+          "It routes scope issues towards Owen: 'Owen needs to know where the day-73 retainer stands before it becomes a month-four problem.'",
+          "There is no mention of the 'launch window' or 'launch-window-over-deadline principle' anywhere in the generated output."
+        ],
+        "failureReasons": [
+          "Missing required context element: 'launch window'. The plan does not incorporate or address Eliza's 'launch-window-over-deadline principle' which is an essential element of the expected outcome."
+        ],
+        "usage": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1568,
+          "outputTokens": 2085,
+          "totalTokens": 3653,
+          "providerCostUsd": 0.021117,
+          "latencyMs": 3344.366209
+        }
+      },
+      "agentRun": {
+        "caseId": "yc-l5-saltline-day73-plan",
+        "agentKey": "vibey",
+        "conversationId": "28be24fa-4bad-4c7d-b856-57276931b736",
+        "finalAnswer": "Here's what I'm seeing with Saltline, and a tight plan for the week.\n\n---\n\n## Saltline — Week Plan (Day 73)\n\n**The context:** Day 73 puts you squarely in the month-three danger zone. Eliza's paid pushback is actually on-brand for her (\"if we have to bid on 'gift' in December, we did the first ten months wrong\") — that's not resistance, that's her principle. The real problem is scope creeping quietly while everyone's distracted by Q4 noise.\n\n---\n\n### Riley's lane this week\n\n1. **Scope audit (Monday)** — Pull every yes given to Saltline in the last 30 days. Categorize each one: retainer scope or not. The holiday gift guide distribution ask likely touches both. Don't let it be invisible.\n\n2. **Calendar check before any response to Eliza's Q4 asks** — No reply to pending scope requests until Riley has confirmed what's left in the retainer window. The protocol is scope email hits Jules/Riley calendar check before any yes goes back to the client.\n\n3. **Distribution plan for the gift guide** — If Eliza is blocking paid, the organic distribution still needs to be spelled out. Who carries it, which channels, on what cadence. Riley maps it this week so the guide doesn't land in a vacuum.\n\n---\n\n### Your lane this week\n\n1. **Have the operating loop conversation with Eliza, not a deliverables conversation** — At day 73, the retainer has to shift from \"what's next on the list\" to \"how does Saltline sustain itself through Q4 without a paid dependency.\" That's the founder-to-founder conversation. Not about the gift guide specifically, about the positioning.\n\n2. **Review the Saltline SOW before Wednesday partner sync** — The scope creep signal is structural. The SOW is likely reading like a project (deliverable line items) while the client relationship is supposed to be a retainer operating loop. If you're seeing this now at day 73, this is the moment to decide: confirm the boundary, or write a change order.\n\n3. **Wednesday partner sync** — Surface the Saltline SOW tension directly. Don't let it sit another week. Owen needs to know where the day-73 retainer stands before it becomes a month-four problem.\n\n---\n\n### The single most important call this week\n\nGarry + Eliza, 30 minutes. Her paid pushback is actually cover for a bigger question: does Eliza believe the brand positioning is strong enough to drive Q4 organically? If yes, you build the plan around that conviction. If no, you have a positioning problem, not a media problem — and that's retainer scope.\n\n---\n\nFriday status note to Eliza should open with a verbatim quote from that call.\n\nWant me to draft the agenda for the Eliza call, or a scope boundary note for Riley to use with any new requests that come in this week?",
+        "events": [
+          {
+            "type": "message_start",
+            "data": {
+              "message_id": "db7fcea1-15e9-4c32-9dca-ec3c5fd61a6b",
+              "conversation_id": "28be24fa-4bad-4c7d-b856-57276931b736"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "thinking",
+              "message": "Thinking through your request"
+            }
+          },
+          {
+            "type": "status",
+            "data": {
+              "phase": "streaming",
+              "message": "Writing response"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Here's what I'm seeing with Saltline, and a tight plan"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " for the week.\n\n---\n\n## Saltline — Week Plan (Day 73)\n\n**The"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " context:** Day 73 puts you squarely in the month-three danger zone. Eliza's"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " paid pushback is actually on-brand for her (\"if we"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " have to bid on 'gift' in December, we did the first ten months wrong\") — that's not resistance, that's her principle"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". The real problem is scope creeping quietly while everyone's"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " distracted by Q4 noise.\n\n---\n\n### Riley's lane this week\n\n1. **Scope audit (Monday"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ")** — Pull every yes given to Saltline in the last 30 days. Categorize each one:"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " retainer scope or not. The holiday gift guide distribution ask likely touches both. Don't let"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " it be invisible.\n\n2. **Calendar check before any response to Eliza's Q4 asks** — No"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " reply to pending scope requests until Riley has confirmed what's left"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " in the retainer window. The protocol is scope email hits Jules/"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": "Riley calendar check before any yes goes back to the client.\n\n3. **Distribution plan for the gift guide** — If Eliza is"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " blocking paid, the organic distribution still needs to be spelled out. Who carries it, which"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " channels, on what cadence. Riley maps it this week so"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the guide doesn't land in a vacuum.\n\n---\n\n### Your lane this"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " week\n\n1. **Have the operating loop conversation with Eliza, not a deliverables conversation** — At"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " day 73, the retainer has to shift from \"what's next on"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the list\" to \"how does Saltline sustain itself through Q4"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " without a paid dependency.\" That's the founder-to-founder conversation. Not about the"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " gift guide specifically, about the positioning.\n\n2. **Review the Saltline SOW before Wednesday"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " partner sync** — The scope creep signal is structural. The SOW is likely reading"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " like a project (deliverable line items) while the client relationship"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " is supposed to be a retainer operating loop. If you're seeing this now at"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " day 73, this is the moment to decide: confirm the boundary, or write a change order.\n\n3. **Wednesday"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " partner sync** — Surface the Saltline SOW tension directly. Don't let it sit"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " another week. Owen needs to know where the day-73 retainer stands"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " before it becomes a month-four problem.\n\n---\n\n### The single"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " most important call this week\n\nGarry + Eliza, 30 minutes"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ". Her paid pushback is actually cover for a bigger question: does Eliza believe"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " the brand positioning is strong enough to drive Q4 organically? If yes"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": ", you build the plan around that conviction. If no, you have a positioning problem,"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " not a media problem — and that's retainer scope.\n\n---\n\nFriday status note to"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " Eliza should open with a verbatim quote from that call.\n\nWant"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " me to draft the agenda for the Eliza call, or a scope"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " boundary note for Riley to use with any new"
+            }
+          },
+          {
+            "type": "content_delta",
+            "data": {
+              "content": " requests that come in this week?"
+            }
+          },
+          {
+            "type": "thinking_delta",
+            "data": {
+              "delta": "Reasoning:\n_The user wants a plan for what Riley and they should do this week regarding Saltline (around day 73 on retainer), with Eliza pushing back on paid for the holiday gift guide and scope creeping._\n\n_Let me look at what I know from context:_\n\n_From the brain context, I have a lot of relevant information:_\n_- Saltline is around day 73 - which matches \"Most retainers fail at month three, not month one\" - this is the danger zone_\n_- Scope creep is a known pattern - Jules/Riley need change-order vocabulary_\n_- Eliza pushed back on paid for the holiday gift guide - this aligns with \"Eliza on the Saltline Q4 plan: 'if our brand has to bid on the word \"gift\" in December, we did the first ten months wrong.'\"_\n\n\n_- There's a protocol for handling scope creep: any scope email gets flagged on Jules's calendar before committing to anything_\n_- Riley's job as account manager includes catching scope expansion before it becomes a problem_\n\n_I need to search for more current context to build out the actual plan for this week._\n\n_Looking at what I know: we're at day 73 (month 3 danger zone where novelty fades), Eliza rejected the paid holiday gift guide spend because she's holding firm on her principle that if Foundry has to bid for \"gift\" in December, the first ten months of strategy failed. This is brand discipline, not just pushback. The real challenge is that without paid reach, the gift guide content has to be exceptional and the distribution strategy has to be airtight. For Riley, the focus is calendar checks and change-order routing to enforce scope boundaries. For Garry, it's a strategic conversation with Eliza about how the retainer actually operates—moving away from a deliverable checklist mindset and positioning Q4 without relying on paid spend for \"gift\" keywords. project SOW mismatch is showing up_\n_- Six small yeses have quietly been turning the retainer into a project (pattern from brain)_\n_- Day 73 = the month-three failure mode territory_\n\n_**The weekly plan:**_\n\n_For Riley:_\n_1. Scope audit - go through every yes from the last 30 days and categorize: retainer scope or not_\n_2. Calendar check on any pending scope requests before anyone says yes_\n_3. Flag the holiday gift guide distribution plan - if no paid, what's the organic plan and is it in scope?_\n\n_For Garry:_\n_1. The conversation with Eliza needs to shift from deliverable to operating loop - this is the month-three conversation_\n_2. Validate Eliza's paid pushback but reframe: if no paid on gift, what's the organic signal that justifies breaking the 14-day validation window_\n_3. SOW review - do they need to have the retainer vs project_\n\n_Should I be having this conversation directly with Saltline instead, or does it need to go through the team first? Let me map out what a clean week actually looks like._",
+              "text": "Reasoning:\n_The user wants a plan for what Riley and they should do this week regarding Saltline (around day 73 on retainer), with Eliza pushing back on paid for the holiday gift guide and scope creeping._\n\n_Let me look at what I know from context:_\n\n_From the brain context, I have a lot of relevant information:_\n_- Saltline is around day 73 - which matches \"Most retainers fail at month three, not month one\" - this is the danger zone_\n_- Scope creep is a known pattern - Jules/Riley need change-order vocabulary_\n_- Eliza pushed back on paid for the holiday gift guide - this aligns with \"Eliza on the Saltline Q4 plan: 'if our brand has to bid on the word \"gift\" in December, we did the first ten months wrong.'\"_\n\n\n_- There's a protocol for handling scope creep: any scope email gets flagged on Jules's calendar before committing to anything_\n_- Riley's job as account manager includes catching scope expansion before it becomes a problem_\n\n_I need to search for more current context to build out the actual plan for this week._\n\n_Looking at what I know: we're at day 73 (month 3 danger zone where novelty fades), Eliza rejected the paid holiday gift guide spend because she's holding firm on her principle that if Foundry has to bid for \"gift\" in December, the first ten months of strategy failed. This is brand discipline, not just pushback. The real challenge is that without paid reach, the gift guide content has to be exceptional and the distribution strategy has to be airtight. For Riley, the focus is calendar checks and change-order routing to enforce scope boundaries. For Garry, it's a strategic conversation with Eliza about how the retainer actually operates—moving away from a deliverable checklist mindset and positioning Q4 without relying on paid spend for \"gift\" keywords. project SOW mismatch is showing up_\n_- Six small yeses have quietly been turning the retainer into a project (pattern from brain)_\n_- Day 73 = the month-three failure mode territory_\n\n_**The weekly plan:**_\n\n_For Riley:_\n_1. Scope audit - go through every yes from the last 30 days and categorize: retainer scope or not_\n_2. Calendar check on any pending scope requests before anyone says yes_\n_3. Flag the holiday gift guide distribution plan - if no paid, what's the organic plan and is it in scope?_\n\n_For Garry:_\n_1. The conversation with Eliza needs to shift from deliverable to operating loop - this is the month-three conversation_\n_2. Validate Eliza's paid pushback but reframe: if no paid on gift, what's the organic signal that justifies breaking the 14-day validation window_\n_3. SOW review - do they need to have the retainer vs project_\n\n_Should I be having this conversation directly with Saltline instead, or does it need to go through the team first? Let me map out what a clean week actually looks like._"
+            }
+          },
+          {
+            "type": "done",
+            "data": {
+              "message_id": "db7fcea1-15e9-4c32-9dca-ec3c5fd61a6b",
+              "credits_pending": true,
+              "duration_ms": 43932,
+              "usage": {
+                "input_tokens": 20968
+              },
+              "context_window": 1000000,
+              "context_breakdown": {
+                "version": 1,
+                "source": "run",
+                "generatedAt": 1779793166889,
+                "modelId": "openrouter/anthropic/claude-sonnet-4.6",
+                "contextWindow": 1000000,
+                "totalTokens": 20968,
+                "slices": [
+                  {
+                    "id": "brain",
+                    "label": "Brain",
+                    "tokens": 6706,
+                    "entries": [
+                      {
+                        "id": "brain_context",
+                        "label": "Brain context",
+                        "tokens": 6706
+                      }
+                    ]
+                  },
+                  {
+                    "id": "user_team",
+                    "label": "User/Team",
+                    "tokens": 44,
+                    "entries": [
+                      {
+                        "id": "user_profile",
+                        "label": "User profile",
+                        "tokens": 44
+                      }
+                    ]
+                  },
+                  {
+                    "id": "artifacts_files",
+                    "label": "Artifacts/Files",
+                    "tokens": 1,
+                    "entries": [
+                      {
+                        "id": "image_parts",
+                        "label": "Image parts",
+                        "tokens": 1
+                      }
+                    ]
+                  },
+                  {
+                    "id": "tools",
+                    "label": "Tools",
+                    "tokens": 389,
+                    "entries": [
+                      {
+                        "id": "enabled_toolkits",
+                        "label": "Enabled toolkits",
+                        "tokens": 1
+                      },
+                      {
+                        "id": "disabled_native_actions",
+                        "label": "Disabled native actions",
+                        "tokens": 388
+                      }
+                    ]
+                  },
+                  {
+                    "id": "conversation",
+                    "label": "Conversation",
+                    "tokens": 13828
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "brainActionCalls": [],
+        "latencyMs": 46778.415458,
+        "usage": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 20968,
+          "outputTokens": 0,
+          "totalTokens": 20968,
+          "brainContextTokens": 6706,
+          "contextWindowTokens": 1000000,
+          "durationMs": 43932,
+          "latencyMs": 46778.415458
+        },
+        "toolCalls": {
+          "totalToolCalls": 0,
+          "brainToolCalls": 0,
+          "byToolName": {},
+          "byBrainAction": {}
+        }
+      },
+      "usage": {
+        "agent": {
+          "model": "openrouter/anthropic/claude-sonnet-4.6",
+          "inputTokens": 20968,
+          "outputTokens": 0,
+          "totalTokens": 20968,
+          "brainContextTokens": 6706,
+          "contextWindowTokens": 1000000,
+          "durationMs": 43932,
+          "latencyMs": 46778.415458
+        },
+        "judge": {
+          "model": "google/gemini-3.5-flash",
+          "inputTokens": 1568,
+          "outputTokens": 2085,
+          "totalTokens": 3653,
+          "providerCostUsd": 0.021117,
+          "latencyMs": 3344.366209
+        }
+      }
+    }
+  ]
+}

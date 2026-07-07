@@ -1,0 +1,26 @@
+node_modules
+.next
+dist
+.turbo
+pnpm-lock.yaml
+
+# Non-production directories
+.docs/
+.documentation/
+.runtime/
+.claude/
+.cursor/
+apps/website/
+apps/openclaw/
+apps/admin/
+apps/chrome-extension/
+
+# Temp files
+.tmp_exec_*.json
+
+# Docker agent templates
+docker/agents/
+
+# Reference and legacy
+**/reference_apps/**
+Vibey_legacy/

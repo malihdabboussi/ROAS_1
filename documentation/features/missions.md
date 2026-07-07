@@ -1,0 +1,202 @@
+# Missions harness
+
+Last updated: 2026-06-25
+
+## Public agent slug namespace
+
+Personal public agent slugs share the `govibey.com` namespace with organization slugs. Organization slugs take priority:
+
+- Worker routing checks `organizations.slug` before `profiles.public_agent_slug`.
+- Profile settings reject a personal `public_agent_slug` that already exists as an organization slug.
+- A broken or incomplete organization route does not fall back to a same-name personal agent slug.
+
+This keeps `acme.govibey.com` owned by the `acme` organization namespace instead of being shadowed by a profile-level public agent slug.
+
+## Mission access approval gate
+
+Mission execution now treats missing agent capability as a user-resolvable access gate instead of a silent blocked state.
+
+When a subtask has an `output_contract`, the execute worker still preflights the assigned agent before calling OpenClaw. If normal role, team, and override policy allow the required action domain, execution continues. If an explicit deny exists, the old hard failure path still applies. If the only problem is that the agent lacks the needed action domain for this mission, the worker creates a `mission_agent_access_requests` row and moves the mission to `awaiting_access_approval`.
+
+The gate is mission-scoped:
+
+- `mission_agent_access_requests` records the mission, subtask, agent, capability kind/id, reason, status, approver, timestamps, and metadata from the output contract.
+- Approved rows are read by worker preflight as mission-local grants. They do not mutate team defaults, org permissions, or `agent_overrides`.
+- The API exposes `GET /missions/:id/access-requests` and `POST /missions/:id/access-requests/approve`.
+- Approval marks pending requests `approved`, reopens access-gated subtasks to `pending`, sets the mission back to `todo`, logs `mission.access_approval.approved`, and requeues `mission.subtask.execute.requested`.
+- Mission Control subscribes to the access request table and shows an "Agent access needed" card inside the mission detail modal with the exact agent/domain pairs.
+
+This fixes the class of failures where a campaign mission can plan correctly, assign the right worker, then produce no artifacts because the worker did not have permission to persist the required deliverable. The user now sees the missing access as the next decision rather than an empty blocked mission.
+
+## Mission Harness assertion contract
+
+Mission plans now support a first-class `content.harness` contract generated before subtask execution. The harness records context research, non-blocking clarification questions, assumptions, deterministic assertions, assertion coverage, and a validator plan.
+
+The contract is carried through the system:
+
+- **API persistence**: mission plan creation accepts `harness`; subtasks can include `assertionKeys`; persisted subtasks map planner assertion ownership onto DB UUIDs.
+- **Worker execution**: subtask prompts include the assertion keys the worker is responsible for and require `assertion_evidence` in successful JSON output.
+- **Review**: manager subtask review and independent quality eval receive the full harness context and must cite concrete evidence for must assertions before approval.
+- **Mission Control UI**: plan detail surfaces context snapshot, assumptions, assertions, coverage, validator plan, and subtask assertion ownership; PDF export includes the same harness data.
+
+This turns mission plans from task lists into validation-backed contracts: the manager can reject a deliverable for wrong evidence mapping even when artifacts exist, and the worker can append corrective validation subtasks without losing assertion context.
+
+Operational notes from the first production-level local run:
+
+- `mission_deliverables` verification now prefers deliverable IDs explicitly returned in `artifact_manifest` before falling back to latest mission artifact, preventing cross-subtask artifact races.
+- Contract verification rejects mismatched `source_action` when the artifact records an action.
+- Triage replacement preserves validation subtasks that depended on cancelled/replaced work.
+- Local mission-worker tests should use local Redis or an isolated queue prefix for final review jobs; production workers can race production `mission_outbox` rows.
+
+## Space-scoped mission visibility
+
+Missions now support the same sharing model users already understand from Spaces and Docs:
+
+- `missions.space_id` links a mission to the Space where it was created.
+- `missions.source_space_item_id` optionally links the mission to the originating task/doc/item.
+- `missions.mission_visibility` controls the access source: `private`, `space`, `shared`, or `campaign`.
+- `mission_shares` stores explicit user/org shares with `view`, `comment`, `edit`, or `admin` levels.
+
+Default behavior:
+
+- Mission created from Space chat/action: `mission_visibility = 'space'`, `space_id` is set, and access inherits Space permissions.
+- Mission creation from Space chat/action also ensures a `missions` Space view exists; the Spaces UI focuses that view after an agent-created mission and task-to-agent mission sends can open the Spaces new-mission modal.
+- Mission created outside a Space: `mission_visibility = 'private'`.
+- Campaign context (`campaign_id`) remains agent/reporting context and is not automatically the sharing boundary.
+- Mission and subtask runtime session keys carry `campaign_id`, `space_id`, and `org_id` scope suffixes so tool-authored artifacts persist back to the same campaign and Space. Mission artifact creation refuses the legacy personal `General` campaign fallback when a mission session has no campaign scope.
+
+API read paths use `MissionPermissionsService` to filter mission lists and redact sensitive fields for view-only access. Sensitive mission detail endpoints such as logs, plans, subtasks, and deliverables require edit-level access.
+
+## Mission Runner V2 contracts
+
+Mission subtasks can now carry an explicit output contract in `mission_subtasks.output_contract`. Contract state is tracked with `contract_status`, `contract_verification`, `preflight_attempts`, and `correction_attempts`.
+
+The runner uses this as a deterministic gate:
+
+- **Preflight before execution**: if a subtask requires an action the assigned agent cannot perform, the worker records `mission.subtask.preflight_failed`, increments `preflight_attempts`, and routes to manager/Vibey triage before blocking the user.
+- **Execution prompt contract**: when a contract exists, the execute prompt includes `OUTPUT_CONTRACT` with the required artifact kind, action, artifact type, and expected metadata. The agent is told not to use another artifact type as fallback.
+- **Verification before done**: after execution, the worker verifies the required artifact exists. `document_artifact` checks tool-authored mission deliverables by type; `agent_skill` checks `agent_skills` by `agent_key` and `skill_key`. Missing/wrong artifacts keep the subtask out of `done`.
+- **DOCX deliverables**: Word documents use `create_docx`, persist as `mission_deliverables.type = 'file'`, and carry `mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'`. DOCX-specific contracts use `required_artifact_type = 'file'` with `expected.mime_type` and `expected.source_action = 'create_docx'`.
+- **Correction loop**: missing or wrong artifacts can trigger a clean corrective run with previous output and verifier evidence. Permission/capability failures route to Vibey/manager instead of retrying the same agent. Attempt counters cap repeated loops.
+- **Review guard**: review blocks if any completed subtask has an output contract that is not `verified`; manager quality review cannot approve an unchecked artifact.
+
+## Task deliverable preview exports
+
+Task detail deliverables use the shared deliverable preview modal used by Mission Control. Agent `artifact_preview` activity blocks are normalized into `MissionDeliverable` entity pointers before preview, so entity-backed artifacts load their source row before export.
+
+The preview keeps direct file actions for file-backed deliverables and shows a visible export control for generated text/entity artifacts. Presentation entities expose `Download HTML`, `Export as PDF`, and `Export as PPT`, matching the presentation view. Non-presentation entity artifacts keep the generic PDF, Markdown, and JSON exports. Toolbar icon help uses the portaled tooltip component so nested task modals do not clip tooltip text.
+
+## Mission attachment asset references
+
+Mission attachment uploads now return a normalized `asset_ref` next to the existing `url`, `path`, and `asset_id`. The reference includes the asset id, bucket, storage path, resolved URL, MIME type, asset type, campaign/org scope, and source surface.
+
+Data flow:
+
+- Presigned media uploads finalize a `media_assets` row through `POST /api/media/confirm` and return `asset_ref`.
+- Mission creation attachment uploads preserve that `asset_ref` on the client so the mission payload can carry both the display URL and stable asset identity.
+- Direct mission attachment uploads to `POST /api/missions/:id/attachments` build the same `asset_ref` from the registered `media_assets` row.
+- Campaign uploads through `POST /api/media/campaigns/upload` now register a `media_assets` row and return `asset_id`, `asset`, and `asset_ref` while keeping `url` and `path` for existing callers.
+
+This gives users and agents one stable file reference after upload instead of a URL-only object that may be hard to reconnect to indexing, permissions, or later tool actions.
+
+## Vibey-only mission manager actions
+
+Mission management controls now have a dedicated `mission.manager` action family and `manage_mission_control` domain. These actions are owned by Vibey only and are not user-policy-addable:
+
+- `answer_mission_question`
+- `summarize_mission_state`
+- `attach_mission_context`
+- `show_mission_deliverable`
+- `create_mission_subtask`
+- `edit_mission_subtask`
+- `cancel_mission_subtask`
+- `retry_mission_subtask`
+- `reassign_mission_subtask`
+- `prepare_mission_replan`
+- `approve_mission`
+
+Worker agents still use normal artifact/task actions. Vibey uses mission-manager actions to answer the user and control mission state, then delegates actual work through the capability-aware mission plan.
+
+## Org Agent Runtime Readiness
+
+Org onboarding stays fast: the API creates the org team in the database and triggers runtime sync in the background. The first message to an org agent is protected by a lazy runtime readiness guard in Agent API.
+
+Before channel-agent execution streams through OpenClaw, Agent API checks the resolved runtime agent id, local OpenClaw config, canonical org/user workspace path, identity files (`SOUL.md`, `ROLE.md`, `IDENTITY.md`), and the scoped `vibey-api` runtime surface. The runtime surface requires both generated files: `skills/vibey-api/SKILL.md` for agent instructions and `skills/vibey-api/ALLOWED_ACTIONS.json` for the actual OpenClaw `vibey_backend` action enum. If any check fails, Agent API runs one targeted sync for that agent (`syncOrgAgent` for org agents, `syncAgent` for personal agents), then rechecks once. Successful readiness is cached briefly per agent so normal chat stays fast.
+
+Mission-worker OpenClaw calls use the same readiness guard through the internal `POST /api/agents/:agentKey/ensure-ready` endpoint after resolving the gateway agent id and before starting the trace/model request. The endpoint normalizes an unscoped personal gateway id like `atlas` into `user-{userId}-atlas` when `AGENT_RUNTIME_MODE=shared` and a user id is present, while preserving explicit scoped ids from callers. Brain ops, mission execution, planning, review, and quality-eval calls therefore repair missing runtime identity/tool files before OpenClaw can build a generic fallback prompt or expose an unscoped action list.
+
+Brain import execution uses the same rule. Before Atlas processes an import chunk, both the Agent API runtime executor and the Main API brain-job gateway resolve the scoped gateway id (`org-{orgId}-atlas` or shared personal `user-{userId}-atlas`), call `ensure-ready`, then send OpenClaw `model: openclaw:{gatewayAgentId}` with the matching `x-openclaw-agent-id`.
+
+This prevents a new org agent from running with the generic fallback prompt when the DB row exists but local runtime files have not landed yet. Runtime traces persist both the base `agent_key` and the resolved gateway agent id so admin tooling can tell personal and org agents apart.
+
+Mission worker wake calls use the same machine readiness path and now allow a longer configurable wait (`MISSIONS_ENSURE_MACHINE_TIMEOUT_MS`, default 285 seconds) so cold-started or image-updated runtimes can become ready before mission execution fails.
+
+## Shared Railway Runtime Routing
+
+Mission and Brain worker calls can now use the shared Railway Agent API/OpenClaw runtime when a user's profile is configured with `agent_runtime_type = shared_railway` and `agent_runtime_url`.
+
+Routing behavior:
+
+- Mission worker OpenClaw execution prefers `agent_runtime_url` and sends requests with `machineId = null`, so it does not force-wake Fly.
+- Main API `UserAgentApiService` uses the same profile fields for background/channel/mission gateway calls and skips `MachinesService.ensureRunning` for shared Railway targets.
+- Brain import jobs and cross-pollination matching do not pre-wake Fly; their Atlas calls route through `MissionAgentGatewayService` and `UserAgentApiService`, with runtime readiness checked before the OpenClaw request.
+- Fly remains the fallback when the profile is `fly_machine`, when `agent_runtime_type` is missing, or when `shared_railway` is set without `agent_runtime_url`.
+- Mission state patching resolves the runtime target before wake; it wakes Fly only when the resolved target has a `machineId`.
+- Mission worker runtime identities now match Agent API shared runtime IDs: org agents use `org-{orgId}-{agentKey}`, and personal agents use `user-{userId}-{agentKey}` when `AGENT_RUNTIME_MODE=shared`.
+- Mission worker jobs now register under runtime queue names: `agent-runtime-queue-mission` for mission outbox work and `agent-runtime-queue-brain` for Brain ops. Concurrency is configurable with `AGENT_RUNTIME_MISSION_CONCURRENCY` and `AGENT_RUNTIME_BRAIN_CONCURRENCY`.
+- Mission OpenClaw calls include explicit workload lanes: `mission:{missionId}`, `mission:{missionId}:subtask:{subtaskId}`, `mission:{missionId}:eval`, and `brain:{orgOrUserId}:{outboxId}` for Brain ops. This keeps long mission and Brain runs out of OpenClaw's default `main` lane.
+- Brain import jobs now dispatch through `agent-runtime-queue-brain-import`. Mission-worker owns the queue processor: sweep jobs call the API internal due-job endpoint, and concrete import jobs call the API internal process endpoint. The API remains the durable `brain_import_jobs` state owner and Atlas import service. Execution uses `AGENT_RUNTIME_BRAIN_IMPORT_CONCURRENCY`, `AGENT_RUNTIME_BRAIN_IMPORT_PER_USER_CONCURRENCY`, and `AGENT_RUNTIME_BRAIN_IMPORT_BATCH_SIZE` caps. Each Atlas import call uses `brain-import:{jobId}` as its OpenClaw lane. Sweep calls retry transient Main API enqueue failures with `AGENT_RUNTIME_BRAIN_IMPORT_MAIN_API_MAX_ATTEMPTS` and log path, origin, status, attempt, and retryability context when the upstream request fails.
+- Mission-worker Bull Board at `/admin/queues` monitors the five active runtime queues: chat, mission, Brain ops, Brain import, and automation. Mission/Brain use the mission-worker Bull connection; chat, Brain import, and automation use the agent-runtime Redis resolver and shared queue prefix.
+
+## Directive flexibility (manager + worker)
+
+- **`SubtaskAbortRegistry`** (mission-worker singleton): subtask execute registers the execution `AbortController`; `cancel_subtask` / `reassign_subtask` (when the subtask was `in_progress`) calls `abort()` so the OpenClaw stream stops immediately.
+- **Internal manager API**: `edit-subtask` rejects only `cancelled`; `retry-subtask` allows `blocked`, `done`, `revision` and flips mission `blocked`/`failed`/`error`/`review` → `in_progress`; `append-subtasks` flips `review`/`done`/`blocked`/`error`/`failed` → `todo` (clears `error` when leaving `error`/`failed`).
+- **Execute phase**: mission is runnable unless status is `done` or `backlog` (so `review`/`blocked`/etc. can still run queued subtask work as needed).
+- **`enqueueReadySubtaskEvents`**: dependency resolution uses status for **all** subtasks (including `cancelled`) so dependents of cancelled deps unblock.
+- **Outbox dispatch**: `mission.subtask.*` events use an expanded mission-status allowlist (`blocked`, `error`, `failed` included) so execute/triage rows are not stuck retrying.
+- **Review recovery**: `mission:{id}:review:all-subtasks-done` uses `requeueExistingDedupeKey`; scheduler **`detectStuckReviewMissions`** re-enqueues `mission.review.requested` with dedupe `mission:{id}:review:stuck-recover` when mission is stale `review` and every subtask is `done` or `cancelled`.
+
+## Mission ↔ task sync (Kanban)
+
+Database triggers (see `supabase/migrations/20260321194500_mission_harness_task_triggers.sql` and follow-ups):
+
+- **`sync_mission_to_task`**: Creates/updates the linked `tasks` row when `missions.status` changes (e.g. `planning` creates task; `todo`/`in_progress`/`review`/`done`/`blocked` update task status; transitions to `inbox` propagate for retry flows).
+- **`sync_task_to_mission`**: Task status changes can update `missions.status` **except** while the mission is in `in_progress`, `planning`, `review`, or `todo` — avoids the board fighting the worker during active execution/manager phases.
+
+**Data flow (summary):** `missions` (worker/API) ↔ `tasks` (UI) via triggers; worker drives `missions` + `mission_subtasks` + `mission_outbox`.
+
+## Outbox dedupe policy
+
+- **Stable `dedupe_key`** for a single logical event (e.g. `mission:{id}:review:all-subtasks-done`) so retries/races do not spawn duplicate Bull jobs.
+- **`requeueExistingDedupeKey` / `requeue_existing_dedupe_key`**: On conflict, reset the row to `pending` so watchdogs and recovery paths can re-fire the same intent.
+
+## User comment directive
+
+When a user posts a **mission comment** (`user.comment` log), the API always enqueues **`mission.comment.directive`** with dedupe key `mission:{id}:directive:comment:{commentLogId}` and payload `comment_id`, `comment_message`, `from_status`, `correlation_id`. It also writes `mission.comment.triage.requested` for audit (`reason: user_comment_directive`) **without** changing mission status for that step alone.
+
+The mission worker handles outbox event `mission.comment.directive` as Bull phase **`directive`**: **Vibey** (`vibey`) runs an OpenClaw `mission_review` task, returns JSON `actions` + `rationale`, and the worker executes them via internal manager routes (`/manager/cancel-subtask`, `append-subtasks`, `edit-subtask`, `retry-subtask`, `mission-fields`, `prepare-replan`) or logs `note_only`. After mutating actions (except full `replan`, which enqueues plan via the API), the worker calls `enqueueReadySubtaskEvents` and `recomputeMissionStatus`. Status is not forced by the comment API path; rollup and directive outcomes drive `missions.status`.
+
+## Advisory lock (API + worker)
+
+`PostgresDirectService.withMissionAdvisoryLock` / worker `DatabaseService.withMissionAdvisoryLock` use the same `pg_advisory_lock(hashtext(mission_id))` key when **direct Postgres** is configured. Without `SUPABASE_DIRECT_DB_URL`, the API/worker skip the lock (no-op) but still mutate via Supabase.
+
+## Pause semantics
+
+**Awareness pause** sets `missions.status` to `backlog` and clears `current_agent_key`. `updateMissionStatus` runs `syncCampaignActiveWork` for the campaign. Outbox dispatch should skip non-runnable mission statuses (verify `missions.outbox-dispatcher` gate list in code). Pause is **mission-shelf** semantics: downstream surfaces depend on triggers + `has_active_work`; operators should confirm campaign/board state in logs if something still looks “active.”
+
+## Direct Postgres / worker
+
+When the mission worker starts **without** a direct DB pool, it logs a **single banner** listing degraded behavior (advisory locks no-op, scheduler PG fallbacks, etc.). Production runbooks should require `SUPABASE_DIRECT_DB_URL` for full parity.
+
+## Decision Log
+
+- 2026-06-25: Runtime readiness now treats `skills/vibey-api/ALLOWED_ACTIONS.json` as required alongside `SKILL.md`, and internal ensure-ready normalizes plain personal ids to shared-runtime `user-{userId}-{agentKey}` ids when possible.
+- 2026-06-21: Mission, mission-creation, and campaign upload paths now return normalized media `asset_ref` descriptors so UI and agents can keep file identity after upload.
+- 2026-06-19: Space-scoped mission creation now ensures the Missions tab exists. Spaces chat focuses Missions after completed `create_mission` tool calls, and task send-to-agent mission mode routes users into the Missions tab/new-mission modal.
+- 2026-06-18: Mission/subtask OpenClaw sessions now propagate campaign and Space scope into artifact creation. Mission artifact persistence resolves missing campaign suffixes from mission context and no longer falls back to a personal General campaign for mission sessions.
+- 2026-06-18: Task deliverable previews now expose a visible export control for generated artifacts. Presentation previews in tasks share the presentation view's HTML, PDF, and PPT export paths, and toolbar tooltips render through the portaled tooltip component to avoid modal clipping.
+- 2026-06-14: Moved Brain import queue execution into mission-worker while keeping API as the durable import state and processing endpoint owner. Bull Board still shows chat, mission, Brain ops, Brain import, and automation queues from `/admin/queues`.
+- 2026-06-16: Added mission-worker runtime readiness preflight through Agent API so background Brain ops and mission calls repair missing agent identity before OpenClaw execution.
+- 2026-06-16: Added the same scoped runtime readiness preflight to Brain import job execution paths before Atlas import chunks call OpenClaw.
+- 2026-06-25: Added bounded Main API retry/context logging for mission-worker Brain import sweep calls so transient enqueue failures do not lose their upstream path, origin, status, or attempt evidence.

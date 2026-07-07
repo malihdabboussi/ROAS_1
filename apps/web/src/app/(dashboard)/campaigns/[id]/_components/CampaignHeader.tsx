@@ -1,0 +1,133 @@
+'use client'
+
+import { AlertTriangle, Check, Loader2 } from 'lucide-react'
+import { IconPicker, type IconColorId } from '@/components/ui/IconPicker'
+import { TabsList, TabsTrigger } from '@/components/ui/navigation/tabs'
+import type { Campaign } from '@/features/studio/types'
+import type { CampaignSaveStatus } from '../_hooks/use-campaign-autosave'
+import type { CampaignContext, CampaignResources } from '../_lib/types'
+
+interface CampaignHeaderProps {
+  campaign: Campaign
+  campaignIcon: string
+  campaignIconColor?: string
+  /** Visible campaign tabs (excluding Settings), in order, plus Settings last — parent builds this. */
+  navTabs: { value: string; label: string }[]
+  onTabChange: (value: string) => void
+  isMobile: boolean
+  editingName: boolean
+  nameValue: string
+  saveStatus: CampaignSaveStatus
+  context: CampaignContext
+  resources: CampaignResources
+  setNameValue: (value: string) => void
+  setEditingName: (value: boolean) => void
+  onNameSave: () => Promise<void>
+  onIconChange: (icon: string) => Promise<void>
+  onIconColorChange?: (colorId: IconColorId) => Promise<void>
+  onRetrySave: (context: CampaignContext, resources: CampaignResources) => Promise<void>
+}
+
+export function CampaignHeader({
+  campaign,
+  campaignIcon,
+  campaignIconColor,
+  navTabs,
+  onTabChange,
+  isMobile,
+  editingName,
+  nameValue,
+  saveStatus,
+  context,
+  resources,
+  setNameValue,
+  setEditingName,
+  onNameSave,
+  onIconChange,
+  onIconColorChange,
+  onRetrySave,
+}: CampaignHeaderProps) {
+  const tabs = isMobile
+    ? navTabs.map((t) => (t.value === 'deliverables' ? { ...t, label: 'Artifacts' } : t))
+    : navTabs
+
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-3">
+        <IconPicker
+          value={campaignIcon}
+          color={campaignIconColor}
+          onChange={(icon) => void onIconChange(icon)}
+          onColorChange={
+            onIconColorChange ? (colorId) => void onIconColorChange(colorId) : undefined
+          }
+          size="md"
+        />
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {editingName ? (
+            <input
+              value={nameValue}
+              onChange={(event) => setNameValue(event.target.value)}
+              onBlur={() => void onNameSave()}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') void onNameSave()
+                if (event.key === 'Escape') {
+                  setNameValue(campaign.name)
+                  setEditingName(false)
+                }
+              }}
+              className="input-glass py-spacing-1 text-foreground text-lg font-bold"
+              autoFocus
+            />
+          ) : (
+            <h1
+              className="text-foreground hover:text-primary cursor-pointer truncate text-lg font-bold"
+              onClick={() => {
+                setNameValue(campaign.name)
+                setEditingName(true)
+              }}
+            >
+              {campaign.name}
+            </h1>
+          )}
+
+          <div className="flex items-center gap-2">
+            {saveStatus === 'saving' && (
+              <span className="body-4 text-muted-foreground flex items-center gap-1.5">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving...
+              </span>
+            )}
+            {saveStatus === 'saved' && (
+              <span className="body-4 flex items-center gap-1.5 text-emerald-400">
+                <Check className="h-3.5 w-3.5" /> Saved
+              </span>
+            )}
+            {saveStatus === 'failed' && (
+              <button
+                onClick={() => void onRetrySave(context, resources)}
+                className="body-4 flex items-center gap-1.5 rounded-md bg-red-500/10 px-2 py-1 text-red-400 transition-colors hover:bg-red-500/20"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" /> Save failed — Retry
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="shrink-0">
+        <TabsList variant="liquid" className="min-w-max">
+          {tabs.map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="px-spacing-4"
+              onClick={() => onTabChange(tab.value)}
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
+    </div>
+  )
+}

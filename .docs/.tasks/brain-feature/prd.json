@@ -1,0 +1,235 @@
+{
+  "project": "Brain Feature — Port from Nexus to Vibey v2",
+  "branchName": "current",
+  "description": "Port the Brain feature into Vibey v2. NestJS brain module connects to NeuralSnap Supabase (lmwfgqhtogjbqpvzckua). Two consumers: frontend user (JWT) + Vibey agent on VM (service token). Frontend ports The-Nexus brain visualization.",
+  "recommendedAgents": 3,
+  "context": {
+    "currentProblem": "Brain page is a placeholder. Complete brain system exists on VM (nexus-api) and NeuralSnap Supabase. Need to wire NestJS as single gateway for both frontend and agent.",
+    "desiredState": "Brain page with graph visualization, memory CRUD, neural snapshot crystallization. Vibey agent on VM can save/search memories through NestJS. All brain data in NeuralSnap Supabase.",
+    "architectureGoal": "NestJS brain module uses second Supabase client (NeuralSnap). Two auth paths: user JWT for frontend, service token for Vibey agent. Migrate missing tables (memories, memory_connections, etc.) into NeuralSnap Supabase alongside existing ns_* tables."
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Migrate missing tables + RPCs into NeuralSnap Supabase",
+      "description": "As a developer, I need the memories tables and RPC functions in NeuralSnap Supabase so the brain module can store raw memories alongside crystallized snapshots.",
+      "acceptanceCriteria": [
+        "Table 'memories' created in NeuralSnap Supabase (lmwfgqhtogjbqpvzckua) with all 20 columns matching Nexus schema",
+        "Table 'memory_connections' created with all 7 columns",
+        "Table 'memory_versions' created with all 5 columns",
+        "Table 'memory_sessions' created with all 6 columns",
+        "RPC function 'search_memories' created (pgvector cosine similarity search)",
+        "RPC function 'search_neural_snapshots' created (uses existing ns_snapshots + pgvector)",
+        "RPC function 'increment_recalled_count' created",
+        "RLS policies on new tables: owner-based access via auth.uid()",
+        "All migrations applied via Supabase MCP apply_migration",
+        "Verified: pgvector extension already enabled (v0.8.0)"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [],
+      "notes": "NeuralSnap already has pgvector v0.8.0 and 13 ns_* tables. We ADD 4 new tables + RPCs alongside them. Schema verified from Nexus Supabase hmjnnznghncnyfrryssp. The memories table uses 768-dim vectors from Gemini embedding model."
+    },
+    {
+      "id": "US-002",
+      "title": "Create NeuralSnap Supabase client in NestJS",
+      "description": "As a developer, I need a second Supabase client in NestJS that connects to NeuralSnap Supabase for brain operations.",
+      "acceptanceCriteria": [
+        "apps/api/src/modules/brain/services/neuralsnap-client.factory.ts created",
+        "Creates Supabase client using NEURALSNAP_SUPABASE_URL + NEURALSNAP_SUPABASE_SERVICE_KEY env vars",
+        "NEURALSNAP_SUPABASE_URL and NEURALSNAP_SUPABASE_SERVICE_KEY added to apps/api/.env.example",
+        "Service is injectable via NestJS DI",
+        "Does NOT interfere with existing Vibey2.0 Supabase client (used by conversations, campaigns)",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [],
+      "notes": "This is a service-role client (not per-user JWT) because NeuralSnap Supabase has different auth than Vibey2.0 Supabase. Brain data is scoped by user_id in RLS, but the client authenticates with service key."
+    },
+    {
+      "id": "US-003",
+      "title": "Create Brain NestJS module with types + dual auth",
+      "description": "As a developer, I need the Brain module skeleton with types and a guard that accepts both user JWT and agent service token.",
+      "acceptanceCriteria": [
+        "apps/api/src/modules/brain/brain.module.ts exports BrainModule",
+        "apps/api/src/modules/brain/types/brain.types.ts defines all types matching both memories and ns_snapshots schemas",
+        "apps/api/src/modules/brain/guards/brain-auth.guard.ts accepts: (a) Supabase JWT from Authorization header, (b) service token from X-Agent-Token header",
+        "Service token loaded from BRAIN_AGENT_TOKEN env var",
+        "Guard attaches user_id to request context (from JWT or from a configured agent user_id)",
+        "BrainModule registered in apps/api/src/app.module.ts",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": ["US-002"],
+      "notes": "Two auth paths: frontend sends Supabase JWT (existing pattern), Vibey agent on VM sends X-Agent-Token header. Both resolve to a user_id that scopes all brain queries."
+    },
+    {
+      "id": "US-004",
+      "title": "Port memories CRUD (repository + service + controller)",
+      "description": "As a user/agent, I need API endpoints to create, read, update, delete, and search memories.",
+      "acceptanceCriteria": [
+        "Repository uses NeuralSnap Supabase client (not Vibey2.0 client)",
+        "POST /api/brain/remember — store memory with content_hash dedup",
+        "POST /api/brain/search — semantic search via search_memories RPC",
+        "GET /api/brain/stats — counts by type/source, connections, most recalled",
+        "GET /api/brain/memories/:id — memory + connections + versions",
+        "PATCH /api/brain/memories/:id — update with versioning",
+        "DELETE /api/brain/memories/:id — hard delete",
+        "All queries scoped by user_id",
+        "All endpoints use BrainAuthGuard (dual auth)",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "dependsOn": ["US-001", "US-003"],
+      "notes": "Port from nexus-api/src/routes/brain.ts. Embedding generation deferred to US-007. Connection discovery deferred to US-006."
+    },
+    {
+      "id": "US-005",
+      "title": "Port neural snapshots CRUD (repository + service + controller)",
+      "description": "As a user/agent, I need API endpoints for crystallized neural snapshots.",
+      "acceptanceCriteria": [
+        "Repository reads/writes ns_snapshots table in NeuralSnap Supabase",
+        "POST /api/brain/snapshots — create snapshot (validate type: Belief/Model/Rule/Conviction/Principle)",
+        "GET /api/brain/snapshots — list with filters (type, tag, min_confidence, limit)",
+        "GET /api/brain/snapshots/search — semantic search via search_neural_snapshots RPC",
+        "GET /api/brain/snapshots/stats — count by type, avg confidence",
+        "GET /api/brain/snapshots/:id — single snapshot",
+        "PATCH /api/brain/snapshots/:id — update",
+        "DELETE /api/brain/snapshots/:id — hard delete",
+        "All queries scoped by brain owner (ns_brains.owner_id = user_id)",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "dependsOn": ["US-001", "US-003"],
+      "notes": "Port from nexus-api/src/routes/snapshots.ts. Uses existing ns_snapshots table (29 cols). Crystallization pipeline is US-008."
+    },
+    {
+      "id": "US-006",
+      "title": "Port graph endpoint + memory connections",
+      "description": "As a frontend, I need the graph data endpoint that powers the ForceGraph visualization.",
+      "acceptanceCriteria": [
+        "GET /api/brain/graph returns nodes + connections + stats",
+        "Nodes include: enriched memories (age_category, status, node_type), document virtual nodes, neural snapshot nodes",
+        "POST /api/brain/memories/:id/connect — create typed connection",
+        "DELETE /api/brain/connections/:id — delete connection",
+        "Graph supports query params: limit, min_significance, memory_type",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": false,
+      "dependsOn": ["US-004", "US-005"],
+      "notes": "Port from brain.ts GET /graph. Complex endpoint — merges memories + documents + snapshots into a unified graph. This is what the ForceGraph component consumes."
+    },
+    {
+      "id": "US-007",
+      "title": "Add Gemini embedding service",
+      "description": "As the system, I need embeddings generated for memories and snapshots to enable semantic search.",
+      "acceptanceCriteria": [
+        "apps/api/src/modules/brain/services/embedding.service.ts exists",
+        "getEmbedding(text) returns number[] (768-dim) via Gemini gemini-embedding-001",
+        "GEMINI_API_KEY loaded from .env via ConfigService",
+        "Graceful fallback: returns null if key missing or API fails, flags needs_embedding in metadata",
+        "Integrated into memories create/update and snapshots create/update",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": false,
+      "dependsOn": ["US-004", "US-005"],
+      "notes": "Requires GEMINI_API_KEY in apps/api/.env. Port from nexus-api getEmbedding helper."
+    },
+    {
+      "id": "US-008",
+      "title": "Port crystallization pipeline",
+      "description": "As a user/agent, I need the 4-phase pipeline that turns raw text into structured neural snapshots.",
+      "acceptanceCriteria": [
+        "POST /api/brain/snapshots/crystallize endpoint",
+        "Phase 1 (parallel): Thought Extractor + Origin Mapper via Gemini",
+        "Phase 2: System Builder",
+        "Phase 3: Stress Test",
+        "Significance gate: reject < 0.3",
+        "Auto-embed accepted snapshots",
+        "Returns pipeline timing metrics",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 4,
+      "passes": false,
+      "dependsOn": ["US-005", "US-007"],
+      "notes": "Port from snapshots.ts POST /crystallize. 4 Gemini calls. Port prompts exactly."
+    },
+    {
+      "id": "US-009",
+      "title": "Port conversation processing endpoint",
+      "description": "As the Vibey agent, I need to send conversation transcripts to NestJS and have significant knowledge extracted into memories.",
+      "acceptanceCriteria": [
+        "POST /api/brain/process/conversation endpoint",
+        "Accepts: session_key, messages array, agent_name",
+        "Rejects < 3 messages or < 500 chars",
+        "LLM extracts significant knowledge (strict filter prompt)",
+        "Significance gate: reject items < 0.6",
+        "Dedup via content_hash",
+        "Auto-embed each extracted memory",
+        "Track session in memory_sessions",
+        "Accessible via agent service token (BrainAuthGuard)",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 4,
+      "passes": false,
+      "dependsOn": ["US-004", "US-007"],
+      "notes": "Port from brain.ts POST /process/conversation. This is the key endpoint the Vibey agent calls after conversations to auto-learn. The extraction prompt is very detailed — port it exactly."
+    },
+    {
+      "id": "US-010",
+      "title": "Port Brain frontend (types + service + store + visualization)",
+      "description": "As a user, I need the Brain page with ForceGraph visualization, memory panel, stats, and detail modal.",
+      "acceptanceCriteria": [
+        "apps/web/src/features/brain/ created with: types, services, store, components",
+        "API service uses backendClient pattern pointing to /api/brain/* endpoints",
+        "Zustand store manages graph data, selected node, filters, loading states",
+        "BrainVisualization.tsx — main container",
+        "ForceGraph.tsx — canvas-based interactive graph",
+        "MemoryPanel.tsx — searchable memory list",
+        "BrainStats.tsx — statistics overview",
+        "NavControls.tsx — zoom/pan/filter",
+        "LegendPanel.tsx — node type legend",
+        "NodeDetailModal.tsx — detail view",
+        "Adapted to Vibey design system (globals.css, Lucide icons)",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 4,
+      "passes": false,
+      "dependsOn": ["US-006"],
+      "notes": "Port from The-Nexus/app/src/features/brain/. Adapt Phosphor → Lucide, Tailwind 4 → Vibey Tailwind config, React 19 patterns → current React.",
+      "visualVerification": {
+        "url": "http://localhost:3000/brain",
+        "requiresLogin": true,
+        "lookFor": "Force-directed graph with colored nodes, memory panel, stats bar. Not 'Coming soon' placeholder."
+      }
+    },
+    {
+      "id": "US-011",
+      "title": "Wire Brain page + replace placeholder",
+      "description": "As a user, I need /brain to show the complete Brain feature.",
+      "acceptanceCriteria": [
+        "apps/web/src/app/(dashboard)/brain/page.tsx imports and renders Brain feature",
+        "Page loads graph data on mount",
+        "Click nodes → detail modal",
+        "Search works in memory panel",
+        "Stats display correctly",
+        "Feature barrel export at apps/web/src/features/brain/index.ts",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 5,
+      "passes": false,
+      "dependsOn": ["US-010"],
+      "visualVerification": {
+        "url": "http://localhost:3000/brain",
+        "requiresLogin": true,
+        "lookFor": "Complete Brain page. Graph, stats, memory panel all functional."
+      }
+    }
+  ]
+}

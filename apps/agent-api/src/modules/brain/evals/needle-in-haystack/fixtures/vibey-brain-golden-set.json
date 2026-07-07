@@ -1,0 +1,74 @@
+[
+  {
+    "id": "user-prefers-subtle-copy",
+    "level": "tiny_golden_fixture",
+    "family": "user",
+    "question": "How does Sefy prefer customer-facing launch copy to sound?",
+    "expectedAnswer": "subtle and non-pushy",
+    "expectedEvidenceIds": ["mem-user-copy-1"],
+    "expectedContextSufficient": true,
+    "tags": ["preference", "grounding"],
+    "category": "factual_recall",
+    "difficulty": "easy"
+  },
+  {
+    "id": "agent-domain-title-match",
+    "level": "tiny_golden_fixture",
+    "family": "agent",
+    "question": "What domain should the Tennis Support agent check before answering?",
+    "expectedAnswer": "IPIN",
+    "expectedEvidenceIds": ["sk-agent-ipin-1"],
+    "expectedContextSufficient": true,
+    "tags": ["agent-brain", "exact-title"],
+    "category": "exact_title",
+    "difficulty": "easy"
+  },
+  {
+    "id": "customer-paraphrase-recall",
+    "level": "tiny_golden_fixture",
+    "family": "customer",
+    "question": "Which customer asked for invoices to be sent before renewal?",
+    "expectedAnswer": "Acme",
+    "expectedEvidenceIds": ["mem-customer-acme-1"],
+    "expectedContextSufficient": true,
+    "tags": ["customer-brain", "semantic"],
+    "category": "factual_recall",
+    "difficulty": "easy"
+  },
+  {
+    "id": "company-title-priority",
+    "level": "tiny_golden_fixture",
+    "family": "company",
+    "question": "What is the company rule for workspace mutations?",
+    "expectedAnswer": "ask before creating or changing workspace objects",
+    "expectedEvidenceIds": ["company-protocol-approval-1"],
+    "expectedContextSufficient": true,
+    "tags": ["company-brain", "hybrid"],
+    "category": "exact_title",
+    "difficulty": "easy"
+  },
+  {
+    "id": "shared-query-access",
+    "level": "tiny_golden_fixture",
+    "family": "shared",
+    "question": "Can a directly shared Brain be searched at query level?",
+    "expectedAnswer": "query access allows search",
+    "expectedEvidenceIds": ["share-user-query-1"],
+    "expectedContextSufficient": true,
+    "tags": ["shared-brain", "permissions"],
+    "category": "shared_access",
+    "difficulty": "easy"
+  },
+  {
+    "id": "insufficient-vague-context",
+    "level": "tiny_golden_fixture",
+    "family": "user",
+    "question": "What launch price was approved?",
+    "expectedAnswer": "No approved launch price is available",
+    "expectedEvidenceIds": [],
+    "expectedContextSufficient": false,
+    "tags": ["sufficiency", "abstention"],
+    "category": "abstention",
+    "difficulty": "hard"
+  }
+]

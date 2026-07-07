@@ -1,0 +1,318 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Agent API route inventory contract > matches the committed method + path inventory 1`] = `
+[
+  {
+    "method": "HEAD",
+    "path": "/",
+  },
+  {
+    "method": "POST",
+    "path": "/",
+  },
+  {
+    "method": "GET",
+    "path": "/.well-known/oauth-protected-resource",
+  },
+  {
+    "method": "GET",
+    "path": "/.well-known/oauth-protected-resource/api/mcp",
+  },
+  {
+    "method": "GET",
+    "path": "/.well-known/oauth-protected-resource/api/vibey-mcp",
+  },
+  {
+    "method": "GET",
+    "path": "/api",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/:agentKey/ensure-ready",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/:agentKey/register",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/:agentKey/sync",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/instruction-audit",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/instruction-repair",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/runtime-skills/read",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/suggest-tasks",
+  },
+  {
+    "method": "POST",
+    "path": "/api/agents/sync",
+  },
+  {
+    "method": "POST",
+    "path": "/api/apps/:projectId/agent-call",
+  },
+  {
+    "method": "POST",
+    "path": "/api/apps/:projectId/restart",
+  },
+  {
+    "method": "POST",
+    "path": "/api/artifacts",
+  },
+  {
+    "method": "POST",
+    "path": "/api/artifacts/openclaw/chat-completions",
+  },
+  {
+    "method": "POST",
+    "path": "/api/artifacts/openclaw/responses",
+  },
+  {
+    "method": "POST",
+    "path": "/api/artifacts/stream",
+  },
+  {
+    "method": "POST",
+    "path": "/api/brain/live-session",
+  },
+  {
+    "method": "GET",
+    "path": "/api/browser-sessions",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/browser-sessions/:domain",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/browser-sessions/:domain",
+  },
+  {
+    "method": "GET",
+    "path": "/api/browser-sessions/config",
+  },
+  {
+    "method": "GET",
+    "path": "/api/browser-sessions/consent",
+  },
+  {
+    "method": "POST",
+    "path": "/api/browser-sessions/consent",
+  },
+  {
+    "method": "POST",
+    "path": "/api/browser-sessions/sync",
+  },
+  {
+    "method": "POST",
+    "path": "/api/channel-agent/invoke",
+  },
+  {
+    "method": "POST",
+    "path": "/api/channel-agent/invoke-brainstorm",
+  },
+  {
+    "method": "POST",
+    "path": "/api/channel-chat",
+  },
+  {
+    "method": "POST",
+    "path": "/api/chat",
+  },
+  {
+    "method": "GET",
+    "path": "/api/chat/browser-media/:filename",
+  },
+  {
+    "method": "GET",
+    "path": "/api/chat/conversations/:conversationId/context-baseline",
+  },
+  {
+    "method": "POST",
+    "path": "/api/chat/prewarm",
+  },
+  {
+    "method": "GET",
+    "path": "/api/chat/runs/:runId/stream",
+  },
+  {
+    "method": "GET",
+    "path": "/api/chat/status/:conversationId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/chat/stop",
+  },
+  {
+    "method": "GET",
+    "path": "/api/conversations",
+  },
+  {
+    "method": "POST",
+    "path": "/api/conversations",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/conversations/:id",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/conversations/:id",
+  },
+  {
+    "method": "POST",
+    "path": "/api/conversations/:id/fork",
+  },
+  {
+    "method": "GET",
+    "path": "/api/conversations/:id/messages",
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/conversations/:id/messages-from/:messageId",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/conversations/:id/messages/:messageId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/health",
+  },
+  {
+    "method": "GET",
+    "path": "/api/health/deep",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/admin-skill-builder/chat",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain-eval/configure",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain-eval/probe",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/brain/import-jobs/:jobId/execute",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/chat/runs/:runId/execute",
+  },
+  {
+    "method": "POST",
+    "path": "/api/internal/chat/runs/:runId/fail",
+  },
+  {
+    "method": "GET",
+    "path": "/api/mcp",
+  },
+  {
+    "method": "HEAD",
+    "path": "/api/mcp",
+  },
+  {
+    "method": "POST",
+    "path": "/api/mcp",
+  },
+  {
+    "method": "GET",
+    "path": "/api/project-files/:projectId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/public-brain/live-session",
+  },
+  {
+    "method": "POST",
+    "path": "/api/public-chat",
+  },
+  {
+    "method": "POST",
+    "path": "/api/public-chat/identify",
+  },
+  {
+    "method": "GET",
+    "path": "/api/public-conversations",
+  },
+  {
+    "method": "POST",
+    "path": "/api/public-conversations",
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/public-conversations/:id",
+  },
+  {
+    "method": "GET",
+    "path": "/api/public-conversations/:id/messages",
+  },
+  {
+    "method": "GET",
+    "path": "/api/public-widget/config",
+  },
+  {
+    "method": "GET",
+    "path": "/api/ready",
+  },
+  {
+    "method": "GET",
+    "path": "/api/runtime/capabilities",
+  },
+  {
+    "method": "POST",
+    "path": "/api/runtime/identity/bind",
+  },
+  {
+    "method": "POST",
+    "path": "/api/runtime/identity/reset",
+  },
+  {
+    "method": "GET",
+    "path": "/api/sessions/store/:agentId",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/sessions/store/:agentId",
+  },
+  {
+    "method": "GET",
+    "path": "/api/sessions/transcript/:agentId/:sessionId",
+  },
+  {
+    "method": "PUT",
+    "path": "/api/sessions/transcript/:agentId/:sessionId",
+  },
+  {
+    "method": "POST",
+    "path": "/api/task-agent/invoke",
+  },
+  {
+    "method": "GET",
+    "path": "/api/vibey-mcp",
+  },
+  {
+    "method": "HEAD",
+    "path": "/api/vibey-mcp",
+  },
+  {
+    "method": "POST",
+    "path": "/api/vibey-mcp",
+  },
+]
+`;

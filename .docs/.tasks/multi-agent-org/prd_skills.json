@@ -1,0 +1,93 @@
+{
+  "project": "Skills to DB Migration (Hybrid Sync)",
+  "branchName": "current",
+  "description": "Move agent skill definitions from static VM files to the database, syncing them dynamically so users can manage and add custom skills via the UI without restarting OpenClaw.",
+  "recommendedAgents": 2,
+  "context": {
+    "currentProblem": "Agent skills are hardcoded as static markdown files built into the Docker image. Users cannot dynamically create, edit, or delete skills without a new Docker build.",
+    "desiredState": "Skills are managed in a Supabase database table. The agent-api acts as a bridge, syncing skills from the database to the VM's disk so OpenClaw's native file watcher can load them dynamically.",
+    "architectureGoal": "Do not modify OpenClaw's core skill loading logic. Use a Hybrid Sync approach where the database is the master record, and the file system acts as a mirror for OpenClaw to read."
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create Supabase skills table and migration",
+      "description": "As a developer, I need a database table to store skill definitions (name, description, markdown_content, agent_key) so that they can be dynamically managed.",
+      "acceptanceCriteria": [
+        "Create migration file for `agent_skills` table",
+        "Table includes columns: id, user_id, agent_key, name, description, markdown_content",
+        "RLS policies set up for user isolation",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "dependsOn": [],
+      "notes": "Ensure it links properly to the auth.users table."
+    },
+    {
+      "id": "US-002",
+      "title": "Build API endpoints for skill sync",
+      "description": "As the agent VM, I need an API endpoint in agent-api to fetch the latest skills for my assigned agents so I can write them to disk.",
+      "acceptanceCriteria": [
+        "Create GET /skills sync endpoint in agent-api",
+        "Endpoint fetches skills from Supabase for the current user's agents",
+        "Creates nested folders and writes SKILL.md files to /app/agents/[agent_key]/skills/",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "dependsOn": ["US-001"],
+      "notes": "Must handle creating directories if they don't exist using fs.promises."
+    },
+    {
+      "id": "US-003",
+      "title": "Trigger sync on VM startup",
+      "description": "As the agent VM, I need to sync skills immediately when I boot up so I have the latest instructions before handling messages.",
+      "acceptanceCriteria": [
+        "Update the agent-api startup sequence (e.g. start.sh or main bootstrap) to call the sync logic",
+        "Verify skills are written to disk before OpenClaw begins processing",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 3,
+      "passes": false,
+      "dependsOn": ["US-002"],
+      "notes": "Can hook into the existing bootstrap process in agent-api."
+    },
+    {
+      "id": "US-004",
+      "title": "Create webhook to trigger live sync",
+      "description": "As a user, I want my agents to learn new skills immediately after I save them in the UI, without restarting the VM.",
+      "acceptanceCriteria": [
+        "Create POST /skills/sync endpoint to manually trigger a sync",
+        "Setup Supabase webhook (or trigger from frontend API) to call this endpoint when skills change",
+        "Verify OpenClaw's chokidar file watcher detects the new SKILL.md files automatically",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 4,
+      "passes": false,
+      "dependsOn": ["US-002"],
+      "notes": "OpenClaw already watches the skills folder, so just writing the file is enough to trigger a refresh."
+    },
+    {
+      "id": "US-005",
+      "title": "Build Skills Management UI",
+      "description": "As a user, I need a UI in Mission Control to view, edit, and create custom skills for my agents.",
+      "acceptanceCriteria": [
+        "Add 'Manage Skills' modal/page to the Team dashboard",
+        "Form to create a new skill with name, description, and markdown editor for instructions",
+        "List view of existing skills per agent",
+        "Verify in browser that skills can be saved and updated",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 5,
+      "passes": false,
+      "dependsOn": ["US-001"],
+      "notes": "Can use existing UI components from the app.",
+      "visualVerification": {
+        "url": "http://localhost:3000/mission-control/team",
+        "requiresLogin": true,
+        "lookFor": "New Skills Management interface accessible from the agent card"
+      }
+    }
+  ]
+}

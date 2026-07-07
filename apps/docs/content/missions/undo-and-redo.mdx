@@ -1,0 +1,91 @@
+---
+title: "Undo and Redo (Spaces Task Edits)"
+description: "When an agent edits tasks inside a Space, you can undo or redo those edits in one click. Strict mode protects your subsequent edits. Force mode overrides when needed."
+---
+
+## What It Does
+
+When an agent makes changes to tasks inside a Space (changing status, assignees, priority, dates, custom fields, comments, or creating/deleting tasks), every change is logged as a reversible activity.
+
+If the agent did the wrong thing, you can **undo** the changes in one click. If you change your mind, you can **redo** them.
+
+This is scoped to **task edits inside Spaces**. It does not undo content writes (a written document is not auto-reversible), brain captures, or non-task artifacts.
+
+## Where the Undo Button Appears
+
+On the last **five** Vibey assistant messages that touched task data inside a Space, you will see an **Undo** icon next to the 3-dot menu in the message footer.
+
+The icon is a counter-clockwise rotate when the change is undoable, and a clockwise rotate when the change is already undone and you can redo.
+
+The icon only shows on assistant messages that actually edited tasks. Conversations that did not touch task data do not show the button.
+
+## How Strict Mode Works
+
+By default, Undo is **strict**:
+
+- If you edited a field that Vibey also edited, Vibey's edit on that field is **skipped** during undo
+- This protects your subsequent edits from being clobbered when you reverse an agent's older change
+- The toast shows you how many fields were undone and how many were skipped
+
+If Vibey changed `status` and `due_date` on a task, and you later updated `due_date` yourself, strict undo will revert `status` but leave your `due_date` alone.
+
+## Force Mode (Undo Anyway)
+
+When strict mode skips fields, the toast offers **Undo anyway**. Tap it to force the undo on all fields, including the ones you changed later.
+
+Use this when you are confident you want to fully revert the agent's edit, even at the cost of losing your subsequent change.
+
+## How Redo Works
+
+Once undone, the same button switches to **Redo**. Click it to reapply the agent's changes.
+
+Redo is also strict by default, with a **Redo anyway** option if strict redo skipped fields.
+
+## The Activity Log
+
+Every task edit (agent or human) is stored in `space_item_activity` with:
+
+- `actor_kind` (human or agent)
+- `agent_message_id` (which assistant message produced the change)
+- `tool_call_id` (which tool call the agent used)
+- A snapshot of the row before the change
+- `reverted_at` (set when the change is undone)
+
+This means the full edit history is queryable. You can see who changed what, when, and revert any agent-produced change.
+
+## What Can Be Undone
+
+| Operation | Reversible |
+|---|---|
+| Status change | Yes |
+| Priority change | Yes |
+| Assignee change | Yes |
+| Field change (custom fields) | Yes |
+| Due date / start date change | Yes |
+| Tag add / remove | Yes |
+| Comment | Yes (the comment is deleted on undo) |
+| Task creation | Yes (the task is deleted on undo) |
+| Task deletion (when confirmed via agent) | Yes (the task is restored from snapshot) |
+| Subtask edits | Yes |
+
+## What Cannot Be Undone
+
+- Written content edits (a doc you asked the agent to write is not auto-reverted)
+- Brain captures (memories saved to a brain stay there until you delete them manually)
+- External actions (a Slack message sent, an email delivered)
+- Mission deliverables that were published to live destinations (a published funnel stays live)
+
+For non-task changes, use the manual delete/revert flows for the relevant artifact.
+
+## Tips
+
+**Test agents on subtasks first.** If you are giving an agent permission to bulk-edit your task board, run them on a sandbox subtask before letting them loose on the main board. The undo trail makes this safer, but a clean test is cheaper than a multi-undo session.
+
+**Undo soon.** The button shows only on the last five assistant messages that touched tasks. After that, manual revert is your option.
+
+**Force undo intentionally.** When strict mode skips fields, ask yourself why. Either the agent made a mistake you want fully reversed (use Force), or your later edit is correct and the strict skip protected it (do nothing).
+
+## Related
+
+- [What a Space Is](/spaces/what-is-a-space)
+- [What Are Missions](/missions/what-are-missions)

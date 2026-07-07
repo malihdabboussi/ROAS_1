@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vibey Platform Architecture</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #121016;
+        --panel: #fbf7fb;
+        --ink: #17141d;
+        --muted: #6f6878;
+        --line: #f0199a;
+        --pink: #ec1b9d;
+        --pink-soft: #ffe5f4;
+        --green: #27c084;
+        --blue: #4f7cff;
+        --orange: #f2994a;
+        --border: rgba(240, 25, 154, 0.95);
+        --shadow: 0 30px 90px rgba(0, 0, 0, 0.36);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+        background:
+          radial-gradient(circle at top left, rgba(236, 27, 157, 0.16), transparent 32rem),
+          radial-gradient(circle at bottom right, rgba(79, 124, 255, 0.16), transparent 34rem),
+          var(--bg);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        padding: 8px;
+        overflow-x: hidden;
+      }
+
+      .frame {
+        width: min(1180px, 92vw);
+        max-width: calc(100vw - 24px);
+        min-width: 0;
+        min-height: 680px;
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        background: var(--panel);
+        color: var(--ink);
+        box-shadow: var(--shadow);
+        padding: 28px 54px 16px;
+      }
+
+      .page-label {
+        margin: 0 0 8px;
+        color: var(--pink);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 12px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(28px, 4vw, 40px);
+        line-height: 0.96;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      .subtitle {
+        max-width: 420px;
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.45;
+        min-width: 0;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+        max-width: 440px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid rgba(23, 20, 29, 0.08);
+        border-radius: 999px;
+        padding: 7px 10px;
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.72);
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+        min-width: 0;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--pink);
+      }
+
+      .dot-blue {
+        background: var(--blue);
+      }
+
+      .dot-green {
+        background: var(--green);
+      }
+
+      .dot-orange {
+        background: var(--orange);
+      }
+
+      .map {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 1.08fr 1fr;
+        grid-template-rows: auto auto auto;
+        gap: 16px 34px;
+        align-items: center;
+      }
+
+      .connectors {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .group,
+      .stack,
+      .surface-list,
+      .infra {
+        position: relative;
+        z-index: 1;
+      }
+
+      .group {
+        border: 2px solid var(--border);
+        border-radius: 15px;
+        background: rgba(255, 229, 244, 0.62);
+        padding: 12px;
+      }
+
+      .group-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 10px;
+        font-size: 19px;
+        line-height: 1;
+        font-weight: 900;
+      }
+
+      .icon {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border-radius: 9px;
+        color: #fff;
+        background: var(--pink);
+        font-size: 16px;
+      }
+
+      .pill-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .pill {
+        display: grid;
+        place-items: center;
+        min-height: 34px;
+        border-radius: 999px;
+        color: #fff;
+        background: var(--pink);
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 850;
+        text-align: center;
+      }
+
+      .layer-note {
+        margin: -4px 0 10px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.35;
+      }
+
+      .core {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        padding: 22px;
+      }
+
+      .core .pill {
+        min-height: 42px;
+      }
+
+      .left-top {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .left-bottom {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .right-top {
+        grid-column: 3;
+        grid-row: 1;
+      }
+
+      .right-bottom {
+        grid-column: 3;
+        grid-row: 2;
+      }
+
+      .stack {
+        display: grid;
+        gap: 14px;
+      }
+
+      .stack-title {
+        margin: 0 0 12px;
+        font-size: 15px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .surface-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .surface {
+        display: grid;
+        grid-template-columns: 36px 1fr;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .surface-mark {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        border: 2px solid var(--pink);
+        border-radius: 9px;
+        color: var(--pink);
+        font-weight: 900;
+      }
+
+      .surface strong,
+      .mini-card strong {
+        display: block;
+        font-size: 14px;
+        line-height: 1.1;
+      }
+
+      .surface span,
+      .mini-card span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.25;
+      }
+
+      .mini-card {
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.74);
+        border: 1px solid rgba(23, 20, 29, 0.08);
+        padding: 10px 12px;
+      }
+
+      .mini-card + .mini-card {
+        margin-top: 8px;
+      }
+
+      .product-core {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .domain {
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: rgba(255, 255, 255, 0.74);
+        border: 1px solid rgba(23, 20, 29, 0.08);
+        min-height: 98px;
+      }
+
+      .domain h2 {
+        margin: 0 0 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 18px;
+      }
+
+      .domain p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .domain ul {
+        margin: 8px 0 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 4px;
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .domain li::before {
+        content: "";
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        margin-right: 7px;
+        border-radius: 999px;
+        background: var(--pink);
+        vertical-align: 1px;
+      }
+
+      .infra {
+        grid-column: 1 / -1;
+        grid-row: 3;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 4px;
+      }
+
+      .infra-card {
+        min-height: 70px;
+        border-radius: 14px;
+        border: 1px solid rgba(23, 20, 29, 0.08);
+        background: rgba(255, 255, 255, 0.8);
+        padding: 10px 12px;
+      }
+
+      .infra-card b {
+        display: block;
+        font-size: 13px;
+        line-height: 1.15;
+      }
+
+      .infra-card span {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.3;
+      }
+
+      .takeaway {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        border-top: 1px solid rgba(23, 20, 29, 0.08);
+        padding-top: 10px;
+      }
+
+      .takeaway strong {
+        font-size: 14px;
+      }
+
+      .takeaway span {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .practical-map {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(250px, 0.78fr) minmax(0, 1fr);
+        gap: 22px;
+        align-items: center;
+      }
+
+      .route-column {
+        display: grid;
+        gap: 8px;
+      }
+
+      .route-heading {
+        margin: 0 0 2px;
+        color: var(--pink);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .route-card {
+        position: relative;
+        min-height: 74px;
+        min-width: 0;
+        border-radius: 13px;
+        border: 1px solid rgba(23, 20, 29, 0.08);
+        background: rgba(255, 255, 255, 0.8);
+        padding: 9px 12px;
+      }
+
+      .route-card b {
+        display: block;
+        font-size: 13px;
+        line-height: 1.12;
+      }
+
+      .route-card span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 11.5px;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+      }
+
+      .route-card small {
+        display: inline-block;
+        margin-top: 7px;
+        border-radius: 999px;
+        background: var(--pink-soft);
+        color: var(--pink);
+        padding: 4px 8px;
+        font-size: 10.5px;
+        font-weight: 850;
+        overflow-wrap: anywhere;
+      }
+
+      .input-route::after,
+      .output-route::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 18px;
+        border-top: 2px dotted var(--line);
+        transform: translateY(-50%);
+      }
+
+      .input-route::after {
+        right: -20px;
+      }
+
+      .output-route::before {
+        left: -20px;
+      }
+
+      .input-route::before,
+      .output-route::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 0;
+        height: 0;
+        transform: translateY(-50%);
+      }
+
+      .input-route::before {
+        right: -25px;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-left: 7px solid var(--line);
+      }
+
+      .output-route::after {
+        left: -7px;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-left: 7px solid var(--line);
+      }
+
+      .brain-node {
+        position: relative;
+        min-width: 0;
+        border: 2px solid var(--border);
+        border-radius: 17px;
+        background: rgba(255, 229, 244, 0.72);
+        padding: 16px;
+        text-align: center;
+      }
+
+      .brain-node .icon {
+        margin: 0 auto 10px;
+      }
+
+      .brain-node h2 {
+        margin: 0;
+        font-size: 25px;
+        line-height: 1;
+      }
+
+      .brain-node p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+
+      .store-grid {
+        display: grid;
+        gap: 7px;
+        margin-top: 14px;
+      }
+
+      .store-pill {
+        border-radius: 999px;
+        background: var(--pink);
+        color: #fff;
+        padding: 8px 10px;
+        font-size: 12px;
+        font-weight: 850;
+        line-height: 1.1;
+        overflow-wrap: anywhere;
+      }
+
+      .route-note {
+        margin-top: 12px;
+        border-top: 1px solid rgba(23, 20, 29, 0.08);
+        padding-top: 10px;
+        color: var(--muted);
+        font-size: 12.5px;
+        line-height: 1.4;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      @media (max-width: 980px) {
+        .frame {
+          padding: 28px;
+        }
+
+        .header,
+        .takeaway {
+          display: grid;
+        }
+
+        .legend {
+          justify-content: flex-start;
+        }
+
+        .map {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+
+        .practical-map {
+          grid-template-columns: 1fr;
+        }
+
+        .input-route::before,
+        .input-route::after,
+        .output-route::before,
+        .output-route::after {
+          display: none;
+        }
+
+        .core,
+        .left-top,
+        .left-bottom,
+        .right-top,
+        .right-bottom,
+        .infra {
+          grid-column: 1;
+          grid-row: auto;
+        }
+
+        .connectors {
+          display: none;
+        }
+
+        .infra {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 620px) {
+        body {
+          padding: 12px;
+        }
+
+        .frame {
+          width: 92vw;
+          padding: 22px;
+        }
+
+        .brain-node h2 {
+          font-size: 23px;
+        }
+
+        .store-pill {
+          font-size: 11.5px;
+        }
+
+        .product-core,
+        .pill-grid,
+        .infra {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="frame" aria-label="Customer Brain practical source map infographic">
+      <header class="header">
+        <div>
+          <p class="page-label">Page 1 · Customer Brain Map</p>
+          <h1>Customer Brain Inputs & Outputs</h1>
+          <p class="subtitle">
+            Each left box is a practical customer signal source. Each right box is a
+            practical way the Customer Brain can be used after the signal is stored.
+          </p>
+        </div>
+        <div class="legend" aria-label="Customer Brain legend">
+          <span class="chip"><i class="dot"></i>Input source</span>
+          <span class="chip"><i class="dot"></i>Customer evidence</span>
+          <span class="chip"><i class="dot"></i>Output use</span>
+        </div>
+      </header>
+
+      <section class="practical-map">
+        <aside class="route-column" aria-label="Customer Brain input sources">
+          <p class="route-heading">Concrete Input Sources</p>
+          <article class="route-card input-route">
+            <b>Website widget chats</b>
+            <span>Embedded customer conversations become customer interaction envelopes when identity can be resolved.</span>
+            <small>widget -> envelope</small>
+          </article>
+          <article class="route-card input-route">
+            <b>Telegram service chats</b>
+            <span>Telegram customer-support conversations use the same channel-agnostic customer signal loop.</span>
+            <small>telegram -> envelope</small>
+          </article>
+          <article class="route-card input-route">
+            <b>Fathom customer calls</b>
+            <span>Tagged meeting recordings send transcript evidence with meeting time and attendee context.</span>
+            <small>meeting -> contact</small>
+          </article>
+          <article class="route-card input-route">
+            <b>Fireflies transcripts</b>
+            <span>Transcript imports can target Customer Brain when the job points at a customer brain/contact.</span>
+            <small>import job</small>
+          </article>
+          <article class="route-card input-route">
+            <b>Slack customer periods</b>
+            <span>Slack windows and threads route to customer when sender/contact resolution qualifies.</span>
+            <small>period + thread</small>
+          </article>
+          <article class="route-card input-route">
+            <b>Manual notes and links</b>
+            <span>The Customer Brain UI/API saves text or URL evidence when it is tied to the right contact.</span>
+            <small>add information</small>
+          </article>
+        </aside>
+
+        <section class="brain-node" aria-label="Customer Brain storage">
+          <span class="icon">CB</span>
+          <h2>Customer Brain</h2>
+          <p>
+            Real customer evidence: what customers say, need, object to, prefer,
+            and reveal across calls and channels.
+          </p>
+          <div class="store-grid" aria-label="Customer Brain storage layers">
+            <div class="store-pill">ns_brains / ns_memories</div>
+            <div class="store-pill">contact_id + evidence chunks</div>
+            <div class="store-pill">snapshots, timelines, embeddings</div>
+            <div class="store-pill">enabled per personal/org scope</div>
+          </div>
+        </section>
+
+        <aside class="route-column" aria-label="Customer Brain outputs">
+          <p class="route-heading">Practical Outputs</p>
+          <article class="route-card output-route">
+            <b>Atlas and agent answers</b>
+            <span>Agents search Customer Brain to answer what is known about a contact, account, objection, or avatar.</span>
+            <small>search_customer_brain</small>
+          </article>
+          <article class="route-card output-route">
+            <b>Agent chat context</b>
+            <span>Runtime can preload customer context when policy and current scope allow the agent to read it.</span>
+            <small>Agent API context</small>
+          </article>
+          <article class="route-card output-route">
+            <b>Tasks and missions</b>
+            <span>Task agents and mission workers can receive relevant customer evidence before execution.</span>
+            <small>execution context</small>
+          </article>
+          <article class="route-card output-route">
+            <b>Flows with brain context</b>
+            <span>Flow actions can inject Customer Brain knowledge into a task or one agent run.</span>
+            <small>extended_brain_knowledge</small>
+          </article>
+          <article class="route-card output-route">
+            <b>Customer avatars</b>
+            <span>Atlas can surface synthesized avatar patterns from repeated customer evidence.</span>
+            <small>list_customer_avatars</small>
+          </article>
+          <article class="route-card output-route">
+            <b>Brain and CRM views</b>
+            <span>The UI shows customer status, recent memories, search, contacts, and what is attached to them.</span>
+            <small>Brain UI</small>
+          </article>
+        </aside>
+      </section>
+
+      <p class="route-note">
+        Audit gap to look for: any customer source that cannot resolve a contact, target scope,
+        or Customer Brain permission stops before becoming durable customer memory.
+      </p>
+    </main>
+
+    <main class="frame" aria-label="Company Cortex practical source map infographic">
+      <header class="header">
+        <div>
+          <p class="page-label">Page 2 · Company Cortex Map</p>
+          <h1>Company Cortex Inputs & Outputs</h1>
+          <p class="subtitle">
+            Company Cortex is the org-level operating mind: durable standards,
+            decisions, protocols, moves, tensions, and retrieval rules.
+          </p>
+        </div>
+        <div class="legend" aria-label="Company Cortex legend">
+          <span class="chip"><i class="dot"></i>Org source</span>
+          <span class="chip"><i class="dot"></i>Company truth</span>
+          <span class="chip"><i class="dot"></i>Runtime use</span>
+        </div>
+      </header>
+
+      <section class="practical-map">
+        <aside class="route-column" aria-label="Company Cortex input sources">
+          <p class="route-heading">Concrete Input Sources</p>
+          <article class="route-card input-route">
+            <b>Daily dream digest</b>
+            <span>Compressed org activity is reviewed in a dream run so Atlas can propose durable company signals.</span>
+            <small>company_daily_dream</small>
+          </article>
+          <article class="route-card input-route">
+            <b>Org activity stream</b>
+            <span>Spaces, tasks, missions, docs, conversations, artifacts, and events become source material.</span>
+            <small>lookback window</small>
+          </article>
+          <article class="route-card input-route">
+            <b>Signal review queue</b>
+            <span>Proposed signals stay reviewable before they become accepted company knowledge.</span>
+            <small>company_cortex_signals</small>
+          </article>
+          <article class="route-card input-route">
+            <b>Atlas formation missions</b>
+            <span>Formation merges evidence into stable objects instead of saving every raw message.</span>
+            <small>objects from signals</small>
+          </article>
+          <article class="route-card input-route">
+            <b>Agent Cortex tools</b>
+            <span>Authorized tools can create, update, archive, link, or search company objects.</span>
+            <small>company brain actions</small>
+          </article>
+          <article class="route-card input-route">
+            <b>Cortex settings</b>
+            <span>Admins control schedule, included sources, lookback hours, and activity thresholds.</span>
+            <small>org settings</small>
+          </article>
+        </aside>
+
+        <section class="brain-node" aria-label="Company Cortex storage">
+          <span class="icon">CC</span>
+          <h2>Company Cortex</h2>
+          <p>
+            Org-level memory that should guide future work: how the company decides,
+            operates, writes, sells, and avoids repeating mistakes.
+          </p>
+          <div class="store-grid" aria-label="Company Cortex storage layers">
+            <div class="store-pill">company_cortex_objects</div>
+            <div class="store-pill">company_cortex_signals</div>
+            <div class="store-pill">dream runs + settings</div>
+            <div class="store-pill">edges + retrieval rules</div>
+          </div>
+        </section>
+
+        <aside class="route-column" aria-label="Company Cortex outputs">
+          <p class="route-heading">Practical Outputs</p>
+          <article class="route-card output-route">
+            <b>Agent runtime context</b>
+            <span>Agent API can preload company context when the current org and policy grant read access.</span>
+            <small>company preload</small>
+          </article>
+          <article class="route-card output-route">
+            <b>Company Brain search</b>
+            <span>Agents and MCP clients retrieve source-grounded company objects and signals.</span>
+            <small>search_company_brain</small>
+          </article>
+          <article class="route-card output-route">
+            <b>Object graph</b>
+            <span>Edges connect standards, decisions, protocols, anti-patterns, and retrieval rules.</span>
+            <small>objects + edges</small>
+          </article>
+          <article class="route-card output-route">
+            <b>Signals UI</b>
+            <span>Review surfaces show what Atlas noticed before it becomes durable company truth.</span>
+            <small>Brain settings</small>
+          </article>
+          <article class="route-card output-route">
+            <b>Flow and task context</b>
+            <span>Automation actions can inject Company Cortex into tasks, suggestions, and agent runs.</span>
+            <small>extended_brain_knowledge</small>
+          </article>
+          <article class="route-card output-route">
+            <b>Jamie-style proposals</b>
+            <span>Dream outputs can feed improvement ideas, skill recommendations, and follow-up proposals.</span>
+            <small>recommendation loop</small>
+          </article>
+        </aside>
+      </section>
+
+      <p class="route-note">
+        Audit gap to look for: Company Cortex should keep durable operating knowledge,
+        not every message. Raw activity should become reviewed signals, then stable objects.
+      </p>
+    </main>
+
+    <main class="frame" aria-label="Vibey platform architecture infographic">
+      <header class="header">
+        <div>
+          <p class="page-label">Page 3 · Meta Platform View</p>
+          <h1>Vibey Platform Architecture</h1>
+          <p class="subtitle">
+            One-view map of how work, knowledge, agents, automations, policy,
+            runtime, and infrastructure connect across the platform.
+          </p>
+        </div>
+        <div class="legend" aria-label="Legend">
+          <span class="chip"><i class="dot"></i>Product core</span>
+          <span class="chip"><i class="dot dot-blue"></i>Runtime</span>
+          <span class="chip"><i class="dot dot-green"></i>State</span>
+          <span class="chip"><i class="dot dot-orange"></i>External</span>
+        </div>
+      </header>
+
+      <section class="map">
+        <svg class="connectors" viewBox="0 0 1068 500" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M 260 105 C 330 105 345 160 410 160" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round" />
+          <path d="M 260 305 C 330 305 345 245 410 245" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round" />
+          <path d="M 658 160 C 730 160 755 105 822 105" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round" />
+          <path d="M 658 245 C 730 245 755 305 822 305" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round" />
+          <path d="M 534 330 C 534 370 534 392 534 430" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round" />
+          <path d="M 456 330 C 360 392 220 400 120 438" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round" />
+          <path d="M 612 330 C 716 392 860 400 960 438" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="2 8" stroke-linecap="round" />
+        </svg>
+
+        <aside class="left-top stack" aria-label="Entry surfaces">
+          <div>
+            <p class="stack-title">Entry Surfaces</p>
+            <div class="surface-list">
+              <div class="surface">
+                <div class="surface-mark">UI</div>
+                <div><strong>Web App</strong><span>Chat, Spaces, Brain, Flows, Mission Control</span></div>
+              </div>
+              <div class="surface">
+                <div class="surface-mark">API</div>
+                <div><strong>Public Agents</strong><span>Org slugs, embedded agents, user entry points</span></div>
+              </div>
+              <div class="surface">
+                <div class="surface-mark">↯</div>
+                <div><strong>Webhooks</strong><span>Composio, forms, Fathom, external triggers</span></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <aside class="left-bottom group" aria-label="Knowledge and work sources">
+          <h2 class="group-title"><span class="icon">◈</span> Sources</h2>
+          <div class="mini-card"><strong>Documents & Media</strong><span>Uploads become stable asset_ref records, not guessed URLs.</span></div>
+          <div class="mini-card"><strong>Connected Apps</strong><span>Drive, Gmail, Slack, GitHub, Notion, Sheets, CRM.</span></div>
+          <div class="mini-card"><strong>Team Activity</strong><span>Messages, tasks, missions, comments, artifacts, events.</span></div>
+        </aside>
+
+        <section class="group core" aria-label="Product core">
+          <h2 class="group-title"><span class="icon">✦</span> Product Core</h2>
+          <div class="product-core">
+            <article class="domain">
+              <h2>Spaces</h2>
+              <p>Where work lives and inherits access.</p>
+              <ul>
+                <li>Tasks, docs, contacts</li>
+                <li>Views, schemas, sharing</li>
+                <li>Space-scoped missions</li>
+              </ul>
+            </article>
+            <article class="domain">
+              <h2>Brain</h2>
+              <p>What Vibey and agents know.</p>
+              <ul>
+                <li>User, company, customer</li>
+                <li>Agent and campaign brains</li>
+                <li>Episodes, snapshots, timelines</li>
+              </ul>
+            </article>
+            <article class="domain">
+              <h2>Agents</h2>
+              <p>Who reasons, plans, and acts.</p>
+              <ul>
+                <li>Vibey, Atlas, Loop</li>
+                <li>Custom org agents</li>
+                <li>Skills and identity files</li>
+              </ul>
+            </article>
+            <article class="domain">
+              <h2>Flows</h2>
+              <p>When work runs automatically.</p>
+              <ul>
+                <li>Triggers and schedules</li>
+                <li>Context-aware actions</li>
+                <li>Loop build sessions</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <aside class="right-top group" aria-label="Control layer">
+          <h2 class="group-title"><span class="icon">✓</span> Control Layer</h2>
+          <p class="layer-note">
+            The safety gate: who can do what, which actions are allowed,
+            and whether a tool call is shaped correctly before it runs.
+          </p>
+          <div class="pill-grid">
+            <div class="pill">RBAC</div>
+            <div class="pill">Policies</div>
+            <div class="pill">Action Domains</div>
+            <div class="pill">Preflight</div>
+            <div class="pill">Tool Schemas</div>
+            <div class="pill">Circuit Breakers</div>
+          </div>
+        </aside>
+
+        <aside class="right-bottom group" aria-label="Execution layer">
+          <h2 class="group-title"><span class="icon">⚙</span> Execution</h2>
+          <p class="layer-note">
+            The work engine: sends tasks to agents, models, MCPs, and artifact tools,
+            then returns results back to Spaces, Brain, or Flows.
+          </p>
+          <div class="pill-grid">
+            <div class="pill">Agent API</div>
+            <div class="pill">OpenClaw</div>
+            <div class="pill">LLMs</div>
+            <div class="pill">MCPs</div>
+            <div class="pill">Artifacts</div>
+            <div class="pill">Tools</div>
+          </div>
+        </aside>
+
+        <div class="infra" aria-label="Infrastructure layer">
+          <div class="infra-card"><b>Supabase</b><span>Source of truth for orgs, spaces, agents, brains, missions, flows, artifacts.</span></div>
+          <div class="infra-card"><b>Redis / BullMQ</b><span>Runtime queues, streaming, worker concurrency, locks, workload lanes.</span></div>
+          <div class="infra-card"><b>Railway Runtime</b><span>Warm shared Agent API and OpenClaw path for chat, Brain, missions, automations.</span></div>
+          <div class="infra-card"><b>Fly Fallback</b><span>Per-user or isolated machine path for older profiles and heavier work.</span></div>
+          <div class="infra-card"><b>Storage & Traces</b><span>media_assets, asset_ref, generated deliverables, app_errors, agent traces.</span></div>
+        </div>
+      </section>
+
+      <footer class="takeaway">
+        <strong>Simple model:</strong>
+        <span>
+          Spaces hold the work. Brain supplies context. Agents act. Flows trigger repeatable work.
+          The control and runtime layers decide what is allowed, then execute it through infra.
+        </span>
+      </footer>
+    </main>
+  </body>
+</html>

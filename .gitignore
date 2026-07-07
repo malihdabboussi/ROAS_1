@@ -1,0 +1,94 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.pnp
+.pnp.js
+
+# Build
+.next/
+out/
+dist/
+!packages/api-shared/dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Supabase
+supabase/.temp/
+
+# Local dev configs
+.local/
+docker/.env.docker
+docker/Dockerfile.local
+
+# Turbo
+.turbo/
+.vercel
+.env*.local
+.env.staging
+package-lock.json
+
+# Cursor
+.cursor/
+
+# Claude
+.claude/
+
+# Agents
+agents/
+!docker/agents/
+docker/agents/*
+!docker/agents/atlas/
+!docker/agents/atlas/**
+!docker/agents/templates/
+!docker/agents/templates/**
+!apps/api/src/modules/agents/
+!apps/api/src/modules/agents/**
+!apps/openclaw/src/agents/
+!apps/openclaw/src/agents/tools/
+!apps/openclaw/src/agents/tools/read-skill-tool.ts
+!apps/openclaw/src/agents/tools/read-skill-tool.test.ts
+!apps/web/src/lib/agents/
+!apps/web/src/lib/agents/**
+!apps/web/src/components/agents/
+!apps/web/src/components/agents/**
+
+# Ad Swipe Files
+Ad Swipe Files/
+
+# Legacy & unused apps
+apps/nexua/
+vibey_legacy/
+
+# Generated user project runtime files
+.runtime/
+
+# YC demo seeder — credentials + cached Adley template dump
+apps/api/.docs/
+*-credentials.md
+scripts/seed-yc-demo/.cache/
+scripts/roas/.lovable-applied-migrations.log
+
+# ROAS: exclude inherited VibeyV2 CI workflows until rewritten with workflow-scoped token
+.github/workflows/

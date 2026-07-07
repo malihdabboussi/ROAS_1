@@ -1,0 +1,21 @@
+name = "vibey-apps-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+account_id = "e4564a5252938d5839b1b84d47312180"
+
+routes = [
+  { pattern = "*-app.govibey.com/*", zone_name = "govibey.com" },
+  { pattern = "*.govibey.com/*", zone_name = "govibey.com" }
+]
+
+[[kv_namespaces]]
+binding = "SLUG_CACHE"
+id = "8cce51a73e9c45cdaca9b9b8c6800073"
+
+# Published-app wake-up: platform API origin (no trailing slash), e.g. https://api.example.com
+# INTERNAL_API_TOKEN: wrangler secret put INTERNAL_API_TOKEN (must match apps/api INTERNAL_API_TOKEN)
+# APPS_WEB_VERCEL_URL: origin for apps/web Vercel deployment, e.g. https://vibey-web.vercel.app
+# WORKER_SECRET: wrangler secret put WORKER_SECRET (shared with apps/web to validate proxied page loads)
+[vars]
+BACKEND_URL = "https://api.govibey.com"
+APPS_WEB_VERCEL_URL = "https://app.vibey.im"

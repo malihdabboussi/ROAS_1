@@ -1,0 +1,158 @@
+# Spaces Flows
+
+Last Modified: 2026-06-29
+
+## Overview
+
+Spaces automations run rules from the `space_automations` table through the single `SpaceAutomationService` engine. Triggers cover task changes, external communication events, form submissions, contact lifecycle events, and artifact lifecycle events. Actions mutate Space items, communicate externally, update CRM contacts, or operate on artifacts. The builder uses context-aware action sequencing so non-task triggers first create or resolve the context required by later task/contact/artifact actions.
+
+## Data Flow
+
+- Automation CRUD reads and writes `space_automations`; `spaces.schema` owns fields/views only.
+- Reusable Flow browsing reads `flow_definitions` through `flow_installations`, with `space_automations` remaining the executable per-Space rule row.
+- Internal task changes emit from `SpacesService`.
+- Public form submissions create a Space item and emit both `task_created` and `form_submitted`.
+- Composio webhooks enter through `IntegrationsComposioService` and route through `processComposioExternalEvent`.
+- First-party Space webhooks enter through `POST /api/flow-webhooks/:publicToken`. The receiver verifies `x-vibey-signature: sha256=<hex hmac>` against the raw JSON body, maps endpoint-level JSON Pointer fields into `trigger.fields`, records `space_webhook_events`, and fans out to every published enabled `space_automations` row whose trigger is `{ type: "webhook_received", webhook_endpoint_id }`.
+- Generic connected-app triggers use `external_app_event` with verified Composio trigger slugs (Google Calendar, Drive, Sheets, Salesforce, GitHub, Notion). The webhook payload is passed through as `{{trigger.payload}}` with stable metadata tokens (`provider_label`, `event_label`, `trigger_slug`, `connected_account_id`). Triggers that require safe per-rule config, like Google Sheets `spreadsheet_id` or Notion `database_id`, store it in `trigger_config` and pass it through to Composio.
+- Contact events route through `space_contact_automation_routes`, create a Space item for run context, then execute the matching automation.
+- Artifact lifecycle events emit after successful artifact mutations, create a synthetic Space item for run context in campaign spaces, then evaluate matching automations.
+- External/message triggers can create a real task with `create_task`; the engine then switches subsequent task actions to the newly created Space item.
+- Gmail email triggers can add an inbox category filter. The API maps the selected category to Composio's Gmail `query` trigger config, e.g. `in:inbox category:primary`, so Primary / Promotions / Social / Updates / Forums filtering happens before the webhook event reaches the automation route.
+- Send to Agent actions can request `output_type=email_artifact`. The automation prompt gets a `save_email` contract with the active `space_id` and `source_item_id`; the agent tool saves a `public.emails` row and links it to the source task deliverables. A later Send Email action can resolve subject/body from that linked email artifact while recipients stay defined by the automation.
+- Send to Agent can also request document file outputs. `document_artifact` uses `save_document`, `pdf_artifact` uses `create_pdf`, and `docx_artifact` uses `create_docx` with markdown content so the generated Word file stays linked to the active Space/task context. OpenClaw records previewable tool outputs as task artifact output blocks (`artifact_preview`, `media_asset`, document/file, project, widget, and screenshot blocks), and task-agent completion merges those into task activity before scoped DB readback adds any missed Space Docs, Space items, task-linked email drafts, media assets, and known scoped artifact rows. The same blocks power inline task activity previews and the task Deliverables & media section.
+- Scheduled agent actions do not pre-wake Fly in the scheduler. `SpaceAutomationService` calls `UserAgentApiService` for agent execution, so shared Railway profiles route to the shared Agent API/OpenClaw runtime and Fly-machine profiles wake through the shared runtime service path when needed.
+- Rule execution now dispatches through `agent-runtime-queue-automation` when the queue is available. Trigger evaluation, scheduled itemless runs, contact-route automations, Fathom fanout, and connected-app webhook runs enqueue automation jobs with `AGENT_RUNTIME_AUTOMATION_CONCURRENCY` worker concurrency. Unit tests and local contexts without a queue keep the inline fallback path.
+- Flow and Spaces run-history views subscribe to `space_automation_runs` over Supabase Realtime and reload their scoped history after external automation executions, so run history does not depend on reopening the panel.
+
+## Persistence
+
+- `space_automations` stores rule metadata (`name`, `description`, `enabled`, `is_draft`, `created_by`) and JSONB `trigger` / `actions`.
+- `flow_definitions` stores the reusable Flow identity and canonical trigger/action snapshot. `flow_definition_versions` stores versioned snapshots, and `flow_installations` connects a definition to each Space plus its executable `space_automations` row.
+- `space_webhook_endpoints` stores Space-scoped inbound webhook configuration: display name, public token, status, field mappings, sample payload, and a Vault secret label. It does not store the signing secret.
+- `vault_secrets` stores the actual webhook HMAC signing secret under provider `flow_webhook`.
+- `space_webhook_events` stores received JSON payloads, mapped fields, idempotency keys, selected header summaries, processing status, matched automation IDs, and error text while preserving event history after endpoint disable/delete.
+- `space_automation_runs` and `space_external_automation_events` preserve audit history when a rule is deleted by setting `automation_id` to null.
+- `space_automation_run_state`, `space_external_automation_triggers`, and `space_contact_automation_routes` cascade with the rule because they are runtime routing/state rows.
+- `emails` stores draft email artifacts (`subject`, `body`, `space_id`, `source_item_id`, `campaign_id`) and uses the same owner/org RLS model as other campaign artifacts.
+- RLS mirrors Spaces read/update ownership for owners and org admins; API-level `assertCanMutateAutomation` remains the source of truth for edit-level per-rule mutation.
+
+## Loop Flows
+
+- Loop builds Space automation flows from live Space context, bounded Flow capabilities, workflow capabilities, reusable blueprints, and backend Flow tools.
+- Loop is a protected system agent with `system_flows` defaults and the `read_flows` / `manage_flows` policy domains.
+- Loop-owned artifact actions are `get_flow_build_context`, `search_flow_capabilities`, `get_flow_capability`, `list_flows`, `get_flow`, `create_flow_clarification`, `answer_flow_clarification`, `create_flow_plan`, `update_flow_plan`, `validate_flow_plan`, `compile_flow_plan`, `evaluate_flow_plan`, `list_flow_blueprints`, `get_flow_blueprint`, `create_flow_blueprint_draft`, `validate_flow_blueprint`, `activate_flow_blueprint`, `create_flow_draft`, `update_flow_draft`, `validate_flow_draft`, and `publish_flow`.
+- Flow actions remain active-Space scoped by default. Agents must omit `space_id` unless the active Space is already known or the user explicitly selected another Space.
+- `packages/api-shared/src/types/flow-capabilities.ts` is the shared compile-ready capability catalog for Loop and the UI. It indexes existing triggers/actions, connected-app triggers, categories, required fields, optional fields, and examples.
+- `trigger.webhook_received` is compile-ready for `space_automation` but requires a real `webhook_endpoint_id`. Agent-side direct publish stays blocked; admins publish webhook drafts from the Flows UI/API so backend endpoint validation runs.
+- `action.send_to_agent` exposes durable output and completion controls: `output_type`, `continuation`, `completed_status`, `target_item_ref`, `extended_brain_knowledge`, `inject_fields`, and `priority`. Flow plans should put document/report/brief outputs and post-run status transitions on the agent action instead of adding a duplicate immediate `change_status` step for the same completion state.
+- `get_flow_build_context.workflow_capabilities` combines compile-ready `space_automation` entries with broader `agent_action.*` platform candidates. Loop may plan directly with `space_automation` entries that are `available`; `agent_action.*` candidates require an active blueprint, admin-authored contract, or Flow runtime bridge before compile/publish.
+- `apps/api/src/modules/spaces/controllers/space-automations.controller.ts` exposes admin-only Flow UI endpoints under `/api/spaces/:id/automations/flows` plus `/capabilities/search` and `/capabilities/:capabilityId`.
+- Draft create/update force `is_draft=true` and `enabled=false`. Publish validates with existing publishability rules, then sets `is_draft=false` and `enabled=true`, reusing external trigger sync and schedule sync.
+- Loop's artifact `publish_flow` fails closed for schedule, connected-app/external, and contact triggers because those publishes require backend route or next-fire sync. Admins publish those drafts from `/flows`, which calls the Spaces Flow API path.
+- Loop treats webhook endpoints as named admin-managed resources. It should resolve or clarify by endpoint label, never ask for raw endpoint UUIDs, and use `{{trigger.payload}}`, `{{trigger.fields.<key>}}`, `{{trigger.webhook.event_id}}`, and `{{trigger.webhook.received_at}}` when drafting templates.
+- Loop DB state is seeded through migrations with an `agents_registry` system row, DB-backed `flow-builder` skill, and canonical identity files (`SOUL.md`, `ROLE.md`, `IDENTITY.md`). Runtime filesystem copies are artifacts of Agent API sync, not the source of truth.
+- Flow build state is session-first: `project_flow_build_session.status` moves through `intake`, `clarifying`, `planning`, `planned`, `validated`, `compiled`, or `blocked`.
+- Flow plan state starts only after planning and is limited to `planned`, `validated`, `compiled`, or `blocked`; plans do not own clarification questions.
+- `project_flow_build_clarification` is the source of truth for open and answered Loop clarification rows. Answering clarifications advances the session back to `planning` and does not mutate plan steps.
+
+## Admin Flows UI
+
+- Platform admins can open `/flows` from the main sidebar. Non-admins do not see the navigation item and the page renders a forbidden state.
+- `/flows?space_id=<id>` selects the Space from a Space automation surface entry point. Without a query parameter, the UI loads a Space picker.
+- `/flows?space_id=<id>&flow_id=<id>` opens a specific flow editor. `/flows?space_id=<id>&build_session_id=<id>` opens the Build tab for a specific Loop build session.
+- The left pane is locked to Loop chat and sends Flow protocol context for the selected Space.
+- The main pane contains a flow list, JSON trigger/action editor, bounded capability search, validation status, run history, test run control, and publish state.
+- Browse loads the full template catalog at every breadcrumb scope. Installing a template or starting a blank flow still requires a selected Space because the created automation needs a destination `space_id`.
+- History follows the same breadcrumb scope as Manage: all campaigns/all spaces shows org run history, a selected campaign narrows to that campaign, and a selected Space narrows to that Space.
+- Webhooks is a Space-scoped tab under `/flows`. It lists endpoints, creates endpoints, copies the receive URL, shows the one-time signing secret after create/rotate, rotates secrets, disables endpoints, edits endpoint-level field mappings from JSON Pointer paths, stores a sample payload, and shows recent received events.
+- History shows the Manage-style context columns for flow, campaign, and Space, with toolbar controls for search, status filtering, the shared Spaces reporting date-range selector, and grouping by campaign, Space, flow, status, or time.
+- Manage grid cards render flow descriptions instead of trigger/action summaries. Draft/build cards keep Plan, Draft, and Session controls in an icon footer so the controls stay aligned regardless of description length.
+- Manage grid cards expose a Doc-style hover/right-click menu with quick Copy link / Copy ID / New tab actions, Open/Rename/Duplicate/Validate, Enable/Pause/Publish, Loop plan/session/update actions, Go to space/campaign/history navigation, Copy to space, Delete flow, and Discard build for build-session-only cards.
+- Manage lists reusable Flow definition cards. All-spaces and campaign scopes show one card per Flow definition with compact Space-count and health icons; cards with multiple installations expand to per-Space rows. Space scope naturally shows only the installations in that Space.
+- Manage flow cards and rows are draggable into the Loop chat panel. Dropping a single-install flow selects that Space and attaches a visible Flow chip to the composer. Dropping a reusable multi-install definition attaches the Flow definition context and keeps the user in the current chat surface instead of reopening a stored conversation or auto-starting an update session.
+- Publish stays disabled until validation succeeds for the currently selected saved draft.
+- `/flows` subscribes to `project_flow_build_session` and `project_flow_build_clarification` over Supabase Realtime after one initial fetch; it does not poll build state.
+- When Loop needs one to three Flow clarifications, the chat renders the same clarification card shape used by the generic chat clarification UI. Four or more open questions render in a temporary `Clarifications` tab.
+- The inspector renders only real plans and post-plan states. While clarifications are open, the right pane must not show plan steps, a score, or a diagram.
+- Flow build quality scores are diagnostics from platform validation/evaluation, not semantic proof from Loop. A 100/100 score means the available checks passed; it does not guarantee the flow matches the user's business intent or uses the best step structure.
+
+## Phase 3 Additions
+
+- `form_submitted` trigger with `form_id` and optional answer predicate.
+- Contact triggers: `contact_created`, `contact_updated`, `contact_tag_added`, `contact_tag_removed`, `contact_type_changed`, `contact_source_changed`.
+- Contact actions: `create_contact`, `update_contact_field`, `add_contact_tag`, `remove_contact_tag`, `attach_note_to_contact`, `link_item_to_contact`.
+
+## Phase 4 Additions
+
+- `artifact_lifecycle` trigger with `artifact_kind`, `lifecycle_event`, optional `artifact_id`, and optional `status`.
+- Artifact lifecycle hooks for funnel publish/unpublish and campaign artifact events including presentation create/publish/unpublish and social post create/schedule.
+- Artifact actions: `create_artifact`, `publish_artifact`, `unpublish_artifact`, `ask_agent_to_improve_artifact`, `attach_artifact_to_item`.
+
+## Context-Aware Builder
+
+- Task triggers produce task context.
+- Contact triggers produce contact context.
+- Artifact triggers produce artifact context.
+- Webhook triggers produce message context and expose `{{trigger.payload}}`, endpoint-mapped `{{trigger.fields.<key>}}`, and webhook metadata under `{{trigger.webhook.*}}`.
+- External email, Slack, Fathom, generic connected-app events, and form triggers begin with message/form context and need a context-producing action before task-only actions.
+- `create_task` produces task context, allowing flows such as `email received -> create task -> send to agent -> change status`.
+- The frontend action picker filters actions by the contexts available before each step and warns on legacy invalid chains.
+- Trigger and step outputs are available as template tokens. Example: `email received -> create_contact` can default to `{{trigger.email}}` and `{{trigger.name}}`; later contact actions can point at `{{steps.1.contact_id}}`. Email triggers expose `{{trigger.body}}` and `{{trigger.cc}}`; created tasks from email triggers also carry the email context in task custom data so a following task agent can read it.
+
+## Ready Templates
+
+- `public.space_automation_templates` is the catalog for installable flow starters in the Flows panel **Browse** tab. Rows are seeded from `apps/api/src/modules/spaces/data/space-automation-template-catalog.ts` via `scripts/generate-space-automation-templates-migration.mjs`.
+- `GET /api/automations/templates` lists active template metadata for the admin Flows Browse tab without requiring a selected Space.
+- `GET /api/automations/runs` lists admin Flow run history across the active org, with optional `campaign_id` and `space_id` query filters.
+- `GET /api/spaces/:id/automations/templates` lists active templates (metadata only) after `view` access to the Space.
+- `POST /api/spaces/:id/automations/templates/:templateKey/install` creates a user-owned `space_automations` row from the template `body`, runs the same Fathom source checks, external-trigger sync, and schedule column sync as manual create, then increments `install_count`.
+- Fully configured templates can install as published disabled/enabled rules. Templates that need user-specific IDs (connected accounts, channels, forms, artifact IDs, or tags) install as drafts with prefilled trigger/action fields.
+- The catalog ships 45 templates: 32 core starters plus 13 connected-app templates (Google Calendar, Drive, Sheets, Salesforce, GitHub, Notion) that install as drafts until the user picks a connected account and any required trigger config.
+- Templates that create a task and immediately run Vibey assign that task to Vibey and set `target_item_ref` to the created task output. Contact-to-task templates link the created task back to the created contact when both are created in the same flow.
+- Brain-context flows are read-only against Brain. `add_brain_context_to_task` has Atlas search available User Brain, Company Cortex, Customer Brain, and Agent Brain context, then appends the relevant context to the task description. `send_to_agent.extended_brain_knowledge` injects the same extended context into that one agent run; `send_to_agents.extended_brain_knowledge` does the same for every agent in the batch; `agent_suggest_tasks.extended_brain_knowledge` includes it in the suggestion payload.
+- Agent handoff steps support collaboration control. `send_to_agent.agent_collaboration` and `send_to_agents.agent_collaboration` default to `allowed`; `disabled` blocks the native `ask_agent`, `delegate_to_agent`, and `brainstorm_agents` tools for that automation invocation and fails closed if the gateway cannot honor the disabled action list.
+- `send_to_agents` runs multiple agents against the same task in parallel. It stores one task activity per agent with a shared `execution_batch_id`; waits and completion-status transitions only resume the automation after every agent in the batch finishes. If any agent fails, the batch resumes as failed.
+- `GET /api/spaces/:id/automations/connected-app-triggers` returns the verified Composio trigger slug catalog for the Flow builder.
+- **Social research actions** (schedule-safe): `sync_social_research`, `select_social_outliers`, `enrich_social_research_items`. They produce `social_research` context. Platform selector values: `instagram`, `tiktok`, `youtube`, `twitter`, `both` (IG+TT legacy), `all` (IG+TT+YT+X). `select_social_outliers` / `enrich_social_research_items` require prior `sync_social_research` (or any step that produced `social_research`). Step tokens include `steps.N.digest`, `steps.N.selected_item_ids`, `steps.N.outlier_count`, `steps.N.enriched_count`. Scheduled runs retarget `item_id` after `create_task` so `send_to_agent` can run on the created task. Scheduled runs stop at the first failed action and log the run as failed or partial instead of continuing with stale step outputs.
+- **YouTube brain ingestion** (schedule-safe): `ingest_youtube_channel_to_agent_brain` calls ScrapeCreators channel videos, filters to recent long-form uploads by `since_days`, and queues Atlas `sk_link_ingest` jobs for the selected Agent Brain. It accepts `brain_id`, up to 10 `channel_urls`, `max_videos_per_channel` up to 200, `include_shorts`, and Brain `domain`. Step tokens include `steps.N.queued_count` and `steps.N.digest`.
+
+## Decision Log
+
+- 2026-06-29: Automation run history now listens to `space_automation_runs` changes and reloads the current scoped history for Space and Flow history panels without a manual refresh.
+- 2026-06-25: Added first-party inbound Space webhooks for Flows. Endpoints are managed from `/flows` Webhooks, use required HMAC over the raw JSON body with the signing secret stored in Vault, keep endpoint-level JSON Pointer field mappings, and fan out one received event to every enabled published Flow in the same Space using `trigger.webhook_received`.
+- 2026-06-25: Task-agent completion now reconciles scoped persisted outputs after the stream merge, covering Space Docs, created Space items/tasks, offers, avatars, sequences, renderable presentations, renderable funnels/websites, social posts, ads/ad sets/ad campaigns, forms, flows, task-linked emails, and media assets. Empty funnel shells without pages/files are not added as completed preview deliverables by the readback path.
+- 2026-06-24: Added reusable Flow definitions, definition versions, and per-Space Flow installations. Admin Manage now lists definition cards with compact Space/health metadata and expandable install rows, while `space_automations` remains the executable rule row.
+- 2026-06-24: Flow Manage drag-to-Loop now attaches a visible composer chip and Flow context. It selects the Space only when the dropped card has one concrete installation, skips stored-conversation auto-open for drag drops, and does not auto-create a hidden update build session.
+- 2026-06-24: Task-agent completion now uses a generic artifact output manifest from OpenClaw tool results instead of a document-only path. Tool-created forms, tasks, missions, flows, websites, themes, custom objects, ad sets, media assets, DOCX/PDF files, projects, widgets, screenshots, and Space Docs can all become task activity preview blocks and task Deliverables & media entries through the shared content-block mapper.
+- 2026-06-24: Task-agent completion now reconciles Space Docs created during a `send_to_agent` run into the final task activity payload as `document_card` blocks. This keeps generated documents visible in task activity and in the task Deliverables & media carousel even when the streaming tool event omitted the UI block.
+- 2026-06-24: Exposed `send_to_agent` durable output and completion fields in the Flow capability catalog and DB-backed Loop `flow-builder` skill. Loop should use `document_artifact`, `continuation: after_task_completes`, and `completed_status` on the agent run step for briefs/reports/review handoffs, and treat evaluator scores as diagnostics rather than self-ranked proof.
+- 2026-06-23: Updated Loop guidance to remove stale version framing. Loop now uses `get_flow_build_context.workflow_capabilities` as the capability graph, compiles only available `space_automation` steps directly, and treats `agent_action.*` entries such as Brain crystallization as blueprint/runtime-bridge candidates instead of unsupported catalog misses.
+- 2026-06-23: Made Admin Flows Browse and History scope-aware outside a selected Space. Browse now reads the org template catalog at all breadcrumb scopes, while History reads org run history with optional campaign/space filters so All campaigns / All spaces is a valid browsing state.
+- 2026-06-08: Moved Loop Flow clarification out of `FlowBuildPlan` and into a pre-plan build-session state. Clarification rows now live in `project_flow_build_clarification`, session state drives the next action, Supabase Realtime replaces polling, and the inspector only renders after a real plan exists.
+- 2026-06-10: Moved Spaces automation orchestration onto `agent-runtime-queue-automation` with queue-backed execution for trigger matches, scheduled itemless rules, contact routes, Fathom fanout, and connected-app webhook events. Agent calls still enter Agent API/OpenClaw through their task-agent isolated lanes; the remaining operational work is splitting the processor into a dedicated Railway worker service and autoscaling it.
+- 2026-06-08: Removed the scheduled automation scheduler's direct Fly pre-wake for agent actions. Runtime routing now happens inside `UserAgentApiService`, matching chat, channel, mission, and Brain paths.
+- 2026-06-07: Added scheduled YouTube channel ingestion for Agent Brain training. The action remains on the existing `space_automations` engine, uses ScrapeCreators for channel discovery, and delegates memory extraction to Atlas through `brain_import_jobs`.
+- 2026-06-06: Added the admin-only full-page Flows interface on top of the existing `space_automations` engine. Loop owns flow planning/tool actions, uses bounded capability search, saves disabled drafts, and validates before publish.
+- 2026-05-20: Tightened Browse templates after logic audit. Sales Call To CRM Note now uses normalized first non-recorder Fathom attendee fields instead of `recorded_by_email`; created-task → Vibey templates assign the task to Vibey and explicitly target the created task; Lead Form Agent Qualification links the created task to the created contact.
+- 2026-05-20: Added read-only Brain context automation support. New Task Brain Context lets Atlas append relevant brain knowledge to new tasks; Run Task with agent can opt into Extended Brain Knowledge for prompt injection without writing to Brain.
+- 2026-05-21: Added `external_app_event` for verified Composio toolkit triggers beyond Gmail/Outlook/Slack/Fathom. Phase 1 carries raw webhook JSON in `trigger.payload`; no per-provider field assumptions. Seeded connected-app Browse templates and `project_composio_toolkit_config` rows for Google Calendar, Sheets, HubSpot, Salesforce, and Notion (Drive/GitHub already configured).
+- 2026-05-20: Removed HubSpot connected-app templates until project-level HubSpot webhook credentials are modeled outside automation JSON. Added provider/slug validation, required `trigger_config` validation for configurable triggers, and concrete trigger-picker entries so choosing Files/CRM/Docs no longer defaults to Google Calendar.
+- 2026-05-21: Moved the flow template catalog to `space_automation_templates` with authenticated read RLS and migration-only writes. Browse loads templates from the API; install uses a dedicated endpoint that reuses automation create + external trigger/schedule sync.
+- 2026-05-20: Expanded the Automations Templates tab from one hardcoded Fathom install button to a 15-item frontend catalog. Kept installation on existing automation CRUD so no new backend template table is required yet.
+- 2026-05-20: Hardened scheduled social research chains. They now fail closed after a broken step, expose failed step errors in `steps.N.error`, verify credits before costly social/agent calls, and treat missing agent API/internal-token configuration as a real action failure.
+- 2026-05-20: Added an idempotent repair migration for `space_external_automation_triggers.source` and PostgREST schema reload. The column is required by Fathom source routing and can drift in environments that missed the earlier Fathom source migration.
+- 2026-05-10: Kept forms and contacts on the existing automation engine instead of adding a separate object automation engine. Contact events use route rows and create a Space item as run context so run history remains consistent.
+- 2026-05-10: Added artifact lifecycle automation without a new global event bus. Artifact owner services emit after successful mutations; Spaces resolves campaign spaces and runs the same automation engine with a synthetic Space item context.
+- 2026-05-10: Added explicit automation context sequencing. Rather than letting every trigger run every action, each trigger/action declares available or required context. `create_task` is the bridge from message/form/artifact/contact flows into task actions.
+- 2026-05-10: Added internal output mapping for triggers and previous steps. The template engine resolves `trigger.*` and `steps.N.*`, and contact/task creation actions return IDs/data for later actions.
+- 2026-05-10: Added email body and CC to the external email trigger event and insert-data picker. Created tasks from email triggers carry the source email context so downstream task-agent runs can see the body and CC.
+- 2026-05-10: Re-enabling or re-saving an external automation re-enables the existing Composio trigger when the trigger config is unchanged, preventing a stale DB route from pointing at a disabled Composio trigger instance.
+- 2026-05-10: Gmail external automation triggers now use a 10-second interval. The desired trigger interval is stored on the route filters so a saved automation recreates stale Composio trigger instances instead of reusing an old interval.
+- 2026-05-10: Composio webhook subscription must point to the stable API webhook URL (`https://api.govibey.com/api/integrations/composio/webhook`). A stale temporary Cloudflare tunnel prevents trigger events from reaching the automation processor even when Gmail polling is active.
+- 2026-05-10: Split automation rules out of `spaces.schema` into `space_automations`. Generic space schema updates now reject `automations`, eliminating stale schema saves as an automation overwrite path.
+- 2026-05-11: Added Gmail inbox category filtering to email triggers. The UI stores `trigger.gmail_category`, and `syncExternalTriggerForAutomation` recreates the Composio Gmail trigger when the category changes.
+- 2026-05-11: Added first-class Email artifacts for automation handoffs. `send_to_agent.output_type=email_artifact` must wait for task completion, and `send_email.subject_source=artifact` reads the linked/specified email draft instead of manual subject/body templates.
+- 2026-05-11: External email capture rows now use only the inbound email subject as the Space item title, matching the `{{trigger.subject}}` value without provider or sender prefixes.
+- 2026-05-11: Composio may still deliver `data.subject` as a UI summary line (`Gmail email from Name <addr@>: SMTP subject`). `extractEmailSummary` strips that known prefix so templates and titles see the real subject; plain subjects are unchanged.
+- 2026-05-11: Automation step summaries use `space_item_activity.event_type = automation_action`. The DB CHECK constraint must include that value (and related automation-prefixed rows); otherwise inserts fail silently and nothing appears on the task activity feed.

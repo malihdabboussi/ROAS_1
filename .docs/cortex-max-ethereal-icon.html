@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cortex Max 3D Icon v3</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/"
+  }
+}
+</script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #050508; color: #e0e0e0; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 60px; gap: 60px; }
+  h1 { font-size: 10px; text-transform: uppercase; letter-spacing: 5px; color: #333; margin-bottom: -20px; }
+  .row { display: flex; gap: 60px; align-items: flex-end; }
+  .icon-card { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .label { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: #444; font-weight: 600; }
+  
+  .modal-preview { 
+    max-width: 540px; 
+    width: 100%;
+    background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.05), transparent 40%),
+                radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.05), transparent 40%),
+                #0a0a0f;
+    border: 1px solid rgba(255,255,255,0.05); 
+    border-radius: 32px; 
+    padding: 64px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 24px;
+    box-shadow: 0 40px 100px -20px rgba(0,0,0,0.5);
+  }
+  
+  .modal-title { display: flex; align-items: center; gap: 12px; }
+  .modal-title .cortex { font-size: 28px; font-weight: 800; color: #fff; letter-spacing: 2px; }
+  .modal-title .max { 
+    font-size: 28px; font-weight: 800; letter-spacing: 2px; 
+    background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899, #6366f1);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: max-flow 4s linear infinite;
+  }
+  @keyframes max-flow { 0% { background-position: 0% 0; } 100% { background-position: 300% 0; } }
+  .modal-sub { font-size: 14px; color: #555; letter-spacing: 0.5px; }
+
+  canvas { cursor: grab; }
+  canvas:active { cursor: grabbing; }
+</style>
+</head>
+<body>
+
+<h1>Phase 3 &mdash; Ethereal Möbius</h1>
+
+<div class="row">
+  <div class="icon-card">
+    <canvas id="icon-lg" width="240" height="240"></canvas>
+    <span class="label">Hero Visual</span>
+  </div>
+  <div class="icon-card">
+    <canvas id="icon-md" width="120" height="120"></canvas>
+    <span class="label">Modal Header</span>
+  </div>
+  <div class="icon-card">
+    <canvas id="icon-sm" width="60" height="60"></canvas>
+    <span class="label">Button Icon</span>
+  </div>
+</div>
+
+<div class="modal-preview">
+  <canvas id="icon-hero" width="240" height="240"></canvas>
+  <div class="modal-title">
+    <span class="cortex">CORTEX</span>
+    <span class="max">MAX</span>
+  </div>
+  <div class="modal-sub">Elevate your collective intelligence</div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+class MobiusIcon {
+  constructor(canvas, size, options = {}) {
+    this.canvas = canvas;
+    this.size = size;
+    this.enableBloom = options.enableBloom ?? true;
+    this.init();
+  }
+
+  init() {
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+
+    this.renderer = new THREE.WebGLRenderer({ 
+      canvas: this.canvas, 
+      antialias: true, 
+      alpha: true,
+      powerPreference: "high-performance"
+    });
+    this.renderer.setSize(w, h);
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.5;
+
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(24, w / h, 0.1, 100);
+    this.camera.position.set(0, 0, 5);
+
+    // Sophisticated lighting
+    const mainLight = new THREE.DirectionalLight(0xffffff, 2);
+    mainLight.position.set(5, 5, 5);
+    this.scene.add(mainLight);
+
+    const purpleLight = new THREE.PointLight(0xa855f7, 15, 10);
+    purpleLight.position.set(-2, 2, 2);
+    this.scene.add(purpleLight);
+
+    const blueLight = new THREE.PointLight(0x6366f1, 10, 10);
+    blueLight.position.set(2, -2, 2);
+    this.scene.add(blueLight);
+
+    const rimLight = new THREE.SpotLight(0xffffff, 5);
+    rimLight.position.set(0, 5, -5);
+    this.scene.add(rimLight);
+
+    // Möbius Geometry - Torus Knot variation for more elegance
+    const geometry = new THREE.TorusKnotGeometry(1, 0.12, 200, 32, 2, 3);
+    
+    // Ethereal Glass Material
+    this.material = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      metalness: 0.1,
+      roughness: 0.05,
+      transmission: 1.0, // Glass transparency
+      thickness: 0.5,
+      ior: 1.5,
+      iridescence: 1.0,
+      iridescenceIOR: 1.3,
+      iridescenceThicknessRange: [100, 400],
+      specularIntensity: 1.0,
+      specularColor: 0xffffff,
+      emissive: 0x7c3aed,
+      emissiveIntensity: 0.2,
+      transparent: true,
+      opacity: 0.9,
+    });
+
+    this.mesh = new THREE.Mesh(geometry, this.material);
+    this.mesh.rotation.set(0.4, 0.8, 0);
+    this.scene.add(this.mesh);
+
+    // Internal "Core" for glowing depth
+    const coreGeom = new THREE.TorusKnotGeometry(1, 0.02, 200, 16, 2, 3);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: 0xc084fc,
+      transparent: true,
+      opacity: 0.8
+    });
+    this.core = new THREE.Mesh(coreGeom, coreMat);
+    this.mesh.add(this.core);
+
+    // Post-processing
+    this.composer = new EffectComposer(this.renderer);
+    this.composer.addPass(new RenderPass(this.scene, this.camera));
+    
+    if (this.enableBloom) {
+      const bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(w, h),
+        0.8, // intensity
+        0.4, // radius
+        0.2  // threshold
+      );
+      this.composer.addPass(bloomPass);
+    }
+
+    this.animate();
+  }
+
+  animate() {
+    requestAnimationFrame(() => this.animate());
+    
+    // Subtle breathing, no spinning
+    const time = performance.now() * 0.001;
+    this.mesh.rotation.y = 0.8 + Math.sin(time * 0.2) * 0.05;
+    this.mesh.rotation.x = 0.4 + Math.cos(time * 0.15) * 0.03;
+    
+    this.material.emissiveIntensity = 0.2 + Math.sin(time * 1.5) * 0.1;
+    
+    if (this.enableBloom) {
+      this.composer.render();
+    } else {
+      this.renderer.render(this.scene, this.camera);
+    }
+  }
+}
+
+window.addEventListener('load', () => {
+  new MobiusIcon(document.getElementById('icon-lg'), 'lg');
+  new MobiusIcon(document.getElementById('icon-md'), 'md');
+  new MobiusIcon(document.getElementById('icon-sm'), 'sm', { enableBloom: false });
+  new MobiusIcon(document.getElementById('icon-hero'), 'lg');
+});
+</script>
+
+</body>
+</html>

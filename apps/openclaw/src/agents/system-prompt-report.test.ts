@@ -1,0 +1,67 @@
+import { describe, expect, it } from "vitest";
+import type { WorkspaceBootstrapFile } from "./workspace.js";
+import { buildSystemPromptReport } from "./system-prompt-report.js";
+
+function makeBootstrapFile(overrides: Partial<WorkspaceBootstrapFile>): WorkspaceBootstrapFile {
+  return {
+    name: "AGENTS.md",
+    path: "/tmp/workspace/AGENTS.md",
+    content: "alpha",
+    missing: false,
+    ...overrides,
+  };
+}
+
+describe("buildSystemPromptReport", () => {
+  it("counts injected chars when injected file paths are absolute", () => {
+    const file = makeBootstrapFile({ path: "/tmp/workspace/policies/AGENTS.md" });
+    const report = buildSystemPromptReport({
+      source: "run",
+      generatedAt: 0,
+      bootstrapMaxChars: 20_000,
+      systemPrompt: "system",
+      bootstrapFiles: [file],
+      injectedFiles: [{ path: "/tmp/workspace/policies/AGENTS.md", content: "trimmed" }],
+      skillsPrompt: "",
+      tools: [],
+    });
+
+    expect(report.injectedWorkspaceFiles[0]?.injectedChars).toBe("trimmed".length);
+  });
+
+  it("keeps legacy basename matching for injected files", () => {
+    const file = makeBootstrapFile({ path: "/tmp/workspace/policies/AGENTS.md" });
+    const report = buildSystemPromptReport({
+      source: "run",
+      generatedAt: 0,
+      bootstrapMaxChars: 20_000,
+      systemPrompt: "system",
+      bootstrapFiles: [file],
+      injectedFiles: [{ path: "AGENTS.md", content: "trimmed" }],
+      skillsPrompt: "",
+      tools: [],
+    });
+
+    expect(report.injectedWorkspaceFiles[0]?.injectedChars).toBe("trimmed".length);
+  });
+
+  it("marks files truncated when the total cap injects fewer chars than the raw file", () => {
+    const file = makeBootstrapFile({
+      content: "abcdef",
+      path: "/tmp/workspace/ROLE.md",
+      name: "ROLE.md",
+    });
+    const report = buildSystemPromptReport({
+      source: "run",
+      generatedAt: 0,
+      bootstrapMaxChars: 20_000,
+      systemPrompt: "system",
+      bootstrapFiles: [file],
+      injectedFiles: [{ path: "/tmp/workspace/ROLE.md", content: "abcd" }],
+      skillsPrompt: "",
+      tools: [],
+    });
+
+    expect(report.injectedWorkspaceFiles[0]?.truncated).toBe(true);
+  });
+});

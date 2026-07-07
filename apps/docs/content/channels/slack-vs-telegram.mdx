@@ -1,0 +1,41 @@
+---
+title: "Slack vs Telegram"
+description: "Feature comparison between Slack and Telegram channels for Vibey agents."
+---
+
+## Feature Comparison
+
+| Feature | Slack | Telegram |
+|---|---|---|
+| **Setup** | OAuth install (one click) | Bot token from BotFather |
+| **Owner verification** | Automatic via OAuth | Press Start to verify |
+| **Member sync** | All workspace members synced on install | Members learned on first message |
+| **DMs** | Each person gets their own session | Each person gets their own session |
+| **Channel mentions** | `@Vibey` in any channel, replies in threads | Not applicable (bot = single chat) |
+| **Channel context** | Last 10 messages injected when mentioned | Not available |
+| **Thread support** | Full thread-based conversations | Single conversation per chat |
+| **Public mode** | Not applicable (workspace-scoped) | Anyone can message the bot |
+| **Streaming** | Full response posted on completion | Real-time placeholder updates every 1.5s |
+| **Formatting** | Slack mrkdwn (`*bold*`, `_italic_`) | Telegram Markdown (`*bold*`, `_italic_`) |
+| **Interactive UI** | No (text-only, no cards or buttons) | No (text-only, no cards or buttons) |
+| **File sharing** | Users can share files in chat | Users can share files in chat |
+| **Member notes** | Agent learns about each team member | Agent learns about each customer/member |
+| **Commands** | Not applicable | `/reset`, `/help`, `/status`, `/campaign` |
+
+## When to Use Which
+
+**Use Slack when:**
+- Your team already lives in Slack
+- You want `@Vibey` mentions in team channels for quick input
+- Multiple team members need to interact with the same agent
+- You want channel discussion context injected automatically
+
+**Use Telegram when:**
+- You want a mobile-first experience
+- You're building a customer-facing support bot (public mode)
+- You want real-time streaming responses
+- You need a simple setup without workspace admin access
+
+**Use both when:**
+- Your team uses Slack internally, but you serve customers on Telegram
+- Different agents handle different channels (e.g., Vibey on Slack, support agent on Telegram)

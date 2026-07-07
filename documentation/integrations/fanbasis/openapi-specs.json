@@ -1,0 +1,6236 @@
+{
+  "cancel-checkout-session-subscription": {
+    "tags": ["Checkout Sessions"],
+    "description": "Cancel a specific subscription for a checkout session",
+    "operationId": "cancelCheckoutSessionSubscription",
+    "parameters": [
+      {
+        "name": "checkoutSessionId",
+        "in": "path",
+        "description": "ID of the checkout session",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "subscriptionId",
+        "in": "path",
+        "description": "ID of the subscription to cancel (AgencyServiceSubscriber ID from subscription list)",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Subscription cancelled successfully"
+                },
+                "data": {
+                  "properties": {
+                    "id": {
+                      "description": "AgencyServiceSubscriber ID",
+                      "type": "string"
+                    },
+                    "subscription_id": {
+                      "description": "Same as id, for backwards compatibility",
+                      "type": "string"
+                    },
+                    "cancelled_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "subscription_status": {
+                      "type": "string",
+                      "example": "cancelled"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Subscription is not active or already cancelled"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Unauthorized"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Checkout session or subscription not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Failed to cancel subscription"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.checkoutSessions.subscriptions.cancel('subscriptionId', {\n  checkoutSessionId: 'checkoutSessionId',\n});\n\nconsole.log(response.data);"
+      }
+    ],
+    "method": "delete",
+    "path": "/checkout-sessions/{checkoutSessionId}/subscriptions/{subscriptionId}",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Cancel a specific subscription for a checkout session",
+      "description": {
+        "content": "Cancel a specific subscription for a checkout session",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["checkout-sessions", ":checkoutSessionId", "subscriptions", ":subscriptionId"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the checkout session",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "checkoutSessionId"
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the subscription to cancel (AgencyServiceSubscriber ID from subscription list)",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "subscriptionId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "DELETE",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "charge-customer": {
+    "tags": ["Customers"],
+    "description": "Charge a customer using a specific payment method",
+    "operationId": "chargeCustomer",
+    "parameters": [
+      {
+        "name": "customerId",
+        "in": "path",
+        "description": "ID of the customer to charge",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "properties": {
+              "payment_method_id": {
+                "type": "string"
+              },
+              "service_id": {
+                "type": "string"
+              },
+              "amount_cents": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "description": {
+                "type": "string"
+              },
+              "metadata": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "type": "object"
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Customer charged successfully"
+                },
+                "data": {
+                  "properties": {
+                    "charge_id": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Customer not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Customer not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.customers.charge('customerId');\n\nconsole.log(response.data);"
+      }
+    ],
+    "method": "post",
+    "path": "/customers/{customerId}/charge",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "jsonRequestBodyExample": {
+      "payment_method_id": "string",
+      "service_id": "string",
+      "amount_cents": 0,
+      "description": "string",
+      "metadata": {}
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Charge customer",
+      "description": {
+        "content": "Charge a customer using a specific payment method",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["customers", ":customerId", "charge"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the customer to charge",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "customerId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "POST",
+      "body": {
+        "mode": "raw",
+        "raw": "",
+        "options": {
+          "raw": {
+            "language": "json"
+          }
+        }
+      },
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "create-checkout-session": {
+    "tags": ["Checkout Sessions"],
+    "description": "Create a checkout session",
+    "operationId": "createCheckoutSession",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "properties": {
+              "product": {
+                "required": ["title"],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "description": {
+                    "nullable": true,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "amount_cents": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "application_fee": {
+                "nullable": true,
+                "type": "number",
+                "minimum": 0
+              },
+              "type": {
+                "type": "string",
+                "enum": ["subscription", "onetime_reusable", "onetime_non_reusable"]
+              },
+              "metadata": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "expiration_date": {
+                "nullable": true,
+                "type": "string",
+                "format": "date"
+              },
+              "subscription": {
+                "nullable": true,
+                "properties": {
+                  "frequency_days": {
+                    "description": "Required if type is subscription",
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "auto_expire_after_x_periods": {
+                    "nullable": true,
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "free_trial_days": {
+                    "nullable": true,
+                    "type": "integer"
+                  },
+                  "initial_fee": {
+                    "nullable": true,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "initial_fee_days": {
+                    "nullable": true,
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "success_url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "webhook_url": {
+                "nullable": true,
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "type": "object"
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Created Product"
+                },
+                "data": {
+                  "properties": {
+                    "checkout_session_id": {
+                      "type": "integer",
+                      "example": "123"
+                    },
+                    "payment_link": {
+                      "type": "string",
+                      "example": "https://checkout.fanbasis.com/123"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst checkoutSession = await client.checkoutSessions.create();\n\nconsole.log(checkoutSession.data);"
+      }
+    ],
+    "method": "post",
+    "path": "/checkout-sessions",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "jsonRequestBodyExample": {
+      "product": {
+        "title": "string",
+        "description": "string"
+      },
+      "amount_cents": 0,
+      "application_fee": 0,
+      "type": "subscription",
+      "metadata": {},
+      "expiration_date": "2024-07-29",
+      "subscription": {
+        "frequency_days": 0,
+        "auto_expire_after_x_periods": 0,
+        "free_trial_days": 0,
+        "initial_fee": 0,
+        "initial_fee_days": 0
+      },
+      "success_url": "string",
+      "webhook_url": "string"
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Create a checkout session",
+      "description": {
+        "content": "Create a checkout session",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["checkout-sessions"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": []
+      },
+      "header": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "POST",
+      "body": {
+        "mode": "raw",
+        "raw": "",
+        "options": {
+          "raw": {
+            "language": "json"
+          }
+        }
+      },
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "create-discount-code": {
+    "tags": ["Discount Codes"],
+    "description": "Create a new discount code",
+    "operationId": "createDiscountCode",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "required": ["code", "discount_type", "value", "duration", "service_ids"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "maxLength": 45
+              },
+              "description": {
+                "nullable": true,
+                "type": "string"
+              },
+              "discount_type": {
+                "type": "string",
+                "enum": ["cash", "percentage"]
+              },
+              "value": {
+                "type": "number"
+              },
+              "duration": {
+                "type": "string",
+                "enum": ["once", "forever", "multiple_months"]
+              },
+              "expiry": {
+                "nullable": true,
+                "type": "string",
+                "format": "date"
+              },
+              "expiry_time": {
+                "nullable": true,
+                "type": "string",
+                "format": "H:i"
+              },
+              "limited_redemptions": {
+                "nullable": true,
+                "type": "boolean"
+              },
+              "usable_number": {
+                "nullable": true,
+                "type": "integer"
+              },
+              "no_of_months": {
+                "nullable": true,
+                "type": "integer"
+              },
+              "one_time": {
+                "nullable": true,
+                "type": "boolean"
+              },
+              "service_ids": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        }
+      }
+    },
+    "responses": {
+      "201": {
+        "description": "Created",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Discount code created successfully"
+                },
+                "data": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst discountCode = await client.discountCodes.create({\n  code: 'code',\n  discount_type: 'cash',\n  duration: 'once',\n  service_ids: [0],\n  value: 0,\n});\n\nconsole.log(discountCode.data);"
+      }
+    ],
+    "method": "post",
+    "path": "/discount-codes",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "jsonRequestBodyExample": {
+      "code": "string",
+      "description": "string",
+      "discount_type": "cash",
+      "value": 0,
+      "duration": "once",
+      "expiry": "2024-07-29",
+      "expiry_time": "string",
+      "limited_redemptions": true,
+      "usable_number": 0,
+      "no_of_months": 0,
+      "one_time": true,
+      "service_ids": [0]
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Create a new discount code",
+      "description": {
+        "content": "Create a new discount code",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["discount-codes"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": []
+      },
+      "header": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "POST",
+      "body": {
+        "mode": "raw",
+        "raw": "",
+        "options": {
+          "raw": {
+            "language": "json"
+          }
+        }
+      },
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "create-embedded-checkout-session": {
+    "tags": ["Checkout Sessions"],
+    "description": "Create an embedded checkout session",
+    "operationId": "createEmbeddedCheckoutSession",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "properties": {
+              "metadata": {
+                "description": "Arbitrary JSON object to store with the checkout session",
+                "type": "object",
+                "example": {
+                  "key": "value",
+                  "custom_field": "custom_value"
+                }
+              }
+            },
+            "type": "object"
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Embedded checkout session created successfully"
+                },
+                "data": {
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "123"
+                    },
+                    "checkout_session_secret": {
+                      "type": "string",
+                      "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "metadata": {
+                      "nullable": true,
+                      "description": "Arbitrary JSON object stored with the checkout session",
+                      "type": "object",
+                      "example": {
+                        "key": "value",
+                        "custom_field": "custom_value"
+                      }
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Failed to create embedded checkout session"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.checkoutSessions.embedded();\n\nconsole.log(response.data);"
+      }
+    ],
+    "method": "post",
+    "path": "/checkout-sessions/embedded",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "jsonRequestBodyExample": {
+      "metadata": {
+        "key": "value",
+        "custom_field": "custom_value"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Create an embedded checkout session",
+      "description": {
+        "content": "Create an embedded checkout session",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["checkout-sessions", "embedded"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": []
+      },
+      "header": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "POST",
+      "body": {
+        "mode": "raw",
+        "raw": "",
+        "options": {
+          "raw": {
+            "language": "json"
+          }
+        }
+      },
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "create-webhook-subscription": {
+    "tags": ["Webhook Subscriptions"],
+    "description": "Create a new webhook subscription",
+    "operationId": "createWebhookSubscription",
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "properties": {
+              "webhook_url": {
+                "description": "URL where webhook events will be sent",
+                "type": "string",
+                "format": "uri"
+              },
+              "event_types": {
+                "description": "Array of event types to subscribe to. Available event types: payment.succeeded, payment.failed, payment.expired, payment.canceled, product.purchased, subscription.created, subscription.renewed, subscription.completed, subscription.canceled",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "payment.succeeded",
+                    "payment.failed",
+                    "payment.expired",
+                    "payment.canceled",
+                    "product.purchased",
+                    "subscription.created",
+                    "subscription.renewed",
+                    "subscription.completed",
+                    "subscription.canceled"
+                  ]
+                }
+              }
+            },
+            "type": "object"
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Webhook subscription created successfully"
+                },
+                "data": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "user_id": {
+                      "type": "string"
+                    },
+                    "webhook_url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "event_types": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "secret_key": {
+                      "type": "string"
+                    },
+                    "is_active": {
+                      "type": "boolean"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "User not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst webhookSubscription = await client.webhookSubscriptions.create();\n\nconsole.log(webhookSubscription.data);"
+      }
+    ],
+    "method": "post",
+    "path": "/webhook-subscriptions",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "jsonRequestBodyExample": {
+      "webhook_url": "string",
+      "event_types": ["payment.succeeded"]
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Create a new webhook subscription",
+      "description": {
+        "content": "Create a new webhook subscription",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["webhook-subscriptions"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": []
+      },
+      "header": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "POST",
+      "body": {
+        "mode": "raw",
+        "raw": "",
+        "options": {
+          "raw": {
+            "language": "json"
+          }
+        }
+      },
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "delete-checkout-session": {
+    "tags": ["Checkout Sessions"],
+    "description": "Delete a checkout session",
+    "operationId": "deleteCheckoutSession",
+    "parameters": [
+      {
+        "name": "checkoutSessionId",
+        "in": "path",
+        "description": "ID of the checkout session to delete",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Checkout session deleted successfully"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Unauthorized"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Checkout session not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst checkoutSession = await client.checkoutSessions.delete('checkoutSessionId');\n\nconsole.log(checkoutSession.data);"
+      }
+    ],
+    "method": "delete",
+    "path": "/checkout-sessions/{checkoutSessionId}",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Delete a checkout session",
+      "description": {
+        "content": "Delete a checkout session",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["checkout-sessions", ":checkoutSessionId"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the checkout session to delete",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "checkoutSessionId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "DELETE",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "delete-discount-code": {
+    "tags": ["Discount Codes"],
+    "description": "Delete a discount code",
+    "operationId": "deleteDiscountCode",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "ID of the discount code",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Discount code deleted successfully"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst discountCode = await client.discountCodes.delete('id');\n\nconsole.log(discountCode.data);"
+      }
+    ],
+    "method": "delete",
+    "path": "/discount-codes/{id}",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Delete a discount code",
+      "description": {
+        "content": "Delete a discount code",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["discount-codes", ":id"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the discount code",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "id"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "DELETE",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "delete-webhook-subscription": {
+    "tags": ["Webhook Subscriptions"],
+    "description": "Delete a webhook subscription",
+    "operationId": "deleteWebhookSubscription",
+    "parameters": [
+      {
+        "name": "webhookSubscriptionId",
+        "in": "path",
+        "description": "ID of the webhook subscription to delete",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Webhook subscription deleted successfully"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Webhook subscription not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst webhookSubscription = await client.webhookSubscriptions.delete('webhookSubscriptionId');\n\nconsole.log(webhookSubscription.request_id);"
+      }
+    ],
+    "method": "delete",
+    "path": "/webhook-subscriptions/{webhookSubscriptionId}",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Delete a webhook subscription",
+      "description": {
+        "content": "Delete a webhook subscription",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["webhook-subscriptions", ":webhookSubscriptionId"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the webhook subscription to delete",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "webhookSubscriptionId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "DELETE",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "extend-subscription": {
+    "tags": ["Checkout Sessions"],
+    "description": "Extend a subscription for a specific user and product",
+    "operationId": "extendSubscription",
+    "parameters": [
+      {
+        "name": "checkoutSessionId",
+        "in": "path",
+        "description": "ID of the checkout session (product)",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "properties": {
+              "user_id": {
+                "description": "ID of the user whose subscription to extend",
+                "type": "string"
+              },
+              "duration_days": {
+                "description": "Number of days to extend the subscription",
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "type": "object"
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Subscription extended successfully"
+                },
+                "data": {
+                  "properties": {
+                    "subscription_id": {
+                      "type": "string"
+                    },
+                    "user_id": {
+                      "type": "string"
+                    },
+                    "product_id": {
+                      "type": "string"
+                    },
+                    "new_completion_date": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "extended_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Unauthorized"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Checkout session or active subscription not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Failed to extend subscription"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "method": "post",
+    "path": "/checkout-sessions/{checkoutSessionId}/extend-subscription",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "jsonRequestBodyExample": {
+      "user_id": "string",
+      "duration_days": 0
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Extend subscription",
+      "description": {
+        "content": "Extend a subscription for a specific user and product",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["checkout-sessions", ":checkoutSessionId", "extend-subscription"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the checkout session (product)",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "checkoutSessionId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "POST",
+      "body": {
+        "mode": "raw",
+        "raw": "",
+        "options": {
+          "raw": {
+            "language": "json"
+          }
+        }
+      },
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "get-checkout-session": {
+    "tags": ["Checkout Sessions"],
+    "description": "Get a checkout session by ID",
+    "operationId": "getCheckoutSession",
+    "parameters": [
+      {
+        "name": "checkoutSessionId",
+        "in": "path",
+        "description": "ID of the checkout session to retrieve",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Checkout session retrieved successfully"
+                },
+                "data": {
+                  "properties": {
+                    "product": {
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "amount_cents": {
+                      "type": "integer"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["subscription", "onetime_reusable", "onetime_non_reusable"]
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "expiration_date": {
+                      "nullable": true,
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "subscription": {
+                      "nullable": true,
+                      "properties": {
+                        "frequency_days": {
+                          "type": "integer"
+                        },
+                        "auto_expire_after_x_periods": {
+                          "nullable": true,
+                          "type": "integer"
+                        },
+                        "free_trial_days": {
+                          "nullable": true,
+                          "type": "integer"
+                        },
+                        "initial_fee": {
+                          "nullable": true,
+                          "type": "number"
+                        },
+                        "initial_fee_days": {
+                          "nullable": true,
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success_url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "webhook_url": {
+                      "nullable": true,
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Unauthorized"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Checkout session not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst checkoutSession = await client.checkoutSessions.retrieve('checkoutSessionId');\n\nconsole.log(checkoutSession.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/checkout-sessions/{checkoutSessionId}",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Get a checkout session by ID",
+      "description": {
+        "content": "Get a checkout session by ID",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["checkout-sessions", ":checkoutSessionId"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the checkout session to retrieve",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "checkoutSessionId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "get-checkout-session-subscriptions": {
+    "tags": ["Checkout Sessions"],
+    "description": "Get subscriptions for a specific checkout session",
+    "operationId": "getCheckoutSessionSubscriptions",
+    "parameters": [
+      {
+        "name": "checkoutSessionId",
+        "in": "path",
+        "description": "ID of the checkout session to get subscriptions for",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "page",
+        "in": "query",
+        "description": "Page number for pagination",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      {
+        "name": "per_page",
+        "in": "query",
+        "description": "Number of items per page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "maximum": 100,
+          "minimum": 1
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Subscriptions retrieved successfully"
+                },
+                "data": {
+                  "properties": {
+                    "subscriptions": {
+                      "type": "array",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "first_name": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "last_name": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "email": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "phone": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "country_code": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "subscription_status": {
+                            "type": "string"
+                          },
+                          "next_renewal_date": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "pagination": {
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "total_pages": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "total_items": {
+                          "type": "integer"
+                        },
+                        "has_more": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Unauthorized"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Checkout session not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Failed to retrieve subscriptions"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.checkoutSessions.subscriptions.listForSession('checkoutSessionId');\n\nconsole.log(response.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/checkout-sessions/{checkoutSessionId}/subscriptions",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Get subscriptions for a specific checkout session",
+      "description": {
+        "content": "Get subscriptions for a specific checkout session",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["checkout-sessions", ":checkoutSessionId", "subscriptions"],
+        "host": ["{{baseUrl}}"],
+        "query": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "Page number for pagination",
+              "type": "text/plain"
+            },
+            "key": "page",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Number of items per page",
+              "type": "text/plain"
+            },
+            "key": "per_page",
+            "value": ""
+          }
+        ],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the checkout session to get subscriptions for",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "checkoutSessionId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "get-checkout-session-transactions": {
+    "tags": ["Checkout Sessions"],
+    "description": "Get transactions for a specific checkout session",
+    "operationId": "getCheckoutSessionTransactions",
+    "parameters": [
+      {
+        "name": "checkoutSessionId",
+        "in": "path",
+        "description": "ID of the checkout session to get transactions for",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "page",
+        "in": "query",
+        "description": "Page number for pagination",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      {
+        "name": "per_page",
+        "in": "query",
+        "description": "Number of items per page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "maximum": 100,
+          "minimum": 1
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Transactions retrieved successfully"
+                },
+                "data": {
+                  "properties": {
+                    "transactions": {
+                      "type": "array",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "fan": {
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "phone": {
+                                "type": "string"
+                              },
+                              "country_code": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "servicePayment": {
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "payment_type": {
+                                "type": "string"
+                              },
+                              "fund_release_on": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "fund_released": {
+                                "type": "boolean"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "subscriber": {
+                            "type": "object"
+                          },
+                          "service": {
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "price": {
+                                "type": "number"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "fee_amount": {
+                            "description": "The processing fee charged (in same currency as transaction)",
+                            "type": "number"
+                          },
+                          "net_amount": {
+                            "description": "Amount after fees (transaction amount - fee)",
+                            "type": "number"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "pagination": {
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "total_pages": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "total_items": {
+                          "type": "integer"
+                        },
+                        "has_more": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Unauthorized"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Checkout session not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Failed to retrieve transactions"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.checkoutSessions.transactions.listForSession('checkoutSessionId');\n\nconsole.log(response.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/checkout-sessions/{checkoutSessionId}/transactions",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Get transactions for a specific checkout session",
+      "description": {
+        "content": "Get transactions for a specific checkout session",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["checkout-sessions", ":checkoutSessionId", "transactions"],
+        "host": ["{{baseUrl}}"],
+        "query": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "Page number for pagination",
+              "type": "text/plain"
+            },
+            "key": "page",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Number of items per page",
+              "type": "text/plain"
+            },
+            "key": "per_page",
+            "value": ""
+          }
+        ],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the checkout session to get transactions for",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "checkoutSessionId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "get-customer-payment-methods": {
+    "tags": ["Customers"],
+    "description": "Get saved payment methods for a customer",
+    "operationId": "getCustomerPaymentMethods",
+    "parameters": [
+      {
+        "name": "customerId",
+        "in": "path",
+        "description": "ID of the customer",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Payment methods retrieved successfully"
+                },
+                "data": {
+                  "properties": {
+                    "customer": {
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "payment_methods": {
+                      "type": "array",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "last4": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "brand": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "exp_month": {
+                            "nullable": true,
+                            "type": "integer"
+                          },
+                          "exp_year": {
+                            "nullable": true,
+                            "type": "integer"
+                          },
+                          "is_default": {
+                            "nullable": true,
+                            "type": "boolean"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Customer not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Customer not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.customers.retrievePaymentMethods('customerId');\n\nconsole.log(response.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/customers/{customerId}/payment-methods",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Get customer payment methods",
+      "description": {
+        "content": "Get saved payment methods for a customer",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["customers", ":customerId", "payment-methods"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the customer",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "customerId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "get-customers": {
+    "tags": ["Customers"],
+    "description": "Get unique customers for a creator",
+    "operationId": "getCustomers",
+    "parameters": [
+      {
+        "name": "page",
+        "in": "query",
+        "description": "Page number for pagination",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      {
+        "name": "per_page",
+        "in": "query",
+        "description": "Number of items per page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "maximum": 100,
+          "minimum": 1
+        }
+      },
+      {
+        "name": "search",
+        "in": "query",
+        "description": "Search term to filter customers by email, name, or phone",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Customers retrieved successfully"
+                },
+                "data": {
+                  "properties": {
+                    "customers": {
+                      "type": "array",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "phone": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "country_code": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "total_transactions": {
+                            "type": "integer"
+                          },
+                          "total_spent": {
+                            "type": "number"
+                          },
+                          "last_transaction_date": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "pagination": {
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "total_pages": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "total_items": {
+                          "type": "integer"
+                        },
+                        "has_more": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst customers = await client.customers.list();\n\nconsole.log(customers.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/customers",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Get unique customers",
+      "description": {
+        "content": "Get unique customers for a creator",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["customers"],
+        "host": ["{{baseUrl}}"],
+        "query": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "Page number for pagination",
+              "type": "text/plain"
+            },
+            "key": "page",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Number of items per page",
+              "type": "text/plain"
+            },
+            "key": "per_page",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Search term to filter customers by email, name, or phone",
+              "type": "text/plain"
+            },
+            "key": "search",
+            "value": ""
+          }
+        ],
+        "variable": []
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "get-discount-code": {
+    "tags": ["Discount Codes"],
+    "description": "Get a specific discount code",
+    "operationId": "getDiscountCode",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "ID of the discount code",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Discount code retrieved successfully"
+                },
+                "data": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst discountCode = await client.discountCodes.get('id');\n\nconsole.log(discountCode.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/discount-codes/{id}",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Get a discount code",
+      "description": {
+        "content": "Get a specific discount code",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["discount-codes", ":id"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the discount code",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "id"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "get-product-subscriptions": {
+    "tags": ["Checkout Sessions"],
+    "description": "Get subscriptions for a specific product",
+    "operationId": "getProductSubscriptions",
+    "parameters": [
+      {
+        "name": "productId",
+        "in": "path",
+        "description": "ID of the product to get subscriptions for",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "product_id",
+        "in": "query",
+        "description": "Alternative way to specify the product ID",
+        "required": false,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      {
+        "name": "page",
+        "in": "query",
+        "description": "Page number for pagination",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      {
+        "name": "per_page",
+        "in": "query",
+        "description": "Number of items per page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "maximum": 100,
+          "minimum": 1
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Subscriptions retrieved successfully"
+                },
+                "data": {
+                  "properties": {
+                    "subscriptions": {
+                      "type": "array",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "first_name": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "last_name": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "email": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "phone": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "country_code": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "subscription_status": {
+                            "type": "string"
+                          },
+                          "next_renewal_date": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "pagination": {
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "total_pages": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "total_items": {
+                          "type": "integer"
+                        },
+                        "has_more": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Failed to retrieve subscriptions"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.checkoutSessions.getSubscriptions('productId');\n\nconsole.log(response.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/checkout-sessions/{productId}/subscriptions",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Get subscriptions for a specific product",
+      "description": {
+        "content": "Get subscriptions for a specific product",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["checkout-sessions", ":productId", "subscriptions"],
+        "host": ["{{baseUrl}}"],
+        "query": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "Alternative way to specify the product ID",
+              "type": "text/plain"
+            },
+            "key": "product_id",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Page number for pagination",
+              "type": "text/plain"
+            },
+            "key": "page",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Number of items per page",
+              "type": "text/plain"
+            },
+            "key": "per_page",
+            "value": ""
+          }
+        ],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the product to get subscriptions for",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "productId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "get-subscribers": {
+    "tags": ["Subscribers"],
+    "description": "Get all subscribers for a creator with optional filtering",
+    "operationId": "getSubscribers",
+    "parameters": [
+      {
+        "name": "customer_id",
+        "in": "query",
+        "description": "Filter by customer ID",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "product_id",
+        "in": "query",
+        "description": "Filter by product ID",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "page",
+        "in": "query",
+        "description": "Page number for pagination",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      {
+        "name": "per_page",
+        "in": "query",
+        "description": "Number of items per page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "maximum": 100,
+          "minimum": 1
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Subscribers retrieved successfully"
+                },
+                "data": {
+                  "properties": {
+                    "subscribers": {
+                      "type": "array",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "customer": {
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "phone": {
+                                "type": "string"
+                              },
+                              "country_code": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "product": {
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "price": {
+                                "type": "number"
+                              },
+                              "payment_link": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "subscription": {
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string"
+                              },
+                              "service_type": {
+                                "type": "string"
+                              },
+                              "payment_frequency": {
+                                "type": "integer"
+                              },
+                              "completion_date": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "cancelled_at": {
+                                "nullable": true,
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "auto_renew_count": {
+                                "type": "integer"
+                              },
+                              "charge_consent": {
+                                "type": "boolean"
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "updated_at": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "pagination": {
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "total_pages": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "total_items": {
+                          "type": "integer"
+                        },
+                        "has_more": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Failed to retrieve subscribers"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst subscribers = await client.subscribers.list();\n\nconsole.log(subscribers.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/subscribers",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Get all subscribers",
+      "description": {
+        "content": "Get all subscribers for a creator with optional filtering",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["subscribers"],
+        "host": ["{{baseUrl}}"],
+        "query": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "Filter by customer ID",
+              "type": "text/plain"
+            },
+            "key": "customer_id",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Filter by product ID",
+              "type": "text/plain"
+            },
+            "key": "product_id",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Page number for pagination",
+              "type": "text/plain"
+            },
+            "key": "page",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Number of items per page",
+              "type": "text/plain"
+            },
+            "key": "per_page",
+            "value": ""
+          }
+        ],
+        "variable": []
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "get-transaction": {
+    "tags": ["Transactions"],
+    "description": "Get a single transaction by ID",
+    "operationId": "getTransaction",
+    "parameters": [
+      {
+        "name": "transactionId",
+        "in": "path",
+        "description": "ID of the transaction to retrieve (can be hashid or numeric)",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Transaction retrieved successfully"
+                },
+                "data": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "transaction_date": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "fan": {
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "country_code": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "servicePayment": {
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "payment_type": {
+                          "type": "string"
+                        },
+                        "fund_release_on": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "fund_released": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "service": {
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "price": {
+                          "type": "number"
+                        },
+                        "payment_link": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "product": {
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "price": {
+                          "type": "number"
+                        },
+                        "payment_link": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "refunds": {
+                      "type": "array",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "payment_id": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "fee_amount": {
+                      "description": "The processing fee charged (in same currency as transaction)",
+                      "type": "number"
+                    },
+                    "net_amount": {
+                      "description": "Amount after fees (transaction amount - fee)",
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Unauthorized - Transaction does not belong to this creator"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Transaction Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Transaction not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Failed to retrieve transaction"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst transaction = await client.transactions.get('transactionId');\n\nconsole.log(transaction.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/transactions/{transactionId}",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Get a single transaction by ID",
+      "description": {
+        "content": "Get a single transaction by ID",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["transactions", ":transactionId"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the transaction to retrieve (can be hashid or numeric)",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "transactionId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "get-transactions": {
+    "tags": ["Checkout Sessions"],
+    "description": "Get all transactions for a creator with product filter",
+    "operationId": "getTransactions",
+    "parameters": [
+      {
+        "name": "product_id",
+        "in": "query",
+        "description": "ID of the product to get transactions for",
+        "required": false,
+        "schema": {
+          "type": ["integer", "string"]
+        }
+      },
+      {
+        "name": "customer_id",
+        "in": "query",
+        "description": "ID of the customer to get transactions for",
+        "required": false,
+        "schema": {
+          "type": ["integer", "string"]
+        }
+      },
+      {
+        "name": "page",
+        "in": "query",
+        "description": "Page number for pagination",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      {
+        "name": "per_page",
+        "in": "query",
+        "description": "Number of items per page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "maximum": 100,
+          "minimum": 1
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Transactions retrieved successfully"
+                },
+                "data": {
+                  "properties": {
+                    "transactions": {
+                      "type": "array",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "fan": {
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "phone": {
+                                "type": "string"
+                              },
+                              "country_code": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "servicePayment": {
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "payment_type": {
+                                "type": "string"
+                              },
+                              "fund_release_on": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "fund_released": {
+                                "type": "boolean"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "subscriber": {
+                            "type": "object"
+                          },
+                          "service": {
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "price": {
+                                "type": "number"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "fee_amount": {
+                            "description": "The processing fee charged (in same currency as transaction)",
+                            "type": "number"
+                          },
+                          "net_amount": {
+                            "description": "Amount after fees (transaction amount - fee)",
+                            "type": "number"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "pagination": {
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "total_pages": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "total_items": {
+                          "type": "integer"
+                        },
+                        "has_more": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Failed to retrieve transactions"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst transactions = await client.checkoutSessions.transactions.list();\n\nconsole.log(transactions.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/checkout-sessions/transactions",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Get all transactions for a creator with product filter",
+      "description": {
+        "content": "Get all transactions for a creator with product filter",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["checkout-sessions", "transactions"],
+        "host": ["{{baseUrl}}"],
+        "query": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "ID of the product to get transactions for",
+              "type": "text/plain"
+            },
+            "key": "product_id",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "ID of the customer to get transactions for",
+              "type": "text/plain"
+            },
+            "key": "customer_id",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Page number for pagination",
+              "type": "text/plain"
+            },
+            "key": "page",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Number of items per page",
+              "type": "text/plain"
+            },
+            "key": "per_page",
+            "value": ""
+          }
+        ],
+        "variable": []
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "get-webhook-subscriptions": {
+    "tags": ["Webhook Subscriptions"],
+    "description": "Get all webhook subscriptions for the authenticated user",
+    "operationId": "getWebhookSubscriptions",
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Webhook subscriptions retrieved successfully"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "webhook_url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "event_types": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "is_active": {
+                        "type": "boolean"
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    },
+                    "type": "object"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst webhookSubscriptions = await client.webhookSubscriptions.list();\n\nconsole.log(webhookSubscriptions.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/webhook-subscriptions",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Get all webhook subscriptions",
+      "description": {
+        "content": "Get all webhook subscriptions for the authenticated user",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["webhook-subscriptions"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": []
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "list-discount-codes": {
+    "tags": ["Discount Codes"],
+    "description": "List discount codes with pagination and search",
+    "operationId": "listDiscountCodes",
+    "parameters": [
+      {
+        "name": "search",
+        "in": "query",
+        "description": "Search term",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "per_page",
+        "in": "query",
+        "description": "Number of items per page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "maximum": 100,
+          "minimum": 1
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Discount codes retrieved successfully"
+                },
+                "data": {
+                  "properties": {
+                    "current_page": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst discountCodes = await client.discountCodes.list();\n\nconsole.log(discountCodes.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/discount-codes",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "List discount codes",
+      "description": {
+        "content": "List discount codes with pagination and search",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["discount-codes"],
+        "host": ["{{baseUrl}}"],
+        "query": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "Search term",
+              "type": "text/plain"
+            },
+            "key": "search",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Number of items per page",
+              "type": "text/plain"
+            },
+            "key": "per_page",
+            "value": ""
+          }
+        ],
+        "variable": []
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "list-products": {
+    "tags": ["Products"],
+    "description": "List all products for a creator",
+    "operationId": "listProducts",
+    "parameters": [
+      {
+        "name": "page",
+        "in": "query",
+        "description": "Page number for pagination",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      {
+        "name": "per_page",
+        "in": "query",
+        "description": "Number of items per page",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "maximum": 100,
+          "minimum": 1
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Products retrieved successfully"
+                },
+                "data": {
+                  "properties": {
+                    "current_page": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "internal_name": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "description": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "price": {
+                            "type": "number"
+                          },
+                          "payment_link": {
+                            "type": "string",
+                            "format": "uri"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "first_page_url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "from": {
+                      "type": "integer"
+                    },
+                    "last_page": {
+                      "type": "integer"
+                    },
+                    "last_page_url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "next_page_url": {
+                      "nullable": true,
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "path": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "per_page": {
+                      "type": "integer"
+                    },
+                    "prev_page_url": {
+                      "nullable": true,
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "to": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Failed to retrieve products"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst products = await client.products.list();\n\nconsole.log(products.data);"
+      }
+    ],
+    "method": "get",
+    "path": "/products",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "List products",
+      "description": {
+        "content": "List all products for a creator",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["products"],
+        "host": ["{{baseUrl}}"],
+        "query": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "Page number for pagination",
+              "type": "text/plain"
+            },
+            "key": "page",
+            "value": ""
+          },
+          {
+            "disabled": false,
+            "description": {
+              "content": "Number of items per page",
+              "type": "text/plain"
+            },
+            "key": "per_page",
+            "value": ""
+          }
+        ],
+        "variable": []
+      },
+      "header": [
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "GET",
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "refund-transaction": {
+    "tags": ["Checkout Sessions"],
+    "description": "Refund a transaction",
+    "operationId": "refundTransaction",
+    "parameters": [
+      {
+        "name": "transactionId",
+        "in": "path",
+        "description": "ID of the transaction to refund (can be hashid or payment_id)",
+        "required": true,
+        "schema": {
+          "type": ["string", "integer"]
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "properties": {
+              "amount_cents": {
+                "description": "Amount in cents to refund",
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "type": "object"
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Transaction refunded successfully"
+                },
+                "data": {
+                  "properties": {
+                    "refund_id": {
+                      "type": "string",
+                      "example": "re_1234567890"
+                    },
+                    "transaction_id": {
+                      "type": "string",
+                      "example": "abc123"
+                    },
+                    "refund_amount": {
+                      "type": "number",
+                      "format": "float",
+                      "example": 50
+                    },
+                    "refund_amount_cents": {
+                      "type": "integer",
+                      "example": 5000
+                    },
+                    "refund_type": {
+                      "type": "string",
+                      "enum": ["full", "partial"],
+                      "example": "partial"
+                    },
+                    "refund_cost": {
+                      "type": "number",
+                      "format": "float",
+                      "example": 52.5
+                    },
+                    "proportional_fee": {
+                      "type": "number",
+                      "format": "float",
+                      "example": 2.5
+                    },
+                    "creator_amount_deduction": {
+                      "type": "number",
+                      "format": "float",
+                      "example": 50
+                    }
+                  },
+                  "type": "object"
+                },
+                "request_id": {
+                  "type": "string",
+                  "example": "req_1234567890"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error or Refund Failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Refund amount exceeds remaining refundable amount"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "nullable": true,
+                  "type": "object"
+                },
+                "error": {
+                  "nullable": true,
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string",
+                  "example": "req_1234567890"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Unauthorized - Transaction does not belong to this creator"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "request_id": {
+                  "type": "string",
+                  "example": "req_1234567890"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Your account is not approved by the FanBasis admin. Please contact support."
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "request_id": {
+                  "type": "string",
+                  "example": "req_1234567890"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Transaction Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Transaction not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "request_id": {
+                  "type": "string",
+                  "example": "req_1234567890"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Failed to refund transaction"
+                },
+                "error": {
+                  "type": "string",
+                  "example": "Internal server error"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "request_id": {
+                  "type": "string",
+                  "example": "req_1234567890"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.checkoutSessions.transactions.refund('string');\n\nconsole.log(response.request_id);"
+      }
+    ],
+    "method": "post",
+    "path": "/checkout-sessions/transactions/{transactionId}/refund",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "jsonRequestBodyExample": {
+      "amount_cents": 0
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Refund a transaction",
+      "description": {
+        "content": "Refund a transaction",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["checkout-sessions", "transactions", ":transactionId", "refund"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the transaction to refund (can be hashid or payment_id)",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "transactionId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "POST",
+      "body": {
+        "mode": "raw",
+        "raw": "",
+        "options": {
+          "raw": {
+            "language": "json"
+          }
+        }
+      },
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "test-subscription": {
+    "tags": ["Webhook Subscriptions"],
+    "description": "Test a webhook subscription by sending a test event",
+    "operationId": "testSubscription",
+    "parameters": [
+      {
+        "name": "webhookSubscriptionId",
+        "in": "path",
+        "description": "ID of the webhook subscription to test",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "properties": {
+              "event_type": {
+                "description": "Type of event to test. Available: payment.succeeded, payment.failed, payment.expired, payment.canceled, product.purchased, subscription.created, subscription.renewed, subscription.completed, subscription.canceled",
+                "type": "string",
+                "enum": [
+                  "payment.succeeded",
+                  "payment.failed",
+                  "payment.expired",
+                  "payment.canceled",
+                  "product.purchased",
+                  "subscription.created",
+                  "subscription.renewed",
+                  "subscription.completed",
+                  "subscription.canceled"
+                ]
+              }
+            },
+            "type": "object"
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Test event sent successfully"
+                },
+                "data": {
+                  "properties": {
+                    "event_sent": {
+                      "type": "boolean"
+                    },
+                    "response_status": {
+                      "type": "integer"
+                    },
+                    "response_body": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Webhook subscription not found"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.webhookSubscriptions.test('webhookSubscriptionId');\n\nconsole.log(response.data);"
+      }
+    ],
+    "method": "post",
+    "path": "/webhook-subscriptions/{webhookSubscriptionId}/test",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "jsonRequestBodyExample": {
+      "event_type": "payment.succeeded"
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Test webhook subscription",
+      "description": {
+        "content": "Test a webhook subscription by sending a test event",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["webhook-subscriptions", ":webhookSubscriptionId", "test"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the webhook subscription to test",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "webhookSubscriptionId"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "POST",
+      "body": {
+        "mode": "raw",
+        "raw": "",
+        "options": {
+          "raw": {
+            "language": "json"
+          }
+        }
+      },
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  },
+  "update-discount-code": {
+    "tags": ["Discount Codes"],
+    "description": "Update an existing discount code",
+    "operationId": "updateDiscountCode",
+    "parameters": [
+      {
+        "name": "id",
+        "in": "path",
+        "description": "ID of the discount code",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "required": ["code", "discount_type", "value", "duration", "service_ids"],
+            "properties": {
+              "code": {
+                "type": "string",
+                "maxLength": 45
+              },
+              "description": {
+                "nullable": true,
+                "type": "string"
+              },
+              "discount_type": {
+                "type": "string",
+                "enum": ["cash", "percentage"]
+              },
+              "value": {
+                "type": "number"
+              },
+              "duration": {
+                "type": "string",
+                "enum": ["once", "forever", "multiple_months"]
+              },
+              "expiry": {
+                "nullable": true,
+                "type": "string",
+                "format": "date"
+              },
+              "expiry_time": {
+                "nullable": true,
+                "type": "string",
+                "format": "H:i"
+              },
+              "limited_redemptions": {
+                "nullable": true,
+                "type": "boolean"
+              },
+              "usable_number": {
+                "nullable": true,
+                "type": "integer"
+              },
+              "no_of_months": {
+                "nullable": true,
+                "type": "integer"
+              },
+              "one_time": {
+                "nullable": true,
+                "type": "boolean"
+              },
+              "service_ids": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Discount code updated successfully"
+                },
+                "data": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "Validation Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Validation failed"
+                },
+                "errors": {
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "security": [
+      {
+        "x-api-key": []
+      }
+    ],
+    "x-codeSamples": [
+      {
+        "lang": "JavaScript",
+        "source": "import FanbasisCheckout from '@fanbasis/checkout-sdk';\n\nconst client = new FanbasisCheckout({\n  apiKey: process.env['FANBASIS_CHECKOUT_API_KEY'], // This is the default and can be omitted\n});\n\nconst discountCode = await client.discountCodes.update('id', {\n  code: 'code',\n  discount_type: 'cash',\n  duration: 'once',\n  service_ids: [0],\n  value: 0,\n});\n\nconsole.log(discountCode.data);"
+      }
+    ],
+    "method": "put",
+    "path": "/discount-codes/{id}",
+    "servers": [
+      {
+        "url": "https://www.fanbasis.com/public-api"
+      }
+    ],
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    },
+    "jsonRequestBodyExample": {
+      "code": "string",
+      "description": "string",
+      "discount_type": "cash",
+      "value": 0,
+      "duration": "once",
+      "expiry": "2024-07-29",
+      "expiry_time": "string",
+      "limited_redemptions": true,
+      "usable_number": 0,
+      "no_of_months": 0,
+      "one_time": true,
+      "service_ids": [0]
+    },
+    "info": {
+      "title": "Fanbasis API",
+      "version": "1.0.0"
+    },
+    "postman": {
+      "name": "Update a discount code",
+      "description": {
+        "content": "Update an existing discount code",
+        "type": "text/plain"
+      },
+      "url": {
+        "path": ["discount-codes", ":id"],
+        "host": ["{{baseUrl}}"],
+        "query": [],
+        "variable": [
+          {
+            "disabled": false,
+            "description": {
+              "content": "(Required) ID of the discount code",
+              "type": "text/plain"
+            },
+            "type": "any",
+            "value": "",
+            "key": "id"
+          }
+        ]
+      },
+      "header": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "method": "PUT",
+      "body": {
+        "mode": "raw",
+        "raw": "",
+        "options": {
+          "raw": {
+            "language": "json"
+          }
+        }
+      },
+      "auth": {
+        "type": "apikey",
+        "apikey": [
+          {
+            "type": "any",
+            "value": "x-api-key",
+            "key": "key"
+          },
+          {
+            "type": "any",
+            "value": "{{apiKey}}",
+            "key": "value"
+          },
+          {
+            "type": "any",
+            "value": "header",
+            "key": "in"
+          }
+        ]
+      }
+    }
+  }
+}

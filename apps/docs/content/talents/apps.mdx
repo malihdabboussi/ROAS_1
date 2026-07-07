@@ -1,0 +1,89 @@
+---
+title: "Apps"
+description: "Build full web applications with a developer agent - describe what you need, iterate in real time, and publish to a live URL."
+---
+
+## What You Get
+
+Vibey can build entire web applications. Describe what you need, and Viktor (your developer agent) writes the code, installs dependencies, starts the dev server, and gives you a live preview - all inside the platform.
+
+Apps run on a dedicated cloud VM. You don't need a local development environment.
+
+## How It Works
+
+<Steps>
+  <Step title="Create or import a project">
+    Start a new project from scratch, or import an existing GitHub repository by selecting a repo and branch.
+  </Step>
+  <Step title="Describe what you want">
+    Chat with Viktor. Tell him what to build: "A dashboard that shows my campaign leads over time" or "A client portal with login and reporting." Viktor writes the code and the live preview updates instantly.
+  </Step>
+  <Step title="Iterate in real time">
+    Every file change hot-reloads in the preview panel. Ask Viktor to adjust layouts, add features, fix bugs, or change styling. If the app hits an error, click **Ask Viktor to fix it** and he reads the logs and patches it.
+  </Step>
+  <Step title="Publish">
+    When the app is running and ready, click **Publish** to get a live URL you can share.
+  </Step>
+</Steps>
+
+## Project Sources
+
+| Source | How it works |
+|---|---|
+| **From scratch** | Viktor scaffolds a new Next.js App Router project and starts building |
+| **GitHub import** | Select a repository from your connected GitHub account, pick a branch, and import it into Projects |
+
+## Deploy Lifecycle
+
+Every project goes through a deploy lifecycle:
+
+| Status | Meaning |
+|---|---|
+| **Ready** | Project created, waiting for you to start building |
+| **Syncing** | Files being synced to the VM |
+| **Installing** | Running `npm install` for dependencies |
+| **Starting** | Dev server spinning up |
+| **Running** | App is live in the preview - you can interact with it |
+| **Stopped** | App is paused - send a message to restart |
+| **Error** | Something went wrong - Viktor can diagnose and fix it |
+
+## The Vibey SDK
+
+Apps built in Projects have access to `@vibey/sdk`, which connects to your real platform data:
+
+- **Team** - List and call your agents from server-side code
+- **Integrations** - Access connected platforms (YouTube, Instagram, Meta, Stripe, etc.)
+- **Campaigns** - Read campaign data, deliverables, and artifacts
+- **Brain** - Query your knowledge base
+- **Contacts** - Access your CRM data
+
+The SDK authenticates automatically. No API keys to configure.
+
+## Calling Agents from Apps
+
+Your app can call any team member agent for AI tasks:
+
+```typescript
+import { vibey } from '@vibey/sdk'
+
+const result = await vibey.agent('rex').ask('Analyze this data', { data })
+```
+
+Pick the right agent for the task: Rex for code, Sage for strategy, Aria for copy. Agent calls run server-side only.
+
+## Publishing
+
+Once your app is running, click **Publish** in the toolbar to deploy it to a live URL. You can unpublish at any time. The publish button is only available when the app status is **Running**.
+
+## What You Can Build
+
+- Custom dashboards pulling from your integrations and CRM
+- Client-facing portals and reporting tools
+- Internal tools that use your agent team for AI tasks
+- Landing pages and microsites beyond what funnels offer
+- Data visualizations from your campaign analytics
+- Any web application you can describe
+
+<Callout type="tip">
+  Apps have access to your real data through the Vibey SDK. Don't use mock data - tell Viktor to use the SDK, and your app connects to your actual accounts, campaigns, and contacts.
+</Callout>

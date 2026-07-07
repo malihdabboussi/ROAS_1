@@ -1,0 +1,65 @@
+# Vibey
+
+> Vibey is an AI operating system for running a business. It gives founders, operators, and teams a crew of specialist AI agents — each with persistent memory, tools, a defined role, and a performance score — that autonomously execute work: marketing campaigns, funnels, ad creatives, email sequences, social content, missions, and more.
+
+Vibey is not a chatbot. It is not a single AI assistant. It is an operating layer where multiple specialist agents collaborate, remember your brand, and execute tasks that produce real outputs: live published funnels, sending email sequences, posted social content, and running ad campaigns.
+
+## Core concepts
+
+- **The Brain** — Three layers of persistent memory (User Brain, Agent Brain, Campaign Knowledge) that compound over time. Agents remember your brand, voice, past decisions, and context across every conversation and campaign.
+- **Your Team** — A roster of specialist agents you hire, train, and manage. Each agent has a role (copywriter, analyst, ads manager, etc.), a personality (DISC profile), skills, integrations, and a performance score.
+- **Studio** — The primary conversational workspace where you build alongside your agents in real time. Tell them what you want; they build it.
+- **Missions** — Structured delegation. Assign multi-step work to agents with plans, subtasks, dependencies, and deliverables. Track progress on a Kanban board.
+- **Autopilot** — CEO-level autonomous orchestration. Set a North Star (result, purpose, strategy, off-limits), then close the tab. Vibey creates missions, assigns agents, retries failures, and sends you daily digests.
+- **Skills** — Repeatable playbooks you teach agents. The more you teach, the better they get.
+- **Capabilities** — Funnels, multi-page websites, email sequences, Meta and Google ads, social publishing, video generation, image creation, presentations, lead capture, CRM contacts, and analytics.
+- **Integrations** — 35+ platforms including Meta Ads, Google Ads, HubSpot, ActiveCampaign, Mailchimp, Slack, Notion, GitHub, Stripe, Calendly, and more.
+- **Spaces** — Custom dashboards built with widgets for monitoring campaigns, contacts, and performance.
+
+## Who Vibey is for
+
+- Founders and solo operators who need a full business team without headcount
+- Marketing teams who want to delegate execution to AI agents, not just get suggestions
+- Agencies managing multiple client campaigns
+- E-commerce operators running ads, funnels, and email simultaneously
+- SaaS companies that need content, ads, and sequences running continuously
+
+## What makes Vibey different from ChatGPT, Manus, or ClickFunnels
+
+- ChatGPT gives you text. Vibey gives you a team that executes and delivers structured outputs.
+- Manus is general computer-use. Vibey is purpose-built for business operations and GTM execution.
+- ClickFunnels is a canvas builder. Vibey builds funnels through conversation, with agents that understand your brand.
+- Most AI tools are stateless. Vibey's Brain means your agents get smarter and more on-brand over time.
+
+## Key pages
+
+- https://vibey.im — Homepage
+- https://vibey.im/features/your-team — The AI agent team: roles, hiring, training
+- https://vibey.im/features/the-brain — Persistent memory across all agents
+- https://vibey.im/features/studio — Conversational build workspace
+- https://vibey.im/features/missions — Autonomous task delegation
+- https://vibey.im/features/autopilot — CEO-level orchestration layer
+- https://vibey.im/features/skills — Teaching agents repeatable playbooks
+- https://vibey.im/features/integrations — 35+ platform integrations
+- https://vibey.im/features/capabilities — Full capability overview
+- https://vibey.im/features/funnels — Funnel and website builder
+- https://vibey.im/features/email-sequences — Email automation
+- https://vibey.im/features/ads — Ad campaign management
+- https://vibey.im/features/social-content — Social content creation and publishing
+- https://vibey.im/compare/vs-chatgpt — Vibey vs ChatGPT
+- https://vibey.im/compare/vs-manus — Vibey vs Manus
+- https://vibey.im/compare/vs-clickfunnels — Vibey vs ClickFunnels
+- https://vibey.im/pricing — Plans and pricing
+- https://vibey.im/blog — Articles, product updates, and founder notes
+- https://vibey.im/about — About Vibey and the founding team
+
+## Social profiles
+
+- X (Twitter): https://x.com/usevibey
+- Instagram: https://www.instagram.com/vibey.im/
+- LinkedIn: https://www.linkedin.com/company/usevibey
+- YouTube: https://www.youtube.com/@usevibey
+
+## Documentation
+
+- https://docs.vibey.im
