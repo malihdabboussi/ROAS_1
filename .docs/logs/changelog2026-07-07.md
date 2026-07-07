@@ -139,3 +139,10 @@ What: Parallel ROAS deploy prep while Vercel builds: fixed funnels Supabase imag
 Why: Unblock Fly/Railway/smoke work without Cowork relay; funnels still pointed at Vibey prod storage host.
 Impact: Fly deploy can run via `bash scripts/roas/deploy-fly-runtimes.sh`; post-Vercel checks via `bash scripts/roas/smoke-deploy.sh`; Railway manual paste documented in deploy script.
 Files: `apps/funnels/next.config.ts`, `docker/fly.roas.runtime.toml`, `scripts/roas/smoke-deploy.sh`, `scripts/roas/apply-fly-secrets.sh`, `scripts/roas/deploy-fly-runtimes.sh`, `scripts/roas/deploy-railway-workers.sh`
+
+## [2026-07-07 11:45] - [DOCS]
+
+What: Expanded section 10 in `roas-secrets.env.template` as a Railway Raw Editor paste block (where/how, both workers, REDIS internal vs public). Sync script now emits `REDIS_URL=${{Redis.REDIS_URL}}` for section 10 instead of copying the literal internal URL from section 4.
+Why: Dylan/Cowork needed an exact paste target for Railway workers without mixing Vercel public Redis.
+Impact: Open `roas-secrets.env` section 10 → copy KEY=VALUE lines → paste into mission-worker + queue-worker Raw Editor.
+Files: `scripts/roas/roas-secrets.env.template`, `scripts/roas/sync-roas-secrets-sections.py`
