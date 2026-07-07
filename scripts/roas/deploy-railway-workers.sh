@@ -29,7 +29,7 @@ if [[ -z "${RAILWAY_TOKEN}" ]]; then
   echo "RAILWAY_TOKEN not in ${ENV_FILE} — manual steps:"
   echo "  1. Railway dashboard → project ${PROJECT_NAME}"
   echo "  2. New Service → GitHub repo dylanvanas1/roas-platform"
-  echo "  3. mission-worker: root apps/mission-worker, Dockerfile apps/mission-worker/Dockerfile"
+  echo "  3. mission-worker (roas-platform): root EMPTY (repo root — needs packages/*), config /apps/mission-worker/railway.json, RAILPACK"
   echo "  4. queue-worker: root apps/queue-worker, builder RAILPACK (see apps/queue-worker/railway.json)"
   echo "  5. Paste section 10 vars into both services (REDIS_URL = internal Railway reference)"
   exit 0

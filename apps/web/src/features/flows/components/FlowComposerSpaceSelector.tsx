@@ -31,11 +31,6 @@ type SpaceGroup = {
   spaces: FlowSpaceNavItem[]
 }
 
-function campaignIconColor(campaign: Campaign) {
-  const raw = (campaign.config as Record<string, unknown> | undefined)?.icon_color
-  return typeof raw === 'string' ? getIconColor(raw) : getIconColor(undefined)
-}
-
 function SpaceRowIcon({ space }: { space: FlowSpaceNavItem }) {
   const iconName = space.schema?.icon ?? 'layout-grid'
   const color = getIconColor(space.schema?.icon_color)
@@ -63,7 +58,10 @@ function SpaceGroupSection({
         className="typo-xs text-muted-foreground hover:bg-hover-subtle gap-spacing-1 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center font-medium tracking-wide transition-colors"
       >
         <ChevronRight
-          className={cn('icon-xs shrink-0 transition-transform duration-150', expanded && 'rotate-90')}
+          className={cn(
+            'icon-xs shrink-0 transition-transform duration-150',
+            expanded && 'rotate-90',
+          )}
         />
         <LucideIcon
           name={group.iconName}
@@ -265,7 +263,7 @@ export function FlowComposerSpaceSelector({
           setOpen((value) => !value)
         }}
         className={cn(
-          'hover:bg-hover-subtle gap-spacing-1 rounded-spacing-2 px-spacing-1 py-spacing-0-5 inline-flex max-w-full min-w-0 items-center transition-colors',
+          'hover:bg-hover-subtle gap-spacing-1 rounded-spacing-2 px-spacing-1 py-spacing-0-5 inline-flex min-w-0 max-w-full items-center transition-colors',
           conceptSpaceLoading && 'opacity-60',
         )}
       >
@@ -286,7 +284,7 @@ export function FlowComposerSpaceSelector({
               {...{ [VIBEY_SPACE_FLOATING_CONTROL]: '' }}
               role="listbox"
               aria-label="Loop spaces"
-              className="dropdown-menu-solid z-dropdown fixed flex w-72 max-h-72 flex-col overflow-hidden rounded-xl"
+              className="dropdown-menu-solid z-dropdown fixed flex max-h-72 w-72 flex-col overflow-hidden rounded-xl"
               style={{ bottom: panelPos.bottom, left: panelPos.left }}
             >
               <div className="border-border gap-spacing-2 px-spacing-3 py-spacing-2 flex shrink-0 items-center border-b">
@@ -311,7 +309,7 @@ export function FlowComposerSpaceSelector({
                   </button>
                 ) : null}
               </div>
-              <div className="min-h-0 flex-1 overflow-y-auto px-spacing-1 py-spacing-2">
+              <div className="px-spacing-1 py-spacing-2 min-h-0 flex-1 overflow-y-auto">
                 {onSelectCreateAnything ? (
                   <>
                     <button
@@ -331,7 +329,9 @@ export function FlowComposerSpaceSelector({
                           {FLOWS_UI.createAnythingTooltip}
                         </span>
                       </span>
-                      {createAnythingMode ? <Check className="icon-xs text-primary shrink-0" /> : null}
+                      {createAnythingMode ? (
+                        <Check className="icon-xs text-primary shrink-0" />
+                      ) : null}
                     </button>
                     <div className="border-border mx-spacing-2 mb-spacing-1 border-b" />
                   </>

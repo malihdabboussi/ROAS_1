@@ -1,7 +1,8 @@
 # ──────────────────────────────────────────────────────────────
-# Vibey Mission Worker — Docker Image (Railway deployment)
+# Vibey Mission Worker — Docker Image (local / repo-root Railway)
 #
-# NestJS worker (BullMQ) running as a long-lived Node server.
+# Requires monorepo root as Docker build context (packages/* + apps/mission-worker).
+# Railway roas-platform service must use empty Root Directory + RAILPACK (see railway.json).
 # Build from monorepo root:
 #   docker build -t vibey-mission-worker:latest -f apps/mission-worker/Dockerfile .
 # ──────────────────────────────────────────────────────────────

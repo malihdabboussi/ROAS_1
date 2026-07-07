@@ -188,3 +188,16 @@ What: roas-api `vercel-build.sh` — materialize `packages/@vibey/*` with only `
 Why: Vercel `includeFiles` `../../packages/@vibey/**` followed pnpm symlinks copied into `node_modules` and failed with `ENOENT …/packages/node_modules/.pnpm/modal@0.7.4/node_modules/modal` on deploy `ebe21425`.
 Impact: Serverless bundle includes compiled workspace output without broken dependency symlinks; redeploy roas-api to verify green build.
 Files: `apps/api/scripts/vercel-build.sh`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 19:51] - [DOCS]
+What: Recorded 15m deploy poll outcomes for commit ebe21425 (Vercel + Railway) in provisioning agent notes and log.
+Why: Parent deploy-monitor handoff needs durable status for Cowork/Dylan.
+Impact: Clear blockers: roas-api modal ENOENT, roas-web unused TS symbol, mission-worker Docker COPY path.
+Files: `.docs/plans/roas-lovable-rebuild-provisioning.md`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 12:54] - [FIX]
+
+What: roas-web — remove unused `campaignIconColor` in `FlowComposerSpaceSelector.tsx`. mission-worker Railway — switch `railway.json` to RAILPACK with monorepo filter build/start commands; add `fix-mission-worker-railway-root.sh` and deploy-script note that Root Directory must be empty (repo root) so `packages/*` are in the build snapshot.
+Why: Deploy poll `a378af44`: roas-web TS6133 unused local; mission-worker Docker failed `"/apps/mission-worker": not found` because Railway Root Directory `apps/mission-worker` limits context and excludes workspace packages.
+Impact: roas-web typecheck unblocks; mission-worker builds once Root Directory is cleared (API script attempts; manual fallback documented).
+Files: `apps/web/src/features/flows/components/FlowComposerSpaceSelector.tsx`, `apps/mission-worker/railway.json`, `apps/mission-worker/Dockerfile`, `scripts/roas/deploy-railway-workers.sh`, `scripts/roas/fix-mission-worker-railway-root.sh`, `.docs/logs/changelog2026-07-07.md`
