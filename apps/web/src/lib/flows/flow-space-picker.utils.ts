@@ -1,5 +1,5 @@
-import type { Campaign } from '@/lib/campaigns/campaign-api'
 import { orderCampaignsForSpacePicker } from '@/features/spaces/lib/group-other-spaces-by-campaign'
+import type { Campaign } from '@/lib/campaigns/campaign-api'
 
 export type FlowSpacePickerItem = {
   id: string
@@ -37,27 +37,27 @@ export function groupFlowSpacesByCampaign(
   spaces: FlowSpacePickerItem[],
   campaigns: Campaign[],
 ): FlowSpacePickerGroup[] {
-  const groups: FlowSpacePickerGroup[] = orderCampaignsForSpacePicker(campaigns)
-    .map((campaign) => {
+  const groups: FlowSpacePickerGroup[] = orderCampaignsForSpacePicker(campaigns).flatMap(
+    (campaign) => {
       const campaignSpaces = sortSpacesByTitle(
         spaces.filter((space) => space.campaign_id === campaign.id),
       )
-      if (campaignSpaces.length === 0) return null
-      return {
-        id: campaign.id,
-        heading: campaign.name,
-        campaignIcon: campaignIconName(campaign),
-        campaignIconColor: campaignIconColorId(campaign),
-        spaces: campaignSpaces,
-      }
-    })
-    .filter((group): group is FlowSpacePickerGroup => group !== null)
+      if (campaignSpaces.length === 0) return []
+      return [
+        {
+          id: campaign.id,
+          heading: campaign.name,
+          campaignIcon: campaignIconName(campaign),
+          campaignIconColor: campaignIconColorId(campaign),
+          spaces: campaignSpaces,
+        },
+      ]
+    },
+  )
 
   const knownCampaignIds = new Set(campaigns.map((campaign) => campaign.id))
   const otherSpaces = sortSpacesByTitle(
-    spaces.filter(
-      (space) => !space.campaign_id || !knownCampaignIds.has(space.campaign_id),
-    ),
+    spaces.filter((space) => !space.campaign_id || !knownCampaignIds.has(space.campaign_id)),
   )
 
   if (otherSpaces.length > 0) {

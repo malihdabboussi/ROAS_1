@@ -288,3 +288,10 @@ What: roas-web — add `flow_branch` fields (`operator`, `value`, `then_step_ind
 Why: Vercel build `0fec21e1` failed TS2339 in `automation-publishable.ts` flow_branch validation.
 Impact: roas-web should build; unblocks `app.roas.io` deploy.
 Files: `apps/web/src/lib/flows/automation-publishable.ts`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 16:40] - [FIX]
+
+What: roas-web — use `flatMap` in `groupFlowSpacesByCampaign` instead of `map` + null filter.
+Why: Vercel build `b45b5a6b` failed TS2322 (`null` not assignable to `FlowSpacePickerGroup[]`).
+Impact: roas-web should build on next deploy.
+Files: `apps/web/src/lib/flows/flow-space-picker.utils.ts`, `.docs/logs/changelog2026-07-07.md`
