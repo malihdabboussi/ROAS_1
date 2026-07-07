@@ -167,3 +167,17 @@ What: roas-web — fixed `ChatMarkdownView.tsx` timer typing: use `ReturnType<ty
 Why: Deploy verification `ef8f5406` — web TS2322 on line 25; api build exited during post-`nest build` materialize when workspace package entrypoints were missing.
 Impact: Local verification: `ChatMarkdownView` typecheck clean; `apps/api/scripts/vercel-build.sh` completes through materialize. Push to main to trigger Vercel redeploy (or redeploy roas-web + roas-api from dashboard).
 Files: `apps/web/src/components/chat/ChatMarkdownView.tsx`, `apps/api/scripts/vercel-build.sh`
+
+## [2026-07-07 12:35] - [UTIL]
+
+What: Added Brave Search API key to local ROAS secrets master (section 5 / P2 AGENTS), synced to Fly paste block (section 9), and applied Fly secrets to `roas-runtimes` via `apply-fly-secrets.sh`.
+Why: OpenClaw gateway on Fly uses `BRAVE_API_KEY` for default web search; key was previously empty in master and section 9.
+Impact: Fly machines updated with new secret (15 secrets batch); `roas-secrets.env` remains gitignored — not committed. `PERPLEXITY_API_KEY` still empty in master and section 9.
+Files: `scripts/roas/roas-secrets.env` (local only), `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 12:40] - [UTIL]
+
+What: Added `SEARCHAPI_API_KEY` (SearchAPI.io — TikTok/Meta/Google ad library) to ROAS secrets template, sync script `api_vars`, local master (section 5), and synced Vercel roas-api paste block (section 6). Documented in `apps/api/.env.example`.
+Why: `SearchApiService` in roas-api reads `SEARCHAPI_API_KEY` for Spaces ads research; key was missing from ROAS secrets workflow.
+Impact: Section 6 paste block includes the key for Vercel roas-api Production — paste or add `SEARCHAPI_API_KEY` in Vercel dashboard, then redeploy roas-api. Not needed on Fly/web/funnels/Railway. `roas-secrets.env` remains gitignored.
+Files: `scripts/roas/roas-secrets.env.template`, `scripts/roas/sync-roas-secrets-sections.py`, `scripts/roas/roas-secrets.env` (local only), `apps/api/.env.example`, `.docs/logs/changelog2026-07-07.md`
