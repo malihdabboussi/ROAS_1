@@ -1,7 +1,6 @@
 import { Module as NodeModule } from 'module'
 import path from 'path'
-import type { Request, Response } from 'express'
-import type { Express } from 'express-serve-static-core'
+import type { Express, Request, Response } from 'express'
 
 function initNodePathFallbacks() {
   const apiRoot = path.join(__dirname, '..')
