@@ -13,3 +13,10 @@ What: Hotfix roas-api Vercel runtime — restore `file:` workspace dep rewrite i
 Why: Commit `9758c81e` deploy built but `/api` returned `FUNCTION_INVOCATION_FAILED` (serverless could not resolve workspace packages without `file:` materialization).
 Impact: Redeploy roas-api should restore `api.roas.io` health.
 Files: `apps/api/scripts/vercel-build.sh`, `apps/api/api/index.ts`, `.docs/logs/changelog2026-07-08.md`
+
+## [2026-07-08 07:38] - [FIX]
+
+What: Stopped generic `Service unavailable` chat failures from being classified as model-busy errors while preserving explicit provider overload and rate-limit handling.
+Why: Users could see “The model is busy” even after switching models when the real failure was runtime or gateway availability.
+Impact: Chat send errors now point users toward temporary assistant/runtime unavailability instead of blaming the selected model for generic 503-style failures.
+Files: `apps/agent-api/src/modules/chat/chat-stream-errors.ts`, `apps/agent-api/src/modules/chat/chat-stream-errors.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-recovery.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-recovery.service.test.ts`, `apps/web/src/lib/chat/chat-stream-errors.config.ts`, `apps/web/src/lib/chat/chat-stream-errors.config.test.ts`, `apps/web/src/features/studio/config/chat-stream-errors.config.test.ts`, `.docs/logs/changelog2026-07-08.md`

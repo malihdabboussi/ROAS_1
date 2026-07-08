@@ -11,8 +11,7 @@ export class ChatStreamRecoveryService {
       msg.includes('overloaded') ||
       msg.includes('try again in a moment') ||
       msg.includes('rate limit') ||
-      msg.includes('too many requests') ||
-      msg.includes('service unavailable')
+      msg.includes('too many requests')
     )
   }
 

@@ -30,4 +30,18 @@ describe('classifyChatStreamError', () => {
     expect(classifyChatStreamError(message)).toBe('anthropic_claude_not_connected')
     expect(isChatStreamRateLimitMessage(message)).toBe(false)
   })
+
+  it('classifies generic service unavailability as temporary runtime unavailability', () => {
+    const message = 'Service unavailable'
+
+    expect(classifyChatStreamError(message)).toBe('temporary_unavailable')
+    expect(isChatStreamRateLimitMessage(message)).toBe(false)
+  })
+
+  it('keeps explicit provider overloads as model busy', () => {
+    const message = 'The provider is temporarily overloaded. Please try again later.'
+
+    expect(classifyChatStreamError(message)).toBe('busy')
+    expect(isChatStreamRateLimitMessage(message)).toBe(true)
+  })
 })

@@ -57,6 +57,9 @@ export function classifyChatStreamError(message: string): ChatStreamErrorCode {
   ) {
     return 'context_window_exceeded'
   }
+  if (msg.includes('service unavailable')) {
+    return 'temporary_unavailable'
+  }
   if (
     msg === 'terminated' ||
     msg.includes('stream_interrupted') ||
@@ -112,8 +115,7 @@ export function classifyChatStreamError(message: string): ChatStreamErrorCode {
     msg.includes('overloaded') ||
     msg.includes('try again in a moment') ||
     msg.includes('rate limit') ||
-    msg.includes('too many requests') ||
-    msg.includes('service unavailable')
+    msg.includes('too many requests')
   ) {
     return 'busy'
   }

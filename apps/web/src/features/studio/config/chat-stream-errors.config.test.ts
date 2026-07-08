@@ -122,6 +122,14 @@ describe('resolveChatStreamFailure', () => {
     expect(resolved.showInterruptedBar).toBe(false)
     expect(resolved.userMessage).toContain('Claude Subscription')
   })
+
+  it('does not label generic service unavailability as model busy', () => {
+    const resolved = resolveChatStreamFailure({ message: 'Service unavailable' })
+
+    expect(resolved.code).toBe('temporary_unavailable')
+    expect(resolved.category).toBe('runtime')
+    expect(resolved.userMessage).not.toContain('model is busy')
+  })
 })
 
 describe('resolveChatStreamErrorToast', () => {

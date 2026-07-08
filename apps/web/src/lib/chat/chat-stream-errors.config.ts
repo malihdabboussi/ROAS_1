@@ -158,6 +158,9 @@ function classifyChatStreamErrorFromMessage(message: string): ChatStreamErrorCod
   if (msg.includes("couldn't get your agent ready") || msg.includes('agent ready yet')) {
     return 'temporary_unavailable'
   }
+  if (msg.includes('service unavailable')) {
+    return 'temporary_unavailable'
+  }
   if (
     msg.includes('credits_exhausted') ||
     msg.includes('org_credit_limit_reached') ||
@@ -178,8 +181,7 @@ function classifyChatStreamErrorFromMessage(message: string): ChatStreamErrorCod
     msg.includes('temporarily overloaded') ||
     msg.includes('overloaded') ||
     msg.includes('rate limit') ||
-    msg.includes('too many requests') ||
-    msg.includes('service unavailable')
+    msg.includes('too many requests')
   ) {
     return 'busy'
   }

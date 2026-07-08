@@ -51,4 +51,20 @@ describe('shared chat stream error config', () => {
     expect(resolved.reconnectProvider).toBe('openai_codex')
     expect(resolved.userMessage).toContain('OpenAI Codex')
   })
+
+  it('shows runtime-unavailable copy for generic service unavailability', () => {
+    const resolved = resolveChatStreamFailure({ message: 'Service unavailable' })
+
+    expect(resolved.code).toBe('temporary_unavailable')
+    expect(resolved.userMessage).not.toContain('model is busy')
+  })
+
+  it('keeps explicit provider overloads as model-busy failures', () => {
+    const resolved = resolveChatStreamFailure({
+      message: 'Provider temporarily overloaded. Please try again later.',
+    })
+
+    expect(resolved.code).toBe('busy')
+    expect(resolved.userMessage).toContain('model is busy')
+  })
 })
