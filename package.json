@@ -30,6 +30,8 @@
     "security:predeploy:check": "node scripts/security/predeploy-health-gate.mjs",
     "seed:system-agents": "tsx scripts/seed-system-agents.ts",
     "seed:yc-demo": "tsx scripts/seed-yc-demo/index.ts",
+    "import:user-brain": "tsx scripts/import-user-brain/index.ts",
+    "import:brain-embeddings": "tsx scripts/import-user-brain/backfill-embeddings.ts",
     "clean": "turbo clean",
     "prepare": "husky"
   },

@@ -295,3 +295,52 @@ What: roas-web — use `flatMap` in `groupFlowSpacesByCampaign` instead of `map`
 Why: Vercel build `b45b5a6b` failed TS2322 (`null` not assignable to `FlowSpacePickerGroup[]`).
 Impact: roas-web should build on next deploy.
 Files: `apps/web/src/lib/flows/flow-space-picker.utils.ts`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 17:30] - [FIX]
+
+What: roas-api Vercel build now materializes `@vibey/api-shared` and `@vibey/agent-policy` into the API function's own `node_modules/@vibey` bundle and repo fallback bundle without mutating source package manifests; API package now declares the shared runtime deps (`esbuild`, `jose`, `pg`) that the materialized `api-shared` copy resolves upward.
+Why: Runtime resolution was alternating between pnpm workspace links, generated package copies, and an in-build package manifest rewrite, which kept surfacing cold-start failures for `@vibey/*` packages and `ERR_REQUIRE_ESM` on `agent-policy`.
+Impact: Serverless cold start should resolve the bundled workspace packages from the function-local copy first while keeping real workspace package metadata stable for later builds.
+Files: `apps/api/scripts/vercel-build.sh`, `apps/api/vercel.json`, `apps/api/package.json`, `pnpm-lock.yaml`, `.docs/plans/roas-lovable-rebuild-provisioning.md`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 17:58] - [FIX]
+
+What: Add server-side `BACKEND_URL=https://api.roas.io` and `AGENT_BACKEND_URL=https://roas-runtimes.fly.dev` to the Vercel `roas-web` secret generator and template, alongside `NEXT_PUBLIC_BACKEND_URL`.
+Why: The Next.js proxy route reads `BACKEND_URL` for platform data and `AGENT_BACKEND_URL` for chat/agent paths; without them, production web proxy calls fall back to local hosts (`localhost:3001` / `localhost:3003`), which can make integrations, campaign data, Spaces, and Jamie chat fail even when the app shell loads.
+Impact: Re-syncing and pasting section 7 into Vercel `roas-web` should route platform data through `api.roas.io` and agent chat through `roas-runtimes.fly.dev`.
+Files: `scripts/roas/sync-roas-secrets-sections.py`, `scripts/roas/roas-secrets.env.template`, `.docs/plans/roas-lovable-rebuild-provisioning.md`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 18:35] - [FIX]
+
+What: Patched Vercel `roas-web` Production env (`BACKEND_URL`, `NEXT_PUBLIC_BACKEND_URL`, `AGENT_BACKEND_URL`), redeployed (`dpl_5q9xhJQprvqtAbCVjpaQqx3mktf2`), synced section 7 in `roas-secrets.env`, and applied ROAS Supabase drift grants for `service_role` + `authenticated` on `public` tables.
+Why: Production toasts (“Couldn't load campaigns”, “Couldn't load your turn”, Spaces spinner, empty Agents/Skills, Jamie send failures) traced to empty server-side proxy env vars falling back to localhost, then PostgreSQL `permission denied` on core tables after proxy routing was fixed.
+Impact: Authenticated proxy smoke on `app.roas.io` now returns HTTP 200 for `/api/proxy/users/me`, `campaigns`, `spaces`, `your-turn`, `agents`, `agents/slim`, and `conversations`.
+Files: `scripts/roas/roas-secrets.env`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 19:05] - [FEATURE]
+
+What: Added gated onboarding free path — `POST /api/billing/activate-free-plan`, "Continue for free" on subscribe step when `NEXT_PUBLIC_ALLOW_FREE_ONBOARDING=true` (ROAS sections 6/7 default true), and active free subscription for `test@gmail.com`.
+Why: ROAS onboarding blocked on the $97 subscribe step; test users need full platform access without Stripe checkout.
+Impact: On ROAS, users can skip payment during onboarding; middleware paywall passes on active free plan. Vibey production stays gated unless env flags are enabled.
+Files: `apps/api/src/modules/billing/controllers/billing.controller.ts`, `apps/api/src/modules/billing/services/billing-user-actions.service.ts`, `apps/web/src/app/(auth)/onboarding/components/OnboardingSubscribe.tsx`, `apps/web/src/app/(auth)/onboarding/page.tsx`, `apps/web/src/lib/billing/billing-api.ts`, `scripts/roas/sync-roas-secrets-sections.py`, `scripts/roas/roas-secrets.env.template`, `apps/web/.env.example`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 19:15] - [FIX]
+
+What: Restored ROAS `agents_registry` personal SELECT/UPDATE RLS, seeded Jaime + Atlas for `test@gmail.com`, and fixed onboarding re-entry to backfill HR when Vibey is already promoted.
+Why: Team page showed “No team members yet” because users could not read their own `agents_registry` rows (missing `agents_registry_select` policy) and the test account never received default HR/Atlas hires after the broken signup trigger.
+Impact: `test@gmail.com` now sees Vibey, Jaime, and Atlas via `/api/agents`; future onboard re-entry also seeds HR when missing.
+Files: `supabase/migrations/20260708021500_roas_agents_registry_personal_select.sql`, `apps/api/src/modules/missions/services/agent-onboarding.service.ts`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 19:30] - [FEATURE]
+
+What: Added idempotent portable Brain import script (`scripts/import-user-brain/index.ts`, `pnpm import:user-brain`) and imported Dylan's Vibey production brain export (71 brains, 1,726 memories, cognition + narrative library) into ROAS `roas-production` for `test@gmail.com`.
+Why: ROAS rebuild needs real User Brain knowledge on the new Supabase project without writing back to Vibey production (`qfrvykscoymiwwgysvsr`).
+Impact: Default User Brain `8d5822bd-94b8-41b3-a439-3dee5125b488` now owned by test user with full memory/cognition/narrative data; embeddings still null until backfill. Script blocks Vibey prod host, upserts on `id`, remaps owner/subject IDs, strips missing columns via Postgres introspection, and relaxes org/campaign/customer brain scopes when target FKs are absent.
+Files: `scripts/import-user-brain/index.ts`, `package.json`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 19:45] - [FIX]
+
+What: Fixed Brain home internal server error after large brain import — chunk `brain_home_health_batch` RPC calls (15 brains per request) in API + web client; added `pnpm import:brain-embeddings` for ROAS post-import embedding backfill.
+Why: Importing 71 brains caused `/api/brain/health/batch` to pass all 73 brain ids in one RPC, hitting Postgres statement timeout (~8s) on ROAS Micro.
+Impact: Brain home loads for users with many brains once web/API deploy; embedding backfill script running for `test@gmail.com` (1,726 memories + narrative pages).
+Files: `apps/api/src/modules/brain/repositories/memory-stats.repository.ts`, `apps/web/src/features/brain/services/brain.service.ts`, `scripts/import-user-brain/backfill-embeddings.ts`, `package.json`, `.docs/logs/changelog2026-07-07.md`

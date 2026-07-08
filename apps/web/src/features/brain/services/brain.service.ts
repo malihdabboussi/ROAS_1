@@ -6,13 +6,13 @@ import type {
   BeliefPattern,
   BrainGraphData,
   BrainHealthData,
+  BrainMemory,
   BrainTimeline,
   BrainTimelineItem,
-  BrainMemory,
-  CustomerBrainView,
   CompanyCortexObject,
   CompanyCortexSignal,
   CustomerAvatar,
+  CustomerBrainView,
   EmotionalProfile,
   NarrativePage,
   PendingCapture,
@@ -47,6 +47,8 @@ export async function fetchBrainHealth(
   return backendGet<BrainHealthData>(`/api/brain/health${query}`)
 }
 
+const BRAIN_HEALTH_BATCH_CHUNK_SIZE = 15
+
 export async function fetchBrainHealthBatch(
   brainIds: string[],
 ): Promise<Map<string, BrainHealthData>> {
@@ -60,12 +62,19 @@ export async function fetchBrainHealthBatch(
   return cachedFetch(
     `brain-health-batch:${ids.join(',')}`,
     async () => {
-      const params = new URLSearchParams()
-      params.set('brain_ids', ids.join(','))
-      const res = await backendGet<{ brains: Array<BrainHealthData & { brain_id: string }> }>(
-        `/api/brain/health/batch?${params.toString()}`,
-      )
-      return new Map((res.brains ?? []).map((brain) => [brain.brain_id, brain]))
+      const merged = new Map<string, BrainHealthData>()
+      for (let i = 0; i < ids.length; i += BRAIN_HEALTH_BATCH_CHUNK_SIZE) {
+        const chunk = ids.slice(i, i + BRAIN_HEALTH_BATCH_CHUNK_SIZE)
+        const params = new URLSearchParams()
+        params.set('brain_ids', chunk.join(','))
+        const res = await backendGet<{ brains: Array<BrainHealthData & { brain_id: string }> }>(
+          `/api/brain/health/batch?${params.toString()}`,
+        )
+        for (const brain of res.brains ?? []) {
+          merged.set(brain.brain_id, brain)
+        }
+      }
+      return merged
     },
     { ttlMs: 30_000 },
   )

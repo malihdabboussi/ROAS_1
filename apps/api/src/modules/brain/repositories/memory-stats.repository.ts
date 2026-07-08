@@ -352,13 +352,18 @@ export class MemoryStatsRepository {
     const ids = [...new Set(brainIds.map((id) => id.trim()).filter(Boolean))]
     if (ids.length === 0) return []
 
-    const { data, error } = await client.rpc('brain_home_health_batch', {
-      p_brain_ids: ids,
-      p_owner_id: ownerId,
-    })
-    if (error) throw new Error(`RPC error: ${error.message}`)
-
-    return (data ?? []) as BrainHealthBatchRow[]
+    const CHUNK_SIZE = 15
+    const rows: BrainHealthBatchRow[] = []
+    for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+      const chunk = ids.slice(i, i + CHUNK_SIZE)
+      const { data, error } = await client.rpc('brain_home_health_batch', {
+        p_brain_ids: chunk,
+        p_owner_id: ownerId,
+      })
+      if (error) throw new Error(`RPC error: ${error.message}`)
+      rows.push(...((data ?? []) as BrainHealthBatchRow[]))
+    }
+    return rows
   }
 
   private async countPendingImportJobsForBrain(
