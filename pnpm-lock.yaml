@@ -484,9 +484,15 @@ importers:
       dotenv:
         specifier: ^17.3.1
         version: 17.3.1
+      esbuild:
+        specifier: ^0.28.0
+        version: 0.28.0
       express:
         specifier: ^4.21.0
         version: 4.22.1
+      jose:
+        specifier: ^5.10.0
+        version: 5.10.0
       mammoth:
         specifier: ^1.11.0
         version: 1.11.0
@@ -499,6 +505,9 @@ importers:
       pdf-parse:
         specifier: 1.1.1
         version: 1.1.1
+      pg:
+        specifier: ^8.19.0
+        version: 8.19.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -7433,7 +7442,7 @@ packages:
   basic-ftp@5.1.0:
     resolution: {integrity: sha512-RkaJzeJKDbaDWTIPiJwubyljaEPwpVWkm9Rt5h9Nd6h7tEXTJ3VB4qxdZBioV7JO5yLUaOKwz7vDOzlncUsegw==}
     engines: {node: '>=10.0.0'}
-    deprecated: Security vulnerability fixed in 5.2.1, please upgrade
+    deprecated: Security vulnerability fixed in 5.2.0, please upgrade
 
   before-after-hook@4.0.0:
     resolution: {integrity: sha512-q6tR3RPqIB1pMiTRMFcZwuG5T8vwp+vUvEG0vuI6B+Rikh5BfPp2fQ82c925FOs+b0lcFQ8CFrL+KbilfZFhOQ==}
@@ -14819,7 +14828,7 @@ snapshots:
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.3.2
-      protobufjs: 7.5.4
+      protobufjs: 7.5.8
       yargs: 17.7.2
 
   '@hapi/boom@9.1.4':

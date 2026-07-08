@@ -19,10 +19,17 @@ const FEATURES = [
 
 interface OnboardingSubscribeProps {
   onBack?: () => void
+  onContinueFree?: () => void | Promise<void>
+  showContinueFree?: boolean
 }
 
-export function OnboardingSubscribe({ onBack }: OnboardingSubscribeProps) {
+export function OnboardingSubscribe({
+  onBack,
+  onContinueFree,
+  showContinueFree = false,
+}: OnboardingSubscribeProps) {
   const [loading, setLoading] = useState(false)
+  const [continuingFree, setContinuingFree] = useState(false)
 
   const handleSubscribe = useCallback(async () => {
     setLoading(true)
@@ -67,7 +74,7 @@ export function OnboardingSubscribe({ onBack }: OnboardingSubscribeProps) {
           </p>
         </div>
 
-        <div className="rounded-spacing-3 p-spacing-6 mb-spacing-6 border border-border bg-surface-subtle">
+        <div className="rounded-spacing-3 p-spacing-6 mb-spacing-6 border-border bg-surface-subtle border">
           <div className="mb-spacing-4 flex items-baseline justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="icon-sm text-foreground" />
@@ -102,6 +109,20 @@ export function OnboardingSubscribe({ onBack }: OnboardingSubscribeProps) {
         <p className="body-4 text-muted-foreground/60 mt-spacing-3 text-center">
           Cancel anytime. Billed monthly via Stripe.
         </p>
+
+        {showContinueFree && onContinueFree && (
+          <button
+            type="button"
+            onClick={() => {
+              setContinuingFree(true)
+              void Promise.resolve(onContinueFree()).finally(() => setContinuingFree(false))
+            }}
+            disabled={loading || continuingFree}
+            className="body-3 text-muted-foreground hover:text-foreground mt-spacing-4 w-full text-center transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {continuingFree ? 'Setting up free access…' : 'Continue for free'}
+          </button>
+        )}
 
         {onBack && (
           <button

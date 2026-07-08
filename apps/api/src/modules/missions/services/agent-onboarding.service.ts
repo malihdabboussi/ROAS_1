@@ -98,9 +98,14 @@ export class AgentOnboardingService {
       this.logger.log(
         `User ${userId} already onboarded (Vibey is c_level with archetype) — ensuring sub-agents`,
       )
-      await this.ensureBrainScholarEmployee(supabase, userId, existing, orgId).catch((e) =>
-        this.logger.warn(`Sub-agent backfill on re-entry: ${(e as Error).message}`),
-      )
+      await Promise.all([
+        this.missionSkillSeederService
+          .seedHrAgent(serviceSupabase, userId, orgId)
+          .catch((e) => this.logger.warn(`HR backfill on re-entry: ${(e as Error).message}`)),
+        this.ensureBrainScholarEmployee(supabase, userId, existing, orgId).catch((e) =>
+          this.logger.warn(`Sub-agent backfill on re-entry: ${(e as Error).message}`),
+        ),
+      ])
       return { ok: true, agent: vibeyRow, skipped: true }
     }
 
@@ -112,17 +117,12 @@ export class AgentOnboardingService {
     const resolvedStyleDescription = styleDescription(styleKey)
     await this.agentTemplateCatalogSeederService.ensureSeeded(serviceSupabase)
 
-    await this.missionsRepository.ensureVibeyRegistryRow(
-      serviceSupabase,
-      userId,
-      orgId,
-      {
-        archetype: 'ceo',
-        capability_profile: 'vibey_ceo',
-        capability_domain: 'management',
-        model_id: 'auto',
-      },
-    )
+    await this.missionsRepository.ensureVibeyRegistryRow(serviceSupabase, userId, orgId, {
+      archetype: 'ceo',
+      capability_profile: 'vibey_ceo',
+      capability_domain: 'management',
+      model_id: 'auto',
+    })
     const capabilityProfile = 'vibey_ceo'
     const capabilityDomain = 'shared'
 

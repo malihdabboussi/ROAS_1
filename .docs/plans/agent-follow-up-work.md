@@ -5876,3 +5876,19 @@ Files:
 Evidence: While reading the complete Projects Supabase panel consumer for Type 3-E Batch 322, `ProjectPage.tsx` was confirmed at 338 LOC and under the frontend component cap, but it imports `ResizableDivider` and `usePanelResize` from Studio private paths (`@/features/studio/components/layout/ResizableDivider` and `@/features/studio/hooks/usePanelResize`). The Supabase panel target itself now has a clean scoped `@/features/*` scan after the split.
 Needed work: Move the generic resize divider/hook boundary to a shared UI/lib surface or a documented transitional adapter, then update Projects and Studio consumers with mounted coverage for panel resizing behavior.
 Deferred because: Batch 322 was scoped to the oversized Supabase panel LOC split. Moving resize primitives affects at least Projects and Studio layout behavior and needs its own focused baseline.
+
+## 2026-07-07 - Spaces Debug Collector Cleanup Follow-up
+
+Status: Open
+Found while: Removing leftover local debug collector calls from Spaces item update, artifact open, empty content routing, and automation prompt editing paths.
+Feature/App: Web Spaces
+Files:
+
+- `apps/web/src/features/spaces/store/use-spaces-store.ts`
+- `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx`
+- `apps/web/src/features/spaces/components/content/SpaceContentRouter.tsx`
+- `apps/web/src/features/spaces/components/automations/PromptTemplateEditor.tsx`
+
+Evidence: `wc -l` reports `use-spaces-store.ts` at 1141 LOC, `SpaceItemsContainer.tsx` at 1750 LOC, `SpaceContentRouter.tsx` at 820 LOC, and `PromptTemplateEditor.tsx` at 1002 LOC. Focused ESLint also reports the pre-existing cross-feature import from `PromptTemplateEditor.tsx` to `@/features/studio/utils/textarea-caret-viewport` plus the component max-lines violation.
+Needed work: Split the store and Spaces containers/components into focused local hooks/helpers under the project architecture limits, and move the textarea caret utility to an approved shared `@/lib` boundary with coverage for prompt variable insertion and caret preservation.
+Deferred because: The current bug fix was scoped to removing product debug network calls without changing Spaces behavior. Decomposing these files and moving shared caret utilities would be a broader architecture remediation with higher regression risk.

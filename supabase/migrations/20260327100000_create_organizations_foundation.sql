@@ -25,17 +25,9 @@ CREATE INDEX idx_organizations_slug ON public.organizations(slug);
 
 ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Org members can read org"
-  ON public.organizations FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.org_members
-      WHERE org_members.org_id = organizations.id
-        AND org_members.user_id = auth.uid()
-        AND org_members.status = 'active'
-    )
-    OR owner_id = auth.uid()
-  );
+-- NOTE: "Org members can read org" policy references org_members and is defined
+-- after that table is created (see below), to avoid a forward-reference error
+-- on a clean database.
 
 CREATE POLICY "Owner can update org"
   ON public.organizations FOR UPDATE
@@ -75,6 +67,19 @@ CREATE INDEX idx_org_members_org ON public.org_members(org_id);
 CREATE INDEX idx_org_members_org_status ON public.org_members(org_id, status);
 
 ALTER TABLE public.org_members ENABLE ROW LEVEL SECURITY;
+
+-- Moved here from the organizations block (forward-reference fix): needs org_members to exist.
+CREATE POLICY "Org members can read org"
+  ON public.organizations FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.org_members
+      WHERE org_members.org_id = organizations.id
+        AND org_members.user_id = auth.uid()
+        AND org_members.status = 'active'
+    )
+    OR owner_id = auth.uid()
+  );
 
 CREATE POLICY "Members can read own membership"
   ON public.org_members FOR SELECT

@@ -25,8 +25,15 @@ fi
 
 touch "$LOG_FILE"
 
+ORDER_FILE="$(dirname "$0")/migration-order.txt"
+if [[ -f "$ORDER_FILE" ]]; then
+  file_list=$(grep -v '^\s*$' "$ORDER_FILE")
+else
+  file_list=$(ls "$MIGRATIONS_DIR"/*.sql | xargs -n1 basename | sort)
+fi
+
 applied=0
-for file in $(ls "$MIGRATIONS_DIR"/*.sql | xargs -n1 basename | sort); do
+for file in $file_list; do
   if [[ -n "${MIGRATION_FROM:-}" && "$file" < "$MIGRATION_FROM" ]]; then
     continue
   fi

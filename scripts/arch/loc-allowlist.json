@@ -134,6 +134,11 @@
       "limit": 400,
       "lines": 2105
     },
+    "apps/web/src/features/spaces/components/automations/PromptTemplateEditor.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 1002
+    },
     "apps/web/src/features/mission-control/components/dialogs/DeliverablesCarousel.tsx": {
       "kind": "web-component",
       "limit": 400,
@@ -227,7 +232,7 @@
     "apps/web/src/features/spaces/components/content/SpaceContentRouter.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 812
+      "lines": 820
     },
     "apps/web/src/features/spaces/components/doc-menu/DocMenuDropdown.tsx": {
       "kind": "web-component",
@@ -267,7 +272,7 @@
     "apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx": {
       "kind": "web-container",
       "limit": 600,
-      "lines": 1650
+      "lines": 1750
     },
     "apps/web/src/features/spaces/services/spaces.service.ts": {
       "kind": "service",
@@ -1111,6 +1116,13 @@
       "count": 1,
       "imports": {
         "@/features/org/services/org.service": 1
+      }
+    },
+    "apps/web/src/features/spaces/components/automations/PromptTemplateEditor.tsx": {
+      "sourceFeature": "spaces",
+      "count": 1,
+      "imports": {
+        "@/features/studio/utils/textarea-caret-viewport": 1
       }
     },
     "apps/web/src/features/spaces/components/artifacts/artifact-view-rows.ts": {

@@ -552,25 +552,6 @@ export function SpaceItemsContainer() {
     let retryTimer: ReturnType<typeof setTimeout> | null = null
     const handleOpenInlineArtifact = (event: Event) => {
       const detail = (event as CustomEvent<InlineArtifactOpenDetail>).detail
-      // #region debug-log - H4: open-artifact event received in SpaceItemsContainer
-      fetch('http://127.0.0.1:7242/log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hypothesis: 'H4',
-          location: 'web/SpaceItemsContainer.tsx:handleOpenInlineArtifact',
-          message: 'vibey-open-artifact received',
-          data: {
-            detail,
-            activeSpaceId,
-            mappedViewType: detail?.artifactType
-              ? artifactTypeToSpaceViewType(detail.artifactType)
-              : null,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {})
-      // #endregion
       if (!detail?.artifactType || !detail?.artifactId) return
       const viewType = artifactTypeToSpaceViewType(detail.artifactType)
       if (!viewType) return
@@ -639,40 +620,10 @@ export function SpaceItemsContainer() {
       )
 
       const _focusedNow = focusMatchingView()
-      // #region debug-log - H3/H4: tab focus result
-      fetch('http://127.0.0.1:7242/log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hypothesis: 'H3',
-          location: 'web/SpaceItemsContainer.tsx:focusMatchingView',
-          message: _focusedNow
-            ? 'Tab found and focused on first try'
-            : 'Tab NOT in local schema — refreshing spaces store and retrying once',
-          data: { targetSpaceId, viewType, focusedFirstTry: _focusedNow },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {})
-      // #endregion
       if (_focusedNow) return
       void refresh().then(() => {
         retryTimer = setTimeout(() => {
-          const retried = focusMatchingView()
-          // #region debug-log - H3: post-refresh retry result
-          fetch('http://127.0.0.1:7242/log', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              hypothesis: 'H3',
-              location: 'web/SpaceItemsContainer.tsx:focusMatchingView(retry)',
-              message: retried
-                ? 'Tab found after store refresh'
-                : 'Tab STILL missing after refresh — view was never added to this space schema',
-              data: { targetSpaceId, viewType, focusedAfterRefresh: retried },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {})
-          // #endregion
+          focusMatchingView()
         }, 200)
       })
     }
@@ -1214,12 +1165,7 @@ export function SpaceItemsContainer() {
     if (filters.includes('campaign')) {
       loadCampaignDocs()
     }
-  }, [
-    isDocsView,
-    activeSpace?.campaign_id,
-    docsConfigToolbar.doc_source_filters,
-    loadCampaignDocs,
-  ])
+  }, [isDocsView, activeSpace?.campaign_id, docsConfigToolbar.doc_source_filters, loadCampaignDocs])
 
   const [docsDriveBrowseActive, setDocsDriveBrowseActive] = useState(false)
   useEffect(() => {

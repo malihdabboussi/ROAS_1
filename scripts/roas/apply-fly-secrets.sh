@@ -41,6 +41,8 @@ for line in text[start:end]:
         val = val[1:-1]
     elif val.startswith("'") and val.endswith("'"):
         val = val[1:-1]
+    if key == 'OPENCLAW_GATEWAY_URL':
+        val = 'http://127.0.0.1:18789'
     rows.append(f'{key}={val}')
 if not rows:
     sys.exit('No non-empty section 9 vars')

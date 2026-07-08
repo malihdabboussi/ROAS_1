@@ -17,7 +17,7 @@ export interface ResourceTreeNode {
 
 export type SkillTypeFilter = 'custom' | 'official'
 
-export const DEFAULT_SKILL_TYPE_FILTERS: SkillTypeFilter[] = ['custom']
+export const DEFAULT_SKILL_TYPE_FILTERS: SkillTypeFilter[] = ['custom', 'official']
 
 export type SkillsGroupBy = 'none' | 'agent' | 'status' | 'type' | 'alphabetical'
 

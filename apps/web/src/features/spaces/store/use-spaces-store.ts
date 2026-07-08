@@ -914,34 +914,12 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
   updateItem: async (itemId, payload) => {
     const { activeSpaceId, items } = get()
     if (!activeSpaceId) return
-    const updateT0 = performance.now()
-    const payloadKeys = Object.keys(payload)
     const previous = items.find((i) => i.id === itemId)
     let localUpdatedAt: string | null = null
     beginPendingItemMutation(itemId)
     set((s) => ({
       items: s.items.map((i) => (i.id === itemId ? applyItemPatch(i, payload) : i)),
     }))
-    const optimisticMs = performance.now() - updateT0
-    // #region agent log
-    fetch('http://127.0.0.1:7839/ingest/973bb75b-1c39-437d-a840-d2b78f7741fd', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '9bfce5' },
-      body: JSON.stringify({
-        sessionId: '9bfce5',
-        location: 'use-spaces-store.ts:updateItem-optimistic',
-        message: 'updateItem optimistic set complete',
-        hypothesisId: 'H-B',
-        data: {
-          itemId,
-          payloadKeys,
-          itemCount: items.length,
-          optimisticMs: Math.round(optimisticMs * 100) / 100,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {})
-    // #endregion
     try {
       if (payload.status !== undefined) {
         if (itemId.startsWith('cdoc:')) {
@@ -972,24 +950,6 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
       set((s) => ({
         items: s.items.map((i) => (i.id === itemId ? { ...i, updated_at: updated.updated_at } : i)),
       }))
-      // #region agent log
-      fetch('http://127.0.0.1:7839/ingest/973bb75b-1c39-437d-a840-d2b78f7741fd', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '9bfce5' },
-        body: JSON.stringify({
-          sessionId: '9bfce5',
-          location: 'use-spaces-store.ts:updateItem-api-done',
-          message: 'updateItem API round-trip complete',
-          hypothesisId: 'H-D',
-          data: {
-            itemId,
-            payloadKeys,
-            totalMs: Math.round((performance.now() - updateT0) * 100) / 100,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {})
-      // #endregion
     } catch (error) {
       if (previous) {
         set((s) => ({ items: s.items.map((i) => (i.id === itemId ? previous : i)) }))

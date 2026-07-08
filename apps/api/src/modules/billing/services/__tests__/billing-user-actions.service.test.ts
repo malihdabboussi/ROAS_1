@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common'
+import { BadRequestException, ForbiddenException } from '@nestjs/common'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BillingUserActionsService } from '../billing-user-actions.service'
 
@@ -47,6 +47,19 @@ describe('BillingUserActionsService', () => {
     cancelSubscription: vi.fn(),
     reactivateSubscription: vi.fn(),
   }
+  const stripeCustomerRepository = {
+    findFreePlanId: vi.fn(),
+    upsertUserSubscription: vi.fn(),
+  }
+
+  function createService(actionsRepository?: unknown) {
+    return new BillingUserActionsService(
+      creditsService as never,
+      stripeService as never,
+      stripeCustomerRepository as never,
+      actionsRepository as never,
+    )
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -56,10 +69,15 @@ describe('BillingUserActionsService', () => {
       periodEnd: '2026-12-31T00:00:00.000Z',
     })
     stripeService.reactivateSubscription.mockResolvedValue(undefined)
+    stripeCustomerRepository.findFreePlanId.mockResolvedValue({
+      data: { id: 'free-plan' },
+      error: null,
+    })
+    stripeCustomerRepository.upsertUserSubscription.mockResolvedValue({ data: null, error: null })
   })
 
   it('redeems a promo code, records credit purchase totals, and applies enterprise profile grants', async () => {
-    const service = new BillingUserActionsService(creditsService as never, stripeService as never)
+    const service = createService()
     const supabase = createSupabase({
       promo_codes: [
         {
@@ -76,7 +94,10 @@ describe('BillingUserActionsService', () => {
         },
         { data: null, error: null },
       ],
-      promo_redemptions: [{ data: null, error: null }, { data: null, error: null }],
+      promo_redemptions: [
+        { data: null, error: null },
+        { data: null, error: null },
+      ],
       credit_purchases: [
         { data: null, error: null },
         {
@@ -122,7 +143,7 @@ describe('BillingUserActionsService', () => {
   })
 
   it('rejects an already redeemed promo code before writing redemption records', async () => {
-    const service = new BillingUserActionsService(creditsService as never, stripeService as never)
+    const service = createService()
     const supabase = createSupabase({
       promo_codes: {
         data: {
@@ -146,7 +167,7 @@ describe('BillingUserActionsService', () => {
   })
 
   it('creates and links a personal agent brain when the active add-on has no brain id', async () => {
-    const service = new BillingUserActionsService(creditsService as never, stripeService as never)
+    const service = createService()
     const supabase = createSupabase({
       user_addons: [{ data: { id: 'addon-1', brain_id: null }, error: null }, { data: null }],
       ns_brains: { data: { id: 'brain-1' }, error: null },
@@ -168,7 +189,7 @@ describe('BillingUserActionsService', () => {
   })
 
   it('maps org agent brain batch status by supplied agent ids', async () => {
-    const service = new BillingUserActionsService(creditsService as never, stripeService as never)
+    const service = createService()
     const supabase = createSupabase({
       ns_brains: {
         data: [{ id: 'brain-a', agent_id: 'agent-a' }],
@@ -197,7 +218,7 @@ describe('BillingUserActionsService', () => {
   })
 
   it('returns Stripe invoices for the current billing customer with a capped limit', async () => {
-    const service = new BillingUserActionsService(creditsService as never, stripeService as never)
+    const service = createService()
     stripeService.listInvoices.mockResolvedValue([
       {
         stripe_invoice_id: 'inv-1',
@@ -225,7 +246,7 @@ describe('BillingUserActionsService', () => {
   })
 
   it('cancels an active subscription at period end and persists the reason', async () => {
-    const service = new BillingUserActionsService(creditsService as never, stripeService as never)
+    const service = createService()
     const supabase = createSupabase({
       user_subscriptions: [
         {
@@ -252,7 +273,7 @@ describe('BillingUserActionsService', () => {
   })
 
   it('reactivates an active subscription and clears cancellation metadata', async () => {
-    const service = new BillingUserActionsService(creditsService as never, stripeService as never)
+    const service = createService()
     const supabase = createSupabase({
       user_subscriptions: [
         { data: { stripe_subscription_id: 'sub-1' }, error: null },
@@ -268,5 +289,33 @@ describe('BillingUserActionsService', () => {
       cancellation_reason: null,
     })
     expect(result).toEqual({ success: true })
+  })
+
+  it('rejects free onboarding when ALLOW_FREE_ONBOARDING is disabled', async () => {
+    const service = createService()
+    const supabase = createSupabase({})
+
+    await expect(service.activateFreePlan('user-1', supabase as never)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    )
+  })
+
+  it('activates the free plan when onboarding free access is enabled', async () => {
+    process.env.ALLOW_FREE_ONBOARDING = 'true'
+    const service = createService()
+    const supabase = createSupabase({
+      user_subscriptions: [{ data: null, error: null }],
+    })
+
+    const result = await service.activateFreePlan('user-1', supabase as never)
+
+    expect(result).toEqual({ success: true, alreadyActive: false })
+    expect(stripeCustomerRepository.upsertUserSubscription).toHaveBeenCalledWith({
+      user_id: 'user-1',
+      plan_id: 'free-plan',
+      status: 'active',
+      stripe_subscription_id: null,
+    })
+    delete process.env.ALLOW_FREE_ONBOARDING
   })
 })

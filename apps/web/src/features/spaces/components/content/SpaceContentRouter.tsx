@@ -30,6 +30,7 @@ import type { MissionsViewHandle } from '../MissionsView'
 import type { CampaignFinanceTabHandle } from '../reporting/FinanceOverviewView'
 import type { ReportingToolbarApi } from '../reporting/shared/reporting-toolbar.types'
 import { EmptySpaceCanvas } from './EmptySpaceCanvas'
+
 function SpaceViewLoading() {
   return (
     <div className="flex flex-1 items-center justify-center">
@@ -325,25 +326,6 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
   } = p
 
   if (!activeView) {
-    // #region debug-log - H6: space renders blank (no active view)
-    fetch('http://127.0.0.1:7242/log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        hypothesis: 'H6',
-        location: 'web/SpaceContentRouter.tsx:render',
-        message: 'EmptySpaceCanvas rendered — no active view resolved',
-        data: {
-          spaceId: activeSpace?.id ?? null,
-          schemaViewTypes: Array.isArray(activeSpace?.schema?.views)
-            ? activeSpace.schema.views.map((v: { type?: string }) => v?.type ?? null)
-            : null,
-          itemCount: Array.isArray(items) ? items.length : null,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {})
-    // #endregion
     return <EmptySpaceCanvas />
   }
 

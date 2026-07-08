@@ -5,6 +5,9 @@
  * Routes to org billing endpoints when an org is active.
  */
 
+import { backendFetch, backendGet, backendPost } from '@/lib/api/backend-client'
+import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { getActiveOrgIdFromStorage } from '@/lib/utils/org-storage'
 import type {
   AgentBrainCheckoutResponse,
   AgentBrainStatusResponse,
@@ -22,9 +25,6 @@ import type {
   UsageAnalyticsResponse,
   UsageEvent,
 } from './billing.types'
-import { backendFetch, backendGet, backendPost } from '@/lib/api/backend-client'
-import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
-import { getActiveOrgIdFromStorage } from '@/lib/utils/org-storage'
 
 // ============================================================================
 // API Functions
@@ -164,7 +164,24 @@ export async function getUsageAnalytics(options: {
     ? `/api/org/${orgId}/billing/usage-analytics?${qs}`
     : `/api/billing/usage-analytics?${qs}`
   // #region agent log
-  fetch('http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ea8738'},body:JSON.stringify({sessionId:'ea8738',location:'billing-api.ts:getUsageAnalytics',message:'getUsageAnalytics request',data:{path,orgId,route:orgId?'org':'personal',startDate:options.startDate,endDate:options.endDate},timestamp:Date.now(),hypothesisId:'H1,H4'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ea8738' },
+    body: JSON.stringify({
+      sessionId: 'ea8738',
+      location: 'billing-api.ts:getUsageAnalytics',
+      message: 'getUsageAnalytics request',
+      data: {
+        path,
+        orgId,
+        route: orgId ? 'org' : 'personal',
+        startDate: options.startDate,
+        endDate: options.endDate,
+      },
+      timestamp: Date.now(),
+      hypothesisId: 'H1,H4',
+    }),
+  }).catch(() => {})
   // #endregion
   if (orgId) {
     const res = await backendGet<UsageAnalyticsResponse & { success?: boolean }>(path)
@@ -196,7 +213,24 @@ export async function getAgentSpending(options: {
     ? `/api/org/${orgId}/billing/agent-spending?${qs}`
     : `/api/billing/agent-spending?${qs}`
   // #region agent log
-  fetch('http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ea8738'},body:JSON.stringify({sessionId:'ea8738',location:'billing-api.ts:getAgentSpending',message:'getAgentSpending request',data:{path,orgId,route:orgId?'org':'personal',startDate:options.startDate,endDate:options.endDate},timestamp:Date.now(),hypothesisId:'H1,H4'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ea8738' },
+    body: JSON.stringify({
+      sessionId: 'ea8738',
+      location: 'billing-api.ts:getAgentSpending',
+      message: 'getAgentSpending request',
+      data: {
+        path,
+        orgId,
+        route: orgId ? 'org' : 'personal',
+        startDate: options.startDate,
+        endDate: options.endDate,
+      },
+      timestamp: Date.now(),
+      hypothesisId: 'H1,H4',
+    }),
+  }).catch(() => {})
   // #endregion
   if (orgId) {
     const res = await backendGet<AgentSpendingResponse & { success?: boolean }>(path)
@@ -370,6 +404,13 @@ export async function getSessionStatus(sessionId: string): Promise<SessionStatus
 
 export async function redeemPromo(code: string): Promise<{ success: boolean; credits: number }> {
   return backendPost<{ success: boolean; credits: number }>('/api/billing/redeem-promo', { code })
+}
+
+export async function activateFreePlan(): Promise<{ success: boolean; alreadyActive: boolean }> {
+  return backendPost<{ success: boolean; alreadyActive: boolean }>(
+    '/api/billing/activate-free-plan',
+    {},
+  )
 }
 
 // ============================================================================

@@ -697,29 +697,8 @@ export function PromptTemplateEditor({
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const changeT0 = performance.now()
     const nextDisplay = e.target.value
     const nextRaw = applyDisplayEditToRaw(value, displayValue, nextDisplay, templateView)
-    const transformMs = performance.now() - changeT0
-    // #region agent log
-    fetch('http://127.0.0.1:7839/ingest/973bb75b-1c39-437d-a840-d2b78f7741fd', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '9bfce5' },
-      body: JSON.stringify({
-        sessionId: '9bfce5',
-        location: 'PromptTemplateEditor.tsx:handleChange',
-        message: 'PromptTemplateEditor keystroke transform',
-        hypothesisId: 'H-C',
-        data: {
-          displayLen: nextDisplay.length,
-          rawLen: nextRaw.length,
-          segmentCount: templateView.segments.length,
-          transformMs: Math.round(transformMs * 100) / 100,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {})
-    // #endregion
     onChange(nextRaw)
     setCaret(e.target.selectionStart)
   }

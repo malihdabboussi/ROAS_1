@@ -40,6 +40,7 @@ function getGreeting(): string {
 export default function HomePage() {
   const searchParams = useSearchParams()
   const [firstName, setFirstName] = useState('')
+  const [greeting, setGreeting] = useState('Welcome back')
   const {
     selectedMission,
     activeYourTurnItem,
@@ -58,6 +59,8 @@ export default function HomePage() {
   const approvalFeed = useYourTurnFeed(approval.scope)
 
   useEffect(() => {
+    setGreeting(getGreeting())
+
     const supabase = createClient()
     // getSession() reads the local session (no GoTrue network round-trip).
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -91,7 +94,7 @@ export default function HomePage() {
     <div className="flex h-full min-h-0 flex-col overflow-y-auto">
       <div className="mx-auto w-full max-w-6xl px-3 pb-16 pt-10 sm:px-4 lg:px-8">
         <h1 className="title-h2 text-foreground mb-6">
-          {getGreeting()}
+          {greeting}
           {firstName ? `, ${firstName}` : ''}
         </h1>
 

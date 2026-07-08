@@ -64,6 +64,9 @@ def main() -> int:
         master_raw['MAIN_API_URL'] = master_raw['API_URL']
         master['MISSION_CALLBACK_URL'] = master['API_URL']
         master_raw['MISSION_CALLBACK_URL'] = master_raw['API_URL']
+    if master.get('AGENT_API_URL'):
+        master['AGENT_BACKEND_URL'] = master['AGENT_API_URL']
+        master_raw['AGENT_BACKEND_URL'] = master_raw['AGENT_API_URL']
 
     static_defaults = {
         'PORT': {'6': '3001', '9': '3003', '10': '3005'},
@@ -75,6 +78,8 @@ def main() -> int:
         'NEXT_PUBLIC_MCP_CONSENT_PATH': {'7': '/mcp/consent'},
         'NEXT_PUBLIC_WAITLIST_MODE': {'7': 'false'},
         'NEXT_PUBLIC_REQUIRE_ADMIN': {'7': 'false'},
+        'ALLOW_FREE_ONBOARDING': {'6': 'true'},
+        'NEXT_PUBLIC_ALLOW_FREE_ONBOARDING': {'7': 'true'},
         'OPENCLAW_AGENT_ID': {'9': 'main'},
         'OPENCLAW_MODEL_PREFIX': {'10': 'openclaw'},
         'MISSIONS_BATCH_SIZE': {'10': '20'},
@@ -95,10 +100,12 @@ def main() -> int:
         'SEARCHAPI_API_KEY',
         'MACHINE_POOL_REPLENISH_ENABLED', 'MACHINE_POOL_SIZE', 'MACHINE_IDLE_THRESHOLD_MS',
         'MACHINE_STALE_THRESHOLD_DAYS', 'FLY_MACHINE_HOURLY_RATE',
+        'ALLOW_FREE_ONBOARDING',
     ]
     web_vars = [
-        'NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'NEXT_PUBLIC_BACKEND_URL',
-        'NEXT_PUBLIC_MCP_CONSENT_PATH', 'NEXT_PUBLIC_WAITLIST_MODE', 'NEXT_PUBLIC_REQUIRE_ADMIN',
+        'NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'BACKEND_URL',
+        'NEXT_PUBLIC_BACKEND_URL', 'AGENT_BACKEND_URL', 'NEXT_PUBLIC_MCP_CONSENT_PATH',
+        'NEXT_PUBLIC_WAITLIST_MODE', 'NEXT_PUBLIC_REQUIRE_ADMIN', 'NEXT_PUBLIC_ALLOW_FREE_ONBOARDING',
     ]
     funnels_vars = [
         'NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY',

@@ -3,6 +3,8 @@ primary_region = "iad"
 
 [env]
   NODE_ENV = "production"
+  AGENT_RUNTIME_MODE = "shared"
+  OPENCLAW_GATEWAY_URL = "http://127.0.0.1:18789"
   BRAIN_LLM_RERANKER = "1"
   BRAIN_LLM_RERANKER_MODEL = "google/gemini-3.5-flash"
   BRAIN_MULTI_QUERY_RETRIEVAL = "1"

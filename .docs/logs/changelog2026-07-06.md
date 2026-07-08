@@ -3,6 +3,13 @@
 
 
 
+## [2026-07-06 23:30] - [FIX]
+
+What: Removed committed fork tmp artifacts (`tmp-wb-mcp-part*.json`, `.tmp_exec_*.json`), added `.gitignore` patterns, and rewrote git history + force-pushed to `origin/main`.
+Why: Cowork handoff flagged fork crumbs on remote; `.env` was never in git but tmp SQL/MCP payloads were on `origin/main`.
+Impact: Private repo history no longer contains tmp artifacts; local `.env` files remain gitignored on disk only.
+Files: `.gitignore`, deleted tmp JSON files, `origin/main` history rewrite
+
 ## [2026-07-06 20:18] - [DOCS]
 
 What: Added 15-min agent sync checklist to ROAS provisioning doc; opened Cursor Automation draft (cron */15 * * * *) to read doc and report changes.

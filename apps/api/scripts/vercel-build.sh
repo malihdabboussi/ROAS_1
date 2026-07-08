@@ -8,13 +8,20 @@ WORKSPACE_PKGS=(agent-policy api-shared)
 materialize_workspace_pkg() {
   local pkg="$1"
   local src="${ROOT}/packages/${pkg}"
+  local repo_runtime_pkg="${ROOT}/packages/@vibey/${pkg}"
+  local api_runtime_pkg="${API_ROOT}/node_modules/@vibey/${pkg}"
 
   # Serverless includeFiles bundle — dist + package.json only (no pnpm symlinks).
-  # Runtime resolution uses pnpm's node_modules/@vibey/* with nested deps (jose, etc.).
-  rm -rf "${ROOT}/packages/@vibey/${pkg}"
-  mkdir -p "${ROOT}/packages/@vibey/${pkg}/dist"
-  cp "${src}/package.json" "${ROOT}/packages/@vibey/${pkg}/"
-  cp -r "${src}/dist/." "${ROOT}/packages/@vibey/${pkg}/dist/"
+  # Runtime resolution prefers apps/api/node_modules, then the repo-level package copy.
+  for target in "${repo_runtime_pkg}" "${api_runtime_pkg}"; do
+    rm -rf "${target}"
+    mkdir -p "${target}/dist"
+    cp "${src}/package.json" "${target}/"
+    cp -r "${src}/dist/." "${target}/dist/"
+    if [[ "${pkg}" == "agent-policy" ]]; then
+      TARGET_PACKAGE_JSON="${target}/package.json" node -e "const fs=require('fs');const p=process.env.TARGET_PACKAGE_JSON;const j=JSON.parse(fs.readFileSync(p,'utf8'));delete j.type;fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n')"
+    fi
+  done
 }
 
 echo "vercel-build: cleaning workspace package outputs"
@@ -26,14 +33,9 @@ echo "vercel-build: building workspace packages"
 cd "${ROOT}"
 echo "vercel-build: @vibey/agent-policy (CJS for Nest serverless — ESM breaks require() on Vercel)"
 cd "${ROOT}/packages/agent-policy"
-node -e "const fs=require('fs');const p='package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));delete j.type;fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n')"
 pnpm exec tsc -p tsconfig.build.vercel.json
 cd "${ROOT}"
 npx pnpm@9 --filter=@vibey/api-shared run build
-
-echo "vercel-build: rewriting workspace deps to file: paths"
-cd "${API_ROOT}"
-node -e "const p=require('./package.json');for (const pkg of ['api-shared','agent-policy']) { p.dependencies['@vibey/'+pkg]='file:../../packages/'+pkg; } require('fs').writeFileSync('./package.json',JSON.stringify(p,null,2))"
 
 echo "vercel-build: reinstalling api deps"
 cd "${ROOT}"

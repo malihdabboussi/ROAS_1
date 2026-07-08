@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { VibeyAwakeningContainer } from '@/features/onboarding/containers/VibeyAwakeningContainer'
 import { backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
+import { activateFreePlan, invalidateBillingStatusCache } from '@/lib/billing/billing-api'
 import { clearActiveOrgStorage } from '@/lib/utils/org-storage'
 import { OnboardingChannels } from './components/OnboardingChannels'
 import { OnboardingCustomize } from './components/OnboardingCustomize'
@@ -227,6 +228,22 @@ export default function OnboardingPage() {
     return () => clearTimeout(timer)
   }, [isReady, step, finalizeAndRedirect, promoteCeo, provisionMachine])
 
+  const handleContinueFree = useCallback(async () => {
+    try {
+      await activateFreePlan()
+      invalidateBillingStatusCache()
+      const profile = await backendGet<RuntimeProfile>('/api/profile').catch(() => null)
+      if (!hasRuntime(profile)) {
+        void provisionMachine().catch(() => {})
+      }
+      setStep('setup-wait')
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Could not start free access. Please try again.',
+      )
+    }
+  }, [provisionMachine, setStep])
+
   const handleFinishFlow = useCallback(async () => {
     const directInviteCode = getDirectInviteCode()
     if (directInviteCode) {
@@ -311,7 +328,13 @@ export default function OnboardingPage() {
   }
 
   if (step === 'subscribe') {
-    return <OnboardingSubscribe onBack={() => setStep('channels')} />
+    return (
+      <OnboardingSubscribe
+        onBack={() => setStep('channels')}
+        onContinueFree={handleContinueFree}
+        showContinueFree={process.env.NEXT_PUBLIC_ALLOW_FREE_ONBOARDING === 'true'}
+      />
+    )
   }
 
   return (

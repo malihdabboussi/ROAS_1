@@ -18,11 +18,7 @@ import {
 import { ThrottlerGuard } from '@nestjs/throttler'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { AuthGuard, CurrentUser, Supabase } from '@vibey/api-shared'
-import type {
-  CheckoutBody,
-  PortalBody,
-  RedeemPromoBody,
-} from '../billing-http.types'
+import type { CheckoutBody, PortalBody, RedeemPromoBody } from '../billing-http.types'
 import { BillingUserActionsService } from '../services/billing-user-actions.service'
 import { StripeService } from '../services/stripe.service'
 
@@ -61,6 +57,16 @@ export class BillingController {
       successUrl,
       cancelUrl,
     )
+  }
+
+  @Post('activate-free-plan')
+  @UseGuards(AuthGuard, ThrottlerGuard)
+  @HttpCode(HttpStatus.OK)
+  activateFreePlan(
+    @CurrentUser() user: { id: string; email: string },
+    @Supabase() supabase: SupabaseClient,
+  ) {
+    return this.billingUserActionsService.activateFreePlan(user.id, supabase)
   }
 
   @Post('redeem-promo')

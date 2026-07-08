@@ -6,17 +6,54 @@ import type {
   FlowBuildSessionSummary,
 } from '@vibey/api-shared/types/flow-builder'
 import { backendDelete, backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
+import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import {
   buildFlowsConceptSpaceSchema,
   FLOWS_CONCEPT_SPACE_TITLE,
   matchesFlowsConceptSpace,
 } from '@/lib/flows/flows-scope-storage'
-import {
-  createSpace,
-  fetchSpaces,
-} from '@/features/spaces/services/spaces.service'
+import { fetchSpaces, type SpaceSummary } from '@/lib/spaces/spaces-api'
+import { getOrgScopedKey } from '@/lib/utils/org-storage'
 import type { FlowAutomation } from '../types/flow-automation.types'
 import type { FlowBuildSessionLink } from '../types/flow-build-session-link.types'
+
+const FLOW_CACHE_PREFIX = 'flows:'
+const FLOW_BUILD_SESSION_CACHE_PREFIX = 'flow-build-sessions:'
+
+function flowsCacheKey(spaceId: string): string {
+  return getOrgScopedKey(`${FLOW_CACHE_PREFIX}space:${spaceId}`)
+}
+
+function orgFlowsCacheKey(options?: {
+  campaignId?: string | null
+  spaceId?: string | null
+}): string {
+  return getOrgScopedKey(
+    `${FLOW_CACHE_PREFIX}org:${options?.campaignId ?? ''}:${options?.spaceId ?? ''}`,
+  )
+}
+
+function latestFlowBuildSessionCacheKey(
+  spaceId: string,
+  options?: { conversationId?: string | null },
+): string {
+  return getOrgScopedKey(
+    `${FLOW_BUILD_SESSION_CACHE_PREFIX}latest:${spaceId}:${options?.conversationId ?? ''}`,
+  )
+}
+
+function flowBuildSessionLinksCacheKey(spaceId: string): string {
+  return getOrgScopedKey(`${FLOW_BUILD_SESSION_CACHE_PREFIX}links:${spaceId}`)
+}
+
+function flowBuildSessionCacheKey(spaceId: string, sessionId: string): string {
+  return getOrgScopedKey(`${FLOW_BUILD_SESSION_CACHE_PREFIX}session:${spaceId}:${sessionId}`)
+}
+
+function invalidateFlowCaches(): void {
+  invalidateCachedFetch(FLOW_CACHE_PREFIX)
+  invalidateCachedFetch(FLOW_BUILD_SESSION_CACHE_PREFIX)
+}
 
 export type FlowCapabilityKind = 'trigger' | 'action'
 
@@ -58,7 +95,9 @@ export interface FlowBlueprintResponse {
 }
 
 export async function fetchFlows(spaceId: string): Promise<FlowAutomation[]> {
-  return backendGet<FlowAutomation[]>(`/api/spaces/${spaceId}/automations/flows`)
+  return cachedFetch(flowsCacheKey(spaceId), () =>
+    backendGet<FlowAutomation[]>(`/api/spaces/${spaceId}/automations/flows`),
+  )
 }
 
 export async function fetchOrgFlows(options?: {
@@ -69,7 +108,9 @@ export async function fetchOrgFlows(options?: {
   if (options?.campaignId) params.set('campaign_id', options.campaignId)
   if (options?.spaceId) params.set('space_id', options.spaceId)
   const suffix = params.toString() ? `?${params.toString()}` : ''
-  return backendGet<FlowAutomation[]>(`/api/automations/flows${suffix}`)
+  return cachedFetch(orgFlowsCacheKey(options), () =>
+    backendGet<FlowAutomation[]>(`/api/automations/flows${suffix}`),
+  )
 }
 
 export async function ensureFlowsConceptSpace(): Promise<{
@@ -98,7 +139,7 @@ export async function ensureFlowsConceptSpace(): Promise<{
     }
   }
 
-  const created = await createSpace({
+  const created = await backendPost<SpaceSummary>('/api/spaces', {
     title: FLOWS_CONCEPT_SPACE_TITLE,
     description: 'Sandbox Space for building and testing flows before assigning them elsewhere.',
     visibility: 'team',
@@ -113,7 +154,9 @@ export async function ensureFlowsConceptSpace(): Promise<{
 }
 
 export async function fetchFlow(spaceId: string, automationId: string): Promise<FlowAutomation> {
-  return backendGet<FlowAutomation>(`/api/spaces/${spaceId}/automations/flows/${automationId}`)
+  return cachedFetch(`${FLOW_CACHE_PREFIX}flow:${spaceId}:${automationId}`, () =>
+    backendGet<FlowAutomation>(`/api/spaces/${spaceId}/automations/flows/${automationId}`),
+  )
 }
 
 export async function createFlowDraft(
@@ -125,7 +168,12 @@ export async function createFlowDraft(
     actions: FlowAutomation['actions']
   },
 ): Promise<FlowAutomation> {
-  return backendPost<FlowAutomation>(`/api/spaces/${spaceId}/automations/flows/drafts`, input)
+  const created = await backendPost<FlowAutomation>(
+    `/api/spaces/${spaceId}/automations/flows/drafts`,
+    input,
+  )
+  invalidateFlowCaches()
+  return created
 }
 
 export async function updateFlowDraft(
@@ -133,10 +181,12 @@ export async function updateFlowDraft(
   automationId: string,
   input: Partial<Pick<FlowAutomation, 'name' | 'description' | 'trigger' | 'actions'>>,
 ): Promise<FlowAutomation> {
-  return backendPatch<FlowAutomation>(
+  const updated = await backendPatch<FlowAutomation>(
     `/api/spaces/${spaceId}/automations/flows/${automationId}`,
     input,
   )
+  invalidateFlowCaches()
+  return updated
 }
 
 export async function updateFlow(
@@ -144,14 +194,23 @@ export async function updateFlow(
   automationId: string,
   input: Partial<Pick<FlowAutomation, 'name' | 'description' | 'enabled' | 'trigger' | 'actions'>>,
 ): Promise<FlowAutomation> {
-  return backendPatch<FlowAutomation>(`/api/spaces/${spaceId}/automations/${automationId}`, input)
+  const updated = await backendPatch<FlowAutomation>(
+    `/api/spaces/${spaceId}/automations/${automationId}`,
+    input,
+  )
+  invalidateFlowCaches()
+  return updated
 }
 
 export async function deleteFlow(
   spaceId: string,
   automationId: string,
 ): Promise<{ deleted: true }> {
-  return backendDelete<{ deleted: true }>(`/api/spaces/${spaceId}/automations/${automationId}`)
+  const deleted = await backendDelete<{ deleted: true }>(
+    `/api/spaces/${spaceId}/automations/${automationId}`,
+  )
+  invalidateFlowCaches()
+  return deleted
 }
 
 export async function validateFlowDraft(
@@ -167,10 +226,12 @@ export async function publishFlow(
   spaceId: string,
   automationId: string,
 ): Promise<{ flow: FlowAutomation; validation: FlowValidationResult }> {
-  return backendPost<{ flow: FlowAutomation; validation: FlowValidationResult }>(
+  const result = await backendPost<{ flow: FlowAutomation; validation: FlowValidationResult }>(
     `/api/spaces/${spaceId}/automations/flows/${automationId}/publish`,
     {},
   )
+  invalidateFlowCaches()
+  return result
 }
 
 export async function searchFlowCapabilities(
@@ -209,14 +270,16 @@ export async function fetchLatestFlowBuildSession(
   const params = new URLSearchParams()
   if (options?.conversationId) params.set('conversation_id', options.conversationId)
   const suffix = params.toString() ? `?${params.toString()}` : ''
-  return backendGet<FlowBuildSessionSummary | null>(
-    `/api/spaces/${spaceId}/automations/flows/build-sessions/latest${suffix}`,
+  return cachedFetch(latestFlowBuildSessionCacheKey(spaceId, options), () =>
+    backendGet<FlowBuildSessionSummary | null>(
+      `/api/spaces/${spaceId}/automations/flows/build-sessions/latest${suffix}`,
+    ),
   )
 }
 
 export async function fetchFlowBuildSessionLinks(spaceId: string): Promise<FlowBuildSessionLink[]> {
-  return backendGet<FlowBuildSessionLink[]>(
-    `/api/spaces/${spaceId}/automations/flows/build-sessions`,
+  return cachedFetch(flowBuildSessionLinksCacheKey(spaceId), () =>
+    backendGet<FlowBuildSessionLink[]>(`/api/spaces/${spaceId}/automations/flows/build-sessions`),
   )
 }
 
@@ -224,8 +287,10 @@ export async function fetchFlowBuildSession(
   spaceId: string,
   sessionId: string,
 ): Promise<FlowBuildSessionSummary> {
-  return backendGet<FlowBuildSessionSummary>(
-    `/api/spaces/${spaceId}/automations/flows/build-sessions/${sessionId}`,
+  return cachedFetch(flowBuildSessionCacheKey(spaceId, sessionId), () =>
+    backendGet<FlowBuildSessionSummary>(
+      `/api/spaces/${spaceId}/automations/flows/build-sessions/${sessionId}`,
+    ),
   )
 }
 
@@ -233,9 +298,11 @@ export async function deleteFlowBuildSession(
   spaceId: string,
   sessionId: string,
 ): Promise<{ deleted: true }> {
-  return backendDelete<{ deleted: true }>(
+  const deleted = await backendDelete<{ deleted: true }>(
     `/api/spaces/${spaceId}/automations/flows/build-sessions/${sessionId}`,
   )
+  invalidateFlowCaches()
+  return deleted
 }
 
 export async function createFlowBuildSession(
@@ -248,10 +315,12 @@ export async function createFlowBuildSession(
     conversation_id?: string
   },
 ): Promise<FlowBuildSessionSummary> {
-  return backendPost<FlowBuildSessionSummary>(
+  const created = await backendPost<FlowBuildSessionSummary>(
     `/api/spaces/${spaceId}/automations/flows/build-sessions`,
     input,
   )
+  invalidateFlowCaches()
+  return created
 }
 
 export async function createFlowPlan(
@@ -263,7 +332,12 @@ export async function createFlowPlan(
     target_automation_id?: string
   },
 ): Promise<FlowPlanResponse> {
-  return backendPost<FlowPlanResponse>(`/api/spaces/${spaceId}/automations/flows/plans`, input)
+  const result = await backendPost<FlowPlanResponse>(
+    `/api/spaces/${spaceId}/automations/flows/plans`,
+    input,
+  )
+  invalidateFlowCaches()
+  return result
 }
 
 export async function answerFlowClarifications(
@@ -271,20 +345,24 @@ export async function answerFlowClarifications(
   sessionId: string,
   answers: Record<string, unknown>,
 ): Promise<FlowPlanResponse> {
-  return backendPost<FlowPlanResponse>(
+  const result = await backendPost<FlowPlanResponse>(
     `/api/spaces/${spaceId}/automations/flows/build-sessions/${sessionId}/clarifications/answers`,
     { answers },
   )
+  invalidateFlowCaches()
+  return result
 }
 
 export async function validateFlowPlan(
   spaceId: string,
   sessionId: string,
 ): Promise<FlowPlanResponse & { validation: FlowValidationResult }> {
-  return backendPost<FlowPlanResponse & { validation: FlowValidationResult }>(
+  const result = await backendPost<FlowPlanResponse & { validation: FlowValidationResult }>(
     `/api/spaces/${spaceId}/automations/flows/plans/${sessionId}/validate`,
     {},
   )
+  invalidateFlowCaches()
+  return result
 }
 
 export async function compileFlowPlan(
@@ -292,9 +370,11 @@ export async function compileFlowPlan(
   sessionId: string,
   input: { allow_invalid_draft?: boolean } = {},
 ): Promise<FlowPlanResponse & { automation: FlowAutomation; validation: FlowValidationResult }> {
-  return backendPost<
+  const result = await backendPost<
     FlowPlanResponse & { automation: FlowAutomation; validation: FlowValidationResult }
   >(`/api/spaces/${spaceId}/automations/flows/plans/${sessionId}/compile`, input)
+  invalidateFlowCaches()
+  return result
 }
 
 export async function evaluateFlowPlan(
@@ -302,10 +382,12 @@ export async function evaluateFlowPlan(
   sessionId: string,
   input: { scenario_key?: string; prompt?: string } = {},
 ): Promise<{ evaluation: Record<string, unknown>; summary: FlowBuildEvaluationSummary }> {
-  return backendPost<{ evaluation: Record<string, unknown>; summary: FlowBuildEvaluationSummary }>(
-    `/api/spaces/${spaceId}/automations/flows/plans/${sessionId}/evaluations`,
-    input,
-  )
+  const result = await backendPost<{
+    evaluation: Record<string, unknown>
+    summary: FlowBuildEvaluationSummary
+  }>(`/api/spaces/${spaceId}/automations/flows/plans/${sessionId}/evaluations`, input)
+  invalidateFlowCaches()
+  return result
 }
 
 export async function listFlowBlueprints(

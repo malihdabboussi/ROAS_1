@@ -23,12 +23,25 @@ fi
 bash "${ROOT}/scripts/roas/apply-fly-secrets.sh"
 
 cd "${ROOT}"
+
+# BuildKit reads .dockerignore from the build context root; flyctl --ignorefile is ignored
+# with Depot/BuildKit (superfly/flyctl#3870). Swap in the Fly-specific ignore file for deploy.
+ROOT_DOCKERIGNORE="${ROOT}/.dockerignore"
+FLY_DOCKERIGNORE="${ROOT}/docker/fly.dockerignore"
+BACKUP_DOCKERIGNORE="$(mktemp)"
+cp "${ROOT_DOCKERIGNORE}" "${BACKUP_DOCKERIGNORE}"
+restore_dockerignore() {
+  cp "${BACKUP_DOCKERIGNORE}" "${ROOT_DOCKERIGNORE}"
+  rm -f "${BACKUP_DOCKERIGNORE}"
+}
+trap restore_dockerignore EXIT
+cp "${FLY_DOCKERIGNORE}" "${ROOT_DOCKERIGNORE}"
+
 echo "Deploying ${APP} (this may take several minutes)..."
 "${FLY}" deploy \
   --app "${APP}" \
   --config "${CONFIG}" \
   --dockerfile docker/Dockerfile \
-  --ignorefile docker/fly.dockerignore \
   --strategy immediate
 
 echo "Health check:"

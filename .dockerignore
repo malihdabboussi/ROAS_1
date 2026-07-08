@@ -1,4 +1,10 @@
 # Dependencies (installed in Docker)
+#
+# Fly roas-runtimes needs apps/openclaw + apps/agent-api; this file excludes them
+# for slim Railway mission-worker builds. Fly deploy MUST use:
+#   bash scripts/roas/deploy-fly-runtimes.sh
+# (swaps in docker/fly.dockerignore). Do not run raw flyctl deploy.
+# See scripts/roas/README.md
 node_modules
 **/node_modules
 

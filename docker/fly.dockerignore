@@ -1,4 +1,4 @@
-# Fly roas-runtimes build context — includes openclaw (see deploy-fly-runtimes.sh --ignorefile)
+# Fly roas-runtimes build context — includes openclaw (see scripts/roas/deploy-fly-runtimes.sh)
 # Dependencies (installed in Docker)
 node_modules
 **/node_modules

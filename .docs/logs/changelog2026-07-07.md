@@ -344,3 +344,52 @@ What: Fixed Brain home internal server error after large brain import — chunk 
 Why: Importing 71 brains caused `/api/brain/health/batch` to pass all 73 brain ids in one RPC, hitting Postgres statement timeout (~8s) on ROAS Micro.
 Impact: Brain home loads for users with many brains once web/API deploy; embedding backfill script running for `test@gmail.com` (1,726 memories + narrative pages).
 Files: `apps/api/src/modules/brain/repositories/memory-stats.repository.ts`, `apps/web/src/features/brain/services/brain.service.ts`, `scripts/import-user-brain/backfill-embeddings.ts`, `package.json`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 19:46] - [FIX]
+
+What: Added the two July 8 ROAS recovery migrations to the ordered ROAS migration runner.
+Why: The files restore personal `agents_registry` read/update policy and add the `agent_definitions.archetype_filter` column, but `scripts/roas/migration-order.txt` did not include them, so future resilient migration runs could skip the fixes behind empty Agents/Skills and agent sync/chat drift.
+Impact: Re-running the ROAS migration runner will include the recovery migrations instead of depending on manual application.
+Files: `scripts/roas/migration-order.txt`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 19:47] - [FIX]
+
+What: Restored ROAS space chat — pointed profiles at `roas-runtimes.fly.dev`, set Fly secrets (`AGENT_RUNTIME_MODE=shared`, `OPENCLAW_GATEWAY_URL=http://127.0.0.1:18789`), scaled runtime to one machine, added `agent_definitions.archetype_filter`, seeded global Vibey identity rows, and fixed invalid OpenClaw plugin config (removed missing `whatsapp`, registered `memory-core`) so `/v1/responses` is enabled.
+Why: Space chat showed “assistant is temporarily unavailable” because the agent runtime URL pointed at Vibey Railway (401), shared Fly runtime was misconfigured, agent sync failed on schema/data gaps, and invalid `openclaw.json` disabled the responses endpoint (404).
+Impact: Authenticated chat smoke to Vibey in a space now streams a model reply (`content_delta` + `done`). Hard refresh recommended; Fly image redeploy in progress for durable config.
+Files: `docker/openclaw.json`, `docker/fly.roas.runtime.toml`, `supabase/migrations/20260708023000_agent_definitions_archetype_filter.sql`, `scripts/roas/roas-secrets.env.template`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 19:55] - [FIX]
+
+What: Deployed `roas-runtimes` to Fly with the fixed OpenClaw config baked into the image; updated `scripts/roas/deploy-fly-runtimes.sh` to swap in `docker/fly.dockerignore` during deploy because BuildKit ignores flyctl `--ignorefile`.
+Why: Prior deploy attempts failed (`/apps/openclaw` not found) — root `.dockerignore` excludes openclaw/agent-api for Railway slim builds, and `--ignorefile` is not honored by Depot/BuildKit.
+Impact: ROAS chat fix is now durable across machine restarts; `/api/health` returns `mode=shared`, `sync=ok`. Use `bash scripts/roas/deploy-fly-runtimes.sh` for future Fly runtime deploys.
+Files: `scripts/roas/deploy-fly-runtimes.sh`, `docker/fly.roas.runtime.toml`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 21:15] - [DOCS]
+
+What: Added `scripts/roas/README.md` documenting ROAS Fly deploy procedure, `.dockerignore` swap requirement, and runtime config; corrected stale `--ignorefile` references.
+Why: Future agent deploys must not use raw `flyctl deploy` (BuildKit ignores `--ignorefile`; root `.dockerignore` excludes openclaw/agent-api).
+Impact: Agents use `bash scripts/roas/deploy-fly-runtimes.sh` with documented rationale.
+Files: `scripts/roas/README.md`, `docker/fly.dockerignore`, `.docs/plans/roas-lovable-rebuild-provisioning.md`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 21:45] - [FIX]
+
+What: Fixed ROAS production runtime routing by forcing Fly `OPENCLAW_GATEWAY_URL` secrets to the in-container gateway URL, applied targeted Supabase repairs for `session_transcripts`, `vb_agent_traces.cost_usd`, and missing Atlas system runtime rows, and patched web home/skills UI bugs found during production smoke testing.
+Why: Production chat was stuck in “Resuming” / interrupted states because Fly secrets overrode the local gateway with the public app URL; agent transcripts failed on a missing storage bucket; Atlas sync lacked `IDENTITY.md` and a system registry row; home hydration and skills default filters caused UI loading/empty-state issues.
+Impact: Fly deep health now reports gateway reachable, Vibey/Atlas backend streams complete and transcript upload succeeds, temporary skill create/delete works, and the next web deploy will avoid the home hydration mismatch and hidden official skills.
+Files: `scripts/roas/apply-fly-secrets.sh`, `supabase/migrations/20260707213521_roas_runtime_storage_trace_repair.sql`, `supabase/migrations/20260707214500_roas_atlas_system_runtime_repair.sql`, `apps/web/src/app/(dashboard)/home/page.tsx`, `apps/web/src/features/settings/components/settings-content/skills-page/skills-page.types.ts`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 21:40] - [FIX]
+
+What: Added shared `cachedFetch` dedupe to Flows list/detail and build-session reads, invalidated those caches after flow/build-session mutations, removed the Flows service import from private Spaces feature internals, and added service cache regression coverage.
+Why: The Flows page can trigger the same flow/build-session GETs from mount effects, realtime reloads, and React StrictMode without a promise-dedupe guard; the touched service also violated feature isolation by importing Spaces internals.
+Impact: Duplicate Flows load bursts collapse to one in-flight request per cache key, mutations refresh the next read, and the Flows service now stays on shared `@/lib` boundaries.
+Files: `apps/web/src/features/flows/services/flows.service.ts`, `apps/web/src/features/flows/services/flows.service.test.ts`, `.docs/logs/changelog2026-07-07.md`
+
+## [2026-07-07 21:43] - [FIX]
+
+What: Removed leftover local debug collector calls from Spaces item updates, inline artifact opens, empty content routing, and automation prompt editing; added a store regression test proving item updates use the Spaces API without local debug `fetch` calls.
+Why: Normal Spaces interactions were still attempting requests to local debug endpoints (`127.0.0.1` ports) from product code, causing unnecessary browser network work and noisy hidden failures.
+Impact: Spaces update/open/prompt-edit flows no longer emit non-product localhost debug traffic while preserving the existing optimistic update and UI behavior.
+Files: `apps/web/src/features/spaces/store/use-spaces-store.ts`, `apps/web/src/features/spaces/store/use-spaces-store.test.ts`, `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx`, `apps/web/src/features/spaces/components/content/SpaceContentRouter.tsx`, `apps/web/src/features/spaces/components/automations/PromptTemplateEditor.tsx`, `.docs/logs/changelog2026-07-07.md`, `.docs/plans/agent-follow-up-work.md`

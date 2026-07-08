@@ -2,10 +2,17 @@
  * User-scoped billing mutations and composite reads: promo, agent brain, invoices, subscription flags.
  */
 
-import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/common'
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  Optional,
+} from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RedeemPromoBody } from '../billing-http.types'
 import { FREE_BASE_CREDITS } from '../constants/credit-allowances'
+import { BillingStripeCustomerRepository } from '../repositories/billing-stripe-customer.repository'
 import { BillingUserActionsRepository } from '../repositories/billing-user-actions.repository'
 import { CreditsService } from './credits.service'
 import { StripeService } from './stripe.service'
@@ -18,9 +25,48 @@ export class BillingUserActionsService {
   constructor(
     private readonly creditsService: CreditsService,
     private readonly stripeService: StripeService,
+    private readonly stripeCustomerRepository: BillingStripeCustomerRepository,
     @Optional() actionsRepository?: BillingUserActionsRepository,
   ) {
     this.actionsRepository = actionsRepository ?? new BillingUserActionsRepository()
+  }
+
+  async activateFreePlan(
+    userId: string,
+    supabase: SupabaseClient,
+  ): Promise<{ success: boolean; alreadyActive: boolean }> {
+    if (process.env.ALLOW_FREE_ONBOARDING !== 'true') {
+      throw new ForbiddenException('Free onboarding is not enabled on this deployment')
+    }
+
+    const { data: existing } = await supabase
+      .from('user_subscriptions')
+      .select('status')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (existing?.status === 'active' || existing?.status === 'trialing') {
+      return { success: true, alreadyActive: true }
+    }
+
+    const { data: freePlan, error: planErr } = await this.stripeCustomerRepository.findFreePlanId()
+    if (planErr || !freePlan?.id) {
+      throw new BadRequestException('Free plan is not configured')
+    }
+
+    const { error: upsertErr } = await this.stripeCustomerRepository.upsertUserSubscription({
+      user_id: userId,
+      plan_id: freePlan.id,
+      status: 'active',
+      stripe_subscription_id: null,
+    })
+    if (upsertErr) {
+      this.logger.error(`Failed to activate free plan for ${userId}: ${upsertErr.message}`)
+      throw new BadRequestException('Could not activate free plan')
+    }
+
+    this.logger.log(`Activated free plan for user ${userId}`)
+    return { success: true, alreadyActive: false }
   }
 
   async redeemPromo(
@@ -33,8 +79,10 @@ export class BillingUserActionsService {
       throw new BadRequestException('code is required')
     }
 
-    const { data: promo, error: promoErr } =
-      await this.actionsRepository.findActivePromoByCode(supabase, code)
+    const { data: promo, error: promoErr } = await this.actionsRepository.findActivePromoByCode(
+      supabase,
+      code,
+    )
 
     if (promoErr || !promo) {
       throw new BadRequestException('Invalid or expired promo code')
@@ -82,8 +130,10 @@ export class BillingUserActionsService {
       status: 'completed',
     })
 
-    const { data: promoAllPurchases } =
-      await this.actionsRepository.listCompletedCreditPurchases(supabase, userId)
+    const { data: promoAllPurchases } = await this.actionsRepository.listCompletedCreditPurchases(
+      supabase,
+      userId,
+    )
 
     const totalPurchased =
       promoAllPurchases?.reduce(
@@ -265,10 +315,7 @@ export class BillingUserActionsService {
   }> {
     const limit = Math.min(parseInt(limitParam ?? '12', 10) || 12, 50)
 
-    const { data: sub } = await this.actionsRepository.findSubscriptionCustomerId(
-      supabase,
-      userId,
-    )
+    const { data: sub } = await this.actionsRepository.findSubscriptionCustomerId(supabase, userId)
 
     if (!sub?.stripe_customer_id) {
       return { invoices: [] }
@@ -309,10 +356,7 @@ export class BillingUserActionsService {
     userId: string,
     supabase: SupabaseClient,
   ): Promise<{ success: boolean }> {
-    const { data: sub } = await this.actionsRepository.findSubscriptionStripeId(
-      supabase,
-      userId,
-    )
+    const { data: sub } = await this.actionsRepository.findSubscriptionStripeId(supabase, userId)
 
     if (!sub?.stripe_subscription_id) {
       throw new BadRequestException('No active subscription found')
