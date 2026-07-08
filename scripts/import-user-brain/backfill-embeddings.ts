@@ -122,7 +122,7 @@ async function embed(text: string, apiKey: string, model: string): Promise<numbe
   }
 
   let lastErr = ''
-  for (let attempt = 1; attempt <= 5; attempt++) {
+  for (let attempt = 1; attempt <= 12; attempt++) {
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -130,7 +130,8 @@ async function embed(text: string, apiKey: string, model: string): Promise<numbe
         body: JSON.stringify(body),
       })
       if (res.status === 429 || res.status === 503) {
-        await new Promise((r) => setTimeout(r, Math.min(2 ** attempt * 250, 8000)))
+        const wait = Math.min(2 ** attempt * 1000, 60_000)
+        await new Promise((r) => setTimeout(r, wait))
         lastErr = `${res.status}`
         continue
       }
@@ -144,7 +145,7 @@ async function embed(text: string, apiKey: string, model: string): Promise<numbe
       return values
     } catch (err) {
       lastErr = err instanceof Error ? err.message : String(err)
-      await new Promise((r) => setTimeout(r, Math.min(2 ** attempt * 250, 8000)))
+      await new Promise((r) => setTimeout(r, Math.min(2 ** attempt * 1000, 60_000)))
     }
   }
   throw new Error(`embed failed: ${lastErr}`)
@@ -256,6 +257,7 @@ async function processTable(
             .eq('id', row.id)
           if (error) {
             failed++
+            if (failed <= 5) console.error(`    ✗ ${spec.table} ${row.id}: ${error.message}`)
             continue
           }
         }
@@ -263,8 +265,13 @@ async function processTable(
         if ((embedded + skipped + failed) % 100 === 0) {
           process.stdout.write(`  ${key}: ${embedded + skipped + failed}/${rows.length}\n`)
         }
-      } catch {
+      } catch (err) {
         failed++
+        if (failed <= 5) {
+          console.error(
+            `    ✗ ${spec.table} ${row.id}: ${err instanceof Error ? err.message : String(err)}`,
+          )
+        }
       }
     }
   }
@@ -322,7 +329,7 @@ async function main(): Promise<void> {
   }
 
   console.log(`\nTotal embedded: ${totalEmbedded}, failed: ${totalFailed}`)
-  if (totalFailed > 0) process.exit(1)
+  if (totalFailed > 0 && totalEmbedded === 0) process.exit(1)
 }
 
 main().catch((err) => {
