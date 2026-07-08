@@ -297,8 +297,9 @@ function HomeComposer() {
         )
         router.push(`/spaces?space=${targetId}&home_seed=1`)
       } catch (error) {
-        setSending(false)
         toast.error(sanitizeUserError(error, HOME_TOAST_ERRORS.SEND_MESSAGE_FAILED.userMessage))
+      } finally {
+        setSending(false)
       }
     },
     [isOrgOnly, router, sending, spaces, targetSpaceId],

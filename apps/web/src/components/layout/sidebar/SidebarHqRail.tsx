@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Rocket } from 'lucide-react'
 import { AvatarDropdown } from '../AvatarDropdown'
 import { SidebarCreditsHover } from '../SidebarCreditsHover'
@@ -20,6 +21,8 @@ export function SidebarHqRail({
   clearSpacesFlyoutCloseTimer: () => void
   closeHoverManageFlyout: () => void
 }) {
+  const router = useRouter()
+
   return (
     <div className="flex w-[72px] flex-shrink-0 items-stretch py-3 pl-2">
       <div className="card-glass flex w-full flex-col rounded-2xl">
@@ -132,6 +135,9 @@ export function SidebarHqRail({
                     c.setActiveManagePanel('spaces')
                   }}
                   onClick={() => {
+                    if (c.pathname !== '/spaces' && !c.pathname.startsWith('/spaces/')) {
+                      router.push('/spaces')
+                    }
                     if (c.activeManagePanel === 'spaces' && !c.isPanelClosing) {
                       c.setIsPanelClosing(true)
                     }
