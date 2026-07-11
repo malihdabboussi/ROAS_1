@@ -11,8 +11,6 @@ export function GlobalChatPanel() {
   const pathname = usePathname() ?? ''
   const workContext = useGlobalChatStore((s) => s.workContext)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
-  const activeAgentKey = useGlobalChatStore((s) => s.activeAgentKey)
-  const conversationListMode = useGlobalChatStore((s) => s.conversationListMode)
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const spaces = useSpacesStore((s) => s.spaces)
   const activeSpace = useMemo(
@@ -29,10 +27,6 @@ export function GlobalChatPanel() {
     : workContext.surface === 'spaces' && workContext.spaceId
       ? workContext.spaceId
       : undefined
-  const useGeneralScope = !isChannelRoute && !spaceId && !pathname.startsWith('/home/channels/')
-  const acceptGlobalComposerSeed =
-    pathname === '/home' ||
-    (pathname.startsWith('/home/') && !pathname.startsWith('/home/channels/'))
 
   const panelKey = isChannelRoute
     ? `channel:${channelId}`
@@ -49,8 +43,6 @@ export function GlobalChatPanel() {
           spaceId={spaceId}
           campaignId={spaceId ? (workContext.campaignId ?? activeSpace?.campaign_id ?? null) : null}
           campaignName={isSpacesRoute ? (activeSpace?.title ?? null) : null}
-          generalScope={useGeneralScope}
-          showWorkContextFooter={useGeneralScope}
           channelContext={
             isChannelRoute && channelId
               ? {
@@ -61,9 +53,6 @@ export function GlobalChatPanel() {
               : undefined
           }
           onCollapseChat={() => setCollapsed(true)}
-          forcedAgentKey={activeAgentKey}
-          conversationListMode={conversationListMode}
-          acceptGlobalComposerSeed={acceptGlobalComposerSeed}
         />
       </div>
     </div>

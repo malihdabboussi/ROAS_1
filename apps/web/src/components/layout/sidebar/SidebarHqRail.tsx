@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Rocket } from 'lucide-react'
 import { AvatarDropdown } from '../AvatarDropdown'
-import { SidebarCreditsHover } from '../SidebarCreditsHover'
 import type { ManageRailItem } from './sidebar-types'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -270,7 +269,6 @@ export function SidebarHqRail({
               </span>
             </button>
           )}
-          <SidebarCreditsHover variant="hq" hqTriggerLayout="rail" />
           <AvatarDropdown
             displayName={c.displayName}
             email={c.email ?? ''}

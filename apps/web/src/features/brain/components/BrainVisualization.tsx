@@ -54,7 +54,6 @@ export default function BrainVisualization() {
     scopeOptions,
     loading: scopesLoading,
     resolved: scopeOptionsResolved,
-    reload: reloadScopeNav,
   } = useBrainScopeNavOptions()
   const isOrg = useOrgStore((s) => s.isOrgContext())
   const { brainScopeRuntime, navigateToBrainHome, selectedScope, selectedScopeId } =

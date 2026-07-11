@@ -3,7 +3,6 @@
 import { useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
-import { Workflow, X } from 'lucide-react'
 import { toast } from 'sonner'
 import type { AutomationRunDisplayMeta } from '@/components/flows/AutomationRunsLog'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
@@ -11,7 +10,6 @@ import type { AutomationSolidOption } from '@/components/ui/forms/AutomationSoli
 import { OptionDot } from '@/components/ui/status/OptionDot'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { useUserRole } from '@/hooks/use-user-role'
-import { fetchMissionAgents, type MissionAgent } from '@/lib/agents/mission-agents-api'
 import {
   dispatchTeamHrChatCompose,
   TEAM_HR_CHAT_COMPOSE_EVENT,
@@ -38,11 +36,7 @@ import { FLOWS_UI } from '@/lib/flows/flows-ui-labels'
 import { useAccountContextGate } from '@/lib/org/org-context-store'
 import { fetchSpaces, type SpaceFieldDef, type SpaceSummary } from '@/lib/spaces/spaces-api'
 import { fetchTeamRoster, type TeamRosterEntry } from '@/lib/team/team-roster-api'
-import { FlowBuildClarificationsComposer } from '../components/FlowBuildClarificationsComposer'
-import { FlowBuildStartPanel } from '../components/FlowBuildStartPanel'
 import { FlowClarificationsView } from '../components/FlowClarificationsView'
-import { FlowComposerLinkedFlowButton } from '../components/FlowComposerLinkedFlowButton'
-import { FlowComposerSpaceSelector } from '../components/FlowComposerSpaceSelector'
 import { FlowsBrowseHub } from '../components/FlowsBrowseHub'
 import { FlowsEditorPanel } from '../components/FlowsEditorPanel'
 import { FlowsForbiddenState } from '../components/FlowsForbiddenState'
@@ -67,7 +61,6 @@ import {
 import { flowAutomationFieldsForSpace } from '../lib/flow-space-fields'
 import { buildTriggerFilterOptions, filterFlows, sortFlows } from '../lib/flows-filters'
 import { groupManageFlows } from '../lib/flows-grouping'
-import { buildLoopFlowsAwarenessContext } from '../lib/flows-loop-awareness-context'
 import {
   dispatchLoopChatActivateConversation,
   dispatchLoopChatOpenPanel,
@@ -81,7 +74,6 @@ import {
   listOrphanFlowBuildSessions,
   mapFlowDraftBuildLinks,
   resolveFlowDraftBuildLink,
-  resolveLoopChatLinkUiState,
 } from '../lib/map-flow-draft-build-links'
 import {
   resolveFlowScopeLocations,
@@ -173,29 +165,6 @@ function isLoopChatPanelDropTarget(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && !!target.closest('[data-team-hr-chat-panel]')
 }
 
-function FlowComposerFlowChip({
-  flow,
-  onClear,
-}: {
-  flow: FlowChatDragPayload
-  onClear: () => void
-}) {
-  return (
-    <span className="chip-glass-blue body-4 gap-spacing-1 h-spacing-8 px-spacing-2 inline-flex max-w-full items-center rounded-full font-medium">
-      <Workflow className="icon-xs shrink-0" />
-      <span className="min-w-0 truncate">{flow.flowName}</span>
-      <button
-        type="button"
-        onClick={onClear}
-        className="text-muted-foreground hover:text-foreground inline-flex shrink-0 transition-colors"
-        aria-label="Remove Flow context"
-      >
-        <X className="icon-xs" />
-      </button>
-    </span>
-  )
-}
-
 export function FlowsPage() {
   const searchParams = useSearchParams()
   const { role, loading: roleLoading } = useUserRole()
@@ -211,7 +180,7 @@ export function FlowsPage() {
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(requestedSpaceId)
   const [createAnythingMode, setCreateAnythingMode] = useState(true)
   const [conceptSpaceId, setConceptSpaceId] = useState<string | null>(null)
-  const [conceptSpaceLoading, setConceptSpaceLoading] = useState(false)
+  const [, setConceptSpaceLoading] = useState(false)
   const [panelTab, setPanelTab] = useState<FlowsPanelTab>('browse')
   const [browseSection, setBrowseSection] = useState<FlowsBrowseSection>('templates')
   const [userTemplateInstallingId, setUserTemplateInstallingId] = useState<string | null>(null)
@@ -236,10 +205,7 @@ export function FlowsPage() {
   const [validation, setValidation] = useState<FlowValidationResult | null>(null)
   const [validationFlowId, setValidationFlowId] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
-  const [loopAgent, setLoopAgent] = useState<MissionAgent | null>(null)
-  const [loopLoading, setLoopLoading] = useState(true)
-  const [loopStartGateOpen, setLoopStartGateOpen] = useState(true)
-  const [loopStartGateKey, setLoopStartGateKey] = useState(0)
+  const [, setLoopStartGateOpen] = useState(true)
   const [loopConversationId, setLoopConversationId] = useState<string | null>(null)
   const [skipStoredLoopConversationSpaceId, setSkipStoredLoopConversationSpaceId] = useState<
     string | null
@@ -318,8 +284,6 @@ export function FlowsPage() {
     summary: flowBuildSummary,
     session: flowBuildSession,
     plan: flowBuildPlan,
-    requiredNextAction: flowBuildRequiredNextAction,
-    inspectorStage: flowBuildInspectorStage,
     refresh: refreshFlowBuildSession,
   } = useFlowBuildSession(
     role === 'admin' ? buildSessionScopeSpaceId : null,
@@ -366,7 +330,6 @@ export function FlowsPage() {
     [flowBuildSummary?.clarifications],
   )
   const showClarificationsTab = openBuildClarifications.length >= 4
-  const hasFlowBuildPlan = !!flowBuildPlan
 
   const shellFlowName = editorFlow?.name ?? buildPreviewFlow?.name ?? flowBuildPlan?.name ?? null
 
@@ -594,17 +557,6 @@ export function FlowsPage() {
     setLoopStartGateOpen(true)
   }, [activeBuildSessionId, createAnythingMode, effectiveSpaceId, pendingLoopFlow])
 
-  const openLoopStartGate = useCallback(() => {
-    setPendingLoopFlow(null)
-    setLoopBuildPanelPinned(false)
-    if (createAnythingMode) {
-      setLoopStartGateOpen(false)
-      return
-    }
-    setLoopStartGateOpen(true)
-    setLoopStartGateKey((current) => current + 1)
-  }, [createAnythingMode])
-
   const handleAskLoopToFix = useCallback((prompt: string) => {
     setLoopStartGateOpen(false)
     dispatchTeamHrChatCompose({ text: prompt, submit: true })
@@ -727,72 +679,6 @@ export function FlowsPage() {
   }, [requestedBuildSessionId, role])
 
   useEffect(() => {
-    setLoopLoading(true)
-    fetchMissionAgents()
-      .then((agents) => {
-        const loop = agents.find((agent) => agent.agent_key === 'loop') ?? null
-        setLoopAgent(loop)
-      })
-      .catch(() => {
-        setLoopAgent(null)
-      })
-      .finally(() => setLoopLoading(false))
-  }, [])
-
-  const buildLoopAwarenessContext = useCallback(
-    () =>
-      buildLoopFlowsAwarenessContext({
-        spaceId: effectiveSpaceId,
-        spaceName: createAnythingMode
-          ? FLOWS_UI.createAnythingLabel
-          : (scopeSpace?.title ?? 'All spaces'),
-        activeTab: panelTab,
-        viewMode,
-        selectedFlowId,
-        selectedFlowName: selectedFlow?.name ?? null,
-        attachedFlowId: pendingLoopFlow?.automationId ?? pendingLoopFlow?.flowId ?? null,
-        attachedFlowDefinitionId: pendingLoopFlow?.flowDefinitionId ?? null,
-        attachedFlowInstallationId: pendingLoopFlow?.flowInstallationId ?? null,
-        attachedFlowName: pendingLoopFlow?.flowName ?? null,
-        attachedFlowSpaceId: pendingLoopFlow?.spaceId ?? null,
-        attachedFlowSpaceName: pendingLoopFlow?.spaceTitle ?? null,
-        attachedFlowInstallationCount: pendingLoopFlow?.installationCount ?? null,
-        flowCount: flows.length,
-        validationValid: validation?.valid ?? null,
-        hasActiveBuildSession: !!activeBuildSessionId,
-        buildSessionStatus: flowBuildSession?.status ?? null,
-        hasBuildPlan: hasFlowBuildPlan,
-        buildRequiredNextAction: flowBuildRequiredNextAction,
-        buildInspectorStage: flowBuildInspectorStage,
-      }),
-    [
-      activeBuildSessionId,
-      flowBuildInspectorStage,
-      flowBuildRequiredNextAction,
-      flowBuildSession?.status,
-      flows.length,
-      hasFlowBuildPlan,
-      panelTab,
-      pendingLoopFlow?.automationId,
-      pendingLoopFlow?.flowDefinitionId,
-      pendingLoopFlow?.flowId,
-      pendingLoopFlow?.flowInstallationId,
-      pendingLoopFlow?.flowName,
-      pendingLoopFlow?.installationCount,
-      pendingLoopFlow?.spaceId,
-      pendingLoopFlow?.spaceTitle,
-      selectedFlow?.name,
-      selectedFlowId,
-      scopeSpace?.title,
-      createAnythingMode,
-      effectiveSpaceId,
-      selectedCampaignId,
-      validation?.valid,
-      viewMode,
-    ],
-  )
-
-  useEffect(() => {
     if (role !== 'admin') return
     let cancelled = false
     const loadSpaces = async () => {
@@ -907,14 +793,6 @@ export function FlowsPage() {
     [spaces],
   )
 
-  const handleSelectCreateAnything = useCallback(() => {
-    setCreateAnythingMode(true)
-    persistFlowsCreateAnythingMode(true)
-    setSelectedSpaceId(null)
-    setSelectedFlowId(null)
-    setPendingLoopFlow(null)
-  }, [])
-
   const handleSelectSpace = useCallback(
     (spaceId: string | null) => {
       if (spaceId) {
@@ -964,38 +842,6 @@ export function FlowsPage() {
     () => mapFlowDraftBuildLinks(draftFlows, flowBuildSessionLinks),
     [draftFlows, flowBuildSessionLinks],
   )
-
-  const loopChatLinkUiState = useMemo(() => {
-    const conversationSession = loopConversationId
-      ? findBuildSessionForConversation(loopConversationId, flowBuildSessionLinks)
-      : null
-    const planMatchesConversation =
-      conversationSession != null &&
-      (conversationSession.id === activeBuildSessionId ||
-        conversationSession.id === focusedBuildSessionId)
-
-    return resolveLoopChatLinkUiState({
-      conversationId: loopConversationId,
-      sessions: flowBuildSessionLinks,
-      drafts: draftFlows,
-      flows: manageFlows,
-      planAutomationId: planMatchesConversation
-        ? (flowBuildPlan?.automation_id ?? flowBuildPlan?.target_automation_id ?? null)
-        : null,
-      planName: planMatchesConversation ? (flowBuildPlan?.name ?? null) : null,
-      preferredSessionId: conversationSession?.id ?? focusedBuildSessionId,
-    })
-  }, [
-    activeBuildSessionId,
-    draftFlows,
-    flowBuildPlan?.automation_id,
-    flowBuildPlan?.target_automation_id,
-    flowBuildPlan?.name,
-    flowBuildSessionLinks,
-    focusedBuildSessionId,
-    loopConversationId,
-    manageFlows,
-  ])
 
   useEffect(() => {
     if (!loopConversationId) return
@@ -1313,81 +1159,6 @@ export function FlowsPage() {
     ],
   )
 
-  const handleLoopStreamSettled = useCallback(() => {
-    void (async () => {
-      const [summary] = await Promise.all([
-        refreshFlowBuildSession(),
-        refreshFlowBuildSessionLinks(),
-      ])
-      setLoopBuildPanelPinned(true)
-      if (!summary) return
-
-      const sessionSpaceId =
-        typeof summary.session?.space_id === 'string' ? summary.session.space_id : effectiveSpaceId
-
-      const preserveFlowIdRaw =
-        summary.plan?.automation_id ??
-        summary.plan?.target_automation_id ??
-        summary.session?.automation_id ??
-        summary.session?.target_automation_id ??
-        selectedFlowId
-      const preserveFlowId = typeof preserveFlowIdRaw === 'string' ? preserveFlowIdRaw : null
-      let rows = await loadFlows({
-        scopeSpaceId: sessionSpaceId,
-        preserveFlowId,
-      })
-
-      const linkedAutomationIdRaw =
-        summary.plan?.automation_id ??
-        summary.plan?.target_automation_id ??
-        summary.session?.automation_id ??
-        summary.session?.target_automation_id ??
-        selectedFlowId ??
-        null
-      const linkedAutomationId =
-        typeof linkedAutomationIdRaw === 'string' ? linkedAutomationIdRaw : null
-      const linkedFlow = linkedAutomationId ? findFlowByAnyId(rows, linkedAutomationId) : null
-
-      const syncedAutomationId = await syncBuildPlanToDraft({
-        summary,
-        flow: linkedFlow,
-        fallbackSpaceId: sessionSpaceId ?? effectiveSpaceId,
-      })
-      if (syncedAutomationId) {
-        rows = await loadFlows({
-          scopeSpaceId: sessionSpaceId,
-          preserveFlowId: syncedAutomationId,
-        })
-      }
-
-      const automationId = syncedAutomationId ?? linkedAutomationId
-      if (!automationId) return
-      if (showClarificationsTab) return
-
-      const linkedFlowAfterSync = findFlowByAnyId(rows, automationId)
-      await openFlowWorkspace({
-        flowId: automationId,
-        sessionId: typeof summary.session?.id === 'string' ? summary.session.id : null,
-        conversationId:
-          typeof summary.session?.conversation_id === 'string'
-            ? summary.session.conversation_id
-            : loopConversationId,
-        spaceId: sessionSpaceId,
-        flowHint: linkedFlowAfterSync,
-        bypassOpenSuppress: true,
-      })
-    })()
-  }, [
-    effectiveSpaceId,
-    loadFlows,
-    loopConversationId,
-    openFlowWorkspace,
-    refreshFlowBuildSession,
-    refreshFlowBuildSessionLinks,
-    selectedFlowId,
-    showClarificationsTab,
-  ])
-
   useEffect(() => {
     if (!loopBuildPanelPinned) return
     dispatchLoopChatOpenPanel()
@@ -1582,24 +1353,6 @@ export function FlowsPage() {
     [effectiveSpaceId, flows, openFlowWorkspace],
   )
 
-  const handleOpenLinkedFlowFromChat = useCallback(() => {
-    if (loopChatLinkUiState.kind !== 'open') return
-    const { link } = loopChatLinkUiState
-    const flowHint = link.flowId ? findFlowByAnyId(manageFlows, link.flowId) : null
-    void openFlowWorkspace({
-      flowId: link.flowId,
-      flowHint: flowHint && 'is_draft' in flowHint ? (flowHint as FlowAutomationSummary) : null,
-      sessionId: link.sessionId,
-      conversationId: link.conversationId,
-      spaceId: link.spaceId,
-      ensureBuildSession: !link.conversationId,
-      bypassOpenSuppress: true,
-    }).catch((error) => {
-      const message = error instanceof Error ? error.message : 'Could not open this Loop draft'
-      toast.error(message)
-    })
-  }, [loopChatLinkUiState, manageFlows, openFlowWorkspace])
-
   const handleOpenBuildSession = useCallback(
     (session: FlowBuildSessionLink) => {
       const matchedDraft = findDraftForBuildSession(session, draftFlows)
@@ -1654,31 +1407,6 @@ export function FlowsPage() {
       setValidation(null)
       setValidationFlowId(null)
       toast.success('Draft created')
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  const handleStartLoopBuild = async (input: {
-    mode: 'create' | 'update'
-    targetFlow?: FlowAutomationSummary | null
-  }) => {
-    if (!effectiveSpaceId) return
-    setBusy('start-loop')
-    try {
-      const targetFlow = input.mode === 'update' ? (input.targetFlow ?? selectedFlow) : null
-      await createFlowBuildSession(effectiveSpaceId, {
-        intent: targetFlow ? `Update flow: ${targetFlow.name}` : 'New flow build',
-        name: targetFlow ? `Update ${targetFlow.name}` : 'New flow build',
-        mode: input.mode,
-        target_automation_id: targetFlow?.id,
-        conversation_id:
-          input.mode === 'update' && loopConversationId ? loopConversationId : undefined,
-      })
-      setLoopStartGateOpen(false)
-      openBrowseSection('my-loops')
-      await refreshFlowBuildSession()
-      toast.success(targetFlow ? 'Loop update started' : 'Loop build started')
     } finally {
       setBusy(null)
     }
@@ -2207,24 +1935,6 @@ export function FlowsPage() {
     setValidationFlowId(null)
     setFocusedBuildSessionId(null)
   }, [])
-
-  const loopComposerBlockedMessage =
-    !createAnythingMode && !effectiveSpaceId
-      ? FLOWS_UI.selectSpaceForLoop
-      : !createAnythingMode && loopStartGateOpen
-        ? 'Choose create or update a flow to start chatting'
-        : undefined
-
-  const loopBuildStartOverlay =
-    effectiveSpaceId && loopStartGateOpen && !createAnythingMode ? (
-      <FlowBuildStartPanel
-        key={loopStartGateKey}
-        flows={flows}
-        preselectedFlow={selectedFlow}
-        busy={busy === 'start-loop'}
-        onStart={(input) => void handleStartLoopBuild(input)}
-      />
-    ) : null
 
   if (roleLoading || (role === 'admin' && spacesLoading)) {
     return (

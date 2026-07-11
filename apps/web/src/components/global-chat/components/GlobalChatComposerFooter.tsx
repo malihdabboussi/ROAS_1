@@ -93,11 +93,15 @@ export function GlobalChatComposerFooter() {
                             })
                           } else if (spaces.length > 0) {
                             const space = spaces[0]
-                            setWorkContext({
-                              surface: 'spaces',
-                              spaceId: space.id,
-                              campaignId: space.campaign_id ?? null,
-                            })
+                            if (!space) {
+                              setWorkContext({ surface: 'spaces' })
+                            } else {
+                              setWorkContext({
+                                surface: 'spaces',
+                                spaceId: space.id,
+                                campaignId: space.campaign_id ?? null,
+                              })
+                            }
                           } else {
                             setWorkContext({ surface: 'spaces' })
                           }

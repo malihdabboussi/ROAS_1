@@ -34,7 +34,6 @@ export function HomeDashboardContent() {
   const [firstName, setFirstName] = useState('')
   const [greeting, setGreeting] = useState('Welcome back')
   const [selectedTemplate, setSelectedTemplate] = useState<HomeDashboardTemplateId | null>(null)
-  const [hoverTemplate, setHoverTemplate] = useState<HomeDashboardTemplateId | null>(null)
   const {
     selectedMission,
     activeYourTurnItem,
@@ -95,11 +94,7 @@ export function HomeDashboardContent() {
 
           <HomeDashboardV4Composer selectedTemplate={selectedTemplate} />
 
-          <HomeTemplateFan
-            selected={selectedTemplate}
-            onSelect={setSelectedTemplate}
-            onHover={setHoverTemplate}
-          />
+          <HomeTemplateFan selected={selectedTemplate} onSelect={setSelectedTemplate} />
 
           <DailyRecommendationStrip variant="v4" />
 

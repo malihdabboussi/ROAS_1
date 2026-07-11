@@ -73,6 +73,10 @@ function agentHasDomain(agentKey: string, domain: string): boolean {
   return contract?.platformDomains.includes(domain as never) ?? false
 }
 
+function rosterAgentKey(entry: TeamRosterEntry): string | null {
+  return typeof entry.agent_key === 'string' && entry.agent_key.length > 0 ? entry.agent_key : null
+}
+
 export function filterAgentsForWorkContext(
   agents: TeamRosterEntry[],
   workContext: GlobalWorkContext,
@@ -80,19 +84,34 @@ export function filterAgentsForWorkContext(
   const agentRows = agents.filter((entry) => entry.kind === 'agent')
   switch (workContext.surface) {
     case 'brain':
-      return agentRows.filter((entry) => BRAIN_AGENT_KEYS.has(entry.agent_key))
+      return agentRows.filter((entry) => {
+        const agentKey = rosterAgentKey(entry)
+        return agentKey !== null && BRAIN_AGENT_KEYS.has(agentKey)
+      })
     case 'team':
-      return agentRows.filter(
-        (entry) =>
-          TEAM_AGENT_KEYS.has(entry.agent_key) || agentHasDomain(entry.agent_key, 'manage_agents'),
-      )
+      return agentRows.filter((entry) => {
+        const agentKey = rosterAgentKey(entry)
+        return (
+          agentKey !== null &&
+          (TEAM_AGENT_KEYS.has(agentKey) || agentHasDomain(agentKey, 'manage_agents'))
+        )
+      })
     case 'flows':
-      return agentRows.filter((entry) => FLOWS_AGENT_KEYS.has(entry.agent_key))
+      return agentRows.filter((entry) => {
+        const agentKey = rosterAgentKey(entry)
+        return agentKey !== null && FLOWS_AGENT_KEYS.has(agentKey)
+      })
     case 'spaces':
-      return agentRows.filter((entry) => !SPACES_EXCLUDED_AGENT_KEYS.has(entry.agent_key))
+      return agentRows.filter((entry) => {
+        const agentKey = rosterAgentKey(entry)
+        return agentKey !== null && !SPACES_EXCLUDED_AGENT_KEYS.has(agentKey)
+      })
     case 'general':
     default:
-      return agentRows.filter((entry) => !FLOWS_AGENT_KEYS.has(entry.agent_key))
+      return agentRows.filter((entry) => {
+        const agentKey = rosterAgentKey(entry)
+        return agentKey !== null && !FLOWS_AGENT_KEYS.has(agentKey)
+      })
   }
 }
 
