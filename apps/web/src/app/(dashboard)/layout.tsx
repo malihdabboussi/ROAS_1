@@ -1,8 +1,9 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Sidebar } from '@/components/layout/Sidebar'
 import { createClient } from '@/lib/supabase/server'
 import { resolveUserAvatarUrl, resolveUserDisplayName } from '@/lib/user-display'
+import { DashboardShell } from './dashboard-shell'
+import { DashboardSidebar } from './dashboard-sidebar.client'
 import { DashboardProviders } from './providers'
 
 const SUPABASE_AUTH_TIMEOUT_MS = 4000
@@ -45,8 +46,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <DashboardProviders initialSidebarMode={initialSidebarMode}>
       <div className="flex h-dvh overflow-y-hidden overflow-x-visible bg-[var(--background)]">
-        <Sidebar userName={userName} email={user.email ?? undefined} avatarUrl={avatarUrl} />
-        <main className="flex-1 overflow-hidden">{children}</main>
+        <DashboardSidebar
+          userName={userName}
+          email={user.email ?? undefined}
+          avatarUrl={avatarUrl}
+        />
+        <main className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+          <DashboardShell>{children}</DashboardShell>
+        </main>
       </div>
     </DashboardProviders>
   )
