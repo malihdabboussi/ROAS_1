@@ -27,6 +27,7 @@ import {
   type OrgMember,
 } from '@/features/org/services/org.service'
 import { useOrgStore } from '@/features/org/store/use-org-store'
+import { formatOrgPublicUrl } from '@/lib/org/org-public-url'
 import { createClient } from '@/lib/supabase/client'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { TeamTabPanel } from './team'
@@ -272,7 +273,7 @@ export default function OrgSettingsContent() {
                     className="h-spacing-10 px-spacing-3 body-2 rounded-spacing-2 border-border surface-bg placeholder:text-muted-foreground text-foreground w-full border disabled:cursor-not-allowed disabled:opacity-60"
                   />
                   <p className="body-3 text-muted-foreground mt-spacing-1">
-                    vibey.im/org/{slug || '...'}
+                    {formatOrgPublicUrl(slug)}
                   </p>
                 </div>
 

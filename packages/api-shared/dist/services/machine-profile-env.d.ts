@@ -1,0 +1,30 @@
+export type RuntimeEnvironment = 'production' | 'staging';
+export type AgentRuntimeType = 'fly_machine' | 'shared_railway';
+export type MachineProfileColumns = {
+    environment: RuntimeEnvironment;
+    machineId: string;
+    machineUrl: string;
+    machineStatus: string;
+    runtimeApp: string;
+    runtimeStatus: string;
+    runtimeLastActivityAt: string;
+    runtimeType: string;
+    runtimeUrl: string;
+};
+export type CanonicalMachineProfileRow = {
+    machineId: string | null;
+    machineUrl: string | null;
+    machineStatus: string | null;
+    runtimeApp: string | null;
+    runtimeStatus: string | null;
+    runtimeLastActivityAt: string | null;
+    runtimeType: AgentRuntimeType;
+    runtimeUrl: string | null;
+};
+type MachineProfileUpdateInput = Partial<CanonicalMachineProfileRow>;
+export declare function resolveRuntimeEnvironmentName(env?: Record<string, string | undefined>): RuntimeEnvironment;
+export declare function resolveMachineProfileColumns(env?: Record<string, string | undefined>): MachineProfileColumns;
+export declare function resolveMachineProfileRow(row: Record<string, unknown> | null | undefined, columns: MachineProfileColumns): CanonicalMachineProfileRow;
+export declare function hasSharedRailwayRuntime(profile: Pick<CanonicalMachineProfileRow, 'runtimeType' | 'runtimeUrl'> | null | undefined): boolean;
+export declare function buildMachineProfileUpdate(columns: MachineProfileColumns, values: MachineProfileUpdateInput): Record<string, unknown>;
+export {};

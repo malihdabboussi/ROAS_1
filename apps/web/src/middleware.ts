@@ -18,8 +18,9 @@ const MACHINE_COLUMNS = resolveMachineProfileColumns(process.env)
 type AccessQueryResult = { data?: { id: string } | null } | null
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+  const guardedPromise = promise.catch(() => null)
   return Promise.race([
-    promise,
+    guardedPromise,
     new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
   ])
 }
@@ -47,11 +48,7 @@ export async function middleware(request: NextRequest) {
   )
 
   let authResult: Awaited<ReturnType<typeof supabase.auth.getUser>> | null = null
-  try {
-    authResult = await withTimeout(supabase.auth.getUser(), SUPABASE_TIMEOUT_MS)
-  } catch {
-    authResult = null
-  }
+  authResult = await withTimeout(supabase.auth.getUser(), SUPABASE_TIMEOUT_MS)
   const user = authResult?.data?.user ?? null
 
   const dashboardPaths = [

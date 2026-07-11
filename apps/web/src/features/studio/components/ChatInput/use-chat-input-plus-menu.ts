@@ -24,6 +24,7 @@ export function useChatInputPlusMenu() {
   const plusSubmenuAnchorRefs = useRef<
     Record<Exclude<ComposerPlusSubmenu, null>, HTMLButtonElement | null>
   >({
+    space: null,
     files: null,
     attach: null,
     integrations: null,
@@ -55,8 +56,10 @@ export function useChatInputPlusMenu() {
     const anchor = plusSubmenuAnchorRefs.current[submenu]
     if (!anchor) return
     const rect = anchor.getBoundingClientRect()
-    const menuWidth = submenu === 'access' ? 280 : submenu === 'integrations' ? 280 : 240
-    const fallbackHeight = submenu === 'access' ? 360 : submenu === 'skills' ? 360 : 280
+    const menuWidth =
+      submenu === 'access' || submenu === 'integrations' || submenu === 'space' ? 280 : 240
+    const fallbackHeight =
+      submenu === 'access' || submenu === 'skills' ? 360 : submenu === 'space' ? 320 : 280
     const measured = plusSubmenuRef.current?.offsetHeight
     const menuHeight = Math.min(
       measured && measured > 0 ? measured : fallbackHeight,

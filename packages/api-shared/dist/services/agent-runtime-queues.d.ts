@@ -1,0 +1,14 @@
+export type AgentRuntimeWorkload = 'chat' | 'brain' | 'brain_import' | 'mission' | 'artifact' | 'automation' | 'sub_agent';
+export declare const AGENT_RUNTIME_QUEUE_NAMES: Record<AgentRuntimeWorkload, string>;
+export declare const AGENT_RUNTIME_CHAT_QUEUE: string;
+export declare const AGENT_RUNTIME_BRAIN_QUEUE: string;
+export declare const AGENT_RUNTIME_BRAIN_IMPORT_QUEUE: string;
+export declare const AGENT_RUNTIME_MISSION_QUEUE: string;
+export declare const AGENT_RUNTIME_ARTIFACT_QUEUE: string;
+export declare const AGENT_RUNTIME_AUTOMATION_QUEUE: string;
+export declare const AGENT_RUNTIME_SUB_AGENT_QUEUE: string;
+export declare const AGENT_RUNTIME_REDIS_URL_ENV_KEYS: readonly ["REDIS_URL_AGENT_QUEUE", "REDIS_URL_AGENT_STREAM", "REDIS_URL_MISSIONS", "REDIS_URL"];
+export type AgentRuntimeRedisEnvKey = (typeof AGENT_RUNTIME_REDIS_URL_ENV_KEYS)[number];
+export type AgentRuntimeEnv = Record<string, string | undefined>;
+export declare function resolveAgentRuntimeRedisUrl(env?: AgentRuntimeEnv): string;
+export declare function resolveAgentRuntimeRedisPrefix(env?: AgentRuntimeEnv): string;

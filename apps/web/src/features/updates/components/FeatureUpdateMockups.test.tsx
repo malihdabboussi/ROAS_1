@@ -20,6 +20,7 @@ describe('FeatureUpdateMockup', () => {
     expect(screen.getByText('vibey.im/brain')).toBeInTheDocument()
 
     rerender(<FeatureUpdateMockup title="Organization switching" />)
+    expect(screen.getByText('roas.io/org')).toBeInTheDocument()
     expect(screen.getByText('Growth')).toBeInTheDocument()
 
     rerender(<FeatureUpdateMockup title="Campaign timeline" />)

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import type { ChatModelSettings } from '@/features/studio/services/chat.service'
 import type { ChatScopeKind, DocumentAttachment, MessageReference } from '../../types'
 import type { AttachedArtifact } from '../chat/ArtifactAttachments'
+import type { ChatInputPlusMenuSpacePickerConfig } from './chat-input-plus-menu-space.types'
 import type { ChatInputSpaceComposerSpaceTask } from './use-chat-input-at-mention-controller'
 
 export interface ChatInputProps {
@@ -78,4 +79,8 @@ export interface ChatInputProps {
   spaceComposerListenExternalAttach?: boolean
   /** Footer slot next to the Integrations control, e.g. Home "Send to". */
   composerFooterAfterIntegrationsSlot?: ReactNode
+  /** Optional space picker surfaced in the composer plus menu (Home dashboard). */
+  plusMenuSpacePicker?: ChatInputPlusMenuSpacePickerConfig
+  /** Optional wrapper class for the default composer footer row. */
+  footerWrapperClassName?: string
 }

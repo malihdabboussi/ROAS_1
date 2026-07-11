@@ -5,13 +5,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
 import { Workflow, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { AgentSideChatLayout } from '@/components/agents/side-chat/AgentSideChatLayout'
 import type { AutomationRunDisplayMeta } from '@/components/flows/AutomationRunsLog'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import type { AutomationSolidOption } from '@/components/ui/forms/AutomationSolidSelect'
 import { OptionDot } from '@/components/ui/status/OptionDot'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { useUserRole } from '@/hooks/use-user-role'
-import { useAccountContextGate } from '@/lib/org/org-context-store'
 import { fetchMissionAgents, type MissionAgent } from '@/lib/agents/mission-agents-api'
 import {
   dispatchTeamHrChatCompose,
@@ -19,15 +18,12 @@ import {
   type TeamHrChatComposeDetail,
 } from '@/lib/agents/side-chat-compose'
 import { readStoredLoopConversationId } from '@/lib/agents/side-chat-storage'
-import { createNewConversation } from '@/lib/conversations/conversations-api'
 import { fetchDistinctContactSourceValues } from '@/lib/contacts/contacts-api'
-import {
-  checkRuleFieldsComplete,
-  isFlowDraftPlaceholder,
-} from '@/lib/flows/automation-publishable'
+import { createNewConversation } from '@/lib/conversations/conversations-api'
+import { checkRuleFieldsComplete, isFlowDraftPlaceholder } from '@/lib/flows/automation-publishable'
 import { mergeContactsViewsPickerOptions } from '@/lib/flows/contacts-automation-picker-options'
 import type { ContactsTriggerPickers } from '@/lib/flows/contacts-trigger-pickers'
-import { FLOWS_UI } from '@/lib/flows/flows-ui-labels'
+import type { FlowTriggerContextSpace } from '@/lib/flows/flow-trigger-context-space.utils'
 import {
   FLOW_USER_TEMPLATE_NAME_PREFIX,
   isUserFlowTemplate,
@@ -38,6 +34,8 @@ import {
   persistFlowsCreateAnythingMode,
   readStoredFlowsCreateAnythingMode,
 } from '@/lib/flows/flows-scope-storage'
+import { FLOWS_UI } from '@/lib/flows/flows-ui-labels'
+import { useAccountContextGate } from '@/lib/org/org-context-store'
 import { fetchSpaces, type SpaceFieldDef, type SpaceSummary } from '@/lib/spaces/spaces-api'
 import { fetchTeamRoster, type TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { FlowBuildClarificationsComposer } from '../components/FlowBuildClarificationsComposer'
@@ -55,6 +53,7 @@ import { FlowsWebhooksView } from '../components/FlowsWebhooksView'
 import { FlowsShell } from '../components/nav/FlowsShell'
 import { useFlowBuildSession } from '../hooks/use-flow-build-session'
 import { useFlowBuildSessionsList } from '../hooks/use-flow-build-sessions-list'
+import { isFlowCardOpenSuppressed, suppressFlowCardOpen } from '../lib/flow-card-open-suppress'
 import {
   isFlowChatDrag,
   readFlowChatDragPayload,
@@ -62,16 +61,10 @@ import {
 } from '../lib/flow-chat-drag'
 import {
   FLOW_CLARIFICATION_ANSWER_EVENT,
-  type FlowClarificationAnswerDetail,
   submitFlowClarificationAnswers,
+  type FlowClarificationAnswerDetail,
 } from '../lib/flow-clarification-ui'
-import { syncFlowClarificationsToChat } from '../lib/sync-flow-clarifications-to-chat'
-import {
-  isFlowCardOpenSuppressed,
-  suppressFlowCardOpen,
-} from '../lib/flow-card-open-suppress'
 import { flowAutomationFieldsForSpace } from '../lib/flow-space-fields'
-import type { FlowTriggerContextSpace } from '@/lib/flows/flow-trigger-context-space.utils'
 import { buildTriggerFilterOptions, filterFlows, sortFlows } from '../lib/flows-filters'
 import { groupManageFlows } from '../lib/flows-grouping'
 import { buildLoopFlowsAwarenessContext } from '../lib/flows-loop-awareness-context'
@@ -83,8 +76,8 @@ import {
   type LoopChatConversationDetail,
 } from '../lib/loop-chat-conversation'
 import {
-  findDraftForBuildSession,
   findBuildSessionForConversation,
+  findDraftForBuildSession,
   listOrphanFlowBuildSessions,
   mapFlowDraftBuildLinks,
   resolveFlowDraftBuildLink,
@@ -94,6 +87,7 @@ import {
   resolveFlowScopeLocations,
   type FlowScopeLocation,
 } from '../lib/resolve-flow-scope-locations'
+import { syncFlowClarificationsToChat } from '../lib/sync-flow-clarifications-to-chat'
 import {
   flowNeedsPlanSync,
   mergeFlowWithBuildPlan,
@@ -114,14 +108,12 @@ import {
   type FlowValidationResult,
 } from '../services/flows.service'
 import type {
-  FlowBuildSessionLink,
-} from '../types/flow-build-session-link.types'
-import type {
   FlowAutomation,
   FlowAutomationPayload,
   FlowAutomationSummary,
   FlowInstallationSummary,
 } from '../types/flow-automation.types'
+import type { FlowBuildSessionLink } from '../types/flow-build-session-link.types'
 import type {
   FlowsBrowseSection,
   FlowsDraftFilter,
@@ -270,6 +262,13 @@ export function FlowsPage() {
 
   const effectiveSpaceId = createAnythingMode ? conceptSpaceId : selectedSpaceId
 
+  useEffect(() => {
+    useGlobalChatStore.getState().expandAndFocus({
+      agentKey: 'loop',
+      workContext: { surface: 'flows', spaceId: effectiveSpaceId ?? undefined },
+    })
+  }, [effectiveSpaceId])
+
   const selectableSpaces = useMemo(
     () => spaces.filter((space) => !matchesFlowsConceptSpace(space)),
     [spaces],
@@ -369,15 +368,14 @@ export function FlowsPage() {
   const showClarificationsTab = openBuildClarifications.length >= 4
   const hasFlowBuildPlan = !!flowBuildPlan
 
-  const shellFlowName =
-    editorFlow?.name ?? buildPreviewFlow?.name ?? flowBuildPlan?.name ?? null
+  const shellFlowName = editorFlow?.name ?? buildPreviewFlow?.name ?? flowBuildPlan?.name ?? null
 
   const isFlowEditorOpen = Boolean(
     panelTab === 'browse' &&
-      browseSection === 'my-loops' &&
-      selectedFlowId &&
-      editorFlow &&
-      editorSpaceId,
+    browseSection === 'my-loops' &&
+    selectedFlowId &&
+    editorFlow &&
+    editorSpaceId,
   )
 
   const editorFlowScopeLocations = useMemo(() => {
@@ -489,7 +487,12 @@ export function FlowsPage() {
     }
     window.addEventListener(LOOP_CHAT_CONVERSATION_EVENT, handler)
     return () => window.removeEventListener(LOOP_CHAT_CONVERSATION_EVENT, handler)
-  }, [effectiveSpaceId, flowBuildSessionLinks, refreshFlowBuildSession, refreshFlowBuildSessionLinks])
+  }, [
+    effectiveSpaceId,
+    flowBuildSessionLinks,
+    refreshFlowBuildSession,
+    refreshFlowBuildSessionLinks,
+  ])
 
   useEffect(() => {
     if (!pendingLoopConversationSelection) return
@@ -952,7 +955,10 @@ export function FlowsPage() {
 
   const manageFlows = useMemo(() => flows.filter((flow) => !isUserFlowTemplate(flow)), [flows])
 
-  const draftFlows = useMemo(() => manageFilteredFlows.filter((flow) => flow.is_draft), [manageFilteredFlows])
+  const draftFlows = useMemo(
+    () => manageFilteredFlows.filter((flow) => flow.is_draft),
+    [manageFilteredFlows],
+  )
 
   const draftBuildLinks = useMemo(
     () => mapFlowDraftBuildLinks(draftFlows, flowBuildSessionLinks),
@@ -1009,7 +1015,8 @@ export function FlowsPage() {
       newLoopConversation?: boolean
       bypassOpenSuppress?: boolean
     }) => {
-      if (input.flowId && !input.bypassOpenSuppress && isFlowCardOpenSuppressed(input.flowId)) return
+      if (input.flowId && !input.bypassOpenSuppress && isFlowCardOpenSuppressed(input.flowId))
+        return
 
       userChosePanelTabRef.current = false
       setLoopStartGateOpen(false)
@@ -1018,7 +1025,7 @@ export function FlowsPage() {
 
       let flowId = input.flowId ?? null
       const sessionFromInput = input.sessionId
-        ? flowBuildSessionLinks.find((row) => row.id === input.sessionId) ?? null
+        ? (flowBuildSessionLinks.find((row) => row.id === input.sessionId) ?? null)
         : null
 
       let spaceId =
@@ -1068,9 +1075,7 @@ export function FlowsPage() {
 
       let draftRows = rows.filter((row) => row.is_draft && !isUserFlowTemplate(row))
 
-      let flow =
-        input.flowHint ??
-        (flowId ? findFlowByAnyId(rows, flowId) : null)
+      let flow = input.flowHint ?? (flowId ? findFlowByAnyId(rows, flowId) : null)
 
       if (flowId && !flow) {
         const candidateSpaceIds = [
@@ -1120,9 +1125,7 @@ export function FlowsPage() {
       if (!input.newLoopConversation) {
         const draftForLink =
           draftRows.find((draft) => flowMatchesId(draft, flowId)) ??
-          (flow && 'is_draft' in flow && flow.is_draft
-            ? (flow as FlowAutomationSummary)
-            : null)
+          (flow && 'is_draft' in flow && flow.is_draft ? (flow as FlowAutomationSummary) : null)
         if (draftForLink) {
           const link = resolveFlowDraftBuildLink(draftForLink, flowBuildSessionLinks, draftRows)
           sessionId = sessionId ?? link.sessionId ?? null
@@ -1215,13 +1218,7 @@ export function FlowsPage() {
             toast.error(message)
           }
         }
-      } else if (
-        input.ensureBuildSession &&
-        flowId &&
-        spaceId &&
-        sessionId &&
-        !conversationId
-      ) {
+      } else if (input.ensureBuildSession && flowId && spaceId && sessionId && !conversationId) {
         const targetFlow =
           flow ??
           (flowId ? findFlowByAnyId(rows, flowId) : null) ??
@@ -1422,11 +1419,7 @@ export function FlowsPage() {
 
   const orphanBuildSessions = useMemo(() => {
     if (draftFilter === 'published') return []
-    const orphans = listOrphanFlowBuildSessions(
-      draftFlows,
-      flowBuildSessionLinks,
-      manageFlows,
-    )
+    const orphans = listOrphanFlowBuildSessions(draftFlows, flowBuildSessionLinks, manageFlows)
     const q = search.trim().toLowerCase()
     if (!q) return orphans
     return orphans.filter((session) =>
@@ -1446,7 +1439,14 @@ export function FlowsPage() {
   }, [manageFilteredFlows, spaces])
 
   const flowGroups = useMemo(
-    () => groupManageFlows(manageFilteredFlows, orphanBuildSessions, groupBy, groupSort, spaceTitleById),
+    () =>
+      groupManageFlows(
+        manageFilteredFlows,
+        orphanBuildSessions,
+        groupBy,
+        groupSort,
+        spaceTitleById,
+      ),
     [manageFilteredFlows, groupBy, groupSort, orphanBuildSessions, spaceTitleById],
   )
 
@@ -1608,7 +1608,8 @@ export function FlowsPage() {
         sessionId: session.id,
         conversationId: session.conversation_id,
         spaceId: session.space_id ?? effectiveSpaceId,
-        ensureBuildSession: !matchedDraft && !session.automation_id && !session.target_automation_id,
+        ensureBuildSession:
+          !matchedDraft && !session.automation_id && !session.target_automation_id,
       })
     },
     [draftFlows, effectiveSpaceId, openFlowWorkspace],
@@ -1698,7 +1699,9 @@ export function FlowsPage() {
     }
 
     if (effectiveSpaceId && buildPreviewFlow && trimmed !== buildPreviewFlow.name) {
-      const updated = await updateFlowDraft(effectiveSpaceId, buildPreviewFlow.id, { name: trimmed })
+      const updated = await updateFlowDraft(effectiveSpaceId, buildPreviewFlow.id, {
+        name: trimmed,
+      })
       setFlows((current) =>
         current.map((flow) => (flow.id === updated.id ? { ...flow, ...updated } : flow)),
       )
@@ -2241,70 +2244,7 @@ export function FlowsPage() {
       onDragOver={handleLoopFlowDragOver}
       onDrop={handleLoopFlowDrop}
     >
-      <AgentSideChatLayout
-        className="min-h-0 flex-1"
-        hrAgent={loopAgent}
-        hrAgentLoading={loopLoading}
-        agentKey="loop"
-        agentName="Loop"
-        mobileMainLabel="Flows"
-        buildAwarenessContext={buildLoopAwarenessContext}
-        emptyStateGreeting={
-          createAnythingMode
-            ? "I'm Loop. Tell me what you want to automate — for example, when a task is marked done, notify the team on Slack — and I'll draft the flow."
-            : "I'm Loop. Ask me to search flow capabilities, draft automations, validate, or publish flows for this Space."
-        }
-        blockingOverlay={loopBuildStartOverlay}
-        composerTopAccessory={
-          <div className="gap-spacing-2 flex max-w-full flex-col">
-            <div className="gap-spacing-2 flex max-w-full flex-wrap items-center">
-              <FlowComposerSpaceSelector
-                spaces={selectableSpaces}
-                selectedSpaceId={selectedSpaceId}
-                onSelectSpace={(spaceId) => handleSelectSpace(spaceId)}
-                createAnythingMode={createAnythingMode}
-                onSelectCreateAnything={handleSelectCreateAnything}
-                conceptSpaceLoading={conceptSpaceLoading}
-              />
-              {pendingLoopFlow ? (
-                <FlowComposerFlowChip
-                  flow={pendingLoopFlow}
-                  onClear={() => setPendingLoopFlow(null)}
-                />
-              ) : null}
-              {loopChatLinkUiState.kind !== 'hidden' ? (
-                <FlowComposerLinkedFlowButton
-                  status={loopChatLinkUiState.kind === 'open' ? 'open' : 'no-loop'}
-                  onOpen={
-                    loopChatLinkUiState.kind === 'open' ? handleOpenLinkedFlowFromChat : undefined
-                  }
-                  disabled={!!busy}
-                />
-              ) : null}
-            </div>
-            {effectiveSpaceId && activeBuildSessionId && openBuildClarifications.length > 0 ? (
-              <FlowBuildClarificationsComposer
-                spaceId={effectiveSpaceId}
-                sessionId={activeBuildSessionId}
-                clarifications={openBuildClarifications}
-                onAnswered={() => void refreshFlowBuildSession()}
-              />
-            ) : null}
-          </div>
-        }
-        composerBlocked={!createAnythingMode && (!effectiveSpaceId || loopStartGateOpen)}
-        composerBlockedMessage={loopComposerBlockedMessage}
-        onNewConversation={openLoopStartGate}
-        showCheckpoints={false}
-        storageScope="loop"
-        spaceId={effectiveSpaceId}
-        resolveSpaceIdBeforeSend={
-          createAnythingMode
-            ? () => ensureConceptSpaceReady({ notifyOnError: true })
-            : undefined
-        }
-        onStreamSettled={handleLoopStreamSettled}
-      >
+      <div className="min-h-0 flex-1">
         <FlowsShell
           activeTab={panelTab}
           onSelectTab={handleSelectPanelTab}
@@ -2450,7 +2390,7 @@ export function FlowsPage() {
             />
           ) : null}
         </FlowsShell>
-      </AgentSideChatLayout>
+      </div>
     </div>
   )
 }

@@ -48,10 +48,6 @@ vi.mock('@/components/layout/AvatarDropdown', () => ({
   ),
 }))
 
-vi.mock('@/components/layout/SidebarCreditsHover', () => ({
-  SidebarCreditsHover: () => <button type="button">Credits</button>,
-}))
-
 vi.mock('@/components/layout/sidebar/SidebarAddSpaceDropdown', () => ({
   SidebarAddSpaceDropdown: () => null,
 }))

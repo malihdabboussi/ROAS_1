@@ -37,6 +37,7 @@ interface ChatInputNormalFooterProps {
   contextPopoverPosition: ContextPopoverPortalProps['position']
   portalTarget: ContextPopoverPortalProps['portalTarget']
   voiceSendProps: VoiceSendControlsProps
+  footerWrapperClassName?: string
 }
 
 export function ChatInputNormalFooter({
@@ -61,10 +62,11 @@ export function ChatInputNormalFooter({
   contextPopoverPosition,
   portalTarget,
   voiceSendProps,
+  footerWrapperClassName,
 }: ChatInputNormalFooterProps) {
   return (
     <div
-      className={`flex items-center justify-between ${composerPadX} ${compact ? 'py-spacing-1' : 'py-spacing-2'}`}
+      className={`flex items-center justify-between ${composerPadX} ${compact ? 'py-spacing-1' : 'py-spacing-2'} ${footerWrapperClassName ?? ''}`}
     >
       <div className="flex items-center gap-1">
         <Tooltip label="Add">

@@ -13,6 +13,8 @@ type TableQueryCall = {
 
 const supabaseMockState = vi.hoisted(() => ({
   createServerClient: vi.fn(),
+  getUser: vi.fn(),
+  getSession: vi.fn(),
   tableCalls: [] as TableQueryCall[],
 }))
 
@@ -69,9 +71,16 @@ function createQuery(table: string) {
 
 function installSupabaseMock() {
   supabaseMockState.tableCalls.length = 0
+  supabaseMockState.getUser.mockReset()
+  supabaseMockState.getSession.mockReset()
+  supabaseMockState.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+  supabaseMockState.getSession.mockResolvedValue({
+    data: { session: { user: { id: 'user-1' } } },
+  })
   supabaseMockState.createServerClient.mockReturnValue({
     auth: {
-      getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } } })),
+      getUser: supabaseMockState.getUser,
+      getSession: supabaseMockState.getSession,
     },
     from: vi.fn((table: string) => createQuery(table)),
   })
@@ -112,5 +121,19 @@ describe('middleware access checks', () => {
       { method: 'limit', args: [1] },
       { method: 'maybeSingle', args: [] },
     ])
+  })
+
+  it('keeps authenticated dev users on dashboard routes when verified auth is temporarily unavailable', async () => {
+    supabaseMockState.getUser.mockRejectedValue(new Error('fetch failed'))
+    supabaseMockState.getSession.mockResolvedValue({
+      data: { session: { user: { id: 'user-1' } } },
+    })
+    const { middleware } = await import('./middleware')
+    const request = createMiddlewareRequest('https://app.vibey.test/spaces')
+
+    const response = await middleware(request)
+
+    expect(response.headers.get('location')).toBeNull()
+    expect(supabaseMockState.getSession).toHaveBeenCalled()
   })
 })

@@ -8,9 +8,9 @@ export function WebsiteThemeBootScript() {
 (function(){try{
   var k=${JSON.stringify(STORAGE_KEY)};
   var s=localStorage.getItem(k);
-  var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
-  var useDark=s==='dark'||(s!=='light'&&(s===null||s==='system')&&prefersDark);
+  var useDark=s==='dark';
   document.documentElement.classList.toggle('dark',useDark);
+  document.documentElement.style.colorScheme=useDark?'dark':'light';
 }catch(e){}})();
 `
 

@@ -13,8 +13,8 @@ export function WebsiteThemeProvider({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
-      enableSystem
+      defaultTheme="light"
+      enableSystem={false}
       storageKey={STORAGE_KEY}
       forcedTheme={pitchLock ? 'dark' : undefined}
       disableTransitionOnChange

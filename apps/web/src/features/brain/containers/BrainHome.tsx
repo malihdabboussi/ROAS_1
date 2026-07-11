@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { ShareModal } from '@/components/org'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { useBrainScopeMenuActions } from '@/features/brain/hooks/use-brain-scope-menu-actions'
@@ -11,11 +12,10 @@ import {
 } from '@/features/brain/hooks/use-brain-scope-nav-options'
 import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
 import {
-  SCOPE_SECTIONS,
-  buildBrainAtlasAwarenessContext,
   isKnowledgeScopeType,
   knowledgeStatsToHealth,
   matchesSearch,
+  SCOPE_SECTIONS,
   sectionIncludesScope,
   sortBrains,
   type BrainSort,
@@ -30,14 +30,9 @@ import {
   type KnowledgeGraphStats,
 } from '@/features/brain/services/knowledge-graph.service'
 import type { BrainHealthData } from '@/features/brain/types'
-import { AgentSideChatLayout } from '@/components/agents/side-chat/AgentSideChatLayout'
-import { fetchMissionAgents, type MissionAgent } from '@/lib/agents'
 import { useOrgStore } from '@/lib/org'
+import { brainCardStatus, BrainHomeGridCard } from '../components/BrainHomeGridCard'
 import { BrainHomeGridSections } from '../components/BrainHomeGridSections'
-import {
-  brainCardStatus,
-  BrainHomeGridCard,
-} from '../components/BrainHomeGridCard'
 import { BrainHomeListView, type BrainListSection } from '../components/BrainHomeListView'
 import { BrainHomeToolbar } from '../components/BrainHomeToolbar'
 import CortexMaxModal from '../components/CortexMaxModal'
@@ -62,16 +57,11 @@ export default function BrainHome() {
   const [statusFilters, setStatusFilters] = useState<BrainStatusFilter[]>([])
   const [modalOption, setModalOption] = useState<BrainScopeNavOption | null>(null)
   const [cortexMaxOpen, setCortexMaxOpen] = useState(false)
-  const [atlasAgent, setAtlasAgent] = useState<MissionAgent | null>(null)
-  const [atlasLoading, setAtlasLoading] = useState(true)
+  const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
 
   useEffect(() => {
-    setAtlasLoading(true)
-    fetchMissionAgents()
-      .then((agents) => setAtlasAgent(agents.find((agent) => agent.agent_key === 'atlas') ?? null))
-      .catch(() => setAtlasAgent(null))
-      .finally(() => setAtlasLoading(false))
-  }, [])
+    setWorkContext({ surface: 'brain' })
+  }, [setWorkContext])
 
   const openTrainForOption = useCallback((option: BrainScopeNavOption) => {
     if (!option.brainId) return
@@ -268,37 +258,6 @@ export default function BrainHome() {
     ],
   )
 
-  const buildAtlasAwarenessContext = useCallback(
-    () =>
-      buildBrainAtlasAwarenessContext({
-        isOrg,
-        view,
-        search,
-        sort: effectiveSort,
-        statusFilters,
-        scopeOptions,
-        sortedFiltered,
-        visibleSections,
-        healthLoading,
-        resolveHealth: resolveCardHealth,
-        resolveStatus: (option) => brainCardStatus(resolveCardHealth(option), healthLoading),
-        agentsWithoutBrainCount: agentsWithoutBrain.length,
-      }),
-    [
-      agentsWithoutBrain.length,
-      effectiveSort,
-      healthLoading,
-      isOrg,
-      resolveCardHealth,
-      scopeOptions,
-      search,
-      sortedFiltered,
-      statusFilters,
-      view,
-      visibleSections,
-    ],
-  )
-
   if (scopeLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -309,63 +268,49 @@ export default function BrainHome() {
 
   return (
     <div className="relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden p-3">
-      <AgentSideChatLayout
-        className="min-h-0 flex-1"
-        hrAgent={atlasAgent}
-        hrAgentLoading={atlasLoading}
-        agentKey="atlas"
-        agentName="Atlas"
-        mobileMainLabel="Brain"
-        buildAwarenessContext={buildAtlasAwarenessContext}
-        emptyStateGreeting="I'm Atlas. Ask me about the brains on this screen, training, Cortex Max, or what knowledge should be organized next."
-        showCheckpoints={false}
-        storageScope="atlas"
-          collapseHrChatForAgentKey="brain-home"
-      >
-        <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--border)]">
-          <div className="gap-spacing-3 flex min-h-0 flex-1 flex-col overflow-hidden p-3">
-            <BrainHomeToolbar
-              search={search}
-              searchOpen={searchOpen}
-              sort={sort}
-              statusFilters={statusFilters}
-              view={view}
-              trainDisabled={!defaultTrainOption?.brainId}
-              onSearchChange={setSearch}
-              onSearchOpenChange={setSearchOpen}
-              onStatusToggle={toggleStatusFilter}
-              onSortChange={setSort}
-              onViewChange={setView}
-              onTrain={openDefaultTrainOption}
-            />
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--border)]">
+        <div className="gap-spacing-3 flex min-h-0 flex-1 flex-col overflow-hidden p-3">
+          <BrainHomeToolbar
+            search={search}
+            searchOpen={searchOpen}
+            sort={sort}
+            statusFilters={statusFilters}
+            view={view}
+            trainDisabled={!defaultTrainOption?.brainId}
+            onSearchChange={setSearch}
+            onSearchOpenChange={setSearchOpen}
+            onStatusToggle={toggleStatusFilter}
+            onSortChange={setSort}
+            onViewChange={setView}
+            onTrain={openDefaultTrainOption}
+          />
 
-            <div className="min-h-0 flex-1 overflow-auto">
-              {sortedFiltered.length === 0 && scopeOptions.some((o) => matchesSearch(o, search)) ? (
-                <div className="body-3 text-muted-foreground p-spacing-6 text-center">
-                  No brains match the current filters.
-                </div>
-              ) : view === 'list' ? (
-                <BrainHomeListView
-                  sections={visibleSections}
-                  healthLoading={healthLoading}
-                  resolveHealth={resolveCardHealth}
-                  getMenuContext={buildMenuContext}
-                  onAddAgentBrain={() => dispatchBrainAddAgentModal()}
-                />
-              ) : (
-                <BrainHomeGridSections
-                  scopeOptions={scopeOptions}
-                  sortedFiltered={sortedFiltered}
-                  agentsWithoutBrain={agentsWithoutBrain}
-                  isOrg={isOrg}
-                  renderBrainCard={renderBrainCard}
-                  onAddAgentBrain={() => dispatchBrainAddAgentModal()}
-                />
-              )}
-            </div>
+          <div className="min-h-0 flex-1 overflow-auto">
+            {sortedFiltered.length === 0 && scopeOptions.some((o) => matchesSearch(o, search)) ? (
+              <div className="body-3 text-muted-foreground p-spacing-6 text-center">
+                No brains match the current filters.
+              </div>
+            ) : view === 'list' ? (
+              <BrainHomeListView
+                sections={visibleSections}
+                healthLoading={healthLoading}
+                resolveHealth={resolveCardHealth}
+                getMenuContext={buildMenuContext}
+                onAddAgentBrain={() => dispatchBrainAddAgentModal()}
+              />
+            ) : (
+              <BrainHomeGridSections
+                scopeOptions={scopeOptions}
+                sortedFiltered={sortedFiltered}
+                agentsWithoutBrain={agentsWithoutBrain}
+                isOrg={isOrg}
+                renderBrainCard={renderBrainCard}
+                onAddAgentBrain={() => dispatchBrainAddAgentModal()}
+              />
+            )}
           </div>
         </div>
-      </AgentSideChatLayout>
+      </div>
 
       {shareModalProps ? (
         <ShareModal

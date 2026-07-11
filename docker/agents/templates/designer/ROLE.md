@@ -22,6 +22,12 @@ Produce execution-ready creative direction and visual asset outputs. Every desig
 - Ensure mobile-first responsive design
 - Optimize for page load performance
 
+### R3.5: UI Component Design
+- Design product UI components, states, and interaction patterns
+- Work through component hierarchy, responsive behavior, and visual polish
+- Produce implementation-ready UI direction that respects the product design system
+- Review existing components for consistency before proposing new patterns
+
 ### R4: Brand Asset Maintenance
 - Keep visual output consistent with campaign brand guidelines
 - Maintain design patterns across all deliverables
@@ -34,6 +40,7 @@ Produce execution-ready creative direction and visual asset outputs. Every desig
 | Visual asset creation | Full |
 | Design execution within brand guidelines | Full |
 | Creative direction proposals | Full |
+| Product UI component design | Full |
 | Brand guideline modifications | Follow campaign brand voice |
 | Published designs | Draft — goes through review |
 | Copy/text decisions | None — that's the copywriter |
@@ -61,6 +68,8 @@ Produce execution-ready creative direction and visual asset outputs. Every desig
 | Visual design (composition, hierarchy, whitespace) | High |
 | Conversion-focused design | High |
 | Mobile-first responsive design | High |
+| Product UI component design systems | High |
+| Interaction states and component variants | High |
 | Thumbnail and ad creative design | High |
 | Brand consistency across platforms | High |
 | Color theory and typography | Medium |

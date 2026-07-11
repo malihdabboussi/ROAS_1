@@ -1,11 +1,15 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ChatInputVoiceSendControls } from './chat-input-voice-send-controls'
 
 afterEach(cleanup)
 
 describe('ChatInputVoiceSendControls', () => {
-  it('renders voice, live voice, and send controls with delegated callbacks', () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+
+  it('runs voice input by default and opens the mode menu on hover', () => {
     const onStartRecording = vi.fn()
     const onVoiceStart = vi.fn()
     const onSend = vi.fn()
@@ -15,6 +19,7 @@ describe('ChatInputVoiceSendControls', () => {
         disabled={false}
         sendDisabled={false}
         isStreaming={false}
+        spaceId="space-1"
         onStartRecording={onStartRecording}
         onVoiceStart={onVoiceStart}
         onSend={onSend}
@@ -25,17 +30,17 @@ describe('ChatInputVoiceSendControls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Voice input' }))
     expect(onStartRecording).toHaveBeenCalledTimes(1)
 
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Voice input' }))
+    expect(screen.getByText('Default voice action')).toBeTruthy()
+    expect(screen.getByText('Live conversation')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: /Live conversation/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Live voice conversation' }))
     expect(onVoiceStart).toHaveBeenCalledTimes(1)
-
-    const sendButton = screen.getByRole('button', { name: 'Send message' })
-    expect(sendButton.className).toContain('text-primary')
-    expect(sendButton.hasAttribute('disabled')).toBe(false)
-    fireEvent.click(sendButton)
-    expect(onSend).toHaveBeenCalledTimes(1)
+    expect(onStartRecording).toHaveBeenCalledTimes(1)
   })
 
-  it('renders stop control while streaming and hides live voice when unavailable', () => {
+  it('renders stop control while streaming and hides live voice menu when unavailable', () => {
     const onStop = vi.fn()
     render(
       <ChatInputVoiceSendControls
@@ -48,7 +53,8 @@ describe('ChatInputVoiceSendControls', () => {
       />,
     )
 
-    expect(screen.queryByRole('button', { name: 'Live voice conversation' })).toBeNull()
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'Voice input' }))
+    expect(screen.queryByText('Default voice action')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Send message' })).toBeNull()
 
     const stopButton = screen.getByRole('button', { name: 'Stop generating' })

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { MissionAgent, MissionAgentSkill } from '@/features/mission-control/types'
 import { fetchSkillRecommendationDetail } from '@/features/skill-recommendations/services/skill-recommendations.service'
-import { TeamHrSideChatLayout } from '@/features/team-2/containers/TeamHrSideChatLayout'
 import {
   useTeamFocusStore,
   type TeamSkillsPageContext,
@@ -169,8 +168,6 @@ export default function SkillsPageContent() {
     [enableAllCustomSkillsForAgent, openAgent, openCreateForAgent, triggerUploadForAgent],
   )
 
-  const hrAgent = useMemo(() => agents.find((agent) => agent.agent_key === 'hr') ?? null, [agents])
-
   const focusAgent = useMemo(() => {
     if (skillsViewKey === 'all') return selectedAgent
     return agents.find((a) => a.agent_key === skillsViewKey) ?? selectedAgent
@@ -307,11 +304,7 @@ export default function SkillsPageContent() {
 
   return (
     <>
-      <TeamHrSideChatLayout
-        className="h-full min-h-0 w-full flex-1"
-        hrAgent={hrAgent}
-        hrAgentLoading={agentsLoading}
-      >
+      <div className="h-full min-h-0 w-full flex-1">
         <SkillsMainPanel
           agents={agents}
           skillsViewKey={skillsViewKey}
@@ -383,7 +376,7 @@ export default function SkillsPageContent() {
             if (detailSkillResolved) downloadSkillMd(detailSkillResolved)
           }}
         />
-      </TeamHrSideChatLayout>
+      </div>
 
       {skillsMobileLayout && detailSkillResolved ? (
         <SkillDetailMobileFullscreen

@@ -5,11 +5,6 @@ import { getIconColor, LucideIcon, type IconColorId } from '@/components/ui/icon
 import type { Form } from '@/lib/forms'
 import { cn } from '@/lib/utils/cn'
 import {
-  FormPreviewFieldPreview,
-  isFullRowPreviewQuestion,
-} from './FormPreviewFieldPreview'
-import { FormPagesRail } from './FormPagesRail'
-import {
   readColor,
   readColorStyle,
   resolveButtonAccentHex,
@@ -19,6 +14,8 @@ import {
   resolveSurfaceStyle,
   resolveTextStyle,
 } from './form-preview-styles'
+import { FormPagesRail } from './FormPagesRail'
+import { FormPreviewFieldPreview, isFullRowPreviewQuestion } from './FormPreviewFieldPreview'
 
 const DEFAULT_LOGO_ICON = 'square'
 const DEFAULT_END_PAGE_ICON = 'check-circle-2'
@@ -48,7 +45,7 @@ export function FormPreviewTab({
   const iconName =
     typeof settings.icon === 'string' && settings.icon.trim() ? settings.icon : DEFAULT_LOGO_ICON
   const iconColor = getIconColor((settings.icon_color ?? 'default') as IconColorId)
-  const theme = (settings.theme ?? 'dark') as 'light' | 'dark'
+  const theme = (settings.theme ?? 'light') as 'light' | 'dark'
   const bgColorId = readColor(settings.colors, 'background')
   const surfaceColorId = readColor(settings.colors, 'surface')
   const textColorId = readColor(settings.colors, 'text')
@@ -109,8 +106,8 @@ export function FormPreviewTab({
                   <div
                     className={
                       endLogoImageUrl
-                        ? 'flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-border'
-                        : `${endIconColor.glassClass} flex h-10 w-10 items-center justify-center rounded-lg border border-border`
+                        ? 'border-border flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border'
+                        : `${endIconColor.glassClass} border-border flex h-10 w-10 items-center justify-center rounded-lg border`
                     }
                     aria-hidden
                   >
@@ -146,8 +143,8 @@ export function FormPreviewTab({
                     <div
                       className={
                         logoImageUrl
-                          ? 'flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-border'
-                          : `${iconColor.glassClass} flex h-10 w-10 items-center justify-center rounded-lg border border-border`
+                          ? 'border-border flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border'
+                          : `${iconColor.glassClass} border-border flex h-10 w-10 items-center justify-center rounded-lg border`
                       }
                       aria-hidden
                     >

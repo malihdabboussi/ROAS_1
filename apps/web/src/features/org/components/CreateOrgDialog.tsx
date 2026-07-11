@@ -5,6 +5,7 @@ import { Building2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { orgService } from '@/features/org/services/org.service'
 import { useOrgStore } from '@/features/org/store/use-org-store'
+import { formatOrgPublicUrl } from '@/lib/org/org-public-url'
 import { clearOrgSensitiveState } from '@/lib/utils/clear-org-state'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { ORG_TOAST_ERRORS } from '../config/org-toast-errors.config'
@@ -75,7 +76,7 @@ export function CreateOrgDialog() {
   return (
     <>
       <div
-        className="fixed inset-0 z-50 bg-modal-overlay"
+        className="bg-modal-overlay fixed inset-0 z-50"
         onClick={loading ? undefined : () => setOpen(false)}
       />
 
@@ -122,7 +123,7 @@ export function CreateOrgDialog() {
                 disabled={loading}
                 className="input-glass rounded-spacing-2 px-spacing-3 py-spacing-2 body-2"
               />
-              <span className="body-3 text-muted-foreground">vibey.im/org/{slug || '...'}</span>
+              <span className="body-3 text-muted-foreground">{formatOrgPublicUrl(slug)}</span>
             </div>
           </div>
 

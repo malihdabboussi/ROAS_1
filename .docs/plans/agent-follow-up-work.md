@@ -23,6 +23,40 @@ Files:
   Deferred because: [why this was outside current scope]
 ```
 
+## 2026-07-08 - [WEB/CHAT] Global chat rail follow-up
+
+Status: Open
+Found while: Global Unified Chat Rail implementation
+Feature/App: Web dashboard chat
+Files:
+
+- apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx
+  Evidence: 2395 LOC after global-scope seed/compose wiring; still hosts Spaces artifact sub-modes and global rail behavior in one component.
+  Needed work: Extract `GlobalChatPanel` send/seed/general-scope paths into a thin wrapper or split artifact sub-panels per architecture limits.
+  Deferred because: Phase 1–5 focused on shell move and parity; refactor would widen blast radius.
+
+- apps/web/src/features/team-2/containers/TeamHrSideChatLayout.tsx
+  Evidence: No longer mounted from Team/Brain/Flows/Skills after global rail; tests still mock it.
+  Needed work: Delete or thin-wrap deprecated layout/panel once no callers remain; migrate remaining compose/storage helpers if any.
+  Deferred because: Kept for reference and existing unit tests; safe removal needs broader grep + test cleanup.
+
+- apps/web/src/features/flows/containers/FlowsPage.tsx
+  Evidence: 2400 LOC; Loop side-chat-only state (`loopAgent`, `buildLoopAwarenessContext`, `loopBuildStartOverlay`, composer accessories) may be dead after rail removal.
+  Needed work: Remove unused Loop embedded-chat helpers; re-home Flow composer space/flow chips into global rail footer or flows toolbar.
+  Deferred because: Flows drag-to-compose still uses `TEAM_HR_CHAT_COMPOSE_EVENT`; full Loop UX parity on global rail is follow-up.
+
+## 2026-07-08 - [WEB/ORG] Split org settings content boundary
+
+Status: Open
+Found while: Updating org URL previews from `vibey.im/org` to `roas.io/org`.
+Feature/App: Web organization settings
+Files:
+
+- `apps/web/src/features/settings/components/settings-content/OrgSettingsContent.tsx`
+  Evidence: `wc -l` reports `OrgSettingsContent.tsx` at 598 LOC. Focused ESLint also flags existing cross-feature imports from `@/features/brain` and `@/features/org` plus the 400-line max-lines cap.
+  Needed work: Split the general settings, danger zone, invitations, members list, and role dropdown into focused owned components or approved shared boundaries.
+  Deferred because: The current request was a narrow URL-label correction; decomposing the full settings surface would be broader architecture remediation.
+
 ## 2026-06-29 - [PR-IMPORTS] Split touched runtime verifier and chat observability surfaces
 
 Status: Partially resolved by Type 3-E Batch 297; remaining Channels shared-boundary and task-agent headroom work stays open.
@@ -5892,3 +5926,58 @@ Files:
 Evidence: `wc -l` reports `use-spaces-store.ts` at 1141 LOC, `SpaceItemsContainer.tsx` at 1750 LOC, `SpaceContentRouter.tsx` at 820 LOC, and `PromptTemplateEditor.tsx` at 1002 LOC. Focused ESLint also reports the pre-existing cross-feature import from `PromptTemplateEditor.tsx` to `@/features/studio/utils/textarea-caret-viewport` plus the component max-lines violation.
 Needed work: Split the store and Spaces containers/components into focused local hooks/helpers under the project architecture limits, and move the textarea caret utility to an approved shared `@/lib` boundary with coverage for prompt variable insertion and caret preservation.
 Deferred because: The current bug fix was scoped to removing product debug network calls without changing Spaces behavior. Decomposing these files and moving shared caret utilities would be a broader architecture remediation with higher regression risk.
+
+## 2026-07-08 - Spaces Local Dev Compile Hang
+
+Status: Open
+Found while: Retrying authenticated browser smoke testing for Spaces after login succeeded.
+Feature/App: Web Spaces
+Files:
+
+- `apps/web/src/app/(dashboard)/spaces/page.tsx`
+- `apps/web/src/features/spaces/containers/SpacesContainer.tsx`
+- `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx`
+
+Evidence: Local `/spaces` navigation stayed on `○ Compiling /spaces ...` for several minutes in both Turbopack dev mode and webpack dev mode. Turbopack also restarted after reaching the used memory threshold before the Spaces route could be exercised.
+Needed work: Audit the Spaces route import graph and split/lazy-load heavyweight views so the authenticated route compiles and opens reliably in local dev before continuing deep browser smoke tests.
+Deferred because: Current fix addressed the login/auth bounce and background route hang. The compile failure is a broader Spaces bundle/startup-performance issue that needs its own import-graph and route-decomposition pass.
+
+## 2026-07-08 - Studio Chat Service Merge Follow-up
+
+Status: Open
+Found while: Fixing streamed assistant responses disappearing after the final backend message refresh.
+Feature/App: Web Studio chat
+Files:
+
+- `apps/web/src/features/studio/services/chat.service.ts`
+
+Evidence: `wc -l` reports `chat.service.ts` at 2545 LOC after the focused merge fix, far above the 600 LOC project-architecture limit. The file owns prewarm, recovery, conversation CRUD, message fetching, SSE send handling, and post-stream reconciliation.
+Needed work: Split chat streaming/reconciliation, recovery, prewarm, and conversation CRUD into focused services/modules with existing behavior locked by tests.
+Deferred because: The current incident fix needed the smallest safe patch to prevent visible streamed responses from being dropped; decomposing this file would be broad and higher risk mid-incident.
+
+## 2026-07-08 - Home Dashboard v4 Composer Split
+
+Status: Open
+Found while: Rebuilding `/home` from Vibey Dashboard v4 mockup.
+Feature/App: Web home dashboard
+Files:
+
+- `apps/web/src/features/home/components/dashboard-v4/HomeDashboardV4Composer.tsx`
+
+Evidence: `wc -l` reports 509 LOC. File combines send routing, space grouping, template/approval/model chip UI, and space menu rendering in one component, above the ~500 LOC proactive extraction threshold.
+Needed work: Extract `HomeDashboardV4SpaceMenu`, approval/template chip builders, and send-to-space hook; keep `HomeDashboardV4Composer` as a thin composition layer.
+Deferred because: Dashboard v4 layout/styling pass needed to land first without widening scope into a full home-composer refactor.
+
+## 2026-07-08 - Home Dashboard v4 Approval Chip Backend Wiring
+
+Status: Open
+Found while: Rebuilding `/home` from Vibey Dashboard v4 mockup.
+Feature/App: Web home dashboard composer
+Files:
+
+- `apps/web/src/features/home/components/dashboard-v4/HomeDashboardV4Composer.tsx`
+- `apps/web/src/features/studio/components/ChatInput/use-chat-input-composer-access.ts`
+
+Evidence: Mockup Approval chip (`Ask every time` / `Approve safe actions`) is rendered with local state only. Existing composer access/policy controls live in the ChatInput plus menu policy surface, not a dedicated approval preset.
+Needed work: Wire the v4 Approval chip to the real composer policy / personal-account approval contract and persist per conversation or home seed.
+Deferred because: Visual v4 parity and preserving send/attachment/space behavior were the priority for this pass.

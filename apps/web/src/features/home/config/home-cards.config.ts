@@ -9,7 +9,6 @@ export const DEFAULT_HOME_CARD_IDS: HomeCardId[] = [
   'my_tasks',
   'approval_queue',
   'notification_feed',
-  'org_pulse',
 ]
 
 export const DEFAULT_HOME_LAYOUT: HomeLayoutState = {

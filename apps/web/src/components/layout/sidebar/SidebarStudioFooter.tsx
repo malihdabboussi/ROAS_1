@@ -3,7 +3,6 @@
 import { Rocket } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { AvatarDropdown } from '../AvatarDropdown'
-import { SidebarCreditsHover } from '../SidebarCreditsHover'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 export function SidebarStudioFooter({
@@ -83,39 +82,18 @@ export function SidebarStudioFooter({
 
       <div
         className={`border-t border-[var(--color-border)] ${
-          c.collapsed
-            ? 'flex flex-col items-center gap-1 py-2'
-            : 'gap-spacing-2 flex items-center justify-between px-3 py-2.5'
+          c.collapsed ? 'flex flex-col items-center gap-1 py-2' : 'flex items-center px-3 py-2.5'
         }`}
       >
-        {!c.collapsed && (
-          <>
-            <div className="flex h-9 shrink-0 items-center">
-              <AvatarDropdown
-                displayName={c.displayName}
-                email={c.email ?? ''}
-                avatarUrl={c.avatarUrl ?? null}
-                initials={c.initials}
-                sidebarCollapsed={c.collapsed}
-              />
-            </div>
-            <SidebarCreditsHover variant="studio" collapsed={false} compactStudioTrigger />
-          </>
-        )}
-        {c.collapsed && (
-          <>
-            <SidebarCreditsHover variant="studio" collapsed />
-            <div className="flex justify-center">
-              <AvatarDropdown
-                displayName={c.displayName}
-                email={c.email ?? ''}
-                avatarUrl={c.avatarUrl ?? null}
-                initials={c.initials}
-                sidebarCollapsed={c.collapsed}
-              />
-            </div>
-          </>
-        )}
+        <div className={`flex h-9 shrink-0 items-center ${c.collapsed ? 'justify-center' : ''}`}>
+          <AvatarDropdown
+            displayName={c.displayName}
+            email={c.email ?? ''}
+            avatarUrl={c.avatarUrl ?? null}
+            initials={c.initials}
+            sidebarCollapsed={c.collapsed}
+          />
+        </div>
       </div>
     </>
   )

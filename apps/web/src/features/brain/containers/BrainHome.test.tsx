@@ -6,11 +6,11 @@ import BrainHome from './BrainHome'
 const mocks = vi.hoisted(() => ({
   fetchBrainHealthBatch: vi.fn(),
   fetchKnowledgeGraphStatsBatch: vi.fn(),
-  fetchMissionAgents: vi.fn(),
   getMenuContext: vi.fn(),
   routerPush: vi.fn(),
   routerReplace: vi.fn(),
   searchParams: new URLSearchParams(''),
+  setWorkContext: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -21,26 +21,13 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => mocks.searchParams,
 }))
 
-vi.mock('@/components/agents/side-chat/AgentSideChatLayout', () => ({
-  AgentSideChatLayout: ({
-    children,
-    hrAgent,
-    hrAgentLoading,
-    agentName,
-  }: {
-    children: React.ReactNode
-    hrAgent: { agent_key?: string } | null
-    hrAgentLoading?: boolean
-    agentName?: string
-  }) => (
-    <section
-      data-testid="agent-side-chat-layout"
-      data-agent-key={hrAgent?.agent_key ?? 'none'}
-      data-loading={String(Boolean(hrAgentLoading))}
-    >
-      <span>{agentName}</span>
-      {children}
-    </section>
+vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
+  useGlobalChatStore: Object.assign(
+    (selector: (state: { setWorkContext: typeof mocks.setWorkContext }) => unknown) =>
+      selector({ setWorkContext: mocks.setWorkContext }),
+    {
+      getState: () => ({ setWorkContext: mocks.setWorkContext }),
+    },
   ),
 }))
 
@@ -54,10 +41,6 @@ vi.mock('@/components/ui/tooltip', () => ({
 
 vi.mock('@/components/vibey/vibey-loading-orb', () => ({
   VibeyLoadingOrb: ({ text }: { text?: string }) => <div data-testid="loading-orb">{text}</div>,
-}))
-
-vi.mock('@/lib/agents', () => ({
-  fetchMissionAgents: mocks.fetchMissionAgents,
 }))
 
 vi.mock('@/lib/org', () => ({
@@ -128,25 +111,6 @@ vi.mock('../components/CortexMaxModal', () => ({
   default: ({ open }: { open: boolean }) => (open ? <div data-testid="cortex-max-modal" /> : null),
 }))
 
-function atlasAgent() {
-  return {
-    id: 'agent-atlas',
-    user_id: 'user-1',
-    agent_key: 'atlas',
-    name: 'Atlas',
-    role: 'Brain scholar',
-    status: 'online',
-    skills: [],
-    level: 'system',
-    image_url: null,
-    is_active: true,
-    team_id: null,
-    config: {},
-    created_at: '2026-06-01T00:00:00.000Z',
-    updated_at: '2026-06-01T00:00:00.000Z',
-  }
-}
-
 function menuContext() {
   return {
     canTrain: true,
@@ -176,7 +140,6 @@ function menuContext() {
 describe('BrainHome', () => {
   beforeEach(() => {
     mocks.searchParams = new URLSearchParams('')
-    mocks.fetchMissionAgents.mockResolvedValue([atlasAgent()])
     mocks.fetchBrainHealthBatch.mockResolvedValue(
       new Map([
         [
@@ -221,19 +184,11 @@ describe('BrainHome', () => {
       </Profiler>,
     )
 
-    expect(screen.getByTestId('agent-side-chat-layout').getAttribute('data-agent-key')).toBe(
-      'none',
-    )
+    expect(mocks.setWorkContext).toHaveBeenCalledWith({ surface: 'brain' })
     expect(screen.queryByText('User brains')).not.toBeNull()
     expect(screen.queryByText('Your Brain')).not.toBeNull()
     expect(screen.queryByText('Agent brains')).not.toBeNull()
     expect(screen.queryByText('Maya')).not.toBeNull()
-
-    await waitFor(() => {
-      expect(screen.getByTestId('agent-side-chat-layout').getAttribute('data-agent-key')).toBe(
-        'atlas',
-      )
-    })
 
     await waitFor(() => {
       expect(mocks.fetchBrainHealthBatch).toHaveBeenCalledWith(['brain-user', 'brain-agent-maya'])
@@ -250,12 +205,6 @@ describe('BrainHome', () => {
         <BrainHome />
       </Profiler>,
     )
-
-    await waitFor(() => {
-      expect(screen.getByTestId('agent-side-chat-layout').getAttribute('data-agent-key')).toBe(
-        'atlas',
-      )
-    })
 
     expect(screen.queryByText('Type')).not.toBeNull()
     const gridButton = screen

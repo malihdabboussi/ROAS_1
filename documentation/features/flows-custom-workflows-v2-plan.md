@@ -993,7 +993,7 @@ Moved clarification out of `FlowBuildPlan` and into the build session:
 - Replaced Flow build-session polling with Supabase Realtime subscriptions for session and clarification rows.
 - Added the `Clarifications` tab for four or more open questions, while one to three questions render as existing chat clarification cards.
 - Removed clarification rendering from `FlowBuildInspector`; the inspector now shows only real plans and post-plan validation, compile, and evaluation state.
-- Removed Loop from the generic Space agent picker while preserving the dedicated `/flows` Loop side chat.
+- Removed Loop from the generic Space agent picker while preserving Loop on the global chat rail when work context is `flows`.
 
 Decision:
 

@@ -5,13 +5,13 @@
  * Uses fixed screenshot-style miniature drawing primitives for thumbnail stability.
  * Each mockup is a tiny browser-frame style illustration matching the website's dark/glass language.
  */
-
+import { ORG_PUBLIC_URL_PREFIX } from '@/lib/org/org-public-url'
 import {
   MOCKUP_COLORS as C,
-  MOCKUP_ICONS as ICONS,
   MockupChrome as Chrome,
   MockupDot as Dot,
   MockupIcon as Icon,
+  MOCKUP_ICONS as ICONS,
   MockupRow as Row,
   mockupShellStyle as shell,
 } from './feature-update-mockups/feature-update-mockup-primitives'
@@ -155,7 +155,7 @@ function BrainMockup() {
 function OrgMockup() {
   return (
     <div style={shell}>
-      <Chrome url="vibey.im/org" />
+      <Chrome url={ORG_PUBLIC_URL_PREFIX} />
       <div style={{ flex: 1, display: 'flex', gap: 1, padding: 2 }}>
         <div
           style={{

@@ -1,6 +1,14 @@
 'use client'
 
-import { Suspense, type Dispatch, type ReactNode, type RefObject, type SetStateAction } from 'react'
+import {
+  Suspense,
+  useEffect,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type RefObject,
+  type SetStateAction,
+} from 'react'
 import { Eye, Plus, Search, X } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
@@ -51,70 +59,64 @@ export function SidebarHqFlyouts({
         c.activeManagePanel !== 'spaces' &&
         c.activeManagePanel !== 'team2' &&
         c.activeManagePanel !== 'brain' && (
-          <div
-            className={`flex min-w-0 items-stretch overflow-hidden py-3 pl-1.5 pr-1.5 transition-all duration-300 ease-in-out ${
-              c.isPanelClosing ? 'w-0 pl-0 pr-0' : 'w-[248px]'
-            }`}
-          >
-            <div className="card-glass flex w-full flex-col overflow-hidden rounded-2xl">
-              {c.activeManagePanel === 'projects' && (
-                <>
-                  <div className="flex items-center justify-between px-3 py-3">
-                    <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
-                      Projects
-                    </span>
-                    {!c.isCreatingProject && (
-                      <button
-                        onClick={() => c.setIsCreatingProject(true)}
-                        className="rounded p-1 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
-                        title="New Project"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </div>
-                  {c.isCreatingProject && (
-                    <div className="flex items-center gap-1.5 px-2 py-1">
-                      <input
-                        value={c.newProjectName}
-                        onChange={(e) => c.setNewProjectName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') void c.handleCreateProject()
-                          if (e.key === 'Escape') {
-                            c.setIsCreatingProject(false)
-                            c.setNewProjectName('')
-                          }
-                        }}
-                        onBlur={() => {
-                          if (!c.newProjectName.trim()) {
-                            c.setIsCreatingProject(false)
-                            c.setNewProjectName('')
-                          }
-                        }}
-                        disabled={c.isSubmittingProject}
-                        autoFocus
-                        placeholder={c.isSubmittingProject ? 'Creating...' : 'Project name'}
-                        className="h-7 flex-1 rounded-md bg-transparent px-2 text-[13px] text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none disabled:opacity-50"
-                      />
-                    </div>
+          <InlineManageFlyoutPanel isPanelClosing={c.isPanelClosing}>
+            {c.activeManagePanel === 'projects' && (
+              <>
+                <div className="flex items-center justify-between px-3 py-3">
+                  <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
+                    Projects
+                  </span>
+                  {!c.isCreatingProject && (
+                    <button
+                      onClick={() => c.setIsCreatingProject(true)}
+                      className="rounded p-1 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
+                      title="New Project"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
                   )}
-                  <div className="scrollbar-hide flex-1 overflow-y-auto px-2 py-2">
-                    {c.sidebarProjects.length === 0 ? (
-                      <p className="px-2 py-4 text-center text-[11px] text-[var(--color-muted-foreground)]">
-                        No projects yet
-                      </p>
-                    ) : (
-                      <SidebarHqProjectList
-                        projects={c.sidebarProjects}
-                        setSidebarProjects={c.setSidebarProjects}
-                        pathname={c.pathname}
-                      />
-                    )}
+                </div>
+                {c.isCreatingProject && (
+                  <div className="flex items-center gap-1.5 px-2 py-1">
+                    <input
+                      value={c.newProjectName}
+                      onChange={(e) => c.setNewProjectName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') void c.handleCreateProject()
+                        if (e.key === 'Escape') {
+                          c.setIsCreatingProject(false)
+                          c.setNewProjectName('')
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!c.newProjectName.trim()) {
+                          c.setIsCreatingProject(false)
+                          c.setNewProjectName('')
+                        }
+                      }}
+                      disabled={c.isSubmittingProject}
+                      autoFocus
+                      placeholder={c.isSubmittingProject ? 'Creating...' : 'Project name'}
+                      className="h-7 flex-1 rounded-md bg-transparent px-2 text-[13px] text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none disabled:opacity-50"
+                    />
                   </div>
-                </>
-              )}
-            </div>
-          </div>
+                )}
+                <div className="scrollbar-hide flex-1 overflow-y-auto px-2 py-2">
+                  {c.sidebarProjects.length === 0 ? (
+                    <p className="px-2 py-4 text-center text-[11px] text-[var(--color-muted-foreground)]">
+                      No projects yet
+                    </p>
+                  ) : (
+                    <SidebarHqProjectList
+                      projects={c.sidebarProjects}
+                      setSidebarProjects={c.setSidebarProjects}
+                      pathname={c.pathname}
+                    />
+                  )}
+                </div>
+              </>
+            )}
+          </InlineManageFlyoutPanel>
         )}
       {c.activeManagePanel === 'team2' && (
         <HoverPanel
@@ -264,6 +266,51 @@ export function SidebarHqFlyouts({
   )
 }
 
+function InlineManageFlyoutPanel({
+  isPanelClosing,
+  children,
+}: {
+  isPanelClosing: boolean
+  children: ReactNode
+}) {
+  const isVisible = useFlyoutSlideVisible(isPanelClosing)
+
+  return (
+    <div
+      className={`flex min-w-0 items-stretch overflow-hidden py-3 pl-1.5 pr-1.5 transition-[width,padding] duration-300 ease-out ${
+        isPanelClosing ? 'w-0 pl-0 pr-0' : 'w-[248px]'
+      }`}
+    >
+      <div
+        className={`card-glass flex w-full flex-col overflow-hidden rounded-2xl transition-[transform,opacity] duration-300 ease-out ${flyoutSlideClass(
+          isVisible,
+        )}`}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function useFlyoutSlideVisible(isPanelClosing: boolean) {
+  const [isEntered, setIsEntered] = useState(false)
+
+  useEffect(() => {
+    if (isPanelClosing) {
+      setIsEntered(false)
+      return
+    }
+    const frame = requestAnimationFrame(() => setIsEntered(true))
+    return () => cancelAnimationFrame(frame)
+  }, [isPanelClosing])
+
+  return !isPanelClosing && isEntered
+}
+
+function flyoutSlideClass(isVisible: boolean) {
+  return isVisible ? 'translate-x-0 opacity-100' : 'pointer-events-none -translate-x-3 opacity-0'
+}
+
 function HoverPanel({
   c,
   onMouseEnter,
@@ -275,13 +322,13 @@ function HoverPanel({
   onMouseLeave: () => void
   children: ReactNode
 }) {
+  const isVisible = useFlyoutSlideVisible(c.isPanelClosing)
+
   return (
     <div
-      className={`absolute bottom-3 left-full top-3 z-[100] ml-1.5 flex min-h-0 flex-col transition-all duration-300 ease-in-out ${
-        c.isPanelClosing
-          ? 'pointer-events-none ml-0 w-0 min-w-0 overflow-hidden opacity-0'
-          : 'w-[248px] opacity-100'
-      }`}
+      className={`absolute bottom-3 left-full top-3 z-[100] ml-1.5 flex min-h-0 w-[248px] flex-col transition-[transform,opacity] duration-300 ease-out ${flyoutSlideClass(
+        isVisible,
+      )}`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >

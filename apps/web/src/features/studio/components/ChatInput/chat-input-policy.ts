@@ -7,7 +7,14 @@ export interface AgentToggle {
   agent_enabled: boolean
 }
 
-export type ComposerPlusSubmenu = 'files' | 'attach' | 'integrations' | 'skills' | 'access' | null
+export type ComposerPlusSubmenu =
+  | 'space'
+  | 'files'
+  | 'attach'
+  | 'integrations'
+  | 'skills'
+  | 'access'
+  | null
 
 export type ComposerCapabilityKind = 'integration' | 'channel' | 'action_domain'
 export type ComposerPolicyRowState = 'default' | 'inherited' | 'allow_extra' | 'deny' | 'unset'

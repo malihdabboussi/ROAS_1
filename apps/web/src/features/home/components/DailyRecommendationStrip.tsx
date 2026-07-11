@@ -4,14 +4,10 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { toast } from 'sonner'
-import {
-  setCustomerBrainEnabled,
-  toggleCortexMax,
-  updateCompanyCortexSettings,
-} from '@/lib/brain'
 import { SuggestionReviewModal } from '@/features/home/components/SuggestionReviewModal'
 import { useSuggestionReview } from '@/features/home/hooks/use-suggestion-review'
 import { getSuggestionBannerBody } from '@/features/home/lib/suggestion-review'
+import { setCustomerBrainEnabled, toggleCortexMax, updateCompanyCortexSettings } from '@/lib/brain'
 import { useOrgStore } from '@/lib/org'
 import { useAccountSettingsModal, useWorkspaceSettingsModal } from '@/lib/settings'
 import { updateSkillRecommendationSettings } from '@/lib/skill-recommendations'
@@ -22,7 +18,7 @@ import {
   type DailyRecommendationKey,
 } from '../services/daily-recommendation.service'
 
-const AUTO_ROTATE_MS = 10_000
+const AUTO_ROTATE_MS = 6_000
 
 const GRADIENT_TITLE_KEYS = new Set<DailyRecommendationKey>([
   'customer_brain',
@@ -54,7 +50,7 @@ function clampIndex(index: number, length: number): number {
   return ((index % length) + length) % length
 }
 
-export function DailyRecommendationStrip() {
+export function DailyRecommendationStrip({ variant = 'default' }: { variant?: 'default' | 'v4' }) {
   const router = useRouter()
   const prefersReducedMotion = useReducedMotion()
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
@@ -229,10 +225,12 @@ export function DailyRecommendationStrip() {
     ctaDisabled = acting
   }
 
+  const isV4 = variant === 'v4'
+
   return (
     <>
       <div
-        className="mb-6"
+        className={isV4 ? undefined : 'mb-6'}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
@@ -243,21 +241,33 @@ export function DailyRecommendationStrip() {
             animate={{ opacity: 1, y: 0 }}
             exit={fadeExit}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            className={`${bannerClass} flex flex-col gap-spacing-3 sm:flex-row sm:items-center sm:justify-between`}
+            className={
+              isV4
+                ? 'hd4-rec-banner'
+                : `${bannerClass} gap-spacing-3 flex flex-col sm:flex-row sm:items-center sm:justify-between`
+            }
           >
             <div className="relative z-10 min-w-0">
               <span
-                className={`${badgeClass} body-4 rounded-spacing-2 mb-2 inline-block px-2 py-0.5`}
+                className={
+                  isV4
+                    ? 'hd4-rec-badge'
+                    : `${badgeClass} body-4 rounded-spacing-2 mb-2 inline-block px-2 py-0.5`
+                }
               >
                 For you
               </span>
-              <p className={titleClass}>{title}</p>
-              <p className="body-3 text-muted-foreground mt-1">{body}</p>
+              <p className={isV4 ? 'hd4-rec-title' : titleClass}>{title}</p>
+              <p className={isV4 ? 'hd4-rec-body' : 'body-3 text-muted-foreground mt-1'}>{body}</p>
             </div>
             <div className="relative z-10 shrink-0">
               <button
                 type="button"
-                className="button-glass-accent rounded-spacing-2 px-spacing-4 py-spacing-2 body-3 shrink-0 font-medium"
+                className={
+                  isV4
+                    ? 'hd4-rec-cta'
+                    : 'button-glass-accent rounded-spacing-2 px-spacing-4 py-spacing-2 body-3 shrink-0 font-medium'
+                }
                 onClick={onCta}
                 disabled={ctaDisabled}
               >
@@ -268,18 +278,28 @@ export function DailyRecommendationStrip() {
         </AnimatePresence>
 
         {slides.length > 1 ? (
-          <div className="mt-3 flex items-center justify-center gap-spacing-2">
+          <div
+            className={
+              isV4 ? 'hd4-rec-dots' : 'gap-spacing-2 mt-3 flex items-center justify-center'
+            }
+          >
             {slides.map((slide, index) => (
               <button
                 key={slide.key}
                 type="button"
                 aria-label={`Show recommendation ${index + 1}`}
                 onClick={() => setActiveIndex(index)}
-                className={`h-1.5 rounded-full border-0 p-0 transition-all duration-300 ${
-                  index === activeIndex
-                    ? 'bg-primary w-6 opacity-100'
-                    : 'bg-muted-foreground w-1.5 opacity-30'
-                }`}
+                className={
+                  isV4
+                    ? index === activeIndex
+                      ? 'hd4-rec-dot hd4-rec-dot-active'
+                      : 'hd4-rec-dot'
+                    : `h-1.5 rounded-full border-0 p-0 transition-all duration-300 ${
+                        index === activeIndex
+                          ? 'bg-primary w-6 opacity-100'
+                          : 'bg-muted-foreground w-1.5 opacity-30'
+                      }`
+                }
               />
             ))}
           </div>

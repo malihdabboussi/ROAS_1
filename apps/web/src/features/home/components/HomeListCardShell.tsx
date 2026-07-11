@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { useHomeDashboardVisual } from '@/features/home/context/home-dashboard-visual-context'
 
 export function HomeListCardShell({
   icon: Icon,
@@ -14,6 +15,7 @@ export function HomeListCardShell({
   hasRows,
   children,
   footer,
+  variant: variantProp,
 }: {
   icon: LucideIcon
   title: string
@@ -24,7 +26,44 @@ export function HomeListCardShell({
   hasRows: boolean
   children: ReactNode
   footer?: ReactNode
+  variant?: 'default' | 'v4'
 }) {
+  const visualVariant = useHomeDashboardVisual()
+  const variant = variantProp ?? visualVariant
+  if (variant === 'v4') {
+    return (
+      <div className="hd4-card-shell">
+        <div className="hd4-card-shell-header">
+          <Icon className="h-[15px] w-[15px] text-[var(--hd4-text-2)]" aria-hidden />
+          <span className="hd4-card-shell-title">{title}</span>
+          {titleSuffix ? (
+            <span className="text-[11px] tabular-nums text-[var(--hd4-text-3)]">{titleSuffix}</span>
+          ) : null}
+          <div className="flex-1" />
+          {headerRight}
+        </div>
+        <div className="hd4-card-shell-body">
+          {loading ? (
+            <div className="flex flex-1 items-center justify-center py-12">
+              <VibeyLoadingOrb state="processing" size="sm" />
+            </div>
+          ) : !hasRows ? (
+            <div className="flex flex-1 items-center justify-center px-4 py-10 text-center text-[13px] text-[var(--hd4-text-3)]">
+              {emptyMessage}
+            </div>
+          ) : (
+            <>
+              <div className="px-2 py-1">{children}</div>
+              {footer ? (
+                <div className="border-t border-[var(--hd4-border)] px-3 py-1.5">{footer}</div>
+              ) : null}
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="group/home-feed-head section-card card-elevated flex h-[420px] min-w-0 flex-col overflow-hidden">
       <div className="border-border flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3.5">

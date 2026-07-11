@@ -44,7 +44,7 @@ export function invalidateBillingStatusCache(): void {
 
 /**
  * Shared, deduped billing status used by the always-mounted chrome
- * (sidebar controller, SidebarCreditsHover, AvatarDropdown): one request per
+ * (sidebar controller, AvatarDropdown): one request per
  * 60s window instead of one per call site. Pass `force` after plan/credit
  * mutations (e.g. credit purchase) or when opening UI that must show fresh
  * numbers.

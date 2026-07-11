@@ -60,6 +60,9 @@ const nextConfig = {
     return config
   },
   experimental: {
+    // Turbopack FS cache compaction was blocking dev for minutes on this monorepo.
+    turbopackFileSystemCacheForDev: false,
+    optimizePackageImports: ['react-icons', 'lucide-react', 'date-fns'],
     serverActions: {
       bodySizeLimit: '1100mb',
     },

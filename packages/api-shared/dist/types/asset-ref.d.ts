@@ -1,0 +1,102 @@
+export type AssetRefType = 'image' | 'document' | 'video' | 'audio' | 'other';
+export type ExternalAssetProvider = 'google_drive' | 'dropbox' | 'slack' | 'wordpress' | 'composio';
+export interface VibeyAssetRef {
+    kind: 'vibey_asset';
+    asset_id: string;
+    bucket_name: string;
+    file_path: string;
+    url: string | null;
+    mime_type: string;
+    asset_type: AssetRefType;
+    name: string;
+    original_filename: string;
+    file_size: number;
+    campaign_id: string | null;
+    space_id: string | null;
+    org_id: string | null;
+    source: string | null;
+    source_surface: string | null;
+}
+export interface StorageAssetRef {
+    kind: 'storage_asset';
+    bucket_name: string;
+    file_path: string;
+    url: string | null;
+    mime_type: string;
+    asset_type: AssetRefType;
+    name: string;
+    original_filename: string;
+    file_size: number;
+    user_id: string | null;
+    org_id: string | null;
+    source: string | null;
+    source_surface: string | null;
+    metadata?: Record<string, unknown>;
+}
+export interface ExternalAssetRef {
+    kind: 'external_asset';
+    provider: ExternalAssetProvider;
+    external_id: string | null;
+    file_path: string | null;
+    url: string | null;
+    mime_type: string;
+    asset_type: AssetRefType;
+    name: string;
+    original_filename: string;
+    file_size: number | null;
+    org_id: string | null;
+    source: string | null;
+    source_surface: string | null;
+    metadata?: Record<string, unknown>;
+}
+export type AssetRef = VibeyAssetRef | StorageAssetRef | ExternalAssetRef;
+export type VibeyAssetRefInput = {
+    id: string;
+    bucket_name: string;
+    file_path: string;
+    mime_type?: string | null;
+    asset_type?: string | null;
+    name?: string | null;
+    original_filename?: string | null;
+    file_size?: number | null;
+    campaign_id?: string | null;
+    space_id?: string | null;
+    org_id?: string | null;
+    source?: string | null;
+    source_surface?: string | null;
+    public_url?: string | null;
+};
+export type StorageAssetRefInput = {
+    bucket_name: string;
+    file_path: string;
+    url?: string | null;
+    mime_type?: string | null;
+    asset_type?: string | null;
+    name?: string | null;
+    original_filename?: string | null;
+    file_size?: number | null;
+    user_id?: string | null;
+    org_id?: string | null;
+    source?: string | null;
+    source_surface?: string | null;
+    metadata?: Record<string, unknown>;
+};
+export type ExternalAssetRefInput = {
+    provider: ExternalAssetProvider;
+    external_id?: string | null;
+    file_path?: string | null;
+    url?: string | null;
+    mime_type?: string | null;
+    asset_type?: string | null;
+    name?: string | null;
+    original_filename?: string | null;
+    file_size?: number | null;
+    org_id?: string | null;
+    source?: string | null;
+    source_surface?: string | null;
+    metadata?: Record<string, unknown>;
+};
+export declare function inferAssetRefType(mimeType?: string | null, fallback?: string | null): AssetRefType;
+export declare function buildVibeyAssetRef(asset: VibeyAssetRefInput, urlOverride?: string | null): VibeyAssetRef;
+export declare function buildStorageAssetRef(input: StorageAssetRefInput): StorageAssetRef;
+export declare function buildExternalAssetRef(input: ExternalAssetRefInput): ExternalAssetRef;

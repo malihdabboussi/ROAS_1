@@ -15,13 +15,13 @@ import {
   useTeams,
   type MissionAgent,
 } from '@/lib/agents'
-import { useAccountContextGate } from '@/lib/org'
 import {
   isAgentInfoPanelTab,
   showsAgentAccessTab,
   type AgentInfoPanelTab,
 } from '@/lib/agents/agent-info-panel-tabs'
 import type { ChatModelSettings } from '@/lib/chat/chat-model-settings'
+import { useAccountContextGate } from '@/lib/org'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 import { agentToSummary, MAX_VISIBLE_AGENTS_IN_HR_CONTEXT } from '../components/agents-grid-utils'
 import { Team2ContainerModals } from '../components/Team2ContainerModals'
@@ -32,12 +32,8 @@ import {
   type TeamAgentsViewKey,
   type TeamManageSection,
 } from '../lib/team-manage-nav'
-import {
-  useTeamFocusStore,
-  type TeamAgentsPageContext,
-} from '../store/use-team-focus-store'
+import { useTeamFocusStore, type TeamAgentsPageContext } from '../store/use-team-focus-store'
 import { HumanDMContainer } from './HumanDMContainer'
-import { TeamHrSideChatLayout } from './TeamHrSideChatLayout'
 
 export function Team2Container() {
   const router = useRouter()
@@ -142,10 +138,6 @@ export function Team2Container() {
     [data.agents, agentKeyFromUrl],
   )
 
-  const hrAgent = useMemo(
-    () => data.agents.find((a) => a.agent_key === 'hr') ?? null,
-    [data.agents],
-  )
   const emptyTeamLookup = useMemo(
     () => new Map<string, { name: string; color: string; icon: string }>(),
     [],
@@ -534,46 +526,38 @@ export function Team2Container() {
 
   return (
     <div className="relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden p-3">
-      <TeamHrSideChatLayout
-        className="min-h-0 flex-1"
-        hrAgent={hrAgent}
-        hrAgentLoading={data.loading}
-        hideHrChat={Boolean(dmUserIdFromUrl)}
-        collapseHrChatForAgentKey={selectedFromUrl?.agent_key ?? null}
-      >
-        {dmUserIdFromUrl ? (
-          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border">
-            <HumanDMContainer targetUserId={dmUserIdFromUrl} onBack={goBackToGrid} />
-          </div>
-        ) : (
-          <Team2ManageContent
-            data={data}
-            derived={derived}
-            handlers={handlers}
-            perms={perms}
-            manageSection={manageSection}
-            onSectionChange={setManageSection}
-            teams={teams}
-            selectedTeamId={selectedTeamId}
-            onSelectTeam={setSelectedTeamId}
-            onNavigateAgentsRoot={setAgentsView}
-            selectedFromUrl={selectedFromUrl}
-            selectedCanManage={selectedCanManage}
-            showOrgTeams={showOrgTeams}
-            infoPanelTab={infoPanelTab}
-            onInfoPanelTabChange={handleInfoPanelTabChange}
-            getAgentMenuContextForGrid={getAgentMenuContextForGrid}
-            onMoveAgentToTeam={handleMoveAgentToTeam}
-            onSelectTeamFromIndex={handleSelectTeamFromIndex}
-            onOpenAgent={openAgent}
-            onGridRename={handleGridRename}
-            onGridModelChange={handleGridModelChange}
-            onOpenAgentLibrary={openAgentLibrary}
-            onStartAgentFromScratch={startAgentFromScratch}
-            assignedCampaignIdsForSelected={assignedCampaignIdsForSelected}
-          />
-        )}
-      </TeamHrSideChatLayout>
+      {dmUserIdFromUrl ? (
+        <div className="border-border flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border">
+          <HumanDMContainer targetUserId={dmUserIdFromUrl} onBack={goBackToGrid} />
+        </div>
+      ) : (
+        <Team2ManageContent
+          data={data}
+          derived={derived}
+          handlers={handlers}
+          perms={perms}
+          manageSection={manageSection}
+          onSectionChange={setManageSection}
+          teams={teams}
+          selectedTeamId={selectedTeamId}
+          onSelectTeam={setSelectedTeamId}
+          onNavigateAgentsRoot={setAgentsView}
+          selectedFromUrl={selectedFromUrl}
+          selectedCanManage={selectedCanManage}
+          showOrgTeams={showOrgTeams}
+          infoPanelTab={infoPanelTab}
+          onInfoPanelTabChange={handleInfoPanelTabChange}
+          getAgentMenuContextForGrid={getAgentMenuContextForGrid}
+          onMoveAgentToTeam={handleMoveAgentToTeam}
+          onSelectTeamFromIndex={handleSelectTeamFromIndex}
+          onOpenAgent={openAgent}
+          onGridRename={handleGridRename}
+          onGridModelChange={handleGridModelChange}
+          onOpenAgentLibrary={openAgentLibrary}
+          onStartAgentFromScratch={startAgentFromScratch}
+          assignedCampaignIdsForSelected={assignedCampaignIdsForSelected}
+        />
+      )}
 
       <Team2ContainerModals
         data={data}

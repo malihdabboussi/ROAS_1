@@ -1,0 +1,194 @@
+'use client'
+
+import { create } from 'zustand'
+import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
+import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { fetchTeamRoster, type TeamRosterEntry } from '@/lib/team/team-roster-api'
+import {
+  defaultAgentForSurface,
+  GLOBAL_CHAT_DEFAULT_AGENT,
+  isAgentAllowedForWorkContext,
+  surfaceFromPathname,
+} from '../config/work-context.config'
+import {
+  readLegacySpacesChatCollapsed,
+  readLegacySpacesChatWidth,
+  readPersistedGlobalChat,
+  writePersistedGlobalChat,
+  type GlobalChatRailIntent,
+  type GlobalWorkContext,
+} from '../lib/global-chat-storage'
+
+export const GLOBAL_CHAT_SEED_EVENT = 'vibey:global-chat-seed'
+
+export interface GlobalChatSeedDetail {
+  content: string
+  agentKey?: string
+  workContext?: Partial<GlobalWorkContext>
+  model?: string
+  documents?: unknown[]
+  artifacts?: unknown[]
+  references?: unknown[]
+  modelSettings?: unknown
+}
+
+function defaultWorkContext(): GlobalWorkContext {
+  return { surface: 'general' }
+}
+
+function mergeWorkContext(
+  base: GlobalWorkContext,
+  patch?: Partial<GlobalWorkContext>,
+): GlobalWorkContext {
+  if (!patch) return base
+  return { ...base, ...patch }
+}
+
+interface GlobalChatStore {
+  collapsed: boolean
+  widthPercent: number
+  railIntent: GlobalChatRailIntent
+  activeAgentKey: string
+  workContext: GlobalWorkContext
+  suggestedWorkContext: GlobalWorkContext | null
+  roster: TeamRosterEntry[]
+  rosterLoaded: boolean
+  pendingSeed: GlobalChatSeedDetail | null
+  hideForHumanDm: boolean
+  conversationListMode: 'scoped' | 'all'
+  setCollapsed: (collapsed: boolean) => void
+  setWidthPercent: (widthPercent: number) => void
+  setRailIntent: (intent: GlobalChatRailIntent) => void
+  setActiveAgentKey: (agentKey: string) => void
+  setWorkContext: (patch: Partial<GlobalWorkContext>) => void
+  setSuggestedWorkContext: (ctx: GlobalWorkContext | null) => void
+  syncRouteContext: (pathname: string) => void
+  loadRoster: () => Promise<void>
+  expandAndFocus: (opts?: {
+    railIntent?: GlobalChatRailIntent
+    agentKey?: string
+    workContext?: Partial<GlobalWorkContext>
+  }) => void
+  seedComposer: (detail: GlobalChatSeedDetail) => void
+  consumePendingSeed: () => GlobalChatSeedDetail | null
+  setHideForHumanDm: (hide: boolean) => void
+  setConversationListMode: (mode: 'scoped' | 'all') => void
+  openConversationList: () => void
+}
+
+const persisted = typeof window !== 'undefined' ? readPersistedGlobalChat() : {}
+const legacyCollapsed = typeof window !== 'undefined' ? readLegacySpacesChatCollapsed() : false
+const legacyWidth = typeof window !== 'undefined' ? readLegacySpacesChatWidth() : null
+
+export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
+  collapsed: persisted.collapsed ?? legacyCollapsed,
+  widthPercent: persisted.widthPercent ?? legacyWidth ?? 40,
+  railIntent: null,
+  activeAgentKey: persisted.activeAgentKey ?? GLOBAL_CHAT_DEFAULT_AGENT,
+  workContext: persisted.workContext ?? defaultWorkContext(),
+  suggestedWorkContext: null,
+  roster: [],
+  rosterLoaded: false,
+  pendingSeed: null,
+  hideForHumanDm: false,
+  conversationListMode: 'all',
+
+  setCollapsed: (collapsed) => {
+    writePersistedGlobalChat({ collapsed })
+    set({ collapsed })
+    useSpacesStore.getState().setChatCollapsed(collapsed)
+  },
+
+  setWidthPercent: (widthPercent) => {
+    writePersistedGlobalChat({ widthPercent })
+    set({ widthPercent })
+  },
+
+  setRailIntent: (intent) => {
+    set({ railIntent: intent })
+    if (intent === 'new' || intent === 'list') {
+      useSpacesStore.getState().setChatRailIntent(intent === 'new' ? 'new' : 'list')
+    }
+  },
+
+  setActiveAgentKey: (agentKey) => {
+    writePersistedGlobalChat({ activeAgentKey: agentKey })
+    set({ activeAgentKey: agentKey })
+  },
+
+  setWorkContext: (patch) => {
+    const next = mergeWorkContext(get().workContext, patch)
+    writePersistedGlobalChat({ workContext: next })
+    set({ workContext: next })
+  },
+
+  setSuggestedWorkContext: (ctx) => set({ suggestedWorkContext: ctx }),
+
+  syncRouteContext: (pathname) => {
+    const surface = surfaceFromPathname(pathname)
+    const suggested: GlobalWorkContext = { surface }
+    if (surface === 'spaces') {
+      const activeSpaceId = useSpacesStore.getState().activeSpaceId
+      const spaces = useSpacesStore.getState().spaces
+      const activeSpace = spaces.find((s) => s.id === activeSpaceId)
+      if (activeSpaceId) {
+        suggested.spaceId = activeSpaceId
+        suggested.campaignId = activeSpace?.campaign_id ?? null
+      }
+    }
+    const channelMatch = pathname.match(/^\/home\/channels\/([^/]+)/)
+    if (channelMatch?.[1]) {
+      suggested.channelId = channelMatch[1]
+    }
+    set({ suggestedWorkContext: suggested })
+  },
+
+  loadRoster: async () => {
+    const rows = await cachedFetch('team-roster:all', () => fetchTeamRoster({ kind: 'all' }))
+    set({ roster: rows, rosterLoaded: true })
+    useSpacesStore.setState({ roster: rows, rosterLoaded: true })
+  },
+
+  expandAndFocus: (opts) => {
+    const nextWork = opts?.workContext
+      ? mergeWorkContext(get().workContext, opts.workContext)
+      : get().workContext
+    if (opts?.workContext) {
+      get().setWorkContext(opts.workContext)
+    }
+    const agentKey = opts?.agentKey ?? get().activeAgentKey
+    if (opts?.agentKey) {
+      get().setActiveAgentKey(agentKey)
+    } else if (!isAgentAllowedForWorkContext(agentKey, nextWork)) {
+      get().setActiveAgentKey(defaultAgentForSurface(nextWork.surface))
+    }
+    set({ collapsed: false, railIntent: opts?.railIntent ?? null })
+    writePersistedGlobalChat({ collapsed: false })
+    useSpacesStore.getState().setChatCollapsed(false)
+  },
+
+  seedComposer: (detail) => {
+    get().expandAndFocus({
+      agentKey: detail.agentKey,
+      workContext: detail.workContext,
+    })
+    set({ pendingSeed: detail })
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(GLOBAL_CHAT_SEED_EVENT, { detail }))
+    }
+  },
+
+  consumePendingSeed: () => {
+    const pending = get().pendingSeed
+    if (pending) set({ pendingSeed: null })
+    return pending
+  },
+
+  setHideForHumanDm: (hide) => set({ hideForHumanDm: hide }),
+
+  setConversationListMode: (mode) => set({ conversationListMode: mode }),
+
+  openConversationList: () => {
+    get().expandAndFocus({ railIntent: 'list' })
+  },
+}))

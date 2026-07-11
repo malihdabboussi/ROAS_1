@@ -1,45 +1,36 @@
 'use client'
 
-import {
-  useCallback,
-  useRef,
-  useState,
-} from 'react'
-import {
-  PastedTextComposerControls,
-  usePastedTextBlocks,
-} from '@/features/composer/pasted-text'
+import { useCallback, useRef, useState } from 'react'
+import { PastedTextComposerControls, usePastedTextBlocks } from '@/features/composer/pasted-text'
 import { usePresignedUpload } from '@/lib/hooks/use-presigned-upload'
 import { useWorkspaceSettingsModal } from '@/lib/settings/workspace-settings-modal-context'
 import type { MessageReference } from '../types'
 import type { AttachedArtifact } from './chat/ArtifactAttachments'
+import {
+  hasChatInputSlashCommand,
+  renderChatInputHighlightBackdrop,
+} from './ChatInput/chat-input-highlight-backdrop'
+import { ChatInputShell } from './ChatInput/chat-input-shell'
 import type { ChatInputProps } from './ChatInput/chat-input.types'
+import { useChatInputAtMentionController } from './ChatInput/use-chat-input-at-mention-controller'
+import { useChatInputAttachmentRemoval } from './ChatInput/use-chat-input-attachment-removal'
+import { useChatInputContextController } from './ChatInput/use-chat-input-context-controller'
 import { useChatInputDraft } from './ChatInput/use-chat-input-draft'
 import { useChatInputDropzone } from './ChatInput/use-chat-input-dropzone'
 import { useChatInputExternalAttachments } from './ChatInput/use-chat-input-external-attachments'
 import { useChatInputFileUpload } from './ChatInput/use-chat-input-file-upload'
 import { useChatInputFloatingMenus } from './ChatInput/use-chat-input-floating-menus'
 import { useChatInputGlobalShortcuts } from './ChatInput/use-chat-input-global-shortcuts'
+import { useChatInputKeyDown } from './ChatInput/use-chat-input-keydown'
 import { useChatInputModelController } from './ChatInput/use-chat-input-model-controller'
 import { useChatInputOutsideClose } from './ChatInput/use-chat-input-outside-close'
-import { useChatInputPlusController } from './ChatInput/use-chat-input-plus-controller'
-import { useChatInputRecording } from './ChatInput/use-chat-input-recording'
-import { useChatInputSlashData } from './ChatInput/use-chat-input-slash-data'
-import {
-  hasChatInputSlashCommand,
-  renderChatInputHighlightBackdrop,
-} from './ChatInput/chat-input-highlight-backdrop'
-import { ChatInputShell } from './ChatInput/chat-input-shell'
-import { useChatInputAttachmentRemoval } from './ChatInput/use-chat-input-attachment-removal'
-import {
-  useChatInputAtMentionController,
-} from './ChatInput/use-chat-input-at-mention-controller'
-import { useChatInputContextController } from './ChatInput/use-chat-input-context-controller'
-import { useChatInputKeyDown } from './ChatInput/use-chat-input-keydown'
 import { useChatInputPaste } from './ChatInput/use-chat-input-paste'
+import { useChatInputPlusController } from './ChatInput/use-chat-input-plus-controller'
 import { useChatInputPrewarm } from './ChatInput/use-chat-input-prewarm'
-import { useChatInputSend } from './ChatInput/use-chat-input-send'
+import { useChatInputRecording } from './ChatInput/use-chat-input-recording'
 import { useChatInputSelectionHandlers } from './ChatInput/use-chat-input-selection-handlers'
+import { useChatInputSend } from './ChatInput/use-chat-input-send'
+import { useChatInputSlashData } from './ChatInput/use-chat-input-slash-data'
 import { useChatInputSlashLayout } from './ChatInput/use-chat-input-slash-layout'
 import { useChatInputTextAccessors } from './ChatInput/use-chat-input-text-accessors'
 import { useChatInputTextareaController } from './ChatInput/use-chat-input-textarea-controller'
@@ -82,6 +73,8 @@ export function ChatInput({
   spaceComposerSpaceTasks,
   spaceComposerListenExternalAttach = false,
   composerFooterAfterIntegrationsSlot,
+  plusMenuSpacePicker,
+  footerWrapperClassName,
 }: ChatInputProps) {
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
   const draftContextKey = draftContextKeyOverride ?? conversationId ?? 'new'
@@ -286,6 +279,7 @@ export function ChatInput({
     handleFileSelect,
     allSlashItems,
     onOpenAtMenu: handleComposerOpenAtMenu,
+    plusMenuSpacePicker,
   })
 
   useChatInputOutsideClose({
@@ -330,8 +324,8 @@ export function ChatInput({
     handleFileSelect,
   })
 
-  const { handleSlashSelect, handleCampaignSelect, handleAtSelect } =
-    useChatInputSelectionHandlers({
+  const { handleSlashSelect, handleCampaignSelect, handleAtSelect } = useChatInputSelectionHandlers(
+    {
       textareaRef,
       recordingState,
       value,
@@ -349,7 +343,8 @@ export function ChatInput({
       setAttachedReferences,
       setAttachedArtifacts,
       attachComposerSpaceTask,
-    })
+    },
+  )
 
   const { handleComposerPaste } = useChatInputPaste({
     disabled,
@@ -568,6 +563,7 @@ export function ChatInput({
                 contextPopoverPanelRef: contextController.contextPopoverPanelRef,
                 contextPopoverPosition: contextController.contextPopoverPosition,
                 portalTarget,
+                footerWrapperClassName,
                 voiceSendProps: {
                   disabled,
                   sendDisabled:
@@ -576,6 +572,7 @@ export function ChatInput({
                     (!contextController.inputValue.trim() && !hasPastedBlocks) ||
                     attachedFiles.some((f) => f.uploading),
                   isStreaming,
+                  spaceId,
                   onStartRecording: handleStartRecording,
                   onVoiceStart,
                   onSend: handleSend,

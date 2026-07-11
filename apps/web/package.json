@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --port ${PORT:-3000}",
+    "dev": "next dev --turbopack --hostname 127.0.0.1 --port ${PORT:-3000}",
+    "dev:turbopack": "next dev --turbopack --hostname 127.0.0.1 --port ${PORT:-3000}",
+    "dev:webpack": "next dev --webpack --hostname 127.0.0.1 --port ${PORT:-3000}",
     "build": "next build --webpack",
     "source-maps:upload": "node --import tsx ../../scripts/observability/upload-source-maps.ts --app web --dir .next",
     "start": "next start",

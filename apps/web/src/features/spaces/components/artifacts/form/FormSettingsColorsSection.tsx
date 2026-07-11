@@ -28,7 +28,7 @@ export function FormSettingsColorsSection({
       <FieldRow label="Theme">
         <div className="gap-spacing-2 grid grid-cols-2">
           {(['light', 'dark'] as const).map((theme) => {
-            const active = (settings.theme ?? 'dark') === theme
+            const active = (settings.theme ?? 'light') === theme
             return (
               <button
                 key={theme}
@@ -48,21 +48,19 @@ export function FormSettingsColorsSection({
 
       <FieldRow label="Page background">
         <ColorSwatchGrid
-          theme={settings.theme ?? 'dark'}
+          theme={settings.theme ?? 'light'}
           value={readColor(settings.colors, 'background')}
           styleOverride={readColorStyle(settings.colors, 'background')}
           onStyleChange={(next) =>
             update({ colors: patchColorStyle(settings.colors, 'background', next) })
           }
-          onChange={(next) =>
-            update({ colors: { ...(settings.colors ?? {}), background: next } })
-          }
+          onChange={(next) => update({ colors: { ...(settings.colors ?? {}), background: next } })}
         />
       </FieldRow>
 
       <FieldRow label="Form background">
         <ColorSwatchGrid
-          theme={settings.theme ?? 'dark'}
+          theme={settings.theme ?? 'light'}
           value={readColor(settings.colors, 'surface')}
           styleOverride={readColorStyle(settings.colors, 'surface')}
           onStyleChange={(next) =>
@@ -74,7 +72,7 @@ export function FormSettingsColorsSection({
 
       <FieldRow label="Form text">
         <ColorSwatchGrid
-          theme={settings.theme ?? 'dark'}
+          theme={settings.theme ?? 'light'}
           value={readColor(settings.colors, 'text')}
           onChange={(next) => update({ colors: { ...(settings.colors ?? {}), text: next } })}
         />
@@ -82,7 +80,7 @@ export function FormSettingsColorsSection({
 
       <FieldRow label="Input fields">
         <ColorSwatchGrid
-          theme={settings.theme ?? 'dark'}
+          theme={settings.theme ?? 'light'}
           value={readColor(settings.colors, 'input')}
           styleOverride={readColorStyle(settings.colors, 'input')}
           onStyleChange={(next) =>
@@ -94,7 +92,7 @@ export function FormSettingsColorsSection({
 
       <FieldRow label="Buttons">
         <ColorSwatchGrid
-          theme={settings.theme ?? 'dark'}
+          theme={settings.theme ?? 'light'}
           value={readColor(settings.colors, 'button')}
           styleOverride={readColorStyle(settings.colors, 'button')}
           onStyleChange={(next) =>
@@ -225,7 +223,7 @@ function ColorSwatchGrid({
     <div className="space-y-spacing-2">
       {onStyleChange ? (
         <div className="flex justify-end">
-          <div className="border-border typo-caption flex items-center gap-spacing-1 rounded-full border p-spacing-0-5 font-medium uppercase">
+          <div className="border-border typo-caption gap-spacing-1 p-spacing-0-5 flex items-center rounded-full border font-medium uppercase">
             {(['glass', 'solid'] as const).map((opt) => {
               const active = variant === opt
               return (
@@ -234,7 +232,7 @@ function ColorSwatchGrid({
                   type="button"
                   onClick={() => onStyleChange(opt === themeDefault ? null : opt)}
                   className={cn(
-                    'rounded-full px-spacing-2 p-spacing-0-5 transition-colors',
+                    'px-spacing-2 p-spacing-0-5 rounded-full transition-colors',
                     active
                       ? 'bg-foreground text-background'
                       : 'text-muted-foreground hover:text-foreground',
@@ -249,7 +247,7 @@ function ColorSwatchGrid({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-9 gap-spacing-1">
+      <div className="gap-spacing-1 grid grid-cols-9">
         {TAG_COLORS.map((color) => {
           const hex = PRESET_HEX[color.id] ?? '#6366f1'
           const selected = value === color.id
@@ -263,7 +261,7 @@ function ColorSwatchGrid({
               aria-pressed={selected}
               className={cn(
                 'h-spacing-7 group relative flex aspect-square items-center justify-center overflow-hidden rounded-full transition-transform hover:scale-110',
-                selected && 'ring-1 ring-foreground ring-offset-1 ring-offset-background',
+                selected && 'ring-foreground ring-offset-background ring-1 ring-offset-1',
               )}
               style={
                 variant === 'glass'
@@ -273,10 +271,7 @@ function ColorSwatchGrid({
             >
               {selected ? (
                 <Check
-                  className={cn(
-                    'icon-sm',
-                    variant === 'glass' ? 'text-foreground' : 'text-white',
-                  )}
+                  className={cn('icon-sm', variant === 'glass' ? 'text-foreground' : 'text-white')}
                 />
               ) : null}
             </button>
@@ -295,7 +290,7 @@ function ColorSwatchGrid({
               aria-pressed={selected}
               className={cn(
                 'h-spacing-7 group relative flex aspect-square items-center justify-center overflow-hidden rounded-full transition-transform hover:scale-110',
-                selected && 'ring-1 ring-foreground ring-offset-1 ring-offset-background',
+                selected && 'ring-foreground ring-offset-background ring-1 ring-offset-1',
               )}
               style={{
                 backgroundColor: color.hex,
@@ -307,10 +302,7 @@ function ColorSwatchGrid({
             >
               {selected ? (
                 <Check
-                  className={cn(
-                    'icon-sm',
-                    color.hex === '#ffffff' ? 'text-black' : 'text-white',
-                  )}
+                  className={cn('icon-sm', color.hex === '#ffffff' ? 'text-black' : 'text-white')}
                 />
               ) : null}
             </button>
@@ -327,7 +319,7 @@ function ColorSwatchGrid({
             aria-pressed={customSelected}
             className={cn(
               'h-spacing-7 group relative flex aspect-square items-center justify-center overflow-hidden rounded-full transition-transform hover:scale-110',
-              customSelected && 'ring-1 ring-foreground ring-offset-1 ring-offset-background',
+              customSelected && 'ring-foreground ring-offset-background ring-1 ring-offset-1',
             )}
             style={swatchVisualStyle(customValue)}
           >
@@ -356,7 +348,7 @@ function ColorSwatchGrid({
               <div
                 ref={panelRef}
                 data-form-color-picker
-                className="fixed z-dropdown"
+                className="z-dropdown fixed"
                 style={{ top: pickerPos.top, left: pickerPos.left }}
               >
                 <ColorPickerPanelStandalone

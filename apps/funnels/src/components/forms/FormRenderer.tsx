@@ -358,7 +358,9 @@ export function FormRenderer({ form, embed }: { form: PublicForm; embed?: boolea
   const captchaTheme: 'light' | 'dark' = form.settings.theme === 'light' ? 'light' : 'dark'
 
   const theme: 'light' | 'dark' =
-    form.settings.theme === 'light' || form.settings.theme === 'dark' ? form.settings.theme : 'dark'
+    form.settings.theme === 'light' || form.settings.theme === 'dark'
+      ? form.settings.theme
+      : 'light'
   const colorsRecord =
     form.settings.colors && typeof form.settings.colors === 'object'
       ? (form.settings.colors as Record<string, unknown>)

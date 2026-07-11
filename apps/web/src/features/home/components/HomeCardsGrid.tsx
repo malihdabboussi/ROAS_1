@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from 'react'
 import { ChevronDown, Plus } from 'lucide-react'
+import { HomeDashboardV4CustomizePopover } from '@/components/home-dashboard-v4/HomeDashboardV4CustomizePopover'
 import { HomeCardRenderer } from '@/features/home/components/cards/HomeCardRenderer'
 import { HomeSortableCardsGrid } from '@/features/home/components/HomeSortableCardsGrid'
 import { HOME_CARD_DEFINITIONS, homeCardDefinition } from '@/features/home/config/home-cards.config'
 import { HomeCustomizeProvider } from '@/features/home/context/home-customize-context'
 import { useHomeLayout } from '@/features/home/hooks/use-home-layout'
+import type { HomeCardId } from '@/features/home/types/home-cards'
 import type { HomeFeedScopeState } from '@/features/home/types/home-feed-scope'
 import type { UserNotification } from '@/features/mission-control/types'
 import { useOrgStore } from '@/features/org/store/use-org-store'
@@ -27,6 +29,7 @@ export function HomeCardsGrid({
   onMyTasksChanged,
   onAccept,
   onDismiss,
+  variant = 'default',
 }: {
   myTasksScope: HomeFeedScopeState
   updateMyTasksScope: (patch: Partial<HomeFeedScopeState>) => void
@@ -41,6 +44,7 @@ export function HomeCardsGrid({
   onMyTasksChanged?: () => void
   onAccept: (item: YourTurnItem) => void | Promise<void>
   onDismiss: (item: YourTurnItem) => void | Promise<void>
+  variant?: 'default' | 'v4'
 }) {
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const { layout, editing, setEditing, addCard, removeCard, reorderCards } = useHomeLayout()
@@ -81,60 +85,93 @@ export function HomeCardsGrid({
     <HomeCardRenderer cardId={cardId} {...cardRendererProps} onMyTasksChanged={onMyTasksChanged} />
   )
 
+  const isV4 = variant === 'v4'
+
+  const toggleCard = (id: HomeCardId) => {
+    if (visibleCardIds.includes(id)) {
+      removeCard(id)
+      return
+    }
+    addCard(id)
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="body-3 text-muted-foreground">Your dashboard</p>
+      <div
+        className={
+          isV4 ? 'hd4-dashboard-header' : 'flex flex-wrap items-center justify-between gap-2'
+        }
+      >
+        <p className={isV4 ? 'hd4-dashboard-title' : 'body-3 text-muted-foreground'}>
+          Your dashboard
+        </p>
         <div className="flex items-center gap-2">
-          {editing && availableToAdd.length > 0 ? (
-            <div className="relative">
+          {isV4 ? (
+            <HomeDashboardV4CustomizePopover
+              visibleCardIds={visibleCardIds}
+              activeOrgId={activeOrgId}
+              onToggleCard={toggleCard}
+              editing={editing}
+              onToggleEditing={() => {
+                setEditing(!editing)
+                setAddOpen(false)
+              }}
+            />
+          ) : (
+            <>
+              {editing && availableToAdd.length > 0 ? (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setAddOpen((o) => !o)}
+                    className="button-glass-secondary rounded-spacing-2 px-spacing-3 py-spacing-2 body-3 inline-flex items-center gap-1.5 font-medium"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add card
+                    <ChevronDown className="h-3 w-3 opacity-70" />
+                  </button>
+                  {addOpen ? (
+                    <>
+                      <div className="z-modal-backdrop-inert" onClick={() => setAddOpen(false)} />
+                      <div className="dropdown-menu-solid absolute right-0 top-full z-10 mt-1 max-h-[320px] min-w-[240px] overflow-y-auto py-1">
+                        {availableToAdd.map((def) => (
+                          <button
+                            key={def.id}
+                            type="button"
+                            className="hover:bg-hover-subtle body-3 text-foreground flex w-full flex-col gap-0.5 px-3 py-2 text-left transition-colors"
+                            onClick={() => {
+                              addCard(def.id)
+                              setAddOpen(false)
+                            }}
+                          >
+                            <span className="font-medium">{def.title}</span>
+                            <span className="typo-caption text-muted-foreground">
+                              {def.description}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
               <button
                 type="button"
-                onClick={() => setAddOpen((o) => !o)}
-                className="button-glass-secondary rounded-spacing-2 px-spacing-3 py-spacing-2 body-3 inline-flex items-center gap-1.5 font-medium"
+                onClick={() => {
+                  setEditing(!editing)
+                  setAddOpen(false)
+                }}
+                className={cn(
+                  'rounded-spacing-2 px-spacing-3 body-3 font-medium transition-colors',
+                  editing
+                    ? 'button-glass-accent py-spacing-1'
+                    : 'button-glass-secondary py-spacing-2',
+                )}
               >
-                <Plus className="h-3.5 w-3.5" />
-                Add card
-                <ChevronDown className="h-3 w-3 opacity-70" />
+                {editing ? 'Done' : 'Customize'}
               </button>
-              {addOpen ? (
-                <>
-                  <div className="z-modal-backdrop-inert" onClick={() => setAddOpen(false)} />
-                  <div className="dropdown-menu-solid absolute right-0 top-full z-10 mt-1 max-h-[320px] min-w-[240px] overflow-y-auto py-1">
-                    {availableToAdd.map((def) => (
-                      <button
-                        key={def.id}
-                        type="button"
-                        className="hover:bg-hover-subtle body-3 text-foreground flex w-full flex-col gap-0.5 px-3 py-2 text-left transition-colors"
-                        onClick={() => {
-                          addCard(def.id)
-                          setAddOpen(false)
-                        }}
-                      >
-                        <span className="font-medium">{def.title}</span>
-                        <span className="typo-caption text-muted-foreground">
-                          {def.description}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              ) : null}
-            </div>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => {
-              setEditing(!editing)
-              setAddOpen(false)
-            }}
-            className={cn(
-              'rounded-spacing-2 px-spacing-3 body-3 font-medium transition-colors',
-              editing ? 'button-glass-accent py-spacing-1' : 'button-glass-secondary py-spacing-2',
-            )}
-          >
-            {editing ? 'Done' : 'Customize'}
-          </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -162,7 +199,7 @@ export function HomeCardsGrid({
               renderCard={renderCard}
             />
           ) : (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className={isV4 ? 'hd4-card-grid' : 'grid grid-cols-1 gap-6 md:grid-cols-2'}>
               {visibleCardIds.map((cardId) => (
                 <div key={cardId} className="relative min-w-0">
                   {renderCard(cardId)}

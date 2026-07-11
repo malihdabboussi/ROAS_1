@@ -1,6 +1,6 @@
 # Missions harness
 
-Last updated: 2026-06-25
+Last updated: 2026-07-08
 
 ## Public agent slug namespace
 
@@ -131,6 +131,12 @@ This prevents a new org agent from running with the generic fallback prompt when
 
 Mission worker wake calls use the same machine readiness path and now allow a longer configurable wait (`MISSIONS_ENSURE_MACHINE_TIMEOUT_MS`, default 285 seconds) so cold-started or image-updated runtimes can become ready before mission execution fails.
 
+## Designer UI Component Skill
+
+The system designer agent now has a dedicated `ui-component-design` skill for product UI component work. It covers component blueprints, design reviews, interaction states, responsive behavior, and implementation-ready handoff notes for modals, panels, forms, navigation, dashboards, and other product surfaces.
+
+The skill is registered in the designer OpenClaw runtime skill list and seeded as a system `agent_skills` row with a `references/component-design-system.md` resource. Mission contracts that require an `agent_skill` artifact can verify the designer skill by `agent_key = designer` and `skill_key = ui-component-design`.
+
 ## Shared Railway Runtime Routing
 
 Mission and Brain worker calls can now use the shared Railway Agent API/OpenClaw runtime when a user's profile is configured with `agent_runtime_type = shared_railway` and `agent_runtime_url`.
@@ -191,6 +197,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-08: Added the designer `ui-component-design` system skill so product UI component work routes through a dedicated component design workflow instead of generic asset or page design.
 - 2026-06-25: Runtime readiness now treats `skills/vibey-api/ALLOWED_ACTIONS.json` as required alongside `SKILL.md`, and internal ensure-ready normalizes plain personal ids to shared-runtime `user-{userId}-{agentKey}` ids when possible.
 - 2026-06-21: Mission, mission-creation, and campaign upload paths now return normalized media `asset_ref` descriptors so UI and agents can keep file identity after upload.
 - 2026-06-19: Space-scoped mission creation now ensures the Missions tab exists. Spaces chat focuses Missions after completed `create_mission` tool calls, and task send-to-agent mission mode routes users into the Missions tab/new-mission modal.

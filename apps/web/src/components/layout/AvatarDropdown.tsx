@@ -12,12 +12,16 @@ import { useWorkspaceSettingsModal } from '@/features/settings/contexts/Workspac
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { backendPatch } from '@/lib/api/backend-client'
 import { billingApi } from '@/lib/billing/billing-api'
+import type { BillingStatusResponse } from '@/lib/billing/billing.types'
 import { createClient } from '@/lib/supabase/client'
 import { clearOrgSensitiveState, navigateHomeAfterOrgSwitch } from '@/lib/utils/clear-org-state'
 import { clearActiveOrgStorage } from '@/lib/utils/org-storage'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { AvatarRoleSimulatorSection } from './AvatarRoleSimulatorSection'
 import { SIDEBAR_TOAST_ERRORS } from './config/sidebar-toast-errors.config'
+import { CreditsSummarySection } from './CreditsSummarySection'
+
+const AVATAR_MENU_WIDTH = 288
 
 type AvatarDropdownProps = {
   displayName: string
@@ -57,13 +61,18 @@ export function AvatarDropdown({
     left: number
   }>({ left: 0 })
 
-  // Credit balance — local state for initial load, synced from Zustand store
   const storeCreditBalance = useChatStore((s) => s.creditBalance)
   const setStoreCreditBalance = useChatStore((s) => s.setCreditBalance)
+  const [billingStatus, setBillingStatus] = React.useState<BillingStatusResponse | null>(null)
+  const [creditsLoading, setCreditsLoading] = React.useState(false)
+  const [initialCreditsFetched, setInitialCreditsFetched] = React.useState(false)
+
   const loadCredits = React.useCallback(
     async (opts?: { force?: boolean }) => {
+      setCreditsLoading(true)
       try {
         const data = await billingApi.getStatusCached(opts)
+        setBillingStatus(data)
         if (data.balance) {
           setStoreCreditBalance({
             totalAvailable: data.balance.totalAvailable,
@@ -72,29 +81,36 @@ export function AvatarDropdown({
           })
         }
       } catch {
-        // Billing endpoint might not exist yet
+        setBillingStatus(null)
+      } finally {
+        setCreditsLoading(false)
+        setInitialCreditsFetched(true)
       }
     },
     [setStoreCreditBalance],
   )
 
-  // Fetch on mount
   React.useEffect(() => {
     void loadCredits()
   }, [loadCredits])
 
+  React.useEffect(() => {
+    if (menuOpen) void loadCredits({ force: true })
+  }, [menuOpen, loadCredits])
+
   const creditRemaining = storeCreditBalance?.totalAvailable ?? 0
+  const balanceKnown =
+    billingStatus?.balance != null || (initialCreditsFetched && storeCreditBalance != null)
 
   React.useEffect(() => {
     if (menuOpen && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect()
       const isMobile = window.matchMedia('(max-width: 767px)').matches
       if (isMobile) {
-        const MENU_WIDTH = 224
         const MARGIN = 8
         let left = rect.left
-        if (left + MENU_WIDTH > window.innerWidth - MARGIN) {
-          left = window.innerWidth - MENU_WIDTH - MARGIN
+        if (left + AVATAR_MENU_WIDTH > window.innerWidth - MARGIN) {
+          left = window.innerWidth - AVATAR_MENU_WIDTH - MARGIN
         }
         if (left < MARGIN) left = MARGIN
         setDropdownPos({ bottom: window.innerHeight - rect.top + MARGIN, left })
@@ -152,10 +168,25 @@ export function AvatarDropdown({
         createPortal(
           <div
             data-avatar-dropdown
-            className="border-border bg-card text-card-foreground rounded-spacing-2 fixed z-[999] w-56 overflow-hidden border shadow-lg"
+            className="border-border bg-card text-card-foreground rounded-spacing-2 fixed z-[999] w-72 overflow-hidden border shadow-lg"
             style={{ top: dropdownPos.top, bottom: dropdownPos.bottom, left: dropdownPos.left }}
           >
-            {/* Settings Section */}
+            <CreditsSummarySection
+              status={billingStatus}
+              loading={creditsLoading}
+              displayTotal={creditRemaining}
+              balanceKnown={balanceKnown}
+              onAddCredits={() => {
+                setMenuOpen(false)
+                setCreditDialogOpen(true)
+              }}
+              onViewUsage={() => {
+                setMenuOpen(false)
+                window.dispatchEvent(new CustomEvent('close-mobile-sidebar'))
+                openAccountSettings('usage')
+              }}
+            />
+
             <div className="border-b border-[var(--color-border)] py-1">
               <MenuItem
                 icon={<User className="h-4 w-4" />}
@@ -361,9 +392,7 @@ function OrgSwitcherSection({ onClose }: { onClose: () => void }) {
             {!isOrgOnly ? (
               <div
                 className={`group flex w-full items-center transition-colors ${
-                  !activeOrgId
-                    ? 'avatar-org-submenu-row-selected'
-                    : 'hover:bg-hover-subtle'
+                  !activeOrgId ? 'avatar-org-submenu-row-selected' : 'hover:bg-hover-subtle'
                 }`}
               >
                 <button
@@ -381,9 +410,7 @@ function OrgSwitcherSection({ onClose }: { onClose: () => void }) {
                   className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2"
                 >
                   <User className="text-muted-foreground h-4 w-4 flex-shrink-0" />
-                  <span className="body-3 min-w-0 flex-1 truncate text-left">
-                    Personal Account
-                  </span>
+                  <span className="body-3 min-w-0 flex-1 truncate text-left">Personal Account</span>
                 </button>
                 <DefaultAccountButton
                   active={defaultAccountMode === 'personal'}
@@ -401,9 +428,7 @@ function OrgSwitcherSection({ onClose }: { onClose: () => void }) {
                 <div
                   key={m.org_id}
                   className={`group flex w-full items-center transition-colors ${
-                    selected
-                      ? 'avatar-org-submenu-row-selected'
-                      : 'hover:bg-hover-subtle'
+                    selected ? 'avatar-org-submenu-row-selected' : 'hover:bg-hover-subtle'
                   }`}
                 >
                   <button
@@ -478,9 +503,7 @@ function DefaultAccountButton({
       disabled={saving}
       onClick={onClick}
       className={`btn-icon-bare-sm mr-spacing-2 shrink-0 ${
-        active
-          ? 'opacity-100'
-          : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
+        active ? 'opacity-100' : 'opacity-0 focus-visible:opacity-100 group-hover:opacity-100'
       } ${saving ? 'cursor-wait opacity-60' : ''}`}
     >
       <Star className={`icon-sm ${active ? 'fill-primary text-primary' : ''}`} />

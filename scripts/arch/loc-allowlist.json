@@ -77,7 +77,7 @@
     "apps/web/src/components/layout/AvatarDropdown.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 412
+      "lines": 544
     },
     "apps/web/src/components/layout/sidebar/SidebarBrainFlyout.tsx": {
       "kind": "web-component",
@@ -98,11 +98,6 @@
       "kind": "web-component",
       "limit": 400,
       "lines": 727
-    },
-    "apps/web/src/features/brain/components/BrainVisualization.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 2076
     },
     "apps/web/src/features/brain/components/ForceGraph.tsx": {
       "kind": "web-component",
@@ -129,6 +124,11 @@
       "limit": 400,
       "lines": 419
     },
+    "apps/web/src/features/flows/containers/FlowsPage.tsx": {
+      "kind": "web-container",
+      "limit": 600,
+      "lines": 2400
+    },
     "apps/web/src/features/spaces/components/automations/ActionBuilder.tsx": {
       "kind": "web-component",
       "limit": 400,
@@ -143,6 +143,11 @@
       "kind": "web-component",
       "limit": 400,
       "lines": 812
+    },
+    "apps/web/src/features/settings/components/settings-content/OrgSettingsContent.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 598
     },
     "apps/web/src/features/settings/components/settings-content/SkillsPageContent.tsx": {
       "kind": "web-component",
@@ -332,7 +337,7 @@
     "apps/web/src/features/studio/services/chat.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 2469
+      "lines": 2545
     },
     "apps/web/src/features/team-2/components/AgentsGrid.tsx": {
       "kind": "web-component",
@@ -353,11 +358,6 @@
       "kind": "web-component",
       "limit": 400,
       "lines": 1437
-    },
-    "apps/web/src/features/team-2/containers/Team2Container.tsx": {
-      "kind": "web-container",
-      "limit": 600,
-      "lines": 809
     },
     "apps/web/src/features/team/components/AgentChatPanel.tsx": {
       "kind": "web-component",
@@ -580,6 +580,15 @@
         "@/features/studio/services/chat.service": 1
       }
     },
+    "apps/web/src/features/home/components/HomeCardsGrid.tsx": {
+      "sourceFeature": "home",
+      "count": 3,
+      "imports": {
+        "@/features/mission-control/types": 1,
+        "@/features/org/store/use-org-store": 1,
+        "@/features/spaces/services/your-turn.service": 1
+      }
+    },
     "apps/web/src/features/home/components/HomeFeedScopePicker.tsx": {
       "sourceFeature": "home",
       "count": 1,
@@ -646,6 +655,16 @@
         "@/features/mission-control/types": 1,
         "@/features/studio/lib/campaign-markdown-pdf-export": 1,
         "@/features/team/constants/team.constants": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/OrgSettingsContent.tsx": {
+      "sourceFeature": "settings",
+      "count": 4,
+      "imports": {
+        "@/features/brain/hooks/use-brain-scope-nav-options": 1,
+        "@/features/org/components/OrgLogoPicker": 1,
+        "@/features/org/services/org.service": 1,
+        "@/features/org/store/use-org-store": 1
       }
     },
     "apps/web/src/features/settings/components/settings-content/SkillsPageContent.tsx": {

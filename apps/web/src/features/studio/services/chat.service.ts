@@ -277,6 +277,13 @@ function isPendingClarificationBlock(block: unknown): boolean {
   return status !== 'submitted' && status !== 'skipped'
 }
 
+function hasAssistantDisplayContent(message: Message | undefined): message is Message {
+  if (!message || message.role !== 'assistant') return false
+  if ((message.content ?? '').trim().length > 0) return true
+  const ordered = (message.metadata?.content_blocks_ordered as unknown[] | undefined) ?? []
+  return ordered.length > 0
+}
+
 export function mergeOrderedContentBlocks(
   localOrdered: unknown[],
   backendOrdered: unknown[],
@@ -312,7 +319,9 @@ function resolveLocalAssistantMessageForMerge(
     backendMsg === [...backendMessages].reverse().find((message) => message.role === 'assistant')
   if (!isLatestBackendAssistant) return undefined
 
-  const latestLocalAssistant = [...localMessages].reverse().find((message) => message.role === 'assistant')
+  const latestLocalAssistant = [...localMessages]
+    .reverse()
+    .find((message) => message.role === 'assistant')
   if (!latestLocalAssistant || latestLocalAssistant.id === backendMsg.id) return undefined
 
   const localOrdered =
@@ -329,7 +338,7 @@ export function mergeMessagesPreservingOrderedBlocks(
   if (localMessages.length === 0) return backendMessages
   if (backendMessages.length === 0) return localMessages
 
-  return backendMessages.map((backendMsg) => {
+  const mergedMessages = backendMessages.map((backendMsg) => {
     if (backendMsg.role !== 'assistant') return backendMsg
 
     const localMsg = resolveLocalAssistantMessageForMerge(
@@ -341,25 +350,42 @@ export function mergeMessagesPreservingOrderedBlocks(
 
     const backendOrdered =
       (backendMsg.metadata?.content_blocks_ordered as unknown[] | undefined) ?? []
-    const localOrdered =
-      (localMsg.metadata?.content_blocks_ordered as unknown[] | undefined) ?? []
-    if (localOrdered.length === 0) return backendMsg
+    const localOrdered = (localMsg.metadata?.content_blocks_ordered as unknown[] | undefined) ?? []
+    const shouldPreserveLocalContent =
+      (backendMsg.content ?? '').trim().length === 0 && (localMsg.content ?? '').trim().length > 0
+    if (localOrdered.length === 0) {
+      return shouldPreserveLocalContent ? { ...backendMsg, content: localMsg.content } : backendMsg
+    }
 
     const mergedOrdered =
       backendOrdered.length === 0
         ? localOrdered
         : mergeOrderedContentBlocks(localOrdered, backendOrdered)
 
-    if (mergedOrdered === backendOrdered) return backendMsg
+    if (mergedOrdered === backendOrdered && !shouldPreserveLocalContent) return backendMsg
 
     return {
       ...backendMsg,
+      ...(shouldPreserveLocalContent ? { content: localMsg.content } : {}),
       metadata: {
         ...(backendMsg.metadata ?? {}),
         content_blocks_ordered: mergedOrdered,
       },
     }
   })
+
+  const backendIds = new Set(backendMessages.map((message) => message.id))
+  const backendLastMessage = backendMessages[backendMessages.length - 1]
+  const latestLocalAssistant = [...localMessages].reverse().find(hasAssistantDisplayContent)
+  if (
+    latestLocalAssistant &&
+    !backendIds.has(latestLocalAssistant.id) &&
+    backendLastMessage?.role === 'user'
+  ) {
+    return [...mergedMessages, latestLocalAssistant]
+  }
+
+  return mergedMessages
 }
 
 function getAssistantOrderedBlockMessageIds(messages: Message[]): Set<string> {

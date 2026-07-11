@@ -6,7 +6,6 @@ import { ListChecks, Plus, Rocket } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { AvatarDropdown } from '../AvatarDropdown'
-import { SidebarCreditsHover } from '../SidebarCreditsHover'
 import { SIDEBAR_MESSAGES } from '../config/sidebar-messages.config'
 import type { ManageRailItem } from './sidebar-types'
 import { SidebarBrainNavLinks } from './SidebarBrainFlyout'
@@ -256,7 +255,7 @@ export function SidebarHqMobileDrawer({
             )}
           </button>
         )}
-        <div className="gap-spacing-2 flex items-center justify-between px-3 py-1">
+        <div className="flex items-center px-3 py-1">
           <div className="flex h-9 shrink-0 items-center">
             <AvatarDropdown
               displayName={c.displayName}
@@ -266,7 +265,6 @@ export function SidebarHqMobileDrawer({
               sidebarCollapsed={false}
             />
           </div>
-          <SidebarCreditsHover variant="hq" hqTriggerLayout="row" />
         </div>
       </div>
     </nav>

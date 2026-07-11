@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import type { ChatInputPlusMenuSpacePickerConfig } from './chat-input-plus-menu-space.types'
 import type { SlashItem } from './chat-input-slash-menu'
 import { useChatInputCloudAttach } from './use-chat-input-cloud-attach'
 import { useChatInputComposerAccess } from './use-chat-input-composer-access'
@@ -12,6 +13,7 @@ interface UseChatInputPlusControllerOptions {
   handleFileSelect: (files: File[] | FileList) => void | Promise<void>
   allSlashItems: SlashItem[]
   onOpenAtMenu: () => void
+  plusMenuSpacePicker?: ChatInputPlusMenuSpacePickerConfig
 }
 
 export function useChatInputPlusController({
@@ -21,6 +23,7 @@ export function useChatInputPlusController({
   handleFileSelect,
   allSlashItems,
   onOpenAtMenu,
+  plusMenuSpacePicker,
 }: UseChatInputPlusControllerOptions) {
   const {
     plusMenuOpen,
@@ -112,6 +115,7 @@ export function useChatInputPlusController({
     handleAccessToggle,
     onShowInfoCard: showPlusInfoCard,
     onClearInfoCard: clearPlusInfoCard,
+    spacePicker: plusMenuSpacePicker ?? null,
   })
 
   return {

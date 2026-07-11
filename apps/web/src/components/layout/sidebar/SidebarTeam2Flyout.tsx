@@ -88,7 +88,6 @@ export function SidebarTeam2Flyout({ pathname }: SidebarTeam2FlyoutProps) {
         </span>
       </div>
       <div className="scrollbar-hide flex-1 overflow-y-auto px-2 pb-2">
-        {/* Top-level items: Manage Agents, Manage Skills. */}
         <div className="mb-3 space-y-0.5">
           <Link
             href="/team"

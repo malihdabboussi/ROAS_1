@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, MuseoModerno } from 'next/font/google'
+import { AppThemeBootScript } from '@/components/AppThemeBootScript'
 import { BrainImportJobNotifier } from '@/features/brain/components/BrainImportJobNotifier'
 import { RootProviders } from './root-providers'
 import './globals.css'
@@ -35,7 +36,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
       className={`${inter.variable} ${fontSiteHeadline.variable}`}
     >
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased" suppressHydrationWarning>
+        <AppThemeBootScript />
         <RootProviders>{children}</RootProviders>
         <BrainImportJobNotifier />
       </body>

@@ -2,26 +2,23 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useRef } from 'react'
-import { AgentSideChatLayout } from '@/components/agents/side-chat/AgentSideChatLayout'
 import { useOrgStore } from '@/lib/org'
 import { useBrainHealthRealtime } from '../hooks/use-brain-health-realtime'
 import { useBrainQueue } from '../hooks/use-brain-queue'
 import { useBrainRealtime } from '../hooks/use-brain-realtime'
 import { useBrainScopeNavOptions } from '../hooks/use-brain-scope-nav-options'
-import { useBrainVisualizationAtlasAwareness } from '../hooks/use-brain-visualization-atlas-awareness'
-import { useBrainVisualizationAtlasAgent } from '../hooks/use-brain-visualization-atlas-agent'
 import { useBrainVisualizationActions } from '../hooks/use-brain-visualization-actions'
 import { useBrainVisualizationGraphData } from '../hooks/use-brain-visualization-graph-data'
-import { useBrainVisualizationSearch } from '../hooks/use-brain-visualization-search'
 import { useBrainVisualizationScopeSelection } from '../hooks/use-brain-visualization-scope-selection'
+import { useBrainVisualizationSearch } from '../hooks/use-brain-visualization-search'
 import { useBrainVisualizationUiState } from '../hooks/use-brain-visualization-ui-state'
 import { deriveBrainVisualizationGraphState } from '../lib/brain-visualization-derived-state'
 import { useBrainStore } from '../store/use-brain-store'
 import { BrainNodeDetailModalHost } from './BrainNodeDetailModalHost'
 import { BrainVisualizationAddInfoLayer } from './BrainVisualizationAddInfoLayer'
-import { BrainVisualizationDock } from './BrainVisualizationDock'
 import { BrainVisualizationBreadcrumbLayer } from './BrainVisualizationBreadcrumbLayer'
 import { BrainVisualizationCanvasStage } from './BrainVisualizationCanvasStage'
+import { BrainVisualizationDock } from './BrainVisualizationDock'
 import { BrainVisualizationGraphControls } from './BrainVisualizationGraphControls'
 import { BrainVisualizationMemoryLayer } from './BrainVisualizationMemoryLayer'
 import { BrainVisualizationModalLayer } from './BrainVisualizationModalLayer'
@@ -60,19 +57,14 @@ export default function BrainVisualization() {
     reload: reloadScopeNav,
   } = useBrainScopeNavOptions()
   const isOrg = useOrgStore((s) => s.isOrgContext())
-  const { atlasAgent, atlasLoading } = useBrainVisualizationAtlasAgent(reloadScopeNav)
-  const {
-    brainScopeRuntime,
-    navigateToBrainHome,
-    selectedScope,
-    selectedScopeId,
-  } = useBrainVisualizationScopeSelection({
-    router,
-    searchParams,
-    scopeOptions,
-    scopeOptionsResolved,
-    scopesLoading,
-  })
+  const { brainScopeRuntime, navigateToBrainHome, selectedScope, selectedScopeId } =
+    useBrainVisualizationScopeSelection({
+      router,
+      searchParams,
+      scopeOptions,
+      scopeOptionsResolved,
+      scopesLoading,
+    })
 
   const topRightScopeReady = brainScopeRuntime.ready
   const selectedAgentId = topRightScopeReady ? (selectedScope?.agentId ?? undefined) : undefined
@@ -218,178 +210,142 @@ export default function BrainVisualization() {
     ],
   )
 
-  const buildAtlasAwarenessContext = useBrainVisualizationAtlasAwareness({
-    activeLoading,
-    brainDateFilterActive,
-    brainDateRange,
-    connectedNodeCount: selectedNodeConnectedNodes.length,
-    cortexMaxOpen,
-    crystallizeOpen,
-    experiencesOnly,
-    healthData,
-    memoryPanelOpen,
-    queueJobs,
-    searchInput,
-    searchLoading,
-    searchQuery,
-    searchResultsCount: searchResults.length,
-    selectedNode,
-    selectedScope,
-    statsHealthForBar,
-    topRightScopeReady,
-    voiceSessionOpen,
-  })
-
   const dockShowsCognitionStats = ['user', 'shared', 'agent', 'customer', 'company'].includes(
     selectedScope?.scopeType ?? '',
   )
 
   return (
-    <AgentSideChatLayout
-      className="min-h-0 flex-1 p-3"
-      hrAgent={atlasAgent}
-      hrAgentLoading={atlasLoading}
-      agentKey="atlas"
-      agentName="Atlas"
-      mobileMainLabel={selectedScope?.label ?? 'Brain'}
-      buildAwarenessContext={buildAtlasAwarenessContext}
-      emptyStateGreeting="I'm Atlas. Ask me about this brain, selected nodes, training, Cortex Max, or what knowledge should be organized next."
-      showCheckpoints={false}
-      storageScope="atlas"
-      collapseHrChatForAgentKey={selectedScopeId}
-    >
-      <div className="bg-background border-border relative h-full min-h-0 w-full min-w-0 flex-1 overflow-hidden rounded-2xl border">
-        <BrainVisualizationCanvasStage
-          activeLoading={activeLoading}
-          connections={filteredConnections}
-          error={error}
-          graphRef={graphRef}
-          hasActiveGraphData={!!activeGraphData}
-          nodes={filteredNodes}
-          nodesMonochrome={brainNodesMonochrome}
-          onNodeClick={(node) => {
-            selectNode(node)
-            if (node) setMemoryPanelOpen(false)
-          }}
-          onRetry={() => loadGraph(selectedAgentId, selectedScope?.brainId ?? undefined)}
-          searchQuery={searchQuery}
-          selectedNodeId={selectedNode?.id ?? null}
-          viewportKey={selectedScopeId}
-        />
+    <div className="bg-background border-border relative h-full min-h-0 w-full min-w-0 flex-1 overflow-hidden rounded-2xl border p-3">
+      <BrainVisualizationCanvasStage
+        activeLoading={activeLoading}
+        connections={filteredConnections}
+        error={error}
+        graphRef={graphRef}
+        hasActiveGraphData={!!activeGraphData}
+        nodes={filteredNodes}
+        nodesMonochrome={brainNodesMonochrome}
+        onNodeClick={(node) => {
+          selectNode(node)
+          if (node) setMemoryPanelOpen(false)
+        }}
+        onRetry={() => loadGraph(selectedAgentId, selectedScope?.brainId ?? undefined)}
+        searchQuery={searchQuery}
+        selectedNodeId={selectedNode?.id ?? null}
+        viewportKey={selectedScopeId}
+      />
 
-        <BrainVisualizationBreadcrumbLayer
-          scope={selectedScope}
-          scopeOptions={scopeOptions}
-          loading={scopesLoading}
-          isOrg={isOrg}
-          onNavigateHome={navigateToBrainHome}
-        />
+      <BrainVisualizationBreadcrumbLayer
+        scope={selectedScope}
+        scopeOptions={scopeOptions}
+        loading={scopesLoading}
+        isOrg={isOrg}
+        onNavigateHome={navigateToBrainHome}
+      />
 
-        <BrainVisualizationAddInfoLayer
-          isMobileBrain={isMobileBrain}
-          selectedScope={selectedScope}
-          topRightScopeReady={topRightScopeReady}
-          onCampaignImported={refreshCampaignGraph}
-        />
+      <BrainVisualizationAddInfoLayer
+        isMobileBrain={isMobileBrain}
+        selectedScope={selectedScope}
+        topRightScopeReady={topRightScopeReady}
+        onCampaignImported={refreshCampaignGraph}
+      />
 
-        <BrainVisualizationGraphControls
-          graphRef={graphRef}
-          nodesMonochrome={brainNodesMonochrome}
-          onToggleNodesMonochrome={toggleBrainNodesMonochrome}
-          legend={{
-            memoryCounts: legendMemoryCounts,
-            snapshotCounts,
-            memoryCount: counts.memories,
-            experienceCount: legendExperienceCount,
-            snapshotCount: counts.snapshots,
-            skEntryCount: legendSkEntryCount,
-            connectionCounts: legendConnectionCounts,
-            beliefCount: beliefs.length,
-            perspectiveCount: perspectives.length,
-            domainCounts,
-            sourceCounts,
-            connections: filteredConnections,
-            scopeType: selectedScope?.scopeType ?? 'user',
-            isAgentBrain: !!selectedScope?.agentId,
-            brainId: selectedScope?.brainId,
-            showCognitionCounts: !isKnowledgeScope && dockShowsCognitionStats,
-          }}
-        />
+      <BrainVisualizationGraphControls
+        graphRef={graphRef}
+        nodesMonochrome={brainNodesMonochrome}
+        onToggleNodesMonochrome={toggleBrainNodesMonochrome}
+        legend={{
+          memoryCounts: legendMemoryCounts,
+          snapshotCounts,
+          memoryCount: counts.memories,
+          experienceCount: legendExperienceCount,
+          snapshotCount: counts.snapshots,
+          skEntryCount: legendSkEntryCount,
+          connectionCounts: legendConnectionCounts,
+          beliefCount: beliefs.length,
+          perspectiveCount: perspectives.length,
+          domainCounts,
+          sourceCounts,
+          connections: filteredConnections,
+          scopeType: selectedScope?.scopeType ?? 'user',
+          isAgentBrain: !!selectedScope?.agentId,
+          brainId: selectedScope?.brainId,
+          showCognitionCounts: !isKnowledgeScope && dockShowsCognitionStats,
+        }}
+      />
 
-        <BrainNodeDetailModalHost
-          selectedNode={selectedNode}
-          selectedScope={selectedScope}
-          scopeOptions={scopeOptions}
-          connectedNodes={selectedNodeConnectedNodes}
-          isCampaignScope={isCampaignScope}
-          isKnowledgeScope={isKnowledgeScope}
-          refreshCampaignGraph={refreshCampaignGraph}
-          refreshKnowledgeGraph={refreshKnowledgeGraph}
-          loadGraph={loadGraph}
-          selectedAgentId={selectedAgentId}
-          selectNode={selectNode}
-        />
-        <BrainVisualizationDock
-          voiceSessionOpen={voiceSessionOpen}
-          onActivateVoice={handleActivateVoice}
-          searchAnchorRef={brainSearchAnchorRef}
-          searchInput={searchInput}
-          searchLoading={searchLoading}
-          searchResults={searchResults}
-          searchDockOpen={brainSearchDockOpen}
-          onOpenSearchDock={handleOpenSearchDock}
-          onSearchInputChange={handleBrainSearchInputChange}
-          onSearchInputBlur={handleBrainSearchInputBlur}
-          onSearchEscape={handleBrainSearchEscape}
-          onClearSearch={handleClearBrainSearch}
-          onOpenImageSearch={handleOpenImageSearch}
-          onSelectSearchResult={handleSelectSearchResult}
-          topRightScopeReady={topRightScopeReady}
-          selectedScope={selectedScope}
-          brainDateRange={brainDateRange}
-          brainDateFilterActive={brainDateFilterActive}
-          onBrainDateRangePatch={handleBrainDateRangePatch}
-          onClearBrainDateRange={handleClearBrainDateRange}
-          experiencesOnly={experiencesOnly}
-          onSetExperiencesOnly={setExperiencesOnly}
-          onOpenCortexMax={handleOpenCortexMax}
-          onTrainBrain={handleTrainBrain}
-          onOpenCrystallize={handleOpenCrystallize}
-          queueJobs={queueJobs}
-          onCancelQueueJob={cancelQueueJob}
-          onRetryQueueJob={retryQueueJob}
-          onDismissQueueJob={dismissQueueJob}
-          statsHealthForBar={statsHealthForBar}
-          activeQueueCount={activeQueueCount}
-          beliefCount={!isKnowledgeScope && dockShowsCognitionStats ? beliefs.length : undefined}
-          perspectiveCount={
-            !isKnowledgeScope && dockShowsCognitionStats ? perspectives.length : undefined
-          }
-        />
-        <BrainVisualizationMemoryLayer
-          memories={filteredNodes}
-          selectedMemoryId={selectedNode?.id ?? null}
-          visible={memoryPanelOpen}
-          searchImageInputRef={searchImageInputRef}
-          onImageSearchFileChange={handleBrainImageSearchFileChange}
-          onSelectMemory={selectNode}
-          onSearchQueryChange={setSearchQuery}
-          onMemoryPanelOpenChange={setMemoryPanelOpen}
-        />
+      <BrainNodeDetailModalHost
+        selectedNode={selectedNode}
+        selectedScope={selectedScope}
+        scopeOptions={scopeOptions}
+        connectedNodes={selectedNodeConnectedNodes}
+        isCampaignScope={isCampaignScope}
+        isKnowledgeScope={isKnowledgeScope}
+        refreshCampaignGraph={refreshCampaignGraph}
+        refreshKnowledgeGraph={refreshKnowledgeGraph}
+        loadGraph={loadGraph}
+        selectedAgentId={selectedAgentId}
+        selectNode={selectNode}
+      />
+      <BrainVisualizationDock
+        voiceSessionOpen={voiceSessionOpen}
+        onActivateVoice={handleActivateVoice}
+        searchAnchorRef={brainSearchAnchorRef}
+        searchInput={searchInput}
+        searchLoading={searchLoading}
+        searchResults={searchResults}
+        searchDockOpen={brainSearchDockOpen}
+        onOpenSearchDock={handleOpenSearchDock}
+        onSearchInputChange={handleBrainSearchInputChange}
+        onSearchInputBlur={handleBrainSearchInputBlur}
+        onSearchEscape={handleBrainSearchEscape}
+        onClearSearch={handleClearBrainSearch}
+        onOpenImageSearch={handleOpenImageSearch}
+        onSelectSearchResult={handleSelectSearchResult}
+        topRightScopeReady={topRightScopeReady}
+        selectedScope={selectedScope}
+        brainDateRange={brainDateRange}
+        brainDateFilterActive={brainDateFilterActive}
+        onBrainDateRangePatch={handleBrainDateRangePatch}
+        onClearBrainDateRange={handleClearBrainDateRange}
+        experiencesOnly={experiencesOnly}
+        onSetExperiencesOnly={setExperiencesOnly}
+        onOpenCortexMax={handleOpenCortexMax}
+        onTrainBrain={handleTrainBrain}
+        onOpenCrystallize={handleOpenCrystallize}
+        queueJobs={queueJobs}
+        onCancelQueueJob={cancelQueueJob}
+        onRetryQueueJob={retryQueueJob}
+        onDismissQueueJob={dismissQueueJob}
+        statsHealthForBar={statsHealthForBar}
+        activeQueueCount={activeQueueCount}
+        beliefCount={!isKnowledgeScope && dockShowsCognitionStats ? beliefs.length : undefined}
+        perspectiveCount={
+          !isKnowledgeScope && dockShowsCognitionStats ? perspectives.length : undefined
+        }
+      />
+      <BrainVisualizationMemoryLayer
+        memories={filteredNodes}
+        selectedMemoryId={selectedNode?.id ?? null}
+        visible={memoryPanelOpen}
+        searchImageInputRef={searchImageInputRef}
+        onImageSearchFileChange={handleBrainImageSearchFileChange}
+        onSelectMemory={selectNode}
+        onSearchQueryChange={setSearchQuery}
+        onMemoryPanelOpenChange={setMemoryPanelOpen}
+      />
 
-        <BrainVisualizationModalLayer
-          cortexMaxOpen={cortexMaxOpen}
-          crystallizeOpen={crystallizeOpen}
-          memoryCount={statsHealthForBar?.total_memories ?? 0}
-          onCortexMaxOpenChange={setCortexMaxOpen}
-          onCrystallizeOpenChange={setCrystallizeOpen}
-          onRefreshQueueJobs={refreshQueueJobs}
-          onVoiceSessionOpenChange={setVoiceSessionOpen}
-          selectedScope={selectedScope}
-          topRightScopeReady={topRightScopeReady}
-          voiceSessionOpen={voiceSessionOpen}
-        />
-      </div>
-    </AgentSideChatLayout>
+      <BrainVisualizationModalLayer
+        cortexMaxOpen={cortexMaxOpen}
+        crystallizeOpen={crystallizeOpen}
+        memoryCount={statsHealthForBar?.total_memories ?? 0}
+        onCortexMaxOpenChange={setCortexMaxOpen}
+        onCrystallizeOpenChange={setCrystallizeOpen}
+        onRefreshQueueJobs={refreshQueueJobs}
+        onVoiceSessionOpenChange={setVoiceSessionOpen}
+        selectedScope={selectedScope}
+        topRightScopeReady={topRightScopeReady}
+        voiceSessionOpen={voiceSessionOpen}
+      />
+    </div>
   )
 }
