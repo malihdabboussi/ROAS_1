@@ -6,6 +6,9 @@ interface Env {
   INTERNAL_API_TOKEN?: string
   APPS_WEB_VERCEL_URL?: string
   WORKER_SECRET?: string
+  FLY_RUNTIME_URL?: string
+  APPS_DOMAIN_SUFFIX?: string
+  PUBLIC_AGENT_HOST_SUFFIX?: string
 }
 
 interface CachedRoute {
@@ -30,7 +33,9 @@ interface CachedAgentInfo {
 }
 
 const CACHE_TTL = 60
-const FLY_MACHINE_URL = 'https://vibey-runtimes.fly.dev'
+const ROAS_FLY_RUNTIME_URL = 'https://roas-runtimes.fly.dev'
+const ROAS_APPS_DOMAIN_SUFFIX = '-app.roas.io'
+const ROAS_PUBLIC_AGENT_HOST_SUFFIX = 'agents.roas.io'
 const ENSURE_RUNNING_TIMEOUT_MS = 120_000
 const RETRY_DELAY_MS = 2_000
 const SENSITIVE_PROXY_HEADER_NAMES = [
@@ -39,6 +44,34 @@ const SENSITIVE_PROXY_HEADER_NAMES = [
   'x-vibey-worker-secret',
   'x-vibey-session-key',
 ]
+
+function resolveFlyRuntimeUrl(env: Env): string {
+  return (env.FLY_RUNTIME_URL?.trim() || ROAS_FLY_RUNTIME_URL).replace(/\/$/, '')
+}
+
+function resolveAppsDomainSuffix(env: Env): string {
+  return env.APPS_DOMAIN_SUFFIX?.trim() || ROAS_APPS_DOMAIN_SUFFIX
+}
+
+function resolvePublicAgentHostSuffix(env: Env): string {
+  return env.PUBLIC_AGENT_HOST_SUFFIX?.trim() || ROAS_PUBLIC_AGENT_HOST_SUFFIX
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function matchAppSlug(host: string, env: Env): string | null {
+  const suffix = resolveAppsDomainSuffix(env)
+  const match = host.match(new RegExp(`^(.+)${escapeRegExp(suffix)}$`))
+  return match?.[1] ?? null
+}
+
+function matchAgentSlug(host: string, env: Env): string | null {
+  const suffix = resolvePublicAgentHostSuffix(env)
+  const match = host.match(new RegExp(`^([a-z0-9][a-z0-9-]*[a-z0-9])\\.${escapeRegExp(suffix)}$`))
+  return match?.[1] ?? null
+}
 
 function isRetryableStatus(status: number): boolean {
   return status === 502 || status === 503 || status === 504
@@ -59,7 +92,7 @@ function isTrustedVercelDeploymentUrl(value: string): boolean {
   }
 }
 
-function isTrustedSharedRailwayRuntimeUrl(value: string): boolean {
+function isTrustedRailwayRuntimeUrl(value: string): boolean {
   try {
     const url = new URL(value)
     return (
@@ -67,6 +100,22 @@ function isTrustedSharedRailwayRuntimeUrl(value: string): boolean {
       url.username === '' &&
       url.password === '' &&
       url.hostname.endsWith('.up.railway.app')
+    )
+  } catch {
+    return false
+  }
+}
+
+function isTrustedSharedRuntimeUrl(value: string, flyRuntimeUrl: string): boolean {
+  if (isTrustedRailwayRuntimeUrl(value)) return true
+  try {
+    const url = new URL(value)
+    const trusted = new URL(flyRuntimeUrl)
+    return (
+      url.protocol === 'https:' &&
+      url.username === '' &&
+      url.password === '' &&
+      url.origin === trusted.origin
     )
   } catch {
     return false
@@ -107,14 +156,14 @@ export default {
     const url = new URL(request.url)
     const host = url.hostname
 
-    const appMatch = host.match(/^(.+)-app\.govibey\.com$/)
-    if (appMatch?.[1]) {
-      return handleAppRoute(request, appMatch[1], url, env)
+    const appSlug = matchAppSlug(host, env)
+    if (appSlug) {
+      return handleAppRoute(request, appSlug, url, env)
     }
 
-    const agentMatch = host.match(/^([a-z0-9][a-z0-9-]*[a-z0-9])\.govibey\.com$/)
-    if (agentMatch?.[1]) {
-      return handleAgentPageRoute(request, agentMatch[1], url, env)
+    const agentSlug = matchAgentSlug(host, env)
+    if (agentSlug) {
+      return handleAgentPageRoute(request, agentSlug, url, env)
     }
 
     return new Response('Not found', { status: 404 })
@@ -129,7 +178,7 @@ async function handleAppRoute(
 ): Promise<Response> {
   const route = await resolveRoute(slug, env)
   if (!route) {
-    return new Response(notFoundHtml(slug), {
+    return new Response(notFoundHtml(slug, resolveAppsDomainSuffix(env)), {
       status: 404,
       headers: { 'content-type': 'text/html;charset=UTF-8' },
     })
@@ -158,7 +207,7 @@ async function handleAgentPageRoute(
 
   const pathMatch = url.pathname.match(/^\/a\/([a-z0-9_-]+)(?:\/(.*))?$/)
   if (!pathMatch) {
-    return new Response(agentNotFoundHtml(userSlug), {
+    return new Response(agentNotFoundHtml(userSlug, resolvePublicAgentHostSuffix(env)), {
       status: 404,
       headers: { 'content-type': 'text/html;charset=UTF-8' },
     })
@@ -168,7 +217,7 @@ async function handleAgentPageRoute(
 
   const agentRoute = await resolveAgentRoute(userSlug, env)
   if (!agentRoute) {
-    return new Response(agentNotFoundHtml(userSlug), {
+    return new Response(agentNotFoundHtml(userSlug, resolvePublicAgentHostSuffix(env)), {
       status: 404,
       headers: { 'content-type': 'text/html;charset=UTF-8' },
     })
@@ -180,7 +229,7 @@ async function handleAgentPageRoute(
 
   const agentDetails = await resolveAgentDetails(agentRoute, agentKey, env)
   if (!agentDetails) {
-    return new Response(agentNotFoundHtml(userSlug), {
+    return new Response(agentNotFoundHtml(userSlug, resolvePublicAgentHostSuffix(env)), {
       status: 404,
       headers: { 'content-type': 'text/html;charset=UTF-8' },
     })
@@ -496,7 +545,7 @@ async function proxyToFly(
   }
 }
 
-function isCachedRoute(v: unknown): v is CachedRoute {
+function isCachedRoute(v: unknown, flyRuntimeUrl: string): v is CachedRoute {
   if (!v || typeof v !== 'object') return false
   const o = v as Record<string, unknown>
   const vercelDeploymentUrl =
@@ -510,13 +559,14 @@ function isCachedRoute(v: unknown): v is CachedRoute {
     typeof o.flyMachineId === 'string' &&
     (vercelDeploymentUrl
       ? o.flyMachineUrl === '' && isTrustedVercelDeploymentUrl(vercelDeploymentUrl)
-      : o.flyMachineUrl === FLY_MACHINE_URL)
+      : o.flyMachineUrl === flyRuntimeUrl)
   )
 }
 
 async function resolveRoute(slug: string, env: Env): Promise<CachedRoute | null> {
+  const flyRuntimeUrl = resolveFlyRuntimeUrl(env)
   const cached = await env.SLUG_CACHE.get(slug, 'json')
-  if (isCachedRoute(cached)) return cached
+  if (isCachedRoute(cached, flyRuntimeUrl)) return cached
 
   const supaHeaders = {
     apikey: env.SUPABASE_SERVICE_ROLE_KEY,
@@ -564,7 +614,7 @@ async function resolveRoute(slug: string, env: Env): Promise<CachedRoute | null>
     projectId: project.id,
     userId: project.user_id,
     vercelDeploymentUrl: null,
-    flyMachineUrl: FLY_MACHINE_URL,
+    flyMachineUrl: flyRuntimeUrl,
     flyMachineId: profiles[0]!.fly_machine_id,
   }
 
@@ -572,7 +622,7 @@ async function resolveRoute(slug: string, env: Env): Promise<CachedRoute | null>
   return route
 }
 
-function isCachedAgentRoute(v: unknown): v is CachedAgentRoute {
+function isCachedAgentRoute(v: unknown, flyRuntimeUrl: string): v is CachedAgentRoute {
   if (!v || typeof v !== 'object') return false
   const o = v as Record<string, unknown>
   const runtimeSource = o.runtimeSource
@@ -582,8 +632,8 @@ function isCachedAgentRoute(v: unknown): v is CachedAgentRoute {
     (o.orgId === null || typeof o.orgId === 'string') &&
     (runtimeSource === 'fly_machine' || runtimeSource === 'shared_railway') &&
     (runtimeSource === 'fly_machine'
-      ? runtimeUrl === FLY_MACHINE_URL && typeof o.flyMachineId === 'string'
-      : isTrustedSharedRailwayRuntimeUrl(runtimeUrl) &&
+      ? runtimeUrl === flyRuntimeUrl && typeof o.flyMachineId === 'string'
+      : isTrustedSharedRuntimeUrl(runtimeUrl, flyRuntimeUrl) &&
         (o.flyMachineId === null || typeof o.flyMachineId === 'string'))
   )
 }
@@ -595,9 +645,10 @@ function isCachedAgentInfo(v: unknown): v is CachedAgentInfo {
 }
 
 async function resolveAgentRoute(slug: string, env: Env): Promise<CachedAgentRoute | null> {
+  const flyRuntimeUrl = resolveFlyRuntimeUrl(env)
   const cacheKey = `agent-route:${slug}`
   const cached = await env.SLUG_CACHE.get(cacheKey, 'json')
-  if (isCachedAgentRoute(cached)) return cached
+  if (isCachedAgentRoute(cached, flyRuntimeUrl)) return cached
 
   const supaHeaders = {
     apikey: env.SUPABASE_SERVICE_ROLE_KEY,
@@ -633,14 +684,14 @@ async function resolveAgentRoute(slug: string, env: Env): Promise<CachedAgentRou
     const useSharedRuntime =
       ownerRuntimeType === 'shared_railway' &&
       typeof ownerRuntimeUrl === 'string' &&
-      isTrustedSharedRailwayRuntimeUrl(ownerRuntimeUrl)
+      isTrustedSharedRuntimeUrl(ownerRuntimeUrl, flyRuntimeUrl)
     if (!useSharedRuntime && !ownerMachineId) return null
 
     const route: CachedAgentRoute = {
       userId: ownerId,
       orgId: org.id,
       runtimeSource: useSharedRuntime ? 'shared_railway' : 'fly_machine',
-      runtimeUrl: useSharedRuntime ? ownerRuntimeUrl! : FLY_MACHINE_URL,
+      runtimeUrl: useSharedRuntime ? ownerRuntimeUrl! : flyRuntimeUrl,
       flyMachineId: ownerMachineId ?? null,
     }
     await env.SLUG_CACHE.put(cacheKey, JSON.stringify(route), { expirationTtl: CACHE_TTL })
@@ -664,13 +715,13 @@ async function resolveAgentRoute(slug: string, env: Env): Promise<CachedAgentRou
   const useSharedRuntime =
     profile?.agent_runtime_type === 'shared_railway' &&
     typeof profile.agent_runtime_url === 'string' &&
-    isTrustedSharedRailwayRuntimeUrl(profile.agent_runtime_url)
+    isTrustedSharedRuntimeUrl(profile.agent_runtime_url, flyRuntimeUrl)
   if (!profiles.length || (!useSharedRuntime && !flyMachineId)) return null
   const route: CachedAgentRoute = {
     userId: profile.id,
     orgId: null,
     runtimeSource: useSharedRuntime ? 'shared_railway' : 'fly_machine',
-    runtimeUrl: useSharedRuntime ? profile.agent_runtime_url! : FLY_MACHINE_URL,
+    runtimeUrl: useSharedRuntime ? profile.agent_runtime_url! : flyRuntimeUrl,
     flyMachineId: flyMachineId ?? null,
   }
   await env.SLUG_CACHE.put(cacheKey, JSON.stringify(route), { expirationTtl: CACHE_TTL })
@@ -748,20 +799,20 @@ async function resolveAgentInfo(
   return info
 }
 
-function notFoundHtml(slug: string): string {
+function notFoundHtml(slug: string, appsDomainSuffix: string): string {
   return `<!DOCTYPE html>
 <html><head><title>Not Found</title>
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0f1116;color:#e5e7eb;font-family:system-ui,sans-serif}
 .c{text-align:center;max-width:400px;padding:2rem}h1{font-size:1.5rem;margin:0 0 .5rem}p{opacity:.7;margin:0}</style></head>
-<body><div class="c"><h1>App not found</h1><p>No published app at <strong>${slug}-app.govibey.com</strong></p></div></body></html>`
+<body><div class="c"><h1>App not found</h1><p>No published app at <strong>${slug}${appsDomainSuffix}</strong></p></div></body></html>`
 }
 
-function agentNotFoundHtml(userSlug: string): string {
+function agentNotFoundHtml(userSlug: string, publicAgentHostSuffix: string): string {
   return `<!DOCTYPE html>
 <html><head><title>Not Found</title>
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0f1116;color:#e5e7eb;font-family:system-ui,sans-serif}
 .c{text-align:center;max-width:400px;padding:2rem}h1{font-size:1.5rem;margin:0 0 .5rem}p{opacity:.7;margin:0}</style></head>
-<body><div class="c"><h1>Agent not found</h1><p>No public agent at <strong>${userSlug}.govibey.com</strong></p></div></body></html>`
+<body><div class="c"><h1>Agent not found</h1><p>No public agent at <strong>${userSlug}.${publicAgentHostSuffix}</strong></p></div></body></html>`
 }
 
 function unavailableHtml(): string {

@@ -1,0 +1,30 @@
+name = "roas-apps-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Set after creating the worker in the ROAS Cloudflare account:
+# account_id = "YOUR_ROAS_CLOUDFLARE_ACCOUNT_ID"
+
+routes = [
+  { pattern = "*-app.roas.io/*", zone_name = "roas.io" },
+  { pattern = "*.agents.roas.io/*", zone_name = "roas.io" }
+]
+
+# Create in Cloudflare dashboard → Workers → KV → Create namespace "roas-apps-proxy-cache"
+# Then paste the namespace id below:
+[[kv_namespaces]]
+binding = "SLUG_CACHE"
+id = "REPLACE_WITH_ROAS_KV_NAMESPACE_ID"
+
+[vars]
+BACKEND_URL = "https://api.roas.io"
+APPS_WEB_VERCEL_URL = "https://app.roas.io"
+FLY_RUNTIME_URL = "https://roas-runtimes.fly.dev"
+APPS_DOMAIN_SUFFIX = "-app.roas.io"
+PUBLIC_AGENT_HOST_SUFFIX = "agents.roas.io"
+
+# Secrets (wrangler secret put — must match roas-api / roas-web):
+# SUPABASE_URL
+# SUPABASE_SERVICE_ROLE_KEY
+# INTERNAL_API_TOKEN
+# WORKER_SECRET

@@ -17,7 +17,7 @@ function makeKv(initial = new Map<string, unknown>()) {
   }
 }
 
-function makeEnv(kv = makeKv()) {
+function makeEnv(kv = makeKv(), overrides: Record<string, string> = {}) {
   return {
     SLUG_CACHE: kv,
     SUPABASE_URL: 'https://supabase.test',
@@ -25,7 +25,19 @@ function makeEnv(kv = makeKv()) {
     BACKEND_URL: '',
     INTERNAL_API_TOKEN: '',
     APPS_WEB_VERCEL_URL: 'https://web.example',
+    FLY_RUNTIME_URL: 'https://roas-runtimes.fly.dev',
+    APPS_DOMAIN_SUFFIX: '-app.roas.io',
+    PUBLIC_AGENT_HOST_SUFFIX: 'agents.roas.io',
+    ...overrides,
   }
+}
+
+function makeLegacyGovibeyEnv(kv = makeKv()) {
+  return makeEnv(kv, {
+    FLY_RUNTIME_URL: 'https://vibey-runtimes.fly.dev',
+    APPS_DOMAIN_SUFFIX: '-app.govibey.com',
+    PUBLIC_AGENT_HOST_SUFFIX: 'govibey.com',
+  })
 }
 
 describe('apps proxy trusted runtime origin', () => {
@@ -60,7 +72,7 @@ describe('apps proxy trusted runtime origin', () => {
           ])
         }
         upstreamFetches.push(url)
-        expect(url).toBe('https://vibey-runtimes.fly.dev/api/public-chat')
+        expect(url).toBe('https://roas-runtimes.fly.dev/api/public-chat')
         expect(new Headers(init?.headers).get('x-public-agent-token')).toBe('agent-token')
         expect(new Headers(init?.headers).get('fly-force-instance-id')).toBe('machine-1')
         return new Response('ok')
@@ -69,7 +81,7 @@ describe('apps proxy trusted runtime origin', () => {
     const env = makeEnv()
 
     const response = await worker.fetch(
-      new Request('https://alice.govibey.com/a/vibey/api/chat', {
+      new Request('https://alice.agents.roas.io/a/vibey/api/chat', {
         method: 'POST',
         body: JSON.stringify({ message: 'hello' }),
         headers: { 'content-type': 'application/json' },
@@ -78,7 +90,52 @@ describe('apps proxy trusted runtime origin', () => {
     )
 
     expect(response.status).toBe(200)
-    expect(upstreamFetches).toEqual(['https://vibey-runtimes.fly.dev/api/public-chat'])
+    expect(upstreamFetches).toEqual(['https://roas-runtimes.fly.dev/api/public-chat'])
+  })
+
+  it('routes public agent API calls to trusted shared Fly runtime', async () => {
+    const upstreamFetches: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url.includes('/rest/v1/organizations?slug=')) {
+          return jsonResponse([])
+        }
+        if (url.includes('/rest/v1/profiles?public_agent_slug=')) {
+          return jsonResponse([
+            {
+              id: 'user-1',
+              fly_machine_id: 'machine-1',
+              agent_runtime_type: 'shared_railway',
+              agent_runtime_url: 'https://roas-runtimes.fly.dev',
+            },
+          ])
+        }
+        if (url.includes('/rest/v1/agents_registry?')) {
+          return jsonResponse([
+            {
+              public_page_token: 'agent-token',
+              widget_allowed_origins: [],
+            },
+          ])
+        }
+        upstreamFetches.push(url)
+        expect(url).toBe('https://roas-runtimes.fly.dev/api/public-chat')
+        const headers = new Headers(init?.headers)
+        expect(headers.get('x-public-agent-token')).toBe('agent-token')
+        expect(headers.get('fly-force-instance-id')).toBeNull()
+        return new Response('ok')
+      }),
+    )
+
+    const response = await worker.fetch(
+      new Request('https://alice.agents.roas.io/a/vibey/api/chat', { method: 'POST' }),
+      makeEnv() as never,
+    )
+
+    expect(response.status).toBe(200)
+    expect(upstreamFetches).toEqual(['https://roas-runtimes.fly.dev/api/public-chat'])
   })
 
   it('routes public agent API calls to trusted shared Railway runtime', async () => {
@@ -118,7 +175,7 @@ describe('apps proxy trusted runtime origin', () => {
     )
 
     const response = await worker.fetch(
-      new Request('https://alice.govibey.com/a/vibey/api/chat', { method: 'POST' }),
+      new Request('https://alice.agents.roas.io/a/vibey/api/chat', { method: 'POST' }),
       makeEnv() as never,
     )
 
@@ -152,7 +209,7 @@ describe('apps proxy trusted runtime origin', () => {
           ])
         }
         upstreamFetches.push(url)
-        expect(url).toBe('https://vibey-runtimes.fly.dev/api/apps/project-1/pricing?x=1')
+        expect(url).toBe('https://roas-runtimes.fly.dev/api/apps/project-1/pricing?x=1')
         expect(new Headers(init?.headers).get('fly-force-instance-id')).toBe('machine-1')
         return new Response('ok')
       }),
@@ -160,13 +217,13 @@ describe('apps proxy trusted runtime origin', () => {
     const env = makeEnv()
 
     const response = await worker.fetch(
-      new Request('https://demo-app.govibey.com/pricing?x=1'),
+      new Request('https://demo-app.roas.io/pricing?x=1'),
       env as never,
     )
 
     expect(response.status).toBe(200)
     expect(upstreamFetches).toEqual([
-      'https://vibey-runtimes.fly.dev/api/apps/project-1/pricing?x=1',
+      'https://roas-runtimes.fly.dev/api/apps/project-1/pricing?x=1',
     ])
   })
 
@@ -208,13 +265,13 @@ describe('apps proxy trusted runtime origin', () => {
             },
           ])
         }
-        expect(url).toBe('https://vibey-runtimes.fly.dev/api/public-chat')
+        expect(url).toBe('https://roas-runtimes.fly.dev/api/public-chat')
         return new Response('ok')
       }),
     )
 
     const response = await worker.fetch(
-      new Request('https://alice.govibey.com/a/vibey/api/chat'),
+      new Request('https://alice.agents.roas.io/a/vibey/api/chat'),
       makeEnv(kv) as never,
     )
 
@@ -225,7 +282,7 @@ describe('apps proxy trusted runtime origin', () => {
         userId: 'user-1',
         orgId: null,
         runtimeSource: 'fly_machine',
-        runtimeUrl: 'https://vibey-runtimes.fly.dev',
+        runtimeUrl: 'https://roas-runtimes.fly.dev',
         flyMachineId: 'machine-1',
       }),
       { expirationTtl: 60 },
@@ -253,7 +310,7 @@ describe('apps proxy trusted runtime origin', () => {
     )
 
     const response = await worker.fetch(
-      new Request('https://demo-app.govibey.com/pricing'),
+      new Request('https://demo-app.roas.io/pricing'),
       makeEnv() as never,
     )
 
@@ -283,7 +340,7 @@ describe('apps proxy trusted runtime origin', () => {
     )
 
     const response = await worker.fetch(
-      new Request('https://demo-app.govibey.com/pricing', {
+      new Request('https://demo-app.roas.io/pricing', {
         headers: {
           authorization: 'Bearer visitor-token',
           cookie: 'session=visitor',
@@ -330,7 +387,7 @@ describe('apps proxy trusted runtime origin', () => {
           ])
         }
         upstreamFetches.push(url)
-        expect(url).toBe('https://vibey-runtimes.fly.dev/api/public-chat')
+        expect(url).toBe('https://roas-runtimes.fly.dev/api/public-chat')
         expect(new Headers(init?.headers).get('x-public-agent-token')).toBe('org-agent-token')
         expect(new Headers(init?.headers).get('fly-force-instance-id')).toBe('owner-machine')
         return new Response('ok')
@@ -338,12 +395,12 @@ describe('apps proxy trusted runtime origin', () => {
     )
 
     const response = await worker.fetch(
-      new Request('https://acme.govibey.com/a/vibey/api/chat', { method: 'POST' }),
+      new Request('https://acme.agents.roas.io/a/vibey/api/chat', { method: 'POST' }),
       makeEnv() as never,
     )
 
     expect(response.status).toBe(200)
-    expect(upstreamFetches).toEqual(['https://vibey-runtimes.fly.dev/api/public-chat'])
+    expect(upstreamFetches).toEqual(['https://roas-runtimes.fly.dev/api/public-chat'])
     expect(queriedUrls.some((url) => url.includes('/rest/v1/profiles?public_agent_slug='))).toBe(
       false,
     )

@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "deploy:roas": "wrangler deploy --config wrangler.roas.toml"
   },
   "devDependencies": {
     "wrangler": "^3.0.0",
