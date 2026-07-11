@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import { resolveMarketingSiteUrl } from '@/lib/platform/platform-urls'
 
 export function ConversionBar() {
   const [dismissed, setDismissed] = useState(false)
@@ -15,7 +16,7 @@ export function ConversionBar() {
       </p>
       <div className="flex shrink-0 items-center gap-2">
         <a
-          href="https://vibey.im/register"
+          href={`${resolveMarketingSiteUrl()}/register`}
           target="_blank"
           rel="noopener noreferrer"
           className="body-4 rounded-full bg-white/10 px-3.5 py-1 font-medium text-white transition-colors hover:bg-white/20"

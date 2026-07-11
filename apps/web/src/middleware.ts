@@ -6,6 +6,7 @@ import {
   resolveAccessStatus,
   resolveAuthenticatedRedirect,
 } from '@/lib/auth/access-routing'
+import { resolveMarketingSiteUrl } from '@/lib/platform/platform-urls'
 import {
   hasSharedRailwayRuntime,
   resolveMachineProfileColumns,
@@ -162,7 +163,7 @@ export async function middleware(request: NextRequest) {
 
     const requireAdmin = process.env.NEXT_PUBLIC_REQUIRE_ADMIN === 'true'
     if (requireAdmin && role !== 'admin' && role !== 'superadmin') {
-      return NextResponse.redirect(new URL('https://vibey.im'))
+      return NextResponse.redirect(new URL(resolveMarketingSiteUrl()))
     }
 
     let subResult: AccessQueryResult = null

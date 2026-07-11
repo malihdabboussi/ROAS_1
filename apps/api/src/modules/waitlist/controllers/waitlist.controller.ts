@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
 import { AuthGuard, CurrentUser, ZodValidationPipe } from '@vibey/api-shared'
+import { resolveAppUrl, resolveMarketingSiteUrl } from '../../../lib/platform-defaults'
 import { FastTrackCheckoutDto, RegisterWithInviteDto, WaitlistJoinDto } from '../dto/waitlist.dto'
 import { WaitlistService } from '../services/waitlist.service'
 
@@ -45,10 +46,10 @@ export class WaitlistController {
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @UsePipes(new ZodValidationPipe(FastTrackCheckoutDto))
   async fastTrackCheckout(@Body() body: FastTrackCheckoutDto) {
-    const appUrl = process.env.APP_URL ?? 'https://app.govibey.com'
+    const appUrl = process.env.APP_URL ?? resolveAppUrl()
     const successUrl =
       body.successUrl ?? `${appUrl}/fast-track-success?session_id={CHECKOUT_SESSION_ID}`
-    const cancelUrl = body.cancelUrl ?? 'https://vibey.im'
+    const cancelUrl = body.cancelUrl ?? resolveMarketingSiteUrl()
     try {
       return await this.waitlistService.createFastTrackCheckout(body.email, successUrl, cancelUrl)
     } catch (err) {

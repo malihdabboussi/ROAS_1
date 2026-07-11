@@ -1,3 +1,5 @@
+import { buildPublicAgentApiUrl } from '@/lib/platform/platform-urls'
+
 function getDevOverrides(): { apiBase: string; token: string } | null {
   if (typeof window === 'undefined' || window.location.hostname !== 'localhost') return null
   const params = new URLSearchParams(window.location.search)
@@ -10,7 +12,7 @@ function getDevOverrides(): { apiBase: string; token: string } | null {
 const buildApiUrl = (userSlug: string, agentKey: string, path: string) => {
   const dev = getDevOverrides()
   if (dev) return `${dev.apiBase}/api/public-${path}`
-  return `https://${userSlug}.govibey.com/a/${agentKey}/api/${path}`
+  return buildPublicAgentApiUrl(userSlug, agentKey, path)
 }
 
 function getDevHeaders(): Record<string, string> {

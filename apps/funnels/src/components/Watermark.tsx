@@ -1,3 +1,5 @@
+import { resolveMarketingSiteUrl } from '@/lib/platform-urls'
+
 export function Watermark() {
   return (
     <div
@@ -9,7 +11,7 @@ export function Watermark() {
       }}
     >
       <a
-        href="https://vibey.im"
+        href={resolveMarketingSiteUrl()}
         target="_blank"
         rel="noopener noreferrer"
         style={{

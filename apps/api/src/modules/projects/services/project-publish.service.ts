@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { deriveProjectSessionKey } from '@vibey/api-shared'
+import { resolveAppsDomainSuffix, resolvePlatformApiUrl } from '../../../lib/platform-defaults'
 import { ProjectsRepository } from '../repositories/projects.repository'
 import { getManifestFiles } from './project-file-manifest'
 import { VERCEL_PUBLISH_DEPLOY_WAIT_MS, VercelDeployService } from './vercel-deploy.service'
 
-const APPS_DOMAIN_SUFFIX = process.env.APPS_DOMAIN_SUFFIX || '-app.govibey.com'
-const PLATFORM_API_URL = process.env.PLATFORM_API_URL || 'https://api.govibey.com'
+const APPS_DOMAIN_SUFFIX = resolveAppsDomainSuffix()
+const PLATFORM_API_URL = resolvePlatformApiUrl()
 
 @Injectable()
 export class ProjectPublishService {

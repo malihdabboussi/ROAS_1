@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import * as LucideIcons from 'lucide-react'
+import { resolveMarketingSiteUrl } from '@/lib/platform-urls'
 import {
   effectiveFormSelectOptions,
   type PublicForm,
@@ -750,7 +751,12 @@ function VibeyBrandingFooter({ theme }: { theme: 'light' | 'dark' }) {
   return (
     <p className={baseClass}>
       Powered by{' '}
-      <a href="https://vibey.im" target="_blank" rel="noopener noreferrer" className={linkClass}>
+      <a
+        href={resolveMarketingSiteUrl()}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={linkClass}
+      >
         Vibey
       </a>
     </p>

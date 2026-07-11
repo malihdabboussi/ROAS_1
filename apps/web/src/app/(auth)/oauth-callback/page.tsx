@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect } from 'react'
+import { resolveMarketingSiteUrl } from '@/lib/platform/platform-urls'
 
 const VibeyLoadingSphereSimple = dynamic(
   () =>
@@ -50,7 +51,7 @@ export default function OAuthCallbackPage() {
       return
     }
 
-    window.location.replace('https://vibey.im')
+    window.location.replace(resolveMarketingSiteUrl())
   }, [])
 
   return (

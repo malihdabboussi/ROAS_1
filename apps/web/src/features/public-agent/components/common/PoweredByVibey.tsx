@@ -1,7 +1,11 @@
+'use client'
+
+import { resolveMarketingSiteUrl } from '@/lib/platform/platform-urls'
+
 export function PoweredByVibey() {
   return (
     <a
-      href="https://vibey.im"
+      href={resolveMarketingSiteUrl()}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full border border-white/10 bg-black/70 px-3 py-1.5 transition-all hover:border-white/20 hover:bg-black/80"

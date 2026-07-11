@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { reportFunnelsServerError } from '@/lib/observability/server-error-reporter'
+import { ROAS_API_URL } from '@/lib/platform-urls'
 
-const BACKEND_URL = process.env.BACKEND_URL || 'https://api.govibey.com'
+const BACKEND_URL = process.env.BACKEND_URL || ROAS_API_URL
 
 function corsHeaders(): HeadersInit {
   return {
@@ -27,18 +28,15 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const res = await fetch(
-      `${BACKEND_URL}/api/public/forms/${encodeURIComponent(token)}/submit`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-forwarded-for': req.headers.get('x-forwarded-for') ?? '',
-          'user-agent': req.headers.get('user-agent') ?? '',
-        },
-        body: JSON.stringify(body),
+    const res = await fetch(`${BACKEND_URL}/api/public/forms/${encodeURIComponent(token)}/submit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-forwarded-for': req.headers.get('x-forwarded-for') ?? '',
+        'user-agent': req.headers.get('user-agent') ?? '',
       },
-    )
+      body: JSON.stringify(body),
+    })
     const json = await res.json().catch(() => ({ ok: false }))
     if (res.status >= 500) {
       reportFunnelsServerError({

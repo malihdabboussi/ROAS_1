@@ -1,3 +1,4 @@
+import { resolveMarketingSiteUrl, ROAS_MARKETING_URL } from '@/lib/platform/platform-urls'
 import { normalizeEmDashToHyphen } from './artifact-text-normalization'
 
 /**
@@ -9,7 +10,7 @@ const TEXT_BODY = '#374151'
 const TEXT_MUTED = '#6b7280'
 const RULE = '#e5e7eb'
 
-const DEFAULT_PLATFORM_URL = 'https://vibey.im'
+const DEFAULT_PLATFORM_URL = ROAS_MARKETING_URL
 
 export const ARTIFACT_PDF_SIDE_MARGIN_MM = 12
 export const ARTIFACT_PDF_CONTENT_WIDTH_MM = 210 - ARTIFACT_PDF_SIDE_MARGIN_MM * 2
@@ -95,7 +96,7 @@ export function getArtifactPdfPlatformUrl(): string {
   const fromEnv =
     process.env.NEXT_PUBLIC_VIBEY_PLATFORM_URL?.trim() ||
     process.env.NEXT_PUBLIC_GOVIBEY_URL?.trim()
-  return fromEnv || DEFAULT_PLATFORM_URL
+  return fromEnv || resolveMarketingSiteUrl()
 }
 
 export function appendPdfFieldValue(parent: HTMLElement, value: unknown): void {

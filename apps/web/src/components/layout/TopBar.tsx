@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { resolveMarketingSiteUrl } from '@/lib/platform/platform-urls'
 import { createClient } from '@/lib/supabase/client'
 
 interface TopBarProps {
@@ -14,7 +15,7 @@ export function TopBar({ userName, avatarUrl }: TopBarProps) {
 
   async function handleSignOut() {
     await supabase.auth.signOut()
-    window.location.href = 'https://vibey.im'
+    window.location.href = resolveMarketingSiteUrl()
   }
 
   const initials = userName

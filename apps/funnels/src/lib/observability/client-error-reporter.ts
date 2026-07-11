@@ -1,5 +1,7 @@
 'use client'
 
+import { resolveBackendUrl } from '@/lib/platform-urls'
+
 export interface ReportFunnelsClientErrorInput {
   feature: string
   error_code?: string | null
@@ -23,14 +25,6 @@ function resolveLocation(): { url: string | null; route: string | null } {
     url: window.location.href,
     route: window.location.pathname,
   }
-}
-
-function resolveBackendUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    'https://api.govibey.com'
-  ).replace(/\/+$/, '')
 }
 
 export async function reportFunnelsClientError(

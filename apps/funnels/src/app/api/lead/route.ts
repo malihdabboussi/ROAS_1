@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { reportFunnelsServerError } from '@/lib/observability/server-error-reporter'
+import { ROAS_API_URL } from '@/lib/platform-urls'
 
-const BACKEND_URL = process.env.BACKEND_URL || 'https://api.govibey.com'
+const BACKEND_URL = process.env.BACKEND_URL || ROAS_API_URL
 
 // ─── Validation helpers ───
 

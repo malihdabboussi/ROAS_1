@@ -1,3 +1,4 @@
+import { buildPlatformWebhookUrl } from '@/lib/platform/platform-urls'
 import type { Integration } from './integrations.types'
 
 const STANDARD_INTEGRATIONS: Integration[] = [
@@ -87,7 +88,8 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     id: 'google_search_console',
     provider: 'google_search_console',
     name: 'Google Search Console',
-    description: 'Connect Google Search Console to monitor search performance, indexing, and site health.',
+    description:
+      'Connect Google Search Console to monitor search performance, indexing, and site health.',
     category: 'ads_analytics',
     is_active: true,
   },
@@ -103,7 +105,8 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     id: 'outlook',
     provider: 'outlook',
     name: 'Microsoft Outlook',
-    description: 'Connect Outlook to read and send email, manage calendar, contacts, and mailbox settings.',
+    description:
+      'Connect Outlook to read and send email, manage calendar, contacts, and mailbox settings.',
     category: 'email_marketing',
     is_active: true,
   },
@@ -140,8 +143,18 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     category: 'email_marketing',
     auth_type: 'api_key',
     connection_fields: [
-      { name: 'full', label: 'API URL', placeholder: 'https://youraccount.api-us1.com', required: true },
-      { name: 'generic_api_key', label: 'API Key', placeholder: 'Enter your ActiveCampaign API key', required: true },
+      {
+        name: 'full',
+        label: 'API URL',
+        placeholder: 'https://youraccount.api-us1.com',
+        required: true,
+      },
+      {
+        name: 'generic_api_key',
+        label: 'API Key',
+        placeholder: 'Enter your ActiveCampaign API key',
+        required: true,
+      },
     ],
     is_active: true,
   },
@@ -157,7 +170,8 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     id: 'stripe',
     provider: 'stripe',
     name: 'Stripe',
-    description: 'Connect Stripe to manage products, prices, payment links, refunds, and analytics.',
+    description:
+      'Connect Stripe to manage products, prices, payment links, refunds, and analytics.',
     category: 'payments',
     is_active: true,
   },
@@ -178,7 +192,12 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     category: 'payments',
     auth_type: 'api_key',
     connection_fields: [
-      { name: 'generic_api_key', label: 'API Key', placeholder: 'whop_xxxxxxxxxxxx', required: true },
+      {
+        name: 'generic_api_key',
+        label: 'API Key',
+        placeholder: 'whop_xxxxxxxxxxxx',
+        required: true,
+      },
     ],
     is_active: true,
   },
@@ -236,7 +255,8 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     id: 'airtable',
     provider: 'airtable',
     name: 'Airtable',
-    description: 'Connect Airtable to manage bases, tables, records, comments, fields, and attachments.',
+    description:
+      'Connect Airtable to manage bases, tables, records, comments, fields, and attachments.',
     category: 'productivity',
     auth_type: 'oauth2',
     is_active: true,
@@ -270,7 +290,8 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     id: 'calendly',
     provider: 'calendly',
     name: 'Calendly',
-    description: 'Connect Calendly to manage event types, schedule meetings, and embed scheduling widgets in funnels.',
+    description:
+      'Connect Calendly to manage event types, schedule meetings, and embed scheduling widgets in funnels.',
     category: 'productivity',
     is_active: true,
   },
@@ -294,7 +315,8 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     id: 'canva',
     provider: 'canva',
     name: 'Canva',
-    description: 'Connect Canva to manage designs, templates, brand assets, and creative workflows.',
+    description:
+      'Connect Canva to manage designs, templates, brand assets, and creative workflows.',
     category: 'productivity',
     is_active: true,
   },
@@ -335,13 +357,17 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     id: 'cursor',
     provider: 'cursor',
     name: 'Cursor',
-    description:
-      'Connect Cursor Cloud Agents to write code and open PRs from Space automations. Grant Cursor GitHub access to your repo in the Cursor dashboard. Register webhook URL: https://api.govibey.com/api/integrations/cursor/webhook',
+    description: `Connect Cursor Cloud Agents to write code and open PRs from Space automations. Grant Cursor GitHub access to your repo in the Cursor dashboard. Register webhook URL: ${buildPlatformWebhookUrl('/api/integrations/cursor/webhook')}`,
     category: 'developer',
     auth_type: 'api_key',
     connection_fields: [
       { name: 'api_key', label: 'Cursor API Key', placeholder: 'key_…', required: true },
-      { name: 'webhook_secret', label: 'Webhook Secret', placeholder: 'From Cursor dashboard (optional)', required: false },
+      {
+        name: 'webhook_secret',
+        label: 'Webhook Secret',
+        placeholder: 'From Cursor dashboard (optional)',
+        required: false,
+      },
     ],
     is_active: true,
   },
@@ -349,7 +375,8 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     id: 'supabase',
     provider: 'supabase',
     name: 'Supabase',
-    description: 'Connect your Supabase account to provision databases and auth for Spaces projects.',
+    description:
+      'Connect your Supabase account to provision databases and auth for Spaces projects.',
     category: 'developer',
     is_active: true,
   },
@@ -361,7 +388,12 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     category: 'developer',
     auth_type: 'api_key',
     connection_fields: [
-      { name: 'bearer_token', label: 'Vercel Access Token', placeholder: 'Enter your Vercel access token', required: true },
+      {
+        name: 'bearer_token',
+        label: 'Vercel Access Token',
+        placeholder: 'Enter your Vercel access token',
+        required: true,
+      },
     ],
     is_active: true,
   },

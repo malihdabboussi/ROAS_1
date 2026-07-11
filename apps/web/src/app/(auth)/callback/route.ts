@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { reportWebServerError } from '@/lib/observability/server-error-reporter.server'
+import { resolveMarketingSiteUrl } from '@/lib/platform/platform-urls'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -181,5 +182,5 @@ export async function GET(request: Request) {
     const qs = params.toString() ? `?${params.toString()}` : ''
     return NextResponse.redirect(`${origin}${redirect}${qs}`)
   }
-  return NextResponse.redirect(new URL('https://vibey.im'))
+  return NextResponse.redirect(new URL(resolveMarketingSiteUrl()))
 }

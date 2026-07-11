@@ -13,6 +13,7 @@ import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { backendPatch } from '@/lib/api/backend-client'
 import { billingApi } from '@/lib/billing/billing-api'
 import type { BillingStatusResponse } from '@/lib/billing/billing.types'
+import { resolveMarketingSiteUrl } from '@/lib/platform/platform-urls'
 import { createClient } from '@/lib/supabase/client'
 import { clearOrgSensitiveState, navigateHomeAfterOrgSwitch } from '@/lib/utils/clear-org-state'
 import { clearActiveOrgStorage } from '@/lib/utils/org-storage'
@@ -142,7 +143,7 @@ export function AvatarDropdown({
     clearActiveOrgStorage()
     const supabase = createClient()
     await supabase.auth.signOut()
-    window.location.href = 'https://vibey.im'
+    window.location.href = resolveMarketingSiteUrl()
   }
 
   return (

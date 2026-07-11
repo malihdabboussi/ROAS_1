@@ -15,7 +15,7 @@
 
   var apiBase = SCRIPT_TAG.getAttribute('data-api-base')
   var devToken = SCRIPT_TAG.getAttribute('data-token')
-  var baseHost = SCRIPT_TAG.getAttribute('data-host') || slug + '.govibey.com'
+  var baseHost = SCRIPT_TAG.getAttribute('data-host') || slug + '.agents.roas.io'
   var baseUrl = apiBase ? apiBase.replace(/\/$/, '') : 'https://' + baseHost
 
   function apiUrl(path) {

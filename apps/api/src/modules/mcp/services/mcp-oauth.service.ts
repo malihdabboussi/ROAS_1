@@ -15,6 +15,7 @@ import {
   type McpOrgRole,
 } from '@vibey/agent-policy'
 import { SupabaseServiceClient, UserSessionMintService } from '@vibey/api-shared'
+import { ROAS_MCP_RESOURCE_URL } from '../../../lib/platform-defaults'
 import type {
   McpAuthorizeQueryDto,
   McpConsentDto,
@@ -464,6 +465,6 @@ export class McpOAuthService {
   }
 
   private resourceUrl() {
-    return this.normalizeResourceUrl(process.env.MCP_RESOURCE_URL ?? 'https://mcp.vibey.im')
+    return this.normalizeResourceUrl(process.env.MCP_RESOURCE_URL ?? ROAS_MCP_RESOURCE_URL)
   }
 }

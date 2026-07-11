@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { type RequestScope } from '@vibey/api-shared'
+import { resolveAppsDomainSuffix } from '../../../lib/platform-defaults'
 import { GitHubApiService } from '../../integrations/github/services/github-api.service'
 import type {
   CreateProjectDto,
@@ -23,7 +24,7 @@ import {
 import { ProjectPublishService } from './project-publish.service'
 import { VercelDeployService } from './vercel-deploy.service'
 
-const APPS_DOMAIN_SUFFIX = process.env.APPS_DOMAIN_SUFFIX || '-app.govibey.com'
+const APPS_DOMAIN_SUFFIX = resolveAppsDomainSuffix()
 
 type GitHubFileEntry = { path: string; content: string }
 

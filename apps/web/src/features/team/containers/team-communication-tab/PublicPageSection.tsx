@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Check, Copy, Globe } from 'lucide-react'
 import { Switch } from '@/components/ui/forms/switch'
 import type { MissionAgent } from '@/lib/agents'
+import { buildPublicAgentPageUrl } from '@/lib/platform/platform-urls'
 
 export function PublicPageSection({
   agent,
@@ -20,7 +21,7 @@ export function PublicPageSection({
   const [copied, setCopied] = useState(false)
   const isEnabled = !!(agent as unknown as Record<string, unknown>).public_page_enabled
 
-  const publicUrl = userPublicSlug ? `${userPublicSlug}.govibey.com/a/${agent.agent_key}` : null
+  const publicUrl = userPublicSlug ? buildPublicAgentPageUrl(userPublicSlug, agent.agent_key) : null
 
   const handleToggle = async (enabled: boolean) => {
     setSaving(true)
@@ -33,17 +34,17 @@ export function PublicPageSection({
 
   const handleCopy = () => {
     if (!publicUrl) return
-    navigator.clipboard.writeText(`https://${publicUrl}`)
+    navigator.clipboard.writeText(publicUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
   return (
-    <div className="pt-spacing-3 mt-spacing-3 border-t border-border">
+    <div className="pt-spacing-3 mt-spacing-3 border-border border-t">
       <p className="body-4 text-muted-foreground/60 mb-spacing-2 uppercase tracking-wide">
         Public Page
       </p>
-      <div className="rounded-spacing-2 px-spacing-3 py-spacing-2 flex items-center justify-between border border-border bg-surface-subtle">
+      <div className="rounded-spacing-2 px-spacing-3 py-spacing-2 border-border bg-surface-subtle flex items-center justify-between border">
         <div>
           <div className="gap-spacing-2 flex items-center">
             <Globe className="text-foreground size-4" aria-hidden />
@@ -61,7 +62,7 @@ export function PublicPageSection({
       </div>
       {isEnabled && publicUrl && (
         <div className="mt-spacing-2 flex items-center gap-2">
-          <div className="body-4 text-foreground flex-1 truncate rounded-lg border border-border bg-surface-subtle px-3 py-2">
+          <div className="body-4 text-foreground border-border bg-surface-subtle flex-1 truncate rounded-lg border px-3 py-2">
             {publicUrl}
           </div>
           <button
@@ -71,7 +72,7 @@ export function PublicPageSection({
             title="Copy link"
           >
             {copied ? (
-              <Check className="h-3.5 w-3.5 text-success" />
+              <Check className="text-success h-3.5 w-3.5" />
             ) : (
               <Copy className="h-3.5 w-3.5" />
             )}

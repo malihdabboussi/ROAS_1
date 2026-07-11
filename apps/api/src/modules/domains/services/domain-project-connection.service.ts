@@ -1,5 +1,6 @@
 import { HttpException, Injectable, Logger } from '@nestjs/common'
 import { SupabaseClient } from '@supabase/supabase-js'
+import { resolveAppsDomainSuffix } from '../../../lib/platform-defaults'
 import { VercelDeployService } from '../../projects/services/vercel-deploy.service'
 import { DOMAINS_ERRORS } from '../config/domains-errors.config'
 import { ConnectProjectDto } from '../dto/connect-project.dto'
@@ -155,7 +156,7 @@ export class DomainProjectConnectionService {
         }
       }
 
-      const APPS_DOMAIN_SUFFIX = process.env.APPS_DOMAIN_SUFFIX || '-app.govibey.com'
+      const APPS_DOMAIN_SUFFIX = resolveAppsDomainSuffix()
       const publishedUrl =
         project.is_published && project.slug ? `https://${project.slug}${APPS_DOMAIN_SUFFIX}` : null
 

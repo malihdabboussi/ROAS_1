@@ -1,3 +1,4 @@
+import { ROAS_LINK_PREVIEW_INTERNAL_HOSTS } from '../../../lib/platform-defaults'
 import type { LinkPreviewProvider } from '../link-preview.types'
 
 const DRIVE_HOSTS = new Set(['drive.google.com', 'docs.google.com'])
@@ -6,9 +7,7 @@ const LOOM_HOSTS = new Set(['loom.com', 'www.loom.com'])
 const VIMEO_HOSTS = new Set(['vimeo.com', 'www.vimeo.com'])
 const FIGMA_HOSTS = new Set(['figma.com', 'www.figma.com'])
 
-const INTERNAL_HOSTS = (
-  process.env.LINK_PREVIEW_INTERNAL_HOSTS || 'vibey.app,vibey.im,app.vibey.im'
-)
+const INTERNAL_HOSTS = (process.env.LINK_PREVIEW_INTERNAL_HOSTS || ROAS_LINK_PREVIEW_INTERNAL_HOSTS)
   .split(',')
   .map((s) => s.trim().toLowerCase())
   .filter(Boolean)

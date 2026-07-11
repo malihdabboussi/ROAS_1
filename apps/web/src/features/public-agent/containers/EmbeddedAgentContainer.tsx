@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, Home, MessageSquare, Newspaper, X } from 'lucide-react'
+import { resolveMarketingSiteUrl } from '@/lib/platform/platform-urls'
 import {
   fetchPublicWidgetConfig,
   prewarmPublicAgent,
@@ -330,7 +331,7 @@ export function EmbeddedAgentContainer({
       </nav>
 
       <a
-        href="https://vibey.im"
+        href={resolveMarketingSiteUrl()}
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center justify-center gap-1.5 border-t border-white/10 bg-neutral-950 py-1.5 text-[11px] text-white/50 transition-colors hover:text-white/80"
