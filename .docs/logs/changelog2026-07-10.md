@@ -20,3 +20,10 @@ What: Preserved provider-specific chat gateway failures for OpenRouter billing/k
 Why: Non-OpenAI chat models could collapse real provider failures into vague gateway/model-busy states, hiding whether the fix is provider billing, credentials, or a retryable rate limit.
 Impact: Chat now surfaces durable `provider_billing` or `busy` codes from gateway status responses instead of masking them as generic gateway failures; streamed assistant responses are also protected by the staged merge fix.
 Files: `apps/agent-api/src/modules/chat/services/openclaw-gateway-request.service.ts`, `apps/agent-api/src/modules/chat/services/openclaw-gateway-request.service.test.ts`, `apps/agent-api/src/modules/chat/chat-stream-errors.ts`, `apps/agent-api/src/modules/chat/chat-stream-errors.test.ts`, `apps/web/src/lib/chat/chat-stream-errors.config.ts`, `apps/web/src/lib/chat/chat-stream-errors.config.test.ts`
+
+## [2026-07-10 21:59] - [FIX]
+
+What: Consume `seedComposer` / `GLOBAL_CHAT_SEED_EVENT` in `SpaceVibeyChatPanel` so home v4 composer messages actually send through the global chat rail.
+Why: Production mounted global chat after layout wiring, but home composer only queued `pendingSeed` with no listener — sends cleared the input without creating a conversation or streaming a reply.
+Impact: Home dashboard composer now opens the side chat and sends the seeded message on `app.roas.io`.
+Files: `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/components/global-chat/lib/global-chat-seed-match.ts`, `apps/web/src/components/global-chat/lib/global-chat-seed-match.test.ts`, `.docs/logs/changelog2026-07-10.md`

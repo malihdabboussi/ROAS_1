@@ -8,11 +8,17 @@ import { ChatInput } from '@/components/chat/ChatInputAdapter'
 import { ChatTurnChangeDivider } from '@/components/chat/ChatTurnChangeDivider'
 import { ComposerActiveRunTipCard } from '@/components/chat/ComposerActiveRunTipCard'
 import { ComposerInputStack } from '@/components/chat/ComposerInputStack'
-import { MessageQueue } from '@/components/chat/MessageQueue'
 import { MessageBubble } from '@/components/chat/MessageBubbleAdapter'
+import { MessageQueue } from '@/components/chat/MessageQueue'
 import { PlanStickyTracker } from '@/components/chat/PlanStickyTracker'
 import { VoiceApprovalProvider } from '@/components/chat/VoiceApprovalContext'
 import { ConversationShareModal } from '@/components/conversations'
+import { globalChatSeedMatchesPanel } from '@/components/global-chat/lib/global-chat-seed-match'
+import {
+  GLOBAL_CHAT_SEED_EVENT,
+  useGlobalChatStore,
+  type GlobalChatSeedDetail,
+} from '@/components/global-chat/store/use-global-chat-store'
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
@@ -65,11 +71,11 @@ import type {
 import { backendGet } from '@/lib/api/backend-client'
 import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { fetchCampaign } from '@/lib/campaigns/campaign-api'
+import { resolvePinnedAssistantMessageId } from '@/lib/chat/assistant-message-actions'
 import type { AttachedArtifact } from '@/lib/chat/attached-artifact'
-import { filterMessagesByQuery } from '@/lib/chat/conversation-search'
 import { toastMessageForChatSendError } from '@/lib/chat/chat-stream-errors.config'
 import { CHAT_TOAST_ERRORS } from '@/lib/chat/chat-toast-errors.config'
-import { resolvePinnedAssistantMessageId } from '@/lib/chat/assistant-message-actions'
+import { filterMessagesByQuery } from '@/lib/chat/conversation-search'
 import { useActiveArtifactSelectionSignal } from '@/lib/chat/use-active-artifact-selection-signal'
 import { useOrgStore } from '@/lib/org/org-context-store'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
@@ -93,6 +99,31 @@ import {
 import { buildSpaceAwarenessContext } from './build-space-awareness-context'
 import { ChatPanelSlideStack } from './ChatPanelSlideTransition'
 import {
+  buildSpaceChatTurnData,
+  buildSpaceVoiceRunTasks,
+  collectVisibleUndoMessageIds,
+  filterVisibleSpaceChatMessages,
+  filterVoiceDelegationMessages,
+  findLastEditableUserMessageId,
+} from './space-vibey-chat-messages.logic'
+import {
+  resolveSpaceChatPanelMode,
+  resolveSpaceChatSpecialMode,
+  type SpaceChatMode,
+} from './space-vibey-chat-mode-sync'
+import {
+  buildSpaceChatConversationUrl,
+  conversationBelongsToChannel,
+  conversationBelongsToSpace,
+  DEFAULT_SPACE_CHAT_AGENT_KEY,
+  getConversationAgentKey,
+  HOME_CHAT_SEED_STORAGE_KEY,
+  isHomeChatSeedPending,
+  mergeConversationLists,
+  readHomeChatSeedForSpace,
+  resolveSpaceChatAutoFocusTarget,
+} from './space-vibey-chat-panel.logic'
+import {
   resolveSpaceChatEmptyStateAgent,
   SpaceChatAgentEmptyState,
 } from './SpaceChatAgentEmptyState'
@@ -102,31 +133,6 @@ import { SpaceChatSubPanel } from './SpaceChatSubPanel'
 import { SpaceUndoButton } from './SpaceUndoButton'
 import type { SpaceVoiceRunTask } from './SpaceVoiceRunsView'
 import { SpaceVoiceSessionView } from './SpaceVoiceSessionView'
-import {
-  DEFAULT_SPACE_CHAT_AGENT_KEY,
-  HOME_CHAT_SEED_STORAGE_KEY,
-  buildSpaceChatConversationUrl,
-  conversationBelongsToChannel,
-  conversationBelongsToSpace,
-  getConversationAgentKey,
-  isHomeChatSeedPending,
-  mergeConversationLists,
-  readHomeChatSeedForSpace,
-  resolveSpaceChatAutoFocusTarget,
-} from './space-vibey-chat-panel.logic'
-import {
-  buildSpaceChatTurnData,
-  buildSpaceVoiceRunTasks,
-  collectVisibleUndoMessageIds,
-  findLastEditableUserMessageId,
-  filterVisibleSpaceChatMessages,
-  filterVoiceDelegationMessages,
-} from './space-vibey-chat-messages.logic'
-import {
-  resolveSpaceChatPanelMode,
-  resolveSpaceChatSpecialMode,
-  type SpaceChatMode,
-} from './space-vibey-chat-mode-sync'
 import { stripLegacySpacesConversationTitle } from './strip-legacy-spaces-conversation-title'
 
 interface SpaceVibeyChatPanelProps {
@@ -334,6 +340,7 @@ export function SpaceVibeyChatPanel({
   const initialHydrationRef = useRef<string | null>(null)
   const prevStreamingRef = useRef(false)
   const homeSeedConsumedRef = useRef(false)
+  const globalSeedConsumedRef = useRef<string | null>(null)
   const loadConversationsSeqRef = useRef(0)
   const lastConversationsLoadSigRef = useRef<string | null>(null)
   const voiceStartedRef = useRef(false)
@@ -1064,7 +1071,7 @@ export function SpaceVibeyChatPanel({
       }
       const shouldQueue = Boolean(
         state.selectedConversationId &&
-          (state.isStreaming || state.isStopping || externalSendInFlightRef.current),
+        (state.isStreaming || state.isStopping || externalSendInFlightRef.current),
       )
       if (state.selectedConversationId && shouldQueue) {
         state.enqueueMessage(state.selectedConversationId, queueItem)
@@ -1698,6 +1705,61 @@ export function SpaceVibeyChatPanel({
     }
     setChatRailIntent(null)
   }, [chatRailIntent, handleNewConversation, setChatRailIntent])
+
+  const applyGlobalChatSeed = useCallback(
+    async (seed: GlobalChatSeedDetail) => {
+      if (isChannelScope || conversationsLoading) return
+      if (!globalChatSeedMatchesPanel(seed, spaceId)) return
+      const content = seed.content?.trim()
+      if (!content) return
+
+      const seedKey = `${spaceId ?? 'general'}:${content}`
+      if (globalSeedConsumedRef.current === seedKey) return
+      globalSeedConsumedRef.current = seedKey
+
+      if (seed.agentKey && seed.agentKey !== activeAgentKey) {
+        handleAgentChange(seed.agentKey)
+      }
+      setMode('chat')
+
+      await sendWithToast(
+        content,
+        seed.documents as DocumentAttachment[] | undefined,
+        seed.artifacts as AttachedArtifact[] | undefined,
+        seed.model,
+        seed.references as MessageReference[] | undefined,
+        seed.modelSettings as ChatModelSettings | undefined,
+      )
+    },
+    [
+      activeAgentKey,
+      conversationsLoading,
+      handleAgentChange,
+      isChannelScope,
+      sendWithToast,
+      spaceId,
+    ],
+  )
+
+  useEffect(() => {
+    globalSeedConsumedRef.current = null
+  }, [spaceId])
+
+  useEffect(() => {
+    const onSeed = (event: Event) => {
+      const detail = (event as CustomEvent<GlobalChatSeedDetail>).detail
+      if (!detail) return
+      void applyGlobalChatSeed(detail)
+    }
+    window.addEventListener(GLOBAL_CHAT_SEED_EVENT, onSeed)
+    return () => window.removeEventListener(GLOBAL_CHAT_SEED_EVENT, onSeed)
+  }, [applyGlobalChatSeed])
+
+  useEffect(() => {
+    if (conversationsLoading) return
+    const pending = useGlobalChatStore.getState().consumePendingSeed()
+    if (pending) void applyGlobalChatSeed(pending)
+  }, [applyGlobalChatSeed, conversationsLoading, spaceId])
 
   useEffect(() => {
     const nextMode = resolveSpaceChatSpecialMode({
