@@ -19,9 +19,10 @@ if rg -q 'REPLACE_WITH_ROAS_KV_NAMESPACE_ID' "${CONFIG}"; then
   exit 1
 fi
 
-if ! command -v wrangler >/dev/null 2>&1; then
-  echo "wrangler CLI not found. Install: npm i -g wrangler" >&2
-  exit 1
+if command -v wrangler >/dev/null 2>&1; then
+  WRANGLER=(wrangler)
+else
+  WRANGLER=(npx --yes wrangler)
 fi
 
 if [[ -f "${ENV_FILE}" ]]; then
@@ -30,7 +31,7 @@ if [[ -f "${ENV_FILE}" ]]; then
   INTERNAL_API_TOKEN="$(grep '^INTERNAL_API_TOKEN=' "${ENV_FILE}" | head -1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//')"
   WORKER_SECRET="$(grep '^WORKER_SECRET=' "${ENV_FILE}" | head -1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//')"
 
-  for name in SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY INTERNAL_API_TOKEN; do
+  for name in SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY INTERNAL_API_TOKEN WORKER_SECRET; do
     if [[ -z "${!name:-}" ]]; then
       echo "${name} missing in ${ENV_FILE}" >&2
       exit 1
@@ -38,20 +39,16 @@ if [[ -f "${ENV_FILE}" ]]; then
   done
 
   cd "${WORKER_DIR}"
-  printf '%s' "${SUPABASE_URL}" | wrangler secret put SUPABASE_URL --config wrangler.roas.toml
-  printf '%s' "${SUPABASE_SERVICE_ROLE_KEY}" | wrangler secret put SUPABASE_SERVICE_ROLE_KEY --config wrangler.roas.toml
-  printf '%s' "${INTERNAL_API_TOKEN}" | wrangler secret put INTERNAL_API_TOKEN --config wrangler.roas.toml
-  if [[ -n "${WORKER_SECRET}" ]]; then
-    printf '%s' "${WORKER_SECRET}" | wrangler secret put WORKER_SECRET --config wrangler.roas.toml
-  else
-    echo "WORKER_SECRET not set in ${ENV_FILE}; skip or add before public agent pages go live" >&2
-  fi
+  printf '%s' "${SUPABASE_URL}" | "${WRANGLER[@]}" secret put SUPABASE_URL --config wrangler.roas.toml
+  printf '%s' "${SUPABASE_SERVICE_ROLE_KEY}" | "${WRANGLER[@]}" secret put SUPABASE_SERVICE_ROLE_KEY --config wrangler.roas.toml
+  printf '%s' "${INTERNAL_API_TOKEN}" | "${WRANGLER[@]}" secret put INTERNAL_API_TOKEN --config wrangler.roas.toml
+  printf '%s' "${WORKER_SECRET}" | "${WRANGLER[@]}" secret put WORKER_SECRET --config wrangler.roas.toml
 else
   echo "No ${ENV_FILE}; ensure worker secrets are set in Cloudflare dashboard" >&2
   cd "${WORKER_DIR}"
 fi
 
-wrangler deploy --config wrangler.roas.toml
+"${WRANGLER[@]}" deploy --config wrangler.roas.toml
 echo "Deployed roas-apps-proxy. DNS required on roas.io zone:"
-echo "  *-app.roas.io/*  → worker routes (wrangler routes)"
 echo "  *.agents.roas.io/* → worker routes (wrangler routes)"
+echo "  *-app.roas.io remains intentionally dormant until published apps ship"

@@ -102,17 +102,21 @@ def main() -> int:
         'MACHINE_STALE_THRESHOLD_DAYS', 'FLY_MACHINE_HOURLY_RATE', 'FLY_RUNTIME_APP',
         'ALLOW_FREE_ONBOARDING',
     ]
-    # Section 6 must never emit blank routing vars — empty paste would revert API to Vibey fallbacks.
-    api_routing_vars_no_empty = frozenset({
-        'FLY_RUNTIME_APP',
-        'APPS_DOMAIN_SUFFIX',
-        'AGENT_API_URL',
-        'PLATFORM_API_URL',
-    })
+    # Paste blocks must never emit blank routing/auth vars that silently disable ROAS infrastructure.
+    required_non_empty_by_section = {
+        '6': frozenset({
+            'FLY_RUNTIME_APP',
+            'APPS_DOMAIN_SUFFIX',
+            'AGENT_API_URL',
+            'PLATFORM_API_URL',
+        }),
+        '7': frozenset({'WORKER_SECRET'}),
+    }
     web_vars = [
         'NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'BACKEND_URL',
         'NEXT_PUBLIC_BACKEND_URL', 'AGENT_BACKEND_URL', 'NEXT_PUBLIC_MCP_CONSENT_PATH',
         'NEXT_PUBLIC_WAITLIST_MODE', 'NEXT_PUBLIC_REQUIRE_ADMIN', 'NEXT_PUBLIC_ALLOW_FREE_ONBOARDING',
+        'WORKER_SECRET',
     ]
     funnels_vars = [
         'NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY',
@@ -152,10 +156,10 @@ def main() -> int:
                 out.append(f'{name}={section_static}')
                 continue
             val = master.get(name, '')
-            if section_key == '6' and name in api_routing_vars_no_empty and not val:
+            if name in required_non_empty_by_section.get(section_key, ()) and not val:
                 print(
-                    f'Refusing to sync: {name} is missing in sections 1–5 but required in section 6 '
-                    f'(empty paste would break ROAS runtime routing). Add it to section 2.',
+                    f'Refusing to sync: {name} is missing in sections 1–5 but required in '
+                    f'section {section_key} (empty paste would break ROAS routing/auth).',
                     file=sys.stderr,
                 )
                 sync_error.append(name)

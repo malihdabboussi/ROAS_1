@@ -69,3 +69,10 @@ What: Fixed ROAS secrets sync footgun — `FLY_RUNTIME_APP=roas-runtimes` now li
 Why: `api_vars` listed `FLY_RUNTIME_APP` before any master value existed, so `sync-roas-secrets-sections.py` could write `FLY_RUNTIME_APP=` into the roas-api paste block and silently revert machine provisioning to `vibey-runtimes` fallbacks.
 Impact: Re-running sync without section 2 values fails loud instead of blanking routing vars; template matches Dylan's fixed `roas-secrets.env` layout.
 Files: `scripts/roas/roas-secrets.env.template`, `scripts/roas/sync-roas-secrets-sections.py`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 11:43] - [FIX]
+
+What: Added `WORKER_SECRET` to the shared secrets template and `roas-web` sync block, made empty web worker secrets fail sync, and updated the apps-proxy deploy script to use `npx wrangler` when no global CLI exists and require all four worker secrets. Recorded the active Cloudflare account/KV binding and kept `*-app.roas.io` intentionally dormant.
+Why: The deploy script consumed `WORKER_SECRET`, but the master template and web sync omitted it; the script also failed when Wrangler was available only through `npx`.
+Impact: Section 7 now carries the same non-empty worker secret as Cloudflare, and deployment preflight no longer depends on a global Wrangler install. Cloudflare deployment remains blocked until Wrangler is authenticated in the executing terminal.
+Files: `workers/apps-proxy/wrangler.roas.toml`, `scripts/roas/deploy-apps-proxy.sh`, `scripts/roas/roas-secrets.env.template`, `scripts/roas/sync-roas-secrets-sections.py`, `.docs/logs/changelog2026-07-11.md`
