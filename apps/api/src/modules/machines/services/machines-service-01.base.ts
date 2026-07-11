@@ -52,35 +52,32 @@ function markAppErrorReported(error: Error): ReportedError {
 
 export abstract class MachinesServiceBase01 {
   // Abstract declarations for methods implemented by later base classes.
-  abstract ensureRunning(...args: any[]): any;
-  protected abstract promoteWorkRuntimeAndProbeAgain(...args: any[]): any;
-  protected abstract promoteMachineToWorkRuntime(...args: any[]): any;
-  protected abstract fetchFlyMachineConfig(...args: any[]): any;
-  protected abstract failWakeAttemptAndFinalizeProfile(...args: any[]): any;
-  abstract waitForUserReady(...args: any[]): any;
-  abstract probeReadyEndpoint(...args: any[]): any;
-  abstract suspendIdleMachine(...args: any[]): any;
-  abstract destroyMachine(...args: any[]): any;
-  protected abstract persistRunningMachineState(...args: any[]): any;
-  protected abstract clearMachinePointerIfMatches(...args: any[]): any;
-  protected abstract isFlyDuplicateNameError(...args: any[]): any;
-  protected abstract findMachineIdByName(...args: any[]): any;
-  abstract patchMachineMetadata(...args: any[]): any;
-  abstract startMachine(...args: any[]): any;
-  protected abstract waitForMachineStarted(...args: any[]): any;
-  abstract waitForMachineHealth(...args: any[]): any;
-  protected abstract probeMachineHealth(...args: any[]): any;
-  protected abstract markMachineFailed(...args: any[]): any;
-  abstract resolveFlyImageRef(...args: any[]): any;
+  abstract ensureRunning(...args: any[]): any
+  protected abstract promoteWorkRuntimeAndProbeAgain(...args: any[]): any
+  protected abstract promoteMachineToWorkRuntime(...args: any[]): any
+  protected abstract fetchFlyMachineConfig(...args: any[]): any
+  protected abstract failWakeAttemptAndFinalizeProfile(...args: any[]): any
+  abstract waitForUserReady(...args: any[]): any
+  abstract probeReadyEndpoint(...args: any[]): any
+  abstract suspendIdleMachine(...args: any[]): any
+  abstract destroyMachine(...args: any[]): any
+  protected abstract persistRunningMachineState(...args: any[]): any
+  protected abstract clearMachinePointerIfMatches(...args: any[]): any
+  protected abstract isFlyDuplicateNameError(...args: any[]): any
+  protected abstract findMachineIdByName(...args: any[]): any
+  abstract patchMachineMetadata(...args: any[]): any
+  abstract startMachine(...args: any[]): any
+  protected abstract waitForMachineStarted(...args: any[]): any
+  abstract waitForMachineHealth(...args: any[]): any
+  protected abstract probeMachineHealth(...args: any[]): any
+  protected abstract markMachineFailed(...args: any[]): any
+  abstract resolveFlyImageRef(...args: any[]): any
   // End generated abstract declarations.
-
-
-
 
   protected readonly logger = new Logger('MachinesService')
 
   readonly flyApiToken = process.env.FLY_API_TOKEN
-  readonly flyRuntimeApp = process.env.FLY_RUNTIME_APP ?? 'vibey-runtimes'
+  readonly flyRuntimeApp = process.env.FLY_RUNTIME_APP ?? 'roas-runtimes'
   readonly flyRegion = process.env.FLY_REGION ?? 'iad'
   readonly flyApiBase = 'https://api.machines.dev/v1'
   protected readonly machineWaitTimeoutS = 60
@@ -106,10 +103,13 @@ export abstract class MachinesServiceBase01 {
     protected readonly runtimeCapabilities: MachineRuntimeCapabilitiesService,
     protected readonly wakeAttempts: MachineWakeAttemptsService,
     protected readonly machineProfileRepository: MachineProfileRepository,
-  ) {
-  }
+  ) {}
 
-  protected reportMachineError(step: string, message: string, extra: Record<string, unknown>): void {
+  protected reportMachineError(
+    step: string,
+    message: string,
+    extra: Record<string, unknown>,
+  ): void {
     this.errorReporter.report({
       app: 'api',
       severity: 'error',

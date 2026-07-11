@@ -65,7 +65,7 @@ interface ReconciliationContext {
 export class MachineReconciliationService {
   private readonly logger = new Logger(MachineReconciliationService.name)
   private readonly machineColumns = resolveMachineProfileColumns(process.env)
-  private readonly flyRuntimeApp = process.env.FLY_RUNTIME_APP ?? 'vibey-runtimes'
+  private readonly flyRuntimeApp = process.env.FLY_RUNTIME_APP ?? 'roas-runtimes'
   private readonly staleStartingThresholdMs = Number.parseInt(
     process.env.MACHINE_STALE_STARTING_THRESHOLD_MS ?? String(10 * 60 * 1000),
     10,

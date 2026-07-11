@@ -358,7 +358,7 @@ async function resolveAgentInfo(
     return { url: AGENT_BACKEND_URL, machineId: null, source: 'fallback-agent' }
   }
 
-  const runtimeApp = profile?.runtimeApp ?? 'vibey-runtimes'
+  const runtimeApp = profile?.runtimeApp ?? 'roas-runtimes'
   const machineUrl = profile?.machineUrl ?? `https://${runtimeApp}.fly.dev`
 
   // Wake asks backend to check Fly state + poll /api/ready. If wake fails,
