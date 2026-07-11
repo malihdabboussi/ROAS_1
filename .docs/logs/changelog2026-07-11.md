@@ -62,3 +62,10 @@ What: Phase 3 ROAS apps-proxy worker — env-driven host routing for `*-app.roas
 Why: Public agent/widget traffic still required govibey.com host patterns and Railway-only shared runtime validation; ROAS `shared_railway` profiles now point at Fly, so the worker would 404/route-fail without these changes.
 Impact: Worker code/tests default to ROAS domains and `roas-runtimes.fly.dev`. Deploy blocked until Dylan sets Cloudflare `account_id` + KV namespace id in `wrangler.roas.toml`, adds DNS routes on `roas.io`, and runs deploy script with `WORKER_SECRET` synced to `roas-web`.
 Files: `workers/apps-proxy/src/index.ts`, `workers/apps-proxy/src/index.test.ts`, `workers/apps-proxy/wrangler.roas.toml`, `workers/apps-proxy/package.json`, `scripts/roas/deploy-apps-proxy.sh`, `scripts/roas/roas-secrets.env.template`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 11:16] - [FIX]
+
+What: Fixed ROAS secrets sync footgun — `FLY_RUNTIME_APP=roas-runtimes` now lives in template section 2 (master URLs); sync script refuses to emit empty `FLY_RUNTIME_APP`, `APPS_DOMAIN_SUFFIX`, `AGENT_API_URL`, or `PLATFORM_API_URL` in section 6.
+Why: `api_vars` listed `FLY_RUNTIME_APP` before any master value existed, so `sync-roas-secrets-sections.py` could write `FLY_RUNTIME_APP=` into the roas-api paste block and silently revert machine provisioning to `vibey-runtimes` fallbacks.
+Impact: Re-running sync without section 2 values fails loud instead of blanking routing vars; template matches Dylan's fixed `roas-secrets.env` layout.
+Files: `scripts/roas/roas-secrets.env.template`, `scripts/roas/sync-roas-secrets-sections.py`, `.docs/logs/changelog2026-07-11.md`

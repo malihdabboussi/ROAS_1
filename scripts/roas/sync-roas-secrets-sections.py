@@ -102,6 +102,13 @@ def main() -> int:
         'MACHINE_STALE_THRESHOLD_DAYS', 'FLY_MACHINE_HOURLY_RATE', 'FLY_RUNTIME_APP',
         'ALLOW_FREE_ONBOARDING',
     ]
+    # Section 6 must never emit blank routing vars — empty paste would revert API to Vibey fallbacks.
+    api_routing_vars_no_empty = frozenset({
+        'FLY_RUNTIME_APP',
+        'APPS_DOMAIN_SUFFIX',
+        'AGENT_API_URL',
+        'PLATFORM_API_URL',
+    })
     web_vars = [
         'NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'BACKEND_URL',
         'NEXT_PUBLIC_BACKEND_URL', 'AGENT_BACKEND_URL', 'NEXT_PUBLIC_MCP_CONSENT_PATH',
@@ -135,6 +142,8 @@ def main() -> int:
     tail_parts = re.split(r'(^# ={5,}\n# 11\. LOCAL DEV.*)', tail, maxsplit=1, flags=re.M)
     section_tail = tail_parts[1] + tail_parts[2] if len(tail_parts) > 2 else ''
 
+    sync_error: list[str] = []
+
     def emit(header: str, var_list: list[str], section_key: str) -> str:
         out = [header, '']
         for name in var_list:
@@ -143,6 +152,14 @@ def main() -> int:
                 out.append(f'{name}={section_static}')
                 continue
             val = master.get(name, '')
+            if section_key == '6' and name in api_routing_vars_no_empty and not val:
+                print(
+                    f'Refusing to sync: {name} is missing in sections 1–5 but required in section 6 '
+                    f'(empty paste would break ROAS runtime routing). Add it to section 2.',
+                    file=sys.stderr,
+                )
+                sync_error.append(name)
+                break
             out.append(fmt(name, val, master_raw) if val else f'{name}=')
         out.append('')
         return '\n'.join(out)
@@ -197,6 +214,9 @@ def main() -> int:
         )
         + section_tail.lstrip('\n')
     )
+
+    if sync_error:
+        return 1
 
     SECRETS.write_text(new_body)
     print(f'Synced sections 6–10 in {SECRETS}')
