@@ -10,6 +10,21 @@ describe('classifyChatStreamError', () => {
     expect(isChatStreamRateLimitMessage(message)).toBe(false)
   })
 
+  it('keeps provider billing ahead of generic gateway wording', () => {
+    const message =
+      'provider_billing: Gateway connection error: agent gateway 402: insufficient balance'
+
+    expect(classifyChatStreamError(message)).toBe('provider_billing')
+    expect(isChatStreamRateLimitMessage(message)).toBe(false)
+  })
+
+  it('keeps provider busy ahead of generic gateway wording', () => {
+    const message = 'busy: Gateway connection error: agent gateway 429: rate limit exceeded'
+
+    expect(classifyChatStreamError(message)).toBe('busy')
+    expect(isChatStreamRateLimitMessage(message)).toBe(true)
+  })
+
   it('classifies invalidated integration tokens as reconnect required', () => {
     const message = 'Your authentication token has been invalidated. Please try signing in again.'
 

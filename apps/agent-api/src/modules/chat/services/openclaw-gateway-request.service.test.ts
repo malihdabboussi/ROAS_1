@@ -115,4 +115,86 @@ describe('OpenClawGatewayRequestService', () => {
 
     expect(postResponses).toHaveBeenCalledTimes(1)
   })
+
+  it('preserves OpenRouter billing failures from gateway status responses', async () => {
+    vi.stubEnv('OPENCLAW_GATEWAY_URL', 'http://gateway.local')
+    vi.stubEnv('OPENCLAW_GATEWAY_TOKEN', 'gateway-token')
+    const send = vi.fn(async () => undefined)
+    const report = vi.fn()
+    const postResponses = vi.fn().mockResolvedValue(
+      new Response('Provider returned a billing error: insufficient balance', {
+        status: 402,
+        statusText: 'Payment Required',
+      }),
+    )
+
+    const service = new OpenClawGatewayRequestService(
+      { report } as never,
+      { resolveRuntimeCredential: vi.fn() } as never,
+      { resolveRuntimeCredential: vi.fn() } as never,
+      { postResponses } as never,
+    )
+
+    await expect(
+      service.openGatewayStream({
+        agentId: 'agent-1',
+        logger: { log: vi.fn(), warn: vi.fn(), error: vi.fn() } as never,
+        logStreamTiming: vi.fn(),
+        options: {
+          conversationId: 'conversation-1',
+          input: 'hello',
+          model: 'google/gemini-3.5-flash',
+          send,
+          sessionKey: 'session-1',
+          userId: 'user-1',
+        } as never,
+        requestTimeoutMs: 1000,
+        resolvedModel: 'openrouter/google/gemini-3.5-flash',
+        streamTimingLogsEnabled: false,
+      }),
+    ).rejects.toThrow('provider_billing')
+
+    expect(send).toHaveBeenCalledWith('error', { code: 'provider_billing' })
+    expect(report).toHaveBeenCalledWith(expect.objectContaining({ error_code: 'provider_billing' }))
+  })
+
+  it('preserves provider rate limit failures from gateway status responses', async () => {
+    vi.stubEnv('OPENCLAW_GATEWAY_URL', 'http://gateway.local')
+    vi.stubEnv('OPENCLAW_GATEWAY_TOKEN', 'gateway-token')
+    const send = vi.fn(async () => undefined)
+    const postResponses = vi.fn().mockResolvedValue(
+      new Response('Rate limit exceeded for this provider', {
+        status: 429,
+        statusText: 'Too Many Requests',
+      }),
+    )
+
+    const service = new OpenClawGatewayRequestService(
+      { report: vi.fn() } as never,
+      { resolveRuntimeCredential: vi.fn() } as never,
+      { resolveRuntimeCredential: vi.fn() } as never,
+      { postResponses } as never,
+    )
+
+    await expect(
+      service.openGatewayStream({
+        agentId: 'agent-1',
+        logger: { log: vi.fn(), warn: vi.fn(), error: vi.fn() } as never,
+        logStreamTiming: vi.fn(),
+        options: {
+          conversationId: 'conversation-1',
+          input: 'hello',
+          model: 'google/gemini-3.5-flash',
+          send,
+          sessionKey: 'session-1',
+          userId: 'user-1',
+        } as never,
+        requestTimeoutMs: 1000,
+        resolvedModel: 'openrouter/google/gemini-3.5-flash',
+        streamTimingLogsEnabled: false,
+      }),
+    ).rejects.toThrow('busy')
+
+    expect(send).toHaveBeenCalledWith('error', { code: 'busy' })
+  })
 })

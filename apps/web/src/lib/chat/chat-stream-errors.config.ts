@@ -141,9 +141,6 @@ function classifyChatStreamErrorFromMessage(message: string): ChatStreamErrorCod
   if (msg.includes('is deactivated')) return 'agent_deactivated'
   if (msg.includes('does not grant channel')) return 'agent_access_denied'
   if (msg.includes('failed to parse')) return 'document_parse_failed'
-  if (msg.includes('gateway connection error') || msg.includes('gateway error')) {
-    return 'gateway_connection'
-  }
   if (
     msg.includes('context_window_exceeded') ||
     msg.includes('context length exceeded') ||
@@ -169,6 +166,7 @@ function classifyChatStreamErrorFromMessage(message: string): ChatStreamErrorCod
     return 'workspace_blocked'
   }
   if (
+    msg.includes('provider_billing') ||
     msg.includes('api provider returned a billing error') ||
     msg.includes('provider returned a billing error') ||
     msg.includes('insufficient balance') ||
@@ -178,12 +176,16 @@ function classifyChatStreamErrorFromMessage(message: string): ChatStreamErrorCod
     return 'provider_billing'
   }
   if (
+    msg.includes('busy:') ||
     msg.includes('temporarily overloaded') ||
     msg.includes('overloaded') ||
     msg.includes('rate limit') ||
     msg.includes('too many requests')
   ) {
     return 'busy'
+  }
+  if (msg.includes('gateway connection error') || msg.includes('gateway error')) {
+    return 'gateway_connection'
   }
   if (
     msg.includes('empty_agent_response') ||

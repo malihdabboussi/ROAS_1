@@ -1,5 +1,6 @@
 import { Injectable, Optional, type Logger } from '@nestjs/common'
 import { ErrorReporter, RouteTraceReporter } from '@vibey/api-shared'
+import type { ChatStreamErrorCode } from '../chat-stream-errors'
 import { OpenClawGatewayClient } from '../integrations/openclaw-gateway.client'
 import { AnthropicClaudeAdminAuthService } from './anthropic-claude-admin-auth.service'
 import { OpenAICodexAdminAuthService } from './openai-codex-admin-auth.service'
@@ -36,6 +37,48 @@ type ReportedError = Error & { __appErrorReported?: true }
 function markAppErrorReported(error: Error): ReportedError {
   ;(error as ReportedError).__appErrorReported = true
   return error as ReportedError
+}
+
+function classifyGatewayStatusFailure(status: number, errorText: string): ChatStreamErrorCode {
+  const lower = errorText.toLowerCase()
+  if (
+    status === 402 ||
+    lower.includes('insufficient balance') ||
+    lower.includes('billing') ||
+    lower.includes('credits_exhausted') ||
+    lower.includes('top up') ||
+    lower.includes('api key') ||
+    lower.includes('unauthorized') ||
+    lower.includes('forbidden')
+  ) {
+    return 'provider_billing'
+  }
+  if (
+    status === 429 ||
+    lower.includes('rate limit') ||
+    lower.includes('too many requests') ||
+    lower.includes('temporarily overloaded') ||
+    lower.includes('overloaded')
+  ) {
+    return 'busy'
+  }
+  if (
+    status === 503 ||
+    lower.includes('service unavailable') ||
+    lower.includes('temporarily unavailable')
+  ) {
+    return 'temporary_unavailable'
+  }
+  if (
+    lower.includes('context_window_exceeded') ||
+    lower.includes('context length exceeded') ||
+    lower.includes('context window exceeded') ||
+    lower.includes('maximum context length') ||
+    lower.includes('too many input tokens')
+  ) {
+    return 'context_window_exceeded'
+  }
+  return 'gateway_connection'
 }
 
 @Injectable()
@@ -344,14 +387,15 @@ export class OpenClawGatewayRequestService {
   ): Promise<never> {
     const errorText = gatewayErrorText ?? (await response.text())
     input.logger.error(`Gateway error ${response.status}: ${errorText.slice(0, 500)}`)
+    const code = classifyGatewayStatusFailure(response.status, errorText)
     const prefixed = `Gateway connection error: agent gateway ${response.status}`
     this.errorReporter.report({
       app: 'agent-api',
       severity: 'error',
       feature: 'chat',
-      error_code: `gateway_${response.status}`,
+      error_code: code === 'gateway_connection' ? `gateway_${response.status}` : code,
       message: prefixed,
-      category: 'infra',
+      category: code === 'gateway_connection' ? 'infra' : 'provider',
       context: {
         agentId: input.agentId,
         conversationId: input.options.conversationId,
@@ -371,8 +415,8 @@ export class OpenClawGatewayRequestService {
       run_id: input.options.runId,
       conversation_id: input.options.conversationId,
     })
-    await input.options.send('error', { code: 'gateway_connection' })
-    throw markAppErrorReported(new Error(`${prefixed}: ${errorText.slice(0, 200)}`))
+    await input.options.send('error', { code })
+    throw markAppErrorReported(new Error(`${code}: ${prefixed}: ${errorText.slice(0, 200)}`))
   }
 
   private reportGatewayEvent(

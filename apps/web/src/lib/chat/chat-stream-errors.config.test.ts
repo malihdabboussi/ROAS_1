@@ -59,6 +59,25 @@ describe('shared chat stream error config', () => {
     expect(resolved.userMessage).not.toContain('model is busy')
   })
 
+  it('keeps provider billing ahead of generic gateway wording', () => {
+    const resolved = resolveChatStreamFailure({
+      message:
+        'provider_billing: Gateway connection error: agent gateway 402: insufficient balance',
+    })
+
+    expect(resolved.code).toBe('provider_billing')
+    expect(resolved.userMessage).toContain('provider')
+  })
+
+  it('keeps provider busy ahead of generic gateway wording', () => {
+    const resolved = resolveChatStreamFailure({
+      message: 'busy: Gateway connection error: agent gateway 429: rate limit exceeded',
+    })
+
+    expect(resolved.code).toBe('busy')
+    expect(resolved.userMessage).toContain('model is busy')
+  })
+
   it('keeps explicit provider overloads as model-busy failures', () => {
     const resolved = resolveChatStreamFailure({
       message: 'Provider temporarily overloaded. Please try again later.',
