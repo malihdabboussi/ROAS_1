@@ -55,9 +55,28 @@ Health should report `mode=shared`, `sync=ok`. Gateway may show `degraded` brief
 
 ## Other scripts
 
-| Script                          | Use                                          |
-| ------------------------------- | -------------------------------------------- |
-| `apply-fly-secrets.sh`          | Re-import section 9 only                     |
-| `smoke-deploy.sh`               | Post-Vercel + optional Fly checks            |
-| `deploy-railway-workers.sh`     | mission-worker / queue-worker (manual steps) |
-| `apply-migrations-resilient.sh` | ROAS Supabase migrations                     |
+| Script                             | Use                                                           |
+| ---------------------------------- | ------------------------------------------------------------- |
+| `apply-fly-secrets.sh`             | Re-import section 9 only                                      |
+| `smoke-deploy.sh`                  | Post-Vercel + optional Fly checks (also runs env-freshness)   |
+| `deploy-railway-workers.sh`        | mission-worker / queue-worker (manual steps)                  |
+| `apply-migrations-resilient.sh`    | ROAS Supabase migrations                                      |
+| `verify-roas-runtime-profiles.sql` | Drift audit — fails if any profile/pool still routes to Vibey |
+| `verify-vercel-env-freshness.sh`   | Guard — confirms critical env vars predate current prod build |
+
+### Drift guardrails (Phase 4)
+
+Vercel bakes env vars at **build time**, so adding a var without redeploying leaves
+production running without it (this bit us on `FLY_RUNTIME_APP` and `WORKER_SECRET`).
+
+```bash
+# Confirm no profile/machine still points at Vibey/Railway/govibey (expect verdict OK):
+bash scripts/roas/apply-via-supabase-api.sh scripts/roas/verify-roas-runtime-profiles.sql
+
+# Confirm critical env vars were set before the current prod build:
+bash scripts/roas/verify-vercel-env-freshness.sh
+```
+
+`smoke-deploy.sh` runs the env-freshness guard automatically when `roas-secrets.env`
+is present (set `SMOKE_ENV=0` to skip). Pass `AGENT_SLUG=<slug>` to also check the
+`agents.roas.io` public-agent proxy.
