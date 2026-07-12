@@ -661,7 +661,6 @@ function proxyChatWithWarmup(params: {
               return null
             })
             if (!backendRes) {
-              if (agentInfo.source === 'shared-railway') break
               continue
             }
             if (eventPrefix) {
@@ -683,10 +682,11 @@ function proxyChatWithWarmup(params: {
             const retryContentType = backendRes.headers.get('content-type') ?? ''
             if (backendRes.ok && retryContentType.includes('text/event-stream')) break
             if (
-              agentInfo.source === 'shared-railway' &&
-              isRetryableAgentStatus(backendRes.status)
+              isRetryableAgentStatus(backendRes.status) &&
+              attempt < COLD_START_RETRY_DELAYS_MS.length - 1
             ) {
-              break
+              if (backendRes.body) await backendRes.body.cancel().catch(() => {})
+              continue
             }
             if (!isRetryableAgentStatus(backendRes.status)) break
           }

@@ -109,3 +109,10 @@ What: Documented the pre-built Strategic Research Loop (`agency-strategic-resear
 Why: User requested a detailed step-by-step reference for the agency strategy preset flow.
 Impact: `.docs/features/strategic-research-loop.md` is the canonical walkthrough for the template.
 Files: `.docs/features/strategic-research-loop.md`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 20:24] - [FIX]
+
+What: Fixed shared-runtime chat warmup retries in the web proxy — `shared_railway` targets (ROAS `roas-runtimes.fly.dev`) now retry on 502/503/504 and connection failures during cold start instead of immediately returning `MACHINE_CHAT_UNAVAILABLE`. Deployed `roas-runtimes` with `min_machines_running = 1` and `auto_start_machines = true`.
+Why: All Fly machines were stopped, so chat failed after refresh; the warmup path also broke early on retryable upstream statuses for shared runtimes while Fly was cold-starting.
+Impact: Fly deploy completed (`exit 0`); 1 machine running; `/api/health` returns `mode=shared` with gateway reachable; smoke `SMOKE_FLY=1` 5/5. User can retry chat on `/home` now. Proxy fix is local until `roas-web` redeploy.
+Files: `apps/web/src/app/api/proxy/[...path]/route.ts`, `docker/fly.roas.runtime.toml`, `.docs/logs/changelog2026-07-11.md`
