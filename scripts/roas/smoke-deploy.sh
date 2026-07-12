@@ -57,11 +57,12 @@ check_http_up() {
 
 check_json_ok() {
   local url="$1"
-  python3 - "$url" <<'PY'
+  local timeout="${2:-45}"
+  python3 - "$url" "$timeout" <<'PY'
 import json, sys, urllib.request
-url = sys.argv[1]
+url, timeout = sys.argv[1], int(sys.argv[2])
 try:
-    with urllib.request.urlopen(url, timeout=20) as r:
+    with urllib.request.urlopen(url, timeout=timeout) as r:
         body = json.load(r)
     ok = body.get("status") == "ok"
     print(json.dumps(body)[:200])

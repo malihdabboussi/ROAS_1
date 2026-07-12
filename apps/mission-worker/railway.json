@@ -1,16 +1,11 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "DOCKERFILE",
-    "dockerfilePath": "apps/mission-worker/Dockerfile",
-    "watchPatterns": [
-      "apps/mission-worker/**",
-      "packages/api-shared/**",
-      "packages/context-breakdown/**",
-      "docker/mission-worker.Dockerfile"
-    ]
+    "builder": "RAILPACK",
+    "buildCommand": "pnpm --filter @vibey/mission-worker build"
   },
   "deploy": {
+    "startCommand": "node --enable-source-maps dist/apps/mission-worker/src/main",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 5
   }

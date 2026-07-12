@@ -14,6 +14,13 @@ Why: Flyout panels were positioned from a wider flex container and could interce
 Impact: Sidebar icons navigate to the correct section again; section clicks also expand the global chat rail where intended.
 Files: `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqSection.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqFlyouts.tsx`, `.docs/logs/changelog2026-07-11.md`
 
+## [2026-07-11 20:11] - [REFACTOR]
+
+What: Moved Updates from the HQ rail footer into the profile avatar dropdown (with unread dot on avatar + menu item); stretched the HQ sidebar card to full viewport height via a complete flex height chain.
+Why: Updates belongs with account/settings controls; the rail card was floating with empty space below it.
+Impact: Profile menu opens Updates; standalone Updates icon removed from rail/mobile/studio footer; left sidebar glass card fills the column height.
+Files: `apps/web/src/components/layout/AvatarDropdown.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqMobileDrawer.tsx`, `apps/web/src/components/layout/sidebar/SidebarStudioFooter.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqSection.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqFlyouts.tsx`, `apps/web/src/components/layout/Sidebar.tsx`, `.docs/logs/changelog2026-07-11.md`
+
 ## [2026-07-11 09:15] - [FEATURE]
 
 What: Added Gemini dual-key support — `GEMINI_API_KEY` (primary) with optional `GEMINI_API_KEY_FALLBACK` for 401/403 failures. Wired into brain embedding services (api + agent-api), import backfill script, ROAS secrets template, and sync script. ROAS secrets now use the working key as primary and the previously denied project key as fallback.
@@ -83,3 +90,17 @@ What: Phase 4 ROAS infrastructure drift guardrails. Extended `verify-roas-runtim
 Why: Vercel bakes env vars at build time, so adding a var without redeploying leaves production running without it — this silently reverted routing twice (`FLY_RUNTIME_APP` on roas-api, `WORKER_SECRET` on roas-web). The audit SQL previously only printed counts, requiring manual interpretation.
 Impact: `verify-roas-runtime-profiles.sql` returns `verdict: OK` against production (drift_rows 0). `verify-vercel-env-freshness.sh` passes for both projects, confirming the post-`WORKER_SECRET` roas-web redeploy actually baked the secret. `smoke-deploy.sh` now reports 4/4 passed. Drift and stale-env regressions are now caught automatically.
 Files: `scripts/roas/verify-roas-runtime-profiles.sql`, `scripts/roas/verify-vercel-env-freshness.sh`, `scripts/roas/smoke-deploy.sh`, `scripts/roas/README.md`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 20:12] - [FIX]
+
+What: Fixed ROAS agent chat outage — all 7 `roas-runtimes` Fly machines were stopped, causing `temporary_unavailable` / "couldn't get your agent ready yet." Started one machine via Machines API (health now 200, mode=shared). Set `min_machines_running = 1` and `auto_start_machines = true` in `docker/fly.roas.runtime.toml` to prevent recurrence. Switched `mission-worker` Railway config from Dockerfile to RAILPACK (matching queue-worker). Increased Fly health timeout in smoke script to 45s.
+Why: DB routing was already correct (`agent_runtime_url = https://roas-runtimes.fly.dev`) but every Fly machine was stopped with `min_machines_running = 0`; chat proxy could not reach a live runtime. Mission-worker still failed RAILPACK image builds while `railway.json` pointed at Dockerfile.
+Impact: Agent chat should work again after cold-start (~14s first request). Smoke with `SMOKE_FLY=1` now 5/5 passed. Fly config change needs `bash scripts/roas/deploy-fly-runtimes.sh` to persist on Fly. Mission-worker RAILPACK switch will auto-redeploy on push to main.
+Files: `docker/fly.roas.runtime.toml`, `apps/mission-worker/railway.json`, `scripts/roas/smoke-deploy.sh`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 15:12] - [DOCS]
+
+What: Documented the pre-built Strategic Research Loop (`agency-strategic-research`) — trigger, five automation steps, review gates, revision loop, and install path.
+Why: User requested a detailed step-by-step reference for the agency strategy preset flow.
+Impact: `.docs/features/strategic-research-loop.md` is the canonical walkthrough for the template.
+Files: `.docs/features/strategic-research-loop.md`, `.docs/logs/changelog2026-07-11.md`
