@@ -116,3 +116,10 @@ What: Fixed shared-runtime chat warmup retries in the web proxy — `shared_rail
 Why: All Fly machines were stopped, so chat failed after refresh; the warmup path also broke early on retryable upstream statuses for shared runtimes while Fly was cold-starting.
 Impact: Fly deploy completed (`exit 0`); 1 machine running; `/api/health` returns `mode=shared` with gateway reachable; smoke `SMOKE_FLY=1` 5/5. User can retry chat on `/home` now. Proxy fix is local until `roas-web` redeploy.
 Files: `apps/web/src/app/api/proxy/[...path]/route.ts`, `docker/fly.roas.runtime.toml`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 20:36] - [ARCH]
+
+What: Finished ROAS production hardening pass — confirmed Vercel production on `9a097d46` (roas-web + roas-api + roas-funnels READY), scaled Fly `roas-runtimes` from 7 shared machines to 1 via Machines API, synced `SUPABASE_DIRECT_DB_URL` to Railway `roas-platform` + `queue-worker`, canceled stale queued roas-web deploy (`6c4cfb79`), verified chat on `/home` and `/team` no longer shows agent-ready error.
+Why: Shared runtime only needs one warm machine; mission-worker degraded without direct Postgres; duplicate Fly machines wasted cost; stale Vercel queue obscured deploy status.
+Impact: Smoke `SMOKE_FLY=1` 5/5; env-freshness PASS; runtime profile SQL `verdict: OK`; Fly `/api/health` 200; Railway workers Online. Sentry DSN sync blocked — no ROAS DSNs in `roas-secrets.env` (Phase 5 placeholders only).
+Files: `.docs/logs/changelog2026-07-11.md` (ops via Vercel/Fly/Railway APIs — no code diff)
