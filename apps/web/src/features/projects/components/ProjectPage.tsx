@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { ResizableDivider } from '@/features/studio/components/layout/ResizableDivider'
 import { usePanelResize } from '@/features/studio/hooks/usePanelResize'
+import { buildPublishedAppUrl } from '@/lib/platform/platform-urls'
 import { useProjectChat } from '../hooks/useProjectChat'
 import { fetchAllProjectFiles, type ProjectFileMap } from '../services/project-files.service'
 import {
@@ -192,7 +193,7 @@ export function ProjectPage({ projectId }: ProjectPageProps) {
             publish_status: result.publish_status as ProjectRepo['publish_status'],
             publish_error: null,
             ...(result.publish_status === 'published'
-              ? { is_published: true, published_url: `https://${result.slug}-app.govibey.com` }
+              ? { is_published: true, published_url: buildPublishedAppUrl(result.slug) }
               : {}),
           }
         : prev,

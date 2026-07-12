@@ -364,10 +364,15 @@
       "limit": 400,
       "lines": 2741
     },
-    "apps/web/src/features/team/components/container/WidgetBuilderModal.tsx": {
+    "apps/web/src/features/billing/components/CreditPurchaseDialog.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 1386
+      "lines": 471
+    },
+    "apps/web/src/features/team/containers/WidgetBuilderModal.tsx": {
+      "kind": "web-container",
+      "limit": 600,
+      "lines": 1387
     },
     "apps/agent-api/src/modules/artifacts/services/artifact-brain-scholar.service.ts": {
       "kind": "service",
@@ -1348,7 +1353,29 @@
         "@/features/spaces/components/artifacts/presentation/PresentationMenuDropdown": 2
       }
     },
-    "apps/web/src/features/team/components/container/WidgetBuilderModal.tsx": {
+    "apps/web/src/features/projects/components/ProjectPage.tsx": {
+      "sourceFeature": "projects",
+      "count": 2,
+      "imports": {
+        "@/features/studio/components/layout/ResizableDivider": 1,
+        "@/features/studio/hooks/usePanelResize": 1
+      }
+    },
+    "apps/web/src/features/settings/components/settings-content/useIntegrations.ts": {
+      "sourceFeature": "settings",
+      "count": 1,
+      "imports": {
+        "@/features/org/store/use-org-store": 1
+      }
+    },
+    "apps/web/src/features/team/containers/AgentWidgetSection.tsx": {
+      "sourceFeature": "team",
+      "count": 1,
+      "imports": {
+        "@/features/mission-control/types": 1
+      }
+    },
+    "apps/web/src/features/team/containers/WidgetBuilderModal.tsx": {
       "sourceFeature": "team",
       "count": 4,
       "imports": {

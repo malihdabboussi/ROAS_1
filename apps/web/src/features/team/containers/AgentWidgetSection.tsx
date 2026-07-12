@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/forms/switch'
 import { Tooltip } from '@/components/ui/tooltip'
 import type { MissionAgent } from '@/features/mission-control/types'
 import { backendGet, backendPatch } from '@/lib/api/backend-client'
+import { resolveAppUrl } from '@/lib/platform/platform-urls'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils/cn'
 import { WidgetBuilderModal } from './WidgetBuilderModal'
@@ -137,7 +138,7 @@ export function AgentWidgetSection({
   const snippet = useMemo(() => {
     if (!slug) return null
     const host =
-      embedHost || (typeof window !== 'undefined' ? window.location.origin : 'https://app.vibey.im')
+      embedHost || (typeof window !== 'undefined' ? window.location.origin : resolveAppUrl())
     return `<script src="${host}/widget.js" data-slug="${slug}" data-agent="${agent.agent_key}" async></script>`
   }, [agent.agent_key, embedHost, slug])
 

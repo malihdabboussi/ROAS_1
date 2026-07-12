@@ -40,6 +40,7 @@ import {
 import { fetchCampaigns } from '@/features/studio/services/campaign.service'
 import type { Campaign } from '@/features/studio/types'
 import { backendGet, backendPatch } from '@/lib/api/backend-client'
+import { resolveAppUrl } from '@/lib/platform/platform-urls'
 import { cn } from '@/lib/utils/cn'
 import { CampaignDestinationField } from '../components/shared/CampaignDestinationField'
 import {
@@ -359,7 +360,7 @@ export function WidgetBuilderModal({
   const snippet = useMemo(() => {
     if (!slug) return null
     const host =
-      embedHost || (typeof window !== 'undefined' ? window.location.origin : 'https://app.vibey.im')
+      embedHost || (typeof window !== 'undefined' ? window.location.origin : resolveAppUrl())
     return `<script src="${host}/widget.js" data-slug="${slug}" data-agent="${agent.agent_key}" async></script>`
   }, [agent.agent_key, embedHost, slug])
 
@@ -409,7 +410,7 @@ export function WidgetBuilderModal({
   /** Stable URL only — dynamic copy/theme updates go through `postMessage` so the iframe does not reload on every keystroke. */
   const previewUrl = useMemo(() => {
     if (!slug) return null
-    const host = typeof window !== 'undefined' ? window.location.origin : 'https://app.vibey.im'
+    const host = typeof window !== 'undefined' ? window.location.origin : resolveAppUrl()
     const params = new URLSearchParams({
       embed: '1',
       preview: '1',

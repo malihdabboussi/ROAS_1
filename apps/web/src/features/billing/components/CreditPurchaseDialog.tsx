@@ -5,6 +5,7 @@ import { Minus, Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { billingApi } from '@/lib/billing/billing-api'
+import { resolveMarketingSiteUrl } from '@/lib/platform/platform-urls'
 import type { AutoRechargeSettings } from '@/lib/billing/billing.types'
 import { BILLING_TOAST_ERRORS } from '../config/billing-toast-errors.config'
 import { CreditPurchaseSuccessDialog } from './CreditPurchaseSuccessDialog'
@@ -304,7 +305,7 @@ export function CreditPurchaseDialog({
                       <span className="text-foreground font-medium">${totalPrice.toFixed(2)}</span>.
                       You agree to our{' '}
                       <a
-                        href="https://govibey.com/terms"
+                        href={`${resolveMarketingSiteUrl()}/terms`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[var(--color-primary)] hover:underline"
@@ -313,7 +314,7 @@ export function CreditPurchaseDialog({
                       </a>{' '}
                       and{' '}
                       <a
-                        href="https://govibey.com/privacy"
+                        href={`${resolveMarketingSiteUrl()}/privacy`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[var(--color-primary)] hover:underline"

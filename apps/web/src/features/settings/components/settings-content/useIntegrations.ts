@@ -9,6 +9,7 @@ import { useUserRole } from '@/hooks/use-user-role'
 import { backendDelete, backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
 import { invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { buildComposioProxyCallbackUrl } from '@/lib/integrations/composio-oauth'
+import { buildPlatformWebhookUrl } from '@/lib/platform/platform-urls'
 import { SETTINGS_TOAST_ERRORS } from '../../config/settings-toast-errors.config'
 import type { Integration, UserIntegration } from './integrations.types'
 
@@ -480,7 +481,7 @@ export function useIntegrations() {
         provider: 'cursor',
         name: 'Cursor',
         description:
-          'Connect Cursor Cloud Agents to write code and open PRs from Space automations. Grant Cursor GitHub access to your repo in the Cursor dashboard. Register webhook URL: https://api.govibey.com/api/integrations/cursor/webhook',
+          `Connect Cursor Cloud Agents to write code and open PRs from Space automations. Grant Cursor GitHub access to your repo in the Cursor dashboard. Register webhook URL: ${buildPlatformWebhookUrl('/api/integrations/cursor/webhook')}`,
         category: 'developer',
         auth_type: 'api_key',
         connection_fields: [
