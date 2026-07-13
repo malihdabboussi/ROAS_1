@@ -158,3 +158,19 @@ Why: Large local working tree needed to go live across Vercel, Fly runtimes, Rai
 Impact: Production DB policies/RPCs updated; deploy pipeline triggered from main for app surfaces and agent runtime.
 Files: `supabase/migrations/20260712193000_fix_messages_update_rls.sql`, `supabase/migrations/20260713110000_roas_brain_retrieval_rpc_repair.sql`, `scripts/roas/migration-order.txt`, apps/web, apps/api, apps/agent-api, apps/funnels, docker/, workers/apps-proxy
 
+
+## [2026-07-12 23:26] - [FIX]
+
+What: Remove unused `surfaceFromPathname` import from HQ hub menu content.
+Why: roas-web Vercel production build failed TypeScript unused-import check on commit 0470c7b5.
+Impact: Unblocks app.roas.io production deploy for the shipped main branch.
+Files: `apps/web/src/components/layout/sidebar/SidebarHqHubMenuContent.tsx`
+
+
+## [2026-07-12 23:28] - [FIX]
+
+What: Fix remaining roas-web production TypeScript blockers (unused import, ReactNode import, false Message type predicates).
+Why: Next production typecheck failed after the first unused-import error was exposed; incorrect `message is Message` predicates collapsed Message to never.
+Impact: Clears app.roas.io build path for the live ship.
+Files: `SidebarHqHubMenuContent.tsx`, `SidebarHqHubMenuSection.tsx`, `chat-turn-completion.ts`, `chat.service.ts`
+

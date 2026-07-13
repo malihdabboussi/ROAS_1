@@ -19,7 +19,7 @@ export function getLastAssistantMessage(messages: Message[]): Message | undefine
   return [...messages].reverse().find((message) => message.role === 'assistant')
 }
 
-export function assistantHasVisibleOutput(message: Message | undefined): message is Message {
+export function assistantHasVisibleOutput(message: Message | undefined): boolean {
   if (!message || message.role !== 'assistant') return false
   const metadata = message.metadata as Record<string, unknown> | undefined
   if (metadata?.duration_ms != null) return true
@@ -53,7 +53,7 @@ export function isAssistantTurnComplete(
   message: Message | undefined,
   streamInactive = false,
 ): boolean {
-  if (!assistantHasVisibleOutput(message)) return false
+  if (!assistantHasVisibleOutput(message) || !message) return false
   const metadata = message.metadata as Record<string, unknown> | undefined
   if (metadata?.duration_ms != null) return true
   return streamInactive

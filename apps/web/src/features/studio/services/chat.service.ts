@@ -286,7 +286,7 @@ function isPendingClarificationBlock(block: unknown): boolean {
   return status !== 'submitted' && status !== 'skipped'
 }
 
-function hasAssistantDisplayContent(message: Message | undefined): message is Message {
+function hasAssistantDisplayContent(message: Message | undefined): boolean {
   return assistantHasVisibleOutput(message)
 }
 
@@ -457,6 +457,7 @@ function preserveLatestAssistantContent(
   }
 
   const mergedAssistant = mergedMessages[assistantIndex]
+  if (!mergedAssistant) return mergedMessages
   const mergedHasText = assistantHasRenderableText(mergedAssistant)
   const localHasText = assistantHasRenderableText(localAssistant)
   if (hasAssistantDisplayContent(mergedAssistant) && (mergedHasText || !localHasText)) {

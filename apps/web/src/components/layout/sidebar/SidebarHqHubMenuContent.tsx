@@ -11,7 +11,6 @@ import {
   Users,
   Workflow,
 } from 'lucide-react'
-import { surfaceFromPathname } from '@/components/global-chat/config/work-context.config'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { cn } from '@/lib/utils/cn'

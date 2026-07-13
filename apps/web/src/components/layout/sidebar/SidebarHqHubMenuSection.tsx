@@ -1,6 +1,7 @@
 'use client'
 
-import { ChevronDown, type ReactNode } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { HubMenuSectionId } from './sidebar-hq-hub-menu.types'
 
