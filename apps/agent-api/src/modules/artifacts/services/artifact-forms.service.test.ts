@@ -109,7 +109,7 @@ describe('ArtifactFormsService', () => {
         id: 'form-1',
         status: 'published',
         slug: 'lead-capture',
-        published_url: 'https://user-11111111.vibeyfunnels.com/form/lead-capture',
+        published_url: 'https://user-11111111.sites.roas.io/form/lead-capture',
       },
     ]
     const supabase = {
@@ -129,12 +129,12 @@ describe('ArtifactFormsService', () => {
       success: true,
       status: 'published',
       slug: 'lead-capture',
-      url: 'https://user-11111111.vibeyfunnels.com/form/lead-capture',
+      url: 'https://user-11111111.sites.roas.io/form/lead-capture',
     })
     expect(updates[0]).toMatchObject({
       slug: 'lead-capture',
       status: 'published',
-      published_url: 'https://user-11111111.vibeyfunnels.com/form/lead-capture',
+      published_url: 'https://user-11111111.sites.roas.io/form/lead-capture',
     })
   })
 

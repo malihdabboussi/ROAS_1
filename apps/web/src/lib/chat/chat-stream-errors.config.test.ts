@@ -75,7 +75,7 @@ describe('shared chat stream error config', () => {
     })
 
     expect(resolved.code).toBe('busy')
-    expect(resolved.userMessage).toContain('model is busy')
+    expect(resolved.userMessage).toContain('model or provider')
   })
 
   it('keeps explicit provider overloads as model-busy failures', () => {
@@ -84,6 +84,6 @@ describe('shared chat stream error config', () => {
     })
 
     expect(resolved.code).toBe('busy')
-    expect(resolved.userMessage).toContain('model is busy')
+    expect(resolved.userMessage).toContain('model or provider')
   })
 })

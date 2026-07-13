@@ -44,7 +44,7 @@ export function convertUiBlockToText(block: Record<string, unknown>): string | n
         typeof block.problem === 'string' && block.problem.trim().length > 0
           ? block.problem.trim()
           : `${providerLabel} is not connected yet.`
-      return `*${providerLabel}* needs attention. ${problem}\n\nFix it here: <https://app.govibey.com/settings|Open integrations>\n\nOnce fixed, come back and we'll pick up where we left off.`
+      return `*${providerLabel}* needs attention. ${problem}\n\nFix it here: <https://app.roas.io/settings|Open integrations>\n\nOnce fixed, come back and we'll pick up where we left off.`
     }
 
     case 'meta_ad_accounts': {

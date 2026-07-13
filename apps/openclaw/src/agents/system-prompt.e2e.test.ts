@@ -3,6 +3,15 @@ import { buildSubagentSystemPrompt } from "./subagent-announce.js";
 import { buildAgentSystemPrompt, buildRuntimeLine } from "./system-prompt.js";
 
 describe("buildAgentSystemPrompt", () => {
+  it("uses only ROAS product links", () => {
+    const prompt = buildAgentSystemPrompt({ workspaceDir: "/tmp/openclaw" });
+
+    expect(prompt).toContain("the ROAS website is roas.io");
+    expect(prompt).toContain("The product app is app.roas.io");
+    expect(prompt).not.toContain("vibey.im");
+    expect(prompt).not.toContain("docs.vibey.im");
+  });
+
   it("includes owner numbers when provided", () => {
     const prompt = buildAgentSystemPrompt({
       workspaceDir: "/tmp/openclaw",

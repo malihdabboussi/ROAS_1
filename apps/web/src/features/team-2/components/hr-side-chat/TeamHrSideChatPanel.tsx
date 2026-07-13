@@ -58,6 +58,8 @@ import {
   requestStopStream,
   selectConversation,
   sendMessageStreaming,
+  shouldSkipStreamRecovery,
+  isStreamActive,
   suggestConversationTitle,
   useChatStore,
   type Conversation,
@@ -96,6 +98,10 @@ import { AgentCheckpointsSidebar } from '../checkpoints/AgentCheckpointsPanel'
 import { buildTeamHrAwarenessContext } from './build-team-hr-awareness-context'
 import { TeamHrChatAgentIdentity } from './TeamHrChatAgentIdentity'
 import { TeamHrChatEmptyState } from './TeamHrChatEmptyState'
+import {
+  getLastAssistantMessage,
+  isAssistantTurnComplete,
+} from '@/features/studio/lib/chat-turn-completion'
 
 const HR_AGENT_KEY = 'hr'
 const HR_AGENT_NAME = 'Jaime'
@@ -353,6 +359,15 @@ export function TeamHrSideChatPanel({
     return { leadingMessages, turns }
   }, [displayMessages])
 
+  const streamRecoveryTriggerKey = useMemo(() => {
+    const lastAssistant = getLastAssistantMessage(messages)
+    if (!lastAssistant) return `${messages.length}:none`
+    const metadata = lastAssistant.metadata as Record<string, unknown> | undefined
+    const durationMs = metadata?.duration_ms
+    const turnComplete = isAssistantTurnComplete(lastAssistant, true)
+    return `${lastAssistant.id}:${durationMs ?? 'none'}:${turnComplete ? 'complete' : 'pending'}:${messages.length}`
+  }, [messages])
+
   const pinnedAssistantMessageId = useMemo(
     () => resolvePinnedAssistantMessageId(displayMessages),
     [displayMessages],
@@ -425,9 +440,11 @@ export function TeamHrSideChatPanel({
 
   useEffect(() => {
     if (!selectedConversationId || messages.length === 0) return
+    if (isStreamActive(selectedConversationId)) return
+    if (shouldSkipStreamRecovery(selectedConversationId)) return
     if (!needsStreamRecovery(messages)) return
     void recoverConversation(selectedConversationId)
-  }, [selectedConversationId, messages])
+  }, [selectedConversationId, streamRecoveryTriggerKey])
 
   useEffect(() => {
     const scrollEl = scrollRef.current

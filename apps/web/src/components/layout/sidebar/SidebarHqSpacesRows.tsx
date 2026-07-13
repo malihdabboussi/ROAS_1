@@ -166,56 +166,62 @@ export function Section({
   return (
     <div>
       <div className="group/section rounded-spacing-2 hover:bg-hover-subtle flex items-center gap-0.5 transition-colors">
-        <div className="relative flex h-7 w-7 shrink-0 items-center justify-center">
-          <div className="flex h-full w-full items-center justify-center transition-opacity group-hover/section:pointer-events-none group-hover/section:opacity-0">
-            {campaignRow ? (
-              <IconPicker
-                className="z-10 shrink-0"
-                value={campaignRow.icon}
-                color={(campaignRow.config.icon_color as string | undefined) ?? 'default'}
-                size="sm"
-                preferAbove
-                onChange={(name) => void patchCampaignConfig(campaignRow.id, { icon: name })}
-                onColorChange={(colorId: IconColorId) =>
-                  void patchCampaignConfig(campaignRow.id, { icon_color: colorId })
-                }
-                customTrigger={
-                  <LucideIcon
-                    name={campaignRow.icon}
-                    className={`h-4 w-4 ${getIconColor(campaignRow.config.icon_color as string | undefined).textColor}`}
-                  />
-                }
-              />
-            ) : (
-              <User className="h-4 w-4 shrink-0 text-[var(--color-muted-foreground)]" aria-hidden />
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => onToggle(bucket)}
-            className="pointer-events-none absolute inset-0 flex items-center justify-center rounded text-[var(--color-muted-foreground)] opacity-0 transition-opacity hover:bg-[var(--color-hover-subtle)] hover:text-[var(--color-foreground)] group-hover/section:pointer-events-auto group-hover/section:opacity-100"
-            aria-expanded={isExpanded}
-            aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
-          >
-            <ChevronRight
-              className={`h-4 w-4 shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
-            />
-          </button>
-        </div>
         <button
           type="button"
           onClick={() => onToggle(bucket)}
-          onContextMenu={(e) => {
-            if (!campaignRow) return
-            e.preventDefault()
-            e.stopPropagation()
-            const r = e.currentTarget.getBoundingClientRect()
-            onOpenCampaignMenu(campaignRow, r)
-          }}
-          className="body-3 min-w-0 flex-1 truncate px-0 py-1 text-left font-medium text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--color-foreground)]"
+          aria-expanded={isExpanded}
+          aria-label={isExpanded ? `Collapse ${label}` : `Expand ${label}`}
         >
-          {label}
+          <ChevronRight
+            className={`h-4 w-4 shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
+          />
         </button>
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center">
+          {campaignRow ? (
+            <IconPicker
+              className="z-10 shrink-0"
+              value={campaignRow.icon}
+              color={(campaignRow.config.icon_color as string | undefined) ?? 'default'}
+              size="sm"
+              preferAbove
+              onChange={(name) => void patchCampaignConfig(campaignRow.id, { icon: name })}
+              onColorChange={(colorId: IconColorId) =>
+                void patchCampaignConfig(campaignRow.id, { icon_color: colorId })
+              }
+              customTrigger={
+                <LucideIcon
+                  name={campaignRow.icon}
+                  className={`h-4 w-4 ${getIconColor(campaignRow.config.icon_color as string | undefined).textColor}`}
+                />
+              }
+            />
+          ) : (
+            <User className="h-4 w-4 shrink-0 text-[var(--color-muted-foreground)]" aria-hidden />
+          )}
+        </div>
+        {campaignRow ? (
+          <Link
+            href={`/campaigns/${campaignRow.id}`}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              const r = e.currentTarget.getBoundingClientRect()
+              onOpenCampaignMenu(campaignRow, r)
+            }}
+            className="body-3 min-w-0 flex-1 truncate px-0 py-1 font-medium text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
+          >
+            {label}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onToggle(bucket)}
+            className="body-3 min-w-0 flex-1 truncate px-0 py-1 text-left font-medium text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
+          >
+            {label}
+          </button>
+        )}
         {campaignRow ? (
           <button
             type="button"

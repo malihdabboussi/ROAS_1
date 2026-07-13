@@ -22,8 +22,6 @@ export function SidebarHqSection({
   c: SidebarControllerReturn
   featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
 }) {
-  const [mobileListsOpen, setMobileListsOpen] = useState(false)
-  const [mobileBrainsOpen, setMobileBrainsOpen] = useState(false)
   const [spacesSearchOpen, setSpacesSearchOpen] = useState(false)
   const [spacesSearchQuery, setSpacesSearchQuery] = useState('')
   const [hiddenMenuOpen, setHiddenMenuOpen] = useState(false)
@@ -66,8 +64,15 @@ export function SidebarHqSection({
   }, [c.activeManagePanel])
 
   useEffect(() => {
-    if (!c.mobileDrawerOpen) setMobileBrainsOpen(false)
-  }, [c.mobileDrawerOpen])
+    if (!c.mobileDrawerOpen) return
+    c.syncHubMenuExpandedToRoute()
+  }, [c.mobileDrawerOpen, c.syncHubMenuExpandedToRoute])
+
+  useEffect(() => {
+    if (c.hubMenuOpen) return
+    setSpacesSearchOpen(false)
+    setSpacesSearchQuery('')
+  }, [c.hubMenuOpen])
 
   const hiddenSpaces = useMemo(
     () =>
@@ -109,32 +114,66 @@ export function SidebarHqSection({
     }
   }
 
+  const hubMenuProps = {
+    c,
+    featureUpdates,
+    spacesSearchOpen,
+    setSpacesSearchOpen,
+    spacesSearchQuery,
+    setSpacesSearchQuery,
+    spacesSearchInputRef,
+    hiddenSidebarCount,
+    hiddenEyeRef,
+    hiddenMenuOpen,
+    setHiddenMenuOpen,
+    openHiddenMenu,
+    setBrowsePanelBucket,
+    setCreateSpaceModalFor,
+    spaceUserState,
+    showAdminSections: c.isAdmin,
+  }
+
   return (
-    <div className="flex min-h-0 flex-1 overflow-visible">
+    <div className="flex h-full min-h-0 flex-1 overflow-visible">
       {c.mobileDrawerOpen ? (
-        <SidebarHqMobileDrawer
-          c={c}
-          featureUpdates={featureUpdates}
-          visibleRailItems={visibleRailItems}
-          mobileListsOpen={mobileListsOpen}
-          setMobileListsOpen={setMobileListsOpen}
-          mobileBrainsOpen={mobileBrainsOpen}
-          setMobileBrainsOpen={setMobileBrainsOpen}
-        />
+        <SidebarHqMobileDrawer c={c} featureUpdates={featureUpdates} hubMenuProps={hubMenuProps} />
       ) : (
         <div
-          className="relative flex min-h-0 flex-1 flex-row overflow-visible"
+          className="flex h-full min-h-0 flex-1 flex-row overflow-visible"
           onMouseEnter={clearSpacesFlyoutCloseTimer}
           onMouseLeave={scheduleSpacesFlyoutClose}
         >
-          <SidebarHqRail
-            c={c}
-            featureUpdates={featureUpdates}
-            visibleRailItems={visibleRailItems}
-            clearSpacesFlyoutCloseTimer={clearSpacesFlyoutCloseTimer}
-            closeHoverManageFlyout={closeHoverManageFlyout}
-          />
+          <div className="relative z-10 flex h-full shrink-0 flex-col">
+            <SidebarHqRail
+              c={c}
+              featureUpdates={featureUpdates}
+              visibleRailItems={visibleRailItems}
+              clearSpacesFlyoutCloseTimer={clearSpacesFlyoutCloseTimer}
+              closeHoverManageFlyout={closeHoverManageFlyout}
+              hubMenuProps={hubMenuProps}
+            />
+            <SidebarHqFlyouts
+              placement="hover"
+              c={c}
+              spacesSearchOpen={spacesSearchOpen}
+              setSpacesSearchOpen={setSpacesSearchOpen}
+              spacesSearchQuery={spacesSearchQuery}
+              setSpacesSearchQuery={setSpacesSearchQuery}
+              spacesSearchInputRef={spacesSearchInputRef}
+              hiddenSidebarCount={hiddenSidebarCount}
+              hiddenEyeRef={hiddenEyeRef}
+              hiddenMenuOpen={hiddenMenuOpen}
+              setHiddenMenuOpen={setHiddenMenuOpen}
+              openHiddenMenu={openHiddenMenu}
+              clearSpacesFlyoutCloseTimer={clearSpacesFlyoutCloseTimer}
+              scheduleSpacesFlyoutClose={scheduleSpacesFlyoutClose}
+              setBrowsePanelBucket={setBrowsePanelBucket}
+              setCreateSpaceModalFor={setCreateSpaceModalFor}
+              spaceUserState={spaceUserState}
+            />
+          </div>
           <SidebarHqFlyouts
+            placement="inline"
             c={c}
             spacesSearchOpen={spacesSearchOpen}
             setSpacesSearchOpen={setSpacesSearchOpen}

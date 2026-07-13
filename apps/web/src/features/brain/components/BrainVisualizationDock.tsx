@@ -33,7 +33,6 @@ type BrainDockScope = {
 }
 
 interface BrainVisualizationDockProps {
-  voiceSessionOpen: boolean
   onActivateVoice: () => void
   searchAnchorRef: RefObject<HTMLDivElement | null>
   searchInput: string
@@ -110,7 +109,6 @@ function BrainScopeActions({
 }
 
 export function BrainVisualizationDock({
-  voiceSessionOpen,
   onActivateVoice,
   searchAnchorRef,
   searchInput,
@@ -148,11 +146,9 @@ export function BrainVisualizationDock({
 
   return (
     <div className="bottom-spacing-4 absolute left-1/2 z-40 flex -translate-x-1/2 flex-col items-center">
-      {!voiceSessionOpen && (
-        <div className="mb-2">
-          <BrainVoiceTrigger onActivate={onActivateVoice} />
-        </div>
-      )}
+      <div className="mb-2">
+        <BrainVoiceTrigger onActivate={onActivateVoice} />
+      </div>
       <div ref={searchAnchorRef} className="relative z-40 mb-2 w-fit max-w-full shrink-0">
         {panelOpen && (
           <BrainSearchResultsPanel

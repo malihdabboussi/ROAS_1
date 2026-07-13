@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { VibeyChatOrb, type OrbAnimationStyle } from '@/components/vibey/vibey-chat-orb'
+import { getLastAssistantMessage, isAssistantTurnComplete } from '../../lib/chat-turn-completion'
 import {
   useChatStore,
   type FlowGenerationBlock,
@@ -131,6 +132,23 @@ export function StatusIndicator({
   const streamingMsgHasTextContent =
     !!streamingMsg?.content?.trim() ||
     orderedBlocks.some((b) => b.type === 'text' && !!b.content?.trim())
+  const streamingTurnLooksComplete = isAssistantTurnComplete(streamingMsg ?? undefined, true)
+  const lastAssistantInConversation = (() => {
+    if (!effectiveConversationId) return null
+    const msgs = messagesByConversation[effectiveConversationId]
+    if (!msgs) return null
+    return getLastAssistantMessage(msgs) ?? null
+  })()
+  const lastTurnLooksComplete = isAssistantTurnComplete(
+    lastAssistantInConversation ?? undefined,
+    true,
+  )
+  const suppressStaleRecoveryStatus =
+    (streamingTurnLooksComplete || lastTurnLooksComplete) &&
+    !streamingHasActiveToolBlock &&
+    !streamingHasActiveCompaction &&
+    activeTools.length === 0 &&
+    (isReconnecting || agentStatusMessage === 'Resuming…')
   /** Avoid orb between inline cards (artifact, etc.) and the narrative — reads as one message */
   const waitingForTextAfterRichCard =
     isStreaming &&
@@ -170,6 +188,7 @@ export function StatusIndicator({
   const awaitingContent = agentPhase === 'streaming' && !streamingMsgHasTextContent
   const showThinking =
     isStreaming &&
+    !suppressStaleRecoveryStatus &&
     (agentPhase === 'thinking' || awaitingContent) &&
     !suppressPostContentWaitingOrb &&
     !showFlowTimeline &&
@@ -180,16 +199,22 @@ export function StatusIndicator({
     !(agentPhase === 'thinking' && streamingMsgHasTextContent && !agentStatusMessage)
   const showExecuting =
     isStreaming &&
+    !suppressStaleRecoveryStatus &&
     agentPhase === 'executing' &&
     !showFlowTimeline &&
     !streamingHasThinkingTranscript &&
     !streamingHasActiveCompaction &&
     !streamingHasActiveToolBlock
   const showGeneration =
-    isStreaming && !!activeGeneration && !showFlowTimeline && !streamingHasOrderedBlocks
+    isStreaming &&
+    !suppressStaleRecoveryStatus &&
+    !!activeGeneration &&
+    !showFlowTimeline &&
+    !streamingHasOrderedBlocks
   // Gap filler only when nothing else is visible (including inline ordered-block tools in MessageBubble).
   const showGapFiller =
     isStreaming &&
+    !suppressStaleRecoveryStatus &&
     lastAgentEventAt > 0 &&
     clock - lastAgentEventAt >= 1000 &&
     !suppressPostContentWaitingOrb &&
@@ -239,7 +264,7 @@ export function StatusIndicator({
     showGapFiller,
   ])
 
-  if (isReconnecting && !isStreaming) {
+  if (isReconnecting && !isStreaming && !suppressStaleRecoveryStatus) {
     return (
       <div className="mx-2 flex items-center gap-2.5 py-0.5">
         <div className="flex h-5 w-5 shrink-0 items-center justify-center overflow-visible">

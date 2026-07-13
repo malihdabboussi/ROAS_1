@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { brainScopeHref, type BrainScopeToolbarAction } from '../lib/brain-scope-nav'
+import { requestBrainSidebarVoice } from '../lib/brain-sidebar-voice'
 import { dispatchBrainTrainModal } from '../lib/brain-training-modal.events'
 import type { BrainScopeNavOption } from './use-brain-scope-nav-options'
 
@@ -24,7 +25,7 @@ type BrainVisualizationActionsSearchParams = {
 type UseBrainVisualizationActionsInput = {
   router: BrainVisualizationActionsRouter
   searchParams: BrainVisualizationActionsSearchParams
-  selectedScope?: Pick<BrainScopeNavOption, 'brainId'>
+  selectedScope?: Pick<BrainScopeNavOption, 'agentId' | 'brainId'>
   selectedScopeId: string
   topRightScopeReady: boolean
 }
@@ -36,7 +37,6 @@ export function useBrainVisualizationActions({
   selectedScopeId,
   topRightScopeReady,
 }: UseBrainVisualizationActionsInput) {
-  const [voiceSessionOpen, setVoiceSessionOpen] = useState(false)
   const [cortexMaxOpen, setCortexMaxOpen] = useState(false)
   const [crystallizeOpen, setCrystallizeOpen] = useState(false)
 
@@ -49,7 +49,7 @@ export function useBrainVisualizationActions({
     if (action === 'add-info') {
       window.dispatchEvent(new CustomEvent('mobile-brain-add-info'))
     } else if (action === 'voice' && selectedScope?.brainId) {
-      setVoiceSessionOpen(true)
+      requestBrainSidebarVoice(selectedScope.agentId)
     } else if (selectedScope?.brainId) {
       if (action === 'train') dispatchBrainTrainModal({ scopeId: selectedScopeId })
       if (action === 'crystallize') setCrystallizeOpen(true)
@@ -57,11 +57,11 @@ export function useBrainVisualizationActions({
     }
 
     router.replace(brainScopeHref(selectedScopeId), { scroll: false })
-  }, [router, searchParams, selectedScope?.brainId, selectedScopeId, topRightScopeReady])
+  }, [router, searchParams, selectedScope?.agentId, selectedScope?.brainId, selectedScopeId, topRightScopeReady])
 
   const handleActivateVoice = useCallback(() => {
-    setVoiceSessionOpen(true)
-  }, [])
+    requestBrainSidebarVoice(selectedScope?.agentId)
+  }, [selectedScope?.agentId])
 
   const handleOpenCortexMax = useCallback(() => {
     setCortexMaxOpen(true)
@@ -84,7 +84,5 @@ export function useBrainVisualizationActions({
     handleTrainBrain,
     setCortexMaxOpen,
     setCrystallizeOpen,
-    setVoiceSessionOpen,
-    voiceSessionOpen,
   }
 }

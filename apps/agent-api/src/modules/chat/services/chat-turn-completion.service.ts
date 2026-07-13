@@ -59,6 +59,7 @@ interface PersistSuccessfulTurnInput {
   recordRunCheckpoint: RecordRunCheckpoint
   dbOp: DbOperation
   logger: CompletionLogger
+  streamedContent?: string
 }
 
 interface EmitSuccessfulTurnDoneInput {
@@ -87,6 +88,7 @@ interface FlushFinalMessageInput {
   clearFlushTimer: () => void
   dbOp: DbOperation
   logger: CompletionLogger
+  streamedContent?: string
 }
 
 interface CompleteConversationInput {
@@ -109,6 +111,15 @@ interface CompleteConversationInput {
   hasActiveWorkingSetEntries: (workingSet: ActiveWorkingSet) => boolean
   dbOp: DbOperation
   logChatFlow: (message: string) => void
+}
+
+function resolveAssistantMessageContent(
+  getAccumulatedContent: () => string,
+  streamedContent?: string,
+): string {
+  const accumulated = getAccumulatedContent()
+  const streamed = streamedContent ?? ''
+  return accumulated.length >= streamed.length ? accumulated : streamed
 }
 
 @Injectable()
@@ -167,26 +178,28 @@ export class ChatTurnCompletionService {
     }
 
     input.clearFlushTimer()
-    await input.dbOp((supabase) =>
-      this.messages.update(supabase, input.messageId, {
-        content: input.getAccumulatedContent(),
-        metadata: {
-          ...(input.toolSteps.length > 0 ? { tool_steps: input.toolSteps } : {}),
-          ...(input.orderedBlocks.length > 0
-            ? { content_blocks_ordered: structuredClone(input.orderedBlocks) }
-            : {}),
-          ...(input.effectiveContextWindowTokens
-            ? { context_window_tokens: input.effectiveContextWindowTokens }
-            : {}),
-          ...(input.timingSpans.length > 0
-            ? { timing_spans: structuredClone(input.timingSpans) }
-            : {}),
-          model_settings: input.selectedSettings.request,
-          requested_model_id: input.selectedSettings.requestedModelId,
-          resolved_model_id: input.selectedSettings.resolvedModelId,
-        },
-      }),
+    const finalContent = resolveAssistantMessageContent(
+      input.getAccumulatedContent,
+      input.streamedContent,
     )
+    await this.updateAssistantMessage(input.messageId, {
+      content: finalContent,
+      metadata: {
+        ...(input.toolSteps.length > 0 ? { tool_steps: input.toolSteps } : {}),
+        ...(input.orderedBlocks.length > 0
+          ? { content_blocks_ordered: structuredClone(input.orderedBlocks) }
+          : {}),
+        ...(input.effectiveContextWindowTokens
+          ? { context_window_tokens: input.effectiveContextWindowTokens }
+          : {}),
+        ...(input.timingSpans.length > 0
+          ? { timing_spans: structuredClone(input.timingSpans) }
+          : {}),
+        model_settings: input.selectedSettings.request,
+        requested_model_id: input.selectedSettings.requestedModelId,
+        resolved_model_id: input.selectedSettings.resolvedModelId,
+      },
+    })
     await input.recordRunCheckpoint('final', {
       summary: 'The assistant response completed successfully.',
       remainingWork: null,
@@ -194,11 +207,18 @@ export class ChatTurnCompletionService {
       lastCallInputTokens: input.resultLastCallInputTokens ?? null,
       compactionCount: input.resultCompactionCount ?? null,
       rawSnapshot: {
-        content_length: input.getAccumulatedContent().length,
+        content_length: finalContent.length,
         tool_count: input.getCompletedVisibleToolCount(),
         model_id: input.resolvedModelId ?? input.selectedSettings.resolvedModelId,
       },
     })
+  }
+
+  async updateAssistantMessage(
+    messageId: string,
+    updates: Record<string, unknown>,
+  ): Promise<void> {
+    await this.messages.update(this.svc.client, messageId, updates)
   }
 
   async emitSuccessfulTurnDone(input: EmitSuccessfulTurnDoneInput): Promise<void> {
@@ -220,8 +240,12 @@ export class ChatTurnCompletionService {
     const DEFERRED_CLEAR_MS = 30 * 60 * 1000
     setTimeout(() => this.requestContext.clear(input.conversationId), DEFERRED_CLEAR_MS)
     input.clearFlushTimer()
+    const finalContent = resolveAssistantMessageContent(
+      input.getAccumulatedContent,
+      input.streamedContent,
+    )
     const finalUpdates: Record<string, unknown> = {
-      content: input.getAccumulatedContent(),
+      content: finalContent,
       metadata: {
         ...(input.toolSteps.length > 0 ? { tool_steps: input.toolSteps } : {}),
         ...(input.orderedBlocks.length > 0
@@ -242,7 +266,7 @@ export class ChatTurnCompletionService {
       },
     }
     if (input.resolvedModelId) finalUpdates.model_id = input.resolvedModelId
-    await input.dbOp((supabase) => this.messages.update(supabase, input.messageId, finalUpdates)).catch((err) => {
+    await this.updateAssistantMessage(input.messageId, finalUpdates).catch((err) => {
       input.logger.error(`Final message save failed: ${err}`)
     })
   }

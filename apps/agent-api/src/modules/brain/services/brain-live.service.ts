@@ -195,6 +195,7 @@ export class BrainLiveService {
     conversationId?: string,
     voiceName?: string,
     accessToken?: string,
+    machineId?: string | null,
   ): LiveSession {
     this.pruneExpiredSessions()
     const session: LiveSession = {
@@ -206,6 +207,7 @@ export class BrainLiveService {
       conversationId,
       voiceName,
       accessToken,
+      machineId: machineId ?? null,
     }
     this.sessions.set(session.id, session)
     return session

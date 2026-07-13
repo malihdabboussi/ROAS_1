@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import type { UserRow } from '../types/users.types'
 
-const FLY_APP = 'vibey-runtimes'
+const FLY_APP = 'roas-runtimes'
 const FLY_MACHINE_LOGS_URL = (machineId: string) =>
   `https://fly.io/apps/${FLY_APP}/machines/${machineId}`
 

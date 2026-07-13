@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { resolveFunnelsBaseDomain } from '../../../lib/platform-defaults'
 import { ArtifactsPresentationFilesBase } from './artifacts-presentation-files.base'
 import type { PresentationCommentRow } from './artifacts.types'
 
@@ -243,7 +244,7 @@ export class ArtifactsPresentationPublishBase extends ArtifactsPresentationFiles
       }
 
       // Match funnels publish behavior: publish to the user's generated subdomain.
-      // Example: https://user-1234abcd.vibeyfunnels.com/p/my-presentation
+      // Example: https://user-1234abcd.sites.roas.io/p/my-presentation
       const subdomain = await this.ensureUserSubdomain(userId)
       return `https://${subdomain}/p/${slug}`
     })()
@@ -296,7 +297,7 @@ export class ArtifactsPresentationPublishBase extends ArtifactsPresentationFiles
     const existing = await this.artifactPresentationsRepo.findGeneratedDomain(userId)
     if (existing) return existing
 
-    const baseDomain = process.env.CLOUDFLARE_BASE_DOMAIN || 'vibeyfunnels.com'
+    const baseDomain = resolveFunnelsBaseDomain()
     let subdomain = `user-${userId.slice(0, 8)}.${baseDomain}`
 
     const conflict = await this.artifactPresentationsRepo.findDomainConflict(subdomain)

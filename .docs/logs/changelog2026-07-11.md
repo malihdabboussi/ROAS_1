@@ -21,6 +21,13 @@ Why: Updates belongs with account/settings controls; the rail card was floating 
 Impact: Profile menu opens Updates; standalone Updates icon removed from rail/mobile/studio footer; left sidebar glass card fills the column height.
 Files: `apps/web/src/components/layout/AvatarDropdown.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqMobileDrawer.tsx`, `apps/web/src/components/layout/sidebar/SidebarStudioFooter.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqSection.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqFlyouts.tsx`, `apps/web/src/components/layout/Sidebar.tsx`, `.docs/logs/changelog2026-07-11.md`
 
+## [2026-07-11 22:36] - [FIX]
+
+What: Restored Dismiss on the chat agent recommendation banner and moved "Don't show this again" under the Switch/Dismiss actions (right column), matching production layout.
+Why: Local refactor dropped Dismiss and placed the checkbox on a full-width row below the title.
+Impact: Recommendation banner shows Switch + Dismiss on the right with the persistent opt-out checkbox tucked underneath.
+Files: `apps/web/src/components/global-chat/components/ChatSurfaceRecommendation.tsx`, `.docs/logs/changelog2026-07-11.md`
+
 ## [2026-07-11 09:15] - [FEATURE]
 
 What: Added Gemini dual-key support — `GEMINI_API_KEY` (primary) with optional `GEMINI_API_KEY_FALLBACK` for 401/403 failures. Wired into brain embedding services (api + agent-api), import backfill script, ROAS secrets template, and sync script. ROAS secrets now use the working key as primary and the previously denied project key as fallback.
@@ -123,3 +130,94 @@ What: Finished ROAS production hardening pass — confirmed Vercel production on
 Why: Shared runtime only needs one warm machine; mission-worker degraded without direct Postgres; duplicate Fly machines wasted cost; stale Vercel queue obscured deploy status.
 Impact: Smoke `SMOKE_FLY=1` 5/5; env-freshness PASS; runtime profile SQL `verdict: OK`; Fly `/api/health` 200; Railway workers Online. Sentry DSN sync blocked — no ROAS DSNs in `roas-secrets.env` (Phase 5 placeholders only).
 Files: `.docs/logs/changelog2026-07-11.md` (ops via Vercel/Fly/Railway APIs — no code diff)
+
+## [2026-07-11 22:44] - [FIX]
+
+What: Fixed false chat `stream_interrupted` during long gateway prep — stall detector now treats SSE comment heartbeats as live connection activity; brain embedding credit failures no longer abort embedding results; local dev env restored (`OPENCLAW_CONFIG_PATH`, `AGENT_BACKEND_URL`, matching gateway token).
+Why: After `brain_context` completed, agent-api kept the SSE stream alive with `: heartbeat` every 25s while OpenClaw prep ran 60s+, but the client only tracked `data:` events and aborted the still-running stream; local agent-api crashed on boot without `OPENCLAW_CONFIG_PATH`.
+Impact: Production chat should complete instead of showing Resume after brain context; local `agent-api` listens on `:3003` (OpenClaw gateway still required via `pnpm dev:agent` for model output).
+Files: `apps/web/src/features/studio/services/stream-resilience.ts`, `apps/web/src/features/studio/services/stream-resilience.test.ts`, `apps/agent-api/src/modules/brain/services/embedding.service.ts`, `apps/api/src/modules/brain/services/embedding.service.ts`, `apps/agent-api/.env.example`, `apps/web/.env.local`, `apps/agent-api/.env`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 22:45] - [FIX]
+
+What: Kept local web hybrid routing — `BACKEND_URL`/`NEXT_PUBLIC_BACKEND_URL` stay on `https://api.roas.io`; only `AGENT_BACKEND_URL` is `http://localhost:3003`.
+Why: Pointing platform API at `localhost:3001` broke conversation create when `pnpm dev:back` is not running (proxy logs already used `api.roas.io`).
+Impact: Local chat can use production platform API + local agent-api again.
+Files: `apps/web/.env.local`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 22:47] - [FIX]
+
+What: Fixed local OpenClaw gateway boot — `MEMORY_CORE_PLUGIN_PATH` env for `memory-core` plugin; `dev:agent` sets repo path; Docker sets container path.
+Why: `pnpm dev:agent` crashed because `docker/openclaw.json` hardcoded `/home/node/.openclaw/extensions/memory-core` (Docker-only path).
+Impact: Local gateway starts on `:18789`; agent-api health reports `gateway: reachable`.
+Files: `docker/openclaw.json`, `package.json`, `docker/Dockerfile`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 22:50] - [FIX]
+
+What: Aligned local `apps/agent-api/.env` Supabase URL/anon key with `apps/web/.env.local` (ROAS `lhfgtsjetcardinpgouq`); restarted agent-api.
+Why: Web logged users into ROAS Supabase but agent-api still verified JWTs against Vibey dev (`qfrvykscoymiwwgysvsr`) → `JWKSNoMatchingKey` / `token_invalid` → chat toast "temporarily unavailable".
+Impact: Local chat auth should accept the same session token as web and api.roas.io.
+Files: `apps/agent-api/.env`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 22:53] - [FIX]
+
+What: Added `scripts/roas/sync-local-agent-env.sh` + `scripts/roas/verify-local-env-alignment.sh`; synced ROAS `SUPABASE_SERVICE_ROLE_KEY`, `VAULT_ENCRYPTION_KEY`, and `INTERNAL_API_TOKEN` into local `apps/agent-api/.env`.
+Why: Auth matched after URL/anon sync, but agent-api still used Vibey service-role key → `Invalid API key` → `runtime_not_ready:vibey:missing_vibey_api_actions` → toast "Something went wrong. Your message was saved — try sending again."
+Impact: Local agent definitions/sync should load; chat can proceed past prewarm/runtime readiness.
+Files: `scripts/roas/sync-local-agent-env.sh`, `scripts/roas/verify-local-env-alignment.sh`, `apps/agent-api/.env`, `apps/agent-api/.env.example`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 22:57] - [FIX]
+
+What: Fixed Vibey chat "Resuming…" stuck loop when a stream completes with visible assistant content but the client misses the `done` SSE event — `isAssistantTurnComplete` treats inactive streams with local/merged content as complete; `recoverConversation` polls merged messages; `__STREAM_INTERRUPTED__` skips recovery when content is already present.
+Why: `pollOnce` only returned `completed` when DB `duration_ms` was set, so inactive streams with delivered content looped forever and could overwrite the visible reply.
+Impact: Missed-`done` interruptions now finalize cleanly instead of infinite reconnect UI.
+Files: `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/studio/services/chat-stream-interruption.test.ts`, `.docs/logs/changelog2026-07-11.md`, `.docs/plans/agent-follow-up-work.md`
+
+## [2026-07-11 23:02] - [FIX]
+
+What: Fixed persistent chat "Resuming…" loop after missed `done` SSE — stream now finalizes when local assistant content exists; `mergeMessagesPreservingOrderedBlocks` preserves streamed content across temp/canonical id mismatch; `needsStreamRecovery` skips turns already complete without `duration_ms`.
+Why: Prior fix short-circuited `__STREAM_INTERRUPTED__` but `SpaceVibeyChatPanel` remounted recovery via `needsStreamRecovery`, and DB polling merge replaced visible local content with empty canonical rows.
+Impact: Reply stays visible after proxy stream ends; recovery no longer re-enters for completed-looking turns.
+Files: `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/studio/services/chat-stream-interruption.test.ts`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 23:05] - [FIX]
+
+What: Fixed persisted chat hydration marking visible assistant replies as reconnecting when `duration_ms` is missing. Added regression coverage for persisted assistant replies with text, ordered content blocks, fresh empty output, and stale empty output.
+Why: Live stream recovery could finalize a visible reply, but a reload/remount could still rehydrate the saved assistant turn as unfinished and trigger the "Resuming…" recovery path.
+Impact: Assistant replies that already rendered should stay visible after refresh/remount instead of being replaced by reconnect UI. Focused chat tests pass: `use-chat-store`, `chat-stream-interruption`, and `stream-resilience`.
+Files: `apps/web/src/features/studio/store/use-chat-store.ts`, `apps/web/src/features/studio/store/use-chat-store.test.ts`, `.docs/logs/changelog2026-07-11.md`, `.docs/plans/agent-follow-up-work.md`
+
+## [2026-07-11 23:06] - [DOCS]
+
+What: Replaced the chat-debug session summary with a sanitized, migration-focused record of removing legacy Vibey infrastructure, domains, credentials, database references, and runtime fallbacks from ROAS.
+Why: The requested thread export was intended to document the broader Vibey-to-ROAS separation rather than only the final chat incident.
+Impact: The new handoff distinguishes completed operational isolation from pending naming, monitoring, publishing, local-env, and repository-hygiene work without exposing secrets.
+Files: `.docs/logs/roas-vibey-removal-thread-sanitized.md`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 23:11] - [FIX]
+
+What: Hardened chat recovery by extracting the assistant-turn completion decision into a shared Studio helper used by live stream recovery and persisted store hydration. Kept the missed-`done`/visible-output regression coverage and made busy/provider overload copy say "selected model or provider" instead of implying every model is busy.
+Why: The prior failures came from multiple code paths deciding whether an assistant reply was complete in slightly different ways, which let reload/remount recovery overwrite visible responses with "Resuming…".
+Impact: Live streaming, DB polling recovery, missed-`done` cleanup, and saved-state hydration now share the same completion contract. Provider/rate-limit errors are clearer. Focused chat/error tests pass.
+Files: `apps/web/src/features/studio/lib/chat-turn-completion.ts`, `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/studio/store/use-chat-store.ts`, `apps/web/src/features/studio/services/chat-stream-interruption.test.ts`, `apps/web/src/features/studio/store/use-chat-store.test.ts`, `apps/web/src/lib/chat/chat-stream-errors.config.ts`, `apps/web/src/lib/chat/chat-stream-errors.config.test.ts`, `.docs/logs/changelog2026-07-11.md`, `.docs/plans/agent-follow-up-work.md`
+
+## [2026-07-11 23:13] - [FIX]
+
+What: Closed the remaining stale "Resuming…" path: recovery now finalizes visible assistant output when `/api/chat/status` still says active but returns no resumable `runId`, and the status indicator hides stale recovery labels once the assistant turn already has visible output.
+Why: The UI could still render `Resuming…` from stale streaming/reconnecting flags even after the answer text was visible, especially when backend run status lingered without a stream to resume.
+Impact: A completed-looking reply should no longer get visually replaced by `Resuming…` after it appears. Added regression coverage for active-status/no-run-id visible replies.
+Files: `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/studio/components/chat/StatusIndicator.tsx`, `apps/web/src/features/studio/services/chat-stream-interruption.test.ts`, `.docs/logs/changelog2026-07-11.md`, `.docs/plans/agent-follow-up-work.md`
+
+## [2026-07-11 23:14] - [FIX]
+
+What: Stopped post-stream recovery from wiping visible assistant replies — merge now preserves latest local assistant content across DB polls, recovery exits early when the turn is already complete, missed-`done` streams stamp `duration_ms`, and stream-resilience skips completed conversations.
+Why: Recovery polling replaced streamed local content with empty canonical DB rows, then re-entered the `active` branch and showed endless "Resuming…" even though agent-api had already completed the turn.
+Impact: Visible replies should stay after stream end; status polling should stop instead of looping. Tests: 26/26 in chat-stream-interruption + stream-resilience.
+Files: `apps/web/src/features/studio/lib/chat-turn-completion.ts`, `apps/web/src/features/studio/services/chat.service.ts`, `apps/web/src/features/studio/services/chat-stream-interruption.test.ts`, `apps/web/src/features/studio/services/stream-resilience.ts`, `apps/web/src/features/studio/services/stream-resilience.test.ts`, `.docs/logs/changelog2026-07-11.md`
+
+## [2026-07-11 23:16] - [FIX]
+
+What: Removed surviving legacy Vibey runtime fallbacks from ROAS funnel/form/presentation publishing, public funnel resolution, agent MCP metadata, admin Fly links/invite URLs, integration recovery links, agent product-link instructions, and visible mock data. Consolidated API and funnels domain defaults around `sites.roas.io`; made the default Cloudflare worker config ROAS-only and removed the duplicate ROAS config; added `verify-no-legacy-runtime-refs.sh` as a regression guard.
+Why: The earlier migration fixed known production paths but left independent fallback constants and a default worker config that could still route newly published content, MCP clients, admins, agents, or an accidental worker deploy back to Vibey infrastructure when environment variables were absent.
+Impact: Active ROAS API, agent-api, funnels, web, admin, OpenClaw, and apps-proxy source surfaces now pass the blocked legacy runtime-reference scan. Focused tests pass for funnel resolution/publishing, form publishing, MCP metadata/instructions, and feature-update mockups. No build was run.
+Files: `apps/funnels/src/lib/platform-urls.ts`, `apps/funnels/src/lib/resolve-domain.ts`, `apps/funnels/src/lib/resolve-domain.test.ts`, `apps/funnels/src/components/PresentationRenderer.tsx`, `apps/funnels/src/app/p/[slug]/page.tsx`, `apps/funnels/src/app/[slug]/page.tsx`, `apps/funnels/src/app/[slug]/thank-you/page.tsx`, `apps/api/src/lib/platform-defaults.ts`, `apps/api/src/modules/funnels/services/funnel-publish.service.ts`, `apps/api/src/modules/funnels/services/funnel-publish.service.test.ts`, `apps/api/src/modules/funnels/services/funnels.service.ts`, `apps/api/src/modules/forms/services/forms.service.ts`, `apps/api/src/modules/campaigns/services/artifacts-presentation-publish.base.ts`, `apps/api/src/modules/domains/integrations/cloudflare.integration.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-forms.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-forms.service.test.ts`, `apps/agent-api/src/modules/vibey-mcp/vibey-mcp-platform-defaults.ts`, `apps/agent-api/src/modules/vibey-mcp/guards/vibey-mcp-oauth.guard.ts`, `apps/agent-api/src/modules/vibey-mcp/services/vibey-mcp-instructions.service.ts`, `apps/agent-api/src/modules/vibey-mcp/services/vibey-mcp-instructions.service.test.ts`, `apps/agent-api/src/modules/vibey-mcp/controllers/vibey-mcp.controller.ts`, `apps/agent-api/src/modules/chat/services/openclaw-ui-block-text.ts`, `apps/web/src/lib/platform/platform-urls.ts`, `apps/web/src/lib/artifacts/use-funnel-menu-actions.ts`, `apps/web/src/features/studio/components/preview/FunnelToolbar.tsx`, `apps/web/src/features/updates/components/FeatureUpdateMockups.tsx`, `apps/web/src/features/updates/components/FeatureUpdateMockups.test.tsx`, `apps/web/src/features/spaces/components/contacts/ContactsView.tsx`, `apps/admin/src/features/users/components/UsersTable.tsx`, `apps/admin/src/features/waitlist/components/InviteCodesTab.tsx`, `apps/admin/src/features/platform-email/components/DomainSetupCard.tsx`, `apps/openclaw/src/agents/system-prompt.ts`, `apps/openclaw/src/agents/system-prompt.e2e.test.ts`, `workers/apps-proxy/wrangler.toml`, `workers/apps-proxy/wrangler.roas.toml`, `workers/apps-proxy/package.json`, `scripts/roas/deploy-apps-proxy.sh`, `scripts/roas/roas-secrets.env.template`, `scripts/roas/verify-no-legacy-runtime-refs.sh`, `.docs/plans/agent-follow-up-work.md`, `.docs/logs/changelog2026-07-11.md`

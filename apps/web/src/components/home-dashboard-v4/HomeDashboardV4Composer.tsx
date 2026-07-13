@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { HomeDashboardTemplateChip } from '@/components/home-dashboard-v4/HomeDashboardTemplateChip'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import {
   homeDashboardTemplate,
@@ -24,8 +25,10 @@ import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
 export function HomeDashboardV4Composer({
   selectedTemplate,
+  onSelectTemplate,
 }: {
   selectedTemplate: HomeDashboardTemplateId | null
+  onSelectTemplate: (id: HomeDashboardTemplateId | null) => void
 }) {
   const seedComposer = useGlobalChatStore((s) => s.seedComposer)
   const { data: cachedSpaceRows } = useCachedSpaces()
@@ -196,6 +199,12 @@ export function HomeDashboardV4Composer({
       spaceId={targetSpaceId}
       campaignId={activeCampaignId ?? undefined}
       plusMenuSpacePicker={plusMenuSpacePicker}
+      composerFooterAfterIntegrationsSlot={
+        <HomeDashboardTemplateChip
+          selectedTemplateId={selectedTemplate}
+          onSelectTemplate={onSelectTemplate}
+        />
+      }
       footerWrapperClassName="home-composer-v4-standard-footer"
       wrapperClass="home-composer-v4-shell bg-transparent border-0 p-0 overflow-visible"
     />

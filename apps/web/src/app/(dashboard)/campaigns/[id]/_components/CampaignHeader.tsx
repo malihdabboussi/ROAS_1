@@ -5,7 +5,9 @@ import { IconPicker, type IconColorId } from '@/components/ui/IconPicker'
 import { TabsList, TabsTrigger } from '@/components/ui/navigation/tabs'
 import type { Campaign } from '@/features/studio/types'
 import type { CampaignSaveStatus } from '../_hooks/use-campaign-autosave'
+import type { ToggleableCampaignTabId } from '../_lib/campaign-nav-tabs'
 import type { CampaignContext, CampaignResources } from '../_lib/types'
+import { CampaignTabSettingsMenu } from './CampaignTabSettingsMenu'
 
 interface CampaignHeaderProps {
   campaign: Campaign
@@ -26,6 +28,8 @@ interface CampaignHeaderProps {
   onIconChange: (icon: string) => Promise<void>
   onIconColorChange?: (colorId: IconColorId) => Promise<void>
   onRetrySave: (context: CampaignContext, resources: CampaignResources) => Promise<void>
+  visibleTabIds: ToggleableCampaignTabId[]
+  onVisibleTabIdsChange: (ids: ToggleableCampaignTabId[]) => void
 }
 
 export function CampaignHeader({
@@ -46,6 +50,8 @@ export function CampaignHeader({
   onIconChange,
   onIconColorChange,
   onRetrySave,
+  visibleTabIds,
+  onVisibleTabIdsChange,
 }: CampaignHeaderProps) {
   const tabs = isMobile
     ? navTabs.map((t) => (t.value === 'deliverables' ? { ...t, label: 'Artifacts' } : t))
@@ -114,7 +120,7 @@ export function CampaignHeader({
         </div>
       </div>
 
-      <div className="shrink-0">
+      <div className="gap-spacing-2 flex shrink-0 items-center">
         <TabsList variant="liquid" className="min-w-max">
           {tabs.map((tab) => (
             <TabsTrigger
@@ -127,6 +133,10 @@ export function CampaignHeader({
             </TabsTrigger>
           ))}
         </TabsList>
+        <CampaignTabSettingsMenu
+          visibleTabIds={visibleTabIds}
+          onVisibleTabIdsChange={onVisibleTabIdsChange}
+        />
       </div>
     </div>
   )

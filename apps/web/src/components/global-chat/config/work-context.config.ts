@@ -32,34 +32,45 @@ export function surfaceFromPathname(pathname: string): GlobalWorkSurface {
   return 'general'
 }
 
+export interface SurfaceRouteRecommendation {
+  headline: string
+  agentName: string
+  body: string
+  suggestedAgentKey: string
+}
+
 export function routeRecommendation(
   surface: GlobalWorkSurface,
   activeAgentKey: string,
-): { title: string; body: string; suggestedAgentKey: string } | null {
+): SurfaceRouteRecommendation | null {
   const suggested = defaultAgentForSurface(surface)
   if (activeAgentKey === suggested) return null
   switch (surface) {
     case 'brain':
       return {
-        title: 'Brain recommends Atlas',
+        headline: 'Brain recommends',
+        agentName: 'Atlas',
         body: 'Atlas is your Brain Scholar for knowledge and training questions.',
         suggestedAgentKey: 'atlas',
       }
     case 'team':
       return {
-        title: 'Team recommends Jaime',
-        body: 'Jaime can help with hiring, skills, and team setup.',
+        headline: 'Team recommends',
+        agentName: 'Jaime',
+        body: 'Jaime helps with hiring, skills, and getting your team set up.',
         suggestedAgentKey: 'hr',
       }
     case 'spaces':
       return {
-        title: 'Spaces work best with Vibey',
+        headline: 'Spaces work best with',
+        agentName: 'Vibey',
         body: 'Vibey can read this space and help you ship in one flow.',
         suggestedAgentKey: 'vibey',
       }
     case 'flows':
       return {
-        title: 'Flows recommends Loop',
+        headline: 'Flows recommends',
+        agentName: 'Loop',
         body: 'Loop helps you build and inspect automations.',
         suggestedAgentKey: 'loop',
       }

@@ -1,15 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { backendGet, backendPost } from '@/lib/api/backend-client'
+import { isAssistantTurnComplete } from '../lib/chat-turn-completion'
 import { useChatStore } from '../store/use-chat-store'
 import {
   abortRecovery,
   abortStream,
   applyRecoveredTimelineEvents,
   isRealAgentStreamEvent,
+  mergeMessagesPreservingOrderedBlocks,
+  needsStreamRecovery,
   recoverConversation,
   requestStopStream,
   shouldMarkConversationInterruptedForStreamError,
 } from './chat.service'
+import type { Message } from '../types'
 
 vi.mock('@/lib/utils/org-storage', () => ({
   getActiveOrgIdFromStorage: () => null,
@@ -231,8 +235,7 @@ describe('chat stream interruption classification', () => {
     expect(useChatStore.getState().streamRunsByConversation['conversation-1']).toBeUndefined()
   })
 
-  it('keeps reconnecting when status is inactive but the assistant message is still incomplete', async () => {
-    vi.useFakeTimers()
+  it('completes recovery when status is inactive and assistant has visible content without duration_ms', async () => {
     const assistantMessage = {
       id: 'message-1',
       conversation_id: 'conversation-1',
@@ -252,16 +255,313 @@ describe('chat stream interruption classification', () => {
       throw new Error(`Unexpected backendGet ${url}`)
     })
 
-    const recovery = recoverConversation('conversation-1')
+    await recoverConversation('conversation-1')
 
-    await vi.waitFor(() => {
-      expect(useChatStore.getState().streamingConversationIds).toContain('conversation-1')
-    })
-    expect(useChatStore.getState().reconnectingConversationIds).toContain('conversation-1')
+    expect(useChatStore.getState().streamingConversationIds).not.toContain('conversation-1')
+    expect(useChatStore.getState().reconnectingConversationIds).not.toContain('conversation-1')
     expect(useChatStore.getState().interruptedConversationIds).not.toContain('conversation-1')
+    expect(useChatStore.getState().streamFailureByConversation['conversation-1']).toBeUndefined()
+  })
 
-    abortRecovery('conversation-1')
-    await vi.runOnlyPendingTimersAsync()
-    await recovery
+  it('completes recovery when status is active without a resumable run and assistant has visible content', async () => {
+    const assistantMessage = {
+      id: 'message-1',
+      conversation_id: 'conversation-1',
+      role: 'assistant' as const,
+      content: 'Finished answer',
+      content_blocks: null,
+      metadata: {},
+      created_at: new Date().toISOString(),
+    }
+    vi.mocked(backendGet).mockImplementation(async (url: string) => {
+      if (url.startsWith('/api/chat/status/')) {
+        return { active: true, messageId: 'message-1', runId: null } as never
+      }
+      if (url.startsWith('/api/conversations/conversation-1/messages')) {
+        return [assistantMessage] as never
+      }
+      throw new Error(`Unexpected backendGet ${url}`)
+    })
+
+    await recoverConversation('conversation-1')
+
+    expect(useChatStore.getState().streamingConversationIds).not.toContain('conversation-1')
+    expect(useChatStore.getState().reconnectingConversationIds).not.toContain('conversation-1')
+    expect(useChatStore.getState().conversationStreamUI['conversation-1']).toBeUndefined()
+  })
+
+  it('completes recovery when DB assistant is empty but local temp message has streamed content', async () => {
+    const localAssistant = {
+      id: 'temp-1',
+      conversation_id: 'conversation-1',
+      role: 'assistant' as const,
+      content: 'Streamed answer',
+      content_blocks: null,
+      metadata: {},
+      created_at: new Date().toISOString(),
+    }
+    useChatStore.getState().setMessages('conversation-1', [
+      {
+        id: 'user-1',
+        conversation_id: 'conversation-1',
+        role: 'user',
+        content: 'hi',
+        content_blocks: null,
+        metadata: {},
+        created_at: new Date().toISOString(),
+      },
+      localAssistant,
+    ])
+
+    vi.mocked(backendGet).mockImplementation(async (url: string) => {
+      if (url.startsWith('/api/chat/status/')) {
+        return { active: false } as never
+      }
+      if (url.startsWith('/api/conversations/conversation-1/messages')) {
+        return [
+          {
+            id: 'user-1',
+            conversation_id: 'conversation-1',
+            role: 'user',
+            content: 'hi',
+            content_blocks: null,
+            metadata: {},
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: 'canonical-1',
+            conversation_id: 'conversation-1',
+            role: 'assistant',
+            content: '',
+            content_blocks: null,
+            metadata: {},
+            created_at: new Date().toISOString(),
+          },
+        ] as never
+      }
+      throw new Error(`Unexpected backendGet ${url}`)
+    })
+
+    await recoverConversation('conversation-1')
+
+    const assistant = (useChatStore.getState().messagesByConversation['conversation-1'] ?? []).find(
+      (message) => message.role === 'assistant',
+    )
+    expect(assistant?.content).toBe('Streamed answer')
+    expect(useChatStore.getState().reconnectingConversationIds).not.toContain('conversation-1')
+    expect(useChatStore.getState().conversationStreamUI['conversation-1']).toBeUndefined()
+  })
+})
+
+describe('isAssistantTurnComplete', () => {
+  const baseAssistant = {
+    id: 'message-1',
+    conversation_id: 'conversation-1',
+    role: 'assistant' as const,
+    content_blocks: null,
+    created_at: '2026-05-28T13:00:00.000Z',
+  }
+
+  it('returns false for missing or non-assistant messages', () => {
+    expect(isAssistantTurnComplete(undefined)).toBe(false)
+    expect(
+      isAssistantTurnComplete({
+        ...baseAssistant,
+        role: 'user',
+        content: 'hi',
+        metadata: {},
+      } as Message),
+    ).toBe(false)
+  })
+
+  it('returns true when duration_ms is set regardless of streamInactive', () => {
+    const message = {
+      ...baseAssistant,
+      content: '',
+      metadata: { duration_ms: 100 },
+    } as Message
+    expect(isAssistantTurnComplete(message, false)).toBe(true)
+    expect(isAssistantTurnComplete(message, true)).toBe(true)
+  })
+
+  it('returns true for visible text content when stream is inactive', () => {
+    const message = {
+      ...baseAssistant,
+      content: 'Hello',
+      metadata: {},
+    } as Message
+    expect(isAssistantTurnComplete(message, true)).toBe(true)
+    expect(isAssistantTurnComplete(message, false)).toBe(false)
+  })
+
+  it('returns true for content_blocks_ordered when stream is inactive', () => {
+    const message = {
+      ...baseAssistant,
+      content: '',
+      metadata: { content_blocks_ordered: [{ type: 'text' }] },
+    } as Message
+    expect(isAssistantTurnComplete(message, true)).toBe(true)
+    expect(isAssistantTurnComplete(message, false)).toBe(false)
+  })
+
+  it('returns false for empty assistant with no blocks when stream is inactive', () => {
+    const message = {
+      ...baseAssistant,
+      content: '',
+      metadata: {},
+    } as Message
+    expect(isAssistantTurnComplete(message, true)).toBe(false)
+  })
+})
+
+describe('mergeMessagesPreservingOrderedBlocks', () => {
+  it('preserves streamed local content when backend assistant id differs and DB row is empty', () => {
+    const localMessages: Message[] = [
+      {
+        id: 'user-1',
+        conversation_id: 'conversation-1',
+        role: 'user',
+        content: 'hi',
+        content_blocks: null,
+        metadata: {},
+        created_at: '2026-05-28T13:00:00.000Z',
+      },
+      {
+        id: 'temp-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: 'Streamed answer',
+        content_blocks: null,
+        metadata: {},
+        created_at: '2026-05-28T13:00:01.000Z',
+      },
+    ]
+    const backendMessages: Message[] = [
+      localMessages[0],
+      {
+        id: 'canonical-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: '',
+        content_blocks: null,
+        metadata: {},
+        created_at: '2026-05-28T13:00:01.000Z',
+      },
+    ]
+
+    const merged = mergeMessagesPreservingOrderedBlocks(localMessages, backendMessages)
+    const assistant = merged.find((message) => message.role === 'assistant')
+
+    expect(assistant?.id).toBe('canonical-1')
+    expect(assistant?.content).toBe('Streamed answer')
+  })
+
+  it('preserves streamed local text when backend assistant only has duration_ms metadata', () => {
+    const localMessages: Message[] = [
+      {
+        id: 'user-1',
+        conversation_id: 'conversation-1',
+        role: 'user',
+        content: 'hi',
+        content_blocks: null,
+        metadata: {},
+        created_at: '2026-05-28T13:00:00.000Z',
+      },
+      {
+        id: 'temp-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: 'Streamed answer',
+        content_blocks: null,
+        metadata: { duration_ms: 1 },
+        created_at: '2026-05-28T13:00:01.000Z',
+      },
+    ]
+    const backendMessages: Message[] = [
+      localMessages[0],
+      {
+        id: 'canonical-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: '',
+        content_blocks: null,
+        metadata: { duration_ms: 42 },
+        created_at: '2026-05-28T13:00:01.000Z',
+      },
+    ]
+
+    const merged = mergeMessagesPreservingOrderedBlocks(localMessages, backendMessages)
+    const assistant = merged.find((message) => message.role === 'assistant')
+
+    expect(assistant?.id).toBe('canonical-1')
+    expect(assistant?.content).toBe('Streamed answer')
+  })
+})
+
+describe('needsStreamRecovery', () => {
+  it('returns false when the latest assistant already has visible streamed content', () => {
+    const messages: Message[] = [
+      {
+        id: 'user-1',
+        conversation_id: 'conversation-1',
+        role: 'user',
+        content: 'hi',
+        content_blocks: null,
+        metadata: {},
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'assistant-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: 'Done without duration_ms',
+        content_blocks: null,
+        metadata: {},
+        created_at: new Date().toISOString(),
+      },
+    ]
+
+    expect(needsStreamRecovery(messages)).toBe(false)
+  })
+
+  it('returns true for a fresh empty assistant placeholder', () => {
+    const messages: Message[] = [
+      {
+        id: 'user-1',
+        conversation_id: 'conversation-1',
+        role: 'user',
+        content: 'hi',
+        content_blocks: null,
+        metadata: {},
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'assistant-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: '',
+        content_blocks: null,
+        metadata: {},
+        created_at: new Date().toISOString(),
+      },
+    ]
+
+    expect(needsStreamRecovery(messages)).toBe(true)
+  })
+
+  it('skips recovery when the latest assistant has legacy content_blocks only', () => {
+    const messages: Message[] = [
+      {
+        id: 'assistant-1',
+        conversation_id: 'conversation-1',
+        role: 'assistant',
+        content: '',
+        content_blocks: [{ type: 'text', content: 'Hello from DB blocks' }],
+        metadata: {},
+        created_at: new Date().toISOString(),
+      },
+    ]
+
+    expect(needsStreamRecovery(messages)).toBe(false)
   })
 })

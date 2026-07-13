@@ -3,8 +3,10 @@
 import { useCallback, useState } from 'react'
 import {
   HOME_DASHBOARD_TEMPLATES,
+  type HomeDashboardTemplate,
   type HomeDashboardTemplateId,
 } from '@/features/home/config/home-dashboard-v4.config'
+import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils/cn'
 
 export function HomeTemplateFan({
@@ -17,6 +19,8 @@ export function HomeTemplateFan({
   onHover?: (id: HomeDashboardTemplateId | null) => void
 }) {
   const [hoveredId, setHoveredId] = useState<HomeDashboardTemplateId | null>(null)
+  const isMobileGrid = useMediaQuery('(max-width: 767px)')
+  const isDesktopFan = useMediaQuery('(min-width: 960px)')
 
   const handleHover = useCallback(
     (id: HomeDashboardTemplateId | null) => {
@@ -26,40 +30,42 @@ export function HomeTemplateFan({
     [onHover],
   )
 
+  const rowClass = isMobileGrid
+    ? 'hd4-template-grid'
+    : isDesktopFan
+      ? 'hd4-template-fan-row'
+      : 'hd4-template-fan-row hd4-template-fan-row-scroll'
+
   return (
-    <div className="flex flex-col items-center gap-3.5">
+    <div className="flex min-w-0 flex-col items-center gap-3.5">
       <div className="hd4-template-fan-hint">Start with a template…</div>
-      <div className="hd4-template-fan-row">
+      <div className={rowClass}>
         {HOME_DASHBOARD_TEMPLATES.map((template, index) => {
-          const Icon = template.icon
           const isSelected = selected === template.id
           const isHovered = hoveredId === template.id
-          const tilt = template.tilt * 0.55
-          const translateY = Math.abs(template.tilt)
+
+          if (isMobileGrid) {
+            return (
+              <TemplateGridButton
+                key={template.id}
+                template={template}
+                isSelected={isSelected}
+                onSelect={onSelect}
+              />
+            )
+          }
 
           return (
-            <button
+            <TemplateFanButton
               key={template.id}
-              type="button"
-              onClick={() => onSelect(isSelected ? null : template.id)}
-              className={cn(
-                'hd4-template-fan-card',
-                isSelected && 'hd4-template-fan-card-selected',
-              )}
-              style={{
-                transform: isHovered
-                  ? 'rotate(0deg) translateY(-4px)'
-                  : `rotate(${tilt}deg) translateY(${translateY}px)`,
-                zIndex: isHovered ? 6 : isSelected ? 5 : index + 1,
-              }}
-              onMouseEnter={() => handleHover(template.id)}
-              onMouseLeave={() => handleHover(null)}
-            >
-              <div className="hd4-template-fan-card-icon">
-                <Icon className="h-4 w-4" aria-hidden />
-              </div>
-              <span className="hd4-template-fan-card-label">{template.label}</span>
-            </button>
+              template={template}
+              index={index}
+              isSelected={isSelected}
+              isHovered={isHovered}
+              enableFanTilt={isDesktopFan}
+              onSelect={onSelect}
+              onHover={handleHover}
+            />
           )
         })}
       </div>
@@ -71,5 +77,76 @@ export function HomeTemplateFan({
         …or start blank <span className="text-sm">→</span>
       </button>
     </div>
+  )
+}
+
+function TemplateGridButton({
+  template,
+  isSelected,
+  onSelect,
+}: {
+  template: HomeDashboardTemplate
+  isSelected: boolean
+  onSelect: (id: HomeDashboardTemplateId | null) => void
+}) {
+  const Icon = template.icon
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(isSelected ? null : template.id)}
+      className={cn('hd4-template-grid-item', isSelected && 'hd4-template-grid-item-selected')}
+    >
+      <div className="hd4-template-fan-card-icon">
+        <Icon className="h-4 w-4" aria-hidden />
+      </div>
+      <span className="hd4-template-fan-card-label">{template.label}</span>
+    </button>
+  )
+}
+
+function TemplateFanButton({
+  template,
+  index,
+  isSelected,
+  isHovered,
+  enableFanTilt,
+  onSelect,
+  onHover,
+}: {
+  template: HomeDashboardTemplate
+  index: number
+  isSelected: boolean
+  isHovered: boolean
+  enableFanTilt: boolean
+  onSelect: (id: HomeDashboardTemplateId | null) => void
+  onHover: (id: HomeDashboardTemplateId | null) => void
+}) {
+  const Icon = template.icon
+  const tilt = template.tilt * 0.55
+  const translateY = Math.abs(template.tilt)
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(isSelected ? null : template.id)}
+      className={cn('hd4-template-fan-card', isSelected && 'hd4-template-fan-card-selected')}
+      style={
+        enableFanTilt
+          ? {
+              transform: isHovered
+                ? 'rotate(0deg) translateY(-4px)'
+                : `rotate(${tilt}deg) translateY(${translateY}px)`,
+              zIndex: isHovered ? 6 : isSelected ? 5 : index + 1,
+            }
+          : undefined
+      }
+      onMouseEnter={() => onHover(template.id)}
+      onMouseLeave={() => onHover(null)}
+    >
+      <div className="hd4-template-fan-card-icon">
+        <Icon className="h-4 w-4" aria-hidden />
+      </div>
+      <span className="hd4-template-fan-card-label">{template.label}</span>
+    </button>
   )
 }

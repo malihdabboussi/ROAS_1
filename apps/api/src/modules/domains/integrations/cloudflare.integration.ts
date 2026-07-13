@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { ROAS_FUNNELS_BASE_DOMAIN } from '../../../lib/platform-defaults'
 
 interface CloudflareRecord {
   id: string
@@ -33,7 +34,7 @@ export class CloudflareIntegration {
     this.API_TOKEN = this.configService.get<string>('CLOUDFLARE_API_TOKEN') || ''
     this.ZONE_ID = this.configService.get<string>('CLOUDFLARE_ZONE_ID') || ''
     this.BASE_DOMAIN =
-      this.configService.get<string>('CLOUDFLARE_BASE_DOMAIN') || 'vibeyfunnels.com'
+      this.configService.get<string>('CLOUDFLARE_BASE_DOMAIN') || ROAS_FUNNELS_BASE_DOMAIN
   }
 
   getBaseDomain(): string {

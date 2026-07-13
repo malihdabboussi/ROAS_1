@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { getChatCreditsExhausted, setChatCreditsExhausted } from '@/lib/chat/chat-credit-state'
+import { shouldReconnectPersistedAssistant } from '../lib/chat-turn-completion'
 import type { Conversation, Message, MessageContentBlock } from '../types'
 import { useChatStore } from './use-chat-store'
 
@@ -27,6 +28,20 @@ function message(conversationId: string): Message {
     content_blocks: null,
     metadata: {},
     created_at: '2026-05-10T00:00:00.000Z',
+  }
+}
+
+function assistantMessage(
+  conversationId: string,
+  overrides: Partial<Message> = {},
+): Message {
+  return {
+    ...message(conversationId),
+    id: `assistant-${conversationId}`,
+    role: 'assistant',
+    content: '',
+    created_at: '2026-05-10T00:00:00.000Z',
+    ...overrides,
   }
 }
 
@@ -97,14 +112,11 @@ describe('useChatStore conversation visibility', () => {
   it('keeps separate thinking transcripts across stream update groups', () => {
     const conversationId = 'conversation-1'
     const messageId = 'assistant-1'
-    const assistantMessage: Message = {
-      ...message(conversationId),
+    const assistant = assistantMessage(conversationId, {
       id: messageId,
-      role: 'assistant',
-      content: '',
-    }
+    })
 
-    useChatStore.getState().setMessages(conversationId, [assistantMessage])
+    useChatStore.getState().setMessages(conversationId, [assistant])
     useChatStore
       .getState()
       .upsertThinkingTranscriptInOrderedBlocks(conversationId, messageId, 'Thought one')
@@ -137,5 +149,43 @@ describe('useChatStore conversation visibility', () => {
       state: 'complete',
     })
     expect(blocks[0]?.id).not.toBe(blocks[2]?.id)
+  })
+
+  it('does not reconnect persisted assistant replies that already have text content', () => {
+    const now = new Date('2026-05-10T00:02:00.000Z').getTime()
+
+    expect(
+      shouldReconnectPersistedAssistant(
+        assistantMessage('conversation-1', { content: 'Done answer' }),
+        now,
+      ),
+    ).toBe(false)
+  })
+
+  it('does not reconnect persisted assistant replies that already have ordered blocks', () => {
+    const now = new Date('2026-05-10T00:02:00.000Z').getTime()
+
+    expect(
+      shouldReconnectPersistedAssistant(
+        assistantMessage('conversation-1', {
+          metadata: {
+            content_blocks_ordered: [{ type: 'text', id: 'text-1', content: 'Done answer' }],
+          },
+        }),
+        now,
+      ),
+    ).toBe(false)
+  })
+
+  it('reconnects only fresh persisted assistant replies with no visible output', () => {
+    const freshNow = new Date('2026-05-10T00:02:00.000Z').getTime()
+    const staleNow = new Date('2026-05-10T00:07:00.000Z').getTime()
+
+    expect(shouldReconnectPersistedAssistant(assistantMessage('conversation-1'), freshNow)).toBe(
+      true,
+    )
+    expect(shouldReconnectPersistedAssistant(assistantMessage('conversation-1'), staleNow)).toBe(
+      false,
+    )
   })
 })

@@ -5,6 +5,7 @@ import { useMemo } from 'react'
 import { SpaceVibeyChatPanel } from '@/features/spaces/components/chat/SpaceVibeyChatPanel'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
+import { surfaceFromPathname } from '../config/work-context.config'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 
 export function GlobalChatPanel() {
@@ -40,9 +41,19 @@ export function GlobalChatPanel() {
       <div className="min-h-0 flex-1">
         <SpaceVibeyChatPanel
           key={panelKey}
+          chatSurface={surfaceFromPathname(pathname)}
           spaceId={spaceId}
           campaignId={spaceId ? (workContext.campaignId ?? activeSpace?.campaign_id ?? null) : null}
           campaignName={isSpacesRoute ? (activeSpace?.title ?? null) : null}
+          brainContext={
+            workContext.surface === 'brain' && workContext.brainAwarenessContext
+              ? {
+                  brainId: workContext.brainId ?? null,
+                  scopeLabel: workContext.brainScopeLabel ?? 'Brain',
+                  awarenessContext: workContext.brainAwarenessContext,
+                }
+              : undefined
+          }
           channelContext={
             isChannelRoute && channelId
               ? {

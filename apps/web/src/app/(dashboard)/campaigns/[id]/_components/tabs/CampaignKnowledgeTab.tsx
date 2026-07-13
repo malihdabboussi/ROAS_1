@@ -1,8 +1,10 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Check, ChevronDown } from 'lucide-react'
+import { ArrowRight, Brain, Check, ChevronDown, ExternalLink, Plus, Users } from 'lucide-react'
+import { brainScopeHref } from '@/features/brain/lib/brain-scope-nav'
 import type { MissionAgent } from '@/features/mission-control/types'
 import {
   DEFAULT_AGENT_DOMAINS,
@@ -11,14 +13,16 @@ import {
 import { ThemeSettingsModal } from '@/features/themes/components/ThemeSettingsModal'
 import type { Theme } from '@/features/themes/types'
 
-type KnowledgeSection = 'assets' | 'access'
+type KnowledgeSection = 'assets' | 'brain' | 'access'
 
 const SECTIONS = [
   { id: 'assets', label: 'Brand Assets' },
+  { id: 'brain', label: 'Campaign Brain' },
   { id: 'access', label: 'Agent Access' },
 ] as const
 
 interface CampaignKnowledgeTabProps {
+  campaignId: string
   offers: any[]
   avatars: any[]
   theme: Theme | null
@@ -28,9 +32,11 @@ interface CampaignKnowledgeTabProps {
   avatarPage: number
   setAvatarPage: (value: number) => void
   dashboardAgents: MissionAgent[]
+  onManageTeam: () => void
 }
 
 export function CampaignKnowledgeTab({
+  campaignId,
   offers,
   avatars,
   theme,
@@ -40,7 +46,9 @@ export function CampaignKnowledgeTab({
   avatarPage,
   setAvatarPage,
   dashboardAgents,
+  onManageTeam,
 }: CampaignKnowledgeTabProps) {
+  const router = useRouter()
   const [activeSection, setActiveSection] = useState<KnowledgeSection>('assets')
   const [themeModalOpen, setThemeModalOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -105,18 +113,56 @@ export function CampaignKnowledgeTab({
       </div>
 
       <div className="space-y-spacing-4 min-w-0 flex-1 overflow-y-auto pb-8">
-        <div className="surface-card border-border rounded-spacing-3 p-spacing-4 border">
-          <p className="body-3 text-muted-foreground">
-            Result, Purpose, Strategy, and Off-limits live in{' '}
-            <Link
-              href="/home"
-              className="text-primary font-semibold underline-offset-4 hover:underline"
-            >
-              Mission Control → AutoPilot
-            </Link>
-            .
-          </p>
-        </div>
+        {activeSection === 'brain' && (
+          <div className="card-glass flex flex-col gap-6 p-5 sm:p-8">
+            <div>
+              <h2 className="title-h4 text-foreground mb-2">Campaign Brain</h2>
+              <p className="body-3 text-muted-foreground">
+                This client&apos;s strategy, briefs, call notes, and deliverable context. Result,
+                Purpose, Strategy, and Off-limits live here — add and browse knowledge in Brain.
+              </p>
+            </div>
+            <div className="gap-spacing-4 grid grid-cols-1 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => router.push(brainScopeHref(`campaign:${campaignId}`))}
+                className="surface-card border-border rounded-spacing-3 hover:bg-hover-subtle gap-spacing-3 flex flex-col border p-5 text-left transition-colors"
+              >
+                <Brain className="text-primary h-6 w-6" />
+                <span className="body-2 text-foreground font-semibold">Open Campaign Brain</span>
+                <span className="body-4 text-muted-foreground">
+                  View the knowledge graph, memories, and sources for this client.
+                </span>
+                <span className="body-4 text-primary inline-flex items-center gap-1 font-medium">
+                  Open in Brain <ExternalLink className="h-3.5 w-3.5" />
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(brainScopeHref(`campaign:${campaignId}`, 'add-info'))
+                }
+                className="surface-card border-border rounded-spacing-3 hover:bg-hover-subtle gap-spacing-3 flex flex-col border p-5 text-left transition-colors"
+              >
+                <Plus className="text-primary h-6 w-6" />
+                <span className="body-2 text-foreground font-semibold">Add knowledge</span>
+                <span className="body-4 text-muted-foreground">
+                  Import a brief, doc, link, or call transcript into this client&apos;s brain.
+                </span>
+                <span className="body-4 text-primary inline-flex items-center gap-1 font-medium">
+                  Add in Brain <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </button>
+            </div>
+            <p className="body-4 text-muted-foreground border-border border-t pt-4">
+              Org-wide buyer insights (ICP, objections across clients) are separate — see{' '}
+              <Link href="/brain?scope=customer" className="text-primary hover:underline">
+                Customer Brain
+              </Link>
+              .
+            </p>
+          </div>
+        )}
 
         {activeSection === 'assets' && (
           <div className="card-glass gap-spacing-6 flex flex-col p-5 sm:p-8">
@@ -364,9 +410,23 @@ export function CampaignKnowledgeTab({
 
         {activeSection === 'access' && (
           <div className="card-glass flex flex-col p-5 sm:p-8">
-            <div className="mb-1 flex items-center justify-between">
-              <h2 className="title-h4 text-foreground">Agent Access</h2>
-              <div className="flex -space-x-2">
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="title-h4 text-foreground">Agent Access</h2>
+                <p className="body-3 text-muted-foreground mt-1">
+                  Which knowledge domains each agent can access during missions.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onManageTeam}
+                className="button-glass-primary body-3 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium"
+              >
+                <Users className="h-4 w-4" />
+                Manage team
+              </button>
+            </div>
+            <div className="mb-6 flex -space-x-2">
                 {dashboardAgents
                   .filter((agent) => agent.level === 'c_level' || agent.level === 'manager')
                   .map((agent) => (
@@ -388,11 +448,7 @@ export function CampaignKnowledgeTab({
                       )}
                     </div>
                   ))}
-              </div>
             </div>
-            <p className="body-3 text-muted-foreground mb-6">
-              Which knowledge domains each agent can access during missions.
-            </p>
 
             <div className="rounded-spacing-3 border-border overflow-x-auto border">
               <table className="w-full text-left">
@@ -481,11 +537,18 @@ export function CampaignKnowledgeTab({
                     })}
                   {dashboardAgents.filter((agent) => agent.level !== 'system').length === 0 && (
                     <tr>
-                      <td
-                        colSpan={KNOWLEDGE_DOMAINS.length + 1}
-                        className="body-3 text-muted-foreground py-8 text-center"
-                      >
-                        No agents hired yet.
+                      <td colSpan={KNOWLEDGE_DOMAINS.length + 1} className="py-8 text-center">
+                        <p className="body-3 text-muted-foreground mb-3">
+                          No agents on this campaign yet.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={onManageTeam}
+                          className="button-glass-primary body-3 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add agents
+                        </button>
                       </td>
                     </tr>
                   )}

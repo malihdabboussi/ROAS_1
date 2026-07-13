@@ -12,6 +12,7 @@ vi.mock('./chat.service', () => ({
   isStreamActive: vi.fn(),
   recoverConversation: vi.fn(),
   recoverStalledConversation: vi.fn(),
+  shouldSkipStreamRecovery: vi.fn().mockReturnValue(false),
 }))
 
 describe('stream stall resilience', () => {
@@ -41,7 +42,7 @@ describe('stream stall resilience', () => {
     expect(recoverStalledConversation).toHaveBeenCalledWith('conversation-1')
   })
 
-  it('recovers an active stream after the agent event timeout even when bytes continue', () => {
+  it('does not recover when SSE heartbeats continue after the last agent event', () => {
     const now = Date.now()
     vi.mocked(isStreamActive).mockReturnValue(true)
     useChatStore.setState({
@@ -57,7 +58,7 @@ describe('stream stall resilience', () => {
 
     handleStreamStalls(now)
 
-    expect(recoverStalledConversation).toHaveBeenCalledWith('conversation-1')
+    expect(recoverStalledConversation).not.toHaveBeenCalled()
   })
 
   it('recovers a streaming conversation when the local stream is gone', () => {

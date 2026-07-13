@@ -1,14 +1,36 @@
 /** Tabs shown in campaign HQ nav (excludes Settings — always visible). */
-export const TOGGLEABLE_CAMPAIGN_TAB_IDS = ['dashboard', 'finance', 'knowledge'] as const
+export const TOGGLEABLE_CAMPAIGN_TAB_IDS = [
+  'overview',
+  'dashboard',
+  'knowledge',
+  'reporting',
+] as const
 
 export type ToggleableCampaignTabId = (typeof TOGGLEABLE_CAMPAIGN_TAB_IDS)[number]
 
-/** Default: all toggleable tabs except Finance. */
-export const DEFAULT_VISIBLE_CAMPAIGN_TABS: ToggleableCampaignTabId[] = ['dashboard', 'knowledge']
+/** Default agency client hub: overview + brand + reporting; work (missions) included. */
+export const DEFAULT_VISIBLE_CAMPAIGN_TABS: ToggleableCampaignTabId[] = [
+  'overview',
+  'dashboard',
+  'knowledge',
+  'reporting',
+]
 
 const ORDER_INDEX: Record<string, number> = Object.fromEntries(
   TOGGLEABLE_CAMPAIGN_TAB_IDS.map((id, i) => [id, i]),
 )
+
+/** Legacy tab id stored on older campaigns. */
+const LEGACY_TAB_ALIASES: Record<string, ToggleableCampaignTabId> = {
+  finance: 'reporting',
+}
+
+export function normalizeCampaignTabId(id: string): ToggleableCampaignTabId | null {
+  const aliased = LEGACY_TAB_ALIASES[id] ?? id
+  return TOGGLEABLE_CAMPAIGN_TAB_IDS.includes(aliased as ToggleableCampaignTabId)
+    ? (aliased as ToggleableCampaignTabId)
+    : null
+}
 
 export function sortVisibleTabs(ids: string[]): string[] {
   return [...ids].sort((a, b) => (ORDER_INDEX[a] ?? 99) - (ORDER_INDEX[b] ?? 99))
@@ -18,17 +40,19 @@ export function readVisibleCampaignTabs(config: unknown): ToggleableCampaignTabI
   const c = config as Record<string, unknown> | null | undefined
   const raw = c?.visible_campaign_tabs
   if (!Array.isArray(raw)) return [...DEFAULT_VISIBLE_CAMPAIGN_TABS]
-  const allowed = new Set<string>(TOGGLEABLE_CAMPAIGN_TAB_IDS)
-  const filtered = raw.filter(
-    (x): x is ToggleableCampaignTabId =>
-      typeof x === 'string' && allowed.has(x as ToggleableCampaignTabId),
-  )
-  if (filtered.length === 0) return [...DEFAULT_VISIBLE_CAMPAIGN_TABS]
-  return sortVisibleTabs(filtered) as ToggleableCampaignTabId[]
+  const normalized = raw
+    .map((x) => (typeof x === 'string' ? normalizeCampaignTabId(x) : null))
+    .filter((x): x is ToggleableCampaignTabId => x != null)
+  const deduped = [...new Set(normalized)]
+  if (deduped.length === 0) return [...DEFAULT_VISIBLE_CAMPAIGN_TABS]
+  return sortVisibleTabs(deduped) as ToggleableCampaignTabId[]
 }
 
 export const CAMPAIGN_TAB_LABELS: Record<ToggleableCampaignTabId, string> = {
-  dashboard: 'Missions',
-  finance: 'Finance',
-  knowledge: 'Knowledge',
+  overview: 'Overview',
+  dashboard: 'Work',
+  knowledge: 'Brand & Knowledge',
+  reporting: 'Reporting',
 }
+
+export const DEFAULT_CAMPAIGN_TAB: ToggleableCampaignTabId = 'overview'

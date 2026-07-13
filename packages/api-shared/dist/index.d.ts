@@ -49,6 +49,8 @@ export type { AgentRuntimeEnv, AgentRuntimeRedisEnvKey, AgentRuntimeWorkload, } 
 export { buildSafeFallbackFunnelTsx, normalizeFunnelPageSource, programmaticTsxRepair, validateFunnelTsxContract, recoverFunnelTsx, prepareFunnelPageForWrite, } from './services/funnel-tsx-contract';
 export type { FunnelTsxValidationCode, FunnelTsxValidationResult, NormalizeFunnelPageSourceInput, NormalizeFunnelPageSourceResult, RecoverFunnelTsxInput, RecoverFunnelTsxResult, FunnelWriteContractInput, FunnelWriteContractResult, ProgrammaticTsxRepairInput, ProgrammaticTsxRepairResult, } from './services/funnel-tsx-contract';
 export { isModelStrategy, resolveFallbackForStrategy, resolveModelForStrategy, } from './services/model-strategy';
+export { resolveGeminiApiKeys, shouldTryNextGeminiApiKey, GEMINI_API_KEY_FALLBACK_ENV_KEYS } from './services/gemini-api-keys';
+export type { GeminiEnvReader } from './services/gemini-api-keys';
 export type { ModelStrategy, ResolvedStrategyModel, StrategyModelReasoningEffort, StrategyModelSettings, TaskType, } from './services/model-strategy';
 export { UserAgentApiClient, UserMachineUnreachableError, UserMachineCircuitOpenError, defaultProbeReachable, USER_AGENT_API_DEFAULTS, } from './services/user-agent-api-client';
 export type { AgentApiTarget, AgentApiLogger, UserAgentApiClientDeps, UserAgentApiFetchOptions, } from './services/user-agent-api-client';

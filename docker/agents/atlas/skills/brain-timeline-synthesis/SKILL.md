@@ -43,26 +43,15 @@ Do not create a timeline for routine ingestion, isolated facts, or every episode
 2. Read supporting objects for the target: memories, evidence chunks, pages, beliefs, perspectives, avatars, company objects, or SK sources.
 3. Decide whether a timeline exists or should be created with `create_brain_timeline`.
 4. Upsert only curated items with `upsert_brain_timeline_items`.
-5. Use `dedupe_key` per durable milestone, not per run. Prefer keys like `perspective:<id>:formation` or `company_object:<id>:effective_from`.
+5. Use `dedupe_key` per durable milestone, not per run.
 6. Archive stale timelines with `archive_brain_timeline` only when the target itself is obsolete or merged.
 
 ## Brain-Specific Rules
 
-### User Brain
-
-Build timelines for identity arcs, belief/perspective evolution, high-value topics, and pages that need historical narrative. Use evidence windows from supporting memories and perspectives.
-
-### Customer Brain
-
-Build timelines for contacts, accounts, objections, lifecycle transitions, avatar shifts, splits, and merges. Use `occurred_at` from interaction windows, not memory `created_at`.
-
-### Agent Brain
-
-Build timelines for imported sources, skill/domain growth, stale knowledge, and superseded SK entries. The source import is the event; SK entries inherit source time and validity.
-
-### Company Brain
-
-Build timelines for durable company cognition: decisions, standards, protocols, tensions, moves, anti-patterns, signals, and objects. Use `effective_from` / `effective_until` for company truth and evidence windows for source support.
+- User Brain: build timelines for identity arcs, belief/perspective evolution, high-value topics, and pages that need historical narrative.
+- Customer Brain: build timelines for contacts, accounts, objections, lifecycle transitions, avatar shifts, splits, and merges. Use `occurred_at` from interaction windows, not memory `created_at`.
+- Agent Brain: build timelines for imported sources, skill/domain growth, stale knowledge, and superseded SK entries.
+- Company Brain: build timelines for durable decisions, standards, protocols, tensions, moves, anti-patterns, signals, and objects. Use `effective_from` / `effective_until` for company truth.
 
 ## Quality Bar
 

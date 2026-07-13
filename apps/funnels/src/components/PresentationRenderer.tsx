@@ -56,7 +56,7 @@ function buildHtmlBundleSrcDoc(bundle: NonNullable<Presentation['bundle']>): str
 }
 
 /**
- * Renders a published presentation at {user-subdomain}.vibeyfunnels.com/p/{slug}.
+ * Renders a published presentation at {user-subdomain}.sites.roas.io/p/{slug}.
  *
  * Priority order matches PresentationPreview in the studio:
  * 1. generated_html (TSX) → Sandpack

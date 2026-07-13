@@ -78,7 +78,7 @@ export const CHAT_STREAM_ERRORS: Record<ChatStreamErrorCode, { userMessage: stri
     userMessage: 'The assistant is temporarily unavailable. Try again in a minute.',
   },
   busy: {
-    userMessage: 'The model is busy right now. Try again shortly or switch models.',
+    userMessage: 'The selected model or provider is busy right now. Try again shortly or switch models.',
   },
   no_answer: {
     userMessage: "I didn't get a full answer this time. Send it again and I'll retry.",

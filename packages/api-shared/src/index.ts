@@ -138,6 +138,8 @@ export {
   resolveFallbackForStrategy,
   resolveModelForStrategy,
 } from './services/model-strategy'
+export { resolveGeminiApiKeys, shouldTryNextGeminiApiKey, GEMINI_API_KEY_FALLBACK_ENV_KEYS } from './services/gemini-api-keys'
+export type { GeminiEnvReader } from './services/gemini-api-keys'
 export type {
   ModelStrategy,
   ResolvedStrategyModel,

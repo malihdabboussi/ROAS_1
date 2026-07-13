@@ -82,8 +82,14 @@ export class MessagesRepository {
   }
 
   async update(supabase: SupabaseClient, id: string, updates: Record<string, unknown>) {
-    const { error } = await supabase.from('messages').update(updates).eq('id', id)
+    const { data, error } = await supabase
+      .from('messages')
+      .update(updates)
+      .eq('id', id)
+      .select('id')
+      .maybeSingle()
     if (error) throw new Error(`DB error: ${error.message}`)
+    if (!data) throw new Error(`Message update affected 0 rows: ${id}`)
   }
 
   async findById(supabase: SupabaseClient, id: string) {

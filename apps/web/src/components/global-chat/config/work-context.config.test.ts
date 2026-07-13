@@ -59,4 +59,14 @@ describe('global chat storage key', () => {
     writePersistedGlobalChat({ collapsed: true, activeAgentKey: 'atlas' })
     expect(readPersistedGlobalChat()).toEqual({ collapsed: true, activeAgentKey: 'atlas' })
   })
+
+  it('persists per-surface recommendation dismissals without duplicates', async () => {
+    const { readRecDismissedSurfaces, addRecDismissedSurface } =
+      await import('../lib/global-chat-storage')
+    expect(readRecDismissedSurfaces()).toEqual([])
+    expect(addRecDismissedSurface('brain')).toEqual(['brain'])
+    expect(addRecDismissedSurface('brain')).toEqual(['brain'])
+    expect(addRecDismissedSurface('team')).toEqual(['brain', 'team'])
+    expect(readRecDismissedSurfaces()).toEqual(['brain', 'team'])
+  })
 })

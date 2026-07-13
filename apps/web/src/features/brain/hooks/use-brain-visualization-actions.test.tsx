@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { requestBrainSidebarVoice } from '../lib/brain-sidebar-voice'
 import { dispatchBrainTrainModal } from '../lib/brain-training-modal.events'
 import type { BrainScopeNavOption } from './use-brain-scope-nav-options'
 import { useBrainVisualizationActions } from './use-brain-visualization-actions'
@@ -8,7 +9,12 @@ vi.mock('../lib/brain-training-modal.events', () => ({
   dispatchBrainTrainModal: vi.fn(),
 }))
 
+vi.mock('../lib/brain-sidebar-voice', () => ({
+  requestBrainSidebarVoice: vi.fn(),
+}))
+
 const dispatchBrainTrainModalMock = vi.mocked(dispatchBrainTrainModal)
+const requestBrainSidebarVoiceMock = vi.mocked(requestBrainSidebarVoice)
 
 function scopeOption(overrides: Partial<BrainScopeNavOption> = {}): BrainScopeNavOption {
   return {
@@ -64,18 +70,16 @@ describe('useBrainVisualizationActions', () => {
     })
   })
 
-  it('opens voice sessions from URL actions and from dock callbacks', async () => {
+  it('routes voice URL actions and dock callbacks into sidebar chat voice', async () => {
     const { result, replace } = renderActionsHook({ action: 'voice' })
 
     await waitFor(() => {
-      expect(result.current.voiceSessionOpen).toBe(true)
+      expect(requestBrainSidebarVoiceMock).toHaveBeenCalledWith(null)
       expect(replace).toHaveBeenCalledWith('/brain?scope=user', { scroll: false })
     })
 
-    act(() => result.current.setVoiceSessionOpen(false))
-    expect(result.current.voiceSessionOpen).toBe(false)
     act(() => result.current.handleActivateVoice())
-    expect(result.current.voiceSessionOpen).toBe(true)
+    expect(requestBrainSidebarVoiceMock).toHaveBeenCalledTimes(2)
   })
 
   it('dispatches mobile add-info URL actions without requiring a brain id', async () => {

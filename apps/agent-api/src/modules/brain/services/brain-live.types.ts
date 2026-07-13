@@ -17,6 +17,7 @@ export interface LiveSession {
   voiceName?: string
   accessToken?: string
   campaignId?: string | null
+  machineId?: string | null
 }
 
 export const BRAIN_LIVE_ACTIONS = [

@@ -1,7 +1,8 @@
 import { headers } from 'next/headers'
+import { resolveFunnelsBaseDomain } from './platform-urls'
 import { getServiceClient } from './supabase'
 
-const BASE_DOMAIN = process.env.CLOUDFLARE_BASE_DOMAIN || 'vibeyfunnels.com'
+const BASE_DOMAIN = resolveFunnelsBaseDomain()
 
 type DomainCacheEntry = {
   userId: string | null
@@ -19,7 +20,7 @@ const CACHE_MISS_TTL_MS = 5 * 60 * 1000
  *
  * Supports:
  * 1. Custom domain: mydomain.com → lookup domains table
- * 2. Subdomain: user-xxx.vibeyfunnels.com → lookup domains table
+ * 2. Subdomain: user-xxx.sites.roas.io → lookup domains table
  *
  * Returns the user_id and optional funnel_id constraint.
  * Results are cached in-memory (10 min for hits, 5 min for misses).
@@ -85,7 +86,7 @@ export async function resolveDomain(): Promise<{
 /**
  * Resolve a funnel page by slug + page type.
  * If userId is set (from subdomain), constrains to that user's funnels.
- * If not, looks up globally (for vibeyfunnels.com/{slug} direct access).
+ * If not, looks up globally (for sites.roas.io/{slug} direct access).
  */
 export async function resolveFunnelPage(
   slug: string,
@@ -271,7 +272,7 @@ export async function resolveFunnelPageForFunnelSlug(
 }
 
 /**
- * For direct vibeyfunnels.com/{slug} access (no subdomain),
+ * For direct sites.roas.io/{slug} access (no subdomain),
  * resolve by funnel slug instead of page slug.
  */
 export async function resolveFunnelBySlug(

@@ -6,11 +6,15 @@
  *   pnpm import:brain-embeddings -- --owner-email=test@gmail.com
  *   pnpm import:brain-embeddings -- --owner-email=test@gmail.com --table=memories --limit=100
  *
- * Env: scripts/roas/roas-secrets.env (SUPABASE_*, GEMINI_API_KEY)
+ * Env: scripts/roas/roas-secrets.env (SUPABASE_*, GEMINI_API_KEY, GEMINI_API_KEY_FALLBACK)
  */
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import {
+  resolveGeminiApiKeys,
+  shouldTryNextGeminiApiKey,
+} from '../../packages/api-shared/src/services/gemini-api-keys'
 
 const BLOCKED_HOSTS = new Set(['qfrvykscoymiwwgysvsr.supabase.co'])
 const DEFAULT_EXPECTED_HOST = 'lhfgtsjetcardinpgouq.supabase.co'
@@ -110,11 +114,10 @@ function assertSafeTarget(supabaseUrl: string, expectedHost: string): void {
   }
 }
 
-async function embed(text: string, apiKey: string, model: string): Promise<number[] | null> {
+async function embed(text: string, apiKeys: string[], model: string): Promise<number[] | null> {
   const cleaned = text.trim().slice(0, MAX_TEXT_CHARS)
   if (!cleaned) return null
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`
   const body = {
     content: { parts: [{ text: cleaned }] },
     outputDimensionality: EMBEDDING_DIMENSIONS,
@@ -122,30 +125,39 @@ async function embed(text: string, apiKey: string, model: string): Promise<numbe
   }
 
   let lastErr = ''
-  for (let attempt = 1; attempt <= 12; attempt++) {
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (res.status === 429 || res.status === 503) {
-        const wait = Math.min(2 ** attempt * 1000, 60_000)
-        await new Promise((r) => setTimeout(r, wait))
-        lastErr = `${res.status}`
-        continue
+  for (let keyIndex = 0; keyIndex < apiKeys.length; keyIndex += 1) {
+    const apiKey = apiKeys[keyIndex]
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`
+
+    for (let attempt = 1; attempt <= 12; attempt++) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+        if (shouldTryNextGeminiApiKey(res.status) && keyIndex < apiKeys.length - 1) {
+          lastErr = `${res.status}`
+          break
+        }
+        if (res.status === 429 || res.status === 503) {
+          const wait = Math.min(2 ** attempt * 1000, 60_000)
+          await new Promise((r) => setTimeout(r, wait))
+          lastErr = `${res.status}`
+          continue
+        }
+        if (!res.ok) {
+          const txt = await res.text()
+          throw new Error(`Gemini ${res.status}: ${txt.slice(0, 200)}`)
+        }
+        const data = (await res.json()) as { embedding?: { values?: number[] } }
+        const values = data.embedding?.values
+        if (!values?.length) return null
+        return values
+      } catch (err) {
+        lastErr = err instanceof Error ? err.message : String(err)
+        await new Promise((r) => setTimeout(r, Math.min(2 ** attempt * 1000, 60_000)))
       }
-      if (!res.ok) {
-        const txt = await res.text()
-        throw new Error(`Gemini ${res.status}: ${txt.slice(0, 200)}`)
-      }
-      const data = (await res.json()) as { embedding?: { values?: number[] } }
-      const values = data.embedding?.values
-      if (!values?.length) return null
-      return values
-    } catch (err) {
-      lastErr = err instanceof Error ? err.message : String(err)
-      await new Promise((r) => setTimeout(r, Math.min(2 ** attempt * 1000, 60_000)))
     }
   }
   throw new Error(`embed failed: ${lastErr}`)
@@ -229,7 +241,7 @@ async function processTable(
   key: TableKey,
   spec: TableSpec,
   rows: Row[],
-  apiKey: string,
+  apiKeys: string[],
   model: string,
   concurrency: number,
   dryRun: boolean,
@@ -245,7 +257,7 @@ async function processTable(
       if (idx >= rows.length) return
       const row = rows[idx]
       try {
-        const vec = await embed(row.text, apiKey, model)
+        const vec = await embed(row.text, apiKeys, model)
         if (!vec) {
           skipped++
           continue
@@ -285,10 +297,10 @@ async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2))
   const supabaseUrl = process.env.SUPABASE_URL?.trim()
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
-  const geminiKey = process.env.GEMINI_API_KEY?.trim()
+  const geminiKeys = resolveGeminiApiKeys((key) => process.env[key])
   if (!supabaseUrl || !supabaseKey)
     throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-  if (!geminiKey) throw new Error('Missing GEMINI_API_KEY')
+  if (!geminiKeys.length) throw new Error('Missing GEMINI_API_KEY')
   assertSafeTarget(supabaseUrl, args.expectedHost)
 
   const model = process.env.EMBEDDING_MODEL?.trim() || DEFAULT_MODEL
@@ -297,6 +309,7 @@ async function main(): Promise<void> {
   })
 
   console.log(`Embedding backfill → ${args.ownerEmail} @ ${new URL(supabaseUrl).host}`)
+  console.log(`Gemini keys configured: ${geminiKeys.length} (primary + fallback)`)
   const brainIds = await resolveBrainIds(supabase, args.ownerEmail)
   console.log(`Brains in scope: ${brainIds.length}`)
 
@@ -316,7 +329,7 @@ async function main(): Promise<void> {
       key,
       spec,
       rows,
-      geminiKey,
+      geminiKeys,
       model,
       args.concurrency,
       args.dryRun,

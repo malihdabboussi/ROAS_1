@@ -33,7 +33,7 @@ export function FeatureUpdateMockup({ title }: { title: string }) {
 function TeamMockup() {
   return (
     <div style={shell}>
-      <Chrome url="vibey.im/team" />
+      <Chrome url="roas.io/team" />
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, padding: 2 }}>
         {[
           { l: 'Strategist', c: C.em },
@@ -67,7 +67,7 @@ function TeamMockup() {
 function SkillsMockup() {
   return (
     <div style={shell}>
-      <Chrome url="vibey.im/skills" />
+      <Chrome url="roas.io/skills" />
       <div
         style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, padding: '2px 3px' }}
       >
@@ -98,7 +98,7 @@ function SkillsMockup() {
 function BrainMockup() {
   return (
     <div style={shell}>
-      <Chrome url="vibey.im/brain" />
+      <Chrome url="roas.io/brain" />
       <div
         style={{
           flex: 1,
@@ -203,7 +203,7 @@ function OrgMockup() {
 function CampaignsMockup() {
   return (
     <div style={shell}>
-      <Chrome url="vibey.im/campaigns" />
+      <Chrome url="roas.io/campaigns" />
       <div
         style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, padding: '2px 3px' }}
       >
@@ -229,7 +229,7 @@ function CampaignsMockup() {
 function MissionControlMockup() {
   return (
     <div style={shell}>
-      <Chrome url="vibey.im/missions" />
+      <Chrome url="roas.io/missions" />
       <div
         style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, padding: '2px 3px' }}
       >
@@ -273,7 +273,7 @@ function MissionControlMockup() {
 function GenericMockup() {
   return (
     <div style={shell}>
-      <Chrome url="vibey.im" />
+      <Chrome url="roas.io" />
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Icon d={ICONS.zap} color={C.em} size={10} />
       </div>

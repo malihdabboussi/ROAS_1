@@ -7,7 +7,7 @@
     "dev:admin": "turbo dev --filter=@vibey/admin",
     "dev:back": "turbo dev --filter=@vibey/api",
     "dev:agentapi": "OPENROUTER_API_KEY=$(node -p \"require('fs').readFileSync('apps/api/.env','utf8').match(/^OPENROUTER_API_KEY=(.*)$/m)[1].trim()\") OPENCLAW_CONFIG_PATH=$PWD/docker/openclaw.json AGENTS_BASE_DIR=$PWD/docker/agents PROJECTS_BASE_DIR=$PWD/.runtime/user-projects OPENCLAW_GATEWAY_TOKEN=local-dev-gateway-token pnpm --filter @vibey/agent-api run dev",
-    "dev:agent": "OPENROUTER_API_KEY=$(node -p \"require('fs').readFileSync('apps/api/.env','utf8').match(/^OPENROUTER_API_KEY=(.*)$/m)[1].trim()\") OPENCLAW_CONFIG_PATH=$PWD/docker/openclaw.json AGENTS_BASE_DIR=$PWD/docker/agents PROJECTS_BASE_DIR=$PWD/.runtime/user-projects VIBEY_PLUGIN_PATH=$PWD/docker/tools/vibey-backend VIBEY_BACKEND_URL=http://localhost:3003 OPENCLAW_GATEWAY_TOKEN=local-dev-gateway-token pnpm --filter openclaw run gateway:dev:headless",
+    "dev:agent": "OPENROUTER_API_KEY=$(node -p \"require('fs').readFileSync('apps/api/.env','utf8').match(/^OPENROUTER_API_KEY=(.*)$/m)[1].trim()\") OPENCLAW_CONFIG_PATH=$PWD/docker/openclaw.json AGENTS_BASE_DIR=$PWD/docker/agents PROJECTS_BASE_DIR=$PWD/.runtime/user-projects VIBEY_PLUGIN_PATH=$PWD/docker/tools/vibey-backend MEMORY_CORE_PLUGIN_PATH=$PWD/apps/openclaw/extensions/memory-core VIBEY_BACKEND_URL=http://localhost:3003 OPENCLAW_GATEWAY_TOKEN=local-dev-gateway-token pnpm --filter openclaw run gateway:dev:headless",
     "dev:website": "turbo dev --filter=@vibey/website",
     "dev:docs": "turbo dev --filter=@vibey/docs",
     "build": "turbo build",

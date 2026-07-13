@@ -8,6 +8,7 @@ import {
   moveArtifactToCampaign,
   type Campaign,
 } from '@/lib/campaigns'
+import { buildPublishedFunnelUrl } from '@/lib/platform/platform-urls'
 import {
   ARTIFACT_MENU_TOAST_ERRORS,
   ARTIFACT_MENU_TOAST_SUCCESS,
@@ -74,8 +75,7 @@ export function useFunnelMenuActions({
   }, [])
 
   const isPublished = funnel.status === 'published'
-  const liveUrl =
-    funnel.published_url || (funnel.slug ? `https://vibeyfunnels.com/${funnel.slug}` : null)
+  const liveUrl = funnel.published_url || (funnel.slug ? buildPublishedFunnelUrl(funnel.slug) : null)
 
   const copyToClipboard = useCallback(async (text: string, label: string) => {
     try {

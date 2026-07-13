@@ -2614,7 +2614,7 @@ Found while: Fixing recoverable queued chat stream interruptions after an intern
 Files:
 
 - apps/web/src/features/studio/services/chat.service.ts
-  Evidence: `wc -l` reports `chat.service.ts` at 2534 LOC after the scoped recovery-state fix, far above the 600 LOC general file ceiling and the 300 LOC utility/service target used by the frontend architecture guide.
+  Evidence: `wc -l` reports `chat.service.ts` at 2619 LOC after the 2026-07-11 missed-`done` recovery fix (+41 LOC), far above the 600 LOC general file ceiling and the 300 LOC utility/service target used by the frontend architecture guide.
   Needed work: Extract stream sending, stream resume, DB polling recovery, timeline replay, and message CRUD into focused services so reconnect fixes do not require touching the monolithic Studio chat service.
   Deferred because: The incident fix needed to change the existing recovery branch in place to avoid disturbing the broader Studio chat surface. Splitting stream orchestration would be a separate behavior-locked refactor.
 
@@ -5951,9 +5951,22 @@ Files:
 
 - `apps/web/src/features/studio/services/chat.service.ts`
 
-Evidence: `wc -l` reports `chat.service.ts` at 2545 LOC after the focused merge fix, far above the 600 LOC project-architecture limit. The file owns prewarm, recovery, conversation CRUD, message fetching, SSE send handling, and post-stream reconciliation.
+Evidence: `wc -l` reports `chat.service.ts` at 2706 LOC after the focused 2026-07-11 stale-`Resuming…` fixes, far above the 600 LOC project-architecture limit. The file owns prewarm, recovery, conversation CRUD, message fetching, SSE send handling, and post-stream reconciliation.
 Needed work: Split chat streaming/reconciliation, recovery, prewarm, and conversation CRUD into focused services/modules with existing behavior locked by tests.
 Deferred because: The current incident fix needed the smallest safe patch to prevent visible streamed responses from being dropped; decomposing this file would be broad and higher risk mid-incident.
+
+## 2026-07-11 - Studio Chat Interruption Test Split
+
+Status: Open
+Found while: Adding regression coverage for stale active chat recovery showing "Resuming…" after visible assistant output.
+Feature/App: Web Studio chat tests
+Files:
+
+- `apps/web/src/features/studio/services/chat-stream-interruption.test.ts`
+
+Evidence: `wc -l` reports `chat-stream-interruption.test.ts` at 526 LOC after the focused recovery regression tests. The file now covers stream classification, recovery polling, ordered-block merge behavior, assistant-turn completion, and recovery eligibility.
+Needed work: Split pure completion/merge helper tests into a focused helper test file and keep recovery polling behavior in the service test.
+Deferred because: The current incident fix needed regression coverage beside the existing recovery tests without widening the change into a test-suite reorganization.
 
 ## 2026-07-08 - Home Dashboard v4 Composer Split
 
@@ -5981,3 +5994,112 @@ Files:
 Evidence: Mockup Approval chip (`Ask every time` / `Approve safe actions`) is rendered with local state only. Existing composer access/policy controls live in the ChatInput plus menu policy surface, not a dedicated approval preset.
 Needed work: Wire the v4 Approval chip to the real composer policy / personal-account approval contract and persist per conversation or home seed.
 Deferred because: Visual v4 parity and preserving send/attachment/space behavior were the priority for this pass.
+
+## 2026-07-11 - SpaceVibeyChatPanel LOC (pre-existing, over limit)
+
+Status: Open
+Found while: Fixing the global-chat surface agent recommendation banner (Switch/Don't-show-again/roster-aware).
+Feature/App: Web global chat / spaces chat panel
+Files:
+
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`
+
+Evidence: `wc -l` reports ~2280 LOC, far above the project-architecture component limit. This change added ~25 LOC (store push mirror + agent-switch listener + surface-aware Loop inclusion) but did not create the overage.
+Needed work: Split the panel into focused units (conversation/list state, agent-switch/seed wiring, composer/send, header/toolbar) behind a thin container.
+Deferred because: The requested fix was scoped to the recommendation banner behavior; a full decomposition of this critical 2k+ LOC file is out of scope and risky to bundle here.
+
+## 2026-07-11 - [ROAS/INFRA] Phase 2 domain fallback edits blocked by arch gate
+
+Status: Open
+Found while: Phase 2 ROAS domain remediation commit `198441a0`.
+Feature/App: ROAS web platform URLs
+Files:
+
+- `apps/web/src/features/billing/components/CreditPurchaseDialog.tsx`
+- `apps/web/src/features/team/containers/WidgetBuilderModal.tsx`
+- `apps/web/src/features/team/containers/AgentWidgetSection.tsx`
+- `apps/web/src/features/settings/components/settings-content/useIntegrations.ts`
+- `apps/web/src/features/projects/components/ProjectPage.tsx`
+
+Evidence: Pre-commit `architecture:check` failed when these files were staged — `CreditPurchaseDialog.tsx` 471 LOC (>400), `WidgetBuilderModal.tsx` 1387 LOC (>600), and cross-feature import violations on the other three. Local edits already swap govibey/vibey fallbacks to `@/lib/platform/platform-urls` helpers but remain unstaged.
+Needed work: Either split/refactor the over-limit containers first, or land the one-line ROAS URL swaps in a dedicated arch-remediation batch, then commit.
+Deferred because: Phase 2 commit had to ship the API/funnels/auth/public-agent core without bundling unrelated arch debt fixes.
+
+## 2026-07-11 - Studio Chat Store LOC (pre-existing, over limit)
+
+Status: Open
+Found while: Fixing persisted chat hydration re-entering "Resuming…" for visible assistant replies without `duration_ms`.
+Feature/App: Web Studio chat
+Files:
+
+- `apps/web/src/features/studio/store/use-chat-store.ts`
+
+Evidence: `wc -l` reports `use-chat-store.ts` at 2312 LOC after extracting the assistant-turn completion check, far above the 600 LOC project-architecture limit. The file owns conversations, messages, streaming state, ordered content blocks, timeline UI, persistence, hydration, queues, credits, and selectors.
+Needed work: Split persistence/hydration helpers, ordered-block mutations, stream UI state, queue/draft state, and selectors into focused modules with existing behavior locked by tests.
+Deferred because: The current incident fix needed the smallest safe patch to stop completed-looking replies from re-entering recovery; decomposing this critical store would be broad and higher risk mid-incident.
+
+## 2026-07-11 - ROAS legacy-removal touched-file LOC debt
+
+Status: Open
+Found while: Removing active Vibey runtime/domain fallbacks from ROAS.
+Feature/App: Funnels resolver and Admin users
+Files:
+
+- `apps/funnels/src/lib/resolve-domain.ts`
+- `apps/admin/src/features/users/components/UsersTable.tsx`
+
+Evidence: `wc -l` reports `resolve-domain.ts` at 685 LOC and `UsersTable.tsx` at 488 LOC, above the applicable utility/component limits. Other touched over-limit files (`FunnelToolbar.tsx`, `ContactsView.tsx`, and OpenClaw `system-prompt.ts`) already have open entries in this log.
+Needed work: Split funnel query families from host resolution/cache behavior, and split the admin users table columns/row actions from the table container, preserving current behavior with focused tests.
+Deferred because: The requested security/integrity fix changed only legacy fallback constants and visible placeholder strings; structural decomposition would widen a routing remediation into unrelated behavior-risk work.
+
+## 2026-07-11 - Remaining non-runtime Vibey repository/history scrub
+
+Status: Open
+Found while: Repository-wide ROAS legacy-removal audit.
+Feature/App: Repository hygiene, historical assets, docs, and branding
+Files:
+
+- `apps/website/**`
+- `apps/docs/**`
+- `product-video/**`
+- `docker/fly.runtime.toml`
+- `docker/fly.runtime.staging.toml`
+- historical `.docs/**` and `supabase/migrations/**`
+
+Evidence: The broad scan still finds legacy branding/domains and old Supabase signed asset URLs outside the active runtime guard. Historical migrations and logs intentionally preserve prior values; website/product-video assets include signed URLs tied to the old project; generic Fly configs still name Vibey apps even though ROAS deploy scripts use `docker/fly.roas.runtime.toml`.
+Needed work: Decide which historical records must remain immutable, migrate or replace old-project media assets, make the default Fly config ROAS-safe without breaking staging intent, rebrand deployed docs/website surfaces, and run a dedicated full-git-history secret scanner with credential rotation for any verified exposure.
+Deferred because: Safe replacement requires asset ownership/source confirmation and deployment-account decisions; blind string replacement could break media, historical migration integrity, or the intended staging environment.
+
+## 2026-07-12 - useSidebarController LOC over component-adjacent hook budget
+
+Status: Open
+Found while: HQ hub menu feature pass (`hubMenuOpen`, accordion state, lazy section data loading).
+Feature/App: Web layout / HQ sidebar
+Files: `apps/web/src/components/layout/sidebar/useSidebarController.ts` (728 lines)
+Evidence: Project architecture hook limit is 300 LOC; file grew with hub menu state/effects while already carrying campaigns, spaces, projects, and studio sidebar concerns.
+Needed work: Extract hub menu state into `useSidebarHubMenu.ts`, campaigns/spaces fetch toggles into focused sub-hooks, and keep `useSidebarController` as composition only.
+Deferred because: Hub menu shipped as additive state; splitting the controller safely requires a dedicated refactor pass with regression coverage beyond sidebar section tests.
+
+## 2026-07-12 - [WEB/BRAIN] Fly live-voice WebSocket machine pinning
+
+Status: Open
+Found while: Brain live voice connection error investigation
+Feature/App: Web Brain voice + agent-api BrainLiveGateway
+Files:
+
+- `apps/web/src/features/brain/hooks/use-brain-live-session.ts`
+- `apps/agent-api/src/modules/brain/gateways/brain-live.gateway.ts`
+- `apps/agent-api/src/modules/brain/services/brain-live.service.ts`
+  Evidence: Live sessions are in-memory per Fly machine; HTTP live-session is pinned with `fly-force-instance-id`, but browser WebSocket cannot send that header, so pooled runtimes can miss the session or land on a machine without BrainLiveGateway.
+  Needed work: Add a WS-capable proxy that forwards `fly-force-instance-id`, or persist live-session tickets in Redis/Supabase so any full-profile runtime can resume the session safely.
+  Deferred because: Local-dev routing bug and composer UX were the immediate user-facing failures; production pinning needs infra/runtime design beyond this fix.
+
+## 2026-07-12 - useBrainLiveSession LOC over hook budget
+
+Status: Open
+Found while: Brain live voice WebSocket fix
+Feature/App: Web Brain voice
+Files: `apps/web/src/features/brain/hooks/use-brain-live-session.ts` (610 lines)
+Evidence: Project architecture hard limit is 600 LOC; hook already exceeded budget before this pass.
+Needed work: Extract WS connect/teardown and message dispatch into focused sub-hooks while keeping the public hook API stable.
+Deferred because: Voice routing fix was scoped to URL resolution and error handling only.

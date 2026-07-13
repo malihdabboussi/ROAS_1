@@ -50,5 +50,6 @@ dst.write_text('\n'.join(rows) + '\n')
 print(f'Prepared {len(rows)} Fly secrets')
 PY
 
-"${FLY}" secrets import --app "${APP}" < "${TMP}"
-echo "Fly secrets imported for ${APP}"
+"${FLY}" secrets import --app "${APP}" --stage < "${TMP}"
+"${FLY}" secrets deploy --app "${APP}"
+echo "Fly secrets staged and deployed for ${APP}"

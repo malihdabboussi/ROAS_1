@@ -19,6 +19,7 @@ import { SidebarTeam2Flyout } from './SidebarTeam2Flyout'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 export function SidebarHqFlyouts({
+  placement = 'all',
   c,
   spacesSearchOpen,
   setSpacesSearchOpen,
@@ -36,6 +37,7 @@ export function SidebarHqFlyouts({
   setCreateSpaceModalFor,
   spaceUserState,
 }: {
+  placement?: 'all' | 'inline' | 'hover'
   c: SidebarControllerReturn
   spacesSearchOpen: boolean
   setSpacesSearchOpen: Dispatch<SetStateAction<boolean>>
@@ -53,9 +55,13 @@ export function SidebarHqFlyouts({
   setCreateSpaceModalFor: Dispatch<SetStateAction<{ campaignId: string | null } | null>>
   spaceUserState: ReturnType<typeof useSpaceUserState>
 }) {
+  const showInline = placement === 'all' || placement === 'inline'
+  const showHover = (placement === 'all' || placement === 'hover') && !c.hubMenuOpen
+
   return (
     <>
-      {c.activeManagePanel &&
+      {showInline &&
+        c.activeManagePanel &&
         c.activeManagePanel !== 'spaces' &&
         c.activeManagePanel !== 'team2' &&
         c.activeManagePanel !== 'brain' && (
@@ -118,7 +124,7 @@ export function SidebarHqFlyouts({
             )}
           </InlineManageFlyoutPanel>
         )}
-      {c.activeManagePanel === 'team2' && (
+      {showHover && c.activeManagePanel === 'team2' && (
         <HoverPanel
           c={c}
           onMouseEnter={clearSpacesFlyoutCloseTimer}
@@ -127,7 +133,7 @@ export function SidebarHqFlyouts({
           <SidebarTeam2Flyout pathname={c.pathname} />
         </HoverPanel>
       )}
-      {c.activeManagePanel === 'brain' && (
+      {showHover && c.activeManagePanel === 'brain' && (
         <HoverPanel
           c={c}
           onMouseEnter={clearSpacesFlyoutCloseTimer}
@@ -144,7 +150,7 @@ export function SidebarHqFlyouts({
           </Suspense>
         </HoverPanel>
       )}
-      {c.activeManagePanel === 'spaces' && (
+      {showHover && c.activeManagePanel === 'spaces' && (
         <HoverPanel
           c={c}
           onMouseEnter={clearSpacesFlyoutCloseTimer}
@@ -277,7 +283,7 @@ function InlineManageFlyoutPanel({
 
   return (
     <div
-      className={`flex min-w-0 items-stretch overflow-hidden py-3 pl-1.5 pr-1.5 transition-[width,padding] duration-300 ease-out ${
+      className={`flex h-full min-h-0 min-w-0 items-stretch overflow-hidden py-3 pl-1.5 pr-1.5 transition-[width,padding] duration-300 ease-out ${
         isPanelClosing ? 'w-0 pl-0 pr-0' : 'w-[248px]'
       }`}
     >

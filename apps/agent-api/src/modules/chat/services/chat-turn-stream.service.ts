@@ -73,6 +73,7 @@ interface RunChatTurnStreamInput {
 
 export interface ChatTurnStreamOutcome {
   toolSteps: ToolStep[]
+  streamedContent?: string
   resolvedModelId?: string
   lastInputTokensActual?: number
   resultLastCallInputTokens?: number
@@ -235,6 +236,7 @@ export class ChatTurnStreamService {
 
     return {
       toolSteps,
+      streamedContent: result.content,
       resolvedModelId,
       lastInputTokensActual,
       resultLastCallInputTokens,

@@ -71,7 +71,7 @@ export function InviteCodesTab() {
   }
 
   const copyUrl = (code: string, id: string) => {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.vibey.im'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.roas.io'
     const url = `${appUrl}/join?code=${encodeURIComponent(code)}`
     void navigator.clipboard.writeText(url)
     setCopiedId(id)

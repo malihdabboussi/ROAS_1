@@ -461,6 +461,7 @@ export class ChatServiceCollaborators {
         this.deps.requestContext,
         this.getChatRunCheckpointService(),
         this.getChatProgressiveStreamService(),
+        this.deps.svc,
       )
     }
     return this.chatTurnStreamingStateService

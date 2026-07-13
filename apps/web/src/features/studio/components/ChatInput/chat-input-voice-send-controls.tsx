@@ -106,8 +106,13 @@ export function ChatInputVoiceSendControls({
     (mode: ComposerVoiceMode) => {
       setDefaultMode(mode)
       writeComposerVoiceDefault(spaceId, mode)
+      if (mode === 'live' && liveVoiceAvailable) {
+        clearCloseTimer()
+        setMenuOpen(false)
+        onVoiceStart?.()
+      }
     },
-    [spaceId],
+    [clearCloseTimer, liveVoiceAvailable, onVoiceStart, spaceId],
   )
 
   const runDefaultVoiceAction = useCallback(() => {

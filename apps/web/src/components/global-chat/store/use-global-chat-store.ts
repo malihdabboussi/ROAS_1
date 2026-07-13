@@ -20,6 +20,16 @@ import {
 } from '../lib/global-chat-storage'
 
 export const GLOBAL_CHAT_SEED_EVENT = 'vibey:global-chat-seed'
+export const GLOBAL_CHAT_AGENT_SWITCH_EVENT = 'vibey:global-chat-agent-switch'
+export const GLOBAL_CHAT_VOICE_START_EVENT = 'vibey:global-chat-voice-start'
+
+export interface GlobalChatVoiceStartDetail {
+  agentKey: string
+}
+
+export interface GlobalChatAgentSwitchDetail {
+  agentKey: string
+}
 
 export interface GlobalChatSeedDetail {
   content: string
@@ -54,12 +64,14 @@ interface GlobalChatStore {
   roster: TeamRosterEntry[]
   rosterLoaded: boolean
   pendingSeed: GlobalChatSeedDetail | null
+  pendingVoiceStart: GlobalChatVoiceStartDetail | null
   hideForHumanDm: boolean
   conversationListMode: 'scoped' | 'all'
   setCollapsed: (collapsed: boolean) => void
   setWidthPercent: (widthPercent: number) => void
   setRailIntent: (intent: GlobalChatRailIntent) => void
   setActiveAgentKey: (agentKey: string) => void
+  requestAgentSwitch: (agentKey: string) => void
   setWorkContext: (patch: Partial<GlobalWorkContext>) => void
   setSuggestedWorkContext: (ctx: GlobalWorkContext | null) => void
   syncRouteContext: (pathname: string) => void
@@ -71,6 +83,8 @@ interface GlobalChatStore {
   }) => void
   seedComposer: (detail: GlobalChatSeedDetail) => void
   consumePendingSeed: () => GlobalChatSeedDetail | null
+  requestVoiceStart: (agentKey: string, workContext?: Partial<GlobalWorkContext>) => void
+  consumePendingVoiceStart: () => GlobalChatVoiceStartDetail | null
   setHideForHumanDm: (hide: boolean) => void
   setConversationListMode: (mode: 'scoped' | 'all') => void
   openConversationList: () => void
@@ -90,6 +104,7 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
   roster: [],
   rosterLoaded: false,
   pendingSeed: null,
+  pendingVoiceStart: null,
   hideForHumanDm: false,
   conversationListMode: 'all',
 
@@ -114,6 +129,18 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
   setActiveAgentKey: (agentKey) => {
     writePersistedGlobalChat({ activeAgentKey: agentKey })
     set({ activeAgentKey: agentKey })
+  },
+
+  requestAgentSwitch: (agentKey) => {
+    writePersistedGlobalChat({ activeAgentKey: agentKey })
+    set({ activeAgentKey: agentKey })
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent<GlobalChatAgentSwitchDetail>(GLOBAL_CHAT_AGENT_SWITCH_EVENT, {
+          detail: { agentKey },
+        }),
+      )
+    }
   },
 
   setWorkContext: (patch) => {
@@ -181,6 +208,26 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
   consumePendingSeed: () => {
     const pending = get().pendingSeed
     if (pending) set({ pendingSeed: null })
+    return pending
+  },
+
+  requestVoiceStart: (agentKey, workContext) => {
+    const detail: GlobalChatVoiceStartDetail = { agentKey }
+    get().expandAndFocus({
+      agentKey,
+      workContext: workContext ?? { surface: 'general' },
+    })
+    set({ pendingVoiceStart: detail })
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent<GlobalChatVoiceStartDetail>(GLOBAL_CHAT_VOICE_START_EVENT, { detail }),
+      )
+    }
+  },
+
+  consumePendingVoiceStart: () => {
+    const pending = get().pendingVoiceStart
+    if (pending) set({ pendingVoiceStart: null })
     return pending
   },
 

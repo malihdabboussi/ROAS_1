@@ -655,7 +655,7 @@ export const ContactsView = forwardRef<ContactsViewHandle, ContactsViewProps>(fu
                 </div>
                 <div className="space-y-spacing-1 min-w-0 flex-1 text-left">
                   <div className="body-3 text-foreground truncate font-medium">Jane Smith</div>
-                  <div className="typo-caption text-muted-foreground truncate">jane@vibey.im</div>
+                  <div className="typo-caption text-muted-foreground truncate">jane@roas.io</div>
                 </div>
               </div>
             </div>

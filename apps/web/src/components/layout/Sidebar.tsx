@@ -77,8 +77,8 @@ export function Sidebar(props: SidebarProps) {
         } md:relative md:z-50 md:flex md:h-full md:overflow-visible ${c.desktopWidth}`}
       >
         <div
-          className={`flex flex-1 flex-col ${
-            c.sidebarMode === 'hq' ? 'min-h-0 overflow-visible' : 'overflow-hidden'
+          className={`flex h-full min-h-0 flex-1 flex-col ${
+            c.sidebarMode === 'hq' ? 'overflow-visible' : 'overflow-hidden'
           }`}
         >
           {c.sidebarMode === 'studio' ? (

@@ -34,7 +34,7 @@ export function DomainSetupCard({
             className="rounded-spacing-2 px-spacing-3 py-spacing-2 body-2 text-foreground min-w-[200px] border border-[var(--border)] bg-[var(--background)]"
             value={domain}
             onChange={(e) => setDomain(e.target.value)}
-            placeholder="vibey.im"
+            placeholder="roas.io"
             required
           />
         </div>

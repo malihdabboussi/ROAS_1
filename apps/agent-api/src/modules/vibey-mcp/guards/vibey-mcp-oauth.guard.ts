@@ -1,5 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common'
 import { VibeyMcpTokenIntrospectionService } from '../services/vibey-mcp-token-introspection.service'
+import { resolveMcpResourceUrl } from '../vibey-mcp-platform-defaults'
 
 @Injectable()
 export class VibeyMcpOAuthGuard implements CanActivate {
@@ -24,7 +25,7 @@ export class VibeyMcpOAuthGuard implements CanActivate {
   }
 
   private resourceMetadataUrl(): string {
-    const resource = process.env.MCP_RESOURCE_URL ?? 'https://mcp.vibey.im'
+    const resource = resolveMcpResourceUrl()
     const origin = new URL(resource).origin
     return `${origin}/.well-known/oauth-protected-resource`
   }

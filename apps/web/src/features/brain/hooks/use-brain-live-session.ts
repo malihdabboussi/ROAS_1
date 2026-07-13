@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { backendPost } from '@/lib/api/backend-client'
 import { useChatStore } from '@/lib/chat/studio-chat-runtime-adapter'
+import {
+  buildBrainLiveWsUrl,
+  describeBrainLiveWsClose,
+  resolveBrainLiveWsOrigin,
+} from '@/lib/brain/brain-live-ws-url'
 import { AudioPlaybackQueue } from '../lib/audio-playback'
 import {
   checkMicPermission,
@@ -33,6 +38,7 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
   const [toolCallEvents, setToolCallEvents] = useState<ToolCallEvent[]>([])
   const [error, setError] = useState<string | null>(null)
   const audioLevelRef = useRef(0)
+  const micInputLevelRef = useRef(0)
   const [isMuted, setIsMuted] = useState(false)
 
   const wsRef = useRef<WebSocket | null>(null)
@@ -101,6 +107,7 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
       playbackRef.current = null
     }
     audioLevelRef.current = 0
+    micInputLevelRef.current = 0
     if (wsRef.current) {
       try {
         wsRef.current.close()
@@ -135,10 +142,12 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
         const {
           sessionId,
           wsUrl: machineWsBase,
+          machineId,
           delegations,
         } = await backendPost<{
           sessionId: string
           wsUrl: string | null
+          machineId?: string | null
           delegations: LiveSessionDelegationSnapshot[]
         }>('/api/brain/live-session', {
           scope: scope ?? { type: 'user' },
@@ -186,13 +195,12 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
         playbackRef.current = playback
 
         const uid = await getUserId()
-        const backendOrigin =
-          machineWsBase ??
-          process.env.NEXT_PUBLIC_API_WS_URL ??
-          (typeof window !== 'undefined' && window.location.hostname === 'localhost'
-            ? 'ws://localhost:3003'
-            : `wss://${window.location.host}`)
-        const wsUrl = `${backendOrigin}/api/brain/live-ws?session=${sessionId}&userId=${encodeURIComponent(uid)}`
+        const backendOrigin = resolveBrainLiveWsOrigin({
+          machineWsBase,
+          publicWsUrl: process.env.NEXT_PUBLIC_API_WS_URL,
+          windowHostname: typeof window !== 'undefined' ? window.location.hostname : undefined,
+        })
+        const wsUrl = buildBrainLiveWsUrl(backendOrigin, sessionId, uid, machineId)
 
         const ws = new WebSocket(wsUrl)
         ws.binaryType = 'arraybuffer'
@@ -218,7 +226,7 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
             switch (msg.type) {
               case 'ready':
                 updateState('listening')
-                startMicCapture(stream, ws, isMutedRef)
+                startMicCapture(stream, ws, isMutedRef, micInputLevelRef)
                 animFrameRef.current = requestAnimationFrame(pollAmplitude)
                 break
 
@@ -502,13 +510,21 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
         }
 
         ws.onerror = () => {
+          if (stateRef.current === 'error') return
           setError('Connection error')
           cleanup()
           updateState('error')
         }
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
           if (mountedRef.current && stateRef.current !== 'idle' && stateRef.current !== 'error') {
+            const closeMessage = describeBrainLiveWsClose(event.code, event.reason)
+            if (closeMessage) {
+              setError(closeMessage)
+              cleanup()
+              updateState('error')
+              return
+            }
             cleanup()
             updateState('idle')
           }
@@ -584,6 +600,7 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
     activeToolLabel,
     toolCallEvents,
     audioLevelRef,
+    micInputLevelRef,
     error,
     isMuted,
     delegationTasks,

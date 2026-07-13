@@ -140,4 +140,41 @@ describe('ChatTurnTerminalService', () => {
       streamService.run.mock.invocationCallOrder[0],
     )
   })
+
+  it('passes streamed content to persistence when progressive accumulation is empty', async () => {
+    const { completionService, service, streamService } = buildService()
+    streamService.run.mockResolvedValueOnce({
+      toolSteps: [],
+      streamedContent: 'Recovered from OpenClaw',
+      resolvedModelId: 'anthropic/claude-opus-4.6',
+      resultLastCallInputTokens: 50,
+      effectiveContextWindowTokens: 128_000,
+      contextBreakdown: finalBreakdown,
+    })
+    const input = buildInput({
+      streamingState: {
+        setModelStreamStartedAt: vi.fn(),
+        getAccumulatedContent: vi.fn(() => ''),
+        getCompletedVisibleToolCount: vi.fn(() => 0),
+        toolSteps: [],
+        orderedBlocks: [],
+        clearFlushTimer: vi.fn(),
+        recordRunCheckpoint: vi.fn(),
+        progressiveSend: vi.fn(),
+      },
+    })
+
+    await service.run(input as never)
+
+    expect(completionService.persistSuccessfulTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        streamedContent: 'Recovered from OpenClaw',
+      }),
+    )
+    expect(completionService.flushFinalMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        streamedContent: 'Recovered from OpenClaw',
+      }),
+    )
+  })
 })

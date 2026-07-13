@@ -94,6 +94,7 @@ export class ChatTurnTerminalService {
     let resultCompactionCount: number | undefined
     let contextBreakdown: ContextBreakdown | undefined
     let terminalRunStatus: ChatProcessTerminalStatus | 'active' = 'active'
+    let streamedContent: string | undefined
     const donePayload: Record<string, unknown> = {
       message_id: input.messageId,
       credits_pending: true,
@@ -168,6 +169,7 @@ export class ChatTurnTerminalService {
         input_items: input.inputArray.length,
       })
       input.streamingState.toolSteps = streamOutcome.toolSteps
+      streamedContent = streamOutcome.streamedContent
       resolvedModelId = streamOutcome.resolvedModelId
       lastInputTokensActual = streamOutcome.lastInputTokensActual
       resultLastCallInputTokens = streamOutcome.resultLastCallInputTokens
@@ -203,6 +205,7 @@ export class ChatTurnTerminalService {
         recordRunCheckpoint: input.streamingState.recordRunCheckpoint,
         dbOp: input.dbOp,
         logger: input.logger,
+        streamedContent: streamOutcome.streamedContent,
       })
       terminalRunStatus = 'done'
       await this.completionService.emitSuccessfulTurnDone({
@@ -278,6 +281,7 @@ export class ChatTurnTerminalService {
         clearFlushTimer: input.streamingState.clearFlushTimer,
         dbOp: input.dbOp,
         logger: input.logger,
+        streamedContent,
       })
     }
 

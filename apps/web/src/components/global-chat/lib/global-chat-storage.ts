@@ -11,6 +11,11 @@ export interface GlobalWorkContext {
   channelId?: string | null
   channelName?: string | null
   channelAwarenessContext?: string
+  /** Active Brain scope id from /brain?scope=… (e.g. user, agent:atlas). */
+  brainScopeId?: string | null
+  brainId?: string | null
+  brainScopeLabel?: string | null
+  brainAwarenessContext?: string
 }
 
 export interface PersistedGlobalChat {
@@ -18,6 +23,8 @@ export interface PersistedGlobalChat {
   widthPercent?: number
   activeAgentKey?: string
   workContext?: GlobalWorkContext
+  /** Surfaces where the user checked "Don't show this again" on the agent recommendation. */
+  recDismissedSurfaces?: GlobalWorkSurface[]
 }
 
 export function readPersistedGlobalChat(): PersistedGlobalChat {
@@ -38,6 +45,18 @@ export function writePersistedGlobalChat(patch: Partial<PersistedGlobalChat>) {
   } catch {
     /* ignore */
   }
+}
+
+export function readRecDismissedSurfaces(): GlobalWorkSurface[] {
+  return readPersistedGlobalChat().recDismissedSurfaces ?? []
+}
+
+export function addRecDismissedSurface(surface: GlobalWorkSurface): GlobalWorkSurface[] {
+  const current = readRecDismissedSurfaces()
+  if (current.includes(surface)) return current
+  const next = [...current, surface]
+  writePersistedGlobalChat({ recDismissedSurfaces: next })
+  return next
 }
 
 export function readLegacySpacesChatCollapsed(): boolean {

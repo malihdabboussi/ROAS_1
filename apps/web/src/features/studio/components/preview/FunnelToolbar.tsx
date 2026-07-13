@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { FunnelStatusGlassCapsule } from '@/components/artifacts'
 import { STUDIO_INLINE_ERRORS } from '@/features/studio/config/studio-inline-errors.config'
 import { backendPost } from '@/lib/api/backend-client'
+import { buildPublishedFunnelUrl } from '@/lib/platform/platform-urls'
 import { useFunnelFullModeStore } from '../../store/use-funnel-full-mode-store'
 import { ConnectCustomDomainModal } from './ConnectCustomDomainModal'
 import { PresentationEditModeToolbar } from './PresentationEditModeToolbar'
@@ -217,7 +218,7 @@ export function FunnelToolbar({
   const currentPage = pages?.find((p) => p.id === currentPageId) ?? pages?.[0]
   const currentPagePath = currentPage ? getPagePath(currentPage) : '/'
 
-  const liveUrl = publishedUrl || (slug ? `https://vibeyfunnels.com/${slug}` : null)
+  const liveUrl = publishedUrl || (slug ? buildPublishedFunnelUrl(slug) : null)
 
   const handlePublish = useCallback(async () => {
     setPublishing(true)

@@ -5,11 +5,12 @@ import {
   MCP_V1_SCOPES,
   MCP_V1_TOOL_CATALOG,
 } from '@vibey/agent-policy'
+import { resolveMcpResourceUrl } from '../vibey-mcp-platform-defaults'
 
 @Injectable()
 export class VibeyMcpInstructionsService {
   buildInstructions(): string {
-    const resourceUrl = process.env.MCP_RESOURCE_URL ?? 'https://mcp.vibey.im'
+    const resourceUrl = resolveMcpResourceUrl()
     const docsUrl = (process.env.VIBEY_DOCS_BASE_URL ?? 'http://localhost:3011').replace(/\/+$/, '')
     const toolsByAction = new Map(MCP_V1_TOOL_CATALOG.map((tool) => [tool.action, tool.toolName]))
     const groupGuide = MCP_PERMISSION_GROUPS.map((group) => {

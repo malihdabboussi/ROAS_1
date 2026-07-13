@@ -35,9 +35,11 @@ describe('ChatInputVoiceSendControls', () => {
     expect(screen.getByText('Live conversation')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: /Live conversation/ }))
-    fireEvent.click(screen.getByRole('button', { name: 'Live voice conversation' }))
     expect(onVoiceStart).toHaveBeenCalledTimes(1)
     expect(onStartRecording).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Live voice conversation' }))
+    expect(onVoiceStart).toHaveBeenCalledTimes(2)
   })
 
   it('renders stop control while streaming and hides live voice menu when unavailable', () => {

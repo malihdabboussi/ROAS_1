@@ -1,11 +1,10 @@
 {
-  "name": "vibey-apps-proxy",
+  "name": "roas-apps-proxy",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "deploy:roas": "wrangler deploy --config wrangler.roas.toml"
+    "deploy": "wrangler deploy"
   },
   "devDependencies": {
     "wrangler": "^3.0.0",

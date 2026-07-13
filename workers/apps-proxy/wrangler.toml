@@ -1,21 +1,31 @@
-name = "vibey-apps-proxy"
+name = "roas-apps-proxy"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
-account_id = "e4564a5252938d5839b1b84d47312180"
 
+# ROAS Cloudflare account (Dylan@dylanvanas.com)
+account_id = "9d667ff9d1f587e6503e317427425e67"
+
+# ACTIVE: public agents/widgets. DNS `*.agents` is proxied on the roas.io zone.
 routes = [
-  { pattern = "*-app.govibey.com/*", zone_name = "govibey.com" },
-  { pattern = "*.govibey.com/*", zone_name = "govibey.com" }
+  { pattern = "*.agents.roas.io/*", zone_name = "roas.io" }
 ]
+
+# Published apps ({slug}-app.roas.io) remain dormant until their catch-all DNS
+# and route can be enabled without swallowing explicit ROAS subdomains.
 
 [[kv_namespaces]]
 binding = "SLUG_CACHE"
-id = "8cce51a73e9c45cdaca9b9b8c6800073"
+id = "0beb337742d748b3b905fb5d5f4604ad"
 
-# Published-app wake-up: platform API origin (no trailing slash), e.g. https://api.example.com
-# INTERNAL_API_TOKEN: wrangler secret put INTERNAL_API_TOKEN (must match apps/api INTERNAL_API_TOKEN)
-# APPS_WEB_VERCEL_URL: origin for apps/web Vercel deployment, e.g. https://vibey-web.vercel.app
-# WORKER_SECRET: wrangler secret put WORKER_SECRET (shared with apps/web to validate proxied page loads)
 [vars]
-BACKEND_URL = "https://api.govibey.com"
-APPS_WEB_VERCEL_URL = "https://app.vibey.im"
+BACKEND_URL = "https://api.roas.io"
+APPS_WEB_VERCEL_URL = "https://app.roas.io"
+FLY_RUNTIME_URL = "https://roas-runtimes.fly.dev"
+APPS_DOMAIN_SUFFIX = "-app.roas.io"
+PUBLIC_AGENT_HOST_SUFFIX = "agents.roas.io"
+
+# Secrets (wrangler secret put — must match roas-api / roas-web):
+# SUPABASE_URL
+# SUPABASE_SERVICE_ROLE_KEY
+# INTERNAL_API_TOKEN
+# WORKER_SECRET

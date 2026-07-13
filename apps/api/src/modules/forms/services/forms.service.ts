@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { resolveFunnelsBaseDomain } from '../../../lib/platform-defaults'
 import { VercelIntegration } from '../../domains/integrations/vercel.integration'
 import { SpacesService } from '../../spaces/services/spaces.service'
 import type { CreateFormDto, SubmitFormDto, UpdateFormDto } from '../dto'
@@ -154,7 +155,7 @@ export class FormsService {
   }
 
   /**
-   * Mirrors `FunnelsService.ensureUserSubdomain` — generates `user-{shortId}.vibeyfunnels.com`
+   * Mirrors `FunnelsService.ensureUserSubdomain` — generates `user-{shortId}.sites.roas.io`
    * (or `-{suffix}` on collision), inserts a verified `domains` row, and registers the subdomain
    * with Vercel so SSL is provisioned.
    */
@@ -167,7 +168,7 @@ export class FormsService {
       return existing.domain_name as string
     }
 
-    const baseDomain = process.env.CLOUDFLARE_BASE_DOMAIN || 'vibeyfunnels.com'
+    const baseDomain = resolveFunnelsBaseDomain()
     let subdomain = `user-${userId.slice(0, 8)}.${baseDomain}`
 
     const conflict = await this.formsRuntime.findDomainConflict(serviceClient, subdomain)

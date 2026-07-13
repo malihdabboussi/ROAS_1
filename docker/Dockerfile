@@ -170,6 +170,7 @@ COPY --chown=node:node docker/tools/vibey-backend /home/node/.openclaw/extension
 
 # Keep plugin path explicit for container runtime config substitution.
 ENV VIBEY_PLUGIN_PATH=/home/node/.openclaw/extensions/vibey-backend
+ENV MEMORY_CORE_PLUGIN_PATH=/home/node/.openclaw/extensions/memory-core
 ENV OPENCLAW_CONFIG_PATH=/home/node/.openclaw/openclaw.json
 ENV AGENTS_BASE_DIR=/app/agents
 

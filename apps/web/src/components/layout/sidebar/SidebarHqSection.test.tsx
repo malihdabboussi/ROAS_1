@@ -69,6 +69,19 @@ vi.mock('@/components/layout/sidebar/SidebarSpaceContextMenu', () => ({
   SidebarSpaceContextMenu: () => null,
 }))
 
+vi.mock('@/components/global-chat/store/use-global-chat-store', () => {
+  const state = {
+    collapsed: true,
+    setCollapsed: vi.fn(),
+    expandAndFocus: vi.fn(),
+    setWorkContext: vi.fn(),
+  }
+  const useGlobalChatStore = (selector?: (s: typeof state) => unknown) =>
+    selector ? selector(state) : state
+  useGlobalChatStore.getState = () => state
+  return { useGlobalChatStore }
+})
+
 vi.mock('@/components/layout/sidebar/SidebarTeam2Flyout', () => ({
   SidebarTeam2Flyout: () => <div>Team flyout</div>,
 }))
@@ -251,6 +264,13 @@ function makeController(
     setActiveManagePanel: vi.fn(),
     isPanelClosing: false,
     setIsPanelClosing: vi.fn(),
+    hubMenuOpen: false,
+    hubMenuClosing: false,
+    hubMenuExpandedSections: new Set(),
+    toggleHubMenu: vi.fn(),
+    closeHubMenu: vi.fn(),
+    toggleHubMenuSectionById: vi.fn(),
+    syncHubMenuExpandedToRoute: vi.fn(),
     expandedSpaceCampaignIds: new Set<string>(),
     setExpandedSpaceCampaignIds: vi.fn(),
     conversations: [],
@@ -266,7 +286,7 @@ function makeController(
     manageCampaigns: [],
     hiddenCampaigns: [],
     filteredConversations: [],
-    desktopWidth: 'md:w-[72px]',
+    desktopWidth: 'md:w-[80px]',
     isActive: vi.fn((href: string) => href === '/home'),
     handleCreateProject: vi.fn(async () => undefined),
     handleNewChat: vi.fn(),
@@ -298,13 +318,16 @@ describe('SidebarHqSection', () => {
     vi.clearAllMocks()
   })
 
-  it('renders the mobile HQ rail and expands spaces from the drawer', () => {
+  it('renders the mobile HQ hub menu and expands spaces from the drawer', () => {
     const setMobileDrawerOpen = vi.fn()
     const reloadSidebarLists = vi.fn(async () => undefined)
+    const toggleHubMenuSectionById = vi.fn()
     const controller = makeController({
       mobileDrawerOpen: true,
       setMobileDrawerOpen,
       reloadSidebarLists,
+      toggleHubMenuSectionById,
+      hubMenuExpandedSections: new Set(),
       sidebarLists: [
         {
           id: 'space-1',
@@ -327,17 +350,11 @@ describe('SidebarHqSection', () => {
     expect(screen.getByText('Home')).toBeTruthy()
     expect(screen.getByText('Team')).toBeTruthy()
     expect(screen.getByText('Spaces')).toBeTruthy()
-    expect(screen.queryByText('Projects')).toBeNull()
-    expect(screen.queryByText('Flows')).toBeNull()
+    expect(screen.getByText('Chat')).toBeTruthy()
 
-    fireEvent.click(screen.getByRole('button', { name: /Spaces/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Spaces/i }))
 
-    expect(reloadSidebarLists).toHaveBeenCalledTimes(1)
-    expect(screen.getByText('New Space')).toBeTruthy()
-    fireEvent.click(screen.getByText('Launch Space'))
-
-    expect(mocks.setActiveSpace).toHaveBeenCalledWith('space-1')
-    expect(setMobileDrawerOpen).toHaveBeenCalledWith(false)
+    expect(toggleHubMenuSectionById).toHaveBeenCalledWith('spaces')
   })
 
   it('renders the desktop projects panel and starts inline project creation', () => {

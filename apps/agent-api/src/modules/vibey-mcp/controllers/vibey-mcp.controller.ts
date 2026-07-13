@@ -14,6 +14,7 @@ import { MCP_V1_SCOPES } from '@vibey/agent-policy'
 import { VibeyMcpOAuthGuard } from '../guards/vibey-mcp-oauth.guard'
 import { VibeyMcpServerService } from '../services/vibey-mcp-server.service'
 import type { VibeyMcpRequestContext } from '../types/vibey-mcp.types'
+import { resolveMcpResourceUrl } from '../vibey-mcp-platform-defaults'
 
 interface RequestWithMcp extends Request {
   vibeyMcp?: VibeyMcpRequestContext
@@ -55,7 +56,7 @@ export class VibeyMcpController {
   }
 
   private metadata() {
-    const resource = process.env.MCP_RESOURCE_URL ?? 'https://mcp.vibey.im'
+    const resource = resolveMcpResourceUrl()
     const issuer = process.env.MCP_OAUTH_ISSUER_URL ?? 'http://localhost:3001'
     return {
       resource,

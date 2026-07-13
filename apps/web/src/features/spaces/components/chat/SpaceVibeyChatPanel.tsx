@@ -15,10 +15,15 @@ import { VoiceApprovalProvider } from '@/components/chat/VoiceApprovalContext'
 import { ConversationShareModal } from '@/components/conversations'
 import { globalChatSeedMatchesPanel } from '@/components/global-chat/lib/global-chat-seed-match'
 import {
+  GLOBAL_CHAT_AGENT_SWITCH_EVENT,
   GLOBAL_CHAT_SEED_EVENT,
+  GLOBAL_CHAT_VOICE_START_EVENT,
   useGlobalChatStore,
+  type GlobalChatAgentSwitchDetail,
   type GlobalChatSeedDetail,
+  type GlobalChatVoiceStartDetail,
 } from '@/components/global-chat/store/use-global-chat-store'
+import type { GlobalWorkSurface } from '@/components/global-chat/lib/global-chat-storage'
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
@@ -27,6 +32,10 @@ import {
 } from '@/features/brain/hooks/use-brain-live-session'
 import { RateLimitCard } from '@/features/studio/components/chat/RateLimitCard'
 import { StatusIndicator } from '@/features/studio/components/chat/StatusIndicator'
+import {
+  getLastAssistantMessage,
+  isAssistantTurnComplete,
+} from '@/features/studio/lib/chat-turn-completion'
 import { StreamInterruptedBar } from '@/features/studio/components/chat/StreamInterruptedBar'
 import {
   assignConversationCampaign,
@@ -47,6 +56,8 @@ import {
   sendMessageStreaming,
   setConversationArchived,
   setConversationPinned,
+  shouldSkipStreamRecovery,
+  isStreamActive,
   suggestConversationTitle,
   type ChatModelSettings,
 } from '@/features/studio/services/chat.service'
@@ -137,11 +148,17 @@ import { stripLegacySpacesConversationTitle } from './strip-legacy-spaces-conver
 
 interface SpaceVibeyChatPanelProps {
   spaceId?: string
+  chatSurface?: GlobalWorkSurface
   campaignId: string | null
   campaignName: string | null
   channelContext?: {
     channelId: string
     channelName: string
+    awarenessContext: string
+  } | null
+  brainContext?: {
+    brainId: string | null
+    scopeLabel: string
     awarenessContext: string
   } | null
   onCollapseChat?: () => void
@@ -194,9 +211,11 @@ const VIBEY_ROSTER_FALLBACK: TeamRosterEntry = {
 
 export function SpaceVibeyChatPanel({
   spaceId,
+  chatSurface,
   campaignId,
   campaignName,
   channelContext,
+  brainContext,
   onCollapseChat,
 }: SpaceVibeyChatPanelProps) {
   const router = useRouter()
@@ -442,13 +461,19 @@ export function SpaceVibeyChatPanel({
   }
 
   const chatAgents = useMemo(() => {
+    // Loop is the Flows specialist — only selectable while working on the Flows
+    // surface, hidden everywhere else (spaces, brain, team, general).
+    const allowLoop = chatSurface === 'flows'
     const agents = spacesRoster.filter(
-      (entry) => entry.kind === 'agent' && entry.agent_key && entry.agent_key !== 'loop',
+      (entry) =>
+        entry.kind === 'agent' &&
+        entry.agent_key &&
+        (allowLoop || entry.agent_key !== 'loop'),
     )
     const sorted = [...agents].sort((a, b) => a.display_name.localeCompare(b.display_name))
     if (sorted.some((entry) => entry.agent_key === DEFAULT_SPACE_CHAT_AGENT_KEY)) return sorted
     return [VIBEY_ROSTER_FALLBACK, ...sorted]
-  }, [spacesRoster])
+  }, [chatSurface, spacesRoster])
 
   const activeAgentKey =
     selectedConversation?.agent_id?.trim() || draftAgentKey || DEFAULT_SPACE_CHAT_AGENT_KEY
@@ -535,6 +560,14 @@ export function SpaceVibeyChatPanel({
   )
 
   const turnData = useMemo(() => buildSpaceChatTurnData(displayMessages), [displayMessages])
+  const streamRecoveryTriggerKey = useMemo(() => {
+    const lastAssistant = getLastAssistantMessage(messages)
+    if (!lastAssistant) return `${messages.length}:none`
+    const metadata = lastAssistant.metadata as Record<string, unknown> | undefined
+    const durationMs = metadata?.duration_ms
+    const turnComplete = isAssistantTurnComplete(lastAssistant, true)
+    return `${lastAssistant.id}:${durationMs ?? 'none'}:${turnComplete ? 'complete' : 'pending'}:${messages.length}`
+  }, [messages])
   const pinnedAssistantMessageId = useMemo(
     () => resolvePinnedAssistantMessageId(displayMessages),
     [displayMessages],
@@ -625,9 +658,11 @@ export function SpaceVibeyChatPanel({
 
   useEffect(() => {
     if (!selectedConversationId || messages.length === 0) return
+    if (isStreamActive(selectedConversationId)) return
+    if (shouldSkipStreamRecovery(selectedConversationId)) return
     if (!needsStreamRecovery(messages)) return
     void recoverConversation(selectedConversationId)
-  }, [selectedConversationId, messages])
+  }, [selectedConversationId, streamRecoveryTriggerKey])
 
   useEffect(() => {
     const scrollEl = scrollRef.current
@@ -831,13 +866,14 @@ export function SpaceVibeyChatPanel({
 
   const buildContextForSend = useCallback(() => {
     if (isChannelScope) return channelContext?.awarenessContext ?? ''
+    if (chatSurface === 'brain') return brainContext?.awarenessContext ?? ''
     return buildSpaceAwarenessContext({
       activeViewType: activeView?.type,
       activeViewName: activeView?.name,
       campaignName,
       focusedArtifact: focusedArtifactRef.current,
     })
-  }, [activeView?.name, activeView?.type, campaignName, channelContext, isChannelScope])
+  }, [activeView?.name, activeView?.type, brainContext, campaignName, channelContext, chatSurface, isChannelScope])
 
   const lastUserMessageId = findLastEditableUserMessageId(messages, isStreaming)
 
@@ -1370,7 +1406,7 @@ export function SpaceVibeyChatPanel({
   ])
 
   const handleVoiceStart = useCallback(() => {
-    if (creditsExhausted || selectedConversationReadOnly) return
+    if (creditsExhausted || selectedConversationReadOnly || voiceActive) return
     void ensureVoiceConversation()
       .then(() => {
         setMode('chat')
@@ -1380,7 +1416,7 @@ export function SpaceVibeyChatPanel({
         console.error('Voice conversation start failed:', error)
         toast.error(toastMessageForChatSendError(error))
       })
-  }, [creditsExhausted, ensureVoiceConversation, selectedConversationReadOnly])
+  }, [creditsExhausted, ensureVoiceConversation, selectedConversationReadOnly, voiceActive])
 
   const handleVoiceEnd = useCallback(() => {
     voiceSession.endSession()
@@ -1755,6 +1791,57 @@ export function SpaceVibeyChatPanel({
     return () => window.removeEventListener(GLOBAL_CHAT_SEED_EVENT, onSeed)
   }, [applyGlobalChatSeed])
 
+  // Mirror the panel's real active agent into the global chat store so the
+  // surface recommendation banner reflects what the user is actually talking to.
+  useEffect(() => {
+    const store = useGlobalChatStore.getState()
+    if (store.activeAgentKey !== activeAgentKey) {
+      store.setActiveAgentKey(activeAgentKey)
+    }
+  }, [activeAgentKey])
+
+  // The recommendation banner's "Switch" button drives the panel through this
+  // event so the two share one source of truth for the active agent.
+  useEffect(() => {
+    const onAgentSwitch = (event: Event) => {
+      const detail = (event as CustomEvent<GlobalChatAgentSwitchDetail>).detail
+      if (detail?.agentKey) handleAgentChange(detail.agentKey)
+    }
+    window.addEventListener(GLOBAL_CHAT_AGENT_SWITCH_EVENT, onAgentSwitch)
+    return () => window.removeEventListener(GLOBAL_CHAT_AGENT_SWITCH_EVENT, onAgentSwitch)
+  }, [handleAgentChange])
+
+  const applyGlobalVoiceStart = useCallback(
+    (detail: GlobalChatVoiceStartDetail) => {
+      if (detail.agentKey !== activeAgentKey) {
+        handleAgentChange(detail.agentKey)
+        return
+      }
+      if (voiceActive) return
+      useGlobalChatStore.getState().consumePendingVoiceStart()
+      handleVoiceStart()
+    },
+    [activeAgentKey, handleAgentChange, handleVoiceStart, voiceActive],
+  )
+
+  useEffect(() => {
+    const onVoiceStart = (event: Event) => {
+      const detail = (event as CustomEvent<GlobalChatVoiceStartDetail>).detail
+      if (!detail?.agentKey) return
+      applyGlobalVoiceStart(detail)
+    }
+    window.addEventListener(GLOBAL_CHAT_VOICE_START_EVENT, onVoiceStart)
+    return () => window.removeEventListener(GLOBAL_CHAT_VOICE_START_EVENT, onVoiceStart)
+  }, [applyGlobalVoiceStart])
+
+  useEffect(() => {
+    if (conversationsLoading || voiceActive) return
+    const pending = useGlobalChatStore.getState().pendingVoiceStart
+    if (!pending || pending.agentKey !== activeAgentKey) return
+    useGlobalChatStore.getState().consumePendingVoiceStart()
+    handleVoiceStart()
+  }, [activeAgentKey, conversationsLoading, handleVoiceStart, voiceActive])
+
   useEffect(() => {
     if (conversationsLoading) return
     const pending = useGlobalChatStore.getState().consumePendingSeed()
@@ -1898,6 +1985,10 @@ export function SpaceVibeyChatPanel({
                   agentName={activeVoiceAgent.display_name}
                   conversationId={selectedConversationId}
                   state={voiceSession.state}
+                  turnData={turnData}
+                  inputTranscript={voiceSession.inputTranscript}
+                  outputTranscript={voiceSession.outputTranscript}
+                  micInputLevelRef={voiceSession.micInputLevelRef}
                   audioLevelRef={voiceSession.audioLevelRef}
                   error={voiceSession.error}
                   isMuted={voiceSession.isMuted}

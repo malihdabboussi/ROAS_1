@@ -187,7 +187,7 @@ export class FunnelsService {
 
   /**
    * Publish a funnel: generates slug if needed, sets status to 'published'.
-   * Returns the live URL on vibeyfunnels.com.
+   * Returns the live URL on sites.roas.io.
    */
   async publishFunnel(supabase: SupabaseClient, id: string, orgId?: string | null) {
     return this.funnelPublishService.publishFunnel(supabase, id, orgId)

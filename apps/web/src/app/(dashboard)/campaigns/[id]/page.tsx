@@ -2,29 +2,40 @@
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BarChart3, BookOpen, DollarSign, Menu } from 'lucide-react'
+import { BarChart3, BookOpen, LayoutGrid, Menu, PieChart } from 'lucide-react'
 import { LucideIcon } from '@/components/ui/IconPicker'
 import { Tabs, TabsContent } from '@/components/ui/navigation/tabs'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { updateCampaign } from '@/features/studio/services/campaign.service'
+import { CampaignTeamManageModal } from '@/features/team/components/CampaignTeamManageModal'
 import { useUserRole } from '@/hooks/use-user-role'
 import { CampaignHeader } from './_components/CampaignHeader'
 import { CampaignDashboardTab } from './_components/tabs/CampaignDashboardTab'
 import { CampaignKnowledgeTab } from './_components/tabs/CampaignKnowledgeTab'
+import { CampaignOverviewTab } from './_components/tabs/CampaignOverviewTab'
+import { CampaignReportingTab } from './_components/tabs/CampaignReportingTab'
 import { useCampaignAutosave } from './_hooks/use-campaign-autosave'
 import { useCampaignDetailData } from './_hooks/use-campaign-detail-data'
 import {
   CAMPAIGN_TAB_LABELS,
+  DEFAULT_CAMPAIGN_TAB,
+  normalizeCampaignTabId,
   readVisibleCampaignTabs,
   type ToggleableCampaignTabId,
 } from './_lib/campaign-nav-tabs'
-import { CampaignFinanceTab } from './CampaignFinanceTab'
 
-const MOBILE_TAB_ICONS = {
+const MOBILE_TAB_ICONS: Partial<Record<ToggleableCampaignTabId, typeof BarChart3>> = {
+  overview: LayoutGrid,
   dashboard: BarChart3,
-  finance: DollarSign,
   knowledge: BookOpen,
-} as const
+  reporting: PieChart,
+}
+
+function resolveTabFromSearch(tabParam: string | null): string {
+  if (!tabParam) return DEFAULT_CAMPAIGN_TAB
+  const normalized = normalizeCampaignTabId(tabParam)
+  return normalized ?? DEFAULT_CAMPAIGN_TAB
+}
 
 export default function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -33,12 +44,8 @@ export default function CampaignDetailPage() {
   const { loading: roleLoading } = useUserRole()
   const [isMobile, setIsMobile] = useState(false)
 
-  const VALID_TABS = ['dashboard', 'finance', 'knowledge'] as const
   const tabParam = searchParams.get('tab')
-  const initialTab = VALID_TABS.includes(tabParam as (typeof VALID_TABS)[number])
-    ? tabParam!
-    : 'dashboard'
-  const [activeTab, setActiveTab] = useState(initialTab)
+  const [activeTab, setActiveTab] = useState(() => resolveTabFromSearch(tabParam))
   const [completionChartType, setCompletionChartType] = useState<'bar' | 'area' | 'line' | 'pie'>(
     'bar',
   )
@@ -47,6 +54,7 @@ export default function CampaignDetailPage() {
   const [timeframeDropdownOpen, setTimeframeDropdownOpen] = useState(false)
   const [offerPage, setOfferPage] = useState(0)
   const [avatarPage, setAvatarPage] = useState(0)
+  const [teamModalOpen, setTeamModalOpen] = useState(false)
 
   useEffect(() => {
     if (!chartDropdownOpen && !timeframeDropdownOpen) return
@@ -73,7 +81,7 @@ export default function CampaignDetailPage() {
     (value: string) => {
       setActiveTab(value)
       const params = new URLSearchParams(searchParams.toString())
-      if (value === 'dashboard') params.delete('tab')
+      if (value === DEFAULT_CAMPAIGN_TAB) params.delete('tab')
       else params.set('tab', value)
       const qs = params.toString()
       router.replace(`/campaigns/${id}${qs ? `?${qs}` : ''}`, { scroll: false })
@@ -95,11 +103,7 @@ export default function CampaignDetailPage() {
   )
 
   useEffect(() => {
-    const tabParam = searchParams.get('tab')
-    let current =
-      tabParam && VALID_TABS.includes(tabParam as (typeof VALID_TABS)[number])
-        ? tabParam
-        : 'dashboard'
+    let current = resolveTabFromSearch(searchParams.get('tab'))
     if (!detail.campaign) {
       setActiveTab(current)
       return
@@ -108,7 +112,9 @@ export default function CampaignDetailPage() {
     const visible = readVisibleCampaignTabs(detail.campaign.config)
     const visSet = new Set(visible)
     if (!visSet.has(current as ToggleableCampaignTabId)) {
-      const next = visible.includes('dashboard') ? 'dashboard' : (visible[0] ?? 'dashboard')
+      const next = visible.includes(DEFAULT_CAMPAIGN_TAB)
+        ? DEFAULT_CAMPAIGN_TAB
+        : (visible[0] ?? DEFAULT_CAMPAIGN_TAB)
       handleTabChange(next)
       return
     }
@@ -137,20 +143,51 @@ export default function CampaignDetailPage() {
     [detail.campaign?.config],
   )
 
+  const handleVisibleTabIdsChange = useCallback(
+    async (tabs: ToggleableCampaignTabId[]) => {
+      const c = detail.campaign
+      if (!c) return
+      const config = (c.config as Record<string, unknown>) ?? {}
+      await updateCampaign(id, {
+        config: {
+          ...config,
+          visible_campaign_tabs: tabs,
+        },
+      })
+      await detail.load()
+      if (!tabs.includes(activeTab as ToggleableCampaignTabId)) {
+        handleTabChange(tabs[0] ?? DEFAULT_CAMPAIGN_TAB)
+      }
+    },
+    [activeTab, detail.campaign, detail.load, handleTabChange, id],
+  )
+
   const headerNavTabs = useMemo(() => {
-    return visibleNavIds.map((id) => ({
-      value: id,
-      label: CAMPAIGN_TAB_LABELS[id],
+    return visibleNavIds.map((tabId) => ({
+      value: tabId,
+      label: CAMPAIGN_TAB_LABELS[tabId],
     }))
   }, [visibleNavIds])
 
   const mobileTabsVisible = useMemo(() => {
-    return visibleNavIds.map((id) => ({
-      value: id,
-      label: CAMPAIGN_TAB_LABELS[id],
-      icon: MOBILE_TAB_ICONS[id],
+    return visibleNavIds.map((tabId) => ({
+      value: tabId,
+      label: CAMPAIGN_TAB_LABELS[tabId],
+      icon: MOBILE_TAB_ICONS[tabId] ?? LayoutGrid,
     }))
   }, [visibleNavIds])
+
+  const handleManageTeam = useCallback(() => {
+    setTeamModalOpen(true)
+  }, [])
+
+  const createdSummary = useMemo(() => {
+    const parts: string[] = []
+    if (detail.offers.length > 0) parts.push(`${detail.offers.length} offer(s)`)
+    if (detail.avatars.length > 0) parts.push(`${detail.avatars.length} avatar(s)`)
+    if (detail.theme) parts.push('brand theme')
+    return parts.length > 0 ? parts.join(', ') : ''
+  }, [detail.offers.length, detail.avatars.length, detail.theme])
 
   if (detail.loading || roleLoading) {
     return (
@@ -162,7 +199,7 @@ export default function CampaignDetailPage() {
 
   if (!detail.campaign) {
     return (
-      <div className="flex h-full items-center justify-center text-[var(--color-muted-foreground)]">
+      <div className="text-muted-foreground flex h-full items-center justify-center">
         Campaign not found
       </div>
     )
@@ -184,9 +221,9 @@ export default function CampaignDetailPage() {
             <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
               <LucideIcon
                 name={detail.campaignIcon}
-                className="h-4 w-4 shrink-0 text-[var(--color-foreground)]"
+                className="text-foreground h-4 w-4 shrink-0"
               />
-              <span className="body-2 min-w-0 truncate font-medium text-[var(--color-foreground)]">
+              <span className="body-2 text-foreground min-w-0 truncate font-medium">
                 {detail.campaign.name}
               </span>
             </div>
@@ -236,8 +273,22 @@ export default function CampaignDetailPage() {
             onIconChange={detail.handleIconChange}
             onIconColorChange={detail.handleIconColorChange}
             onRetrySave={autosave.performSave}
+            visibleTabIds={visibleNavIds}
+            onVisibleTabIdsChange={(tabs) => void handleVisibleTabIdsChange(tabs)}
           />
         )}
+
+        <TabsContent value="overview" className="animate-tab-enter">
+          <CampaignOverviewTab
+            campaignId={id}
+            campaignName={detail.campaign.name}
+            dashboardMissions={detail.dashboardMissions}
+            dashboardAgents={detail.dashboardAgents}
+            campaignTeam={detail.campaignTeam}
+            onOpenTab={(tab) => handleTabChange(tab)}
+            onManageTeam={handleManageTeam}
+          />
+        </TabsContent>
 
         <TabsContent value="dashboard" className="animate-tab-enter">
           <CampaignDashboardTab
@@ -257,12 +308,9 @@ export default function CampaignDetailPage() {
           />
         </TabsContent>
 
-        <TabsContent value="finance">
-          <CampaignFinanceTab campaignId={id} campaignName={detail.campaign.name} />
-        </TabsContent>
-
         <TabsContent value="knowledge" className="animate-tab-enter">
           <CampaignKnowledgeTab
+            campaignId={id}
             offers={detail.offers}
             avatars={detail.avatars}
             theme={detail.theme}
@@ -272,9 +320,25 @@ export default function CampaignDetailPage() {
             avatarPage={avatarPage}
             setAvatarPage={setAvatarPage}
             dashboardAgents={detail.dashboardAgents}
+            onManageTeam={handleManageTeam}
           />
         </TabsContent>
+
+        <TabsContent value="reporting" className="animate-tab-enter min-h-0">
+          <CampaignReportingTab campaignId={id} campaignName={detail.campaign.name} />
+        </TabsContent>
       </Tabs>
+
+      <CampaignTeamManageModal
+        open={teamModalOpen}
+        onOpenChange={setTeamModalOpen}
+        campaignId={id}
+        campaignName={detail.campaign.name}
+        campaignTeam={detail.campaignTeam}
+        onTeamChange={() => void detail.load()}
+        context={detail.context}
+        createdSummary={createdSummary}
+      />
     </div>
   )
 }

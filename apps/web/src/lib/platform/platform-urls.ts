@@ -3,6 +3,7 @@ export const ROAS_APP_URL = 'https://app.roas.io'
 export const ROAS_API_URL = 'https://api.roas.io'
 export const ROAS_PUBLIC_AGENT_HOST_SUFFIX = 'agents.roas.io'
 export const ROAS_APPS_DOMAIN_SUFFIX = '-app.roas.io'
+export const ROAS_FUNNELS_URL = 'https://sites.roas.io'
 
 export function resolveMarketingSiteUrl(): string {
   return (
@@ -31,6 +32,10 @@ export function resolveAppsDomainSuffix(): string {
 
 export function buildPublishedAppUrl(slug: string): string {
   return `https://${slug}${resolveAppsDomainSuffix()}`
+}
+
+export function buildPublishedFunnelUrl(slug: string): string {
+  return `${ROAS_FUNNELS_URL}/${slug}`
 }
 
 export function resolvePublicAgentHostSuffix(): string {

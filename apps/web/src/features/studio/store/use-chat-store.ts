@@ -11,6 +11,7 @@ import {
   subscribeChatCreditsExhausted,
 } from '@/lib/chat/chat-credit-state'
 import { getOrgScopedKey } from '@/lib/utils/org-storage'
+import { shouldReconnectPersistedAssistant } from '../lib/chat-turn-completion'
 import type { ChatStreamFailure } from '../config/chat-stream-errors.config'
 import type {
   ChatStreamRunState,
@@ -2235,11 +2236,7 @@ export const useChatStore = create<ChatState>()(
         const msgs = state.messagesByConversation[activeId]
         if (!msgs || msgs.length === 0) return
         const last = msgs[msgs.length - 1]
-        if (
-          last?.role === 'assistant' &&
-          !(last.metadata as Record<string, unknown> | undefined)?.duration_ms &&
-          Date.now() - new Date(last.created_at).getTime() <= 5 * 60 * 1_000
-        ) {
+        if (shouldReconnectPersistedAssistant(last)) {
           useChatStore.setState((s) => ({
             reconnectingConversationIds: s.reconnectingConversationIds.includes(activeId)
               ? s.reconnectingConversationIds

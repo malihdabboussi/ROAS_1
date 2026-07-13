@@ -1,6 +1,6 @@
 import { Injectable, type Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { ChatScopeKind, DocumentIntelligenceMetadata } from '@vibey/api-shared'
+import type { ChatScopeKind, DocumentIntelligenceMetadata, SupabaseServiceClient } from '@vibey/api-shared'
 import { MessagesRepository } from '../../conversations/repositories/messages.repository'
 import type { RequestUploadAttachment } from '../../shared/services/request-context.service'
 import { RequestContextService } from '../../shared/services/request-context.service'
@@ -130,6 +130,7 @@ export class ChatTurnStreamingStateService {
     private readonly requestContext: RequestContextService,
     private readonly checkpointService: ChatRunCheckpointService,
     private readonly progressiveStreamService: ChatProgressiveStreamService,
+    private readonly svc: SupabaseServiceClient,
   ) {}
 
   create(input: CreateStreamingStateInput): ChatTurnStreamingState {
@@ -179,8 +180,7 @@ export class ChatTurnStreamingStateService {
     const flushContentToDB = async () =>
       this.progressiveStreamService.flushContentToDB(progressiveStreamState, {
         getToolSteps: () => state.toolSteps,
-        updateMessage: (updates) =>
-          input.dbOp((supabase) => this.messages.update(supabase, input.messageId, updates)),
+        updateMessage: (updates) => this.messages.update(this.svc.client, input.messageId, updates),
         logger: input.logger,
       })
     state.progressiveSend = this.progressiveStreamService.createSend(progressiveStreamState, {

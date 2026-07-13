@@ -4,7 +4,11 @@ import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react'
 import { Loader2, Mic, MicOff, PhoneOff, RotateCcw } from 'lucide-react'
 import type { LiveSessionState } from '@/features/brain/hooks/use-brain-live-session'
+import type { Message } from '@/lib/chat/studio-chat-runtime-adapter'
 import { StatusIndicator } from '@/features/studio/components/chat/StatusIndicator'
+import type { SpaceChatTurnData } from './space-vibey-chat-messages.logic'
+import { SpaceVoiceLiveTranscript } from './SpaceVoiceLiveTranscript'
+import { formatVoiceElapsedTime } from '@/features/team/components/voice/agent-voice-mode/agent-voice-mode-utils'
 
 const BrainVoiceOrbScene = dynamic(
   () =>
@@ -18,6 +22,10 @@ interface SpaceVoiceSessionViewProps {
   agentName: string
   conversationId: string | null
   state: LiveSessionState
+  turnData: SpaceChatTurnData<Message>
+  inputTranscript?: string
+  outputTranscript?: string
+  micInputLevelRef: MutableRefObject<number>
   audioLevelRef: MutableRefObject<number>
   error: string | null
   isMuted: boolean
@@ -26,16 +34,27 @@ interface SpaceVoiceSessionViewProps {
   onEnd: () => void
 }
 
-function formatTime(seconds: number): string {
-  const minutes = Math.floor(seconds / 60)
-  const remaining = seconds % 60
-  return `${minutes}:${remaining.toString().padStart(2, '0')}`
+function voiceStatusLabel(state: LiveSessionState): string | null {
+  switch (state) {
+    case 'listening':
+      return 'Listening'
+    case 'speaking':
+      return 'Speaking'
+    case 'toolCall':
+      return 'Working'
+    default:
+      return null
+  }
 }
 
 export function SpaceVoiceSessionView({
   agentName,
   conversationId,
   state,
+  turnData,
+  inputTranscript = '',
+  outputTranscript = '',
+  micInputLevelRef,
   audioLevelRef,
   error,
   isMuted,
@@ -89,51 +108,75 @@ export function SpaceVoiceSessionView({
             : 'listening'
 
   const active = state === 'listening' || state === 'speaking' || state === 'toolCall'
+  const statusLabel = voiceStatusLabel(state)
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-4 py-6">
-      <div className="relative flex h-40 w-40 items-center justify-center">
-        <BrainVoiceOrbScene animationState={orbState} audioLevelRef={audioLevelRef} size="mini" />
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-4">
+      <div className="flex shrink-0 flex-col items-center">
+        <div className="relative flex h-28 w-28 items-center justify-center">
+          <BrainVoiceOrbScene animationState={orbState} audioLevelRef={audioLevelRef} size="mini" />
+        </div>
+
+        <div className="mt-2 flex min-h-6 flex-col items-center justify-center gap-1 text-center">
+          {state === 'connecting' ? (
+            <div className="text-muted-foreground flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="body-3">Connecting to {agentName}...</span>
+            </div>
+          ) : null}
+
+          {state === 'error' ? (
+            <p className="body-3 text-destructive">{error ?? 'Something went wrong'}</p>
+          ) : null}
+
+          {state === 'idle' ? (
+            <p className="body-3 text-muted-foreground">Voice session ended</p>
+          ) : null}
+
+          {active && statusLabel ? (
+            <div className="gap-spacing-1 flex items-center">
+              {state === 'listening' ? (
+                <Mic className="text-destructive h-3.5 w-3.5 animate-pulse" aria-hidden />
+              ) : null}
+              <span className="body-3 text-foreground font-medium">{statusLabel}</span>
+            </div>
+          ) : null}
+        </div>
       </div>
 
-      <div className="mt-4 flex min-h-6 items-center justify-center">
-        {state === 'connecting' ? (
-          <div className="text-muted-foreground flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="body-3">Connecting to {agentName}...</span>
-          </div>
-        ) : null}
-
-        {state === 'error' ? (
-          <p className="body-3 text-[var(--color-destructive)]">
-            {error ?? 'Something went wrong'}
-          </p>
-        ) : null}
-
-        {state === 'idle' ? (
-          <p className="body-3 text-muted-foreground">Voice session ended</p>
-        ) : null}
-      </div>
+      {active ? (
+        <SpaceVoiceLiveTranscript
+          agentName={agentName}
+          conversationId={conversationId}
+          state={state}
+          turnData={turnData}
+          inputTranscript={inputTranscript}
+          outputTranscript={outputTranscript}
+          micInputLevelRef={micInputLevelRef}
+          audioLevelRef={audioLevelRef}
+          isMuted={isMuted}
+        />
+      ) : null}
 
       {conversationId ? (
-        <div className="mt-3 w-full max-w-md">
+        <div className="mt-2 w-full max-w-md shrink-0">
           <StatusIndicator conversationIdOverride={conversationId} />
         </div>
       ) : null}
 
-      <div className="mt-4 flex min-h-10 items-center gap-3">
+      <div className="mt-3 flex shrink-0 items-center justify-center gap-3">
         {active ? (
           <>
-            <span className="body-4 text-muted-foreground font-mono">{formatTime(elapsed)}</span>
+            <span className="body-4 text-muted-foreground font-mono">{formatVoiceElapsedTime(elapsed)}</span>
             <button
               type="button"
               onClick={onToggleMute}
-              className={`btn-icon-glass rounded-full p-2 ${isMuted ? 'bg-red-500/20' : ''}`}
+              className={`btn-icon-glass rounded-full p-2 ${isMuted ? 'bg-destructive/15' : ''}`}
               aria-label={isMuted ? 'Unmute' : 'Mute'}
               title={isMuted ? 'Unmute' : 'Mute'}
             >
               {isMuted ? (
-                <MicOff className="h-4 w-4 text-red-400" />
+                <MicOff className="text-destructive h-4 w-4" />
               ) : (
                 <Mic className="text-muted-foreground h-4 w-4" />
               )}
@@ -141,7 +184,7 @@ export function SpaceVoiceSessionView({
             <button
               type="button"
               onClick={handleEnd}
-              className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-3 py-1.5 text-sm text-red-400 transition-colors hover:bg-red-500/30"
+              className="bg-destructive/15 text-destructive hover:bg-destructive/25 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors"
             >
               <PhoneOff className="h-3.5 w-3.5" />
               End

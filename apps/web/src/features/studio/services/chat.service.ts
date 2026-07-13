@@ -14,6 +14,12 @@ import {
   fetchConversations,
 } from '@/lib/conversations/conversations-api'
 import { stripEmoji } from '@/lib/utils/text'
+import {
+  assistantHasRenderableText,
+  assistantHasVisibleOutput,
+  getLastAssistantMessage,
+  isAssistantTurnComplete,
+} from '../lib/chat-turn-completion'
 import { ChatStreamUserError, resolveChatStreamFailure } from '../config/chat-stream-errors.config'
 import { reportStudioError } from '../lib/report-studio-error'
 import {
@@ -75,7 +81,10 @@ function upsertRecoveredMessage(conversationId: string, message: Message): void 
   }
   store.setMessages(
     conversationId,
-    localMessages.map((m) => (m.id === message.id ? { ...m, ...message } : m)),
+    preserveLatestAssistantContent(
+      localMessages.map((m) => (m.id === message.id ? { ...m, ...message } : m)),
+      localMessages,
+    ),
   )
 }
 
@@ -278,10 +287,7 @@ function isPendingClarificationBlock(block: unknown): boolean {
 }
 
 function hasAssistantDisplayContent(message: Message | undefined): message is Message {
-  if (!message || message.role !== 'assistant') return false
-  if ((message.content ?? '').trim().length > 0) return true
-  const ordered = (message.metadata?.content_blocks_ordered as unknown[] | undefined) ?? []
-  return ordered.length > 0
+  return assistantHasVisibleOutput(message)
 }
 
 export function mergeOrderedContentBlocks(
@@ -321,14 +327,19 @@ function resolveLocalAssistantMessageForMerge(
 
   const latestLocalAssistant = [...localMessages]
     .reverse()
-    .find((message) => message.role === 'assistant')
+    .find(hasAssistantDisplayContent)
   if (!latestLocalAssistant || latestLocalAssistant.id === backendMsg.id) return undefined
 
   const localOrdered =
     (latestLocalAssistant.metadata?.content_blocks_ordered as unknown[] | undefined) ?? []
-  if (!localOrdered.some(isPendingClarificationBlock)) return undefined
+  if (localOrdered.some(isPendingClarificationBlock)) return latestLocalAssistant
 
-  return latestLocalAssistant
+  // Streamed content can live on a temp/local id while the DB row uses the canonical id.
+  if (!hasAssistantDisplayContent(backendMsg) && hasAssistantDisplayContent(latestLocalAssistant)) {
+    return latestLocalAssistant
+  }
+
+  return undefined
 }
 
 export function mergeMessagesPreservingOrderedBlocks(
@@ -377,15 +388,151 @@ export function mergeMessagesPreservingOrderedBlocks(
   const backendIds = new Set(backendMessages.map((message) => message.id))
   const backendLastMessage = backendMessages[backendMessages.length - 1]
   const latestLocalAssistant = [...localMessages].reverse().find(hasAssistantDisplayContent)
-  if (
-    latestLocalAssistant &&
-    !backendIds.has(latestLocalAssistant.id) &&
-    backendLastMessage?.role === 'user'
-  ) {
-    return [...mergedMessages, latestLocalAssistant]
+  if (latestLocalAssistant && !backendIds.has(latestLocalAssistant.id)) {
+    if (backendLastMessage?.role === 'user') {
+      return preserveLatestAssistantContent(
+        [...mergedMessages, latestLocalAssistant],
+        localMessages,
+      )
+    }
+    if (
+      backendLastMessage?.role === 'assistant' &&
+      !hasAssistantDisplayContent(backendLastMessage) &&
+      hasAssistantDisplayContent(latestLocalAssistant)
+    ) {
+      const lastMerged = mergedMessages[mergedMessages.length - 1]
+      if (lastMerged?.role === 'assistant' && !hasAssistantDisplayContent(lastMerged)) {
+        const localOrdered =
+          (latestLocalAssistant.metadata?.content_blocks_ordered as unknown[] | undefined) ?? []
+        const backendOrdered =
+          (lastMerged.metadata?.content_blocks_ordered as unknown[] | undefined) ?? []
+        const mergedOrdered =
+          localOrdered.length === 0
+            ? backendOrdered
+            : backendOrdered.length === 0
+              ? localOrdered
+              : mergeOrderedContentBlocks(localOrdered, backendOrdered)
+        return preserveLatestAssistantContent(
+          [
+            ...mergedMessages.slice(0, -1),
+            {
+              ...lastMerged,
+              content: latestLocalAssistant.content,
+              metadata: {
+                ...(lastMerged.metadata ?? {}),
+                ...(mergedOrdered.length > 0 ? { content_blocks_ordered: mergedOrdered } : {}),
+              },
+            },
+          ],
+          localMessages,
+        )
+      }
+    }
   }
 
-  return mergedMessages
+  return preserveLatestAssistantContent(mergedMessages, localMessages)
+}
+
+function preserveLatestAssistantContent(
+  mergedMessages: Message[],
+  localMessages: Message[],
+): Message[] {
+  const localAssistant = getLastAssistantMessage(localMessages)
+  if (!localAssistant || !hasAssistantDisplayContent(localAssistant)) return mergedMessages
+
+  let assistantIndex = -1
+  for (let index = mergedMessages.length - 1; index >= 0; index -= 1) {
+    if (mergedMessages[index]?.role === 'assistant') {
+      assistantIndex = index
+      break
+    }
+  }
+
+  if (assistantIndex < 0) {
+    const lastMessage = mergedMessages[mergedMessages.length - 1]
+    if (lastMessage?.role === 'user') {
+      return [...mergedMessages, localAssistant]
+    }
+    return mergedMessages
+  }
+
+  const mergedAssistant = mergedMessages[assistantIndex]
+  const mergedHasText = assistantHasRenderableText(mergedAssistant)
+  const localHasText = assistantHasRenderableText(localAssistant)
+  if (hasAssistantDisplayContent(mergedAssistant) && (mergedHasText || !localHasText)) {
+    return mergedMessages
+  }
+
+  const localOrdered =
+    (localAssistant.metadata?.content_blocks_ordered as unknown[] | undefined) ?? []
+  const mergedOrdered =
+    (mergedAssistant.metadata?.content_blocks_ordered as unknown[] | undefined) ?? []
+  const nextOrdered =
+    localOrdered.length === 0
+      ? mergedOrdered
+      : mergedOrdered.length === 0
+        ? localOrdered
+        : mergeOrderedContentBlocks(localOrdered, mergedOrdered)
+
+  const next = [...mergedMessages]
+  const localMetadata = localAssistant.metadata as Record<string, unknown> | undefined
+  const mergedMetadata = mergedAssistant.metadata as Record<string, unknown> | undefined
+  next[assistantIndex] = {
+    ...mergedAssistant,
+    content: localAssistant.content ?? mergedAssistant.content,
+    content_blocks: localAssistant.content_blocks ?? mergedAssistant.content_blocks,
+    metadata: {
+      ...(mergedAssistant.metadata ?? {}),
+      ...(nextOrdered.length > 0 ? { content_blocks_ordered: nextOrdered } : {}),
+      ...(localMetadata?.duration_ms != null && mergedMetadata?.duration_ms == null
+        ? { duration_ms: localMetadata.duration_ms }
+        : {}),
+    },
+  }
+  return next
+}
+
+function finalizeStreamEndMessages(
+  localMessages: Message[],
+  backendMessages: Message[],
+): Message[] {
+  const merged = preserveLatestAssistantContent(
+    mergeMessagesPreservingOrderedBlocks(localMessages, backendMessages),
+    localMessages,
+  )
+  const localAssistant = getLastAssistantMessage(localMessages)
+  const mergedAssistant = getLastAssistantMessage(merged)
+  if (!localAssistant || !mergedAssistant || !isAssistantTurnComplete(localAssistant, true)) {
+    return merged
+  }
+
+  const assistantIndex = merged.findIndex((message) => message.id === mergedAssistant.id)
+  if (assistantIndex < 0) return merged
+
+  const mergedMetadata = mergedAssistant.metadata as Record<string, unknown> | undefined
+  if (mergedMetadata?.duration_ms != null && assistantHasRenderableText(mergedAssistant)) {
+    return merged
+  }
+
+  const next = [...merged]
+  next[assistantIndex] = {
+    ...mergedAssistant,
+    content: assistantHasRenderableText(localAssistant)
+      ? localAssistant.content
+      : mergedAssistant.content,
+    metadata: {
+      ...(mergedAssistant.metadata ?? {}),
+      duration_ms: mergedMetadata?.duration_ms ?? 1,
+    },
+  }
+  return preserveLatestAssistantContent(next, localMessages)
+}
+
+export function finalizeCompletedConversationTurn(conversationId: string): void {
+  abortRecovery(conversationId)
+  if (shouldSkipStreamRecovery(conversationId)) {
+    clearCompletedConversationRecoveryState(conversationId)
+  }
 }
 
 function getAssistantOrderedBlockMessageIds(messages: Message[]): Set<string> {
@@ -787,12 +934,33 @@ const RECOVER_MAX_DURATION_MS = 90_000
 const RECOVER_MAX_MESSAGE_AGE_MS = 5 * 60 * 1_000
 
 export function needsStreamRecovery(messages: Message[]): boolean {
-  const last = messages[messages.length - 1]
-  if (!last || last.role !== 'assistant') return false
-  if ((last.metadata as Record<string, unknown> | undefined)?.duration_ms != null) return false
-  const age = Date.now() - new Date(last.created_at).getTime()
+  const lastAssistant = getLastAssistantMessage(messages)
+  if (!lastAssistant) return false
+  if ((lastAssistant.metadata as Record<string, unknown> | undefined)?.duration_ms != null)
+    return false
+  if (isAssistantTurnComplete(lastAssistant, true)) return false
+  const age = Date.now() - new Date(lastAssistant.created_at).getTime()
   if (age > RECOVER_MAX_MESSAGE_AGE_MS) return false
   return true
+}
+
+function clearCompletedConversationRecoveryState(conversationId: string): void {
+  const store = useChatStore.getState()
+  store.setConversationReconnecting(conversationId, false)
+  store.setConversationStreaming(conversationId, false)
+  store.setConversationInterrupted(conversationId, false)
+  store.setConversationStreamFailure(conversationId, null)
+  store.clearConversationStreamRun(conversationId)
+  store.clearConversationStreamUI(conversationId)
+  store.setIsStreaming(
+    store.streamingConversationIds.filter((id) => id !== conversationId).length > 0 ||
+      activeControllers.size > 0,
+  )
+}
+
+export function shouldSkipStreamRecovery(conversationId: string): boolean {
+  const messages = useChatStore.getState().messagesByConversation[conversationId] ?? []
+  return isAssistantTurnComplete(getLastAssistantMessage(messages), true)
 }
 
 const activeRecoveries = new Set<string>()
@@ -851,6 +1019,10 @@ export async function recoverStalledConversation(conversationId: string): Promis
 export async function recoverConversation(conversationId: string): Promise<void> {
   if (activeRecoveries.has(conversationId)) return
   if (isStreamActive(conversationId)) return
+  if (shouldSkipStreamRecovery(conversationId)) {
+    clearCompletedConversationRecoveryState(conversationId)
+    return
+  }
   activeRecoveries.add(conversationId)
 
   abortRecovery(conversationId)
@@ -865,18 +1037,29 @@ export async function recoverConversation(conversationId: string): Promise<void>
   let shownReconnecting = false
   let contactEstablished = false
 
-  const pollOnce = async (): Promise<'completed' | 'active' | 'dead'> => {
+  const pollOnce = async (streamInactive: boolean): Promise<'completed' | 'active' | 'dead'> => {
+    const localBeforeFetch = useChatStore.getState().messagesByConversation[conversationId] ?? []
+    const localAssistantBefore = getLastAssistantMessage(localBeforeFetch)
     const msgs = await fetchMessages(conversationId)
     if (signal.aborted) return 'dead'
-    const local = useChatStore.getState().messagesByConversation[conversationId] ?? []
-    store.setMessages(conversationId, mergeMessagesPreservingOrderedBlocks(local, msgs))
+    const merged = preserveLatestAssistantContent(
+      mergeMessagesPreservingOrderedBlocks(localBeforeFetch, msgs),
+      localBeforeFetch,
+    )
+    store.setMessages(conversationId, merged)
 
-    const last = msgs[msgs.length - 1]
-    if (!last || last.role !== 'assistant') return 'dead'
-    if ((last.metadata as Record<string, unknown> | undefined)?.duration_ms != null)
+    const lastAssistant = getLastAssistantMessage(merged)
+    if (!lastAssistant) return 'dead'
+    if (isAssistantTurnComplete(lastAssistant, streamInactive)) return 'completed'
+    if (streamInactive && isAssistantTurnComplete(localAssistantBefore, true)) {
+      if (localAssistantBefore) {
+        const restored = preserveLatestAssistantContent(merged, localBeforeFetch)
+        store.setMessages(conversationId, restored)
+      }
       return 'completed'
+    }
 
-    const age = Date.now() - new Date(last.created_at).getTime()
+    const age = Date.now() - new Date(lastAssistant.created_at).getTime()
     if (age > RECOVER_MAX_MESSAGE_AGE_MS) return 'dead'
     return 'active'
   }
@@ -892,7 +1075,7 @@ export async function recoverConversation(conversationId: string): Promise<void>
         if (signal.aborted) return
 
         if (!status.active) {
-          const result = await pollOnce()
+          const result = await pollOnce(true)
           if (signal.aborted) return
 
           if (result === 'completed') {
@@ -906,6 +1089,10 @@ export async function recoverConversation(conversationId: string): Promise<void>
           }
 
           if (result === 'active') {
+            if (shouldSkipStreamRecovery(conversationId)) {
+              clearCompletedConversationRecoveryState(conversationId)
+              return
+            }
             store.setConversationStreaming(conversationId, true)
             store.setIsStreaming(true)
             if (!shownReconnecting) {
@@ -972,7 +1159,7 @@ export async function recoverConversation(conversationId: string): Promise<void>
           shownReconnecting = true
         }
 
-        const result = await pollOnce()
+        const result = await pollOnce(!status.runId)
         if (signal.aborted) return
         if (result === 'completed') {
           store.setConversationReconnecting(conversationId, false)
@@ -1018,9 +1205,13 @@ export async function recoverConversation(conversationId: string): Promise<void>
     activeRecoveries.delete(conversationId)
     recoveryAbortControllers.delete(conversationId)
     if (!signal.aborted) {
-      store.setConversationReconnecting(conversationId, false)
-      if (!isStreamActive(conversationId)) {
-        store.clearConversationStreamUI(conversationId)
+      if (shouldSkipStreamRecovery(conversationId)) {
+        clearCompletedConversationRecoveryState(conversationId)
+      } else {
+        store.setConversationReconnecting(conversationId, false)
+        if (!isStreamActive(conversationId)) {
+          store.clearConversationStreamUI(conversationId)
+        }
       }
     }
   }
@@ -2436,7 +2627,25 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
       if (!sawRealAgentEvent) {
         throw new Error('__MACHINE_WARMUP_INTERRUPTED__')
       }
-      throw new Error('__STREAM_INTERRUPTED__')
+      const streamedMessages = store.messagesByConversation[conversationId!] ?? []
+      const streamedAssistant = [...streamedMessages]
+        .reverse()
+        .find((message) => message.role === 'assistant')
+      if (!isAssistantTurnComplete(streamedAssistant, true)) {
+        throw new Error('__STREAM_INTERRUPTED__')
+      }
+      clearVisibleStreamState()
+      if (
+        streamedAssistant &&
+        (streamedAssistant.metadata as Record<string, unknown> | undefined)?.duration_ms == null
+      ) {
+        store.updateMessage(conversationId!, streamedAssistant.id, {
+          metadata: {
+            ...(streamedAssistant.metadata ?? {}),
+            duration_ms: 1,
+          },
+        })
+      }
     }
 
     // 5. Ensure any stream that never delivered message_start still binds the final ID.
@@ -2468,8 +2677,7 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
         const localMessages = store.messagesByConversation[conversationId!] ?? []
         const expectedCanonicalIds = getAssistantOrderedBlockMessageIds(localMessages)
         const backendMessages = await fetchMessages(conversationId!)
-        const merged = mergeMessagesPreservingOrderedBlocks(localMessages, backendMessages)
-        pendingMergedMessages = merged
+        pendingMergedMessages = finalizeStreamEndMessages(localMessages, backendMessages)
         void reconcileCanonicalOrderedBlocks({
           conversationId: conversationId!,
           expectedMessageIds: expectedCanonicalIds,
@@ -2481,6 +2689,7 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
     }
 
     finalizeStreamState()
+    finalizeCompletedConversationTurn(conversationId!)
     return conversationId!
   } catch (err) {
     // Don't treat abort as an error
@@ -2512,6 +2721,16 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
       const interrupted = resolveChatStreamFailure({ code: 'stream_interrupted' })
       store.setConversationStreamFailure(conversationId!, interrupted)
       finalizeStreamState()
+
+      const localMessages = store.messagesByConversation[conversationId!] ?? []
+      const lastAssistant = [...localMessages]
+        .reverse()
+        .find((message) => message.role === 'assistant')
+      if (isAssistantTurnComplete(lastAssistant, true)) {
+        finalizeCompletedConversationTurn(conversationId!)
+        return conversationId!
+      }
+
       void recoverConversation(conversationId!)
       return conversationId!
     }

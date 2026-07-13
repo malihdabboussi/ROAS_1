@@ -2,19 +2,35 @@ import type { RefObject } from 'react'
 
 export const MIC_SAMPLE_RATE = 16000
 
+export async function ensureAudioContextRunning(ctx: AudioContext): Promise<void> {
+  if (ctx.state === 'suspended') {
+    await ctx.resume()
+  }
+}
+
 export function startMicCapture(
   stream: MediaStream,
   ws: WebSocket,
   mutedRef: RefObject<boolean>,
+  micInputLevelRef?: RefObject<number>,
 ): void {
   const audioCtx = new AudioContext({ sampleRate: MIC_SAMPLE_RATE })
+  void ensureAudioContextRunning(audioCtx)
   const source = audioCtx.createMediaStreamSource(stream)
   const processor = audioCtx.createScriptProcessor(4096, 1, 1)
 
   processor.onaudioprocess = (event) => {
     if (ws.readyState !== WebSocket.OPEN) return
-    if (mutedRef.current) return
     const input = event.inputBuffer.getChannelData(0)
+    if (micInputLevelRef) {
+      let sum = 0
+      for (let i = 0; i < input.length; i++) {
+        const sample = input[i]!
+        sum += sample * sample
+      }
+      micInputLevelRef.current = Math.sqrt(sum / input.length)
+    }
+    if (mutedRef.current) return
     const buffer = new ArrayBuffer(input.length * 2)
     const view = new DataView(buffer)
     for (let i = 0; i < input.length; i++) {

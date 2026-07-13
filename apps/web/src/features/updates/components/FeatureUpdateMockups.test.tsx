@@ -17,7 +17,7 @@ describe('FeatureUpdateMockup', () => {
     expect(screen.getByText('Website Builder')).toBeInTheDocument()
 
     rerender(<FeatureUpdateMockup title="Brain knowledge graph" />)
-    expect(screen.getByText('vibey.im/brain')).toBeInTheDocument()
+    expect(screen.getByText('roas.io/brain')).toBeInTheDocument()
 
     rerender(<FeatureUpdateMockup title="Organization switching" />)
     expect(screen.getByText('roas.io/org')).toBeInTheDocument()
@@ -30,7 +30,7 @@ describe('FeatureUpdateMockup', () => {
     expect(screen.getByText('Q2 Landing')).toBeInTheDocument()
 
     rerender(<FeatureUpdateMockup title="General platform polish" />)
-    expect(screen.getByText('vibey.im')).toBeInTheDocument()
+    expect(screen.getByText('roas.io')).toBeInTheDocument()
   })
 
   it('settles after rerender without repeated render churn', async () => {

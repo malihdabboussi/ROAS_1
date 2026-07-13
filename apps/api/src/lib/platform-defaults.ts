@@ -3,6 +3,7 @@ export const ROAS_PLATFORM_API_URL = 'https://api.roas.io'
 export const ROAS_APP_URL = 'https://app.roas.io'
 export const ROAS_MARKETING_URL = 'https://roas.io'
 export const ROAS_MCP_RESOURCE_URL = 'https://mcp.roas.io'
+export const ROAS_FUNNELS_BASE_DOMAIN = 'sites.roas.io'
 export const ROAS_LINK_PREVIEW_INTERNAL_HOSTS =
   'roas.io,app.roas.io,api.roas.io,sites.roas.io,agents.roas.io'
 
@@ -20,4 +21,8 @@ export function resolveAppUrl(): string {
 
 export function resolveMarketingSiteUrl(): string {
   return ROAS_MARKETING_URL
+}
+
+export function resolveFunnelsBaseDomain(): string {
+  return process.env.CLOUDFLARE_BASE_DOMAIN || ROAS_FUNNELS_BASE_DOMAIN
 }

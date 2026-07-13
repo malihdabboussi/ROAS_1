@@ -32,6 +32,8 @@ const FORM_ASSET_SETTING_KEYS = {
   end_page_icon: 'end_page_icon_image_url',
 } satisfies Record<FormAssetPlacement, string>
 
+const ROAS_FUNNELS_BASE_DOMAIN = 'sites.roas.io'
+
 @Injectable()
 export class ArtifactFormsService {
   constructor(
@@ -274,7 +276,7 @@ export class ArtifactFormsService {
   private buildPublishedUrl(form: ArtifactFormRow, slug: string, userId: string): string {
     const existing = this.stringValue(form.published_url)
     if (existing) return existing
-    const baseDomain = process.env.CLOUDFLARE_BASE_DOMAIN || 'vibeyfunnels.com'
+    const baseDomain = process.env.CLOUDFLARE_BASE_DOMAIN || ROAS_FUNNELS_BASE_DOMAIN
     const subdomain = `user-${userId.slice(0, 8)}.${baseDomain}`
     const tokenOrSlug = this.stringValue(form.share_token) ?? slug
     return `https://${subdomain}/form/${tokenOrSlug}`

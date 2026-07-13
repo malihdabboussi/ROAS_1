@@ -26,6 +26,7 @@ function GlobalChatRouteSync() {
   const loadRoster = useGlobalChatStore((s) => s.loadRoster)
   const setHideForHumanDm = useGlobalChatStore((s) => s.setHideForHumanDm)
   const expandAndFocus = useGlobalChatStore((s) => s.expandAndFocus)
+  const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
 
   useEffect(() => {
     void loadRoster()
@@ -34,6 +35,12 @@ function GlobalChatRouteSync() {
   useEffect(() => {
     syncRouteContext(pathname)
   }, [pathname, syncRouteContext])
+
+  useEffect(() => {
+    if (pathname === '/home') {
+      setCollapsed(true)
+    }
+  }, [pathname, setCollapsed])
 
   useEffect(() => {
     const dm = searchParams.get('dm')
@@ -95,7 +102,6 @@ export function GlobalChatLayout({ children }: { children: ReactNode }) {
   const setRailIntent = useGlobalChatStore((s) => s.setRailIntent)
   const hideForHumanDm = useGlobalChatStore((s) => s.hideForHumanDm)
   const isDesktop = useMediaQuery('(min-width: 768px)')
-  const [mobileMode, setMobileMode] = useState<'chat' | 'main'>('main')
   const [containerWidthPx, setContainerWidthPx] = useState(0)
 
   const {
@@ -189,30 +195,8 @@ export function GlobalChatLayout({ children }: { children: ReactNode }) {
       </div>
 
       <div className="flex h-full min-h-0 min-w-0 flex-col md:hidden">
-        {showChat ? (
-          <div className="border-border mb-2 grid grid-cols-2 rounded-xl border p-1">
-            <button
-              type="button"
-              onClick={() => setMobileMode('chat')}
-              className={`body-4 rounded-lg px-3 py-1.5 font-medium ${
-                mobileMode === 'chat' ? 'surface-card text-foreground' : 'text-muted-foreground'
-              }`}
-            >
-              Chat
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileMode('main')}
-              className={`body-4 rounded-lg px-3 py-1.5 font-medium ${
-                mobileMode === 'main' ? 'surface-card text-foreground' : 'text-muted-foreground'
-              }`}
-            >
-              Page
-            </button>
-          </div>
-        ) : null}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {showChat && mobileMode === 'chat' && !isDesktop ? <GlobalChatPanel /> : children}
+          {showChat && !collapsed && !isDesktop ? <GlobalChatPanel /> : children}
         </div>
       </div>
     </>

@@ -1,5 +1,11 @@
 const SAMPLE_RATE = 24000
 
+async function ensureAudioContextRunning(ctx: AudioContext): Promise<void> {
+  if (ctx.state === 'suspended') {
+    await ctx.resume()
+  }
+}
+
 export class AudioPlaybackQueue {
   private ctx: AudioContext | null = null
   private queue: AudioBuffer[] = []
@@ -15,8 +21,12 @@ export class AudioPlaybackQueue {
   }
 
   async init(): Promise<void> {
-    if (this.ctx) return
+    if (this.ctx) {
+      await ensureAudioContextRunning(this.ctx)
+      return
+    }
     this.ctx = new AudioContext({ sampleRate: SAMPLE_RATE })
+    await ensureAudioContextRunning(this.ctx)
     this.analyser = this.ctx.createAnalyser()
     this.analyser.fftSize = 256
     this.analyser.smoothingTimeConstant = 0.8
@@ -26,6 +36,7 @@ export class AudioPlaybackQueue {
 
   enqueue(pcmBytes: ArrayBuffer): void {
     if (!this.ctx || !this.analyser) return
+    void ensureAudioContextRunning(this.ctx)
 
     const int16 = new Int16Array(pcmBytes)
     const float32 = new Float32Array(int16.length)

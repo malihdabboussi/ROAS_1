@@ -3,26 +3,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { BrainScopeNavOption } from '../hooks/use-brain-scope-nav-options'
 import { BrainVisualizationModalLayer } from './BrainVisualizationModalLayer'
 
-vi.mock('next/dynamic', () => ({
-  default: () =>
-    function BrainVoiceOrbMock({
-      onClose,
-      scope,
-    }: {
-      onClose: () => void
-      scope?: { type: string; brainId?: string | null; campaignId?: string | null }
-    }) {
-      return (
-        <div data-testid="brain-voice-orb">
-          <span data-testid="voice-scope">{JSON.stringify(scope ?? null)}</span>
-          <button type="button" onClick={onClose}>
-            Close voice
-          </button>
-        </div>
-      )
-    },
-}))
-
 vi.mock('./CortexMaxModal', () => ({
   default: ({
     brainId,
@@ -92,7 +72,6 @@ function renderLayer(overrides: Partial<Parameters<typeof BrainVisualizationModa
   const onCortexMaxOpenChange = vi.fn()
   const onCrystallizeOpenChange = vi.fn()
   const onRefreshQueueJobs = vi.fn()
-  const onVoiceSessionOpenChange = vi.fn()
   const props = {
     cortexMaxOpen: true,
     crystallizeOpen: true,
@@ -100,10 +79,8 @@ function renderLayer(overrides: Partial<Parameters<typeof BrainVisualizationModa
     onCortexMaxOpenChange,
     onCrystallizeOpenChange,
     onRefreshQueueJobs,
-    onVoiceSessionOpenChange,
     selectedScope: scopeOption(),
     topRightScopeReady: true,
-    voiceSessionOpen: true,
     ...overrides,
   }
 
@@ -112,7 +89,6 @@ function renderLayer(overrides: Partial<Parameters<typeof BrainVisualizationModa
     onCortexMaxOpenChange,
     onCrystallizeOpenChange,
     onRefreshQueueJobs,
-    onVoiceSessionOpenChange,
   }
 }
 
@@ -162,46 +138,11 @@ describe('BrainVisualizationModalLayer', () => {
         onCortexMaxOpenChange={vi.fn()}
         onCrystallizeOpenChange={vi.fn()}
         onRefreshQueueJobs={vi.fn()}
-        onVoiceSessionOpenChange={vi.fn()}
         selectedScope={scopeOption({ brainId: null })}
         topRightScopeReady
-        voiceSessionOpen={false}
       />,
     )
 
     expect(screen.queryByTestId('crystallize-modal')).toBeNull()
-  })
-
-  it('ports voice sessions into document body with the mapped live scope and close callback', () => {
-    const { onVoiceSessionOpenChange } = renderLayer({
-      selectedScope: scopeOption({
-        agentId: null,
-        brainId: 'brain-shared',
-        id: 'shared:brain-shared',
-        label: 'Shared Brain',
-        scopeType: 'shared',
-      }),
-    })
-
-    expect(document.body.querySelector('[data-testid="brain-voice-orb"]')).toBeTruthy()
-    expect(screen.getByTestId('voice-scope').textContent).toContain('"type":"user"')
-    expect(screen.getByTestId('voice-scope').textContent).toContain('"brainId":"brain-shared"')
-
-    fireEvent.click(screen.getByRole('button', { name: 'Close voice' }))
-
-    expect(onVoiceSessionOpenChange).toHaveBeenCalledWith(false)
-  })
-
-  it('passes no live voice scope for unsupported campaign-knowledge scopes', () => {
-    renderLayer({
-      selectedScope: scopeOption({
-        brainId: 'brain-campaign-knowledge',
-        id: 'campaign:knowledge',
-        label: 'Campaign Knowledge',
-        scopeType: 'campaign_knowledge',
-      }),
-    })
-
-    expect(screen.getByTestId('voice-scope').textContent).toBe('null')
   })
 })

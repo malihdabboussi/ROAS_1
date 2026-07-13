@@ -23,6 +23,10 @@ import {
 } from '@vibey/api-shared'
 import { SyncReadyInterceptor } from '../../agent-sync/interceptors/sync-ready.interceptor'
 import { CreditsGuard } from '../../billing/guards/credits.guard'
+import {
+  resolveBrainLiveMachineId,
+  resolveBrainLiveMachineWsUrl,
+} from '../brain-live-ws-url'
 import { BrainLiveService, type LiveSessionScope } from '../services/brain-live.service'
 
 @Controller('brain')
@@ -56,6 +60,7 @@ export class BrainLiveController {
       `POST /brain/live-session - User: ${user.id} scope=${body.scope?.type ?? 'user'} conv=${body.conversationId ?? 'none'} reconnect=${!!body.reconnect}`,
     )
     const accessToken = authHeader?.replace(/^Bearer\s+/i, '') ?? ''
+    const machineId = resolveBrainLiveMachineId(req)
     const session = this.brainLiveService.createSession(
       user.id,
       reqScope.orgId ?? null,
@@ -63,9 +68,13 @@ export class BrainLiveController {
       body.conversationId,
       body.voiceName,
       accessToken,
+      machineId,
     )
 
-    const machineUrl = this.resolveMachineWsUrl(req)
+    const machineUrl = resolveBrainLiveMachineWsUrl(
+      req,
+      this.config.get<string>('FLY_MACHINE_URL'),
+    )
 
     let delegations: ReturnType<typeof this.brainLiveService.listActiveDelegationsForSession> = []
     if (body.reconnect && body.conversationId && body.scope?.agentId) {
@@ -77,21 +86,6 @@ export class BrainLiveController {
       )
     }
 
-    return { sessionId: session.id, wsUrl: machineUrl, delegations }
-  }
-
-  private resolveMachineWsUrl(req: Request): string | null {
-    const flyMachineUrl = this.config.get<string>('FLY_MACHINE_URL')
-    if (flyMachineUrl) {
-      const base = flyMachineUrl.replace(/^https?:\/\//, '')
-      return `wss://${base}`
-    }
-
-    const host = req.headers['host']
-    if (host && !host.includes('localhost')) {
-      return `wss://${host}`
-    }
-
-    return null
+    return { sessionId: session.id, wsUrl: machineUrl, machineId, delegations }
   }
 }

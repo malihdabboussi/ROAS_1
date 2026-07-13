@@ -17,6 +17,7 @@ export {
   requestStopStream,
   selectConversation,
   sendMessageStreaming,
+  shouldSkipStreamRecovery,
   suggestConversationTitle,
 } from '@/features/studio/services/chat.service'
 export { initStreamResilience } from '@/features/studio/services/stream-resilience'

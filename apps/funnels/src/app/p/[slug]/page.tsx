@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * Public presentation view: {user-subdomain}.vibeyfunnels.com/p/{slug}
+ * Public presentation view: {user-subdomain}.sites.roas.io/p/{slug}
  * No auth required. Only serves published presentations.
  */
 export default async function PresentationPublicPage({ params }: Props) {

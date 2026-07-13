@@ -84,7 +84,7 @@ export function HomeDashboardContent() {
 
   return (
     <HomeDashboardVisualProvider variant="v4">
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <HomeDashboardV4Shell>
           <HomeDashboardV4Greeting greeting={greeting} firstName={firstName} />
 
@@ -92,7 +92,10 @@ export function HomeDashboardContent() {
             <HomeCreditDepletedBanner canBuyCredits={!activeOrgId || canManageOrgBilling} />
           ) : null}
 
-          <HomeDashboardV4Composer selectedTemplate={selectedTemplate} />
+          <HomeDashboardV4Composer
+            selectedTemplate={selectedTemplate}
+            onSelectTemplate={setSelectedTemplate}
+          />
 
           <HomeTemplateFan selected={selectedTemplate} onSelect={setSelectedTemplate} />
 

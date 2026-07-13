@@ -12,7 +12,7 @@ type Props = {
 }
 
 /**
- * Direct access thank-you: vibeyfunnels.com/{funnel-slug}/thank-you
+ * Direct access thank-you: sites.roas.io/{funnel-slug}/thank-you
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params

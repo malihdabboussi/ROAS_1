@@ -66,3 +66,17 @@ describe('resolveFunnelEntryBySlug', () => {
     expect(result).toBeNull()
   })
 })
+
+describe('funnel domain defaults', () => {
+  it('uses the ROAS funnels host when the environment is absent', async () => {
+    const previous = process.env.CLOUDFLARE_BASE_DOMAIN
+    delete process.env.CLOUDFLARE_BASE_DOMAIN
+
+    const { resolveFunnelsBaseDomain } = await import('./platform-urls')
+
+    expect(resolveFunnelsBaseDomain()).toBe('sites.roas.io')
+
+    if (previous === undefined) delete process.env.CLOUDFLARE_BASE_DOMAIN
+    else process.env.CLOUDFLARE_BASE_DOMAIN = previous
+  })
+})

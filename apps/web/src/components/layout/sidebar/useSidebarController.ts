@@ -25,6 +25,8 @@ import { useUserRole } from '@/hooks/use-user-role'
 import { billingApi } from '@/lib/billing/billing-api'
 import { SIDEBAR_TOAST_ERRORS } from '../config/sidebar-toast-errors.config'
 import type { ConversationTypeFilter, SidebarProps } from './sidebar-types'
+import type { HubMenuSectionId } from './sidebar-hq-hub-menu.types'
+import { hubSectionFromPathname, toggleHubMenuSection } from './sidebar-hq-hub-menu.utils'
 import { useSidebarCampaignsCore } from './useSidebarCampaignsCore'
 
 function isAppTeamRoute(pathname: string) {
@@ -150,9 +152,21 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     'projects' | 'spaces' | 'team2' | 'brain' | null
   >(null)
   const [isPanelClosing, setIsPanelClosing] = useState(false)
+  const [hubMenuOpen, setHubMenuOpen] = useState(false)
+  const [hubMenuClosing, setHubMenuClosing] = useState(false)
+  const [hubMenuExpandedSections, setHubMenuExpandedSections] = useState<Set<HubMenuSectionId>>(
+    new Set(),
+  )
   const [expandedSpaceCampaignIds, setExpandedSpaceCampaignIds] = useState<Set<string>>(new Set())
 
-  const { data: sidebarProjectsData } = useCachedProjects(activeManagePanel === 'projects')
+  const hubSpacesDataEnabled =
+    activeManagePanel === 'spaces' ||
+    (hubMenuOpen && hubMenuExpandedSections.has('spaces'))
+  const hubProjectsDataEnabled =
+    activeManagePanel === 'projects' ||
+    (hubMenuOpen && hubMenuExpandedSections.has('projects'))
+
+  const { data: sidebarProjectsData } = useCachedProjects(hubProjectsDataEnabled)
   const sidebarProjects = sidebarProjectsData ?? []
   const setSidebarProjects = useCallback((next: SetStateAction<ProjectRepo[]>) => {
     cachedProjects.mutate((prev) =>
@@ -172,7 +186,7 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     hasMore: sidebarListsHasMore,
     loadingMore: sidebarListsLoadingMore,
     loadMore: loadMoreSidebarLists,
-  } = useCachedSpaces(activeManagePanel === 'spaces')
+  } = useCachedSpaces(hubSpacesDataEnabled)
   const sidebarLists = sidebarListsData ?? []
 
   const conversations = useChatStore((s) => s.conversations)
@@ -219,6 +233,47 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     }, 300)
     return () => clearTimeout(t)
   }, [isPanelClosing])
+
+  useEffect(() => {
+    if (!hubMenuClosing) return
+    const t = setTimeout(() => {
+      setHubMenuOpen(false)
+      setHubMenuClosing(false)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [hubMenuClosing])
+
+  useEffect(() => {
+    if (hubMenuOpen) return
+    setHubMenuExpandedSections(new Set())
+  }, [hubMenuOpen])
+
+  const closeHubMenu = useCallback(() => {
+    if (!hubMenuOpen || hubMenuClosing) return
+    setHubMenuClosing(true)
+  }, [hubMenuClosing, hubMenuOpen])
+
+  const toggleHubMenu = useCallback(() => {
+    if (hubMenuOpen) {
+      closeHubMenu()
+      return
+    }
+    setHubMenuOpen(true)
+    setHubMenuClosing(false)
+    setActiveManagePanel(null)
+    setIsPanelClosing(false)
+    const routeSection = hubSectionFromPathname(pathname)
+    setHubMenuExpandedSections(routeSection ? new Set([routeSection]) : new Set())
+  }, [closeHubMenu, hubMenuOpen, pathname])
+
+  const toggleHubMenuSectionById = useCallback((sectionId: HubMenuSectionId) => {
+    setHubMenuExpandedSections((current) => toggleHubMenuSection(current, sectionId))
+  }, [])
+
+  const syncHubMenuExpandedToRoute = useCallback(() => {
+    const routeSection = hubSectionFromPathname(pathname)
+    setHubMenuExpandedSections(routeSection ? new Set([routeSection]) : new Set())
+  }, [pathname])
 
   const filteredConversations = useMemo(() => {
     const getUpdatedAt = (value: string | null | undefined): number => {
@@ -529,15 +584,19 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     }
   }, [menuOpenId])
 
+  const hubExpanded = hubMenuOpen || hubMenuClosing
+
   const desktopWidth =
     sidebarMode === 'hq'
-      ? activeManagePanel &&
-        activeManagePanel !== 'spaces' &&
-        activeManagePanel !== 'team2' &&
-        activeManagePanel !== 'brain' &&
-        !isPanelClosing
-        ? 'md:w-[320px]'
-        : 'md:w-[72px]'
+      ? hubExpanded
+        ? 'md:w-[328px]'
+        : activeManagePanel &&
+            activeManagePanel !== 'spaces' &&
+            activeManagePanel !== 'team2' &&
+            activeManagePanel !== 'brain' &&
+            !isPanelClosing
+          ? 'md:w-[320px]'
+          : 'md:w-[80px]'
       : collapsed
         ? 'md:w-[72px]'
         : 'md:w-[264px]'
@@ -624,6 +683,13 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     setActiveManagePanel,
     isPanelClosing,
     setIsPanelClosing,
+    hubMenuOpen,
+    hubMenuClosing,
+    hubMenuExpandedSections,
+    toggleHubMenu,
+    closeHubMenu,
+    toggleHubMenuSectionById,
+    syncHubMenuExpandedToRoute,
     expandedSpaceCampaignIds,
     setExpandedSpaceCampaignIds,
     conversations,

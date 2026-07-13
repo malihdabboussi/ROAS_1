@@ -14,7 +14,7 @@ type Props = {
 }
 
 /**
- * Direct access route: vibeyfunnels.com/{funnel-slug}
+ * Direct access route: sites.roas.io/{funnel-slug}
  * Resolves by funnel.slug (not page slug), shows the opt-in page.
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

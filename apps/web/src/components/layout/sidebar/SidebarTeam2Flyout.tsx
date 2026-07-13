@@ -13,11 +13,12 @@ import { useSidebarTeam2FlyoutData } from './useSidebarTeam2FlyoutData'
 
 interface SidebarTeam2FlyoutProps {
   pathname: string
+  embedded?: boolean
 }
 
 const DM_RECENT_LIMIT = 5
 
-export function SidebarTeam2Flyout({ pathname }: SidebarTeam2FlyoutProps) {
+export function SidebarTeam2Flyout({ pathname, embedded = false }: SidebarTeam2FlyoutProps) {
   const {
     create,
     rename,
@@ -80,40 +81,34 @@ export function SidebarTeam2Flyout({ pathname }: SidebarTeam2FlyoutProps) {
     }
   }
 
-  return (
+  const teamBody = (
     <>
-      <div className="flex items-center justify-between px-3 py-3">
-        <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
-          Team
-        </span>
+      <div className="mb-3 space-y-0.5">
+        <Link
+          href="/team"
+          className={`nav-glass-hover-purple body-3 flex w-full items-center gap-2 rounded-lg px-3 py-1.5 transition-all ${
+            pathname === '/team'
+              ? 'home-sidebar-item-active'
+              : 'text-[var(--color-muted-foreground)]'
+          }`}
+        >
+          <LayoutGrid className="h-4 w-4 shrink-0" />
+          <span className="min-w-0 flex-1 truncate">Manage Agents</span>
+        </Link>
+        <Link
+          href="/team/skills"
+          className={`nav-glass-hover-purple body-3 flex w-full items-center gap-2 rounded-lg px-3 py-1.5 transition-all ${
+            pathname === '/team/skills' || pathname.startsWith('/team/skills/')
+              ? 'home-sidebar-item-active'
+              : 'text-[var(--color-muted-foreground)]'
+          }`}
+        >
+          <BookCheck className="h-4 w-4 shrink-0" />
+          <span className="min-w-0 flex-1 truncate">Manage Skills</span>
+        </Link>
       </div>
-      <div className="scrollbar-hide flex-1 overflow-y-auto px-2 pb-2">
-        <div className="mb-3 space-y-0.5">
-          <Link
-            href="/team"
-            className={`nav-glass-hover-purple body-3 flex w-full items-center gap-2 rounded-lg px-3 py-1.5 transition-all ${
-              pathname === '/team'
-                ? 'home-sidebar-item-active'
-                : 'text-[var(--color-muted-foreground)]'
-            }`}
-          >
-            <LayoutGrid className="h-4 w-4 shrink-0" />
-            <span className="min-w-0 flex-1 truncate">Manage Agents</span>
-          </Link>
-          <Link
-            href="/team/skills"
-            className={`nav-glass-hover-purple body-3 flex w-full items-center gap-2 rounded-lg px-3 py-1.5 transition-all ${
-              pathname === '/team/skills' || pathname.startsWith('/team/skills/')
-                ? 'home-sidebar-item-active'
-                : 'text-[var(--color-muted-foreground)]'
-            }`}
-          >
-            <BookCheck className="h-4 w-4 shrink-0" />
-            <span className="min-w-0 flex-1 truncate">Manage Skills</span>
-          </Link>
-        </div>
 
-        <div className="gap-spacing-6 flex flex-col">
+      <div className="gap-spacing-6 flex flex-col">
           {showOrgCollaboration ? (
             <div className="group/teams">
               <div className="flex items-center justify-between px-3 pb-1 pt-1">
@@ -304,8 +299,22 @@ export function SidebarTeam2Flyout({ pathname }: SidebarTeam2FlyoutProps) {
               )}
             </div>
           ) : null}
-        </div>
       </div>
+    </>
+  )
+
+  if (embedded) {
+    return <div className="px-2 pb-2">{teamBody}</div>
+  }
+
+  return (
+    <>
+      <div className="flex items-center justify-between px-3 py-3">
+        <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
+          Team
+        </span>
+      </div>
+      <div className="scrollbar-hide flex-1 overflow-y-auto px-2 pb-2">{teamBody}</div>
     </>
   )
 }

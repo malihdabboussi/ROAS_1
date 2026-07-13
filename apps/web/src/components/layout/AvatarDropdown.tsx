@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { createPortal } from 'react-dom'
-import { Building2, ChevronRight, LogOut, Plus, Settings, Star, User } from 'lucide-react'
+import { Building2, ChevronRight, LogOut, Plus, Rocket, Settings, Star, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { CreditPurchaseDialog } from '@/features/billing/components/CreditPurchaseDialog'
 import { ImpersonationClientsSection } from '@/features/impersonation/components/ImpersonationClientsSection'
@@ -31,6 +31,7 @@ type AvatarDropdownProps = {
   initials: string
   sidebarCollapsed: boolean
   showLabel?: boolean
+  featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
 }
 
 export function AvatarDropdown({
@@ -40,6 +41,7 @@ export function AvatarDropdown({
   initials,
   sidebarCollapsed: _sidebarCollapsed,
   showLabel: _showLabel = true,
+  featureUpdates,
 }: AvatarDropdownProps) {
   const { openAccountSettings } = useAccountSettingsModal()
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
@@ -151,7 +153,7 @@ export function AvatarDropdown({
       <button
         ref={triggerRef}
         onClick={() => setMenuOpen(!menuOpen)}
-        className="rounded-spacing-2 flex cursor-pointer items-center justify-center p-1 text-[var(--color-muted-foreground)] outline-none transition-colors hover:text-[var(--color-foreground)]"
+        className="rounded-spacing-2 relative flex cursor-pointer items-center justify-center p-1 text-[var(--color-muted-foreground)] outline-none transition-colors hover:text-[var(--color-foreground)]"
       >
         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]">
           {avatarUrl ? (
@@ -162,6 +164,9 @@ export function AvatarDropdown({
             </span>
           )}
         </div>
+        {featureUpdates?.hasUnread ? (
+          <span className="bg-primary absolute right-0.5 top-0.5 h-2 w-2 rounded-full ring-2 ring-[var(--color-card)]" />
+        ) : null}
       </button>
 
       {menuOpen &&
@@ -207,6 +212,20 @@ export function AvatarDropdown({
                   openWorkspaceSettings()
                 }}
               />
+              {featureUpdates ? (
+                <MenuItem
+                  icon={<Rocket className="h-4 w-4" />}
+                  label="Updates"
+                  showUnreadDot={featureUpdates.hasUnread}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    window.dispatchEvent(new CustomEvent('close-mobile-sidebar'))
+                    if (triggerRef.current) {
+                      featureUpdates.onOpen(triggerRef.current)
+                    }
+                  }}
+                />
+              ) : null}
             </div>
 
             {/* Org Switcher */}
@@ -517,11 +536,13 @@ function MenuItem({
   label,
   onClick,
   active = false,
+  showUnreadDot = false,
 }: {
   icon: React.ReactNode
   label: string
   onClick: () => void
   active?: boolean
+  showUnreadDot?: boolean
 }) {
   return (
     <button
@@ -532,6 +553,9 @@ function MenuItem({
     >
       {icon}
       <span className="body-2">{label}</span>
+      {showUnreadDot ? (
+        <span className="bg-primary ml-auto h-2 w-2 shrink-0 rounded-full" />
+      ) : null}
     </button>
   )
 }

@@ -19,8 +19,6 @@ Propose a signal only when the digest reveals something reusable about how the c
 
 Signal types: belief, standard, move, anti_pattern, protocol, decision, tension_candidate, retrieval_rule.
 
-Mark signals as timeline-worthy when they represent a durable company decision, protocol change, standard formation, contradiction, tension emergence, or effective operating shift. Preserve the digest's source window so formation can write evidence windows later.
-
 ## What To Ignore
 
 Ignore routine execution, raw status updates, logs, and one-off facts that belong in a task, document, or dashboard. Do not convert every deliverable into memory. A deliverable is only signal when the surrounding human response teaches company taste, quality, process, or operating behavior.
@@ -44,3 +42,8 @@ Return only JSON:
 ```
 
 Return `{ "signals": [], "no_signal_reason": "..." }` when the digest contains no durable company signal.
+
+
+## Timeline-Worthy Company Signals
+
+Mark signals as timeline-worthy when they represent a durable company decision, protocol change, standard formation, contradiction, tension emergence, or effective operating shift. Preserve the digest source window for later evidence windows.

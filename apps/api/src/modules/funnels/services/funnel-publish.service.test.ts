@@ -7,6 +7,31 @@ vi.mock('@supabase/supabase-js', () => ({
 }))
 
 describe('FunnelPublishService', () => {
+  it('defaults generated publish URLs to the ROAS funnels domain', async () => {
+    const previous = process.env.CLOUDFLARE_BASE_DOMAIN
+    delete process.env.CLOUDFLARE_BASE_DOMAIN
+    const funnelRuntime = {
+      createServiceClient: vi.fn().mockReturnValue({}),
+      findGeneratedDomain: vi.fn().mockResolvedValue(null),
+      findDomainConflict: vi.fn().mockResolvedValue(null),
+      insertGeneratedDomain: vi.fn().mockResolvedValue(undefined),
+    }
+    const service = new FunnelPublishService(
+      {} as never,
+      {} as never,
+      { addDomain: vi.fn().mockResolvedValue({ success: true }) } as never,
+      undefined,
+      funnelRuntime as never,
+    )
+
+    await expect((service as any).ensureUserSubdomain('12345678-user', null)).resolves.toBe(
+      'user-12345678.sites.roas.io',
+    )
+
+    if (previous === undefined) delete process.env.CLOUDFLARE_BASE_DOMAIN
+    else process.env.CLOUDFLARE_BASE_DOMAIN = previous
+  })
+
   it('resolves slug, custom domain URL, and publish theme CSS during publish', async () => {
     const serviceClient = {
       from: vi.fn((table: string) => {

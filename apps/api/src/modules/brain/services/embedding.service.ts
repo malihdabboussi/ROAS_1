@@ -1,6 +1,7 @@
 import { createHash } from 'crypto'
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { resolveGeminiApiKeys, shouldTryNextGeminiApiKey } from '@vibey/api-shared'
 import { CreditsService } from '../../billing/services/credits.service'
 
 const DEFAULT_EMBEDDING_MODEL = 'gemini-embedding-2'
@@ -87,8 +88,8 @@ export class EmbeddingService {
     parts: GeminiEmbeddingPart[],
     options: GeminiEmbeddingOptions = {},
   ): Promise<{ embedding: number[] | null; usage: GeminiTokenUsage }> {
-    const apiKey = this.config.get<string>('GEMINI_API_KEY')
-    if (!apiKey) {
+    const apiKeys = resolveGeminiApiKeys((key) => this.config.get<string>(key))
+    if (!apiKeys.length) {
       this.logger.warn('GEMINI_API_KEY not configured — skipping embedding')
       return { embedding: null, usage: { ...DEFAULT_USAGE } }
     }
@@ -100,57 +101,77 @@ export class EmbeddingService {
     const model =
       options.model || this.config.get<string>('EMBEDDING_MODEL') || DEFAULT_EMBEDDING_MODEL
     const outputDimensionality = options.outputDimensionality ?? EMBEDDING_DIMENSIONS
+    const requestBody = JSON.stringify({
+      content: { parts },
+      outputDimensionality,
+      ...(options.taskType ? { taskType: options.taskType } : {}),
+    })
     let chargingProviderUsage = false
+    let lastError = 'Unknown Gemini embedding error'
 
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            content: { parts },
-            outputDimensionality,
-            ...(options.taskType ? { taskType: options.taskType } : {}),
-          }),
-        },
-      )
-
-      if (!res.ok) {
-        const errorBody = await res.text()
-        this.logger.warn(
-          `Gemini embedding API error: ${res.status} ${res.statusText} - ${errorBody.slice(0, 500)}`,
-        )
-        return { embedding: null, usage: { ...DEFAULT_USAGE } }
-      }
-
-      const data = await res.json()
-      const embedding = data.embedding?.values ?? null
-      const usage = this.parseUsageFromGeminiResponse(data)
-      const costSource = usage.totalTokens > 0 ? 'runtime_tokens' : 'char_estimate'
-      let chargeUsage = usage
-      if (usage.totalTokens <= 0 && options.billing?.userId) {
-        chargeUsage = {
-          inputTokens: Math.ceil(JSON.stringify(parts).length / 4),
-          outputTokens: 0,
-          totalTokens: Math.ceil(JSON.stringify(parts).length / 4),
-        }
-      }
-      chargingProviderUsage = true
-      await this.chargeBrainUsage(options.billing, model, chargeUsage, 'embedding', costSource)
+    for (let keyIndex = 0; keyIndex < apiKeys.length; keyIndex += 1) {
+      const apiKey = apiKeys[keyIndex]
       chargingProviderUsage = false
 
-      return { embedding, usage }
-    } catch (err) {
-      if (chargingProviderUsage) {
-        this.logger.error(
-          `Brain Gemini embedding credit tracking failed after provider usage was incurred: ${err instanceof Error ? err.message : 'Unknown'}`,
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: requestBody,
+          },
         )
-        throw err
+
+        if (!res.ok) {
+          const errorBody = await res.text()
+          lastError = `${res.status} ${res.statusText} - ${errorBody.slice(0, 500)}`
+          this.logger.warn(`Gemini embedding API error: ${lastError}`)
+          if (shouldTryNextGeminiApiKey(res.status) && keyIndex < apiKeys.length - 1) {
+            this.logger.warn('Trying next Gemini API key for embedding')
+            continue
+          }
+          return { embedding: null, usage: { ...DEFAULT_USAGE } }
+        }
+
+        const data = await res.json()
+        const embedding = data.embedding?.values ?? null
+        const usage = this.parseUsageFromGeminiResponse(data)
+        const costSource = usage.totalTokens > 0 ? 'runtime_tokens' : 'char_estimate'
+        let chargeUsage = usage
+        if (usage.totalTokens <= 0 && options.billing?.userId) {
+          chargeUsage = {
+            inputTokens: Math.ceil(JSON.stringify(parts).length / 4),
+            outputTokens: 0,
+            totalTokens: Math.ceil(JSON.stringify(parts).length / 4),
+          }
+        }
+        chargingProviderUsage = true
+        try {
+          await this.chargeBrainUsage(options.billing, model, chargeUsage, 'embedding', costSource)
+        } catch (err) {
+          this.logger.error(
+            `Brain Gemini embedding credit tracking failed after provider usage was incurred: ${err instanceof Error ? err.message : 'Unknown'}`,
+          )
+        } finally {
+          chargingProviderUsage = false
+        }
+
+        return { embedding, usage }
+      } catch (err) {
+        if (chargingProviderUsage) {
+          this.logger.error(
+            `Brain Gemini embedding credit tracking failed after provider usage was incurred: ${err instanceof Error ? err.message : 'Unknown'}`,
+          )
+          return { embedding: null, usage: { ...DEFAULT_USAGE } }
+        }
+        lastError = err instanceof Error ? err.message : 'Unknown'
+        this.logger.warn(`Gemini embedding failed: ${lastError}`)
       }
-      this.logger.warn(`Gemini embedding failed: ${err instanceof Error ? err.message : 'Unknown'}`)
-      return { embedding: null, usage: { ...DEFAULT_USAGE } }
     }
+
+    this.logger.warn(`Gemini embedding failed after ${apiKeys.length} key(s): ${lastError}`)
+    return { embedding: null, usage: { ...DEFAULT_USAGE } }
   }
 
   async getImageEmbedding(
@@ -190,8 +211,8 @@ export class EmbeddingService {
     systemPrompt?: string,
     billing?: BrainGeminiBillingContext,
   ): Promise<string> {
-    const apiKey = this.config.get<string>('GEMINI_API_KEY')
-    if (!apiKey) {
+    const apiKeys = resolveGeminiApiKeys((key) => this.config.get<string>(key))
+    if (!apiKeys.length) {
       throw new Error('GEMINI_API_KEY not configured')
     }
 
@@ -208,43 +229,54 @@ export class EmbeddingService {
       body.systemInstruction = { parts: [{ text: systemPrompt }] }
     }
 
-    const res = await fetch(`${LLM_URL}?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
+    let lastError = 'Gemini LLM API error'
+    for (let keyIndex = 0; keyIndex < apiKeys.length; keyIndex += 1) {
+      const apiKey = apiKeys[keyIndex]
+      const res = await fetch(`${LLM_URL}?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
 
-    if (!res.ok) {
-      throw new Error(`Gemini LLM API error: ${res.status} ${res.statusText}`)
-    }
-
-    const data = await res.json()
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text
-    if (!text) throw new Error('Empty response from Gemini')
-
-    const meta = data.usageMetadata as { totalTokenCount?: number } | undefined
-    const usage = this.parseUsageFromGeminiResponse(data)
-    const costSource =
-      meta && Number(meta.totalTokenCount ?? 0) > 0 ? 'runtime_tokens' : 'char_estimate'
-    let chargeUsage = usage
-    if (usage.totalTokens <= 0 && billing?.userId) {
-      const inputTokens = Math.ceil(prompt.length / 4)
-      const outputTokens = Math.ceil(text.length / 4)
-      chargeUsage = {
-        inputTokens,
-        outputTokens,
-        totalTokens: inputTokens + outputTokens,
+      if (!res.ok) {
+        lastError = `Gemini LLM API error: ${res.status} ${res.statusText}`
+        if (shouldTryNextGeminiApiKey(res.status) && keyIndex < apiKeys.length - 1) {
+          this.logger.warn('Trying next Gemini API key for Gemini LLM call')
+          continue
+        }
+        throw new Error(lastError)
       }
-    }
-    await this.chargeBrainUsage(
-      billing,
-      LLM_MODEL_FOR_PRICING,
-      chargeUsage,
-      'gemini_llm',
-      costSource,
-    )
 
-    return text
+      const data = await res.json()
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+      if (!text) throw new Error('Empty response from Gemini')
+
+      const meta = data.usageMetadata as { totalTokenCount?: number } | undefined
+      const usage = this.parseUsageFromGeminiResponse(data)
+      const costSource =
+        meta && Number(meta.totalTokenCount ?? 0) > 0 ? 'runtime_tokens' : 'char_estimate'
+      let chargeUsage = usage
+      if (usage.totalTokens <= 0 && billing?.userId) {
+        const inputTokens = Math.ceil(prompt.length / 4)
+        const outputTokens = Math.ceil(text.length / 4)
+        chargeUsage = {
+          inputTokens,
+          outputTokens,
+          totalTokens: inputTokens + outputTokens,
+        }
+      }
+      await this.chargeBrainUsage(
+        billing,
+        LLM_MODEL_FOR_PRICING,
+        chargeUsage,
+        'gemini_llm',
+        costSource,
+      )
+
+      return text
+    }
+
+    throw new Error(lastError)
   }
 
   // ── Utilities ─────────────────────────────────────────────────────────

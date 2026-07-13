@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common'
+import { resolveFunnelsBaseDomain } from '../../../lib/platform-defaults'
 import { VercelIntegration } from '../../domains/integrations/vercel.integration'
 import { SpaceAutomationService } from '../../spaces/services/space-automation.service'
 import { FunnelPagesRepository } from '../repositories/funnel-pages.repository'
@@ -213,7 +214,7 @@ export class FunnelPublishService {
       return existing.domain_name as string
     }
 
-    const baseDomain = process.env.CLOUDFLARE_BASE_DOMAIN || 'vibeyfunnels.com'
+    const baseDomain = resolveFunnelsBaseDomain()
     let subdomain = `user-${userId.slice(0, 8)}.${baseDomain}`
 
     const conflict = await this.funnelRuntime.findDomainConflict(serviceClient, subdomain)

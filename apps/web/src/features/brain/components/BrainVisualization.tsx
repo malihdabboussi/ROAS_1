@@ -1,7 +1,8 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useEffect } from 'react'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useOrgStore } from '@/lib/org'
 import { useBrainHealthRealtime } from '../hooks/use-brain-health-realtime'
 import { useBrainQueue } from '../hooks/use-brain-queue'
@@ -13,6 +14,7 @@ import { useBrainVisualizationScopeSelection } from '../hooks/use-brain-visualiz
 import { useBrainVisualizationSearch } from '../hooks/use-brain-visualization-search'
 import { useBrainVisualizationUiState } from '../hooks/use-brain-visualization-ui-state'
 import { deriveBrainVisualizationGraphState } from '../lib/brain-visualization-derived-state'
+import { buildBrainChatAwarenessContext } from '../lib/brain-chat-awareness'
 import { useBrainStore } from '../store/use-brain-store'
 import { BrainNodeDetailModalHost } from './BrainNodeDetailModalHost'
 import { BrainVisualizationAddInfoLayer } from './BrainVisualizationAddInfoLayer'
@@ -77,8 +79,6 @@ export default function BrainVisualization() {
     handleTrainBrain,
     setCortexMaxOpen,
     setCrystallizeOpen,
-    setVoiceSessionOpen,
-    voiceSessionOpen,
   } = useBrainVisualizationActions({
     router,
     searchParams,
@@ -209,6 +209,36 @@ export default function BrainVisualization() {
     ],
   )
 
+  const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
+
+  useEffect(() => {
+    if (!topRightScopeReady || !selectedScope) return
+    const brainId = selectedScope.brainId ?? brainScopeRuntime.graphBrainId ?? null
+    setWorkContext({
+      surface: 'brain',
+      brainScopeId: selectedScopeId,
+      brainId,
+      brainScopeLabel: selectedScope.label,
+      brainAwarenessContext: buildBrainChatAwarenessContext({
+        scopeLabel: selectedScope.label,
+        brainId,
+        totalMemories: activeGraphData?.stats.total_memories ?? healthData?.total_memories,
+        totalConnections:
+          activeGraphData?.stats.total_connections ?? healthData?.total_connections,
+      }),
+    })
+  }, [
+    activeGraphData?.stats.total_connections,
+    activeGraphData?.stats.total_memories,
+    brainScopeRuntime.graphBrainId,
+    healthData?.total_connections,
+    healthData?.total_memories,
+    selectedScope,
+    selectedScopeId,
+    setWorkContext,
+    topRightScopeReady,
+  ])
+
   const dockShowsCognitionStats = ['user', 'shared', 'agent', 'customer', 'company'].includes(
     selectedScope?.scopeType ?? '',
   )
@@ -286,7 +316,6 @@ export default function BrainVisualization() {
         selectNode={selectNode}
       />
       <BrainVisualizationDock
-        voiceSessionOpen={voiceSessionOpen}
         onActivateVoice={handleActivateVoice}
         searchAnchorRef={brainSearchAnchorRef}
         searchInput={searchInput}
@@ -340,10 +369,8 @@ export default function BrainVisualization() {
         onCortexMaxOpenChange={setCortexMaxOpen}
         onCrystallizeOpenChange={setCrystallizeOpen}
         onRefreshQueueJobs={refreshQueueJobs}
-        onVoiceSessionOpenChange={setVoiceSessionOpen}
         selectedScope={selectedScope}
         topRightScopeReady={topRightScopeReady}
-        voiceSessionOpen={voiceSessionOpen}
       />
     </div>
   )

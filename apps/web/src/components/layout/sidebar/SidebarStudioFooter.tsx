@@ -1,7 +1,5 @@
 'use client'
 
-import { Rocket } from 'lucide-react'
-import { Tooltip } from '@/components/ui/tooltip'
 import { AvatarDropdown } from '../AvatarDropdown'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -46,40 +44,6 @@ export function SidebarStudioFooter({
         </div>
       )}
 
-      {featureUpdates && (
-        <div className={c.collapsed ? 'flex justify-center px-3 pb-2' : 'px-3 pb-2'}>
-          {c.collapsed ? (
-            <Tooltip label="What's New" side="right">
-              <button
-                type="button"
-                onClick={(e) => featureUpdates.onOpen(e.currentTarget)}
-                className="nav-glass-hover-purple relative flex h-9 w-9 items-center justify-center rounded-lg text-[var(--color-muted-foreground)] transition-all hover:text-[var(--color-foreground)]"
-                aria-label="What's New"
-              >
-                <Rocket className="icon-md shrink-0" />
-                {featureUpdates.hasUnread && (
-                  <span className="bg-primary absolute right-1 top-1 h-2 w-2 rounded-full ring-2 ring-[var(--color-card)]" />
-                )}
-              </button>
-            </Tooltip>
-          ) : (
-            <button
-              type="button"
-              onClick={(e) => featureUpdates.onOpen(e.currentTarget)}
-              className="nav-glass-hover-purple gap-spacing-2 relative flex w-full items-center rounded-lg px-3 py-2 text-left transition-all"
-            >
-              <Rocket className="icon-md shrink-0 text-[var(--color-muted-foreground)]" />
-              <span className="body-2 font-medium text-[var(--color-foreground)]">
-                What&apos;s New
-              </span>
-              {featureUpdates.hasUnread && (
-                <span className="bg-primary ml-auto h-2 w-2 shrink-0 rounded-full" />
-              )}
-            </button>
-          )}
-        </div>
-      )}
-
       <div
         className={`border-t border-[var(--color-border)] ${
           c.collapsed ? 'flex flex-col items-center gap-1 py-2' : 'flex items-center px-3 py-2.5'
@@ -92,6 +56,7 @@ export function SidebarStudioFooter({
             avatarUrl={c.avatarUrl ?? null}
             initials={c.initials}
             sidebarCollapsed={c.collapsed}
+            featureUpdates={featureUpdates}
           />
         </div>
       </div>

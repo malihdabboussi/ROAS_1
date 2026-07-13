@@ -14,6 +14,10 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler'
 import type { Request } from 'express'
 import { SyncReadyInterceptor } from '../../agent-sync/interceptors/sync-ready.interceptor'
 import { CreditsService } from '../../billing/services/credits.service'
+import {
+  resolveBrainLiveMachineId,
+  resolveBrainLiveMachineWsUrl,
+} from '../../brain/brain-live-ws-url'
 import { BrainLiveService, type LiveSessionScope } from '../../brain/services/brain-live.service'
 import { PublicAgentGuard } from '../guards/public-agent.guard'
 import { PublicAgentService } from '../services/public-agent.service'
@@ -54,6 +58,7 @@ export class PublicBrainController {
       agentId: agentKey,
     }
 
+    const machineId = resolveBrainLiveMachineId(req)
     const session = this.brainLiveService.createSession(
       owner.actingUserId,
       owner.orgId,
@@ -61,23 +66,19 @@ export class PublicBrainController {
       body.conversationId,
       body.voiceName,
       owner.accessToken,
+      machineId,
     )
 
-    const machineUrl = this.resolveMachineWsUrl(req)
+    const machineUrl = resolveBrainLiveMachineWsUrl(
+      req,
+      this.config.get<string>('FLY_MACHINE_URL'),
+    )
 
-    return { sessionId: session.id, wsUrl: machineUrl, userId: owner.actingUserId }
-  }
-
-  private resolveMachineWsUrl(req: Request): string | null {
-    const flyMachineUrl = this.config.get<string>('FLY_MACHINE_URL')
-    if (flyMachineUrl) {
-      const base = flyMachineUrl.replace(/^https?:\/\//, '')
-      return `wss://${base}`
+    return {
+      sessionId: session.id,
+      wsUrl: machineUrl,
+      machineId,
+      userId: owner.actingUserId,
     }
-    const host = req.headers['host']
-    if (host && !host.includes('localhost')) {
-      return `wss://${host}`
-    }
-    return null
   }
 }
