@@ -15,7 +15,7 @@ export const SPACE_MISSION_PLAYBOOKS = [
     id: WEBINAR_FULFILLMENT_PLAYBOOK_ID,
     title: 'Webinar Fulfillment',
     description:
-      'Strategy (skills 1→2→3) → Gate 1 human approve. Copy and creative phases unlock when those skills are ready.',
+      'Strategy → Gate 1 → market research → Copy Package → Gate 2 → ads / image briefs / funnel / deck outline → Gate 3 → Webinar Deck v1.',
   },
 ] as const
 

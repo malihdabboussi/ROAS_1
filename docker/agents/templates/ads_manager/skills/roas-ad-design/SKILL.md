@@ -45,13 +45,13 @@ Write a JSON **line spec** per line (a list for several lines) following the sch
 python assets/render_ad.py config.json
 ```
 
-Each line spec sets `text` (verbatim), `highlight`, optional `stamp` (`"LIVE ON"` gets the Zoom logo), `size`, `brand_color`, optional `brand_bg_light` / `brand_bg_dark`, and `out_prefix`. The engine produces `{prefix}_light.png`, `{prefix}_dark.png`, `{prefix}_bold.png` — light/dark branded, bold neutral. Write outputs to `/mnt/user-data/outputs/`.
+Each line spec sets `text` (verbatim), `highlight`, optional `stamp` (`"LIVE ON"` gets the Zoom logo), `size`, `brand_color`, optional `brand_bg_light` / `brand_bg_dark`, and `out_prefix`. The engine produces `{prefix}_light.png`, `{prefix}_dark.png`, `{prefix}_bold.png` — light/dark branded, bold neutral. Write engine temp outputs to `/mnt/user-data/outputs/` in claude.ai; in Vibey, write to a local workspace path then register each PNG as an ad/media artifact (see deliver step).
 
 `python assets/render_ad.py --demo` regenerates the three reference creatives (with the real Zoom logo).
 
 ## STEP 3 — REVIEW + PRESENT
 
-`view` the PNGs: the highlight sits on the right phrase, the brand color is on light/dark (and bold is neutral), the Zoom logo reads correctly, nothing overflows the margins, copy matches the locked line exactly. Re-render if a line overflows a size. Then `present_files` all three per line. Offer to pair them with the full ad copy (primary text, headline, CTA) from `roas-ad-copy` if that wasn't already delivered.
+`view` the PNGs: the highlight sits on the right phrase, the brand color is on light/dark (and bold is neutral), the Zoom logo reads correctly, nothing overflows the margins, copy matches the locked line exactly. Re-render if a line overflows a size. Then deliver per environment: in a platform with native ad/media artifacts (Vibey), register each PNG as an ad artifact / Deliverables card ("Static Ads — [Campaign]") instead of leaving loose files; in claude.ai, `present_files` all three per line. The engine and the creatives are identical either way — only the destination changes. Offer to pair them with the full ad copy (primary text, headline, CTA) from `roas-ad-copy` if that wasn't already delivered.
 
 ---
 

@@ -80,7 +80,12 @@ export type MissionPlaybookPlanResult = {
       ecology: string
     }
     outputContract?: {
-      artifact_kind: 'document_artifact'
+      artifact_kind:
+        | 'document_artifact'
+        | 'funnel_artifact'
+        | 'presentation_artifact'
+        | 'ad_artifact'
+        | 'media_artifact'
       required_action: string
       required_artifact_type: string
       expected?: Record<string, unknown>

@@ -1,5 +1,22 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 10:45] - [FEATURE]
+
+What: Seeded Agency Ops Phase B/C skills from the packaged zip into agent templates + `skill_library` / assignments, and wired Pre-B → Copy Package → Gate 2 → Phase C → Gate 3 → deck build into `webinar-fulfillment`.
+
+Why: Spine was live; production skills needed owners, DB seed, and playbook step keys so missions invoke real capabilities.
+
+Impact: New webinar missions expand through research/copy/creative with Gates 1–3. **Blocked:** `roas-webinar-emails` missing (Copy Package section 2). Gate 2 surgical re-run is encoded in gate ecology only (no auto fan-out yet). Redeploy mission-worker for playbook; agents need skill sync / re-hire to pick up new skills.
+
+Files: `docker/agents/templates/{ads_manager,copywriter,designer,strategist}/skills/*`, `20260716120000_webinar_pipeline_skills.sql`, `generate-webinar-pipeline-skills-migration.ts`, `seed-webinar-pipeline-skills.ts`, `webinar-fulfillment.playbook.ts`, helpers + tests, web playbook description
+
+## [2026-07-16 10:40] - [FIX]
+
+What: Truncated space list/table task names now show the full title in a hover tooltip (wide Tooltip on the name cell).
+Why: Long task and subtask names were cut off with ellipsis and had no way to read the full text without widening the column.
+Impact: Hovering a truncated Name cell in Spaces list/table (and other views using the same TextCell path) reveals the full task name.
+Files: `apps/web/src/features/spaces/components/cells/TextCell.tsx`, `.docs/logs/changelog2026-07-16.md`
+
 ## [2026-07-16 10:27] - [FIX]
 
 What: Template-seeded Docs now write/backfill `doc_body` (cards were empty because instantiate only stored `custom_data.body`). Agency Client (Webinar) create opens Vibey chat with kickoff guidance and the Start Playbook modal; Missions empty state CTA points at Webinar Fulfillment.
@@ -68,6 +85,13 @@ Why: Turn `/team` from a chat roster into an ops floor where Vibey briefs and de
 Impact: Opening Manage Agents shows Vibey first; specialists stay visible and assignable; Phase 3 Work desks still pending.
 Files: `apps/web/src/features/team-2/components/VibeyOpsDesk.tsx`, `VibeyOpsDeskBriefing.tsx`, `AgentAssignWorkModal.tsx`, `Team2ManageContent.tsx`, `AgentsGrid.tsx`, `AgentGridCard.tsx`, `Team2Toolbar.tsx`, `ChatTab.tsx`, `Team2AgentChatWithConversations.tsx`, `agents-grid-utils.ts`, `lib/ops-desk-summary.ts`, `lib/build-team-ops-awareness-context.ts`, `config/messages.config.ts`, tests, `.docs/plans/manage-agents-work-surface.md`
 
+## [2026-07-16 10:33] - [FIX]
+
+What: Fixed janky Vibey Ops Desk layout (compact briefing + composer, no empty-thread scroll void) and shipped Phase 3 agent Work desks (Now / Queue / Recent) with mission detail open.
+Why: Half-height full AgentChatPanel left a giant empty scroll area; desks still lacked work visibility.
+Impact: `/team` Ops Desk is compact; opening a specialist defaults to Work tab.
+Files: `VibeyOpsDesk.tsx`, `AgentChatPanel.tsx`, `AgentChatThread.tsx`, `ChatTab.tsx`, `Team2AgentChatWithConversations.tsx`, `Team2DetailView.tsx`, `tabs/AgentWorkTab.tsx`, `Team2ManageContent.tsx`
+
 ## [2026-07-16 10:22] - [FEATURE]
 
 What: Meetings now ingest all team Fathom recordings (cleared Dylan-only recorded_by filter), tag each call Personal vs Team by whether Dylan was on it (`call_kind`), dedupe by Fathom meeting_id, and nest follow-ups under All Meetings via `parent_item_id` (Follow-ups / Action items still show them as main tasks).
@@ -88,3 +112,19 @@ What: Row “Ask in chat” (was Attach to ROAS chat) expands the global chat pa
 Why: Attach only mutated composer state while chat stayed collapsed — especially broken on mobile where the panel unmounts.
 Impact: Click the link icon on a Meetings row — chat opens with that task attached so you can ask whether Nouman completed it.
 Files: SpaceItemRow.tsx, MediaCell.tsx
+
+## [2026-07-16 10:38] - [FEATURE]
+
+What: Replaced Ops Desk embedded composer with **Talk to Vibey** — opens sidebar global chat as Vibey and attaches live Ops Desk awareness (same attach idea as Spaces task → ROAS). Team work surface defaults to Vibey; chip shows "Ops Desk". Roster `agents_registry` status now patches live (missions refetch for focus); no more waiting on 60s list cache for idle/working.
+Why: Embedded chat made the Ops Desk feel like another DM; sidebar attach is cleaner and matches existing platform attach patterns.
+Impact: `/team` Ops Desk is briefing + CTA + floor; continue the conversation in the rail with team context. Working/idle badges update in realtime.
+Files: `VibeyOpsDesk.tsx`, `VibeyOpsDeskTalkButton.tsx`, `GlobalChatPanel.tsx`, `SpaceVibeyChatPanel.tsx`, `work-context.config.ts`, `global-chat-storage.ts`, `use-team-roster-realtime.ts`, `apply-agents-registry-realtime-delta.ts`, messages/plan/changelog
+
+
+## [2026-07-16 10:41] - [FIX]
+
+What: Fixed Manage Agents Ops Desk roster clip (floor wrapper is now a flex column so AgentsGrid can scroll). Default agent group-by is **none**. Hardened `min-h-0` on Team / Brain / Flows / Spaces page roots after a cross-page scroll-chain audit.
+Why: Ops Desk floor used `overflow-hidden` without flex, so `flex-1` + inner `overflow-auto` never got a height bound and the roster was clipped. Group-by team was a poor default when most orgs have no real teams.
+Impact: `/team` roster scrolls under the briefing; agents render flat unless you group. Brain/Flows/Spaces page shells less likely to break nested scroll.
+Files: `VibeyOpsDesk.tsx`, `AgentsGrid.tsx`, `AgentsGrid.test.tsx`, `team/page.tsx`, `brain/page.tsx`, `flows/page.tsx`, `spaces-page-client.tsx`
+

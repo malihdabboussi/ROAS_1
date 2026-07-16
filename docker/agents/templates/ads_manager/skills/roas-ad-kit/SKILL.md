@@ -48,8 +48,10 @@ Pull from the conversation/brief first; only ask if genuinely missing. Use clear
 
 ## THE WORKFLOW
 
-### Step 1 — Ad Library research (required grounding, keep it tight)
-Per `ad-library-research.md`, pull 3-5 competitor/top-performer references before writing. The live Ad Library is JS-heavy and usually won't render through a fetch — web-search the competitors and the offer category instead, or ask for screenshots. For each reference capture the hook, the identity angle, the creative format, the CTA, the longevity signal, and what to borrow vs. counter-position against. Summarize in a few tight lines at the top of the deliverable. This feeds both the concepts and the angles. Don't write blind.
+### Step 1 — Market research (required grounding, keep it tight)
+**Load the `roas-market-research` skill and run it first.** It pulls real competitor ads through the connected SearchAPI (Ads Intelligence) and Scrape Creators MCPs — Meta, Google, TikTok, LinkedIn — ranks them by longevity, and pulls transcripts of winning video ads. Its References section drops directly into Section 1 of this deliverable (same six fields: hook, identity angle, creative format, CTA, longevity, borrow-vs-counter).
+
+If `roas-market-research` isn't installed or both MCPs are unavailable, fall back to the legacy method per `ad-library-research.md`: web-search the competitors and the offer category, or ask for screenshots. Either way: 3-5 references minimum, and don't write blind.
 
 ### Step 2 — Concepts across mechanisms, then trim to ship
 Generate 5-8 concepts spread across DIFFERENT mechanisms from the catalog (insider-ritual, quiet evidence, split life, mismatch, belief reversal, stop/start, literalize-the-abstract, status reframe). Cover both emotional poles (some fear/recognition, some aspiration/status). Pressure-test each against the scroll test, the screenshot test, the mind-read test, the could-be-anyone test, and the visual-does-work test. Keep only the ones that clear the bar.
@@ -108,7 +110,9 @@ Run every shipping line (concept on-image text, angles, all six ad pieces) back 
 [which 2-3 to run first and why; note that concepts are design-ready as written and angles can be rendered by roas-ad-design; biggest available proof lift]
 ```
 
-Save to `/mnt/user-data/outputs/` and present it. Offer a DOCX only if asked.
+### Output (environment-aware)
+**Vibey / native artifacts:** save as a Space Doc via `save_document`. Offer a DOCX only if asked. Do NOT write to `/mnt/user-data/outputs/`.
+**claude.ai fallback:** save to `/mnt/user-data/outputs/` and present it. Offer a DOCX only if asked.
 
 ---
 

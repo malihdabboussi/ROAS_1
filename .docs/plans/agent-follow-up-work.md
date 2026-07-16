@@ -15,6 +15,41 @@ Entry template:
 …
 ```
 
+## 2026-07-16 - [FEATURE] Webinar playbook Phase B/C + Flows mission-playbook type
+
+Status: Open
+Found while: Shipping Agency Client (Webinar) template + webinar-fulfillment Phase A + Gate 1
+Files:
+
+- `apps/mission-worker/src/modules/missions/playbooks/webinar-fulfillment.playbook.ts`
+- `.docs/plans/agency-operations-webinar-fulfillment.md`
+  Evidence: Playbook `outOfScope` explicitly lists Phase B copy package and Phase C creative; skills TBD from user. Flow Add Flow chooser deferred by plan.
+  Needed work: Wire copy/creative skills into playbook phases + Gate 2/3; later Flows → Standard vs Mission playbook.
+  Deferred because: User sequenced spine first; skills for B/C not provided yet.
+  Resolved: 2026-07-16 — Phase B/C skill keys + Gates 2/3 wired in playbook; skills seeded from zip. Remaining: Flows Standard vs Mission chooser; `roas-webinar-emails` still missing (orchestrator section 2 blocker).
+
+## 2026-07-16 - [FEATURE] Seed missing `roas-webinar-emails` for Copy Package section 2
+
+Status: Open
+Found while: Porting Phase B/C skills from `roas-platform-skills.zip`
+Files:
+
+- `docker/agents/templates/copywriter/skills/roas-webinar-copy-package/SKILL.md` (references `roas-webinar-emails`)
+  Evidence: Skill not in zip inventory, not in repo under any agent template, zero glob hits for `roas-webinar-emails`.
+  Needed work: Author/seed `roas-webinar-emails` under copywriter + library assignment; until then Copy Package section 2 blocks.
+  Deferred because: User forbade inventing missing skill content.
+
+## 2026-07-16 - [ARCH] Gate 2 surgical section re-run is intent-only
+
+Status: Open
+Found while: Wiring Gate 2 REVIEW MAP into webinar-fulfillment playbook
+Files:
+
+- `apps/mission-worker/src/modules/missions/playbooks/webinar-fulfillment.playbook.ts`
+  Evidence: Gate 2 ecology encodes “re-run ONLY owning skill + reassemble”; mission-worker has no automated fan-out that spawns a single atomic skill subtask from a section-named reject comment.
+  Needed work: Mission revision path that parses section N → skill key → re-run + reassemble without re-running whole package.
+  Deferred because: User said do not redesign pipeline/gates/UI; encode contract in playbook only.
+
 ## 2026-07-15 - [FIX] Team agent `conv=` deep links still unused
 
 Status: Open
@@ -6425,3 +6460,37 @@ Deferred because: Voice routing fix and mic-silence bug were scoped to capture/a
 - Needed: ensure `search_campaign_brain` is in the live allowed-action enum for campaign_capability/vibey_backend the same way vibey-api ALLOWED_ACTIONS has it
 - Why not now: scoped to web_search red-chip fix (Brave provider + TOOLS.md)
 
+
+## 2026-07-16 — Manage Agents Ops Desk (deferred)
+
+- Feature/app: team-2 / Manage Agents
+- File: `apps/web/src/features/team-2/components/Team2DetailView.tsx` (+ planned `AgentWorkTab`)
+- Evidence: Plan Phase 3 not implemented; desks still Chat + Info only. Roster status still from 60s `agents:list` cache (no `agents_registry` realtime on `/team` landing).
+- Needed: Work tab (Now / Queue / Recent deliverables); roster realtime status subscription
+- Why not now: Phase 1–2 Ops Desk + assign shipped first per plan order
+- **Resolved 2026-07-16:** Work desks + Talk to Vibey sidebar attach + roster status realtime shipped
+
+## 2026-07-16 — Manage Agents Ops Desk realtime (still deferred)
+
+- Feature/app: team-2 / Manage Agents
+- File: `apps/web/src/features/team-2` roster landing
+- Evidence: Phase 3 Work desks shipped; agent list status still via 60s `agents:list` cache
+- Needed: `agents_registry` realtime on `/team` Ops Desk / roster
+- Why not now: layout + Work tab were the user-blocking issues
+- **Resolved 2026-07-16:** `useTeamRosterRealtime` patches status from `agents_registry` + missions refetch
+
+## 2026-07-16 — SpaceVibeyChatPanel LOC (pre-existing)
+
+- Feature/app: spaces / global chat
+- File: `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`
+- Evidence: `wc -l` = 2360 (hard limit 600 / component 400); touched only to accept `teamOpsContext` for Ops Desk attach
+- Needed: Split send/context/voice/header into focused modules
+- Why not now: out of scope for Talk to Vibey attach; change was a few lines on the awareness path
+
+## 2026-07-16 — Dashboard scroll-chain edge cases (audit)
+
+- Feature/app: spaces / projects
+- File: `spaces-page-client.tsx` (mobile header + `h-full` child), `DatabaseBrowser.tsx` / `DatabaseTableView` pane
+- Evidence: Cross-page scroll audit after Ops Desk clip fix — Team Ops Desk was the confirmed break; Spaces mobile header stacking and Projects database pane height chain are medium-risk only
+- Needed: Verify Spaces mobile viewport with header + container; harden DatabaseBrowser pane with `flex h-full min-h-0 flex-col` if DB tab clips
+- Why not now: Confirmed Team clip + group-by default fixed; other surfaces already had working overflow-auto chains in audit
