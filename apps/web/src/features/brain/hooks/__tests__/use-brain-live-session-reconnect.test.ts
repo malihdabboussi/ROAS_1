@@ -23,6 +23,7 @@ const backendPostMock = vi.mocked(backendPost)
 
 class MockAudioContext {
   currentTime = 0
+  state: AudioContextState = 'running'
   destination = {}
 
   createAnalyser() {
@@ -36,11 +37,15 @@ class MockAudioContext {
   }
 
   createMediaStreamSource() {
-    return { connect: vi.fn() }
+    return { connect: vi.fn(), disconnect: vi.fn() }
   }
 
   createScriptProcessor() {
     return { connect: vi.fn(), disconnect: vi.fn(), onaudioprocess: null }
+  }
+
+  createGain() {
+    return { gain: { value: 1 }, connect: vi.fn(), disconnect: vi.fn() }
   }
 
   createBuffer() {
@@ -49,6 +54,11 @@ class MockAudioContext {
 
   createBufferSource() {
     return { buffer: null, connect: vi.fn(), start: vi.fn(), stop: vi.fn(), onended: null }
+  }
+
+  resume() {
+    this.state = 'running'
+    return Promise.resolve()
   }
 
   close() {

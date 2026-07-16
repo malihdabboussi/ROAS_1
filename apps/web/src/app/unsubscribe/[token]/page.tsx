@@ -205,7 +205,7 @@ export default function UnsubscribePage() {
         )}
 
         <div className="mt-8 border-t border-white/5 pt-4 text-center">
-          <p className="text-[11px] text-white/20">Powered by Vibey</p>
+          <p className="text-[11px] text-white/20">Powered by ROAS</p>
         </div>
       </div>
     </main>

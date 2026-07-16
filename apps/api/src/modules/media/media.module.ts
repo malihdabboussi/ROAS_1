@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { BillingModule } from '../billing/billing.module'
 import { BrainModule } from '../brain/brain.module'
+import { ComposioModule } from '../composio/composio.module'
 import { ProviderBillingModule } from '../provider-billing/provider-billing.module'
 import { SpaceRetrievalModule } from '../space-retrieval/space-retrieval.module'
 import { MediaAdConceptsController } from './controllers/media-ad-concepts.controller'
@@ -13,12 +14,19 @@ import { GeminiImageIntegration } from './integrations/gemini-image.integration'
 import { MediaRepository } from './repositories/media.repository'
 import { MediaUploadRepository } from './repositories/media-upload.repository'
 import { AdConceptGenerationService } from './services/ad-concept-generation.service'
+import { MediaCanvaHandoffService } from './services/media-canva-handoff.service'
 import { MediaIndexerService } from './services/media-indexer.service'
 import { MediaReaderService } from './services/media-reader.service'
 import { MediaService } from './services/media.service'
 
 @Module({
-  imports: [BillingModule, BrainModule, ProviderBillingModule, SpaceRetrievalModule],
+  imports: [
+    BillingModule,
+    BrainModule,
+    ComposioModule,
+    ProviderBillingModule,
+    SpaceRetrievalModule,
+  ],
   controllers: [
     MediaUploadController,
     MediaSocialCacheController,
@@ -35,6 +43,7 @@ import { MediaService } from './services/media.service'
     MediaUploadRepository,
     MediaReaderService,
     MediaIndexerService,
+    MediaCanvaHandoffService,
   ],
   exports: [MediaService, AdConceptGenerationService, MediaReaderService, MediaIndexerService],
 })

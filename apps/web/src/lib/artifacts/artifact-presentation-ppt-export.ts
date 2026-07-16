@@ -40,7 +40,7 @@ async function exportPresentationFromLiveIframe(title: string): Promise<string> 
   const PptxGenJS = (await import('pptxgenjs')).default
   const pptx = new PptxGenJS()
   pptx.layout = 'LAYOUT_WIDE'
-  pptx.author = 'Vibey'
+  pptx.author = 'ROAS'
   pptx.subject = 'Presentation export'
   pptx.title = title || 'Presentation'
 
@@ -109,7 +109,7 @@ export function downloadPresentationPPTFromSlides(
       const PptxGenJS = (await import('pptxgenjs')).default
       const pptx = new PptxGenJS()
       pptx.layout = 'LAYOUT_WIDE'
-      pptx.author = 'Vibey'
+      pptx.author = 'ROAS'
       pptx.subject = 'Presentation export'
       pptx.title = title || 'Presentation'
 

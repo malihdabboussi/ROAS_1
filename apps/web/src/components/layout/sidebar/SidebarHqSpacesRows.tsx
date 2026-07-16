@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import type { MouseEvent } from 'react'
 import { ChevronRight, MoreHorizontal, Plus, Star, User } from 'lucide-react'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { getIconColor, IconPicker, LucideIcon, type IconColorId } from '@/components/ui/IconPicker'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space } from '@/features/spaces/types'
@@ -73,7 +74,10 @@ export function SpaceRow({
         <>
           <Link
             href="/spaces"
-            onClick={() => useSpacesStore.getState().setActiveSpace(space.id)}
+            onClick={() => {
+              useSpacesStore.getState().setActiveSpace(space.id)
+              useGlobalChatStore.getState().setCollapsed(true)
+            }}
             onContextMenu={(e) => {
               if (isShared) return
               e.preventDefault()

@@ -20,7 +20,7 @@ type ColorMode = ColorPickerPanelMode
 
 /**
  * Professional Color Picker Component
- * Ported from legacy Vibey app.
+ * Ported from legacy ROAS app.
  *
  * Features:
  * - Solid/Gradient mode tabs

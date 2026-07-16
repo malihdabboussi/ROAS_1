@@ -6,7 +6,22 @@ import type {
   MessageReference,
 } from '@/lib/chat/studio-chat-runtime-adapter'
 import type { AttachedArtifact, ChatModelSettings } from '@/lib/chat'
+import { assignConversationCampaign } from '@/lib/conversations/conversations-api'
 import { sendAgentChatMessage, type SendAgentChatMessageInput } from './agent-chat-panel.send'
+
+vi.mock('@/lib/conversations/conversations-api', () => ({
+  assignConversationCampaign: vi.fn(async (id: string, campaignId: string | null) => ({
+    id,
+    user_id: 'user-1',
+    campaign_id: campaignId,
+    title: `Session ${id}`,
+    agent_id: 'agent-alpha',
+    status: 'active',
+    metadata: {},
+    created_at: '2026-06-24T00:00:00.000Z',
+    updated_at: '2026-06-24T00:00:00.000Z',
+  })),
+}))
 
 function conversation(id: string, overrides: Partial<Conversation> = {}): Conversation {
   return {
@@ -176,6 +191,24 @@ describe('sendAgentChatMessage', () => {
       expect.objectContaining({
         id: 'session-1',
         metadata: { keep: true },
+      }),
+    )
+  })
+
+  it('remounts an existing General conversation onto the preferred assigned campaign', async () => {
+    const input = createInput({
+      activeCampaignId: 'general-campaign',
+      getPreferredCampaignWhenGeneral: vi.fn(() => 'impact-campaign'),
+      getMessages: vi.fn(() => []),
+    })
+
+    await sendAgentChatMessage(input)
+
+    expect(assignConversationCampaign).toHaveBeenCalledWith('session-1', 'impact-campaign')
+    expect(input.sendMessageStreaming).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversation_id: 'session-1',
+        campaign_id: 'impact-campaign',
       }),
     )
   })

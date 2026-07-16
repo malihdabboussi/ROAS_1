@@ -177,6 +177,10 @@ export class SlackRepository {
           error_message: null,
           scope_mode: scopeMode,
           org_id: orgId ?? null,
+          connection_label:
+            (typeof metadata.team_name === 'string' && metadata.team_name.trim()) ||
+            (typeof metadata.teamName === 'string' && metadata.teamName.trim()) ||
+            null,
         })
         .eq('id', existing.id)
       if (error) throw new Error(`Failed to update slack integration: ${error.message}`)
@@ -192,6 +196,10 @@ export class SlackRepository {
       status: 'connected',
       connected_at: new Date().toISOString(),
       org_id: orgId ?? null,
+      connection_label:
+        (typeof metadata.team_name === 'string' && metadata.team_name.trim()) ||
+        (typeof metadata.teamName === 'string' && metadata.teamName.trim()) ||
+        null,
       scope_mode: scopeMode,
     })
     if (error) throw new Error(`Failed to create slack integration: ${error.message}`)

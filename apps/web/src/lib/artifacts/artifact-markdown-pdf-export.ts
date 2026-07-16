@@ -86,7 +86,7 @@ function clearActiveSelection(): void {
 /** Print dialog footer — mirrors jsPDF footer (Watermark / offer PDF). */
 function madeWithVibeyPrintFooterFragment(): string {
   const href = escapeHtmlAttr(getArtifactPdfPlatformUrl())
-  return `<div class="vibey-campaign-pdf-footer"><a href="${href}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><span style="color:#374151;font-family:Helvetica,Arial,sans-serif;font-size:9pt;">Made with </span><span style="color:#9333ea;font-family:Helvetica,Arial,sans-serif;font-size:9pt;font-weight:700;">Vibey</span></a></div>`
+  return `<div class="vibey-campaign-pdf-footer"><a href="${href}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><span style="color:#374151;font-family:Helvetica,Arial,sans-serif;font-size:9pt;">Made with </span><span style="color:#9333ea;font-family:Helvetica,Arial,sans-serif;font-size:9pt;font-weight:700;">ROAS</span></a></div>`
 }
 
 const VIBEY_PRINT_FOOTER_CSS = `

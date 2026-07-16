@@ -83,7 +83,7 @@ export class SlackService extends SlackEventsBase {
       org_id: orgId ?? null,
     })
 
-    const scopes = [
+    const botScopes = [
       'app_mentions:read',
       'assistant:write',
       'bookmarks:read',
@@ -107,18 +107,24 @@ export class SlackService extends SlackEventsBase {
       'reactions:read',
       'reactions:write',
       'remote_files:read',
+      'users:read',
+      'users:read.email',
+    ]
+
+    // search.* Web API methods require a user token (xoxp). Request via user_scope.
+    const userScopes = [
+      'search:read',
       'search:read.files',
       'search:read.im',
       'search:read.mpim',
       'search:read.private',
       'search:read.public',
-      'users:read',
-      'users:read.email',
     ]
 
     const qs = new URLSearchParams({
       client_id: clientId,
-      scope: scopes.join(','),
+      scope: botScopes.join(','),
+      user_scope: userScopes.join(','),
       redirect_uri: redirectUri,
       state,
     })
@@ -169,6 +175,11 @@ export class SlackService extends SlackEventsBase {
         bot_user_id: botUserId ?? null,
         authed_user_id: oauth.authed_user?.id ?? null,
         authed_user_scope: oauth.authed_user?.scope ?? null,
+        // Required for search.messages / search.files (bot tokens cannot call those APIs).
+        ...(typeof oauth.authed_user?.access_token === 'string' &&
+        oauth.authed_user.access_token.trim()
+          ? { user_access_token: oauth.authed_user.access_token.trim() }
+          : {}),
         installed_for_agent_key: statePayload.agent_key,
       },
       statePayload.org_id ?? null,

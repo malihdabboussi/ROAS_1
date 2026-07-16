@@ -51,7 +51,9 @@ export function extractAssigneesFromActivitySide(value: unknown): ActivityAssign
 export function resolveAssigneeDisplayName(
   ref: ActivityAssigneeRef,
   roster: TeamRosterEntry[],
+  currentUserId?: string | null,
 ): string {
+  if (ref.type === 'human' && currentUserId && ref.id === currentUserId) return 'Me'
   if (ref.type === 'agent') {
     return roster.find((e) => e.kind === 'agent' && e.agent_key === ref.id)?.display_name ?? ref.id
   }
@@ -85,6 +87,7 @@ export function shouldRenderAssigneeActivityPreview(
 export function formatAssigneeChangeActivityLabel(
   payload: Record<string, unknown> | undefined,
   roster: TeamRosterEntry[],
+  currentUserId?: string | null,
 ): string {
   const toRaw = payload?.to
 
@@ -98,7 +101,7 @@ export function formatAssigneeChangeActivityLabel(
 
   if (shouldRenderAssigneeActivityPreview(payload, roster)) return 'assigned'
 
-  const names = toAssignees.map((a) => resolveAssigneeDisplayName(a, roster))
+  const names = toAssignees.map((a) => resolveAssigneeDisplayName(a, roster, currentUserId))
   return names.length === 1 ? `assigned to ${names[0]}` : `assigned to ${names.join(', ')}`
 }
 

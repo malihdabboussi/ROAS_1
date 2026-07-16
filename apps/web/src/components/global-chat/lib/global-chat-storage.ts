@@ -16,6 +16,10 @@ export interface GlobalWorkContext {
   brainId?: string | null
   brainScopeLabel?: string | null
   brainAwarenessContext?: string
+  /** Manage Agents Ops Desk label for the work-context chip. */
+  teamOpsLabel?: string | null
+  /** Live team floor context injected when opening Vibey from Ops Desk. */
+  teamOpsAwarenessContext?: string
 }
 
 export interface PersistedGlobalChat {

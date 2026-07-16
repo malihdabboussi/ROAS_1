@@ -120,7 +120,7 @@ export function ChannelSettingsModal({
                     className="border-border accent-primary mt-1 h-4 w-4 shrink-0"
                   />
                   <span>
-                    <span className="body-2 text-foreground block">Public — anyone in Vibey</span>
+                    <span className="body-2 text-foreground block">Public — anyone in ROAS</span>
                   </span>
                 </label>
                 <label

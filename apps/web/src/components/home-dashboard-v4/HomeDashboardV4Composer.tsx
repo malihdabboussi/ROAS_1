@@ -13,6 +13,7 @@ import { useOrgStore } from '@/features/org/store/use-org-store'
 import { cachedSpaces, useCachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
 import { normalizeSpaceLegacyViews } from '@/features/spaces/lib/view-customization-merge'
 import { ensureGeneralSpace } from '@/features/spaces/services/spaces.service'
+import { matchesFlowsConceptSpace } from '@/lib/flows/flows-scope-storage'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { AttachedArtifact } from '@/features/studio/components/chat/ArtifactAttachments'
 import { ChatInput } from '@/features/studio/components/ChatInput'
@@ -86,7 +87,10 @@ export function HomeDashboardV4Composer({
     if (!generalCampaignId) return null
     return (
       [...spaces]
-        .filter((space) => space.campaign_id === generalCampaignId)
+        .filter(
+          (space) =>
+            space.campaign_id === generalCampaignId && !matchesFlowsConceptSpace(space),
+        )
         .sort((a, b) => {
           const aTime = new Date(a.updated_at ?? a.created_at ?? 0).getTime()
           const bTime = new Date(b.updated_at ?? b.created_at ?? 0).getTime()
@@ -114,7 +118,7 @@ export function HomeDashboardV4Composer({
 
   const placeholder = useMemo(() => {
     if (committedTemplate) return committedTemplate.placeholder
-    return 'Tell Vibey what to do…'
+    return 'Tell ROAS what to do…'
   }, [committedTemplate])
 
   const plusMenuSpacePicker = useMemo<ChatInputPlusMenuSpacePickerConfig>(

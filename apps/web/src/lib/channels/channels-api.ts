@@ -66,7 +66,7 @@ export interface SendChannelMessagePayload {
   attachments?: string[]
   reply_to_id?: string
   /** Active space context — server resolves `campaign_id` and threads scope
-   *  to the channel-agent runtime (parity with Vibey chat). */
+   *  to the channel-agent runtime (parity with ROAS chat). */
   space_id?: string
 }
 

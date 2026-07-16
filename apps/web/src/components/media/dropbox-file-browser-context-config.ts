@@ -10,7 +10,7 @@ export function getDropboxFileBrowserContextConfig(
     case 'brain':
       return {
         selectLabel: 'Import to Brain',
-        exportLabel: 'Export to Vibey',
+        exportLabel: 'Export to ROAS',
         showSelect: true,
         showExport: false,
         showShare: false,
@@ -28,7 +28,7 @@ export function getDropboxFileBrowserContextConfig(
     case 'mission_inbox':
       return {
         selectLabel: 'Attach to Inbox',
-        exportLabel: 'Export to Vibey',
+        exportLabel: 'Export to ROAS',
         showSelect: true,
         showExport: false,
         showShare: false,
@@ -37,7 +37,7 @@ export function getDropboxFileBrowserContextConfig(
     case 'media_library':
       return {
         selectLabel: 'Add to library',
-        exportLabel: 'Export to Vibey',
+        exportLabel: 'Export to ROAS',
         showSelect: true,
         showExport: false,
         showShare: false,
@@ -46,7 +46,7 @@ export function getDropboxFileBrowserContextConfig(
     case 'chat':
       return {
         selectLabel: 'Add to chat',
-        exportLabel: 'Export to Vibey',
+        exportLabel: 'Export to ROAS',
         showSelect: true,
         showExport: false,
         showShare: false,

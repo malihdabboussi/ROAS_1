@@ -137,38 +137,10 @@ export async function ensureSpaceView({
   viewType,
   logger,
 }: EnsureSpaceViewParams): Promise<void> {
-  if (!campaignId && !spaceId) {
-    // #region debug-log - H1: ensureSpaceView no-op (no scope at all)
-    fetch('http://127.0.0.1:7242/log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        hypothesis: 'H1',
-        location: 'agent-api/ensure-space-view.ts:ensureSpaceView',
-        message: 'NO-OP: neither spaceId nor campaignId — tab not created anywhere',
-        data: { viewType },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {})
-    // #endregion
-    return
-  }
+  if (!campaignId && !spaceId) return
   try {
     if (spaceId) {
-      const result = await patchSpaceSchemaWithView({ supabase, spaceId, viewType, logger })
-      // #region debug-log - H1: ensureSpaceView explicit space branch
-      fetch('http://127.0.0.1:7242/log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hypothesis: 'H1',
-          location: 'agent-api/ensure-space-view.ts:ensureSpaceView',
-          message: 'Explicit space branch: patched target space schema',
-          data: { spaceId, viewType, patchResult: result },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {})
-      // #endregion
+      await patchSpaceSchemaWithView({ supabase, spaceId, viewType, logger })
       return
     }
     if (!campaignId) return
@@ -180,26 +152,12 @@ export async function ensureSpaceView({
     if (spacesError || !spaces || spaces.length === 0) return
     const target = spaces[0]
     if (target?.id) {
-      const fallbackResult = await patchSpaceSchemaWithView({
+      await patchSpaceSchemaWithView({
         supabase,
         spaceId: String(target.id),
         viewType,
         logger,
       })
-      // #region debug-log - H1: ensureSpaceView campaign fallback branch
-      fetch('http://127.0.0.1:7242/log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hypothesis: 'H1',
-          location: 'agent-api/ensure-space-view.ts:ensureSpaceView',
-          message:
-            'FALLBACK: no spaceId — tab pinned to most-recently-updated space in campaign (artifact itself stays campaign-level!)',
-          data: { campaignId, guessedSpaceId: String(target.id), viewType, patchResult: fallbackResult },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {})
-      // #endregion
     }
   } catch (err) {
     logger?.warn(

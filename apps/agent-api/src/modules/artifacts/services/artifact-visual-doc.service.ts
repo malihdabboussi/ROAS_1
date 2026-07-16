@@ -12,6 +12,7 @@ import {
 import { ProviderBillingAttemptsService } from '../../billing/services/provider-billing-attempts.service'
 import { ArtifactVisualDocRepository } from '../repositories/artifact-visual-doc.repository'
 import type { ArtifactActionHandler } from './artifact-action.registry'
+import { syncVisualDocLinkedPresentation } from './artifact-visual-doc-presentation.sync'
 
 const DEFAULT_VISUAL_DOC_STRATEGY = 'auto' as const
 const OPENROUTER_CHAT_COMPLETIONS_URL = 'https://openrouter.ai/api/v1/chat/completions'
@@ -99,7 +100,8 @@ export class ArtifactVisualDocService {
     const existingHtml = String(customData._doc_visual_html ?? '').trim()
     const existingHash = String(customData._doc_visual_source_hash ?? '').trim()
     if (!force && existingHtml && existingHash === sourceHash) {
-      return this.buildResult(row, existingHtml, sourceHash, customData)
+      const cachedPresentationId = this.readPresentationId(customData)
+      return this.buildResult(row, existingHtml, sourceHash, customData, cachedPresentationId)
     }
 
     const orgId =
@@ -128,6 +130,29 @@ export class ArtifactVisualDocService {
       }
 
       const now = new Date().toISOString()
+      let presentationId = this.readPresentationId(customData)
+      try {
+        await onProgress?.('Linking presentation for Design')
+        const synced = await syncVisualDocLinkedPresentation({
+          supabase,
+          userId,
+          orgId,
+          spaceId: row.space_id,
+          itemId: row.id,
+          title: row.title?.trim() || 'Visual doc',
+          html: sanitized,
+          existingPresentationId: presentationId,
+          logger: this.logger,
+        })
+        if (synced.presentationId) presentationId = synced.presentationId
+      } catch (syncError) {
+        const syncMessage =
+          syncError instanceof Error ? syncError.message : 'Presentation sync failed'
+        this.logger.warn(
+          `generate_visual_html presentation sync failed for item=${itemId}: ${syncMessage}`,
+        )
+      }
+
       const nextCustomData = {
         ...customData,
         _doc_visual_html: sanitized,
@@ -135,6 +160,7 @@ export class ArtifactVisualDocService {
         _doc_visual_updated_at: now,
         _doc_visual_source_hash: sourceHash,
         _doc_visual_last_error: null,
+        ...(presentationId ? { _doc_visual_presentation_id: presentationId } : {}),
       }
       const { data: updated, error: updateError } = await this.repository.updateVisualDocReady(
         supabase,
@@ -147,7 +173,13 @@ export class ArtifactVisualDocService {
       )
       if (updateError) throw updateError
       await onProgress?.('Visual doc is ready')
-      return this.buildResult(updated as SpaceItemRow, sanitized, sourceHash, nextCustomData)
+      return this.buildResult(
+        updated as SpaceItemRow,
+        sanitized,
+        sourceHash,
+        nextCustomData,
+        presentationId,
+      )
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Visual doc generation failed'
       this.logger.error(`generate_visual_html failed for item=${itemId}: ${message}`)
@@ -161,13 +193,42 @@ export class ArtifactVisualDocService {
     }
   }
 
+  private readPresentationId(customData: Record<string, unknown>): string | null {
+    const raw = customData._doc_visual_presentation_id
+    return typeof raw === 'string' && raw.trim() ? raw.trim() : null
+  }
+
   private buildResult(
     item: SpaceItemRow,
     html: string,
     sourceHash: string,
     customData: Record<string, unknown>,
+    presentationId: string | null,
   ) {
     const title = item.title?.trim() || 'Visual doc'
+    const uiBlocks: Array<Record<string, unknown>> = [
+      {
+        type: 'artifact_preview',
+        id: `visual-doc-${item.id}`,
+        artifactType: 'visual-doc',
+        artifactId: item.id,
+        spaceId: item.space_id,
+        name: title,
+        subtitle: 'Visual doc',
+        status: 'ready',
+      },
+    ]
+    if (presentationId) {
+      uiBlocks.push({
+        type: 'artifact_preview',
+        id: `artifact-presentation-${presentationId}`,
+        artifactType: 'presentation',
+        artifactId: presentationId,
+        spaceId: item.space_id,
+        name: title,
+        status: 'draft',
+      })
+    }
     return {
       success: true,
       item_id: item.id,
@@ -175,19 +236,9 @@ export class ArtifactVisualDocService {
       title,
       html,
       source_hash: sourceHash,
+      presentation_id: presentationId,
       custom_data: customData,
-      ui_blocks: [
-        {
-          type: 'artifact_preview',
-          id: `visual-doc-${item.id}`,
-          artifactType: 'visual-doc',
-          artifactId: item.id,
-          spaceId: item.space_id,
-          name: title,
-          subtitle: 'Visual doc',
-          status: 'ready',
-        },
-      ],
+      ui_blocks: uiBlocks,
     }
   }
 

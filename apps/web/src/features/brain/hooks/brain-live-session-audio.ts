@@ -8,20 +8,39 @@ export async function ensureAudioContextRunning(ctx: AudioContext): Promise<void
   }
 }
 
-export function startMicCapture(
+export interface MicCaptureHandle {
+  setWebSocket: (ws: WebSocket | null) => void
+  resume: () => Promise<void>
+  stop: () => void
+}
+
+/**
+ * Open the mic capture graph immediately (close to the user gesture) so the
+ * AudioContext can leave "suspended" and levels update before the WS is ready.
+ * PCM is only forwarded once setWebSocket() receives an open socket.
+ */
+export async function createMicCapture(
   stream: MediaStream,
-  ws: WebSocket,
   mutedRef: RefObject<boolean>,
   micInputLevelRef?: RefObject<number>,
-): void {
+): Promise<MicCaptureHandle> {
   const audioCtx = new AudioContext({ sampleRate: MIC_SAMPLE_RATE })
-  void ensureAudioContextRunning(audioCtx)
+  await ensureAudioContextRunning(audioCtx)
+
   const source = audioCtx.createMediaStreamSource(stream)
   const processor = audioCtx.createScriptProcessor(4096, 1, 1)
+  // Keep the ScriptProcessor graph alive without routing mic into speakers
+  // (full-gain destination + echoCancellation often silences the input).
+  const silentGain = audioCtx.createGain()
+  silentGain.gain.value = 0
+
+  let ws: WebSocket | null = null
+  let stopped = false
 
   processor.onaudioprocess = (event) => {
-    if (ws.readyState !== WebSocket.OPEN) return
+    if (stopped) return
     const input = event.inputBuffer.getChannelData(0)
+
     if (micInputLevelRef) {
       let sum = 0
       for (let i = 0; i < input.length; i++) {
@@ -30,7 +49,10 @@ export function startMicCapture(
       }
       micInputLevelRef.current = Math.sqrt(sum / input.length)
     }
+
     if (mutedRef.current) return
+    if (!ws || ws.readyState !== WebSocket.OPEN) return
+
     const buffer = new ArrayBuffer(input.length * 2)
     const view = new DataView(buffer)
     for (let i = 0; i < input.length; i++) {
@@ -41,7 +63,31 @@ export function startMicCapture(
   }
 
   source.connect(processor)
-  processor.connect(audioCtx.destination)
+  processor.connect(silentGain)
+  silentGain.connect(audioCtx.destination)
+
+  return {
+    setWebSocket: (next) => {
+      ws = next
+    },
+    resume: async () => {
+      if (stopped) return
+      await ensureAudioContextRunning(audioCtx)
+    },
+    stop: () => {
+      stopped = true
+      ws = null
+      try {
+        processor.disconnect()
+        silentGain.disconnect()
+        source.disconnect()
+      } catch {
+        // Nodes may already be disconnected during teardown.
+      }
+      void audioCtx.close().catch(() => {})
+      if (micInputLevelRef) micInputLevelRef.current = 0
+    },
+  }
 }
 
 export async function checkMicPermission(): Promise<string | null> {

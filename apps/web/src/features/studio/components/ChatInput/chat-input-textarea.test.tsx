@@ -14,7 +14,7 @@ function defaultProps() {
     renderHighlightBackdrop: vi.fn((text: string) => <span>highlight {text}</span>),
     composerPadX: 'px-spacing-2',
     compact: false,
-    placeholder: 'Message Vibey',
+    placeholder: 'Message ROAS',
     disabled: false,
     onFocus: vi.fn(),
     onChange: vi.fn(),
@@ -31,7 +31,7 @@ describe('ChatInputTextarea', () => {
     const { container } = render(<ChatInputTextarea {...props} />)
 
     expect(screen.getByRole('textbox').getAttribute('data-chat-input')).toBe('true')
-    expect(screen.getByPlaceholderText('Message Vibey')).toBeTruthy()
+    expect(screen.getByPlaceholderText('Message ROAS')).toBeTruthy()
     expect(screen.getByText('highlight /brief')).toBeTruthy()
     expect(container.querySelector('[aria-hidden="true"]')).toBeTruthy()
     expect(props.renderHighlightBackdrop).toHaveBeenCalledWith('/brief')

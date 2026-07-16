@@ -27,9 +27,11 @@ interface SpaceVoiceLiveTranscriptProps {
 function useLevelMeter(levelRef: MutableRefObject<number>, active: boolean): number {
   const [level, setLevel] = useState(0)
   const rafRef = useRef<number | null>(null)
+  const lastLevelRef = useRef(0)
 
   useEffect(() => {
     if (!active) {
+      lastLevelRef.current = 0
       setLevel(0)
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
       rafRef.current = null
@@ -39,7 +41,11 @@ function useLevelMeter(levelRef: MutableRefObject<number>, active: boolean): num
     let mounted = true
     const tick = () => {
       if (!mounted) return
-      setLevel(normalizeAudioLevel(levelRef.current))
+      const next = normalizeAudioLevel(levelRef.current)
+      if (Math.abs(next - lastLevelRef.current) >= 1) {
+        lastLevelRef.current = next
+        setLevel(next)
+      }
       rafRef.current = requestAnimationFrame(tick)
     }
     rafRef.current = requestAnimationFrame(tick)
@@ -106,9 +112,14 @@ export function SpaceVoiceLiveTranscript({
   isMuted,
 }: SpaceVoiceLiveTranscriptProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const metering =
+    state === 'connecting' ||
+    state === 'listening' ||
+    state === 'speaking' ||
+    state === 'toolCall'
   const active = state === 'listening' || state === 'speaking' || state === 'toolCall'
-  const micLevel = useLevelMeter(micInputLevelRef, active && !isMuted)
-  const speakerLevel = useLevelMeter(audioLevelRef, active && state === 'speaking')
+  const micLevel = useLevelMeter(micInputLevelRef, metering && !isMuted)
+  const speakerLevel = useLevelMeter(audioLevelRef, metering && state === 'speaking')
 
   const inputText = inputTranscript.trim() || getLiveInputPlaceholder(state, isMuted)
   const outputText = outputTranscript.trim() || getLiveOutputPlaceholder(state, agentName)

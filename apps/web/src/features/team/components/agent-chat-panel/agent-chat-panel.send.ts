@@ -8,6 +8,7 @@ import type {
 } from '@/lib/chat/studio-chat-runtime-adapter'
 import type { AttachedArtifact, ChatModelSettings } from '@/lib/chat'
 import type { UiSelectedArtifact } from '@/lib/chat/ui-selected-artifact'
+import { assignConversationCampaign } from '@/lib/conversations/conversations-api'
 
 interface AgentChatSendStreamParams {
   conversation_id: string
@@ -40,6 +41,8 @@ export interface SendAgentChatMessageInput {
   systemContext?: string
   uiSelectedArtifact?: UiSelectedArtifact | null
   getNewConversationCampaignScope: () => string | null
+  /** When active chat is General and agent has exactly one assignment, remount onto it. */
+  getPreferredCampaignWhenGeneral?: () => string | null
   createAndSelectSession: (campaignId?: string | null) => Promise<Conversation>
   getSessions: () => Conversation[]
   getMessages: (conversationId: string) => Message[]
@@ -73,6 +76,7 @@ export async function sendAgentChatMessage({
   systemContext,
   uiSelectedArtifact,
   getNewConversationCampaignScope,
+  getPreferredCampaignWhenGeneral,
   createAndSelectSession,
   getSessions,
   getMessages,
@@ -95,10 +99,22 @@ export async function sendAgentChatMessage({
   let streamCampaignId: string | null = activeCampaignId
 
   if (!convId) {
-    const scope = getNewConversationCampaignScope() ?? activeCampaignId ?? null
+    const preferred =
+      getPreferredCampaignWhenGeneral?.() ?? getNewConversationCampaignScope() ?? null
+    const scope = preferred ?? getNewConversationCampaignScope() ?? activeCampaignId ?? null
     const created = await createAndSelectSession(scope ?? undefined)
     convId = created.id
     streamCampaignId = (created.campaign_id as string | null) ?? scope
+  } else {
+    const preferred = getPreferredCampaignWhenGeneral?.() ?? null
+    if (preferred && preferred !== streamCampaignId) {
+      const updated = await assignConversationCampaign(convId, preferred)
+      streamCampaignId = preferred
+      setSessions((prev) =>
+        prev.map((session) => (session.id === convId ? { ...session, ...updated } : session)),
+      )
+      onConversationUpdated(updated)
+    }
   }
 
   if (!convId) {

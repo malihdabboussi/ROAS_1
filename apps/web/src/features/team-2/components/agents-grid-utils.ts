@@ -37,11 +37,14 @@ export function agentMatchesStatus(
   filters: Team2StatusFilter[],
 ): boolean {
   if (filters.length === 0) return true
-  const isOffline = agent.is_active === false
-  const wantsOffline = filters.includes('offline')
-  const wantsOnline = filters.includes('online')
-  if (isOffline) return wantsOffline
-  return wantsOnline
+  const isDeactivated = agent.is_active === false
+  return filters.some((filter) => {
+    if (filter === 'working') return !isDeactivated && agent.status === 'working'
+    if (filter === 'idle') return !isDeactivated && agent.status === 'idle'
+    if (filter === 'offline') return isDeactivated
+    if (filter === 'online') return !isDeactivated
+    return false
+  })
 }
 
 export function agentToSummary(

@@ -21,6 +21,10 @@ import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { cn } from '@/lib/utils/cn'
 import { assigneeFieldValueForGroupKey, groupItems } from '../lib/group-items'
 import {
+  resolveSpaceEntryType,
+  viewPromotesFollowUpSubtasks,
+} from '../lib/apply-space-toolbar-filters'
+import {
   kanbanBoardColumnTintSource,
   spaceGroupBadgeChipProps,
 } from '../lib/space-group-badge-glass'
@@ -422,15 +426,24 @@ export function KanbanView({
 
   const subtaskCounts = useMemo(() => {
     const counts: Record<string, number> = {}
+    const promote = viewPromotesFollowUpSubtasks(view)
     for (const item of items) {
+      if (promote) continue
       if (item.parent_item_id) {
         counts[item.parent_item_id] = (counts[item.parent_item_id] ?? 0) + 1
       }
     }
     return counts
-  }, [items])
+  }, [items, view])
 
-  const topLevelItems = useMemo(() => items.filter((i) => !i.parent_item_id), [items])
+  const topLevelItems = useMemo(() => {
+    if (viewPromotesFollowUpSubtasks(view)) {
+      return items.filter(
+        (i) => !i.parent_item_id || resolveSpaceEntryType(i) === 'follow_up',
+      )
+    }
+    return items.filter((i) => !i.parent_item_id)
+  }, [items, view])
 
   const boardColumns = useMemo(() => {
     const gf = groupField

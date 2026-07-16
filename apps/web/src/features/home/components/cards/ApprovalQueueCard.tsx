@@ -109,7 +109,15 @@ export function ApprovalQueueCard({
                   className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                 >
                   <ApprovalQueueStatusDot item={item} />
-                  <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                  <Tooltip
+                    label={item.title}
+                    side="top"
+                    wide
+                    delayMs={300}
+                    triggerClassName="min-w-0 flex-1"
+                  >
+                    <span className="block min-w-0 truncate">{item.title}</span>
+                  </Tooltip>
                   <span className="typo-caption text-muted-foreground flex shrink-0 items-center gap-1 tabular-nums">
                     <Clock className="h-3 w-3 shrink-0" aria-hidden />
                     {waitingLabel}

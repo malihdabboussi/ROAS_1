@@ -41,7 +41,7 @@ export function useTeamContainerCampaignHandlers(data: TeamContainerHandlersData
     async (campaignId: string) => {
       if (!data.selectedAgentKey) return
       if (CAMPAIGN_CORE_AGENT_KEYS.has(data.selectedAgentKey)) {
-        data.setCampaignError('Vibey and Atlas are always assigned to every campaign.')
+        data.setCampaignError('ROAS and Atlas are always assigned to every campaign.')
         return
       }
       data.setCampaignActionLoading(true)

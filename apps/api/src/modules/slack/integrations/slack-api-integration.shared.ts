@@ -21,5 +21,10 @@ export function isSlackAuthError(error: unknown): error is SlackAuthError {
 export function throwSlackError(error: string | undefined, fallback: string): never {
   const code = error ?? fallback
   if (SLACK_AUTH_ERRORS.has(code)) throw new SlackAuthError(code)
+  if (code === 'not_allowed_token_type') {
+    throw new Error(
+      'not_allowed_token_type: Slack search requires a user token. Reconnect Slack in Settings (grants search:read), or use SLACK_LIST_CHANNELS + SLACK_GET_CHANNEL_HISTORY with the bot token.',
+    )
+  }
   throw new Error(code)
 }

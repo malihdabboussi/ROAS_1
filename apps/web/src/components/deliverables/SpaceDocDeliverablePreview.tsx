@@ -127,6 +127,7 @@ export function SpaceDocDeliverablePreview({
     docVisualStatus,
     docVisualSourceHash,
     docVisualLastError,
+    docVisualPresentationId,
   } = useMemo(() => parseDocEditorUiFromCustomData(customData), [customData])
   const visualHtml =
     typeof docVisualHtml === 'string' && docVisualHtml.trim() ? docVisualHtml : null
@@ -183,6 +184,27 @@ export function SpaceDocDeliverablePreview({
     a.click()
     URL.revokeObjectURL(url)
   }, [loadedItem?.title, title, visualHtml])
+
+  const openVisualFullMode = useCallback(() => {
+    const presentationId = docVisualPresentationId?.trim()
+    const target = loadedItem
+    if (presentationId && target) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('vibey-open-artifact', {
+            detail: {
+              artifactType: 'presentation',
+              artifactId: presentationId,
+              spaceId: target.space_id,
+              name: title ?? target.title ?? 'Visual presentation',
+            },
+          }),
+        )
+      }
+      return
+    }
+    setVisualFullModeOpen(true)
+  }, [docVisualPresentationId, loadedItem, title])
 
   const downloadVisualPdfFile = useCallback(async () => {
     if (!visualHtml || exportingVisualPdf) return
@@ -261,13 +283,20 @@ export function SpaceDocDeliverablePreview({
           <div className="gap-spacing-1 flex shrink-0 items-center">
             {visualHtml ? (
               <>
-                <Tooltip label="Full mode" side="bottom">
+                <Tooltip
+                  label={docVisualPresentationId ? 'Open Design' : 'Full mode'}
+                  side="bottom"
+                >
                   <span className="inline-flex">
                     <button
                       type="button"
                       className={visualChromeIconBtnClass}
-                      onClick={() => setVisualFullModeOpen(true)}
-                      aria-label="Open visual doc full mode"
+                      onClick={openVisualFullMode}
+                      aria-label={
+                        docVisualPresentationId
+                          ? 'Open linked presentation Design mode'
+                          : 'Open visual doc full mode'
+                      }
                     >
                       <Maximize2 className="h-3.5 w-3.5 shrink-0" />
                     </button>

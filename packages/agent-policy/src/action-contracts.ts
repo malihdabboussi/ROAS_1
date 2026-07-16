@@ -628,6 +628,7 @@ const EXPLICIT_ACTION_CONTRACTS = {
       'search_agent_brain',
       'search_customer_brain',
       'search_company_brain',
+      'search_campaign_brain',
     ],
     skillKeys: ['brain-scholar', 'vibey-api'],
     schemaRef: 'ACTION_SCHEMAS.search_brain_context',

@@ -12,7 +12,7 @@ export function ConversionBar() {
   return (
     <div className="relative flex items-center justify-between gap-3 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-blue-600/20 px-4 py-2 md:px-6">
       <p className="body-4 text-foreground/80 min-w-0 truncate">
-        Build your own AI team with <span className="font-semibold text-white">Vibey</span>
+        Build your own AI team with <span className="font-semibold text-white">ROAS</span>
       </p>
       <div className="flex shrink-0 items-center gap-2">
         <a

@@ -124,7 +124,24 @@ export abstract class MediaServiceBase03 extends MediaServiceBase02 {
     user: { id: string },
     orgId?: string | null,
   ): Promise<MediaAssetRow | null> {
-    return this.resolveAssetForRead(assetId, user, orgId)
+    const asset = await this.resolveAssetForRead(assetId, user, orgId)
+    if (!asset) return null
+    if (asset.conversation_id) return asset
+
+    const conversationId = await this.mediaRepository.findOriginConversationId(assetId)
+    if (!conversationId) return asset
+    return { ...asset, conversation_id: conversationId }
+  }
+
+  async resolveAssetIdByUrl(
+    url: string,
+    user: { id: string },
+    orgId?: string | null,
+  ): Promise<string | null> {
+    const assetId = await this.mediaRepository.findAssetIdByUrl(url)
+    if (!assetId) return null
+    const asset = await this.resolveAssetForRead(assetId, user, orgId)
+    return asset?.id ?? null
   }
 
   // ── Update Asset ────────────────────────────────────────────────────────

@@ -29,7 +29,7 @@ const CHAT_COMPOSER_TIPS = [
   'Click any queued message to edit it before it goes out.',
   'Drop a file anywhere on the chat to attach it.',
   'Use the paperclip to attach files from Google Drive or Dropbox.',
-  'Paste a wall of text and Vibey turns it into a clean attachable block.',
+  'Paste a wall of text and ROAS turns it into a clean attachable block.',
   'Pick a different model for one message from the dropdown under the input.',
   'The Send button turns into Stop while the agent is working — hit it to interrupt.',
   'Your draft sticks around per conversation until you send or clear it.',
@@ -76,7 +76,7 @@ const SPACES_TASKS_TIPS = [
   'In task chat, type / for assign-to-me, set status, or send to agent.',
   'Share a Space with view or edit permission — your call.',
   'Your Turn on home gathers everything waiting on your approval.',
-  'Comment on a mission to nudge Vibey mid-flight — it reads and adjusts.',
+  'Comment on a mission to nudge ROAS mid-flight — it reads and adjusts.',
 ] as const
 
 const INTEGRATIONS_EMAIL_TIPS = [

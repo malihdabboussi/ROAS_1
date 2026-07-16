@@ -231,7 +231,8 @@ export function SelectCell({
           customTrigger && (triggerInline ? 'shrink-0' : 'w-full'),
           fieldRowVariant === 'kanban' && 'gap-1.5',
           isPriority && selected && fieldRowVariant !== 'kanban' && 'min-w-0 gap-1.5',
-          isCategory && selected && fieldRowVariant !== 'kanban' && 'min-w-0 gap-1.5',
+          // Category + generic selects (e.g. Call Kind) show label beside the dot in list cells.
+          !isStatus && !isPriority && selected && fieldRowVariant !== 'kanban' && 'min-w-0 gap-1.5',
         )}
         title={selected?.label}
       >
@@ -257,21 +258,12 @@ export function SelectCell({
               <Flag className="h-3.5 w-3.5 text-[var(--color-muted-foreground)]" />
             )
           ) : selected ? (
-            fieldRowVariant === 'kanban' ? (
-              <>
-                <OptionDot color={selected.color} />
-                <span className="truncate text-xs text-[var(--foreground)]">{selected.label}</span>
-              </>
-            ) : isCategory ? (
-              <>
-                <OptionDot color={selected.color} />
-                <span className="min-w-0 truncate text-xs text-[var(--foreground)]">
-                  {selected.label}
-                </span>
-              </>
-            ) : (
+            <>
               <OptionDot color={selected.color} />
-            )
+              <span className="min-w-0 truncate text-xs text-[var(--foreground)]">
+                {selected.label}
+              </span>
+            </>
           ) : (
             <OptionDot />
           ))}

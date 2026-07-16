@@ -174,7 +174,7 @@ export class SpaceItemsRepository {
     if (ids.length === 0) return []
     let q = supabase
       .from('space_items')
-      .select('id, space_id, title, custom_data, status, updated_at')
+      .select('id, space_id, title, custom_data, status, task_execution_status, updated_at')
       .eq('custom_data->>entry_type', 'prep')
       .in('custom_data->>calendar_event_id', ids)
       .order('updated_at', { ascending: false })

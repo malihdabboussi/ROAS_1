@@ -90,8 +90,8 @@ export function TaskMetaFields({
     [categoryField, categoryValue],
   )
   const assigneeEntries = useMemo(
-    () => resolveAssignees(assigneeValue, roster),
-    [assigneeValue, roster],
+    () => resolveAssignees(assigneeValue, roster, currentUserId),
+    [assigneeValue, roster, currentUserId],
   )
   const tagsArray = useMemo(() => {
     if (!Array.isArray(tagsValue)) return []

@@ -24,9 +24,12 @@ import { SpacesRepository } from '../repositories/spaces.repository'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
 import {
   enrichSuggestedFollowUp,
+  followUpOwnerTagLabel,
   isInternalAssigneeEmail,
+  matchAttendeeTagOption,
   type FathomActionItemLike,
 } from './fathom-follow-up-enrichment'
+import { upsertAttendeeTagOptions } from './fathom-meeting-item-enrichment'
 import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
 import { SpaceAutomationServiceBase12 } from './space-automation-service-12.base'
 import { renderTemplate, type TemplateContext } from './space-automation-template'
@@ -77,6 +80,7 @@ const SCHEDULE_ALLOWED_ACTION_TYPES = new Set<string>([
   'ingest_youtube_channel_to_agent_brain',
   'send_to_agent',
   'send_to_cursor',
+  'meetings_precall_prep',
 ])
 
 const YOUTUBE_CHANNEL_VIDEOS_PATH = '/v1/youtube/channel-videos'
@@ -402,7 +406,7 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
     }
 
     const rawTasks = Array.isArray(body?.tasks) ? body.tasks : []
-    const spaceSchema = this.objectRecord(templateCtx.space.schema)
+    let spaceSchema = this.objectRecord(templateCtx.space.schema)
     const statusField = Array.isArray(spaceSchema.fields)
       ? (spaceSchema.fields as Array<Record<string, unknown>>).find(
           (field) => String(field.id ?? '') === 'status',
@@ -444,6 +448,48 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
         enriched.assignee_email,
       )
 
+      const ownerHint = {
+        name: enriched.assignee_name,
+        email: enriched.assignee_email,
+      }
+      let ownerAttendeeIds: string[] = []
+      const attendeesField = Array.isArray(spaceSchema.fields)
+        ? (spaceSchema.fields as Array<Record<string, unknown>>).find(
+            (field) => String(field.id ?? '') === 'attendees',
+          )
+        : null
+      const attendeeOptions = Array.isArray(attendeesField?.options)
+        ? (attendeesField.options as Array<{ id: string; label: string }>)
+        : []
+      const matchedOwnerId = matchAttendeeTagOption(attendeeOptions, ownerHint)
+      if (matchedOwnerId) {
+        ownerAttendeeIds = [matchedOwnerId]
+      } else {
+        const ownerLabel = followUpOwnerTagLabel(ownerHint)
+        if (ownerLabel) {
+          const upserted = upsertAttendeeTagOptions(spaceSchema, [ownerLabel])
+          if (upserted.optionIds[0]) ownerAttendeeIds = [upserted.optionIds[0]]
+          if (upserted.optionsChanged && upserted.nextSchema) {
+            spaceSchema = upserted.nextSchema
+            try {
+              await this.repo.updateSpace(
+                ctx.supabase,
+                ownerUserId,
+                ctx.spaceId,
+                { schema: spaceSchema as never },
+                ctx.orgId,
+              )
+            } catch (error) {
+              this.logger.warn(
+                `Failed to upsert follow-up owner attendee tag on space ${ctx.spaceId}: ${
+                  error instanceof Error ? error.message : String(error)
+                }`,
+              )
+            }
+          }
+        }
+      }
+
       const created = (await this.repo.createItem(
         ctx.supabase,
         ownerUserId,
@@ -462,8 +508,10 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
               }
             : {}),
           source: 'agent_suggested',
+          ...(ctx.itemId ? { parent_item_id: ctx.itemId } : {}),
           custom_data: {
             entry_type: 'follow_up',
+            ...(ownerAttendeeIds.length > 0 ? { attendees: ownerAttendeeIds } : {}),
             ...(ctx.itemId
               ? {
                   source_call_item_id: ctx.itemId,
@@ -479,17 +527,21 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
               suggestion_index: index,
               source_action: 'agent_suggest_tasks',
             },
-            ...(enriched.assignee_email
+            ...(enriched.assignee_email || enriched.assignee_name
               ? {
-                  suggested_assignee_email: enriched.assignee_email,
+                  ...(enriched.assignee_email
+                    ? { suggested_assignee_email: enriched.assignee_email }
+                    : {}),
                   ...(enriched.assignee_name
                     ? { suggested_assignee_name: enriched.assignee_name }
                     : {}),
                   ...(assignee
                     ? {}
-                    : isInternalAssigneeEmail(enriched.assignee_email)
+                    : enriched.assignee_email && isInternalAssigneeEmail(enriched.assignee_email)
                       ? { suggested_assignee_unresolved: true }
-                      : { suggested_assignee_external: true }),
+                      : enriched.assignee_email
+                        ? { suggested_assignee_external: true }
+                        : {}),
                 }
               : {}),
           },

@@ -22,12 +22,16 @@ import {
   type RequestScope,
 } from '@vibey/api-shared'
 import { QueryAssetsSchema, UpdateAssetSchema } from '../dto'
+import { MediaCanvaHandoffService } from '../services/media-canva-handoff.service'
 import { MediaService } from '../services/media.service'
 
 @Controller('media')
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
 export class MediaAssetsController {
-  constructor(private readonly mediaService: MediaService) {}
+  constructor(
+    private readonly mediaService: MediaService,
+    private readonly mediaCanvaHandoffService: MediaCanvaHandoffService,
+  ) {}
 
   /**
    * GET /api/media/assets
@@ -48,6 +52,26 @@ export class MediaAssetsController {
     }
 
     return this.mediaService.listAssets(parsed.data, user, scope.orgId)
+  }
+
+  /**
+   * GET /api/media/assets/resolve-by-url?url=
+   * Resolve a chat/markdown image URL to a media asset id (for Space Media slide-out).
+   */
+  @Get('assets/resolve-by-url')
+  async resolveByUrl(
+    @CurrentUser() user: { id: string; email: string },
+    @OrgContext() scope: RequestScope,
+    @Query('url') url?: string,
+  ) {
+    if (!url?.trim()) {
+      throw new BadRequestException('url is required')
+    }
+    const assetId = await this.mediaService.resolveAssetIdByUrl(url, user, scope.orgId)
+    if (!assetId) {
+      throw new BadRequestException('Asset not found for url')
+    }
+    return { id: assetId }
   }
 
   /**
@@ -153,5 +177,19 @@ export class MediaAssetsController {
       throw new BadRequestException('Asset not found')
     }
     return { url }
+  }
+
+  /**
+   * POST /api/media/assets/:id/canva-handoff
+   * Import the image into Canva and return an edit_url
+   */
+  @Post('assets/:id/canva-handoff')
+  @HttpCode(HttpStatus.OK)
+  async openInCanva(
+    @CurrentUser() user: { id: string; email: string },
+    @OrgContext() scope: RequestScope,
+    @Param('id') id: string,
+  ) {
+    return this.mediaCanvaHandoffService.createHandoff(user, scope, id)
   }
 }

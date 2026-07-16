@@ -168,7 +168,7 @@ export default function LoginPage() {
     >
       <div className="mb-spacing-8 text-center">
         <h1 className="text-foreground text-3xl font-bold tracking-tight">Sign in</h1>
-        <p className="body-2 text-muted-foreground mt-spacing-2">Continue to Vibey</p>
+        <p className="body-2 text-muted-foreground mt-spacing-2">Continue to ROAS</p>
       </div>
 
       <div className="space-y-spacing-4">

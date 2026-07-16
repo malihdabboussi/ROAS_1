@@ -23,6 +23,11 @@ import {
   type DndZone,
 } from '../lib/space-list-dnd-apply'
 import {
+  resolveFollowUpParentCallId,
+  resolveSpaceEntryType,
+  viewPromotesFollowUpSubtasks,
+} from '../lib/apply-space-toolbar-filters'
+import {
   LIST_TOP_DROP_ID,
   tryParseEmptyGroupDropId,
   tryParseGroupTopDropId,
@@ -147,7 +152,20 @@ export function ListView({
 
   const clearSelection = useCallback(() => setSelectedIds(new Set()), [])
 
-  const topLevelItems = useMemo(() => items.filter((i) => !i.parent_item_id), [items])
+  const promoteFollowUpSubtasks = viewPromotesFollowUpSubtasks(activeView)
+  const nestFollowUpsUnderCalls = activeView.id === 'all-meetings'
+
+  const topLevelItems = useMemo(() => {
+    if (promoteFollowUpSubtasks) {
+      return items.filter(
+        (i) => !i.parent_item_id || resolveSpaceEntryType(i) === 'follow_up',
+      )
+    }
+    if (nestFollowUpsUnderCalls) {
+      return items.filter((i) => resolveSpaceEntryType(i) === 'call')
+    }
+    return items.filter((i) => !i.parent_item_id)
+  }, [items, promoteFollowUpSubtasks, nestFollowUpsUnderCalls])
 
   const itemIds = useMemo(() => topLevelItems.map((i) => i.id), [topLevelItems])
 
@@ -405,22 +423,26 @@ export function ListView({
   const subtaskCountMap = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const item of items) {
-      if (item.parent_item_id) {
-        counts[item.parent_item_id] = (counts[item.parent_item_id] ?? 0) + 1
-      }
+      if (promoteFollowUpSubtasks) continue
+      const parentId = nestFollowUpsUnderCalls
+        ? resolveFollowUpParentCallId(item)
+        : item.parent_item_id
+      if (parentId) counts[parentId] = (counts[parentId] ?? 0) + 1
     }
     return counts
-  }, [items])
+  }, [items, nestFollowUpsUnderCalls, promoteFollowUpSubtasks])
 
   const subtasksByParent = useMemo(() => {
     const map: Record<string, SpaceItem[]> = {}
+    if (promoteFollowUpSubtasks) return map
     for (const item of items) {
-      if (item.parent_item_id) {
-        ;(map[item.parent_item_id] ??= []).push(item)
-      }
+      const parentId = nestFollowUpsUnderCalls
+        ? resolveFollowUpParentCallId(item)
+        : item.parent_item_id
+      if (parentId) (map[parentId] ??= []).push(item)
     }
     return map
-  }, [items])
+  }, [items, nestFollowUpsUnderCalls, promoteFollowUpSubtasks])
 
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const prevSubtasksModeRef = useRef(subtasksMode)

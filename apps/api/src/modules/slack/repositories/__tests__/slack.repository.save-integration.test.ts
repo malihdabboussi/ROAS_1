@@ -21,7 +21,13 @@ describe('SlackRepository.saveIntegration', () => {
     const supabase = { from } as never
     const repo = new SlackRepository()
 
-    await repo.saveIntegration(supabase, 'user-1', 'xoxb-token', { team_id: 'T1' }, null)
+    await repo.saveIntegration(
+      supabase,
+      'user-1',
+      'xoxb-token',
+      { team_id: 'T1', team_name: 'ROAS' },
+      null,
+    )
 
     expect(insert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -32,6 +38,7 @@ describe('SlackRepository.saveIntegration', () => {
         status: 'connected',
         org_id: null,
         scope_mode: 'personal',
+        connection_label: 'ROAS',
       }),
     )
   })

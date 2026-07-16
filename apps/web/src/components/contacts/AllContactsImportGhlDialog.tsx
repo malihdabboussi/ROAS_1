@@ -179,7 +179,7 @@ export function AllContactsImportGhlDialog({
           <VisuallyHidden.Root>
             <DialogPrimitive.Title>Import from GoHighLevel</DialogPrimitive.Title>
             <DialogPrimitive.Description>
-              Select contacts to copy into Vibey from GoHighLevel.
+              Select contacts to copy into ROAS from GoHighLevel.
             </DialogPrimitive.Description>
           </VisuallyHidden.Root>
           <div className="surface-card wizard-container-border rounded-spacing-4 relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden">
@@ -196,7 +196,7 @@ export function AllContactsImportGhlDialog({
                 <div>
                   <h2 className="title-h6 text-foreground">Import from GoHighLevel</h2>
                   <p className="body-4 text-muted-foreground mt-spacing-0-5">
-                    Select contacts to copy into Vibey. Connect GHL under Settings{' '}
+                    Select contacts to copy into ROAS. Connect GHL under Settings{' '}
                     {'\u2192'} Integrations if this fails.
                   </p>
                 </div>

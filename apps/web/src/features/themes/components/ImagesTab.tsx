@@ -70,7 +70,7 @@ export function ImagesTab({
       <div>
         <h3 className="body-1 mb-spacing-2 font-semibold text-foreground">Your Headshots</h3>
         <p className="body-3 mb-spacing-4 text-muted-foreground">
-          Upload professional photos of yourself from different angles. Vibey will pick the best one
+          Upload professional photos of yourself from different angles. ROAS will pick the best one
           for each ad creative based on the name and description you provide.
         </p>
         <ImageUploadCard
@@ -94,7 +94,7 @@ export function ImagesTab({
         </h3>
         <p className="body-3 mb-spacing-4 text-muted-foreground">
           Upload product shots, book covers, app screenshots, or brand imagery. Name and describe
-          each one so Vibey knows when to use it.
+          each one so ROAS knows when to use it.
         </p>
         <ImageUploadCard
           images={productImages}

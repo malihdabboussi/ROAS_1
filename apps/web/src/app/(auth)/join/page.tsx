@@ -213,7 +213,7 @@ export default function JoinPage() {
     <AuthOrbShell quotes={SIGNUP_QUOTES}>
       <div className="mb-spacing-8 text-center">
         <h1 className="text-foreground text-3xl font-bold tracking-tight">CREATE ACCOUNT</h1>
-        <p className="body-2 text-muted-foreground mt-spacing-2">Start building with Vibey</p>
+        <p className="body-2 text-muted-foreground mt-spacing-2">Start building with ROAS</p>
       </div>
 
       <div className="space-y-spacing-4">

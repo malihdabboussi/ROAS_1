@@ -54,6 +54,8 @@ import {
   readConversationSpaceId,
   readSessionMap,
   resolveActiveCampaignId,
+  resolveDefaultNewConversationCampaignId,
+  resolvePreferredCampaignWhenGeneral,
   writeSessionMap,
 } from './agent-chat-panel/agent-chat-panel.logic'
 import { runAgentChatInitialLoad } from './agent-chat-panel/agent-chat-panel.initial-load'
@@ -124,6 +126,11 @@ interface AgentChatPanelProps {
   /** Optional system context appended to every user-initiated send (e.g. Team 2 Edit feeds HR with target-agent context). */
   systemContext?: string
   composerStyle?: 'compact' | 'home'
+  /**
+   * Ops Desk / embedded surfaces: no empty-state hero, no spacer scroll void.
+   * Composer sits under briefing; thread only grows when there are messages.
+   */
+  compactLayout?: boolean
   /** When true, composer send/voice/attach controls are disabled (e.g. Edit tab gate before user acknowledges edit mode). */
   composerDisabled?: boolean
   renderComposerOverlay?: () => React.ReactNode
@@ -172,6 +179,7 @@ export function AgentChatPanel({
   hideCampaignPanel = false,
   systemContext,
   composerStyle = 'compact',
+  compactLayout = false,
   composerDisabled = false,
   renderComposerOverlay,
   renderComposerTopSlot,
@@ -758,6 +766,12 @@ export function AgentChatPanel({
         systemContext,
         uiSelectedArtifact,
         getNewConversationCampaignScope: () => newConversationCampaignScopeRef.current,
+        getPreferredCampaignWhenGeneral: () =>
+          resolvePreferredCampaignWhenGeneral({
+            activeCampaignId,
+            assignedCampaigns,
+            generalCampaignId,
+          }),
         createAndSelectSession: (campaignId) => createAndSelectSession(campaignId ?? undefined),
         getSessions: () => sessionsRef.current,
         getMessages: (conversationId) =>
@@ -788,6 +802,8 @@ export function AgentChatPanel({
       modelId,
       agent.agent_key,
       activeCampaignId,
+      assignedCampaigns,
+      generalCampaignId,
       selectedSession,
       cancelTeamDraftTimer,
       systemContext,
@@ -986,6 +1002,7 @@ export function AgentChatPanel({
     selectedSession,
     activeCampaignId,
     generalCampaignId,
+    assignedCampaigns,
     nonGeneralCampaigns,
     sessions,
     isMobile,
@@ -1005,12 +1022,26 @@ export function AgentChatPanel({
     if (creatingSession) return
     setCreatingSession(true)
     try {
-      const scope = newConversationCampaignScopeRef.current ?? activeCampaignId ?? undefined
+      const scope =
+        newConversationCampaignScopeRef.current ??
+        resolveDefaultNewConversationCampaignId({
+          assignedCampaigns,
+          cachedCampaignId: null,
+          generalCampaignId,
+        }) ??
+        activeCampaignId ??
+        undefined
       startLocalDraftSession(scope ?? null)
     } finally {
       setCreatingSession(false)
     }
-  }, [creatingSession, activeCampaignId, startLocalDraftSession])
+  }, [
+    creatingSession,
+    activeCampaignId,
+    assignedCampaigns,
+    generalCampaignId,
+    startLocalDraftSession,
+  ])
 
   const startRenameSession = useCallback((session: Conversation) => {
     setRenamingSessionId(session.id)
@@ -1226,8 +1257,13 @@ export function AgentChatPanel({
   ) : null
 
   return (
-    <div className="surface-bg relative flex h-full min-h-0 flex-1 flex-row overflow-hidden">
-      {!hideConversationsSidebar && (
+    <div
+      className={cn(
+        'relative flex min-h-0 flex-col overflow-hidden',
+        compactLayout ? 'w-full' : 'surface-bg h-full min-h-0 flex-1 flex-row',
+      )}
+    >
+      {!hideConversationsSidebar && !compactLayout && (
         <div
           className={cn(
             'flex h-full min-h-0 shrink-0 flex-col',
@@ -1299,21 +1335,25 @@ export function AgentChatPanel({
       <div
         ref={resizeContainerRef}
         className={cn(
-          'flex min-h-0 min-w-0 flex-1 overflow-hidden',
-          isMobile ? 'absolute inset-0 z-10 flex-col' : 'flex-row',
-          isMobile && 'bg-[var(--color-background)] transition-transform duration-300 ease-in-out',
-          isMobile && mobileNavScreen === 'conversations' && 'translate-x-full',
-          isMobile && mobileNavScreen === 'thread' && 'translate-x-0',
+          'flex min-h-0 min-w-0 overflow-hidden',
+          compactLayout ? 'w-full flex-col' : 'flex-1',
+          !compactLayout && (isMobile ? 'absolute inset-0 z-10 flex-col' : 'flex-row'),
+          !compactLayout &&
+            isMobile &&
+            'bg-[var(--color-background)] transition-transform duration-300 ease-in-out',
+          !compactLayout && isMobile && mobileNavScreen === 'conversations' && 'translate-x-full',
+          !compactLayout && isMobile && mobileNavScreen === 'thread' && 'translate-x-0',
         )}
       >
         <div
           className={cn(
             'flex min-h-0 min-w-0 flex-col overflow-hidden',
-            isDragging ? '' : 'transition-all duration-300 ease-in-out',
-            isMobile || !campaignPanelOpen ? 'flex-1' : '',
+            isDragging || compactLayout ? '' : 'transition-all duration-300 ease-in-out',
+            compactLayout || isMobile || !campaignPanelOpen ? 'flex-1' : '',
+            compactLayout && messages.length === 0 ? 'flex-none' : '',
           )}
           style={
-            !isMobile && campaignPanelOpen
+            !compactLayout && !isMobile && campaignPanelOpen
               ? { width: `${chatWidthPercent}%`, minWidth: '300px' }
               : undefined
           }
@@ -1378,7 +1418,7 @@ export function AgentChatPanel({
                   scrollRef={scrollRef}
                   contentRef={contentRef}
                   lastUserPromptRef={lastUserPromptRef}
-                  spacerHeight={spacerHeight}
+                  spacerHeight={compactLayout ? 0 : spacerHeight}
                   lastUserPromptHeight={lastUserPromptHeight}
                   threadHorizontalPad={threadHorizontalPad}
                   composerFooterClass={composerFooterClass}
@@ -1391,6 +1431,7 @@ export function AgentChatPanel({
                   composerOverlay={composerOverlay}
                   composerInput={composerInput}
                   homeComposerStyle={homeComposerStyle}
+                  compactLayout={compactLayout}
                   isStreaming={isStreaming}
                   onScroll={handleScroll}
                   onScrollToBottom={handleScrollToBottom}
@@ -1406,10 +1447,10 @@ export function AgentChatPanel({
             </>
           </AgentChatSetupGate>
         </div>
-        {!hideCampaignPanel && !isMobile && campaignPanelOpen && activeCampaignId && (
+        {!compactLayout && !hideCampaignPanel && !isMobile && campaignPanelOpen && activeCampaignId && (
           <ResizableDivider onMouseDown={handleResizeMouseDown} isDragging={isDragging} compact />
         )}
-        {!hideCampaignPanel && activeCampaignId && !isMobile && (
+        {!compactLayout && !hideCampaignPanel && activeCampaignId && !isMobile && (
           <motion.div
             initial={false}
             animate={{ flexGrow: campaignPanelOpen ? 1 : 0, opacity: campaignPanelOpen ? 1 : 0 }}

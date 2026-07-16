@@ -1,31 +1,55 @@
 'use client'
 
-import { memo, useCallback, useState } from 'react'
+import { memo, useCallback } from 'react'
 import { AlertCircle, Image as ImageIcon } from 'lucide-react'
-
-type ImageLoadState = 'loading' | 'loaded' | 'error'
+import { openMediaAssetInApp } from '@/lib/media/open-media-asset-in-app'
+import { useResilientImageSrc } from '@/lib/media/use-resilient-image-src'
 
 interface GeneratedImageProps {
   url: string
   prompt?: string
   aspectRatio?: string
+  mediaAssetId?: string
+  spaceId?: string | null
 }
 
 function resolveAspectClass(aspectRatio: string): string {
   return aspectRatio === '1:1' ? 'aspect-square' : 'aspect-video'
 }
 
-function GeneratedImageComponent({ url, prompt, aspectRatio = '16:9' }: GeneratedImageProps) {
-  const [loadState, setLoadState] = useState<ImageLoadState>('loading')
-  const [retryCount, setRetryCount] = useState(0)
+function GeneratedImageComponent({
+  url,
+  prompt,
+  aspectRatio = '16:9',
+  mediaAssetId,
+  spaceId,
+}: GeneratedImageProps) {
+  const { loadState, imgSrc, onLoad, onError, retry } = useResilientImageSrc(url)
   const aspectClass = resolveAspectClass(aspectRatio)
 
-  const handleRetry = useCallback(() => {
-    setLoadState('loading')
-    setRetryCount((count) => count + 1)
-  }, [])
-
-  const imgSrc = retryCount > 0 ? `${url}${url.includes('?') ? '&' : '?'}_r=${retryCount}` : url
+  const handleOpen = useCallback(() => {
+    void (async () => {
+      if (
+        mediaAssetId &&
+        openMediaAssetInApp({ mediaAssetId, title: prompt, spaceId: spaceId ?? undefined })
+      ) {
+        return
+      }
+      const { resolveMediaAssetIdByUrl } = await import('@/lib/services/media-api')
+      const resolvedId = await resolveMediaAssetIdByUrl(url)
+      if (
+        resolvedId &&
+        openMediaAssetInApp({
+          mediaAssetId: resolvedId,
+          title: prompt,
+          spaceId: spaceId ?? undefined,
+        })
+      ) {
+        return
+      }
+      window.open(url, '_blank', 'noopener,noreferrer')
+    })()
+  }, [mediaAssetId, prompt, spaceId, url])
 
   return (
     <div className="card-glass my-3 w-full max-w-sm overflow-hidden">
@@ -46,7 +70,7 @@ function GeneratedImageComponent({ url, prompt, aspectRatio = '16:9' }: Generate
             <p className="text-destructive text-center text-xs">Failed to load image</p>
             <button
               type="button"
-              onClick={handleRetry}
+              onClick={retry}
               className="button-glass-neutral rounded-lg px-3 py-1.5 text-xs"
             >
               Retry
@@ -55,15 +79,16 @@ function GeneratedImageComponent({ url, prompt, aspectRatio = '16:9' }: Generate
         )}
 
         {loadState !== 'error' && (
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={handleOpen}
             className="absolute inset-0 z-20 cursor-pointer"
-            title="Open full size"
+            title={mediaAssetId ? 'Open in media workspace' : 'Open full size'}
           >
-            <span className="sr-only">Open image in new tab</span>
-          </a>
+            <span className="sr-only">
+              {mediaAssetId ? 'Open image in media workspace' : 'Open image in new tab'}
+            </span>
+          </button>
         )}
 
         {loadState !== 'error' && (
@@ -73,8 +98,8 @@ function GeneratedImageComponent({ url, prompt, aspectRatio = '16:9' }: Generate
             className={`h-full w-full object-cover transition-opacity duration-500 ${
               loadState === 'loaded' ? 'opacity-100' : 'opacity-0'
             }`}
-            onLoad={() => setLoadState('loaded')}
-            onError={() => setLoadState('error')}
+            onLoad={onLoad}
+            onError={onError}
           />
         )}
       </div>

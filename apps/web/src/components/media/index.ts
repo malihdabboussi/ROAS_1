@@ -32,7 +32,14 @@ export * from './MediaPickerLibraryAssetTile'
 export * from './MediaPickerLibraryGrid'
 export * from './MediaPickerLibraryToolbar'
 export * from './MediaPickerMetaPanel'
+export * from './aspect-ratio-menu'
+export * from './MediaGenerateComposer'
 export * from './MediaGenerateModal'
+export {
+  openMediaAssetInApp,
+  VIBEY_OPEN_MEDIA_EVENT,
+  type VibeyOpenMediaDetail,
+} from '@/lib/media/open-media-asset-in-app'
 export * from './MediaPickerModal'
 export * from './MediaPickerModalHeader'
 export * from './drive-file-browser-context-config'

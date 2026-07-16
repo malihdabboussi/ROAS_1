@@ -42,6 +42,18 @@ export const MEDIA_TOAST_ERRORS = {
   CLOUD_DROPBOX_CONNECT_FIRST: {
     userMessage: 'Connect Dropbox first.',
   },
+  CANVA_CONNECT_FIRST: {
+    userMessage: 'Connect Canva to open this image.',
+  },
+  CANVA_CONNECT_STARTING: {
+    userMessage: 'Opening Canva connect…',
+  },
+  CANVA_CONNECT_FAILED: {
+    userMessage: "Couldn't start Canva connect. Try again from Settings → Integrations.",
+  },
+  CANVA_HANDOFF_FAILED: {
+    userMessage: "Couldn't open in Canva. Try again.",
+  },
 } as const
 
 /** User-facing toast messages for media success */
@@ -63,5 +75,11 @@ export const MEDIA_TOAST_SUCCESS = {
   },
   LINK_COPIED: {
     userMessage: 'Link copied to clipboard.',
+  },
+  CANVA_OPENING: {
+    userMessage: 'Opening in Canva…',
+  },
+  CANVA_CONNECTED: {
+    userMessage: 'Canva connected. Opening your design…',
   },
 } as const

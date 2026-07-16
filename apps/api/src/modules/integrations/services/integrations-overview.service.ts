@@ -9,7 +9,9 @@ import { IntegrationsComposioHealthService } from './integrations-composio-healt
 import { IntegrationsCoreService } from './integrations-core.service'
 import { backfillIntegrationConnectionLabels } from './integrations-label-backfill'
 import { IntegrationsOrgAccountsService } from './integrations-org-accounts.service'
+import { getRowComposioConnectionId } from './integrations-overview-composio-row'
 import { buildGroupedIntegrations } from './integrations-overview-groups'
+import { syncPersonalComposioOverviewAccounts } from './integrations-overview-personal-composio-sync'
 
 const INTEGRATION_IDS_FOR_OVERVIEW = [
   'meta',
@@ -162,118 +164,35 @@ export class IntegrationsOverviewService {
 
     const isOrgContext = this.orgScope.isOrgContext(scope)
 
-    const activeComposioByIntegrationId = new Map<
-      string,
-      { connection_id: string; toolkit_slug: string }
-    >()
+    let activeComposioAccounts: Array<{
+      integrationId: string
+      connectionId: string
+      toolkitSlug: string
+    }> = []
+    let pendingComposioAccounts: Array<{
+      integrationId: string
+      connectionId: string
+      toolkitSlug: string
+    }> = []
+    let activeComposioConnectionIds = new Set<string>()
+    let activeComposioIntegrationIds = new Set<string>()
+    let pendingComposioIntegrationIds = new Set<string>()
     const activatedOrgRowIds = new Set<string>()
-    const pendingComposioByIntegrationId = new Map<
-      string,
-      { connection_id: string; toolkit_slug: string }
-    >()
 
     if (!isOrgContext) {
-      const composioAccounts = (await this.composio.listConnectedAccounts({
+      const synced = await syncPersonalComposioOverviewAccounts({
+        supabase,
         userId: user.id,
-      })) as Array<Record<string, unknown>>
-
-      for (const account of composioAccounts) {
-        const status = String(account.status ?? '')
-          .trim()
-          .toUpperCase()
-        const toolkitSlug = String(
-          account.toolkitSlug ??
-            account.toolkit_slug ??
-            (account.toolkit as Record<string, unknown> | undefined)?.slug ??
-            '',
-        )
-          .trim()
-          .toLowerCase()
-        const integrationId = this.core.mapComposioToolkitToIntegrationId(toolkitSlug)
-        if (!integrationId) continue
-        const connectionId = String(account.id ?? '').trim()
-        if (status === 'ACTIVE') {
-          activeComposioByIntegrationId.set(integrationId, {
-            connection_id: connectionId,
-            toolkit_slug: toolkitSlug,
-          })
-        }
-        if (status === 'PENDING' || status === 'INITIATED') {
-          pendingComposioByIntegrationId.set(integrationId, {
-            connection_id: connectionId,
-            toolkit_slug: toolkitSlug,
-          })
-        }
-      }
-
-      for (const [integrationId, account] of activeComposioByIntegrationId.entries()) {
-        const upsertMeta: Record<string, unknown> = {
-          composio_connected_account_id: account.connection_id,
-          composio_toolkit_slug: account.toolkit_slug,
-        }
-
-        if (integrationId === 'linkedin') {
-          const existingRow = (
-            data as Array<{
-              integration_id: string
-              metadata?: Record<string, unknown> | null
-            }>
-          ).find((r) => r.integration_id === 'linkedin')
-          const existingMeta =
-            existingRow?.metadata &&
-            typeof existingRow.metadata === 'object' &&
-            !Array.isArray(existingRow.metadata)
-              ? (existingRow.metadata as Record<string, unknown>)
-              : {}
-          if (typeof existingMeta.linkedin_author_urn === 'string') {
-            upsertMeta.linkedin_author_urn = existingMeta.linkedin_author_urn
-          } else {
-            const urn = await this.core.resolveLinkedInAuthorUrn(user.id)
-            if (urn) upsertMeta.linkedin_author_urn = urn
-          }
-        }
-
-        const existingRow = (
-          data as Array<{ integration_id: string; connection_label?: string | null }>
-        ).find((r) => r.integration_id === integrationId)
-        const hasLabel = !!existingRow?.connection_label
-
-        await this.core.upsertPersonalScopedIntegration(supabase, scope, {
-          integration_id: integrationId,
-          provider: integrationId,
-          status: 'connected',
-          metadata: upsertMeta,
-        })
-
-        if (!hasLabel) {
-          const identity = await this.core.resolveConnectionIdentity(
-            integrationId,
-            user.id,
-            account.connection_id,
-          )
-          if (identity) {
-            await this.core.upsertPersonalScopedIntegration(supabase, scope, {
-              integration_id: integrationId,
-              provider: integrationId,
-              status: 'connected',
-              metadata: upsertMeta,
-              connection_label: identity,
-            })
-          }
-        }
-      }
-      for (const [integrationId, account] of pendingComposioByIntegrationId.entries()) {
-        if (activeComposioByIntegrationId.has(integrationId)) continue
-        await this.core.upsertPersonalScopedIntegration(supabase, scope, {
-          integration_id: integrationId,
-          provider: integrationId,
-          status: 'pending',
-          metadata: {
-            composio_connected_account_id: account.connection_id,
-            composio_toolkit_slug: account.toolkit_slug,
-          },
-        })
-      }
+        scope,
+        data,
+        composio: this.composio,
+        core: this.core,
+      })
+      activeComposioAccounts = synced.activeComposioAccounts
+      pendingComposioAccounts = synced.pendingComposioAccounts
+      activeComposioConnectionIds = synced.activeComposioConnectionIds
+      activeComposioIntegrationIds = synced.activeComposioIntegrationIds
+      pendingComposioIntegrationIds = synced.pendingComposioIntegrationIds
     } else {
       const pendingOrgRows = (
         data as Array<{
@@ -306,10 +225,13 @@ export class IntegrationsOverviewService {
             const toolkitSlug = String(meta.composio_toolkit_slug ?? '')
               .trim()
               .toLowerCase()
-            activeComposioByIntegrationId.set(row.integration_id, {
-              connection_id: connId,
-              toolkit_slug: toolkitSlug,
+            activeComposioAccounts.push({
+              integrationId: row.integration_id,
+              connectionId: connId,
+              toolkitSlug,
             })
+            activeComposioConnectionIds.add(connId)
+            activeComposioIntegrationIds.add(row.integration_id)
             const rowId = String(row.id ?? '').trim()
             if (!rowId) continue
             const existingLabel = (row as Record<string, unknown>).connection_label as string | null
@@ -369,6 +291,7 @@ export class IntegrationsOverviewService {
         )
         if (identity) {
           await this.core.updateIntegrationById(supabase, row.id, { connection_label: identity })
+          ;(row as Record<string, unknown>).connection_label = identity
         }
       } catch {
         // identity resolution failed — skip, will retry next overview load
@@ -413,8 +336,12 @@ export class IntegrationsOverviewService {
           },
         }
       }
+      const rowConnectionId = getRowComposioConnectionId(row as Record<string, unknown>)
       if (
-        activeComposioByIntegrationId.has(integrationId) ||
+        (rowConnectionId && activeComposioConnectionIds.has(rowConnectionId)) ||
+        (!rowConnectionId &&
+          !isOrgContext &&
+          activeComposioIntegrationIds.has(integrationId)) ||
         (rowId && activatedOrgRowIds.has(rowId))
       ) {
         return {
@@ -424,8 +351,10 @@ export class IntegrationsOverviewService {
       }
       if (
         !isOrgContext &&
-        pendingComposioByIntegrationId.has(integrationId) &&
-        row.status !== 'connected'
+        pendingComposioIntegrationIds.has(integrationId) &&
+        row.status !== 'connected' &&
+        (!rowConnectionId ||
+          pendingComposioAccounts.some((account) => account.connectionId === rowConnectionId))
       ) {
         return {
           ...row,
@@ -470,40 +399,45 @@ export class IntegrationsOverviewService {
     })
 
     if (!isOrgContext) {
-      const existingIntegrationIds = new Set(integrations.map((item) => item.integration_id))
-      for (const [integrationId, account] of activeComposioByIntegrationId.entries()) {
-        if (existingIntegrationIds.has(integrationId)) continue
+      const existingConnectionIds = new Set(
+        integrations
+          .map((item) => getRowComposioConnectionId(item as Record<string, unknown>))
+          .filter(Boolean),
+      )
+      for (const account of activeComposioAccounts) {
+        if (existingConnectionIds.has(account.connectionId)) continue
         integrations.push({
           id: '',
-          integration_id: integrationId,
-          provider: integrationId,
+          integration_id: account.integrationId,
+          provider: account.integrationId,
           status: 'connected',
           agent_enabled: true,
           metadata: {
             composio_inferred: true,
-            composio_connected_account_id: account.connection_id,
-            composio_toolkit_slug: account.toolkit_slug,
+            composio_connected_account_id: account.connectionId,
+            composio_toolkit_slug: account.toolkitSlug,
             execution_mode: 'composio',
           },
         })
-        existingIntegrationIds.add(integrationId)
+        existingConnectionIds.add(account.connectionId)
       }
-      for (const [integrationId, account] of pendingComposioByIntegrationId.entries()) {
-        if (existingIntegrationIds.has(integrationId)) continue
+      for (const account of pendingComposioAccounts) {
+        if (activeComposioConnectionIds.has(account.connectionId)) continue
+        if (existingConnectionIds.has(account.connectionId)) continue
         integrations.push({
           id: '',
-          integration_id: integrationId,
-          provider: integrationId,
+          integration_id: account.integrationId,
+          provider: account.integrationId,
           status: 'pending',
           agent_enabled: true,
           metadata: {
             composio_inferred: true,
-            composio_connected_account_id: account.connection_id,
-            composio_toolkit_slug: account.toolkit_slug,
+            composio_connected_account_id: account.connectionId,
+            composio_toolkit_slug: account.toolkitSlug,
             execution_mode: 'composio',
           },
         })
-        existingIntegrationIds.add(integrationId)
+        existingConnectionIds.add(account.connectionId)
       }
     }
 

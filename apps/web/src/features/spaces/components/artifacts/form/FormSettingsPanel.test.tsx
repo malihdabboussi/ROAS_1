@@ -89,7 +89,7 @@ vi.mock('@/features/spaces/store/use-spaces-store', () => ({
           participant_id: 'agent-vibey',
           kind: 'agent',
           agent_key: 'vibey',
-          display_name: 'Vibey Agent',
+          display_name: 'ROAS Agent',
           role_label: 'Research',
         }),
       ],
@@ -275,7 +275,7 @@ describe('FormSettingsPanel', () => {
     fireEvent.click(screen.getByTitle('Me'))
     const meOptions = await screen.findAllByText('Me')
     fireEvent.click(meOptions[meOptions.length - 1]!)
-    fireEvent.click(await screen.findByText('Vibey Agent'))
+    fireEvent.click(await screen.findByText('ROAS Agent'))
     expect(onChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ assignee_type: 'agent', assignee_id: 'vibey' }),
     )

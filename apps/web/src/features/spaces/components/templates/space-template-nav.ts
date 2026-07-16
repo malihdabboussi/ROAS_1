@@ -71,8 +71,11 @@ const PERSONA_MAP: Record<string, SpaceTemplateNavFilterId[]> = {
 }
 
 const SLUG_WORK_TYPE: Record<string, SpaceTemplateNavFilterId[]> = {
+  'ceo-hq': ['calendars', 'founder_solo', 'operations'],
+  meetings: ['calendars', 'knowledge', 'founder_solo'],
   'personal-workspace': ['calendars'],
   'client-account-workspace': ['pipelines', 'agency_client'],
+  'agency-client-webinar': ['pipelines', 'agency_client'],
   'product-launch': ['calendars', 'pipelines'],
   'sales-pipeline': ['pipelines', 'sales_cs'],
   'company-wiki': ['knowledge'],

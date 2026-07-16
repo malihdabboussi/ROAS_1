@@ -219,6 +219,21 @@ export abstract class MissionsRepositoryPlansBase extends MissionsRepositoryMiss
     return { mission, approved: approved || [] }
   }
 
+  async getSubtaskById(
+    supabase: SupabaseClient,
+    subtaskId: string,
+    userId: string,
+    orgId: string | null | undefined,
+  ) {
+    const { data, error } = await this.applyOwnerScope(
+      supabase.from('mission_subtasks').select('*').eq('id', subtaskId),
+      userId,
+      orgId,
+    ).maybeSingle()
+    if (error) throw new Error(`Failed to load subtask: ${error.message}`)
+    return data
+  }
+
   async updateSubtask(
     supabase: SupabaseClient,
     subtaskId: string,

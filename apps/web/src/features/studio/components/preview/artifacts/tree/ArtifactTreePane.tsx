@@ -287,7 +287,7 @@ export function ArtifactTreePane(props: ArtifactTreePaneProps) {
             <Box className="text-muted-foreground/30 mx-auto mb-2 h-8 w-8" />
             <p className="body-3 text-muted-foreground">No artifacts yet</p>
             <p className="typo-caption text-muted-foreground mt-1">
-              Chat with Vibey to create funnels, presentations, and more
+              Chat with ROAS to create funnels, presentations, and more
             </p>
           </div>
         ) : (isSearching ? searchFilteredCount : props.filteredTotalItems) === 0 ? (

@@ -217,6 +217,7 @@ const CAT_BRAIN_READ = new Set<string>([
   'list_user_brain_memories',
   'list_agent_brain_domains',
   'search_customer_brain',
+  'search_campaign_brain',
   'list_customer_brain_memories',
   'list_customer_avatars',
 ])
@@ -726,6 +727,7 @@ export const BRAIN_SCHOLAR_ALLOWED_ACTIONS = new Set<string>([
   'search_brain_context',
   'save_user_memory',
   'search_agent_brain',
+  'search_campaign_brain',
   'get_brain_stats',
   'resolve_agent_brain',
   'list_available_brain_scopes',
@@ -833,6 +835,7 @@ export const BUILDER_ALLOWED_ACTIONS = new Set<string>([
   'search_user_brain',
   'search_brain_context',
   'search_agent_brain',
+  'search_campaign_brain',
   'resolve_agent_brain',
   'ingest_agent_brain_text',
   'ingest_agent_brain_link',

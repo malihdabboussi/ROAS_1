@@ -40,6 +40,50 @@ describe("workflow circuit classifier", () => {
     ).toBe("database_execution");
   });
 
+  it("keeps campaign brain reads off the shared memory_save / agent-brain circuit", () => {
+    expect(
+      resolveWorkflowClass({
+        toolName: "campaign_capability",
+        params: { action: "search_campaign_brain", data: { query: "offer", campaign_id: "c1" } },
+      }),
+    ).toBe("brain_campaign_read");
+    expect(
+      resolveWorkflowClass({
+        toolName: "campaign_capability",
+        params: { action: "search_agent_brain", data: { query: "offer", brain_id: "b1" } },
+      }),
+    ).toBe("brain_agent_read");
+    expect(
+      resolveWorkflowClass({
+        toolName: "campaign_capability",
+        params: { action: "search_company_brain", data: { query: "offer" } },
+      }),
+    ).toBe("brain_company_read");
+    expect(
+      resolveWorkflowClass({
+        toolName: "campaign_capability",
+        params: { action: "search_user_brain", data: { query: "offer" } },
+      }),
+    ).toBe("memory_read");
+    expect(
+      resolveWorkflowClass({
+        toolName: "campaign_capability",
+        params: { action: "ingest_user_brain_text", data: { text: "note", title: "t" } },
+      }),
+    ).toBe("memory_save");
+    expect(resolveWorkflowClass({ toolName: "memory_search", params: { query: "x" } })).toBe(
+      "memory_read",
+    );
+  });
+
+  it("suggests search_campaign_brain when agent/user brain circuits open", async () => {
+    const { resolveVerifiedRecoveryOptions } = await import("./workflow-circuit-classifier.js");
+    const agentOpts = resolveVerifiedRecoveryOptions("brain_agent_read");
+    expect(agentOpts.some((o) => o.label.includes("search_campaign_brain"))).toBe(true);
+    const campaignOpts = resolveVerifiedRecoveryOptions("brain_campaign_read");
+    expect(campaignOpts.some((o) => o.label.toLowerCase().includes("campaign"))).toBe(true);
+  });
+
   it("classifies every current Vibey action doc into a known workflow class", () => {
     const actionNames = readVibeyActionNames();
     expect(actionNames.length).toBeGreaterThan(300);

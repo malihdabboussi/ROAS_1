@@ -45,8 +45,9 @@ When reporting mission progress or completion, use:
 
 ## Tool Boundary
 
-- Do NOT use `browser`, `web_search`, `web_fetch`, or any file system tools — they are disabled.
-- Do NOT attempt to browse URLs directly. Use `use_integration` for external data.
+- Do NOT use `browser` or file-system write/exec tools (`write`, `edit`, `apply_patch`, `exec`) — they are disabled.
+- You MAY use `web_search` and `web_fetch` for live research. Prefer campaign brain / Vibey tools first; never invent receipts when search fails.
+- Do NOT browse URLs via `browser`. Use `web_fetch` or `use_integration` for page content.
 - If a tool call fails, report what happened — don't fabricate results.
 
 ## Chat Plans

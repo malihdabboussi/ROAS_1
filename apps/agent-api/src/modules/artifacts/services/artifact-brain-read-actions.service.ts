@@ -109,32 +109,63 @@ export class ArtifactBrainReadActionsService {
     )
     if (bErr) return { success: false, error: `Failed to list brains: ${bErr.message}` }
 
-    const defaultBrain = (brains ?? []).find((b: { is_default?: boolean }) => b.is_default === true)
-    const agentBrains = (brains ?? [])
-      .filter((b: { agent_id?: string | null }) => b.agent_id != null && String(b.agent_id).trim())
-      .map((b: { id: string; name?: string | null; agent_id?: string | null }) => ({
-        brain_id: b.id,
-        name: b.name ?? null,
-        agent_id: String(b.agent_id),
-      }))
+    type BrainRow = {
+      id: string
+      name?: string | null
+      is_default?: boolean
+      agent_id?: string | null
+      scope?: string | null
+      campaign_id?: string | null
+    }
+
+    const rows = (brains ?? []) as BrainRow[]
+    const defaultBrain = rows.find((b) => b.is_default === true)
+    const mapBrain = (b: BrainRow) => ({
+      brain_id: b.id,
+      name: b.name ?? null,
+      is_default: b.is_default === true,
+      agent_id: b.agent_id != null ? String(b.agent_id) : null,
+      scope: typeof b.scope === 'string' && b.scope.trim() ? b.scope.trim() : null,
+      campaign_id:
+        typeof b.campaign_id === 'string' && b.campaign_id.trim() ? b.campaign_id.trim() : null,
+    })
+
+    const mapped = rows.map(mapBrain)
+    const agentBrains = mapped.filter((b) => b.agent_id != null && b.agent_id.trim().length > 0)
+    const campaignBrains = mapped.filter(
+      (b) => b.scope === 'campaign' || (b.campaign_id != null && b.campaign_id.length > 0),
+    )
+
+    let currentCampaignId: string | null = null
+    if (typeof target.resolveCampaignId === 'function') {
+      try {
+        const resolved = await target.resolveCampaignId(
+          target.serviceClient,
+          {},
+          userId,
+          sessionKey,
+        )
+        if (typeof resolved === 'string' && resolved.trim()) currentCampaignId = resolved.trim()
+      } catch {
+        // optional; scopes list still useful without session campaign
+      }
+    }
+
+    const currentCampaignBrain =
+      currentCampaignId != null
+        ? (campaignBrains.find((b) => b.campaign_id === currentCampaignId) ?? null)
+        : null
 
     return {
       success: true,
       default_brain_id: defaultBrain?.id ?? null,
-      brains: (brains ?? []).map(
-        (b: {
-          id: string
-          name?: string | null
-          is_default?: boolean
-          agent_id?: string | null
-        }) => ({
-          brain_id: b.id,
-          name: b.name ?? null,
-          is_default: b.is_default === true,
-          agent_id: b.agent_id != null ? String(b.agent_id) : null,
-        }),
-      ),
+      current_campaign_id: currentCampaignId,
+      current_campaign_brain: currentCampaignBrain,
+      note:
+        'Campaign/client package knowledge lives on scope=campaign brains. Read it with search_campaign_brain (pass campaign_id). Do not use search_agent_brain / empty brain_id placeholders for campaign names.',
+      brains: mapped,
       agent_brains: agentBrains,
+      campaign_brains: campaignBrains,
     }
   }
 

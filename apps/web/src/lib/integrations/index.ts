@@ -1,4 +1,5 @@
 export * from './composio-oauth'
+export * from './connect-composio-integration'
 export * from './integration-catalog'
 export * from './integration-logo'
 export * from './integration-status-utils'

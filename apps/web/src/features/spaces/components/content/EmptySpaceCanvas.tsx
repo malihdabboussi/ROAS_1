@@ -45,7 +45,7 @@ export function EmptySpaceCanvas() {
     <div className="px-spacing-6 py-spacing-8 flex min-h-0 flex-1 flex-col items-center justify-center">
       <EmptySpaceMockup />
       <p className="title-h6 text-foreground mt-spacing-6 text-center">
-        Build with Vibey, or add a view
+        Build with ROAS, or add a view
       </p>
       <p className="body-3 text-muted-foreground mt-spacing-2 max-w-md text-center">
         Chat on the left to shape this space, or pick a view tab to get started.

@@ -1,15 +1,26 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import {
+  looksLikeFathomSummaryMarkdown,
+  sanitizeFathomSummaryMarkdown,
+} from '@vibey/api-shared/sanitize-fathom-summary-markdown'
 
 interface TaskDescriptionProps {
   description: string | null
   onDescriptionChange: (description: string | null) => void
 }
 
+function readableDescription(raw: string | null | undefined): string {
+  const text = raw ?? ''
+  if (!looksLikeFathomSummaryMarkdown(text)) return text
+  return sanitizeFathomSummaryMarkdown(text)
+}
+
 export function TaskDescription({ description, onDescriptionChange }: TaskDescriptionProps) {
-  const [draft, setDraft] = useState(description ?? '')
+  const displaySource = useMemo(() => readableDescription(description), [description])
+  const [draft, setDraft] = useState(displaySource)
   const [editing, setEditing] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [canCollapse, setCanCollapse] = useState(false)
@@ -17,9 +28,9 @@ export function TaskDescription({ description, onDescriptionChange }: TaskDescri
   const displayTextRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    setDraft(description ?? '')
+    setDraft(displaySource)
     setExpanded(false)
-  }, [description])
+  }, [displaySource])
 
   useEffect(() => {
     if (editing && textareaRef.current) {
@@ -29,7 +40,7 @@ export function TaskDescription({ description, onDescriptionChange }: TaskDescri
     }
   }, [editing, draft])
 
-  const displayText = description ?? ''
+  const displayText = displaySource
 
   useEffect(() => {
     if (!displayText || editing || expanded) return
@@ -46,7 +57,8 @@ export function TaskDescription({ description, onDescriptionChange }: TaskDescri
     setEditing(false)
     const trimmed = draft.trim()
     const next = trimmed || null
-    if (next !== description) {
+    const baseline = displaySource.trim() || null
+    if (next !== baseline) {
       onDescriptionChange(next)
     }
   }
@@ -121,7 +133,7 @@ export function TaskDescription({ description, onDescriptionChange }: TaskDescri
       onBlur={handleBlur}
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
-          setDraft(description ?? '')
+          setDraft(displaySource)
           setEditing(false)
         }
       }}

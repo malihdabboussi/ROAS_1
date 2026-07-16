@@ -20,7 +20,7 @@ const TOOLBAR_DOCK_SLOT_SPRING = {
 
 export type Team2ViewMode = 'grid' | 'list'
 
-export type Team2StatusFilter = 'online' | 'offline'
+export type Team2StatusFilter = 'online' | 'offline' | 'working' | 'idle'
 
 export type Team2Sort = 'recent' | 'oldest' | 'name_asc' | 'name_desc' | 'level_top_first'
 
@@ -29,8 +29,10 @@ export type Team2GroupBy = 'none' | 'team' | 'level' | 'model'
 export type Team2GroupSort = 'asc' | 'desc'
 
 const STATUS_OPTIONS: FilterOption[] = [
-  { id: 'online', label: 'Online' },
-  { id: 'offline', label: 'Offline' },
+  { id: 'working', label: 'Working' },
+  { id: 'idle', label: 'Idle' },
+  { id: 'online', label: 'Active' },
+  { id: 'offline', label: 'Deactivated' },
 ]
 
 const SORT_OPTIONS: FilterOption[] = [

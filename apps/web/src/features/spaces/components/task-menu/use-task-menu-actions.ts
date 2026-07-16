@@ -3,6 +3,7 @@
 import { useCallback } from 'react'
 import { toast } from 'sonner'
 import { openInNewTab as openAppInNewTab } from '@/lib/utils/open-in-new-tab'
+import { useSpaceItemUpdate } from '../SpaceStatusCascadeConfirmProvider'
 import { transferSpaceItem, type DuplicateSpaceItemInclude } from '../../services/spaces.service'
 import { useSpacesStore } from '../../store/use-spaces-store'
 import type { SpaceItem } from '../../types'
@@ -43,7 +44,7 @@ export function useTaskMenuActions({
   onAddSubtask,
   onDelete,
 }: UseTaskMenuActionsArgs) {
-  const updateItem = useSpacesStore((s) => s.updateItem)
+  const updateItem = useSpaceItemUpdate()
   const duplicateItem = useSpacesStore((s) => s.duplicateItem)
 
   const copyLink = useCallback(async () => {

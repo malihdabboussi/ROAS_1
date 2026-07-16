@@ -3,8 +3,10 @@ import {
   actionItemLabel,
   enrichSuggestedFollowUp,
   extractDueDateFromText,
+  followUpOwnerTagLabel,
   inferFollowUpPriority,
   isInternalAssigneeEmail,
+  matchAttendeeTagOption,
   matchFathomActionItem,
   normalizeFollowUpDueDateIso,
 } from '../fathom-follow-up-enrichment'
@@ -61,5 +63,22 @@ describe('fathom-follow-up-enrichment', () => {
     expect(extractDueDateFromText('Ship FIFA content Jul 15; send to Owen', now)).toBe(
       '2026-07-15T17:00:00.000Z',
     )
+  })
+
+  it('matches and labels owner tags from the Attendees option pool', () => {
+    const options = [
+      { id: 'att_dylan', label: 'Dylan Vanas' },
+      { id: 'att_nate', label: 'Nate Tilley' },
+      { id: 'att_bryce', label: 'Bryce Knutson' },
+    ]
+    expect(
+      matchAttendeeTagOption(options, { name: 'Nate Tilley', email: 'nate@example.com' }),
+    ).toBe('att_nate')
+    expect(matchAttendeeTagOption(options, { name: null, email: 'bryce@roas.co' })).toBe(
+      'att_bryce',
+    )
+    expect(matchAttendeeTagOption(options, { name: 'Nate', email: null })).toBe('att_nate')
+    expect(followUpOwnerTagLabel({ name: 'Filmar', email: null })).toBe('Filmar')
+    expect(followUpOwnerTagLabel({ name: null, email: 'dylan@dylanvanas.com' })).toBe('Dylan')
   })
 })

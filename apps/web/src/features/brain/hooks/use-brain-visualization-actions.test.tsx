@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { requestBrainSidebarVoice } from '../lib/brain-sidebar-voice'
 import { dispatchBrainTrainModal } from '../lib/brain-training-modal.events'
@@ -70,16 +70,13 @@ describe('useBrainVisualizationActions', () => {
     })
   })
 
-  it('routes voice URL actions and dock callbacks into sidebar chat voice', async () => {
-    const { result, replace } = renderActionsHook({ action: 'voice' })
+  it('routes voice URL actions into sidebar chat voice', async () => {
+    const { replace } = renderActionsHook({ action: 'voice' })
 
     await waitFor(() => {
       expect(requestBrainSidebarVoiceMock).toHaveBeenCalledWith(null)
       expect(replace).toHaveBeenCalledWith('/brain?scope=user', { scroll: false })
     })
-
-    act(() => result.current.handleActivateVoice())
-    expect(requestBrainSidebarVoiceMock).toHaveBeenCalledTimes(2)
   })
 
   it('dispatches mobile add-info URL actions without requiring a brain id', async () => {

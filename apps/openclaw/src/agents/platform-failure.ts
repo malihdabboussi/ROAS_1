@@ -82,7 +82,7 @@ const ACCESS_BLOCKED_RE =
 const TRANSIENT_RE =
   /\b(timeout|timed out|temporar(?:y|ily)|rate limit|overloaded|429|500|502|503|504|connection reset|econnreset|service unavailable)\b/i;
 const CAPABILITY_UNAVAILABLE_RE =
-  /\b(unknown tool|not available|not found|unsupported|unavailable|not installed|not configured)\b/i;
+  /\b(unknown tool|tool not (?:found|available)|not available|unsupported|unavailable|not installed|not configured)\b/i;
 
 const FORBIDDEN_USER_FRAMING = [
   "platform error",

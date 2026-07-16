@@ -229,10 +229,9 @@ export function FlowsPage() {
   const effectiveSpaceId = createAnythingMode ? conceptSpaceId : selectedSpaceId
 
   useEffect(() => {
-    useGlobalChatStore.getState().expandAndFocus({
-      agentKey: 'loop',
-      workContext: { surface: 'flows', spaceId: effectiveSpaceId ?? undefined },
-    })
+    const store = useGlobalChatStore.getState()
+    store.setActiveAgentKey('loop')
+    store.setWorkContext({ surface: 'flows', spaceId: effectiveSpaceId ?? undefined })
   }, [effectiveSpaceId])
 
   const selectableSpaces = useMemo(

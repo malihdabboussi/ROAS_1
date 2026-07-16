@@ -130,7 +130,7 @@ export function DeliverablePreviewModalToolbar({
         setBrainDropdownOpen={setBrainDropdownOpen}
       />
       {effectiveContent && (
-        <Tooltip label="Discuss with Vibey" side="top">
+        <Tooltip label="Discuss with ROAS" side="top">
           <button type="button" onClick={handleStartConversation} className="btn-icon-bare">
             <MessageSquarePlus className="icon-sm" />
           </button>

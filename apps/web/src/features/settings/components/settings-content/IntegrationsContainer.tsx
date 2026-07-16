@@ -26,6 +26,12 @@ export function IntegrationsContainer() {
   const { integrationsFocusIntegrationId, consumeIntegrationsFocusIntegrationId } =
     useWorkspaceSettingsModal()
   const focusScrollTimeoutRef = useRef<number | null>(null)
+  const oauthPollBaselineRef = useRef<{
+    provider: string
+    integrationId: string
+    connectedCount: number
+    forceNew: boolean
+  } | null>(null)
   const [activeTab, setActiveTab] = useState<IntegrationsTab>('library')
   const [searchQuery, setSearchQuery] = useState('')
   const [initialLoadComplete, setInitialLoadComplete] = useState(false)
@@ -60,6 +66,7 @@ export function IntegrationsContainer() {
   const finishOAuthConnect = useCallback(
     (integrationId: string | null, showToast = true) => {
       setConnectingProvider(null)
+      oauthPollBaselineRef.current = null
       void loadData()
       if (!showToast || !integrationId) return
       const key = integrationId.toLowerCase().replace(/-/g, '_')
@@ -92,6 +99,19 @@ export function IntegrationsContainer() {
 
     let cancelled = false
     const integrationId = connectingProvider
+    const baseline = oauthPollBaselineRef.current
+
+    // Add-another / reconnect-while-connected: status stays "connected" immediately.
+    // Polling would fake success toasts. Wait for OAuth callback / event instead.
+    if (baseline?.forceNew || (baseline && baseline.connectedCount > 0)) {
+      const timeoutId = window.setTimeout(() => {
+        if (!cancelled) setConnectingProvider(null)
+      }, 5 * 60 * 1000)
+      return () => {
+        cancelled = true
+        window.clearTimeout(timeoutId)
+      }
+    }
 
     const pollStatus = async () => {
       try {
@@ -369,12 +389,24 @@ export function IntegrationsContainer() {
     apiKeyOrData?: string | Record<string, string>,
     options?: ConnectIntegrationOptions,
   ) => {
-    setConnectingProvider(integration.provider.toLowerCase())
+    const provider = integration.provider.toLowerCase()
+    const connectedCount = userIntegrations.filter(
+      (row) =>
+        row.integration_id === integration.id && String(row.status).toLowerCase() === 'connected',
+    ).length
+    oauthPollBaselineRef.current = {
+      provider,
+      integrationId: integration.id,
+      connectedCount,
+      forceNew: options?.forceNew === true,
+    }
+    setConnectingProvider(provider)
     try {
       const result = await connectIntegration(integration, apiKeyOrData, options)
       if (integration.auth_type === 'api_key' || result?.completedSynchronously) {
         toast.success(getIntegrationConnectedMessage(integration.name))
         setConnectingProvider(null)
+        oauthPollBaselineRef.current = null
       }
     } catch (e) {
       toast.error(
@@ -383,6 +415,7 @@ export function IntegrationsContainer() {
           : SETTINGS_TOAST_ERRORS.INTEGRATION_CONNECT_FAILED.userMessage,
       )
       setConnectingProvider(null)
+      oauthPollBaselineRef.current = null
     }
   }
 

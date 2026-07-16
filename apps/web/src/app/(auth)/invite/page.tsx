@@ -97,9 +97,14 @@ export default function InvitePage() {
     <div className="card-glass card-elevated text-card-foreground w-full max-w-[var(--container-auth)] rounded-[var(--spacing-4)] p-[var(--spacing-8)]">
       <div className="mb-[var(--spacing-6)] text-center">
         <img
-          src="/Logos/logov2_transperent.png"
-          alt="Vibey"
-          className="mx-auto mb-[var(--spacing-3)] h-16 w-16 object-contain"
+          src="/Logos/roas/icon-black.png"
+          alt="ROAS"
+          className="mx-auto mb-[var(--spacing-3)] h-16 w-16 object-contain dark:hidden"
+        />
+        <img
+          src="/Logos/roas/icon-white.png"
+          alt="ROAS"
+          className="mx-auto mb-[var(--spacing-3)] hidden h-16 w-16 object-contain dark:block"
         />
         <h1 className="title-h1 text-foreground">CREATE ACCOUNT</h1>
         <p className="body-2 text-muted-foreground mt-[var(--spacing-2)]">

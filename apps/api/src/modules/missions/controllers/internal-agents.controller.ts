@@ -15,6 +15,7 @@ import { AgentOnboardingService, isSystemAgentKey } from '../services/agent-onbo
 import { MissionAgentGatewayService } from '../services/gateways/mission-agent-gateway.service'
 import { MissionAvatarService } from '../services/media/mission-avatar.service'
 import { MissionsAgentOperationsService } from '../services/missions-agent-operations.service'
+import { WebinarFulfillmentTeamService } from '../services/webinar-fulfillment-team.service'
 
 @Controller('internal/agents')
 @UseGuards(InternalAuthGuard)
@@ -24,6 +25,7 @@ export class InternalAgentsController {
     private readonly agentOnboardingService: AgentOnboardingService,
     private readonly missionAgentGatewayService: MissionAgentGatewayService,
     private readonly missionAvatarService: MissionAvatarService,
+    private readonly webinarFulfillmentTeamService: WebinarFulfillmentTeamService,
   ) {}
 
   @Put(':agentKey/definitions/:fileName')
@@ -106,6 +108,31 @@ export class InternalAgentsController {
       { role_key: body.role_key, name: body.name, team_id: body.team_id },
       body.org_id,
     )
+  }
+
+  @Post('ensure-webinar-team')
+  @HttpCode(HttpStatus.OK)
+  async ensureWebinarTeam(
+    @Body()
+    body: {
+      user_id: string
+      org_id?: string | null
+      campaign_id?: string | null
+      playbook_id?: string | null
+    },
+  ) {
+    if (!body.user_id?.trim()) {
+      throw new BadRequestException('user_id is required')
+    }
+    const playbookId = body.playbook_id?.trim() || 'webinar-fulfillment'
+    if (!this.webinarFulfillmentTeamService.supportsPlaybook(playbookId)) {
+      throw new BadRequestException(`Unsupported playbook_id: ${playbookId}`)
+    }
+    const supabase = this.missionAgentGatewayService.getServiceRoleClient()
+    return this.webinarFulfillmentTeamService.ensureTeam(supabase, body.user_id, {
+      orgId: body.org_id,
+      campaignId: body.campaign_id,
+    })
   }
 
   @Post('create')

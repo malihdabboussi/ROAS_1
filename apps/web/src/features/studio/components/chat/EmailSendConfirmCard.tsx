@@ -158,7 +158,7 @@ function SenderEmptyState({
       <div className="space-y-spacing-2">
         <p className="body-3 text-muted-foreground">
           {providerSettingsUrl
-            ? 'Configure the sending domain and SMTP for this location in GoHighLevel. You can also pick Vibey’s native email provider in Workspace Settings → Email.'
+            ? 'Configure the sending domain and SMTP for this location in GoHighLevel. You can also pick ROAS’s native email provider in Workspace Settings → Email.'
             : 'Confirm your GoHighLevel connection and email defaults in Workspace Settings → Email.'}
         </p>
         <div className="gap-spacing-2 flex flex-wrap">

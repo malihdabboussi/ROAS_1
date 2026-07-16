@@ -80,10 +80,10 @@ describe('comments chat views', () => {
     expect(screen.queryByText('Already fixed')).toBeNull()
     expect(screen.getByText('1 resolved comment hidden')).toBeTruthy()
     expect(screen.getByText('Saving...')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Send to Vibey' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Send to ROAS' })).toBeNull()
 
     fireEvent.click(screen.getByRole('checkbox', { name: /Alice/ }))
-    fireEvent.click(screen.getByRole('button', { name: 'Send to Vibey' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Send to ROAS' }))
     expect(onSendCommentsToVibe).toHaveBeenCalledWith([comments[0]])
 
     fireEvent.click(screen.getByRole('button', { name: 'Resolve' }))
@@ -140,7 +140,7 @@ describe('comments chat views', () => {
     expect(screen.getByText('1 resolved comment hidden')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('checkbox', { name: /Chris/ }))
-    fireEvent.click(screen.getByRole('button', { name: 'Send to Vibey' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Send to ROAS' }))
     expect(onSendCommentsToVibe).toHaveBeenCalledWith([comments[0]])
 
     fireEvent.click(screen.getByRole('button', { name: 'Resolve' }))

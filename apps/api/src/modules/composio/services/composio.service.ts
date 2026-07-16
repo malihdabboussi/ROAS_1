@@ -12,6 +12,7 @@ import {
 type InitiateConnectionOptions = {
   callbackUrl?: string
   allowMultiple?: boolean
+  alias?: string
   data?: Record<string, unknown>
   longRedirectUrl?: boolean
   connectionData?: Record<string, string>
@@ -79,6 +80,7 @@ export class ComposioService {
       ...(typeof options.allowMultiple === 'boolean'
         ? { allowMultiple: options.allowMultiple }
         : {}),
+      ...(options.alias ? { alias: options.alias } : {}),
       ...(options.accountType ? { experimental: { accountType: options.accountType } } : {}),
     }
 
@@ -88,6 +90,7 @@ export class ComposioService {
           ...(typeof options.allowMultiple === 'boolean'
             ? { allowMultiple: options.allowMultiple }
             : {}),
+          ...(options.alias ? { alias: options.alias } : {}),
           ...(options.data ? { data: options.data } : {}),
           config: AuthScheme.APIKey(options.connectionData) as never,
         })

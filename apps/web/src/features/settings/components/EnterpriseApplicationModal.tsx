@@ -168,7 +168,7 @@ export function EnterpriseApplicationModal({
 
               <div>
                 <label className="body-3 text-muted-foreground mb-1 block">
-                  How do you plan to use Vibey?
+                  How do you plan to use ROAS?
                 </label>
                 <textarea
                   value={useCase}

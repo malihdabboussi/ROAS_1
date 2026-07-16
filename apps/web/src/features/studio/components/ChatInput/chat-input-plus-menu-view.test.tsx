@@ -41,6 +41,7 @@ function renderPlusMenu(overrides: Partial<Parameters<typeof ChatInputPlusMenuVi
     onLocalUpload: vi.fn(),
     onDrive: vi.fn(),
     onDropbox: vi.fn(),
+    onGenerateImage: vi.fn(),
     onCloseMenu: vi.fn(),
     onOpenAtMenu: vi.fn(),
     onToggleAgent: vi.fn(),
@@ -55,11 +56,24 @@ function renderPlusMenu(overrides: Partial<Parameters<typeof ChatInputPlusMenuVi
 }
 
 describe('ChatInputPlusMenuView', () => {
+  it('renders Generate image and delegates click through the close path', () => {
+    const onCloseMenu = vi.fn()
+    const onGenerateImage = vi.fn()
+    renderPlusMenu({ onCloseMenu, onGenerateImage })
+
+    expect(screen.getByText('Generate image')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /generate image/i }))
+
+    expect(onCloseMenu).toHaveBeenCalledTimes(1)
+    expect(onGenerateImage).toHaveBeenCalledTimes(1)
+  })
+
   it('renders root menu rows and delegates submenu hover behavior', () => {
     const onOpenSubmenu = vi.fn()
     const onSubmenuAnchorNode = vi.fn()
     const { props } = renderPlusMenu({ onOpenSubmenu, onSubmenuAnchorNode })
 
+    expect(screen.getByText('Generate image')).toBeTruthy()
     expect(screen.getByText('Add photos & files')).toBeTruthy()
     expect(screen.getByText('Attach')).toBeTruthy()
     expect(screen.getByText('Access')).toBeTruthy()

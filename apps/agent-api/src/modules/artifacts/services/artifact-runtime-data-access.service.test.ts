@@ -286,7 +286,7 @@ describe('artifact runtime data access services', () => {
         space_id: 'space-1',
         org_id: 'org-1',
         source: 'generated',
-        source_surface: 'agent_generated_media',
+        source_surface: 'generated',
       },
       success: true,
       url: expect.stringContaining('https://signed.example/user-1/images/'),

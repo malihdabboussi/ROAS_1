@@ -287,7 +287,7 @@ function PresentationDesignControls({
         <div className="rounded-spacing-2 border-border bg-hover-subtle px-spacing-3 py-spacing-2 border">
           <p className="body-3 text-muted-foreground">
             This element can&apos;t be matched to a unique spot in the slide source, so direct edits
-            wouldn&apos;t save. Ask Vibey to change it instead.
+            wouldn&apos;t save. Ask ROAS to change it instead.
           </p>
         </div>
       ) : null}

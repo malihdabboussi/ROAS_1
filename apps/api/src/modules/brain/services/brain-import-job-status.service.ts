@@ -62,8 +62,12 @@ export class BrainImportJobStatusService {
     const importRows = (
       await this.repository.listActiveImportJobs(userId, completedAfter, scope, limit)
     ).map((row) => mapImportQueueRow(row as Record<string, unknown>))
+    // Campaign Knowledge / campaign scopes pass campaignId without brainId. Cortex
+    // ops (pattern analysis, library sync, timeline) are brain-scoped — including
+    // them without a brain filter flooded the campaign UI with unrelated
+    // account-wide "Crystallize beliefs…" jobs.
     const brainOpsRows =
-      scope?.targetBrain === 'user'
+      scope?.targetBrain === 'user' || (scope?.campaignId && !scope?.brainId)
         ? []
         : await this.listActiveBrainOpsJobs(userId, completedAfter, scope, limit)
     return [...importRows, ...brainOpsRows]

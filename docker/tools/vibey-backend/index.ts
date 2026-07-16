@@ -273,6 +273,7 @@ const SUPPORTED_ACTIONS = [
   'search_user_brain',
   'search_brain_context',
   'search_agent_brain',
+  'search_campaign_brain',
   'get_brain_stats',
   'resolve_agent_brain',
   'list_available_brain_scopes',

@@ -65,7 +65,6 @@ export function SidebarHqHubMenuContent({
 }) {
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
   const setChatCollapsed = useGlobalChatStore((s) => s.setCollapsed)
-  const expandChat = useGlobalChatStore((s) => s.expandAndFocus)
   const spacesReloadedRef = useRef(false)
 
   useEffect(() => {
@@ -79,6 +78,7 @@ export function SidebarHqHubMenuContent({
   }, [c, expandedSections])
 
   const handleNavigate = () => {
+    setChatCollapsed(true)
     onNavigate?.()
   }
 
@@ -103,7 +103,6 @@ export function SidebarHqHubMenuContent({
           href="/home"
           onClick={() => {
             setWorkContext({ surface: 'general' })
-            setChatCollapsed(true)
             handleNavigate()
           }}
           className={cn('hub-menu-link-row', c.pathname === '/home' && 'hub-menu-link-row-active')}
@@ -212,7 +211,6 @@ export function SidebarHqHubMenuContent({
             href="/flows"
             onClick={() => {
               setWorkContext({ surface: 'flows' })
-              expandChat({ workContext: { surface: 'flows' } })
               handleNavigate()
             }}
             className={cn(

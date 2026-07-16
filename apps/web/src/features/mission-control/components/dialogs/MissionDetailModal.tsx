@@ -348,6 +348,7 @@ export function MissionDetailModal({
       sendingComment={sendingComment}
       setCommentText={setCommentText}
       onSendComment={handleSendComment}
+      onAppendMissionLog={(log) => setMissionLogs((prev) => [...prev, log])}
       activityEndRef={activityEndRef}
       attachedFiles={attachedFiles}
       onRemoveFile={handleRemoveFile}

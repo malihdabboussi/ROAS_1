@@ -26,7 +26,7 @@ export function OfficialSkillPreviewMockup() {
         </div>
       </div>
       <p className="body-3 text-muted-foreground mt-spacing-4 max-w-[320px] text-center">
-        Official platform skill. Instructions are managed by Vibey.
+        Official platform skill. Instructions are managed by ROAS.
       </p>
     </div>
   )

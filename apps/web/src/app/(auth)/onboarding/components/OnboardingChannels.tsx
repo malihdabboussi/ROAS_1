@@ -78,7 +78,7 @@ export function OnboardingChannels({ onComplete, onBack }: OnboardingChannelsPro
       key: 'studio' as const,
       icon: <Globe className="size-4 text-violet-300" />,
       iconBg: 'bg-violet-900/60',
-      title: 'Vibey Web App',
+      title: 'ROAS Web App',
       titleColor: 'text-violet-400',
       description: 'Chat directly in the studio',
       enabled: true,
@@ -113,7 +113,7 @@ export function OnboardingChannels({ onComplete, onBack }: OnboardingChannelsPro
           {showTelegramSetup && (
             <TelegramSetupDialog
               agentKey="vibey"
-              agentName="Vibey"
+              agentName="ROAS"
               onClose={() => setShowTelegramSetup(false)}
               onConnected={(botUsername) => {
                 setTelegramConnected(true)
@@ -126,7 +126,7 @@ export function OnboardingChannels({ onComplete, onBack }: OnboardingChannelsPro
           {showSlackSetup && (
             <SlackSetupDialog
               agentKey="vibey"
-              agentName="Vibey"
+              agentName="ROAS"
               onClose={() => setShowSlackSetup(false)}
               onConnected={(channelName) => {
                 setSlackConnected(true)
@@ -146,7 +146,7 @@ export function OnboardingChannels({ onComplete, onBack }: OnboardingChannelsPro
             <span className="vibey-shine-text bg-clip-text text-transparent">VIBEY</span>
           </h2>
           <p className="title-h4 text-muted-foreground mt-spacing-2">
-            Choose where Vibey reaches you.
+            Choose where ROAS reaches you.
           </p>
         </div>
 
@@ -156,7 +156,7 @@ export function OnboardingChannels({ onComplete, onBack }: OnboardingChannelsPro
               Default Channel
             </p>
             <p className="body-3 text-muted-foreground/70 mb-spacing-4">
-              Where Vibey sends proactive updates
+              Where ROAS sends proactive updates
             </p>
             <div className="gap-spacing-3 flex flex-col">
               {CHANNELS.map((card) => {

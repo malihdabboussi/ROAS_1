@@ -26,7 +26,7 @@ const agents: MissionAgent[] = [
     id: 'agent-1',
     user_id: 'user-1',
     agent_key: 'vibey',
-    name: 'Vibey',
+    name: 'ROAS',
     image_url: null,
     role: 'CEO',
     level: 'c_level',
@@ -106,7 +106,7 @@ describe('official skill admin access', () => {
     )
 
     expect(
-      screen.getByText('Official platform skill. Instructions are managed by Vibey.'),
+      screen.getByText('Official platform skill. Instructions are managed by ROAS.'),
     ).toBeTruthy()
     expect(screen.queryByText('Admin-only instructions.')).toBeNull()
 
@@ -114,7 +114,7 @@ describe('official skill admin access', () => {
 
     expect(screen.getByText('Admin-only instructions.')).toBeTruthy()
     expect(
-      screen.queryByText('Official platform skill. Instructions are managed by Vibey.'),
+      screen.queryByText('Official platform skill. Instructions are managed by ROAS.'),
     ).toBeNull()
   })
 })

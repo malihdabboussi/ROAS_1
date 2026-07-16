@@ -95,7 +95,7 @@ export function OrgOnboardingQuestions({
           {orgName ? orgName.toUpperCase() : 'YOUR ORGANIZATION'}
         </h2>
         <p className="body-2 text-muted-foreground mb-spacing-6">
-          This helps your team&apos;s Vibey research and strategize from day one.
+          This helps your team&apos;s ROAS research and strategize from day one.
         </p>
 
         <label className="mb-spacing-3 block">
@@ -192,7 +192,7 @@ export function OrgOnboardingQuestions({
             onChange={(e) => setDescription(e.target.value)}
             className="input-glass body-2 px-spacing-3 py-spacing-3 w-full resize-none"
             rows={3}
-            placeholder="Brief description so Vibey can hit the ground running"
+            placeholder="Brief description so ROAS can hit the ground running"
           />
         </label>
 

@@ -143,6 +143,9 @@ const READ_ONLY_CROSS_SCOPE_ACTIONS = new Set<string>([
   'get_space_item',
   'list_tasks',
   'get_task',
+  // Client package knowledge must be readable even when the Team chat is stuck on General.
+  'search_campaign_brain',
+  'list_available_brain_scopes',
 ])
 
 export function getActionScopeMode(action: string): ArtifactActionScopeMode {
@@ -607,6 +610,7 @@ export const ACTION_METHOD_MAP: Record<ArtifactAction, string> = {
   list_social_post_templates: 'listSocialPostTemplates',
   list_campaign_media: 'listCampaignMedia',
   search_agent_brain: 'searchSkEntries',
+  search_campaign_brain: 'searchCampaignBrain',
   get_brain_stats: 'getBrainStats',
   resolve_agent_brain: 'resolveAgentSkBrain',
   list_available_brain_scopes: 'listBrainScopes',

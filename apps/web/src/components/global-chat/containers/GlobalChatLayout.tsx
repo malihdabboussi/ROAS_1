@@ -19,13 +19,27 @@ import { GlobalChatPanel } from './GlobalChatPanel'
 const COLLAPSE_RAW_PERCENT = 15
 const EXPAND_RAW_PERCENT = 22
 
+function shouldCollapseChatForRoute(pathname: string): boolean {
+  return (
+    pathname === '/home' ||
+    pathname.startsWith('/home/') ||
+    pathname.startsWith('/spaces') ||
+    pathname.startsWith('/brain') ||
+    pathname.startsWith('/flows') ||
+    pathname.startsWith('/projects') ||
+    pathname.startsWith('/team')
+  )
+}
+
 function GlobalChatRouteSync() {
   const pathname = usePathname() ?? ''
   const searchParams = useSearchParams()
+  const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const syncRouteContext = useGlobalChatStore((s) => s.syncRouteContext)
   const loadRoster = useGlobalChatStore((s) => s.loadRoster)
   const setHideForHumanDm = useGlobalChatStore((s) => s.setHideForHumanDm)
-  const expandAndFocus = useGlobalChatStore((s) => s.expandAndFocus)
+  const setActiveAgentKey = useGlobalChatStore((s) => s.setActiveAgentKey)
+  const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
 
   useEffect(() => {
@@ -36,11 +50,14 @@ function GlobalChatRouteSync() {
     syncRouteContext(pathname)
   }, [pathname, syncRouteContext])
 
-  useEffect(() => {
-    if (pathname === '/home') {
-      setCollapsed(true)
-    }
-  }, [pathname, setCollapsed])
+  const agentParam = searchParams.get('agent')?.trim() ?? ''
+
+  // Workspace pages stay full-width. Persisted "chat open" must not linger when
+  // switching Home / Spaces / Team / Brain / Flows. Open only via Chat button.
+  useLayoutEffect(() => {
+    if (!shouldCollapseChatForRoute(pathname)) return
+    setCollapsed(true)
+  }, [pathname, activeSpaceId, agentParam, setCollapsed])
 
   useEffect(() => {
     const dm = searchParams.get('dm')
@@ -48,10 +65,11 @@ function GlobalChatRouteSync() {
   }, [pathname, searchParams, setHideForHumanDm])
 
   useEffect(() => {
-    const agent = searchParams.get('agent')?.trim()
-    if (!agent || !pathname.startsWith('/team')) return
-    expandAndFocus({ agentKey: agent, workContext: { surface: 'team' } })
-  }, [expandAndFocus, pathname, searchParams])
+    if (!agentParam || !pathname.startsWith('/team')) return
+    // Agent page owns the middle chat + skills panel — left rail stays collapsed.
+    setActiveAgentKey(agentParam)
+    setWorkContext({ surface: 'team' })
+  }, [pathname, agentParam, setActiveAgentKey, setWorkContext])
 
   useEffect(() => {
     const onPresentationChatRequest = () => useGlobalChatStore.getState().setCollapsed(false)

@@ -12,9 +12,10 @@ import { AudioPlaybackQueue } from '../lib/audio-playback'
 import {
   checkMicPermission,
   classifyMicError,
+  createMicCapture,
   getUserId,
   MIC_SAMPLE_RATE,
-  startMicCapture,
+  type MicCaptureHandle,
 } from './brain-live-session-audio'
 import {
   useBrainLiveSessionMessages,
@@ -43,6 +44,7 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
 
   const wsRef = useRef<WebSocket | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
+  const micCaptureRef = useRef<MicCaptureHandle | null>(null)
   const playbackRef = useRef<AudioPlaybackQueue | null>(null)
   const sessionStartRef = useRef<number>(0)
   const animFrameRef = useRef<number>(0)
@@ -98,6 +100,10 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
   const cleanup = useCallback(() => {
     cancelAnimationFrame(animFrameRef.current)
 
+    if (micCaptureRef.current) {
+      micCaptureRef.current.stop()
+      micCaptureRef.current = null
+    }
     if (micStreamRef.current) {
       micStreamRef.current.getTracks().forEach((t) => t.stop())
       micStreamRef.current = null
@@ -139,6 +145,27 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
           return
         }
 
+        // Open mic + AudioContext before the slow live-session create. Contexts
+        // opened long after the click (post-ready) often stay suspended forever.
+        let stream: MediaStream
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              sampleRate: MIC_SAMPLE_RATE,
+              channelCount: 1,
+              echoCancellation: true,
+              noiseSuppression: true,
+            },
+          })
+        } catch (err) {
+          const micError = classifyMicError(err)
+          setError(micError)
+          updateState('error')
+          return
+        }
+        micStreamRef.current = stream
+        micCaptureRef.current = await createMicCapture(stream, isMutedRef, micInputLevelRef)
+
         const {
           sessionId,
           wsUrl: machineWsBase,
@@ -159,24 +186,6 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
         if (reconnect && delegations && delegations.length > 0) {
           hydrateDelegationSnapshots(delegations)
         }
-
-        let stream: MediaStream
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              sampleRate: MIC_SAMPLE_RATE,
-              channelCount: 1,
-              echoCancellation: true,
-              noiseSuppression: true,
-            },
-          })
-        } catch (err) {
-          const micError = classifyMicError(err)
-          setError(micError)
-          updateState('error')
-          return
-        }
-        micStreamRef.current = stream
 
         const playback = new AudioPlaybackQueue()
         await playback.init()
@@ -226,7 +235,8 @@ export function useBrainLiveSession(scope?: BrainLiveScope) {
             switch (msg.type) {
               case 'ready':
                 updateState('listening')
-                startMicCapture(stream, ws, isMutedRef, micInputLevelRef)
+                void micCaptureRef.current?.resume()
+                micCaptureRef.current?.setWebSocket(ws)
                 animFrameRef.current = requestAnimationFrame(pollAmplitude)
                 break
 

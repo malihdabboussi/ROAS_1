@@ -149,4 +149,35 @@ describe("workflow circuit breaker", () => {
       expect(blocked.contract.workflow_circuit.reason).toBe("half_open_recovery_failed");
     }
   });
+
+  it("does not let failed agent-brain reads open the campaign-brain circuit", () => {
+    const agentFail = {
+      ...context,
+      toolName: "campaign_capability",
+      params: { action: "search_agent_brain", data: { query: "offer", brain_id: "missing" } },
+    };
+    for (let i = 0; i < 4; i += 1) {
+      recordWorkflowToolResult(
+        agentFail,
+        failureResult("campaign_capability", `agent brain missing ${i}`, `agent.${i}`),
+      );
+    }
+
+    const agentBlocked = preflightWorkflowToolCall(agentFail);
+    expect(agentBlocked.allowed).toBe(false);
+    if (!agentBlocked.allowed) {
+      expect(agentBlocked.workflowClass).toBe("brain_agent_read");
+    }
+
+    const campaignRead = preflightWorkflowToolCall({
+      ...context,
+      toolName: "campaign_capability",
+      params: {
+        action: "search_campaign_brain",
+        data: { query: "offer pricing", campaign_id: "impact" },
+      },
+    });
+    expect(campaignRead.allowed).toBe(true);
+    expect(campaignRead.workflowClass).toBe("brain_campaign_read");
+  });
 });

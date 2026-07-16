@@ -28,4 +28,13 @@ describe('globalChatSeedMatchesPanel', () => {
       globalChatSeedMatchesPanel({ content: 'hi', workContext: { surface: 'general' } }, 'space-1'),
     ).toBe(false)
   })
+
+  it('matches a team Ops Desk seed on the general (no-space) panel', () => {
+    expect(
+      globalChatSeedMatchesPanel({ content: 'hi', workContext: { surface: 'team' } }, undefined),
+    ).toBe(true)
+    expect(
+      globalChatSeedMatchesPanel({ content: 'hi', workContext: { surface: 'team' } }, 'space-1'),
+    ).toBe(false)
+  })
 })

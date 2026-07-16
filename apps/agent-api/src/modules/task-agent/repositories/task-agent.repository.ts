@@ -73,9 +73,28 @@ export class TaskAgentRepository {
   }
 
   async updateTaskExecutionStatus(itemId: string, spaceId: string, status: string) {
+    const { data: existing } = await this.svc.client
+      .from('space_items')
+      .select('custom_data')
+      .eq('id', itemId)
+      .eq('space_id', spaceId)
+      .maybeSingle()
+    const custom =
+      existing?.custom_data && typeof existing.custom_data === 'object'
+        ? ({ ...(existing.custom_data as Record<string, unknown>) } as Record<string, unknown>)
+        : {}
+    const isPrep = String(custom.entry_type ?? '') === 'prep'
+    if (isPrep && status === 'failed') custom.prep_status = 'failed'
+    if (isPrep && status === 'cancelled') custom.prep_status = 'failed'
+    if (isPrep && status === 'done') custom.prep_status = 'ready'
+
     return this.svc.client
       .from('space_items')
-      .update({ task_execution_status: status })
+      .update(
+        isPrep
+          ? { task_execution_status: status, custom_data: custom, updated_at: new Date().toISOString() }
+          : { task_execution_status: status },
+      )
       .eq('id', itemId)
       .eq('space_id', spaceId)
   }

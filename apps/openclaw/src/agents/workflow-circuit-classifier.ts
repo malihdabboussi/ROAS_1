@@ -13,7 +13,12 @@ export type WorkflowClass =
   | "artifact_read"
   | "image_analysis"
   | "video_analysis"
+  | "memory_read"
   | "memory_save"
+  | "brain_campaign_read"
+  | "brain_agent_read"
+  | "brain_company_read"
+  | "brain_customer_read"
   | "mcp_execution"
   | "database_execution"
   | "message_delivery"
@@ -73,7 +78,7 @@ function classifyNativeTool(toolName: string, action?: string): WorkflowClass {
   if (toolName === "tts" || toolName === "nano-banana-pro") return "media_processing";
   if (toolName === "message") return "message_delivery";
   if (toolName === "gateway" || toolName.startsWith("mcp")) return "mcp_execution";
-  if (toolName === "memory_search" || toolName === "memory_get") return "memory_save";
+  if (toolName === "memory_search" || toolName === "memory_get") return "memory_read";
   if (toolName === "canvas" || toolName === "nodes") return "artifact_mutation";
   if (toolName === "cron") return "artifact_publish";
   if (
@@ -101,6 +106,19 @@ function classifyGenericAction(action: string, params: unknown): WorkflowClass {
     action.includes("fathom") ||
     action.includes("fireflies")
   ) {
+    // Keep campaign / agent / company / customer brain reads in separate
+    // circuit classes so wrong-family read failures cannot open a circuit
+    // that blocks the correct family (e.g. search_agent_brain ≠ search_campaign_brain).
+    const isBrainRead =
+      /^(search|get|list|read|resolve|describe|check|show|validate)_/.test(action) ||
+      action === "list_available_brain_scopes";
+    if (isBrainRead) {
+      if (action.includes("campaign")) return "brain_campaign_read";
+      if (action.includes("agent")) return "brain_agent_read";
+      if (action.includes("company") || action.includes("cortex")) return "brain_company_read";
+      if (action.includes("customer")) return "brain_customer_read";
+      return "memory_read";
+    }
     return "memory_save";
   }
   if (action.includes("video")) return "video_analysis";
@@ -221,6 +239,36 @@ export function resolveVerifiedRecoveryOptions(
     return [
       { label: "Keep the saved draft state if it already exists.", requires_user_choice: false },
       { label: "Ask the user before trying another delivery channel.", requires_user_choice: true },
+    ];
+  }
+  if (
+    workflowClass === "brain_agent_read" ||
+    workflowClass === "brain_company_read" ||
+    workflowClass === "brain_customer_read" ||
+    workflowClass === "memory_read"
+  ) {
+    return [
+      {
+        label:
+          "For client/campaign package knowledge, call search_campaign_brain with the campaign_id (separate circuit from agent/user/company brain reads).",
+        requires_user_choice: false,
+      },
+      {
+        label: "Ask the user which verified brain or document path to use next.",
+        requires_user_choice: true,
+      },
+    ];
+  }
+  if (workflowClass === "brain_campaign_read") {
+    return [
+      {
+        label: "Confirm the conversation is scoped to the client campaign or pass an explicit campaign_id.",
+        requires_user_choice: false,
+      },
+      {
+        label: "Ask the user which verified path to use next.",
+        requires_user_choice: true,
+      },
     ];
   }
   return [

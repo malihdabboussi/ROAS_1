@@ -664,7 +664,7 @@ export const ContactsView = forwardRef<ContactsViewHandle, ContactsViewProps>(fu
               <p className="body-3 text-muted-foreground max-w-xs">
                 {contactsScope === 'all'
                   ? 'Contacts appear here when people reach you through funnels, forms, your chat widget, Telegram, or imports.'
-                  : 'Contacts appear here when leads submit forms on your funnels or are imported into this campaign.'}
+                  : 'Contacts appear here from funnel leads, meeting attendees with emails, or people imported into this campaign.'}
               </p>
             </div>
           </div>

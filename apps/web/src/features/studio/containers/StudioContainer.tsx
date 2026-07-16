@@ -251,7 +251,7 @@ function StudioLayout() {
     void load()
   }, [activeCampaignId])
 
-  // Listen for vibey:sendMessage (e.g. from Instagram post "Ask Vibey to reply")
+  // Listen for vibey:sendMessage (e.g. from Instagram post "Ask ROAS to reply")
   useEffect(() => {
     const handler = (e: Event) => {
       const ev = e as CustomEvent<{ content: string }>
@@ -272,7 +272,7 @@ function StudioLayout() {
     if (!discoveryMode || discoverySentRef.current) return
     discoverySentRef.current = true
     const prompt = [
-      'Discovery Mode: Vibey onboarding conversation.',
+      'Discovery Mode: ROAS onboarding conversation.',
       'Phase 1: Ask focused questions to understand the business.',
       'Only after enough information, synthesize a proposed RPSO:',
       '- Result',

@@ -102,7 +102,7 @@ export const DAILY_RECOMMENDATION_COPY: Record<DailyRecommendationKey, DailyReco
     action: { type: 'route', path: '/contacts' },
   },
   invite_teammate: {
-    title: 'Vibey is better together',
+    title: 'ROAS is better together',
     body: "Invite a teammate and I'll keep everyone on the same page.",
     cta: 'Invite',
     action: { type: 'account-settings', section: 'organization' },

@@ -202,8 +202,8 @@ const FEATURE_CARDS: {
 }[] = [
   {
     id: 'brain',
-    title: 'Vibey Brain',
-    subtitle: 'Train Vibey on your business so every response is on-brand.',
+    title: 'ROAS Brain',
+    subtitle: 'Train ROAS on your business so every response is on-brand.',
     section: 'brain',
   },
   {

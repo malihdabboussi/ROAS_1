@@ -79,7 +79,7 @@ function stampVisualPdfFooterOnPage(
 ): void {
   const isDark = visualPdfIsDark(backgroundColor)
   const part1 = 'Made with '
-  const part2 = 'Vibey'
+  const part2 = 'ROAS'
   const textMuted: [number, number, number] = isDark ? [226, 232, 240] : [55, 65, 81]
   const vibeyPurple: [number, number, number] = isDark ? [196, 181, 253] : [147, 51, 234]
   const footerY = pageHeight - 7

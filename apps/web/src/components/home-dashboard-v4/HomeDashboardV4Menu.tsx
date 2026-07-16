@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { Check, ChevronDown, ChevronRight, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
@@ -11,6 +12,8 @@ export function HomeDashboardV4Menu({
   width = 300,
   align = 'left',
   className,
+  /** When set, menu is portaled and positioned under this anchor (avoids overflow clipping). */
+  anchorRef,
 }: {
   open: boolean
   onClose: () => void
@@ -18,29 +21,60 @@ export function HomeDashboardV4Menu({
   width?: number
   align?: 'left' | 'right'
   className?: string
+  anchorRef?: React.RefObject<HTMLElement | null>
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null)
+
+  useLayoutEffect(() => {
+    if (!open || !anchorRef?.current) {
+      setCoords(null)
+      return
+    }
+    const rect = anchorRef.current.getBoundingClientRect()
+    const left =
+      align === 'right' ? Math.max(8, rect.right - width) : Math.max(8, rect.left)
+    setCoords({ top: rect.bottom + 8, left })
+  }, [open, anchorRef, align, width])
 
   useEffect(() => {
     if (!open) return
     const handleMouseDown = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) onClose()
+      const target = event.target as Node
+      if (anchorRef?.current?.contains(target)) return
+      if (ref.current?.contains(target)) return
+      onClose()
     }
     document.addEventListener('mousedown', handleMouseDown)
     return () => document.removeEventListener('mousedown', handleMouseDown)
-  }, [open, onClose])
+  }, [open, onClose, anchorRef])
 
   if (!open) return null
 
-  return (
+  const menu = (
     <div
       ref={ref}
-      className={cn('hd4-menu', align === 'right' ? 'hd4-menu-right' : 'hd4-menu-left', className)}
-      style={{ width }}
+      className={cn(
+        'hd4-menu',
+        !anchorRef && (align === 'right' ? 'hd4-menu-right' : 'hd4-menu-left'),
+        anchorRef && 'hd4-menu-portal',
+        className,
+      )}
+      style={
+        anchorRef && coords
+          ? { width, top: coords.top, left: coords.left }
+          : { width }
+      }
     >
       {children}
     </div>
   )
+
+  if (anchorRef && typeof document !== 'undefined') {
+    return createPortal(menu, document.body)
+  }
+
+  return menu
 }
 
 export function HomeDashboardV4MenuLabel({ children }: { children: ReactNode }) {

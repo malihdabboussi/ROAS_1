@@ -10,6 +10,8 @@ import {
   Video,
 } from 'lucide-react'
 import type { ArtifactNodeType } from '@/lib/chat/attached-artifact'
+import { openMediaAssetInApp } from '@/lib/media/open-media-asset-in-app'
+import { useResilientImageSrc } from '@/lib/media/use-resilient-image-src'
 import { missionDeliverableFromContentBlock, type MissionDeliverable } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 import { ARTIFACT_GLASS, ARTIFACT_ICON } from '../chat/ArtifactAttachments'
@@ -193,9 +195,63 @@ function openDefaultOutput(block: FinalOutputBlock) {
     return
   }
 
-  if (block.type === 'pdf_file' || block.type === 'docx_file' || block.type === 'media_asset') {
+  if (block.type === 'media_asset') {
+    if (
+      block.mediaAssetId &&
+      openMediaAssetInApp({
+        mediaAssetId: block.mediaAssetId,
+        title: block.title,
+        spaceId: block.spaceId,
+      })
+    ) {
+      return
+    }
+    window.open(block.url, '_blank', 'noopener,noreferrer')
+    return
+  }
+
+  if (block.type === 'pdf_file' || block.type === 'docx_file') {
     window.open(block.url, '_blank', 'noopener,noreferrer')
   }
+}
+
+function FinalOutputThumb({
+  imageUrl,
+  videoUrl,
+  subtitle,
+  icon,
+  isDocumentSnippet,
+}: {
+  imageUrl?: string
+  videoUrl?: string
+  subtitle?: string
+  icon: ReactNode
+  isDocumentSnippet: boolean
+}) {
+  const resilient = useResilientImageSrc(imageUrl ?? '')
+  if (imageUrl) {
+    return (
+      <img
+        src={resilient.imgSrc}
+        alt=""
+        className={cn(
+          'h-full w-full object-cover transition-opacity duration-300',
+          resilient.loadState === 'loaded' ? 'opacity-100' : 'opacity-0',
+        )}
+        onLoad={resilient.onLoad}
+        onError={resilient.onError}
+      />
+    )
+  }
+  if (videoUrl) {
+    return <video src={videoUrl} muted className="h-full w-full object-cover" />
+  }
+  if (isDocumentSnippet && subtitle) {
+    return (
+      <span className="typo-caption text-muted-foreground px-spacing-2 line-clamp-3">{subtitle}</span>
+    )
+  }
+  return <span className="text-muted-foreground">{icon}</span>
 }
 
 export function FinalOutputCards({
@@ -232,17 +288,13 @@ export function FinalOutputCards({
             className="card-glass hover:bg-hover-subtle gap-spacing-3 rounded-spacing-3 p-spacing-2 flex w-full items-center text-left transition-colors"
           >
             <div className="h-spacing-14 w-spacing-16 border-border bg-muted rounded-spacing-2 flex shrink-0 items-center justify-center overflow-hidden border">
-              {output.imageUrl ? (
-                <img src={output.imageUrl} alt="" className="h-full w-full object-cover" />
-              ) : output.videoUrl ? (
-                <video src={output.videoUrl} muted className="h-full w-full object-cover" />
-              ) : block.type === 'document_card' && output.subtitle ? (
-                <span className="typo-caption text-muted-foreground px-spacing-2 line-clamp-3">
-                  {output.subtitle}
-                </span>
-              ) : (
-                <span className="text-muted-foreground">{output.icon}</span>
-              )}
+              <FinalOutputThumb
+                imageUrl={output.imageUrl}
+                videoUrl={output.videoUrl}
+                subtitle={output.subtitle}
+                icon={output.icon}
+                isDocumentSnippet={block.type === 'document_card'}
+              />
             </div>
             <div className="min-w-0 flex-1">
               <div className="body-3 text-foreground truncate font-semibold">{output.title}</div>

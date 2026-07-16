@@ -68,7 +68,7 @@ export default function UsageTable() {
       <div className="text-muted-foreground flex flex-col items-center justify-center py-12">
         <Clock className="mb-spacing-2 h-8 w-8 opacity-50" />
         <p className="body-2">No usage history yet</p>
-        <p className="body-3 mt-spacing-1">Credit usage will appear here as you use Vibey</p>
+        <p className="body-3 mt-spacing-1">Credit usage will appear here as you use ROAS</p>
       </div>
     )
   }

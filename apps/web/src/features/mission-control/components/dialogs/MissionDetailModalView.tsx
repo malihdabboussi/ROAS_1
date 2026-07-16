@@ -1,4 +1,5 @@
 import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { AttachedFile } from '@/components/chat/FileAttachments'
 import type {
@@ -59,6 +60,7 @@ interface MissionDetailModalViewProps {
   sendingComment: boolean
   setCommentText: (value: string) => void
   onSendComment: () => void
+  onAppendMissionLog: (log: MissionLog) => void
   activityEndRef: RefObject<HTMLDivElement | null>
   attachedFiles: AttachedFile[]
   onRemoveFile: (id: string) => void
@@ -134,6 +136,7 @@ export function MissionDetailModalView({
   sendingComment,
   setCommentText,
   onSendComment,
+  onAppendMissionLog,
   activityEndRef,
   attachedFiles,
   onRemoveFile,
@@ -168,6 +171,7 @@ export function MissionDetailModalView({
   onStatusChange,
   onPriorityChange,
 }: MissionDetailModalViewProps) {
+  const [selectedSubtaskId, setSelectedSubtaskId] = useState<string | null>(null)
   const effectiveMission = liveMission ?? mission
   const accessApprovalCard: ReactNode = (
     <MissionAccessApprovalCard
@@ -196,7 +200,10 @@ export function MissionDetailModalView({
     subtasks,
     agents,
     planContent,
+    missionProgressNotes: mission.progress_notes,
+    missionError: mission.error,
     onOpenPlan: onViewPlan,
+    onOpenSubtask: setSelectedSubtaskId,
     onUpdated,
     onSubtasksChange: (updater: (prev: MissionSubtask[]) => MissionSubtask[]) =>
       setSubtasks((prev) => updater(prev)),
@@ -253,6 +260,12 @@ export function MissionDetailModalView({
       onApprovePlan={onApprovePlan}
       onRejectPlan={onRejectPlan}
       approvingPlan={approvingPlan}
+      selectedSubtaskId={selectedSubtaskId}
+      missionLogs={sortedLogs}
+      onCloseSubtask={() => setSelectedSubtaskId(null)}
+      onSubtaskCommentSent={(log) => {
+        onAppendMissionLog(log)
+      }}
       showDrivePicker={showDrivePicker}
       onCloseDrive={() => setShowDrivePicker(false)}
       onSelectCloudFile={onSelectCloudFile}

@@ -62,6 +62,11 @@ export function parseDocEditorUiFromCustomData(docCustomData: Record<string, unk
   const rawVisualLastError = docCustomData._doc_visual_last_error
   const docVisualLastError =
     typeof rawVisualLastError === 'string' && rawVisualLastError.trim() ? rawVisualLastError : null
+  const rawVisualPresentationId = docCustomData._doc_visual_presentation_id
+  const docVisualPresentationId =
+    typeof rawVisualPresentationId === 'string' && rawVisualPresentationId.trim()
+      ? rawVisualPresentationId.trim()
+      : null
 
   return {
     docFontStyle,
@@ -82,6 +87,7 @@ export function parseDocEditorUiFromCustomData(docCustomData: Record<string, unk
     docVisualSourceHash,
     docVisualDefaultMode,
     docVisualLastError,
+    docVisualPresentationId,
   }
 }
 

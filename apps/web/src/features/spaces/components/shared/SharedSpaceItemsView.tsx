@@ -239,7 +239,7 @@ export function SharedSpaceItemsView({ token }: { token: string }) {
                 Channels are not available in shared views.
               </p>
               <p className="body-4 mt-spacing-2 text-[var(--color-muted-foreground)]">
-                Open this space in Vibey to keep private chats protected.
+                Open this space in ROAS to keep private chats protected.
               </p>
             </div>
           </div>

@@ -601,7 +601,9 @@ export class TaskAgentService {
       msg.includes('overloaded') ||
       msg.includes('rate limit') ||
       msg.includes('too many requests') ||
-      msg.includes('service unavailable')
+      msg.includes('service unavailable') ||
+      msg.includes('session store lock') ||
+      msg.includes('timeout waiting for session')
     )
   }
 }

@@ -19,10 +19,10 @@ export type ImageGenerationModelId = (typeof IMAGE_GENERATION_MODEL_IDS)[number]
 /** Static list for GET /api/media/generate/models (Gemini via Google API; GPT Image 2 via OpenRouter). */
 export const IMAGE_GENERATION_MODELS_PUBLIC = [
   {
-    id: 'gemini-3-pro-image-preview' as const,
-    name: 'Nano Banana',
+    id: 'gpt-5.4-image-2' as const,
+    name: 'ChatGPT',
     tier: 'pro' as const,
-    description: 'Best for polished, final assets.',
+    description: 'OpenAI GPT Image 2 — ChatGPT images (not GPT-5.6 chat).',
     supportedAspectRatios: ['1:1', '16:9', '9:16', '3:2', '4:3'] as const,
     defaultAspectRatio: '16:9' as const,
   },
@@ -35,10 +35,10 @@ export const IMAGE_GENERATION_MODELS_PUBLIC = [
     defaultAspectRatio: '16:9' as const,
   },
   {
-    id: 'gpt-5.4-image-2' as const,
-    name: 'GPT Image 2',
+    id: 'gemini-3-pro-image-preview' as const,
+    name: 'Nano Banana',
     tier: 'pro' as const,
-    description: 'Best when you want strong detail.',
+    description: 'Best for polished, final assets.',
     supportedAspectRatios: ['1:1', '16:9', '9:16', '3:2', '4:3'] as const,
     defaultAspectRatio: '16:9' as const,
   },
@@ -143,6 +143,7 @@ export interface MediaAssetRow {
   created_at: string
   updated_at: string
   space_id?: string | null
+  conversation_id?: string | null
   status?: string | null
   deletable_after?: string | null
   page_count?: number | null

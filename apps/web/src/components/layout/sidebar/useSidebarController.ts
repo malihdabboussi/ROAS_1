@@ -26,7 +26,7 @@ import { billingApi } from '@/lib/billing/billing-api'
 import { SIDEBAR_TOAST_ERRORS } from '../config/sidebar-toast-errors.config'
 import type { ConversationTypeFilter, SidebarProps } from './sidebar-types'
 import type { HubMenuSectionId } from './sidebar-hq-hub-menu.types'
-import { hubSectionFromPathname, toggleHubMenuSection } from './sidebar-hq-hub-menu.utils'
+import { defaultHubMenuExpandedSections, toggleHubMenuSection } from './sidebar-hq-hub-menu.utils'
 import { useSidebarCampaignsCore } from './useSidebarCampaignsCore'
 
 function isAppTeamRoute(pathname: string) {
@@ -262,8 +262,7 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     setHubMenuClosing(false)
     setActiveManagePanel(null)
     setIsPanelClosing(false)
-    const routeSection = hubSectionFromPathname(pathname)
-    setHubMenuExpandedSections(routeSection ? new Set([routeSection]) : new Set())
+    setHubMenuExpandedSections(defaultHubMenuExpandedSections(pathname))
   }, [closeHubMenu, hubMenuOpen, pathname])
 
   const toggleHubMenuSectionById = useCallback((sectionId: HubMenuSectionId) => {
@@ -271,8 +270,7 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   }, [])
 
   const syncHubMenuExpandedToRoute = useCallback(() => {
-    const routeSection = hubSectionFromPathname(pathname)
-    setHubMenuExpandedSections(routeSection ? new Set([routeSection]) : new Set())
+    setHubMenuExpandedSections(defaultHubMenuExpandedSections(pathname))
   }, [pathname])
 
   const filteredConversations = useMemo(() => {

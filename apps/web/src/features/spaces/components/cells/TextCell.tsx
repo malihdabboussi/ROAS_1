@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FileText } from 'lucide-react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils/cn'
 import { htmlToPlainTextPreview } from '../space-item-values'
 import type { BaseCellProps } from './cell-types'
@@ -164,14 +165,16 @@ export function TextCell({
       }
       return (
         <div className="flex min-h-7 w-full min-w-0 items-center">
-          <span
-            className={cn(
-              'body-3 text-foreground min-w-0 flex-1 cursor-pointer truncate transition-colors',
-              linkHover,
-            )}
-          >
-            {text}
-          </span>
+          <Tooltip label={text} side="top" wide delayMs={300} triggerClassName="min-w-0 flex-1">
+            <span
+              className={cn(
+                'body-3 text-foreground block min-w-0 cursor-pointer truncate transition-colors',
+                linkHover,
+              )}
+            >
+              {text}
+            </span>
+          </Tooltip>
         </div>
       )
     }

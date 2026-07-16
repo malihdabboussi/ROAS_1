@@ -5,6 +5,7 @@ import {
   filterItemsByToolbarSearch,
   itemMatchesFieldValueFilters,
   resolveViewFieldValueFilters,
+  viewPromotesFollowUpSubtasks,
 } from '../apply-space-toolbar-filters'
 import type { SpaceItem } from '../../types'
 import type { ViewDef } from '../../types/space-schema'
@@ -119,6 +120,27 @@ describe('field_value_filters', () => {
     )
     expect(meetingsOnly.map((row) => row.id)).toEqual(['call-1', 'call-2', 'call-3'])
 
+    const nestedFollowUp = item({
+      id: 'fu-nested',
+      title: 'Nested action',
+      parent_item_id: 'call-2',
+      custom_data: { entry_type: 'follow_up', source_call_item_id: 'call-2' },
+    })
+    const orphanFollowUp = item({
+      id: 'fu-orphan',
+      title: 'Orphan action',
+      custom_data: { entry_type: 'follow_up', source_call_item_id: 'missing' },
+    })
+    const withNested = applySpaceToolbarFilters(
+      [callTagged, nestedFollowUp, orphanFollowUp, followUp],
+      allMeetings,
+      undefined,
+      [],
+      null,
+      '',
+    )
+    expect(withNested.map((row) => row.id)).toEqual(['call-2', 'fu-nested'])
+
     const actionItems = {
       id: 'action-items',
       type: 'list',
@@ -126,6 +148,8 @@ describe('field_value_filters', () => {
       field_value_filters: { entry_type: 'follow_up' },
       show_closed_tasks: true,
     } as ViewDef
+    expect(viewPromotesFollowUpSubtasks(actionItems)).toBe(true)
+    expect(viewPromotesFollowUpSubtasks(allMeetings)).toBe(false)
     const filtered = applySpaceToolbarFilters(
       [callLegacy, callTagged, callByTitle, followUp, bareTask],
       actionItems,

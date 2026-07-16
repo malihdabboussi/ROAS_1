@@ -7,7 +7,10 @@ import { toast } from 'sonner'
 import { getIconColor } from '@/components/ui/IconPicker'
 import { useWorkspaceSettingsModal } from '@/features/settings/contexts/WorkspaceSettingsModalContext'
 import { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
-import type { MediaAsset } from '@/lib/services/media-api'
+import {
+  VIBEY_OPEN_MEDIA_EVENT,
+  type VibeyOpenMediaDetail,
+} from '@/lib/media/open-media-asset-in-app'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 import type { ArtifactPreviewSelection } from '../components/artifacts/artifact-preview-selection'
 import {
@@ -20,6 +23,7 @@ import { SpaceBreadcrumbHeader, SpaceMoreMenu, SpaceSwitcherDropdown } from '../
 import { MEDIA_QUERY_KEY, useMediaDetailQuery } from '../components/media/use-media-detail-query'
 import type { MissionsViewHandle } from '../components/MissionsView'
 import { SpaceModalsHost } from '../components/modals'
+import { SpaceItemUpdateProvider } from '../components/SpaceStatusCascadeConfirmProvider'
 import type { CampaignFinanceTabHandle } from '../components/reporting/FinanceOverviewView'
 import { buildNewViewDef, ViewSwitcher } from '../components/ViewSwitcher'
 import { useAllSocialResearchAccountActions } from '../hooks/use-all-social-research-account-actions'
@@ -38,6 +42,7 @@ import { useSpaceSwitcherState } from '../hooks/use-space-switcher-state'
 import { useSpaceToolbarFilters } from '../hooks/use-space-toolbar-filters'
 import { useSpaceToolbarState } from '../hooks/use-space-toolbar-state'
 import { useSpaceUserState } from '../hooks/use-space-user-state'
+import { useUpdateItemWithSubtaskCompleteConfirm } from '../hooks/use-update-item-with-subtask-complete-confirm'
 import { useViewPatchFlush } from '../hooks/use-view-patch-flush'
 import { ALL_ARTIFACTS_GROUP_BY_OPTIONS, isArtifactSurfaceViewType } from '../lib/all-artifacts'
 import { getAllSocialResearchConfig } from '../lib/all-social-research'
@@ -85,8 +90,11 @@ const ArtifactPreviewPanelHost = dynamic(
     ),
   { loading: PreviewHostLoading },
 )
-const MediaPreviewPanelHost = dynamic(
-  () => import('../views/media/MediaPreviewPanel').then((mod) => mod.MediaPreviewPanelHost),
+const MediaImageWorkspacePanelHost = dynamic(
+  () =>
+    import('../views/media/MediaImageWorkspacePanelHost').then(
+      (mod) => mod.MediaImageWorkspacePanelHost,
+    ),
   { loading: PreviewHostLoading },
 )
 
@@ -179,7 +187,8 @@ export function SpaceItemsContainer() {
   const setActiveSpace = useSpacesStore((s) => s.setActiveSpace)
   const activeViewId = useSpacesStore((s) => s.activeViewId)
   const setActiveView = useSpacesStore((s) => s.setActiveView)
-  const updateItem = useSpacesStore((s) => s.updateItem)
+  const storeUpdateItem = useSpacesStore((s) => s.updateItem)
+  const updateItemsBatch = useSpacesStore((s) => s.updateItemsBatch)
   const deleteItem = useSpacesStore((s) => s.deleteItem)
   const pushToAgent = useSpacesStore((s) => s.pushToAgent)
   const roster = useSpacesStore((s) => s.roster)
@@ -258,9 +267,9 @@ export function SpaceItemsContainer() {
   } | null>(null)
   const [artifactPreviewSelection, setArtifactPreviewSelection] =
     useState<ArtifactPreviewSelection | null>(null)
-  const [mediaPreviewAsset, setMediaPreviewAsset] = useState<MediaAsset | null>(null)
   const [mediaDeepDetail, setMediaDeepDetail] = useState<{ id: string; title: string } | null>(null)
   const prevActiveViewIdForArtifactQsRef = useRef<string | null>(null)
+  const pendingMediaOpenRef = useRef<{ id: string; title: string } | null>(null)
   const { artifactId, setArtifactQuery } = useArtifactDetailQuery()
   const { mediaId: mediaDetailId, setMediaQuery: setMediaDetailQuery } = useMediaDetailQuery()
 
@@ -472,13 +481,42 @@ export function SpaceItemsContainer() {
     const onOpenTask = (e: Event) => {
       const d = (e as CustomEvent<{ itemId?: unknown; spaceId?: unknown }>).detail
       if (typeof d?.itemId !== 'string') return
-      if (typeof d?.spaceId === 'string' && d.spaceId !== activeSpaceId) return
+      const targetSpaceId =
+        typeof d.spaceId === 'string' && d.spaceId.trim() ? d.spaceId.trim() : activeSpaceId
+      if (!targetSpaceId) return
+      if (targetSpaceId !== activeSpaceId) {
+        setActiveSpace(targetSpaceId)
+        urlSpaceItemDeepLinkRef.current = null
+        const p = new URLSearchParams(searchParams.toString())
+        p.set('space', targetSpaceId)
+        p.set('item', d.itemId)
+        const qs = p.toString()
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+        return
+      }
       const item = items.find((i) => i.id === d.itemId)
-      if (item) openSpaceItemModal(item)
+      if (item) {
+        openSpaceItemModal(item)
+        return
+      }
+      urlSpaceItemDeepLinkRef.current = null
+      const p = new URLSearchParams(searchParams.toString())
+      p.set('space', targetSpaceId)
+      p.set('item', d.itemId)
+      const qs = p.toString()
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
     }
     window.addEventListener('space-vibey:open-task', onOpenTask as EventListener)
     return () => window.removeEventListener('space-vibey:open-task', onOpenTask as EventListener)
-  }, [activeSpaceId, items, openSpaceItemModal])
+  }, [
+    activeSpaceId,
+    items,
+    openSpaceItemModal,
+    pathname,
+    router,
+    searchParams,
+    setActiveSpace,
+  ])
 
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
   const openIntegrationsLibrary = useCallback(() => {
@@ -555,12 +593,44 @@ export function SpaceItemsContainer() {
     const handleOpenInlineArtifact = (event: Event) => {
       const detail = (event as CustomEvent<InlineArtifactOpenDetail>).detail
       if (!detail?.artifactType || !detail?.artifactId) return
-      const viewType = artifactTypeToSpaceViewType(detail.artifactType)
-      if (!viewType) return
+
       const targetSpaceId =
         typeof detail.spaceId === 'string' && detail.spaceId.trim()
           ? detail.spaceId.trim()
           : activeSpaceId
+
+      // Tasks (and task-shaped space items) open in TaskDetailModal — they are not
+      // a Space "view type", so the view-map path below would no-op.
+      if (detail.artifactType === 'task') {
+        if (!targetSpaceId) return
+        if (targetSpaceId !== activeSpaceId) {
+          setActiveSpace(targetSpaceId)
+        }
+        urlSpaceItemDeepLinkRef.current = null
+        const item =
+          targetSpaceId === activeSpaceId
+            ? items.find((row) => row.id === detail.artifactId)
+            : null
+        if (item) {
+          const vt = (item.custom_data as Record<string, unknown> | undefined)?._view_type
+          if (vt === 'doc') {
+            setSelectedItem(null)
+            setDocEditorItem(item)
+          } else {
+            setDocEditorItem(null)
+            openSpaceItemModal(item)
+          }
+        }
+        const p = new URLSearchParams(searchParams.toString())
+        p.set('space', targetSpaceId)
+        p.set('item', detail.artifactId)
+        const qs = p.toString()
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+        return
+      }
+
+      const viewType = artifactTypeToSpaceViewType(detail.artifactType)
+      if (!viewType) return
       const isSpaceDoc =
         detail.artifactType === 'space_doc' ||
         detail.artifactType === 'visual-doc' ||
@@ -638,6 +708,7 @@ export function SpaceItemsContainer() {
   }, [
     activeSpaceId,
     items,
+    openSpaceItemModal,
     pathname,
     refresh,
     router,
@@ -648,6 +719,64 @@ export function SpaceItemsContainer() {
     setDocEditorItem,
     setSelectedItem,
   ])
+
+  useEffect(() => {
+    let retryTimer: ReturnType<typeof setTimeout> | null = null
+    const handleOpenMedia = (event: Event) => {
+      const detail = (event as CustomEvent<VibeyOpenMediaDetail>).detail
+      const mediaAssetId = detail?.mediaAssetId?.trim()
+      if (!mediaAssetId) return
+
+      const targetSpaceId =
+        typeof detail.spaceId === 'string' && detail.spaceId.trim()
+          ? detail.spaceId.trim()
+          : activeSpaceId
+      if (targetSpaceId && targetSpaceId !== activeSpaceId) {
+        setActiveSpace(targetSpaceId)
+      }
+
+      const title = detail.title?.trim() || 'Generated image'
+      const spacesState = useSpacesStore.getState()
+      const currentSchema = spacesState.spaces.find(
+        (space) => space.id === (targetSpaceId || activeSpaceId),
+      )?.schema
+      const mediaView = currentSchema?.views?.find((view) => view.type === 'media')
+      const alreadyOnMedia =
+        Boolean(mediaView) && spacesState.activeViewId === mediaView?.id
+
+      setMediaDeepDetail({ id: mediaAssetId, title })
+
+      if (alreadyOnMedia) {
+        pendingMediaOpenRef.current = null
+        setMediaDetailQuery(mediaAssetId)
+        return
+      }
+
+      // Defer ?media= until Media view is active — otherwise a non-media view
+      // effect clears the query before the view switch lands.
+      pendingMediaOpenRef.current = { id: mediaAssetId, title }
+
+      if (mediaView) {
+        setActiveView(mediaView.id)
+        return
+      }
+      void refresh().then(() => {
+        retryTimer = setTimeout(() => {
+          const schema = useSpacesStore
+            .getState()
+            .spaces.find((space) => space.id === (targetSpaceId || activeSpaceId))?.schema
+          const target = schema?.views?.find((view) => view.type === 'media')
+          if (target) setActiveView(target.id)
+        }, 200)
+      })
+    }
+
+    window.addEventListener(VIBEY_OPEN_MEDIA_EVENT, handleOpenMedia as EventListener)
+    return () => {
+      if (retryTimer) clearTimeout(retryTimer)
+      window.removeEventListener(VIBEY_OPEN_MEDIA_EVENT, handleOpenMedia as EventListener)
+    }
+  }, [activeSpaceId, refresh, setActiveSpace, setActiveView, setMediaDetailQuery])
 
   useEffect(() => {
     setReportingToolbarApi(null)
@@ -989,6 +1118,19 @@ export function SpaceItemsContainer() {
   const { toolbarMeAvatarUrl, toolbarMeInitials, toolbarAssigneeAvatars } =
     useSpaceCurrentUserToolbarMeta(roster, currentUserId, activeView)
 
+  const statusField = useMemo(
+    () => fieldsForUi.find((field) => field.id === 'status'),
+    [fieldsForUi],
+  )
+  const { updateItem, dialog: completeSubtasksDialog } = useUpdateItemWithSubtaskCompleteConfirm({
+    updateItem: storeUpdateItem,
+    updateItemsBatch,
+    items,
+    statusField,
+    spaceId: activeSpaceId,
+    itemsLoadedForSpaceId,
+  })
+
   if (!activeSpaceId || !activeSpace || !activeSchema) {
     return (
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--border)]">
@@ -1040,7 +1182,19 @@ export function SpaceItemsContainer() {
   const isSocialReportingView = activeView?.type === 'social_reporting'
 
   useEffect(() => {
-    if (!mediaDetailId) setMediaDeepDetail(null)
+    if (!isMediaView) return
+    const pending = pendingMediaOpenRef.current
+    if (!pending) return
+    pendingMediaOpenRef.current = null
+    setMediaDeepDetail(pending)
+    setMediaDetailQuery(pending.id)
+  }, [isMediaView, setMediaDetailQuery])
+
+  useEffect(() => {
+    if (mediaDetailId) return
+    // Keep optimistic title while a chat→media open is applying ?media=
+    if (pendingMediaOpenRef.current) return
+    setMediaDeepDetail(null)
   }, [mediaDetailId])
 
   useEffect(() => {
@@ -1070,20 +1224,15 @@ export function SpaceItemsContainer() {
     if (prev === null || prev === activeViewId) return
     setArtifactDeepDetail(null)
     setMediaDeepDetail(null)
-    if (isDocsView) return
+    // Keep ?media= when landing on Media (chat image → workspace), same as docs deep links.
+    if (isDocsView || isMediaView) return
     if (!searchParams.get(ARTIFACT_QUERY_KEY) && !searchParams.get(MEDIA_QUERY_KEY)) return
     const p = new URLSearchParams(searchParams.toString())
     p.delete(ARTIFACT_QUERY_KEY)
     p.delete(MEDIA_QUERY_KEY)
     const qs = p.toString()
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
-  }, [activeViewId, isDocsView, pathname, router, searchParams])
-
-  useEffect(() => {
-    if (!isMediaView && mediaPreviewAsset) {
-      setMediaPreviewAsset(null)
-    }
-  }, [isMediaView, mediaPreviewAsset])
+  }, [activeViewId, isDocsView, isMediaView, pathname, router, searchParams])
 
   const regularItems = useMemo(
     () => items.filter((item) => !(item.custom_data as Record<string, unknown>)?._view_type),
@@ -1162,8 +1311,6 @@ export function SpaceItemsContainer() {
     },
     [handleViewPatch, mediaViewConfig],
   )
-
-  const mediaSlidePreviewOpen = mediaPreviewAsset !== null
 
   const docsConfigToolbar: DocsConfig = useMemo(
     () => ({ display_mode: 'grid', ...(activeView?.docs_config ?? {}) }),
@@ -1297,7 +1444,6 @@ export function SpaceItemsContainer() {
     artifactSlidePreviewOpen,
     mediaViewConfig,
     handleMediaViewConfigPatch,
-    mediaSlidePreviewOpen,
     docsConfigToolbar,
     docsPreTreeDisplayModeRef,
     artifactCampaignId: campaignIdEarly,
@@ -1419,6 +1565,7 @@ export function SpaceItemsContainer() {
   }
 
   return (
+    <SpaceItemUpdateProvider value={updateItem}>
     <div
       className={
         isArtifactView
@@ -1614,8 +1761,6 @@ export function SpaceItemsContainer() {
               hasDriveDocs={hasDriveDocs}
               artifactPreviewSelection={artifactPreviewSelection}
               setArtifactPreviewSelection={setArtifactPreviewSelection}
-              mediaPreviewAsset={mediaPreviewAsset}
-              setMediaPreviewAsset={setMediaPreviewAsset}
               contactsSearch={contactsSearch}
               contactsScope={contactsScope}
               contactsStatusFilter={contactsStatusFilter}
@@ -1672,18 +1817,16 @@ export function SpaceItemsContainer() {
           />
         ) : null}
         {isMediaView ? (
-          <MediaPreviewPanelHost
+          <MediaImageWorkspacePanelHost
             parentRef={spaceBelowViewTabsRef}
-            selection={mediaPreviewAsset}
-            onClose={() => setMediaPreviewAsset(null)}
-            onAssetUpdated={(asset) => setMediaPreviewAsset(asset)}
-            onOpenFullView={() => {
-              if (mediaPreviewAsset) {
-                setMediaDetailQuery(mediaPreviewAsset.id)
-                setMediaDeepDetail({ id: mediaPreviewAsset.id, title: mediaPreviewAsset.name })
-                setMediaPreviewAsset(null)
-              }
+            mediaId={mediaDetailId}
+            spaceId={activeSpace.id}
+            campaignId={activeSpace.campaign_id ?? null}
+            onClose={() => {
+              setMediaDetailQuery(null)
+              setMediaDeepDetail(null)
             }}
+            onMetaChange={setMediaDeepDetail}
           />
         ) : null}
       </div>
@@ -1761,6 +1904,8 @@ export function SpaceItemsContainer() {
         handleDeleteFieldOption={handleDeleteFieldOption}
         handleTagCustomSwatchesChange={handleTagCustomSwatchesChange}
       />
+      {completeSubtasksDialog}
     </div>
+    </SpaceItemUpdateProvider>
   )
 }

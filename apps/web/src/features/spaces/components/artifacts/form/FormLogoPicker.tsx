@@ -252,6 +252,7 @@ export function FormLogoPicker({
         open={generateOpen}
         onClose={() => setGenerateOpen(false)}
         campaignId={campaignId}
+        extraTags={['form-logo']}
         onSelect={(url) => {
           setImage(url)
           setGenerateOpen(false)

@@ -102,7 +102,7 @@ export const SETTINGS_TOAST_SUCCESS = {
     userMessage: 'Emails will now be sent via GoHighLevel.',
   },
   EMAIL_PROVIDER_VIBEY: {
-    userMessage: 'Emails will now be sent via Vibey (SendGrid).',
+    userMessage: 'Emails will now be sent via ROAS (SendGrid).',
   },
   EMAIL_LOG_ARCHIVED: {
     userMessage: 'Email log archived.',

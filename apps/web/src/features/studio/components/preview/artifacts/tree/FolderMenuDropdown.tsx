@@ -262,7 +262,7 @@ export function FolderMenuDropdown({
             className="gap-spacing-2 body-3 text-muted-foreground hover:bg-muted/20 hover:text-foreground px-spacing-3 py-spacing-2 flex w-full items-center text-left"
           >
             <Layers className="h-4 w-4" />
-            <span>Bulk Test With Vibey</span>
+            <span>Bulk Test With ROAS</span>
           </button>
         )}
         <div className="border-border my-1 border-t" />

@@ -13,6 +13,16 @@ const priorityField = {
   ],
 }
 
+const callKindField = {
+  id: 'call_kind',
+  name: 'Call Kind',
+  type: 'select' as const,
+  options: [
+    { id: 'personal', label: 'Personal', color: 'emerald' },
+    { id: 'team', label: 'Team', color: 'violet' },
+  ],
+}
+
 describe('SelectCell', () => {
   afterEach(() => {
     cleanup()
@@ -29,5 +39,12 @@ describe('SelectCell', () => {
     fireEvent.click(screen.getByRole('button', { name: /high/i }))
 
     expect(onChange).toHaveBeenCalledWith('high')
+  })
+
+  it('shows the option label for generic selects in list cells (not only the color dot)', () => {
+    render(<SelectCell field={callKindField} value="personal" onChange={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: /personal/i })).toBeTruthy()
+    expect(screen.getByText('Personal')).toBeTruthy()
   })
 })

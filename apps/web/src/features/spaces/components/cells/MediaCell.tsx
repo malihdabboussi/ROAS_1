@@ -24,10 +24,10 @@ import {
 import type { MediaSource } from '@/components/media/media-picker-modal.types'
 import { MediaPickerModal } from '@/components/media/MediaPickerModal'
 import { Tooltip } from '@/components/ui/tooltip'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { backendUpload } from '@/lib/api/backend-client'
 import { MEDIA_TOAST_ERRORS } from '@/lib/config/media-toast-errors.config'
 import type { MediaAsset } from '@/lib/services/media-api'
-import { useSpacesStore } from '../../store/use-spaces-store'
 import type { BaseCellProps } from './cell-types'
 
 type MediaCellFile = {
@@ -229,16 +229,20 @@ export function MediaCell({ value, onChange, readonly, openOnMount }: BaseCellPr
   }
 
   const attachFileToChat = (file: MediaCellFile) => {
-    useSpacesStore.getState().setChatCollapsed(false)
-    window.dispatchEvent(
-      new CustomEvent('space-vibey:attach-file', {
-        detail: {
-          url: file.url,
-          name: file.name || filenameFromUrl(file.url),
-          mime_type: file.mime_type,
-        },
-      }),
-    )
+    useGlobalChatStore.getState().expandAndFocus()
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.dispatchEvent(
+          new CustomEvent('space-vibey:attach-file', {
+            detail: {
+              url: file.url,
+              name: file.name || filenameFromUrl(file.url),
+              mime_type: file.mime_type,
+            },
+          }),
+        )
+      })
+    })
     setFileMenuFile(null)
     setFileMenuPos(null)
   }

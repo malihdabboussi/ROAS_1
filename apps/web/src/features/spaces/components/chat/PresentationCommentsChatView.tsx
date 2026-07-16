@@ -66,7 +66,7 @@ export function PresentationCommentsChatView({
               className="button-compact button-glass-primary gap-spacing-1 shrink-0"
             >
               <Send className="icon-xs" />
-              Send to Vibey
+              Send to ROAS
             </button>
           ) : null}
         </div>

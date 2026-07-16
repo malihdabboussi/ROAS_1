@@ -33,6 +33,7 @@ import { AgentManagementService } from './services/agent-management.service'
 import { AgentOnboardingService } from './services/agent-onboarding.service'
 import { AgentProvisioningService } from './services/agent-provisioning.service'
 import { AgentSkillManagementService } from './services/agent-skill-management.service'
+import { WebinarFulfillmentTeamService } from './services/webinar-fulfillment-team.service'
 import { MissionAgentGatewayService } from './services/gateways/mission-agent-gateway.service'
 import { MissionAvatarService } from './services/media/mission-avatar.service'
 import { MissionHumanSubtaskService } from './services/mission-human-subtask.service'
@@ -116,6 +117,7 @@ import { MissionAgentTemplateService } from './services/templates/mission-agent-
     AgentProvisioningService,
     AgentSkillManagementService,
     AgentManagementService,
+    WebinarFulfillmentTeamService,
   ],
   exports: [
     MissionsQueryService,
@@ -130,6 +132,7 @@ import { MissionAgentTemplateService } from './services/templates/mission-agent-
     MissionsRepository,
     MissionServiceRoleClientRepository,
     MissionAgentGatewayService,
+    WebinarFulfillmentTeamService,
   ],
 })
 export class MissionsModule {}

@@ -7,16 +7,16 @@ export default function SharedLayout({ children }: { children: React.ReactNode }
       <header className="gap-spacing-4 px-spacing-6 py-spacing-4 border-border flex items-center justify-between border-b">
         <Link href="/" className="inline-flex items-center">
           <Image
-            src="/Logos/logov2/icon-text-black-moregap.png"
-            alt="Vibey"
+            src="/Logos/roas/wordmark-black.png"
+            alt="ROAS"
             width={132}
             height={36}
             priority
             className="dark:hidden"
           />
           <Image
-            src="/Logos/logov2/icon-text-white-moregap.png"
-            alt="Vibey"
+            src="/Logos/roas/wordmark-white.png"
+            alt="ROAS"
             width={132}
             height={36}
             priority
@@ -40,7 +40,7 @@ export default function SharedLayout({ children }: { children: React.ReactNode }
       </header>
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
       <footer className="px-spacing-6 py-spacing-4 border-border border-t">
-        <p className="body-3 text-muted-foreground text-center">Vibey</p>
+        <p className="body-3 text-muted-foreground text-center">ROAS</p>
       </footer>
     </div>
   )

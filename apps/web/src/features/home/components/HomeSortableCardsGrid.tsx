@@ -13,18 +13,22 @@ import {
 } from '@dnd-kit/core'
 import { rectSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { X } from 'lucide-react'
+import { Columns2, RectangleHorizontal, X } from 'lucide-react'
 import { homeCardDefinition } from '@/features/home/config/home-cards.config'
-import type { HomeCardId } from '@/features/home/types/home-cards'
+import type { HomeCardGridSize, HomeCardId } from '@/features/home/types/home-cards'
 import { cn } from '@/lib/utils/cn'
 
 function SortableHomeCard({
   cardId,
+  size,
   onRemove,
+  onSetSize,
   children,
 }: {
   cardId: HomeCardId
+  size: HomeCardGridSize
   onRemove: (id: HomeCardId) => void
+  onSetSize: (id: HomeCardId, size: HomeCardGridSize) => void
   children: ReactNode
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -36,31 +40,70 @@ function SortableHomeCard({
     transition,
   }
 
+  const title = homeCardDefinition(cardId).title
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
         'group/home-card ring-dashed relative min-w-0 cursor-grab touch-none rounded-xl ring-1 ring-[var(--color-border)] active:cursor-grabbing',
+        size === 'full' && 'hd4-card-grid-item-full',
         isDragging && 'opacity-40',
       )}
-      aria-label={`Drag ${homeCardDefinition(cardId).title}`}
+      aria-label={`Drag ${title}`}
       {...attributes}
       {...listeners}
     >
-      <button
-        type="button"
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={() => onRemove(cardId)}
-        className={cn(
-          'pointer-events-auto absolute right-2 top-2 z-10',
-          'text-muted-foreground hover:text-foreground hover:bg-hover-subtle cursor-pointer rounded-md p-1 transition-[opacity,colors] duration-200',
-          'opacity-0 focus-visible:opacity-100 group-hover/home-card:opacity-100',
-        )}
-        aria-label={`Remove ${homeCardDefinition(cardId).title}`}
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
+      <div className="pointer-events-auto absolute right-2 top-2 z-10 flex items-center gap-0.5">
+        <div
+          className={cn(
+            'border-border bg-card flex items-center rounded-md border p-0.5 shadow-sm transition-opacity duration-200',
+            'opacity-0 focus-within:opacity-100 group-hover/home-card:opacity-100',
+          )}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() => onSetSize(cardId, 'half')}
+            className={cn(
+              'rounded-spacing-1 p-1 transition-colors',
+              size === 'half'
+                ? 'bg-secondary text-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-hover-subtle',
+            )}
+            aria-label={`Half width for ${title}`}
+            aria-pressed={size === 'half'}
+            title="Half width"
+          >
+            <Columns2 className="h-3.5 w-3.5" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={() => onSetSize(cardId, 'full')}
+            className={cn(
+              'rounded-spacing-1 p-1 transition-colors',
+              size === 'full'
+                ? 'bg-secondary text-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-hover-subtle',
+            )}
+            aria-label={`Full width for ${title}`}
+            aria-pressed={size === 'full'}
+            title="Full width"
+          >
+            <RectangleHorizontal className="h-3.5 w-3.5" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={() => onRemove(cardId)}
+            className="text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-spacing-1 p-1 transition-colors"
+            aria-label={`Remove ${title}`}
+            title="Remove"
+          >
+            <X className="h-3.5 w-3.5" aria-hidden />
+          </button>
+        </div>
+      </div>
       <div className={cn('pointer-events-none', isDragging && 'invisible')}>{children}</div>
     </div>
   )
@@ -68,14 +111,20 @@ function SortableHomeCard({
 
 export function HomeSortableCardsGrid({
   cardIds,
+  cardSizes,
   onReorder,
   onRemove,
+  onSetSize,
   renderCard,
+  variant = 'default',
 }: {
   cardIds: HomeCardId[]
+  cardSizes?: Partial<Record<HomeCardId, HomeCardGridSize>>
   onReorder: (activeId: HomeCardId, overId: HomeCardId) => void
   onRemove: (id: HomeCardId) => void
+  onSetSize: (id: HomeCardId, size: HomeCardGridSize) => void
   renderCard: (cardId: HomeCardId) => ReactNode
+  variant?: 'default' | 'v4'
 }) {
   const [activeId, setActiveId] = useState<HomeCardId | null>(null)
 
@@ -100,6 +149,9 @@ export function HomeSortableCardsGrid({
     setActiveId(null)
   }
 
+  const sizeFor = (id: HomeCardId): HomeCardGridSize =>
+    cardSizes?.[id] === 'full' ? 'full' : 'half'
+
   return (
     <DndContext
       sensors={sensors}
@@ -109,9 +161,19 @@ export function HomeSortableCardsGrid({
       onDragCancel={handleDragCancel}
     >
       <SortableContext items={cardIds} strategy={rectSortingStrategy}>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div
+          className={
+            variant === 'v4' ? 'hd4-card-grid' : 'grid grid-cols-1 gap-6 md:grid-cols-2'
+          }
+        >
           {cardIds.map((cardId) => (
-            <SortableHomeCard key={cardId} cardId={cardId} onRemove={onRemove}>
+            <SortableHomeCard
+              key={cardId}
+              cardId={cardId}
+              size={sizeFor(cardId)}
+              onRemove={onRemove}
+              onSetSize={onSetSize}
+            >
               {renderCard(cardId)}
             </SortableHomeCard>
           ))}
@@ -119,7 +181,12 @@ export function HomeSortableCardsGrid({
       </SortableContext>
       <DragOverlay dropAnimation={null}>
         {activeId ? (
-          <div className="ring-primary/40 cursor-grabbing rounded-xl shadow-lg ring-2">
+          <div
+            className={cn(
+              'ring-primary/40 cursor-grabbing rounded-xl shadow-lg ring-2',
+              sizeFor(activeId) === 'full' && 'hd4-card-grid-item-full',
+            )}
+          >
             {renderCard(activeId)}
           </div>
         ) : null}

@@ -21,6 +21,9 @@ import {
   withTimeout,
   writeCampaignScope,
   writeSessionMap,
+  resolveDefaultNewConversationCampaignId,
+  isGeneralCampaignId,
+  resolvePreferredCampaignWhenGeneral,
 } from './agent-chat-panel.logic'
 
 function buildConversation(overrides: Partial<Conversation> = {}): Conversation {
@@ -227,6 +230,56 @@ describe('agent chat panel logic', () => {
       'general',
     )
     expect(resolveActiveCampaignId(null, 'general')).toBeNull()
+  })
+
+  it('prefers assigned campaigns over General for new Team chats', () => {
+    expect(
+      resolveDefaultNewConversationCampaignId({
+        assignedCampaigns: [{ id: 'impact' }],
+        cachedCampaignId: 'general',
+        generalCampaignId: 'general',
+      }),
+    ).toBe('impact')
+    expect(
+      resolveDefaultNewConversationCampaignId({
+        assignedCampaigns: [{ id: 'impact' }],
+        cachedCampaignId: 'cached-non-general',
+        generalCampaignId: 'general',
+      }),
+    ).toBe('cached-non-general')
+    expect(
+      resolveDefaultNewConversationCampaignId({
+        assignedCampaigns: [],
+        cachedCampaignId: 'general',
+        generalCampaignId: 'general',
+      }),
+    ).toBe('general')
+    expect(isGeneralCampaignId('general', 'general')).toBe(true)
+    expect(isGeneralCampaignId('impact', 'general')).toBe(false)
+  })
+
+  it('remounts General chats onto a single assigned campaign', () => {
+    expect(
+      resolvePreferredCampaignWhenGeneral({
+        activeCampaignId: 'general',
+        assignedCampaigns: [{ id: 'impact' }],
+        generalCampaignId: 'general',
+      }),
+    ).toBe('impact')
+    expect(
+      resolvePreferredCampaignWhenGeneral({
+        activeCampaignId: 'general',
+        assignedCampaigns: [{ id: 'impact' }, { id: 'other' }],
+        generalCampaignId: 'general',
+      }),
+    ).toBeNull()
+    expect(
+      resolvePreferredCampaignWhenGeneral({
+        activeCampaignId: 'impact',
+        assignedCampaigns: [{ id: 'impact' }],
+        generalCampaignId: 'general',
+      }),
+    ).toBeNull()
   })
 
   it('builds mobile campaign switcher options from General and non-general campaigns', () => {

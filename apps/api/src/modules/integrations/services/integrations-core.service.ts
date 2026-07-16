@@ -144,9 +144,12 @@ export class IntegrationsCoreService {
       .eq('integration_id', integrationId)
       .eq('user_id', scope.userId)
       .eq('scope_mode', 'personal')
+      .order('updated_at', { ascending: false })
+      .limit(1)
 
     const query = scope.orgId ? baseQuery.eq('org_id', scope.orgId) : baseQuery.is('org_id', null)
-    const { data: existing } = await query.maybeSingle()
+    const { data: existingRows } = await query
+    const existing = Array.isArray(existingRows) ? existingRows[0] : existingRows
 
     if (existing?.id) {
       const { data: updated, error } = await this.repository
@@ -161,6 +164,15 @@ export class IntegrationsCoreService {
       }
     }
 
+    return this.insertPersonalScopedIntegration(supabase, scope, data)
+  }
+
+  async insertPersonalScopedIntegration(
+    supabase: SupabaseClient,
+    scope: RequestScope,
+    data: Record<string, unknown>,
+  ): Promise<{ id: string | null; error: { message: string } | null }> {
+    const now = new Date().toISOString()
     const insertData = {
       ...data,
       ...this.orgScope.getInsertData(scope),
@@ -270,6 +282,45 @@ export class IntegrationsCoreService {
       .eq('org_id', orgId)
       .eq('integration_id', integrationId)
       .eq('scope_mode', 'org_shared')
+    if (resetError) return { success: false, error: resetError.message }
+
+    const { error: setError } = await this.repository
+      .table(supabase, 'user_integrations')
+      .update({ is_default: true, updated_at: now })
+      .eq('id', rowId)
+    if (setError) return { success: false, error: setError.message }
+
+    return { success: true, integration_id: integrationId }
+  }
+
+  async setPersonalDefaultConnection(
+    supabase: SupabaseClient,
+    scope: RequestScope,
+    rowId: string,
+  ): Promise<{ success: boolean; error?: string; integration_id?: string }> {
+    const row = await this.getIntegrationRowForScope(supabase, scope, rowId)
+    if (!row) return { success: false, error: 'Integration connection not found' }
+    const scopeMode = String(row.scope_mode ?? '')
+    if (scopeMode !== 'personal') {
+      return { success: false, error: 'Personal default can only be set for personal connections' }
+    }
+    if (String(row.user_id ?? '') !== scope.userId) {
+      return { success: false, error: 'You can only set default on your own personal connection' }
+    }
+    const integrationId = String(row.integration_id ?? '')
+      .trim()
+      .toLowerCase()
+    if (!integrationId) return { success: false, error: 'Integration id missing' }
+    const now = new Date().toISOString()
+
+    let resetQuery = this.repository
+      .table(supabase, 'user_integrations')
+      .update({ is_default: false, updated_at: now })
+      .eq('user_id', scope.userId)
+      .eq('integration_id', integrationId)
+      .eq('scope_mode', 'personal')
+    resetQuery = scope.orgId ? resetQuery.eq('org_id', scope.orgId) : resetQuery.is('org_id', null)
+    const { error: resetError } = await resetQuery
     if (resetError) return { success: false, error: resetError.message }
 
     const { error: setError } = await this.repository

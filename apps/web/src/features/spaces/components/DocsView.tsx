@@ -38,6 +38,7 @@ import { listDriveFiles, type GoogleDriveFile } from '@/lib/services/google-driv
 import { cn } from '@/lib/utils/cn'
 import { getDocsTreeDndInvalidToastMessage } from '../config/docs-tree-dnd-toast.config'
 import { buildDocsTreeReorder, type DocsTreeDndZone } from '../lib/docs-tree-dnd-apply'
+import { formatAbsoluteDateTime, formatRelativeDate } from '../lib/format-relative-date'
 import {
   buildDocToolbarSearchHaystack,
   filterItemsByToolbarSearch,
@@ -680,19 +681,6 @@ interface DocsViewProps {
   docsCloud?: ReturnType<typeof useCloudAttach>
 }
 
-function formatRelativeDate(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  const now = new Date()
-  const diffMs = now.getTime() - d.getTime()
-  const diffH = Math.floor(diffMs / 3_600_000)
-  if (diffH < 1) return 'just now'
-  if (diffH < 24) return `${diffH}h ago`
-  const diffD = Math.floor(diffH / 24)
-  if (diffD < 7) return `${diffD}d ago`
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
 function upgradeDriveThumbSize(url: string): string {
   return url
     .replace(/=s\d+(-c)?$/, '=w800')
@@ -1102,7 +1090,9 @@ function DocCard({
               <span>·</span>
             </>
           )}
-          <span>{formatRelativeDate(item.updated_at)}</span>
+          <span title={formatAbsoluteDateTime(item.created_at ?? item.updated_at)}>
+            {formatRelativeDate(item.created_at ?? item.updated_at)}
+          </span>
           {wc > 0 && (
             <>
               <span>·</span>

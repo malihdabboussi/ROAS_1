@@ -51,7 +51,7 @@ export function AgentSettingsSection({
               Image + Video Generation
             </span>
             <span className="body-3 text-muted-foreground mt-spacing-1 block">
-              Allow Vibey to generate images and videos for this campaign.
+              Allow ROAS to generate images and videos for this campaign.
             </span>
           </div>
           <div className="gap-spacing-2 flex items-center">

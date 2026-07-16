@@ -19,7 +19,6 @@ import {
 import { BrainDockHoverButton } from './BrainDockHoverButton'
 import BrainProcessingQueue from './BrainProcessingQueue'
 import BrainStats from './BrainStats'
-import { BrainVoiceTrigger } from './BrainVoiceTrigger'
 import { CortexMaxIcon } from './CortexMaxIcon'
 import { BrainSearchResultsPanel } from './BrainSearchResultsPanel'
 
@@ -33,7 +32,6 @@ type BrainDockScope = {
 }
 
 interface BrainVisualizationDockProps {
-  onActivateVoice: () => void
   searchAnchorRef: RefObject<HTMLDivElement | null>
   searchInput: string
   searchLoading: boolean
@@ -109,7 +107,6 @@ function BrainScopeActions({
 }
 
 export function BrainVisualizationDock({
-  onActivateVoice,
   searchAnchorRef,
   searchInput,
   searchLoading,
@@ -146,9 +143,6 @@ export function BrainVisualizationDock({
 
   return (
     <div className="bottom-spacing-4 absolute left-1/2 z-40 flex -translate-x-1/2 flex-col items-center">
-      <div className="mb-2">
-        <BrainVoiceTrigger onActivate={onActivateVoice} />
-      </div>
       <div ref={searchAnchorRef} className="relative z-40 mb-2 w-fit max-w-full shrink-0">
         {panelOpen && (
           <BrainSearchResultsPanel

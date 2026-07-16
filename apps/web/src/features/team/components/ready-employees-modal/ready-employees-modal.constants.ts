@@ -18,6 +18,7 @@ export const ROLE_TEAM: Record<string, { label: string; badge: string }> = {
   cfo: { label: 'Operations', badge: 'badge-glass badge-glass-sm badge-glass-orange' },
   coach: { label: 'Operations', badge: 'badge-glass badge-glass-sm badge-glass-orange' },
   ads_manager: { label: 'Marketing', badge: 'badge-glass badge-glass-sm badge-glass-purple' },
+  strategist: { label: 'Agency', badge: 'badge-glass badge-glass-sm badge-glass-orange' },
   customer_support: { label: 'Support', badge: 'badge-glass badge-glass-sm badge-glass-green' },
   customer_success: { label: 'Support', badge: 'badge-glass badge-glass-sm badge-glass-green' },
   customer_coach: { label: 'Support', badge: 'badge-glass badge-glass-sm badge-glass-green' },

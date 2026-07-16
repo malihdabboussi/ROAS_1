@@ -264,7 +264,7 @@ export function OnboardingQuestions({ onComplete, onError }: OnboardingQuestions
           ABOUT YOU
         </h2>
         <p className="body-2 text-muted-foreground mb-spacing-6">
-          The more Vibey knows, the better it performs.
+          The more ROAS knows, the better it performs.
         </p>
 
         <label className="mb-spacing-3 block">
@@ -274,7 +274,7 @@ export function OnboardingQuestions({ onComplete, onError }: OnboardingQuestions
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
             className="input-glass body-2 px-spacing-3 py-spacing-3 w-full"
-            placeholder="What should Vibey call you?"
+            placeholder="What should ROAS call you?"
             required
           />
         </label>

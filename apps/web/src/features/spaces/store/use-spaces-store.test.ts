@@ -92,7 +92,7 @@ describe('spaces active conversation storage', () => {
     expect(readStoredAgentConversationId('space-1', 'hr')).toBeNull()
   })
 
-  it('keeps legacy Vibey storage compatible', () => {
+  it('keeps legacy ROAS storage compatible', () => {
     persistActiveConversationId('space-1', 'conversation-vibey', 'vibey')
 
     expect(readStoredConversationId('space-1')).toBe('conversation-vibey')

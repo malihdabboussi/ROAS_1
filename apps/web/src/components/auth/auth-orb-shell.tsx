@@ -59,7 +59,7 @@ export function AuthOrbShell({
   quotes = [],
   children,
   overlay,
-  quoteAttribution = 'Vibey',
+  quoteAttribution = 'ROAS',
   panelClassName = 'card-glass max-w-[380px]',
   showHeroOrb = true,
   showQuoteFooter = true,

@@ -121,7 +121,7 @@ export function resolveMediaEmptyState(filters: MediaAssetTypePick[]): {
       copy: {
         title: 'No media in this space yet',
         description:
-          'Upload or generate with AI — I’ll keep images and videos organized in this view.',
+          'Describe an image above to generate, or upload from the toolbar — I’ll keep files organized here.',
       },
     }
   }
@@ -134,7 +134,7 @@ export function resolveMediaEmptyState(filters: MediaAssetTypePick[]): {
         copy: {
           title: 'No images yet',
           description:
-            'Drop stills here or generate covers and creatives — I’ll tile them in this view.',
+            'Describe an image above to generate, or upload stills — I’ll tile them in this view.',
         },
       }
     }
@@ -152,7 +152,7 @@ export function resolveMediaEmptyState(filters: MediaAssetTypePick[]): {
     copy: {
       title: 'No media in this space yet',
       description:
-        'Upload or generate with AI — I’ll keep images and videos organized in this view.',
+        'Describe an image above to generate, or upload from the toolbar — I’ll keep files organized here.',
     },
   }
 }

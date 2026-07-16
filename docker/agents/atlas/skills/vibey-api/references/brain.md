@@ -616,10 +616,23 @@ Lists import sessions from ns_memory_sessions for an agent brain. Requires brain
 ```
 
 ## list_available_brain_scopes
-Lists available owned brain scopes for the user: default user brain and agent brains. Campaign/Space context is not a durable Brain family.
+Lists owned brain scopes: default user brain, agent brains, and campaign brains (`scope`, `campaign_id`, `campaign_brains`). For client package knowledge use `search_campaign_brain` with `campaign_id` / `campaign_name` — never invent empty brain ids from campaign names, and never treat General as a client brain.
 
 ```json
 {"action":"list_available_brain_scopes","label":"Listing brain scopes","data":{}}
+```
+
+## search_campaign_brain
+**Required keys:** `query`
+
+**Optional keys:** `campaign_id`, `campaign_name`, `brain_id`, `limit`
+
+**Types:** `query`: string, `campaign_id`: string, `campaign_name`: string, `brain_id`: string, `limit`: number
+
+Searches the campaign brain (`ns_memories` on the campaign-scoped `ns_brains` row) for client research, onboarding intake, strategy notes, and ROAS package knowledge. Prefer this over Agent/User/Company Brain for client intake. Cross-scope is allowed: if Team chat is on General, pass `campaign_id` or `campaign_name` for the client campaign (e.g. Impact). Never target General.
+
+```json
+{"action":"search_campaign_brain","label":"Searching campaign brain","data":{"query":"offer pricing ICP onboarding form","campaign_name":"Impact","limit":15}}
 ```
 
 ## list_customer_avatars

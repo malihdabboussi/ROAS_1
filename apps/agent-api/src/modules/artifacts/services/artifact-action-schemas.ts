@@ -2884,7 +2884,8 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       'Explicitly search across accessible Brain families when the user asks to search all brains/everything/shared brains.',
     ],
     doNotUseWhen: [
-      'The user asks for one specific Brain family; use search_user_brain, search_agent_brain, search_customer_brain, or search_company_brain instead.',
+      'The user asks for one specific Brain family; use search_user_brain, search_agent_brain, search_customer_brain, search_company_brain, or search_campaign_brain instead.',
+      'The user asks for campaign / client knowledge stored on a campaign brain; use search_campaign_brain.',
       'The user refers to uploaded files, attachments, reports, spreadsheets, PDFs, generated documents, or data they previously provided in the active work; search or read Space/document sources first because those usually have exact retrievable objects.',
       'This agent does not have access to the requested Brain family (user requires Read personal brain; agent/company/customer require the matching read_brain action domain).',
     ],
@@ -2946,6 +2947,57 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
     },
     useWhen: [
       'Search an Agent Brain by brain_id for source-grounded SK entries, scores, related context, and sufficiency signals.',
+    ],
+    doNotUseWhen: [
+      'Searching a campaign / client knowledge brain; use search_campaign_brain with campaign_id (or campaign chat scope).',
+    ],
+  },
+  search_campaign_brain: {
+    required: ['query'],
+    optional: [
+      'campaign_id',
+      'campaign_name',
+      'brain_id',
+      'limit',
+      'scope_override',
+      ...BRAIN_TEMPORAL_SEARCH_KEYS,
+    ],
+    types: {
+      query: 'string',
+      campaign_id: 'string',
+      campaign_name: 'string',
+      brain_id: 'string',
+      limit: 'number',
+      scope_override: 'boolean',
+      ...BRAIN_TEMPORAL_SEARCH_TYPES,
+    },
+    useWhen: [
+      'Search the campaign brain (ns_memories on the campaign-scoped ns_brains row) for client research, onboarding intake, strategy notes, or ROAS-brain package knowledge.',
+      'Pre-call strategy, launch briefs, or any work that must use Impact/client knowledge stored on the campaign brain.',
+      'Chat is on General but the user named a client campaign — pass campaign_id or campaign_name (cross-scope read is allowed).',
+    ],
+    doNotUseWhen: [
+      'Searching an Agent Brain (use search_agent_brain), User Brain (search_user_brain), Customer Brain (search_customer_brain), or Company Brain (search_company_brain).',
+      'Searching Space docs/tasks only (use search_space_context).',
+      'Using the General campaign as target — General has no client package brain.',
+    ],
+    examples: [
+      {
+        intent: 'pull Impact campaign brain for pre-call strategy',
+        data: {
+          query: 'offer pricing ICP competitors onboarding form',
+          campaign_id: 'c0a6bc09-9502-4b0e-9438-302ed1482531',
+          limit: 15,
+        },
+      },
+      {
+        intent: 'read Impact campaign brain while Team chat is on General',
+        data: {
+          query: 'onboarding form offer ICP',
+          campaign_name: 'Impact',
+          limit: 15,
+        },
+      },
     ],
   },
   ingest_agent_brain_text: {

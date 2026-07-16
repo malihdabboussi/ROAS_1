@@ -10,7 +10,7 @@ import {
   ArtifactDocumentSpaceDocsService,
   type SpaceDocRow,
 } from './artifact-document-space-docs.service'
-import { createSpaceDocItem, getActiveSpaceId } from './artifact-space-scope'
+import { createSpaceDocItem, resolveDocumentSpaceId } from './artifact-space-scope'
 import { ensureSpaceView } from './ensure-space-view'
 
 @Injectable()
@@ -284,7 +284,7 @@ export class ArtifactDocumentsService {
     })
     if (error) throw error
 
-    const spaceId = getActiveSpaceId(input)
+    const spaceId = await resolveDocumentSpaceId(supabase, input, campaignId)
     let spaceItemId: string | null = null
     if (spaceId) {
       const orgId =

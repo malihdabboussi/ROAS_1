@@ -139,9 +139,9 @@ export function ActivityTimelineComposer({
                 e.preventDefault()
                 onPasteFiles(imageFiles)
               }}
-              placeholder="Send a message..."
+              placeholder="Message Vibey..."
               rows={1}
-              className="body-3 max-h-[200px] min-h-[32px] w-full resize-none bg-transparent text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none"
+              className="body-3 text-foreground placeholder:text-muted-foreground max-h-[200px] min-h-[32px] w-full resize-none bg-transparent focus:outline-none"
             />
           </div>
 

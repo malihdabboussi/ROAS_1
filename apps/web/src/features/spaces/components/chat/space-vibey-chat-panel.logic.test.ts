@@ -41,7 +41,7 @@ function message(overrides: Partial<Message>): Message {
   }
 }
 
-describe('space Vibey chat panel logic', () => {
+describe('space ROAS chat panel logic', () => {
   beforeEach(() => {
     window.sessionStorage.clear()
   })

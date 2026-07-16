@@ -99,7 +99,7 @@ export function TeamMemberAccordionRow({
               className="button-glass-neutral rounded-spacing-2 px-spacing-3 py-spacing-2 body-3 gap-spacing-2 inline-flex items-center font-medium disabled:opacity-50"
             >
               <Slack className="h-4 w-4" aria-hidden />
-              {learning ? 'Asking Vibey to read Slack…' : 'Learn from Slack'}
+              {learning ? 'Asking ROAS to read Slack…' : 'Learn from Slack'}
             </button>
           )}
           <button

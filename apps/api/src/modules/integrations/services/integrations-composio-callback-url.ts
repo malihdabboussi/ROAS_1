@@ -5,7 +5,8 @@ export function buildComposioCallbackRedirectUrl(
   messageRaw?: string,
 ): string {
   const appUrl = process.env.APP_URL || 'http://localhost:3000'
-  const fallback = new URL('/settings?tab=manage', appUrl)
+  // Settings is a modal, not a route — land on home so IntegrationReturnHandler can open it.
+  const fallback = new URL('/home?tab=manage', appUrl)
 
   let target = fallback
   if (typeof redirectToRaw === 'string' && redirectToRaw.trim().length > 0) {

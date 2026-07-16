@@ -365,8 +365,26 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
   get_media_generation_status: schema(['job_id'], ['job_id'], stringType(['job_id'])),
   generate_image: schema(
     [],
-    ['prompt', 'model', 'size', 'aspect_ratio', 'image_url', 'image_asset_id'],
-    stringType(['prompt', 'model', 'size', 'aspect_ratio', 'image_url', 'image_asset_id']),
+    [
+      'prompt',
+      'model',
+      'size',
+      'aspect_ratio',
+      'image_url',
+      'image_asset_id',
+      'space_id',
+      'campaign_id',
+    ],
+    stringType([
+      'prompt',
+      'model',
+      'size',
+      'aspect_ratio',
+      'image_url',
+      'image_asset_id',
+      'space_id',
+      'campaign_id',
+    ]),
   ),
   edit_image: schema(
     ['prompt'],

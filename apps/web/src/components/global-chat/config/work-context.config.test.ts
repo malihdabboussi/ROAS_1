@@ -8,7 +8,7 @@ import {
 
 describe('work-context.config', () => {
   const roster = [
-    { kind: 'agent' as const, agent_key: 'vibey', display_name: 'Vibey' },
+    { kind: 'agent' as const, agent_key: 'vibey', display_name: 'ROAS' },
     { kind: 'agent' as const, agent_key: 'atlas', display_name: 'Atlas' },
     { kind: 'agent' as const, agent_key: 'hr', display_name: 'Jaime' },
     { kind: 'agent' as const, agent_key: 'loop', display_name: 'Loop' },
@@ -30,13 +30,16 @@ describe('work-context.config', () => {
       filterAgentsForWorkContext(roster, { surface: 'flows' }).map((entry) => entry.agent_key),
     ).toEqual(['loop'])
     expect(
+      filterAgentsForWorkContext(roster, { surface: 'team' }).map((entry) => entry.agent_key),
+    ).toEqual(['vibey', 'hr'])
+    expect(
       filterAgentsForWorkContext(roster, { surface: 'general' }).map((entry) => entry.agent_key),
     ).toEqual(['vibey', 'atlas', 'hr'])
   })
 
   it('picks default agents per surface', () => {
     expect(defaultAgentForSurface('brain')).toBe('atlas')
-    expect(defaultAgentForSurface('team')).toBe('hr')
+    expect(defaultAgentForSurface('team')).toBe('vibey')
     expect(defaultAgentForSurface('flows')).toBe('loop')
     expect(defaultAgentForSurface('general')).toBe('vibey')
   })

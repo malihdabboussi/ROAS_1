@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Tooltip } from '@/components/ui/tooltip'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { ConfirmDialog } from '@/features/settings/components/settings-content/ConfirmDialog'
 import { cn } from '@/lib/utils/cn'
@@ -262,7 +263,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                       </span>
                     </Tooltip>
                   )}
-                  <Tooltip label="Attach to ROAS chat" side="top">
+                  <Tooltip label="Ask in chat" side="top">
                     <span className="inline-flex">
                       <button
                         type="button"
@@ -270,12 +271,21 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                         onClick={(e) => {
                           e.stopPropagation()
                           const { id, label } = buildSpaceTaskChatDragPayload(item)
-                          window.dispatchEvent(
-                            new CustomEvent('space-vibey:attach-task', { detail: { id, label } }),
-                          )
+                          // Expand first — mobile unmounts the composer while collapsed,
+                          // so attach must land after the panel remounts.
+                          useGlobalChatStore.getState().expandAndFocus()
+                          requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                              window.dispatchEvent(
+                                new CustomEvent('space-vibey:attach-task', {
+                                  detail: { id, label },
+                                }),
+                              )
+                            })
+                          })
                         }}
                         className="btn-icon-glass-sm !h-[18px] !w-[18px] !rounded-[4px]"
-                        aria-label="Attach to ROAS chat"
+                        aria-label="Ask in chat"
                       >
                         <Link2 className="h-3 w-3" />
                       </button>

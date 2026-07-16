@@ -73,9 +73,9 @@ export interface ChatInputProps {
   agentKey?: string
   /** Optional outer element to also accept artifact/file drops. */
   dropZoneRef?: React.RefObject<HTMLElement | null>
-  /** Space Vibey chat: regular tasks merged into the @ mention menu. */
+  /** Space ROAS chat: regular tasks merged into the @ mention menu. */
   spaceComposerSpaceTasks?: ChatInputSpaceComposerSpaceTask[]
-  /** Listen for Space Vibey external attach events and show an @ shortcut. */
+  /** Listen for Space ROAS external attach events and show an @ shortcut. */
   spaceComposerListenExternalAttach?: boolean
   /** Footer slot next to the Integrations control, e.g. Home "Send to". */
   composerFooterAfterIntegrationsSlot?: ReactNode

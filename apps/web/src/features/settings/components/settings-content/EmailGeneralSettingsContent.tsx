@@ -379,15 +379,15 @@ export default function EmailGeneralSettingsContent() {
           <div>
             <h2 className="title-h6 text-foreground">Email Branding</h2>
             <p className="body-3 text-muted-foreground mt-spacing-1">
-              Control Vibey branding in your email footers
+              Control ROAS branding in your email footers
             </p>
           </div>
           <div className="surface-card border-border rounded-spacing-2 p-spacing-3 border">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="body-2 font-medium">Hide "Powered by Vibey"</div>
+                <div className="body-2 font-medium">Hide "Powered by ROAS"</div>
                 <div className="typo-caption text-muted-foreground mt-spacing-1">
-                  Remove Vibey branding from your email footers
+                  Remove ROAS branding from your email footers
                 </div>
               </div>
               <Switch
@@ -414,7 +414,7 @@ export default function EmailGeneralSettingsContent() {
             </p>
           </div>
           <div className="space-y-spacing-2">
-            {/* Vibey (SendGrid) */}
+            {/* ROAS (SendGrid) */}
             <button
               type="button"
               onClick={() => handleEmailProviderChange('sendgrid')}
@@ -430,10 +430,10 @@ export default function EmailGeneralSettingsContent() {
                 </div>
                 <div className="flex-1">
                   <div className="body-2 text-foreground font-medium">
-                    Send via Vibey (SendGrid)
+                    Send via ROAS (SendGrid)
                   </div>
                   <div className="typo-caption text-muted-foreground mt-spacing-1">
-                    Use Vibey's built-in email service with advanced deliverability
+                    Use ROAS's built-in email service with advanced deliverability
                   </div>
                 </div>
               </div>

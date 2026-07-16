@@ -35,6 +35,11 @@ export interface GlobalChatSeedDetail {
   content: string
   agentKey?: string
   workContext?: Partial<GlobalWorkContext>
+  railIntent?: GlobalChatRailIntent
+  /** When set, open this conversation instead of starting a new/current thread. */
+  conversationId?: string
+  /** `attach` puts docs on the composer without sending; default sends. */
+  seedMode?: 'send' | 'attach'
   model?: string
   documents?: unknown[]
   artifacts?: unknown[]
@@ -198,6 +203,7 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
     get().expandAndFocus({
       agentKey: detail.agentKey,
       workContext: detail.workContext,
+      railIntent: detail.railIntent,
     })
     set({ pendingSeed: detail })
     if (typeof window !== 'undefined') {

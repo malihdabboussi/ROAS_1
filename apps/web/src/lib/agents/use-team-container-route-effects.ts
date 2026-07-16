@@ -142,7 +142,7 @@ export function useTeamContainerRouteEffects({
     const run = async () => {
       const convo = await createNewConversation({
         agent_id: cLevel.agent_key,
-        title: 'Vibey Discovery',
+        title: 'ROAS Discovery',
       }).catch(() => null)
       if (cancelled) return
       onboardingKickoffStartedRef.current = true

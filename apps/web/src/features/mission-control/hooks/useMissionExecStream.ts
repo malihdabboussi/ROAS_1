@@ -163,10 +163,7 @@ export function useMissionExecStream(subtask: MissionSubtask | null): UseMission
     }
   }, [subtask?.id, esSerialized])
 
-  const isStreaming =
-    !streamEnded &&
-    ((subtask?.status === 'in_progress' && es?.execution_status === 'streaming') ||
-      toolBlocks.some((b) => b.state === 'active'))
+  const isStreaming = !streamEnded && !!subtask && subtask.status === 'in_progress'
 
   useEffect(() => {
     if (!shouldSubscribe || !subtask?.id) return

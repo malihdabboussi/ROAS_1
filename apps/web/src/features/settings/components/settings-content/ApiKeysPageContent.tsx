@@ -20,7 +20,7 @@ export default function ApiKeysPageContent() {
           <div className="rounded-spacing-2 bg-secondary/50 p-spacing-8 text-center">
             <p className="body-2 text-muted-foreground">API key management coming soon</p>
             <p className="body-3 text-muted-foreground mt-spacing-2">
-              You&apos;ll be able to create and manage API keys for programmatic access to Vibey.
+              You&apos;ll be able to create and manage API keys for programmatic access to ROAS.
             </p>
           </div>
         </div>

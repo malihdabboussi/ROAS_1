@@ -113,7 +113,7 @@ export default function ChromeExtensionPageContent() {
       <div className="min-w-0">
         <h1 className="typo-h2 uppercase">CHROME EXTENSION</h1>
         <p className="body-2 text-muted-foreground mt-spacing-2">
-          Manage the browser sessions captured by the Vibey Mini Chrome extension. Agents use
+          Manage the browser sessions captured by the ROAS Mini Chrome extension. Agents use
           these sessions to browse the web as you.
         </p>
       </div>
@@ -124,7 +124,7 @@ export default function ChromeExtensionPageContent() {
           <div className="min-w-0 flex-1">
             <h2 className="body-1-medium">Install the extension</h2>
             <p className="body-3 text-muted-foreground mt-spacing-1">
-              Install the Vibey Mini Chrome extension and sign in with the same Vibey account.
+              Install the ROAS Mini Chrome extension and sign in with the same ROAS account.
               Sessions for approved domains will appear below automatically after your next visit.
             </p>
           </div>
@@ -156,7 +156,7 @@ export default function ChromeExtensionPageContent() {
           )}
           {!loading && sessions && sessions.length === 0 && (
             <div className="p-spacing-4 body-3 text-muted-foreground sm:p-spacing-5">
-              No sessions saved yet. Install the Vibey Mini extension, approve session sharing in
+              No sessions saved yet. Install the ROAS Mini extension, approve session sharing in
               the sidepanel, then visit Instagram, TikTok, LinkedIn, X, YouTube, Facebook, or
               Reddit while signed in.
             </div>

@@ -1,8 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown, Plus, Search } from 'lucide-react'
+import { Search, Upload } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { usePresignedUpload } from '@/lib/hooks/use-presigned-upload'
 import { GroupByButton } from '../_shared/GroupByButton'
@@ -12,7 +12,6 @@ import { SpaceCustomizeButton } from '../../components/toolbar'
 import { ARTIFACT_SLIDE_PREVIEW_TOOLBAR_MOTION } from '@/lib/ui/toolbar-motion'
 import type { SpaceToolbarContext } from '../types'
 import { MediaDetailToolbar } from './MediaDetailToolbar'
-import { MediaGenerateModal } from './MediaGenerateModal'
 import { MediaPreviewCardSizeControl } from './MediaPreviewCardSizeControl'
 import { MediaTypeFilterControl } from './MediaTypeFilterControl'
 
@@ -22,7 +21,6 @@ export function SpaceMediaToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
     activeSpace,
     handleMediaViewConfigPatch,
     mediaDetailOpen,
-    mediaSlidePreviewOpen,
     showGroupByInToolbar,
     spaceToolbarSearchOpen,
     setSpaceToolbarSearchOpen,
@@ -32,24 +30,10 @@ export function SpaceMediaToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
   } = ctx
 
   const mc = ctx.mediaViewConfig
-  const hideListToolbar = mediaSlidePreviewOpen || mediaDetailOpen
+  const hideListToolbar = mediaDetailOpen
 
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [genOpen, setGenOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const { upload } = usePresignedUpload()
-
-  useEffect(() => {
-    if (!menuOpen) return
-    const fn = (e: MouseEvent) => {
-      const t = e.target as Node
-      if (menuRef.current?.contains(t)) return
-      setMenuOpen(false)
-    }
-    document.addEventListener('mousedown', fn)
-    return () => document.removeEventListener('mousedown', fn)
-  }, [menuOpen])
 
   const patchMc = useCallback(
     (patch: Parameters<typeof handleMediaViewConfigPatch>[0]) => {
@@ -57,11 +41,6 @@ export function SpaceMediaToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
     },
     [handleMediaViewConfigPatch],
   )
-
-  const onPickUpload = useCallback(async () => {
-    fileRef.current?.click()
-    setMenuOpen(false)
-  }, [])
 
   const onFiles = useCallback(
     async (files: FileList | null) => {
@@ -133,7 +112,7 @@ export function SpaceMediaToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
                               }
                             }}
                             placeholder="Search..."
-                            className="h-7 w-full rounded-lg border border-[var(--color-border)] bg-[var(--background)] px-2.5 text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-primary)]"
+                            className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-primary h-7 w-full rounded-lg border px-2.5 text-xs outline-none"
                           />
                         </motion.div>
                       )}
@@ -149,8 +128,8 @@ export function SpaceMediaToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
                           onClick={() => setSpaceToolbarSearchOpen(true)}
                           className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
                             spaceToolbarSearchOpen || mc.search_query
-                              ? 'bg-[var(--color-hover-subtle)] text-[var(--foreground)]'
-                              : 'text-[var(--color-muted-foreground)] hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]'
+                              ? 'bg-hover-subtle text-foreground'
+                              : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground'
                           }`}
                         >
                           <Search className="h-3.5 w-3.5" />
@@ -181,40 +160,16 @@ export function SpaceMediaToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
                     closeCustomizePanel={closeCustomizePanel}
                     openCustomizeFromToolbar={openCustomizeFromToolbar}
                   />
-                  <div ref={menuRef} className="relative">
-                    <Tooltip label="Generate or upload" side="bottom">
-                      <button
-                        type="button"
-                        onClick={() => setMenuOpen((v) => !v)}
-                        className="badge-glass badge-glass-green body-3 rounded-spacing-2 inline-flex shrink-0 items-center gap-1.5 px-3 py-2 font-semibold transition-opacity hover:opacity-90"
-                      >
-                        <Plus className="h-3.5 w-3.5 shrink-0" />
-                        Generate
-                        <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-80" />
-                      </button>
-                    </Tooltip>
-                    {menuOpen ? (
-                      <div className="dropdown-menu-solid z-dropdown p-spacing-2 absolute right-0 top-full mt-1 min-w-52">
-                        <button
-                          type="button"
-                          className="body-3 hover:bg-hover-subtle rounded-spacing-1 px-spacing-2 py-spacing-2 w-full text-left"
-                          onClick={() => {
-                            setGenOpen(true)
-                            setMenuOpen(false)
-                          }}
-                        >
-                          Generate with AI
-                        </button>
-                        <button
-                          type="button"
-                          className="body-3 hover:bg-hover-subtle rounded-spacing-1 px-spacing-2 py-spacing-2 w-full text-left"
-                          onClick={() => void onPickUpload()}
-                        >
-                          Upload
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
+                  <Tooltip label="Upload media" side="bottom">
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      className="badge-glass badge-glass-green body-3 rounded-spacing-2 inline-flex shrink-0 items-center gap-1.5 px-3 py-2 font-semibold transition-opacity hover:opacity-90"
+                    >
+                      <Upload className="h-3.5 w-3.5 shrink-0" />
+                      Upload
+                    </button>
+                  </Tooltip>
                 </motion.div>
               ) : null}
             </AnimatePresence>
@@ -228,14 +183,6 @@ export function SpaceMediaToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
         className="hidden"
         accept="image/*,video/*"
         onChange={(e) => void onFiles(e.target.files)}
-      />
-      <MediaGenerateModal
-        open={genOpen}
-        onClose={() => setGenOpen(false)}
-        onSelect={() => setGenOpen(false)}
-        campaignId={activeSpace.campaign_id}
-        spaceId={activeSpace.id}
-        title="Generate image"
       />
     </>
   )

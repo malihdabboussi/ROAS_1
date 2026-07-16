@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'
 import type { MouseEvent } from 'react'
 import { Download, FileText } from 'lucide-react'
@@ -18,6 +19,10 @@ interface DocumentCardProps {
   onDownloadClick?: (e: MouseEvent<HTMLButtonElement>) => void
 }
 
+function spacesDocHref(spaceId: string, spaceItemId: string): string {
+  return `/spaces?space=${encodeURIComponent(spaceId)}&item=${encodeURIComponent(spaceItemId)}`
+}
+
 export function DocumentCard({
   title,
   documentId,
@@ -27,6 +32,7 @@ export function DocumentCard({
   onOpenOverride,
   onDownloadClick,
 }: DocumentCardProps) {
+  const router = useRouter()
   const pathname = usePathname()
   const inSpacesUi = (pathname ?? '').startsWith('/spaces')
   const campaignMode = useCampaignModeOptional()
@@ -36,32 +42,13 @@ export function DocumentCard({
       <button
         type="button"
         onClick={() => {
-          // #region debug-log - H4: document card click branch
-          fetch('http://127.0.0.1:7242/log', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              hypothesis: 'H4',
-              location: 'web/DocumentCard.tsx:onClick',
-              message: onOpenOverride
-                ? 'Doc card click → onOpenOverride'
-                : campaignMode && !inSpacesUi
-                  ? 'Doc card click → campaignMode media panel (NOT doc preview)'
-                  : 'Doc card click → dispatching vibey-open-artifact',
-              data: {
-                documentId,
-                spaceId: spaceId ?? null,
-                spaceItemId: spaceItemId ?? null,
-                inSpacesUi,
-                hasCampaignMode: !!campaignMode,
-                page: window.location.pathname,
-              },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {})
-          // #endregion
           if (onOpenOverride) {
             onOpenOverride()
+            return
+          }
+          // Prefer the Space Doc deep link whenever dual-write succeeded.
+          if (spaceId && spaceItemId) {
+            router.push(spacesDocHref(spaceId, spaceItemId))
             return
           }
           if (campaignMode && !inSpacesUi) {

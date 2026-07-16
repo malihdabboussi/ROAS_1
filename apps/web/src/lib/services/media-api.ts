@@ -26,6 +26,7 @@ export interface MediaAsset {
   subcategory: string | null
   campaign_id: string | null
   space_id?: string | null
+  conversation_id?: string | null
   tags: string[]
   description: string | null
   is_public: boolean
@@ -79,7 +80,7 @@ export async function fetchImageGenerationModels(): Promise<{
 }
 
 export interface GenerationProgress {
-  stage: 'generating' | 'uploading' | 'complete'
+  stage: 'generating' | 'uploading' | 'complete' | 'loading_parent'
   message: string
   progress: number
 }
@@ -346,4 +347,74 @@ export async function refreshAssetUrl(id: string): Promise<{ url: string }> {
     method: 'POST',
   })
   return response.json()
+}
+
+export type MediaCanvaHandoffResponse =
+  | { success: true; edit_url: string; design_id?: string }
+  | { success: false; error?: string; code?: 'NOT_CONNECTED' | 'HANDOFF_FAILED' }
+
+export async function openMediaAssetInCanva(assetId: string): Promise<MediaCanvaHandoffResponse> {
+  const { backendPost } = await import('@/lib/api/backend-client')
+  try {
+    return await backendPost<MediaCanvaHandoffResponse>(
+      `/api/media/assets/${assetId}/canva-handoff`,
+      {},
+    )
+  } catch (err) {
+    return {
+      success: false,
+      code: 'HANDOFF_FAILED',
+      error: err instanceof Error ? err.message : "Couldn't open in Canva. Try again.",
+    }
+  }
+}
+
+export async function resolveMediaAssetIdByUrl(url: string): Promise<string | null> {
+  const trimmed = url.trim()
+  if (!trimmed) return null
+  try {
+    const res = await backendGet<{ id: string }>(
+      `/api/media/assets/resolve-by-url?url=${encodeURIComponent(trimmed)}`,
+    )
+    if (typeof res?.id === 'string' && res.id.trim()) return res.id
+  } catch {
+    // Fall through to client lookup (API may not have resolve-by-url yet).
+  }
+  return resolveMediaAssetIdByUrlClient(trimmed)
+}
+
+function extractMediaStoragePath(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    const markers = ['/object/sign/media/', '/object/public/media/', '/object/authenticated/media/']
+    for (const marker of markers) {
+      const idx = parsed.pathname.indexOf(marker)
+      if (idx >= 0) {
+        return decodeURIComponent(parsed.pathname.slice(idx + marker.length)).split('?')[0] || null
+      }
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
+async function resolveMediaAssetIdByUrlClient(url: string): Promise<string | null> {
+  const filePath = extractMediaStoragePath(url)
+  if (!filePath) return null
+  try {
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('media_assets')
+      .select('id')
+      .eq('file_path', filePath)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error || !data?.id) return null
+    return String(data.id)
+  } catch {
+    return null
+  }
 }

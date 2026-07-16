@@ -72,7 +72,12 @@ export function messageContentBlockPartA(
       ) : block.kind === 'file' ? (
         <PdfCard url={block.url} label={block.fileName ?? block.title} />
       ) : (
-        <GeneratedImage url={block.url} prompt={block.prompt ?? block.title} />
+        <GeneratedImage
+          url={block.url}
+          prompt={block.prompt ?? block.title}
+          mediaAssetId={block.mediaAssetId}
+          spaceId={block.spaceId}
+        />
       )
     if (openPreview && onOpenDeliverablePreview) {
       return (

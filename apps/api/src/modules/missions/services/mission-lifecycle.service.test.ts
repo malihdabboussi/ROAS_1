@@ -77,7 +77,22 @@ function createHarness(tableResults: Record<string, QueryResult> = {}) {
       priority: 'medium',
       correlation_id: 'correlation-1',
     }),
-    updateSubtask: vi.fn().mockResolvedValue({ id: 'subtask-1', scheduled_at: null }),
+    getSubtaskById: vi.fn().mockResolvedValue({
+      id: 'subtask-1',
+      title: 'Pre-call strategy map',
+      status: 'pending',
+      assigned_agent_key: 'nate',
+      feedback: null,
+      scheduled_at: null,
+    }),
+    updateSubtask: vi.fn().mockResolvedValue({
+      id: 'subtask-1',
+      title: 'Pre-call strategy map',
+      status: 'pending',
+      assigned_agent_key: 'nate',
+      feedback: null,
+      scheduled_at: null,
+    }),
     reschedulePendingSubtaskExecutionOutbox: vi.fn(
       async (
         supabase: SupabaseClient,

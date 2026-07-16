@@ -86,7 +86,7 @@ export function DeleteCustomDomainDialog({
                       Are you sure you want to delete <strong>{domain.domain_name}</strong>?
                     </p>
                     <p className="body-3 text-muted-foreground">
-                      This will remove the domain from the domain provider and from Vibey. This
+                      This will remove the domain from the domain provider and from ROAS. This
                       action cannot be undone.
                     </p>
 

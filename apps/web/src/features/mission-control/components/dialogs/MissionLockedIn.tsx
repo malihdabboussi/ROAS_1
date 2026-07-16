@@ -25,12 +25,20 @@ function buildClosedSummary(blocks: MessageContentBlock[]): string {
 
 interface MissionLockedInProps {
   subtask: MissionSubtask
+  /** Keep the stream open when first mounted (e.g. subtask detail panel). */
+  defaultOpen?: boolean
+  maxHeightClass?: string
 }
 
-export function MissionLockedIn({ subtask }: MissionLockedInProps) {
+export function MissionLockedIn({
+  subtask,
+  defaultOpen = false,
+  maxHeightClass = 'max-h-48',
+}: MissionLockedInProps) {
   const { blocks, isStreaming } = useMissionExecStream(subtask)
   const hasActiveBlock = isStreaming && blocks.some((b) => 'state' in b && b.state === 'active')
-  const [expanded, setExpanded] = useState(hasActiveBlock)
+  const [expanded, setExpanded] = useState(defaultOpen || isStreaming || hasActiveBlock)
+  const [userCollapsed, setUserCollapsed] = useState(false)
   const [userScrolled, setUserScrolled] = useState(false)
   const [showTopFade, setShowTopFade] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -45,7 +53,8 @@ export function MissionLockedIn({ subtask }: MissionLockedInProps) {
   }, [])
 
   useEffect(() => {
-    if (hasActiveBlock) {
+    if (userCollapsed) return
+    if (isStreaming || hasActiveBlock || defaultOpen) {
       setExpanded(true)
       return
     }
@@ -53,7 +62,7 @@ export function MissionLockedIn({ subtask }: MissionLockedInProps) {
       setExpanded(false)
     }, 600)
     return () => clearTimeout(collapseTimeout)
-  }, [hasActiveBlock])
+  }, [isStreaming, hasActiveBlock, defaultOpen, userCollapsed])
 
   useEffect(() => {
     if (!userScrolled && scrollRef.current) {
@@ -73,8 +82,9 @@ export function MissionLockedIn({ subtask }: MissionLockedInProps) {
 
   if (!hasVisibleContent && !isStreaming) return null
 
-  const summary = hasActiveBlock ? '' : buildClosedSummary(blocks)
-  const label = hasActiveBlock ? 'Locked in...' : summary ? `Locked in · ${summary}` : 'Locked in'
+  const live = isStreaming || hasActiveBlock
+  const summary = live ? '' : buildClosedSummary(blocks)
+  const label = live ? 'Locked in...' : summary ? `Locked in · ${summary}` : 'Locked in'
 
   let toolIdx = 0
 
@@ -82,11 +92,15 @@ export function MissionLockedIn({ subtask }: MissionLockedInProps) {
     <div className="mt-2 overflow-hidden rounded-lg">
       <button
         type="button"
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => {
+          const next = !expanded
+          setExpanded(next)
+          setUserCollapsed(!next)
+        }}
         className="flex w-full items-center gap-2 py-1 pl-0 pr-3"
       >
         <span
-          className={`body-3 font-medium ${hasActiveBlock ? 'text-shimmer-gradient animate-[shimmer_4s_infinite_linear]' : 'text-muted-foreground'}`}
+          className={`body-3 font-medium ${live ? 'text-shimmer-gradient animate-[shimmer_4s_infinite_linear]' : 'text-muted-foreground'}`}
         >
           {label}
         </span>
@@ -101,7 +115,7 @@ export function MissionLockedIn({ subtask }: MissionLockedInProps) {
           <div
             ref={scrollRef}
             onScroll={handleScroll}
-            className="flex max-h-48 flex-col gap-1 overflow-y-auto py-1"
+            className={`flex ${maxHeightClass} flex-col gap-1 overflow-y-auto py-1`}
           >
             {blocks.map((block) => {
               if (block.type === 'thinking_transcript') {
@@ -115,8 +129,7 @@ export function MissionLockedIn({ subtask }: MissionLockedInProps) {
                 return (
                   <div
                     key={block.id}
-                    className="text-muted-foreground body-3 py-0.5 pl-0 pr-3"
-                    style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                    className="text-muted-foreground body-3 whitespace-pre-wrap break-words py-0.5 pl-0 pr-3"
                   >
                     {displayText}
                   </div>
@@ -136,8 +149,7 @@ export function MissionLockedIn({ subtask }: MissionLockedInProps) {
                 return (
                   <div
                     key={block.id}
-                    className="body-3 py-0.5 pl-0 pr-3 text-[var(--color-foreground)]"
-                    style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                    className="body-3 text-foreground whitespace-pre-wrap break-words py-0.5 pl-0 pr-3"
                   >
                     {block.content}
                   </div>

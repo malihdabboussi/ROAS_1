@@ -54,7 +54,7 @@ function conversation(overrides: Partial<Conversation> & { id: string }): Conver
 const conversations = [
   conversation({
     id: 'pinned-1',
-    title: 'Chat with Vibey',
+    title: 'Chat with ROAS',
     agent_id: 'atlas',
     metadata: { pinned: true },
   }),

@@ -228,7 +228,7 @@ export function AgentInfoAccessTab(props: AgentInfoAccessTabProps) {
           {collapsed['policy:brain_access'] !== true ? (
             <div className="px-spacing-2 pb-spacing-2">
               <div className="surface-card border-border rounded-spacing-3 border p-3">
-                <p className="body-3 text-foreground font-medium">Protected by Vibey</p>
+                <p className="body-3 text-foreground font-medium">Protected by ROAS</p>
                 <p className="body-4 text-muted-foreground mt-1">
                   {protectedAgentDescription(selected.agent_key)}
                 </p>

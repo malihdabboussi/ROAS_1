@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Unsubscribe | Vibey',
+  title: 'Unsubscribe | ROAS',
   description: 'Manage your email preferences',
 }
 

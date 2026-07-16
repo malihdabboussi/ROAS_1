@@ -141,7 +141,7 @@ describe('AgentsGrid', () => {
     vi.clearAllMocks()
   })
 
-  it('renders scoped team groups, publishes context, and stays render-stable', async () => {
+  it('renders scoped agents flat by default, publishes context, and stays render-stable', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const onOpenAgent = vi.fn()
     let commitCount = 0
@@ -186,7 +186,7 @@ describe('AgentsGrid', () => {
 
       await flushAsyncWork()
 
-      expect(screen.getByText('Growth Team')).toBeTruthy()
+      expect(screen.queryByText('Growth Team')).toBeNull()
       expect(screen.getByText('Atlas')).toBeTruthy()
       expect(screen.queryByText('Blake')).toBeNull()
       expect(screen.queryByText('Cora')).toBeNull()
@@ -198,7 +198,7 @@ describe('AgentsGrid', () => {
         expect(mocks.setAgentsContext).toHaveBeenCalledWith(
           expect.objectContaining({
             panel: 'agent-list',
-            groupBy: 'team',
+            groupBy: 'none',
             totalAgentCount: 1,
             visibleAgentCount: 1,
             visibleAgents: [
@@ -211,9 +211,6 @@ describe('AgentsGrid', () => {
           }),
         ),
       )
-
-      fireEvent.click(screen.getByRole('button', { name: /Growth Team/i }))
-      expect(screen.queryByText('Atlas')).toBeNull()
 
       const maximumDepthErrors = consoleError.mock.calls.filter((call) =>
         call.some((part) => String(part).includes('Maximum update depth')),

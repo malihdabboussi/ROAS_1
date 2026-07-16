@@ -49,7 +49,7 @@ describe('SpaceChatHeaderActions', () => {
       />,
     )
 
-    fireEvent.click(screen.getByLabelText('Collapse Vibey chat'))
+    fireEvent.click(screen.getByLabelText('Collapse ROAS chat'))
     fireEvent.click(screen.getByLabelText('Search in conversation'))
     fireEvent.click(screen.getByLabelText('New conversation'))
     fireEvent.click(screen.getByLabelText('Show tasks and runs'))

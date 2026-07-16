@@ -58,6 +58,19 @@ export class MissionPlanPhaseService {
     }
 
     try {
+      const missionInputEarly =
+        mission.input && typeof mission.input === 'object' && !Array.isArray(mission.input)
+          ? (mission.input as Record<string, unknown>)
+          : {}
+      const playbookIdEarly =
+        typeof missionInputEarly.playbook_id === 'string'
+          ? missionInputEarly.playbook_id.trim()
+          : ''
+
+      if (playbookIdEarly === 'webinar-fulfillment' && mission.campaign_id) {
+        await this.ensureWebinarFulfillmentTeam(mission, playbookIdEarly)
+      }
+
       if (mission.campaign_id) {
         let campaignWorkersQuery = missionClient
           .from('campaign_agents')
@@ -332,5 +345,51 @@ export class MissionPlanPhaseService {
       this.logger.error(`Plan phase failed for mission ${missionId}: ${errorMessage}`)
       throw error
     }
+  }
+
+  private async ensureWebinarFulfillmentTeam(
+    mission: {
+      user_id: string
+      org_id?: string | null
+      campaign_id?: string | null
+    },
+    playbookId: string,
+  ): Promise<void> {
+    const callbackUrl = this.configService.get<string>('missionApi.callbackUrl') || ''
+    const internalToken = this.configService.get<string>('missionApi.internalToken') || ''
+    if (!callbackUrl || !internalToken) {
+      this.logger.warn('Skipping webinar team ensure: mission API callback config missing')
+      return
+    }
+    const baseUrl = callbackUrl.replace('/api/internal/missions/callback', '')
+    const ensureUrl = `${baseUrl}/api/internal/agents/ensure-webinar-team`
+    const res = await fetch(ensureUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${internalToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: mission.user_id,
+        org_id: mission.org_id ?? null,
+        campaign_id: mission.campaign_id ?? null,
+        playbook_id: playbookId,
+      }),
+    })
+    if (!res.ok) {
+      const text = await res.text().catch(() => '')
+      throw new Error(`Webinar team ensure failed (${res.status}): ${text}`)
+    }
+    const body = (await res.json().catch(() => null)) as {
+      agents?: Array<{ agent_key?: string; role_key?: string; created?: boolean }>
+    } | null
+    const hired = (body?.agents || [])
+      .filter((a) => a.created)
+      .map((a) => a.agent_key || a.role_key)
+      .filter(Boolean)
+    this.logger.log(
+      `Webinar fulfillment team ensured for campaign ${mission.campaign_id}` +
+        (hired.length ? ` (hired: ${hired.join(', ')})` : ' (already present)'),
+    )
   }
 }

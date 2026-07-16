@@ -1,4 +1,9 @@
-import type { HomeCardDefinition, HomeCardId, HomeLayoutState } from '../types/home-cards'
+import type {
+  HomeCardDefinition,
+  HomeCardGridSize,
+  HomeCardId,
+  HomeLayoutState,
+} from '../types/home-cards'
 
 export const HOME_LAYOUT_STORAGE_KEY = 'vibey-home-layout'
 
@@ -79,6 +84,26 @@ export function homeCardDefinition(id: HomeCardId): HomeCardDefinition {
   return HOME_CARD_DEFINITIONS.find((c) => c.id === id)!
 }
 
+export function homeCardGridSize(layout: HomeLayoutState, id: HomeCardId): HomeCardGridSize {
+  return layout.cardSizes?.[id] === 'full' ? 'full' : 'half'
+}
+
+function parseCardSizes(
+  raw: unknown,
+  cardIds: HomeCardId[],
+): Partial<Record<HomeCardId, HomeCardGridSize>> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const allowed = new Set(cardIds)
+  const out: Partial<Record<HomeCardId, HomeCardGridSize>> = {}
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!allowed.has(key as HomeCardId)) continue
+    if (value === 'half' || value === 'full') {
+      out[key as HomeCardId] = value
+    }
+  }
+  return Object.keys(out).length > 0 ? out : undefined
+}
+
 export function parseHomeLayout(raw: unknown): HomeLayoutState {
   if (!raw || typeof raw !== 'object')
     return { ...DEFAULT_HOME_LAYOUT, cardIds: [...DEFAULT_HOME_CARD_IDS] }
@@ -90,5 +115,6 @@ export function parseHomeLayout(raw: unknown): HomeLayoutState {
     (id): id is HomeCardId => typeof id === 'string' && valid.has(id as HomeCardId),
   )
   if (cardIds.length === 0) return { ...DEFAULT_HOME_LAYOUT, cardIds: [...DEFAULT_HOME_CARD_IDS] }
-  return { cardIds }
+  const cardSizes = parseCardSizes(o.cardSizes, cardIds)
+  return cardSizes ? { cardIds, cardSizes } : { cardIds }
 }

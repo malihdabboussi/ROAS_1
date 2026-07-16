@@ -31,9 +31,9 @@ export const IMAGE_MODELS: readonly ImageModelDefinition[] = [
   },
   {
     id: 'gpt-5.4-image-2',
-    label: 'GPT Image 2',
+    label: 'ChatGPT',
     provider: 'openai',
-    description: 'Best for legible on-image text.',
+    description: 'OpenAI GPT Image 2 — ChatGPT images (not GPT-5.6 chat).',
     supportsEdit: true,
     supportsGenerate: true,
     defaultAspectRatios: ['1:1', '9:16'],
@@ -49,7 +49,7 @@ export const IMAGE_MODELS: readonly ImageModelDefinition[] = [
   },
 ] as const
 
-export const DEFAULT_IMAGE_MODEL_ID = 'gemini-3.1-flash-image-preview'
+export const DEFAULT_IMAGE_MODEL_ID = 'gpt-5.4-image-2'
 
 export const IMAGE_MODEL_BY_ID: Record<string, ImageModelDefinition> = Object.fromEntries(
   IMAGE_MODELS.map((m) => [m.id, m]),

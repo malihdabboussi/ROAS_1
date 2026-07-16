@@ -7,13 +7,13 @@ const TEXT_MUTED_RGB: [number, number, number] = [55, 65, 81]
 const VIBEY_PURPLE_RGB: [number, number, number] = [147, 51, 234]
 
 /**
- * Draw "Made with Vibey" centered at the bottom of every page (jsPDF — html2canvas omits per-page HTML footers).
+ * Draw "Made with ROAS" centered at the bottom of every page (jsPDF — html2canvas omits per-page HTML footers).
  */
 export function stampMadeWithVibeyFooterOnAllPages(pdf: jsPDF): void {
   const url = getArtifactPdfPlatformUrl()
   const n = pdf.getNumberOfPages()
   const part1 = 'Made with '
-  const part2 = 'Vibey'
+  const part2 = 'ROAS'
 
   for (let i = 1; i <= n; i++) {
     pdf.setPage(i)

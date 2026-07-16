@@ -20,7 +20,7 @@ function formatWhen(ev: CalendarAgendaEvent): string {
   })}`
 }
 
-/** Open left-rail chat (DiBi/Vibey) scoped to Meetings for this calendar event. */
+/** Open left-rail chat (Vibey) scoped to Meetings for this calendar event. */
 export function askAboutMeetingInChat(ev: CalendarAgendaEvent): void {
   const spaceId = resolveMeetingsSpaceId()
   const space = spaceId

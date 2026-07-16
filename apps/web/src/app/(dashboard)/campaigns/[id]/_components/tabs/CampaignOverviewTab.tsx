@@ -18,6 +18,8 @@ import type { Mission, MissionAgent } from '@/features/mission-control/types'
 import type { CampaignTeamAgent } from '@/features/studio/services/campaign.service'
 import { createSpace, fetchSpaces } from '@/features/spaces/services/spaces.service'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
+import { matchesFlowsConceptSpace } from '@/lib/flows/flows-scope-storage'
+import { CampaignOverviewDocsSection } from './CampaignOverviewDocsSection'
 import type { Space } from '@/features/spaces/types'
 
 interface CampaignOverviewTabProps {
@@ -75,8 +77,16 @@ export function CampaignOverviewTab({
     }
   }, [campaignId, dashboardMissions])
 
-  const openSpace = (spaceId: string) => {
-    useSpacesStore.getState().setActiveSpace(spaceId)
+  const openSpace = (spaceId: string, opts?: { docs?: boolean }) => {
+    const store = useSpacesStore.getState()
+    store.setActiveSpace(spaceId)
+    if (opts?.docs) {
+      const space = store.spaces.find((row) => row.id === spaceId) ?? spaces.find((row) => row.id === spaceId)
+      const docsView = space?.schema?.views?.find(
+        (view) => view && typeof view === 'object' && (view as { type?: string }).type === 'docs',
+      ) as { id?: string } | undefined
+      if (docsView?.id) store.setActiveView(docsView.id)
+    }
     router.push('/spaces')
   }
 
@@ -99,6 +109,8 @@ export function CampaignOverviewTab({
   }
 
   const trainKnowledgeHref = brainScopeHref(`campaign:${campaignId}`, 'add-info')
+  const primarySpaceId =
+    spaces.find((space) => !matchesFlowsConceptSpace(space))?.id ?? spaces[0]?.id ?? null
 
   return (
     <div className="gap-spacing-6 flex flex-col pb-8">
@@ -242,6 +254,12 @@ export function CampaignOverviewTab({
           )}
         </section>
       </div>
+
+      <CampaignOverviewDocsSection
+        campaignId={campaignId}
+        primarySpaceId={primarySpaceId}
+        onOpenSpace={(spaceId) => openSpace(spaceId, { docs: true })}
+      />
 
       <section className="surface-card border-border rounded-spacing-3 border p-4">
         <div className="mb-spacing-3 flex items-center justify-between gap-2">

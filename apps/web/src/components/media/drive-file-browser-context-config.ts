@@ -10,7 +10,7 @@ export function getDriveFileBrowserContextConfig(
     case 'brain':
       return {
         selectLabel: 'Import to Brain',
-        exportLabel: 'Export to Vibey',
+        exportLabel: 'Export to ROAS',
         showSelect: true,
         showExport: false,
         showRename: false,
@@ -30,7 +30,7 @@ export function getDriveFileBrowserContextConfig(
     case 'mission_inbox':
       return {
         selectLabel: 'Attach to Inbox',
-        exportLabel: 'Export to Vibey',
+        exportLabel: 'Export to ROAS',
         showSelect: true,
         showExport: false,
         showRename: false,
@@ -40,7 +40,7 @@ export function getDriveFileBrowserContextConfig(
     case 'media_library':
       return {
         selectLabel: 'Add to library',
-        exportLabel: 'Export to Vibey',
+        exportLabel: 'Export to ROAS',
         showSelect: true,
         showExport: false,
         showRename: false,
@@ -50,7 +50,7 @@ export function getDriveFileBrowserContextConfig(
     case 'ad_creative':
       return {
         selectLabel: 'Use for ad',
-        exportLabel: 'Export to Vibey',
+        exportLabel: 'Export to ROAS',
         showSelect: false,
         showExport: false,
         showRename: false,
@@ -70,7 +70,7 @@ export function getDriveFileBrowserContextConfig(
     case 'chat':
       return {
         selectLabel: 'Add to chat',
-        exportLabel: 'Export to Vibey',
+        exportLabel: 'Export to ROAS',
         showSelect: true,
         showExport: false,
         showRename: false,

@@ -33,6 +33,7 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
       }),
       updateSpace: vi.fn().mockResolvedValue({}),
       findItemById: vi.fn().mockResolvedValue(parentItem),
+      findItemByFathomMeetingId: vi.fn().mockResolvedValue(null),
       findSubtasksByParentId: vi.fn().mockResolvedValue([]),
       findActivityByItemId: vi.fn().mockResolvedValue([]),
     }
@@ -173,6 +174,7 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
         title: 'Follow up with buyer',
         source: 'agent_suggested',
         priority: 'medium',
+        parent_item_id: 'item_parent',
         custom_data: expect.objectContaining({
           entry_type: 'follow_up',
           source_call_item_id: 'item_parent',

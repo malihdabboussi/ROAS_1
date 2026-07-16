@@ -62,7 +62,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     id: 'meta',
     provider: 'meta',
     name: 'Meta Ads',
-    description: 'Connect Meta to publish Facebook and Instagram ads directly from Vibey.',
+    description: 'Connect Meta to publish Facebook and Instagram ads directly from ROAS.',
     category: 'ads_analytics',
     is_active: true,
   },
@@ -405,7 +405,7 @@ const ADMIN_INTEGRATIONS: Integration[] = [
     provider: 'openai_codex',
     name: 'OpenAI Codex',
     description:
-      'Admin-only connection for using your OpenAI subscription on Codex models without spending Vibey model credits.',
+      'Admin-only connection for using your OpenAI subscription on Codex models without spending ROAS model credits.',
     category: 'admin',
     is_active: true,
   },
@@ -414,7 +414,7 @@ const ADMIN_INTEGRATIONS: Integration[] = [
     provider: 'anthropic_claude',
     name: 'Claude Subscription',
     description:
-      'Admin-only connection for using your Claude subscription on Claude models without spending Vibey model credits.',
+      'Admin-only connection for using your Claude subscription on Claude models without spending ROAS model credits.',
     category: 'admin',
     auth_type: 'api_key',
     connection_fields: [
@@ -430,7 +430,7 @@ const ADMIN_INTEGRATIONS: Integration[] = [
         helpSteps: [
           'Open a terminal on any machine where Claude Code is signed in to your Claude subscription.',
           'Run the command and copy the full token it prints.',
-          'Paste it here. Vibey accepts the token that starts with sk-ant-oat01-.',
+          'Paste it here. ROAS accepts the token that starts with sk-ant-oat01-.',
         ],
       },
     ],

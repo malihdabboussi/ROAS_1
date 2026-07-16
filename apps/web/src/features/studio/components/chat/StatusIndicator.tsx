@@ -29,7 +29,7 @@ const THINKING_MESSAGES = [
 ]
 
 /**
- * StatusIndicator — Shows progress while Vibey is working.
+ * StatusIndicator — Shows progress while ROAS is working.
  *
  * Thinking (no tools yet) → emerald/green orb + typewriter rotating messages
  * Tool active             → orange orb + shimmer label

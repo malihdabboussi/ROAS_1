@@ -1,5 +1,12 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 15:45] - [FIX]
+
+What: Meeting detail CTA says Vibey (not DiBi). Prep agenda status reconciles `task_execution_status` so failed agent runs show Prep failed; task-agent writes `prep_status` on done/failed and retries OpenClaw session-lock timeouts.
+Why: Nate check-in prep sat on “pending” after a Fly session-store lock timeout; UI never flipped to failed/retry. CTA used DiBi branding.
+Impact: Hard-refresh after deploy. Retry prep on failed chips. Live prep re-invoked for Nate item.
+Files: `HomeMeetingDetailHost.tsx`, `ask-meeting-in-chat.ts`, `meetings-precall-prep.helpers.ts` (+test), `space-items.repository.ts`, `task-agent.repository.ts`, `task-agent.service.ts`
+
 ## [2026-07-16 15:23] - [FEATURE]
 
 What: Home Agenda meeting workspace slice — single-event prep API, reliable Prep chip (open / retry), meeting detail dialog (who / where / prep / related call tasks), DiBi chat seed, calendar `location` + related-call enrichment, Meetings template **Agenda** calendar view with Google/Outlook sources.

@@ -61,6 +61,18 @@ describe('meetings-precall-prep.helpers', () => {
     })
   })
 
+  it('reconciles pending prep to failed when task execution failed', () => {
+    expect(
+      mapPrepItemToAgendaLink({
+        id: 'item-2',
+        space_id: 'space-1',
+        title: 'Prep — Stuck',
+        custom_data: { prep_status: 'pending' },
+        task_execution_status: 'failed',
+      }).status,
+    ).toBe('failed')
+  })
+
   it('computes local day bounds', () => {
     const { dayKey, startIso, endIso } = localDayBounds(
       new Date('2026-07-16T20:00:00.000Z'),

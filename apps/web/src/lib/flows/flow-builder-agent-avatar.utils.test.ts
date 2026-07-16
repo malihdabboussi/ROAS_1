@@ -13,7 +13,7 @@ describe('flow-builder-agent-avatar.utils', () => {
             org_id: null,
             user_id: null,
             agent_key: 'vibey',
-            display_name: 'Vibey',
+            display_name: 'ROAS',
             avatar_url: 'https://cdn.example/vibey.png',
             role_label: null,
             specialties: [],

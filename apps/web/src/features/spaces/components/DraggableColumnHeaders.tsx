@@ -36,6 +36,8 @@ const DEFAULT_COL_WIDTHS: Record<string, number> = {
   last_name: 130,
   phone: 130,
   tags: 200,
+  attendees: 360,
+  recording_url: 220,
   contact_type: 130,
   contact_source: 160,
   business_name: 180,

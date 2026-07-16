@@ -25,9 +25,9 @@ exports.IMAGE_MODELS = [
     },
     {
         id: 'gpt-5.4-image-2',
-        label: 'GPT Image 2',
+        label: 'ChatGPT',
         provider: 'openai',
-        description: 'Best for legible on-image text.',
+        description: 'OpenAI GPT Image 2 — ChatGPT images (not GPT-5.6 chat).',
         supportsEdit: true,
         supportsGenerate: true,
         defaultAspectRatios: ['1:1', '9:16'],
@@ -42,7 +42,7 @@ exports.IMAGE_MODELS = [
         defaultAspectRatios: ['1:1', '4:5', '9:16'],
     },
 ];
-exports.DEFAULT_IMAGE_MODEL_ID = 'gemini-3.1-flash-image-preview';
+exports.DEFAULT_IMAGE_MODEL_ID = 'gpt-5.4-image-2';
 exports.IMAGE_MODEL_BY_ID = Object.fromEntries(exports.IMAGE_MODELS.map((m) => [m.id, m]));
 function getImageModel(id) {
     return exports.IMAGE_MODEL_BY_ID[id];

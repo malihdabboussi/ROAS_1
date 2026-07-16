@@ -52,7 +52,7 @@ function buildErrorFeedbackMessage(errors: PreviewError[]): string {
 }
 
 /**
- * Watches for unreported preview errors and auto-sends them to Vibey when the agent is idle.
+ * Watches for unreported preview errors and auto-sends them to ROAS when the agent is idle.
  * Must be mounted once in a component that has access to the active campaign context.
  */
 export function usePreviewErrorFeedback(campaignId: string | null) {

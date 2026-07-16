@@ -131,11 +131,16 @@ export class AgentSyncController {
       definitions: Array<{ file_name: string; content: string }>
     },
   ) {
+    const userId = body.user_id?.trim() || ''
+    const gatewayAgentId = this.resolveGatewayAgentId(agentKey, userId, null)
     const agentsBaseDir = this.syncService.getAgentsBaseDir()
-    const workspace = `${agentsBaseDir}/${agentKey}`
+    const workspace =
+      process.env.AGENT_RUNTIME_MODE?.trim() === 'shared' && userId
+        ? `${agentsBaseDir}/users/${userId}/${agentKey}`
+        : `${agentsBaseDir}/${agentKey}`
 
     const result = await this.gateway.ensureAgent({
-      agentKey,
+      agentKey: gatewayAgentId,
       name: body.name,
       workspace,
       definitions: body.definitions,
@@ -144,13 +149,13 @@ export class AgentSyncController {
     if (result.ok) {
       const syncResult = await this.syncService.syncAgent(agentKey, body.user_id)
       this.readinessService.invalidateRuntime({
-        userId: body.user_id ?? '',
+        userId,
         orgId: null,
         agentKey,
-        gatewayAgentId: agentKey,
+        gatewayAgentId,
       })
       this.logger.log(
-        `Agent "${agentKey}" registered: gateway=${result.created ? 'created' : 'exists'}, files=${result.filesWritten}, synced=${syncResult.synced}, healthy=${syncResult.healthy}`,
+        `Agent "${agentKey}" registered as "${gatewayAgentId}": gateway=${result.created ? 'created' : 'exists'}, files=${result.filesWritten}, synced=${syncResult.synced}, healthy=${syncResult.healthy}`,
       )
       return {
         ok: result.ok,

@@ -1,8 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { MouseEvent } from 'react'
-import { ChevronRight, Fullscreen, MoreVertical } from 'lucide-react'
+import { ChevronRight, MoreVertical } from 'lucide-react'
+import { HomeChatHeroToggle } from '@/components/home-dashboard-v4/HomeDashboardV4Shell'
+import { MediaGenerateComposer } from '@/components/media'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { ConfirmDialog } from '@/features/settings/components/settings-content/ConfirmDialog'
 import { deleteAsset, type MediaAsset } from '@/lib/services/media-api'
@@ -10,6 +11,7 @@ import { cn } from '@/lib/utils/cn'
 import { MediaMenuDropdown } from '../../components/media-menu/MediaMenuDropdown'
 import { useMediaDetailQuery } from '../../components/media/use-media-detail-query'
 import { useSpaceMedia } from '../../hooks/use-space-media'
+import { useSpaceMediaComposerCollapsed } from '../../hooks/use-space-media-composer-collapsed'
 import { normalizeMediaGroupBy } from '../../lib/media-group-by-options'
 import { spaceGroupBadgeChipProps } from '../../lib/space-group-badge-glass'
 import type {
@@ -19,7 +21,6 @@ import type {
   ViewDef,
 } from '../../types/space-schema'
 import { DEFAULT_MEDIA_VIEW_CONFIG, resolveMediaTypeFilters } from '../../types/space-schema'
-import { MediaDeepView } from './MediaDeepView'
 import { resolveMediaEmptyState } from './MediaEmptyMockups'
 
 function mediaCardGridClass(layout: MediaLayoutMode, cardSize: MediaPreviewCardSize): string {
@@ -77,17 +78,13 @@ function formatMediaGroupDisplayLabel(gb: MediaGroupBy, rawKey: string): string 
 
 export function SpaceMediaView({
   spaceId,
-  campaignId: _campaignId,
+  campaignId,
   view,
-  previewSelection,
-  onPreviewSelectionChange,
   onMediaDeepMetaChange,
 }: {
   spaceId: string
   campaignId: string | null
   view: ViewDef
-  previewSelection: MediaAsset | null
-  onPreviewSelectionChange: (next: MediaAsset | null) => void
   onMediaDeepMetaChange: (meta: { id: string; title: string } | null) => void
 }) {
   const mc = useMemo(
@@ -101,6 +98,7 @@ export function SpaceMediaView({
     sourceFilter: mc.source_filter ?? 'all',
     search: mc.search_query,
   })
+  const { collapsed: composerCollapsed, toggle: toggleComposer } = useSpaceMediaComposerCollapsed()
 
   const [collapsedMediaGroups, setCollapsedMediaGroups] = useState<Record<string, boolean>>({})
 
@@ -138,14 +136,9 @@ export function SpaceMediaView({
   }, [assets, groupByMode, mc.group_sort])
 
   const openRow = (row: MediaAsset) => {
-    onPreviewSelectionChange(row)
-  }
-
-  const openRowFull = (row: MediaAsset, e: MouseEvent) => {
-    e.stopPropagation()
+    // Opens the right slide-out editor via `?media=` (hosted by SpaceItemsContainer).
     setMediaQuery(row.id)
     onMediaDeepMetaChange({ id: row.id, title: row.name })
-    onPreviewSelectionChange(null)
   }
 
   const [menuState, setMenuState] = useState<{
@@ -159,21 +152,13 @@ export function SpaceMediaView({
     setMenuState({ asset: row, position })
   }, [])
 
-  const handleAssetUpdated = useCallback(
-    (updated: MediaAsset) => {
-      if (previewSelection?.id === updated.id) onPreviewSelectionChange(updated)
-      void reload()
-    },
-    [previewSelection?.id, onPreviewSelectionChange, reload],
-  )
+  const handleAssetUpdated = useCallback(() => {
+    void reload()
+  }, [reload])
 
-  const handleAssetDeleted = useCallback(
-    (deletedId: string) => {
-      if (previewSelection?.id === deletedId) onPreviewSelectionChange(null)
-      void reload()
-    },
-    [previewSelection?.id, onPreviewSelectionChange, reload],
-  )
+  const handleAssetDeleted = useCallback(() => {
+    void reload()
+  }, [reload])
 
   const previewCardSize = mc.preview_card_size ?? 'preview'
 
@@ -182,30 +167,59 @@ export function SpaceMediaView({
 
   const groupChip = spaceGroupBadgeChipProps(undefined)
 
-  if (mediaId) {
-    return <MediaDeepView onDeepMetaChange={onMediaDeepMetaChange} />
-  }
-
-  if (loading) {
-    return (
-      <div className="py-spacing-12 flex flex-1 items-center justify-center">
-        <VibeyLoadingOrb text="Loading media…" state="processing" size="lg" />
-      </div>
-    )
-  }
-  if (error) {
-    return (
-      <div className="body-3 text-muted-foreground flex flex-1 items-center justify-center">
-        {error}
-      </div>
-    )
-  }
-
-  const isEmpty = grouped.every((g) => g.items.length === 0)
+  const isEmpty = !loading && !error && grouped.every((g) => g.items.length === 0)
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-      {isEmpty ? (
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      {/* Keep composer outside overflow-hidden so Aspect/Model menus are not clipped.
+          Drop z-dropdown while the slide-out editor is open so it cannot paint over History. */}
+      <div
+        className={cn(
+          'home-dashboard-v4 relative min-w-0 shrink-0 overflow-visible',
+          mediaId ? 'z-0' : 'z-dropdown',
+        )}
+      >
+        <div className="home-dashboard-v4-hero-glow" aria-hidden />
+        <div className="home-dashboard-v4-hero-grid" aria-hidden />
+        <div className="home-dashboard-v4-column home-dashboard-v4-column-media-composer min-w-0">
+          {composerCollapsed ? (
+            <HomeChatHeroToggle
+              collapsed
+              onToggle={toggleComposer}
+              expandLabel="New image"
+              expandAriaLabel="Expand new image composer"
+            />
+          ) : (
+            <>
+              <MediaGenerateComposer
+                spaceId={spaceId}
+                campaignId={campaignId}
+                onGenerated={() => {
+                  void reload()
+                }}
+              />
+              <HomeChatHeroToggle
+                collapsed={false}
+                onToggle={toggleComposer}
+                expandLabel="New image"
+                collapseLabel="Minimize"
+                collapseAriaLabel="Minimize new image composer"
+              />
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      {loading ? (
+        <div className="py-spacing-12 flex flex-1 items-center justify-center">
+          <VibeyLoadingOrb text="Loading media…" state="processing" size="lg" />
+        </div>
+      ) : error ? (
+        <div className="body-3 text-muted-foreground flex flex-1 items-center justify-center">
+          {error}
+        </div>
+      ) : isEmpty ? (
         <div className="gap-spacing-6 px-spacing-4 py-spacing-6 flex min-h-0 flex-1 flex-col items-center justify-center text-center">
           {emptyState.mockup}
           <div className="space-y-spacing-1 max-w-artifact-wide mx-auto">
@@ -215,6 +229,9 @@ export function SpaceMediaView({
         </div>
       ) : (
         <div className="p-spacing-4 min-h-0 flex-1 overflow-y-auto">
+          <div className="mb-spacing-4">
+            <p className="title-h6 text-foreground">Your media</p>
+          </div>
           <div className="gap-spacing-10 flex flex-col">
             {grouped.map((g) => {
               const showHeader = groupByMode !== 'none' && g.displayLabel !== ''
@@ -229,7 +246,7 @@ export function SpaceMediaView({
                         onClick={() =>
                           setCollapsedMediaGroups((m) => ({ ...m, [g.key]: !m[g.key] }))
                         }
-                        className="shrink-0 rounded p-0.5 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+                        className="text-muted-foreground hover:text-foreground shrink-0 rounded p-0.5 transition-colors"
                         aria-expanded={!collapsed}
                       >
                         <ChevronRight
@@ -248,15 +265,13 @@ export function SpaceMediaView({
                       >
                         {g.displayLabel}
                       </span>
-                      <span className="text-xs text-[var(--color-muted-foreground)]">
-                        {g.items.length}
-                      </span>
+                      <span className="body-4 text-muted-foreground">{g.items.length}</span>
                     </div>
                   ) : null}
                   {!collapsed ? (
                     <div className={gridClass}>
                       {g.items.map((row) => {
-                        const selected = previewSelection?.id === row.id
+                        const selected = mediaId === row.id
                         return (
                           <div
                             key={row.id}
@@ -275,11 +290,13 @@ export function SpaceMediaView({
                               e.stopPropagation()
                               openMenuForRow(row, { x: e.clientX, y: e.clientY })
                             }}
-                            className={`surface-card border-border group text-left transition-colors ${
-                              selected
-                                ? 'border-primary ring-primary/30 ring-2'
-                                : 'hover:border-muted-foreground/40'
-                            } ${mc.layout === 'list' ? 'gap-spacing-3 p-spacing-3 flex flex-row' : 'rounded-spacing-3 flex flex-col overflow-hidden border p-0'}`}
+                            className={cn(
+                              'surface-card border-border group text-left transition-colors hover:border-muted-foreground/40',
+                              mc.layout === 'list'
+                                ? 'gap-spacing-3 p-spacing-3 flex flex-row'
+                                : 'rounded-spacing-3 flex flex-col overflow-hidden border p-0',
+                              selected && 'border-primary ring-primary/30 ring-2',
+                            )}
                           >
                             <div
                               className={`bg-muted/20 relative overflow-hidden ${mc.layout === 'list' ? listThumbClass : 'aspect-video w-full'}`}
@@ -318,14 +335,6 @@ export function SpaceMediaView({
                                 >
                                   <MoreVertical className="h-3.5 w-3.5" />
                                 </button>
-                                <button
-                                  type="button"
-                                  className="surface-card rounded-spacing-1 inline-flex p-1"
-                                  aria-label="Open full view"
-                                  onClick={(e) => openRowFull(row, e)}
-                                >
-                                  <Fullscreen className="h-3.5 w-3.5" />
-                                </button>
                               </div>
                             </div>
                             <div
@@ -347,16 +356,15 @@ export function SpaceMediaView({
           </div>
         </div>
       )}
+      </div>
       {menuState ? (
         <MediaMenuDropdown
           asset={menuState.asset}
           pointerPosition={menuState.position}
           onClose={() => setMenuState(null)}
-          onChanged={(updated) => handleAssetUpdated(updated)}
+          onChanged={() => handleAssetUpdated()}
           onOpenFull={() => {
-            setMediaQuery(menuState.asset.id)
-            onMediaDeepMetaChange({ id: menuState.asset.id, title: menuState.asset.name })
-            onPreviewSelectionChange(null)
+            openRow(menuState.asset)
             setMenuState(null)
           }}
           onDeleted={() => {
@@ -380,7 +388,7 @@ export function SpaceMediaView({
           setDeleting(true)
           try {
             await deleteAsset(deleteTarget.id)
-            handleAssetDeleted(deleteTarget.id)
+            handleAssetDeleted()
           } finally {
             setDeleting(false)
             setDeleteTarget(null)

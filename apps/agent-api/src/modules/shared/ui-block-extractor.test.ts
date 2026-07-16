@@ -119,16 +119,19 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
 
   it('emits media asset blocks for generated images', () => {
     vi.spyOn(Date, 'now').mockReturnValue(789)
+    const assetId = '2bbdc0be-a8bc-49ce-bc4c-91e18cc00e4f'
+    const spaceId = 'c0a6bc09-9502-4b0e-9438-302ed1482531'
 
     const blocks = resolveUiBlocksFromToolResult({
       name: 'vibey_backend',
       action: 'generate_image',
-      toolArgs: { data: { prompt: 'A product shot' } },
+      toolArgs: { data: { prompt: 'A product shot', space_id: spaceId } },
       result: {
         success: true,
         image_url: 'https://cdn.vibey.ai/image.png',
-        image_asset_id: 'asset-image-1',
+        image_asset_id: assetId,
         mime_type: 'image/png',
+        space_id: spaceId,
       },
       status: 'completed',
       cachedMetaAdAccounts: [],
@@ -138,13 +141,51 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
     expect(blocks).toEqual([
       expect.objectContaining({
         type: 'media_asset',
-        id: 'media-asset-image-1',
-        mediaAssetId: 'asset-image-1',
+        id: `media-${assetId}`,
+        mediaAssetId: assetId,
+        spaceId,
         url: 'https://cdn.vibey.ai/image.png',
         title: 'Generated image',
         kind: 'image',
         mimeType: 'image/png',
         prompt: 'A product shot',
+      }),
+    ])
+  })
+
+  it('emits media asset blocks for edited images', () => {
+    const assetId = '3482342b-d575-4346-8276-29cedbcd9b9b'
+    const spaceId = 'c0a6bc09-9502-4b0e-9438-302ed1482531'
+
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'edit_image',
+      toolArgs: {
+        data: {
+          prompt: 'Make it 1:1',
+          parent_image_asset_id: '8c116148-62aa-4109-bf19-18e2bad38cf1',
+          space_id: spaceId,
+        },
+      },
+      result: {
+        success: true,
+        image_url: 'https://cdn.vibey.ai/edited.png',
+        image_asset_id: assetId,
+        space_id: spaceId,
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      expect.objectContaining({
+        type: 'media_asset',
+        mediaAssetId: assetId,
+        spaceId,
+        url: 'https://cdn.vibey.ai/edited.png',
+        title: 'Edited image',
+        kind: 'image',
       }),
     ])
   })
@@ -208,6 +249,7 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
 
   it('emits media asset blocks for processed media results', () => {
     vi.spyOn(Date, 'now').mockReturnValue(987)
+    const assetId = '11111111-1111-4111-8111-111111111111'
 
     const blocks = resolveUiBlocksFromToolResult({
       name: 'vibey_backend',
@@ -216,7 +258,7 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
       result: {
         success: true,
         url: 'https://cdn.vibey.ai/audio.mp3',
-        media_asset_id: 'media-1',
+        media_asset_id: assetId,
         file_name: 'audio.mp3',
       },
       status: 'completed',
@@ -227,8 +269,8 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
     expect(blocks).toEqual([
       expect.objectContaining({
         type: 'media_asset',
-        id: 'media-media-1',
-        mediaAssetId: 'media-1',
+        id: `media-${assetId}`,
+        mediaAssetId: assetId,
         url: 'https://cdn.vibey.ai/audio.mp3',
         title: 'audio.mp3',
         kind: 'audio',

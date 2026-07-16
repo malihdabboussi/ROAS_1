@@ -40,6 +40,7 @@ export type MessageContentBlock =
       title: string
       kind: 'image' | 'video' | 'audio' | 'file'
       mediaAssetId?: string
+      spaceId?: string
       mimeType?: string
       fileName?: string
       prompt?: string

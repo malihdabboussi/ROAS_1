@@ -113,11 +113,18 @@ export function MetaIntegrationConnectCard({
               <div className="px-spacing-6 pt-spacing-10 pb-spacing-6 flex flex-col items-center">
                 <div className="gap-spacing-4 flex items-center">
                   <Image
-                    src="/Logos/v2transperent.png"
-                    alt="Vibey"
+                    src="/Logos/roas/icon-black.png"
+                    alt="ROAS"
                     width={40}
                     height={40}
-                    className="h-10 w-10 object-contain"
+                    className="h-10 w-10 object-contain dark:hidden"
+                  />
+                  <Image
+                    src="/Logos/roas/icon-white.png"
+                    alt="ROAS"
+                    width={40}
+                    height={40}
+                    className="hidden h-10 w-10 object-contain dark:block"
                   />
                   <Image
                     src="/Integrations/Composio.png"
@@ -136,7 +143,7 @@ export function MetaIntegrationConnectCard({
                 </div>
 
                 <DialogPrimitive.Title className="title-h3 mt-spacing-6 text-center leading-snug">
-                  Vibey uses Composio
+                  ROAS uses Composio
                   <br />
                   to connect your account
                 </DialogPrimitive.Title>

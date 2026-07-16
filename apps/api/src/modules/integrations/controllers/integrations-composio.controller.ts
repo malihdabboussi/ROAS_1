@@ -30,6 +30,7 @@ export class IntegrationsComposioController {
       connection_data?: Record<string, string>
       connection_scope?: 'personal' | 'org_shared'
       connection_label?: string
+      force_new?: boolean
     },
     @OrgContext() scope: RequestScope,
   ) {

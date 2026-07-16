@@ -193,4 +193,37 @@ describe('AgentSyncController', () => {
       inspection,
     })
   })
+
+  it('registers personal agents with shared-mode gateway id and workspace', async () => {
+    process.env.AGENT_RUNTIME_MODE = 'shared'
+    const { controller, syncService, readinessService, gateway } = makeController()
+    const userId = '00000000-0000-4000-8000-000000000001'
+    gateway.ensureAgent.mockResolvedValue({ ok: true, created: true, filesWritten: 2 })
+
+    const result = await controller.registerAgent('nate', {
+      user_id: userId,
+      name: 'Reed',
+      definitions: [{ file_name: 'SOUL.md', content: 'soul' }],
+    })
+
+    expect(gateway.ensureAgent).toHaveBeenCalledWith({
+      agentKey: `user-${userId}-nate`,
+      name: 'Reed',
+      workspace: `/agents/users/${userId}/nate`,
+      definitions: [{ file_name: 'SOUL.md', content: 'soul' }],
+    })
+    expect(syncService.syncAgent).toHaveBeenCalledWith('nate', userId)
+    expect(readinessService.invalidateRuntime).toHaveBeenCalledWith({
+      userId,
+      orgId: null,
+      agentKey: 'nate',
+      gatewayAgentId: `user-${userId}-nate`,
+    })
+    expect(result).toEqual({
+      ok: true,
+      created: true,
+      filesWritten: 2,
+      ...syncResult,
+    })
+  })
 })

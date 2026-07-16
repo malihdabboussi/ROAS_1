@@ -6,7 +6,7 @@ import type { Metadata } from 'next'
 // import { SharedSpaceItemsView } from '@/features/spaces/components/shared/SharedSpaceItemsView'
 
 export const metadata: Metadata = {
-  title: 'Shared Space | Vibey',
+  title: 'Shared Space | ROAS',
 }
 
 export default async function SharedSpacePage({
@@ -26,7 +26,7 @@ export default async function SharedSpacePage({
           Public space links are paused
         </h1>
         <p className="body-3 mt-spacing-2 text-[var(--color-muted-foreground)]">
-          Vibey is moving sharing to internal team access first.
+          ROAS is moving sharing to internal team access first.
         </p>
       </div>
     </main>

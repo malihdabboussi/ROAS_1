@@ -11,6 +11,41 @@ export function getActiveSpaceId(input: Record<string, unknown>): string | null 
   return trimmed.length > 0 ? trimmed : null
 }
 
+function isFlowsConceptSpaceSchema(schema: unknown): boolean {
+  if (!schema || typeof schema !== 'object') return false
+  const customData = (schema as Record<string, unknown>).custom_data
+  if (!customData || typeof customData !== 'object') return false
+  return (customData as Record<string, unknown>).vibey_flows_concept_space === true
+}
+
+/**
+ * Resolve which space should own a dual-written Space Doc.
+ * Prefer explicit chat scope `space_id`; otherwise pin to the campaign's
+ * most recently updated non–Flow-concepts space (Flow concepts is Flows-only).
+ */
+export async function resolveDocumentSpaceId(
+  supabase: SupabaseClient,
+  input: Record<string, unknown>,
+  campaignId: string | null | undefined,
+): Promise<string | null> {
+  const explicit = getActiveSpaceId(input)
+  if (explicit) return explicit
+  if (typeof campaignId !== 'string' || campaignId.trim().length === 0) return null
+
+  const { data, error } = await supabase
+    .from('spaces')
+    .select('id, schema, updated_at')
+    .eq('campaign_id', campaignId.trim())
+    .order('updated_at', { ascending: false })
+    .limit(20)
+  if (error || !data || data.length === 0) return null
+
+  const preferred =
+    data.find((row) => !isFlowsConceptSpaceSchema(row.schema)) ?? data[0] ?? null
+  const id = preferred?.id
+  return typeof id === 'string' && id.trim().length > 0 ? id.trim() : null
+}
+
 export function withSpaceId(
   input: Record<string, unknown>,
   payload: Record<string, unknown>,

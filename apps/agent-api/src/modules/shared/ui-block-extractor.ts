@@ -251,6 +251,7 @@ function collectCandidateRecords(result: unknown): Array<Record<string, unknown>
       'result',
       'data',
       'asset',
+      'asset_ref',
       'media',
       'media_asset',
       'document',
@@ -286,6 +287,23 @@ function firstString(
     for (const key of keys) {
       const value = stringValue(record[key])
       if (value) return value
+    }
+  }
+  return ''
+}
+
+const MEDIA_ASSET_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function firstUuid(
+  records: Array<Record<string, unknown> | undefined>,
+  keys: string[],
+): string {
+  for (const record of records) {
+    if (!record) continue
+    for (const key of keys) {
+      const value = stringValue(record[key])
+      if (value && MEDIA_ASSET_UUID_RE.test(value)) return value
     }
   }
   return ''
@@ -330,14 +348,15 @@ function buildMediaAssetBlock(input: {
   ])
   if (!url) return []
 
-  const mediaAssetId = firstString(records, [
+  const mediaAssetId = firstUuid(records, [
     'media_asset_id',
     'mediaAssetId',
-    'asset_id',
     'image_asset_id',
     'video_asset_id',
+    'asset_id',
     'id',
   ])
+  const spaceId = firstUuid(records, ['space_id', 'spaceId'])
   const mimeType = firstString(records, ['mime_type', 'mimeType', 'content_type', 'contentType'])
   const title =
     firstString(records, ['title', 'name', 'file_name', 'filename', 'original_filename', 'label']) ||
@@ -354,6 +373,7 @@ function buildMediaAssetBlock(input: {
       title,
       kind,
       ...(mediaAssetId ? { mediaAssetId } : {}),
+      ...(spaceId ? { spaceId } : {}),
       ...(mimeType ? { mimeType } : {}),
       ...(fileName ? { fileName } : {}),
       ...(prompt ? { prompt } : {}),
@@ -631,13 +651,13 @@ export function resolveUiBlocksFromToolResult(params: {
   if (!isCampaignToolName(name) || !action) return []
   const data = isRecord(toolArgs?.data) ? (toolArgs.data as Record<string, unknown>) : {}
 
-  if (action === 'generate_image') {
+  if (action === 'generate_image' || action === 'edit_image') {
     return buildMediaAssetBlock({
       action,
       data,
       result,
       defaultKind: 'image',
-      defaultTitle: 'Generated image',
+      defaultTitle: action === 'edit_image' ? 'Edited image' : 'Generated image',
       urlKeys: ['image_url'],
     })
   }

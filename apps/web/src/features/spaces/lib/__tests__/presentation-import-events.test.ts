@@ -11,7 +11,7 @@ describe('presentation import events', () => {
 
     const prompt = buildPresentationSourceImportPrompt(file)
 
-    expect(prompt).toContain('turn it into an editable Vibey HTML presentation')
+    expect(prompt).toContain('turn it into an editable ROAS HTML presentation')
     expect(prompt).toContain('Use read_document with the attached asset_id')
     expect(prompt).toContain('create_presentation with files and index.html as the entry_file')
     expect(prompt).toContain('<section>')

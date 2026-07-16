@@ -351,10 +351,10 @@ export default function McpConsentPage() {
       <div className="scrollbar-thin p-spacing-6 min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-spacing-6">
           <h1 className="title-h6 text-foreground">
-            {`${preview.client_name} would like to access your Vibey account`.toUpperCase()}
+            {`${preview.client_name} would like to access your ROAS account`.toUpperCase()}
           </h1>
           <p className="body-2 text-muted-foreground">
-            By continuing, you allow {preview.client_name} to use your Vibey data in accordance with
+            By continuing, you allow {preview.client_name} to use your ROAS data in accordance with
             their terms of service and privacy policy.
           </p>
           <div className="bg-secondary gap-spacing-3 rounded-spacing-3 px-spacing-3 py-spacing-2 flex items-center justify-between">
@@ -449,7 +449,7 @@ export default function McpConsentPage() {
             disabled={submitting}
             onClick={() => void submitDecision(true)}
           >
-            Connect Vibey
+            Connect ROAS
           </button>
         </div>
       </div>

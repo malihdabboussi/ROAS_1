@@ -23,8 +23,8 @@ function formatTimeRange(ev: CalendarAgendaEvent): string {
 
 function prepLabel(status: NonNullable<CalendarAgendaEvent['prep']>['status']): string {
   if (status === 'ready') return 'Open prep'
-  if (status === 'failed') return 'Retry prep'
-  return 'Open prep (pending)'
+  if (status === 'failed') return 'Prep failed — retry'
+  return 'Prep generating…'
 }
 
 export function HomeMeetingDetailHost({
@@ -178,7 +178,7 @@ export function HomeMeetingDetailHost({
             className="button-glass-primary body-3 inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 font-semibold"
           >
             <MessageSquare className="h-4 w-4" aria-hidden />
-            Talk with DiBi about this meeting
+            Talk with Vibey about this meeting
           </button>
           {event.video_url ? (
             <a

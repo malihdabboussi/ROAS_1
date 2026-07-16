@@ -21,7 +21,7 @@ export function PresentationBrandingSection({
       <div className="gap-spacing-4 flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <span className="body-3 text-foreground block font-medium">
-            Remove &quot;Made with Vibey&quot;
+            Remove &quot;Made with ROAS&quot;
           </span>
           <span className="body-3 text-muted-foreground mt-spacing-1 block">
             Hide the watermark on published presentation pages.

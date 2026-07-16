@@ -3,7 +3,13 @@ import { AgentTurnFeedbackActions } from '@/components/chat/AgentTurnFeedbackAct
 import { CHAT_MARKDOWN_CLASSNAME, renderChatMarkdown } from '@/lib/utils/chat-markdown.utils'
 import type { MissionCommentAttachment } from '../../services/missions.service'
 import type { MissionAgent, MissionLog, MissionSubtask } from '../../types'
-import { formatEventType, formatRelativeTime, getEventDotClass } from './detail-helpers'
+import {
+  formatAgentShortName,
+  formatEventType,
+  formatRelativeTime,
+  formatSubtaskStatusLabel,
+  getEventDotClass,
+} from './detail-helpers'
 import { LogPayloadDetails } from './LogPayloadDetails'
 import { MissionLockedIn } from './MissionLockedIn'
 
@@ -27,20 +33,48 @@ function resolvePayload(log: MissionLog): Record<string, unknown> | null {
   return log.payload && typeof log.payload === 'object' ? log.payload : null
 }
 
-function AgentChip({ log, agents }: { log: MissionLog; agents: MissionAgent[] }) {
-  if (!log.agent_key) return null
-  const logAgent = agents.find((agent) => agent.agent_key === log.agent_key)
+function resolveAgent(log: MissionLog, agents: MissionAgent[]): MissionAgent | undefined {
+  if (!log.agent_key) return undefined
+  return agents.find((agent) => agent.agent_key === log.agent_key)
+}
+
+function AgentActivityHeader({
+  log,
+  agents,
+  createdAt,
+}: {
+  log: MissionLog
+  agents: MissionAgent[]
+  createdAt: string
+}) {
+  const logAgent = resolveAgent(log, agents)
+  const fullName = logAgent?.name ?? log.agent_key ?? 'Agent'
+  const shortName = formatAgentShortName(fullName) || fullName
+
   return (
-    <div className="gap-spacing-1 flex shrink-0 items-center">
-      {logAgent?.image_url ? (
-        <img src={logAgent.image_url} alt={logAgent.name} className="h-4 w-4 rounded-full object-cover" />
-      ) : (
-        <div className="typo-2xs flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-secondary)] font-bold text-[var(--color-muted-foreground)]">
-          {(logAgent?.name ?? log.agent_key).charAt(0).toUpperCase()}
-        </div>
-      )}
-      <span className="body-3 text-[var(--color-muted-foreground)]">
-        {logAgent?.name ?? log.agent_key}
+    <div className="gap-spacing-2 flex items-start justify-between">
+      <div className="gap-spacing-1 flex min-w-0 items-center">
+        {logAgent?.image_url ? (
+          <img
+            src={logAgent.image_url}
+            alt={fullName}
+            className="h-4 w-4 shrink-0 rounded-full object-cover"
+            title={fullName}
+          />
+        ) : (
+          <div
+            className="typo-2xs bg-secondary text-muted-foreground flex h-4 w-4 shrink-0 items-center justify-center rounded-full font-bold"
+            title={fullName}
+          >
+            {shortName.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <span className="body-3 text-muted-foreground truncate" title={fullName}>
+          {shortName}
+        </span>
+      </div>
+      <span className="body-3 text-muted-foreground/50 shrink-0">
+        {formatRelativeTime(createdAt)}
       </span>
     </div>
   )
@@ -54,20 +88,24 @@ function UserHeader({
   createdAt: string
 }) {
   return (
-    <div className="flex items-start justify-between gap-2">
-      <div className="gap-spacing-1 flex items-center">
+    <div className="gap-spacing-2 flex items-start justify-between">
+      <div className="gap-spacing-1 flex min-w-0 items-center">
         {userProfile?.avatarUrl ? (
-          <img src={userProfile.avatarUrl} alt={userProfile.fullName} className="h-4 w-4 rounded-full object-cover" />
+          <img
+            src={userProfile.avatarUrl}
+            alt={userProfile.fullName}
+            className="h-4 w-4 shrink-0 rounded-full object-cover"
+          />
         ) : (
-          <div className="bg-[var(--color-primary)]/20 typo-2xs flex h-4 w-4 items-center justify-center rounded-full font-bold text-[var(--color-primary)]">
+          <div className="bg-primary/20 typo-2xs text-primary flex h-4 w-4 shrink-0 items-center justify-center rounded-full font-bold">
             {(userProfile?.fullName ?? 'Y').charAt(0).toUpperCase()}
           </div>
         )}
-        <span className="body-3 font-medium text-[var(--color-foreground)]">
+        <span className="body-3 text-foreground truncate font-medium">
           {userProfile?.fullName ?? 'You'}
         </span>
       </div>
-      <span className="body-3 text-[var(--color-muted-foreground)]/50 shrink-0">
+      <span className="body-3 text-muted-foreground/50 shrink-0">
         {formatRelativeTime(createdAt)}
       </span>
     </div>
@@ -84,18 +122,18 @@ function CommentAttachments({ attachments }: { attachments?: MissionCommentAttac
           href={att.fileUrl ?? '#'}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:bg-[var(--color-secondary)]/80 body-4 group flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-secondary)] px-2 py-1 transition-colors"
+          className="hover:bg-secondary/80 body-4 border-border bg-secondary group flex items-center gap-1.5 rounded-lg border px-2 py-1 transition-colors"
         >
           {att.type === 'image' ? (
             <img src={att.fileUrl} alt={att.filename} className="h-8 w-8 rounded object-cover" />
           ) : (
-            <FileText className="h-3.5 w-3.5 shrink-0 text-[var(--color-muted-foreground)]" />
+            <FileText className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
           )}
-          <span className="body-4 max-w-[120px] truncate text-[var(--color-foreground)]">
+          <span className="body-4 text-foreground max-w-artifact-compact truncate">
             {att.filename}
           </span>
           {att.fileUrl && (
-            <ExternalLink className="h-3 w-3 shrink-0 text-[var(--color-muted-foreground)] opacity-0 transition-opacity group-hover:opacity-100" />
+            <ExternalLink className="text-muted-foreground h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
           )}
         </a>
       ))}
@@ -114,9 +152,9 @@ function UserRatingActivity({
   return (
     <>
       <UserHeader userProfile={userProfile} createdAt={log.created_at} />
-      <div className="rounded-spacing-1 px-spacing-2 py-spacing-1 mt-1 border border-orange-500/20 bg-orange-500/[0.06]">
+      <div className="rounded-spacing-1 px-spacing-2 py-spacing-1 mt-1 border border-warning/20 bg-warning/10">
         <div className="flex items-center gap-2">
-          <span className="body-3 text-orange-300">
+          <span className="body-3 text-warning">
             {ratingPayload.thumbs_up === true
               ? '👍'
               : ratingPayload.thumbs_up === false
@@ -124,13 +162,11 @@ function UserRatingActivity({
                 : ''}
           </span>
           {ratingPayload.rating != null && (
-            <span className="body-3 font-medium text-orange-300">{ratingPayload.rating}/10</span>
+            <span className="body-3 text-warning font-medium">{ratingPayload.rating}/10</span>
           )}
         </div>
         {ratingPayload.feedback && (
-          <p className="body-3 mt-0.5 text-[var(--color-foreground)]">
-            {ratingPayload.feedback}
-          </p>
+          <p className="body-3 text-foreground mt-0.5">{ratingPayload.feedback}</p>
         )}
       </div>
     </>
@@ -152,13 +188,40 @@ function UserCommentActivity({
     <>
       <UserHeader userProfile={userProfile} createdAt={log.created_at} />
       <div
-        className={`body-3 mt-0.5 text-[var(--color-foreground)] ${CHAT_MARKDOWN_CLASSNAME}`}
+        className={`body-3 text-foreground mt-0.5 break-words ${CHAT_MARKDOWN_CLASSNAME}`}
         dangerouslySetInnerHTML={{
           __html: renderChatMarkdown(payload.message ?? ''),
         }}
       />
       <CommentAttachments attachments={payload.attachments} />
     </>
+  )
+}
+
+function LinkedSubtaskStatus({
+  subtask,
+  subtaskTitle,
+}: {
+  subtask: MissionSubtask | null | undefined
+  subtaskTitle: string | null
+}) {
+  if (!subtask && !subtaskTitle) return null
+  const statusLabel = subtask
+    ? formatSubtaskStatusLabel(subtask.status)
+    : null
+  return (
+    <div className="mt-spacing-1 space-y-spacing-1">
+      {(subtaskTitle || subtask?.title) && (
+        <p className="body-4 text-muted-foreground break-words">
+          Subtask: {subtaskTitle || subtask?.title}
+          {statusLabel ? ` · ${statusLabel}` : ''}
+          {subtask?.updated_at ? ` · ${formatRelativeTime(subtask.updated_at)}` : ''}
+        </p>
+      )}
+      {subtask?.feedback ? (
+        <p className="body-3 text-warning break-words">{subtask.feedback}</p>
+      ) : null}
+    </div>
   )
 }
 
@@ -176,23 +239,34 @@ function MissionProgressActivity({
   const note = (log.payload as { note?: string })?.note
   const isExecLog = typeof note === 'string' && note.startsWith('Executing subtask')
   const execSubtask = subtaskId && isExecLog ? subtasks.find((st) => st.id === subtaskId) : null
+  const linkedSubtask = subtaskId ? subtasks.find((st) => st.id === subtaskId) : null
+  const displayNote =
+    typeof note === 'string'
+      ? note.replace(/\s+assigned to\s+[a-z0-9_]+$/i, '').trim()
+      : note
+
   return (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <div
-          className={`body-3 min-w-0 flex-1 text-[var(--color-foreground)] ${CHAT_MARKDOWN_CLASSNAME}`}
-          dangerouslySetInnerHTML={{
-            __html: renderChatMarkdown(note || 'Progress update'),
-          }}
-        />
-        <AgentChip log={log} agents={agents} />
-      </div>
-      <span className="body-3 text-[var(--color-muted-foreground)]/50">
-        {formatRelativeTime(log.created_at)}
-      </span>
-      {execSubtask ? <MissionLockedIn subtask={execSubtask} /> : null}
-      <AgentTurnFeedbackActions targetKind="mission_log" targetId={log.id} sourceSurface="mission_activity" content={note || 'Progress update'} className="py-0" />
-    </>
+    <div className="space-y-spacing-1 min-w-0">
+      <AgentActivityHeader log={log} agents={agents} createdAt={log.created_at} />
+      <div
+        className={`body-3 text-foreground min-w-0 break-words ${CHAT_MARKDOWN_CLASSNAME}`}
+        dangerouslySetInnerHTML={{
+          __html: renderChatMarkdown(displayNote || 'Progress update'),
+        }}
+      />
+      <LinkedSubtaskStatus
+        subtask={linkedSubtask}
+        subtaskTitle={linkedSubtask?.title ?? null}
+      />
+      {execSubtask ? <MissionLockedIn subtask={execSubtask} defaultOpen /> : null}
+      <AgentTurnFeedbackActions
+        targetKind="mission_log"
+        targetId={log.id}
+        sourceSurface="mission_activity"
+        content={displayNote || 'Progress update'}
+        className="py-0"
+      />
+    </div>
   )
 }
 
@@ -231,19 +305,32 @@ function PlanPendingActivity({
               </p>
             ) : null}
             {onViewPlan && (
-              <button type="button" onClick={onViewPlan} className="body-3 text-primary hover:text-foreground mt-spacing-2 flex items-center gap-1 font-medium transition-colors">
+              <button
+                type="button"
+                onClick={onViewPlan}
+                className="body-3 text-primary hover:text-foreground mt-spacing-2 flex items-center gap-1 font-medium transition-colors"
+              >
                 View Plan
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
             )}
             <div className="gap-spacing-2 mt-spacing-3 flex flex-wrap items-center">
               {onReject && (
-                <button type="button" onClick={onReject} className="button-glass-destructive body-3 rounded-lg px-3 py-1.5 font-medium">
+                <button
+                  type="button"
+                  onClick={onReject}
+                  className="button-glass-destructive body-3 rounded-lg px-3 py-1.5 font-medium"
+                >
                   Reject
                 </button>
               )}
               {onApprove && (
-                <button type="button" onClick={onApprove} disabled={approving} className="chip-glass-green body-3 rounded-lg px-3 py-1.5 font-medium disabled:opacity-50">
+                <button
+                  type="button"
+                  onClick={onApprove}
+                  disabled={approving}
+                  className="chip-glass-green body-3 rounded-lg px-3 py-1.5 font-medium disabled:opacity-50"
+                >
                   {approving ? 'Approving...' : 'Approve'}
                 </button>
               )}
@@ -256,19 +343,19 @@ function PlanPendingActivity({
             )}
           </>
         ) : wasRejected ? (
-          <p className="body-2 font-medium text-orange-400">Plan Rejected</p>
+          <p className="body-2 text-warning font-medium">Plan Rejected</p>
         ) : wasApproved && autoApprovePlans ? (
           <div className="flex items-center justify-between">
-            <p className="body-2 font-medium text-emerald-400">Plan auto-approved</p>
+            <p className="body-2 text-success font-medium">Plan auto-approved</p>
             {onToggleAutoApprove && (
               <PlanSwitch checked={autoApprovePlans} onClick={() => onToggleAutoApprove(false)} />
             )}
           </div>
         ) : (
-          <p className="body-2 font-medium text-emerald-400">Plan Approved</p>
+          <p className="body-2 text-success font-medium">Plan Approved</p>
         )}
       </div>
-      <span className="body-3 text-[var(--color-muted-foreground)]/50 mt-1">
+      <span className="body-3 text-muted-foreground/50 mt-1">
         {formatRelativeTime(log.created_at)}
       </span>
     </>
@@ -310,45 +397,76 @@ function PlanApprovedActivity({ log, agents }: { log: MissionLog; agents: Missio
   const hired = (log.payload as { hired_agents?: Array<{ role_key: string; agent_key: string }> })
     ?.hired_agents
   return (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <span className="body-3 font-medium text-emerald-400">Plan approved</span>
-        <AgentChip log={log} agents={agents} />
-      </div>
+    <div className="space-y-spacing-1 min-w-0">
+      <AgentActivityHeader log={log} agents={agents} createdAt={log.created_at} />
+      <span className="body-3 text-success font-medium">Plan approved</span>
       {hired && hired.length > 0 ? (
-        <p className="body-3 text-muted-foreground">
+        <p className="body-3 text-muted-foreground break-words">
           Hired: {hired.map((h) => h.agent_key).join(', ')}
         </p>
       ) : null}
-      <span className="body-3 text-[var(--color-muted-foreground)]/50">
-        {formatRelativeTime(log.created_at)}
-      </span>
-    </>
+    </div>
   )
 }
 
-function DefaultActivity({ log, eventLabel, agents }: { log: MissionLog; eventLabel: string; agents: MissionAgent[] }) {
+function DefaultActivity({
+  log,
+  eventLabel,
+  agents,
+  subtaskTitle,
+  linkedSubtask,
+}: {
+  log: MissionLog
+  eventLabel: string
+  agents: MissionAgent[]
+  subtaskTitle: string | null
+  linkedSubtask: MissionSubtask | null
+}) {
+  const payloadNote =
+    log.payload && typeof log.payload === 'object' && typeof log.payload.note === 'string'
+      ? log.payload.note
+      : null
+  const headline = payloadNote || eventLabel
+
   return (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <span className="body-3 font-medium text-[var(--color-foreground)]">{eventLabel}</span>
-        <AgentChip log={log} agents={agents} />
-      </div>
+    <div className="space-y-spacing-1 min-w-0">
+      {log.agent_key ? (
+        <AgentActivityHeader log={log} agents={agents} createdAt={log.created_at} />
+      ) : (
+        <div className="flex items-start justify-between gap-2">
+          <span className="body-3 text-foreground min-w-0 break-words font-medium">{headline}</span>
+          <span className="body-3 text-muted-foreground/50 shrink-0">
+            {formatRelativeTime(log.created_at)}
+          </span>
+        </div>
+      )}
+      {log.agent_key ? (
+        <span className="body-3 text-foreground break-words font-medium">{headline}</span>
+      ) : null}
+      <LinkedSubtaskStatus subtask={linkedSubtask} subtaskTitle={subtaskTitle} />
       {log.payload && typeof log.payload === 'object' && (
-        <LogPayloadDetails payload={log.payload as Record<string, unknown>} eventType={log.event_type} />
+        <LogPayloadDetails
+          payload={
+            payloadNote
+              ? Object.fromEntries(
+                  Object.entries(log.payload as Record<string, unknown>).filter(
+                    ([key]) => key !== 'note',
+                  ),
+                )
+              : (log.payload as Record<string, unknown>)
+          }
+          eventType={log.event_type}
+        />
       )}
       {log.from_status &&
         log.to_status &&
         log.from_status !== log.to_status &&
         !(log.payload as { error?: string })?.error && (
-          <p className="body-3 text-[var(--color-muted-foreground)]">
+          <p className="body-3 text-muted-foreground">
             {log.from_status} → {log.to_status}
           </p>
         )}
-      <span className="body-3 text-[var(--color-muted-foreground)]/50">
-        {formatRelativeTime(log.created_at)}
-      </span>
-    </>
+    </div>
   )
 }
 
@@ -356,16 +474,17 @@ export function ActivityTimelineLogItem(props: ActivityTimelineLogItemProps) {
   const { log, subtasks, agents, userProfile } = props
   const payload = resolvePayload(log)
   const subtaskId = payload && typeof payload.subtask_id === 'string' ? payload.subtask_id : null
-  const subtaskTitle = subtaskId
-    ? subtasks.find((subtask) => subtask.id === subtaskId)?.title || null
+  const linkedSubtask = subtaskId
+    ? subtasks.find((subtask) => subtask.id === subtaskId) || null
     : null
+  const subtaskTitle = linkedSubtask?.title || null
   const eventLabel =
     log.event_type === 'subtask.review' && subtaskTitle
       ? `Subtask review — ${subtaskTitle}`
       : formatEventType(log.event_type)
 
   return (
-    <div className="pl-spacing-6 relative flex">
+    <div className="pl-spacing-6 relative flex min-w-0">
       <div
         className={`${getEventDotClass(log.event_type)} absolute left-[5px] top-1.5 z-10 h-[11px] w-[11px] shrink-0 -translate-x-1/2 rounded-full`}
       />
@@ -375,23 +494,31 @@ export function ActivityTimelineLogItem(props: ActivityTimelineLogItemProps) {
         ) : log.event_type === 'user.comment' ? (
           <UserCommentActivity log={log} userProfile={userProfile} />
         ) : log.event_type === 'mission.progress' ? (
-          <MissionProgressActivity log={log} subtaskId={subtaskId} subtasks={subtasks} agents={agents} />
+          <MissionProgressActivity
+            log={log}
+            subtaskId={subtaskId}
+            subtasks={subtasks}
+            agents={agents}
+          />
         ) : log.event_type === 'mission.plan.pending_approval' ? (
           <PlanPendingActivity {...props} />
         ) : log.event_type === 'mission.plan.approved' ? (
           <PlanApprovedActivity log={log} agents={agents} />
         ) : log.event_type === 'mission.plan.rejected' ? (
-          <>
-            <div className="flex items-start justify-between gap-2">
-              <span className="body-3 font-medium text-orange-400">Plan rejected — replanning</span>
-              <AgentChip log={log} agents={agents} />
-            </div>
-            <span className="body-3 text-[var(--color-muted-foreground)]/50">
-              {formatRelativeTime(log.created_at)}
+          <div className="space-y-spacing-1 min-w-0">
+            <AgentActivityHeader log={log} agents={agents} createdAt={log.created_at} />
+            <span className="body-3 text-warning break-words font-medium">
+              Plan rejected — replanning
             </span>
-          </>
+          </div>
         ) : (
-          <DefaultActivity log={log} eventLabel={eventLabel} agents={agents} />
+          <DefaultActivity
+            log={log}
+            eventLabel={eventLabel}
+            agents={agents}
+            subtaskTitle={subtaskTitle}
+            linkedSubtask={linkedSubtask}
+          />
         )}
       </div>
     </div>

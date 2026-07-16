@@ -50,6 +50,7 @@ interface AgentChatThreadProps {
   composerOverlay: ReactNode
   composerInput: ReactNode
   homeComposerStyle: boolean
+  compactLayout?: boolean
   isStreaming: boolean
   onScroll: () => void
   onScrollToBottom: () => void
@@ -96,6 +97,7 @@ export function AgentChatThread({
   composerOverlay,
   composerInput,
   homeComposerStyle,
+  compactLayout = false,
   isStreaming,
   onScroll,
   onScrollToBottom,
@@ -110,39 +112,38 @@ export function AgentChatThread({
   return (
     <>
       <PlanStickyTracker messages={messages} scrollContainerRef={scrollRef} />
-      <div
-        ref={scrollRef}
-        onScroll={onScroll}
-        className={cn(
-          'flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden',
-          threadHorizontalPad,
-        )}
-      >
-        <div ref={contentRef} className="mx-auto flex min-h-full w-full max-w-3xl flex-1 flex-col">
-          {initializing && messages.length === 0 ? (
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center py-24">
-              <VibeyLoadingOrb
-                text={
-                  (selectedSession?.metadata as Record<string, unknown> | undefined)
-                    ?.team_draft === true
-                    ? 'Starting conversation...'
-                    : 'Loading conversation...'
-                }
-                state="processing"
-                size="md"
-              />
-            </div>
-          ) : (
-            <>
-              {messages.length === 0 && !initializing ? (
-                <div className="flex flex-col items-center justify-center py-24">
-                  <h1 className="title-h2 text-center text-foreground">
-                    WHAT ARE WE BUILDING TODAY?
-                  </h1>
-                </div>
-              ) : null}
-
-              <div className="flex flex-1 flex-col gap-3">
+      {messages.length > 0 || initializing ? (
+        <div
+          ref={scrollRef}
+          onScroll={onScroll}
+          className={cn(
+            'flex min-h-0 flex-col overflow-y-auto overflow-x-hidden',
+            compactLayout ? 'max-h-1/2 flex-none' : 'flex-1',
+            threadHorizontalPad,
+          )}
+        >
+          <div
+            ref={contentRef}
+            className={cn(
+              'mx-auto flex w-full max-w-3xl flex-col',
+              compactLayout ? 'min-h-0' : 'min-h-full flex-1',
+            )}
+          >
+            {initializing && messages.length === 0 ? (
+              <div className="flex min-h-0 flex-col items-center justify-center py-spacing-6">
+                <VibeyLoadingOrb
+                  text={
+                    (selectedSession?.metadata as Record<string, unknown> | undefined)
+                      ?.team_draft === true
+                      ? 'Starting conversation...'
+                      : 'Loading conversation...'
+                  }
+                  state="processing"
+                  size="md"
+                />
+              </div>
+            ) : (
+              <div className={cn('flex flex-col gap-3', !compactLayout && 'flex-1')}>
                 {turnData.leadingMessages.map((message) => (
                   <div key={message.id} data-message-id={message.id}>
                     <MessageBubble
@@ -165,7 +166,7 @@ export function AgentChatThread({
                     <div
                       key={turn.user.id}
                       data-turn-id={turn.user.id}
-                      className={`relative flex flex-col ${isLastTurn ? 'flex-1' : ''}`}
+                      className={`relative flex flex-col ${isLastTurn && !compactLayout ? 'flex-1' : ''}`}
                     >
                       <div ref={isLastTurn ? lastUserPromptRef : undefined} className="sticky top-0 z-10">
                         <div className="surface-bg">
@@ -189,7 +190,7 @@ export function AgentChatThread({
                       <div
                         className="flex flex-col gap-3"
                         style={
-                          isLastTurn
+                          isLastTurn && !compactLayout
                             ? {
                                 minHeight: Math.max(0, spacerHeight - lastUserPromptHeight),
                               }
@@ -231,10 +232,18 @@ export function AgentChatThread({
                   )
                 })}
               </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div ref={scrollRef} className="hidden" aria-hidden />
+      )}
+
+      {!compactLayout && messages.length === 0 && !initializing ? (
+        <div className="flex flex-col items-center justify-center py-24">
+          <h1 className="title-h2 text-center text-foreground">WHAT ARE WE BUILDING TODAY?</h1>
+        </div>
+      ) : null}
 
       {creditsLow && !creditsExhausted && (
         <div className="flex items-center justify-center gap-2 bg-warning/10 px-4 py-2">

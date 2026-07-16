@@ -176,7 +176,7 @@ function StickyNoteNodeComponent(props: NodeProps) {
           className="bg-primary text-primary-foreground absolute -bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-medium shadow-lg"
         >
           <Sparkles className="h-3 w-3" />
-          Build with Vibey
+          Build with ROAS
         </button>
       )}
     </div>

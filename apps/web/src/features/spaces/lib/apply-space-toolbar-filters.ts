@@ -43,6 +43,53 @@ export function resolveViewFieldValueFilters(
   return undefined
 }
 
+/** Follow-ups / Action items show nested follow-ups as main rows. */
+export function viewPromotesFollowUpSubtasks(
+  view: Pick<ViewDef, 'id' | 'field_value_filters'>,
+): boolean {
+  const filters = resolveViewFieldValueFilters(view)
+  const allowed = normalizeFilterValues(filters?.entry_type)
+  if (allowed.includes('follow_up')) return true
+  return view.id === 'follow-ups' || view.id === 'action-items'
+}
+
+function readSourceCallItemId(item: SpaceItem): string | null {
+  const cd = (item.custom_data ?? {}) as Record<string, unknown>
+  const raw = cd.source_call_item_id
+  return typeof raw === 'string' && raw.trim() ? raw.trim() : null
+}
+
+/** Parent call id for a follow-up — real parent or denormalized source_call link. */
+export function resolveFollowUpParentCallId(item: SpaceItem): string | null {
+  if (resolveSpaceEntryType(item) !== 'follow_up') return null
+  if (item.parent_item_id) return item.parent_item_id
+  return readSourceCallItemId(item)
+}
+
+/**
+ * All Meetings: calls as top-level rows, plus follow-ups nested under those
+ * calls (via parent_item_id or source_call_item_id) for expand/collapse.
+ */
+export function filterItemsForMeetingsListView(
+  items: SpaceItem[],
+  view: Pick<ViewDef, 'id' | 'field_value_filters'>,
+): SpaceItem[] | null {
+  const filters = resolveViewFieldValueFilters(view)
+  const allowed = normalizeFilterValues(filters?.entry_type)
+  const isAllMeetings =
+    view.id === 'all-meetings' || (allowed.length === 1 && allowed[0] === 'call')
+  if (!isAllMeetings) return null
+
+  const calls = items.filter((item) => resolveSpaceEntryType(item) === 'call')
+  const callIds = new Set(calls.map((item) => item.id))
+  const nested = items.filter((item) => {
+    if (resolveSpaceEntryType(item) !== 'follow_up') return false
+    const parentId = resolveFollowUpParentCallId(item)
+    return Boolean(parentId && callIds.has(parentId))
+  })
+  return [...calls, ...nested]
+}
+
 /** True when item field value matches any allowed filter value. */
 export function itemMatchesFieldValueFilters(
   item: SpaceItem,
@@ -138,9 +185,14 @@ export function applySpaceToolbarFilters(
   searchQuery: string,
 ): SpaceItem[] {
   let out = items
-  const fieldValueFilters = resolveViewFieldValueFilters(view)
-  if (fieldValueFilters) {
-    out = out.filter((i) => itemMatchesFieldValueFilters(i, fieldValueFilters))
+  const meetingsList = filterItemsForMeetingsListView(items, view)
+  if (meetingsList) {
+    out = meetingsList
+  } else {
+    const fieldValueFilters = resolveViewFieldValueFilters(view)
+    if (fieldValueFilters) {
+      out = out.filter((i) => itemMatchesFieldValueFilters(i, fieldValueFilters))
+    }
   }
   const showClosed = view.show_closed_tasks === true
   // When grouped by status, keep closed items visible so they appear under the Done/Archived

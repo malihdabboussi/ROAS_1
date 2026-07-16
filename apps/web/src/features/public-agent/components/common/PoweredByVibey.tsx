@@ -26,7 +26,7 @@ export function PoweredByVibey() {
         </defs>
       </svg>
       <span className="body-4 text-muted-foreground">Powered by</span>
-      <span className="body-4 font-semibold text-white">Vibey</span>
+      <span className="body-4 font-semibold text-white">ROAS</span>
     </a>
   )
 }

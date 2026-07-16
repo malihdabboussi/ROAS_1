@@ -1988,7 +1988,7 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
     store.setActiveConversationId(conversationId)
   }
 
-  // Show the normal Vibey "thinking" state immediately after send.
+  // Show the normal ROAS "thinking" state immediately after send.
   activateStreamState(conversationId)
   let currentStatusShownAt = Date.now()
   let queuedStatusTimer: ReturnType<typeof setTimeout> | null = null

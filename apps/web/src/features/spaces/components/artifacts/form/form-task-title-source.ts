@@ -8,7 +8,7 @@ export const AUTO_TASK_TITLE_LABEL = 'Auto'
 export const AUTO_TASK_TITLE_PEEK_TITLE = 'Auto task title'
 
 export const AUTO_TASK_TITLE_PEEK_BODY =
-  'Vibey picks the task title automatically using the first available value below.'
+  'ROAS picks the task title automatically using the first available value below.'
 
 export const AUTO_TASK_TITLE_PEEK_STEPS = [
   'Contact name (full name or first + last)',

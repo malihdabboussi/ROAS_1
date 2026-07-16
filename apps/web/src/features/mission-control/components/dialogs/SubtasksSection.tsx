@@ -2,12 +2,10 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
 import {
   Ban,
   Check,
   CheckCircle2,
-  ChevronDown,
   ChevronRight,
   Circle,
   Clock,
@@ -15,21 +13,17 @@ import {
   RefreshCw,
   User,
 } from 'lucide-react'
-import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
+import { ConfirmDialog } from '@/components/ui/dialogs/ConfirmDialog'
+import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { updateSubtask } from '../../services/missions.service'
 import type { MissionAgent, MissionSubtask, PrdContent, SubtaskStatus } from '../../types'
-
-function formatAssigneeLabel(raw: string): string {
-  const s = raw.trim().replace(/_/g, ' ')
-  if (!s) return raw
-  return s
-    .split(/\s+/)
-    .map((word) =>
-      word.length === 0 ? word : word[0]!.toLocaleUpperCase() + word.slice(1).toLocaleLowerCase(),
-    )
-    .join(' ')
-}
+import {
+  formatAgentShortName,
+  formatRelativeTime,
+  formatSubtaskStatusLabel,
+  resolveSubtaskIssueDetail,
+} from './detail-helpers'
 
 interface SubtasksSectionProps {
   missionId: string | null
@@ -38,7 +32,10 @@ interface SubtasksSectionProps {
   subtasks: MissionSubtask[]
   agents: MissionAgent[]
   planContent: PrdContent | null
+  missionProgressNotes?: string | null
+  missionError?: string | null
   onOpenPlan: () => void
+  onOpenSubtask: (subtaskId: string) => void
   onUpdated: () => void
   onSubtasksChange: (updater: (prev: MissionSubtask[]) => MissionSubtask[]) => void
 }
@@ -50,19 +47,62 @@ export function SubtasksSection({
   subtasks,
   agents,
   planContent,
+  missionProgressNotes,
+  missionError,
   onOpenPlan,
+  onOpenSubtask,
   onUpdated,
   onSubtasksChange,
 }: SubtasksSectionProps) {
-  const [expandedSubtask, setExpandedSubtask] = useState<string | null>(null)
   const [subtaskAssigneeOpenId, setSubtaskAssigneeOpenId] = useState<string | null>(null)
+  const [completeConfirm, setCompleteConfirm] = useState<{
+    subtaskId: string
+    title: string
+  } | null>(null)
+  const [completing, setCompleting] = useState(false)
   const router = useRouter()
+
+  async function applySubtaskStatus(subtaskId: string, next: SubtaskStatus) {
+    if (!missionId) return
+    try {
+      await updateSubtask(missionId, subtaskId, { status: next })
+      onUpdated()
+    } catch {
+      /* noop */
+    }
+  }
 
   return (
     <div className="md:border-t-glass md:pt-spacing-3 mb-3 mt-3 flex min-h-0 flex-1 flex-col overflow-hidden md:mt-4">
+      <ConfirmDialog
+        open={Boolean(completeConfirm)}
+        title="Mark this subtask complete?"
+        description={
+          completeConfirm
+            ? `“${completeConfirm.title}” will be marked done. Only do this if the work is actually finished.`
+            : undefined
+        }
+        confirmText="Mark complete"
+        confirmingText="Marking…"
+        confirmDisabled={completing}
+        confirmTone="primary"
+        onOpenChange={(open) => {
+          if (!open && !completing) setCompleteConfirm(null)
+        }}
+        onConfirm={async () => {
+          if (!completeConfirm) return
+          setCompleting(true)
+          try {
+            await applySubtaskStatus(completeConfirm.subtaskId, 'done')
+            setCompleteConfirm(null)
+          } finally {
+            setCompleting(false)
+          }
+        }}
+      />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="flex flex-shrink-0 items-center justify-between">
-          <h3 className="body-2 font-semibold text-[var(--color-muted-foreground)]">
+          <h3 className="body-2 text-muted-foreground font-semibold">
             {logsLoading || prdLoading
               ? 'Loading...'
               : subtasks.length > 0
@@ -73,7 +113,7 @@ export function SubtasksSection({
             <button
               type="button"
               onClick={onOpenPlan}
-              className="body-3 flex items-center gap-1 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
+              className="body-3 text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
             >
               <span>Task overview</span>
               <ChevronRight className="h-3.5 w-3.5" />
@@ -97,14 +137,14 @@ export function SubtasksSection({
                   )
                 const isBlocked = subtask.status === 'pending' && hasDeps && !depsReady
                 const statusColor = isBlocked
-                  ? 'text-red-400'
+                  ? 'text-destructive'
                   : subtask.status === 'done'
-                    ? 'text-emerald-400'
+                    ? 'text-success'
                     : subtask.status === 'in_progress'
-                      ? 'text-amber-400'
-                      : subtask.status === 'revision'
-                        ? 'text-orange-400'
-                        : 'text-[var(--color-muted-foreground)]/40'
+                      ? 'text-warning'
+                      : subtask.status === 'revision' || subtask.status === 'blocked'
+                        ? 'text-warning'
+                        : 'text-muted-foreground/40'
                 const StatusIcon = isBlocked
                   ? Ban
                   : subtask.status === 'done'
@@ -113,65 +153,104 @@ export function SubtasksSection({
                       ? Clock
                       : subtask.status === 'revision'
                         ? RefreshCw
-                        : Circle
-                const isExpanded = expandedSubtask === subtask.id
+                        : subtask.status === 'blocked'
+                          ? Ban
+                          : Circle
                 const isHuman = subtask.assignee_type === 'human'
                 const assigneeAgent =
                   !isHuman && subtask.assigned_agent_key
                     ? agents.find((a) => a.agent_key === subtask.assigned_agent_key)
                     : undefined
+                const assigneeFullName =
+                  assigneeAgent?.name ?? subtask.assigned_agent_key ?? 'Unassigned'
                 const assigneeLabel = isHuman
                   ? `${subtask.status === 'awaiting_human' ? 'Awaiting ' : ''}teammate`
-                  : formatAssigneeLabel(
-                      assigneeAgent?.name ?? subtask.assigned_agent_key ?? 'Unassigned',
-                    )
+                  : formatAgentShortName(assigneeFullName) || assigneeFullName
+                const statusLabel = formatSubtaskStatusLabel(subtask.status, {
+                  dependencyBlocked: isBlocked,
+                })
+                const statusMeta = `${statusLabel} · ${formatRelativeTime(subtask.updated_at)}`
+                const issueDetail = resolveSubtaskIssueDetail(subtask, {
+                  progressNotes: missionProgressNotes,
+                  error: missionError,
+                })
+                const statusTooltip =
+                  issueDetail ||
+                  (isBlocked
+                    ? 'Waiting for a dependency to complete'
+                    : subtask.feedback ||
+                      (subtask.status === 'done' ? 'Mark as not done' : 'Mark complete'))
 
                 return (
                   <div key={subtask.id} className="border-b-glass last:border-b-0">
-                    <div
-                      className={`relative flex items-center gap-2 rounded-lg px-2.5 py-1.5 ${isExpanded ? 'bg-[var(--color-primary)]/10' : 'hover:bg-hover-subtle'}`}
-                    >
+                    <div className="hover:bg-hover-subtle relative flex items-center gap-2 rounded-lg px-2.5 py-1.5">
+                      <Tooltip label={statusTooltip} side="top" wide={Boolean(issueDetail)}>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!missionId) return
+                            if (isBlocked) return
+                            if (subtask.status === 'done') {
+                              await applySubtaskStatus(subtask.id, 'pending')
+                              return
+                            }
+                            if (
+                              subtask.status === 'pending' ||
+                              subtask.status === 'blocked' ||
+                              subtask.status === 'in_progress' ||
+                              subtask.status === 'revision'
+                            ) {
+                              setCompleteConfirm({
+                                subtaskId: subtask.id,
+                                title: subtask.title,
+                              })
+                              return
+                            }
+                            await applySubtaskStatus(subtask.id, 'pending')
+                          }}
+                          className="shrink-0"
+                        >
+                          <StatusIcon className={`h-3.5 w-3.5 ${statusColor}`} />
+                        </button>
+                      </Tooltip>
                       <button
                         type="button"
-                        onClick={async () => {
-                          if (!missionId) return
-                          if (isBlocked) return
-                          const nextStatus: Record<string, SubtaskStatus> = {
-                            done: 'pending',
-                            revision: 'pending',
-                            pending: 'done',
-                            blocked: 'pending',
-                          }
-                          const next = nextStatus[subtask.status] || 'pending'
-                          try {
-                            await updateSubtask(missionId, subtask.id, { status: next })
-                            onUpdated()
-                          } catch {
-                            /* noop */
-                          }
-                        }}
-                        className="shrink-0"
-                        title={
-                          isBlocked
-                            ? 'Waiting for a dependency to complete'
-                            : `Status: ${subtask.status}`
-                        }
-                      >
-                        <StatusIcon className={`h-3.5 w-3.5 ${statusColor}`} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setExpandedSubtask(isExpanded ? null : subtask.id)}
-                        className="body-2 flex min-w-0 flex-1 items-center gap-2 text-left text-[var(--color-foreground)]"
+                        onClick={() => onOpenSubtask(subtask.id)}
+                        className="body-2 text-foreground flex min-w-0 flex-1 items-center gap-2 text-left"
                       >
                         <GitBranch
-                          className="h-3.5 w-3.5 shrink-0 text-[var(--color-muted-foreground)]"
+                          className="text-muted-foreground h-3.5 w-3.5 shrink-0"
                           aria-hidden
                         />
-                        <span className="min-w-0 flex-1 truncate">{subtask.title}</span>
-                        <ChevronDown
-                          className={`text-[var(--color-muted-foreground)]/50 h-3 w-3 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate">{subtask.title}</span>
+                          {issueDetail || subtask.feedback ? (
+                            <Tooltip
+                              label={issueDetail || subtask.feedback || statusMeta}
+                              side="bottom"
+                              wide
+                              triggerClassName="block min-w-0"
+                            >
+                              <span className="typo-caption text-muted-foreground block truncate">
+                                {statusMeta}
+                                {subtask.feedback ? (
+                                  <span className="text-warning"> · {subtask.feedback}</span>
+                                ) : null}
+                                {issueDetail ? (
+                                  <span className="text-muted-foreground/70">
+                                    {' '}
+                                    · Hover for details
+                                  </span>
+                                ) : null}
+                              </span>
+                            </Tooltip>
+                          ) : (
+                            <span className="typo-caption text-muted-foreground block truncate">
+                              {statusMeta}
+                            </span>
+                          )}
+                        </span>
+                        <ChevronRight className="text-muted-foreground/50 h-3 w-3 shrink-0" />
                       </button>
                       {isHuman ? (
                         <button
@@ -180,7 +259,7 @@ export function SubtasksSection({
                             e.stopPropagation()
                             router.push(`/spaces?tab=your-turn&item=${subtask.id}`)
                           }}
-                          className="body-3 gap-spacing-1 bg-[var(--color-primary)]/15 hover:bg-[var(--color-primary)]/25 flex shrink-0 items-center rounded-full px-1.5 py-0.5 text-[var(--color-primary)] transition-colors"
+                          className="body-3 gap-spacing-1 bg-primary/15 hover:bg-primary/25 text-primary flex shrink-0 items-center rounded-full px-1.5 py-0.5 transition-colors"
                           title="Open in Your Turn"
                         >
                           <User className="h-3 w-3" />
@@ -195,8 +274,8 @@ export function SubtasksSection({
                               subtaskAssigneeOpenId === subtask.id ? null : subtask.id,
                             )
                           }}
-                          className="body-3 shrink-0 rounded-full bg-[var(--color-secondary)] px-1.5 py-0.5 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
-                          title="Reassign subtask"
+                          className="body-3 bg-secondary text-muted-foreground hover:text-foreground max-w-artifact-compact shrink-0 truncate rounded-full px-1.5 py-0.5 transition-colors"
+                          title={`${assigneeFullName}${assigneeAgent?.role ? ` — ${assigneeAgent.role}` : ''} · Reassign`}
                         >
                           {assigneeLabel}
                         </button>
@@ -250,9 +329,11 @@ export function SubtasksSection({
                                         </div>
                                       )}
                                       <div className="min-w-0 flex-1">
-                                        <div>{agent.name}</div>
+                                        <div className="truncate">
+                                          {formatAgentShortName(agent.name) || agent.name}
+                                        </div>
                                         {agent.role && (
-                                          <div className="typo-caption text-muted-foreground">
+                                          <div className="typo-caption text-muted-foreground truncate">
                                             {agent.role}
                                           </div>
                                         )}
@@ -274,90 +355,6 @@ export function SubtasksSection({
                         </>
                       )}
                     </div>
-                    <AnimatePresence initial={false}>
-                      {isExpanded && (
-                        <motion.div
-                          key={`content-${subtask.id}`}
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                          className="overflow-hidden"
-                        >
-                          <div className="border-t-glass mx-2.5 space-y-3 pb-3 pt-3">
-                            {subtask.intent && subtask.intent.why && (
-                              <div className="space-y-1">
-                                <h4 className="body-3 font-semibold text-[var(--color-foreground)]">
-                                  Plan Intent
-                                </h4>
-                                <div className="space-y-1 pl-2">
-                                  {(
-                                    [
-                                      ['Why', subtask.intent.why],
-                                      ['Story', subtask.intent.story],
-                                      ['Sensory', subtask.intent.sensory],
-                                      ['End-State', subtask.intent.endState],
-                                      ['Ecology', subtask.intent.ecology],
-                                    ] as const
-                                  ).map(([label, value]) =>
-                                    value ? (
-                                      <div key={label} className="flex gap-1.5">
-                                        <span className="body-3 shrink-0 font-medium text-[var(--color-muted-foreground)]">
-                                          {label}:
-                                        </span>
-                                        <span className="body-3 text-[var(--color-muted-foreground)]/80">
-                                          {value}
-                                        </span>
-                                      </div>
-                                    ) : null,
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                            {subtask.feedback && (
-                              <div className="space-y-1">
-                                <h4 className="body-3 font-semibold text-orange-400">Feedback</h4>
-                                <p className="body-3 pl-2 text-orange-400/80">{subtask.feedback}</p>
-                              </div>
-                            )}
-                            {subtask.output && Object.keys(subtask.output).length > 0 && (
-                              <div className="space-y-1">
-                                <h4 className="body-3 font-semibold text-[var(--color-foreground)]">
-                                  Agent Output
-                                </h4>
-                                <div className="pl-2">
-                                  {typeof subtask.output.content === 'string' ? (
-                                    <MarkdownRenderer className="body-3 max-w-none leading-relaxed text-[var(--color-muted-foreground)]">
-                                      {subtask.output.content.slice(0, 1500)}
-                                    </MarkdownRenderer>
-                                  ) : (
-                                    <pre className="body-3 overflow-x-auto whitespace-pre-wrap text-[var(--color-muted-foreground)]">
-                                      {JSON.stringify(subtask.output, null, 2).slice(0, 1500)}
-                                    </pre>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                            {isBlocked && (
-                              <div className="space-y-1">
-                                <h4 className="body-3 font-semibold text-amber-400">
-                                  Waiting for subtask
-                                </h4>
-                                <p className="body-3 pl-2 text-amber-400/80">
-                                  {subtask.depends_on
-                                    .map(
-                                      (depId) =>
-                                        `"${subtasks.find((subtaskItem) => subtaskItem.id === depId)?.title || depId}"`,
-                                    )
-                                    .join(', ')}{' '}
-                                  must complete first
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
                 )
               })}
@@ -365,12 +362,10 @@ export function SubtasksSection({
           ) : planContent ? (
             <div className="min-w-0">
               {planContent.summary && (
-                <p className="body-2 mb-3 text-[var(--color-muted-foreground)]">
-                  {planContent.summary}
-                </p>
+                <p className="body-2 text-muted-foreground mb-3">{planContent.summary}</p>
               )}
               {(planContent as { approach?: string }).approach && (
-                <p className="body-2 text-[var(--color-muted-foreground)]/70 mb-3 italic">
+                <p className="body-2 text-muted-foreground/70 mb-3 italic">
                   {(planContent as { approach?: string }).approach}
                 </p>
               )}

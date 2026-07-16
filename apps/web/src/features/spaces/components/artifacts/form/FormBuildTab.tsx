@@ -338,6 +338,7 @@ export function FormBuildTab({
         open={coverGenerateOpen}
         onClose={() => setCoverGenerateOpen(false)}
         campaignId={form.campaign_id}
+        extraTags={['doc-cover']}
         onSelect={(url) => {
           setCoverUrl(url)
           setCoverGenerateOpen(false)

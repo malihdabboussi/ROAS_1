@@ -103,7 +103,7 @@ export function TaskActivityAssigneePreview({
               key={`${ref.type}:${ref.id}`}
               className="body-3 min-w-0 truncate font-medium text-[var(--color-foreground)]"
             >
-              {resolveAssigneeDisplayName(ref, roster)}
+              {resolveAssigneeDisplayName(ref, roster, currentUserId)}
             </span>
           ))}
         </div>

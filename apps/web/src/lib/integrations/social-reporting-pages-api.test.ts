@@ -28,13 +28,13 @@ describe('social reporting provider page APIs', () => {
   it('fetches and normalizes selectable Facebook pages', async () => {
     backendGetMock.mockResolvedValue({
       success: true,
-      pages: [{ id: 'page-1', name: 'Vibey Page' }],
+      pages: [{ id: 'page-1', name: 'ROAS Page' }],
       hint: 'Pick a page',
     })
 
     await expect(fetchFacebookPages('integration-1')).resolves.toEqual({
       success: true,
-      pages: [{ id: 'page-1', name: 'Vibey Page' }],
+      pages: [{ id: 'page-1', name: 'ROAS Page' }],
       hint: 'Pick a page',
     })
     expect(backendGetMock).toHaveBeenCalledWith(
@@ -49,25 +49,25 @@ describe('social reporting provider page APIs', () => {
       saveFacebookPage({
         user_integration_id: 'integration-1',
         page_id: 'page-1',
-        page_name: 'Vibey Page',
+        page_name: 'ROAS Page',
       }),
     ).resolves.toEqual({ success: true, error: undefined })
     expect(backendPatchMock).toHaveBeenCalledWith('/api/integrations/facebook/page', {
       user_integration_id: 'integration-1',
       page_id: 'page-1',
-      page_name: 'Vibey Page',
+      page_name: 'ROAS Page',
     })
   })
 
   it('fetches and normalizes LinkedIn company pages', async () => {
     backendGetMock.mockResolvedValue({
       success: true,
-      organizations: [{ urn: 'urn:li:org:1', name: 'Vibey', role: 'ADMINISTRATOR' }],
+      organizations: [{ urn: 'urn:li:org:1', name: 'ROAS', role: 'ADMINISTRATOR' }],
     })
 
     await expect(fetchLinkedInCompanyPages('integration-2')).resolves.toEqual({
       success: true,
-      organizations: [{ urn: 'urn:li:org:1', name: 'Vibey', role: 'ADMINISTRATOR' }],
+      organizations: [{ urn: 'urn:li:org:1', name: 'ROAS', role: 'ADMINISTRATOR' }],
       error: undefined,
       hint: undefined,
     })
@@ -83,25 +83,25 @@ describe('social reporting provider page APIs', () => {
       saveLinkedInCompanyPage({
         user_integration_id: 'integration-2',
         organization_urn: 'urn:li:org:1',
-        organization_name: 'Vibey',
+        organization_name: 'ROAS',
       }),
     ).resolves.toEqual({ success: true, error: undefined })
     expect(backendPatchMock).toHaveBeenCalledWith('/api/integrations/linkedin/company-page', {
       user_integration_id: 'integration-2',
       organization_urn: 'urn:li:org:1',
-      organization_name: 'Vibey',
+      organization_name: 'ROAS',
     })
   })
 
   it('fetches and normalizes YouTube channels', async () => {
     backendGetMock.mockResolvedValue({
       success: true,
-      channels: [{ id: 'channel-1', name: 'Vibey', handle: '@vibey' }],
+      channels: [{ id: 'channel-1', name: 'ROAS', handle: '@vibey' }],
     })
 
     await expect(fetchYoutubeChannels('integration-3')).resolves.toEqual({
       success: true,
-      channels: [{ id: 'channel-1', name: 'Vibey', handle: '@vibey' }],
+      channels: [{ id: 'channel-1', name: 'ROAS', handle: '@vibey' }],
       error: undefined,
       hint: undefined,
     })
@@ -117,13 +117,13 @@ describe('social reporting provider page APIs', () => {
       saveYoutubeChannel({
         user_integration_id: 'integration-3',
         channel_id: 'channel-1',
-        channel_name: 'Vibey',
+        channel_name: 'ROAS',
       }),
     ).resolves.toEqual({ success: true, error: undefined })
     expect(backendPatchMock).toHaveBeenCalledWith('/api/integrations/youtube/channel', {
       user_integration_id: 'integration-3',
       channel_id: 'channel-1',
-      channel_name: 'Vibey',
+      channel_name: 'ROAS',
     })
   })
 })

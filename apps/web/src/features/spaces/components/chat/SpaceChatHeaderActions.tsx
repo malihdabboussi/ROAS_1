@@ -48,8 +48,8 @@ export function SpaceChatHeaderActions({
         type="button"
         onClick={onCollapse}
         className="text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 flex shrink-0 items-center justify-center transition-colors"
-        aria-label="Collapse Vibey chat"
-        title="Collapse Vibey chat"
+        aria-label="Collapse ROAS chat"
+        title="Collapse ROAS chat"
       >
         <RxDoubleArrowLeft className="icon-sm" aria-hidden />
       </button>

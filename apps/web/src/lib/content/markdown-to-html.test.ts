@@ -8,9 +8,9 @@ describe('markdownToHtml', () => {
     expect(markdownToHtml('')).toBeNull()
   })
 
-  it('keeps existing html untouched', () => {
-    expect(markdownToHtml('<section><p>Ready</p></section>')).toBe(
-      '<section><p>Ready</p></section>',
+  it('keeps semantic html untouched', () => {
+    expect(markdownToHtml('<section><h1>Ready</h1><p>Go</p></section>')).toBe(
+      '<section><h1>Ready</h1><p>Go</p></section>',
     )
   })
 
@@ -19,5 +19,23 @@ describe('markdownToHtml', () => {
 
     expect(html).toContain('<h1>Title</h1>')
     expect(html).toContain('first<br>second')
+  })
+
+  it('unwraps markdown dumped into a pre block', () => {
+    const html = markdownToHtml(
+      '<pre style="white-space:pre-wrap"># Title\n\n**Bold** line</pre>',
+    )
+    expect(html).toContain('<h1>Title</h1>')
+    expect(html).toContain('<strong>Bold</strong>')
+    expect(html).not.toContain('<pre')
+  })
+
+  it('unwraps markdown left inside a single paragraph with br breaks', () => {
+    const html = markdownToHtml(
+      '<p># Title<br><br>## Section<br><br>Impact Elite sells **coaching**</p>',
+    )
+    expect(html).toContain('<h1>Title</h1>')
+    expect(html).toContain('<h2>Section</h2>')
+    expect(html).toContain('<strong>coaching</strong>')
   })
 })

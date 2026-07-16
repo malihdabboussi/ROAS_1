@@ -58,7 +58,8 @@ export interface DocEditorPanelProps {
 function resolveInitialDocBody(item: SpaceItem): string {
   const raw = item.doc_body ?? item.notes ?? ''
   if (!raw) return ''
-  if (/<[a-z][\s\S]*>/i.test(raw)) return raw
+  // Always run through markdownToHtml — it keeps real semantic HTML and repairs
+  // markdown dumped into <pre> / <p># ...</p> leftovers from agent saves.
   return markdownToHtml(raw) ?? raw
 }
 
@@ -205,6 +206,7 @@ export function DocEditorPanel({
     docVisualSourceHash,
     docVisualDefaultMode,
     docVisualLastError,
+    docVisualPresentationId,
   } = useMemo(() => parseDocEditorUiFromCustomData(docCustomData), [docCustomData])
 
   const docHiddenFields = useMemo(
@@ -640,6 +642,7 @@ export function DocEditorPanel({
           : docVisualDefaultMode
       }
       docVisualLastError={docVisualLastError}
+      docVisualPresentationId={docVisualPresentationId}
       hasCurrentDocBody={hasCurrentDocBody}
       currentDocBodyHash={currentDocBodyHash}
     />

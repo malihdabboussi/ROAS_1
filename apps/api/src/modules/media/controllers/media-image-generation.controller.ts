@@ -86,8 +86,8 @@ export class MediaImageGenerationController {
     return {
       success: true as const,
       models: IMAGE_GENERATION_MODELS_PUBLIC,
-      defaultModel: 'gemini-3.1-flash-image-preview' as const,
-      tier: 'free' as const,
+      defaultModel: 'gpt-5.4-image-2' as const,
+      tier: 'pro' as const,
     }
   }
 }

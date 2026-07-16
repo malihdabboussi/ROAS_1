@@ -69,7 +69,7 @@ describe('ProjectSupabasePanel', () => {
       connectedAt: '2026-06-30T00:00:00.000Z',
     })
     mocks.connectSupabase.mockResolvedValue('https://supabase.example/oauth')
-    mocks.listSupabaseOrganizations.mockResolvedValue([{ id: 'org-1', name: 'Vibey HQ' }])
+    mocks.listSupabaseOrganizations.mockResolvedValue([{ id: 'org-1', name: 'ROAS HQ' }])
     mocks.listSupabaseProjects.mockResolvedValue([
       {
         id: 'supabase-project-1',
@@ -154,7 +154,7 @@ describe('ProjectSupabasePanel', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'New Project' }))
     expect(await screen.findByText('Create New Supabase Project')).toBeInTheDocument()
-    expect(screen.getByText('Vibey HQ')).toBeInTheDocument()
+    expect(screen.getByText('ROAS HQ')).toBeInTheDocument()
 
     fireEvent.change(screen.getByDisplayValue('Launch App'), {
       target: { value: '  Customer Portal  ' },

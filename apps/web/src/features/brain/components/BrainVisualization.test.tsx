@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('next/dynamic', () => ({
-  default: () => () => <div data-testid="dynamic-brain-voice-orb" />,
+  default: () => () => <div data-testid="dynamic-import" />,
 }))
 
 vi.mock('next/navigation', () => ({
@@ -43,12 +43,6 @@ vi.mock('@/components/ui/tooltip', () => ({
 
 vi.mock('@/components/vibey/vibey-loading-orb', () => ({
   VibeyLoadingOrb: ({ text }: { text?: string }) => <div data-testid="loading-orb">{text}</div>,
-}))
-
-vi.mock('@/components/agents/side-chat/AgentSideChatLayout', () => ({
-  AgentSideChatLayout: ({ children }: { children: React.ReactNode }) => (
-    <section data-testid="atlas-layout">{children}</section>
-  ),
 }))
 
 vi.mock('@/lib/agents', () => ({
@@ -136,14 +130,6 @@ vi.mock('./BrainScopeBreadcrumb', () => ({
 vi.mock('./BrainStats', () => ({
   default: ({ queueCount }: { queueCount: number }) => (
     <div data-testid="brain-stats">queue:{queueCount}</div>
-  ),
-}))
-
-vi.mock('./BrainVoiceTrigger', () => ({
-  BrainVoiceTrigger: ({ onActivate }: { onActivate: () => void }) => (
-    <button type="button" onClick={onActivate}>
-      Voice
-    </button>
   ),
 }))
 
@@ -324,10 +310,10 @@ describe('BrainVisualization', () => {
     try {
       const { container, getCommitCount } = renderBrainVisualization()
 
-      expect(screen.getByTestId('atlas-layout')).toBeTruthy()
       expect(screen.getByTestId('force-graph').textContent).toBe('nodes:1')
       expect(screen.getAllByTestId('brain-scope-breadcrumb')[0]?.textContent).toBe('Your Brain')
       expect(screen.getByRole('button', { name: 'Share brain-user' })).toBeTruthy()
+      expect(screen.queryByRole('button', { name: 'Talk to Atlas' })).toBeNull()
 
       fireEvent.click(screen.getByRole('button', { name: 'Search' }))
       fireEvent.change(screen.getByLabelText('Search brain'), {

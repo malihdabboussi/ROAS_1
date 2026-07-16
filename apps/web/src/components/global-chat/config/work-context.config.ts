@@ -14,7 +14,7 @@ export function defaultAgentForSurface(surface: GlobalWorkSurface): string {
     case 'brain':
       return 'atlas'
     case 'team':
-      return 'hr'
+      return GLOBAL_CHAT_DEFAULT_AGENT
     case 'flows':
       return 'loop'
     case 'spaces':
@@ -56,15 +56,15 @@ export function routeRecommendation(
     case 'team':
       return {
         headline: 'Team recommends',
-        agentName: 'Jaime',
-        body: 'Jaime helps with hiring, skills, and getting your team set up.',
-        suggestedAgentKey: 'hr',
+        agentName: 'Vibey',
+        body: 'Vibey runs the ops floor — brief the team and deploy work. Jaime stays in the HR rail for hiring.',
+        suggestedAgentKey: 'vibey',
       }
     case 'spaces':
       return {
         headline: 'Spaces work best with',
-        agentName: 'Vibey',
-        body: 'Vibey can read this space and help you ship in one flow.',
+        agentName: 'ROAS',
+        body: 'ROAS can read this space and help you ship in one flow.',
         suggestedAgentKey: 'vibey',
       }
     case 'flows':
@@ -104,7 +104,9 @@ export function filterAgentsForWorkContext(
         const agentKey = rosterAgentKey(entry)
         return (
           agentKey !== null &&
-          (TEAM_AGENT_KEYS.has(agentKey) || agentHasDomain(agentKey, 'manage_agents'))
+          (agentKey === GLOBAL_CHAT_DEFAULT_AGENT ||
+            TEAM_AGENT_KEYS.has(agentKey) ||
+            agentHasDomain(agentKey, 'manage_agents'))
         )
       })
     case 'flows':
@@ -135,7 +137,11 @@ export function isAgentAllowedForWorkContext(
     case 'brain':
       return BRAIN_AGENT_KEYS.has(agentKey)
     case 'team':
-      return TEAM_AGENT_KEYS.has(agentKey) || agentHasDomain(agentKey, 'manage_agents')
+      return (
+        agentKey === GLOBAL_CHAT_DEFAULT_AGENT ||
+        TEAM_AGENT_KEYS.has(agentKey) ||
+        agentHasDomain(agentKey, 'manage_agents')
+      )
     case 'flows':
       return FLOWS_AGENT_KEYS.has(agentKey)
     case 'spaces':

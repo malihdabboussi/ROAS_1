@@ -1,13 +1,65 @@
 import { marked } from 'marked'
 
+function decodeBasicEntities(value: string): string {
+  return value
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+}
+
+function stripHtmlToText(value: string): string {
+  return decodeBasicEntities(
+    value
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<\/div>/gi, '\n')
+      .replace(/<[^>]+>/g, ''),
+  )
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+function looksLikeMarkdown(text: string): boolean {
+  return /(?:^|\n)\s{0,3}#{1,6}\s|(?:^|\n)\s*[-*+]\s|(?:^|\n)\s*\d+\.\s|\*\*[^*]+\*\*|__[^_]+__|```/.test(
+    text,
+  )
+}
+
+function unwrapPrefixedMarkdownHtml(text: string): string | null {
+  const trimmed = text.trim()
+  const preMatch = trimmed.match(/^<pre\b[^>]*>([\s\S]*)<\/pre>$/i)
+  if (preMatch) {
+    return stripHtmlToText(preMatch[1])
+  }
+  // Agent dual-write sometimes produced <p># Heading<br>## Sub</p> instead of <h1>/<h2>.
+  if (/^<(?:p|div)\b/i.test(trimmed) && looksLikeMarkdown(stripHtmlToText(trimmed))) {
+    return stripHtmlToText(trimmed)
+  }
+  return null
+}
+
 /**
- * Server mirror of apps/web/src/features/spaces/lib/markdown-to-html.ts —
+ * Server mirror of apps/web/src/lib/content/markdown-to-html.ts —
  * space_items.doc_body is editor HTML, so markdown written by agents must be
  * converted with the exact same rules the Docs UI uses, or the two surfaces
  * render the same doc differently.
  */
 export function markdownToHtml(text: string | null | undefined): string | null {
   if (!text) return null
-  if (/<[a-z][\s\S]*>/i.test(text)) return text
-  return marked.parse(text, { async: false, breaks: true }) as string
+  const trimmed = text.trim()
+  if (!trimmed) return null
+
+  if (/<(h[1-6]|ul|ol|li|table|blockquote)\b/i.test(trimmed)) {
+    return text
+  }
+
+  const unwrapped = unwrapPrefixedMarkdownHtml(trimmed)
+  if (unwrapped != null) {
+    return marked.parse(unwrapped, { async: false, breaks: true }) as string
+  }
+
+  if (/<[a-z][\s\S]*>/i.test(trimmed)) return text
+  return marked.parse(trimmed, { async: false, breaks: true }) as string
 }

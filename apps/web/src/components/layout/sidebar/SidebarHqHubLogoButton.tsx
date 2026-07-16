@@ -22,11 +22,11 @@ export function SidebarHqHubLogoButton({
       ) : (
         <>
           <img
-            src="/Logos/logov2/icon-white.png"
-            alt="Vibey"
+            src="/Logos/roas/icon-white.png"
+            alt="ROAS"
             className="hidden h-10 w-10 dark:block"
           />
-          <img src="/Logos/logov2/icon-black.png" alt="Vibey" className="h-10 w-10 dark:hidden" />
+          <img src="/Logos/roas/icon-black.png" alt="ROAS" className="h-10 w-10 dark:hidden" />
         </>
       )}
     </button>

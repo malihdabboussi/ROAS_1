@@ -13,6 +13,7 @@ interface UseChatInputPlusControllerOptions {
   handleFileSelect: (files: File[] | FileList) => void | Promise<void>
   allSlashItems: SlashItem[]
   onOpenAtMenu: () => void
+  onGenerateImage: () => void
   plusMenuSpacePicker?: ChatInputPlusMenuSpacePickerConfig
 }
 
@@ -23,6 +24,7 @@ export function useChatInputPlusController({
   handleFileSelect,
   allSlashItems,
   onOpenAtMenu,
+  onGenerateImage,
   plusMenuSpacePicker,
 }: UseChatInputPlusControllerOptions) {
   const {
@@ -107,6 +109,7 @@ export function useChatInputPlusController({
     onLocalUpload: handleFileButtonClick,
     onDrive: openDrive,
     onDropbox: openDropbox,
+    onGenerateImage,
     onCloseMenu: closePlusMenu,
     onOpenAtMenu,
     handleToggleAgent,

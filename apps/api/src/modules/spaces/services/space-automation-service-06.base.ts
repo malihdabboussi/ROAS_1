@@ -28,6 +28,7 @@ import {
   type FathomAttendeeLike,
   type FathomTranscriptEntryLike,
 } from './fathom-meeting-item-enrichment'
+import { buildCeoCallIdentity, resolveCeoCallKind } from './fathom-call-kind'
 import {
   provisionalFathomMeetingTitle,
   sanitizeCeoMeetingTitle,
@@ -83,6 +84,7 @@ const SCHEDULE_ALLOWED_ACTION_TYPES = new Set<string>([
   'ingest_youtube_channel_to_agent_brain',
   'send_to_agent',
   'send_to_cursor',
+  'meetings_precall_prep',
 ])
 
 const YOUTUBE_CHANNEL_VIDEOS_PATH = '/v1/youtube/channel-videos'
@@ -352,6 +354,24 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
       // mutate the synthetic Space item.
       const runUserId = routeRecord.user_id ? String(routeRecord.user_id) : userId
 
+      const existingCall = await this.repo.findItemByFathomMeetingId(
+        supabase,
+        spaceId,
+        meeting.meetingId,
+      )
+      if (existingCall?.id) {
+        this.logger.log(
+          `Fathom meeting ${meeting.meetingId} already on space ${spaceId} as ${String(existingCall.id)} — skipping duplicate create`,
+        )
+        fanoutResults.push({
+          route_id: String(routeRecord.id),
+          space_id: spaceId,
+          automation_id: automationId,
+          item_id: String(existingCall.id),
+        })
+        continue
+      }
+
       const space = (await this.repo.findSpaceById(
         supabase,
         runUserId,
@@ -363,6 +383,24 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
         transcript: meeting.transcript as FathomTranscriptEntryLike[],
         recordedByEmail: meeting.recordedByEmail,
         titleHint: meeting.title,
+      })
+      const { data: ownerProfile } = await supabase
+        .from('profiles')
+        .select('email, fathom_aliases, full_name')
+        .eq('id', runUserId)
+        .maybeSingle()
+      const callIdentity = buildCeoCallIdentity({
+        email: typeof ownerProfile?.email === 'string' ? ownerProfile.email : null,
+        fathomAliases: Array.isArray(ownerProfile?.fathom_aliases)
+          ? (ownerProfile.fathom_aliases as string[])
+          : null,
+        fullName: typeof ownerProfile?.full_name === 'string' ? ownerProfile.full_name : null,
+      })
+      const callKind = resolveCeoCallKind({
+        identity: callIdentity,
+        recordedByEmail: meeting.recordedByEmail,
+        attendees: meeting.attendees as FathomAttendeeLike[],
+        attendeeLabels: resolvedAttendees.labels,
       })
       const { optionIds, nextSchema, optionsChanged } = upsertAttendeeTagOptions(
         this.objectRecord(space?.schema),
@@ -410,6 +448,7 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
           ...(hasProcessingStatus ? { status: 'processing' as const } : {}),
           custom_data: {
             entry_type: 'call',
+            call_kind: callKind,
             ...(meeting.callDate ? { call_date: meeting.callDate } : {}),
             ...(meeting.url ? { recording_url: meeting.url, fathom_url: meeting.url } : {}),
             ...(optionIds.length > 0 ? { attendees: optionIds } : {}),
@@ -421,6 +460,7 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
               transcript_entries: meeting.transcriptEntries,
               fathom_owner_user_id: userId,
               attendees_from_speakers: resolvedAttendees.usedSpeakers,
+              call_kind: callKind,
             },
           },
         },

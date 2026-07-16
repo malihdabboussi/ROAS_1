@@ -13,6 +13,7 @@ import { createSpaceItem, deleteSpaceItem, updateSpaceItem } from '../../service
 import { useSpacesStore } from '../../store/use-spaces-store'
 import type { SpaceItem } from '../../types'
 import { ShareModal } from '../ShareModal'
+import { useSpaceItemUpdate } from '../SpaceStatusCascadeConfirmProvider'
 import { TaskMenuDropdown } from '../task-menu/TaskMenuDropdown'
 import { SendTaskToAgentModal, type SendToAgentInstructionsSeed } from './SendTaskToAgentModal'
 import { TaskActivity } from './TaskActivity'
@@ -105,7 +106,7 @@ export function TaskDetailModal({
     return () => document.removeEventListener('keydown', handleKey)
   }, [onClose, shareOpen, sendToAgentOpen])
 
-  const storeUpdateItem = useSpacesStore((s) => s.updateItem)
+  const storeUpdateItem = useSpaceItemUpdate()
   const pushToAgent = useSpacesStore((s) => s.pushToAgent)
   const openConversationInSpaceChat = useSpacesStore((s) => s.openConversationInSpaceChat)
   const setChatCollapsed = useSpacesStore((s) => s.setChatCollapsed)
@@ -144,11 +145,16 @@ export function TaskDetailModal({
   const handleUpdateField = useCallback(
     async (patch: Partial<SpaceItem>) => {
       const previous = item
-      const optimistic = { ...item, ...patch } as SpaceItem
-      setItem(optimistic)
+      // Status may open the “also complete subtasks?” confirm — wait before painting Done.
+      const deferOptimistic = typeof patch.status === 'string'
+      if (!deferOptimistic) {
+        setItem({ ...item, ...patch } as SpaceItem)
+      }
       try {
         await storeUpdateItem(item.id, patch)
-        setItem((current) => ({ ...current, ...patch }) as SpaceItem)
+        const fresh = useSpacesStore.getState().items.find((row) => row.id === item.id)
+        if (fresh) setItem(fresh)
+        else setItem((current) => ({ ...current, ...patch }) as SpaceItem)
       } catch {
         setItem(previous)
         toast.error('Failed to update task')

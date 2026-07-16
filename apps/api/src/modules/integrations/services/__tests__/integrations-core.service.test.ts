@@ -36,6 +36,25 @@ describe('IntegrationsCoreService', () => {
     expect(composio.executeTool).toHaveBeenCalledWith('GMAIL_GET_PROFILE', 'user-1', {}, 'ca-1')
   })
 
+  it('resolves Google Calendar identity from LIST_CALENDARS (not Gmail profile)', async () => {
+    const { service, composio } = makeService({
+      data: {
+        dataOwner: 'dylanvanas@gmail.com',
+        items: [{ id: 'dylanvanas@gmail.com', primary: true }],
+      },
+    })
+
+    await expect(
+      service.resolveConnectionIdentity('google_calendar', 'user-1', 'ca-1'),
+    ).resolves.toBe('dylanvanas@gmail.com')
+    expect(composio.executeTool).toHaveBeenCalledWith(
+      'GOOGLECALENDAR_LIST_CALENDARS',
+      'user-1',
+      {},
+      'ca-1',
+    )
+  })
+
   it('resolves an Airtable connection identity through the configured Composio tool', async () => {
     const { service, composio } = makeService({
       data: { response_data: { email: 'airtable-user@example.com' } },

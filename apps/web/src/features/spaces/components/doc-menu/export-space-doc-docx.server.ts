@@ -13,7 +13,7 @@ export async function renderSpaceDocDocxBytes(title: string, docBody: string): P
   const html = buildSpaceDocExportHtml(heading, docBody)
   const result = await HtmlToDocx(html, null, {
     title: heading,
-    creator: 'Vibey',
+    creator: 'ROAS',
     table: {
       row: { cantSplit: true },
       borderOptions: { size: 1, color: 'D1D5DB' },

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { AgentInfoPanel, type AgentInfoPanelProps } from '@/components/agents/AgentInfoPanel'
 import {
   showsAgentAccessTab,
@@ -8,19 +8,23 @@ import {
 } from '@/lib/agents/agent-info-panel-tabs'
 import { backendPatch } from '@/lib/api/backend-client'
 import type { AgentMenuContext, AgentTeam, MissionAgent } from '@/lib/agents'
+import type { Campaign } from '@/lib/campaigns'
 import type { ChatModelSettings } from '@/lib/chat/chat-model-settings'
 import type { useTeam2Perms } from '../hooks/use-team2-perms'
 import type { TeamAgentsViewKey, TeamManageSection } from '../lib/team-manage-nav'
+import { resolveAgentFocusLabel } from '../lib/ops-desk-summary'
 import type {
   Team2ManageData,
   Team2ManageDerived,
   Team2ManageHandlers,
 } from './team2-manage-content.types'
+import { AgentAssignWorkModal } from './AgentAssignWorkModal'
 import { AgentsGrid } from './AgentsGrid'
 import { Team2DetailView } from './Team2DetailView'
 import { Team2ManageShell } from './nav/Team2ManageShell'
 import { TeamDetailView } from './teams/TeamDetailView'
 import { TeamsIndexView } from './teams/TeamsIndexView'
+import { VibeyOpsDesk } from './VibeyOpsDesk'
 
 type Team2Perms = ReturnType<typeof useTeam2Perms>
 
@@ -81,6 +85,34 @@ export function Team2ManageContent({
   onStartAgentFromScratch,
   assignedCampaignIdsForSelected,
 }: Team2ManageContentProps) {
+  const [assignAgent, setAssignAgent] = useState<MissionAgent | null>(null)
+
+  const missions = data.missions ?? []
+  const vibeyAgent = useMemo(
+    () => data.agents.find((agent) => agent.agent_key === 'vibey') ?? null,
+    [data.agents],
+  )
+
+  const focusByAgentKey = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const agent of data.agents) {
+      const focus = resolveAgentFocusLabel(agent, missions)
+      if (focus.kind === 'mission' && focus.label) map[agent.agent_key] = focus.label
+    }
+    return map
+  }, [data.agents, missions])
+
+  const handleOpenAgent = useCallback(
+    (agentKey: string, opts?: { infoTab?: AgentInfoPanelTab }) => {
+      if (agentKey === 'vibey') {
+        onNavigateAgentsRoot('all')
+        return
+      }
+      onOpenAgent(agentKey, opts)
+    },
+    [onNavigateAgentsRoot, onOpenAgent],
+  )
+
   const agentInfoBaseProps = useMemo(
     () => ({
       selected: data.selected,
@@ -223,6 +255,11 @@ export function Team2ManageContent({
           infoPanelTab={infoPanelTab}
           showAccessTab={showsAgentAccessTab(selectedFromUrl, derived.isSystemLikeAgent)}
           onInfoPanelTabChange={onInfoPanelTabChange}
+          assignedCampaigns={data.assignedCampaigns as Campaign[]}
+          nonGeneralCampaigns={data.nonGeneralCampaigns as Campaign[]}
+          generalCampaignId={data.generalCampaignId}
+          missions={missions}
+          onAssignWork={() => setAssignAgent(selectedFromUrl)}
           infoPanel={(onRequestCollapse) => (
             <AgentInfoPanel
               {...(agentInfoBaseProps as AgentInfoPanelProps)}
@@ -242,12 +279,12 @@ export function Team2ManageContent({
       )
     }
 
-    return (
+    const floor = (
       <AgentsGrid
         agents={data.agents}
         teamFilterId={selectedTeamId}
-        onOpenAgent={onOpenAgent}
-        onOpenAgentChat={(agentKey) => onOpenAgent(agentKey)}
+        onOpenAgent={handleOpenAgent}
+        onOpenAgentChat={(agentKey) => handleOpenAgent(agentKey)}
         getAgentMenuContext={getAgentMenuContextForGrid}
         onRenameAgent={onGridRename}
         onChangeAgentModel={onGridModelChange}
@@ -256,8 +293,16 @@ export function Team2ManageContent({
         selectedAgentKey={data.selectedAgentKey || null}
         assignedCampaignIdsForSelected={assignedCampaignIdsForSelected}
         hasBrainForSelected={data.hasBrain}
+        focusByAgentKey={focusByAgentKey}
+        onAssignWork={(agent) => setAssignAgent(agent)}
       />
     )
+
+    if (vibeyAgent) {
+      return <VibeyOpsDesk agents={data.agents} missions={missions} floor={floor} />
+    }
+
+    return floor
   })()
 
   return (
@@ -274,6 +319,15 @@ export function Team2ManageContent({
       showOrgTeams={showOrgTeams}
     >
       {content}
+      <AgentAssignWorkModal
+        open={assignAgent !== null}
+        agent={assignAgent}
+        campaigns={(data.campaigns as Campaign[]) ?? []}
+        onOpenChange={(open) => {
+          if (!open) setAssignAgent(null)
+        }}
+        onCreated={() => void data.loadAgents()}
+      />
     </Team2ManageShell>
   )
 }

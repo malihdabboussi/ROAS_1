@@ -27,7 +27,7 @@ function BrainRouter() {
 
 export default function BrainPage() {
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <Suspense
         fallback={
           <div className="flex h-full items-center justify-center">

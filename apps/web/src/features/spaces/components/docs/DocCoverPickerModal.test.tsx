@@ -25,14 +25,14 @@ describe('DocCoverGenerateModal', () => {
   beforeEach(() => {
     mediaApiMocks.fetchImageGenerationModels.mockResolvedValue({
       success: true,
-      defaultModel: 'gemini-3.1-flash-image-preview',
-      tier: 'free',
+      defaultModel: 'gpt-5.4-image-2',
+      tier: 'pro',
       models: [
         {
-          id: 'gemini-3.1-flash-image-preview',
-          name: 'Nano Banana 2',
-          tier: 'free',
-          description: 'Fast drafts',
+          id: 'gpt-5.4-image-2',
+          name: 'ChatGPT',
+          tier: 'pro',
+          description: 'Strong detail',
           supportedAspectRatios: ['1:1', '16:9'],
           defaultAspectRatio: '16:9',
         },

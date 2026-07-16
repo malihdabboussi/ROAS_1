@@ -232,7 +232,7 @@ export function MetaIntegrationsReviewModal({
     setCreatingPixel(true)
     try {
       await createMetaPixel(accountId, {
-        name: `Vibey Pixel ${new Date().toISOString().slice(0, 10)}`,
+        name: `ROAS Pixel ${new Date().toISOString().slice(0, 10)}`,
       })
       await runReview()
     } finally {

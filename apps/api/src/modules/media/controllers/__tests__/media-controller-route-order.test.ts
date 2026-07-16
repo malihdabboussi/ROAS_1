@@ -27,6 +27,7 @@ const EXPECTED_MEDIA_ROUTES = [
   'POST media/edit-image-stream -> editImageStream',
   'POST media/generate-ad-concepts -> generateAdConcepts',
   'GET media/assets -> listAssets',
+  'GET media/assets/resolve-by-url -> resolveByUrl',
   'GET media/assets/:id -> getAsset',
   'PATCH media/assets/:id -> updateAsset',
   'POST media/assets/:id/copy -> copyAsset',

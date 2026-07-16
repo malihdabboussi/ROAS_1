@@ -113,7 +113,7 @@ export function CampaignPreviewPanel({
           conversation_id: activeConvId ?? undefined,
           campaign_id: activeCampaignId,
           content: `Build a ${hintLabel} based on this strategy note: "${text}"`,
-          system_context: `The user clicked "Build with Vibey" on a strategy note. Create the appropriate ${hintLabel} artifact based on the note content. Use vibey_backend to create the artifact.`,
+          system_context: `The user clicked "Build with ROAS" on a strategy note. Create the appropriate ${hintLabel} artifact based on the note content. Use vibey_backend to create the artifact.`,
         })
       }
     }

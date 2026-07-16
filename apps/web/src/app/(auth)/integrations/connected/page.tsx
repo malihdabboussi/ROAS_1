@@ -82,7 +82,7 @@ function IntegrationConnectedContent() {
       </div>
       <h1 className="title-h6 text-foreground mt-spacing-4">CONNECTED SUCCESSFULLY</h1>
       <p className="body-2 mt-spacing-3 text-muted-foreground">
-        You can close this tab and return to Vibey.
+        You can close this tab and return to ROAS.
       </p>
       <p className="body-4 mt-spacing-2 text-muted-foreground">Closing&hellip;</p>
     </section>

@@ -17,7 +17,7 @@ export function docMentionPreviewsFromHtml(html: string, spaceId: string): LinkP
       description: null,
       imageUrl: null,
       iconUrl: null,
-      siteName: 'Vibey',
+      siteName: 'ROAS',
       entityKind: 'space-item',
       entityId: mention.entity_id,
       mimeType: 'text/html',

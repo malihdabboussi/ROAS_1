@@ -41,7 +41,7 @@ describe('PresentationBrandingSection', () => {
       />,
     )
 
-    expect(screen.getByText('Remove "Made with Vibey"')).toBeTruthy()
+    expect(screen.getByText('Remove "Made with ROAS"')).toBeTruthy()
     expect(screen.getByText('Hide the watermark on published presentation pages.')).toBeTruthy()
     expect(screen.getByText('Saving...')).toBeTruthy()
 

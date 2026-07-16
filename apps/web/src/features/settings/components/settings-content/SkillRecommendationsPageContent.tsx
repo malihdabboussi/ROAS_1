@@ -87,7 +87,7 @@ export default function SkillRecommendationsPageContent() {
               Jaime-reviewed agent improvements
             </p>
             <p className="body-3 text-muted-foreground mt-spacing-1">
-              When enabled, Vibey stores lightweight workflow metadata after chat turns. This
+              When enabled, ROAS stores lightweight workflow metadata after chat turns. This
               collection is token-free. Credits can be used only after enough similar runs are
               detected and Jaime analyzes the repeated pattern.
             </p>

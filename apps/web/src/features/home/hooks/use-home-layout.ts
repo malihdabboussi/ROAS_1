@@ -7,7 +7,7 @@ import {
   HOME_LAYOUT_STORAGE_KEY,
   parseHomeLayout,
 } from '../config/home-cards.config'
-import type { HomeCardId, HomeLayoutState } from '../types/home-cards'
+import type { HomeCardGridSize, HomeCardId, HomeLayoutState } from '../types/home-cards'
 
 function defaultHomeLayoutState(): HomeLayoutState {
   return { ...DEFAULT_HOME_LAYOUT, cardIds: [...DEFAULT_HOME_LAYOUT.cardIds] }
@@ -56,7 +56,12 @@ export function useHomeLayout() {
 
   const removeCard = useCallback((id: HomeCardId) => {
     setLayout((prev) => {
-      const next = { ...prev, cardIds: prev.cardIds.filter((c) => c !== id) }
+      const nextSizes = { ...prev.cardSizes }
+      delete nextSizes[id]
+      const next: HomeLayoutState = {
+        cardIds: prev.cardIds.filter((c) => c !== id),
+        ...(Object.keys(nextSizes).length > 0 ? { cardSizes: nextSizes } : {}),
+      }
       saveLayout(next)
       return next
     })
@@ -73,6 +78,24 @@ export function useHomeLayout() {
     })
   }, [])
 
+  const setCardSize = useCallback((id: HomeCardId, size: HomeCardGridSize) => {
+    setLayout((prev) => {
+      if (!prev.cardIds.includes(id)) return prev
+      const nextSizes = { ...prev.cardSizes }
+      if (size === 'half') {
+        delete nextSizes[id]
+      } else {
+        nextSizes[id] = size
+      }
+      const next: HomeLayoutState = {
+        cardIds: prev.cardIds,
+        ...(Object.keys(nextSizes).length > 0 ? { cardSizes: nextSizes } : {}),
+      }
+      saveLayout(next)
+      return next
+    })
+  }, [])
+
   const resetLayout = useCallback(() => {
     persist({ cardIds: [...DEFAULT_HOME_LAYOUT.cardIds] })
   }, [persist])
@@ -84,6 +107,7 @@ export function useHomeLayout() {
     addCard,
     removeCard,
     reorderCards,
+    setCardSize,
     resetLayout,
   }
 }

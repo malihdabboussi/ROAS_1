@@ -10,7 +10,7 @@ export type SpacePresentationSourceImportDetail = {
 
 export function buildPresentationSourceImportPrompt(file: File): string {
   const sourceLabel = file.name.trim() || 'the attached PPTX/PDF'
-  return `Take the attached PPTX/PDF (${sourceLabel}) and turn it into an editable Vibey HTML presentation.
+  return `Take the attached PPTX/PDF (${sourceLabel}) and turn it into an editable ROAS HTML presentation.
 
 Use read_document with the attached asset_id if the extracted text is partial, empty, scanned, or visually complex. Recreate the deck as an HTML bundle by calling create_presentation with files and index.html as the entry_file. Wrap every slide in a <section> element. Preserve slide order, headings, hierarchy, colors, tables, charts, images, and speaker notes as closely as possible. Use semantic HTML and clear class names so the presentation editor and markup tools can edit it.`
 }

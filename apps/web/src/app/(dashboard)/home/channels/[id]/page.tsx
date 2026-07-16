@@ -21,7 +21,6 @@ export default function HomeChannelPage() {
   const searchParams = useSearchParams()
   const { isAccountContextReady, isPersonalAccountContext } = useAccountContextGate()
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
-  const expandAndFocus = useGlobalChatStore((s) => s.expandAndFocus)
   const [rightPanelAwareness, setRightPanelAwareness] = useState<ChannelRightPanelAwareness>({
     activeTab: 'messages',
     openThreadId: null,
@@ -70,14 +69,13 @@ export default function HomeChannelPage() {
 
   useEffect(() => {
     if (!id) return
-    expandAndFocus()
     setWorkContext({
       surface: 'general',
       channelId: id,
       channelName: selectedChannel?.name ?? 'Channel',
       channelAwarenessContext,
     })
-  }, [channelAwarenessContext, expandAndFocus, id, selectedChannel?.name, setWorkContext])
+  }, [channelAwarenessContext, id, selectedChannel?.name, setWorkContext])
 
   const handleRightPanelAwarenessChange = useCallback((next: ChannelRightPanelAwareness) => {
     setRightPanelAwareness(next)

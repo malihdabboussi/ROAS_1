@@ -161,6 +161,10 @@ interface SpaceVibeyChatPanelProps {
     scopeLabel: string
     awarenessContext: string
   } | null
+  teamOpsContext?: {
+    label: string
+    awarenessContext: string
+  } | null
   onCollapseChat?: () => void
 }
 
@@ -191,7 +195,7 @@ const VIBEY_ROSTER_FALLBACK: TeamRosterEntry = {
   org_id: null,
   user_id: null,
   agent_key: DEFAULT_SPACE_CHAT_AGENT_KEY,
-  display_name: 'Vibey',
+  display_name: 'ROAS',
   avatar_url: null,
   role_label: null,
   specialties: [],
@@ -216,6 +220,7 @@ export function SpaceVibeyChatPanel({
   campaignName,
   channelContext,
   brainContext,
+  teamOpsContext,
   onCollapseChat,
 }: SpaceVibeyChatPanelProps) {
   const router = useRouter()
@@ -867,13 +872,25 @@ export function SpaceVibeyChatPanel({
   const buildContextForSend = useCallback(() => {
     if (isChannelScope) return channelContext?.awarenessContext ?? ''
     if (chatSurface === 'brain') return brainContext?.awarenessContext ?? ''
+    if (chatSurface === 'team' && teamOpsContext?.awarenessContext) {
+      return teamOpsContext.awarenessContext
+    }
     return buildSpaceAwarenessContext({
       activeViewType: activeView?.type,
       activeViewName: activeView?.name,
       campaignName,
       focusedArtifact: focusedArtifactRef.current,
     })
-  }, [activeView?.name, activeView?.type, brainContext, campaignName, channelContext, chatSurface, isChannelScope])
+  }, [
+    activeView?.name,
+    activeView?.type,
+    brainContext,
+    campaignName,
+    channelContext,
+    chatSurface,
+    isChannelScope,
+    teamOpsContext,
+  ])
 
   const lastUserMessageId = findLastEditableUserMessageId(messages, isStreaming)
 
@@ -948,18 +965,20 @@ export function SpaceVibeyChatPanel({
       references?: MessageReference[],
       modelSettings?: ChatModelSettings,
       extraSystemContext?: string,
+      options?: { forceNewConversation?: boolean },
     ) => {
-      if (selectedConversationId && isStopping) return
+      const forceNew = Boolean(options?.forceNewConversation)
+      if (!forceNew && selectedConversationId && isStopping) return
       const systemContext = [buildContextForSend(), extraSystemContext]
         .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
         .join('\n\n')
       const msgsBefore =
-        (selectedConversationId
+        (!forceNew && selectedConversationId
           ? useChatStore.getState().messagesByConversation[selectedConversationId]
           : null) ?? []
-      const isFirstMessageInThread = msgsBefore.length === 0
+      const isFirstMessageInThread = forceNew || msgsBefore.length === 0
 
-      let conversationId = selectedConversationId
+      let conversationId = forceNew ? null : selectedConversationId
       if (!conversationId) {
         const conversation = await createNewConversation({
           agent_id: activeAgentKey,
@@ -1058,6 +1077,7 @@ export function SpaceVibeyChatPanel({
       references?: MessageReference[],
       modelSettings?: ChatModelSettings,
       extraSystemContext?: string,
+      options?: { forceNewConversation?: boolean },
     ) => {
       try {
         await spaceSend(
@@ -1068,6 +1088,7 @@ export function SpaceVibeyChatPanel({
           references,
           modelSettings,
           extraSystemContext,
+          options,
         )
       } catch (err) {
         if (err instanceof Error && err.message === '__CREDITS_EXHAUSTED__') {
@@ -1746,31 +1767,55 @@ export function SpaceVibeyChatPanel({
     async (seed: GlobalChatSeedDetail) => {
       if (isChannelScope || conversationsLoading) return
       if (!globalChatSeedMatchesPanel(seed, spaceId)) return
-      const content = seed.content?.trim()
-      if (!content) return
 
-      const seedKey = `${spaceId ?? 'general'}:${content}`
+      const content = seed.content?.trim() ?? ''
+      const documents = seed.documents as DocumentAttachment[] | undefined
+      const isAttach = seed.seedMode === 'attach'
+      if (!isAttach && !content) return
+      if (isAttach && !content && !(documents && documents.length > 0)) return
+
+      const seedKey = `${spaceId ?? 'general'}:${seed.seedMode ?? 'send'}:${seed.conversationId ?? ''}:${content}:${documents?.map((d) => d.mediaAssetId ?? d.fileUrl).join(',') ?? ''}`
       if (globalSeedConsumedRef.current === seedKey) return
       globalSeedConsumedRef.current = seedKey
 
       if (seed.agentKey && seed.agentKey !== activeAgentKey) {
         handleAgentChange(seed.agentKey)
       }
+
+      if (seed.conversationId) {
+        useSpacesStore.getState().openConversationInSpaceChat(seed.conversationId)
+      } else if (seed.railIntent === 'new') {
+        // railIntent 'new' must force a fresh thread — React state from handleNewConversation
+        // is not updated yet when the sync GLOBAL_CHAT_SEED_EVENT fires.
+        handleNewConversation()
+      }
       setMode('chat')
+
+      if (isAttach) {
+        setComposerRestore({
+          text: content,
+          documents,
+          nonce: crypto.randomUUID(),
+        })
+        return
+      }
 
       await sendWithToast(
         content,
-        seed.documents as DocumentAttachment[] | undefined,
+        documents,
         seed.artifacts as AttachedArtifact[] | undefined,
         seed.model,
         seed.references as MessageReference[] | undefined,
         seed.modelSettings as ChatModelSettings | undefined,
+        undefined,
+        seed.railIntent === 'new' ? { forceNewConversation: true } : undefined,
       )
     },
     [
       activeAgentKey,
       conversationsLoading,
       handleAgentChange,
+      handleNewConversation,
       isChannelScope,
       sendWithToast,
       spaceId,

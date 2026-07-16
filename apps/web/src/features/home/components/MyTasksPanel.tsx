@@ -1,0 +1,278 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import * as DialogPrimitive from '@radix-ui/react-dialog'
+import { Calendar, CheckSquare, Search, X } from 'lucide-react'
+import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { Tooltip } from '@/components/ui/tooltip'
+import { TasksEmptyIllustration } from '@/features/home/components/HomeEmptyIllustrations'
+import {
+  HomeFeedScopePicker,
+} from '@/features/home/components/HomeFeedScopePicker'
+import { formatHomeShortDate } from '@/features/home/components/HomeListCardShell'
+import {
+  filterMyTasksBySearch,
+  groupMyTasksByDue,
+} from '@/features/home/lib/group-my-tasks-by-due'
+import type { HomeFeedScopeState } from '@/features/home/types/home-feed-scope'
+import { formatInboxStatusLabel } from '@/features/inbox/lib/inbox-status-label'
+import { OptionDot } from '@/features/spaces/components/OptionBadge'
+import {
+  resolveMissionSubtaskStatusDotColor,
+  resolveStatusDotColorFromId,
+  resolveStatusLabelFromId,
+} from '@/features/spaces/components/space-item-values'
+import { cachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
+import { fetchSpaceById } from '@/features/spaces/services/spaces.service'
+import type { YourTurnItem } from '@/features/spaces/services/your-turn.service'
+import type { FieldDef } from '@/features/spaces/types/space-schema'
+import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { cn } from '@/lib/utils/cn'
+
+function isOverdue(dueAt: string | null, now: Date = new Date()): boolean {
+  if (!dueAt) return false
+  return new Date(dueAt).getTime() < now.getTime()
+}
+
+function useSpaceStatusFieldsBySpaceId(spaceIds: string[]) {
+  const [fieldsBySpaceId, setFieldsBySpaceId] = useState<Map<string, FieldDef | null>>(new Map())
+  const spaceIdsKey = useMemo(
+    () => [...new Set(spaceIds.filter(Boolean))].sort().join(','),
+    [spaceIds],
+  )
+
+  useEffect(() => {
+    const ids = spaceIdsKey ? spaceIdsKey.split(',') : []
+    if (ids.length === 0) {
+      setFieldsBySpaceId(new Map())
+      return
+    }
+    let cancelled = false
+    const knownSpaces = cachedSpaces.peek()
+    void Promise.all(
+      ids.map(async (spaceId) => {
+        try {
+          const space =
+            knownSpaces?.find((row) => row.id === spaceId) ??
+            (await cachedFetch(`space:${spaceId}`, () => fetchSpaceById(spaceId), {
+              ttlMs: 60_000,
+            }))
+          const statusField = space.schema?.fields?.find((field) => field.id === 'status') ?? null
+          return [spaceId, statusField] as const
+        } catch {
+          return [spaceId, null] as const
+        }
+      }),
+    ).then((entries) => {
+      if (!cancelled) setFieldsBySpaceId(new Map(entries))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [spaceIdsKey])
+
+  return fieldsBySpaceId
+}
+
+function StatusDot({
+  item,
+  statusField,
+}: {
+  item: YourTurnItem
+  statusField: FieldDef | null | undefined
+}) {
+  const statusLabel =
+    item.kind === 'mission_subtask'
+      ? formatInboxStatusLabel(item.status)
+      : resolveStatusLabelFromId(item.status, statusField)
+  const dotColor =
+    item.kind === 'mission_subtask'
+      ? resolveMissionSubtaskStatusDotColor(item.status)
+      : resolveStatusDotColorFromId(item.status, statusField)
+  return (
+    <Tooltip label={statusLabel} side="top">
+      <span className="inline-flex shrink-0">
+        <OptionDot color={dotColor} size="sm" />
+      </span>
+    </Tooltip>
+  )
+}
+
+export function MyTasksPanel({
+  open,
+  onOpenChange,
+  scope,
+  updateScope,
+  loading,
+  items,
+  onOpenItem,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  scope: HomeFeedScopeState
+  updateScope: (patch: Partial<HomeFeedScopeState>) => void
+  loading: boolean
+  items: YourTurnItem[]
+  onOpenItem: (item: YourTurnItem) => void | Promise<void>
+}) {
+  const [search, setSearch] = useState('')
+  const filtered = useMemo(() => filterMyTasksBySearch(items, search), [items, search])
+  const groups = useMemo(() => groupMyTasksByDue(filtered), [filtered])
+  const spaceIds = useMemo(
+    () => filtered.map((item) => item.space_id).filter((id): id is string => id != null),
+    [filtered],
+  )
+  const statusFieldsBySpaceId = useSpaceStatusFieldsBySpaceId(spaceIds)
+  const totalCount = filtered.length
+
+  useEffect(() => {
+    if (!open) setSearch('')
+  }, [open])
+
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="z-modal-backdrop bg-modal-overlay fixed inset-0" />
+        <DialogPrimitive.Content className="z-modal-layer-3 p-spacing-4 fixed inset-0 flex items-center justify-center">
+          <div className="surface-card wizard-container-border rounded-spacing-4 border-border flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden border bg-card shadow-2xl">
+            <div className="px-spacing-6 pt-spacing-5 pb-spacing-3 shrink-0">
+              <div className="gap-spacing-3 flex items-start justify-between">
+                <div className="min-w-0 flex-1">
+                  <DialogPrimitive.Title className="title-h6 text-foreground flex items-center gap-2">
+                    <CheckSquare className="text-muted-foreground h-5 w-5 shrink-0" aria-hidden />
+                    My tasks
+                  </DialogPrimitive.Title>
+                  <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
+                    Everything assigned to you — grouped by when it’s due.
+                    {totalCount > 0 ? (
+                      <span className="text-muted-foreground"> · {totalCount}</span>
+                    ) : null}
+                  </DialogPrimitive.Description>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onOpenChange(false)}
+                  className="btn-icon-bare shrink-0"
+                  aria-label="Close"
+                >
+                  <X className="icon-xs" />
+                </button>
+              </div>
+
+              <div className="mt-spacing-4 gap-spacing-2 flex flex-wrap items-center">
+                <div className="input-glass relative min-w-0 flex-1">
+                  <Search
+                    className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
+                    aria-hidden
+                  />
+                  <input
+                    className="input-glass body-3 h-spacing-9 w-full rounded-spacing-2 pl-9 pr-3"
+                    placeholder="Search tasks…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+                <HomeFeedScopePicker variant="my_tasks" scope={scope} onChange={updateScope} />
+              </div>
+            </div>
+
+            <div className="px-spacing-4 pb-spacing-5 flex min-h-0 flex-1 flex-col overflow-y-auto">
+              {loading ? (
+                <div className="flex flex-1 items-center justify-center py-16">
+                  <VibeyLoadingOrb state="processing" size="md" />
+                </div>
+              ) : groups.length === 0 ? (
+                <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-16 text-center">
+                  <TasksEmptyIllustration />
+                  <div>
+                    <p className="body-2 text-foreground font-medium">
+                      {search.trim() ? 'No matching tasks' : 'No tasks assigned to you'}
+                    </p>
+                    <p className="body-3 text-muted-foreground mt-1 max-w-sm">
+                      {search.trim()
+                        ? 'Try a different search, or clear the filter.'
+                        : 'When something is assigned to you, it shows up here.'}
+                    </p>
+                  </div>
+                  {search.trim() ? (
+                    <button
+                      type="button"
+                      className="button-default button-glass-neutral body-3 font-medium"
+                      onClick={() => setSearch('')}
+                    >
+                      Clear search
+                    </button>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="space-y-spacing-5 px-spacing-2 pt-spacing-1">
+                  {groups.map((group) => (
+                    <section key={group.id}>
+                      <h2 className="typo-caption text-muted-foreground mb-spacing-2 px-0.5 font-medium tracking-wide">
+                        {group.label}
+                        <span className="text-muted-foreground/80 ml-1.5 tabular-nums">
+                          {group.items.length}
+                        </span>
+                      </h2>
+                      <ul className="border-border bg-card divide-border overflow-hidden rounded-spacing-2 divide-y border">
+                        {group.items.map((item) => {
+                          const dueForDisplay = item.due_at
+                            ? formatHomeShortDate(new Date(item.due_at))
+                            : null
+                          const overdue = isOverdue(item.due_at)
+                          const statusField =
+                            item.space_id != null
+                              ? (statusFieldsBySpaceId.get(item.space_id) ?? null)
+                              : null
+                          return (
+                            <li key={`${item.kind}:${item.id}`}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onOpenChange(false)
+                                  void onOpenItem(item)
+                                }}
+                                className="hover:bg-hover-subtle body-3 text-foreground flex w-full min-w-0 items-center gap-3 px-3.5 py-3 text-left transition-colors"
+                              >
+                                <StatusDot item={item} statusField={statusField} />
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate font-medium">{item.title}</span>
+                                  {item.preview ? (
+                                    <span className="typo-caption text-muted-foreground mt-0.5 block truncate">
+                                      {item.preview}
+                                    </span>
+                                  ) : null}
+                                </span>
+                                <span
+                                  className={cn(
+                                    'typo-caption flex shrink-0 items-center gap-1 tabular-nums',
+                                    dueForDisplay && overdue
+                                      ? 'text-destructive'
+                                      : 'text-muted-foreground',
+                                  )}
+                                >
+                                  {dueForDisplay ? (
+                                    <>
+                                      <Calendar className="h-3 w-3 shrink-0" aria-hidden />
+                                      {dueForDisplay}
+                                    </>
+                                  ) : (
+                                    'No due date'
+                                  )}
+                                </span>
+                              </button>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
+  )
+}

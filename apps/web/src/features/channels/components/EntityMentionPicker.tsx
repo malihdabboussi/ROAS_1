@@ -13,7 +13,7 @@ import {
 import { OptionDot } from '@/components/ui/status/OptionBadge'
 import type { EntitySearchKind, EntitySearchResult } from '../services/entity-search.service'
 
-/** Default Vibey status palette (mirrors `StatusCell` defaults). */
+/** Default ROAS status palette (mirrors `StatusCell` defaults). */
 const TASK_STATUS_COLOR: Record<string, string> = {
   todo: 'cyan',
   in_progress: 'amber',

@@ -22,7 +22,7 @@ function message(overrides: Partial<Message>): Message {
   }
 }
 
-describe('space Vibey chat message logic', () => {
+describe('space ROAS chat message logic', () => {
   it('keeps visible messages stable and filters hidden delegation messages', () => {
     const visible = message({ id: 'visible' })
     const unchanged = [visible]

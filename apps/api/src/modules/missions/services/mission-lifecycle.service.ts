@@ -562,6 +562,12 @@ export class MissionLifecycleService {
     orgId?: string | null,
   ) {
     await this.getById(supabase, userId, missionId, orgId, null, 'edit')
+    const existing = await this.missionsRepository.getSubtaskById(
+      supabase,
+      subtaskId,
+      userId,
+      orgId,
+    )
     const updates: Record<string, unknown> = {}
     if (dto.status !== undefined) updates.status = dto.status
     if (dto.assigned_agent_key !== undefined) updates.assigned_agent_key = dto.assigned_agent_key
@@ -583,6 +589,37 @@ export class MissionLifecycleService {
         subtaskId,
         newNextAttempt,
       )
+    }
+
+    const statusChanged =
+      dto.status !== undefined && existing && String(existing.status) !== String(dto.status)
+    const assigneeChanged =
+      dto.assigned_agent_key !== undefined &&
+      existing &&
+      String(existing.assigned_agent_key || '') !== String(dto.assigned_agent_key || '')
+    if (statusChanged || assigneeChanged) {
+      const title = String(result?.title || existing?.title || 'Subtask')
+      const note = statusChanged
+        ? `Subtask "${title}" marked ${dto.status}`
+        : `Subtask "${title}" reassigned to ${dto.assigned_agent_key}`
+      await this.missionsRepository.insertMissionLog(supabase, {
+        mission_id: missionId,
+        user_id: userId,
+        org_id: orgId ?? null,
+        event_type: statusChanged
+          ? 'mission.subtask.status_updated'
+          : 'mission.subtask.reassigned',
+        agent_key: (result?.assigned_agent_key as string | null) ?? undefined,
+        payload: {
+          subtask_id: subtaskId,
+          title,
+          note,
+          from_status: existing?.status ?? null,
+          to_status: dto.status ?? existing?.status ?? null,
+          assigned_agent_key: result?.assigned_agent_key ?? null,
+          feedback: result?.feedback ?? existing?.feedback ?? null,
+        },
+      })
     }
 
     return result

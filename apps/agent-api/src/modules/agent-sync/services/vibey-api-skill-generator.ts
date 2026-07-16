@@ -208,10 +208,10 @@ function buildImportantPatterns(sections: Set<string>, availableActions: Set<str
   }
 
   patterns.push(
-    `**Campaign context**: \`campaign_id\` is resolved automatically from the session. NEVER pass \`campaign_id\` in \`data\` — it will be ignored or cause errors. The same applies to \`conversation_id\` and \`user_id\`.`,
+    `**Campaign context**: tool calls inherit the user's current \`space_id\` and \`campaign_id\` for campaign-scoped actions. Do not invent conversation_id or user_id. Exception — \`search_campaign_brain\`: when the chat is on General or the wrong campaign, pass \`campaign_id\` or \`campaign_name\` for the client campaign (e.g. Impact). General has no client package brain.`,
   )
   patterns.push(
-    `**Active scope contract**: tool calls inherit the user's current \`space_id\` and \`campaign_id\` automatically for each message. Do not pass \`space_id\` or \`campaign_id\` unless the user explicitly named a different space/campaign. If you do target a different scope, also pass \`scope_override: true\`.`,
+    `**Active scope contract**: tool calls inherit the user's current \`space_id\` and \`campaign_id\` automatically for each message. Do not pass \`space_id\` or \`campaign_id\` unless targeting a different space/campaign (allowed for \`search_campaign_brain\` and other read-only cross-scope actions). If you target a different write scope, also pass \`scope_override: true\`.`,
   )
 
   patterns.push(

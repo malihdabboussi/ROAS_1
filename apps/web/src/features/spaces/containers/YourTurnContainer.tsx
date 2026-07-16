@@ -33,7 +33,7 @@ export function YourTurnContainer() {
       <div className="section-card p-spacing-6 text-center">
         <p className="body-2 text-foreground font-medium">Nothing waiting on you</p>
         <p className="body-3 text-muted-foreground mt-spacing-1">
-          Vibey will ping you here the moment a teammate or mission needs your turn.
+          ROAS will ping you here the moment a teammate or mission needs your turn.
         </p>
       </div>
     )

@@ -59,10 +59,6 @@ export function useBrainVisualizationActions({
     router.replace(brainScopeHref(selectedScopeId), { scroll: false })
   }, [router, searchParams, selectedScope?.agentId, selectedScope?.brainId, selectedScopeId, topRightScopeReady])
 
-  const handleActivateVoice = useCallback(() => {
-    requestBrainSidebarVoice(selectedScope?.agentId)
-  }, [selectedScope?.agentId])
-
   const handleOpenCortexMax = useCallback(() => {
     setCortexMaxOpen(true)
   }, [])
@@ -78,7 +74,6 @@ export function useBrainVisualizationActions({
   return {
     cortexMaxOpen,
     crystallizeOpen,
-    handleActivateVoice,
     handleOpenCortexMax,
     handleOpenCrystallize,
     handleTrainBrain,

@@ -30,7 +30,7 @@ export function PlansTabFooterSection({
           <div>
             <h3 className="body-1 text-foreground font-semibold">Enterprise</h3>
             <p className="body-3 text-muted-foreground">
-              Promote your Vibey to become a CEO, and get access to the Multi-Agent organization.
+              Promote your ROAS to become a CEO, and get access to the Multi-Agent organization.
             </p>
           </div>
         </div>

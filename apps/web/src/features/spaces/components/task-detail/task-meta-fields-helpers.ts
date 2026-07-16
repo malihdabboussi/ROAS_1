@@ -71,8 +71,43 @@ function resolveAssignee(
 export function resolveAssignees(
   value: TaskMetaAssigneeValue[],
   roster: TeamRosterEntry[],
+  currentUserId?: string | null,
 ): TeamRosterEntry[] {
   return value
-    .map((assignee) => resolveAssignee(assignee, roster))
+    .map((assignee) => {
+      const resolved = resolveAssignee(assignee, roster)
+      if (resolved) return resolved
+      // Fallback when roster hasn't loaded / personal self missing — still show Me.
+      if (
+        assignee.type === 'human' &&
+        currentUserId &&
+        assignee.id === currentUserId
+      ) {
+        return {
+          participant_id: currentUserId,
+          kind: 'human' as const,
+          org_id: null,
+          user_id: currentUserId,
+          agent_key: null,
+          display_name: 'Me',
+          avatar_url: null,
+          role_label: null,
+          specialties: [],
+          accepts_assignments: true,
+          delegation_notes: null,
+          timezone: null,
+          working_hours: null,
+          out_of_office_until: null,
+          current_load: 0,
+          is_ready: true,
+          agent_level: null,
+          org_role: null,
+          email: null,
+          created_at: new Date(0).toISOString(),
+          updated_at: null,
+        }
+      }
+      return null
+    })
     .filter((entry): entry is TeamRosterEntry => entry != null)
 }

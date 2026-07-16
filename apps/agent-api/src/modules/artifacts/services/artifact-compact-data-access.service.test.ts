@@ -154,7 +154,12 @@ describe('compact artifact data-access services', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => ({
-        json: async () => ({ choices: [{ message: { content: generatedHtml } }] }),
+        headers: { get: () => null },
+        json: async () => ({
+          choices: [{ message: { content: generatedHtml } }],
+          model: 'test-model',
+          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
+        }),
         ok: true,
       })),
     )
@@ -193,8 +198,11 @@ describe('compact artifact data-access services', () => {
       parseConversationId: vi.fn(() => null),
       requestContext: new Map(),
       resolveUserId: vi.fn(() => 'user-1'),
+      resolveOrgId: vi.fn(() => null),
     }
-    const handlers = new ArtifactVisualDocService().getHandlers(target)
+    const handlers = new ArtifactVisualDocService(undefined, {
+      recordAttempt: vi.fn(async () => undefined),
+    } as any).getHandlers(target)
 
     const result = (await handlers.generate_visual_html(
       { item_id: 'item-1', prompt: 'Make it visual' },
@@ -209,6 +217,10 @@ describe('compact artifact data-access services', () => {
       _doc_visual_source_hash: createHash('sha256').update('<h1>Source</h1>').digest('hex'),
       _doc_visual_status: 'ready',
     })
+    // Soft-fail presentation sync is fine when spaces/presentations mocks are absent.
+    expect(result.presentation_id === null || typeof result.presentation_id === 'string').toBe(
+      true,
+    )
   })
 
   it('creates and lists custom object records through user-scoped handlers', async () => {

@@ -90,8 +90,8 @@ export function OnboardingCustomize({ onComplete, onBack, orgName }: OnboardingC
           <div className="mb-spacing-6 gap-spacing-3 rounded-spacing-2 border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 p-spacing-3 flex items-start border">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]" />
             <p className="body-3 text-muted-foreground">
-              Setting up a dedicated Vibey for{' '}
-              <span className="text-foreground font-medium">{orgName}</span>. Your personal Vibey
+              Setting up a dedicated ROAS for{' '}
+              <span className="text-foreground font-medium">{orgName}</span>. Your personal ROAS
               stays as is, this one leads your organization&apos;s team.
             </p>
           </div>

@@ -11,7 +11,22 @@ import { useAccountSettingsModal } from '@/lib/settings/account-settings-modal-c
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { fetchProfileSettings, toggleAwareness } from '../services/missions.service'
 
-export function AwarenessToggle() {
+export interface AwarenessToggleProps {
+  /** Show a short “what Autopilot does next” line under the switch (Ops Desk). */
+  showStatusHint?: boolean
+  statusHint?: string
+  openSettingsLabel?: string
+  onOpenStrategy?: () => void
+  onEnabledChange?: (enabled: boolean) => void
+}
+
+export function AwarenessToggle({
+  showStatusHint = false,
+  statusHint,
+  openSettingsLabel = 'Set strategy',
+  onOpenStrategy,
+  onEnabledChange,
+}: AwarenessToggleProps = {}) {
   const { openAccountSettings } = useAccountSettingsModal()
   const [enabled, setEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -23,6 +38,7 @@ export function AwarenessToggle() {
   const [triggerCredits, setTriggerCredits] = useState(500)
   const [topupCredits, setTopupCredits] = useState(2000)
   const [monthlyCapDollars, setMonthlyCapDollars] = useState('')
+
   useEffect(() => {
     let mounted = true
     const load = async () => {
@@ -38,13 +54,17 @@ export function AwarenessToggle() {
       const credits = billingStatus?.balance?.totalAvailable ?? 0
       setCanUseAutopilot(isPaid || credits > 0)
 
-      setEnabled(settings?.awareness_loop_enabled ?? false)
+      const nextEnabled = settings?.awareness_loop_enabled ?? false
+      setEnabled(nextEnabled)
+      onEnabledChange?.(nextEnabled)
       setLoading(false)
     }
     void load()
     return () => {
       mounted = false
     }
+    // Intentionally once on mount — parent callback identity should not refetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadAutoRechargeSettings = useCallback(async () => {
@@ -77,14 +97,17 @@ export function AwarenessToggle() {
       }
 
       setEnabled(false)
+      onEnabledChange?.(false)
       try {
         const result = await toggleAwareness(false)
         setEnabled(result.awareness_loop_enabled)
+        onEnabledChange?.(result.awareness_loop_enabled)
       } catch {
         setEnabled(true)
+        onEnabledChange?.(true)
       }
     },
-    [canUseAutopilot, loadAutoRechargeSettings, modalOpen],
+    [canUseAutopilot, loadAutoRechargeSettings, modalOpen, onEnabledChange],
   )
 
   const handleConfirmEnable = useCallback(async () => {
@@ -108,49 +131,83 @@ export function AwarenessToggle() {
       if (!enabled) {
         const result = await toggleAwareness(true)
         setEnabled(result.awareness_loop_enabled)
+        onEnabledChange?.(result.awareness_loop_enabled)
+        if (result.awareness_loop_enabled) {
+          toast.success(
+            'Autopilot is on. Vibey will watch campaigns and deploy from your strategy.',
+          )
+        }
       }
       setModalOpen(false)
     } catch (err) {
       toast.error(sanitizeUserError(err, 'Failed to save Autopilot settings'))
-      if (!enabled) setEnabled(false)
+      if (!enabled) {
+        setEnabled(false)
+        onEnabledChange?.(false)
+      }
     }
     setModalSaving(false)
-  }, [autoRechargeEnabled, enabled, monthlyCapDollars, topupCredits, triggerCredits])
+  }, [
+    autoRechargeEnabled,
+    enabled,
+    monthlyCapDollars,
+    onEnabledChange,
+    topupCredits,
+    triggerCredits,
+  ])
 
   return (
     <>
-      <div className="flex items-center gap-2">
-        <span className="body-4 text-muted-foreground whitespace-nowrap">Vibey Autopilot</span>
-        <Switch checked={enabled} onCheckedChange={handleToggle} disabled={loading} />
-        {enabled && (
-          <button
-            type="button"
-            onClick={() => {
-              setModalOpen(true)
-              void loadAutoRechargeSettings()
-            }}
-            className="btn-icon-glass"
-            title="Autopilot settings"
-          >
-            <Settings className="icon-sm" />
-          </button>
-        )}
+      <div className="gap-spacing-1 flex flex-col items-end">
+        <div className="flex items-center gap-2">
+          <span className="body-4 text-muted-foreground whitespace-nowrap">ROAS Autopilot</span>
+          <Switch checked={enabled} onCheckedChange={handleToggle} disabled={loading} />
+          {enabled ? (
+            <button
+              type="button"
+              onClick={() => {
+                setModalOpen(true)
+                void loadAutoRechargeSettings()
+              }}
+              className="btn-icon-glass"
+              title="Autopilot settings"
+            >
+              <Settings className="icon-sm" />
+            </button>
+          ) : null}
+        </div>
+        {showStatusHint && enabled && statusHint ? (
+          <div className="gap-spacing-1 flex max-w-xs flex-col items-end text-right">
+            <p className="body-4 text-muted-foreground">{statusHint}</p>
+            {onOpenStrategy ? (
+              <button
+                type="button"
+                onClick={onOpenStrategy}
+                className="body-4 text-foreground underline-offset-2 hover:underline"
+              >
+                {openSettingsLabel}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <Dialog.Root open={modalOpen} onOpenChange={setModalOpen}>
         <Dialog.Portal>
-          <Dialog.Overlay className="z-modal-backdrop fixed inset-0 bg-modal-overlay" />
+          <Dialog.Overlay className="z-modal-backdrop bg-modal-overlay fixed inset-0" />
           <Dialog.Content className="z-modal-content fixed inset-0 flex items-center justify-center p-4">
             <div className="surface-card wizard-container-border rounded-spacing-4 w-full max-w-lg p-6">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
                   <Dialog.Title className="body-1 text-foreground font-semibold uppercase">
-                    {enabled ? 'Autopilot Settings' : 'Enable Vibey Autopilot'}
+                    {enabled ? 'Autopilot Settings' : 'Enable ROAS Autopilot'}
                   </Dialog.Title>
                   <Dialog.Description className="body-2 text-muted-foreground mt-2">
-                    Vibey Autopilot runs continuously and can consume{' '}
-                    <span className="text-foreground font-bold">credits</span>. For continuous
-                    experience, we recommend enabling auto purchase credits.
+                    Autopilot lets Vibey watch your campaigns and act like an ops lead: create and
+                    assign missions from your strategy, retry stuck work, and keep the floor moving
+                    without you babysitting. It uses{' '}
+                    <span className="text-foreground font-bold">credits</span> when agents run —
+                    enable auto-purchase so it doesn’t stop mid-flight.
                   </Dialog.Description>
                 </div>
                 <Dialog.Close asChild>
@@ -177,7 +234,7 @@ export function AwarenessToggle() {
                       </span>
                       <Tooltip
                         wide
-                        label="Gives Vibey the option to keep on going without getting stuck when credits are finished"
+                        label="Gives ROAS the option to keep on going without getting stuck when credits are finished"
                       >
                         <Info className="icon-sm text-muted-foreground cursor-help" />
                       </Tooltip>

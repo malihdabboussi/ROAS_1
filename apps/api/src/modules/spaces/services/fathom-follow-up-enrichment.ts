@@ -236,3 +236,85 @@ export function enrichSuggestedFollowUp(input: {
     assignee_name,
   }
 }
+
+export type AttendeeTagOption = { id: string; label: string }
+
+/**
+ * Map a Fathom / suggested owner onto an existing Attendees multi_select option.
+ * Prefer exact label, then email local-part, then unique first-name.
+ */
+export function matchAttendeeTagOption(
+  options: AttendeeTagOption[],
+  hint: { name?: string | null; email?: string | null },
+): string | null {
+  if (!options.length) return null
+  const name = String(hint.name ?? '')
+    .trim()
+    .toLowerCase()
+  const email = String(hint.email ?? '')
+    .trim()
+    .toLowerCase()
+  const local = email.includes('@') ? email.split('@')[0]!.replace(/[._+]/g, ' ').trim() : ''
+
+  const byExact = (needle: string) =>
+    options.find((opt) => String(opt.label).trim().toLowerCase() === needle)?.id ?? null
+
+  if (name) {
+    const exact = byExact(name)
+    if (exact) return exact
+  }
+  if (local) {
+    const exactLocal = byExact(local)
+    if (exactLocal) return exactLocal
+  }
+
+  if (name) {
+    const partial = options.filter((opt) => {
+      const label = String(opt.label).trim().toLowerCase()
+      return label.includes(name) || name.includes(label)
+    })
+    if (partial.length === 1) return partial[0].id
+  }
+
+  if (local && local.length >= 2) {
+    const first = local.split(/\s+/)[0]!
+    const firstHits = options.filter((opt) => {
+      const label = String(opt.label).trim().toLowerCase()
+      return label === first || label.startsWith(`${first} `)
+    })
+    if (firstHits.length === 1) return firstHits[0].id
+  }
+
+  if (name) {
+    const first = name.split(/\s+/)[0]!
+    if (first.length >= 2) {
+      const firstHits = options.filter((opt) => {
+        const label = String(opt.label).trim().toLowerCase()
+        return label === first || label.startsWith(`${first} `)
+      })
+      if (firstHits.length === 1) return firstHits[0].id
+    }
+  }
+
+  return null
+}
+
+/** Label to upsert into Attendees tags when no option matched yet. */
+export function followUpOwnerTagLabel(hint: {
+  name?: string | null
+  email?: string | null
+}): string | null {
+  const name = String(hint.name ?? '').trim()
+  if (name) return name.slice(0, 80)
+  const email = String(hint.email ?? '')
+    .trim()
+    .toLowerCase()
+  if (!email || !email.includes('@')) return null
+  const local = email.split('@')[0]!.replace(/[._+]/g, ' ').trim()
+  if (!local || /^(test|admin|info|hello|contact|support|user)$/i.test(local)) return null
+  return local
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+    .slice(0, 80)
+}

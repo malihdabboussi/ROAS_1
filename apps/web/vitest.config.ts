@@ -28,6 +28,10 @@ export default defineConfig({
         __dirname,
         '../../packages/api-shared/src/image-models.ts',
       ),
+      '@vibey/api-shared/sanitize-fathom-summary-markdown': path.resolve(
+        __dirname,
+        '../../packages/api-shared/src/sanitize-fathom-summary-markdown.ts',
+      ),
       '@vibey/db': path.resolve(__dirname, '../../packages/db/src'),
     },
   },

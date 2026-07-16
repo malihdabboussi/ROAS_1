@@ -1,10 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { useMemo } from 'react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
-import { getIntegrationLogoPath } from '@/lib/integrations/integration-logo'
-import { ConnectedIntegrationCard } from './ConnectedIntegrationCard'
+import { IntegrationAccountsGroup } from './IntegrationAccountsGroup'
 import type { Integration, UserIntegration } from './integrations.types'
 
 interface IntegrationsManageProps {
@@ -18,7 +16,9 @@ interface IntegrationsManageProps {
   onSetDefault: (userIntegration: UserIntegration) => void
   onChangeScope: (userIntegration: UserIntegration, newScope: 'personal' | 'org_shared') => void
   onRename: (userIntegration: UserIntegration, connectionLabel: string) => Promise<void> | void
+  onAddAccount: (integration: Integration) => void
   canManageOrgShared: boolean
+  connectingProvider?: string | null
   autoOpenSocialReportingPickerId?: string | null
   autoOpenSocialReportingPickerPlatform?: 'linkedin' | 'facebook' | 'youtube' | null
 }
@@ -34,12 +34,12 @@ export function IntegrationsManage({
   onSetDefault,
   onChangeScope,
   onRename,
+  onAddAccount,
   canManageOrgShared,
+  connectingProvider = null,
   autoOpenSocialReportingPickerId = null,
   autoOpenSocialReportingPickerPlatform = null,
 }: IntegrationsManageProps) {
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
-
   const groupedIntegrations = useMemo(() => {
     const grouped = new Map<string, UserIntegration[]>()
     for (const row of userIntegrations) {
@@ -79,73 +79,25 @@ export function IntegrationsManage({
     <div className="space-y-spacing-6">
       {userIntegrations.length > 0 ? (
         <div className="space-y-spacing-4">
-          {groupedIntegrations.map(({ integration, rows }) => {
-            const expanded = expandedGroups[integration.id] ?? true
-            const logoPath = getIntegrationLogoPath(integration.provider)
-            return (
-              <div
-                key={integration.id}
-                className="surface-card rounded-spacing-3 border-border border"
-              >
-                <button
-                  type="button"
-                  className="gap-spacing-2 px-spacing-4 py-spacing-3 flex w-full items-center text-left"
-                  onClick={() =>
-                    setExpandedGroups((prev) => ({ ...prev, [integration.id]: !expanded }))
-                  }
-                >
-                  <ChevronRight
-                    className={`text-muted-foreground h-4 w-4 shrink-0 transition-transform ${
-                      expanded ? 'rotate-90' : 'rotate-0'
-                    }`}
-                  />
-                  {logoPath ? (
-                    <div className="flex h-5 w-5 shrink-0 items-center justify-center">
-                      <img
-                        src={logoPath}
-                        alt={integration.name}
-                        className="block h-4 w-4 object-contain"
-                      />
-                    </div>
-                  ) : null}
-                  <span className="title-h6 font-medium">{integration.name}</span>
-                  <span className="body-3 text-muted-foreground">{rows.length}</span>
-                </button>
-                {expanded ? (
-                  <div className="px-spacing-4 pb-spacing-3 space-y-spacing-1">
-                    {rows.map((userIntegration, index) => (
-                      <ConnectedIntegrationCard
-                        key={userIntegration.id || `${integration.id}-${index}`}
-                        userIntegration={userIntegration}
-                        integration={integration}
-                        accountIndex={index + 1}
-                        onRefresh={onRefresh}
-                        onDisconnect={onDisconnect}
-                        onReconnect={onReconnect}
-                        onRemove={onRemove}
-                        onSetDefault={onSetDefault}
-                        onChangeScope={onChangeScope}
-                        onRename={onRename}
-                        canManageOrgShared={canManageOrgShared}
-                        autoOpenCompanyPagePicker={
-                          autoOpenSocialReportingPickerPlatform === 'linkedin' &&
-                          autoOpenSocialReportingPickerId === userIntegration.id
-                        }
-                        autoOpenFacebookPagePicker={
-                          autoOpenSocialReportingPickerPlatform === 'facebook' &&
-                          autoOpenSocialReportingPickerId === userIntegration.id
-                        }
-                        autoOpenYoutubeChannelPicker={
-                          autoOpenSocialReportingPickerPlatform === 'youtube' &&
-                          autoOpenSocialReportingPickerId === userIntegration.id
-                        }
-                      />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            )
-          })}
+          {groupedIntegrations.map(({ integration, rows }) => (
+            <IntegrationAccountsGroup
+              key={integration.id}
+              integration={integration}
+              rows={rows}
+              onRefresh={onRefresh}
+              onDisconnect={onDisconnect}
+              onReconnect={onReconnect}
+              onRemove={onRemove}
+              onSetDefault={onSetDefault}
+              onChangeScope={onChangeScope}
+              onRename={onRename}
+              onAddAccount={onAddAccount}
+              canManageOrgShared={canManageOrgShared}
+              connecting={connectingProvider === integration.provider.toLowerCase()}
+              autoOpenSocialReportingPickerId={autoOpenSocialReportingPickerId}
+              autoOpenSocialReportingPickerPlatform={autoOpenSocialReportingPickerPlatform}
+            />
+          ))}
         </div>
       ) : (
         <div className="surface-card rounded-spacing-3 p-spacing-8 text-center">

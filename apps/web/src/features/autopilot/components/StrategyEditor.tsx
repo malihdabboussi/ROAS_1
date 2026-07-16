@@ -112,7 +112,7 @@ export function StrategyEditor({ campaignId, name, initialContext, onSaved }: St
               onClick={handleGenerate}
               className="button-glass-primary body-3 rounded-spacing-2 px-spacing-4 py-spacing-2 font-semibold"
             >
-              Generate with Vibey
+              Generate with ROAS
             </button>
           </div>
         </div>
@@ -121,7 +121,7 @@ export function StrategyEditor({ campaignId, name, initialContext, onSaved }: St
           <div className="space-y-spacing-6">
             {!hasStrategy ? (
               <p className="body-3 text-muted-foreground italic">
-                Add your strategy below, or use Generate with Vibey to draft from this campaign and
+                Add your strategy below, or use Generate with ROAS to draft from this campaign and
                 brand knowledge.
               </p>
             ) : null}
@@ -162,7 +162,7 @@ export function StrategyEditor({ campaignId, name, initialContext, onSaved }: St
             <section>
               <h3 className="body-2 text-foreground mb-spacing-2 font-semibold">Off-limits</h3>
               <p className="body-4 text-muted-foreground mb-spacing-2">
-                Rules Vibey won&apos;t break without checking with you.
+                Rules ROAS won&apos;t break without checking with you.
               </p>
               <div className="gap-spacing-2 flex flex-wrap">
                 {(ctx.off_limits ?? []).map((rule) => (

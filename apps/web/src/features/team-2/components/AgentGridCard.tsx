@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { MessageCircle, MoreHorizontal } from 'lucide-react'
+import { MessageCircle, MoreHorizontal, Send } from 'lucide-react'
 import { AgentActionsMenu, type AgentTeamOption } from '@/components/agents/AgentActionsMenu'
 import type { MissionAgent } from '@/lib/agents'
 import {
@@ -9,6 +9,7 @@ import {
   SYSTEM_LIKE_AGENT_KEYS,
 } from '@/lib/agents/agent-team-display'
 import type { Campaign } from '@/lib/campaigns'
+import { TEAM_OPS_DESK_MESSAGES } from '../config/messages.config'
 
 export interface AgentGridCardMenuActions {
   onCopyId: () => void
@@ -47,6 +48,8 @@ interface AgentGridCardProps {
   isFavorite: boolean
   onToggleFavorite: () => void | Promise<void>
   canFavorite: boolean
+  focusLabel?: string | null
+  onAssignWork?: () => void
 }
 
 function canFireAgent(agent: MissionAgent): boolean {
@@ -78,6 +81,8 @@ export function AgentGridCard({
   isFavorite,
   onToggleFavorite,
   canFavorite,
+  focusLabel = null,
+  onAssignWork,
 }: AgentGridCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuAnchor, setMenuAnchor] = useState<{ top: number; left: number } | null>(null)
@@ -181,6 +186,19 @@ export function AgentGridCard({
             >
               <MessageCircle className="icon-sm" />
             </button>
+            {onAssignWork ? (
+              <button
+                type="button"
+                title={TEAM_OPS_DESK_MESSAGES.ASSIGN_WORK}
+                className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground flex h-7 w-7 items-center justify-center rounded-md transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onAssignWork()
+                }}
+              >
+                <Send className="icon-sm" />
+              </button>
+            ) : null}
             <button
               type="button"
               title="More"
@@ -234,6 +252,9 @@ export function AgentGridCard({
           <span className={agentPresenceStatusDotClass(agent)} aria-hidden />
         </div>
         <p className="body-4 text-muted-foreground line-clamp-2">{subtitle}</p>
+        <p className="body-4 text-muted-foreground line-clamp-2">
+          {focusLabel?.trim() ? focusLabel : TEAM_OPS_DESK_MESSAGES.IDLE_FOCUS}
+        </p>
         <div className="pt-spacing-1 mt-auto">
           <span className="body-4 text-muted-foreground">{dateLabel}</span>
         </div>

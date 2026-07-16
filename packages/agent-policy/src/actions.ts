@@ -272,6 +272,7 @@ export const ACTIONS = [
   'list_social_post_templates',
   'list_campaign_media',
   'search_agent_brain',
+  'search_campaign_brain',
   'get_brain_stats',
   'resolve_agent_brain',
   'list_available_brain_scopes',

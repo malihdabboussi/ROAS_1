@@ -4,7 +4,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
 /**
  * Returns the current user's Supabase session tokens to same-origin callers
- * (the Vibey Chrome extension running with host_permissions for this origin).
+ * (the ROAS Chrome extension running with host_permissions for this origin).
  *
  * Cookies are sent automatically by Chrome for the extension's fetch; this
  * endpoint exposes nothing that isn't already bound to the caller's cookie jar.

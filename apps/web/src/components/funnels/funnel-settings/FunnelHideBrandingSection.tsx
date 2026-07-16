@@ -15,7 +15,7 @@ export function FunnelHideBrandingSection(props: {
       <div className="flex min-w-0 items-center gap-1.5">
         <Stamp className="h-3.5 w-3.5 shrink-0 text-[var(--color-muted-foreground)]" />
         <span className="body-3 text-[var(--foreground)]">
-          Remove &quot;Made with Vibey&quot;
+          Remove &quot;Made with ROAS&quot;
         </span>
       </div>
       <Switch

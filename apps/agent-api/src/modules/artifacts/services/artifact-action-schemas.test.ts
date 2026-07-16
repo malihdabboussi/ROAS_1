@@ -294,6 +294,7 @@ const canonicalBrainSchemaActions = [
   'list_available_brain_scopes',
   'resolve_agent_brain',
   'search_agent_brain',
+  'search_campaign_brain',
   'ingest_agent_brain_text',
   'ingest_agent_brain_link',
   'list_agent_brain_domains',

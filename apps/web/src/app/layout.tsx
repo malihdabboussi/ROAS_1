@@ -18,14 +18,16 @@ const fontSiteHeadline = MuseoModerno({
 })
 
 export const metadata: Metadata = {
-  title: 'Vibey',
+  title: 'ROAS',
   description: 'Your AI Marketing Agency',
   icons: {
     icon: [
-      { url: '/Logos/logov2/icon-white.png', media: '(prefers-color-scheme: dark)' },
-      { url: '/Logos/logov2/icon-black.png', media: '(prefers-color-scheme: light)' },
+      { url: '/Logos/roas/icon-white.png', media: '(prefers-color-scheme: dark)' },
+      { url: '/Logos/roas/icon-black.png', media: '(prefers-color-scheme: light)' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
     ],
-    apple: '/Logos/logov2/icon-white.png',
+    apple: '/apple-touch-icon.png',
   },
 }
 

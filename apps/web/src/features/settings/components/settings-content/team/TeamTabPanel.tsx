@@ -133,7 +133,7 @@ export function TeamTabPanel() {
         <p className="body-2 text-foreground font-medium">Nobody on the roster yet</p>
         <p className="body-3 text-muted-foreground mt-spacing-1">
           Invite teammates on the Members tab. Once they&apos;re in, fill in their role and
-          specialties here so Vibey knows when to loop them into missions.
+          specialties here so ROAS knows when to loop them into missions.
         </p>
       </div>
     )

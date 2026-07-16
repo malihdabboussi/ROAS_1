@@ -200,7 +200,7 @@ export function messageContentBlockMeta(
             pageId: readString(rawBlock, 'pageId', 'page_id') ?? '',
             pixelId: config.pixelId,
             customEventType: config.customEventType,
-            campaignName: readString(rawBlock, 'campaignName', 'campaign_name') ?? 'Vibey Campaign',
+            campaignName: readString(rawBlock, 'campaignName', 'campaign_name') ?? 'ROAS Campaign',
             objective: config.objective,
             dailyBudget: config.dailyBudget,
             targeting: {
@@ -230,7 +230,7 @@ export function messageContentBlockMeta(
         pageId={readString(rawBlock, 'pageId', 'page_id') ?? ''}
         pixelId={readString(rawBlock, 'pixelId', 'pixel_id')}
         customEventType={readString(rawBlock, 'customEventType', 'custom_event_type')}
-        campaignName={readString(rawBlock, 'campaignName', 'campaign_name') ?? 'Vibey Campaign'}
+        campaignName={readString(rawBlock, 'campaignName', 'campaign_name') ?? 'ROAS Campaign'}
         objective={readString(rawBlock, 'objective') ?? 'OUTCOME_TRAFFIC'}
         dailyBudget={readNumber(rawBlock, 'dailyBudget', 'daily_budget') ?? 500}
         targeting={targeting}

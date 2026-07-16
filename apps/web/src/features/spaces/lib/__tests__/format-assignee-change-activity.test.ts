@@ -12,7 +12,7 @@ const ROSTER: TeamRosterEntry[] = [
     org_id: null,
     user_id: 'user-2',
     agent_key: null,
-    display_name: 'Dylan Vibey',
+    display_name: 'Dylan ROAS',
     email: null,
     avatar_url: null,
     role_label: null,
@@ -86,7 +86,7 @@ describe('formatAssigneeChangeActivityLabel', () => {
   })
 
   it('supports legacy string to label', () => {
-    expect(formatAssigneeChangeActivityLabel({ from: null, to: 'Dylan Vibey' }, ROSTER)).toBe(
+    expect(formatAssigneeChangeActivityLabel({ from: null, to: 'Dylan ROAS' }, ROSTER)).toBe(
       'assigned',
     )
   })

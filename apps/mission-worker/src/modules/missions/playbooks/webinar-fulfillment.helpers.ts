@@ -1,12 +1,25 @@
 import type { MissionPlaybookPlanResult } from './mission-playbook.types'
 
+/** Preferred role slug → hired agent_key aliases (name-derived hires). */
+const ROLE_AGENT_KEY_ALIASES: Record<string, string[]> = {
+  strategist: ['strategist', 'nate', 'reed'],
+  copywriter: ['copywriter', 'writer', 'ivy'],
+  designer: ['designer', 'aria', 'lux'],
+  ads_manager: ['ads_manager', 'blaze'],
+}
+
 export function pickAgent(
   preferred: string[],
   workerAgentKeys: string[],
   managerKey: string,
 ): string {
+  const workers = new Set(workerAgentKeys)
   for (const key of preferred) {
-    if (workerAgentKeys.includes(key)) return key
+    if (workers.has(key)) return key
+    const aliases = ROLE_AGENT_KEY_ALIASES[key] ?? []
+    for (const alias of aliases) {
+      if (workers.has(alias)) return alias
+    }
   }
   if (workerAgentKeys.length > 0) return workerAgentKeys[0]!
   return managerKey || 'vibey'

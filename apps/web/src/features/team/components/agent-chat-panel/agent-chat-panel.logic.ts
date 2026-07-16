@@ -95,6 +95,65 @@ export function resolveInitialCampaignFilter({
   return cachedCampaignId !== generalCampaignId ? cachedCampaignId : undefined
 }
 
+/**
+ * Prefer an assigned campaign over General when creating Team agent chats.
+ * Browsing a General thread must not sticky-set the next new chat to General
+ * when the agent already has campaign assignments (e.g. Nate → Impact).
+ */
+export function resolveDefaultNewConversationCampaignId({
+  assignedCampaigns,
+  cachedCampaignId,
+  generalCampaignId,
+}: {
+  assignedCampaigns: Array<{ id: string }>
+  cachedCampaignId: string | null | undefined
+  generalCampaignId: string | null | undefined
+}): string | null {
+  const cached =
+    typeof cachedCampaignId === 'string' && cachedCampaignId.trim().length > 0
+      ? cachedCampaignId.trim()
+      : null
+  if (cached && cached !== generalCampaignId) return cached
+
+  const firstAssigned = assignedCampaigns[0]?.id
+  if (typeof firstAssigned === 'string' && firstAssigned.trim().length > 0) {
+    return firstAssigned.trim()
+  }
+
+  if (cached) return cached
+  return typeof generalCampaignId === 'string' && generalCampaignId.trim().length > 0
+    ? generalCampaignId.trim()
+    : null
+}
+
+export function isGeneralCampaignId(
+  campaignId: string | null | undefined,
+  generalCampaignId: string | null | undefined,
+): boolean {
+  if (!campaignId || !generalCampaignId) return false
+  return campaignId === generalCampaignId
+}
+
+/**
+ * When a Team chat is stuck on General but the agent has exactly one assigned
+ * client campaign, remount onto that campaign so campaign-brain tools resolve.
+ * Multiple assignments → null (user must pick via scope picker).
+ */
+export function resolvePreferredCampaignWhenGeneral({
+  activeCampaignId,
+  assignedCampaigns,
+  generalCampaignId,
+}: {
+  activeCampaignId: string | null | undefined
+  assignedCampaigns: Array<{ id: string }>
+  generalCampaignId: string | null | undefined
+}): string | null {
+  if (!isGeneralCampaignId(activeCampaignId, generalCampaignId)) return null
+  if (assignedCampaigns.length !== 1) return null
+  const preferred = assignedCampaigns[0]?.id
+  return typeof preferred === 'string' && preferred.trim().length > 0 ? preferred.trim() : null
+}
+
 export function resolveCachedSession({
   requestedSessionId,
   sessionsList,

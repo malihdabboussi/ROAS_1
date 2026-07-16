@@ -42,7 +42,7 @@ export function ChatInput({
   creditsExhausted = false,
   isStreaming = false,
   onStop,
-  placeholder = 'Message Vibe... (@ to tag offers or docs)',
+  placeholder = 'Message ROAS... (@ to tag offers or docs)',
   initialValue,
   initialDocuments,
   restoreNonce,
@@ -279,6 +279,9 @@ export function ChatInput({
     handleFileSelect,
     allSlashItems,
     onOpenAtMenu: handleComposerOpenAtMenu,
+    onGenerateImage: () => {
+      setText('Generate an image: ')
+    },
     plusMenuSpacePicker,
   })
 

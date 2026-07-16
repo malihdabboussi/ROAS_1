@@ -36,6 +36,8 @@ export class ArtifactBrainScholarService {
         this.brainSearchActionsService.searchBrainContext(target, data, sessionKey),
       search_agent_brain: (data, sessionKey) =>
         this.brainSearchActionsService.searchSkEntries(target, data, sessionKey),
+      search_campaign_brain: (data, sessionKey) =>
+        this.brainSearchActionsService.searchCampaignBrain(target, data, sessionKey),
       get_brain_stats: (data, sessionKey) =>
         this.brainReadActionsService.getBrainStats(target, data, sessionKey),
       resolve_agent_brain: (data, sessionKey) => this.resolveAgentSkBrain(target, data, sessionKey),

@@ -63,6 +63,7 @@ function makeTarget(supabase: unknown) {
     credits: {
       getUnitCost: vi.fn(async () => 0.03),
       processFixedCostUsage: vi.fn(async () => undefined),
+      calculateTextCredits: vi.fn(async () => ({ credits: 1 })),
     },
     geminiApiKey: 'gemini-key',
     getUserClient: vi.fn(async () => supabase),
@@ -118,9 +119,10 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
       'user-1',
       'campaign-avatar',
       'Create an avatar portrait',
-      'gemini-3.1-flash-image',
+      'gpt-5.4-image-2',
       null,
       'space-1',
+      'conversation-1',
     )
     expect(supabase.avatarUpdate).toHaveBeenCalledWith({
       persona_data: {
@@ -139,7 +141,7 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
     )
   })
 
-  it('defaults image generation to OpenRouter Nano Banana 2', async () => {
+  it('defaults image generation to OpenRouter GPT Image 2', async () => {
     const supabase = makeSupabase()
     const target = makeTarget(supabase)
     target.geminiApiKey = ''
@@ -181,8 +183,12 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
       target,
       'Create an avatar portrait',
       '1:1',
-      'google/gemini-3.1-flash-image',
+      'openai/gpt-5.4-image-2',
       undefined,
+      expect.objectContaining({
+        userId: 'user-1',
+        conversationId: 'conversation-1',
+      }),
     )
     expect(google).not.toHaveBeenCalled()
     expect((service as any).uploadService.uploadMediaFromBytes).toHaveBeenCalledWith(
@@ -193,16 +199,10 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
       'user-1',
       null,
       'Create an avatar portrait',
-      'gemini-3.1-flash-image',
+      'gpt-5.4-image-2',
       null,
       'space-1',
-    )
-    expect(target.credits.getUnitCost).toHaveBeenCalledWith('gemini-3.1-flash-image', 'images_1')
-    expect(target.credits.processFixedCostUsage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        provider: 'google',
-        modelName: 'gemini-3.1-flash-image',
-      }),
+      'conversation-1',
     )
   })
 
@@ -261,6 +261,7 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
       'gemini-3.1-flash-image-preview',
       null,
       'space-1',
+      'conversation-1',
     )
   })
 })

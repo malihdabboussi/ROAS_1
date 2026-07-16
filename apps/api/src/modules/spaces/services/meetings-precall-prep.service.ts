@@ -216,6 +216,10 @@ export class MeetingsPrecallPrepService {
           space_id: String(row.space_id),
           title: typeof row.title === 'string' ? row.title : null,
           custom_data: custom,
+          task_execution_status:
+            typeof (row as { task_execution_status?: unknown }).task_execution_status === 'string'
+              ? String((row as { task_execution_status: string }).task_execution_status)
+              : null,
         }),
       )
     }

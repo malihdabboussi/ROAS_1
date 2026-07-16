@@ -401,6 +401,14 @@ export const MCP_V1_TOOL_CATALOG = [
     inputMode: 'action_schema',
   },
   {
+    toolName: 'search_campaign_brain',
+    action: 'search_campaign_brain',
+    requiredScopes: [MCP_BASE_SCOPE, 'read_campaign'],
+    description:
+      'Search the campaign brain (ns_memories) for client research, onboarding intake, and strategy knowledge.',
+    inputMode: 'action_schema',
+  },
+  {
     toolName: 'create_funnel',
     action: 'create_funnel',
     requiredScopes: [MCP_BASE_SCOPE, 'write_marketing_artifacts'],
@@ -664,7 +672,7 @@ export const MCP_PERMISSION_GROUPS = [
     description: 'Read and create campaigns from the MCP client.',
     readScopes: ['read_campaign'],
     writeScopes: ['edit_campaign'],
-    includedActions: ['list_campaigns', 'get_campaign', 'create_campaign'],
+    includedActions: ['list_campaigns', 'get_campaign', 'create_campaign', 'search_campaign_brain'],
   },
   {
     id: 'contacts',

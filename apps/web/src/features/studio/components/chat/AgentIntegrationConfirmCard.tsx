@@ -24,7 +24,7 @@ export function AgentIntegrationConfirmCard({
           <Check className="icon-sm mt-0.5 flex-shrink-0 text-emerald-500" />
           <div className="flex flex-1 flex-col">
             <span className="body-2 text-foreground font-medium uppercase tracking-tight">
-              Vibey Agents Enabled
+              ROAS Agents Enabled
             </span>
             <p className="body-3 text-muted-foreground mt-0.5">
               Viktor is now integrating the SDK and setting up your agent proxy routes.
@@ -52,7 +52,7 @@ export function AgentIntegrationConfirmCard({
                 className="text-foreground text-sm font-bold uppercase tracking-tight"
                 style={{ fontFamily: 'var(--font-site-headline)' }}
               >
-                Enable Vibey Agents
+                Enable ROAS Agents
               </h3>
               <p className="body-4 text-muted-foreground">
                 Complete setup to connect your AI team.

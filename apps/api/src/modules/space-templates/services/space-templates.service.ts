@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
+import { AGENCY_CLIENT_WEBINAR_TEMPLATE_SLUG } from '../../missions/lib/webinar-fulfillment-team'
+import { WebinarFulfillmentTeamService } from '../../missions/services/webinar-fulfillment-team.service'
 import { SpaceAutomationsRepository } from '../../spaces/repositories/space-automations.repository'
 import { SpaceAutomationSchedulerService } from '../../spaces/services/space-automation-scheduler.service'
 import { SpaceAutomationService } from '../../spaces/services/space-automation.service'
@@ -10,11 +12,14 @@ import type { SpaceTemplateDetailRow, SpaceTemplateRow } from '../types'
 
 @Injectable()
 export class SpaceTemplatesService {
+  private readonly logger = new Logger(SpaceTemplatesService.name)
+
   constructor(
     private readonly templatesRepo: SpaceTemplatesRepository,
     private readonly automationsRepo: SpaceAutomationsRepository,
     private readonly automationService: SpaceAutomationService,
     private readonly schedulerService: SpaceAutomationSchedulerService,
+    private readonly webinarFulfillmentTeamService: WebinarFulfillmentTeamService,
   ) {}
 
   async list(supabase: SupabaseClient): Promise<SpaceTemplateRow[]> {
@@ -58,6 +63,16 @@ export class SpaceTemplatesService {
         automation,
       )
       await this.syncScheduleColumns(supabase, spaceId, automation)
+    }
+
+    if (slug === AGENCY_CLIENT_WEBINAR_TEMPLATE_SLUG && dto.campaign_id) {
+      await this.webinarFulfillmentTeamService
+        .ensureTeam(supabase, userId, { orgId, campaignId: dto.campaign_id })
+        .catch((e) =>
+          this.logger.warn(
+            `Webinar team auto-provision failed for campaign ${dto.campaign_id}: ${(e as Error).message}`,
+          ),
+        )
     }
 
     return result.space

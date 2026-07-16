@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { SharedItemView } from '@/features/spaces/components/shared/SharedItemView'
 
 export const metadata: Metadata = {
-  title: 'Shared Item | Vibey',
+  title: 'Shared Item | ROAS',
 }
 
 export default async function SharedItemPage({ params }: { params: Promise<{ token: string }> }) {

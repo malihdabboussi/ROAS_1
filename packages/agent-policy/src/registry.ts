@@ -275,6 +275,7 @@ export const ACTION_TO_DOMAIN = {
   list_social_post_templates: 'manage_content',
   list_campaign_media: 'read_campaign',
   search_agent_brain: 'read_brain_agent',
+  search_campaign_brain: 'read_campaign',
   save_customer_memory: 'edit_brain_customer',
   search_customer_brain: 'read_brain_customer',
   ingest_customer_brain_text: 'edit_brain_customer',

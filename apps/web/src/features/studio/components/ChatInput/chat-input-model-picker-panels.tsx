@@ -80,7 +80,7 @@ export function ChatInputModelPickerPanels({
                   </p>
                   <p className="body-4 text-muted-foreground">{modelHoverStrategy.description}</p>
                   <p className="body-4 text-muted-foreground">
-                    Vibey chooses the model for this message using the current task, context, and
+                    ROAS chooses the model for this message using the current task, context, and
                     cost profile.
                   </p>
                 </div>
@@ -89,7 +89,7 @@ export function ChatInputModelPickerPanels({
                 <div className="gap-spacing-2 flex flex-col">
                   <p className="body-3 text-foreground font-semibold">Cortex Max</p>
                   <p className="body-4 text-muted-foreground">
-                    Gives Vibey full access to your Brain memory while it works, for richer and more
+                    Gives ROAS full access to your Brain memory while it works, for richer and more
                     personal answers.
                   </p>
                   <p className="body-4 text-muted-foreground">

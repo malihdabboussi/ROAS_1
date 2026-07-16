@@ -73,7 +73,6 @@ export default function BrainVisualization() {
   const {
     cortexMaxOpen,
     crystallizeOpen,
-    handleActivateVoice,
     handleOpenCortexMax,
     handleOpenCrystallize,
     handleTrainBrain,
@@ -316,7 +315,6 @@ export default function BrainVisualization() {
         selectNode={selectNode}
       />
       <BrainVisualizationDock
-        onActivateVoice={handleActivateVoice}
         searchAnchorRef={brainSearchAnchorRef}
         searchInput={searchInput}
         searchLoading={searchLoading}

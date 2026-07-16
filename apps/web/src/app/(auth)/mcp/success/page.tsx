@@ -43,7 +43,7 @@ export default function McpSuccessPage() {
       </div>
       <h1 className="title-h6 text-foreground mt-spacing-4">CONNECTED SUCCESSFULLY</h1>
       <p className="body-2 mt-spacing-3 text-muted-foreground">
-        Vibey is connected. You can close this window.
+        ROAS is connected. You can close this window.
       </p>
       {redirectUri ? (
         <p className="body-4 mt-spacing-2 text-muted-foreground">Returning to your app&hellip;</p>

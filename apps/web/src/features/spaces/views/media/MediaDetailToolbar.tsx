@@ -7,7 +7,7 @@ import { ToolbarShell } from '../_shared/ToolbarShell'
 import { useMediaDetailQuery } from '../../components/media/use-media-detail-query'
 import type { SpaceToolbarContext } from '../types'
 
-/** Toolbar strip when a media asset is open in full mode (`?media=`). */
+/** Toolbar strip when a media asset is open in the right slide-out (`?media=`). */
 export function MediaDetailToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
   const { setMediaQuery } = useMediaDetailQuery()
   const title = ctx.mediaDeepDetail?.title ?? 'Media'
@@ -26,16 +26,14 @@ export function MediaDetailToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
             <button
               type="button"
               onClick={() => setMediaQuery(null)}
-              className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
+              className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium transition-colors"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
               Back
             </button>
           </motion.div>
         </AnimatePresence>
-        <span className="body-3 min-w-0 truncate font-semibold text-[var(--foreground)]">
-          {title}
-        </span>
+        <span className="body-3 text-foreground min-w-0 truncate font-semibold">{title}</span>
       </div>
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
         <SaveViewSlot ctx={ctx} />

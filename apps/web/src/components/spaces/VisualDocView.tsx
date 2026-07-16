@@ -123,8 +123,8 @@ export function VisualDocView({
           <div className="space-y-spacing-1">
             <h3 className="title-h6 text-foreground">Create a visual doc</h3>
             <p className="body-3 text-muted-foreground max-w-md">
-              I’ll turn this doc into a polished HTML page you can preview here, open in full mode,
-              or download — same idea as mock previews in Funnels, Ads, and IG Research.
+              I’ll turn this doc into a polished HTML page you can preview here, open in Design,
+              or download — same idea as presentations, funnels, and ads.
             </p>
           </div>
           {canUsePrompt && (

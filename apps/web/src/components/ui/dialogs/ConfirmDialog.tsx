@@ -9,6 +9,8 @@ type ConfirmDialogProps = {
   confirmText: string
   confirmingText?: string
   confirmDisabled?: boolean
+  /** Defaults to destructive. Use primary for non-destructive confirms (e.g. mark complete). */
+  confirmTone?: 'destructive' | 'primary'
   onConfirm: () => void
   onOpenChange: (open: boolean) => void
 }
@@ -20,9 +22,13 @@ export function ConfirmDialog({
   confirmText,
   confirmingText,
   confirmDisabled = false,
+  confirmTone = 'destructive',
   onConfirm,
   onOpenChange,
 }: ConfirmDialogProps) {
+  const confirmClass =
+    confirmTone === 'primary' ? 'button-glass-primary' : 'button-glass-destructive'
+
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -56,7 +62,7 @@ export function ConfirmDialog({
                   onConfirm()
                 }}
                 disabled={confirmDisabled}
-                className="button-glass-destructive rounded-spacing-2 px-spacing-3 py-spacing-2 body-3 disabled:opacity-50"
+                className={`${confirmClass} rounded-spacing-2 px-spacing-3 py-spacing-2 body-3 disabled:opacity-50`}
               >
                 {confirmDisabled && confirmingText ? confirmingText : confirmText}
               </button>

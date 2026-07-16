@@ -189,6 +189,11 @@ describe('artifact action scope helpers', () => {
     }
   })
 
+  it('keeps search_campaign_brain campaign-scoped (auto) so campaign_id injects', () => {
+    expect(ACTION_METHOD_MAP.search_campaign_brain).toBe('searchCampaignBrain')
+    expect(getActionScopeMode('search_campaign_brain')).toBe('auto')
+  })
+
   it('maps every flow action to a handler method and keeps them active-scope aware', () => {
     for (const action of flowActions) {
       expect(ACTION_METHOD_MAP[action]).toBeDefined()
@@ -441,6 +446,10 @@ describe('artifact action scope helpers', () => {
       ['get_space_item', { space_id: otherSpaceId, item_id: 'item-1' }],
       ['list_tasks', { space_id: otherSpaceId }],
       ['get_task', { space_id: otherSpaceId, task_id: 'task-1' }],
+      [
+        'search_campaign_brain',
+        { query: 'offer pricing ICP', campaign_id: '00000000-0000-0000-0000-0000000000aa' },
+      ],
     ] as const) {
       expect(validateScopeForAction(action, data, campaignScope)).toEqual({ ok: true })
     }

@@ -243,7 +243,7 @@ describe('useTeamContainerHandlers', () => {
 
     expect(mocks.unassignAgentFromCampaign).not.toHaveBeenCalled()
     expect(coreData.setCampaignError).toHaveBeenCalledWith(
-      'Vibey and Atlas are always assigned to every campaign.',
+      'ROAS and Atlas are always assigned to every campaign.',
     )
   })
 

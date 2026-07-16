@@ -97,27 +97,34 @@ describe('webinar-fulfillment playbook', () => {
     expect(expandMissionPlaybook({ ...base, playbookId: 'unknown' })).toBeNull()
   })
 
-  it('omits human gates when mission has no org_id', () => {
+  it('resolves name-derived campaign agent keys to playbook roles', () => {
+    const plan = expandWebinarFulfillmentPlaybook({
+      ...base,
+      workerAgentKeys: ['nate', 'ivy', 'blaze', 'lux'],
+    })
+    expect(plan.subtasks[0]?.assignTo).toBe('nate')
+    expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.assignTo).toBe('blaze')
+    expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.assignTo).toBe('ivy')
+    expect(plan.subtasks.find((s) => s.id === 'st-funnel-design')?.assignTo).toBe('lux')
+  })
+
+  it('includes human gates for personal missions (no org_id)', () => {
     const plan = expandWebinarFulfillmentPlaybook({
       ...base,
       mission: { ...base.mission, org_id: null },
     })
     const ids = plan.subtasks.map((s) => s.id)
-    expect(ids).not.toContain('st-gate-1')
-    expect(ids).not.toContain('st-gate-2')
-    expect(ids).not.toContain('st-gate-3')
-    expect(ids).toContain('st-market-research')
-    expect(ids).toContain('st-copy-package')
-    expect(ids).toContain('st-deck-build')
+    expect(ids).toContain('st-gate-1')
+    expect(ids).toContain('st-gate-2')
+    expect(ids).toContain('st-gate-3')
+    expect(plan.subtasks.find((s) => s.id === 'st-gate-1')?.assignTo).toBe(
+      `human:${base.mission.user_id}`,
+    )
     expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.dependsOn).toEqual([
-      'st-launch-brief',
+      'st-gate-1',
     ])
-    expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.dependsOn).toEqual([
-      'st-copy-package',
-    ])
-    expect(plan.subtasks.find((s) => s.id === 'st-deck-build')?.dependsOn).toEqual([
-      'st-deck-outline',
-    ])
+    expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.dependsOn).toEqual(['st-gate-2'])
+    expect(plan.subtasks.find((s) => s.id === 'st-deck-build')?.dependsOn).toEqual(['st-gate-3'])
   })
 
   it('wires Gate 2 REVIEW MAP owners for surgical reject', () => {

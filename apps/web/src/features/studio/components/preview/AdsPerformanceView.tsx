@@ -99,7 +99,7 @@ interface AdsPerformanceViewProps {
   externalTimeRange?: ReportingTimeRange
   onExternalTimeRangeChange?: (value: ReportingTimeRange) => void
   onRegisterReportingToolbar?: (api: ReportingToolbarApi | null) => void
-  /** When set, only these Vibey ad campaign row IDs appear at the top level; undefined = all. */
+  /** When set, only these ROAS ad campaign row IDs appear at the top level; undefined = all. */
   adCampaignRowIdsFilter?: string[] | undefined
 }
 
@@ -520,7 +520,7 @@ export function AdsPerformanceView({
                 Pull in your current ads from Meta to manage and analyze
               </p>
               <p className="typo-caption text-muted-foreground">
-                Sync your existing Meta campaigns, ad sets, and ads into Vibey for performance
+                Sync your existing Meta campaigns, ad sets, and ads into ROAS for performance
                 analysis and iteration.
               </p>
             </div>

@@ -95,7 +95,6 @@ export type SpaceToolbarContext = {
   loadCampaignArtifacts: () => void
   mediaViewConfig: MediaViewConfig
   handleMediaViewConfigPatch: (patch: Partial<MediaViewConfig>) => void | Promise<void>
-  mediaSlidePreviewOpen: boolean
   docsConfigToolbar: DocsConfig
   docsPreTreeDisplayModeRef: RefObject<'grid' | 'list'>
 

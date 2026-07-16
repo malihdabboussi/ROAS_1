@@ -40,7 +40,7 @@ Use `vibey_backend` for all brain operations.
 
 - `search_memory` — Search user memories by query
 - `search_sk_entries` — Search agent SK entries by query and brain_id
-- `search_campaign_knowledge` — Search campaign knowledge nodes (requires campaign_id)
+- `search_campaign_brain` — Search campaign brain memories (requires campaign_id or campaign chat scope)
 - `list_brain_scopes` — List available brain rows and campaigns for routing. Use this before deciding where knowledge belongs.
 - `resolve_agent_sk_brain` — Resolve agent_key → SK brain_id and provisioned flag
 - `get_brain_stats` — Stats per scope (user/agent/campaign)

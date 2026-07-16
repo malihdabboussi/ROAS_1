@@ -147,7 +147,7 @@ function ThemePreviewClosingSection({
           className="body-3 mb-spacing-4"
           style={{ color: 'var(--color-body)', opacity: 0.7, ...bodyFont }}
         >
-          We hope you enjoy your Vibey experience 💜
+          We hope you enjoy your ROAS experience 💜
         </p>
         <button
           className="px-spacing-8 py-spacing-3 body-2 font-medium transition-opacity hover:opacity-90"

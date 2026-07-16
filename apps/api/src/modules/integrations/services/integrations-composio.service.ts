@@ -31,11 +31,19 @@ export class IntegrationsComposioService {
       connection_data?: Record<string, string>
       connection_scope?: 'personal' | 'org_shared'
       connection_label?: string
+      force_new?: boolean
     },
   ): Promise<Record<string, unknown>> {
     const integrationId = body.integration_id?.trim().toLowerCase()
     if (!integrationId) return { success: false, error: 'integration_id is required' }
     const scopeMode = this.core.resolveScopeMode(scope, body.connection_scope)
+    const forceNewRaw = (body as { force_new?: unknown; forceNew?: unknown }).force_new
+    const forceNewCamel = (body as { forceNew?: unknown }).forceNew
+    const forceNew =
+      forceNewRaw === true ||
+      forceNewRaw === 'true' ||
+      forceNewCamel === true ||
+      forceNewCamel === 'true'
 
     const PERSONAL_ONLY = ['fathom', 'fireflies']
     if (
@@ -79,7 +87,7 @@ export class IntegrationsComposioService {
     }
 
     const accountType = scopeMode === 'org_shared' ? ('SHARED' as const) : ('PRIVATE' as const)
-    if (!body.connection_data) {
+    if (!body.connection_data && !forceNew) {
       const reusable = await this.core.resolveReusableComposioConnection(supabase, {
         userId: user.id,
         scope,
@@ -104,13 +112,24 @@ export class IntegrationsComposioService {
       }
     }
 
-    const initiated = await this.composio.initiateConnectedAccount(user.id, config.auth_config_id, {
-      callbackUrl: body.callback_url,
-      longRedirectUrl: body.long_redirect_url,
-      allowMultiple: true,
-      ...(body.connection_data ? { connectionData: body.connection_data } : {}),
-      ...(!body.connection_data && scopeMode === 'org_shared' ? { accountType } : {}),
-    })
+    let initiated: { id: string; redirectUrl: string | null; status: string | null }
+    try {
+      initiated = await this.composio.initiateConnectedAccount(user.id, config.auth_config_id, {
+        callbackUrl: body.callback_url,
+        longRedirectUrl: body.long_redirect_url,
+        // Always allow multiple so "Add another account" can open a fresh OAuth link.
+        allowMultiple: true,
+        ...(forceNew ? { alias: `${integrationId}-${Date.now()}` } : {}),
+        ...(body.connection_data ? { connectionData: body.connection_data } : {}),
+        ...(!body.connection_data && scopeMode === 'org_shared' ? { accountType } : {}),
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return {
+        success: false,
+        error: `Failed to start ${integrationId} connection: ${message}`,
+      }
+    }
 
     const isApiKeyAuth = !!body.connection_data
     const now = new Date().toISOString()
@@ -135,9 +154,18 @@ export class IntegrationsComposioService {
     const upsertResult =
       scopeMode === 'org_shared'
         ? await this.core.insertOrgSharedIntegration(supabase, scope, rowData)
-        : await this.core.upsertPersonalScopedIntegration(supabase, scope, rowData)
+        : forceNew
+          ? await this.core.insertPersonalScopedIntegration(supabase, scope, rowData)
+          : await this.core.upsertPersonalScopedIntegration(supabase, scope, rowData)
 
     if (upsertResult.error) return { success: false, error: upsertResult.error.message }
+
+    if (!isApiKeyAuth && !initiated.redirectUrl) {
+      return {
+        success: false,
+        error: `Failed to start ${integrationId} connection: provider did not return an authorize URL`,
+      }
+    }
 
     return {
       success: true,
@@ -158,7 +186,7 @@ export class IntegrationsComposioService {
     let query = this.repository
       .table(supabase, 'user_integrations')
       .select(
-        'integration_id,status,metadata,connection_label,scope_mode,is_default,user_id,org_id',
+        'id,integration_id,status,metadata,connection_label,scope_mode,is_default,user_id,org_id',
       )
       .not('metadata->>composio_connected_account_id', 'is', null)
 
@@ -481,6 +509,17 @@ export class IntegrationsComposioService {
     scope: RequestScope,
     body: { user_integration_id: string },
   ): Promise<Record<string, unknown>> {
+    const rowId = String(body.user_integration_id ?? '').trim()
+    if (!rowId) return { success: false, error: 'user_integration_id is required' }
+    const row = await this.core.getIntegrationRowForScope(supabase, scope, rowId)
+    if (!row) return { success: false, error: 'Integration connection not found' }
+    const scopeMode = String(row.scope_mode ?? '')
+    if (scopeMode === 'personal') {
+      return this.core.setPersonalDefaultConnection(supabase, scope, rowId)
+    }
+    if (scopeMode !== 'org_shared') {
+      return { success: false, error: 'Unsupported connection scope for default' }
+    }
     if (!scope.orgId) {
       return { success: false, error: 'Org context is required' }
     }
@@ -490,8 +529,6 @@ export class IntegrationsComposioService {
         error: 'Only org admin/owner can set default All Org integration connection.',
       }
     }
-    const rowId = String(body.user_integration_id ?? '').trim()
-    if (!rowId) return { success: false, error: 'user_integration_id is required' }
     return this.core.setOrgSharedDefaultConnection(supabase, scope, rowId)
   }
 

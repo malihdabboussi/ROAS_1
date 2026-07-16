@@ -18,7 +18,7 @@ export function VibeyAgentsIcon({ size = 'md', className }: VibeyAgentsIconProps
     >
       <Image
         src="/icons/vibey_agents.png"
-        alt="Vibey Agents"
+        alt="ROAS Agents"
         width={px}
         height={px}
         style={{ mixBlendMode: 'screen', width: px, height: px, objectFit: 'contain' }}

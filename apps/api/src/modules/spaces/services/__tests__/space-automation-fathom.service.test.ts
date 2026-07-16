@@ -38,6 +38,7 @@ describe('SpaceAutomationService Fathom recording fanout', () => {
       }),
       updateSpace: vi.fn().mockResolvedValue({}),
       findItemById: vi.fn().mockResolvedValue(createdItem),
+      findItemByFathomMeetingId: vi.fn().mockResolvedValue(null),
       findSubtasksByParentId: vi.fn().mockResolvedValue([]),
       findActivityByItemId: vi.fn().mockResolvedValue([]),
     }
@@ -145,6 +146,7 @@ describe('SpaceAutomationService Fathom recording fanout', () => {
       }),
       updateSpace: vi.fn().mockResolvedValue({}),
       findItemById: vi.fn().mockResolvedValue(itemA),
+      findItemByFathomMeetingId: vi.fn().mockResolvedValue(null),
       findSubtasksByParentId: vi.fn().mockResolvedValue([]),
       findActivityByItemId: vi.fn().mockResolvedValue([]),
     }

@@ -206,7 +206,7 @@ export function CampaignDashboardTab({
       if (cancelled) return
       if (team.length === 0) {
         setCapabilityWarning(
-          'No workers are assigned to this campaign. Vibey can send anyway, but results may be weak.',
+          'No workers are assigned to this campaign. ROAS can send anyway, but results may be weak.',
         )
         return
       }
@@ -228,7 +228,7 @@ export function CampaignDashboardTab({
       const matched = missionTokens.some((t) => skillText.includes(t))
       if (!matched) {
         setCapabilityWarning(
-          'Team skills may not match this mission. Vibey will still proceed, but consider hiring a specialist.',
+          'Team skills may not match this mission. ROAS will still proceed, but consider hiring a specialist.',
         )
       } else {
         setCapabilityWarning(null)

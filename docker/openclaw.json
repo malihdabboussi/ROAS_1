@@ -1,7 +1,7 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.2.16",
-    "lastTouchedAt": "2026-07-12T05:46:27.654Z"
+    "lastTouchedAt": "2026-07-16T21:14:09.850Z"
   },
   "wizard": {
     "lastRunAt": "2026-02-15T14:00:00.000Z",
@@ -6414,6 +6414,45 @@
             "browser"
           ]
         }
+      },
+      {
+        "id": "nate",
+        "workspace": "${AGENTS_BASE_DIR}/nate",
+        "skills": [
+          "auto-skill-1-roas-precall-strategy",
+          "auto-skill-2-roas-strategy-adjust",
+          "auto-skill-3-roas-launch-brief",
+          "dylans-super-voice",
+          "roas-market-research",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
       }
     ]
   },
@@ -6421,7 +6460,7 @@
     "web": {
       "search": {
         "enabled": true,
-        "provider": "perplexity"
+        "provider": "brave"
       }
     },
     "sandbox": {

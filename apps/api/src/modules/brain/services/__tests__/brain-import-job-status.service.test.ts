@@ -124,6 +124,39 @@ describe('BrainImportJobStatusService', () => {
     expect(importQuery.eq).not.toHaveBeenCalledWith('payload->>brainId', expect.any(String))
   })
 
+  it('omits cortex brain-ops from campaign-scoped queues', async () => {
+    const importQuery = createQuery({ data: [], error: null })
+    const brainOpsQuery = createQuery({
+      data: [
+        {
+          id: 'brain-op-leak',
+          event_type: 'brain_pattern_analysis',
+          status: 'pending',
+          error: null,
+          created_at: '2026-07-13T03:37:00.000Z',
+          processed_at: null,
+          brain_id: 'other-brain',
+          payload: {},
+        },
+      ],
+      error: null,
+    })
+    const admin = {
+      from: vi.fn((table: string) => (table === 'brain_import_jobs' ? importQuery : brainOpsQuery)),
+    }
+    const repository = new BrainImportJobStatusRepository()
+    ;(repository as never as { getAdminClient: () => unknown }).getAdminClient = () => admin
+    const service = new BrainImportJobStatusService(repository)
+
+    const jobs = await service.listActiveJobs('user-1', {
+      campaignId: 'campaign-impact',
+      limit: 10,
+    })
+
+    expect(jobs).toEqual([])
+    expect(admin.from).not.toHaveBeenCalledWith('brain_ops_outbox')
+  })
+
   it('returns false when cancel does not update a matching active job', async () => {
     const query = createQuery({ data: [], error: null })
     const admin = { from: vi.fn(() => query) }

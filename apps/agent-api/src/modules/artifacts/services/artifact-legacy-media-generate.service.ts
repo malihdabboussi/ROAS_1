@@ -230,6 +230,10 @@ export class ArtifactLegacyMediaGenerateService {
         ? target.requestContext.get(conversationId)
         : null
     const spaceIdFromCtx = (rcSpace?.spaceId as string | null | undefined) ?? null
+    const spaceIdFromInput =
+      typeof input.space_id === 'string' && input.space_id.trim().length > 0
+        ? input.space_id.trim()
+        : null
     const upload = await this.uploadService.uploadMediaFromBytes(
       target,
       Buffer.from(imageBytesB64, 'base64'),
@@ -240,7 +244,8 @@ export class ArtifactLegacyMediaGenerateService {
       prompt,
       billingModel,
       mediaOrgId,
-      spaceIdFromCtx,
+      spaceIdFromInput ?? spaceIdFromCtx,
+      conversationId,
     )
     if (!upload.success) return upload
 
@@ -363,12 +368,22 @@ export class ArtifactLegacyMediaGenerateService {
       )
     }
 
+    const savedSpaceId = spaceIdFromInput ?? spaceIdFromCtx
     return {
       success: true,
       url: imageUrl,
       asset: upload.asset,
+      asset_ref: upload.asset_ref,
       image_url: imageUrl,
       image_asset_id: imageAssetId,
+      space_id: savedSpaceId,
+      campaign_id: campaignId ?? null,
+      media_library:
+        imageAssetId && savedSpaceId
+          ? 'registered_in_space_media'
+          : imageAssetId
+            ? 'registered_in_user_media'
+            : 'url_only_no_asset_row',
       ...(avatarUpdate?.data ? { avatar_id: avatarId, avatar_image_url: imageUrl } : {}),
     }
   }

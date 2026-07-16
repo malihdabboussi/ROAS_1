@@ -21,6 +21,9 @@ const EVENT_LABELS: Record<string, string> = {
   'mission.subtask.cancelled': 'Subtask cancelled',
   'mission.subtask.edited': 'Subtask edited',
   'mission.subtask.retried': 'Subtask retried',
+  'mission.subtask.status_updated': 'Subtask status updated',
+  'mission.subtask.reassigned': 'Subtask reassigned',
+  'mission.subtask.execute.failed': 'Subtask hit an issue',
   'mission.atlas.brain_routing_conflict': 'Brain routing conflict (triage)',
   'awareness.append_subtasks': 'Awareness: subtasks added',
   'awareness.cancel_subtask': 'Awareness: subtask cancelled',
@@ -65,6 +68,9 @@ const EVENT_DOT_CLASS: Record<string, string> = {
   'mission.subtask.cancelled': 'indicator-dot-glass-orange',
   'mission.subtask.edited': 'indicator-dot-glass-blue',
   'mission.subtask.retried': 'indicator-dot-glass-blue',
+  'mission.subtask.status_updated': 'indicator-dot-glass-blue',
+  'mission.subtask.reassigned': 'indicator-dot-glass-blue',
+  'mission.subtask.execute.failed': 'indicator-dot-glass-orange',
   'mission.atlas.brain_routing_conflict': 'indicator-dot-glass-orange',
   'awareness.append_subtasks': 'indicator-dot-glass-blue',
   'awareness.cancel_subtask': 'indicator-dot-glass-orange',
@@ -88,6 +94,63 @@ const EVENT_DOT_CLASS: Record<string, string> = {
 
 export function formatEventType(eventType: string): string {
   return EVENT_LABELS[eventType] || eventType.replace(/^mission\./, '').replace(/\./g, ' ')
+}
+
+/** First name before "· Role" for compact chips (avoids crushing narrow activity columns). */
+export function formatAgentShortName(raw: string | null | undefined): string {
+  const full = String(raw || '').trim()
+  if (!full) return ''
+  const beforeRole = full.split('·')[0]?.trim() || full
+  const first = beforeRole.split(/\s+/)[0] || beforeRole
+  return first
+}
+
+/** Prefer stored technical detail for hover; fall back to mission progress notes. */
+export function resolveSubtaskIssueDetail(
+  subtask: {
+    feedback?: string | null
+    output?: Record<string, unknown> | null
+    bounce_reason?: string | null
+  },
+  missionHints?: { progressNotes?: string | null; error?: string | null },
+): string | null {
+  const output =
+    subtask.output && typeof subtask.output === 'object' ? subtask.output : null
+  const internal =
+    typeof output?._internal_error === 'string' ? output._internal_error.trim() : ''
+  if (internal) return internal
+  const bounce = typeof subtask.bounce_reason === 'string' ? subtask.bounce_reason.trim() : ''
+  if (bounce) return bounce
+  const progress = typeof missionHints?.progressNotes === 'string' ? missionHints.progressNotes.trim() : ''
+  if (progress && /failed|error|404|503|gateway|triage/i.test(progress)) return progress
+  const missionError = typeof missionHints?.error === 'string' ? missionHints.error.trim() : ''
+  if (missionError && missionError !== subtask.feedback) return missionError
+  return null
+}
+
+export function formatSubtaskStatusLabel(
+  status: string,
+  opts?: { dependencyBlocked?: boolean },
+): string {
+  if (opts?.dependencyBlocked) return 'Waiting'
+  switch (status) {
+    case 'done':
+      return 'Done'
+    case 'in_progress':
+      return 'Working'
+    case 'blocked':
+      return 'Blocked'
+    case 'revision':
+      return 'Revision'
+    case 'awaiting_human':
+      return 'Your turn'
+    case 'pending':
+      return 'Queued'
+    case 'cancelled':
+      return 'Cancelled'
+    default:
+      return status.replace(/_/g, ' ')
+  }
 }
 
 export function formatRelativeTime(dateStr: string): string {

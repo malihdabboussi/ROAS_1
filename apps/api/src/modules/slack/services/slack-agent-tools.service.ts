@@ -36,13 +36,105 @@ export class SlackAgentToolsService {
     userId: string,
     orgId?: string | null,
   ): Promise<string> {
+    const { botToken } = await this.resolveTokens(supabase, userId, orgId)
+    return botToken
+  }
+
+  private async resolveTokens(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId?: string | null,
+  ): Promise<{ botToken: string; userToken: string | null }> {
     const integration = await this.slackRepo.getIntegration(supabase, userId, orgId)
     if (!integration?.access_token) {
       throw new NotFoundException(
         'Slack is not connected for this user. Connect Slack in Settings first.',
       )
     }
-    return integration.access_token
+    const metadata =
+      integration.metadata && typeof integration.metadata === 'object'
+        ? (integration.metadata as Record<string, unknown>)
+        : {}
+    const userToken =
+      typeof metadata.user_access_token === 'string' && metadata.user_access_token.trim()
+        ? metadata.user_access_token.trim()
+        : null
+    return { botToken: integration.access_token, userToken }
+  }
+
+  private isNotAllowedTokenTypeError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error)
+    return /not_allowed_token_type/i.test(message)
+  }
+
+  /**
+   * Bot-token fallback when search.messages is unavailable.
+   * Scans channel history the bot can read (optionally filtered by in:#channel).
+   */
+  private async searchMessagesViaChannelHistory(
+    botToken: string,
+    query: string,
+    count = 20,
+  ): Promise<{
+    ok: boolean
+    search_mode: 'channel_history_fallback'
+    messages: {
+      total: number
+      matches: Array<{
+        text?: string
+        user?: string
+        ts?: string
+        channel?: { id?: string; name?: string }
+      }>
+    }
+  }> {
+    const inMatch = query.match(/\bin:#?([a-z0-9_-]+)\b/i)
+    const terms = query
+      .replace(/\bin:#?[a-z0-9_-]+\b/gi, ' ')
+      .toLowerCase()
+      .split(/\s+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length >= 2)
+
+    let channels = await this.slackApi.listConversations(botToken)
+    if (inMatch?.[1]) {
+      const needle = inMatch[1].toLowerCase()
+      channels = channels.filter(
+        (c) => c.id.toLowerCase() === needle || c.name.toLowerCase() === needle,
+      )
+    } else {
+      channels = channels.slice(0, 30)
+    }
+
+    const matches: Array<{
+      text?: string
+      user?: string
+      ts?: string
+      channel?: { id?: string; name?: string }
+    }> = []
+
+    for (const channel of channels) {
+      const history = await this.slackApi.getChannelHistory(botToken, channel.id, 40)
+      for (const message of history) {
+        const text = typeof message.text === 'string' ? message.text : ''
+        const haystack = text.toLowerCase()
+        if (terms.length > 0 && !terms.every((term) => haystack.includes(term))) continue
+        matches.push({
+          text,
+          user: typeof message.user === 'string' ? message.user : undefined,
+          ts: typeof message.ts === 'string' ? message.ts : undefined,
+          channel: { id: channel.id, name: channel.name },
+        })
+        if (matches.length >= count) break
+      }
+      if (matches.length >= count) break
+    }
+
+    return {
+      ok: true,
+      search_mode: 'channel_history_fallback',
+      messages: { total: matches.length, matches },
+    }
   }
 
   private async runWithSlackAuthMapping<T>(
@@ -81,16 +173,33 @@ export class SlackAgentToolsService {
     },
   ) {
     if (!params.query?.trim()) throw new BadRequestException('query is required')
-    const botToken = await this.resolveBotToken(supabase, userId, orgId)
-    const result = await this.runWithSlackAuthMapping(supabase, userId, orgId, () =>
-      this.slackApi.searchMessages(botToken, params.query, {
-        count: params.count,
-        sort: params.sort,
-        sort_dir: params.sort_dir,
-        cursor: params.cursor,
-      }),
+    const { botToken, userToken } = await this.resolveTokens(supabase, userId, orgId)
+    const count = params.count ?? 20
+
+    if (userToken) {
+      try {
+        const result = await this.runWithSlackAuthMapping(supabase, userId, orgId, () =>
+          this.slackApi.searchMessages(userToken, params.query, {
+            count,
+            sort: params.sort,
+            sort_dir: params.sort_dir,
+            cursor: params.cursor,
+          }),
+        )
+        return { success: true, search_mode: 'search_messages', ...result }
+      } catch (error) {
+        if (!this.isNotAllowedTokenTypeError(error)) throw error
+        this.logger.warn(
+          'Slack user token rejected for search.messages; falling back to channel history',
+        )
+      }
+    }
+
+    // Existing installs only have a bot token — search.messages always fails for xoxb.
+    const fallback = await this.runWithSlackAuthMapping(supabase, userId, orgId, () =>
+      this.searchMessagesViaChannelHistory(botToken, params.query, count),
     )
-    return { success: true, ...result }
+    return { success: true, ...fallback }
   }
 
   async searchFiles(
@@ -106,16 +215,30 @@ export class SlackAgentToolsService {
     },
   ) {
     if (!params.query?.trim()) throw new BadRequestException('query is required')
-    const botToken = await this.resolveBotToken(supabase, userId, orgId)
-    const result = await this.runWithSlackAuthMapping(supabase, userId, orgId, () =>
-      this.slackApi.searchFiles(botToken, params.query, {
-        count: params.count,
-        sort: params.sort,
-        sort_dir: params.sort_dir,
-        cursor: params.cursor,
-      }),
-    )
-    return { success: true, ...result }
+    const { userToken } = await this.resolveTokens(supabase, userId, orgId)
+    if (!userToken) {
+      throw new BadRequestException(
+        'Slack file search needs a user token with search:read. Reconnect Slack in Settings, then retry. Meanwhile use SLACK_LIST_CHANNELS + SLACK_GET_CHANNEL_HISTORY for channel context.',
+      )
+    }
+    try {
+      const result = await this.runWithSlackAuthMapping(supabase, userId, orgId, () =>
+        this.slackApi.searchFiles(userToken, params.query, {
+          count: params.count,
+          sort: params.sort,
+          sort_dir: params.sort_dir,
+          cursor: params.cursor,
+        }),
+      )
+      return { success: true, search_mode: 'search_files', ...result }
+    } catch (error) {
+      if (this.isNotAllowedTokenTypeError(error)) {
+        throw new BadRequestException(
+          'Slack file search needs a user token with search:read. Reconnect Slack in Settings, then retry.',
+        )
+      }
+      throw error
+    }
   }
 
   async listChannels(supabase: SupabaseClient, userId: string, orgId: string | null | undefined) {

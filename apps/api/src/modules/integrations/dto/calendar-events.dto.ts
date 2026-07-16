@@ -57,6 +57,7 @@ export const CreateCalendarEventSchema = z
     attendees: z.array(CalendarAttendeeInputSchema).optional(),
     calendar_id: z.string().min(1).optional(),
     create_video_meeting: z.boolean().optional(),
+    user_integration_id: z.string().uuid().optional(),
   })
   .refine((body) => Date.parse(body.end) > Date.parse(body.start), {
     message: 'end must be after start',

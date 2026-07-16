@@ -201,9 +201,9 @@ export function appendArtifactPdfHeader(
   const brandRow = document.createElement('div')
   brandRow.className = 'pdf-brand-row'
   const logo = document.createElement('img')
-  logo.alt = 'Vibey'
+  logo.alt = 'ROAS'
   logo.crossOrigin = 'anonymous'
-  logo.src = `${typeof window !== 'undefined' ? window.location.origin : ''}/Logos/logov2_transperent.png`
+  logo.src = `${typeof window !== 'undefined' ? window.location.origin : ''}/Logos/roas/icon-black.png`
   brandRow.appendChild(logo)
   header.appendChild(brandRow)
 

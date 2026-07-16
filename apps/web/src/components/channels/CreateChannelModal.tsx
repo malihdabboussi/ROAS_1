@@ -231,7 +231,7 @@ export function CreateChannelModal({
                       />
                       <span>
                         <span className="body-2 text-foreground block">
-                          Public — anyone in Vibey
+                          Public — anyone in ROAS
                         </span>
                       </span>
                     </label>

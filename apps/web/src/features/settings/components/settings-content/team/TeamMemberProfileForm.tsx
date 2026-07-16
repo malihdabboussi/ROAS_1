@@ -282,7 +282,7 @@ export function TeamMemberProfileForm({
 
       {missing.length > 0 && (
         <p className="body-3 text-muted-foreground">
-          Add {missing.join(', ')} so Vibey can loop this teammate into missions.
+          Add {missing.join(', ')} so ROAS can loop this teammate into missions.
         </p>
       )}
     </div>

@@ -30,6 +30,7 @@ import type {
   VisualizeDocBody,
 } from '../dto'
 import { buildArtifactViewDef } from '../lib/build-artifact-view-def'
+import { isFlowsConceptSpaceSchema } from '../constants/flows-concept-space.constants'
 import { resolveDocMentionLinkPreviews } from '../lib/resolve-doc-mention-previews'
 import { sanitizeCommentHtml } from '../lib/sanitize-comment'
 import { syncDocEditToConversationDocument } from '../lib/sync-doc-conversation-copy'
@@ -216,7 +217,9 @@ export abstract class SpacesServiceBase01 {
       generalCampaignId,
       orgId,
     )
-    if (existing[0]) return existing[0]
+    // Flow concepts is a Flows sandbox only — never treat it as the personal default.
+    const preferred = existing.find((space) => !isFlowsConceptSpaceSchema(space.schema))
+    if (preferred) return preferred
 
     return this.repo.createSpace(
       supabase,
@@ -225,7 +228,20 @@ export abstract class SpacesServiceBase01 {
         title: 'New Workspace',
         visibility: 'private',
         campaign_id: generalCampaignId,
-        schema: DEFAULT_SPACE_SCHEMA as unknown as CreateSpaceDto['schema'],
+        schema: {
+          ...DEFAULT_SPACE_SCHEMA,
+          views: [
+            ...DEFAULT_SPACE_SCHEMA.views,
+            {
+              id: 'docs',
+              type: 'docs',
+              name: 'Docs',
+              group_by: 'category',
+              docs_config: { pinned_item_ids: [], display_mode: 'grid' },
+              visible_fields: ['title', 'category'],
+            },
+          ],
+        } as unknown as CreateSpaceDto['schema'],
       },
       orgId,
     )

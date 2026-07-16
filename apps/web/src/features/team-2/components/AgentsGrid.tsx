@@ -45,6 +45,8 @@ interface AgentsGridProps {
   selectedAgentKey: string | null
   assignedCampaignIdsForSelected: string[] | undefined
   hasBrainForSelected: boolean
+  focusByAgentKey?: Record<string, string>
+  onAssignWork?: (agent: MissionAgent) => void
 }
 
 export function AgentsGrid({
@@ -60,6 +62,8 @@ export function AgentsGrid({
   selectedAgentKey,
   assignedCampaignIdsForSelected,
   hasBrainForSelected,
+  focusByAgentKey = {},
+  onAssignWork,
 }: AgentsGridProps) {
   const [view, setView] = useState<Team2ViewMode>('grid')
   const [search, setSearch] = useState('')
@@ -67,7 +71,7 @@ export function AgentsGrid({
   const [statusFilters, setStatusFilters] = useState<Team2StatusFilter[]>([])
   const [modelFilters, setModelFilters] = useState<string[]>([])
   const [sort, setSort] = useState<Team2Sort>('recent')
-  const [groupBy, setGroupBy] = useState<Team2GroupBy>('team')
+  const [groupBy, setGroupBy] = useState<Team2GroupBy>('none')
   const [groupSort, setGroupSort] = useState<Team2GroupSort>('asc')
   const [collapsedGroupKeys, setCollapsedGroupKeys] = useState<Set<string>>(() => new Set())
   const [modelOptions, setModelOptions] = useState<LlmModelOption[]>([])
@@ -220,6 +224,8 @@ export function AgentsGrid({
         isFavorite={ctx.isFavorite}
         onToggleFavorite={ctx.onToggleFavorite}
         canFavorite={ctx.canFavorite}
+        focusLabel={focusByAgentKey[agent.agent_key] ?? null}
+        onAssignWork={onAssignWork ? () => onAssignWork(agent) : undefined}
       />
     )
   }

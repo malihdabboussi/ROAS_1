@@ -126,7 +126,9 @@ export function TaskMetaCoreFields({
                   </span>
                   <span className="body-2 truncate text-[var(--color-foreground)]">
                     {assigneeEntries.length === 1
-                      ? assigneeEntries[0]!.display_name
+                      ? currentUserId && assigneeEntries[0]!.user_id === currentUserId
+                        ? 'Me'
+                        : assigneeEntries[0]!.display_name
                       : `${assigneeEntries.length} assignees`}
                   </span>
                 </span>

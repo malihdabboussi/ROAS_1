@@ -7,7 +7,7 @@ const metaIntegration: Integration = {
   id: 'meta',
   provider: 'meta',
   name: 'Meta Ads',
-  description: 'Connect Meta to publish Facebook and Instagram ads directly from Vibey.',
+  description: 'Connect Meta to publish Facebook and Instagram ads directly from ROAS.',
   category: 'ads_analytics',
   is_active: true,
 }
@@ -48,7 +48,7 @@ describe('MetaIntegrationConnectCard', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }))
 
-    expect(screen.getByText(/Vibey uses Composio/i)).toBeTruthy()
+    expect(screen.getByText(/ROAS uses Composio/i)).toBeTruthy()
     expect(onConnect).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))

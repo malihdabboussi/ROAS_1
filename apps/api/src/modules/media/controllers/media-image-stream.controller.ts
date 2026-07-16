@@ -77,7 +77,7 @@ export class MediaImageStreamController {
       res.write('data: [DONE]\n\n')
     } finally {
       if (generationSucceeded && generationCompleteCount > 0) {
-        const modelName = parsed.data.model ?? 'gemini-3.1-flash-image-preview'
+        const modelName = parsed.data.model ?? 'gpt-5.4-image-2'
         for (let i = 0; i < generationCompleteCount; i++) {
           try {
             await this.creditsService.processImageUsage({
@@ -147,7 +147,7 @@ export class MediaImageStreamController {
       res.write('data: [DONE]\n\n')
     } finally {
       if (generationSucceeded) {
-        const modelName = parsed.data.model ?? 'gemini-3.1-flash-image-preview'
+        const modelName = parsed.data.model ?? 'gpt-5.4-image-2'
         try {
           await this.creditsService.processImageUsage({
             userId: user.id,

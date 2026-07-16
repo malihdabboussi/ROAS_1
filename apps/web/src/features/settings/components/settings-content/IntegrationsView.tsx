@@ -189,6 +189,11 @@ export function IntegrationsView({
                           const comingSoon = isComingSoon(integration.provider)
                           const isConnecting =
                             connectingProvider === integration.provider.toLowerCase()
+                          const alreadyConnected = userIntegrations.some(
+                            (ui) =>
+                              ui.integration_id === integration.id &&
+                              ['connected', 'pending', 'needs_reconnect'].includes(ui.status),
+                          )
                           return (
                             <button
                               key={integration.id}
@@ -199,7 +204,11 @@ export function IntegrationsView({
                                 if (integration.provider.toLowerCase() === 'wordpress') {
                                   setWordpressDialogIntegration(integration)
                                 } else {
-                                  onConnect(integration)
+                                  onConnect(
+                                    integration,
+                                    undefined,
+                                    alreadyConnected ? { forceNew: true } : undefined,
+                                  )
                                 }
                               }}
                               className="body-3 text-foreground hover:bg-hover-subtle gap-spacing-2 px-spacing-3 py-spacing-2 flex w-full items-center text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50"
@@ -267,6 +276,8 @@ export function IntegrationsView({
           canManageOrgShared={canManageOrgShared}
           onChangeScope={onChangeScope}
           onRename={onRename}
+          onAddAccount={(integration) => onConnect(integration, undefined, { forceNew: true })}
+          connectingProvider={connectingProvider}
           autoOpenSocialReportingPickerId={autoOpenSocialReportingPickerId}
           autoOpenSocialReportingPickerPlatform={autoOpenSocialReportingPickerPlatform}
         />
@@ -279,7 +290,14 @@ export function IntegrationsView({
           providerModes={providerModes}
           metaEligible={metaLibraryEligible}
           onConnect={onConnect}
+          onRefresh={onRefresh}
           onDisconnect={onDisconnect}
+          onReconnect={onReconnect}
+          onRemove={onRemove}
+          onSetDefault={onSetDefault}
+          onChangeScope={onChangeScope}
+          onRename={onRename}
+          canManageOrgShared={canManageOrgShared}
           connectingProvider={connectingProvider}
         />
       </TabsContent>

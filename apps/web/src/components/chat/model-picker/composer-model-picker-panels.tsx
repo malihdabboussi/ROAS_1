@@ -90,7 +90,7 @@ export function ComposerModelPickerPanels({
               </p>
               <p className="body-4 text-muted-foreground">{modelHoverStrategy.description}</p>
               <p className="body-4 text-muted-foreground">
-                Vibey chooses the model for this message using the current task, context, and cost
+                ROAS chooses the model for this message using the current task, context, and cost
                 profile.
               </p>
             </div>

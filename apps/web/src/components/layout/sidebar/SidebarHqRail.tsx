@@ -29,7 +29,6 @@ export function SidebarHqRail({
   const router = useRouter()
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
-  const expandAndFocus = useGlobalChatStore((s) => s.expandAndFocus)
 
   const syncWorkContextForPath = (href: string) => {
     setWorkContext({ surface: surfaceFromPathname(href) })
@@ -55,10 +54,6 @@ export function SidebarHqRail({
     if (c.pathname === href) return
     if (href !== '/' && c.pathname.startsWith(`${href}/`)) return
     router.push(href)
-  }
-
-  const openSectionChat = (surface: ReturnType<typeof surfaceFromPathname>) => {
-    expandAndFocus({ workContext: { surface } })
   }
 
   const closeHubIfOpen = () => {
@@ -145,12 +140,7 @@ export function SidebarHqRail({
                     closeHubIfOpen()
                     syncWorkContextForPath(item.href)
                     c.setActiveManagePanel(null)
-                    if (item.id === 'home') {
-                      setCollapsed(true)
-                    }
-                    if (item.id === 'flows') {
-                      openSectionChat('flows')
-                    }
+                    setCollapsed(true)
                     pushIfNeeded(item.href)
                   }}
                   className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
@@ -171,6 +161,7 @@ export function SidebarHqRail({
                   onClick={(e) => {
                     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
                     setWorkContext({ surface: 'team' })
+                    setCollapsed(true)
                     c.setActiveManagePanel(null)
                   }}
                   className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
@@ -198,7 +189,7 @@ export function SidebarHqRail({
                   onClick={() => {
                     closeHubIfOpen()
                     syncWorkContextForPanel('spaces')
-                    openSectionChat('spaces')
+                    setCollapsed(true)
                     pushIfNeeded('/spaces')
                     if (c.activeManagePanel === 'spaces' && !c.isPanelClosing) {
                       c.setIsPanelClosing(true)
@@ -229,7 +220,7 @@ export function SidebarHqRail({
                   onClick={() => {
                     closeHubIfOpen()
                     syncWorkContextForPanel('team2')
-                    openSectionChat('team')
+                    setCollapsed(true)
                     c.setIsPanelClosing(false)
                     c.setActiveManagePanel('team2')
                     pushIfNeeded(item.href ?? '/team')
@@ -259,7 +250,7 @@ export function SidebarHqRail({
                   onClick={() => {
                     closeHubIfOpen()
                     syncWorkContextForPanel('brain')
-                    openSectionChat('brain')
+                    setCollapsed(true)
                     c.setIsPanelClosing(false)
                     c.setActiveManagePanel('brain')
                     pushIfNeeded(item.href ?? '/brain')
@@ -284,6 +275,7 @@ export function SidebarHqRail({
                         c.setIsPanelClosing(true)
                       } else {
                         syncWorkContextForPanel(item.panelId)
+                        setCollapsed(true)
                         c.setIsPanelClosing(false)
                         c.setActiveManagePanel(item.panelId)
                       }
@@ -308,6 +300,7 @@ export function SidebarHqRail({
                       c.setIsPanelClosing(true)
                       return
                     }
+                    setCollapsed(true)
                     c.setIsPanelClosing(false)
                     c.setActiveManagePanel(item.panelId)
                   }}

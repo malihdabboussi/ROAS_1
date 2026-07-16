@@ -21,7 +21,7 @@ export const HOME_HERO_CAROUSEL_CARDS: HomeHeroCarouselCard[] = [
     eyebrow: 'Live event',
     eyebrowClassName: 'text-blue-400',
     title: 'Launch a webinar',
-    body: 'Vibey drafts the funnel, registration page, and 5-email reminder sequence.',
+    body: 'ROAS drafts the funnel, registration page, and 5-email reminder sequence.',
     vignette: 'webinar',
     glowClassName: 'bg-blue-500/15',
   },

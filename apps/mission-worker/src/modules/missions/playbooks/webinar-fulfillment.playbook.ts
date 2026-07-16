@@ -84,7 +84,8 @@ export function expandWebinarFulfillmentPlaybook(
     input.workerAgentKeys,
     input.managerKey,
   )
-  const canAssignHuman = Boolean(input.mission.org_id)
+  // Personal and org missions both get human gates assigned to the mission owner.
+  const canAssignHuman = Boolean(input.mission.user_id)
   const humanAssign = `human:${input.mission.user_id}`
 
   const kickoffBits = [
@@ -532,11 +533,6 @@ export function expandWebinarFulfillmentPlaybook(
       'Flow-builder Standard vs Mission chooser',
       'Inventing roas-webinar-emails content',
       'PPTX export inside the platform',
-      ...(canAssignHuman
-        ? []
-        : [
-            'Gate 1/2/3 human assignees (require org_id on mission)',
-          ]),
     ],
     assignTo: strategist,
   }

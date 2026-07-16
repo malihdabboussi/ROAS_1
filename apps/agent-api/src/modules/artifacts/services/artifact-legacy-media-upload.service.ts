@@ -18,6 +18,7 @@ export class ArtifactLegacyMediaUploadService {
     model: string,
     orgId?: string | null,
     spaceId?: string | null,
+    conversationId?: string | null,
   ): Promise<{
     success: boolean
     url?: string
@@ -78,9 +79,10 @@ export class ArtifactLegacyMediaUploadService {
         category: 'generated',
         campaign_id: campaignId ?? null,
         space_id: spaceId ?? null,
+        conversation_id: conversationId ?? null,
         tags: ['ai-generated'],
         source: 'generated',
-        source_surface: 'agent_generated_media',
+        source_surface: 'generated',
         source_model: model,
         source_prompt: prompt,
         public_url: publicUrl,
@@ -90,7 +92,7 @@ export class ArtifactLegacyMediaUploadService {
 
     if (dbErr) {
       target.logger.error(`[Media] DB insert failed: ${dbErr.message}`)
-      return { success: true, url: publicUrl }
+      return { success: false, error: `DB insert failed: ${dbErr.message}`, url: publicUrl }
     }
 
     return {
@@ -112,6 +114,7 @@ export class ArtifactLegacyMediaUploadService {
     model: string,
     orgId?: string | null,
     spaceId?: string | null,
+    conversationId?: string | null,
   ): Promise<{
     success: boolean
     url?: string
@@ -165,9 +168,10 @@ export class ArtifactLegacyMediaUploadService {
         category: 'generated',
         campaign_id: campaignId ?? null,
         space_id: spaceId ?? null,
+        conversation_id: conversationId ?? null,
         tags: ['ai-generated'],
         source: 'generated',
-        source_surface: 'agent_generated_media',
+        source_surface: 'generated',
         source_model: model,
         source_prompt: prompt,
         public_url: publicUrl,
@@ -177,7 +181,7 @@ export class ArtifactLegacyMediaUploadService {
 
     if (dbErr) {
       target.logger.error(`[Media] DB insert failed: ${dbErr.message}`)
-      return { success: true, url: publicUrl }
+      return { success: false, error: `DB insert failed: ${dbErr.message}`, url: publicUrl }
     }
 
     return {

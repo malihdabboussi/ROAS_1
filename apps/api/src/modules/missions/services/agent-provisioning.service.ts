@@ -252,8 +252,17 @@ export class AgentProvisioningService {
     const key = agentKey.toLowerCase()
     const roleText = role.toLowerCase()
     if (
-      ['copywriter', 'designer', 'media_producer', 'brand_manager'].includes(key) ||
-      /(copywriter|designer|creative|brand|media|marketing|social)/.test(roleText)
+      [
+        'copywriter',
+        'designer',
+        'media_producer',
+        'brand_manager',
+        'ads_manager',
+        'strategist',
+      ].includes(key) ||
+      /(copywriter|designer|creative|brand|media|marketing|social|strategist|ads.?manager)/.test(
+        roleText,
+      )
     ) {
       return 'marketing'
     }

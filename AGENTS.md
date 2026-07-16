@@ -150,7 +150,7 @@ Required:
 ## 9. Project conventions
 
 - **DB tables:** domain-scoped names matching the existing schema (`space_shares`, `funnel_blocks`, `agent_definitions`). Do **not** use a `project_` prefix.
-- **Page `<title>`:** append `| Vibey`. **All H1 headings:** UPPERCASE.
+- **Page `<title>`:** append `| ROAS`. **All H1 headings:** UPPERCASE.
 - **Never run builds automatically** — only on explicit request _(Claude Code: a hook gates build commands behind confirmation)_.
 - Don't rename files arbitrarily — keep original names.
 

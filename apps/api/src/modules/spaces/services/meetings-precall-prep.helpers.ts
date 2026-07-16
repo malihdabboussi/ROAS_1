@@ -107,11 +107,20 @@ export function mapPrepItemToAgendaLink(row: {
   space_id: string
   title?: string | null
   custom_data?: Record<string, unknown> | null
+  task_execution_status?: string | null
 }): AgendaPrepLink {
   const custom = row.custom_data ?? {}
   const raw = String(custom.prep_status ?? 'pending')
-  const status: AgendaPrepLink['status'] =
+  let status: AgendaPrepLink['status'] =
     raw === 'ready' || raw === 'failed' || raw === 'pending' ? raw : 'pending'
+  // Agent runs async after invoke accepts — reconcile stuck pending when execution already failed.
+  const exec = String(row.task_execution_status ?? '').toLowerCase()
+  if (status === 'pending' && (exec === 'failed' || exec === 'cancelled')) {
+    status = 'failed'
+  }
+  if (status === 'pending' && (exec === 'done' || exec === 'completed')) {
+    status = 'ready'
+  }
   return {
     status,
     space_item_id: row.id,

@@ -167,6 +167,219 @@ export class ArtifactBrainSearchActionsService {
     }
   }
 
+  /**
+   * Search ns_memories on the campaign-scoped brain for a campaign.
+   * Intentional product override of Phase 2 Campaign Brain removal: agency
+   * workflows ingest client packages into campaign brains and hireable agents
+   * must be able to read them (e.g. Strategist pre-call maps).
+   */
+  async searchCampaignBrain(
+    target: Record<string, any>,
+    input: Record<string, unknown>,
+    sessionKey?: string,
+  ) {
+    const query = String(input.query ?? '').trim()
+    if (query.length < 3) return { success: false, error: 'query is required (min 3 chars)' }
+
+    const userId = target.resolveUserId(sessionKey)
+    const orgId = target.resolveOrgId?.(sessionKey) ?? null
+    const limit = typeof input.limit === 'number' ? Math.min(Math.max(input.limit, 1), 50) : 10
+
+    const resolved = await this.resolveCampaignBrainId(target, input, userId, orgId, sessionKey)
+    if ('error' in resolved) return { success: false, error: resolved.error }
+    const { brainId, campaignId } = resolved
+
+    if (!target.brainRetrievalService || typeof target.getUserClient !== 'function') {
+      return { success: false, error: 'Brain retrieval service is unavailable' }
+    }
+
+    const userClient = await target.getUserClient(userId, sessionKey as string)
+    // Memory lane uses family 'user' regardless of ns_brains.scope; brainId pins the campaign brain.
+    const result = await target.brainRetrievalService.search({
+      supabase: target.serviceClient,
+      userClient,
+      family: 'user',
+      brainId,
+      query,
+      userId,
+      orgId,
+      requiredAccess: 'query',
+      limit,
+      ...this.temporalSearchInput(input),
+    })
+
+    return {
+      ...result,
+      success: result?.success !== false,
+      brain_id: brainId,
+      campaign_id: campaignId,
+      family: 'campaign',
+    }
+  }
+
+  private async resolveCampaignBrainId(
+    target: Record<string, any>,
+    input: Record<string, unknown>,
+    userId: string,
+    orgId: string | null,
+    sessionKey?: string,
+  ): Promise<{ brainId: string; campaignId: string } | { error: string }> {
+    const explicitBrainId = String(input.brain_id ?? '').trim()
+    let campaignId = String(input.campaign_id ?? '').trim()
+    const campaignName = String(input.campaign_name ?? input.campaignName ?? '').trim()
+
+    // Prefer explicit ids/names over session scope so General chats can still
+    // read a client campaign brain (search_campaign_brain is cross-scope).
+    if (!campaignId && campaignName && typeof target.resolveCampaignId === 'function') {
+      try {
+        const resolved = await target.resolveCampaignId(
+          target.serviceClient,
+          { ...input, campaign_name: campaignName },
+          userId,
+          sessionKey,
+        )
+        if (typeof resolved === 'string' && resolved.trim()) campaignId = resolved.trim()
+      } catch (err) {
+        return {
+          error: err instanceof Error ? err.message : `Failed to resolve campaign_name: ${campaignName}`,
+        }
+      }
+    }
+
+    if (!campaignId && typeof target.resolveCampaignId === 'function') {
+      try {
+        const resolved = await target.resolveCampaignId(
+          target.serviceClient,
+          input,
+          userId,
+          sessionKey,
+        )
+        if (typeof resolved === 'string' && resolved.trim()) campaignId = resolved.trim()
+      } catch {
+        // fall through
+      }
+    }
+
+    if (explicitBrainId) {
+      const { data: brain, error } = await target.serviceClient
+        .from('ns_brains')
+        .select('id, campaign_id, scope, owner_id, org_id')
+        .eq('id', explicitBrainId)
+        .maybeSingle()
+      if (error) return { error: `Failed to load brain: ${error.message}` }
+      if (!brain) return { error: `Brain not found: ${explicitBrainId}` }
+      const brainCampaignId =
+        typeof brain.campaign_id === 'string' && brain.campaign_id.trim()
+          ? brain.campaign_id.trim()
+          : ''
+      if (!brainCampaignId && brain.scope !== 'campaign') {
+        return {
+          error:
+            'brain_id must point at a campaign brain. Use search_agent_brain / search_user_brain / search_customer_brain for other families.',
+        }
+      }
+      const resolvedCampaignId = brainCampaignId || campaignId
+      if (!resolvedCampaignId) {
+        return { error: 'campaign_id is required when brain_id has no campaign_id link' }
+      }
+      const generalBlock = await this.rejectIfGeneralCampaign(
+        target,
+        userId,
+        orgId,
+        resolvedCampaignId,
+      )
+      if (generalBlock) return generalBlock
+      const access = await this.assertCampaignReadable(
+        target,
+        userId,
+        orgId,
+        resolvedCampaignId,
+      )
+      if (access) return access
+      return { brainId: brain.id as string, campaignId: resolvedCampaignId }
+    }
+
+    if (!campaignId) {
+      return {
+        error:
+          'campaign_id (or campaign_name) is required. Client package knowledge is not on General — pass the client campaign id/name or open that campaign chat.',
+      }
+    }
+
+    const generalBlock = await this.rejectIfGeneralCampaign(target, userId, orgId, campaignId)
+    if (generalBlock) return generalBlock
+
+    const access = await this.assertCampaignReadable(target, userId, orgId, campaignId)
+    if (access) return access
+
+    const { data: brain, error } = await target.serviceClient
+      .from('ns_brains')
+      .select('id')
+      .eq('campaign_id', campaignId)
+      .maybeSingle()
+    if (error) return { error: `Failed to resolve campaign brain: ${error.message}` }
+    if (!brain?.id) {
+      return {
+        error: `No campaign brain found for campaign_id ${campaignId}. Ingest or open Campaign Knowledge first.`,
+      }
+    }
+    return { brainId: brain.id as string, campaignId }
+  }
+
+  private async rejectIfGeneralCampaign(
+    target: Record<string, any>,
+    userId: string,
+    orgId: string | null,
+    campaignId: string,
+  ): Promise<{ error: string } | null> {
+    let query = target.serviceClient
+      .from('campaigns')
+      .select('id, name, config')
+      .eq('id', campaignId)
+    if (orgId) {
+      query = query.eq('org_id', orgId)
+    } else {
+      query = query.eq('user_id', userId)
+    }
+    const { data, error } = await query.maybeSingle()
+    if (error || !data) return null
+    const config =
+      data.config && typeof data.config === 'object' && !Array.isArray(data.config)
+        ? (data.config as Record<string, unknown>)
+        : {}
+    const name = String(data.name ?? '')
+      .trim()
+      .toLowerCase()
+    const isGeneral =
+      name === 'general' ||
+      config.system_kind === 'general' ||
+      config.is_general === true ||
+      config.isSystemGeneral === true
+    if (!isGeneral) return null
+    return {
+      error:
+        'search_campaign_brain cannot use the General campaign — client packages live on campaign brains (e.g. Impact). Pass campaign_id or campaign_name for the client campaign, or open that campaign chat. Do not use search_agent_brain / search_user_brain for client intake.',
+    }
+  }
+
+  private async assertCampaignReadable(
+    target: Record<string, any>,
+    userId: string,
+    orgId: string | null,
+    campaignId: string,
+  ): Promise<{ error: string } | null> {
+    let query = target.serviceClient.from('campaigns').select('id').eq('id', campaignId)
+    if (orgId) {
+      query = query.eq('org_id', orgId)
+    } else {
+      query = query.eq('user_id', userId)
+    }
+    const { data, error } = await query.maybeSingle()
+    if (error) return { error: `Failed to verify campaign access: ${error.message}` }
+    if (!data) return { error: `Campaign not found or not accessible: ${campaignId}` }
+    return null
+  }
+
   async searchSkEntries(
     target: Record<string, any>,
     input: Record<string, unknown>,

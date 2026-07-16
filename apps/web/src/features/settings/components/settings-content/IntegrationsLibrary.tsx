@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { IntegrationAccountsGroup } from './IntegrationAccountsGroup'
 import { IntegrationCard } from './IntegrationCard'
 import type { Integration, UserIntegration } from './integrations.types'
 import type { ConnectIntegrationOptions } from './useIntegrations'
@@ -27,6 +28,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   developer: 'Developer',
 }
 
+const ACTIVE_STATUSES = new Set(['connected', 'pending', 'needs_reconnect'])
+
 interface IntegrationsLibraryProps {
   availableIntegrations: Integration[]
   userIntegrations: UserIntegration[]
@@ -37,8 +40,24 @@ interface IntegrationsLibraryProps {
     apiKeyOrData?: string | Record<string, string>,
     options?: ConnectIntegrationOptions,
   ) => void
+  onRefresh: (userIntegration: UserIntegration) => void
   onDisconnect: (userIntegration: UserIntegration) => Promise<void> | void
+  onReconnect: (integration: Integration) => void
+  onRemove: (userIntegration: UserIntegration) => void
+  onSetDefault: (userIntegration: UserIntegration) => void
+  onChangeScope: (userIntegration: UserIntegration, newScope: 'personal' | 'org_shared') => void
+  onRename: (userIntegration: UserIntegration, connectionLabel: string) => Promise<void> | void
+  canManageOrgShared: boolean
   connectingProvider?: string | null
+}
+
+function sortConnectionRows(rows: UserIntegration[]): UserIntegration[] {
+  return [...rows].sort((a, b) => {
+    const aDefault = a.is_default ? 1 : 0
+    const bDefault = b.is_default ? 1 : 0
+    if (aDefault !== bDefault) return bDefault - aDefault
+    return String(b.connection_label ?? '').localeCompare(String(a.connection_label ?? ''))
+  })
 }
 
 export function IntegrationsLibrary({
@@ -47,30 +66,29 @@ export function IntegrationsLibrary({
   providerModes,
   metaEligible = false,
   onConnect,
+  onRefresh,
   onDisconnect,
+  onReconnect,
+  onRemove,
+  onSetDefault,
+  onChangeScope,
+  onRename,
+  canManageOrgShared,
   connectingProvider,
 }: IntegrationsLibraryProps) {
-  const [disconnectingProvider, setDisconnectingProvider] = useState<string | null>(null)
-
-  const getUserIntegration = (integrationId: string): UserIntegration | undefined => {
-    const rows = userIntegrations.filter((ui) => ui.integration_id === integrationId)
-    return (
-      rows.find((ui) => ui.status === 'connected') ??
-      rows.find((ui) => ui.status === 'needs_reconnect') ??
-      rows[0]
-    )
-  }
-
-  const handleDisconnect = async (integration: Integration) => {
-    const ui = getUserIntegration(integration.id)
-    if (!ui || ui.status !== 'connected') return
-    setDisconnectingProvider(integration.provider.toLowerCase())
-    try {
-      await onDisconnect(ui)
-    } finally {
-      setDisconnectingProvider(null)
+  const rowsByIntegrationId = useMemo(() => {
+    const map = new Map<string, UserIntegration[]>()
+    for (const row of userIntegrations) {
+      if (!ACTIVE_STATUSES.has(row.status)) continue
+      const bucket = map.get(row.integration_id) ?? []
+      bucket.push(row)
+      map.set(row.integration_id, bucket)
     }
-  }
+    for (const [key, rows] of map) {
+      map.set(key, sortConnectionRows(rows))
+    }
+    return map
+  }, [userIntegrations])
 
   const comingSoonProviders: string[] = ['twitter', 'tiktok']
   const isComingSoon = (provider: string): boolean => {
@@ -104,8 +122,28 @@ export function IntegrationsLibrary({
           </p>
           <div className="gap-spacing-3 flex flex-col" data-tour="integrations-grid">
             {integrations.map((integration) => {
-              const userIntegration = getUserIntegration(integration.id)
-              const connected = userIntegration?.status === 'connected'
+              const connectedRows = rowsByIntegrationId.get(integration.id) ?? []
+              if (connectedRows.length > 0) {
+                return (
+                  <IntegrationAccountsGroup
+                    key={integration.id}
+                    variant="library"
+                    integration={integration}
+                    rows={connectedRows}
+                    onRefresh={onRefresh}
+                    onDisconnect={onDisconnect}
+                    onReconnect={onReconnect}
+                    onRemove={onRemove}
+                    onSetDefault={onSetDefault}
+                    onChangeScope={onChangeScope}
+                    onRename={onRename}
+                    onAddAccount={(item) => onConnect(item, undefined, { forceNew: true })}
+                    canManageOrgShared={canManageOrgShared}
+                    connecting={connectingProvider === integration.provider.toLowerCase()}
+                  />
+                )
+              }
+
               const provider = integration.provider.toLowerCase()
               const isComposioMode =
                 provider !== 'slack' &&
@@ -117,14 +155,11 @@ export function IntegrationsLibrary({
                   key={integration.id}
                   variant="list"
                   integration={integration}
-                  isConnected={connected}
-                  connectionStatus={userIntegration?.status}
+                  isConnected={false}
                   comingSoon={isComingSoon(integration.provider)}
                   isComposioMode={isComposioMode}
                   onConnect={onConnect}
-                  onDisconnect={connected ? handleDisconnect : undefined}
                   connecting={connectingProvider === integration.provider.toLowerCase()}
-                  disconnecting={disconnectingProvider === integration.provider.toLowerCase()}
                 />
               )
             })}

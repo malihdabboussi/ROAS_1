@@ -177,6 +177,7 @@ export type DocEditorPanelInnerProps = {
   docVisualSourceHash: string | null
   docVisualDefaultMode: DocViewMode
   docVisualLastError: string | null
+  docVisualPresentationId: string | null
   hasCurrentDocBody: boolean
   currentDocBodyHash: string | null
 }
@@ -246,6 +247,33 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
     URL.revokeObjectURL(url)
   }, [p.docVisualHtml, p.item.title, p.title])
 
+  const openVisualFullMode = useCallback(() => {
+    const presentationId = p.docVisualPresentationId?.trim()
+    if (presentationId) {
+      p.requestClosePanel()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('vibey-open-artifact', {
+            detail: {
+              artifactType: 'presentation',
+              artifactId: presentationId,
+              spaceId: p.item.space_id,
+              name: p.title || p.item.title || 'Visual presentation',
+            },
+          }),
+        )
+      }
+      return
+    }
+    setVisualDocFullModeOpen(true)
+  }, [
+    p.docVisualPresentationId,
+    p.item.space_id,
+    p.item.title,
+    p.requestClosePanel,
+    p.title,
+  ])
+
   const getDocBodyForExport = useCallback(
     () => p.editor?.getHTML() ?? p.item.doc_body ?? '',
     [p.editor, p.item.doc_body],
@@ -297,13 +325,20 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
             >
               {!!p.docVisualHtml?.trim() ? (
                 <>
-                  <Tooltip label="Full mode" side="bottom">
+                  <Tooltip
+                    label={p.docVisualPresentationId ? 'Open Design' : 'Full mode'}
+                    side="bottom"
+                  >
                     <span className="inline-flex">
                       <button
                         type="button"
                         className={visualChromeIconBtnClass}
-                        onClick={() => setVisualDocFullModeOpen(true)}
-                        aria-label="Open visual doc full mode"
+                        onClick={openVisualFullMode}
+                        aria-label={
+                          p.docVisualPresentationId
+                            ? 'Open linked presentation Design mode'
+                            : 'Open visual doc full mode'
+                        }
                       >
                         <Maximize2 className="h-3.5 w-3.5 shrink-0" />
                       </button>
@@ -934,6 +969,7 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
         open={p.coverGenerateOpen}
         onClose={() => p.setCoverGenerateOpen(false)}
         campaignId={p.campaignId}
+        extraTags={['doc-cover']}
         onSelect={(url) => {
           p.setCoverUrl(url)
           p.setCoverGenerateOpen(false)

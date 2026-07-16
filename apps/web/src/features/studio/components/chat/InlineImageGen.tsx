@@ -2,6 +2,8 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { STUDIO_INLINE_ERRORS } from '@/features/studio/config/studio-inline-errors.config'
+import { openMediaAssetInApp } from '@/lib/media/open-media-asset-in-app'
+import { useResilientImageSrc } from '@/lib/media/use-resilient-image-src'
 import {
   generateImageStream,
   type GenerateImageParams,
@@ -275,17 +277,22 @@ export const InlineImageGen = memo(InlineImageGenComponent)
 // Image display for already-generated images (from message content)
 // ============================================================================
 
-type ImageLoadState = 'loading' | 'loaded' | 'error'
-
 interface GeneratedImageProps {
   url: string
   prompt?: string
   aspectRatio?: string
+  mediaAssetId?: string
+  spaceId?: string | null
 }
 
-function GeneratedImageComponent({ url, prompt, aspectRatio = '16:9' }: GeneratedImageProps) {
-  const [loadState, setLoadState] = useState<ImageLoadState>('loading')
-  const [retryCount, setRetryCount] = useState(0)
+function GeneratedImageComponent({
+  url,
+  prompt,
+  aspectRatio = '16:9',
+  mediaAssetId,
+  spaceId,
+}: GeneratedImageProps) {
+  const { loadState, imgSrc, onLoad, onError, retry } = useResilientImageSrc(url)
 
   const aspectMap: Record<string, string> = {
     '1:1': 'aspect-square',
@@ -296,13 +303,25 @@ function GeneratedImageComponent({ url, prompt, aspectRatio = '16:9' }: Generate
   }
   const aspectClass = aspectMap[aspectRatio] ?? 'aspect-video'
 
-  const handleRetry = useCallback(() => {
-    setLoadState('loading')
-    setRetryCount((c) => c + 1)
-  }, [])
-
-  // Append cache-buster on retry
-  const imgSrc = retryCount > 0 ? `${url}${url.includes('?') ? '&' : '?'}_r=${retryCount}` : url
+  const handleOpen = useCallback(() => {
+    void (async () => {
+      if (
+        mediaAssetId &&
+        openMediaAssetInApp({ mediaAssetId, title: prompt, spaceId: spaceId ?? undefined })
+      ) {
+        return
+      }
+      const { resolveMediaAssetIdByUrl } = await import('@/lib/services/media-api')
+      const resolvedId = await resolveMediaAssetIdByUrl(url)
+      if (
+        resolvedId &&
+        openMediaAssetInApp({ mediaAssetId: resolvedId, title: prompt, spaceId: spaceId ?? undefined })
+      ) {
+        return
+      }
+      window.open(url, '_blank', 'noopener,noreferrer')
+    })()
+  }, [mediaAssetId, prompt, spaceId, url])
 
   return (
     <div className="card-glass my-3 w-full max-w-[400px] overflow-hidden">
@@ -360,7 +379,7 @@ function GeneratedImageComponent({ url, prompt, aspectRatio = '16:9' }: Generate
             <p className="text-center text-xs text-red-400/80">Failed to load image</p>
             <button
               type="button"
-              onClick={handleRetry}
+              onClick={retry}
               className="card-glass-interactive rounded-lg px-3 py-1.5 text-xs text-white/70 transition-colors hover:text-white"
             >
               Retry
@@ -368,17 +387,18 @@ function GeneratedImageComponent({ url, prompt, aspectRatio = '16:9' }: Generate
           </div>
         )}
 
-        {/* Click-to-open wrapper */}
+        {/* Click → Space Media workspace when asset id is known */}
         {loadState !== 'error' && (
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={handleOpen}
             className="absolute inset-0 z-20 cursor-pointer"
-            title="Open full size"
+            title={mediaAssetId ? 'Open in media workspace' : 'Open full size'}
           >
-            <span className="sr-only">Open image in new tab</span>
-          </a>
+            <span className="sr-only">
+              {mediaAssetId ? 'Open image in media workspace' : 'Open image in new tab'}
+            </span>
+          </button>
         )}
 
         {/* The image */}
@@ -389,8 +409,8 @@ function GeneratedImageComponent({ url, prompt, aspectRatio = '16:9' }: Generate
             className={`h-full w-full object-cover transition-opacity duration-500 ${
               loadState === 'loaded' ? 'opacity-100' : 'opacity-0'
             }`}
-            onLoad={() => setLoadState('loaded')}
-            onError={() => setLoadState('error')}
+            onLoad={onLoad}
+            onError={onError}
           />
         )}
       </div>

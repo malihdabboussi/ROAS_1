@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Calendar, CheckSquare } from 'lucide-react'
+import { Calendar, CheckSquare, Maximize2 } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { TasksEmptyIllustration } from '@/features/home/components/HomeEmptyIllustrations'
 import {
@@ -12,6 +12,7 @@ import {
   formatHomeShortDate,
   HomeListCardShell,
 } from '@/features/home/components/HomeListCardShell'
+import { filterMyTaskItems } from '@/features/home/lib/group-my-tasks-by-due'
 import type { HomeFeedScopeState } from '@/features/home/types/home-feed-scope'
 import { formatInboxStatusLabel } from '@/features/inbox/lib/inbox-status-label'
 import { OptionDot } from '@/features/spaces/components/OptionBadge'
@@ -27,7 +28,7 @@ import type { FieldDef } from '@/features/spaces/types/space-schema'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { cn } from '@/lib/utils/cn'
 
-const TASK_KINDS = new Set<YourTurnItem['kind']>(['space_item', 'mission_subtask'])
+const CARD_PREVIEW_LIMIT = 15
 
 function isOverdue(dueAt: string | null, now: Date = new Date()): boolean {
   if (!dueAt) return false
@@ -111,14 +112,18 @@ export function MyTasksCard({
   loading,
   items,
   onOpen,
+  onExpand,
 }: {
   scope: HomeFeedScopeState
   updateScope: (patch: Partial<HomeFeedScopeState>) => void
   loading: boolean
   items: YourTurnItem[]
   onOpen: (item: YourTurnItem) => void | Promise<void>
+  onExpand: () => void
 }) {
-  const taskItems = items.filter((item) => TASK_KINDS.has(item.kind))
+  const taskItems = filterMyTaskItems(items)
+  const previewItems = taskItems.slice(0, CARD_PREVIEW_LIMIT)
+  const hiddenCount = Math.max(0, taskItems.length - previewItems.length)
   const spaceIds = useMemo(
     () => taskItems.map((item) => item.space_id).filter((id): id is string => id != null),
     [taskItems],
@@ -129,10 +134,27 @@ export function MyTasksCard({
     <HomeListCardShell
       icon={CheckSquare}
       title="My tasks"
+      titleSuffix={
+        taskItems.length > 0 ? (
+          <span className="tabular-nums">{taskItems.length}</span>
+        ) : null
+      }
       headerRight={
-        <HomeFeedScopeHoverReveal>
-          <HomeFeedScopePicker variant="my_tasks" scope={scope} onChange={updateScope} />
-        </HomeFeedScopeHoverReveal>
+        <div className="flex shrink-0 items-center gap-1">
+          <Tooltip label="Expand" side="top">
+            <button
+              type="button"
+              onClick={onExpand}
+              className="btn-icon-bare text-muted-foreground hover:text-foreground"
+              aria-label="Expand my tasks"
+            >
+              <Maximize2 className="icon-xs" />
+            </button>
+          </Tooltip>
+          <HomeFeedScopeHoverReveal>
+            <HomeFeedScopePicker variant="my_tasks" scope={scope} onChange={updateScope} />
+          </HomeFeedScopeHoverReveal>
+        </div>
       }
       loading={loading}
       emptyMessage={
@@ -141,12 +163,28 @@ export function MyTasksCard({
           <p className="body-3 text-muted-foreground max-w-[240px] text-center">
             No tasks assigned to you right now.
           </p>
+          <button
+            type="button"
+            onClick={onExpand}
+            className="button-glass-secondary rounded-spacing-2 px-spacing-3 py-spacing-2 body-3 font-medium"
+          >
+            Open my tasks
+          </button>
         </div>
       }
       hasRows={taskItems.length > 0}
+      footer={
+        <button
+          type="button"
+          onClick={onExpand}
+          className="body-3 text-muted-foreground hover:text-foreground hover:bg-hover-subtle flex w-full items-center justify-center rounded-md px-2 py-1.5 font-medium transition-colors"
+        >
+          {hiddenCount > 0 ? `View all ${taskItems.length} tasks` : 'Open full list'}
+        </button>
+      }
     >
       <ul className="space-y-0.5">
-        {taskItems.slice(0, 15).map((item) => {
+        {previewItems.map((item) => {
           const dueForDisplay = item.due_at ? formatHomeShortDate(new Date(item.due_at)) : null
           const overdue = isOverdue(item.due_at)
           const statusField =
@@ -160,7 +198,15 @@ export function MyTasksCard({
                 className="hover:bg-hover-subtle body-3 text-foreground flex w-full min-w-0 items-center gap-2.5 rounded-md px-2.5 py-2 text-left font-medium transition-colors"
               >
                 <MyTaskStatusDot item={item} statusField={statusField} />
-                <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                <Tooltip
+                  label={item.title}
+                  side="top"
+                  wide
+                  delayMs={300}
+                  triggerClassName="min-w-0 flex-1"
+                >
+                  <span className="block min-w-0 truncate">{item.title}</span>
+                </Tooltip>
                 <span
                   className={cn(
                     'typo-caption flex shrink-0 items-center gap-1 tabular-nums',

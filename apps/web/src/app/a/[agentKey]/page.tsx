@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const headerStore = await headers()
   const name = headerStore.get('x-vibey-agent-name')
   const role = headerStore.get('x-vibey-agent-role')
-  if (!name) return { title: 'Agent | Vibey' }
-  return { title: `${name} — ${role || agentKey} | Vibey` }
+  if (!name) return { title: 'Agent | ROAS' }
+  return { title: `${name} — ${role || agentKey} | ROAS` }
 }
 
 export default async function PublicAgentPage({
@@ -74,7 +74,7 @@ export default async function PublicAgentPage({
       greeting: query.greeting ?? null,
       accentColor: query.accent || '#7C3AED',
       imageUrl: query.avatar ?? agentImage,
-      poweredByTagline: query.tagline || 'Powered by Vibey — Build your own AI workforce',
+      poweredByTagline: query.tagline || 'Powered by ROAS — Build your own AI workforce',
     }
     return (
       <EmbeddedAgentContainer

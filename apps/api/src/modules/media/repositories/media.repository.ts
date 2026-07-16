@@ -48,6 +48,65 @@ export class MediaRepository {
     return data as MediaAssetRow
   }
 
+  async setAssetConversationId(assetId: string, conversationId: string): Promise<void> {
+    await this.supabase
+      .from('media_assets')
+      .update({ conversation_id: conversationId })
+      .eq('id', assetId)
+      .is('conversation_id', null)
+  }
+
+  /**
+   * Prefer media_assets.conversation_id; fall back to the earliest message that
+   * references this asset id (content_blocks, metadata, or content).
+   */
+  async findOriginConversationId(assetId: string): Promise<string | null> {
+    const asset = await this.findAssetById(assetId)
+    if (!asset) return null
+    if (typeof asset.conversation_id === 'string' && asset.conversation_id.trim()) {
+      return asset.conversation_id
+    }
+
+    const { data, error } = await this.supabase.rpc('find_media_asset_origin_conversation', {
+      p_asset_id: assetId,
+    })
+
+    if (error) return null
+    const conversationId = typeof data === 'string' ? data : null
+    if (!conversationId?.trim()) return null
+
+    await this.setAssetConversationId(assetId, conversationId)
+    return conversationId
+  }
+
+  /** Resolve a media asset id from a signed/public storage URL (chat markdown images). */
+  async findAssetIdByUrl(url: string): Promise<string | null> {
+    const trimmed = url.trim()
+    if (!trimmed) return null
+
+    const filePath = extractMediaStoragePath(trimmed)
+    if (filePath) {
+      const { data, error } = await this.supabase
+        .from('media_assets')
+        .select('id')
+        .eq('file_path', filePath)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (!error && data?.id) return String(data.id)
+    }
+
+    const { data, error } = await this.supabase
+      .from('media_assets')
+      .select('id')
+      .ilike('public_url', `${trimmed.split('?')[0]}%`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error || !data?.id) return null
+    return String(data.id)
+  }
+
   async listAssets(
     query: QueryAssetsInput,
     input: {
@@ -262,4 +321,21 @@ export class MediaRepository {
   async insertAssetChunks(rows: Array<Record<string, unknown>>) {
     return this.supabase.from('media_asset_chunks').insert(rows)
   }
+}
+
+function extractMediaStoragePath(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    const markers = ['/object/sign/media/', '/object/public/media/', '/object/authenticated/media/']
+    for (const marker of markers) {
+      const idx = parsed.pathname.indexOf(marker)
+      if (idx >= 0) {
+        const path = decodeURIComponent(parsed.pathname.slice(idx + marker.length))
+        return path.split('?')[0] || null
+      }
+    }
+  } catch {
+    return null
+  }
+  return null
 }

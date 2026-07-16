@@ -39,6 +39,63 @@ function serviceWithAccounts(accounts: Array<Record<string, unknown>>) {
 }
 
 describe('IntegrationsComposioService.listComposioAccounts', () => {
+  it('skips reuse when force_new is set so Add another account can open OAuth', async () => {
+    const composio = {
+      initiateConnectedAccount: vi.fn(async () => ({
+        id: 'ca_new',
+        redirectUrl: 'https://connect.composio.dev/link/new',
+        status: 'INITIATED',
+      })),
+    }
+    const core = {
+      resolveScopeMode: vi.fn(() => 'personal'),
+      resolveIntegrationConfig: vi.fn(async () => ({
+        integration_id: 'google_calendar',
+        toolkit_slug: 'googlecalendar',
+        auth_config_id: 'auth-cal',
+        enabled: true,
+        metadata: {},
+      })),
+      resolveReusableComposioConnection: vi.fn(async () => ({
+        connectionId: 'ca_existing',
+        userIntegrationId: 'ui_1',
+        status: 'connected' as const,
+        connectionScope: 'personal' as const,
+      })),
+      isOrgAdminOrOwner: vi.fn(() => false),
+      insertPersonalScopedIntegration: vi.fn(async () => ({ id: 'ui_2', error: null })),
+    }
+    const service = new IntegrationsComposioService(
+      {} as never,
+      composio as never,
+      { isOrgContext: vi.fn(() => false) } as never,
+      core as never,
+      {} as never,
+      {} as never,
+    )
+
+    const result = await service.connectWithComposio(
+      {} as never,
+      { id: 'user_1' },
+      { userId: 'user_1', orgId: null, orgRole: null },
+      { integration_id: 'google_calendar', force_new: true },
+    )
+
+    expect(core.resolveReusableComposioConnection).not.toHaveBeenCalled()
+    expect(composio.initiateConnectedAccount).toHaveBeenCalledWith(
+      'user_1',
+      'auth-cal',
+      expect.objectContaining({ allowMultiple: true, alias: expect.stringMatching(/^google_calendar-/) }),
+    )
+    expect(result).toMatchObject({
+      success: true,
+      connection_id: 'ca_new',
+      user_integration_id: 'ui_2',
+      redirect_url: 'https://connect.composio.dev/link/new',
+    })
+    expect(result.reused).toBeUndefined()
+  })
+
   it('reuses an already active Composio connection instead of creating a new link', async () => {
     const reusable = {
       connectionId: 'ca_existing',

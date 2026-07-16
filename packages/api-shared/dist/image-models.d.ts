@@ -9,7 +9,7 @@ export interface ImageModelDefinition {
     defaultAspectRatios: readonly ('1:1' | '9:16' | '4:5' | '16:9')[];
 }
 export declare const IMAGE_MODELS: readonly ImageModelDefinition[];
-export declare const DEFAULT_IMAGE_MODEL_ID = "gemini-3.1-flash-image-preview";
+export declare const DEFAULT_IMAGE_MODEL_ID = "gpt-5.4-image-2";
 export declare const IMAGE_MODEL_BY_ID: Record<string, ImageModelDefinition>;
 export declare function getImageModel(id: string): ImageModelDefinition | undefined;
 export declare function isValidImageModel(id: string): boolean;

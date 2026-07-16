@@ -1,6 +1,7 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react'
 import type { AgentChannel, AgentStats, FireEmployeeHandoffInput, MissionAgent } from '@/lib/agents'
 import type { ModelStrategyId } from '@/lib/agents/model-strategies'
+import type { Mission } from '@/lib/missions'
 
 export interface Team2ManageData {
   agents: MissionAgent[]
@@ -80,6 +81,7 @@ export interface Team2ManageData {
   setFireHandoff: (value: FireEmployeeHandoffInput | null) => void
   loadAgents: (selectAgentKey?: string) => Promise<void>
   loadChannels: () => Promise<void>
+  missions: Mission[]
 }
 
 export interface Team2ManageDerived {

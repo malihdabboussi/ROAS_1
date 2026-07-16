@@ -108,6 +108,7 @@ export function SpaceVoiceSessionView({
             : 'listening'
 
   const active = state === 'listening' || state === 'speaking' || state === 'toolCall'
+  const showTranscript = active || state === 'connecting'
   const statusLabel = voiceStatusLabel(state)
 
   return (
@@ -144,7 +145,7 @@ export function SpaceVoiceSessionView({
         </div>
       </div>
 
-      {active ? (
+      {showTranscript ? (
         <SpaceVoiceLiveTranscript
           agentName={agentName}
           conversationId={conversationId}

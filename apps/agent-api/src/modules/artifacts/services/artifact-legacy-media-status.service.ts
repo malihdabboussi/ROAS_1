@@ -163,6 +163,7 @@ export class ArtifactLegacyMediaStatusService {
         (job.model as string) ?? '',
         statusOrgIdForUpload,
         spaceIdFromCtx,
+        conversationIdForSpace,
       )
 
       if (!upload.success) {
@@ -327,6 +328,7 @@ export class ArtifactLegacyMediaStatusService {
           (job.model as string) ?? '',
           googleOrgIdForUpload,
           spaceIdFromCtx,
+          conversationIdForSpace,
         )
       } else if (uri) {
         upload = await this.uploadService.uploadMediaFromUrl(
@@ -339,6 +341,7 @@ export class ArtifactLegacyMediaStatusService {
           (job.model as string) ?? '',
           googleOrgIdForUpload,
           spaceIdFromCtx,
+          conversationIdForSpace,
         )
       } else {
         upload = { success: false, error: 'No output from Google video generation' }

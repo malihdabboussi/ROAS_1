@@ -24,7 +24,7 @@ export class ArtifactLegacyMediaProviderService {
     'seedance-2': { replicateId: 'bytedance/seedance-2.0', hasGoogleFallback: false },
   }
 
-  readonly DEFAULT_IMAGE_MODEL = 'google/gemini-3.1-flash-image'
+  readonly DEFAULT_IMAGE_MODEL = 'openai/gpt-5.4-image-2'
   readonly GOOGLE_IMAGE_MODEL_ID = 'gemini-3.1-flash-image-preview'
   readonly GOOGLE_VIDEO_MODEL_ID = 'veo-3.1-fast-generate-preview'
   readonly OPENROUTER_GEMINI_IMAGE_MODEL = 'google/gemini-3.1-flash-image'

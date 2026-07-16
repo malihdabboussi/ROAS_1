@@ -41,6 +41,7 @@ describe('SpaceAutomationService Fathom source routing', () => {
       }),
       updateSpace: vi.fn().mockResolvedValue({}),
       findItemById: vi.fn().mockResolvedValue(createdItem),
+      findItemByFathomMeetingId: vi.fn().mockResolvedValue(null),
       findSubtasksByParentId: vi.fn().mockResolvedValue([]),
       findActivityByItemId: vi.fn().mockResolvedValue([]),
     }
@@ -156,6 +157,7 @@ describe('SpaceAutomationService Fathom source routing', () => {
       }),
       updateSpace: vi.fn().mockResolvedValue({}),
       findItemById: vi.fn().mockResolvedValue(createdItem),
+      findItemByFathomMeetingId: vi.fn().mockResolvedValue(null),
       findSubtasksByParentId: vi.fn().mockResolvedValue([]),
       findActivityByItemId: vi.fn().mockResolvedValue([]),
     }

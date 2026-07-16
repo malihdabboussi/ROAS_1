@@ -54,6 +54,14 @@ export function GlobalChatPanel() {
                 }
               : undefined
           }
+          teamOpsContext={
+            workContext.surface === 'team' && workContext.teamOpsAwarenessContext
+              ? {
+                  label: workContext.teamOpsLabel ?? 'Ops Desk',
+                  awarenessContext: workContext.teamOpsAwarenessContext,
+                }
+              : undefined
+          }
           channelContext={
             isChannelRoute && channelId
               ? {

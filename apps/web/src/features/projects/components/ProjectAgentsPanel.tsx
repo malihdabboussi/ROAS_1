@@ -43,7 +43,7 @@ export function ProjectAgentsPanel({ cachedFiles, onIntegrate }: ProjectAgentsPa
   const handleEnable = useCallback(() => {
     setSdkRequested(true)
     onIntegrate(
-      'Enable Vibey Agents in this project. Please start by showing the integration confirmation card.',
+      'Enable ROAS Agents in this project. Please start by showing the integration confirmation card.',
     )
   }, [onIntegrate])
 
@@ -82,7 +82,7 @@ function SdkPromoCard({ onEnable }: { onEnable: () => void }) {
               className="flex items-center gap-2"
               style={{ fontFamily: 'var(--font-site-headline)', letterSpacing: '1px' }}
             >
-              <span className="text-3xl font-black uppercase leading-tight text-white">Vibey</span>
+              <span className="text-3xl font-black uppercase leading-tight text-white">ROAS</span>
               <span className="agents-gradient-text text-3xl font-black uppercase leading-tight">
                 Agents
               </span>
@@ -108,7 +108,7 @@ function SdkPromoCard({ onEnable }: { onEnable: () => void }) {
             <FeatureRow
               icon={<MessageSquare className="h-4 w-4 text-emerald-400" />}
               title="Included in your plan"
-              description="Uses your existing Vibey credits. No extra cost."
+              description="Uses your existing ROAS credits. No extra cost."
             />
           </div>
 
@@ -215,7 +215,7 @@ function SdkEnabledView({ onIntegrate }: { onIntegrate: (message: string) => voi
               letterSpacing: '2px',
             }}
           >
-            <span className="uppercase text-white">Vibey</span>
+            <span className="uppercase text-white">ROAS</span>
             <span className="agents-gradient-text uppercase">Agents</span>
           </h2>
         </div>

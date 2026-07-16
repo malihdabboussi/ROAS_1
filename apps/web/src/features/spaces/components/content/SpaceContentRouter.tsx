@@ -7,7 +7,6 @@ import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { useAccountContextGate } from '@/features/org/store/use-org-store'
 import type { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
-import type { MediaAsset } from '@/lib/services/media-api'
 import { useSpacePermission } from '../../hooks/use-space-permission'
 import type { CrmSort } from '../../services/contacts-view.service'
 import { useSpacesStore } from '../../store/use-spaces-store'
@@ -201,8 +200,6 @@ export type SpaceContentRouterProps = {
   hasDriveDocs: boolean
   artifactPreviewSelection: ArtifactPreviewSelection | null
   setArtifactPreviewSelection: (next: ArtifactPreviewSelection | null) => void
-  mediaPreviewAsset: MediaAsset | null
-  setMediaPreviewAsset: (next: MediaAsset | null) => void
   contactsSearch: string
   contactsScope: 'campaign' | 'all'
   contactsStatusFilter: 'all' | 'lead' | 'customer'
@@ -281,8 +278,6 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
     hasDriveDocs,
     artifactPreviewSelection,
     setArtifactPreviewSelection,
-    mediaPreviewAsset,
-    setMediaPreviewAsset,
     contactsSearch,
     contactsScope,
     contactsStatusFilter,
@@ -356,8 +351,6 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
           spaceId={activeSpace.id}
           campaignId={activeSpace.campaign_id ?? null}
           view={activeView}
-          previewSelection={mediaPreviewAsset}
-          onPreviewSelectionChange={setMediaPreviewAsset}
           onMediaDeepMetaChange={setMediaDeepDetail}
         />
       ) : isContactsView ? (
@@ -449,6 +442,7 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
             ref={missionsViewRef}
             campaignId={activeSpace.campaign_id}
             campaignName={campaignName ?? activeSpace.campaign_id}
+            spaceId={activeSpace.id}
             activeView={activeView!}
             onViewPatch={handleViewPatch}
             currentUserId={currentUserId}

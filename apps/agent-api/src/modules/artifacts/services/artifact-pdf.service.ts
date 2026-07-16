@@ -4,7 +4,7 @@ import { buildStorageAssetRef, type StorageAssetRef } from '@vibey/api-shared'
 import type { ArtifactActionHandler } from './artifact-action.registry'
 import { ArtifactDocumentFilesRepository } from '../repositories/artifact-document-files.repository'
 import { ArtifactPdfRenderService } from './artifact-pdf-render.service'
-import { createSpaceDocItem, getActiveSpaceId } from './artifact-space-scope'
+import { createSpaceDocItem, resolveDocumentSpaceId } from './artifact-space-scope'
 import { ensureSpaceView } from './ensure-space-view'
 
 @Injectable()
@@ -167,7 +167,7 @@ export class ArtifactPdfService {
     )
     if (error) throw error
 
-    const spaceId = getActiveSpaceId(input)
+    const spaceId = await resolveDocumentSpaceId(supabase, input, campaignId)
     let spaceItemId: string | null = null
     if (spaceId) {
       const orgId =

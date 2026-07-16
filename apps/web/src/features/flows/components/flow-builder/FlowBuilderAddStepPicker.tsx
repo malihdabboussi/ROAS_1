@@ -373,7 +373,7 @@ function HomePanel({
               <BuiltInRow key={row.id} row={row} onClick={() => onSelectBuiltIn(row.id)} />
             ))}
           </PickerColumn>
-          <PickerColumn title="Vibey tools">
+          <PickerColumn title="ROAS tools">
             {products.filter((row) => row.id !== 'agent').map((row) => (
               <BuiltInRow key={row.id} row={row} onClick={() => onSelectBuiltIn(row.id)} />
             ))}

@@ -3,78 +3,65 @@ export type IntegrationIdentityToolEntry = {
   extract: (data: Record<string, unknown>) => string | null
 }
 
+function extractGmailProfileEmail(d: Record<string, unknown>): string | null {
+  const rd = d.response_data as Record<string, unknown> | undefined
+  return (rd?.emailAddress as string | undefined) ?? (d.emailAddress as string | undefined) ?? null
+}
+
+/** Calendar OAuth scopes do not include Gmail profile — use list calendars instead. */
+export function extractGoogleCalendarAccountEmail(d: Record<string, unknown>): string | null {
+  const owner =
+    (typeof d.dataOwner === 'string' && d.dataOwner) ||
+    (typeof d.data_owner === 'string' && d.data_owner) ||
+    null
+  if (owner?.includes('@')) return owner.trim()
+
+  const items = (Array.isArray(d.items) ? d.items : Array.isArray(d.calendars) ? d.calendars : []) as Array<
+    Record<string, unknown>
+  >
+  const primary = items.find((item) => item?.primary === true)
+  const primaryId = typeof primary?.id === 'string' ? primary.id.trim() : ''
+  if (primaryId.includes('@')) return primaryId
+
+  for (const item of items) {
+    const id = typeof item?.id === 'string' ? item.id.trim() : ''
+    if (id.includes('@')) return id
+  }
+  return null
+}
+
 export const CONNECTION_IDENTITY_TOOL_MAP: Record<string, IntegrationIdentityToolEntry> = {
   gmail: {
     tool: 'GMAIL_GET_PROFILE',
-    extract: (d) => {
-      const rd = d.response_data as Record<string, unknown> | undefined
-      return (
-        (rd?.emailAddress as string | undefined) ?? (d.emailAddress as string | undefined) ?? null
-      )
-    },
+    extract: extractGmailProfileEmail,
   },
   google_calendar: {
-    tool: 'GMAIL_GET_PROFILE',
-    extract: (d) => {
-      const rd = d.response_data as Record<string, unknown> | undefined
-      return (
-        (rd?.emailAddress as string | undefined) ?? (d.emailAddress as string | undefined) ?? null
-      )
-    },
+    tool: 'GOOGLECALENDAR_LIST_CALENDARS',
+    extract: extractGoogleCalendarAccountEmail,
   },
   google_drive: {
     tool: 'GMAIL_GET_PROFILE',
-    extract: (d) => {
-      const rd = d.response_data as Record<string, unknown> | undefined
-      return (
-        (rd?.emailAddress as string | undefined) ?? (d.emailAddress as string | undefined) ?? null
-      )
-    },
+    extract: extractGmailProfileEmail,
   },
   google_sheets: {
     tool: 'GMAIL_GET_PROFILE',
-    extract: (d) => {
-      const rd = d.response_data as Record<string, unknown> | undefined
-      return (
-        (rd?.emailAddress as string | undefined) ?? (d.emailAddress as string | undefined) ?? null
-      )
-    },
+    extract: extractGmailProfileEmail,
   },
   google_docs: {
     tool: 'GMAIL_GET_PROFILE',
-    extract: (d) => {
-      const rd = d.response_data as Record<string, unknown> | undefined
-      return (
-        (rd?.emailAddress as string | undefined) ?? (d.emailAddress as string | undefined) ?? null
-      )
-    },
+    extract: extractGmailProfileEmail,
   },
   google_ads: {
     tool: 'GMAIL_GET_PROFILE',
-    extract: (d) => {
-      const rd = d.response_data as Record<string, unknown> | undefined
-      return (
-        (rd?.emailAddress as string | undefined) ?? (d.emailAddress as string | undefined) ?? null
-      )
-    },
+    extract: extractGmailProfileEmail,
   },
   google_analytics: {
     tool: 'GMAIL_GET_PROFILE',
-    extract: (d) => {
-      const rd = d.response_data as Record<string, unknown> | undefined
-      return (
-        (rd?.emailAddress as string | undefined) ?? (d.emailAddress as string | undefined) ?? null
-      )
-    },
+    extract: extractGmailProfileEmail,
   },
   google_search_console: {
     tool: 'GMAIL_GET_PROFILE',
-    extract: (d) => {
-      const rd = d.response_data as Record<string, unknown> | undefined
-      return (
-        (rd?.emailAddress as string | undefined) ?? (d.emailAddress as string | undefined) ?? null
-      )
-    },
+    extract: extractGmailProfileEmail,
   },
   linkedin: {
     tool: 'LINKEDIN_GET_MY_INFO',

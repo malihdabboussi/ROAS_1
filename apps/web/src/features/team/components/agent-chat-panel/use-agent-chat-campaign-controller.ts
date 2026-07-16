@@ -15,6 +15,8 @@ import { createClient } from '@/lib/supabase/client'
 import {
   buildMobileCampaignSwitcherOptions,
   findLatestSessionForCampaign,
+  isGeneralCampaignId,
+  resolveDefaultNewConversationCampaignId,
   writeCampaignScope,
   type MobileCampaignSwitcherOption,
 } from './agent-chat-panel.logic'
@@ -29,6 +31,7 @@ interface UseAgentChatCampaignControllerInput {
   selectedSession: Conversation | null
   activeCampaignId: string | null
   generalCampaignId?: string
+  assignedCampaigns?: Campaign[]
   nonGeneralCampaigns: Campaign[]
   sessions: Conversation[]
   isMobile: boolean
@@ -66,6 +69,7 @@ export function useAgentChatCampaignController({
   selectedSession,
   activeCampaignId,
   generalCampaignId,
+  assignedCampaigns = [],
   nonGeneralCampaigns,
   sessions,
   isMobile,
@@ -93,16 +97,68 @@ export function useAgentChatCampaignController({
   const [campaignConfigVersion, setCampaignConfigVersion] = useState(0)
 
   useEffect(() => {
+    const preferred = resolveDefaultNewConversationCampaignId({
+      assignedCampaigns,
+      cachedCampaignId: newConversationCampaignScopeRef.current,
+      generalCampaignId,
+    })
+    if (!preferred) return
+    if (
+      !newConversationCampaignScopeRef.current ||
+      isGeneralCampaignId(newConversationCampaignScopeRef.current, generalCampaignId)
+    ) {
+      newConversationCampaignScopeRef.current = preferred
+      if (!isGeneralCampaignId(preferred, generalCampaignId)) {
+        writeCampaignScope(agentKey, preferred)
+      }
+    }
+  }, [agentKey, assignedCampaigns, generalCampaignId, newConversationCampaignScopeRef])
+
+  useEffect(() => {
     if (!selectedSession) return
     const cid = selectedSession.campaign_id
     if (typeof cid === 'string' && cid.trim().length > 0) {
+      // Viewing General must not sticky the next "+ new chat" onto General when
+      // the agent is assigned to real campaigns (client brain reads need that scope).
+      if (isGeneralCampaignId(cid, generalCampaignId) && assignedCampaigns.length > 0) {
+        const preferred = resolveDefaultNewConversationCampaignId({
+          assignedCampaigns,
+          cachedCampaignId: null,
+          generalCampaignId,
+        })
+        if (preferred) {
+          newConversationCampaignScopeRef.current = preferred
+          writeCampaignScope(agentKey, preferred)
+        }
+        return
+      }
       newConversationCampaignScopeRef.current = cid
       writeCampaignScope(agentKey, cid)
-    } else if (generalCampaignId) {
+      return
+    }
+    if (assignedCampaigns.length > 0) {
+      const preferred = resolveDefaultNewConversationCampaignId({
+        assignedCampaigns,
+        cachedCampaignId: null,
+        generalCampaignId,
+      })
+      if (preferred) {
+        newConversationCampaignScopeRef.current = preferred
+        writeCampaignScope(agentKey, preferred)
+      }
+      return
+    }
+    if (generalCampaignId) {
       newConversationCampaignScopeRef.current = generalCampaignId
       writeCampaignScope(agentKey, generalCampaignId)
     }
-  }, [selectedSession, generalCampaignId, agentKey, newConversationCampaignScopeRef])
+  }, [
+    selectedSession,
+    generalCampaignId,
+    assignedCampaigns,
+    agentKey,
+    newConversationCampaignScopeRef,
+  ])
 
   useEffect(() => {
     if (!activeCampaignId) {

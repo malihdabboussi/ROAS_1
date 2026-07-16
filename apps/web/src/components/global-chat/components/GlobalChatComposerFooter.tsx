@@ -27,7 +27,9 @@ export function GlobalChatComposerFooter() {
   const triggerLabel =
     workContext.surface === 'spaces' && workContext.spaceId
       ? selectedSpaceTitle
-      : WORK_SURFACE_LABELS[workContext.surface]
+      : workContext.surface === 'team' && workContext.teamOpsLabel
+        ? workContext.teamOpsLabel
+        : WORK_SURFACE_LABELS[workContext.surface]
 
   const portalTarget = typeof document === 'undefined' ? null : document.body
 

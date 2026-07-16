@@ -95,7 +95,7 @@ export class ArtifactBrainScholarRepository {
   ): Promise<QueryListResult<Record<string, unknown>>> {
     return (await serviceClient
       .from('ns_brains')
-      .select('id, name, is_default, agent_id')
+      .select('id, name, is_default, agent_id, scope, campaign_id')
       .eq('owner_id', userId)
       .order('created_at', { ascending: true })) as QueryListResult<Record<string, unknown>>
   }

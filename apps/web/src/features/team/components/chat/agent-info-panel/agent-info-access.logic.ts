@@ -13,12 +13,12 @@ export function isLockedSystemAccessKind(kind: AgentCapabilityKind): boolean {
 
 export function protectedAgentDescription(agentKey: string): string {
   if (agentKey === 'vibey')
-    return 'Vibey keeps Spaces, delegation, and artifact coordination working.'
+    return 'ROAS keeps Spaces, delegation, and artifact coordination working.'
   if (agentKey === 'atlas' || agentKey === 'brain_scholar') {
     return 'Atlas keeps brain, knowledge, ingestion, and model operations working.'
   }
   if (agentKey === 'hr') return 'HR keeps agent identity, hiring, and team operations working.'
-  return 'This platform agent has protected access managed by Vibey.'
+  return 'This platform agent has protected access managed by ROAS.'
 }
 
 export function applyOverrideChange(

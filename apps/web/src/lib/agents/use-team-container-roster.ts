@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState, type MutableRefObject, type SetStateAction } from 'react'
 import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
-import { createClient } from '@/lib/supabase/client'
 import type { Mission } from '@/lib/missions'
 import { fetchMissions } from '@/lib/missions'
 import {
@@ -12,6 +11,7 @@ import {
   type MissionAgent,
 } from './mission-agents-api'
 import { cachedAgents } from './use-mission-agents'
+import { useTeamRosterRealtime } from './use-team-roster-realtime'
 
 export type TeamContainerSearchParams = Pick<URLSearchParams, 'get' | 'toString'>
 
@@ -184,37 +184,12 @@ export function useTeamContainerRoster({
     void loadAgents(initialAgentKeyRef.current ?? undefined)
   }, [loadAgents])
 
-  useEffect(() => {
-    const supabase = createClient()
-    let mounted = true
-    let channel: ReturnType<typeof supabase.channel> | null = null
-    const subscribe = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!mounted || !user) return
-      channel = supabase
-        .channel(`team-agents-${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'agents_registry',
-            filter: activeOrgId ? `org_id=eq.${activeOrgId}` : `user_id=eq.${user.id}`,
-          },
-          () => {
-            if (mounted) void loadAgents()
-          },
-        )
-        .subscribe()
-    }
-    void subscribe()
-    return () => {
-      mounted = false
-      if (channel) supabase.removeChannel(channel)
-    }
-  }, [activeOrgId, loadAgents])
+  useTeamRosterRealtime({
+    activeOrgId,
+    setAgents,
+    setMissions,
+    loadAgents: () => loadAgents(),
+  })
 
   useEffect(() => {
     if (!selectedAgentKeyFromUrl) return

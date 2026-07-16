@@ -19,7 +19,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   private isDirectDbTransportError(error: unknown): boolean {
     const message = String((error as Error)?.message || '')
-    return /self-signed certificate|password authentication failed|ECONNREFUSED|connection timeout|Connection terminated/i.test(
+    // ENETUNREACH/EHOSTUNREACH: IPv6-only Supabase direct hosts fail on Railway
+    // (no IPv6 egress). Disable the pool so callers fall back to Supabase HTTP.
+    return /self-signed certificate|password authentication failed|ECONNREFUSED|ENETUNREACH|EHOSTUNREACH|ENOTFOUND|connection timeout|Connection terminated/i.test(
       message,
     )
   }
