@@ -321,11 +321,30 @@ export class MissionInternalRepository {
     subtaskId: string,
     updatedAt: string,
   ): Promise<void> {
+    const { data: existing, error: readError } = await supabase
+      .from('mission_subtasks')
+      .select('execution_state')
+      .eq('id', subtaskId)
+      .maybeSingle()
+    if (readError) throw new Error(readError.message)
+
+    const prev =
+      existing?.execution_state && typeof existing.execution_state === 'object'
+        ? (existing.execution_state as Record<string, unknown>)
+        : {}
+    const completedActions = Array.isArray(prev.completed_actions) ? prev.completed_actions : []
+
     const { error } = await supabase
       .from('mission_subtasks')
       .update({
         status: 'pending',
         feedback: null,
+        // Drop zombie current_tool / partial stream so UI does not show a dead step as "working"
+        execution_state: {
+          completed_actions: completedActions,
+          current_tool: null,
+          execution_status: 'queued',
+        },
         updated_at: updatedAt,
       })
       .eq('id', subtaskId)

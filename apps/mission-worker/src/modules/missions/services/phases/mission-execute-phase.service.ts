@@ -16,6 +16,7 @@ import {
 } from '../gateways/mission-openclaw-errors'
 import { MissionOpenclawGateway } from '../gateways/mission-openclaw.gateway'
 import { MissionExecBroadcastService } from '../mission-exec-broadcast.service'
+import { shouldWriteMissionExecutionLease } from '../mission-execution-lease'
 import {
   MissionDeliverablesRepository,
   type MissionContractVerificationResult,
@@ -372,6 +373,14 @@ export class MissionExecutePhaseService {
           .eq('status', 'in_progress')
       }
 
+      // Clear any prior-run zombie tool so the UI does not show a dead step while we warm the runtime.
+      await persistExecState({
+        current_tool: null,
+        execution_status: 'starting',
+      })
+      let lastLeaseWriteAt = Date.now()
+      let streamStarted = false
+
       const openClawExecOpts = (deadline: {
         signal: AbortSignal
         touch: () => void
@@ -383,12 +392,33 @@ export class MissionExecutePhaseService {
         onStreamHeartbeat: async () => {
           deadline.touch()
           await job.updateProgress({ hb: Date.now() }).catch(() => {})
-          const { data: current } = await supabase
-            .from('mission_subtasks')
-            .select('status, assigned_agent_key')
-            .eq('id', subtaskId)
-            .eq('mission_id', missionId)
-            .maybeSingle()
+          const nowMs = Date.now()
+          if (!streamStarted) {
+            await persistExecState({ execution_status: 'streaming' })
+            streamStarted = true
+            lastLeaseWriteAt = nowMs
+          }
+          const shouldWriteLease = shouldWriteMissionExecutionLease(lastLeaseWriteAt, nowMs)
+          const currentResult = shouldWriteLease
+            ? await supabase
+                .from('mission_subtasks')
+                .update({ updated_at: new Date(nowMs).toISOString() })
+                .eq('id', subtaskId)
+                .eq('mission_id', missionId)
+                .eq('status', 'in_progress')
+                .select('status, assigned_agent_key')
+                .maybeSingle()
+            : await supabase
+                .from('mission_subtasks')
+                .select('status, assigned_agent_key')
+                .eq('id', subtaskId)
+                .eq('mission_id', missionId)
+                .maybeSingle()
+          if (currentResult.error) {
+            throw new Error(`Failed to renew subtask execution lease: ${currentResult.error.message}`)
+          }
+          const current = currentResult.data
+          if (shouldWriteLease && current) lastLeaseWriteAt = nowMs
           const rowAgent =
             typeof current?.assigned_agent_key === 'string' && current.assigned_agent_key.trim()
               ? current.assigned_agent_key.trim()

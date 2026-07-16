@@ -115,6 +115,8 @@ export async function enqueueMissionOutboxEvent(
       ],
     )
   } catch (error) {
-    logger.error(`Failed to enqueue outbox event ${input.eventType}: ${(error as Error).message}`)
+    const message = error instanceof Error ? error.message : String(error)
+    logger.error(`Failed to enqueue outbox event ${input.eventType}: ${message}`)
+    throw error
   }
 }

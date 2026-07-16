@@ -9,13 +9,14 @@ export async function detectStalledSubtasks(ctx: MissionsSchedulerRecoveryCtx) {
     mission_id: string
     assigned_agent_key: string | null
     updated_at: string | null
+    execution_state: Record<string, unknown> | null
   }
   let stalledSubtasks: StalledRow[]
   if (ctx.databaseService.hasPgPool()) {
     try {
       stalledSubtasks = (
         await ctx.databaseService.pgQuery<StalledRow>(
-          `SELECT id, mission_id, assigned_agent_key, updated_at FROM mission_subtasks WHERE status = 'in_progress' LIMIT 100`,
+          `SELECT id, mission_id, assigned_agent_key, updated_at::text AS updated_at, execution_state FROM mission_subtasks WHERE status = 'in_progress' LIMIT 100`,
           [],
         )
       ).rows
@@ -23,7 +24,7 @@ export async function detectStalledSubtasks(ctx: MissionsSchedulerRecoveryCtx) {
       ctx.logger.warn(`detectStalledSubtasks PG failed, using Supabase: ${(err as Error).message}`)
       const { data } = await supabase
         .from('mission_subtasks')
-        .select('id, mission_id, assigned_agent_key, updated_at')
+        .select('id, mission_id, assigned_agent_key, updated_at, execution_state')
         .eq('status', 'in_progress')
         .limit(100)
       stalledSubtasks = (data || []) as StalledRow[]
@@ -31,7 +32,7 @@ export async function detectStalledSubtasks(ctx: MissionsSchedulerRecoveryCtx) {
   } else {
     const { data } = await supabase
       .from('mission_subtasks')
-      .select('id, mission_id, assigned_agent_key, updated_at')
+      .select('id, mission_id, assigned_agent_key, updated_at, execution_state')
       .eq('status', 'in_progress')
       .limit(100)
     stalledSubtasks = (data || []) as StalledRow[]
@@ -81,7 +82,11 @@ export async function detectStalledSubtasks(ctx: MissionsSchedulerRecoveryCtx) {
   for (const subtask of stalledSubtasks) {
     const mission = missionById.get(String(subtask.mission_id))
     if (!mission) continue
-    if (!ctx.isPastPriorityStaleThreshold(subtask.updated_at, mission.priority)) continue
+    const executionStatus =
+      subtask.execution_state && typeof subtask.execution_state.execution_status === 'string'
+        ? subtask.execution_state.execution_status
+        : null
+    if (!ctx.isPastMissionExecutionLease(subtask.updated_at, executionStatus)) continue
 
     const agentKey = String(subtask.assigned_agent_key || mission.assigned_agent_key || 'vibey')
     const runtime = await ctx.resolveRuntimeAgent(
@@ -104,26 +109,78 @@ export async function detectStalledSubtasks(ctx: MissionsSchedulerRecoveryCtx) {
     )
     if (isActive) continue
 
+    // Preserve completed_actions when possible; drop zombie current_tool so UI is not stuck.
+    let completedActions: unknown[] = []
+    try {
+      const { data: row } = await supabase
+        .from('mission_subtasks')
+        .select('execution_state')
+        .eq('id', subtask.id)
+        .maybeSingle()
+      const prev =
+        row?.execution_state && typeof row.execution_state === 'object'
+          ? (row.execution_state as Record<string, unknown>)
+          : {}
+      if (Array.isArray(prev.completed_actions)) completedActions = prev.completed_actions
+    } catch {
+      /* keep empty */
+    }
+    const queuedState = {
+      completed_actions: completedActions,
+      current_tool: null,
+      execution_status: 'queued',
+    }
+
+    let didReclaim = false
     if (ctx.databaseService.hasPgPool()) {
       try {
-        await ctx.databaseService.pgQuery(
-          `UPDATE mission_subtasks SET status = 'pending', updated_at = NOW() WHERE id = $1 AND status = 'in_progress'`,
-          [subtask.id],
+        const result = await ctx.databaseService.pgQuery(
+          `UPDATE mission_subtasks
+           SET status = 'pending',
+               updated_at = NOW(),
+               feedback = NULL,
+               execution_state = $3::jsonb
+           WHERE id = $1
+             AND updated_at = $2::timestamptz
+             AND status = 'in_progress'
+           RETURNING id`,
+          [subtask.id, subtask.updated_at, JSON.stringify(queuedState)],
         )
+        didReclaim = (result.rowCount || 0) > 0
       } catch {
-        await supabase
+        const { data, error } = await supabase
           .from('mission_subtasks')
-          .update({ status: 'pending', updated_at: new Date().toISOString() })
+          .update({
+            status: 'pending',
+            feedback: null,
+            execution_state: queuedState,
+            updated_at: new Date().toISOString(),
+          })
           .eq('id', subtask.id)
+          .eq('updated_at', subtask.updated_at)
           .eq('status', 'in_progress')
+          .select('id')
+        if (error) throw new Error(error.message)
+        didReclaim = (data?.length || 0) > 0
       }
     } else {
-      await supabase
+      const { data, error } = await supabase
         .from('mission_subtasks')
-        .update({ status: 'pending', updated_at: new Date().toISOString() })
+        .update({
+          status: 'pending',
+          feedback: null,
+          execution_state: queuedState,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', subtask.id)
+        .eq('updated_at', subtask.updated_at)
         .eq('status', 'in_progress')
+        .select('id')
+      if (error) throw new Error(error.message)
+      didReclaim = (data?.length || 0) > 0
     }
+
+    if (!didReclaim) continue
 
     await ctx.enqueueOutboxEvent({
       missionId: String(subtask.mission_id),
@@ -249,7 +306,7 @@ export async function detectOrphanedPendingSubtasks(ctx: MissionsSchedulerRecove
 
     for (const subtask of subtasks) {
       if (subtask.status !== 'pending') continue
-      if (!ctx.isPastPriorityStaleThreshold(subtask.updated_at, priority)) continue
+      if (!ctx.isPastMissionExecutionLease(subtask.updated_at)) continue
       const deps = Array.isArray(subtask.depends_on) ? subtask.depends_on : []
       if (!deps.every(depSatisfied)) continue
 

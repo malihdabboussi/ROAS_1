@@ -18,6 +18,10 @@ type TriageSiblingRow = {
   scheduled_at?: string | null
 }
 
+export function shouldSweepReadySubtasksAfterTriage(decision: string): boolean {
+  return decision === 'cancel' || decision === 'replace'
+}
+
 @Injectable()
 export class MissionSubtaskTriageService {
   private readonly logger = new Logger(MissionSubtaskTriageService.name)
@@ -312,10 +316,12 @@ export class MissionSubtaskTriageService {
     }
 
     if (decision !== 'escalate' && decision !== 'replan') {
-      await this.stateRepo.enqueueReadySubtaskEvents(supabase, missionId, uid, orgId, {
-        requested_by: 'subtask_triage',
-        source_subtask_id: String(subtaskId),
-      })
+      if (shouldSweepReadySubtasksAfterTriage(decision)) {
+        await this.stateRepo.enqueueReadySubtaskEvents(supabase, missionId, uid, orgId, {
+          requested_by: 'subtask_triage',
+          source_subtask_id: String(subtaskId),
+        })
+      }
       await this.stateRepo.recomputeMissionStatus(supabase, missionId)
     }
 

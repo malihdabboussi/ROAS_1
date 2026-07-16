@@ -12,6 +12,18 @@ const VIBEY_DIRECTIVE_AGENT = 'vibey'
 
 type DirectiveAction = Record<string, unknown>
 
+export type DirectiveRetryAction = 'retry' | 'abort_and_retry' | 'already_retried'
+
+export function resolveDirectiveRetryAction(
+  initialStatus: string,
+  currentStatus: string,
+): DirectiveRetryAction {
+  if (initialStatus && initialStatus !== 'in_progress' && currentStatus !== initialStatus) {
+    return 'already_retried'
+  }
+  return currentStatus === 'in_progress' ? 'abort_and_retry' : 'retry'
+}
+
 @Injectable()
 export class MissionCommentDirectiveService {
   private readonly logger = new Logger(MissionCommentDirectiveService.name)
@@ -108,6 +120,9 @@ export class MissionCommentDirectiveService {
       .order('sort_order', { ascending: true })
 
     const subtasks = (subtaskRows || []) as Array<Record<string, unknown>>
+    const initialSubtaskStatusById = new Map(
+      subtasks.map((subtask) => [String(subtask.id || ''), String(subtask.status || '')]),
+    )
     const userComments = await this.stateRepo.getRecentUserComments(
       supabase,
       missionId,
@@ -327,14 +342,23 @@ export class MissionCommentDirectiveService {
           case 'retry_subtask': {
             const sid = this.subtaskIdFromAction(a)
             if (!sid) throw new Error('retry_subtask missing subtask_id')
-            hadMutation = true
             const { data: preRetry } = await supabase
               .from('mission_subtasks')
               .select('status')
               .eq('id', sid)
               .eq('mission_id', missionId)
               .maybeSingle()
-            if (String(preRetry?.status) === 'in_progress') {
+            const initialStatus = initialSubtaskStatusById.get(sid) || ''
+            const currentStatus = String(preRetry?.status || '')
+            const retryAction = resolveDirectiveRetryAction(initialStatus, currentStatus)
+            if (retryAction === 'already_retried') {
+              this.logger.log(
+                `Directive retry converged mission=${missionId} subtask=${sid}: initial=${initialStatus} current=${currentStatus}`,
+              )
+              break
+            }
+            hadMutation = true
+            if (retryAction === 'abort_and_retry') {
               this.abortRegistry.abort(sid)
             }
             await this.postManager('/manager/retry-subtask', {

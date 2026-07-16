@@ -1,6 +1,22 @@
 # Missions harness
 
-Last updated: 2026-07-08
+Last updated: 2026-07-16
+
+## Mission execution leases and restart recovery
+
+Active subtask execution uses `mission_subtasks.updated_at` as a renewable lease. OpenClaw stream activity renews the lease at a throttled interval, so a healthy long-running tool remains distinguishable from a worker process that disappeared.
+
+Recovery behavior:
+
+- The mission worker runs a stalled-work sweep immediately on startup and then every 30 seconds by default (`MISSIONS_RECOVERY_POLL_MS`). Operational loops and digests remain on the slower `MISSIONS_WATCHDOG_MS` schedule.
+- Runtime startup has a six-minute lease by default (`MISSIONS_EXECUTION_START_LEASE_TIMEOUT_MS`) to cover machine wake and readiness before the first stream event. The state switches from `starting` to `streaming` on that first event.
+- An active streaming execution lease expires after 90 seconds by default (`MISSIONS_EXECUTION_LEASE_TIMEOUT_MS`). Lease writes are throttled to 15 seconds by default (`MISSIONS_EXECUTION_LEASE_WRITE_MS`).
+- Before reclaiming an expired subtask, the worker probes its OpenClaw session. An active session is left alone.
+- Reclaim compares the row's exact `updated_at` value from the stale snapshot. If stream activity renewed it in the meantime, the update affects no rows and no recovery event is queued.
+- A recovered row preserves completed actions, clears the dead `current_tool`, returns to `pending`, and requeues the stable execute intent. Failed outbox writes now fail the recovery sweep visibly instead of logging false success.
+- Pending rows left between reclaim and enqueue are covered by the same short lease threshold and stable outbox dedupe key on the next sweep.
+
+With the defaults, a dead execution is normally eligible at 90 seconds and recovered on the next 30-second sweep, while real stream traffic keeps extending the lease.
 
 ## Public agent slug namespace
 
@@ -157,7 +173,8 @@ Routing behavior:
 ## Directive flexibility (manager + worker)
 
 - **`SubtaskAbortRegistry`** (mission-worker singleton): subtask execute registers the execution `AbortController`; `cancel_subtask` / `reassign_subtask` (when the subtask was `in_progress`) calls `abort()` so the OpenClaw stream stops immediately.
-- **Internal manager API**: `edit-subtask` rejects only `cancelled`; `retry-subtask` allows `blocked`, `done`, `revision` and flips mission `blocked`/`failed`/`error`/`review` → `in_progress`; `append-subtasks` flips `review`/`done`/`blocked`/`error`/`failed` → `todo` (clears `error` when leaving `error`/`failed`).
+- **Internal manager API**: `edit-subtask` rejects only `cancelled`; `retry-subtask` allows `blocked`, `done`, `revision`, `pending`, and `in_progress`, and flips mission `blocked`/`failed`/`error`/`review` → `in_progress`; `append-subtasks` flips `review`/`done`/`blocked`/`error`/`failed` → `todo` (clears `error` when leaving `error`/`failed`).
+- **Retry convergence**: comment directives compare the subtask status they planned against with the current status before acting. If triage or another recovery path already moved blocked work to `pending`/`in_progress`, the later directive converges without aborting it. A directive that began while the subtask was already `in_progress` still performs abort-and-retry for intentional mid-run steering. Triage `retry`/`reassign` decisions do not run a second ready-subtask sweep because the manager retry endpoint already enqueues execution.
 - **Execute phase**: mission is runnable unless status is `done` or `backlog` (so `review`/`blocked`/etc. can still run queued subtask work as needed).
 - **`enqueueReadySubtaskEvents`**: dependency resolution uses status for **all** subtasks (including `cancelled`) so dependents of cancelled deps unblock.
 - **Outbox dispatch**: `mission.subtask.*` events use an expanded mission-status allowlist (`blocked`, `error`, `failed` included) so execute/triage rows are not stuck retrying.
@@ -197,6 +214,8 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-16: Coordinated concurrent triage and comment retries so a delayed "try again" directive cannot abort work another recovery path just started, and removed the duplicate triage execute enqueue.
+- 2026-07-16: Replaced priority-based, 15-minute-only stalled-subtask recovery with renewable execution leases, immediate startup recovery, a dedicated 30-second sweep, exact-timestamp reclaim guards, and surfaced outbox failures.
 - 2026-07-08: Added the designer `ui-component-design` system skill so product UI component work routes through a dedicated component design workflow instead of generic asset or page design.
 - 2026-06-25: Runtime readiness now treats `skills/vibey-api/ALLOWED_ACTIONS.json` as required alongside `SKILL.md`, and internal ensure-ready normalizes plain personal ids to shared-runtime `user-{userId}-{agentKey}` ids when possible.
 - 2026-06-21: Mission, mission-creation, and campaign upload paths now return normalized media `asset_ref` descriptors so UI and agents can keep file identity after upload.

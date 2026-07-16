@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { WorkerLoggerService } from '../../logger'
+import { getMissionRecoveryPollMs } from './mission-execution-lease'
 import { MissionsSchedulerRecoveryService } from './missions.scheduler-recovery.service'
 import { MissionsSchedulerStateTransitionsService } from './missions.scheduler-state-transitions.service'
 
@@ -8,6 +9,8 @@ import { MissionsSchedulerStateTransitionsService } from './missions.scheduler-s
 export class MissionsScheduler implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MissionsScheduler.name)
   private pollTimer: NodeJS.Timeout | null = null
+  private recoveryTimer: NodeJS.Timeout | null = null
+  private recoverySweepInFlight = false
   private watchdogPausedUntil = 0
 
   constructor(
@@ -25,18 +28,29 @@ export class MissionsScheduler implements OnModuleInit, OnModuleDestroy {
     }
 
     const pollMs = Number(process.env.MISSIONS_WATCHDOG_MS || 900000)
+    const recoveryPollMs = getMissionRecoveryPollMs()
+    void this.runRecoverySweep()
+    this.recoveryTimer = setInterval(() => {
+      void this.runRecoverySweep()
+    }, recoveryPollMs)
     this.pollTimer = setInterval(() => {
       this.pollAllPhases().catch((error) => {
         this.reportSchedulerError('MISSIONS_SCHEDULER_POLL_FAILED', 'Scheduler poll failed', error)
       })
     }, pollMs)
-    this.logger.log(`Mission scheduler started (watchdog_poll=${pollMs}ms)`)
+    this.logger.log(
+      `Mission scheduler started (watchdog_poll=${pollMs}ms, recovery_poll=${recoveryPollMs}ms)`,
+    )
   }
 
   onModuleDestroy() {
     if (this.pollTimer) {
       clearInterval(this.pollTimer)
       this.pollTimer = null
+    }
+    if (this.recoveryTimer) {
+      clearInterval(this.recoveryTimer)
+      this.recoveryTimer = null
     }
   }
 
@@ -65,14 +79,6 @@ export class MissionsScheduler implements OnModuleInit, OnModuleDestroy {
     if (Date.now() < this.watchdogPausedUntil) {
       return
     }
-    await this.recovery.detectStalledWork().catch((error) => {
-      this.pauseWatchdogsIfDbTransportError(error)
-      this.reportSchedulerError(
-        'MISSIONS_STALLED_WORK_WATCHDOG_FAILED',
-        'Failed stalled-work watchdog',
-        error,
-      )
-    })
     await this.recovery.autoRetryFailed().catch((error) => {
       this.pauseWatchdogsIfDbTransportError(error)
       this.reportSchedulerError('MISSIONS_AUTO_RETRY_POLL_FAILED', 'Auto-retry poll failed', error)
@@ -96,6 +102,23 @@ export class MissionsScheduler implements OnModuleInit, OnModuleDestroy {
     await this.stateTransitions.maybeRunDigests().catch((error) => {
       this.reportSchedulerError('MISSIONS_DAILY_DIGEST_FAILED', 'Daily digest failed', error)
     })
+  }
+
+  private async runRecoverySweep(): Promise<void> {
+    if (this.recoverySweepInFlight || Date.now() < this.watchdogPausedUntil) return
+    this.recoverySweepInFlight = true
+    try {
+      await this.recovery.detectStalledWork()
+    } catch (error) {
+      this.pauseWatchdogsIfDbTransportError(error as Error)
+      this.reportSchedulerError(
+        'MISSIONS_STALLED_WORK_WATCHDOG_FAILED',
+        'Failed stalled-work watchdog',
+        error,
+      )
+    } finally {
+      this.recoverySweepInFlight = false
+    }
   }
 
   private reportSchedulerError(

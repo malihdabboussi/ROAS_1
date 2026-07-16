@@ -1,5 +1,12 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 15:23] - [FEATURE]
+
+What: Home Agenda meeting workspace slice — single-event prep API, reliable Prep chip (open / retry), meeting detail dialog (who / where / prep / related call tasks), DiBi chat seed, calendar `location` + related-call enrichment, Meetings template **Agenda** calendar view with Google/Outlook sources.
+Why: Prep pending opened a half-broken task modal; users need a real meeting surface that ties calendar → prep → Fathom call/follow-ups → agent chat.
+Impact: Deploy `roas-api` + `roas-web`. Hard-refresh Home → expand a meeting → **Open meeting** / Prep. Existing Meetings spaces need Agenda view backfill (logged).
+Files: `space-precall-prep.controller.ts`, `meetings-precall-prep.service.ts` (+helpers/tests), `integrations-calendar.service.ts`, `calendar-api.ts`, `HomeMeetingDetailHost.tsx`, `AgendaCard*.tsx`, `use-agenda-prep-actions.ts`, `ask-meeting-in-chat.ts`, `home-dashboard-content.tsx`, `HomeTaskDetailHost.tsx`, `space-template-catalog-ceo.ts`
+
 ## [2026-07-16 14:46] - [FIX]
 
 What: Shipped missing `@vibey/api-shared` `sanitizeFathomSummaryMarkdown` source + barrel export so `roas-api` Nest builds succeed again.
@@ -700,9 +707,58 @@ Why: User wants GPT image generation, not a silent Gemini fallback when the Open
 Impact: Image gen/edit fail clearly if `OPENROUTER_API_KEY` is invalid. Local key currently returns OpenRouter 401 User not found — replace key in `apps/api/.env` (and root `.env`) then restart `pnpm dev:agentapi`.
 Files: `artifact-legacy-media-generate.service.ts` (+test), `artifact-legacy-media-provider.service.ts`
 
-## [2026-07-16 14:46] - [FIX]
 
-What: Slack agent search no longer dies on bot-token `not_allowed_token_type`. Search uses stored user token when present; otherwise falls back to bot-readable channel history (`in:#channel` + keyword filter). OAuth now requests search scopes via `user_scope` and persists `metadata.user_access_token`.
-Why: Slack was “connected” (bot token) but `search.messages` requires a user token — agents paraphrased the opaque error as a connectivity issue.
-Impact: Existing installs can search via channel history without reconnect; reconnect Slack once for native workspace search. Deploy roas-api.
-Files: `slack.service.ts`, `slack-agent-tools.service.ts` (+test), `slack-api-integration.shared.ts`
+## [2026-07-16 14:47] - [FIX]
+
+What: Synced local `OPENROUTER_API_KEY` in `apps/api/.env` and root `.env` to the working OpenClaw `openrouter:default` key (OpenRouter auth/key now 200). Restarted agent-api so GPT Image 2 uses that key.
+Why: Chat worked via OpenClaw auth-profiles; image gen used a different dead env key (401 User not found). User asked to use GPT with the correct key.
+Impact: Aspect/edit image gen should hit OpenRouter GPT Image 2 successfully after refresh. Backups of previous env lines saved as `.bak-openrouter-*`.
+Files: `apps/api/.env`, `.env` (local only)
+
+## [2026-07-16 15:03] - [FEATURE]
+
+What: Space Media "Show in chat" opens the origin conversation that generated the image and attaches the asset to the composer (no auto-send). Persists `media_assets.conversation_id` on generate/upload; resolves older assets via `find_media_asset_origin_conversation`.
+Why: "Open in chat" was seeding a new thread with a prompt instead of returning to the original chat with the image ready to work from.
+Impact: Hard-refresh web; restart agent-api for new generations to store conversation_id. Click Show in chat on a chat-generated image → origin thread opens, image attached to the sheet. Recent clock asset backfilled to conversation `747b8c2d-…`.
+Files: `MediaImageWorkspace.tsx`, `SpaceVibeyChatPanel.tsx`, `use-global-chat-store.ts`, `media-api.ts`, `artifact-legacy-media-upload.service.ts`, `artifact-legacy-media-generate.service.ts` (+test), `artifact-legacy-media-status.service.ts`, `media.repository.ts`, `media-service-03.base.ts`, `media/dto`, migrations `20260716150000_media_assets_conversation_id.sql`, `20260716220000_find_media_asset_origin_conversation.sql`
+
+## [2026-07-16 15:11] - [FIX]
+
+What: Fixed Open in Canva (seeded missing `canva` catalog + Composio auth config), chat image click → Space Media slide-out (edit_image UI blocks + URL→asset resolve), live Media gallery updates (`media_assets` realtime publication), and composer overlaying the editor (z-index).
+Why: Canva connect could not persist FK rows; edit_image results had no mediaAssetId so clicks opened a new tab; gallery realtime was not published; generate composer used `z-dropdown` over the slide-out.
+Impact: Hard-refresh web; restart agent-api. Open in Canva should start OAuth then handoff. New chat images open in the right editor. New space media appears without reload. Editor History stays above the generate composer.
+Files: Canva/realtime migrations, `ui-block-extractor.ts` (+test), `media-assets.controller.ts`, `media.repository.ts`, `media-service-03.base.ts`, `media-api.ts`, `InlineImageGen.tsx`, `GeneratedMedia.tsx`, `SpaceMediaView.tsx`, `MediaImageWorkspacePanelHost.tsx`, `MediaImageWorkspace.tsx`, `connect-composio-integration.ts`
+
+## [2026-07-16 15:22] - [STYLE]
+
+What: Space Media aspect-ratio menu matches ChatGPT: hollow size glyphs + Square/Portrait/Story/Landscape/Widescreen labels beside ratios.
+Why: Plain ratio strings lacked the visual size cue from the ChatGPT picker.
+Impact: Hard-refresh → open Aspect ratio in the media editor (and Media generate Aspect chip) to see shape + name + ratio.
+Files: `aspect-ratio-menu.tsx`, `MediaImageWorkspace.tsx`, `MediaGenerateComposer.tsx`, `components/media/index.ts`
+
+## [2026-07-16 15:16] - [FEATURE]
+
+What: Space Media "Describe a new image" composer can be minimized (same Home chat toggle pattern); preference persists in localStorage.
+Why: Users want more gallery space when they are not generating a new image.
+Impact: Hard-refresh Media tab → Minimize under the composer collapses it to a "New image" chip; click again to expand.
+Files: `SpaceMediaView.tsx`, `use-space-media-composer-collapsed.ts`, `HomeDashboardV4Shell.tsx`
+
+## [2026-07-16 15:04] - [FIX]
+
+What: Added renewable mission execution leases, a six-minute runtime-start lease, a dedicated 30-second recovery sweep that runs on worker startup, exact-timestamp atomic reclaim guards, short orphan recovery, and surfaced recovery outbox failures. The lease switches to the 90-second active window on the first stream event; recovered state preserves completed actions while clearing zombie tool UI state.
+
+Why: A worker/runtime restart could leave a subtask looking active for 10–25 minutes because ordinary stream traffic did not renew `updated_at`, recovery only ran on the 15-minute scheduler, and stale snapshots could still enqueue after losing an update race.
+
+Impact: With defaults, a dead execution becomes eligible after 90 seconds and is normally requeued on the next 30-second sweep; healthy stream traffic renews every 15 seconds and cannot be reclaimed from an older snapshot. Requires mission-worker deployment; the API retry-state clear remains part of the pending API deployment.
+
+Files: `mission-execution-lease.ts`, `missions.scheduler.ts`, `missions.scheduler-recovery.service.ts`, `missions.scheduler-recovery.types.ts`, `missions.scheduler-recovery.outbox.ts`, `missions.scheduler-recovery.watchdogs.phase-b.ts`, `mission-execute-phase.service.ts`, mission recovery tests, `apps/mission-worker/.env.example`, `documentation/features/missions.md`
+
+## [2026-07-16 15:16] - [FIX]
+
+What: Coordinated mission retry paths so a delayed comment directive does not abort a subtask that triage already restarted. Intentional mid-run steering still aborts and restarts. Removed triage's second ready-subtask enqueue after manager retry/reassign already queued execution.
+
+Why: Production created three execute intents within two seconds for the same Pre-call subtask. Triage began retrying blocked work while the user's delayed "try again" directive observed the new `in_progress` state, aborted it, reset it, and produced the internal error `This operation was aborted`.
+
+Impact: Concurrent recovery paths converge on one execution instead of killing each other. Requires mission-worker deployment.
+
+Files: `mission-comment-directive.service.ts`, `mission-subtask-triage.service.ts`, `mission-retry-coordination.test.ts`, `documentation/features/missions.md`

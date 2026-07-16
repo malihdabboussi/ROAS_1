@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { DatabaseService } from '../../../lib/services/database.service'
 import { AgentRuntimeService } from './agent-runtime.service'
 import { MissionOpenclawGateway } from './gateways/mission-openclaw.gateway'
+import { isPastMissionExecutionLease } from './mission-execution-lease'
 import { runAutoRetryFailed } from './missions.scheduler-recovery.auto-retry'
 import { enqueueMissionOutboxEvent } from './missions.scheduler-recovery.outbox'
 import { isPastPriorityStaleThreshold } from './missions.scheduler-recovery.stale'
@@ -35,6 +36,8 @@ export class MissionsSchedulerRecoveryService {
       agentRuntime: this.agentRuntime,
       openclawGateway: this.openclawGateway,
       isPastPriorityStaleThreshold,
+      isPastMissionExecutionLease: (updatedAt, executionStatus) =>
+        isPastMissionExecutionLease(updatedAt, Date.now(), undefined, executionStatus),
       resolveRuntimeAgent: (userId, agentKey, orgId) =>
         this.resolveRuntimeAgent(userId, agentKey, orgId),
       enqueueOutboxEvent: (input) =>

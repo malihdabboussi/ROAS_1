@@ -12,6 +12,10 @@ export type MissionsSchedulerRecoveryCtx = {
     updatedAt: string | null | undefined,
     priority: string | null | undefined,
   ) => boolean
+  isPastMissionExecutionLease: (
+    updatedAt: string | null | undefined,
+    executionStatus?: string | null,
+  ) => boolean
   resolveRuntimeAgent: (
     userId: string,
     agentKey: string,

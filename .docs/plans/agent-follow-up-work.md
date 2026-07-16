@@ -1,3 +1,34 @@
+## 2026-07-16 - [FEATURE] Meetings Agenda view backfill + LOC cleanup
+
+Status: Open
+Found while: Shipping Home meeting detail + Meetings template Agenda view
+Files:
+
+- Live ROAS Meetings space `d957d348-c30a-4dbb-a089-ba3092332543` — template now has `agenda` calendar view; existing space schema still needs that view + external calendar sources merged
+- `apps/web/src/features/home/components/AgendaCard.tsx` (557 LOC; component soft limit 400)
+- `apps/api/src/modules/integrations/services/integrations-calendar.service.ts` (704 LOC; over 600)
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts` (531 LOC; near service limit)
+  Evidence: Catalog/tests updated for new spaces only; AgendaCard stayed large after extracting prep hook; calendar service grew with location + related enrichment.
+  Needed work: Backfill Meetings `schema.views` with Agenda; split AgendaCard nav/list; extract calendar parsers; optional notes field on meeting hub item; wire dedicated DiBi agent_key if not `vibey`.
+  Deferred because: Vertical slice shipped for Home; live schema backfill needs ROAS Supabase write; further splits out of critical path.
+
+
+## 2026-07-16 - [OPS] Deploy mission execution lease + Pre-call recovery
+
+Status: Open
+Found while: Webinar Fulfillment sat on “Loading Impact Elite client context” after worker/Fly restarts
+Files:
+
+- `apps/api/src/modules/missions/repositories/mission-internal.repository.ts` (`resetSubtaskForRetry` clears zombie `current_tool`)
+- `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts` (2336 LOC, pre-existing over limit; clears tool at execute start and renews the DB execution lease)
+- `apps/mission-worker/src/modules/missions/services/missions.scheduler-recovery.watchdogs.phase-b.ts` (480 LOC, near 600 LOC service limit; exact-snapshot reclaim and zombie-tool clear)
+- `apps/mission-worker/src/modules/missions/services/missions.scheduler.ts` (immediate and 30-second dedicated recovery sweep)
+- `apps/mission-worker/src/modules/missions/services/mission-execution-lease.ts` (lease timing contract)
+  Evidence: DB `execution_state.current_tool` stayed on `search_brain_context` for ~20m after checkpoint freeze; the old worker only swept every 15 minutes and did not renew `mission_subtasks.updated_at` from normal SSE activity. Mission tests added for expiry, startup recovery, reclaim races, and failed outbox writes; mission-worker typecheck and focused lint pass.
+  Needed work: Deploy API + mission-worker; later split `mission-execute-phase.service.ts` and split phase-b before it reaches the service limit.
+  Deferred because: Ops unstick done live; deploy not requested in this turn.
+
+
 # Agent Follow-Up Work
 
 Use this file for real, scoped follow-up work discovered during agent changes that should not be hidden in chat history.
@@ -18,13 +49,13 @@ Entry template:
 ## 2026-07-16 - [ARCH] MediaImageWorkspace near 400 LOC
 
 Status: Open
-Found while: Wiring Canva connect-on-missing OAuth
+Found while: Wiring Canva connect-on-missing OAuth; still open after Show in chat
 Files:
 
-- `apps/web/src/features/spaces/views/media/MediaImageWorkspace.tsx` (395 LOC; component limit 400)
-  Evidence: `wc -l` after Canva OAuth retry wiring.
+- `apps/web/src/features/spaces/views/media/MediaImageWorkspace.tsx` (479 LOC; component limit 400)
+  Evidence: `wc -l` after ChatGPT-style aspect menu.
   Needed work: Extract history rail / Canva handoff / edit composer into sibling components.
-  Deferred because: In-scope was connect prompt; split is structure-only.
+  Deferred because: In-scope was aspect ratio menu visual match.
 
 ## 2026-07-16 - [OPS] Deploy mission-worker claim/abort stuck fixes
 
@@ -49,7 +80,8 @@ Files:
 
 ## 2026-07-16 - [FEATURE] Live backfill Meetings prep schema + Morning Pre-call Prep automation
 
-Status: Open
+Status: Resolved
+Resolved: 2026-07-16 — schema backfilled on Meetings `d957d348-…` (prep entry type, calendar_event_id, prep_status, Prep view); API redeploy for prep route (changelog 14:20).
 Found while: Implementing pre-call prep (morning + manual)
 Files:
 
@@ -88,10 +120,11 @@ Found while: Mission live stream UX
 Files:
 
 - `apps/web/src/features/mission-control/components/dialogs/SubtasksSection.tsx` (419 LOC; limit 400)
-- `apps/mission-worker/src/modules/missions/services/phases/mission-comment-directive.service.ts` (518 LOC; limit 500)
-  Evidence: `wc -l` after extract of `SubtaskExpandedPanel`; assignee dropdown still lives in SubtasksSection; directive switch still monolithic.
+- `apps/mission-worker/src/modules/missions/services/phases/mission-comment-directive.service.ts` (542 LOC; limit 500)
+- `apps/mission-worker/src/modules/missions/services/phases/mission-subtask-triage.service.ts` (405 LOC; approaching 500 LOC service limit)
+  Evidence: `wc -l` after retry convergence fix; directive switch is still monolithic and triage owns decision execution plus replacement graph handling.
   Needed work: Extract assignee picker; split directive action handlers.
-  Deferred because: Stream UX was the request; further split is structure-only.
+  Deferred because: In-scope work was preventing concurrent retry paths from aborting one another; further split is structure-only.
 
 ## 2026-07-16 - [ARCH] Split over-limit calendar/core services
 
@@ -168,16 +201,16 @@ Files:
   Needed work: Phase 4 click-to-pin comments; persist `parent_media_asset_id` for version trees; verify Canva handoff against a live connected account after API deploy.
   Deferred because: This pass shipped chat + Generate image and Canva `edit_url` handoff; pin comments and DB lineage remain separate.
 
-## 2026-07-16 - [REFACTOR] SpaceMediaView slightly over 400 LOC
+## 2026-07-16 - [REFACTOR] SpaceMediaView at 400 LOC limit
 
 Status: Open
-Found while: Embedding MediaGenerateComposer + deep view props
+Found while: Embedding MediaGenerateComposer + deep view props; composer minimize
 Files:
 
-- `apps/web/src/features/spaces/views/media/SpaceMediaView.tsx` (410 LOC after menu/overflow wrap)
-  Evidence: `wc -l` = 410; component target is 400.
+- `apps/web/src/features/spaces/views/media/SpaceMediaView.tsx` (400 LOC after composer minimize)
+  Evidence: `wc -l` = 400; component target is 400.
   Needed work: Extract gallery grid / empty state into a sibling component.
-  Deferred because: In-scope was dropdown clipping + seed race + space_id save.
+  Deferred because: In-scope was minimize control; extract is adjacent cleanup.
 
 ## 2026-07-16 - [FIX] Agent gateway 404 blocking webinar subtask execute
 
@@ -6871,3 +6904,10 @@ Deferred because: Voice routing fix and mic-silence bug were scoped to capture/a
 - Needed: Extract step components (`PageGraderClientStep`, `PageGraderTypeStep`, `PageGraderAssigneeStep`, `PageGraderPreviewStep`)
 - Why not now: in-scope was assignee + preview behavior
 
+## 2026-07-16 — SlackAgentToolsService LOC after search fallback
+
+- Feature/app: api / slack
+- File: `apps/api/src/modules/slack/services/slack-agent-tools.service.ts` (471)
+- Evidence: over service soft limit after channel-history search fallback
+- Needed: Extract search token resolution + channel-history fallback helpers
+- Why not now: in-scope was search connectivity bug fix
