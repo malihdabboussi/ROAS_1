@@ -15,12 +15,27 @@ export type CalendarAgendaPrep = {
   title: string | null
 }
 
+export type CalendarAgendaRelatedFollowUp = {
+  id: string
+  title: string
+  status: string
+}
+
+export type CalendarAgendaRelatedCall = {
+  space_id: string
+  call_item_id: string
+  title: string
+  recording_url: string | null
+  follow_ups: CalendarAgendaRelatedFollowUp[]
+}
+
 export type CalendarAgendaEvent = {
   id: string
   title: string
   start: string
   end: string
   all_day: boolean
+  location?: string | null
   video_url: string | null
   video_label: string | null
   html_link: string | null
@@ -30,6 +45,7 @@ export type CalendarAgendaEvent = {
   account_id?: string | null
   account_label?: string | null
   prep?: CalendarAgendaPrep | null
+  related?: CalendarAgendaRelatedCall | null
 }
 
 export async function runMeetingsPrecallPrepToday(input: {
@@ -44,6 +60,25 @@ export async function runMeetingsPrecallPrepToday(input: {
   day_key: string
 }> {
   return backendPost(`/api/spaces/${input.spaceId}/precall-prep/today`, {
+    timezone: input.timezone,
+    refresh: input.refresh !== false,
+  })
+}
+
+export async function runMeetingsPrecallPrepEvent(input: {
+  spaceId: string
+  calendarEventId: string
+  timezone?: string
+  refresh?: boolean
+}): Promise<{
+  calendar_event_id: string
+  space_item_id: string
+  title: string
+  status: 'pending' | 'ready' | 'failed'
+  kind: 'created' | 'refreshed' | 'skipped'
+}> {
+  return backendPost(`/api/spaces/${input.spaceId}/precall-prep/event`, {
+    calendar_event_id: input.calendarEventId,
     timezone: input.timezone,
     refresh: input.refresh !== false,
   })

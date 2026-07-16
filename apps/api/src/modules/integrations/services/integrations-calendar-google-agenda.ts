@@ -6,6 +6,7 @@ type AgendaEvent = {
   start: string
   end: string
   all_day: boolean
+  location?: string | null
   video_url: string | null
   video_label: string | null
   html_link: string | null

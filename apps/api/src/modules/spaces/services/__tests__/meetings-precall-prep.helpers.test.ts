@@ -3,6 +3,7 @@ import {
   isEligiblePrecallEvent,
   localDayBounds,
   mapPrepItemToAgendaLink,
+  scoreRelatedCallMatch,
 } from '../meetings-precall-prep.helpers'
 
 describe('meetings-precall-prep.helpers', () => {
@@ -67,5 +68,31 @@ describe('meetings-precall-prep.helpers', () => {
     )
     expect(dayKey).toBe('2026-07-16')
     expect(new Date(startIso).getTime()).toBeLessThan(new Date(endIso).getTime())
+  })
+
+  it('scores related call matches by attendee overlap', () => {
+    const event = {
+      id: 'google:1',
+      title: 'Nate Tilley & Dylan — Weekly Check-In',
+      start: '2026-07-16T23:00:00.000Z',
+      end: '2026-07-16T23:45:00.000Z',
+      all_day: false,
+      video_url: 'https://meet.google.com/x',
+      attendees: [{ email: 'nate@example.com', name: 'Nate' }],
+    }
+    expect(
+      scoreRelatedCallMatch(event, {
+        title: 'Nate Tilley weekly',
+        call_date: '2026-07-16T23:05:00.000Z',
+        attendees: ['Nate Tilley', 'nate@example.com'],
+      }),
+    ).toBeGreaterThanOrEqual(10)
+    expect(
+      scoreRelatedCallMatch(event, {
+        title: 'Unrelated',
+        call_date: '2026-07-16T23:05:00.000Z',
+        attendees: ['other@example.com'],
+      }),
+    ).toBe(0)
   })
 })

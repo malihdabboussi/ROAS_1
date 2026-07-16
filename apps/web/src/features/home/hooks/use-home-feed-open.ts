@@ -16,12 +16,14 @@ import {
 } from '@/features/mission-control/services/missions.service'
 import type { Mission, UserNotification } from '@/features/mission-control/types'
 import type { YourTurnItem } from '@/features/spaces/services/your-turn.service'
+import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
 export function useHomeFeedOpen() {
   const router = useRouter()
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null)
   const [activeYourTurnItem, setActiveYourTurnItem] = useState<YourTurnItem | null>(null)
+  const [activeMeetingEvent, setActiveMeetingEvent] = useState<CalendarAgendaEvent | null>(null)
 
   const openMissionById = useCallback(async (missionId: string, orgId: string | null) => {
     try {
@@ -97,14 +99,27 @@ export function useHomeFeedOpen() {
 
   const closeMission = useCallback(() => setSelectedMission(null), [])
   const closeYourTurnItem = useCallback(() => setActiveYourTurnItem(null), [])
+  const openMeetingEvent = useCallback((event: CalendarAgendaEvent) => {
+    setActiveYourTurnItem(null)
+    setActiveMeetingEvent(event)
+  }, [])
+  const closeMeetingEvent = useCallback(() => setActiveMeetingEvent(null), [])
+  const openYourTurnItemFromMeeting = useCallback((item: YourTurnItem) => {
+    setActiveMeetingEvent(null)
+    setActiveYourTurnItem(normalizeYourTurnItemForHomeOpen(item))
+  }, [])
 
   return {
     selectedMission,
     activeYourTurnItem,
+    activeMeetingEvent,
     openMissionById,
     openYourTurnItem,
+    openYourTurnItemFromMeeting,
+    openMeetingEvent,
     openNotification,
     closeMission,
     closeYourTurnItem,
+    closeMeetingEvent,
   }
 }

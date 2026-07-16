@@ -10,7 +10,9 @@ import {
   isEligiblePrecallEvent,
   localDayBounds,
   mapPrepItemToAgendaLink,
+  scoreRelatedCallMatch,
   type AgendaPrepLink,
+  type AgendaRelatedCall,
   type PrecallAgendaEventLike,
 } from './meetings-precall-prep.helpers'
 
@@ -135,6 +137,59 @@ export class MeetingsPrecallPrepService {
     return result
   }
 
+  async runForEvent(input: {
+    supabase: SupabaseClient
+    userId: string
+    orgId: string | null
+    spaceId: string
+    calendarEventId: string
+    timezone?: string
+    refresh?: boolean
+    scope: RequestScope
+  }): Promise<{
+    calendar_event_id: string
+    space_item_id: string
+    title: string
+    status: 'pending' | 'ready' | 'failed'
+    kind: 'created' | 'refreshed' | 'skipped'
+  }> {
+    const calendarEventId = input.calendarEventId.trim()
+    if (!calendarEventId) throw new BadRequestException('calendar_event_id is required')
+
+    const timezone = input.timezone?.trim() || 'America/Los_Angeles'
+    const { startIso, endIso } = localDayBounds(new Date(), timezone)
+    const calendar = this.resolveCalendarService()
+    const agenda = await calendar.getAgenda(
+      input.supabase,
+      { id: input.userId },
+      input.scope,
+      { start: startIso, end: endIso, timezone },
+    )
+    const event = (agenda.events ?? []).find((row) => row.id === calendarEventId)
+    if (!event) {
+      throw new BadRequestException('Calendar event not found in today’s agenda')
+    }
+    if (!isEligiblePrecallEvent(event)) {
+      throw new BadRequestException('This calendar event is not eligible for pre-call prep')
+    }
+
+    const outcome = await this.upsertAndInvoke({
+      supabase: input.supabase,
+      userId: input.userId,
+      orgId: input.orgId,
+      spaceId: input.spaceId,
+      event,
+      refresh: input.refresh !== false,
+    })
+    return {
+      calendar_event_id: event.id,
+      space_item_id: outcome.itemId,
+      title: outcome.title,
+      status: 'pending',
+      kind: outcome.kind,
+    }
+  }
+
   async enrichAgendaEvents(input: {
     supabase: SupabaseClient
     userId: string
@@ -163,6 +218,92 @@ export class MeetingsPrecallPrepService {
           custom_data: custom,
         }),
       )
+    }
+    return map
+  }
+
+  async enrichAgendaRelatedCalls(input: {
+    supabase: SupabaseClient
+    userId: string
+    orgId: string | null
+    events: PrecallAgendaEventLike[]
+  }): Promise<Map<string, AgendaRelatedCall>> {
+    const map = new Map<string, AgendaRelatedCall>()
+    if (input.events.length === 0) return map
+
+    const spaceId = await this.resolveMeetingsSpaceId(input.supabase, input.userId, input.orgId)
+    if (!spaceId) return map
+
+    const { data: callRows } = await input.supabase
+      .from('space_items')
+      .select('id, space_id, title, status, custom_data, created_at')
+      .eq('space_id', spaceId)
+      .eq('custom_data->>entry_type', 'call')
+      .order('created_at', { ascending: false })
+      .limit(40)
+
+    const calls = (callRows ?? []) as Array<{
+      id: string
+      space_id: string
+      title?: string | null
+      custom_data?: Record<string, unknown> | null
+    }>
+    if (calls.length === 0) return map
+
+    const callIdSet = new Set(calls.map((c) => c.id))
+    const { data: followUpRows } = await input.supabase
+      .from('space_items')
+      .select('id, title, status, custom_data, parent_item_id')
+      .eq('space_id', spaceId)
+      .eq('custom_data->>entry_type', 'follow_up')
+      .order('created_at', { ascending: false })
+      .limit(120)
+
+    const followUpsByCall = new Map<string, AgendaRelatedCall['follow_ups']>()
+    for (const row of (followUpRows ?? []) as Array<{
+      id: string
+      title?: string | null
+      status?: string | null
+      custom_data?: Record<string, unknown> | null
+      parent_item_id?: string | null
+    }>) {
+      const sourceId = String(
+        row.custom_data?.source_call_item_id ?? row.parent_item_id ?? '',
+      ).trim()
+      if (!sourceId || !callIdSet.has(sourceId)) continue
+      const list = followUpsByCall.get(sourceId) ?? []
+      list.push({
+        id: row.id,
+        title: String(row.title ?? 'Untitled').slice(0, 200),
+        status: String(row.status ?? ''),
+      })
+      followUpsByCall.set(sourceId, list)
+    }
+
+    for (const event of input.events) {
+      let best: { call: (typeof calls)[number]; score: number } | null = null
+      for (const call of calls) {
+        const custom = call.custom_data ?? {}
+        const score = scoreRelatedCallMatch(event, {
+          title: call.title,
+          call_date: typeof custom.call_date === 'string' ? custom.call_date : null,
+          attendees: custom.attendees,
+        })
+        if (score <= 0) continue
+        if (!best || score > best.score) best = { call, score }
+      }
+      if (!best || best.score < 10) continue
+      const custom = best.call.custom_data ?? {}
+      map.set(event.id, {
+        space_id: String(best.call.space_id),
+        call_item_id: best.call.id,
+        title: String(best.call.title ?? 'Call').slice(0, 200),
+        recording_url:
+          typeof custom.recording_url === 'string' && custom.recording_url.trim()
+            ? custom.recording_url.trim()
+            : null,
+        follow_ups: followUpsByCall.get(best.call.id) ?? [],
+      })
     }
     return map
   }

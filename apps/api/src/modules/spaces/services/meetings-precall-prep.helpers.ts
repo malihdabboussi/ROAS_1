@@ -119,3 +119,66 @@ export function mapPrepItemToAgendaLink(row: {
     title: row.title ?? null,
   }
 }
+
+export type AgendaRelatedFollowUp = {
+  id: string
+  title: string
+  status: string
+}
+
+export type AgendaRelatedCall = {
+  space_id: string
+  call_item_id: string
+  title: string
+  recording_url: string | null
+  follow_ups: AgendaRelatedFollowUp[]
+}
+
+const RELATED_CALL_WINDOW_MS = 36 * 60 * 60 * 1000
+
+/** Score how well a Fathom call row matches a calendar event (higher is better). */
+export function scoreRelatedCallMatch(
+  event: PrecallAgendaEventLike,
+  call: {
+    title?: string | null
+    call_date?: string | null
+    attendees?: unknown
+  },
+): number {
+  const eventEmails = new Set(
+    event.attendees
+      .map((a) => a.email?.trim().toLowerCase())
+      .filter((v): v is string => Boolean(v)),
+  )
+  const callAttendees = Array.isArray(call.attendees)
+    ? call.attendees.map((a) => String(a).toLowerCase())
+    : []
+  let emailHits = 0
+  for (const tag of callAttendees) {
+    for (const email of eventEmails) {
+      if (tag.includes(email) || email.includes(tag) || tag.includes(email.split('@')[0] ?? '')) {
+        emailHits += 1
+        break
+      }
+    }
+  }
+  if (eventEmails.size > 0 && emailHits === 0) return 0
+
+  let score = emailHits * 10
+  const callMs = call.call_date ? new Date(call.call_date).getTime() : NaN
+  const eventMs = new Date(event.start).getTime()
+  if (Number.isFinite(callMs) && Number.isFinite(eventMs)) {
+    const delta = Math.abs(callMs - eventMs)
+    if (delta > RELATED_CALL_WINDOW_MS) return 0
+    score += Math.max(0, 20 - Math.floor(delta / (60 * 60 * 1000)))
+  }
+
+  const eventTitle = event.title.trim().toLowerCase()
+  const callTitle = String(call.title ?? '')
+    .trim()
+    .toLowerCase()
+  if (eventTitle && callTitle && (eventTitle.includes(callTitle) || callTitle.includes(eventTitle))) {
+    score += 5
+  }
+  return score
+}

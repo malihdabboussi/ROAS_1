@@ -15,6 +15,7 @@ import { usePersistedHomeFeedScope } from '@/features/home/components/HomeFeedSc
 import { RecentAgentConversationsCard } from '@/features/home/components/RecentAgentConversationsCard'
 import type { HomeCardId } from '@/features/home/types/home-cards'
 import type { HomeFeedScopeState } from '@/features/home/types/home-feed-scope'
+import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 
 type HomeRendererYourTurnItem = ComponentProps<typeof MyTasksCard>['items'][number]
 type HomeRendererNotification = Parameters<
@@ -32,6 +33,7 @@ export function HomeCardRenderer({
   myTasksItems,
   approvalItems,
   onOpenItem,
+  onOpenMeeting,
   onExpandMyTasks,
   onNotificationClick,
   onAccept,
@@ -47,6 +49,7 @@ export function HomeCardRenderer({
   myTasksItems: HomeRendererYourTurnItem[]
   approvalItems: HomeRendererYourTurnItem[]
   onOpenItem: (item: HomeRendererYourTurnItem) => void | Promise<void>
+  onOpenMeeting?: (event: CalendarAgendaEvent) => void
   onExpandMyTasks: () => void
   onNotificationClick: (notification: HomeRendererNotification) => void | Promise<void>
   onMyTasksChanged?: () => void
@@ -94,7 +97,7 @@ export function HomeCardRenderer({
     case 'completed_automations':
       return <CompletedSpaceAutomationsCard />
     case 'agenda':
-      return <AgendaCard onOpenItem={onOpenItem} />
+      return <AgendaCard onOpenItem={onOpenItem} onOpenMeeting={onOpenMeeting} />
     default:
       return null
   }

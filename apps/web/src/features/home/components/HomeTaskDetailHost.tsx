@@ -5,12 +5,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { orgService, type TeamRosterEntry } from '@/features/org/services/org.service'
+import { SpaceStatusCascadeConfirmProvider } from '@/features/spaces/components/SpaceStatusCascadeConfirmProvider'
 import { StatusEditorModal } from '@/features/spaces/components/StatusEditorModal'
 import { TaskDetailModal } from '@/features/spaces/components/task-detail/TaskDetailModal'
 import { YourTurnSubtaskDrawer } from '@/features/spaces/components/your-turn/YourTurnSubtaskDrawer'
 import { useSpaceFieldOptionActions } from '@/features/spaces/hooks/use-space-field-option-actions'
 import {
   fetchSpaceById,
+  fetchSpaceItem,
   fetchSpaceItems,
   updateSpace,
 } from '@/features/spaces/services/spaces.service'
@@ -224,30 +226,42 @@ function HomeSpaceTaskDetailHost({
 
         const mergedSchema = mergeSchema(loadedSpace.schema)
         const view = pickTaskDetailView(mergedSchema)
-        const targetItem = items.find((i) => i.id === itemId)
+        let targetItem = items.find((i) => i.id === itemId) ?? null
+        if (!targetItem) {
+          try {
+            targetItem = await fetchSpaceItem(spaceId, itemId)
+          } catch {
+            targetItem = null
+          }
+        }
         if (!targetItem) {
           toast.error('Task not found')
           onClose()
           return
         }
 
-        hydrateStoreForSpaceTask({ ...loadedSpace, schema: mergedSchema }, items, view.id)
+        const hydratedItems = items.some((i) => i.id === targetItem!.id)
+          ? items
+          : [targetItem, ...items]
+        hydrateStoreForSpaceTask(
+          { ...loadedSpace, schema: mergedSchema },
+          hydratedItems,
+          view.id,
+        )
 
-        if (loadedSpace.org_id) {
-          try {
-            const rows = await orgService.listRoster()
-            if (!cancelled) setRoster(rows)
-          } catch {
-            if (!cancelled) setRoster([])
-          }
-        } else {
-          setRoster([])
+        // Always load roster (personal = self + agents; org = team members).
+        // Skipping personal spaces left Assignee Empty even when assignee_id was set.
+        try {
+          const rows = await orgService.listRoster({ kind: 'all' })
+          if (!cancelled) setRoster(rows)
+        } catch {
+          if (!cancelled) setRoster([])
         }
 
         setSpace({ ...loadedSpace, schema: mergedSchema })
         setSchema(mergedSchema)
         setActiveView(view)
-        openSpaceItemWithHistory(targetItem, items, setSelectedItem, setTaskHistory)
+        openSpaceItemWithHistory(targetItem, hydratedItems, setSelectedItem, setTaskHistory)
       } catch (err) {
         if (!cancelled) {
           toast.error('Failed to open task')
@@ -319,8 +333,13 @@ function HomeSpaceTaskDetailHost({
     )
   }
 
+  const statusField = useMemo(
+    () => fieldsForUi.find((field) => field.id === 'status'),
+    [fieldsForUi],
+  )
+
   return (
-    <>
+    <SpaceStatusCascadeConfirmProvider statusField={statusField} spaceId={spaceId}>
       <TaskDetailModal
         item={selectedItem}
         allFields={fieldsForUi}
@@ -364,6 +383,6 @@ function HomeSpaceTaskDetailHost({
           await refresh()
         }}
       />
-    </>
+    </SpaceStatusCascadeConfirmProvider>
   )
 }

@@ -153,6 +153,17 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
           date_display_formats: expect.objectContaining({ call_date: 'date_time' }),
           visible_fields: expect.arrayContaining(['call_date', 'call_kind']),
         }),
+        expect.objectContaining({
+          id: 'agenda',
+          type: 'calendar',
+          calendar_config: expect.objectContaining({
+            date_field: 'call_date',
+            sources: expect.arrayContaining([
+              expect.objectContaining({ id: 'google_calendar', visible: true }),
+              expect.objectContaining({ id: 'outlook', visible: true }),
+            ]),
+          }),
+        }),
       ]),
     )
     expect(meetings?.schema.fields).toEqual(

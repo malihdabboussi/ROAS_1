@@ -488,10 +488,34 @@ export const CEO_SPACE_TEMPLATES: SpaceTemplateSeed[] = [
           show_closed_tasks: true,
         },
         {
+          id: 'agenda',
+          type: 'calendar',
+          name: 'Agenda',
+          calendar_config: {
+            date_field: 'call_date',
+            default_zoom: 'week',
+            week_start: 1,
+            show_task_list: false,
+            time_format: '12h',
+            sources: [
+              { id: 'space_items', type: 'space_items', visible: true, color: 'blue' },
+              { id: 'google_calendar', type: 'google_calendar', visible: true, color: 'green' },
+              { id: 'outlook', type: 'outlook', visible: true, color: 'blue' },
+            ],
+          },
+        },
+        {
           id: 'calendar',
           type: 'calendar',
           name: 'Calendar',
-          calendar_config: { date_field: 'call_date' },
+          calendar_config: {
+            date_field: 'call_date',
+            sources: [
+              { id: 'space_items', type: 'space_items', visible: true, color: 'blue' },
+              { id: 'google_calendar', type: 'google_calendar', visible: true, color: 'green' },
+              { id: 'outlook', type: 'outlook', visible: true, color: 'blue' },
+            ],
+          },
         },
         viewDocs('Meeting Logs', 'meeting-logs'),
         {

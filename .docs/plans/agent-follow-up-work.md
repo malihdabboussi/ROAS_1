@@ -4,13 +4,13 @@ Status: Open
 Found while: Shipping Home meeting detail + Meetings template Agenda view
 Files:
 
-- Live ROAS Meetings space `d957d348-c30a-4dbb-a089-ba3092332543` — template now has `agenda` calendar view; existing space schema still needs that view + external calendar sources merged
+- Live ROAS Meetings space `d957d348-c30a-4dbb-a089-ba3092332543` — **Resolved 2026-07-16:** Agenda view + calendar external sources backfilled (`viewIds` include `agenda`)
 - `apps/web/src/features/home/components/AgendaCard.tsx` (557 LOC; component soft limit 400)
 - `apps/api/src/modules/integrations/services/integrations-calendar.service.ts` (704 LOC; over 600)
 - `apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts` (531 LOC; near service limit)
-  Evidence: Catalog/tests updated for new spaces only; AgendaCard stayed large after extracting prep hook; calendar service grew with location + related enrichment.
-  Needed work: Backfill Meetings `schema.views` with Agenda; split AgendaCard nav/list; extract calendar parsers; optional notes field on meeting hub item; wire dedicated DiBi agent_key if not `vibey`.
-  Deferred because: Vertical slice shipped for Home; live schema backfill needs ROAS Supabase write; further splits out of critical path.
+  Evidence: AgendaCard stayed large after extracting prep hook; calendar service grew with location + related enrichment.
+  Needed work: Split AgendaCard nav/list; extract calendar parsers; meeting notes field on hub item; wire dedicated DiBi agent_key if not `vibey`; Home meeting detail click-on-row (not only Open meeting CTA).
+  Deferred because: Vertical slice shipped; further splits/notes out of critical path.
 
 
 ## 2026-07-16 - [OPS] Deploy mission execution lease + Pre-call recovery

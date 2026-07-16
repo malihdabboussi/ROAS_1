@@ -12,9 +12,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
-import { minimalSpaceYourTurnItem } from '@/features/home/lib/home-your-turn-item'
+import { useAgendaPrepActions } from '@/features/home/hooks/use-agenda-prep-actions'
 import { useOrgStore } from '@/features/org/store/use-org-store'
-import { cachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
 import type { YourTurnItem } from '@/features/spaces/services/your-turn.service'
 import {
   agendaBoardFallbackWindow,
@@ -35,7 +34,6 @@ import { cachedFetch, peekCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { getIntegrationLogoPath } from '@/lib/integrations/integration-logo'
 import {
   fetchCalendarAgenda,
-  runMeetingsPrecallPrepToday,
   type CalendarAgendaAccount,
   type CalendarAgendaEvent,
 } from '@/lib/services/calendar-api'
@@ -96,21 +94,12 @@ function rangeDetail(d: Date, r: DateRange): string {
   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 }
 
-function resolveMeetingsSpaceId(): string | null {
-  const spaces = cachedSpaces.peek() ?? []
-  const meetings = spaces.find((space) => {
-    const schema = space.schema as { icon?: string; fields?: Array<{ id?: string }> } | null
-    const hasEntryType = schema?.fields?.some((f) => f.id === 'entry_type')
-    const title = String(space.title ?? '').toLowerCase()
-    return hasEntryType && (schema?.icon === 'video' || title === 'meetings')
-  })
-  return meetings?.id ?? null
-}
-
 export function AgendaCard({
   onOpenItem,
+  onOpenMeeting,
 }: {
   onOpenItem?: (item: YourTurnItem) => void | Promise<void>
+  onOpenMeeting?: (event: CalendarAgendaEvent) => void
 } = {}) {
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
@@ -120,7 +109,6 @@ export function AgendaCard({
   const [rangeOpen, setRangeOpen] = useState(false)
   const [provider, setProvider] = useState<ProviderFilter>('all')
   const [events, setEvents] = useState<CalendarAgendaEvent[]>([])
-  const [prepRunning, setPrepRunning] = useState(false)
   const [accounts, setAccounts] = useState<CalendarAgendaAccount[]>([])
   const [connected, setConnected] = useState<{ google_calendar: boolean; outlook: boolean }>({
     google_calendar: false,
@@ -299,46 +287,12 @@ export function AgendaCard({
     [openWorkspaceSettings],
   )
 
-  const openPrepItem = useCallback(
-    (ev: CalendarAgendaEvent) => {
-      if (!ev.prep || !onOpenItem) return
-      void onOpenItem(
-        minimalSpaceYourTurnItem(
-          ev.prep.space_id,
-          ev.prep.space_item_id,
-          ev.prep.title ?? `Prep — ${ev.title}`,
-          activeOrgId,
-        ),
-      )
-    },
-    [activeOrgId, onOpenItem],
-  )
-
-  const runPrepToday = useCallback(async () => {
-    const spaceId = resolveMeetingsSpaceId()
-    if (!spaceId) {
-      toast.error('Open or create your Meetings space first, then try Prep today again.')
-      return
-    }
-    setPrepRunning(true)
-    try {
-      const result = await runMeetingsPrecallPrepToday({
-        spaceId,
-        timezone,
-        refresh: true,
-      })
-      toast.success(
-        `Prep started for today (${result.created + result.refreshed} meeting${
-          result.created + result.refreshed === 1 ? '' : 's'
-        }).`,
-      )
-      await load()
-    } catch (error) {
-      toast.error(sanitizeUserError(error, 'Could not start pre-call prep.'))
-    } finally {
-      setPrepRunning(false)
-    }
-  }, [load, timezone])
+  const { prepRunning, handlePrepClick, runPrepToday } = useAgendaPrepActions({
+    timezone,
+    activeOrgId,
+    onOpenItem,
+    reloadAgenda: load,
+  })
 
   return (
     <div className="section-card card-elevated flex h-[420px] flex-col overflow-hidden">
@@ -553,7 +507,10 @@ export function AgendaCard({
                                 ev={ev}
                                 isExpanded={eventKey(ev) === selectedEventKey}
                                 onSelect={() => setSelectedEventKey(eventKey(ev))}
-                                onOpenPrep={() => openPrepItem(ev)}
+                                onOpenMeeting={
+                                  onOpenMeeting ? () => onOpenMeeting(ev) : undefined
+                                }
+                                onOpenPrep={() => handlePrepClick(ev)}
                                 nowTick={nowTick}
                                 showAccountLabel={showAccountLabel}
                               />
@@ -572,7 +529,10 @@ export function AgendaCard({
                         ev={ev}
                         isExpanded={eventKey(ev) === selectedEventKey}
                         onSelect={() => setSelectedEventKey(eventKey(ev))}
-                        onOpenPrep={() => openPrepItem(ev)}
+                        onOpenMeeting={
+                          onOpenMeeting ? () => onOpenMeeting(ev) : undefined
+                        }
+                        onOpenPrep={() => handlePrepClick(ev)}
                         nowTick={nowTick}
                         showAccountLabel={showAccountLabel}
                       />

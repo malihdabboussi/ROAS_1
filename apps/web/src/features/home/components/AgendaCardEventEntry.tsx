@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FileText, Video } from 'lucide-react'
+import { FileText, MapPin, Video } from 'lucide-react'
 import type { CalendarAgendaEvent, CalendarAttendee } from '@/lib/services/calendar-api'
 
 const GCAL_EVENT_COLORS: Record<string, { border: string; bg: string; text: string }> = {
@@ -109,6 +109,7 @@ export function AgendaEventEntry({
   ev,
   isExpanded,
   onSelect,
+  onOpenMeeting,
   onOpenPrep,
   nowTick,
   showAccountLabel,
@@ -116,6 +117,7 @@ export function AgendaEventEntry({
   ev: CalendarAgendaEvent
   isExpanded: boolean
   onSelect: () => void
+  onOpenMeeting?: () => void
   onOpenPrep?: () => void
   nowTick: number
   showAccountLabel: boolean
@@ -156,6 +158,12 @@ export function AgendaEventEntry({
             {formatTimeRange(ev)}
             {accountLabel ? ` · ${accountLabel}` : ''}
           </p>
+          {ev.location?.trim() ? (
+            <p className="typo-caption text-muted-foreground mt-1 flex items-center gap-1">
+              <MapPin className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="truncate">{ev.location.trim()}</span>
+            </p>
+          ) : null}
 
           {ev.attendees.length > 0 && (
             <div className="mt-2.5 flex items-center gap-2">
@@ -184,7 +192,19 @@ export function AgendaEventEntry({
           )}
 
           <div className="mt-3 flex flex-col gap-2">
-            {ev.prep && onOpenPrep ? (
+            {onOpenMeeting ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOpenMeeting()
+                }}
+                className="button-glass-secondary body-3 flex w-full items-center justify-center gap-2 rounded-lg py-2 font-semibold"
+              >
+                Open meeting
+              </button>
+            ) : null}
+            {onOpenPrep ? (
               <button
                 type="button"
                 onClick={(e) => {
@@ -194,7 +214,7 @@ export function AgendaEventEntry({
                 className="border-border bg-secondary text-foreground hover:bg-hover-subtle body-3 flex w-full items-center justify-center gap-2 rounded-lg border py-2 font-semibold transition-colors"
               >
                 <FileText className="h-4 w-4 text-muted-foreground" aria-hidden />
-                {prepChipLabel(ev.prep.status)}
+                {ev.prep ? prepChipLabel(ev.prep.status) : 'Start prep'}
               </button>
             ) : null}
             {ev.video_url ? (

@@ -4,7 +4,10 @@ import type { RequestScope } from '@vibey/api-shared'
 import { OrgScopeService } from '@vibey/api-shared'
 import { ComposioService } from '../../composio/services/composio.service'
 import { MeetingsPrecallPrepService } from '../../spaces/services/meetings-precall-prep.service'
-import type { AgendaPrepLink } from '../../spaces/services/meetings-precall-prep.helpers'
+import type {
+  AgendaPrepLink,
+  AgendaRelatedCall,
+} from '../../spaces/services/meetings-precall-prep.helpers'
 import { IntegrationsRepository } from '../repositories/integrations.repository'
 import {
   assertCalendarProvider,
@@ -37,6 +40,7 @@ export type CalendarAgendaEvent = {
   start: string
   end: string
   all_day: boolean
+  location: string | null
   video_url: string | null
   video_label: string | null
   html_link: string | null
@@ -46,6 +50,7 @@ export type CalendarAgendaEvent = {
   account_id?: string | null
   account_label?: string | null
   prep?: AgendaPrepLink | null
+  related?: AgendaRelatedCall | null
 }
 
 export type CalendarProvider = CalendarAgendaEvent['source']
@@ -229,17 +234,26 @@ export class IntegrationsCalendarService {
 
     if (this.precallPrep && events.length > 0) {
       try {
-        const prepMap = await this.precallPrep.enrichAgendaEvents({
-          supabase,
-          userId: user.id,
-          orgId: scope.orgId,
-          events,
-        })
+        const [prepMap, relatedMap] = await Promise.all([
+          this.precallPrep.enrichAgendaEvents({
+            supabase,
+            userId: user.id,
+            orgId: scope.orgId,
+            events,
+          }),
+          this.precallPrep.enrichAgendaRelatedCalls({
+            supabase,
+            userId: user.id,
+            orgId: scope.orgId,
+            events,
+          }),
+        ])
         for (const event of events) {
           event.prep = prepMap.get(event.id) ?? null
+          event.related = relatedMap.get(event.id) ?? null
         }
       } catch {
-        // Agenda still works without prep enrichment.
+        // Agenda still works without prep / related enrichment.
       }
     }
 
@@ -547,12 +561,14 @@ export class IntegrationsCalendarService {
         }
       }
 
+      const locationRaw = typeof ev.location === 'string' ? ev.location.trim() : ''
       out.push({
         id: `google:${id}`,
         title,
         start: startIso,
         end: endIso,
         all_day: allDay,
+        location: locationRaw || null,
         video_url: videoUrl,
         video_label: videoLabel,
         html_link: htmlLink,
@@ -630,12 +646,20 @@ export class IntegrationsCalendarService {
         }
       }
 
+      const locWrap = this.asRecord(ev.location)
+      const locationRaw =
+        locWrap && typeof locWrap.displayName === 'string'
+          ? locWrap.displayName.trim()
+          : typeof ev.location === 'string'
+            ? ev.location.trim()
+            : ''
       out.push({
         id: `outlook:${id}`,
         title,
         start: startRaw,
         end: endRaw,
         all_day: allDay,
+        location: locationRaw || null,
         video_url: videoUrl,
         video_label: videoLabel,
         html_link: htmlLink,

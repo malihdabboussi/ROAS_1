@@ -5,7 +5,8 @@ import { ChevronDown, Plus } from 'lucide-react'
 import { HomeDashboardV4CustomizePopover } from '@/components/home-dashboard-v4/HomeDashboardV4CustomizePopover'
 import { HomeCardRenderer } from '@/features/home/components/cards/HomeCardRenderer'
 import { HomeSortableCardsGrid } from '@/features/home/components/HomeSortableCardsGrid'
-import { HOME_CARD_DEFINITIONS, homeCardDefinition } from '@/features/home/config/home-cards.config'
+import { MyTasksPanel } from '@/features/home/components/MyTasksPanel'
+import { HOME_CARD_DEFINITIONS, homeCardDefinition, homeCardGridSize } from '@/features/home/config/home-cards.config'
 import { HomeCustomizeProvider } from '@/features/home/context/home-customize-context'
 import { useHomeLayout } from '@/features/home/hooks/use-home-layout'
 import type { HomeCardId } from '@/features/home/types/home-cards'
@@ -13,6 +14,7 @@ import type { HomeFeedScopeState } from '@/features/home/types/home-feed-scope'
 import type { UserNotification } from '@/features/mission-control/types'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import type { YourTurnItem } from '@/features/spaces/services/your-turn.service'
+import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { cn } from '@/lib/utils/cn'
 
 export function HomeCardsGrid({
@@ -25,6 +27,7 @@ export function HomeCardsGrid({
   myTasksItems,
   approvalItems,
   onOpenItem,
+  onOpenMeeting,
   onNotificationClick,
   onMyTasksChanged,
   onAccept,
@@ -40,6 +43,7 @@ export function HomeCardsGrid({
   myTasksItems: YourTurnItem[]
   approvalItems: YourTurnItem[]
   onOpenItem: (item: YourTurnItem) => void | Promise<void>
+  onOpenMeeting?: (event: CalendarAgendaEvent) => void
   onNotificationClick: (notification: UserNotification) => void | Promise<void>
   onMyTasksChanged?: () => void
   onAccept: (item: YourTurnItem) => void | Promise<void>
@@ -47,8 +51,10 @@ export function HomeCardsGrid({
   variant?: 'default' | 'v4'
 }) {
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
-  const { layout, editing, setEditing, addCard, removeCard, reorderCards } = useHomeLayout()
+  const { layout, editing, setEditing, addCard, removeCard, reorderCards, setCardSize } =
+    useHomeLayout()
   const [addOpen, setAddOpen] = useState(false)
+  const [myTasksPanelOpen, setMyTasksPanelOpen] = useState(false)
 
   const visibleCardIds = useMemo(() => {
     return layout.cardIds.filter((id) => {
@@ -76,6 +82,8 @@ export function HomeCardsGrid({
     myTasksItems,
     approvalItems,
     onOpenItem,
+    onOpenMeeting,
+    onExpandMyTasks: () => setMyTasksPanelOpen(true),
     onNotificationClick,
     onAccept,
     onDismiss,
@@ -194,21 +202,43 @@ export function HomeCardsGrid({
           {editing ? (
             <HomeSortableCardsGrid
               cardIds={visibleCardIds}
+              cardSizes={layout.cardSizes}
               onReorder={reorderCards}
               onRemove={removeCard}
+              onSetSize={setCardSize}
               renderCard={renderCard}
+              variant={variant}
             />
           ) : (
             <div className={isV4 ? 'hd4-card-grid' : 'grid grid-cols-1 gap-6 md:grid-cols-2'}>
-              {visibleCardIds.map((cardId) => (
-                <div key={cardId} className="relative min-w-0">
-                  {renderCard(cardId)}
-                </div>
-              ))}
+              {visibleCardIds.map((cardId) => {
+                const size = homeCardGridSize(layout, cardId)
+                return (
+                  <div
+                    key={cardId}
+                    className={cn(
+                      'relative min-w-0',
+                      size === 'full' && 'hd4-card-grid-item-full',
+                    )}
+                  >
+                    {renderCard(cardId)}
+                  </div>
+                )
+              })}
             </div>
           )}
         </HomeCustomizeProvider>
       )}
+
+      <MyTasksPanel
+        open={myTasksPanelOpen}
+        onOpenChange={setMyTasksPanelOpen}
+        scope={myTasksScope}
+        updateScope={updateMyTasksScope}
+        loading={myTasksLoading}
+        items={myTasksItems}
+        onOpenItem={onOpenItem}
+      />
     </div>
   )
 }
