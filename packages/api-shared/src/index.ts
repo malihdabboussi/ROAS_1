@@ -279,6 +279,14 @@ export type {
 } from './types/agent-tool-error-contract'
 export { normalizeAgentToolFailureFields } from './utils/agent-tool-error-normalizer'
 export type { NormalizedAgentToolFailureFields } from './utils/agent-tool-error-normalizer'
+export {
+  looksLikeFathomSummaryMarkdown,
+  repairBrokenMarkdownLinks,
+  sanitizeFathomSummaryMarkdown,
+  stripAtxHeaders,
+  stripMarkdownEmphasis,
+  unwrapFathomProseLinks,
+} from './utils/sanitize-fathom-summary-markdown'
 
 // Conversation sharing
 export {

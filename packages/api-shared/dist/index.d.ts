@@ -72,6 +72,7 @@ export type { AssetRef, AssetRefType, ExternalAssetProvider, ExternalAssetRef, S
 export type { AgentToolCorrectionPlan, AgentToolErrorContract, AgentToolErrorEffectState, AgentToolErrorObservability, AgentToolErrorReliability, AgentToolFallbackPlan, AgentToolRetryPolicy, AgentToolRetryPolicyMode, AgentToolUserExplanation, } from './types/agent-tool-error-contract';
 export { normalizeAgentToolFailureFields } from './utils/agent-tool-error-normalizer';
 export type { NormalizedAgentToolFailureFields } from './utils/agent-tool-error-normalizer';
+export { looksLikeFathomSummaryMarkdown, repairBrokenMarkdownLinks, sanitizeFathomSummaryMarkdown, stripAtxHeaders, stripMarkdownEmphasis, unwrapFathomProseLinks, } from './utils/sanitize-fathom-summary-markdown';
 export { ConversationIdParamSchema, ConversationShareEntityTypeSchema, ConversationShareIdParamSchema, ConversationShareLevelSchema, UpsertConversationShareSchema, } from './types/conversation-sharing';
 export type { ConversationIdParam, ConversationShareEntityType, ConversationShareIdParam, ConversationShareLevel, ConversationShareRecord, UpsertConversationShareDto, } from './types/conversation-sharing';
 export { CUSTOMER_INTERACTION_ROUTE_EVENT, INTERACTION_CHANNELS, INTERACTION_PARTICIPANT_ROLES, buildInteractionDedupeKey, parseInteractionEnvelope, } from './types/customer-interaction';

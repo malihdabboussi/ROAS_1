@@ -1,5 +1,19 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 14:46] - [FIX]
+
+What: Shipped missing `@vibey/api-shared` `sanitizeFathomSummaryMarkdown` source + barrel export so `roas-api` Nest builds succeed again.
+Why: Prep today kept toasting "Could not start pre-call prep" because production API deploys failed (`TS2305` — export not on main) and the prep route never went live.
+Impact: Redeploy `roas-api`; then retry **Prep today** on Home Agenda.
+Files: `packages/api-shared/src/utils/sanitize-fathom-summary-markdown.ts` (+test), `sanitize-fathom-summary-markdown.ts` barrel, `index.ts`, `package.json`, matching `dist/`
+
+## [2026-07-16 14:40] - [FIX]
+
+What: Page Grader `/launcher?task=<id>` now opens the task detail dialog (was ignored — Launcher hub only). `roas-api` `work.url` always returns the Portal deep-link (ClickUp on `clickup_task_*`).
+Why: ROAS “Open in Page Grader” landed on the request tiles page with no task open.
+Impact: After Portal frontend + `roas-api` redeploy, `https://portal.roas.io/launcher?task=9925e4af-…` opens that workload task.
+Files: page-grader `useLauncherTaskDeepLink.ts`, `Launcher.tsx`, `useUnifiedTasks.ts`, `roas-api/index.ts`
+
 ## [2026-07-16 14:37] - [FIX]
 
 What: Exported missing `peekCachedFetch` from `keyed-fetch-cache` so production `roas-web` builds again.
@@ -671,3 +685,24 @@ What: Media gallery/chat open restored as a right slide-out (`MediaImageWorkspac
 Why: Full-view replace felt like a screen reload; edits failed because OpenRouter auth was broken while Gemini was available — agent framed it as "image generation unavailable".
 Impact: Hard-refresh web; agent-api hot-reload. Click media → gallery stays, editor slides from the right. Aspect ratio + describe edits should succeed via Gemini when OpenRouter is unauthorized. Fix/rotate `OPENROUTER_API_KEY` in `apps/api/.env` for GPT Image 2 path.
 Files: `MediaImageWorkspacePanelHost.tsx`, `SpaceMediaView.tsx`, `SpaceItemsContainer.tsx`, `MediaImageWorkspace.tsx`, deleted `MediaDeepView.tsx`, `artifact-legacy-media-generate.service.ts` (+test), `artifact-legacy-media-provider.service.ts`, `platform-failure.ts`
+
+## [2026-07-16 14:39] - [FIX]
+
+What: Open in Canva connect no longer fails when Composio reuses an existing account (`redirect_url: null`). Treats reuse as already connected and retries handoff; force_new OAuth if needed; same-tab fallback when popup blocked.
+Why: Connect API returned 201 with reused connection and no authorize URL; frontend threw "Couldn't start Canva connect" instead of completing the handoff.
+Impact: Hard-refresh web. Open in Canva → if Canva is already linked in Composio, design opens; otherwise OAuth starts (popup or same tab).
+Files: `connect-composio-integration.ts` (+test), `MediaImageWorkspace.tsx`
+
+## [2026-07-16 14:43] - [FIX]
+
+What: Removed OpenRouter→Gemini auth fallback for image generate/edit. GPT Image 2 (`openai/gpt-5.4-image-2`) stays on OpenRouter only.
+Why: User wants GPT image generation, not a silent Gemini fallback when the OpenRouter key fails.
+Impact: Image gen/edit fail clearly if `OPENROUTER_API_KEY` is invalid. Local key currently returns OpenRouter 401 User not found — replace key in `apps/api/.env` (and root `.env`) then restart `pnpm dev:agentapi`.
+Files: `artifact-legacy-media-generate.service.ts` (+test), `artifact-legacy-media-provider.service.ts`
+
+## [2026-07-16 14:46] - [FIX]
+
+What: Slack agent search no longer dies on bot-token `not_allowed_token_type`. Search uses stored user token when present; otherwise falls back to bot-readable channel history (`in:#channel` + keyword filter). OAuth now requests search scopes via `user_scope` and persists `metadata.user_access_token`.
+Why: Slack was “connected” (bot token) but `search.messages` requires a user token — agents paraphrased the opaque error as a connectivity issue.
+Impact: Existing installs can search via channel history without reconnect; reconnect Slack once for native workspace search. Deploy roas-api.
+Files: `slack.service.ts`, `slack-agent-tools.service.ts` (+test), `slack-api-integration.shared.ts`
