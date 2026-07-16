@@ -17,15 +17,13 @@ Entry template:
 
 ## 2026-07-16 - [OPS] Deploy mission-worker claim/abort stuck fixes
 
-Status: In progress
+Status: Resolved
+Resolved: 2026-07-16 — pushed `07e1d5d2`, Railway mission-worker + queue-worker redeploy SUCCESS (changelog 14:17).
 Found while: Missions stuck in progress / Pre-call blocked
 Files:
 
 - `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`
 - `apps/mission-worker/src/modules/missions/services/subtask-abort-registry.service.ts`
-  Evidence: Live Pre-call requeued via manager retry; claim-accepts-blocked + abort-previous-on-register need Railway rebuild from git.
-  Needed work: Commit/push + redeploy `roas-workers` mission-worker.
-  Deferred because: Deploying now per user request.
 
 ## 2026-07-16 - [ARCH] Split artifact-legacy-media-generate over 600 LOC
 

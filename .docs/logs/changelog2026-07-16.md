@@ -1,5 +1,15 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 14:17] - [FIX]
+
+What: Pushed mission-worker stuck-loop fixes (`07e1d5d2`) and redeployed Railway `mission-worker` + `queue-worker` to SUCCESS.
+
+Why: Claim/abort/awareness fixes were local-only until git deploy.
+
+Impact: Blocked Pre-call retries can claim again; duplicate runs abort cleanly; awareness scheduler no longer crashes on missing column (column already live).
+
+Files: Railway `roas-workers` mission-worker + queue-worker; commit `07e1d5d2`
+
 ## [2026-07-16 14:15] - [FIX]
 
 What: Unstuck Webinar Fulfillment Pre-call runs (manual manager retry). Root fixes: execute claim now accepts `blocked` (was only pending/revision → silent skip), abort-registry aborts prior run on re-register, humanize `terminated`, soft-fail + migration for missing `profiles.awareness_loop_enabled`. Applied column on live DB. Fly runtime was healthy again after 502/503 storm.
