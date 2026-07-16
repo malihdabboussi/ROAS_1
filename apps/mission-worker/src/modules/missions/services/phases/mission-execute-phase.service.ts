@@ -1616,9 +1616,15 @@ export class MissionExecutePhaseService {
     const requiredAction = String(record.required_action ?? '')
     const requiredArtifactType = String(record.required_artifact_type ?? '')
     if (
-      !['agent_skill', 'document_artifact', 'presentation_artifact', 'brain_ingestion'].includes(
-        artifactKind,
-      )
+      ![
+        'agent_skill',
+        'document_artifact',
+        'presentation_artifact',
+        'brain_ingestion',
+        'ad_artifact',
+        'funnel_artifact',
+        'media_artifact',
+      ].includes(artifactKind)
     ) {
       return null
     }

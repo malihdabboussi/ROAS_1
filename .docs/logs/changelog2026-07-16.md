@@ -1,5 +1,25 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 11:25] - [FIX]
+
+What: Accept playbook output contracts `ad_artifact`, `funnel_artifact`, and `media_artifact` on mission plan create + execute normalize.
+
+Why: Webinar Fulfillment plan expansion succeeded but `POST /internal/missions/plan` 400'd on artifact_kind enum — missions failed with "Had trouble saving the plan".
+
+Impact: Playbook missions with ads/funnel contracts can save plans after roas-api + mission-worker redeploy.
+
+Files: `mission-plan.dto.ts`, `mission-deliverables.repository.ts`, `mission-execute-phase.service.ts`
+
+## [2026-07-16 11:20] - [FIX]
+
+What: Pushed `6ac5af77` and redeployed production — Railway `roas-platform` (mission-worker) + `queue-worker` SUCCESS; Vercel `roas-api` + `roas-web` READY on that commit. Confirmed mission-worker `LISTEN mission_outbox_new` on ROAS DB.
+
+Why: Worker was not claiming outbox; API/web needed the outbox + description fixes live.
+
+Impact: Mission dispatch path is live again. Local `RAILWAY_TOKEN` in secrets remains Unauthorized for CLI logs (GitHub-connected deploys still work).
+
+Files: deploy `6ac5af77`
+
 ## [2026-07-16 11:10] - [FIX]
 
 What: Fixed personal-user mission create never enqueueing `mission.plan.requested` (RLS blocked `mission_outbox` writes; Vercel API had no `SUPABASE_DIRECT_DB_URL`). Outbox enqueue now uses service role; added personal outbox write RLS; mission description is expandable; list status label aligned to Queue. Manually expanded both stuck Webinar Fulfillment missions to `pending_approval` with plans/subtasks. Added `SUPABASE_DIRECT_DB_URL` on Vercel `roas-api`.
@@ -164,10 +184,24 @@ Impact: Users see what Autopilot means and where to set campaign strategy; test 
 Files: `AwarenessToggle.tsx`, `VibeyOpsDesk.tsx`, `VibeyOpsDeskBriefing.tsx`, `messages.config.ts`, org_credit_purchases (prod)
 
 
-## [2026-07-16 10:51] - [FEATURE]
+## [2026-07-16 11:13] - [FIX]
 
-What: Talk to Vibey on Ops Desk now auto-opens sidebar chat and sends a kickoff so Vibey starts the check-in (floor notice + what to focus on today), with Ops Desk context attached.
-Why: Opening an empty composer wasn't functional enough — users need Vibey to initiate.
-Impact: Click Talk to Vibey → new Vibey thread with a live briefing ask.
-Files: `VibeyOpsDeskTalkButton.tsx`, `build-ops-desk-talk-kickoff.ts`, `use-global-chat-store.ts` (railIntent on seed), tests
+What: Personal Slack connections are now visible and usable in org/workspace context — same cross-context pattern as Fathom/Fireflies. Status/overview/agent integration context include personal Slack; `getIntegration` (and metadata/error updates) fall back to the personal row when org-scoped lookup misses.
+Why: Slack OAuth saved as `scope_mode: personal` / `org_id: null`, but chat/agent status checks filtered by org and reported disconnected even when Settings showed connected.
+Impact: Agent `check_integration_connection` and Slack tools see a personally connected Slack workspace while the user is in an org workspace.
+Files: `integrations-status.service.ts`, `integrations-overview.service.ts`, `integration-context.service.ts`, `slack.repository.ts`, tests
 
+## [2026-07-16 11:15] - [DOCS]
+
+What: Drafted Page Grader native send-tasks API contract + implementation plan (locked decisions: bulk bar, pick client, sync-back, assignee mapping).
+Why: Need a shared contract before ROAS + Page Grader build the handoff.
+Impact: Plan ready at `.docs/plans/page-grader-send-tasks.md`.
+Files: `.docs/plans/page-grader-send-tasks.md`
+
+
+## [2026-07-16 11:18] - [FIX]
+
+What: Home My tasks detail loads personal team roster (self + agents) instead of forcing `roster=[]` for non-org spaces; Assignee falls back to “Me” when assignee_id is the current user.
+Why: CEO HQ tasks are personal — opening from Home left Assignee Empty and activity showed a raw user UUID even though assignee_id was set correctly.
+Impact: Open a My tasks item from Home — Assignee shows Me, not Empty.
+Files: HomeTaskDetailHost.tsx, task-meta-fields-helpers.ts, TaskMetaFields.tsx, TaskMetaCoreFields.tsx
