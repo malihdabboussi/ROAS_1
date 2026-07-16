@@ -3,6 +3,7 @@ import { Injectable, Logger, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Queue } from 'bullmq'
+import { sanitizeFathomSummaryMarkdown } from '@vibey/api-shared'
 import { AGENT_RUNTIME_AUTOMATION_QUEUE } from '../../agent-runtime/agent-runtime-queues'
 import { CreditsService } from '../../billing/services/credits.service'
 import { BrainImportJobsService } from '../../brain/services/brain-import-jobs.service'
@@ -73,6 +74,7 @@ const SCHEDULE_ALLOWED_ACTION_TYPES = new Set<string>([
   'ingest_youtube_channel_to_agent_brain',
   'send_to_agent',
   'send_to_cursor',
+  'meetings_precall_prep',
 ])
 
 const YOUTUBE_CHANNEL_VIDEOS_PATH = '/v1/youtube/channel-videos'
@@ -313,9 +315,9 @@ export abstract class SpaceAutomationServiceBase19 extends SpaceAutomationServic
       .join('\n')
       .slice(0, 20000)
     const defaultSummary = this.objectRecord(event.default_summary)
-    const summary = String(defaultSummary.markdown_formatted ?? '')
-      .trim()
-      .slice(0, 20000)
+    const summary = sanitizeFathomSummaryMarkdown(
+      String(defaultSummary.markdown_formatted ?? ''),
+    ).slice(0, 20000)
     const recordedBy = this.objectRecord(event.recorded_by)
     const meetingId = String(
       event.id ?? event.recording_id ?? event.call_id ?? `fathom-${Date.now()}`,

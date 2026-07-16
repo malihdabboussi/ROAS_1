@@ -53,7 +53,10 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
     )
 
     expect(automationsBySlug['ceo-hq']).toEqual(['Morning CEO Brief', 'End of Day Close'])
-    expect(automationsBySlug['meetings']).toEqual(['Fathom Meeting Log'])
+    expect(automationsBySlug['meetings']).toEqual([
+      'Fathom Meeting Log',
+      'Morning Pre-call Prep',
+    ])
     expect(automationsBySlug['sales-pipeline']).toEqual(['Fathom Call Follow-Ups'])
     expect(automationsBySlug['operations-hub']).toEqual(['Weekly Space Digest'])
     expect(automationsBySlug['marketing-campaign']).toEqual(['Weekly Space Digest'])
@@ -83,6 +86,11 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
           visible_fields: expect.arrayContaining(['status', 'attendees', 'recording_url']),
         }),
         expect.objectContaining({
+          id: 'prep',
+          type: 'list',
+          field_value_filters: { entry_type: 'prep' },
+        }),
+        expect.objectContaining({
           id: 'follow-ups',
           type: 'kanban',
           field_value_filters: { entry_type: 'follow_up' },
@@ -107,13 +115,20 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
           options: expect.arrayContaining([
             expect.objectContaining({ id: 'call' }),
             expect.objectContaining({ id: 'follow_up' }),
+            expect.objectContaining({ id: 'prep' }),
           ]),
         }),
+        expect.objectContaining({ id: 'calendar_event_id' }),
+        expect.objectContaining({ id: 'prep_status' }),
       ]),
     )
     expect(meetings?.automations[0]?.trigger).toMatchObject({
       type: 'external_fathom_recording_ready',
     })
+    expect(meetings?.automations[1]?.trigger).toMatchObject({ type: 'schedule' })
+    expect((meetings?.automations[1]?.actions ?? []).map((a) => a.type)).toContain(
+      'meetings_precall_prep',
+    )
     const actionTypes = (meetings?.automations[0]?.actions ?? []).map((action) => action.type)
     expect(actionTypes).not.toContain('create_task')
     expect(actionTypes).toContain('change_status')
@@ -136,13 +151,14 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
           id: 'all-meetings',
           column_widths: expect.objectContaining({ attendees: 360 }),
           date_display_formats: expect.objectContaining({ call_date: 'date_time' }),
-          visible_fields: expect.arrayContaining(['call_date']),
+          visible_fields: expect.arrayContaining(['call_date', 'call_kind']),
         }),
       ]),
     )
     expect(meetings?.schema.fields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'call_date', name: 'Call Date' }),
+        expect.objectContaining({ id: 'call_kind', name: 'Call Kind' }),
         expect.objectContaining({ id: 'due_date', name: 'Due Date' }),
       ]),
     )

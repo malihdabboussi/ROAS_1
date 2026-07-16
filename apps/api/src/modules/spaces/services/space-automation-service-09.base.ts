@@ -78,6 +78,7 @@ const SCHEDULE_ALLOWED_ACTION_TYPES = new Set<string>([
   'ingest_youtube_channel_to_agent_brain',
   'send_to_agent',
   'send_to_cursor',
+  'meetings_precall_prep',
 ])
 
 const YOUTUBE_CHANNEL_VIDEOS_PATH = '/v1/youtube/channel-videos'
@@ -620,6 +621,8 @@ export abstract class SpaceAutomationServiceBase09 extends SpaceAutomationServic
         return this.execEnrichSocialResearchItems(action, ctx, templateCtx)
       case 'ingest_youtube_channel_to_agent_brain':
         return this.execIngestYoutubeChannelToAgentBrain(action, ctx)
+      case 'meetings_precall_prep':
+        return this.execMeetingsPrecallPrep(action, ctx)
       default:
         this.logger.warn(`Unknown action type: ${action.type}`)
         return null

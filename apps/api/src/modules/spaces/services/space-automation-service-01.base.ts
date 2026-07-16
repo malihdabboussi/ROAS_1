@@ -74,6 +74,7 @@ const SCHEDULE_ALLOWED_ACTION_TYPES = new Set<string>([
   'ingest_youtube_channel_to_agent_brain',
   'send_to_agent',
   'send_to_cursor',
+  'meetings_precall_prep',
 ])
 
 const YOUTUBE_CHANNEL_VIDEOS_PATH = '/v1/youtube/channel-videos'
@@ -315,6 +316,7 @@ export abstract class SpaceAutomationServiceBase01 {
   protected abstract resolveSocialResearchItemIds(...args: any[]): any
   protected abstract resolveAgentBrainIdFromKey(...args: any[]): any
   protected abstract execIngestYoutubeChannelToAgentBrain(...args: any[]): any
+  protected abstract execMeetingsPrecallPrep(...args: any[]): any
   protected abstract normalizeYoutubeBrainChannels(...args: any[]): any
   protected abstract parseYoutubeChannelInput(...args: any[]): any
   protected abstract fetchRecentYoutubeChannelVideosForBrain(...args: any[]): any

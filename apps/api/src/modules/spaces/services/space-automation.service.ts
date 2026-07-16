@@ -26,6 +26,7 @@ import { SpaceAutomationsRepository } from '../repositories/space-automations.re
 import { SpacesRepository } from '../repositories/spaces.repository'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
 import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
+import { MeetingsPrecallPrepService } from './meetings-precall-prep.service'
 import { SpaceAutomationServiceBase19 } from './space-automation-service-19.base'
 import { renderTemplate, type TemplateContext } from './space-automation-template'
 
@@ -75,6 +76,7 @@ const SCHEDULE_ALLOWED_ACTION_TYPES = new Set<string>([
   'ingest_youtube_channel_to_agent_brain',
   'send_to_agent',
   'send_to_cursor',
+  'meetings_precall_prep',
 ])
 
 const YOUTUBE_CHANNEL_VIDEOS_PATH = '/v1/youtube/channel-videos'
@@ -295,6 +297,7 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
     @Optional() automationActionsRepo?: SpaceAutomationActionsRepository,
     @Optional() externalEventsRepo?: SpaceAutomationExternalEventsRepository,
     @Optional() automationRunsRepo?: SpaceAutomationRunsRepository,
+    @Optional() private readonly meetingsPrecallPrep?: MeetingsPrecallPrepService,
   ) {
     super(
       repo,
@@ -315,5 +318,27 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
       externalEventsRepo,
       automationRunsRepo,
     )
+  }
+
+  protected async execMeetingsPrecallPrep(
+    action: Record<string, unknown>,
+    ctx: {
+      supabase: SupabaseClient
+      userId: string
+      orgId: string | null
+      spaceId: string
+    },
+  ): Promise<Record<string, unknown>> {
+    if (!this.meetingsPrecallPrep) throw new Error('Pre-call prep service unavailable')
+    const result = await this.meetingsPrecallPrep.runForToday({
+      supabase: ctx.supabase,
+      userId: ctx.userId,
+      orgId: ctx.orgId,
+      spaceId: ctx.spaceId,
+      timezone: typeof action.timezone === 'string' ? action.timezone : undefined,
+      refresh: action.refresh !== false,
+      scope: { orgId: ctx.orgId, userId: ctx.userId, orgRole: null },
+    })
+    return result as unknown as Record<string, unknown>
   }
 }

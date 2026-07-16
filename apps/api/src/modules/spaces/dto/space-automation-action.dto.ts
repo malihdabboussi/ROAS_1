@@ -289,6 +289,12 @@ export const AutomationActionSchema = z.discriminatedUnion('type', [
     domain: BrainImportDomainSchema.default('strategy').optional(),
     continuation: ContinuationSchema,
   }),
+  z.object({
+    type: z.literal('meetings_precall_prep'),
+    refresh: z.boolean().optional(),
+    timezone: z.string().min(1).max(100).optional(),
+    continuation: ContinuationSchema,
+  }),
 ])
 export type AutomationActionDto = z.infer<typeof AutomationActionSchema>
 

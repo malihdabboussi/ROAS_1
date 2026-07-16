@@ -1,8 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, forwardRef, Inject, Injectable, Optional } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
 import { OrgScopeService } from '@vibey/api-shared'
 import { ComposioService } from '../../composio/services/composio.service'
+import { MeetingsPrecallPrepService } from '../../spaces/services/meetings-precall-prep.service'
+import type { AgendaPrepLink } from '../../spaces/services/meetings-precall-prep.helpers'
 import { IntegrationsRepository } from '../repositories/integrations.repository'
 import {
   assertCalendarProvider,
@@ -16,6 +18,12 @@ import {
   isTimedDateTime,
   normalizeProviderEventId,
 } from './integrations-calendar-mutations'
+import {
+  listConnectedCalendarAccounts,
+  pickBestCalendarConnectionRow,
+  type CalendarConnectionRef,
+} from './integrations-calendar-connections'
+import { fetchGoogleMultiCalendarAgenda } from './integrations-calendar-google-agenda'
 
 export type CalendarAttendee = {
   name: string | null
@@ -35,6 +43,9 @@ export type CalendarAgendaEvent = {
   color_id: string | null
   attendees: CalendarAttendee[]
   source: 'google_calendar' | 'outlook'
+  account_id?: string | null
+  account_label?: string | null
+  prep?: AgendaPrepLink | null
 }
 
 export type CalendarProvider = CalendarAgendaEvent['source']
@@ -54,6 +65,7 @@ export type CalendarCreateEventInput = {
   attendees?: CalendarEventAttendeeInput[]
   calendar_id?: string
   create_video_meeting?: boolean
+  user_integration_id?: string
 }
 
 export type CalendarUpdateEventInput = {
@@ -83,6 +95,9 @@ export class IntegrationsCalendarService {
     private readonly repository: IntegrationsRepository,
     private readonly composio: ComposioService,
     private readonly orgScope: OrgScopeService,
+    @Optional()
+    @Inject(forwardRef(() => MeetingsPrecallPrepService))
+    private readonly precallPrep?: MeetingsPrecallPrepService,
   ) {}
 
   async getAgenda(
@@ -99,6 +114,7 @@ export class IntegrationsCalendarService {
     success: boolean
     events: CalendarAgendaEvent[]
     connected: { google_calendar: boolean; outlook: boolean }
+    accounts: CalendarConnectionRef[]
     error?: string
   }> {
     const start = query.start?.trim()
@@ -111,16 +127,27 @@ export class IntegrationsCalendarService {
     const providerFilter =
       providerRaw === 'google_calendar' || providerRaw === 'outlook' ? providerRaw : null
 
-    const googleConn = await this.resolveConnection(supabase, user.id, scope, 'google_calendar')
-    const outlookConn = await this.resolveConnection(supabase, user.id, scope, 'outlook')
+    const googleAccounts = await this.resolveAllConnections(
+      supabase,
+      user.id,
+      scope,
+      'google_calendar',
+    )
+    const outlookAccounts = await this.resolveAllConnections(
+      supabase,
+      user.id,
+      scope,
+      'outlook',
+    )
+    const accounts = [...googleAccounts, ...outlookAccounts]
 
     const connected = {
-      google_calendar: googleConn !== null,
-      outlook: outlookConn !== null,
+      google_calendar: googleAccounts.length > 0,
+      outlook: outlookAccounts.length > 0,
     }
 
     if (!connected.google_calendar && !connected.outlook) {
-      return { success: true, events: [], connected }
+      return { success: true, events: [], connected, accounts }
     }
 
     const events: CalendarAgendaEvent[] = []
@@ -130,60 +157,97 @@ export class IntegrationsCalendarService {
       connected.google_calendar && (!providerFilter || providerFilter === 'google_calendar')
     const wantOutlook = connected.outlook && (!providerFilter || providerFilter === 'outlook')
 
-    if (wantGoogle && googleConn) {
-      try {
-        const raw = await this.composio.executeTool(
-          'GOOGLECALENDAR_EVENTS_LIST',
-          user.id,
-          {
-            calendarId: 'primary',
-            timeMin: start,
-            timeMax: end,
-            singleEvents: true,
-            orderBy: 'startTime',
-            timeZone: tz,
-            maxResults: 250,
-          },
-          googleConn,
-        )
-        const parsedG = this.parseGoogleEventsListResponse(raw)
-        events.push(...parsedG)
-      } catch (e) {
-        errors.push(e instanceof Error ? e.message : 'Google Calendar fetch failed')
-      }
-    }
+    const googleJobs =
+      wantGoogle
+        ? googleAccounts.map(async (account) => {
+            const googleResult = await fetchGoogleMultiCalendarAgenda({
+              executeTool: (tool, userId, params, connectionId) =>
+                this.composio.executeTool(tool, userId, params, connectionId),
+              userId: user.id,
+              connectionId: account.composioAccountId,
+              start,
+              end,
+              timezone: tz,
+              parseEvents: (raw) => this.parseGoogleEventsListResponse(raw),
+            })
+            return {
+              events: (googleResult.events as CalendarAgendaEvent[]).map((event) => ({
+                ...event,
+                account_id: account.userIntegrationId,
+                account_label: account.label,
+              })),
+              errors: googleResult.errors.map((message) => `${account.label}: ${message}`),
+            }
+          })
+        : []
 
-    if (wantOutlook && outlookConn) {
-      try {
-        const startZ = this.ensureZSuffix(start)
-        const endZ = this.ensureZSuffix(end)
-        const raw = await this.composio.executeTool(
-          'OUTLOOK_LIST_EVENTS',
-          user.id,
-          {
-            user_id: 'me',
-            timezone: tz,
-            filter: `start/dateTime ge '${startZ}' and start/dateTime le '${endZ}'`,
-            orderby: ['start/dateTime asc'],
-            top: 100,
-            expand_recurring_events: true,
-          },
-          outlookConn,
-        )
-        const parsedO = this.parseOutlookListEventsResponse(raw)
-        events.push(...parsedO)
-      } catch (e) {
-        errors.push(e instanceof Error ? e.message : 'Outlook fetch failed')
-      }
+    const outlookJobs =
+      wantOutlook
+        ? outlookAccounts.map(async (account) => {
+            try {
+              const startZ = this.ensureZSuffix(start)
+              const endZ = this.ensureZSuffix(end)
+              const raw = await this.composio.executeTool(
+                'OUTLOOK_LIST_EVENTS',
+                user.id,
+                {
+                  user_id: 'me',
+                  timezone: tz,
+                  filter: `start/dateTime ge '${startZ}' and start/dateTime le '${endZ}'`,
+                  orderby: ['start/dateTime asc'],
+                  top: 100,
+                  expand_recurring_events: true,
+                },
+                account.composioAccountId,
+              )
+              const parsedO = this.parseOutlookListEventsResponse(raw).map((event) => ({
+                ...event,
+                account_id: account.userIntegrationId,
+                account_label: account.label,
+              }))
+              return { events: parsedO, errors: [] as string[] }
+            } catch (e) {
+              return {
+                events: [] as CalendarAgendaEvent[],
+                errors: [
+                  e instanceof Error
+                    ? `${account.label}: ${e.message}`
+                    : `${account.label}: Outlook fetch failed`,
+                ],
+              }
+            }
+          })
+        : []
+
+    const settled = await Promise.all([...googleJobs, ...outlookJobs])
+    for (const result of settled) {
+      events.push(...result.events)
+      errors.push(...result.errors)
     }
 
     events.sort((a, b) => a.start.localeCompare(b.start))
 
-    if (errors.length > 0 && events.length === 0) {
-      return { success: false, events: [], connected, error: errors.join('; ') }
+    if (this.precallPrep && events.length > 0) {
+      try {
+        const prepMap = await this.precallPrep.enrichAgendaEvents({
+          supabase,
+          userId: user.id,
+          orgId: scope.orgId,
+          events,
+        })
+        for (const event of events) {
+          event.prep = prepMap.get(event.id) ?? null
+        }
+      } catch {
+        // Agenda still works without prep enrichment.
+      }
     }
 
-    return { success: true, events, connected }
+    if (errors.length > 0 && events.length === 0) {
+      return { success: false, events: [], connected, accounts, error: errors.join('; ') }
+    }
+
+    return { success: true, events, connected, accounts }
   }
 
   async createEvent(
@@ -194,7 +258,13 @@ export class IntegrationsCalendarService {
   ): Promise<CalendarEventMutationResponse> {
     const provider = assertCalendarProvider(input.provider)
     assertTimedRange(input.start, input.end)
-    const connectionId = await this.requireConnection(supabase, user.id, scope, provider)
+    const connectionId = await this.requireConnection(
+      supabase,
+      user.id,
+      scope,
+      provider,
+      input.user_integration_id,
+    )
     const raw = await this.composio.executeTool(
       provider === 'google_calendar' ? 'GOOGLECALENDAR_CREATE_EVENT' : 'OUTLOOK_CREATE_ME_EVENT',
       user.id,
@@ -278,8 +348,15 @@ export class IntegrationsCalendarService {
     userId: string,
     scope: RequestScope,
     provider: CalendarProvider,
+    userIntegrationId?: string,
   ): Promise<string> {
-    const connectionId = await this.resolveConnection(supabase, userId, scope, provider)
+    const connectionId = await this.resolveConnection(
+      supabase,
+      userId,
+      scope,
+      provider,
+      userIntegrationId,
+    )
     if (!connectionId) {
       throw new BadRequestException(`${provider} is not connected`)
     }
@@ -304,25 +381,62 @@ export class IntegrationsCalendarService {
     }
   }
 
-  private async resolveConnection(
+  private async listScopedIntegrationRows(
     supabase: SupabaseClient,
     userId: string,
     scope: RequestScope,
     integrationId: string,
-  ): Promise<string | null> {
-    let q = this.repository
+  ): Promise<Array<Record<string, unknown>>> {
+    const q = this.repository
       .table(supabase, 'user_integrations')
-      .select('id, user_id, status, metadata, scope_mode, is_default')
+      .select('id, user_id, status, metadata, scope_mode, is_default, connection_label')
       .eq('integration_id', integrationId)
     const { data: allRows } = await this.orgScope.applyScope(q, scope)
-    const scopedRows = ((allRows ?? []) as Array<Record<string, unknown>>).filter((row) => {
+    return ((allRows ?? []) as Array<Record<string, unknown>>).filter((row) => {
       if (!scope.orgId) return true
       const scopeMode = String(row.scope_mode ?? '')
       if (scopeMode === 'org_shared') return true
       if (scopeMode === 'personal') return String(row.user_id ?? '') === userId
       return false
     })
-    const row = this.pickBestStatusRow(scopedRows, userId, scope.orgId)
+  }
+
+  private async resolveAllConnections(
+    supabase: SupabaseClient,
+    userId: string,
+    scope: RequestScope,
+    integrationId: CalendarProvider,
+  ): Promise<CalendarConnectionRef[]> {
+    const scopedRows = await this.listScopedIntegrationRows(
+      supabase,
+      userId,
+      scope,
+      integrationId,
+    )
+    return listConnectedCalendarAccounts(scopedRows, integrationId)
+  }
+
+  private async resolveConnection(
+    supabase: SupabaseClient,
+    userId: string,
+    scope: RequestScope,
+    integrationId: string,
+    userIntegrationId?: string,
+  ): Promise<string | null> {
+    const scopedRows = await this.listScopedIntegrationRows(
+      supabase,
+      userId,
+      scope,
+      integrationId,
+    )
+    const preferredId = String(userIntegrationId ?? '').trim()
+    const preferred = preferredId
+      ? scopedRows.find((row) => String(row.id ?? '') === preferredId)
+      : null
+    const row =
+      preferred && String(preferred.status ?? '').toLowerCase() === 'connected'
+        ? preferred
+        : pickBestCalendarConnectionRow(scopedRows, userId, scope.orgId)
     if (!row || String(row.status ?? '').toLowerCase() !== 'connected') return null
     const meta =
       row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
@@ -333,39 +447,6 @@ export class IntegrationsCalendarService {
         ? meta.composio_connected_account_id.trim()
         : ''
     return id.length > 0 ? id : null
-  }
-
-  private pickBestStatusRow(
-    rows: Array<Record<string, unknown>>,
-    userId: string,
-    orgId: string | null,
-  ): Record<string, unknown> | null {
-    if (rows.length === 0) return null
-    if (!orgId) return rows[0] ?? null
-    const connectedRows = rows.filter(
-      (row) => String(row.status ?? '').toLowerCase() === 'connected',
-    )
-    const personalConnected = connectedRows.find(
-      (row) => String(row.scope_mode ?? '') === 'personal' && String(row.user_id ?? '') === userId,
-    )
-    if (personalConnected) return personalConnected
-    const sharedDefaultConnected = connectedRows.find(
-      (row) => String(row.scope_mode ?? '') === 'org_shared' && Boolean(row.is_default),
-    )
-    if (sharedDefaultConnected) return sharedDefaultConnected
-    const latestSharedConnected = connectedRows.find(
-      (row) => String(row.scope_mode ?? '') === 'org_shared',
-    )
-    if (latestSharedConnected) return latestSharedConnected
-    const personalAny = rows.find(
-      (row) => String(row.scope_mode ?? '') === 'personal' && String(row.user_id ?? '') === userId,
-    )
-    if (personalAny) return personalAny
-    const sharedDefaultAny = rows.find(
-      (row) => String(row.scope_mode ?? '') === 'org_shared' && Boolean(row.is_default),
-    )
-    if (sharedDefaultAny) return sharedDefaultAny
-    return rows[0] ?? null
   }
 
   private parseGoogleEventsListResponse(raw: unknown): CalendarAgendaEvent[] {

@@ -32,6 +32,7 @@ export function HomeCardRenderer({
   myTasksItems,
   approvalItems,
   onOpenItem,
+  onExpandMyTasks,
   onNotificationClick,
   onAccept,
   onDismiss,
@@ -46,6 +47,7 @@ export function HomeCardRenderer({
   myTasksItems: HomeRendererYourTurnItem[]
   approvalItems: HomeRendererYourTurnItem[]
   onOpenItem: (item: HomeRendererYourTurnItem) => void | Promise<void>
+  onExpandMyTasks: () => void
   onNotificationClick: (notification: HomeRendererNotification) => void | Promise<void>
   onMyTasksChanged?: () => void
   onAccept: (item: HomeRendererYourTurnItem) => void | Promise<void>
@@ -66,6 +68,7 @@ export function HomeCardRenderer({
           loading={myTasksLoading}
           items={myTasksItems}
           onOpen={onOpenItem}
+          onExpand={onExpandMyTasks}
         />
       )
     case 'approval_queue':
@@ -91,7 +94,7 @@ export function HomeCardRenderer({
     case 'completed_automations':
       return <CompletedSpaceAutomationsCard />
     case 'agenda':
-      return <AgendaCard />
+      return <AgendaCard onOpenItem={onOpenItem} />
     default:
       return null
   }

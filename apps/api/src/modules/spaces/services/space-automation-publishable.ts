@@ -28,6 +28,7 @@ const ITEMLESS_ALLOWED_ACTION_TYPES = new Set<string>([
   'send_to_agent',
   'send_to_agents',
   'send_to_cursor',
+  'meetings_precall_prep',
 ])
 
 /** Throws if the stored rule must not run while enabled (draft or incomplete). */

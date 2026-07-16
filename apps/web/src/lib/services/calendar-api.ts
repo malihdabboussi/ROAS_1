@@ -8,6 +8,13 @@ export type CalendarAttendee = {
   status: 'accepted' | 'declined' | 'tentative' | 'needsAction' | 'unknown'
 }
 
+export type CalendarAgendaPrep = {
+  status: 'pending' | 'ready' | 'failed'
+  space_item_id: string
+  space_id: string
+  title: string | null
+}
+
 export type CalendarAgendaEvent = {
   id: string
   title: string
@@ -20,12 +27,41 @@ export type CalendarAgendaEvent = {
   color_id: string | null
   attendees: CalendarAttendee[]
   source: CalendarProvider
+  account_id?: string | null
+  account_label?: string | null
+  prep?: CalendarAgendaPrep | null
+}
+
+export async function runMeetingsPrecallPrepToday(input: {
+  spaceId: string
+  timezone?: string
+  refresh?: boolean
+}): Promise<{
+  created: number
+  refreshed: number
+  skipped: number
+  failed: number
+  day_key: string
+}> {
+  return backendPost(`/api/spaces/${input.spaceId}/precall-prep/today`, {
+    timezone: input.timezone,
+    refresh: input.refresh !== false,
+  })
+}
+
+export type CalendarAgendaAccount = {
+  userIntegrationId: string
+  composioAccountId: string
+  label: string
+  isDefault: boolean
+  provider: CalendarProvider
 }
 
 export type CalendarAgendaResponse = {
   success: boolean
   events: CalendarAgendaEvent[]
   connected: { google_calendar: boolean; outlook: boolean }
+  accounts?: CalendarAgendaAccount[]
   error?: string
 }
 

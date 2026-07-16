@@ -565,6 +565,10 @@ export const ACTION_SECTIONS: AutomationCategorizedSection[] = [
     ],
   },
   {
+    heading: 'Meetings',
+    options: [{ value: 'meetings_precall_prep', label: 'Prep today’s calendar meetings' }],
+  },
+  {
     heading: 'Integrations',
     options: [{ value: 'send_to_cursor', label: 'Send to Cursor (write code & open PR)' }],
   },
@@ -1281,6 +1285,11 @@ export function defaultAction(type: string): AutomationAction | null {
         max_videos_per_channel: 25,
         include_shorts: false,
         domain: 'strategy',
+      }
+    case 'meetings_precall_prep':
+      return {
+        type: 'meetings_precall_prep',
+        refresh: true,
       }
     default:
       return null

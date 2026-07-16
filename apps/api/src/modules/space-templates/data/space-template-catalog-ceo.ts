@@ -33,6 +33,17 @@ function meetingFields(statusOptions: StatusOpt[]) {
       options: [
         { id: 'call', label: 'Call', color: 'blue' },
         { id: 'follow_up', label: 'Follow-up', color: 'amber' },
+        { id: 'prep', label: 'Prep', color: 'emerald' },
+      ],
+    },
+    {
+      id: 'call_kind',
+      name: 'Call Kind',
+      type: 'select',
+      required: false,
+      options: [
+        { id: 'personal', label: 'Personal', color: 'emerald' },
+        { id: 'team', label: 'Team', color: 'violet' },
       ],
     },
     PRIORITY_FIELD,
@@ -61,6 +72,23 @@ function meetingFields(statusOptions: StatusOpt[]) {
       name: 'Call Date',
       type: 'date',
       required: false,
+    },
+    {
+      id: 'calendar_event_id',
+      name: 'Calendar Event',
+      type: 'text',
+      required: false,
+    },
+    {
+      id: 'prep_status',
+      name: 'Prep Status',
+      type: 'select',
+      required: false,
+      options: [
+        { id: 'pending', label: 'Pending', color: 'slate' },
+        { id: 'ready', label: 'Ready', color: 'emerald' },
+        { id: 'failed', label: 'Failed', color: 'red' },
+      ],
     },
     { id: 'due_date', name: 'Due Date', type: 'date', system: true },
   ]
@@ -169,8 +197,26 @@ export const CEO_EOD_CLOSE_AUTOMATION: SpaceTemplateAutomationSeed = {
   sort_order: 1,
 }
 
+export const MEETINGS_PRECALL_PREP_AUTOMATION: SpaceTemplateAutomationSeed = {
+  name: 'Morning Pre-call Prep',
+  trigger: {
+    type: 'schedule',
+    schedule: { mode: 'preset', preset: 'daily', time: '07:00' },
+    timezone: 'America/Los_Angeles',
+  },
+  actions: [
+    {
+      type: 'meetings_precall_prep',
+      refresh: true,
+    },
+  ],
+  sort_order: 1,
+}
+
 export const MEETINGS_FATHOM_LOG_AUTOMATION: SpaceTemplateAutomationSeed = {
   name: 'Fathom Meeting Log',
+  // Team Fathom account webhooks into the connected owner; do not filter by
+  // recorded_by — Personal vs Team is tagged via call_kind (owner on call?).
   trigger: { type: 'external_fathom_recording_ready', source: { mode: 'self' } },
   actions: [
     {
@@ -359,6 +405,7 @@ export const CEO_SPACE_TEMPLATES: SpaceTemplateSeed[] = [
           visible_fields: [
             'status',
             'title',
+            'call_kind',
             'attendees',
             'call_date',
             'recording_url',
@@ -367,9 +414,35 @@ export const CEO_SPACE_TEMPLATES: SpaceTemplateSeed[] = [
           column_widths: {
             status: 140,
             title: 360,
+            call_kind: 110,
             attendees: 360,
             call_date: 170,
             recording_url: 220,
+            priority: 110,
+          },
+          date_display_formats: {
+            call_date: 'date_time',
+          },
+        },
+        {
+          id: 'prep',
+          type: 'list',
+          name: 'Prep',
+          field_value_filters: { entry_type: 'prep' },
+          visible_fields: [
+            'status',
+            'title',
+            'prep_status',
+            'attendees',
+            'call_date',
+            'priority',
+          ],
+          column_widths: {
+            status: 140,
+            title: 360,
+            prep_status: 110,
+            attendees: 280,
+            call_date: 170,
             priority: 110,
           },
           date_display_formats: {
@@ -382,7 +455,7 @@ export const CEO_SPACE_TEMPLATES: SpaceTemplateSeed[] = [
           name: 'Follow-ups',
           group_by: 'status',
           field_value_filters: { entry_type: 'follow_up' },
-          visible_fields: ['title', 'source_call', 'priority', 'assignee', 'due_date'],
+          visible_fields: ['title', 'source_call', 'attendees', 'priority', 'assignee', 'due_date'],
           show_closed_tasks: true,
         },
         {
@@ -391,11 +464,20 @@ export const CEO_SPACE_TEMPLATES: SpaceTemplateSeed[] = [
           name: 'Action items',
           group_by: 'status',
           field_value_filters: { entry_type: 'follow_up' },
-          visible_fields: ['status', 'title', 'source_call', 'priority', 'assignee', 'due_date'],
+          visible_fields: [
+            'status',
+            'title',
+            'source_call',
+            'attendees',
+            'priority',
+            'assignee',
+            'due_date',
+          ],
           column_widths: {
             status: 140,
             title: 360,
             source_call: 220,
+            attendees: 200,
             priority: 110,
             assignee: 160,
             due_date: 120,
@@ -432,11 +514,12 @@ export const CEO_SPACE_TEMPLATES: SpaceTemplateSeed[] = [
         title: 'Welcome — how to use Meetings',
         body: welcomeDocBody('Meetings', [
           '**All Meetings (List)** — calls only: Status, Name, Attendees, Call Date, Recording',
+          '**Prep (List)** — pre-call briefs for today’s calendar (morning + Prep today on Home Agenda)',
           '**Follow-ups (Board) / Action items (List)** — follow-up tasks only (never call rows). Due Date = when the action is due',
           '**Source call** — every follow-up links back to the meeting it came from (click to open that call)',
           '**Call Date vs Due Date** — Call Date is when the meeting happened; Due Date is the deadline on an action item',
           '**Status (auto on calls)** — Processing → To action → Following up after suggestions. Waiting/Done you set when follow-through stalls or finishes',
-          '**Type** — Call vs Follow-up (keeps views clean)',
+          '**Type** — Call vs Follow-up vs Prep (keeps views clean)',
           '**Attendees** — tags from invitees OR transcript speakers',
           '**Recording** — Fathom call / transcript link on the call row',
           '**Meeting Logs (Docs)** — write-ups per call (purpose, decisions, acronyms, commitments)',
@@ -500,6 +583,6 @@ export const CEO_SPACE_TEMPLATES: SpaceTemplateSeed[] = [
         sort_order: 3,
       },
     ],
-    automations: [MEETINGS_FATHOM_LOG_AUTOMATION],
+    automations: [MEETINGS_FATHOM_LOG_AUTOMATION, MEETINGS_PRECALL_PREP_AUTOMATION],
   },
 ]

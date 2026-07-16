@@ -28,6 +28,7 @@ import { SpaceAutomationCapabilitiesController } from './controllers/space-autom
 import { SpaceAutomationFlowUpdatesController } from './controllers/space-automation-flow-updates.controller'
 import { SpaceAutomationLifecycleController } from './controllers/space-automation-lifecycle.controller'
 import { SpaceAutomationReadController } from './controllers/space-automation-read.controller'
+import { SpacePrecallPrepController } from './controllers/space-precall-prep.controller'
 import { SpaceAutomationTemplatesController } from './controllers/space-automation-templates.controller'
 import { SpaceAutomationsInternalController } from './controllers/space-automations-internal.controller'
 import { SpaceAutomationsController } from './controllers/space-automations.controller'
@@ -94,6 +95,7 @@ import { SpaceAutomationReconcilerService } from './services/space-automation-re
 import { SpaceAutomationRuntimeProcessor } from './services/space-automation-runtime.processor'
 import { SpaceAutomationSchedulerService } from './services/space-automation-scheduler.service'
 import { SpaceAutomationService } from './services/space-automation.service'
+import { MeetingsPrecallPrepService } from './services/meetings-precall-prep.service'
 import { SpaceFlowBuilderAccessService } from './services/space-flow-builder-access.service'
 import { SpaceFlowBuilderContextService } from './services/space-flow-builder-context.service'
 import { SpaceFlowBuilderPlanService } from './services/space-flow-builder-plan.service'
@@ -160,6 +162,7 @@ import { SpacesService } from './services/spaces.service'
     SpaceAutomationLifecycleController,
     SpaceAutomationTemplatesController,
     SpaceAutomationReadController,
+    SpacePrecallPrepController,
     SpaceAutomationsInternalController,
     SpaceWebhooksController,
     SpaceWebhookReceiverController,
@@ -206,6 +209,7 @@ import { SpacesService } from './services/spaces.service'
     AdsResearchSearchService,
     AdsResearchBreakdownService,
     SpaceAutomationService,
+    MeetingsPrecallPrepService,
     SpaceAutomationInternalService,
     SpaceAutomationControllerPolicyService,
     SpaceAutomationReconcilerService,
@@ -233,6 +237,7 @@ import { SpacesService } from './services/spaces.service'
     SpaceAutomationInternalService,
     SpaceAutomationReconcilerService,
     SpaceAutomationService,
+    MeetingsPrecallPrepService,
     SpaceAutomationSchedulerService,
     SpaceFlowBuilderService,
     SpaceFlowCapabilityService,

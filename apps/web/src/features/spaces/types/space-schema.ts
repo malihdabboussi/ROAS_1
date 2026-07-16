@@ -1205,6 +1205,12 @@ export type AutomationAction =
       domain?: BrainImportDomain
       continuation?: AutomationContinuation
     }
+  | {
+      type: 'meetings_precall_prep'
+      refresh?: boolean
+      timezone?: string
+      continuation?: AutomationContinuation
+    }
   | { type: 'choose_action'; continuation?: AutomationContinuation }
 
 export interface SpaceAutomation {

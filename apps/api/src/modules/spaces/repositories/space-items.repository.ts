@@ -124,6 +124,66 @@ export class SpaceItemsRepository {
     return data
   }
 
+  /** Existing Fathom call row for this space + Fathom meeting id (dedupe ingest). */
+  async findItemByFathomMeetingId(
+    supabase: SupabaseClient,
+    spaceId: string,
+    meetingId: string,
+  ): Promise<Record<string, unknown> | null> {
+    const id = String(meetingId ?? '').trim()
+    if (!id) return null
+    const { data, error } = await supabase
+      .from('space_items')
+      .select('*')
+      .eq('space_id', spaceId)
+      .eq('custom_data->external_automation->>meeting_id', id)
+      .limit(1)
+      .maybeSingle()
+    if (error) throw new BadRequestException(error.message)
+    return (data as Record<string, unknown> | null) ?? null
+  }
+
+  /** Prep / linked row for a provider calendar event id (e.g. google:…). */
+  async findItemByCalendarEventId(
+    supabase: SupabaseClient,
+    spaceId: string,
+    calendarEventId: string,
+  ): Promise<Record<string, unknown> | null> {
+    const id = String(calendarEventId ?? '').trim()
+    if (!id) return null
+    const { data, error } = await supabase
+      .from('space_items')
+      .select('*')
+      .eq('space_id', spaceId)
+      .eq('custom_data->>calendar_event_id', id)
+      .eq('custom_data->>entry_type', 'prep')
+      .limit(1)
+      .maybeSingle()
+    if (error) throw new BadRequestException(error.message)
+    return (data as Record<string, unknown> | null) ?? null
+  }
+
+  /** Batch lookup prep items by calendar event ids (agenda enrichment). */
+  async findPrepItemsByCalendarEventIds(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null | undefined,
+    calendarEventIds: string[],
+  ): Promise<Record<string, unknown>[]> {
+    const ids = [...new Set(calendarEventIds.map((id) => String(id).trim()).filter(Boolean))]
+    if (ids.length === 0) return []
+    let q = supabase
+      .from('space_items')
+      .select('id, space_id, title, custom_data, status, updated_at')
+      .eq('custom_data->>entry_type', 'prep')
+      .in('custom_data->>calendar_event_id', ids)
+      .order('updated_at', { ascending: false })
+    q = this.applyItemOwnerScope(q, userId, orgId)
+    const { data, error } = await q
+    if (error) throw new BadRequestException(error.message)
+    return (data as Record<string, unknown>[]) ?? []
+  }
+
   async findAccessibleItemById(
     supabase: SupabaseClient,
     userId: string,

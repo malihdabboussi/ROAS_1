@@ -1,32 +1,48 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
 import {
   CalendarClock,
   CalendarDays,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  FileText,
   LayoutList,
-  Video,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { minimalSpaceYourTurnItem } from '@/features/home/lib/home-your-turn-item'
+import { useOrgStore } from '@/features/org/store/use-org-store'
+import { cachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
+import type { YourTurnItem } from '@/features/spaces/services/your-turn.service'
 import {
   agendaBoardFallbackWindow,
   AgendaCalendarPanel,
 } from '@/features/home/components/AgendaCalendarPanel'
 import { AgendaEmptyIllustration } from '@/features/home/components/AgendaEmptyIllustration'
+import { AgendaEventEntry } from '@/features/home/components/AgendaCardEventEntry'
+import {
+  AgendaWeekDaySeparator,
+  dayKeyInTimeZone,
+  enumerateDayKeysInNavRange,
+  eventsGroupedByDayKey,
+} from '@/features/home/components/agenda-list-grouping'
+import { agendaListFetchWindow, filterEventsToWindow } from '@/features/home/lib/agenda-fetch-window'
+import { askAboutAgendaInChat } from '@/features/home/lib/ask-agenda-in-chat'
 import { useWorkspaceSettingsModal } from '@/features/settings'
+import { cachedFetch, peekCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { getIntegrationLogoPath } from '@/lib/integrations/integration-logo'
 import {
   fetchCalendarAgenda,
+  runMeetingsPrecallPrepToday,
+  type CalendarAgendaAccount,
   type CalendarAgendaEvent,
-  type CalendarAttendee,
 } from '@/lib/services/calendar-api'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { HOME_TOAST_ERRORS } from '../config/home-toast-errors.config'
+
+const AGENDA_CACHE_TTL_MS = 90_000
 
 type AgendaView = 'list' | 'board'
 type ProviderFilter = 'all' | 'google_calendar' | 'outlook'
@@ -46,41 +62,6 @@ const CALENDAR_PROVIDER_CONNECT: {
   },
 ]
 
-const GCAL_EVENT_COLORS: Record<string, { border: string; bg: string; text: string }> = {
-  '1': { border: '#7986CB', bg: 'rgba(121,134,203,0.25)', text: '#C5CAE9' },
-  '2': { border: '#33B679', bg: 'rgba(51,182,121,0.25)', text: '#A5D6A7' },
-  '3': { border: '#8E24AA', bg: 'rgba(142,36,170,0.25)', text: '#CE93D8' },
-  '4': { border: '#E67C73', bg: 'rgba(230,124,115,0.25)', text: '#EF9A9A' },
-  '5': { border: '#F6BF26', bg: 'rgba(246,191,38,0.25)', text: '#FFF59D' },
-  '6': { border: '#F4511E', bg: 'rgba(244,81,30,0.25)', text: '#FFAB91' },
-  '7': { border: '#039BE5', bg: 'rgba(3,155,229,0.25)', text: '#81D4FA' },
-  '8': { border: '#616161', bg: 'rgba(97,97,97,0.25)', text: '#BDBDBD' },
-  '9': { border: '#3F51B5', bg: 'rgba(63,81,181,0.25)', text: '#9FA8DA' },
-  '10': { border: '#0B8043', bg: 'rgba(11,128,67,0.25)', text: '#A5D6A7' },
-  '11': { border: '#D50000', bg: 'rgba(213,0,0,0.25)', text: '#EF9A9A' },
-}
-const DEFAULT_EVENT_COLOR = { border: '#F6BF26', bg: 'rgba(246,191,38,0.18)', text: '#FFF59D' }
-
-function eventColor(ev: CalendarAgendaEvent): (typeof GCAL_EVENT_COLORS)[string] {
-  if (ev.color_id) {
-    const c = GCAL_EVENT_COLORS[ev.color_id]
-    if (c) return c
-  }
-  return DEFAULT_EVENT_COLOR
-}
-
-function startOfDay(d: Date): Date {
-  const x = new Date(d)
-  x.setHours(0, 0, 0, 0)
-  return x
-}
-
-function endOfDay(d: Date): Date {
-  const x = new Date(d)
-  x.setHours(23, 59, 59, 999)
-  return x
-}
-
 function formatNavDate(d: Date, range: DateRange): string {
   if (range === 'day')
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
@@ -94,89 +75,12 @@ function formatNavDate(d: Date, range: DateRange): string {
   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 }
 
-function rangeEndDate(d: Date, range: DateRange): Date {
-  if (range === 'day') return endOfDay(d)
-  if (range === 'week') return endOfDay(new Date(d.getTime() + 6 * 86400000))
-  const next = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999)
-  return next
-}
-
 function stepDate(d: Date, range: DateRange, direction: 1 | -1): Date {
   if (range === 'day') return new Date(d.getTime() + direction * 86400000)
   if (range === 'week') return new Date(d.getTime() + direction * 7 * 86400000)
   const m = new Date(d)
   m.setMonth(m.getMonth() + direction)
   return m
-}
-
-function formatTimeRange(ev: CalendarAgendaEvent): string {
-  const s = new Date(ev.start)
-  const e = new Date(ev.end)
-  if (ev.all_day) return 'All day'
-  const opts: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' }
-  return `${s.toLocaleTimeString('en-US', opts)} – ${e.toLocaleTimeString('en-US', opts)}`
-}
-
-function minutesBetween(a: number, b: number): number {
-  return Math.max(0, Math.round((b - a) / 60000))
-}
-
-function formatCountdown(now: number, ev: CalendarAgendaEvent): string | null {
-  const s = new Date(ev.start).getTime()
-  const e = new Date(ev.end).getTime()
-  if (s <= now && e >= now) {
-    const left = minutesBetween(now, e)
-    if (left > 60) return `${Math.floor(left / 60)}h ${left % 60}m left`
-    return `${left}m left`
-  }
-  if (s > now) {
-    const until = minutesBetween(now, s)
-    if (until > 60) return `in ${Math.floor(until / 60)}h ${until % 60}m`
-    return `in ${until}m`
-  }
-  return null
-}
-
-function attendeeRsvpSummary(attendees: CalendarAttendee[]): string | null {
-  if (attendees.length === 0) return null
-  const accepted = attendees.filter((a) => a.status === 'accepted').length
-  const declined = attendees.filter((a) => a.status === 'declined').length
-  const parts: string[] = []
-  if (accepted > 0) parts.push(`${accepted} Yes`)
-  if (declined > 0) parts.push(`${declined} No`)
-  const pending = attendees.length - accepted - declined
-  if (pending > 0) parts.push(`${pending} Pending`)
-  return parts.join(' · ')
-}
-
-function attendeeInitials(a: CalendarAttendee): string {
-  if (a.name) {
-    const parts = a.name.trim().split(/\s+/)
-    return parts.length >= 2
-      ? `${parts[0]![0]}${parts[parts.length - 1]![0]}`.toUpperCase()
-      : (parts[0]?.[0] ?? '?').toUpperCase()
-  }
-  return (a.email[0] ?? '?').toUpperCase()
-}
-
-const AVATAR_COLORS = [
-  'bg-indigo-600',
-  'bg-emerald-600',
-  'bg-rose-600',
-  'bg-amber-600',
-  'bg-cyan-600',
-  'bg-violet-600',
-  'bg-teal-600',
-  'bg-pink-600',
-]
-
-function avatarColor(index: number): string {
-  return AVATAR_COLORS[index % AVATAR_COLORS.length]!
-}
-
-function videoButtonLabel(ev: CalendarAgendaEvent): string {
-  if (ev.video_label) return `Join ${ev.video_label} meeting`
-  return 'Join meeting'
 }
 
 function rangeDetail(d: Date, r: DateRange): string {
@@ -192,219 +96,32 @@ function rangeDetail(d: Date, r: DateRange): string {
   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 }
 
-function dayKeyInTimeZone(dt: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(dt)
-}
-
-function utcMidnightMsFromDayKey(dayKey: string): number {
-  const parts = dayKey.split('-').map(Number)
-  const y = parts[0]!
-  const mo = parts[1]!
-  const d = parts[2]!
-  return Date.UTC(y, mo - 1, d)
-}
-
-/** One line: "Tomorrow" / "Yesterday" / "Thursday 14 May" (never the word "Today"). */
-function agendaListDayDividerLabel(dayKey: string, nowTick: number, timeZone: string): string {
-  const todayKey = dayKeyInTimeZone(new Date(nowTick), timeZone)
-  const delta = Math.round(
-    (utcMidnightMsFromDayKey(dayKey) - utcMidnightMsFromDayKey(todayKey)) / 86_400_000,
-  )
-  if (delta === 1) return 'Tomorrow'
-  if (delta === -1) return 'Yesterday'
-  const parts = dayKey.split('-').map(Number)
-  const y = parts[0]!
-  const mo = parts[1]!
-  const d = parts[2]!
-  const utc = new Date(Date.UTC(y, mo - 1, d, 12))
-  return new Intl.DateTimeFormat('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    timeZone: 'UTC',
+function resolveMeetingsSpaceId(): string | null {
+  const spaces = cachedSpaces.peek() ?? []
+  const meetings = spaces.find((space) => {
+    const schema = space.schema as { icon?: string; fields?: Array<{ id?: string }> } | null
+    const hasEntryType = schema?.fields?.some((f) => f.id === 'entry_type')
+    const title = String(space.title ?? '').toLowerCase()
+    return hasEntryType && (schema?.icon === 'video' || title === 'meetings')
   })
-    .format(utc)
-    .replace(/,/g, '')
-    .trim()
+  return meetings?.id ?? null
 }
 
-/** Anchor uses local navigator dates (`day` state); bucket keys honor `timezone`. */
-function enumerateDayKeysInNavRange(anchor: Date, range: DateRange, timeZone: string): string[] {
-  const keys: string[] = []
-  let cur = startOfDay(anchor)
-  const last = rangeEndDate(anchor, range)
-  const endStart = startOfDay(last)
-  while (cur.getTime() <= endStart.getTime()) {
-    keys.push(dayKeyInTimeZone(cur, timeZone))
-    cur = new Date(cur)
-    cur.setDate(cur.getDate() + 1)
-  }
-  return keys
-}
-
-function eventsGroupedByDayKey(
-  list: CalendarAgendaEvent[],
-  timeZone: string,
-): Map<string, CalendarAgendaEvent[]> {
-  const m = new Map<string, CalendarAgendaEvent[]>()
-  for (const ev of list) {
-    const k = dayKeyInTimeZone(new Date(ev.start), timeZone)
-    if (!m.has(k)) m.set(k, [])
-    m.get(k)!.push(ev)
-  }
-  for (const [, arr] of m) {
-    arr.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
-  }
-  return m
-}
-
-function AgendaWeekDaySeparator({
-  dayKey,
-  nowTick,
-  timeZone,
+export function AgendaCard({
+  onOpenItem,
 }: {
-  dayKey: string
-  nowTick: number
-  timeZone: string
-}) {
-  const label = agendaListDayDividerLabel(dayKey, nowTick, timeZone)
-
-  return (
-    <div className="relative flex items-center justify-center py-2.5">
-      <div className="border-border absolute inset-x-0 top-1/2 border-t" />
-      <div className="border-border text-foreground relative z-[1] max-w-[min(100%,20rem)] rounded-full border bg-[var(--color-card)] px-4 py-1.5 text-center text-xs font-semibold leading-none shadow-sm">
-        {label}
-      </div>
-    </div>
-  )
-}
-
-const ENTRY_TRANSITION = { type: 'spring', stiffness: 380, damping: 32, mass: 0.7 } as const
-
-function AgendaEventEntry({
-  ev,
-  isExpanded,
-  onSelect,
-  nowTick,
-}: {
-  ev: CalendarAgendaEvent
-  isExpanded: boolean
-  onSelect: () => void
-  nowTick: number
-}) {
-  const color = eventColor(ev)
-
-  return (
-    <motion.div
-      layout
-      transition={ENTRY_TRANSITION}
-      onClick={!isExpanded ? onSelect : undefined}
-      className={
-        isExpanded
-          ? 'card-glass rounded-xl border-l-[4px] p-4'
-          : 'hover:bg-hover-subtle cursor-pointer rounded-lg px-2 py-2 transition-colors'
-      }
-      style={isExpanded ? { borderLeftColor: color.border } : undefined}
-      role={!isExpanded ? 'button' : undefined}
-      tabIndex={!isExpanded ? 0 : undefined}
-      onKeyDown={
-        !isExpanded
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onSelect()
-              }
-            }
-          : undefined
-      }
-    >
-      {isExpanded ? (
-        <motion.div layout="position" transition={ENTRY_TRANSITION}>
-          <p className="body-2 text-foreground font-semibold">{ev.title}</p>
-          <p className="typo-caption text-muted-foreground mt-1">
-            {formatCountdown(nowTick, ev) ? `${formatCountdown(nowTick, ev)} · ` : ''}
-            {formatTimeRange(ev)}
-          </p>
-
-          {ev.attendees.length > 0 && (
-            <div className="mt-2.5 flex items-center gap-2">
-              <div className="flex -space-x-1.5">
-                {ev.attendees.slice(0, 5).map((a, i) => (
-                  <div
-                    key={a.email}
-                    className={`${avatarColor(i)} flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--color-background)] text-[9px] font-bold text-white`}
-                    title={a.name ?? a.email}
-                  >
-                    {attendeeInitials(a)}
-                  </div>
-                ))}
-                {ev.attendees.length > 5 && (
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--color-background)] bg-[var(--color-muted)] text-[9px] font-bold text-[var(--color-muted-foreground)]">
-                    +{ev.attendees.length - 5}
-                  </div>
-                )}
-              </div>
-              {attendeeRsvpSummary(ev.attendees) && (
-                <span className="typo-caption text-muted-foreground">
-                  {attendeeRsvpSummary(ev.attendees)}
-                </span>
-              )}
-            </div>
-          )}
-
-          {ev.video_url ? (
-            <a
-              href={ev.video_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/15 py-2 text-[13px] font-semibold text-emerald-400 backdrop-blur-sm transition-colors hover:bg-emerald-500/25"
-            >
-              <Video className="h-4 w-4" />
-              {videoButtonLabel(ev)}
-            </a>
-          ) : null}
-        </motion.div>
-      ) : (
-        <motion.div
-          layout="position"
-          transition={ENTRY_TRANSITION}
-          className="flex items-center gap-2"
-        >
-          <span
-            className="h-6 w-1 shrink-0 rounded-full"
-            style={{ background: color.border }}
-            aria-hidden
-          />
-          <span className="typo-caption text-muted-foreground w-14 shrink-0">
-            {ev.all_day
-              ? 'All day'
-              : new Date(ev.start).toLocaleTimeString('en-US', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-          </span>
-          <span className="body-3 min-w-0 flex-1 truncate font-medium">{ev.title}</span>
-          {ev.video_url ? <Video className="text-muted-foreground h-3.5 w-3.5 shrink-0" /> : null}
-        </motion.div>
-      )}
-    </motion.div>
-  )
-}
-
-export function AgendaCard() {
+  onOpenItem?: (item: YourTurnItem) => void | Promise<void>
+} = {}) {
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
+  const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const [view, setView] = useState<AgendaView>('list')
   const [day, setDay] = useState(() => new Date())
   const [range, setRange] = useState<DateRange>('week')
   const [rangeOpen, setRangeOpen] = useState(false)
   const [provider, setProvider] = useState<ProviderFilter>('all')
   const [events, setEvents] = useState<CalendarAgendaEvent[]>([])
+  const [prepRunning, setPrepRunning] = useState(false)
+  const [accounts, setAccounts] = useState<CalendarAgendaAccount[]>([])
   const [connected, setConnected] = useState<{ google_calendar: boolean; outlook: boolean }>({
     google_calendar: false,
     outlook: false,
@@ -417,46 +134,81 @@ export function AgendaCard() {
     end: Date
   } | null>(null)
   const hasCompletedLoadRef = useRef(false)
+  const lastEventsRef = useRef<CalendarAgendaEvent[]>([])
 
   const [timezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC')
 
   const load = useCallback(async () => {
-    const blocking = !hasCompletedLoadRef.current
+    const hasWarmEvents = lastEventsRef.current.length > 0 || hasCompletedLoadRef.current
+    const blocking = !hasWarmEvents
     if (blocking) setLoading(true)
     try {
-      let startAt: Date
-      let endAt: Date
+      let fetchStart: Date
+      let fetchEnd: Date
+      let viewStart: Date
+      let viewEnd: Date
       if (view === 'list') {
-        startAt = startOfDay(day)
-        endAt = rangeEndDate(day, range)
+        const window = agendaListFetchWindow(day, range)
+        fetchStart = window.fetchStart
+        fetchEnd = window.fetchEnd
+        viewStart = window.viewStart
+        viewEnd = window.viewEnd
       } else {
         const w = boardFetchWindow ?? agendaBoardFallbackWindow(day, 1)
-        startAt = w.start
-        endAt = w.end
+        fetchStart = w.start
+        fetchEnd = w.end
+        viewStart = w.start
+        viewEnd = w.end
       }
-      const start = startAt.toISOString()
-      const end = endAt.toISOString()
-      const res = await fetchCalendarAgenda({
-        start,
-        end,
-        timezone,
-        provider:
-          provider === 'all'
-            ? undefined
-            : provider === 'google_calendar'
-              ? 'google_calendar'
-              : 'outlook',
-      })
+      const start = fetchStart.toISOString()
+      const end = fetchEnd.toISOString()
+      const providerParam =
+        provider === 'all'
+          ? undefined
+          : provider === 'google_calendar'
+            ? 'google_calendar'
+            : 'outlook'
+      const cacheKey = `calendar-agenda:${start}:${end}:${timezone}:${providerParam ?? 'all'}`
+      const peeked = peekCachedFetch<Awaited<ReturnType<typeof fetchCalendarAgenda>>>(cacheKey)
+      if (peeked?.success) {
+        setConnected(peeked.connected)
+        setAccounts(peeked.accounts ?? [])
+        const warmed =
+          view === 'list'
+            ? filterEventsToWindow(peeked.events ?? [], viewStart, viewEnd)
+            : (peeked.events ?? [])
+        lastEventsRef.current = warmed
+        setEvents(warmed)
+        setInitialized(true)
+        hasCompletedLoadRef.current = true
+        setLoading(false)
+      }
+      const res = await cachedFetch(
+        cacheKey,
+        () =>
+          fetchCalendarAgenda({
+            start,
+            end,
+            timezone,
+            provider: providerParam,
+          }),
+        { ttlMs: AGENDA_CACHE_TTL_MS },
+      )
       setConnected(res.connected)
+      setAccounts(res.accounts ?? [])
       if (!res.success && res.error) {
         toast.error(HOME_TOAST_ERRORS.CALENDAR_LOAD_FAILED.userMessage)
-        setEvents([])
+        if (!hasWarmEvents) setEvents([])
       } else {
-        setEvents(res.events ?? [])
+        const fetched = res.events ?? []
+        const next =
+          view === 'list' ? filterEventsToWindow(fetched, viewStart, viewEnd) : fetched
+        lastEventsRef.current = next
+        setEvents(next)
       }
     } catch (e) {
       toast.error(sanitizeUserError(e, HOME_TOAST_ERRORS.CALENDAR_LOAD_FAILED.userMessage))
-      setEvents([])
+      if (!hasWarmEvents) setEvents([])
     } finally {
       if (blocking) setLoading(false)
       setInitialized(true)
@@ -485,6 +237,7 @@ export function AgendaCard() {
 
   const anyConnected = connected.google_calendar || connected.outlook
   const bothConnected = connected.google_calendar && connected.outlook
+  const showAccountLabel = accounts.length > 1
 
   const isToday = useMemo(() => {
     const now = new Date()
@@ -503,12 +256,13 @@ export function AgendaCard() {
     return sorted.filter((ev) => new Date(ev.end).getTime() > nowTick)
   }, [events, isToday, nowTick])
 
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const eventKey = (ev: CalendarAgendaEvent) => `${ev.account_id ?? ev.source}:${ev.id}`
+  const [selectedEventKey, setSelectedEventKey] = useState<string | null>(null)
 
   useEffect(() => {
-    setSelectedEventId((curr) => {
-      if (curr && visibleEvents.some((ev) => ev.id === curr)) return curr
-      return visibleEvents[0]?.id ?? null
+    setSelectedEventKey((curr) => {
+      if (curr && visibleEvents.some((ev) => eventKey(ev) === curr)) return curr
+      return visibleEvents[0] ? eventKey(visibleEvents[0]) : null
     })
   }, [visibleEvents])
 
@@ -545,15 +299,86 @@ export function AgendaCard() {
     [openWorkspaceSettings],
   )
 
+  const openPrepItem = useCallback(
+    (ev: CalendarAgendaEvent) => {
+      if (!ev.prep || !onOpenItem) return
+      void onOpenItem(
+        minimalSpaceYourTurnItem(
+          ev.prep.space_id,
+          ev.prep.space_item_id,
+          ev.prep.title ?? `Prep — ${ev.title}`,
+          activeOrgId,
+        ),
+      )
+    },
+    [activeOrgId, onOpenItem],
+  )
+
+  const runPrepToday = useCallback(async () => {
+    const spaceId = resolveMeetingsSpaceId()
+    if (!spaceId) {
+      toast.error('Open or create your Meetings space first, then try Prep today again.')
+      return
+    }
+    setPrepRunning(true)
+    try {
+      const result = await runMeetingsPrecallPrepToday({
+        spaceId,
+        timezone,
+        refresh: true,
+      })
+      toast.success(
+        `Prep started for today (${result.created + result.refreshed} meeting${
+          result.created + result.refreshed === 1 ? '' : 's'
+        }).`,
+      )
+      await load()
+    } catch (error) {
+      toast.error(sanitizeUserError(error, 'Could not start pre-call prep.'))
+    } finally {
+      setPrepRunning(false)
+    }
+  }, [load, timezone])
+
   return (
     <div className="section-card card-elevated flex h-[420px] flex-col overflow-hidden">
       <div className="border-border flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-5">
         <div className="flex items-center gap-2">
           <CalendarClock className="text-muted-foreground h-4 w-4 shrink-0" />
           <span className="body-2 text-foreground font-medium">Agenda</span>
+          {anyConnected ? (
+            <button
+              type="button"
+              onClick={() => askAboutAgendaInChat(accounts)}
+              className="rounded-md p-1 transition-opacity hover:opacity-90"
+              aria-label="Ask Vibey about your agenda"
+              title="Ask Vibey"
+            >
+              <img
+                src="/Logos/roas/icon-black.png"
+                alt=""
+                className="h-5 w-5 dark:hidden"
+              />
+              <img
+                src="/Logos/roas/icon-white.png"
+                alt=""
+                className="hidden h-5 w-5 dark:block"
+              />
+            </button>
+          ) : null}
         </div>
         {anyConnected && (
           <div className="flex flex-wrap items-center justify-end gap-1">
+            <button
+              type="button"
+              onClick={() => void runPrepToday()}
+              disabled={prepRunning}
+              className="button-glass-secondary rounded-spacing-2 typo-caption inline-flex items-center gap-1 px-2 py-1 font-medium disabled:opacity-50"
+              title="Generate pre-call prep docs for today’s meetings"
+            >
+              <FileText className="h-3.5 w-3.5" aria-hidden />
+              {prepRunning ? 'Prepping…' : 'Prep today'}
+            </button>
             {bothConnected && (
               <div className="bg-muted/50 mr-1 flex rounded-lg p-0.5">
                 {(['all', 'google_calendar', 'outlook'] as const).map((p) => (
@@ -723,12 +548,14 @@ export function AgendaCard() {
                         ) : null}
                         <ul className="space-y-1">
                           {dayEvts.map((ev) => (
-                            <li key={ev.id}>
+                            <li key={eventKey(ev)}>
                               <AgendaEventEntry
                                 ev={ev}
-                                isExpanded={ev.id === selectedEventId}
-                                onSelect={() => setSelectedEventId(ev.id)}
+                                isExpanded={eventKey(ev) === selectedEventKey}
+                                onSelect={() => setSelectedEventKey(eventKey(ev))}
+                                onOpenPrep={() => openPrepItem(ev)}
                                 nowTick={nowTick}
+                                showAccountLabel={showAccountLabel}
                               />
                             </li>
                           ))}
@@ -740,12 +567,14 @@ export function AgendaCard() {
               ) : (
                 <ul className="space-y-1">
                   {visibleEvents.map((ev) => (
-                    <li key={ev.id}>
+                    <li key={eventKey(ev)}>
                       <AgendaEventEntry
                         ev={ev}
-                        isExpanded={ev.id === selectedEventId}
-                        onSelect={() => setSelectedEventId(ev.id)}
+                        isExpanded={eventKey(ev) === selectedEventKey}
+                        onSelect={() => setSelectedEventKey(eventKey(ev))}
+                        onOpenPrep={() => openPrepItem(ev)}
                         nowTick={nowTick}
+                        showAccountLabel={showAccountLabel}
                       />
                     </li>
                   ))}

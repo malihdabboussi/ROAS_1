@@ -92,6 +92,7 @@ const ITEMLESS_ALLOWED_ACTION_TYPES = new Set<string>([
   'send_to_agent',
   'send_to_agents',
   'send_to_cursor',
+  'meetings_precall_prep',
 ])
 
 export function validateConcreteAction(action: AutomationActionLike): string | null {
@@ -171,7 +172,7 @@ export function validateConcreteAction(action: AutomationActionLike): string | n
       if (!action.text_template?.trim()) return 'Add Slack message text'
       return null
     case 'send_channel_message':
-      if (!action.channel_id?.trim()) return 'Add a Vibey channel ID'
+      if (!action.channel_id?.trim()) return 'Add a ROAS channel ID'
       if (!action.content_template?.trim()) return 'Add channel message text'
       return null
     case 'create_contact':
@@ -225,6 +226,8 @@ export function validateConcreteAction(action: AutomationActionLike): string | n
     case 'ingest_youtube_channel_to_agent_brain':
       if (!action.agent_key?.trim() && !action.brain_id?.trim()) return 'Choose an agent'
       if (!action.channel_urls?.some((url) => url.trim())) return 'Add at least one channel URL'
+      return null
+    case 'meetings_precall_prep':
       return null
     default:
       return 'Complete all actions before enabling'
