@@ -66,6 +66,25 @@ export function MissionsToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
             openCustomizeFromToolbar={openCustomizeFromToolbar}
           />
           <Tooltip
+            label={activeSpace.campaign_id ? 'Start playbook' : 'Missions require a campaign'}
+            side="bottom"
+          >
+            <span className="inline-flex">
+              <button
+                type="button"
+                disabled={!activeSpace.campaign_id}
+                onClick={() => {
+                  if (!activeSpace.campaign_id) return
+                  missionsViewRef.current?.openStartPlaybook()
+                }}
+                className="button-glass-neutral body-3 rounded-spacing-2 inline-flex shrink-0 items-center gap-1.5 px-3 py-2 font-semibold transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-40"
+                aria-label="Start playbook"
+              >
+                Playbook
+              </button>
+            </span>
+          </Tooltip>
+          <Tooltip
             label={activeSpace.campaign_id ? 'New mission' : 'Missions require a campaign'}
             side="bottom"
           >

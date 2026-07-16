@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import type { Job } from 'bullmq'
 import { DatabaseService } from '../../../../lib/services/database.service'
 import type { MissionJobData, MissionJobResult, MissionStatus } from '../../types'
+import { expandMissionPlaybook } from '../../playbooks/webinar-fulfillment.playbook'
 import { MissionOpenclawGateway } from '../gateways/mission-openclaw.gateway'
 import { MissionAgentStateService } from '../persistence/mission-agent-state.service'
 import { MissionStateRepository } from '../persistence/mission-state.repository'
@@ -140,11 +141,62 @@ export class MissionPlanPhaseService {
         mgr,
       )
 
-      const rawPlanResult = await this.support.withTimeout(
-        this.openclawGateway.callOpenClawForPlan(mission, mgr),
-        executionTimeoutMs,
-        `Plan phase timed out after ${Math.floor(executionTimeoutMs / 1000)}s`,
-      )
+      const missionInput =
+        mission.input && typeof mission.input === 'object' && !Array.isArray(mission.input)
+          ? (mission.input as Record<string, unknown>)
+          : {}
+      const playbookId =
+        typeof missionInput.playbook_id === 'string' ? missionInput.playbook_id.trim() : ''
+
+      let rawPlanResult: Record<string, unknown>
+      if (playbookId) {
+        let workerAgentKeys: string[] = []
+        if (mission.campaign_id) {
+          let caQ = missionClient
+            .from('campaign_agents')
+            .select('agent_key')
+            .eq('campaign_id', mission.campaign_id)
+          if (mission.org_id) caQ = caQ.eq('org_id', mission.org_id)
+          else caQ = caQ.eq('user_id', mission.user_id).is('org_id', null)
+          const { data: workers } = await caQ
+          workerAgentKeys = (workers || []).map((w) => w.agent_key)
+        }
+        const expanded = expandMissionPlaybook({
+          playbookId,
+          mission: {
+            id: mission.id,
+            title: mission.title,
+            brief: mission.brief,
+            user_id: mission.user_id,
+            org_id: mission.org_id ?? null,
+            input: missionInput,
+          },
+          workerAgentKeys,
+          managerKey: mgr,
+        })
+        if (!expanded) {
+          throw new Error(`Unknown mission playbook: ${playbookId}`)
+        }
+        rawPlanResult = expanded
+        await this.stateRepo.insertLog(
+          missionClient,
+          mission,
+          'mission.progress',
+          'planning',
+          'planning',
+          {
+            note: `Expanded playbook "${playbookId}" into a guided plan (no freeform invent).`,
+            playbook_id: playbookId,
+          },
+          mgr,
+        )
+      } else {
+        rawPlanResult = await this.support.withTimeout(
+          this.openclawGateway.callOpenClawForPlan(mission, mgr),
+          executionTimeoutMs,
+          `Plan phase timed out after ${Math.floor(executionTimeoutMs / 1000)}s`,
+        )
+      }
       const planResult = this.jsonService.sanitizePlanForUser(rawPlanResult)
 
       const capabilityGap = planResult.capability_gap as

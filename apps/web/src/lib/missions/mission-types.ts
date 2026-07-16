@@ -121,6 +121,7 @@ export interface CreateMissionInput {
   priority?: MissionPriority
   assigned_agent_key?: AgentKey
   campaign_id?: string
+  space_id?: string
   input?: Record<string, unknown>
   idempotency_key?: string
   scheduled_at?: string | null
