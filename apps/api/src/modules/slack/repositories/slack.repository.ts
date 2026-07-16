@@ -155,6 +155,8 @@ export class SlackRepository {
     metadata: Record<string, unknown>,
     orgId?: string | null,
   ): Promise<void> {
+    // user_integrations.scope_mode is NOT NULL; org_shared requires org_id.
+    const scopeMode = orgId ? 'org_shared' : 'personal'
     let existsQuery = supabase
       .from('user_integrations')
       .select('id')
@@ -173,6 +175,8 @@ export class SlackRepository {
           status: 'connected',
           connected_at: new Date().toISOString(),
           error_message: null,
+          scope_mode: scopeMode,
+          org_id: orgId ?? null,
         })
         .eq('id', existing.id)
       if (error) throw new Error(`Failed to update slack integration: ${error.message}`)
@@ -188,6 +192,7 @@ export class SlackRepository {
       status: 'connected',
       connected_at: new Date().toISOString(),
       org_id: orgId ?? null,
+      scope_mode: scopeMode,
     })
     if (error) throw new Error(`Failed to create slack integration: ${error.message}`)
   }
