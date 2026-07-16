@@ -1,5 +1,12 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 16:10] - [ARCH]
+
+What: Production sync — committed/pushed local `main` (`7e896094` + retrigger `9656d977`), applied 17 pending Supabase migrations on ROAS prod, redeployed Fly `roas-runtimes` (health ok, sync 66/66).
+Why: Bring production DB + agent runtime current with the large local working tree (Page Grader send, Slack search fallback, integrations, etc.).
+Impact: DB + Fly are live. Vercel `roas-web`/`roas-api`/`roas-funnels` still on older SHAs — GitHub is partially degraded so create-deployment/webhooks hang; retry Vercel when GitHub recovers (our tip already includes the `onExpandMyTasks` web TS fix). Railway workers not manually redeployed (no CLI token path). Page Grader edge is a separate repo.
+Files: `supabase/migrations/20260714*`–`20260716*`, `scripts/roas/deploy-fly-runtimes.sh`, git `main`
+
 ## [2026-07-16 15:45] - [FIX]
 
 What: Meeting detail CTA says Vibey (not DiBi). Prep agenda status reconciles `task_execution_status` so failed agent runs show Prep failed; task-agent writes `prep_status` on done/failed and retries OpenClaw session-lock timeouts.
