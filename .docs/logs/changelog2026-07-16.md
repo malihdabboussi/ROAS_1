@@ -776,3 +776,13 @@ Why: Production created three execute intents within two seconds for the same Pr
 Impact: Concurrent recovery paths converge on one execution instead of killing each other. Requires mission-worker deployment.
 
 Files: `mission-comment-directive.service.ts`, `mission-subtask-triage.service.ts`, `mission-retry-coordination.test.ts`, `documentation/features/missions.md`
+
+## [2026-07-16 16:39] - [FIX]
+
+What: Removed the unavailable WhatsApp plugin from the Fly OpenClaw config and made the headless gateway reject invalid configuration before opening its HTTP listener.
+
+Why: OpenClaw treated the missing WhatsApp plugin as a whole-config validation failure, silently loaded an empty config, and returned 404 from the mission-critical `/v1/responses` route while `/v1/models` still appeared healthy.
+
+Impact: The corrected runtime exposes `/v1/responses` again. Future plugin/config drift fails startup with exact validation issues instead of presenting a false-green runtime that blocks Missions.
+
+Files: `docker/openclaw.json`, `apps/openclaw/src/gateway/headless-http-server.ts`, `.docs/plans/agent-follow-up-work.md`

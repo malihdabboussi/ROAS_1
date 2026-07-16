@@ -6911,3 +6911,11 @@ Deferred because: Voice routing fix and mic-silence bug were scoped to capture/a
 - Evidence: over service soft limit after channel-history search fallback
 - Needed: Extract search token resolution + channel-history fallback helpers
 - Why not now: in-scope was search connectivity bug fix
+
+## 2026-07-16 — OpenClaw existing typecheck failure
+
+- Feature/app: OpenClaw runtime observability
+- File: `apps/openclaw/src/observability/vibey-error-reporter.ts:262`
+- Evidence: `tsc --noEmit -p apps/openclaw/tsconfig.json` reports `Promise<boolean>` is not assignable to the unhandled-rejection observer's `void | Promise<void>` return type; the line is unchanged since the initial repository snapshot
+- Needed: Wrap the error-report call so the observer resolves `void`, then add focused observer coverage
+- Why not now: unrelated to the requested Mission gateway/config recovery

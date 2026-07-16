@@ -6530,8 +6530,7 @@
   "plugins": {
     "allow": [
       "vibey-backend",
-      "memory-core",
-      "whatsapp"
+      "memory-core"
     ],
     "load": {
       "paths": [
@@ -6550,9 +6549,6 @@
         }
       },
       "memory-core": {
-        "enabled": true
-      },
-      "whatsapp": {
         "enabled": true
       }
     }

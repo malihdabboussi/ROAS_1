@@ -7,7 +7,7 @@ import {
 import { createServer as createHttpsServer } from "node:https";
 import type { AuthRateLimiter } from "./auth-rate-limit.js";
 import type { ResolvedGatewayAuth } from "./auth.js";
-import { loadConfig } from "../config/config.js";
+import { loadConfig, readConfigFileSnapshot } from "../config/config.js";
 import { createAuthRateLimiter } from "./auth-rate-limit.js";
 import { authorizeGatewayBearerRequestOrReply } from "./http-auth-helpers.js";
 import { sendJson, sendMethodNotAllowed, sendText } from "./http-common.js";
@@ -125,7 +125,18 @@ export async function startHeadlessHttpGatewayServer(
 ): Promise<HeadlessHttpGatewayServer> {
   process.env.OPENCLAW_GATEWAY_PORT = String(port);
 
-  const cfgAtStart = loadConfig();
+  const configSnapshot = await readConfigFileSnapshot();
+  if (configSnapshot.exists && !configSnapshot.valid) {
+    const issues =
+      configSnapshot.issues.length > 0
+        ? configSnapshot.issues
+            .map((issue) => `${issue.path || "<root>"}: ${issue.message}`)
+            .join("\n")
+        : "Unknown validation issue.";
+    throw new Error(`Invalid config at ${configSnapshot.path}.\n${issues}`);
+  }
+
+  const cfgAtStart = configSnapshot.config;
   const runtimeConfig = await resolveGatewayRuntimeConfig({
     cfg: cfgAtStart,
     port,
