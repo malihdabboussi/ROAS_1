@@ -27,13 +27,14 @@ export class CampaignArtifactPresentationsRepository {
     spaceId?: string,
     options?: { summary?: boolean },
   ): Promise<Array<Record<string, unknown>>> {
+    // Cast through '*': supabase-js typegen parse of the long column list fails
+    // at compile time even though PostgREST accepts it at runtime.
+    const columns = options?.summary
+      ? CampaignArtifactPresentationsRepository.PRESENTATION_SUMMARY_COLUMNS
+      : '*'
     let query = supabase
       .from('presentations')
-      .select(
-        options?.summary
-          ? CampaignArtifactPresentationsRepository.PRESENTATION_SUMMARY_COLUMNS
-          : '*',
-      )
+      .select(columns as '*')
       .eq('campaign_id', campaignId)
       .order('created_at', { ascending: false })
     if (spaceId) query = query.eq('space_id', spaceId)

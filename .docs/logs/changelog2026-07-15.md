@@ -1,5 +1,15 @@
 # Changelog - July 15, 2026
 
+## [2026-07-15 17:34] - [FIX]
+
+What: Cast presentation summary `select(...)` through `as '*'` so Nest/Vercel tsc accepts the light column list.
+
+Why: `roas-api` Production build for All Artifacts hung-fix failed — supabase-js typegen ParserError on the long select string.
+
+Impact: Unblocks Production redeploy of slim All Artifacts presentation lists.
+
+Files: `campaign-artifact-presentations.repository.ts`
+
 ## [2026-07-15 17:24] - [FIX]
 
 What: All Artifacts — presentation list summary selects light columns (no `generated_html`/`slides`); funnel page summary omits missing `path`/`source_mode`; web uses `Promise.allSettled` so one kind 500 no longer blanks the grid.
