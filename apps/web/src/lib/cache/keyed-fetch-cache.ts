@@ -44,6 +44,13 @@ export function cachedFetch<T>(
   return inflight
 }
 
+/** Synchronous read of a cached value (ignores TTL freshness). */
+export function peekCachedFetch<T>(key: string): T | undefined {
+  const existing = entries.get(key)
+  if (!existing || existing.value === undefined) return undefined
+  return existing.value as T
+}
+
 /** Drop all cached entries whose key starts with `keyPrefix`. */
 export function invalidateCachedFetch(keyPrefix: string) {
   for (const key of entries.keys()) {

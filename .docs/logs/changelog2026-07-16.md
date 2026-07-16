@@ -1,12 +1,26 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 14:37] - [FIX]
+
+What: Exported missing `peekCachedFetch` from `keyed-fetch-cache` so production `roas-web` builds again.
+Why: AgendaCard on main imported it, but the helper never shipped — Vercel failed TypeScript compile.
+Impact: Unblocks `roas-web` Production deploy (deadline UI + Page Grader activity link).
+Files: `apps/web/src/lib/cache/keyed-fetch-cache.ts`
+
+## [2026-07-16 14:34] - [ARCH]
+
+What: Confirmed Page Grader production deploy of `roas-api` + `clickup-push-workload-task` via Lovable. Stuck Impact Elite slides task now has ClickUp `868kd91q6`; new `/work` returns `clickup_task_id` on 201; idempotent re-hit returns same ClickUp URL.
+Why: Close the ClickUp gap for ROAS → Portal creates.
+Impact: Launcher should no longer show that task as Not in ClickUp; future ROAS sends push ClickUp after create.
+Files: Page Grader edge functions `roas-api`, `clickup-push-workload-task` (live)
+
 ## [2026-07-16 14:20] - [FIX]
 
 What: Diagnosed Prep today 404 (`Cannot POST …/precall-prep/today`) — route existed locally but not on `api.roas.io`. Backfilled ROAS Meetings space schema (`prep` entry type, `calendar_event_id`, `prep_status`, Prep view). Redeploying `roas-api` with the prep controller.
 
 Why: Clicking Prep today failed with a sanitized toast; production Nest had no prep route, and live Meetings schema lacked prep fields.
 
-Impact: After deploy finishes, retry **Prep today** on Home Agenda. Meetings space now has Prep schema.
+Impact: Retry **Prep today** on Home Agenda — route is live (401 without auth vs previous 404). Meetings space has Prep schema. Deploy `roas-rnl92iliz` → `api.roas.io`.
 
 Files: live `spaces` row `d957d348-…`, `space-precall-prep.controller.ts`, `meetings-precall-prep.service.ts`, Vercel `roas-api` redeploy
 
@@ -640,3 +654,20 @@ What: Open in Canva on NOT_CONNECTED now starts Canva Composio OAuth (popup) ins
 Why: Missing Canva integration blocked the feature with a dead-end toast; user asked to run/prompt the integration flow.
 Impact: Hard-refresh web. Click Open in Canva → connect popup if needed → design opens after auth.
 Files: `connect-composio-integration.ts` (+test), `MediaImageWorkspace.tsx`, `media-toast-errors.config.ts`, `lib/integrations/index.ts`
+
+## [2026-07-16 14:30] - [FIX]
+
+What: Subtask detail modal now portals to `document.body` and uses `z-modal-layer-4` so it renders above the mission detail shell.
+
+Why: It used nonexistent `z-modal-layer-2` and lived inside the mission shell, so the mission card (`z-10`) painted over it.
+
+Impact: Clicking a subtask shows the Subtask popup on top of Webinar Fulfillment (and any other mission modal).
+
+Files: `SubtaskDetailModal.tsx`
+
+## [2026-07-16 14:37] - [FIX]
+
+What: Media gallery/chat open restored as a right slide-out (`MediaImageWorkspacePanelHost`) instead of replacing the Media view. Aspect/describe edits now fall back to Google Gemini when OpenRouter returns 401/auth failure (local key was returning "User not found"). Edit seeds include `space_id`; removed unused full-page `MediaDeepView`.
+Why: Full-view replace felt like a screen reload; edits failed because OpenRouter auth was broken while Gemini was available — agent framed it as "image generation unavailable".
+Impact: Hard-refresh web; agent-api hot-reload. Click media → gallery stays, editor slides from the right. Aspect ratio + describe edits should succeed via Gemini when OpenRouter is unauthorized. Fix/rotate `OPENROUTER_API_KEY` in `apps/api/.env` for GPT Image 2 path.
+Files: `MediaImageWorkspacePanelHost.tsx`, `SpaceMediaView.tsx`, `SpaceItemsContainer.tsx`, `MediaImageWorkspace.tsx`, deleted `MediaDeepView.tsx`, `artifact-legacy-media-generate.service.ts` (+test), `artifact-legacy-media-provider.service.ts`, `platform-failure.ts`
