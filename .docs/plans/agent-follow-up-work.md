@@ -17,7 +17,7 @@ Entry template:
 
 ## 2026-07-16 - [FIX] Mission-worker not dispatching ROAS `mission_outbox`
 
-Status: Open
+Status: Resolved
 Found while: Diagnosing stuck Webinar Fulfillment missions after Playbook start
 Files:
 
@@ -26,6 +26,18 @@ Files:
   Evidence: Two `mission.plan.requested` rows stayed `pending`/`attempts=0` for minutes after `pg_notify`; `pg_stat_activity` showed no worker LISTEN on ROAS (`lhfgtsjetcardinpgouq`); `RAILWAY_TOKEN` in `scripts/roas/roas-secrets.env` returns Unauthorized.
   Needed work: Re-auth Railway token; confirm worker `SUPABASE_URL`/`SUPABASE_DIRECT_DB_URL`/`REDIS_URL` point at ROAS; restart dispatcher; redeploy `roas-api` so service-role outbox + DIRECT_DB are live.
   Deferred because: No valid Railway credentials in this session; plans manually expanded to unblock UI approval.
+  Resolved: 2026-07-16 — GitHub push redeployed mission-worker (LISTEN live); plan save fixed via artifact_kind enum + removing broken Vercel `SUPABASE_DIRECT_DB_URL`. Local `RAILWAY_TOKEN` still Unauthorized for CLI logs only.
+
+## 2026-07-16 - [FIX] Add working `SUPABASE_DIRECT_DB_URL` for Vercel roas-api native TX
+
+Status: Open
+Found while: Deploying mission outbox fix
+Files:
+
+- Vercel `roas-api` env
+  Evidence: Adding `SUPABASE_DIRECT_DB_URL` from `scripts/roas/.env` made validated `POST /internal/missions/plan` return 503; deleting the env restored 201.
+  Needed work: Set a Vercel-reachable pooler URI (not broken direct URL) and verify native mission TX create/plan.
+  Deferred because: Service-role path unblocked production; need a verified pooler connection string.
 
 ## 2026-07-16 - [FEATURE] Webinar playbook Phase B/C + Flows mission-playbook type
 
