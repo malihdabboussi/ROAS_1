@@ -1,5 +1,15 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 11:50] - [FIX]
+
+What: Redeployed Railway mission-worker + queue-worker and Vercel `roas-api`/`roas-web` (`6ac5af77`/`c463f69b`). Fixed plan save (`ad_artifact`/`funnel_artifact` enum). Removed broken Vercel `SUPABASE_DIRECT_DB_URL` that caused plan-create 503; confirmed plan save 201 and mission pending approval.
+
+Why: Worker was not claiming outbox; playbook plans failed API validation then native-TX 503.
+
+Impact: Dispatch LISTEN live; Webinar Fulfillment mission can be approved in UI. Local `RAILWAY_TOKEN` still Unauthorized for CLI-only.
+
+Files: mission plan DTO/execute normalize, Vercel env, deploys
+
 ## [2026-07-16 11:48] - [FIX]
 
 What: Seed missing `integrations_available` rows for Google Calendar, Google Sheets, HubSpot, Notion, and Salesforce.
