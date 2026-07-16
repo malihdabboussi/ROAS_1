@@ -258,6 +258,13 @@ export class MissionCommentDirectiveService {
               throw new Error('edit_subtask needs title, assigned_agent_key, or intent')
             }
             hadMutation = true
+            const { data: preEdit } = await supabase
+              .from('mission_subtasks')
+              .select('status')
+              .eq('id', sid)
+              .eq('mission_id', missionId)
+              .maybeSingle()
+            const editWasInProgress = String(preEdit?.status) === 'in_progress'
             const body: Record<string, unknown> = {
               mission_id: missionId,
               user_id: uid,
@@ -269,6 +276,7 @@ export class MissionCommentDirectiveService {
             if (assigned) body.assigned_agent_key = assigned
             if (intent) body.intent = intent
             await this.postManager('/manager/edit-subtask', body)
+            if (editWasInProgress) this.abortRegistry.abort(sid)
             break
           }
           case 'reassign_subtask': {
@@ -320,6 +328,15 @@ export class MissionCommentDirectiveService {
             const sid = this.subtaskIdFromAction(a)
             if (!sid) throw new Error('retry_subtask missing subtask_id')
             hadMutation = true
+            const { data: preRetry } = await supabase
+              .from('mission_subtasks')
+              .select('status')
+              .eq('id', sid)
+              .eq('mission_id', missionId)
+              .maybeSingle()
+            if (String(preRetry?.status) === 'in_progress') {
+              this.abortRegistry.abort(sid)
+            }
             await this.postManager('/manager/retry-subtask', {
               mission_id: missionId,
               user_id: uid,

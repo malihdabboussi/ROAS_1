@@ -23,10 +23,44 @@ describe('AgentRuntimeService (mission-worker)', () => {
     expect(service.resolveGatewayAgentId('atlas', 'org-1')).toBe('org-org-1-atlas')
   })
 
-  it('scopes personal gateway agent ids by user in shared runtime mode', () => {
+  it('scopes personal gateway agent ids by user in shared runtime mode', async () => {
     process.env.AGENT_RUNTIME_MODE = 'shared'
 
     expect(service.resolveGatewayAgentId('atlas', null, 'user-1')).toBe('user-user-1-atlas')
+  })
+
+  it('scopes personal ids from shared_railway profile even without AGENT_RUNTIME_MODE', async () => {
+    delete process.env.AGENT_RUNTIME_MODE
+    const supabase = {
+      from: (table: string) => {
+        if (table === 'agents_registry') {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  is: () => ({
+                    maybeSingle: async () => ({ data: { level: 'employee' }, error: null }),
+                  }),
+                }),
+              }),
+            }),
+          }
+        }
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { agent_runtime_type: 'shared_railway' },
+                error: null,
+              }),
+            }),
+          }),
+        }
+      },
+    }
+
+    const runtime = await service.resolveRuntimeAgent(supabase as never, 'user-1', 'nate', null)
+    expect(runtime.gatewayAgentId).toBe('user-user-1-nate')
   })
 
   it('builds mission, subtask, and state session keys', () => {

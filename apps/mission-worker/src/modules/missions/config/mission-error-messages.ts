@@ -17,12 +17,20 @@ export const MISSION_ERROR_MESSAGES: MissionErrorMessageRule[] = [
     message: 'The agent runtime misconfigured a path — we are fixing it',
   },
   {
+    pattern: /^(terminated|The operation was aborted|AbortError)/i,
+    message: 'Lost connection to the agent runtime, retrying',
+  },
+  {
     pattern: /Gateway connection error/i,
     message: 'Lost connection to the agent runtime, retrying',
   },
   {
     pattern: /(openclaw|agent) request failed \(5\d{2}\)/i,
     message: 'Ran into a small issue, trying again now',
+  },
+  {
+    pattern: /(OpenClaw|Agent) gateway error \(404\)|Agent request failed \(404\)/i,
+    message: "Couldn't reach that agent runtime — retrying",
   },
   {
     pattern: /(OpenClaw|Agent) gateway error \(\d{3}\)/i,

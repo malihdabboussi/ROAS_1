@@ -257,7 +257,7 @@ export class MissionExecutePhaseService {
         .update({ status: 'in_progress', updated_at: claimAt })
         .eq('id', subtaskId)
         .eq('mission_id', missionId)
-        .in('status', ['pending', 'revision'])
+        .in('status', ['pending', 'revision', 'blocked'])
         .select('id')
       if (!claimedRows?.length) {
         return {
@@ -807,16 +807,43 @@ export class MissionExecutePhaseService {
       this.logger.error(
         `[mission_execute_error] hop=worker correlation_id=${String(mission.correlation_id ?? '')} mission_id=${missionId} subtask_id=${subtaskId} retryable=${retryable} ${errorMessage}`,
       )
+      const priorOutput =
+        subtask.output && typeof subtask.output === 'object' && !Array.isArray(subtask.output)
+          ? (subtask.output as Record<string, unknown>)
+          : {}
       await supabase
         .from('mission_subtasks')
         .update({
           status: 'blocked',
           feedback: humanFeedback,
+          output: {
+            ...priorOutput,
+            _internal_error: errorMessage.slice(0, 2000),
+            error_summary: humanFeedback,
+          },
           updated_at: new Date().toISOString(),
         })
         .eq('id', subtaskId)
         .eq('mission_id', missionId)
         .eq('status', 'in_progress')
+
+      await this.stateRepo.insertLog(
+        supabase,
+        mission,
+        'mission.subtask.execute.failed',
+        mission.status,
+        'blocked',
+        {
+          subtask_id: subtaskId,
+          title: subtask.title,
+          note: `Subtask "${subtask.title}" blocked`,
+          error: humanFeedback,
+          _internal_error: errorMessage.slice(0, 2000),
+          retryCount: nextRetryCount,
+          attempts,
+        },
+        assignedAgent,
+      )
 
       await this.stateRepo.enqueueMissionOutboxEvent(supabase, {
         missionId,

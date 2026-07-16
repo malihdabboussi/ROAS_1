@@ -14,11 +14,18 @@ export class AgentRuntimeService {
     return process.env.AGENT_RUNTIME_MODE?.trim() === 'shared'
   }
 
-  resolveGatewayAgentId(agentKey?: string, orgId?: string | null, userId?: string | null): string {
+  resolveGatewayAgentId(
+    agentKey?: string,
+    orgId?: string | null,
+    userId?: string | null,
+    opts?: { forceShared?: boolean },
+  ): string {
     const key = agentKey?.trim() || 'vibey'
     if (orgId) return `org-${orgId}-${key}`
     const scopedUserId = userId?.trim()
-    if (this.isSharedRuntime() && scopedUserId) return `user-${scopedUserId}-${key}`
+    if ((opts?.forceShared || this.isSharedRuntime()) && scopedUserId) {
+      return `user-${scopedUserId}-${key}`
+    }
     return key
   }
 
@@ -34,13 +41,31 @@ export class AgentRuntimeService {
     } else {
       query = query.eq('user_id', userId).is('org_id', null)
     }
-    const { data } = await query.maybeSingle()
+    const [{ data }, forceShared] = await Promise.all([
+      query.maybeSingle(),
+      this.resolveForceSharedPersonalRuntime(supabase, userId, orgId),
+    ])
 
     const level = this.normalizeLevel(data?.level)
     return {
       level,
-      gatewayAgentId: this.resolveGatewayAgentId(agentKey, orgId, userId),
+      gatewayAgentId: this.resolveGatewayAgentId(agentKey, orgId, userId, { forceShared }),
     }
+  }
+
+  private async resolveForceSharedPersonalRuntime(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId?: string | null,
+  ): Promise<boolean> {
+    if (orgId) return false
+    if (this.isSharedRuntime()) return true
+    const { data } = await supabase
+      .from('profiles')
+      .select('agent_runtime_type')
+      .eq('id', userId)
+      .maybeSingle()
+    return String(data?.agent_runtime_type ?? '').trim() === 'shared_railway'
   }
 
   buildMissionSessionKey(input: {

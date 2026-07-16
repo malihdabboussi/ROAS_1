@@ -1,5 +1,221 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 14:15] - [FIX]
+
+What: Unstuck Webinar Fulfillment Pre-call runs (manual manager retry). Root fixes: execute claim now accepts `blocked` (was only pending/revision → silent skip), abort-registry aborts prior run on re-register, humanize `terminated`, soft-fail + migration for missing `profiles.awareness_loop_enabled`. Applied column on live DB. Fly runtime was healthy again after 502/503 storm.
+
+Why: Missions looked “in progress” but Pre-call sat blocked after runtime drops; retries/triage could enqueue execute while status stayed blocked so claim no-oped; scheduler also crashed on missing awareness column.
+
+Impact: Latest mission Pre-call requeued to in_progress. Needs mission-worker deploy for durable claim/abort fixes. Prefer the newest Webinar Fulfillment mission.
+
+Files: `mission-execute-phase.service.ts`, `subtask-abort-registry.service.ts`, `mission-error-messages.ts`, `agent-pattern-evaluator.service.ts`, `20260716214500_profiles_awareness_loop_enabled.sql`
+
+## [2026-07-16 14:11] - [FEATURE]
+
+What: Mission Activity composer is Vibey again (`Message Vibey...`). Clicking a subtask opens a full Subtask detail modal (live run stream, intent, output, step activity) with its own “tell Vibey about this step” composer that posts a scoped mission comment into the existing Vibey directive pipeline.
+
+Why: “Steer Atlas / restarts step” reframed the mission composer incorrectly — users expect mission Activity to hit Vibey like before, and each subtask to have an extensive window.
+
+Impact: After web deploy — Activity = Vibey; click any subtask → detail modal + scoped Vibey guidance.
+
+Files: `SubtaskDetailModal.tsx`, `SubtasksSection.tsx`, `MissionDetailOverlayModals.tsx`, `MissionDetailModalView.tsx`, `MissionDetailModal.tsx`, `ActivityTimelineComposer.tsx`; removed `SubtaskExpandedPanel.tsx`
+
+## [2026-07-16 14:00] - [FEATURE]
+
+What: Pre-call prep for Meetings — morning schedule action `meetings_precall_prep` + manual **Prep today** on Home Agenda. Creates/refreshes Prep items keyed by `calendar_event_id`, invokes Vibey for a prep document, and surfaces Prep chips on agenda events (opens the Meetings prep item).
+Why: Complete the CEO meeting loop: prep before the call (Agenda) + Fathom log after.
+Impact: After deploy, enable **Morning Pre-call Prep** on Meetings (or use Prep today). Existing Meetings spaces need schema/automation backfill (entry_type prep, calendar_event_id, prep_status, Prep view).
+Files: `space-template-catalog-ceo.ts`, `meetings-precall-prep.*`, `space-precall-prep.controller.ts`, `space-automation-*.ts`, `integrations-calendar.service.ts`, `AgendaCard*.tsx`, `calendar-api.ts`, `space-schema.ts`, `automation-catalog.ts`, `automation-publishable.ts`
+
+## [2026-07-16 13:54] - [FEATURE]
+
+What: Mission subtasks show the live agent stream on expand (auto-opens the in-progress row). “Locked in” stays open while the run is live instead of collapsing between tools. Activity composer explains that mid-run guidance restarts the working agent’s step; comment-directive `retry_subtask`/`edit_subtask` now abort in-progress runs so guidance actually applies.
+
+Why: Users saw Working/Atlas but no usable stream, and Send a message never steered the live turn.
+
+Impact: Open the mission → Pre-call (or any working) subtask expands with Live run tools/thinking. Send guidance to restart that step with the new note. Needs web + mission-worker deploy.
+
+Files: `SubtaskExpandedPanel.tsx`, `SubtasksSection.tsx`, `MissionLockedIn.tsx`, `useMissionExecStream.ts`, `ActivityTimeline*.tsx`, `MissionDetailModalView.tsx`, `mission-comment-directive.service.ts`, `mission-openclaw.gateway.ts`
+
+## [2026-07-16 13:53] - [FIX]
+
+What: Page Grader send now (1) pushes ClickUp after Portal create via `clickup-push-workload-task`, (2) accepts a Deadline on the send panel and writes it to Page Grader `due_date` + ROAS `due_date`, (3) appends operator notes onto the ROAS Space task. Re-send of already-linked items retries ClickUp. Activity “Open in Page Grader” link still ships with web.
+Why: ROAS-created workload rows never called ClickUp push (stuck “Not in ClickUp”); send UI had no deadline and notes/due weren’t written back to ROAS.
+Impact: After Page Grader `roas-api` redeploy + ROAS api/web deploy: new sends sync to ClickUp; deadline/note on send update both sides. Slack launch posts still only on typed Portal service-request path (same as Quick Add).
+Files: `page-grader/.../roas-api/index.ts`, `clickup-push-workload-task/index.ts`, `page-grader-api.service.ts`, `page-grader.dto.ts`, `PageGraderBulkSendPanel.tsx`, `BulkActionBar.tsx`, `page-grader-send.service.ts`, `page-grader-send-preview.ts`, activity format files
+
+## [2026-07-16 13:44] - [FIX]
+
+What: Task Activity now labels Page Grader sync as “sent this to Page Grader” and shows a clickable **Open in Page Grader** link from `custom_data.page_grader.work_url` (fixes the generic “You updated Page Grader” row).
+Why: After bulk send, users need confirmation in Activity plus a one-click jump to the Portal work item.
+Impact: Existing send activity rows pick this up after `roas-web` deploy (no re-send). New sends keep writing the same payload.
+Files: `page-grader-activity.ts`, `page-grader-activity.test.ts`, `task-activity-format.ts`, `TaskActivityTimeline.tsx`
+
+## [2026-07-16 13:36] - [FIX]
+
+What: Set `AGENT_RUNTIME_MODE=shared` on Railway `mission-worker` and `queue-worker` (project `roas-workers`) via GraphQL `variableUpsert` with `Project-Access-Token`, then redeployed both. Latest deployments SUCCESS (`bf4e6b83…` mission, `9e13cc98…` queue).
+
+Why: Workers were resolving bare personal gateway agent IDs; shared Railway runtime needs scoped `user-{userId}-{agentKey}` IDs. Bearer auth fails for project tokens — use `Project-Access-Token` header.
+
+Impact: Live workers pick up shared runtime mode. Retry blocked Pre-call / mission subtasks if they still show the old 404 class of failure.
+
+Files: Railway env (mission-worker, queue-worker); ops note for `RAILWAY_TOKEN` auth header
+
+## [2026-07-16 13:32] - [FEATURE]
+
+What: Home Agenda loads all connected Google Calendar accounts (merged), parallelizes per-calendar Composio fetches, caches/SWR day–week–month switches, adds Ask Vibey on the Agenda header, and lets personal multi-account connections set a default (star) for sending invites.
+
+Why: Second Calendar account was invisible in Agenda (single-connection resolve); range switches refetched the slow sequential Google path; users need a default work calendar for invites and a fast ask-Vibey path.
+
+Impact: Hard-refresh Home — both calendars’ events appear (with account labels when multiple). Star your work account in Integrations for invites. Day/Week within a cached month should feel instant. API live on `api.roas.io` (`roas-5v8ca4frr`); web UI (Ask Vibey / cache) needs local refresh or web deploy.
+
+Files: `integrations-calendar.service.ts`, `integrations-calendar-google-agenda.ts`, `integrations-calendar-connections.ts`, `integrations-core.service.ts`, AgendaCard + cache helpers, `ConnectedIntegrationCard.tsx`, `integration-connections.md`
+
+## [2026-07-16 13:14] - [FIX]
+
+What: Personal Composio overview sync now matches/updates/labels each connected-account id separately (no one-row-per-integration upsert), reclaims stomped duplicate rows, and re-resolves colliding connection labels.
+
+Why: Add another Google Calendar account created a second row but both UI lines showed the same email — sync stomped metadata onto the latest personal row and reused the first account’s label.
+
+Impact: Hard-refresh Integrations — two Calendar accounts should show distinct emails. Deployed to `api.roas.io` (`roas-228i2y2kb`).
+
+Files: `integrations-overview.service.ts`, `integrations-overview-personal-composio-sync.ts`, `integrations-overview-composio-row.ts`, overview tests, `integration-connections.md`
+
+## [2026-07-16 13:10] - [FIX]
+
+What: Deployed `force_new` Composio connect to production `api.roas.io` so Add another account skips reuse and opens a new OAuth link. Also fixed blocking Nest TS errors (Page Grader filter, calendar agenda push, mission log agent_key).
+
+Why: Local web already sent `force_new`, but production API always reused the existing Google Calendar connection → client error toast with no OAuth window.
+
+Impact: Retry **+ Add another account** on Google Calendar — should open Google/Composio authorize. Hard refresh if needed.
+
+Files: `integrations-composio.service.ts`, `integrations-core.service.ts`, `composio.service.ts`, page-grader/calendar/mission TS fixes; Vercel `roas-api` → `api.roas.io`
+
+## [2026-07-16 13:10] - [FIX]
+
+What: Restored OpenClaw `/v1/responses` by removing invalid `whatsapp` from live config + `docker/openclaw.json` (reintroduced Jul 12; machine restart reverts to image). Fixed shared-mode agent `/register`. Mission-worker now scopes personal gateway IDs when `profiles.agent_runtime_type=shared_railway` even without `AGENT_RUNTIME_MODE`. Added `AGENT_RUNTIME_MODE=shared` to Railway paste block. Fly image redeploy started.
+
+Why: Mission execute hit `Agent gateway error (404): Not Found` — invalid OpenClaw plugin config disables `/v1/responses`. Worker also called bare `nate` while ensure-ready repaired `user-…-nate`.
+
+Impact: Live responses restored after config strip + gateway restart. Durable after Fly redeploy finishes. Railway `AGENT_RUNTIME_MODE=shared` is now set and workers redeployed (see 13:36 entry).
+
+Files: `docker/openclaw.json`, `agent-sync.controller.ts`, `agent-runtime.service.ts` (mission-worker), tests, `scripts/roas/roas-secrets.env(.template)`
+
+## [2026-07-16 12:46] - [FIX]
+
+What: Media API OpenRouter GPT Image calls now send `modalities: ["image","text"]` + `image_config` (matching the agent path), parse `message.images`, and abort after 120s. Client generate/edit streams also abort at 120s so UI can’t stick on “Creating your image…”.
+Why: Direct media generate for ChatGPT omitted OpenRouter image modalities, so the stream could hang for minutes with no image returned.
+Impact: GPT Image generation should complete or fail fast with a timeout; hard-refresh Media to pick up the chat-routed composer (no under-bar status).
+Files: `gemini-image.integration.ts`, `use-media-image-generation.ts`, `MediaGenerateComposer.tsx`
+
+## [2026-07-16 12:43] - [FEATURE]
+
+What: Media composer uses the home chat widget shell (centered); always defaults to ChatGPT (`gpt-5.4-image-2`); submit opens the chat sidebar via `seedComposer` so image creation runs in chat. Phase 2 image workspace: history rail, aspect-ratio regen, download, Open in chat, describe-edits bar.
+Why: Nano Banana was still showing from stale API defaults; status text under the bar wasn’t the product UX; deep view was preview-only.
+Impact: Generate/edit flows pull out global chat; deep media is an editable workspace. Canva handoff and pin-comments still deferred.
+Files: `MediaGenerateComposer.tsx`, `use-media-image-generation.ts`, `MediaImageWorkspace.tsx`, `MediaDeepView.tsx`, `SpaceMediaView.tsx`, `media/dto/index.ts`, `image-models.ts`
+
+## [2026-07-16 12:39] - [FIX]
+
+What: Library shows the same connected accounts + “Add another account” as Manage (not trash-only). Stopped false green success toasts when adding another Google Calendar account while already connected; hardened `force_new` Composio connect with alias + unit test.
+
+Why: Library/Manage mismatched once connected; status polling treated the existing Calendar connection as OAuth success, stacking green toasts behind the force_new error.
+
+Impact: Connected providers look the same in Library and Manage. Add another account no longer fires fake success toasts; OAuth should open for a second account (needs `roas-api` deploy for alias/`force_new` hardening).
+
+Files: `IntegrationAccountsGroup.tsx`, `IntegrationsLibrary.tsx`, `IntegrationsManage.tsx`, `IntegrationsView.tsx`, `IntegrationsContainer.tsx`, `integrations-composio.service.ts`, `composio.service.ts`, composio accounts test, `integration-connections.md`
+
+## [2026-07-16 12:34] - [FEATURE]
+
+What: Space Media now has a ChatGPT-style generate composer at the top (attach reference, prompt, model, aspect ratio, send) with the gallery below; default image model is GPT Image 2 (`gpt-5.4-image-2`). Toolbar Generate dropdown replaced with Upload (generation lives in-page).
+Why: Make Media a functional create surface instead of an empty gallery that only opened a modal.
+Impact: Users generate/edit-from-reference images in Space Media without a modal; Nano Banana remains selectable. Next: image workspace (history/edit bar/Canva), chat + Generate, localized comments.
+Files: `MediaGenerateComposer.tsx`, `use-media-image-generation.ts`, `SpaceMediaView.tsx`, `SpaceMediaToolbar.tsx`, `image-models.ts`, `media-image-generation.controller.ts`, `media-image-stream.controller.ts`, `dto/index.ts`, `artifact-legacy-media-provider.service.ts`
+
+## [2026-07-16 12:28] - [FIX]
+
+What: Webinar human gates now apply on personal missions (not only org). Mission subtask hover/expand shows the real blocked detail (`_internal_error` / mission progress notes) instead of only the soft “small issue” line; execute failures store technical detail + Activity log. Live mission got Gate 1/2/3 + backfilled 404 detail.
+Why: Personal playbooks skipped human gates; gateway 404 was humanized away so the UI couldn’t explain the block.
+Impact: Personal webinar runs include Your-turn gates; hover shows agent runtime 404 detail. Root cause remains agent gateway 404 (needs runtime fix).
+Files: `webinar-fulfillment.playbook.ts`, `mission-execute-phase.service.ts`, `mission-error-messages.ts`, `SubtasksSection.tsx`, `detail-helpers.tsx`, `MissionDetailModalView.tsx`
+
+## [2026-07-16 12:22] - [FIX]
+
+What: Completed Dylan’s Page Grader `user_integrations` row after a partial connect (vault secrets saved, FK insert failed).
+Why: Connect stored API URL/key before catalog seed, so Manage could look half-connected while the row was missing.
+Impact: Page Grader shows connected in Manage; Send to Page Grader can list clients.
+Files: ROAS DB `user_integrations` for `page_grader`
+
+## [2026-07-16 12:21] - [FIX]
+
+What: Seeded `integrations_available.page_grader` on ROAS and call `ensureAvailable` before `user_integrations` upsert on connect. Send panel shows Connect CTA when not connected.
+Why: Connect hit FK `user_integrations_integration_id_fkey` because catalog row was missing and ensure ran after insert.
+Impact: Retry Page Grader Connect in Settings (API Base URL + API key) should succeed now; then Send to Page Grader can list clients.
+Files: `20260716203000_seed_page_grader_integrations_available.sql`, `page-grader-api.service.ts`, `PageGraderBulkSendPanel.tsx`
+
+## [2026-07-16 12:13] - [FIX]
+
+What: Renamed `use-update-item-with-subtask-complete-confirm.ts` → `.tsx` so Turbopack can parse the JSX dialog return.
+Why: Hook returns `<CompleteSubtasksConfirmDialog />` inside a `.ts` file → “Expected '>', got 'ident'” build error on Home.
+Impact: Local Home compile unblocks for SpaceStatusCascadeConfirmProvider.
+Files: `use-update-item-with-subtask-complete-confirm.tsx`
+
+## [2026-07-16 12:12] - [FIX]
+
+What: Mission detail Activity no longer crushes “Executing subtask” into vertical letter stacking (agent chip moves above the message; chips use short first name). Subtask rows show status + relative timestamp + feedback preview; mark-complete requires confirm. Subtask status/reassign now writes Activity logs.
+Why: Long Name · Role labels sat `shrink-0` beside the note in a narrow column; circle toggle marked done with no confirm; status changes never logged to Activity.
+Impact: Activity stays readable; accidental completes need confirmation; Activity shows subtask status updates after API deploy.
+Files: `ActivityTimelineLogItem.tsx`, `SubtasksSection.tsx`, `detail-helpers.tsx`, `ConfirmDialog.tsx`, `mission-lifecycle.service.ts`, `missions-repository-plans.base.ts`
+
+## [2026-07-16 12:10] - [FIX]
+
+What: Restore local Next.js by adding a root `@vibey/api-shared/sanitize-fathom-summary-markdown` re-export so web tsconfig paths no longer fall through to the Nest/`pg` barrel from client `TaskDescription`.
+Why: Import resolved via `@vibey/api-shared/*` → `src/sanitize-fathom-summary-markdown` (missing); Turbopack pulled `api-shared` index into the browser and crashed on `tls` / Express.
+Impact: Local `pnpm dev:app` serves again; Home task detail no longer bundles Node-only modules.
+Files: `packages/api-shared/src/sanitize-fathom-summary-markdown.ts`, `packages/api-shared/package.json`, `apps/web/vitest.config.ts`
+
+## [2026-07-16 12:08] - [FIX]
+
+What: My tasks expand control is now a Maximize icon in the card header (upper right). Opening a task from the expand panel closes the panel first so it no longer stacks under the task detail modal.
+Why: Count-as-expand was unclear; panel stayed open under the task popup.
+Impact: Expand is obvious in the header; task detail opens cleanly alone.
+Files: `MyTasksCard.tsx`, `MyTasksPanel.tsx`
+
+## [2026-07-16 12:05] - [FEATURE]
+
+What: Auto-provision Webinar Fulfillment team (strategist/copywriter/designer/ads_manager) on playbook plan + Agency Client (Webinar) space template; hireable `ads_manager` employee template; playbook `pickAgent` resolves name-derived keys (nate/ivy/lux/blaze); Name · Role display renames. Live-hired Ivy/Lux/Blaze for Dylan’s Impact campaign, renamed Nate→Reed · Agency Strategist, remapped mission subtasks, resumed triage.
+Why: Webinar playbook fell back to a single hired strategist because role-shaped keys were missing and ads_manager was not in the hire catalog; users should not manually hire the roster per Space.
+Impact: New webinar Spaces/playbooks get the roster automatically after deploy. Current campaign already has Reed/Ivy/Lux/Blaze on the team with template skills seeded.
+Files: `webinar-fulfillment-team.*`, `webinar-fulfillment-team.service.ts`, `internal-agents.controller.ts`, `mission-plan-phase.service.ts`, `webinar-fulfillment.helpers.ts`, `space-templates.service.ts`, `20260716200000_ads_manager_employee_template_and_reed_strategist.sql`
+
+## [2026-07-16 11:59] - [FIX]
+
+What: Stop false “connected” toast when Add another account reuses OAuth without a redirect; merge Slack status into the existing overview row (was showing 2 unlabeled Accounts); show Slack workspace name (`ROAS`), skip opaque UUID Codex labels, and backfill Slack `connection_label` from `metadata.team_name`. Reject Composio connect responses that omit an authorize URL.
+Why: force_new against a reused/missing-redirect response was treated as synchronous success; Map-by-id loadData stopped collapsing Slack duplicates; Slack team name lived in metadata but never became the display label.
+Impact: Add another account either opens Google OAuth or errors clearly. Manage shows one Slack row named ROAS after refresh. Hover actions unchanged (rename / scope / refresh / disconnect); social page pickers remain the only extra per-connection config on this surface.
+Files: `useIntegrations.ts`, `ConnectedIntegrationCard.tsx`, `integrations-composio.service.ts`, `slack.repository.ts`, Slack label backfill SQL
+
+## [2026-07-16 11:55] - [ARCH]
+
+What: Confirmed production ship for Page Grader send + Slack org visibility + notification Ask in chat (`7664ebaa` on `main`). Vercel `roas-api` (`api.roas.io`) and `roas-web` (`app.roas.io`) Production Ready. Page Grader edge function `roas-api` is live at `https://mjaxhuehopzbsuhmseeg.supabase.co/functions/v1/roas-api` (returns auth 401, not 404). Local Supabase CLI (DVTEST org) cannot redeploy that project (403 privileges).
+Why: User asked to commit + deploy ROAS api/web and the Page Grader function.
+Impact: Connect Page Grader in Settings with base URL + API key (`ROAS_API_KEY` secret or `agent_api_keys` row), then bulk-send from Spaces. Future PG function deploys need a Supabase login that owns project `mjaxhuehopzbsuhmseeg`.
+Files: Vercel Production `roas-api` / `roas-web`; Page Grader `supabase/functions/roas-api`
+
+## [2026-07-16 11:54] - [FEATURE]
+
+What: Home My tasks card now opens a polished full-panel of all assigned tasks (search, scope picker, Overdue/Today/Upcoming/No due date groups). Card stays a glance preview (15 rows) with “View all” / count expand.
+Why: User wanted a simple Home glance that expands into a proper personal task list without building a dedicated Personal Tasks space yet.
+Impact: From Home → My tasks → Open full list / count / empty-state CTA. Row click still opens the existing task detail host. Still powered by the Your-turn feed (no new Space).
+Files: `MyTasksPanel.tsx`, `group-my-tasks-by-due.ts`, `group-my-tasks-by-due.test.ts`, `MyTasksCard.tsx`, `HomeCardRenderer.tsx`, `HomeCardsGrid.tsx`
+
+## [2026-07-16 11:50] - [FEATURE]
+
+What: Google Calendar multi-account + auto-label + multi-calendar agenda. Personal connections can add another Google account (`force_new`), connections label from `GOOGLECALENDAR_LIST_CALENDARS` email, agenda pulls up to 15 calendars (not only primary), `/settings` OAuth callback redirects to `/home`, and existing Calendar connection labeled `dylanvanas@gmail.com`.
+Why: One Google OAuth account was capped by unique indexes + reuse short-circuit; identity used Gmail profile without Gmail scopes; agenda ignored secondary calendars; callback hit a 404 `/settings` route.
+Impact: Manage shows "+ Add another account"; refresh should show the Gmail address as the connection name; home agenda includes events from other calendars in that Google account. Needs `roas-api` + `roas-web` deploy for full code path (DB migration + label backfill already live on ROAS).
+Files: `integrations-identity-tools.ts`, `integrations-composio.service.ts`, `integrations-core.service.ts`, `integrations-calendar*.ts`, `integrations-composio-callback-url.ts`, `useIntegrations.ts`, `IntegrationsManage.tsx`, `IntegrationsView.tsx`, `settings/page.tsx`, `20260716190000_allow_multiple_personal_integration_connections.sql`
+
 ## [2026-07-16 11:50] - [FIX]
 
 What: Redeployed Railway mission-worker + queue-worker and Vercel `roas-api`/`roas-web` (`6ac5af77`/`c463f69b`). Fixed plan save (`ad_artifact`/`funnel_artifact` enum). Removed broken Vercel `SUPABASE_DIRECT_DB_URL` that caused plan-create 503; confirmed plan save 201 and mission pending approval.
@@ -285,3 +501,108 @@ What: Restored Fathom→Brain auto-ingest and stuck “Crystallize beliefs and p
 Why: Auto-crystallize was ON and webhooks arrived, but workers could not claim outbox rows and Atlas calls hit a broken gateway, so last capture stayed ~22 days old and crystallize jobs sat In queue forever.
 Impact: New Fathom meetings enqueue and complete into User Brain again; night-janitor crystallize jobs drain instead of stacking. Deploy Fly with updated `docker/openclaw.json` so whatsapp does not return on image rebuild.
 Files: Railway env (SUPABASE_DIRECT_DB_URL/DATABASE_URL/AGENT_API_URL), `apps/mission-worker/.../database.service.ts`, `apps/queue-worker/.../database.service.ts`, `docker/openclaw.json`, `scripts/roas/roas-secrets.env`, Fly live `/home/node/.openclaw/openclaw.json`
+
+## [2026-07-16 12:02] - [FIX]
+
+What: Strip markdown bold/italic markers (`**…**`, `__…__`) from Fathom meeting summaries in the plain-text task description sanitizer; also detect leftover `**` so existing items get cleaned on display (not only fathom.video markdown links / ATX headers).
+Why: Summaries showed literal stars like `- **Professional Wins:**` because detection skipped prose-only dumps and the sanitizer never removed emphasis.
+Impact: Meeting task descriptions show `Professional Wins:` without asterisks; new writes strip them too.
+Files: `packages/api-shared/src/utils/sanitize-fathom-summary-markdown.ts`, tests, `packages/api-shared/src/index.ts`
+
+## [2026-07-16 12:07] - [FEATURE]
+
+What: When marking a parent Space task Done/closed, show a ClickUp-style confirm if it has open subtasks — Yes completes parent + open subtasks, No completes parent only, Cancel aborts.
+Why: Completing a parent left subtasks open with no way to cascade status in one step.
+Impact: List/kanban/detail/menu status changes prompt when needed; bulk status skips the prompt.
+Files: `complete-open-subtasks-on-status.ts`, `CompleteSubtasksConfirmDialog.tsx`, `use-update-item-with-subtask-complete-confirm.ts`, `SpaceStatusCascadeConfirmProvider.tsx`, `SpaceItemsContainer.tsx`, `BulkActionBar.tsx`, `TaskDetailModal.tsx`, `HomeTaskDetailHost.tsx`, `use-task-menu-actions.ts`
+
+## [2026-07-16 12:09] - [FIX]
+
+What: List/table SelectCell triggers for generic selects (e.g. Call Kind) now show the option label beside the color dot, matching category/kanban.
+Why: Non-status selects reused the status-only “dot” closed trigger, so Call Kind looked like an unlabeled color chip.
+Impact: Call Kind (and other custom selects) show Personal/Team etc. in the list cell; status remains dot-only.
+Files: `apps/web/src/components/ui/forms/SelectCell.tsx`, `SelectCell.test.tsx`
+
+## [2026-07-16 12:26] - [FEATURE]
+
+What: Page Grader bulk send is multi-step (client → work type → Send), shows Selected client + checkmark, maps each client to a Space tag (creates/reuses on send), and defaults the client from that tag on later sends.
+Why: Picking Impact Elite Coaching should tag the Space tasks and pre-select that client next time; Send was finishing too early before choosing task vs task request.
+Impact: Select tasks → Page Grader → client (check / pinned) → Continue → Task or Task request → Send; matching tag becomes the default client.
+Files: `PageGraderBulkSendPanel.tsx`, `page-grader-client-tag.ts` (+test), `page-grader-send.service.ts`, `BulkActionBar.tsx`, `page-grader.dto.ts`, `page-grader-api.service.ts` (+test)
+
+## [2026-07-16 12:37] - [FEATURE]
+
+What: Page Grader clients can map to ROAS campaigns (optional space). Settings → Integrations → Page Grader → Map clients; send flow defaults from space/campaign map, then tags, then name match (Impact → Impact Elite Coaching), with optional “Map this campaign” on send.
+Why: Portal clients and ROAS campaigns/spaces need a durable link so work from Impact defaults to the right Page Grader client.
+Impact: Map once in Settings (or check map on send); later sends from that campaign pre-select the client.
+Files: `page-grader.dto.ts`, `page-grader.controller.ts`, `page-grader-api.service.ts`, `page-grader-client-tag.ts` (+test), `page-grader-send.service.ts`, `PageGraderBulkSendPanel.tsx`, `BulkActionBar.tsx`, `PageGraderClientScopeMapModal.tsx`, `page-grader-scope-api.ts`, `ConnectedIntegrationCard.tsx`
+
+## [2026-07-16 12:40] - [FIX]
+
+What: Page Grader client picker loads once and filters locally; typing no longer refetch/auto-selects. Selected client is pinned above Cancel/Continue and only changes on click.
+Why: Search was reloading clients and picking the first match on every keystroke.
+Impact: Search filters the list only; your pick stays until you click another client.
+Files: `PageGraderBulkSendPanel.tsx`
+
+## [2026-07-16 12:46] - [FEATURE]
+
+What: Page Grader send picks Portal service-request types (Graphics, Copywriting, Video Editing, …) instead of Task vs Task request. ROAS pulls types from Page Grader `GET /task-types` (with Portal-aligned fallback) and sends `work.task_type` + `kind: task_request`.
+Why: Page Grader creates service requests by type; the previous Task/Task request step didn’t match Portal.
+Impact: Client → request type → Send; workload rows get the correct `task_type`. Deploy Page Grader `roas-api` for live `/task-types`.
+Files: `page-grader/supabase/functions/roas-api/index.ts`, ROAS `page-grader.integration.ts`, `page-grader-api.service.ts`, `page-grader.dto.ts`, `page-grader.controller.ts`, `PageGraderBulkSendPanel.tsx`, `page-grader-send.service.ts`, `BulkActionBar.tsx`
+
+## [2026-07-16 13:19] - [FEATURE]
+
+What: Chat + menu now has Generate image (prefills composer). Media image workspace has Open in Canva via `POST /api/media/assets/:id/canva-handoff` (Composio URL import → design → edit_url).
+Why: Continue Space Media ChatGPT-style phases — generate from any chat, hand off assets to Canva for polish.
+Impact: + → Generate image anywhere with ChatInput; Open in Canva on image workspace (needs Canva connected + API deploy). Pin comments and parent lineage still deferred.
+Files: `chat-input-plus-menu-view.tsx`, `use-chat-input-plus-controller.ts`, `ChatInput.tsx`, `MediaImageWorkspace.tsx`, `media-api.ts`, `media-toast-errors.config.ts`, `media-canva-handoff.service.ts`, `media-canva-composio-payload.ts`, `media-assets.controller.ts`, `media.module.ts`, tests
+
+## [2026-07-16 13:22] - [FEATURE]
+
+What: Page Grader send flow adds Assignee + Preview steps. Suggests Portal assignee from Space assignees/attendees (email/name match); otherwise pick from Page Grader people or Unassigned. Preview shows title/description/priority/due before Send. Page Grader `GET /assignees` lists profiles; send accepts explicit assignee.
+Why: Operators need to assign work and see what Portal will receive before bulk-sending.
+Impact: Client → type → assignee → preview → Send. Deploy Page Grader `roas-api` for live `/assignees`.
+Files: `page-grader/.../roas-api/index.ts`, ROAS page-grader module, `PageGraderBulkSendPanel.tsx`, `page-grader-send-preview.ts` (+test), `BulkActionBar.tsx`, `page-grader-send.service.ts`
+
+## [2026-07-16 13:24] - [FIX]
+
+What: Media composer now uses Home HD4 shell (tokens, hero grid/glow, hd4 chips/menus). Provisioned missing `media` + `campaigns` storage buckets on ROAS Supabase (`lhfgtsjetcardinpgouq`) that caused generate_image "Bucket not found"; added migration for durable repair.
+Why: Composer sat outside `.home-dashboard-v4` so HD4 tokens never applied; ROAS DB never had `media` bucket INSERT (policies assumed it).
+Impact: Media tab matches Home composer look after refresh. Image generate/save should work now without Bucket not found. Retry the donkey prompt.
+Files: `MediaGenerateComposer.tsx`, `SpaceMediaView.tsx`, `MediaImageWorkspace.tsx`, `globals.css`, `20260716192000_provision_media_campaigns_storage_buckets.sql`
+
+## [2026-07-16 13:36] - [FIX]
+
+What: Media Aspect/Model menus portal above the gallery (no more clipping). Media composer seed with `railIntent: new` now forces a fresh chat thread (was racing into the old busy conversation). `generate_image` accepts `space_id`/`campaign_id` and prefers them when saving so Space Media gallery can list the asset.
+Why: Seed event fired before React cleared the selected conversation; menus were clipped by overflow; uploads often had null `space_id` so the Media tab stayed empty.
+Impact: Hard-refresh web; redeploy agent-api for space_id save. New generates from Media should open a new chat, show the prompt, and land in the Space Media gallery.
+Files: `SpaceVibeyChatPanel.tsx`, `MediaGenerateComposer.tsx`, `SpaceMediaView.tsx`, `HomeDashboardV4Menu.tsx`, `globals.css`, `artifact-legacy-media-generate.service.ts`, `artifact-action-additional-schemas.ts`, `vibey-api-action-docs.ts`
+
+## [2026-07-16 13:40] - [FEATURE]
+
+What: Clicking a generated image (inline or "Generated image" card) in Space chat opens the Media workspace editor (`MediaImageWorkspace`) instead of a new browser tab, when `mediaAssetId` is present.
+Why: ChatGPT-style flow — edit/history should stay in-app on the asset, not dump a raw URL.
+Impact: Hard-refresh web. Needs a real media asset id on the block (new generates after space_id deploy). Legacy URL-only images still open in a new tab.
+Files: `open-media-asset-in-app.ts` (+test), `SpaceItemsContainer.tsx`, `GeneratedMedia.tsx`, `InlineImageGen.tsx`, `MessageContentBlockSwitchPartA.tsx`, `FinalOutputCards.tsx`, `components/media/index.ts`
+
+## [2026-07-16 13:58] - [FIX]
+
+What: `generate_image` media asset insert now uses allowed `source_surface: 'generated'` (was `agent_generated_media`, rejected by `media_assets_source_surface_check`). DB insert failure returns `success: false` instead of a false OK with only a signed URL. Media composer footer wraps/`min-w-0` so Aspect/Model/Send stay visible when the chat rail narrows the pane.
+Why: Image bytes uploaded but gallery stayed empty; composer was clipped by overflow when the Space pane was narrow.
+Impact: Redeploy/restart agent-api, hard-refresh web, retry generate — asset should land in Space Media.
+Files: `artifact-legacy-media-upload.service.ts`, `artifact-runtime-data-access.service.test.ts`, `MediaGenerateComposer.tsx`, `SpaceMediaView.tsx`, `globals.css`
+
+## [2026-07-16 14:00] - [FIX]
+
+What: Clarified ChatGPT image default is OpenAI GPT Image 2 (`gpt-5.4-image-2`), not GPT-5.6 chat. `generate_image` success now returns `space_id`, `asset_ref`, and `media_library` status; action docs forbid inventing a "URL-only / can't register Space Media" limitation.
+Why: Users confuse GPT-5.6 (chat) with image models; agents were narrating a stale save failure as a product limitation.
+Impact: After agent-api redeploy + skill sync, agents should confirm Space Media registration; UI copy says GPT Image 2 ≠ GPT-5.6.
+Files: `artifact-legacy-media-generate.service.ts`, `vibey-api-action-docs.ts`, `MediaGenerateComposer.tsx`, `image-models.ts`, `use-media-image-generation.ts`, `media/dto/index.ts`
+
+## [2026-07-16 14:05] - [FIX]
+
+What: Chat image cards auto-retry thumbnail load (no flash of "Failed to load image"). Clicking a generated-image card switches to Space Media workspace by deferring `?media=` until the Media view is active (was racing clear → fell through to new tab when asset id missing). `media_asset` blocks now carry UUID `mediaAssetId` + `spaceId` from generate_image results.
+Why: Signed URLs fail once on first paint; opening media from List/Board cleared `?media=` before the view switched; cards without a registered asset id opened a raw URL tab.
+Impact: Hard-refresh web; redeploy agent-api for asset-id-on-block. New generates with a saved asset open the editor; regenerate if older cards only have a URL.
+Files: `use-resilient-image-src.ts`, `InlineImageGen.tsx`, `GeneratedMedia.tsx`, `FinalOutputCards.tsx`, `SpaceItemsContainer.tsx`, `ui-block-extractor.ts`, `message-content-blocks.ts`

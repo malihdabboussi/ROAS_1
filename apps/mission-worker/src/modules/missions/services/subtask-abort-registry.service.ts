@@ -9,7 +9,12 @@ export class SubtaskAbortRegistry {
   private readonly bySubtaskId = new Map<string, AbortController>()
 
   register(subtaskId: string, controller: AbortController) {
-    this.bySubtaskId.set(String(subtaskId), controller)
+    const id = String(subtaskId)
+    const previous = this.bySubtaskId.get(id)
+    if (previous && previous !== controller) {
+      previous.abort()
+    }
+    this.bySubtaskId.set(id, controller)
   }
 
   abort(subtaskId: string) {

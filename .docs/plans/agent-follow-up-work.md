@@ -15,6 +15,278 @@ Entry template:
 …
 ```
 
+## 2026-07-16 - [OPS] Deploy mission-worker claim/abort stuck fixes
+
+Status: In progress
+Found while: Missions stuck in progress / Pre-call blocked
+Files:
+
+- `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`
+- `apps/mission-worker/src/modules/missions/services/subtask-abort-registry.service.ts`
+  Evidence: Live Pre-call requeued via manager retry; claim-accepts-blocked + abort-previous-on-register need Railway rebuild from git.
+  Needed work: Commit/push + redeploy `roas-workers` mission-worker.
+  Deferred because: Deploying now per user request.
+
+## 2026-07-16 - [ARCH] Split artifact-legacy-media-generate over 600 LOC
+
+Status: Open
+Found while: Returning space_id/media_library on generate_image success
+Files:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-generate.service.ts` (625 LOC; service soft limit 600)
+  Evidence: `wc -l` after success-payload enrichment.
+  Needed work: Extract video generate path and/or upload/billing helpers into sibling services.
+  Deferred because: In-scope fix was agent-facing success contract + docs; full split is structure-only.
+
+## 2026-07-16 - [FEATURE] Live backfill Meetings prep schema + Morning Pre-call Prep automation
+
+Status: Open
+Found while: Implementing pre-call prep (morning + manual)
+Files:
+
+- ROAS Meetings space `d957d348-c30a-4dbb-a089-ba3092332543` (schema + space_automations)
+  Evidence: Catalog now seeds `prep` entry_type, `calendar_event_id`, `prep_status`, Prep view, and `Morning Pre-call Prep`; existing spaces do not auto-migrate.
+  Needed work: Patch live Meetings schema + insert/publish the schedule automation on ROAS after `roas-api` deploy.
+  Deferred because: Local API `.env` points at Vibey Supabase, not ROAS.
+
+## 2026-07-16 - [REFACTOR] AgendaCard near LOC ceiling after Prep today
+
+Status: Open
+Found while: Pre-call prep Agenda UI
+Files:
+
+- `apps/web/src/features/home/components/AgendaCard.tsx` (~597 LOC)
+  Evidence: Architecture soft limit ~500 / hard 600 for components.
+  Needed work: Extract prep-today + header controls into `AgendaCardHeader.tsx`.
+  Deferred because: In-scope was wiring Prep today / chips, not AgendaCard split.
+
+## 2026-07-16 - [FEATURE] True mid-stream mission steer (no abort)
+
+Status: Open
+Found while: Mission live stream + mid-run feedback UX
+Files:
+
+- `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`
+- `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts`
+  Evidence: OpenClaw execute path is one-shot HTTP with output-only callbacks; comments mid-run cannot inject into the live turn without abort+retry.
+  Needed work: If OpenClaw gains mid-turn user input, wire pending guidance without killing the run; until then abort+retry is the product path.
+  Deferred because: True injection needs runtime support; shipped abort+retry steering instead.
+
+## 2026-07-16 - [ARCH] Split SubtasksSection / comment-directive over LOC
+
+Status: Open
+Found while: Mission live stream UX
+Files:
+
+- `apps/web/src/features/mission-control/components/dialogs/SubtasksSection.tsx` (419 LOC; limit 400)
+- `apps/mission-worker/src/modules/missions/services/phases/mission-comment-directive.service.ts` (518 LOC; limit 500)
+  Evidence: `wc -l` after extract of `SubtaskExpandedPanel`; assignee dropdown still lives in SubtasksSection; directive switch still monolithic.
+  Needed work: Extract assignee picker; split directive action handlers.
+  Deferred because: Stream UX was the request; further split is structure-only.
+
+## 2026-07-16 - [ARCH] Split over-limit calendar/core services
+
+Status: Open
+Found while: Multi-account Agenda + personal default for sends
+Files:
+
+- `apps/api/src/modules/integrations/services/integrations-calendar.service.ts` (658 LOC)
+- `apps/api/src/modules/integrations/services/integrations-core.service.ts` (620 LOC)
+  Evidence: Both over the 600 LOC service limit after connection/default helpers; Agenda parse/mutation blocks are the main weight.
+  Needed work: Extract Google/Outlook parse helpers and/or default-connection methods into dedicated modules.
+  Deferred because: Behavior fix shipped; split is pure structure.
+
+## 2026-07-16 - [ARCH] Deploy roas-api for Agenda multi-account + parallel fetch
+
+Status: Resolved
+Resolved: 2026-07-16 — production deploy `roas-5v8ca4frr` → `api.roas.io` (changelog 13:32).
+Found while: Implementing multi-account Agenda merge
+Files:
+
+- `apps/api/src/modules/integrations/services/integrations-calendar.service.ts`
+- `apps/api/src/modules/integrations/services/integrations-calendar-google-agenda.ts`
+  Evidence: Production still serves single-connection agenda until redeploy.
+  Needed work: Deploy `roas-api` to `api.roas.io`, hard-refresh Home, confirm both Google accounts’ events + faster loads.
+  Deferred because: Code complete; deploy is a separate ship step.
+
+## 2026-07-16 - [ARCH] Deploy roas-api for Calendar multi-account label sync
+
+Status: Resolved
+Resolved: 2026-07-16 — production deploy `roas-228i2y2kb` aliased to `api.roas.io` (changelog 13:14).
+Found while: Fixing duplicate Google Calendar emails after Add another account
+Files:
+
+- `apps/api/src/modules/integrations/services/integrations-overview-personal-composio-sync.ts`
+- `apps/api/src/modules/integrations/services/integrations-overview.service.ts`
+  Evidence: Local fix + unit tests pass; production `api.roas.io` still runs previous overview sync until redeploy.
+  Needed work: Deploy `roas-api` to `api.roas.io`, then hard-refresh Integrations and confirm two Calendar rows show distinct emails.
+  Deferred because: Fix is code-complete; deploy is a separate ship step.
+
+## 2026-07-16 - [ARCH] Bake OpenClaw whatsapp fix into Fly image + Railway env
+
+Status: Open
+Found while: Fixing agent gateway 404 /v1/responses
+Files:
+
+- `docker/openclaw.json` (cleaned; Fly redeployed `01KXP8T18…`)
+- Railway `mission-worker` / `queue-worker` variables
+  Evidence: Live `/v1/responses` 200 after Fly deploy with cleaned plugins (no whatsapp). Mission-worker still may send bare personal agent ids without `AGENT_RUNTIME_MODE=shared` until env set or profile-based code is deployed.
+  Needed work: Set `AGENT_RUNTIME_MODE=shared` on Railway mission-worker + queue-worker (or deploy mission-worker with profile-based shared ID scoping) and redeploy workers.
+  Deferred because: Fly image fix is live; Railway token in secrets lacked GraphQL auth for remote env set.
+  Partial: Fly bake done 2026-07-16 (changelog 13:10).
+
+## 2026-07-16 - [ARCH] Deploy roas-api for Calendar Add-another force_new alias
+
+Status: Resolved
+Resolved: 2026-07-16 — deployed `roas-dxjwzt6rr` to `api.roas.io` (changelog 13:10).
+Found while: Fixing Library/Manage multi-account UX + false success toasts
+Files:
+
+- `apps/api/src/modules/integrations/services/integrations-composio.service.ts`
+- `apps/api/src/modules/composio/services/composio.service.ts`
+  Evidence: Client already sends `force_new`; production may still short-circuit reuse without the hardened coerce + Composio `alias` on second-account link.
+  Needed work: Deploy `roas-api` (and `roas-web` for Library UI) then verify Add another account opens Google OAuth for a second mailbox.
+  Deferred because: UI/toast fixes are local; deploy is a separate ship step.
+
+## 2026-07-16 - [FEATURE] Space Media Canva + chat + menu Generate + pin comments
+
+Status: Open
+Found while: Shipping Media composer chat routing + Phase 2 image workspace
+Files:
+
+- `MediaImageWorkspace.tsx` (no parent_asset_id lineage, no region pin comments)
+  Evidence: Workspace history is chronological space images, not true edit lineage. Phase 3 Generate image and Phase 2b Canva handoff shipped 2026-07-16.
+  Needed work: Phase 4 click-to-pin comments; persist `parent_media_asset_id` for version trees; verify Canva handoff against a live connected account after API deploy.
+  Deferred because: This pass shipped chat + Generate image and Canva `edit_url` handoff; pin comments and DB lineage remain separate.
+
+## 2026-07-16 - [REFACTOR] SpaceMediaView slightly over 400 LOC
+
+Status: Open
+Found while: Embedding MediaGenerateComposer + deep view props
+Files:
+
+- `apps/web/src/features/spaces/views/media/SpaceMediaView.tsx` (410 LOC after menu/overflow wrap)
+  Evidence: `wc -l` = 410; component target is 400.
+  Needed work: Extract gallery grid / empty state into a sibling component.
+  Deferred because: In-scope was dropdown clipping + seed race + space_id save.
+
+## 2026-07-16 - [FIX] Agent gateway 404 blocking webinar subtask execute
+
+Status: Resolved
+Found while: Investigating “Ran into a small issue” on Pre-call strategy map
+Files:
+
+- Fly `roas-runtimes` / agent-api OpenClaw gateway for personal user `5f2b4597-…`
+- Mission `e35b57cb-…` subtask `9daf2cb9-…`
+  Evidence: `missions.progress_notes` = `Subtask triage failed: Agent request failed (404): {"message":"Agent gateway error (404): Not Found"}`. Agents show `sync_status=ready` in DB; runtime `/api/agents/*/sync` returned 503 earlier.
+  Needed work: Restore agent gateway routing for hired employees (nate/reed path) and retry the blocked subtask.
+  Deferred because: This pass fixed personal human gates + UI error detail; runtime 404 is infra.
+  Resolved: 2026-07-16 — root cause was invalid `plugins.entries.whatsapp` on live OpenClaw config (and reintroduced in `docker/openclaw.json`). Removed whatsapp, restarted gateway, `/v1/responses` 200; subtask retried to `in_progress`. Also fixed shared-mode `/register`. See changelog `[2026-07-16 13:05]`. Remaining: Fly redeploy to bake image + confirm Railway `AGENT_RUNTIME_MODE=shared`.
+
+## 2026-07-16 - [REFACTOR] MissionLifecycleService over 600 LOC
+
+Status: Open
+Found while: Logging subtask status updates into mission Activity
+Files:
+
+- `apps/api/src/modules/missions/services/mission-lifecycle.service.ts` (627 LOC)
+  Evidence: Architecture max is 600; file grew when `updateSubtask` started writing Activity logs.
+  Needed work: Split create / comment / updateSubtask paths into a dedicated lifecycle subservice.
+  Deferred because: In-scope was Activity visibility for subtask status; split is cleanup.
+
+## 2026-07-16 - [FEATURE] Name · Role display formatting in Team UI
+
+Status: Open
+Found while: Webinar fulfillment auto-provision + Nate→Reed rename
+Files:
+
+- `apps/web/src/features/team/components/ready-employees-modal/use-ready-employees-modal.ts`
+- Agent cards / campaign worker chips that render `agents_registry.name`
+  Evidence: Display names were rewritten in DB to `Name · Role`, but hire UI still picks bare `default_name` from the pool; no shared formatter for list chips.
+  Needed work: Format hire preview + list labels as `Name · Role` from template role; keep `agent_key` stable.
+  Deferred because: In-scope was auto-provision + live roster; UI formatter is polish.
+
+## 2026-07-16 - [FEATURE] Live backfill Meetings prep schema + Morning Pre-call Prep automation
+
+Status: Open
+Found while: Implementing pre-call prep (morning + manual)
+Files:
+
+- ROAS Meetings space `d957d348-c30a-4dbb-a089-ba3092332543` (schema + space_automations)
+  Evidence: Catalog now seeds `prep` entry_type, `calendar_event_id`, `prep_status`, Prep view, and `Morning Pre-call Prep` schedule action; existing spaces do not auto-migrate schema/automations.
+  Needed work: Patch live Meetings schema + insert/publish the schedule automation (or re-instantiate template fields) on ROAS after `roas-api` deploy.
+  Deferred because: Local API `.env` points at Vibey Supabase, not ROAS (`lhfgtsjetcardinpgouq`).
+
+## 2026-07-16 - [REFACTOR] AgendaCard near LOC ceiling after Prep today
+
+Status: Open
+Found while: Pre-call prep Agenda UI
+Files:
+
+- `apps/web/src/features/home/components/AgendaCard.tsx` (~597 LOC)
+  Evidence: Architecture soft limit ~500 / hard 600 for components.
+  Needed work: Extract prep-today + header controls into `AgendaCardHeader.tsx`.
+  Deferred because: In-scope was wiring Prep today / chips, not AgendaCard split.
+
+## 2026-07-16 - [REFACTOR] Deduplicate My tasks status-field loading
+
+Status: Open
+Found while: Home My tasks expand panel
+Files:
+
+- `apps/web/src/features/home/components/cards/MyTasksCard.tsx`
+- `apps/web/src/features/home/components/MyTasksPanel.tsx`
+  Evidence: Both define `useSpaceStatusFieldsBySpaceId` + status-dot helpers (~identical).
+  Needed work: Extract shared hook/component under `features/home/`.
+  Deferred because: In-scope was the expand panel UX; dedupe is cleanup only.
+
+## 2026-07-16 - [FEATURE] Personal OS / CEO HQ Today + calendar (step 2)
+
+Status: Open
+Found while: Shipping Home My tasks expand panel (step 1)
+Files:
+
+- CEO HQ space / personal operating surface (not built this pass)
+  Evidence: User approved step 1 (Home expand panel) first; step 2 is deepen Personal OS / CEO HQ with nicer Today + calendar and Home deep-link.
+  Needed work: Design + build personal space surface; wire Home My tasks into it when ready.
+  Deferred because: Explicitly out of scope for this pass.
+
+## 2026-07-16 - [FEATURE] Fathom connection auto-label (no email in metadata)
+
+Status: Open
+Found while: Auto-naming Manage connection rows
+Files:
+
+- `apps/api/src/modules/integrations/fathom/services/fathom-oauth.service.ts`
+- `user_integrations` row `9d699699-…` (metadata has webhook ids only)
+  Evidence: Fathom connected row has `connection_label` null and no email/name in metadata, so UI falls back to provider name.
+  Needed work: Persist Fathom account identity on OAuth connect (or refresh) into `connection_label` / metadata.
+  Deferred because: Calendar/Slack false-success and duplicate-row fixes were the blockers; Fathom identity needs a provider API call or OAuth profile field.
+
+## 2026-07-16 - [REFACTOR] Oversized integrations frontend + Composio service files
+
+Status: Open
+Found while: Google Calendar multi-account / auto-label work
+Files:
+
+- `apps/web/src/features/settings/components/settings-content/useIntegrations.ts` (1255 LOC)
+- `apps/api/src/modules/integrations/services/integrations-composio.service.ts` (605 LOC)
+- `apps/api/src/modules/integrations/services/integrations-core.service.ts` (581 LOC)
+  Evidence: Project architecture max is 600 LOC for services / 400 for containers; `useIntegrations` was already far over before this change (+~11 LOC).
+  Needed work: Split `useIntegrations` into load/connect/disconnect hooks; extract Composio connect vs accounts vs webhook ops.
+  Deferred because: Out of scope for Calendar multi-account fix; behavior change landed without a full split.
+
+## 2026-07-16 - [FIX] Google Drive/Sheets/Docs identity still uses Gmail profile tool
+
+Status: Open
+Found while: Fixing Google Calendar auto-label
+Files:
+
+- `apps/api/src/modules/integrations/services/integrations-identity-tools.ts`
+  Evidence: `google_drive`, `google_sheets`, `google_docs`, etc. still map to `GMAIL_GET_PROFILE`; Calendar OAuth proved Gmail profile is unavailable without Gmail scopes.
+  Needed work: Map each Google toolkit to a scoped identity tool (Drive about, Sheets, etc.).
+  Deferred because: User request was Calendar-specific.
+
 ## 2026-07-16 - [FIX] Mission-worker not dispatching ROAS `mission_outbox`
 
 Status: Resolved
@@ -6530,18 +6802,25 @@ Deferred because: Voice routing fix and mic-silence bug were scoped to capture/a
 ## 2026-07-16 — BulkActionBar / useIntegrations LOC (pre-existing, grew with Page Grader)
 
 - Feature/app: spaces / settings
-- Files: `BulkActionBar.tsx` (~1212), `useIntegrations.ts` (~1244)
-- Evidence: Both over component/hook soft limits; Page Grader send panel extracted to `PageGraderBulkSendPanel.tsx`, but bar still owns Move/Convert/Delete panels
+- Files: `BulkActionBar.tsx` (~1268), `useIntegrations.ts` (~1244)
+- Evidence: Both over component/hook soft limits; Page Grader send panel extracted to `PageGraderBulkSendPanel.tsx` (380 LOC), but bar still owns Move/Convert/Delete panels
 - Needed: Split Move/Convert/Delete panels + selection toolbar chrome; split useIntegrations catalog/connect maps
 - Why not now: in-scope work was send path; full split is adjacent cleanup
 
-## 2026-07-16 — Page Grader ClickUp push after ROAS create (deferred)
+## 2026-07-16 — Page Grader ClickUp push after ROAS create (done in code)
 
 - Feature/app: page-grader
 - File: `supabase/functions/roas-api/index.ts`
-- Evidence: Creates `workload_tasks` with `source=roas`; does not call `clickup-push-workload-task`
-- Needed: Optional ClickUp mirror so Launcher + ClickUp stay aligned
-- Why not now: v1 acceptance is ROAS → Page Grader workload row + portal link
+- Evidence: Now calls `clickup-push-workload-task` after insert / on idempotent re-hit. Needs Lovable redeploy of `roas-api` (+ ideally `clickup-push-workload-task` for priority column fix).
+- Still open: Slack launch notifications only exist on typed `clickup-service-requests` path — ROAS/Quick Add workload push does not post Slack. Portal detail Retry for ROAS rows may still hit typed-table retry instead of `clickup-push-workload-task`.
+
+## 2026-07-16 — Page Grader send panel / API service LOC
+
+- Feature/app: spaces / page-grader integration
+- Files: `PageGraderBulkSendPanel.tsx` (~694), `page-grader-api.service.ts` (~700+)
+- Evidence: Over component/service soft limits after deadline UI + ClickUp retry path
+- Needed: Extract preview/deadline step + send orchestration helpers
+- Why not now: shipping ClickUp + deadline write-back; split is adjacent cleanup
 
 ## 2026-07-16 — chat-reference-context.service LOC (pre-existing, grew)
 
@@ -6550,3 +6829,36 @@ Deferred because: Voice routing fix and mic-silence bug were scoped to capture/a
 - Evidence: `wc -l` = 443 (service soft limit ~400); added notification/awareness resolution branch
 - Needed: Extract highlighted-artifact line builders (space items vs notifications) into helpers
 - Why not now: in-scope was Ask-in-chat for notifications; split is adjacent cleanup
+
+## 2026-07-16 — SpaceItemsContainer LOC (pre-existing, touched for subtask-complete confirm)
+
+- Feature/app: spaces
+- File: `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx`
+- Evidence: `wc -l` = 1849 (far over container limits); only wired status-cascade confirm + provider
+- Needed: Split realtime/open-task/docs/modals hosts out of the container
+- Why not now: in-scope was Done→subtasks confirm; full container split is adjacent debt
+
+## 2026-07-16 — BulkActionBar LOC (pre-existing, touched for skipSubtaskCompleteConfirm)
+
+- Feature/app: spaces
+- File: `apps/web/src/features/spaces/components/BulkActionBar.tsx`
+- Evidence: `wc -l` = 1230; only taught bulkApply to skip subtask-complete confirm
+- Needed: Split Move/Convert/Delete panels (already logged with Page Grader)
+- Why not now: same as prior BulkActionBar follow-up
+
+## 2026-07-16 — Page Grader scope-map / panel LOC (pre-existing grew)
+
+- Feature/app: spaces / settings / page-grader
+- Files: `PageGraderBulkSendPanel.tsx` (450), `ConnectedIntegrationCard.tsx` (636), `page-grader-api.service.ts` (570)
+- Evidence: Soft limits ~400 component / ~400 service; scope-map + multi-step send pushed panel and card over
+- Needed: Extract client-list / work-type steps from panel; extract provider footer rows from ConnectedIntegrationCard; split scope-map helpers from page-grader-api.service
+- Why not now: in-scope was campaign/space mapping behavior
+
+## 2026-07-16 — PageGraderBulkSendPanel LOC after assignee/preview steps
+
+- Feature/app: spaces / page-grader
+- File: `apps/web/src/features/spaces/components/PageGraderBulkSendPanel.tsx`
+- Evidence: multi-step panel grew past component soft limit (~400); steps are client/type/assignee/preview
+- Needed: Extract step components (`PageGraderClientStep`, `PageGraderTypeStep`, `PageGraderAssigneeStep`, `PageGraderPreviewStep`)
+- Why not now: in-scope was assignee + preview behavior
+

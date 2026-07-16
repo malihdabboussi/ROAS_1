@@ -13,24 +13,38 @@ export class AgentPatternEvaluator {
 
   async getUsersWithCLevelAgents(): Promise<Array<{ user_id: string; org_id: string | null }>> {
     if (!this.databaseService.hasPgPool()) return []
-    const { rows } = await this.databaseService.pgQuery<{ user_id: string; org_id: string | null }>(
-      `
-        SELECT DISTINCT ar.user_id, ar.org_id
-        FROM agents_registry ar
-        JOIN user_subscriptions us ON us.user_id = ar.user_id
-          AND us.status IN ('active', 'trialing', 'past_due')
-        JOIN subscription_plans sp ON sp.id = us.plan_id
-          AND sp.slug != 'free'
-        JOIN profiles p ON p.id = ar.user_id
-          AND p.awareness_loop_enabled = true
-        WHERE ar.level = 'c_level'
-          AND (ar.config->>'archetype') = 'ceo'
-      `,
-      [],
-    )
-    return (rows || [])
-      .filter((row) => !!row.user_id)
-      .map((row) => ({ user_id: String(row.user_id), org_id: row.org_id ?? null }))
+    try {
+      const { rows } = await this.databaseService.pgQuery<{
+        user_id: string
+        org_id: string | null
+      }>(
+        `
+          SELECT DISTINCT ar.user_id, ar.org_id
+          FROM agents_registry ar
+          JOIN user_subscriptions us ON us.user_id = ar.user_id
+            AND us.status IN ('active', 'trialing', 'past_due')
+          JOIN subscription_plans sp ON sp.id = us.plan_id
+            AND sp.slug != 'free'
+          JOIN profiles p ON p.id = ar.user_id
+            AND COALESCE(p.awareness_loop_enabled, false) = true
+          WHERE ar.level = 'c_level'
+            AND (ar.config->>'archetype') = 'ceo'
+        `,
+        [],
+      )
+      return (rows || [])
+        .filter((row) => !!row.user_id)
+        .map((row) => ({ user_id: String(row.user_id), org_id: row.org_id ?? null }))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      if (/awareness_loop_enabled/i.test(message)) {
+        this.logger.warn(
+          `Awareness loop query skipped — profiles.awareness_loop_enabled missing: ${message}`,
+        )
+        return []
+      }
+      throw error
+    }
   }
 
   async hasAvailableCredits(userId: string, orgId?: string | null): Promise<boolean> {
