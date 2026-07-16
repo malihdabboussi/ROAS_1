@@ -6,6 +6,7 @@ const EXPECTED_TEMPLATE_SLUGS = [
   'meetings',
   'personal-workspace',
   'client-account-workspace',
+  'agency-client-webinar',
   'product-launch',
   'sales-pipeline',
   'company-wiki',
