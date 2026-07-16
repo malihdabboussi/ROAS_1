@@ -63,6 +63,37 @@ describe('useChatInputExternalAttachments', () => {
     expect(attachedArtifacts).toEqual([{ id: 'task-1', type: 'space-task', label: 'Review launch' }])
   })
 
+  it('listens for external notification attach events and de-duplicates', () => {
+    renderHook(() =>
+      useChatInputExternalAttachments({
+        enabled: true,
+        setAttachedArtifacts,
+        setAttachedFiles,
+        setText,
+        handleFileSelect,
+        toastError,
+        createId: () => 'file-1',
+      }),
+    )
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('space-vibey:attach-notification', {
+          detail: { id: 'notif-1', label: 'Skill gap detected' },
+        }),
+      )
+      window.dispatchEvent(
+        new CustomEvent('space-vibey:attach-notification', {
+          detail: { id: 'notif-1', label: 'Skill gap detected' },
+        }),
+      )
+    })
+
+    expect(attachedArtifacts).toEqual([
+      { id: 'notif-1', type: 'notification', label: 'Skill gap detected' },
+    ])
+  })
+
   it('attaches external files with parsed metadata, duplicate guard, and max-file guard', () => {
     const { result } = renderHook(() =>
       useChatInputExternalAttachments({

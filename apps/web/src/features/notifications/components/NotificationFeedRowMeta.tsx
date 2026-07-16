@@ -1,24 +1,26 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, RotateCw, Trash2 } from 'lucide-react'
+import { Check, Link2, RotateCw, Trash2 } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 
 export function NotificationFeedRowMeta({
   dateText,
   read,
+  onAskInChat,
   onMarkRead,
   onRetry,
   onDelete,
 }: {
   dateText: string
   read: boolean
+  onAskInChat?: () => void
   onMarkRead?: () => void | Promise<void>
   onRetry?: () => void | Promise<void>
   onDelete?: () => void | Promise<void>
 }) {
   const [retrying, setRetrying] = useState(false)
-  const showActions = Boolean(onMarkRead || onRetry || onDelete)
+  const showActions = Boolean(onAskInChat || onMarkRead || onRetry || onDelete)
 
   return (
     <div className="relative flex h-5 shrink-0 items-center">
@@ -33,6 +35,21 @@ export function NotificationFeedRowMeta({
       </span>
       {showActions ? (
         <div className="pointer-events-none absolute right-0 flex translate-x-2 items-center gap-0.5 opacity-0 transition-all duration-200 ease-out group-hover/feed-row:pointer-events-auto group-hover/feed-row:translate-x-0 group-hover/feed-row:opacity-100">
+          {onAskInChat ? (
+            <Tooltip label="Ask in chat" side="bottom">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onAskInChat()
+                }}
+                className="button-glass-secondary rounded-spacing-1 flex h-5 w-5 items-center justify-center"
+                aria-label="Ask in chat"
+              >
+                <Link2 className="h-3 w-3" />
+              </button>
+            </Tooltip>
+          ) : null}
           {!read && onMarkRead ? (
             <Tooltip label="Mark read" side="bottom">
               <button

@@ -41,6 +41,8 @@ function canonicalizeIntegrationId(id: string): string {
 const PERSONAL_CROSS_CONTEXT_PROVIDERS = new Set([
   'fathom',
   'fireflies',
+  'slack',
+  'page_grader',
   'openai_codex',
   'anthropic_claude',
 ])

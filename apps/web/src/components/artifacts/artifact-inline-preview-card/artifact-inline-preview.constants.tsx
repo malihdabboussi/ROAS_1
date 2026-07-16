@@ -92,6 +92,7 @@ export const ARTIFACT_GLASS: Record<ArtifactNodeType, string> = {
   'youtube-research': 'badge-glass badge-glass-red',
   'twitter-research': 'badge-glass badge-glass-blue',
   'space-task': 'badge-glass badge-glass-green',
+  notification: 'badge-glass badge-glass-purple',
   'contact-conversation': 'badge-glass badge-glass-purple',
   space_doc: 'badge-glass badge-glass-muted',
   document: 'badge-glass badge-glass-muted',

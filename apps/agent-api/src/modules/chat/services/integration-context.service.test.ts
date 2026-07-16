@@ -76,7 +76,48 @@ describe('IntegrationContextService', () => {
     })
     expect(repository.listPersonalIntegrations).toHaveBeenCalledWith(client, {
       userId: 'user-1',
-      integrationIds: ['fathom', 'fireflies'],
+      integrationIds: ['fathom', 'fireflies', 'slack', 'page_grader'],
+    })
+  })
+
+  it('includes personal Slack connections in org integration context', async () => {
+    const repository = makeRepository([
+      {
+        data: [],
+      },
+      {
+        data: [
+          {
+            id: 'slack-row',
+            user_id: 'user-1',
+            integration_id: 'slack',
+            provider: 'slack',
+            status: 'connected',
+            connected_at: null,
+            last_sync_at: null,
+            agent_enabled: true,
+            scope_mode: 'personal',
+            is_default: false,
+            connection_label: 'ROAS',
+            metadata: { team_name: 'ROAS' },
+          },
+        ],
+      },
+    ])
+    const client = {}
+    const service = new IntegrationContextService(
+      { client } as any,
+      { resolveAgentPolicy: vi.fn() } as any,
+      repository as any,
+    )
+
+    const context = await service.buildIntegrationContext('user-1', undefined, 'org-1')
+
+    expect(context).toContain('slack')
+    expect(context).toContain('slack: ROAS(personal,non_default)')
+    expect(repository.listPersonalIntegrations).toHaveBeenCalledWith(client, {
+      userId: 'user-1',
+      integrationIds: ['fathom', 'fireflies', 'slack', 'page_grader'],
     })
   })
 

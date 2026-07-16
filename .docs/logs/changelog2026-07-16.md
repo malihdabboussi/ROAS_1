@@ -1,5 +1,54 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 11:48] - [FIX]
+
+What: Seed missing `integrations_available` rows for Google Calendar, Google Sheets, HubSpot, Notion, and Salesforce.
+Why: Composio connect got past auth-config creation, then failed FK `user_integrations_integration_id_fkey` because toolkit configs existed without catalog parents.
+Impact: Google Calendar Connect can insert the pending `user_integrations` row and continue OAuth.
+Files: `supabase/migrations/20260716184000_seed_missing_composio_integrations_available.sql`
+
+## [2026-07-16 11:45] - [FIX]
+
+What: Recreate ROAS Composio managed OAuth auth configs and update `project_composio_toolkit_config` IDs (Google Calendar/Drive/Sheets plus other Composio OAuth apps). Catch Composio initiate failures so connect returns a clear error instead of a raw 500.
+Why: ROAS Composio project had zero auth configs; DB still pointed at Vibey leftover IDs, so Google Calendar Connect 404'd into "Internal server error".
+Impact: Google Calendar Connect should open the OAuth popup again. Same fix covers Drive, Sheets, Outlook, HubSpot, Notion, GitHub, LinkedIn, Instagram, YouTube, Zoom, Salesforce, Airtable. ElevenLabs still needs API-key auth config separately.
+Files: `supabase/migrations/20260716183000_roas_composio_google_auth_configs.sql`, `apps/api/src/modules/integrations/services/integrations-composio.service.ts`
+
+## [2026-07-16 11:38] - [FEATURE]
+
+What: Home dashboard reorder mode now supports per-card width — half (1 column) or full (span both columns). Toggle appears on each card while Reorder is active; sizes persist in `vibey-home-layout`.
+Why: Users wanted to resize cards when customizing layout, not only drag-reorder.
+Impact: Open Reorder → hover a card → pick half/full. Full-width cards stretch across the dashboard grid on desktop; mobile stays single column.
+Files: `home-cards.ts`, `home-cards.config.ts`, `use-home-layout.ts`, `HomeSortableCardsGrid.tsx`, `HomeCardsGrid.tsx`, `globals.css`, `home-cards.config.test.ts`
+
+## [2026-07-16 11:35] - [FIX]
+
+What: Home dashboard Mission Approval queue and My tasks rows show the full title in a hover tooltip when the label is truncated.
+Why: Long titles were cut off with ellipsis and had no way to read the full text without opening the item.
+Impact: Hover any truncated queue/task title to see the full name; click still opens the item.
+Files: `ApprovalQueueCard.tsx`, `MyTasksCard.tsx`, `.docs/logs/changelog2026-07-16.md`
+
+## [2026-07-16 11:32] - [FIX]
+
+What: Home minimize now also hides the recommendation carousel (sliding "For you" cards), so collapsed Home starts at Your dashboard with only the tiny Chat expand control.
+Why: Minimize left the carousel visible; day-to-day use wanted that block tucked away too.
+Impact: Collapsed = Chat chip + dashboard cards; Expand restores greeting, composer, templates, and carousel.
+Files: `home-dashboard-content.tsx`, `.docs/logs/changelog2026-07-16.md`
+
+## [2026-07-16 11:30] - [FIX]
+
+What: Clicking task artifact cards in Space/global Vibey chat now opens `TaskDetailModal` (via the existing `?space=&item=` deep link + modal opener). Cross-space opens switch the active Space first.
+Why: Cards dispatched `vibey-open-artifact` with `artifactType: 'task'`, but the Spaces listener only handled mapped view types (funnels/docs/…) and silently no-op'd tasks.
+Impact: Task cards in chat open the task popup again; docs path unchanged. Preference for space switch uses the same URL deep-link as list opens.
+Files: `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx`, `.docs/logs/changelog2026-07-16.md`
+
+## [2026-07-16 11:28] - [FEATURE]
+
+What: Home dashboard chat hero (greeting + composer + template fan) can collapse to a tiny "Chat" chevron so the page starts at the recommendation carousel / dashboard cards. Preference persists in localStorage.
+Why: Day-to-day use doesn't need the hero UI dominating the viewport; users still need a one-click way to expand chat when they want it.
+Impact: Click Minimize under the templates to hide the top block; click Chat at the top to bring it back. Collapsed state also dims the hero glow/grid and tightens top padding.
+Files: `home-dashboard-content.tsx`, `HomeDashboardV4Shell.tsx`, `use-home-chat-hero-collapsed.ts`, `apps/web/src/app/globals.css`, `.docs/logs/changelog2026-07-16.md`
+
 ## [2026-07-16 11:25] - [FIX]
 
 What: Accept playbook output contracts `ad_artifact`, `funnel_artifact`, and `media_artifact` on mission plan create + execute normalize.
@@ -198,6 +247,20 @@ Why: Need a shared contract before ROAS + Page Grader build the handoff.
 Impact: Plan ready at `.docs/plans/page-grader-send-tasks.md`.
 Files: `.docs/plans/page-grader-send-tasks.md`
 
+## [2026-07-16 11:33] - [FEATURE]
+
+What: Implemented Page Grader native send-tasks end-to-end — Page Grader `roas-api` edge function (list clients + idempotent workload create); ROAS connect/status/clients/send module; Settings catalog card; Spaces bulk bar **Page Grader** send panel with client picker; sync-back on `custom_data.page_grader`.
+Why: Locked product path: multi-select Space tasks → Page Grader client work without inventing a second task system.
+Impact: After deploying `roas-api` + setting `ROAS_API_KEY`, and shipping ROAS api/web, users can connect Page Grader and send selected tasks.
+Files: `page-grader/supabase/functions/roas-api/`, `apps/api/.../page-grader/`, `BulkActionBar.tsx`, `PageGraderBulkSendPanel.tsx`, `useIntegrations.ts`, plan/docs
+
+## [2026-07-16 11:36] - [FEATURE]
+
+What: Notification feed rows now have **Ask in chat** (same Link2 pattern as Space tasks) — opens global chat, attaches a notification chip, prefills the composer with that item’s type/title/body; agent context resolves `user_notifications` / `agent_awareness_points` for the chip.
+Why: Users need to talk to ROAS about a specific feed item without copy-paste.
+Impact: Hover a notification → Ask in chat → composer ready with that context.
+Files: `NotificationFeedRowMeta.tsx`, `NotificationFeedRow.tsx`, `ask-notification-in-chat.ts`, `use-chat-input-external-attachments.ts`, `attached-artifact.ts`, `chat-reference-context.service.ts`
+
 
 ## [2026-07-16 11:18] - [FIX]
 
@@ -205,3 +268,10 @@ What: Home My tasks detail loads personal team roster (self + agents) instead of
 Why: CEO HQ tasks are personal — opening from Home left Assignee Empty and activity showed a raw user UUID even though assignee_id was set correctly.
 Impact: Open a My tasks item from Home — Assignee shows Me, not Empty.
 Files: HomeTaskDetailHost.tsx, task-meta-fields-helpers.ts, TaskMetaFields.tsx, TaskMetaCoreFields.tsx
+
+## [2026-07-16 11:24] - [FIX]
+
+What: Restored Fathom→Brain auto-ingest and stuck “Crystallize beliefs and perspectives” processing for ROAS. Railway workers now use the IPv4 Supabase session pooler (direct DB host is IPv6-only and was ENETUNREACH), AGENT_API_URL points at Fly, and OpenClaw config no longer references a missing whatsapp plugin that disabled `/v1/responses` (404). Requeued failed Fathom imports — both succeeded.
+Why: Auto-crystallize was ON and webhooks arrived, but workers could not claim outbox rows and Atlas calls hit a broken gateway, so last capture stayed ~22 days old and crystallize jobs sat In queue forever.
+Impact: New Fathom meetings enqueue and complete into User Brain again; night-janitor crystallize jobs drain instead of stacking. Deploy Fly with updated `docker/openclaw.json` so whatsapp does not return on image rebuild.
+Files: Railway env (SUPABASE_DIRECT_DB_URL/DATABASE_URL/AGENT_API_URL), `apps/mission-worker/.../database.service.ts`, `apps/queue-worker/.../database.service.ts`, `docker/openclaw.json`, `scripts/roas/roas-secrets.env`, Fly live `/home/node/.openclaw/openclaw.json`

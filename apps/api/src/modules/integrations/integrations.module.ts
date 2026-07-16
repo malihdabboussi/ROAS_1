@@ -17,6 +17,7 @@ import { DropboxModule } from './dropbox/dropbox.module'
 import { FanbasisModule } from './fanbasis/fanbasis.module'
 import { FathomModule } from './fathom/fathom.module'
 import { FirefliesModule } from './fireflies/fireflies.module'
+import { PageGraderModule } from './page-grader/page-grader.module'
 import { GitHubModule } from './github/github.module'
 import { GoHighLevelModule } from './gohighlevel/gohighlevel.module'
 import { GoogleDriveModule } from './google-drive/google-drive.module'
@@ -61,6 +62,7 @@ import { WordpressModule } from './wordpress/wordpress.module'
     FathomModule,
     FanbasisModule,
     FirefliesModule,
+    PageGraderModule,
     ScrapeCreatorsModule,
     DataForSeoModule,
     SupabaseIntegrationModule,

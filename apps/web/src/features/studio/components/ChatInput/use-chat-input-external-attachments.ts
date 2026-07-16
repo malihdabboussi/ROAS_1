@@ -46,6 +46,17 @@ export function useChatInputExternalAttachments({
     [setAttachedArtifacts],
   )
 
+  const attachComposerNotification = useCallback(
+    (id: string, label: string) => {
+      setAttachedArtifacts((prev) =>
+        prev.some((artifact) => artifact.id === id && artifact.type === 'notification')
+          ? prev
+          : [...prev, { id, type: 'notification', label }],
+      )
+    },
+    [setAttachedArtifacts],
+  )
+
   const attachComposerSpaceFile = useCallback(
     (url: string, name: string, mimeType?: string) => {
       const trimmedUrl = url.trim()
@@ -98,6 +109,11 @@ export function useChatInputExternalAttachments({
       if (typeof detail?.id !== 'string' || typeof detail?.label !== 'string') return
       attachComposerSpaceTask(detail.id, detail.label)
     }
+    const onAttachNotification = (event: Event) => {
+      const detail = (event as CustomEvent<{ id?: unknown; label?: unknown }>).detail
+      if (typeof detail?.id !== 'string' || typeof detail?.label !== 'string') return
+      attachComposerNotification(detail.id, detail.label)
+    }
     const onAttachFile = (event: Event) => {
       const detail = (event as CustomEvent<{ url?: unknown; name?: unknown; mime_type?: unknown }>)
         .detail
@@ -107,12 +123,17 @@ export function useChatInputExternalAttachments({
       attachComposerSpaceFile(detail.url, name, mimeType)
     }
     window.addEventListener('space-vibey:attach-task', onAttachTask as EventListener)
+    window.addEventListener('space-vibey:attach-notification', onAttachNotification as EventListener)
     window.addEventListener('space-vibey:attach-file', onAttachFile as EventListener)
     return () => {
       window.removeEventListener('space-vibey:attach-task', onAttachTask as EventListener)
+      window.removeEventListener(
+        'space-vibey:attach-notification',
+        onAttachNotification as EventListener,
+      )
       window.removeEventListener('space-vibey:attach-file', onAttachFile as EventListener)
     }
-  }, [attachComposerSpaceFile, attachComposerSpaceTask, enabled])
+  }, [attachComposerNotification, attachComposerSpaceFile, attachComposerSpaceTask, enabled])
 
   useEffect(() => {
     if (!enabled) return
@@ -136,6 +157,7 @@ export function useChatInputExternalAttachments({
 
   return {
     attachComposerSpaceTask,
+    attachComposerNotification,
     attachComposerSpaceFile,
   }
 }

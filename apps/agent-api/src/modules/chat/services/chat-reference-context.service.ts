@@ -100,6 +100,42 @@ export class ChatReferenceContextService {
       }
     }
 
+    const notificationIds = artifacts
+      .filter((artifact) => artifact.type === 'notification')
+      .map((artifact) => artifact.id)
+    const notificationById = new Map<string, Record<string, unknown>>()
+    if (notificationIds.length > 0) {
+      const { data: notifRows, error: notifError } =
+        await this.chatAttachmentContextRepository.listUserNotificationsByIds(
+          this.svc.client,
+          notificationIds,
+        )
+      if (notifError) {
+        logger.warn(`Failed to resolve notifications for highlighted artifacts: ${notifError.message}`)
+      } else {
+        for (const row of notifRows ?? []) {
+          if (typeof row.id === 'string') notificationById.set(row.id, row)
+        }
+      }
+      const missing = notificationIds.filter((id) => !notificationById.has(id))
+      if (missing.length > 0) {
+        const { data: awarenessRows, error: awarenessError } =
+          await this.chatAttachmentContextRepository.listAwarenessPointsByIds(
+            this.svc.client,
+            missing,
+          )
+        if (awarenessError) {
+          logger.warn(
+            `Failed to resolve awareness points for highlighted artifacts: ${awarenessError.message}`,
+          )
+        } else {
+          for (const row of awarenessRows ?? []) {
+            if (typeof row.id === 'string') notificationById.set(row.id, { ...row, _kind: 'awareness' })
+          }
+        }
+      }
+    }
+
     for (const artifact of artifacts) {
       if (spaceItemTypes.has(artifact.type)) {
         const itemId = resolveItemId(artifact)
@@ -146,6 +182,26 @@ export class ChatReferenceContextService {
         lines.push(
           `- ${artifact.label} (type: ${artifact.type}, id: ${itemId}${hint}${meta ? `, ${meta}` : ''})`,
         )
+      } else if (artifact.type === 'notification') {
+        const row = notificationById.get(artifact.id)
+        if (!row) {
+          lines.push(`- ${artifact.label} (type: notification, id: ${artifact.id})`)
+          continue
+        }
+        if (row._kind === 'awareness') {
+          const content = typeof row.content === 'string' ? row.content : artifact.label
+          const pointType = typeof row.point_type === 'string' ? row.point_type : 'awareness'
+          lines.push(
+            `- Awareness (${pointType}): ${content} (type: notification, id: ${artifact.id}, source: agent_awareness_points)`,
+          )
+        } else {
+          const title = typeof row.title === 'string' ? row.title : artifact.label
+          const body = typeof row.body === 'string' && row.body.trim() ? row.body.trim() : null
+          const nType = typeof row.type === 'string' ? row.type : 'notification'
+          lines.push(
+            `- Notification [${nType}]: ${title}${body ? ` — ${body}` : ''} (type: notification, id: ${artifact.id}, source: user_notifications)`,
+          )
+        }
       } else {
         lines.push(`- ${artifact.label} (type: ${artifact.type}, id: ${artifact.id})`)
       }

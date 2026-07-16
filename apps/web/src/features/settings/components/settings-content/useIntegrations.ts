@@ -142,7 +142,7 @@ export function useIntegrations() {
         id: 'meta',
         provider: 'meta',
         name: 'Meta Ads',
-        description: 'Connect Meta to publish Facebook and Instagram ads directly from Vibey.',
+        description: 'Connect Meta to publish Facebook and Instagram ads directly from ROAS.',
         category: 'ads_analytics',
         is_active: true,
       },
@@ -233,6 +233,31 @@ export function useIntegrations() {
             name: 'generic_api_key',
             label: 'API Key',
             placeholder: 'Enter your ActiveCampaign API key',
+            required: true,
+          },
+        ],
+        is_active: true,
+      },
+      {
+        id: 'page_grader',
+        provider: 'page_grader',
+        name: 'Page Grader',
+        description:
+          'Connect Page Grader to send Space tasks as client workload (funnel, copy, design).',
+        category: 'productivity',
+        auth_type: 'api_key',
+        connection_fields: [
+          {
+            name: 'full',
+            label: 'API Base URL',
+            placeholder:
+              'https://mjaxhuehopzbsuhmseeg.supabase.co/functions/v1/roas-api',
+            required: true,
+          },
+          {
+            name: 'generic_api_key',
+            label: 'API Key',
+            placeholder: 'Enter your Page Grader ROAS API key',
             required: true,
           },
         ],
@@ -442,7 +467,7 @@ export function useIntegrations() {
               provider: 'openai_codex',
               name: 'OpenAI Codex',
               description:
-                'Admin-only connection for using your OpenAI subscription on Codex models without spending Vibey model credits.',
+                'Admin-only connection for using your OpenAI subscription on Codex models without spending ROAS model credits.',
               category: 'admin' as const,
               is_active: true,
             },
@@ -452,7 +477,7 @@ export function useIntegrations() {
               name: 'Claude Subscription',
               description:
                 'Admin-only connection for using your Claude subscription on Claude models ' +
-                'without spending Vibey model credits.',
+                'without spending ROAS model credits.',
               category: 'admin' as const,
               auth_type: 'api_key' as const,
               connection_fields: [
@@ -468,7 +493,7 @@ export function useIntegrations() {
                   helpSteps: [
                     'Open a terminal on any machine where Claude Code is signed in to your Claude subscription.',
                     'Run the command and copy the full token it prints.',
-                    'Paste it here. Vibey accepts the token that starts with sk-ant-oat01-.',
+                    'Paste it here. ROAS accepts the token that starts with sk-ant-oat01-.',
                   ],
                 },
               ],
@@ -754,6 +779,17 @@ export function useIntegrations() {
         return
       }
 
+      if (provider === 'page_grader') {
+        if (!connectionData?.full || !connectionData?.generic_api_key)
+          throw new Error('API Base URL and API Key are required')
+        await backendPost('/api/integrations/page-grader/connect', {
+          baseUrl: connectionData.full,
+          apiKey: connectionData.generic_api_key,
+        })
+        await loadData()
+        return
+      }
+
       if (provider === 'openai_codex') {
         const callbackUrlFromAuth = connectionData?.callbackUrl?.trim()
         if (callbackUrlFromAuth) {
@@ -945,6 +981,12 @@ export function useIntegrations() {
 
       if (provider === 'active_campaign') {
         await backendPost('/api/integrations/active-campaign/disconnect', {})
+        await loadData()
+        return
+      }
+
+      if (provider === 'page_grader') {
+        await backendPost('/api/integrations/page-grader/disconnect', {})
         await loadData()
         return
       }

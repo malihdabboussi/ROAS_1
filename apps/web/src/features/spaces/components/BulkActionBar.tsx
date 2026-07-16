@@ -11,6 +11,7 @@ import {
   FolderMinus,
   LayoutList,
   Loader2,
+  Send,
   Tags,
   Trash2,
   Users,
@@ -20,6 +21,7 @@ import { toast } from 'sonner'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { cn } from '@/lib/utils/cn'
 import { useOtherSpacesByCampaign } from '../hooks/use-other-spaces-by-campaign'
+import { sendSpaceItemsToPageGrader } from '../services/page-grader-send.service'
 import {
   ensureGeneralSpace,
   transferSpaceItem,
@@ -34,6 +36,7 @@ import { MultiSelectCell } from './cells/MultiSelectCell'
 import { SelectCell } from './cells/SelectCell'
 import { SpaceCell } from './cells/SpaceCell'
 import { OtherSpacesSubmenuList } from './OtherSpacesSubmenuList'
+import { PageGraderBulkSendPanel } from './PageGraderBulkSendPanel'
 import { readFieldValue, toFieldPatch } from './space-item-values'
 
 // ---------------------------------------------------------------------------
@@ -665,7 +668,7 @@ export interface BulkActionBarProps {
   itemKind?: 'task' | 'doc'
 }
 
-type PanelKey = 'custom' | 'move' | 'convert' | 'delete' | 'removeFromSpace'
+type PanelKey = 'custom' | 'move' | 'convert' | 'delete' | 'removeFromSpace' | 'pageGrader'
 
 export function BulkActionBar({
   selectedIds,
@@ -699,6 +702,7 @@ export function BulkActionBar({
   const moveRef = useRef<HTMLButtonElement>(null)
   const convertRef = useRef<HTMLButtonElement>(null)
   const removeFromSpaceRef = useRef<HTMLButtonElement>(null)
+  const pageGraderRef = useRef<HTMLButtonElement>(null)
   const deleteRef = useRef<HTMLButtonElement>(null)
 
   const selectedItems = useMemo(
@@ -822,6 +826,50 @@ export function BulkActionBar({
     setBusy(false)
     await onRefresh()
   }, [selectedItems, allFields, duplicateItem, onClearSelection, onRefresh])
+
+  const handlePageGraderSend = useCallback(
+    async (input: { clientId: string; note: string }) => {
+      if (!activeSpaceId) {
+        toast.error('No active space')
+        return
+      }
+      setBusy(true)
+      try {
+        const { results } = await sendSpaceItemsToPageGrader({
+          clientId: input.clientId,
+          spaceId: activeSpaceId,
+          spaceItemIds: [...selectedIds],
+          note: input.note,
+        })
+        const created = results.filter((r) => r.status === 'created').length
+        const skipped = results.filter((r) => r.status === 'skipped_already_sent').length
+        const failed = results.filter((r) => r.status === 'failed').length
+        if (failed === 0 && created + skipped > 0) {
+          const parts: string[] = []
+          if (created > 0) parts.push(`sent ${created}`)
+          if (skipped > 0) parts.push(`${skipped} already in Page Grader`)
+          toast.success(parts.join(' · '))
+          onClearSelection()
+          closePanel()
+          await onRefresh()
+        } else if (failed > 0) {
+          const firstError = results.find((r) => r.status === 'failed')?.error
+          toast.error(
+            firstError
+              ? `Page Grader send failed: ${firstError}`
+              : `Page Grader send failed for ${failed} of ${results.length}`,
+          )
+        } else {
+          toast.error('Nothing was sent to Page Grader')
+        }
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Page Grader send failed')
+      } finally {
+        setBusy(false)
+      }
+    },
+    [activeSpaceId, selectedIds, onClearSelection, closePanel, onRefresh],
+  )
 
   const handleDelete = useCallback(async () => {
     closePanel()
@@ -1116,6 +1164,27 @@ export function BulkActionBar({
         <button type="button" className={cn(BTN, 'shrink-0')} onClick={handleDuplicate}>
           <CopyPlus className="h-3.5 w-3.5" /> Duplicate
         </button>
+
+        {itemKind !== 'doc' && (
+          <>
+            <button
+              ref={pageGraderRef}
+              type="button"
+              className={cn(BTN, 'shrink-0')}
+              onClick={() => toggle('pageGrader')}
+            >
+              <Send className="h-3.5 w-3.5" /> Page Grader
+            </button>
+            {activePanel === 'pageGrader' && (
+              <PageGraderBulkSendPanel
+                anchorRef={pageGraderRef}
+                selectedCount={selectedIds.size}
+                onClose={closePanel}
+                onSend={handlePageGraderSend}
+              />
+            )}
+          </>
+        )}
 
         <div className="mx-1 h-5 w-px bg-[var(--color-border)]" />
 

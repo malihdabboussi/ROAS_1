@@ -117,6 +117,28 @@ export class ChatAttachmentContextRepository {
     return data ?? []
   }
 
+  async listUserNotificationsByIds(
+    supabase: SupabaseClient,
+    notificationIds: readonly string[],
+  ): Promise<ListResult> {
+    if (notificationIds.length === 0) return { data: [], error: null }
+    return this.table(supabase, 'user_notifications')
+      .select('id, type, title, body, mission_id, action_url, metadata')
+      .in('id', [...notificationIds])
+      .limit(notificationIds.length)
+  }
+
+  async listAwarenessPointsByIds(
+    supabase: SupabaseClient,
+    pointIds: readonly string[],
+  ): Promise<ListResult> {
+    if (pointIds.length === 0) return { data: [], error: null }
+    return this.table(supabase, 'agent_awareness_points')
+      .select('id, point_type, content, agent_key, campaign_id')
+      .in('id', [...pointIds])
+      .limit(pointIds.length)
+  }
+
   private table(supabase: SupabaseClient, tableName: string): TableQuery {
     return supabase.from(tableName) as unknown as TableQuery
   }

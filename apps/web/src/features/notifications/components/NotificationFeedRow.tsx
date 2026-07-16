@@ -11,6 +11,7 @@ import {
 import { retryBrainImportJobFromNotification } from '@/features/mission-control/services/missions.service'
 import type { UserNotification } from '@/features/mission-control/types'
 import type { UnifiedFeedItem } from '../hooks/use-notifications-feed'
+import { askAboutFeedItemInChat } from '../lib/ask-notification-in-chat'
 import {
   notificationDotClass,
   notificationMarkdownSource,
@@ -84,6 +85,15 @@ export function NotificationFeedRow({
               <NotificationFeedRowMeta
                 dateText={dateText}
                 read={read}
+                onAskInChat={() =>
+                  askAboutFeedItemInChat({
+                    id: n.id,
+                    kind: 'notification',
+                    typeLabel: label,
+                    title: n.title,
+                    body: n.body,
+                  })
+                }
                 onMarkRead={onMarkRead}
                 onRetry={
                   retryJobId
@@ -147,6 +157,14 @@ export function NotificationFeedRow({
             <NotificationFeedRowMeta
               dateText={dateText}
               read={read}
+              onAskInChat={() =>
+                askAboutFeedItemInChat({
+                  id: p.id,
+                  kind: 'awareness',
+                  typeLabel: 'Awareness',
+                  title: p.content,
+                })
+              }
               onMarkRead={onMarkRead}
               onDelete={onDelete}
             />
@@ -223,6 +241,15 @@ function CrossSuggestionRow({
             <NotificationFeedRowMeta
               dateText={dateText}
               read={read || decided !== null}
+              onAskInChat={() =>
+                askAboutFeedItemInChat({
+                  id: notification.id,
+                  kind: 'notification',
+                  typeLabel: 'Brain Suggestion',
+                  title: notification.title,
+                  body: notification.body,
+                })
+              }
               onMarkRead={onMarkRead}
               onDelete={onDelete}
             />

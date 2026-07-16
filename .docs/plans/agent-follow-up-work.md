@@ -6506,3 +6506,35 @@ Deferred because: Voice routing fix and mic-silence bug were scoped to capture/a
 - Evidence: Cross-page scroll audit after Ops Desk clip fix — Team Ops Desk was the confirmed break; Spaces mobile header stacking and Projects database pane height chain are medium-risk only
 - Needed: Verify Spaces mobile viewport with header + container; harden DatabaseBrowser pane with `flex h-full min-h-0 flex-col` if DB tab clips
 - Why not now: Confirmed Team clip + group-by default fixed; other surfaces already had working overflow-auto chains in audit
+
+## 2026-07-16 — Integrations overview service LOC (pre-existing)
+
+- Feature/app: integrations
+- File: `apps/api/src/modules/integrations/services/integrations-overview.service.ts`
+- Evidence: `wc -l` = 587 (service soft limit ~400); touched only to add `slack` to personal cross-context providers
+- Needed: Split overview assembly (Composio health, personal cross-context, admin rows) into focused helpers/services
+- Why not now: out of scope for Slack personal→org visibility fix
+
+## 2026-07-16 — BulkActionBar / useIntegrations LOC (pre-existing, grew with Page Grader)
+
+- Feature/app: spaces / settings
+- Files: `BulkActionBar.tsx` (~1212), `useIntegrations.ts` (~1244)
+- Evidence: Both over component/hook soft limits; Page Grader send panel extracted to `PageGraderBulkSendPanel.tsx`, but bar still owns Move/Convert/Delete panels
+- Needed: Split Move/Convert/Delete panels + selection toolbar chrome; split useIntegrations catalog/connect maps
+- Why not now: in-scope work was send path; full split is adjacent cleanup
+
+## 2026-07-16 — Page Grader ClickUp push after ROAS create (deferred)
+
+- Feature/app: page-grader
+- File: `supabase/functions/roas-api/index.ts`
+- Evidence: Creates `workload_tasks` with `source=roas`; does not call `clickup-push-workload-task`
+- Needed: Optional ClickUp mirror so Launcher + ClickUp stay aligned
+- Why not now: v1 acceptance is ROAS → Page Grader workload row + portal link
+
+## 2026-07-16 — chat-reference-context.service LOC (pre-existing, grew)
+
+- Feature/app: agent-api / chat
+- File: `apps/agent-api/src/modules/chat/services/chat-reference-context.service.ts`
+- Evidence: `wc -l` = 443 (service soft limit ~400); added notification/awareness resolution branch
+- Needed: Extract highlighted-artifact line builders (space items vs notifications) into helpers
+- Why not now: in-scope was Ask-in-chat for notifications; split is adjacent cleanup

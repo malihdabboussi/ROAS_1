@@ -8,7 +8,7 @@ import {
   toAgentFacingIntegrationId,
 } from '../../shared/utils/integration-id.util'
 
-const PERSONAL_CROSS_CONTEXT_INTEGRATIONS = ['fathom', 'fireflies'] as const
+const PERSONAL_CROSS_CONTEXT_INTEGRATIONS = ['fathom', 'fireflies', 'slack', 'page_grader'] as const
 
 interface ConnectedIntegration {
   integration_id: string

@@ -107,6 +107,8 @@ export class IntegrationsOverviewService {
     const PERSONAL_CROSS_CONTEXT_PROVIDERS = [
       'fathom',
       'fireflies',
+      'slack',
+      'page_grader',
       'openai_codex',
       'anthropic_claude',
     ]

@@ -17,6 +17,7 @@ export type ArtifactNodeType =
   | 'youtube-research'
   | 'twitter-research'
   | 'space-task'
+  | 'notification'
   | 'contact-conversation'
   | 'space_doc'
   | 'document'

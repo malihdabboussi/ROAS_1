@@ -197,7 +197,7 @@ export class SlackRepository {
     if (error) throw new Error(`Failed to create slack integration: ${error.message}`)
   }
 
-  async getIntegration(
+  private async findConnectedIntegration(
     supabase: SupabaseClient,
     userId: string,
     orgId?: string | null,
@@ -214,24 +214,46 @@ export class SlackRepository {
     return data
   }
 
+  private async findIntegrationRow(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId?: string | null,
+  ): Promise<{ id: string; metadata: Record<string, unknown> | null } | null> {
+    let query = supabase
+      .from('user_integrations')
+      .select('id, metadata')
+      .eq('user_id', userId)
+      .eq('integration_id', 'slack')
+    query = orgId ? query.eq('org_id', orgId) : query.is('org_id', null)
+    const { data, error } = await query.maybeSingle()
+    if (error) throw new Error(`Failed to load slack integration: ${error.message}`)
+    return data
+  }
+
+  /**
+   * Resolve Slack connection for the request scope. When org-scoped lookup misses,
+   * fall back to the user's personal Slack row (same pattern as Fathom/Fireflies).
+   */
+  async getIntegration(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId?: string | null,
+  ): Promise<{ access_token: string; metadata: Record<string, unknown> } | null> {
+    const scoped = await this.findConnectedIntegration(supabase, userId, orgId)
+    if (scoped || !orgId) return scoped
+    return this.findConnectedIntegration(supabase, userId, null)
+  }
+
   async updateIntegrationMetadata(
     supabase: SupabaseClient,
     userId: string,
     metadata: Record<string, unknown>,
     orgId?: string | null,
   ): Promise<void> {
-    let existsQuery = supabase
-      .from('user_integrations')
-      .select('id, metadata')
-      .eq('user_id', userId)
-      .eq('integration_id', 'slack')
-    existsQuery = orgId ? existsQuery.eq('org_id', orgId) : existsQuery.is('org_id', null)
-    const { data: existing, error: existingError } = await existsQuery.maybeSingle()
-
-    if (existingError)
-      throw new Error(
-        `Failed to load slack integration for metadata update: ${existingError.message}`,
-      )
+    let existing = await this.findIntegrationRow(supabase, userId, orgId)
+    if (!existing?.id && orgId) {
+      existing = await this.findIntegrationRow(supabase, userId, null)
+    }
     if (!existing?.id) return
 
     const existingMetadata =
@@ -259,13 +281,16 @@ export class SlackRepository {
     errorMessage: string,
     orgId?: string | null,
   ): Promise<void> {
-    let query = supabase
+    let existing = await this.findIntegrationRow(supabase, userId, orgId)
+    if (!existing?.id && orgId) {
+      existing = await this.findIntegrationRow(supabase, userId, null)
+    }
+    if (!existing?.id) return
+
+    const { error } = await supabase
       .from('user_integrations')
       .update({ status: 'error', error_message: errorMessage })
-      .eq('user_id', userId)
-      .eq('integration_id', 'slack')
-    query = orgId ? query.eq('org_id', orgId) : query.is('org_id', null)
-    const { error } = await query
+      .eq('id', existing.id)
     if (error) throw new Error(`Failed to mark slack integration error: ${error.message}`)
   }
 
