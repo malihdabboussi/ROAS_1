@@ -22,6 +22,11 @@ import {
 import { SpaceAutomationsRepository } from '../repositories/space-automations.repository'
 import { SpacesRepository } from '../repositories/spaces.repository'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
+import {
+  enrichSuggestedFollowUp,
+  isInternalAssigneeEmail,
+  type FathomActionItemLike,
+} from './fathom-follow-up-enrichment'
 import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
 import { SpaceAutomationServiceBase12 } from './space-automation-service-12.base'
 import { renderTemplate, type TemplateContext } from './space-automation-template'
@@ -273,6 +278,50 @@ interface AutomationYoutubeChannelInput {
 }
 
 export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServiceBase12 {
+  /**
+   * Assign follow-ups only to internal humans we can resolve.
+   * Personal spaces: owner only. Org spaces: active org member.
+   * Never invent external Fathom people as Assignees.
+   */
+  protected async resolveInternalFollowUpAssignee(
+    supabase: SupabaseClient,
+    ownerUserId: string,
+    orgId: string | null,
+    email: string | null,
+  ): Promise<{ assignee_type: 'human'; assignee_id: string; assignees: Array<{ type: 'human'; id: string }> } | null> {
+    if (!email || !isInternalAssigneeEmail(email)) return null
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('id, email')
+      .ilike('email', email)
+      .maybeSingle()
+    if (error || !profile?.id) return null
+    const userId = String(profile.id)
+
+    if (!orgId) {
+      if (userId !== ownerUserId) return null
+      return {
+        assignee_type: 'human',
+        assignee_id: userId,
+        assignees: [{ type: 'human', id: userId }],
+      }
+    }
+
+    const { data: member } = await supabase
+      .from('org_members')
+      .select('user_id')
+      .eq('org_id', orgId)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .maybeSingle()
+    if (!member?.user_id) return null
+    return {
+      assignee_type: 'human',
+      assignee_id: userId,
+      assignees: [{ type: 'human', id: userId }],
+    }
+  }
+
   protected async execAgentSuggestTasks(
     action: Record<string, unknown>,
     ctx: EvalContext,
@@ -353,6 +402,23 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
     }
 
     const rawTasks = Array.isArray(body?.tasks) ? body.tasks : []
+    const spaceSchema = this.objectRecord(templateCtx.space.schema)
+    const statusField = Array.isArray(spaceSchema.fields)
+      ? (spaceSchema.fields as Array<Record<string, unknown>>).find(
+          (field) => String(field.id ?? '') === 'status',
+        )
+      : null
+    const statusOptions = Array.isArray(statusField?.options)
+      ? (statusField.options as Array<Record<string, unknown>>)
+      : []
+    const hasToActionStatus = statusOptions.some((option) => String(option.id ?? '') === 'logged')
+    const sourceCallTitle = String(templateCtx.item.title ?? '')
+      .replace(/^(?:fathom\s+)?meeting:\s*/i, '')
+      .trim()
+      .slice(0, 500)
+    const actionItems = Array.isArray(event.action_items)
+      ? (event.action_items as FathomActionItemLike[])
+      : []
     const createdIds: string[] = []
     for (const [index, raw] of rawTasks.slice(0, maxSuggestions).entries()) {
       const task = this.objectRecord(raw)
@@ -363,8 +429,20 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
       const description = String(task.description ?? '')
         .trim()
         .slice(0, 20000)
-      const dueDate = String(task.due_date ?? '').trim()
-      const priority = String(task.priority ?? '').trim()
+      const enriched = enrichSuggestedFollowUp({
+        title,
+        description,
+        due_date: typeof task.due_date === 'string' ? task.due_date : null,
+        priority: typeof task.priority === 'string' ? task.priority : null,
+        assignee_email: typeof task.assignee_email === 'string' ? task.assignee_email : null,
+        actionItems,
+      })
+      const assignee = await this.resolveInternalFollowUpAssignee(
+        ctx.supabase,
+        ownerUserId,
+        ctx.orgId,
+        enriched.assignee_email,
+      )
 
       const created = (await this.repo.createItem(
         ctx.supabase,
@@ -373,15 +451,25 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
         {
           title,
           ...(description ? { description } : {}),
-          ...(dueDate ? { due_date: dueDate } : {}),
-          ...(priority === 'low' ||
-          priority === 'medium' ||
-          priority === 'high' ||
-          priority === 'urgent'
-            ? { priority }
+          ...(enriched.due_date ? { due_date: enriched.due_date } : {}),
+          priority: enriched.priority,
+          ...(hasToActionStatus ? { status: 'logged' as const } : {}),
+          ...(assignee
+            ? {
+                assignee_type: assignee.assignee_type,
+                assignee_id: assignee.assignee_id,
+                assignees: assignee.assignees,
+              }
             : {}),
           source: 'agent_suggested',
           custom_data: {
+            entry_type: 'follow_up',
+            ...(ctx.itemId
+              ? {
+                  source_call_item_id: ctx.itemId,
+                  ...(sourceCallTitle ? { source_call: sourceCallTitle } : {}),
+                }
+              : {}),
             suggestion_origin: {
               ...(ctx.itemId ? { rule_trigger_item_id: ctx.itemId } : {}),
               trigger_type: String(event.type ?? ''),
@@ -391,8 +479,18 @@ export abstract class SpaceAutomationServiceBase13 extends SpaceAutomationServic
               suggestion_index: index,
               source_action: 'agent_suggest_tasks',
             },
-            ...(typeof task.assignee_email === 'string' && task.assignee_email.trim()
-              ? { suggested_assignee_email: task.assignee_email.trim().toLowerCase() }
+            ...(enriched.assignee_email
+              ? {
+                  suggested_assignee_email: enriched.assignee_email,
+                  ...(enriched.assignee_name
+                    ? { suggested_assignee_name: enriched.assignee_name }
+                    : {}),
+                  ...(assignee
+                    ? {}
+                    : isInternalAssigneeEmail(enriched.assignee_email)
+                      ? { suggested_assignee_unresolved: true }
+                      : { suggested_assignee_external: true }),
+                }
               : {}),
           },
         },

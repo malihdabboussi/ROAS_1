@@ -262,7 +262,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                       </span>
                     </Tooltip>
                   )}
-                  <Tooltip label="Attach to Vibey chat" side="top">
+                  <Tooltip label="Attach to ROAS chat" side="top">
                     <span className="inline-flex">
                       <button
                         type="button"
@@ -275,7 +275,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                           )
                         }}
                         className="btn-icon-glass-sm !h-[18px] !w-[18px] !rounded-[4px]"
-                        aria-label="Attach to Vibey chat"
+                        aria-label="Attach to ROAS chat"
                       >
                         <Link2 className="h-3 w-3" />
                       </button>
@@ -528,6 +528,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                             statusField={statusField}
                             onEditStatuses={onEditStatuses}
                             onEditCategories={onEditCategories}
+                            onOpenDetail={onOpenDetail}
                             onChange={(next) => {
                               const patch = toFieldPatch(item, field.id, next)
                               void onUpdateItem(item.id, patch)
@@ -598,6 +599,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                               statusField={statusField}
                               onEditStatuses={onEditStatuses}
                               onEditCategories={onEditCategories}
+                              onOpenDetail={onOpenDetail}
                               onChange={(next) => {
                                 const patch = toFieldPatch(item, field.id, next)
                                 void onUpdateItem(item.id, patch)
@@ -658,6 +660,7 @@ export const SpaceItemRow = memo(function SpaceItemRow({
                 onItemPatch={(p) => void onUpdateItem(item.id, p)}
                 statusField={statusField}
                 onPushToAgent={onPushToAgent}
+                onOpenDetail={onOpenDetail}
                 allFields={allFields}
                 onChange={(next) => {
                   const patch = toFieldPatch(item, field.id, next)

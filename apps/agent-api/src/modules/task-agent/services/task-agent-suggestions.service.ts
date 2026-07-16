@@ -23,6 +23,14 @@ export interface SuggestedTask {
   priority?: 'low' | 'medium' | 'high' | 'urgent'
 }
 
+export interface SuggestMeetingTitlePayload {
+  space_id: string
+  owner_user_id: string
+  org_id: string | null
+  agent_key?: string
+  payload: Record<string, unknown>
+}
+
 @Injectable()
 export class TaskAgentSuggestionsService {
   constructor(
@@ -31,6 +39,73 @@ export class TaskAgentSuggestionsService {
     private readonly agentRuntime: AgentRuntimeService,
     private readonly runtimeReadiness: AgentRuntimeReadinessService,
   ) {}
+
+  async suggestMeetingTitle(
+    payload: SuggestMeetingTitlePayload,
+  ): Promise<{ title: string | null }> {
+    const agentKey =
+      typeof payload.agent_key === 'string' && payload.agent_key.trim().length > 0
+        ? payload.agent_key.trim()
+        : 'vibey'
+    const runtime = await this.agentRuntime.resolveConversationRuntime(
+      this.repository.client,
+      payload.owner_user_id,
+      agentKey,
+      payload.org_id,
+    )
+    await this.runtimeReadiness.ensureRuntimeReady({
+      userId: payload.owner_user_id,
+      orgId: payload.org_id,
+      agentKey: runtime.agentKey,
+      gatewayAgentId: runtime.gatewayAgentId,
+    })
+    const sessionKey = this.agentRuntime.buildChatSessionKey({
+      gatewayAgentId: runtime.gatewayAgentId,
+      agentKey: runtime.agentKey,
+      userId: payload.owner_user_id,
+      conversationId: `suggest-meeting-title-${payload.space_id}`,
+      orgId: payload.org_id ?? undefined,
+    })
+    const instructions = [
+      'Write a short CEO meeting label for a Meetings list.',
+      'Return JSON only. Do not include markdown fences or commentary.',
+      'Use this exact shape: {"title":"..."}',
+      'Rules:',
+      '- 4–10 words, purpose-first (who + real operating purpose).',
+      '- Never start with Meeting, Fathom, Impromptu, Untitled, or Zoom.',
+      '- Do NOT copy sensational summary headings unless that was truly the purpose.',
+      '  Bad: "Urgent: Stripe Compliance" when the call was a weekly client update.',
+      '  Good: "Weekly client update — Stripe" or "Sales call — Jason attention".',
+      '- Prefer conversation purpose over calendar scare titles or template section headers.',
+      '- Use attendees/speakers + summary + transcript excerpt; invent nothing else.',
+    ].join('\n')
+
+    let content = ''
+    const send: SendFn = async (type, data) => {
+      if (type === 'content_delta' && typeof data.content === 'string') {
+        content += data.content
+      }
+    }
+    const input: OpenClawInputMessage[] = [
+      {
+        type: 'message',
+        role: 'user',
+        content: JSON.stringify({ payload: payload.payload }, null, 2),
+      },
+    ]
+    const result = await this.openClaw.streamCompletion({
+      input,
+      instructions,
+      send,
+      agentId: runtime.gatewayAgentId,
+      sessionKey,
+      userId: payload.owner_user_id,
+      conversationId: `suggest-meeting-title-${payload.space_id}`,
+      channel: 'studio',
+      disableResponseFilter: true,
+    })
+    return { title: parseSuggestedMeetingTitle(content || result.content || '') }
+  }
 
   async suggestTasks(payload: SuggestTasksPayload): Promise<{ tasks: SuggestedTask[] }> {
     const maxSuggestions = Math.min(
@@ -65,6 +140,10 @@ export class TaskAgentSuggestionsService {
       'Return JSON only. Do not include markdown fences or commentary.',
       `Return at most ${maxSuggestions} tasks.`,
       'Each task must be concrete, actionable, and based only on the payload.',
+      'Prefer payload.action_items when present — turn each into a task when possible.',
+      'Always set priority (not everything medium): urgent/high when ASAP/today/blocker/this week; low for nice-to-have/FYI.',
+      'Set due_date to ISO-8601 when the payload has a deadline/due date; otherwise "".',
+      'Set assignee_email when an owner email is present on the action item or clearly stated; else "".',
       'Use this exact shape: {"tasks":[{"title":"...","description":"...","assignee_email":"...","due_date":"ISO-8601 or empty","priority":"low|medium|high|urgent"}]}',
       payload.instructions ? `User instructions: ${payload.instructions}` : '',
     ]
@@ -104,6 +183,34 @@ export class TaskAgentSuggestionsService {
       disableResponseFilter: true,
     })
     return { tasks: parseSuggestedTasks(content || result.content || '', maxSuggestions) }
+  }
+}
+
+function parseSuggestedMeetingTitle(raw: string): string | null {
+  const trimmed = raw.trim()
+  const withoutFence = trimmed
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim()
+  const jsonText =
+    withoutFence.startsWith('{') || withoutFence.startsWith('[')
+      ? withoutFence
+      : (withoutFence.match(/\{[\s\S]*\}/)?.[0] ?? '')
+  if (!jsonText) return null
+  try {
+    const parsed = JSON.parse(jsonText) as Record<string, unknown>
+    const title = String(parsed.title ?? '')
+      .replace(/^(?:fathom\s+)?meeting:\s*/i, '')
+      .replace(/^["'`]+|["'`]+$/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/[.!?]+$/g, '')
+      .trim()
+    if (!title || title.length < 4) return null
+    if (/^(impromptu|untitled|zoom)/i.test(title)) return null
+    return title.slice(0, 120)
+  } catch {
+    return null
   }
 }
 

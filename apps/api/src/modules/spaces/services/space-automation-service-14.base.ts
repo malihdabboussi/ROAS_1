@@ -390,13 +390,15 @@ export abstract class SpaceAutomationServiceBase14 extends SpaceAutomationServic
     }
     await this.assertAutomationCreditsAvailable(ctx)
 
+    // Only mark execution running — do NOT force status `in_progress`.
+    // Spaces with custom funnels (e.g. Meetings: Processing → To action) lose
+    // their status when agent start overwrites it with a system status.
     await this.automationActionsRepo.updateTaskExecutionState(
       ctx.supabase,
       ctx.spaceId,
       ctx.itemId,
       {
         task_execution_status: 'running',
-        status: 'in_progress',
       },
     )
 
@@ -446,7 +448,6 @@ export abstract class SpaceAutomationServiceBase14 extends SpaceAutomationServic
       ctx.itemId,
       {
         task_execution_status: 'running',
-        status: 'in_progress',
       },
     )
 
@@ -543,7 +544,6 @@ export abstract class SpaceAutomationServiceBase14 extends SpaceAutomationServic
       ctx.itemId,
       {
         task_execution_status: 'running',
-        status: 'in_progress',
       },
     )
 

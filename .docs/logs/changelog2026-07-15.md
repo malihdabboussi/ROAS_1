@@ -1,5 +1,15 @@
 # Changelog - July 15, 2026
 
+## [2026-07-15 17:45] - [ARCH]
+
+What: Production Vercel deploys READY for All Artifacts fix — `roas-api`, `roas-web`, `roas-funnels` on commit `9b7baa1d`.
+
+Why: Needed live after commit + tsc select cast so Impact All Artifacts can use slim lists + partial settle.
+
+Impact: Hard-refresh Impact → All Artifacts; funnels/presentations summary should 200. First build of `ed19ee69` failed tsc and was superseded.
+
+Files: Vercel Production `roas-api` / `roas-web` / `roas-funnels`
+
 ## [2026-07-15 17:34] - [FIX]
 
 What: Cast presentation summary `select(...)` through `as '*'` so Nest/Vercel tsc accepts the light column list.
@@ -281,3 +291,10 @@ What: Meetings naming — drop `Meeting:`/`Fathom meeting:` prefixes; always AI-
 Why: Titles were coming from Fathom calendar scare-headings / summary section titles, plus a redundant Meeting: prefix.
 Impact: Hard-refresh Meetings — clearer purpose names, no Meeting: prefix. Future auto-rename needs API + agent-api deploy for the new suggest-meeting-title route.
 Files: fathom-meeting-title.ts, space-automation-service-06.base.ts, task-agent-suggestions.service.ts, agents-automation.controller.ts, space-template-catalog-ceo.ts, live ROAS Meetings items, tests
+
+## [2026-07-15 17:55] - [FEATURE]
+
+What: Call Date column shows date + time (e.g. Jul 15, 10:30 AM). `DateCell` respects `date_display_formats.call_date`; Meetings catalog + live ROAS All Meetings default to `date_time` with wider column.
+Why: Call timestamps were stored with time but the UI only rendered the calendar day.
+Impact: Hard-refresh All Meetings — Call Date includes local time. Column header can still switch Date / Date & time / Time.
+Files: DateCell.tsx, SpaceCell.tsx, ListView.tsx, SpaceCalendarDayTaskList.tsx, space-schema.ts, space-template-catalog-ceo.ts, catalog test, live ROAS Meetings schema

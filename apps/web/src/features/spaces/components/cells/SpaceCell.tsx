@@ -17,6 +17,7 @@ import { PhoneCell } from './PhoneCell'
 import { ProgressCell } from './ProgressCell'
 import { RatingCell } from './RatingCell'
 import { SelectCell } from './SelectCell'
+import { SourceCallCell } from './SourceCallCell'
 import { TextCell } from './TextCell'
 // import { DurationCell } from './DurationCell' // duration field disabled for now
 import { TimestampCell } from './TimestampCell'
@@ -49,9 +50,26 @@ export function SpaceCell({
   bulkInlineEditor,
   dateDisplayFormat,
   dateDisplayFormats,
+  onOpenDetail,
 }: ExtendedCellProps) {
   const resolvedDateDisplayFormat =
-    dateDisplayFormats?.[field.id as 'start_date' | 'due_date'] ?? dateDisplayFormat
+    dateDisplayFormats?.[field.id as keyof NonNullable<typeof dateDisplayFormats>] ??
+    dateDisplayFormat ??
+    (field.id === 'call_date' ? 'date_time' : undefined)
+
+  if (field.id === 'source_call') {
+    return (
+      <SourceCallCell
+        field={field}
+        value={value}
+        onChange={onChange}
+        readonly={readonly}
+        spaceItem={spaceItem}
+        fieldRowVariant={fieldRowVariant}
+        onOpenDetail={onOpenDetail}
+      />
+    )
+  }
 
   switch (field.type) {
     case 'text':
@@ -184,6 +202,7 @@ export function SpaceCell({
           readonly={readonly}
           openOnMount={openOnMount}
           bulkInlineEditor={bulkInlineEditor}
+          dateDisplayFormat={resolvedDateDisplayFormat ?? 'date'}
         />
       )
     case 'url':

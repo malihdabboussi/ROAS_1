@@ -97,6 +97,7 @@ export function SpaceCalendarDayTaskList({
         'date_time',
       due_date:
         activeView.date_display_formats?.due_date ?? activeView.date_display_format ?? 'date_time',
+      call_date: activeView.date_display_formats?.call_date ?? 'date_time',
     }),
     [activeView.date_display_format, activeView.date_display_formats],
   )
@@ -217,7 +218,7 @@ export function SpaceCalendarDayTaskList({
 
   const updateDateDisplayFormat = useCallback(
     async (fieldId: string, format: DateDisplayFormat) => {
-      if (fieldId !== 'start_date' && fieldId !== 'due_date') return
+      if (fieldId !== 'start_date' && fieldId !== 'due_date' && fieldId !== 'call_date') return
       await onViewChange({
         date_display_formats: {
           ...(activeView.date_display_formats ?? {}),
@@ -241,7 +242,7 @@ export function SpaceCalendarDayTaskList({
       onMoveColumn: (fieldId, where) => void reorderDisplayColumn(fieldId, where),
       onHideColumn: (fieldId) => void hideListColumn(fieldId),
       dateFormat: {
-        fieldIds: ['due_date', 'start_date'],
+        fieldIds: ['due_date', 'start_date', 'call_date'],
         value: (fieldId) =>
           dateDisplayFormats[fieldId as keyof DateDisplayFormats] ??
           activeView.date_display_format ??

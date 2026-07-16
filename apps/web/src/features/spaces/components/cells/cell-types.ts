@@ -58,4 +58,6 @@ export interface ExtendedCellProps extends BaseCellProps {
   ) => Promise<void>
   /** All field definitions from the space schema; needed by MissionSendDropdown. */
   allFields?: FieldDef[]
+  /** Open another space item (e.g. Source call parent meeting). */
+  onOpenDetail?: (item: SpaceItem) => void
 }

@@ -35,10 +35,11 @@ import { TaskAgentRequestContextService } from './task-agent-request-context.ser
 import {
   TaskAgentSuggestionsService,
   type SuggestedTask,
+  type SuggestMeetingTitlePayload,
   type SuggestTasksPayload,
 } from './task-agent-suggestions.service'
 
-export type { SuggestedTask, SuggestTasksPayload }
+export type { SuggestedTask, SuggestMeetingTitlePayload, SuggestTasksPayload }
 
 const INVOKE_TIMEOUT_MS = 600_000
 const AGENT_COLLABORATION_NATIVE_ACTIONS = ['ask_agent', 'delegate_to_agent', 'brainstorm_agents']
@@ -79,6 +80,12 @@ export class TaskAgentService {
 
   async suggestTasks(payload: SuggestTasksPayload): Promise<{ tasks: SuggestedTask[] }> {
     return this.suggestions.suggestTasks(payload)
+  }
+
+  async suggestMeetingTitle(
+    payload: SuggestMeetingTitlePayload,
+  ): Promise<{ title: string | null }> {
+    return this.suggestions.suggestMeetingTitle(payload)
   }
   async cancel(payload: CancelTaskAgentPayload) {
     const result = this.cancelRegistry.cancel(payload.space_id, payload.item_id)

@@ -267,6 +267,44 @@ describe('Type C Spaces service batch 3 baselines', () => {
     expect(db.spaces[0]).toEqual(expect.objectContaining({ campaign_id: db.campaigns[0]!.id }))
   })
 
+  it('does not treat Flow concepts as the personal default workspace', async () => {
+    const db = {
+      campaigns: [
+        {
+          id: 'general_1',
+          user_id: 'user_1',
+          org_id: null,
+          name: 'General',
+          config: { system_kind: 'general' },
+        },
+      ],
+      spaces: [
+        {
+          id: 'flow_1',
+          user_id: 'user_1',
+          org_id: null,
+          campaign_id: 'general_1',
+          title: 'Flow concepts',
+          schema: { custom_data: { vibey_flows_concept_space: true } },
+        },
+      ],
+    }
+    const service = spacesService()
+    const supabase = fakeSupabase(db)
+
+    const space = await service.ensureGeneral(supabase, 'user_1', null)
+
+    expect(space).toEqual(
+      expect.objectContaining({
+        title: 'New Workspace',
+      }),
+    )
+    expect(db.spaces.map((row: { title?: string }) => row.title)).toEqual(
+      expect.arrayContaining(['Flow concepts', 'New Workspace']),
+    )
+    expect(db.spaces).toHaveLength(2)
+  })
+
   it('marks a doc item visual as generating before invoking the visual agent', async () => {
     const db = {
       space_items: [

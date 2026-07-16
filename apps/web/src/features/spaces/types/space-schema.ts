@@ -30,7 +30,9 @@ export interface SortDef {
 }
 
 export type DateDisplayFormat = 'relative' | 'date_time' | 'date' | 'time'
-export type DateDisplayFormats = Partial<Record<'start_date' | 'due_date', DateDisplayFormat>>
+export type DateDisplayFormats = Partial<
+  Record<'start_date' | 'due_date' | 'call_date', DateDisplayFormat>
+>
 
 /** Platforms supported by the unified Social Research view. */
 export type SocialPlatform = 'instagram' | 'tiktok' | 'youtube' | 'twitter'
@@ -301,7 +303,7 @@ export interface ReportingViewConfig {
   funnel_ids?: string[]
   /** Email analytics: restrict to these sequence IDs; omit or undefined = all campaign sequences. */
   sequence_ids?: string[]
-  /** Ads performance: show only these Vibey ad campaign row IDs; omit or undefined = all. */
+  /** Ads performance: show only these ROAS ad campaign row IDs; omit or undefined = all. */
   ad_campaign_ids?: string[]
   /**
    * Campaign overview: user-added blocks (heading pair + note). IDs use prefixes `ovcw_h_*` / `ovcw_n_*` for default grid sizes.
@@ -694,6 +696,12 @@ export interface ViewDef {
   date_display_formats?: DateDisplayFormats
   show_empty_statuses?: boolean
   show_closed_tasks?: boolean
+  /**
+   * Hard view filters on field values (system columns or custom_data).
+   * Values may be a single id/string or a list (OR). Missing custom values
+   * match only when filtering for `call` on `entry_type` (legacy meeting rows).
+   */
+  field_value_filters?: Record<string, string | string[]>
   /** Toolbar: show only tasks assigned to the current user (human). */
   toolbar_assigned_to_me?: boolean
   /** Toolbar: filter by assignee roster `participant_id`s. */

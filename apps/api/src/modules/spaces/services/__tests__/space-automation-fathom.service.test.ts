@@ -5,7 +5,7 @@ import { chain } from './space-automation-fathom-test-helpers'
 
 describe('SpaceAutomationService Fathom recording fanout', () => {
   it('creates one Space item and runs matching automation for a Fathom recording webhook', async () => {
-    const createdItem = { id: 'item_1', title: 'Fathom meeting: Demo call' }
+    const createdItem = { id: 'item_1', title: 'Demo call' }
     const route = {
       id: 'route_1',
       space_id: 'space_1',
@@ -16,9 +16,12 @@ describe('SpaceAutomationService Fathom recording fanout', () => {
     }
     const repo = {
       createItem: vi.fn().mockResolvedValue(createdItem),
+      updateItem: vi.fn().mockResolvedValue(createdItem),
       createActivity: vi.fn().mockResolvedValue({}),
       findSpaceById: vi.fn().mockResolvedValue({
+        id: 'space_1',
         schema: {
+          fields: [{ id: 'attendees', type: 'multi_select', options: [] }],
           automations: [
             {
               id: 'automation_1',
@@ -33,6 +36,7 @@ describe('SpaceAutomationService Fathom recording fanout', () => {
           ],
         },
       }),
+      updateSpace: vi.fn().mockResolvedValue({}),
       findItemById: vi.fn().mockResolvedValue(createdItem),
       findSubtasksByParentId: vi.fn().mockResolvedValue([]),
       findActivityByItemId: vi.fn().mockResolvedValue([]),
@@ -82,12 +86,19 @@ describe('SpaceAutomationService Fathom recording fanout', () => {
       automation_id: 'automation_1',
     })
     expect(repo.createItem).toHaveBeenCalledOnce()
+    expect(repo.createItem).toHaveBeenCalledWith(
+      expect.anything(),
+      'user_1',
+      'space_1',
+      expect.objectContaining({ title: 'Demo call' }),
+      null,
+    )
     expect(repo.createActivity).toHaveBeenCalledOnce()
   })
 
   it('fans out a single Fathom recording across every matching rule the user owns', async () => {
-    const itemA = { id: 'item_a', title: 'Fathom meeting: Demo call' }
-    const itemB = { id: 'item_b', title: 'Fathom meeting: Demo call' }
+    const itemA = { id: 'item_a', title: 'Demo call' }
+    const itemB = { id: 'item_b', title: 'Demo call' }
     const routeA = {
       id: 'route_a',
       space_id: 'space_a',
@@ -107,9 +118,13 @@ describe('SpaceAutomationService Fathom recording fanout', () => {
     const createItem = vi.fn().mockResolvedValueOnce(itemA).mockResolvedValueOnce(itemB)
     const repo = {
       createItem,
+      updateItem: vi.fn().mockImplementation(async (_s, _u, _space, itemId) =>
+        itemId === 'item_a' ? itemA : itemB,
+      ),
       createActivity: vi.fn().mockResolvedValue({}),
       findSpaceById: vi.fn().mockResolvedValue({
         schema: {
+          fields: [{ id: 'attendees', type: 'multi_select', options: [] }],
           automations: [
             {
               id: 'automation_a',
@@ -128,6 +143,7 @@ describe('SpaceAutomationService Fathom recording fanout', () => {
           ],
         },
       }),
+      updateSpace: vi.fn().mockResolvedValue({}),
       findItemById: vi.fn().mockResolvedValue(itemA),
       findSubtasksByParentId: vi.fn().mockResolvedValue([]),
       findActivityByItemId: vi.fn().mockResolvedValue([]),

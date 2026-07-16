@@ -22,6 +22,17 @@ import {
 import { SpaceAutomationsRepository } from '../repositories/space-automations.repository'
 import { SpacesRepository } from '../repositories/spaces.repository'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
+import {
+  resolveFathomAttendeeLabels,
+  upsertAttendeeTagOptions,
+  type FathomAttendeeLike,
+  type FathomTranscriptEntryLike,
+} from './fathom-meeting-item-enrichment'
+import {
+  provisionalFathomMeetingTitle,
+  sanitizeCeoMeetingTitle,
+} from './fathom-meeting-title'
+import { upsertFathomPeopleFromAttendees } from './fathom-meeting-people-upsert'
 import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
 import { SpaceAutomationServiceBase05 } from './space-automation-service-05.base'
 import { renderTemplate, type TemplateContext } from './space-automation-template'
@@ -341,15 +352,67 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
       // mutate the synthetic Space item.
       const runUserId = routeRecord.user_id ? String(routeRecord.user_id) : userId
 
-      const item = (await this.repo.createItem(
+      const space = (await this.repo.findSpaceById(
+        supabase,
+        runUserId,
+        spaceId,
+        orgId,
+      )) as Record<string, unknown> | null
+      const resolvedAttendees = resolveFathomAttendeeLabels({
+        attendees: meeting.attendees as FathomAttendeeLike[],
+        transcript: meeting.transcript as FathomTranscriptEntryLike[],
+        recordedByEmail: meeting.recordedByEmail,
+        titleHint: meeting.title,
+      })
+      const { optionIds, nextSchema, optionsChanged } = upsertAttendeeTagOptions(
+        this.objectRecord(space?.schema),
+        resolvedAttendees.labels,
+      )
+      if (optionsChanged && nextSchema) {
+        try {
+          await this.repo.updateSpace(
+            supabase,
+            runUserId,
+            spaceId,
+            { schema: nextSchema as never },
+            orgId,
+          )
+        } catch (error) {
+          this.logger.warn(
+            `Failed to upsert Fathom attendee tags on space ${spaceId}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          )
+        }
+      }
+
+      const statusField = Array.isArray(this.objectRecord(space?.schema).fields)
+        ? (
+            this.objectRecord(space?.schema).fields as Array<Record<string, unknown>>
+          ).find((field) => String(field.id ?? '') === 'status')
+        : null
+      const statusOptions = Array.isArray(statusField?.options)
+        ? (statusField.options as Array<Record<string, unknown>>)
+        : []
+      const hasProcessingStatus = statusOptions.some(
+        (option) => String(option.id ?? '') === 'processing',
+      )
+
+      const provisionalTitle = provisionalFathomMeetingTitle(meeting.title)
+      let item = (await this.repo.createItem(
         supabase,
         runUserId,
         spaceId,
         {
-          title: `Fathom meeting: ${meeting.title}`.slice(0, 1000),
+          title: provisionalTitle,
           description: meeting.summary || meeting.transcriptText || null,
           source: 'fathom',
+          ...(hasProcessingStatus ? { status: 'processing' as const } : {}),
           custom_data: {
+            entry_type: 'call',
+            ...(meeting.callDate ? { call_date: meeting.callDate } : {}),
+            ...(meeting.url ? { recording_url: meeting.url, fathom_url: meeting.url } : {}),
+            ...(optionIds.length > 0 ? { attendees: optionIds } : {}),
             external_automation: {
               provider: 'fathom',
               trigger_slug: 'FATHOM_RECORDING_READY',
@@ -357,11 +420,53 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
               recorded_by_email: meeting.recordedByEmail,
               transcript_entries: meeting.transcriptEntries,
               fathom_owner_user_id: userId,
+              attendees_from_speakers: resolvedAttendees.usedSpeakers,
             },
           },
         },
         orgId,
       )) as Record<string, unknown>
+
+      const aiTitle = await this.suggestCeoMeetingTitle(runUserId, spaceId, orgId, {
+        calendar_title: meeting.title,
+        summary: meeting.summary,
+        transcript_text: meeting.transcriptText,
+        attendees: meeting.attendees,
+        action_items: meeting.actionItems,
+        recorded_by_email: meeting.recordedByEmail,
+      })
+      if (aiTitle && aiTitle !== provisionalTitle) {
+        try {
+          item = (await this.repo.updateItem(
+            supabase,
+            runUserId,
+            spaceId,
+            String(item.id),
+            { title: aiTitle },
+            orgId,
+          )) as Record<string, unknown>
+        } catch (error) {
+          this.logger.warn(
+            `Failed to apply CEO meeting title on space ${spaceId}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          )
+        }
+      }
+
+      await upsertFathomPeopleFromAttendees(
+        supabase,
+        {
+          userId: runUserId,
+          orgId,
+          campaignId:
+            typeof space?.campaign_id === 'string' && space.campaign_id.trim()
+              ? space.campaign_id.trim()
+              : null,
+          attendees: meeting.attendees as FathomAttendeeLike[],
+        },
+        (message) => this.logger.warn(message),
+      )
 
       await this.repo.createActivity(supabase, {
         item_id: String(item.id),
@@ -434,6 +539,55 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
       fanout_count: fanoutResults.length,
       item_id: first.item_id,
       automation_id: first.automation_id,
+    }
+  }
+
+  /** Always AI-name Meetings rows — purpose-first CEO labels, no "Meeting:" prefix. */
+  protected async suggestCeoMeetingTitle(
+    ownerUserId: string,
+    spaceId: string,
+    orgId: string | null,
+    meetingPayload: Record<string, unknown>,
+  ): Promise<string | null> {
+    if (!this.userAgentApi) return null
+    const internalToken =
+      this.configService.get<string>('INTERNAL_API_TOKEN') ?? process.env.INTERNAL_API_TOKEN ?? ''
+    if (!internalToken) return null
+    try {
+      const response = await this.userAgentApi.invoke(
+        ownerUserId,
+        '/api/agents/suggest-meeting-title',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Internal-Token': internalToken },
+          body: JSON.stringify({
+            space_id: spaceId,
+            owner_user_id: ownerUserId,
+            org_id: orgId,
+            agent_key: 'vibey',
+            payload: meetingPayload,
+          }),
+        },
+        {
+          timeoutMs: 90_000,
+          logTag: `suggest_meeting_title space=${spaceId}`,
+        },
+      )
+      const body = (await response.json().catch(() => null)) as Record<string, unknown> | null
+      if (!response.ok) {
+        this.logger.warn(
+          `suggest-meeting-title failed for space ${spaceId}: ${String(body?.error ?? body?.message ?? response.status)}`,
+        )
+        return null
+      }
+      return sanitizeCeoMeetingTitle(String(body?.title ?? ''))
+    } catch (error) {
+      this.logger.warn(
+        `suggest-meeting-title threw for space ${spaceId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+      return null
     }
   }
 

@@ -11,6 +11,319 @@ Rules:
 Entry template:
 
 ```md
+## YYYY-MM-DD - [TYPE] Title
+…
+```
+
+## 2026-07-15 - [FIX] Team agent `conv=` deep links still unused
+
+Status: Open
+Found while: Removing mid-page Conversations list from Team agent chat
+Files:
+
+- `apps/web/src/features/team-2/components/Team2AgentChatWithConversations.tsx`
+- `apps/web/src/features/home/lib/recent-agent-conversations.ts` (builds `/team?agent=…&conv=…`)
+  Evidence: Home recent-agent links include `conv=`, but Team agent chat has never read `searchParams.get('conv')`; agent open now always starts blank.
+  Needed work: On `/team?agent=&conv=`, select that conversation instead of blank draft; ignore stale/foreign ids.
+  Deferred because: User asked for blank middle chat + no double history; deep-link select is adjacent.
+
+## 2026-07-15 - [FEATURE] Meetings follow-ups: Due Dates + Priority + Assignees
+
+Status: Closed
+Found while: CEO Meetings readiness review after Source call
+Files:
+
+- `apps/api/src/modules/spaces/services/fathom-follow-up-enrichment.ts`
+- `apps/api/src/modules/spaces/services/space-automation-service-13.base.ts`
+- Meetings Follow-ups / Action items views
+  Evidence: Shipped enrichment + live backfill (due from text when Fathom has no deadline; priority inference; internal suggested_assignee / assign-when-resolvable).
+  Needed work: n/a (closed)
+  Deferred because: n/a
+
+
+## 2026-07-15 - [FIX] Deploy API/agent-api for CEO meeting auto-title
+
+Status: Open
+Found while: Meetings naming pass (purpose-first AI titles)
+Files:
+
+- `apps/agent-api/.../suggest-meeting-title`
+- `apps/api/.../space-automation-service-06.base.ts`
+  Evidence: Live titles were backfilled in DB; webhook path still creates provisional titles until deployed agent-api exposes `/api/agents/suggest-meeting-title` and API calls it.
+  Needed work: Deploy roas-api + roas-runtimes/agent-api; verify next Dylan Fathom webhook lands with purpose-first title and no Meeting: prefix.
+  Deferred because: Deploy is user-gated; live list was corrected in-DB.
+
+## 2026-07-15 - [FEATURE] Show suggested_assignee on Follow-ups UI
+
+Status: Open
+Found while: CEO due/priority/assignee enrichment pass
+Files:
+
+- Follow-ups / Action items views; `custom_data.suggested_assignee_email`
+  Evidence: 23/48 follow-ups have `suggested_assignee_*` but Assignee column stays empty when profile/org member cannot resolve (personal `test@gmail.com` ≠ `dylan@dylanvanas.com`).
+  Needed work: Read-only “Suggested owner” column or tooltip from `suggested_assignee_email` / name.
+  Deferred because: User chose hint-only storage when unresolvable; UI surface not requested in this pass.
+
+## 2026-07-15 - [ARCH] space-automation-service-13.base.ts over 600 LOC
+
+Status: Open
+Found while: Wiring follow-up enrichment into agent_suggest_tasks
+Files:
+
+- `apps/api/src/modules/spaces/services/space-automation-service-13.base.ts` (632 LOC)
+  Evidence: Service hard limit is 600 LOC; grew with resolveInternalFollowUpAssignee + enrichment wiring.
+  Needed work: Extract suggest-tasks create/enrich helpers into a sibling module.
+  Deferred because: In-scope was CEO due/priority/assignee behavior, not base-file split.
+
+## 2026-07-15 - [REFACTOR] KanbanView.tsx still over 600 LOC
+
+Status: Open
+Found while: Fixing Follow-ups board column vertical scroll
+Files:
+
+- `apps/web/src/features/spaces/components/KanbanView.tsx` (~1205 LOC)
+  Evidence: File is well over the 600 LOC component/service limit; scroll fix was a few className changes.
+  Needed work: Extract column / card / draft composer into sibling modules.
+  Deferred because: In-scope was scroll overflow only.
+
+## 2026-07-15 - [ARCH] space-schema.ts ViewDef still over types LOC limit
+
+Status: Open
+Found while: Adding `field_value_filters` for Meetings call vs follow-up views
+Files:
+
+- `apps/web/src/features/spaces/types/space-schema.ts` (1379 LOC)
+  Evidence: Types file is far over the 500 LOC types budget; only a small filter field was added.
+  Needed work: Split ViewDef / config interfaces into domain modules (contacts, research, meetings filters, etc.).
+  Deferred because: In-scope was Meetings entry_type filtering; full schema types split is a large refactor.
+
+## 2026-07-15 - [FIX] Deploy API for Meetings entry_type + People upsert on Fathom webhook
+
+Status: Open
+Found while: Finishing Meetings call vs follow-up split + People backfill
+Files:
+
+- `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts`
+- `apps/api/src/modules/spaces/services/space-automation-service-13.base.ts`
+- `apps/api/src/modules/spaces/services/fathom-meeting-people-upsert.ts`
+  Evidence: Live ROAS schema/data were patched in DB; webhook/agent paths still run deployed API without `entry_type` / People upsert until redeploy.
+  Needed work: Deploy `roas-api` (and frontend for `field_value_filters` UI if web isn’t already on this branch).
+  Deferred because: Deploy is user-gated; local/catalog + live DB backfill already done.
+
+## 2026-07-15 - [FIX] Meetings Fathom agent resume stuck after send_to_agent
+
+Status: Open
+Found while: Investigating missing/new Fathom meetings not finishing in Meetings
+Files:
+
+- `apps/api/src/modules/spaces/services/space-automation-service-14.base.ts` (`invokeTaskAgentAutomation`)
+- Fly agent-api / task-agent invoke for personal `test@gmail.com` runtime
+  Evidence: Run state `cb14857a-…` paused at next_action_index=2 after send_to_agent ok; only `agent_task_execution` phase `thinking` activity; empty `missions` table; never resumed so completed_status / agent_suggest_tasks / Following up never applied until manual enrichment.
+  Needed work: Confirm personal account machine is healthy; ensure task-agent completion calls spaces resume with run_state_id; add timeout/fail path that resumes automation as failed and sets status To action.
+  Deferred because: In-scope was status clobber + explaining auto pull; agent runtime resume needs Fly/runtime access beyond Meetings schema fix.
+
+## 2026-07-15 - [REFACTOR] DueDateCell over 600 LOC
+
+Status: Open
+Found while: Disabling overdue urgency for Call Date display formats
+Files:
+
+- `apps/web/src/features/spaces/components/cells/DueDateCell.tsx` (692 LOC)
+  Evidence: File is over the 600 LOC service/component limit after adding `dueDateTriggerColorClass`; formatting helpers and portal popover still live in one file.
+  Needed work: Extract date label/color helpers + recurrence/portal popover into sibling modules.
+  Deferred because: In-scope was Call Date overdue behavior only; full split was out of scope.
+
+## 2026-07-15 - [FIX] Fathom diarization-only speakers (Speaker 1/2)
+
+Status: Open
+Found while: Fixing host-only Fathom attendee lists in Meetings
+Files:
+
+- `apps/api/src/modules/spaces/services/fathom-meeting-item-enrichment.ts`
+  Evidence: Some recordings only expose `Speaker 1`/`Speaker 2` (or "Starting transcription...") with empty calendar invitees; junk filter correctly drops those, so Attendees stay host-only even when another person was on the call (e.g. Carol, Jul 15 Impromptu).
+  Needed work: Infer names from summary/transcript content when diarization labels are anonymous; optionally ask agent to set attendee tags during send_to_agent.
+  Deferred because: In-scope fix covers real named speakers + title-pair hints; anonymous Speaker N needs NLP/agent pass.
+
+## YYYY-MM-DD - [TYPE] Short title
+
+Status: Open
+Found while: …
+Files:
+
+- `path` (evidence)
+  Needed work: …
+  Deferred because: …
+```
+
+## 2026-07-15 - [FEATURE] Auto-upsert Attendee tags on Fathom Meeting Log create_task
+
+Status: Open
+Found while: Converting Meetings Attendees to multi_select tags + recording URL
+Files:
+
+- `apps/api/src/modules/spaces/services/space-automation-service-12.base.ts` (`execCreateTask`)
+- `apps/api/src/modules/space-templates/data/space-template-catalog-ceo.ts` (Fathom Meeting Log)
+  Evidence: Backfill wrote attendee option IDs into `custom_data.attendees` and seeded `field.options`. Live create_task `field_values` only sets `recording_url`; multi_select option upsert from `trigger.attendees` is not implemented, so new Fathom imports may land without Attendee tags until agent/manual edit.
+  Needed work: On create_task for multi_select `attendees`, parse Fathom attendees/primary attendee, upsert options on space schema, write option id array into custom_data.
+  Deferred because: In-scope was UI columns + backfill rename/tags/URL; option upsert belongs in automation create_task path.
+
+## 2026-07-15 - [ARCH] DocEditorPanelInner remains over component LOC limit
+
+Status: Open
+Found while: Option A visual-doc → presentation dual-write UI wiring
+Files:
+
+- `apps/web/src/features/spaces/components/docs/DocEditorPanelInner.tsx`
+  Evidence: `wc -l` reports 1047 LOC after Open Design wiring (frontend component target 400; hard ceiling 600).
+  Needed work: Split visual-mode chrome, doc chrome, media/share modals, and full-screen portal into focused components; keep prop contract stable.
+  Deferred because: In-scope change only added Open Design routing for `_doc_visual_presentation_id`; full split is adjacent debt already noted in prior follow-ups.
+
+## 2026-07-15 - [FEATURE] Sync `_doc_visual_html` when Design edits the linked presentation
+
+Status: Open
+Found while: Option A dual-write implementation
+Files:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-visual-doc-presentation.sync.ts`
+  Evidence: Sync is one-way on visualize (doc HTML → presentation files). Design/Markup edits update `presentation_files` only.
+  Needed work: On presentation file write for `metadata.linked_from=visual_doc`, mirror entry HTML back into the Space Doc `_doc_visual_html` (or refresh Visual tab from presentation entry).
+  Deferred because: Option A only required dual-write on visualize + Design open; reverse sync is a follow-on.
+
+## 2026-07-15 - [FIX] Presentation summary slides_count is 0 without loading slides
+
+Status: Open
+Found while: Fixing All Artifacts presentations 500 from `select('*')` payloads
+Files:
+
+- `apps/api/src/modules/campaigns/repositories/campaign-artifact-presentations.repository.ts`
+- `apps/api/src/modules/campaigns/services/artifacts-presentation-files.base.ts`
+  Evidence: Summary list omits `slides`/`generated_html` so cards show `slides_count: 0` until detail fetch.
+  Needed work: Derive count via DB expression / presentation_files section count for HTML bundles without pulling slide HTML.
+  Deferred because: Root fix was stopping 500s; count accuracy is cosmetic vs blank view.
+
+## 2026-07-15 - [FEATURE] Auto-bootstrap CEO HQ + Meetings on personal default
+
+Status: Open
+Found while: Building ceo-hq and meetings space templates
+Files:
+
+- `apps/api/src/modules/spaces/services/spaces-service-01.base.ts` (`ensureDefault` / `ensureGeneral`)
+- `apps/api/src/modules/space-templates/data/space-template-catalog-ceo.ts`
+  Evidence: Templates require manual Browse → Use Template; user asked to build for personal use but agreed templates over campaigns. Default personal space today is still “My Tasks” / “New Workspace”.
+  Needed work: Optional ensure path that instantiates `ceo-hq` + `meetings` once per personal user (or replace thin personal-workspace default).
+  Deferred because: Scope was catalog + seed templates first; auto-bootstrap needs product decision on existing My Tasks users.
+
+## 2026-07-15 - [ARCH] artifact-documents.service.ts near 600 LOC hard limit
+
+Status: Open
+Found while: Campaign chat → Space Docs dual-write fix for Nate Impact docs
+Files:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-documents.service.ts` (596 LOC)
+  Evidence: Architecture service limit is 600 LOC; file was already near limit before dual-write resolve change.
+  Needed work: Extract saveDocument / getDocument sync helpers into a document dual-write service.
+  Deferred because: In-scope was campaign-space resolve + dual-write behavior, not Type D split.
+
+## 2026-07-15 - [UX] Historical DOCUMENT cards lack spaceItemId deep-link
+
+Status: Open
+Found while: Campaign chat → Space Docs dual-write fix
+Files:
+
+- Stored chat `ui_blocks` for conversation docs created before the fix
+- `apps/web/src/features/studio/components/chat/DocumentCard.tsx`
+  Evidence: Message history cards still expand campaign media when `spaceItemId` is missing even after DB backfill. New saves include `spaceItemId`.
+  Needed work: Resolve `documentId` → linked `space_items` on click (or rewrite ui_blocks) so older cards open Space Docs.
+  Deferred because: Docs tab + Overview Docs list unstick the visible empty-state bug; click restore for old cards is a second pass.
+
+## 2026-07-14 - [ARCH] AgentChatPanel / campaign-controller still over frontend LOC targets
+
+Status: Open
+Found while: Preferring assigned campaign over General for Nate Impact brain reads; Team2 prop wiring
+Files:
+
+- `apps/web/src/features/team/components/AgentChatPanel.tsx` (~1477 LOC)
+- `apps/web/src/features/team/components/agent-chat-panel/use-agent-chat-campaign-controller.ts` (~431 LOC)
+- `apps/web/src/features/team-2/components/Team2AgentChatWithConversations.tsx`
+  Evidence: Architecture frontend component target is ~400 LOC; AgentChatPanel already Phase 3-E debt. Team2 now correctly passes assignedCampaigns.
+  Needed work: Continue AgentChatPanel decomposition.
+  Deferred because: In-scope was durable campaign-brain scope fix, not full panel split.
+
+## 2026-07-14 - [DEPLOY] ROAS web still needs ship for Team2 remount wiring
+
+Status: Open
+Found while: Closing Nate General → Impact brain failure class
+Files:
+
+- Team2 → AgentChatPanel campaign props + send remount path
+  Evidence: Fly `roas-runtimes` redeployed with agent-api/OpenClaw fixes from local tree. Web UI changes are local-only until commit/push + Vercel `roas-web` production deploy.
+  Needed work: Commit/push and deploy `roas-web` so Team2 remount-on-send + assigned-campaign preferences go live.
+  Deferred because: Deploy of Vercel production requires repo push; user did not ask to commit.
+
+
+## 2026-07-13 - [ARCH] artifact-capability.policy.ts over 600 LOC
+
+Status: Open
+Found while: Restoring `search_campaign_brain` for Strategist / Impact
+Files:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-capability.policy.ts` (1333 LOC)
+  Evidence: Service max is 600 LOC per project-architecture.md; file already oversized; this change only added action keys to existing sets.
+  Needed work: Split capability categories / domain allowlists into dedicated modules.
+  Deferred because: Out of scope for campaign-brain read restore; touch was additive set membership only.
+
+## 2026-07-13 - [RUNTIME] OpenClaw `/v1/responses` 404 on roas-runtimes
+
+Status: Resolved
+Found while: Hiring Strategist Nate and running auto-skill-1 against Impact brain
+Files:
+
+- `roas-runtimes` Fly machine OpenClaw gateway (`127.0.0.1:18789`)
+  Evidence: After machine restart, `GET /v1/models` → 401 (route exists); `POST /v1/responses` and `POST /v1/chat/completions` → 404 Not Found. Chat stream returns `gateway_connection` for both `nate` and `vibey` after brain_context succeeds.
+  Needed work: Restore OpenClaw gateway Responses API on the deployed runtime image (version pin / OpenClaw config / process listening on expected routes). Re-run Impact precall skill on Nate once fixed.
+  Deferred because: Strategist install + hire + skill sync completed; gateway 404 is pre-existing runtime infra outside skill seeding.
+  Resolved: 2026-07-13 — root cause was invalid `plugins.allow` / `entries.whatsapp` (plugin missing). Removed from `docker/openclaw.json`, redeployed; `/v1/responses` 200 and Nate skill-1 used `search_campaign_brain` on Impact.
+
+## 2026-07-13 - [ROAS-BRAIN] Campaign Knowledge surface vs ns_memories ingest
+
+Status: Partially resolved (one-off semantic mirror written for Impact)
+Found while: User saw empty Campaign Knowledge / Impact after memory ingest
+Files:
+
+- `scripts/roas/ingest-roas-brain-package.py`
+  Evidence: Script writes `ns_memories` + evidence chunks; UI path `campaign_knowledge` loads `/api/space-retrieval/knowledge/campaigns/:id/graph` → `space_semantic_objects` via campaign space membership.
+  Needed work: Extend ingest script to also upsert `space_semantic_objects` (+ chunks) into the campaign's Space (or document that users must open a memories-capable scope). Optionally wire Campaign Knowledge to campaign brain memories.
+  Deferred because: Immediate one-off mirror unblocked the Impact demo UI; durable dual-write belongs in the next script pass.
+
+- `brain_ops_outbox` pending `brain_pattern_analysis` (7 jobs for test@gmail.com, other brain ids)
+  Evidence: Titles map to "Crystallize beliefs and perspectives"; status pending since ~2026-07-13 03:37; not Impact brain.
+  Needed work: Investigate why brain-ops/mission-worker is not draining pattern analysis; add stale-outbox TTL.
+  Deferred because: Unrelated to Impact package empty-graph root cause.
+  Resolved: 2026-07-13 — manually marked 7 pending rows done; campaign queue scope leak fixed so they no longer appear on Campaign Knowledge. Worker drain/TTL still open.
+
+
+## 2026-07-13 - [ROAS-BRAIN] Impact Elite post-ingest follow-ups
+
+Status: Open
+Found while: Impact ROAS-BRAIN package ingest into campaign Impact
+Files:
+
+- `scripts/roas/ingest-roas-brain-package.py`
+  Evidence: 277 source items landed as memories with `needs_roas_extraction: true` / `provisional_source_snapshot: true` — not yet run through DocumentIngestion / conversation extraction.
+  Needed work: Batch ROAS extraction over confirmed source items (or evidence chunks) to produce true atomic memories; prune/replace provisional source-item memories after.
+  Deferred because: First pass prioritized searchable landing + seed facts over full Gemini re-extraction cost/time.
+
+- `scripts/import-user-brain/backfill-embeddings.ts`
+  Evidence: Evidence chunks table has 277 rows with null embeddings; backfill script only supports memories/snapshots/sk/pages.
+  Needed work: Extend embedding backfill to `ns_brain_evidence_chunks` (or separate script) for source-grounded retrieval.
+  Deferred because: Memory embeddings unblocked Ask Brain smoke; evidence lane is secondary.
+
+- Page Grader `impact-elite-roas-brain-package.json` client row
+  Evidence: `ai_overview`, `ai_summary`, `raw_description`, `ai_differentiators` length 0 in package (brand voice present).
+  Needed work: Have package builder include full client narrative fields used in seeds.
+  Deferred because: Campaign/offer/avatar/source_item content still ingested; profile narrative gap is package-side.
+
+
 ## YYYY-MM-DD - [APP/FEATURE] Short title
 
 Status: Partially resolved by Type 3-E Batch 273; `ChatAttachmentPreviews` and Spaces task preview ownership remain open.
@@ -6099,7 +6412,16 @@ Files:
 Status: Open
 Found while: Brain live voice WebSocket fix
 Feature/App: Web Brain voice
-Files: `apps/web/src/features/brain/hooks/use-brain-live-session.ts` (610 lines)
-Evidence: Project architecture hard limit is 600 LOC; hook already exceeded budget before this pass.
+Files: `apps/web/src/features/brain/hooks/use-brain-live-session.ts` (623 lines as of 2026-07-13)
+Evidence: Project architecture hard limit is 600 LOC; hook already exceeded budget before this pass and grew again when mic capture was started before WS ready.
 Needed work: Extract WS connect/teardown and message dispatch into focused sub-hooks while keeping the public hook API stable.
-Deferred because: Voice routing fix was scoped to URL resolution and error handling only.
+Deferred because: Voice routing fix and mic-silence bug were scoped to capture/audio path only.
+
+## 2026-07-15 — campaign_capability missing search_campaign_brain
+
+- Feature/app: agent-api / OpenClaw promptMode tool surface
+- File: apps/openclaw campaign_capability / vibey_backend action enum (platform-tool-surface)
+- Evidence: Nate chat `1dafa272…` tool_steps show `campaign_capability` reject: `action: must be equal to one of the allowed values` for `search_campaign_brain` (brain later worked via other path)
+- Needed: ensure `search_campaign_brain` is in the live allowed-action enum for campaign_capability/vibey_backend the same way vibey-api ALLOWED_ACTIONS has it
+- Why not now: scoped to web_search red-chip fix (Brave provider + TOOLS.md)
+

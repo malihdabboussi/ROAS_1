@@ -648,66 +648,68 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
           </div>
         )
       ) : activeView?.type === 'kanban' ? (
-        <KanbanView
-          view={activeView}
-          items={filteredRegularItems}
-          fieldsById={fieldsById}
-          roster={roster}
-          currentUserId={currentUserId}
-          onUpdateItem={updateItem}
-          onCreateOption={handleCreateFieldOption}
-          onUpdateOption={handleUpdateFieldOption}
-          onDeleteOption={handleDeleteFieldOption}
-          onTagCustomSwatchesChange={handleTagCustomSwatchesChange}
-          onPushToAgent={pushToAgent}
-          onOpenDetail={openSpaceItemModal}
-          onCreateSubtask={async (parentId, title, extras) => {
-            try {
-              await useSpacesStore
-                .getState()
-                .createItem(title, { ...extras, parent_item_id: parentId })
-            } catch (err) {
-              console.error('[kanban subtask] create failed:', err)
-              toast.error('Failed to create subtask')
-            }
-          }}
-          onAddItemInGroup={async (title, groupFieldId, groupKey, fieldExtras) => {
-            const extra: Record<string, unknown> = { ...(fieldExtras ?? {}) }
-            if (groupFieldId === 'status') extra.status = groupKey
-            else if (groupFieldId === 'priority') extra.priority = groupKey
-            else if (groupFieldId === 'category') {
-              const base =
-                extra.custom_data &&
-                typeof extra.custom_data === 'object' &&
-                !Array.isArray(extra.custom_data)
-                  ? { ...(extra.custom_data as Record<string, unknown>) }
-                  : {}
-              if (groupKey === '__none__' || groupKey === '') base.category = null
-              else base.category = groupKey
-              extra.custom_data = base
-            } else if (groupFieldId === 'assignee') {
-              if (groupKey === '__unassigned__') {
-                extra.assignee_type = 'unassigned'
-                extra.assignee_id = null
-                extra.assignees = []
-              } else {
-                const entry =
-                  roster.find((r) => r.participant_id === groupKey) ??
-                  roster.find(
-                    (r) =>
-                      (r.kind === 'human' && r.user_id === groupKey) ||
-                      (r.kind === 'agent' && r.agent_key === groupKey),
-                  )
-                if (entry) {
-                  extra.assignee_type = entry.kind === 'agent' ? 'agent' : 'human'
-                  extra.assignee_id = entry.kind === 'agent' ? entry.agent_key! : entry.user_id!
-                  extra.assignees = [{ type: extra.assignee_type, id: extra.assignee_id }]
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <KanbanView
+            view={activeView}
+            items={filteredRegularItems}
+            fieldsById={fieldsById}
+            roster={roster}
+            currentUserId={currentUserId}
+            onUpdateItem={updateItem}
+            onCreateOption={handleCreateFieldOption}
+            onUpdateOption={handleUpdateFieldOption}
+            onDeleteOption={handleDeleteFieldOption}
+            onTagCustomSwatchesChange={handleTagCustomSwatchesChange}
+            onPushToAgent={pushToAgent}
+            onOpenDetail={openSpaceItemModal}
+            onCreateSubtask={async (parentId, title, extras) => {
+              try {
+                await useSpacesStore
+                  .getState()
+                  .createItem(title, { ...extras, parent_item_id: parentId })
+              } catch (err) {
+                console.error('[kanban subtask] create failed:', err)
+                toast.error('Failed to create subtask')
+              }
+            }}
+            onAddItemInGroup={async (title, groupFieldId, groupKey, fieldExtras) => {
+              const extra: Record<string, unknown> = { ...(fieldExtras ?? {}) }
+              if (groupFieldId === 'status') extra.status = groupKey
+              else if (groupFieldId === 'priority') extra.priority = groupKey
+              else if (groupFieldId === 'category') {
+                const base =
+                  extra.custom_data &&
+                  typeof extra.custom_data === 'object' &&
+                  !Array.isArray(extra.custom_data)
+                    ? { ...(extra.custom_data as Record<string, unknown>) }
+                    : {}
+                if (groupKey === '__none__' || groupKey === '') base.category = null
+                else base.category = groupKey
+                extra.custom_data = base
+              } else if (groupFieldId === 'assignee') {
+                if (groupKey === '__unassigned__') {
+                  extra.assignee_type = 'unassigned'
+                  extra.assignee_id = null
+                  extra.assignees = []
+                } else {
+                  const entry =
+                    roster.find((r) => r.participant_id === groupKey) ??
+                    roster.find(
+                      (r) =>
+                        (r.kind === 'human' && r.user_id === groupKey) ||
+                        (r.kind === 'agent' && r.agent_key === groupKey),
+                    )
+                  if (entry) {
+                    extra.assignee_type = entry.kind === 'agent' ? 'agent' : 'human'
+                    extra.assignee_id = entry.kind === 'agent' ? entry.agent_key! : entry.user_id!
+                    extra.assignees = [{ type: extra.assignee_type, id: extra.assignee_id }]
+                  }
                 }
               }
-            }
-            await useSpacesStore.getState().createItem(title, extra)
-          }}
-        />
+              await useSpacesStore.getState().createItem(title, extra)
+            }}
+          />
+        </div>
       ) : isDocsView ? (
         docsLoading ? (
           <div className="flex flex-1 items-center justify-center">

@@ -5,7 +5,7 @@ import { chain } from './space-automation-fathom-test-helpers'
 
 describe('SpaceAutomationService Fathom actions and revocation', () => {
   it('runs agent_suggest_tasks and writes suggestions for the Fathom owner', async () => {
-    const parentItem = { id: 'item_parent', title: 'Fathom meeting: Sales call' }
+    const parentItem = { id: 'item_parent', title: 'Sales call' }
     const suggestionA = { id: 'suggestion_a', title: 'Follow up with buyer' }
     const suggestionB = { id: 'suggestion_b', title: 'Send recap' }
     const route = {
@@ -24,12 +24,14 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
       .mockResolvedValueOnce(suggestionB)
     const repo = {
       createItem,
+      updateItem: vi.fn().mockResolvedValue({ ...parentItem, title: 'Sales call' }),
       createActivity: vi.fn().mockResolvedValue({}),
       findSpaceById: vi.fn().mockResolvedValue({
         id: 'space_admin',
         title: 'Sales space',
         schema: {},
       }),
+      updateSpace: vi.fn().mockResolvedValue({}),
       findItemById: vi.fn().mockResolvedValue(parentItem),
       findSubtasksByParentId: vi.fn().mockResolvedValue([]),
       findActivityByItemId: vi.fn().mockResolvedValue([]),
@@ -74,19 +76,36 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
           builder.then = (resolve: (value: typeof result) => unknown) => resolve(result)
           return builder
         }
+        if (table === 'profiles' || table === 'org_members') {
+          const result = { data: null, error: null }
+          const builder: Record<string, unknown> = {}
+          builder.select = () => builder
+          builder.eq = () => builder
+          builder.ilike = () => builder
+          builder.maybeSingle = async () => result
+          return builder
+        }
         if (table === 'space_automation_runs') return { insert: async () => ({ error: null }) }
         return chain({ data: null, error: null })
       }),
     }
     const userAgentApi = {
-      invoke: vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          tasks: [
-            { title: 'Follow up with buyer', description: 'Send the pricing deck.' },
-            { title: 'Send recap' },
-          ],
-        }),
+      invoke: vi.fn().mockImplementation(async (_userId: string, path: string) => {
+        if (path.includes('suggest-meeting-title')) {
+          return {
+            ok: true,
+            json: async () => ({ title: 'Sales call' }),
+          }
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            tasks: [
+              { title: 'Follow up with buyer', description: 'Send the pricing deck.' },
+              { title: 'Send recap ASAP', priority: 'medium' },
+            ],
+          }),
+        }
       }),
     }
     const service = new SpaceAutomationService(
@@ -111,6 +130,7 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
             ],
           },
         }),
+      updateSpace: vi.fn().mockResolvedValue({}),
       }) as never,
       { get: () => 'internal-token' } as never,
       {} as never,
@@ -130,6 +150,14 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
 
     expect(result).toMatchObject({ processed: true, fanout_count: 1 })
     expect(userAgentApi.invoke).toHaveBeenCalledWith(
+      'admin_1',
+      '/api/agents/suggest-meeting-title',
+      expect.objectContaining({
+        method: 'POST',
+      }),
+      expect.anything(),
+    )
+    expect(userAgentApi.invoke).toHaveBeenCalledWith(
       'rep_1',
       '/api/agents/suggest-tasks',
       expect.objectContaining({
@@ -144,10 +172,15 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
       expect.objectContaining({
         title: 'Follow up with buyer',
         source: 'agent_suggested',
+        priority: 'medium',
         custom_data: expect.objectContaining({
+          entry_type: 'follow_up',
+          source_call_item_id: 'item_parent',
+          source_call: 'Sales call',
           suggestion_origin: expect.objectContaining({
             trigger_type: 'external_fathom_recording_ready',
             fathom_meeting_id: 'rec_agent',
+            rule_trigger_item_id: 'item_parent',
           }),
         }),
       }),
@@ -158,8 +191,9 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
       'rep_1',
       'space_admin',
       expect.objectContaining({
-        title: 'Send recap',
+        title: 'Send recap ASAP',
         source: 'agent_suggested',
+        priority: 'urgent',
       }),
       'org_42',
     )

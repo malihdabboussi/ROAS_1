@@ -1,7 +1,71 @@
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
-import { readItemAssignees } from '../components/space-item-values'
+import { readFieldValue, readItemAssignees } from '../components/space-item-values'
 import type { SpaceItem } from '../types'
 import type { FieldDef, ViewDef } from '../types/space-schema'
+
+function normalizeFilterValues(raw: string | string[] | undefined): string[] {
+  if (raw == null) return []
+  return (Array.isArray(raw) ? raw : [raw]).map((v) => String(v).trim()).filter(Boolean)
+}
+
+/**
+ * Resolve Meetings `entry_type` even when custom_data is incomplete so
+ * call vs follow-up views stay exclusive.
+ */
+export function resolveSpaceEntryType(item: SpaceItem): 'call' | 'follow_up' | null {
+  const raw = readFieldValue(item, 'entry_type')
+  if (raw === 'call' || raw === 'follow_up') return raw
+  if (item.source === 'fathom') return 'call'
+  if (item.source === 'agent_suggested') return 'follow_up'
+  const title = String(item.title ?? '')
+  if (/^(Meeting:|Fathom meeting:)/i.test(title)) return 'call'
+  const cd = (item.custom_data ?? {}) as Record<string, unknown>
+  if (cd.recording_url || cd.fathom_url || cd.fathom_meeting_id || cd.external_automation) {
+    return 'call'
+  }
+  if (cd.suggestion_origin) return 'follow_up'
+  return null
+}
+
+/**
+ * Hard view filters. Prefer explicit `field_value_filters`; fall back to the
+ * Meetings template view ids so call/follow-up tabs stay correct even if a
+ * customize-save dropped the filter object from schema.
+ */
+export function resolveViewFieldValueFilters(
+  view: Pick<ViewDef, 'id' | 'field_value_filters'>,
+): Record<string, string | string[]> | undefined {
+  if (view.field_value_filters && Object.keys(view.field_value_filters).length > 0) {
+    return view.field_value_filters
+  }
+  if (view.id === 'all-meetings') return { entry_type: 'call' }
+  if (view.id === 'follow-ups' || view.id === 'action-items') return { entry_type: 'follow_up' }
+  return undefined
+}
+
+/** True when item field value matches any allowed filter value. */
+export function itemMatchesFieldValueFilters(
+  item: SpaceItem,
+  filters: Record<string, string | string[]> | undefined,
+): boolean {
+  if (!filters) return true
+  for (const [fieldId, rawAllowed] of Object.entries(filters)) {
+    const allowed = normalizeFilterValues(rawAllowed)
+    if (allowed.length === 0) continue
+    const value =
+      fieldId === 'entry_type' ? resolveSpaceEntryType(item) : readFieldValue(item, fieldId)
+    const asString =
+      value == null || value === ''
+        ? null
+        : Array.isArray(value)
+          ? null
+          : String(value)
+    // Missing / unknown does NOT match All Meetings — only real calls do.
+    if (asString == null) return false
+    if (!allowed.includes(asString)) return false
+  }
+  return true
+}
 
 function stripHtml(html: string): string {
   return html
@@ -74,6 +138,10 @@ export function applySpaceToolbarFilters(
   searchQuery: string,
 ): SpaceItem[] {
   let out = items
+  const fieldValueFilters = resolveViewFieldValueFilters(view)
+  if (fieldValueFilters) {
+    out = out.filter((i) => itemMatchesFieldValueFilters(i, fieldValueFilters))
+  }
   const showClosed = view.show_closed_tasks === true
   // When grouped by status, keep closed items visible so they appear under the Done/Archived
   // group buckets even if "show completed" is off.

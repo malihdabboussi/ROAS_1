@@ -168,6 +168,24 @@ function formatDisplayRangeLabel(
   return `${startLabel} → ${dueLabel}`
 }
 
+/** Urgency colors only apply to deadline-style relative dates — not historic Call Dates. */
+function dueDateTriggerColorClass(
+  dueValue: string | null,
+  displayFormat: DateDisplayFormat,
+): string {
+  if (displayFormat !== 'relative') return 'text-muted-foreground'
+  const due = parseDate(dueValue)
+  if (!due) return 'text-muted-foreground'
+  const now = new Date()
+  const dueMid = new Date(due.getFullYear(), due.getMonth(), due.getDate())
+  const nowMid = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const days = Math.round((dueMid.getTime() - nowMid.getTime()) / 86_400_000)
+  if (days < 0) return 'text-destructive'
+  if (days === 0) return 'text-warning'
+  if (days <= 2) return 'text-warning'
+  return 'text-muted-foreground'
+}
+
 function formatPresetRightLabel(key: DueDatePresetKey, date: Date): string {
   switch (key) {
     case 'today':
@@ -283,20 +301,7 @@ export function DueDateCell({
     </>
   ) : triggerField === 'due' && value.due_date ? (
     (() => {
-      const due = parseDate(value.due_date)
-      const now = new Date()
-      const dueMid = due ? new Date(due.getFullYear(), due.getMonth(), due.getDate()) : null
-      const nowMid = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const days = dueMid ? Math.round((dueMid.getTime() - nowMid.getTime()) / 86_400_000) : 0
-      const colorClass = !due
-        ? 'text-[var(--color-muted-foreground)]'
-        : days < 0
-          ? 'text-red-400'
-          : days === 0
-            ? 'text-amber-400'
-            : days <= 2
-              ? 'text-orange-400'
-              : 'text-[var(--color-muted-foreground)]'
+      const colorClass = dueDateTriggerColorClass(value.due_date, displayFormat)
       return (
         <>
           <Calendar className={`h-3.5 w-3.5 shrink-0 ${colorClass}`} />
@@ -322,20 +327,7 @@ export function DueDateCell({
     <Calendar className="h-3.5 w-3.5 shrink-0 text-[var(--color-muted-foreground)]" aria-hidden />
   ) : value.due_date ? (
     (() => {
-      const due = parseDate(value.due_date)
-      const now = new Date()
-      const dueMid = due ? new Date(due.getFullYear(), due.getMonth(), due.getDate()) : null
-      const nowMid = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const days = dueMid ? Math.round((dueMid.getTime() - nowMid.getTime()) / 86_400_000) : 0
-      const colorClass = !due
-        ? 'text-[var(--color-muted-foreground)]'
-        : days < 0
-          ? 'text-red-400'
-          : days === 0
-            ? 'text-amber-400'
-            : days <= 2
-              ? 'text-orange-400'
-              : 'text-[var(--color-muted-foreground)]'
+      const colorClass = dueDateTriggerColorClass(value.due_date, displayFormat)
       return (
         <>
           <Calendar className={`h-3.5 w-3.5 shrink-0 ${colorClass}`} />

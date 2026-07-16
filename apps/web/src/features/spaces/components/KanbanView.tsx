@@ -589,7 +589,7 @@ export function KanbanView({
   }, [inlineTaskComposerFocusNonce, boardColumns])
 
   return (
-    <div className="flex h-full gap-3 overflow-x-auto px-4 py-3">
+    <div className="flex h-full min-h-0 gap-3 overflow-x-auto px-4 py-3">
       {boardColumns.map((col) => {
         const columnItems = col.columnItems
         const colKey = col.key
@@ -609,7 +609,7 @@ export function KanbanView({
           <div
             key={colKey}
             className={cn(
-              'relative flex w-[280px] shrink-0 flex-col overflow-hidden rounded-xl border',
+              'relative flex h-full max-h-full w-[280px] shrink-0 flex-col overflow-hidden rounded-xl border',
               colBg,
             )}
             onDragOver={(event) => !readOnly && event.preventDefault()}
@@ -639,7 +639,7 @@ export function KanbanView({
               />
             ) : null}
             <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
-              <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+              <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-2.5">
                 {col.mode === 'group' && groupData && groupData.assigneeAvatarUrl !== undefined ? (
                   <div className="flex min-w-0 flex-1 items-center gap-2">
                     <AssigneeGroupHeaderTitle
@@ -679,7 +679,7 @@ export function KanbanView({
                   </button>
                 )}
               </div>
-              <div className="flex flex-1 flex-col gap-2 px-2 pb-2">
+              <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
                 {draftGroupKey === colKey && !readOnly && (
                   <div
                     className="card-glass border-[var(--color-primary)]/50 rounded-lg border p-2.5"
@@ -917,6 +917,7 @@ export function KanbanView({
                                     onItemPatch={(p) => void onUpdateItem(item.id, p)}
                                     statusField={fieldsById.get('status')}
                                     onPushToAgent={onPushToAgent}
+                                    onOpenDetail={onOpenDetail}
                                     allFields={Array.from(fieldsById.values())}
                                     onChange={(next) => {
                                       void onUpdateItem(item.id, toFieldPatch(item, field.id, next))
@@ -1098,6 +1099,7 @@ export function KanbanView({
                                             onItemPatch={(p) => void onUpdateItem(sub.id, p)}
                                             statusField={fieldsById.get('status')}
                                             onPushToAgent={onPushToAgent}
+                                            onOpenDetail={onOpenDetail}
                                             allFields={Array.from(fieldsById.values())}
                                             onChange={(next) => {
                                               void onUpdateItem(

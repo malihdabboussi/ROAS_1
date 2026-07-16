@@ -92,7 +92,19 @@ export function useViewPatchFlush(opts: {
         if (team) {
           await patchViewOverride(view.id, patch)
         } else {
-          const next = { ...view, ...patch }
+          const orgView = schema.views.find((v) => v.id === view.id)
+          const next = {
+            ...orgView,
+            ...view,
+            ...patch,
+            // Keep hard view filters (e.g. Meetings call vs follow-up) unless
+            // this patch explicitly replaces them — customize saves of widths
+            // must not drop `field_value_filters` from a stale merged view.
+            field_value_filters:
+              patch.field_value_filters ??
+              view.field_value_filters ??
+              orgView?.field_value_filters,
+          }
           const nextViews = schema.views.map((v) => (v.id === next.id ? next : v))
           const nextSchema = { ...schema, views: nextViews }
           patchActiveSpaceSchema(nextSchema)

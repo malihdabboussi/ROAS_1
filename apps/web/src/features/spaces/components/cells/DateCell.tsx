@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Calendar } from 'lucide-react'
+import type { DateDisplayFormat } from '../../types/space-schema'
 import type { BaseCellProps } from './cell-types'
 import { MonthCalendar } from './date-picker/MonthCalendar'
 
@@ -12,9 +13,20 @@ function parseDate(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d
 }
 
-function formatLabel(value: unknown): string | null {
+function formatLabel(value: unknown, displayFormat: DateDisplayFormat = 'date'): string | null {
   const d = parseDate(value)
   if (!d) return null
+  if (displayFormat === 'date_time') {
+    return d.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+  }
+  if (displayFormat === 'time') {
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  }
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
@@ -22,14 +34,20 @@ function toStartOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1)
 }
 
-export function DateCell({ value, onChange, readonly, openOnMount }: BaseCellProps) {
+export function DateCell({
+  value,
+  onChange,
+  readonly,
+  openOnMount,
+  dateDisplayFormat = 'date',
+}: BaseCellProps) {
   const [open, setOpen] = useState(!!openOnMount)
   const [month, setMonth] = useState(() => toStartOfMonth(parseDate(value) ?? new Date()))
   const triggerRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
 
-  const label = formatLabel(value)
+  const label = formatLabel(value, dateDisplayFormat)
   const selected = parseDate(value)
 
   useLayoutEffect(() => {

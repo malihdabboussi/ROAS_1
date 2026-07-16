@@ -22,6 +22,7 @@ import {
 import { SpaceAutomationsRepository } from '../repositories/space-automations.repository'
 import { SpacesRepository } from '../repositories/spaces.repository'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
+import { extractFathomCallDateIso } from './fathom-meeting-item-enrichment'
 import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
 import { SpaceAutomationServiceBase18 } from './space-automation-service-18.base'
 import { renderTemplate, type TemplateContext } from './space-automation-template'
@@ -284,6 +285,7 @@ export abstract class SpaceAutomationServiceBase19 extends SpaceAutomationServic
     actionItems: Array<Record<string, unknown>>
     attendees: Array<Record<string, unknown>>
     url: string | null
+    callDate: string | null
   } {
     const transcript = Array.isArray(event.transcript)
       ? (event.transcript as Array<Record<string, unknown>>)
@@ -336,6 +338,7 @@ export abstract class SpaceAutomationServiceBase19 extends SpaceAutomationServic
           : typeof event.share_url === 'string' && event.share_url.trim()
             ? event.share_url.trim()
             : null,
+      callDate: extractFathomCallDateIso(event),
     }
   }
 
