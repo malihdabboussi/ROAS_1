@@ -6,6 +6,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { cachedSpaces } from '../../hooks/use-cached-spaces'
 import {
   getSpaceTemplate,
@@ -142,6 +143,32 @@ export function UseTemplateConfirmDialog({
       cachedSpaces.mutate((prev) => [space, ...(prev ?? [])])
       useSpacesStore.setState((s) => ({ spaces: [space, ...s.spaces] }))
       useSpacesStore.getState().setActiveSpace(space.id)
+      if (template.slug === 'agency-client-webinar') {
+        useGlobalChatStore.getState().seedComposer({
+          content: [
+            `You just opened the Agency Client (Webinar) Space "${space.title}".`,
+            'Guide me through kickoff in plain English:',
+            '1) Confirm what this client bought and any links/transcripts I should use',
+            '2) Tell me to click Playbook (or start Webinar Fulfillment for me)',
+            '3) Explain that Phase A builds strategy docs, then I approve at Gate 1 before copy/creative',
+            'Keep it short. Do not invent a different workflow.',
+          ].join('\n'),
+          workContext: {
+            surface: 'spaces',
+            spaceId: space.id,
+            campaignId: space.campaign_id ?? null,
+          },
+        })
+        if (typeof window !== 'undefined') {
+          window.setTimeout(() => {
+            window.dispatchEvent(
+              new CustomEvent('space:open-missions-view', {
+                detail: { spaceId: space.id, openPlaybook: true },
+              }),
+            )
+          }, 400)
+        }
+      }
       toast.success(`Created "${space.title}" from template`)
       router.push('/spaces')
       onCreated?.(space)

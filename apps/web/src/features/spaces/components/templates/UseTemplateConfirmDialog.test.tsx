@@ -14,10 +14,19 @@ const mocks = vi.hoisted(() => ({
   setActiveSpace: vi.fn(),
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
+  seedComposer: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.routerPush }),
+}))
+
+vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
+  useGlobalChatStore: {
+    getState: () => ({
+      seedComposer: mocks.seedComposer,
+    }),
+  },
 }))
 
 vi.mock('sonner', () => ({

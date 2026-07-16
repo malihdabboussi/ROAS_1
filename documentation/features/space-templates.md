@@ -57,6 +57,7 @@ Instantiate both on the **personal account** (no `X-Org-Id`). Slack audit for HQ
 - **2026-07-15:** Added `ceo-hq` and `meetings` as space templates (not freeloaded campaigns). CEO loops are schedule+agent with draft-only prompts; Meetings uses Fathom → task + document artifact + suggested follow-ups. Default personal bootstrap of these templates is not automatic yet.
 - **2026-07-15:** Meetings views filter on `entry_type` (`field_value_filters`) so Follow-ups holds action items only; Fathom invitee emails upsert into campaign People.
 - **2026-07-16:** Added `agency-client-webinar` — Agency Client (Webinar) with Missions + Docs seeds for Webinar Fulfillment playbook kickoff. Additive seed: `supabase/migrations/20260716102000_seed_agency_client_webinar_space_template.sql`.
+- **2026-07-16:** `instantiate_space_template` writes `doc_body` again (was only `custom_data.body`, so Doc cards looked empty). Migration: `20260716104000_instantiate_space_template_doc_body.sql`. Agency webinar create seeds Vibey chat + opens Start Playbook.
 
 ## Regenerating seed SQL
 

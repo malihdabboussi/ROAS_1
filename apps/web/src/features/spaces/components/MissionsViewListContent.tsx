@@ -41,6 +41,7 @@ export interface MissionsViewListContentProps {
   ) => Promise<void>
   onOpenDeliverable: (deliverable: MissionDeliverable) => void
   onListColumnResize: (columnId: MissionColumnId, width: number) => void
+  onStartPlaybook?: () => void
 }
 
 export function MissionsViewListContent({
@@ -69,6 +70,7 @@ export function MissionsViewListContent({
   onMissionsProgressPatch,
   onOpenDeliverable,
   onListColumnResize,
+  onStartPlaybook,
 }: MissionsViewListContentProps) {
   const renderMissionList = (missions: Mission[]) => (
     <MissionList
@@ -104,7 +106,10 @@ export function MissionsViewListContent({
       onMouseUp={onPersistColumnWidths}
     >
       {missionsForDisplay.length === 0 ? (
-        <MissionsViewEmptyState hasAnyMissions={sortedMissions.length > 0} />
+        <MissionsViewEmptyState
+          hasAnyMissions={sortedMissions.length > 0}
+          onStartPlaybook={onStartPlaybook}
+        />
       ) : missionGroups ? (
         <div className="gap-spacing-10 flex flex-col">
           {missionGroups.map((group) => {

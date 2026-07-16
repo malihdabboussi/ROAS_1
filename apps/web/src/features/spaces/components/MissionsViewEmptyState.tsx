@@ -43,9 +43,13 @@ function MissionEmptyMockup() {
 
 interface MissionsViewEmptyStateProps {
   hasAnyMissions: boolean
+  onStartPlaybook?: () => void
 }
 
-export function MissionsViewEmptyState({ hasAnyMissions }: MissionsViewEmptyStateProps) {
+export function MissionsViewEmptyState({
+  hasAnyMissions,
+  onStartPlaybook,
+}: MissionsViewEmptyStateProps) {
   if (hasAnyMissions) {
     return (
       <div className="card-glass mx-auto max-w-md p-8 text-center">
@@ -57,12 +61,22 @@ export function MissionsViewEmptyState({ hasAnyMissions }: MissionsViewEmptyStat
   return (
     <div className="gap-spacing-6 px-spacing-8 pb-spacing-8 pt-spacing-4 flex flex-1 flex-col items-center justify-center text-center">
       <MissionEmptyMockup />
-      <div className="space-y-spacing-1">
-        <p className="title-h6 text-foreground">No missions yet</p>
-        <p className="body-3 text-muted-foreground max-w-xs">
-          Create your first mission and I&apos;ll keep the campaign lineup organized here.
+      <div className="space-y-spacing-2">
+        <p className="title-h6 text-foreground">Start with the playbook</p>
+        <p className="body-3 text-muted-foreground mx-auto max-w-sm">
+          Webinar fulfillment is a guided mission: strategy docs first, then you approve at Gate 1.
+          Freeform Mission is only if you need something outside that path.
         </p>
       </div>
+      {onStartPlaybook ? (
+        <button
+          type="button"
+          onClick={onStartPlaybook}
+          className="badge-glass badge-glass-green body-3 rounded-spacing-2 px-spacing-4 py-spacing-2 font-semibold"
+        >
+          Start Webinar Fulfillment
+        </button>
+      ) : null}
     </div>
   )
 }

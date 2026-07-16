@@ -120,7 +120,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
         kind: 'task',
         title: 'Start Webinar Fulfillment playbook',
         status: 'brief',
-        description: 'Open Missions → Start playbook → Webinar Fulfillment and fill kickoff fields.',
+        description: 'Open Missions → Playbook (or use Start Webinar Fulfillment on the empty Missions screen) and fill kickoff fields.',
         sort_order: 6,
       },
     ],

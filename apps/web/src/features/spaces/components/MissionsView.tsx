@@ -15,6 +15,11 @@ import type { DocumentAttachment } from '@/lib/chat/document-attachments'
 import type { ViewDef } from '../types/space-schema'
 import { MissionCaptureModal } from './MissionCaptureModal'
 import { MissionsViewListContent } from './MissionsViewListContent'
+import {
+  buildWebinarFulfillmentMissionPayload,
+  type PlaybookKickoffFields,
+} from './playbooks/webinar-fulfillment'
+import { StartPlaybookModal } from './StartPlaybookModal'
 import { useMissionsViewListState } from './useMissionsViewListState'
 
 function documentsToMissionAttachments(documents: DocumentAttachment[]) {
@@ -35,6 +40,7 @@ function documentsToMissionAttachments(documents: DocumentAttachment[]) {
 interface MissionsViewProps {
   campaignId: string
   campaignName: string
+  spaceId?: string | null
   activeView: ViewDef
   onViewPatch: (patch: Partial<ViewDef>) => Promise<void>
   onAddColumn?: (e: MouseEvent<HTMLButtonElement>) => void
@@ -44,12 +50,14 @@ interface MissionsViewProps {
 
 export type MissionsViewHandle = {
   openNewMissionCapture: () => void
+  openStartPlaybook: () => void
 }
 
 export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(function MissionsView(
   {
     campaignId,
     campaignName,
+    spaceId = null,
     activeView,
     onViewPatch,
     onAddColumn,
@@ -63,6 +71,7 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
   const missionComposerMirrorRef = useRef('')
   const [creditsExhausted, setCreditsExhausted] = useState(false)
   const [captureOpen, setCaptureOpen] = useState(false)
+  const [playbookOpen, setPlaybookOpen] = useState(false)
   const [missionComposerDraft, setMissionComposerDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [capabilityWarning, setCapabilityWarning] = useState<string | null>(null)
@@ -90,6 +99,9 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
     () => ({
       openNewMissionCapture: () => {
         setCaptureOpen(true)
+      },
+      openStartPlaybook: () => {
+        setPlaybookOpen(true)
       },
     }),
     [],
@@ -129,7 +141,7 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
       if (cancelled) return
       if (team.length === 0) {
         setCapabilityWarning(
-          'No workers are assigned to this campaign. Vibey can send anyway, but results may be weak.',
+          'No workers are assigned to this campaign. ROAS can send anyway, but results may be weak.',
         )
         return
       }
@@ -151,7 +163,7 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
       const matched = missionTokens.some((t) => skillText.includes(t))
       if (!matched) {
         setCapabilityWarning(
-          'Team skills may not match this mission. Vibey will still proceed, but consider hiring a specialist.',
+          'Team skills may not match this mission. ROAS will still proceed, but consider hiring a specialist.',
         )
       } else {
         setCapabilityWarning(null)
@@ -175,6 +187,7 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
           brief: title,
           priority: 'medium',
           campaign_id: campaignId,
+          space_id: spaceId || undefined,
           idempotency_key: `mission-${crypto.randomUUID()}`,
           input: attachments.length > 0 ? { attachments } : undefined,
         })
@@ -188,7 +201,32 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
         setSubmitting(false)
       }
     },
-    [campaignId, loadData],
+    [campaignId, loadData, setSelectedMission, spaceId],
+  )
+
+  const handleStartPlaybook = useCallback(
+    async (fields: PlaybookKickoffFields) => {
+      if (!campaignId) return
+      setSubmitting(true)
+      try {
+        const payload = buildWebinarFulfillmentMissionPayload(fields)
+        const mission = await createMission({
+          ...payload,
+          campaign_id: campaignId,
+          space_id: spaceId || undefined,
+          idempotency_key: `playbook-webinar-${crypto.randomUUID()}`,
+        })
+        setPlaybookOpen(false)
+        await loadData()
+        setSelectedMission(mission)
+        toast.success('Webinar Fulfillment playbook started')
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : resolveMissionCreateToastMessage(err))
+      } finally {
+        setSubmitting(false)
+      }
+    },
+    [campaignId, loadData, setSelectedMission, spaceId],
   )
 
   if (loading) {
@@ -201,7 +239,10 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <MissionsViewListContent {...listContentProps} />
+      <MissionsViewListContent
+        {...listContentProps}
+        onStartPlaybook={() => setPlaybookOpen(true)}
+      />
 
       {selectedMission && (
         <MissionDetailModal
@@ -235,6 +276,13 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
           onSend={(content, documents) => void handleMissionComposerSend(content, documents)}
         />
       ) : null}
+
+      <StartPlaybookModal
+        open={playbookOpen}
+        submitting={submitting}
+        onClose={() => setPlaybookOpen(false)}
+        onStart={(fields) => void handleStartPlaybook(fields)}
+      />
     </div>
   )
 })

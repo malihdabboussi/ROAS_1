@@ -102,6 +102,7 @@ type InlineArtifactOpenDetail = {
 type OpenMissionsViewDetail = {
   spaceId?: unknown
   openCapture?: unknown
+  openPlaybook?: unknown
 }
 
 const MISSIONS_VIEW_CATALOG_ITEM = {
@@ -204,6 +205,7 @@ export function SpaceItemsContainer() {
 
   const missionsViewRef = useRef<MissionsViewHandle | null>(null)
   const pendingMissionCaptureOpenRef = useRef(false)
+  const pendingPlaybookOpenRef = useRef(false)
   const financeOverviewRef = useRef<CampaignFinanceTabHandle | null>(null)
   const contactsViewRef = useRef<ContactsViewHandle | null>(null)
   const spaceBelowViewTabsRef = useRef<HTMLDivElement>(null)
@@ -721,9 +723,10 @@ export function SpaceItemsContainer() {
     })
 
   const focusMissionsView = useCallback(
-    async (options?: { openCapture?: boolean }) => {
+    async (options?: { openCapture?: boolean; openPlaybook?: boolean }) => {
       if (!activeSpace || !activeSchema) return
       if (options?.openCapture) pendingMissionCaptureOpenRef.current = true
+      if (options?.openPlaybook) pendingPlaybookOpenRef.current = true
 
       const existingMissionsView = activeSchema.views.find((view) => view.type === 'missions')
       if (existingMissionsView) {
@@ -744,7 +747,10 @@ export function SpaceItemsContainer() {
     const handleOpenMissionsView = (event: Event) => {
       const detail = (event as CustomEvent<OpenMissionsViewDetail>).detail
       if (typeof detail?.spaceId === 'string' && detail.spaceId !== activeSpaceId) return
-      void focusMissionsView({ openCapture: detail?.openCapture === true })
+      void focusMissionsView({
+        openCapture: detail?.openCapture === true,
+        openPlaybook: detail?.openPlaybook === true,
+      })
     }
     window.addEventListener('space:open-missions-view', handleOpenMissionsView as EventListener)
     return () =>
@@ -765,6 +771,21 @@ export function SpaceItemsContainer() {
       if (!handle) return
       pendingMissionCaptureOpenRef.current = false
       handle.openNewMissionCapture()
+    }, 50)
+    return () => window.clearInterval(timer)
+  }, [activeView?.id, activeView?.type])
+
+  useEffect(() => {
+    if (!pendingPlaybookOpenRef.current || activeView?.type !== 'missions') return
+    let attempts = 0
+    const timer = window.setInterval(() => {
+      const handle = missionsViewRef.current
+      attempts += 1
+      if (!handle && attempts < 20) return
+      window.clearInterval(timer)
+      if (!handle) return
+      pendingPlaybookOpenRef.current = false
+      handle.openStartPlaybook()
     }, 50)
     return () => window.clearInterval(timer)
   }, [activeView?.id, activeView?.type])
