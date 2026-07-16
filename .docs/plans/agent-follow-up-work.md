@@ -15,6 +15,17 @@ Entry template:
 …
 ```
 
+## 2026-07-16 - [ARCH] MediaImageWorkspace near 400 LOC
+
+Status: Open
+Found while: Wiring Canva connect-on-missing OAuth
+Files:
+
+- `apps/web/src/features/spaces/views/media/MediaImageWorkspace.tsx` (395 LOC; component limit 400)
+  Evidence: `wc -l` after Canva OAuth retry wiring.
+  Needed work: Extract history rail / Canva handoff / edit composer into sibling components.
+  Deferred because: In-scope was connect prompt; split is structure-only.
+
 ## 2026-07-16 - [OPS] Deploy mission-worker claim/abort stuck fixes
 
 Status: Resolved

@@ -56,6 +56,8 @@ type ComposioAccountsResponse = {
 
 export type ConnectIntegrationOptions = {
   connectionScope?: 'personal' | 'org_shared'
+  /** Start a new OAuth account even if one is already connected for this provider. */
+  forceNew?: boolean
 }
 
 export type ConnectIntegrationResult = {
@@ -562,7 +564,7 @@ export function useIntegrations() {
     try {
       const integrationsById = new Map<string, UserIntegration>()
       const setIntegration = (item: UserIntegration) => {
-        integrationsById.set(item.integration_id, item)
+        integrationsById.set(item.id, item)
       }
       const [overview, slackStatus, composioAccounts, billing] = await Promise.all([
         backendGet<IntegrationsOverviewResponse>('/api/integrations/overview').catch(() => null),
@@ -637,6 +639,9 @@ export function useIntegrations() {
             integration_id: integration.integration_id,
             provider: integration.provider,
             status: normalizeIntegrationStatus(integration.status),
+            scope_mode: integration.scope_mode,
+            is_default: Boolean(integration.is_default),
+            connection_label: integration.connection_label ?? null,
             metadata: integration.metadata,
           })
         }
@@ -681,12 +686,16 @@ export function useIntegrations() {
             typeof integration.id === 'string' && integration.id.trim().length > 0
               ? integration.id
               : `user-integration-${integration.integration_id}-${integrationsById.size}`
+          if (integrationsById.has(rowId)) continue
           if (overviewStatus === 'connected') {
             setIntegration({
               id: rowId,
               integration_id: integration.integration_id,
               provider: integration.provider,
               status: 'connected',
+              scope_mode: integration.scope_mode,
+              is_default: Boolean(integration.is_default),
+              connection_label: integration.connection_label ?? null,
               metadata: integration.metadata,
             })
             continue
@@ -698,22 +707,54 @@ export function useIntegrations() {
             integration_id: integration.integration_id,
             provider: integration.provider,
             status: overviewStatus,
+            scope_mode: integration.scope_mode,
+            is_default: Boolean(integration.is_default),
+            connection_label: integration.connection_label ?? null,
             metadata: integration.metadata,
           })
         }
 
         if (slackStatus?.connected) {
-          setIntegration({
-            id: 'user-integration-slack',
-            integration_id: 'slack',
-            provider: 'slack',
-            status: 'connected',
-            created_at: slackStatus.connectedAt ?? undefined,
-            metadata: {
-              teamName: slackStatus.teamName,
-              teamId: slackStatus.teamId,
-            },
-          })
+          const existingSlack = [...integrationsById.values()].find(
+            (row) => row.integration_id === 'slack',
+          )
+          const teamName = slackStatus.teamName ?? null
+          const teamId = slackStatus.teamId ?? null
+          if (existingSlack) {
+            const existingMeta = existingSlack.metadata ?? {}
+            setIntegration({
+              ...existingSlack,
+              status: 'connected',
+              connection_label:
+                existingSlack.connection_label?.trim() ||
+                teamName ||
+                (typeof existingMeta.team_name === 'string' ? existingMeta.team_name : null) ||
+                null,
+              created_at: slackStatus.connectedAt ?? existingSlack.created_at,
+              metadata: {
+                ...existingMeta,
+                teamName: teamName ?? existingMeta.teamName ?? existingMeta.team_name,
+                teamId: teamId ?? existingMeta.teamId ?? existingMeta.team_id,
+                team_name: teamName ?? existingMeta.team_name,
+                team_id: teamId ?? existingMeta.team_id,
+              },
+            })
+          } else {
+            setIntegration({
+              id: 'user-integration-slack',
+              integration_id: 'slack',
+              provider: 'slack',
+              status: 'connected',
+              connection_label: teamName,
+              created_at: slackStatus.connectedAt ?? undefined,
+              metadata: {
+                teamName,
+                teamId,
+                team_name: teamName,
+                team_id: teamId,
+              },
+            })
+          }
         }
       }
 
@@ -754,6 +795,7 @@ export function useIntegrations() {
       const connectionData = typeof apiKeyOrData === 'object' ? apiKeyOrData : undefined
       const apiKey = typeof apiKeyOrData === 'string' ? apiKeyOrData : undefined
       const connectionScope = options?.connectionScope
+      const forceNew = options?.forceNew === true
 
       if (provider === 'slack') {
         const returnTo =
@@ -839,24 +881,42 @@ export function useIntegrations() {
           provider !== 'slack' &&
           !LEGACY_OAUTH_PROVIDERS.has(integrationId))
 
-      if (shouldUseComposio) {
+        if (shouldUseComposio) {
         const res = await backendPost<{
           success: boolean
-          redirect_url?: string
+          redirect_url?: string | null
+          reused?: boolean
           error?: string
         }>('/api/integrations/composio/connect', {
           integration_id: integrationId,
           ...(connectionScope ? { connection_scope: connectionScope } : {}),
+          ...(forceNew ? { force_new: true } : {}),
           callback_url: callbackUrl || redirectTo,
           long_redirect_url: true,
           ...(connectionData ? { connection_data: connectionData } : {}),
         })
         if (!res?.success) throw new Error(res?.error || 'Failed to initiate connection')
-        if (connectionData || !res?.redirect_url) {
+
+        const redirectUrl =
+          typeof res.redirect_url === 'string' && res.redirect_url.trim().length > 0
+            ? res.redirect_url.trim()
+            : null
+
+        // Adding another account must open OAuth — never treat reuse / missing redirect as success.
+        if (forceNew && (res.reused || !redirectUrl)) {
+          const detail = res.reused
+            ? 'The API reused your existing connection instead of starting a new OAuth link.'
+            : 'The API did not return an authorize URL.'
+          throw new Error(
+            `${detail} Refresh the page and try Add another account again.`,
+          )
+        }
+
+        if (connectionData || !redirectUrl) {
           await loadData()
           return { completedSynchronously: true }
         }
-        window.open(res.redirect_url, '_blank', 'noopener,noreferrer')
+        window.open(redirectUrl, '_blank', 'noopener,noreferrer')
         return
       }
 

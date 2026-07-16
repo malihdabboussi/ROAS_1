@@ -5,6 +5,7 @@ import {
   formatStatusChangeActivityLabel,
 } from '../../lib/format-field-change-activity'
 import type { FieldDef } from '../../types/space-schema'
+import { formatPageGraderFieldChangeLabel } from './page-grader-activity'
 import {
   formatFileFieldActivityLabel,
   formatUrlFieldActivityLabel,
@@ -133,6 +134,9 @@ export function formatEventLabel(
 ): string {
   if (eventType === 'field_change' && payload?.field) {
     const fieldId = String(payload.field)
+    if (fieldId === 'page_grader') {
+      return formatPageGraderFieldChangeLabel(payload)
+    }
     const resolveFieldLabel = (id: string) =>
       FIELD_LABELS[id] ?? id.replace(/[_-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
     const urlLabel = formatUrlFieldActivityLabel(payload, resolveFieldLabel)

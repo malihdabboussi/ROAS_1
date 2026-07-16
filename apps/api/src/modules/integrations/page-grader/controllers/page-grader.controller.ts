@@ -21,8 +21,10 @@ import {
 } from '@vibey/api-shared'
 import {
   ConnectPageGraderSchema,
+  ListPageGraderAssigneesSchema,
   ListPageGraderClientsSchema,
   SendPageGraderWorkSchema,
+  UpsertPageGraderClientScopeMapSchema,
 } from '../dto/page-grader.dto'
 import { PageGraderApiService } from '../services/page-grader-api.service'
 
@@ -77,6 +79,44 @@ export class PageGraderController {
       )
     }
     const result = await this.api.listClients(user.id, validation.data)
+    return { success: true, ...result }
+  }
+
+  @Get('task-types')
+  @RequireOrgRole('viewer')
+  async listTaskTypes(@CurrentUser() user: { id: string }) {
+    const result = await this.api.listTaskTypes(user.id)
+    return { success: true, ...result }
+  }
+
+  @Get('assignees')
+  @RequireOrgRole('viewer')
+  async listAssignees(
+    @CurrentUser() user: { id: string },
+    @Query() query: Record<string, string | undefined>,
+  ) {
+    const validation = ListPageGraderAssigneesSchema.safeParse(query)
+    if (!validation.success) {
+      throw new HttpException(
+        { success: false, error: 'Invalid request', details: validation.error.flatten() },
+        HttpStatus.BAD_REQUEST,
+      )
+    }
+    const result = await this.api.listAssignees(user.id, validation.data)
+    return { success: true, ...result }
+  }
+
+  @Post('client-scope-map')
+  @RequireOrgRole('editor')
+  async upsertClientScopeMap(@CurrentUser() user: { id: string }, @Body() body: unknown) {
+    const validation = UpsertPageGraderClientScopeMapSchema.safeParse(body)
+    if (!validation.success) {
+      throw new HttpException(
+        { success: false, error: 'Invalid request', details: validation.error.flatten() },
+        HttpStatus.BAD_REQUEST,
+      )
+    }
+    const result = await this.api.upsertClientScopeMap(user.id, validation.data)
     return { success: true, ...result }
   }
 

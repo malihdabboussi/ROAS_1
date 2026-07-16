@@ -25,7 +25,20 @@ describe('PageGraderApiService.sendWork', () => {
   }
   const svc = {
     client: {
-      from: vi.fn(),
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              is: vi.fn(() => ({
+                maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+              })),
+            })),
+          })),
+        })),
+        update: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        })),
+      })),
       auth: { admin: { getUserById: vi.fn().mockResolvedValue({ data: { user: null } }) } },
     },
   }
@@ -50,7 +63,7 @@ describe('PageGraderApiService.sendWork', () => {
     )
   })
 
-  it('skips items already sent to Page Grader', async () => {
+  it('retries ClickUp via idempotent create when already sent', async () => {
     spaces.getItem.mockResolvedValue({
       id: 'item-1',
       title: 'Offer page',
@@ -62,22 +75,35 @@ describe('PageGraderApiService.sendWork', () => {
       },
       assignees: [],
     })
+    pageGrader.createWork.mockResolvedValue({
+      status: 200,
+      work: {
+        id: 'pg-1',
+        kind: 'task_request',
+        client_id: '11111111-1111-1111-1111-111111111111',
+        url: 'https://app.clickup.com/t/abc',
+        assignee_resolution: [],
+      },
+    })
+    spaces.updateItem.mockResolvedValue({})
 
     const result = await service.sendWork({} as never, 'user-1', {
       client_id: '11111111-1111-1111-1111-111111111111',
       space_id: '22222222-2222-2222-2222-222222222222',
       space_item_ids: ['33333333-3333-3333-3333-333333333333'],
+      task_type: 'design',
     })
 
+    expect(pageGrader.createWork).toHaveBeenCalledOnce()
+    expect(spaces.updateItem).toHaveBeenCalled()
     expect(result.results).toEqual([
       {
         space_item_id: '33333333-3333-3333-3333-333333333333',
         status: 'skipped_already_sent',
         work_id: 'pg-1',
-        work_url: 'https://portal.roas.io/launcher?task=pg-1',
+        work_url: 'https://app.clickup.com/t/abc',
       },
     ])
-    expect(pageGrader.createWork).not.toHaveBeenCalled()
   })
 
   it('creates work and writes custom_data.page_grader', async () => {
@@ -107,8 +133,13 @@ describe('PageGraderApiService.sendWork', () => {
     const result = await service.sendWork({} as never, 'user-1', {
       client_id: '11111111-1111-1111-1111-111111111111',
       note: 'Build ASAP',
+      due_date: '2026-07-25',
       space_id: '22222222-2222-2222-2222-222222222222',
       space_item_ids: ['33333333-3333-3333-3333-333333333333'],
+      work_kind: 'task_request',
+      task_type: 'design',
+      client_tag_id: 'impact_elite_coaching',
+      client_tag_label: 'Impact Elite Coaching',
     })
 
     expect(pageGrader.createWork).toHaveBeenCalledWith(
@@ -116,7 +147,14 @@ describe('PageGraderApiService.sendWork', () => {
       'test-key',
       expect.objectContaining({
         client_id: '11111111-1111-1111-1111-111111111111',
-        work: expect.objectContaining({ title: 'Draft offer page', priority: 'high' }),
+        work: expect.objectContaining({
+          title: 'Draft offer page',
+          priority: 'high',
+          kind: 'task_request',
+          task_type: 'design',
+          due_at: '2026-07-25',
+          tags: ['impact_elite_coaching'],
+        }),
       }),
     )
     expect(spaces.updateItem).toHaveBeenCalledWith(
@@ -125,6 +163,8 @@ describe('PageGraderApiService.sendWork', () => {
       '22222222-2222-2222-2222-222222222222',
       '33333333-3333-3333-3333-333333333333',
       expect.objectContaining({
+        due_date: '2026-07-25',
+        notes: 'Need CTA\n\nOperator note: Build ASAP',
         custom_data: expect.objectContaining({
           page_grader: expect.objectContaining({
             work_id: 'work-9',

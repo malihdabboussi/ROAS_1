@@ -1,5 +1,15 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 14:20] - [FIX]
+
+What: Diagnosed Prep today 404 (`Cannot POST …/precall-prep/today`) — route existed locally but not on `api.roas.io`. Backfilled ROAS Meetings space schema (`prep` entry type, `calendar_event_id`, `prep_status`, Prep view). Redeploying `roas-api` with the prep controller.
+
+Why: Clicking Prep today failed with a sanitized toast; production Nest had no prep route, and live Meetings schema lacked prep fields.
+
+Impact: After deploy finishes, retry **Prep today** on Home Agenda. Meetings space now has Prep schema.
+
+Files: live `spaces` row `d957d348-…`, `space-precall-prep.controller.ts`, `meetings-precall-prep.service.ts`, Vercel `roas-api` redeploy
+
 ## [2026-07-16 14:17] - [FIX]
 
 What: Pushed mission-worker stuck-loop fixes (`07e1d5d2`) and redeployed Railway `mission-worker` + `queue-worker` to SUCCESS.
@@ -616,3 +626,17 @@ What: Chat image cards auto-retry thumbnail load (no flash of "Failed to load im
 Why: Signed URLs fail once on first paint; opening media from List/Board cleared `?media=` before the view switched; cards without a registered asset id opened a raw URL tab.
 Impact: Hard-refresh web; redeploy agent-api for asset-id-on-block. New generates with a saved asset open the editor; regenerate if older cards only have a URL.
 Files: `use-resilient-image-src.ts`, `InlineImageGen.tsx`, `GeneratedMedia.tsx`, `FinalOutputCards.tsx`, `SpaceItemsContainer.tsx`, `ui-block-extractor.ts`, `message-content-blocks.ts`
+
+## [2026-07-16 14:23] - [FIX]
+
+What: Media Library gallery click now opens the same `MediaImageWorkspace` editor used from chat (`?media=` deep view). Removed the separate right-side `MediaPreviewPanel` slide-over so there is one image editor surface.
+Why: Gallery click opened a simpler preview panel while chat opened the full editor (history, aspect regen, describe edits, Canva) — two different UIs for the same asset.
+Impact: Hard-refresh web. Click any media thumbnail → full editor; back clears `?media=` to the gallery.
+Files: `SpaceMediaView.tsx`, `SpaceItemsContainer.tsx`, `SpaceContentRouter.tsx`, `SpaceMediaToolbar.tsx`, `views/types.ts`, deleted `MediaPreviewPanel.tsx`
+
+## [2026-07-16 14:24] - [FIX]
+
+What: Open in Canva on NOT_CONNECTED now starts Canva Composio OAuth (popup) instead of only toasting "connect in Settings". After connect succeeds, retries handoff automatically.
+Why: Missing Canva integration blocked the feature with a dead-end toast; user asked to run/prompt the integration flow.
+Impact: Hard-refresh web. Click Open in Canva → connect popup if needed → design opens after auth.
+Files: `connect-composio-integration.ts` (+test), `MediaImageWorkspace.tsx`, `media-toast-errors.config.ts`, `lib/integrations/index.ts`

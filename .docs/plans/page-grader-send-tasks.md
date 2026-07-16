@@ -30,6 +30,11 @@ UX entry point: the existing Spaces bulk bar (`BulkActionBar.tsx`) — same surf
 | Create | One Page Grader task/request **per** selected Space task, with outline details |
 | Sync back | **Required** — store Page Grader ids on Space items |
 | Destination | **Pick client** from Page Grader client list |
+| Work type | Multi-step: client → **service request type** → **assignee** → **preview** → Send |
+| Assignee | Prefer Space assignee email/name match to Page Grader profiles; else Attendees label match; else pick from `GET /assignees` or Unassigned |
+| Preview | Show title, description/notes (+ optional operator note), priority, due, client, type, assignee before Send |
+| Client ↔ tag | First send creates/reuses a Space tag named like the client; map stored on integration metadata; later sends default that client from task tags (override allowed) |
+| Client ↔ campaign/space | Settings **Map clients** (or “Map this campaign” on send) stores `metadata.client_scope_map`; default order: space map → campaign map → tags → name match (Impact → Impact Elite Coaching) |
 | Assignees | Map where email/identity matches; otherwise create unassigned / assign in Page Grader |
 
 **Out of scope for v1**
@@ -418,7 +423,10 @@ All under org-scoped auth (`RequestScope`), same as other Spaces/integrations ro
 - [ ] Dialog lists Page Grader clients; user picks one; optional note.
 - [ ] Each selected task creates (or idempotently returns) Page Grader work with title + outline context.
 - [ ] Space item gains `custom_data.page_grader.work_id` + `work_url`.
-- [ ] Re-send does not duplicate work.
+- [ ] Task Activity shows “sent this to Page Grader” with clickable **Open in Page Grader** (`work_url`).
+- [ ] Send panel Deadline + note write to Page Grader and back to the ROAS Space task.
+- [ ] New create pushes ClickUp via `clickup-push-workload-task` (Slack launch posts still typed-path only).
+- [ ] Re-send does not duplicate work; re-send retries ClickUp when still missing.
 - [ ] Assignees mapped by email when possible; otherwise work still created.
 - [ ] Fathom meeting metadata on the same item is not wiped.
 

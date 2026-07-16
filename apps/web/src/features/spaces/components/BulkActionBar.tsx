@@ -21,6 +21,7 @@ import { toast } from 'sonner'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { cn } from '@/lib/utils/cn'
 import { useOtherSpacesByCampaign } from '../hooks/use-other-spaces-by-campaign'
+import { useSpaceCampaignName } from '../hooks/use-space-campaign-name'
 import { sendSpaceItemsToPageGrader } from '../services/page-grader-send.service'
 import {
   ensureGeneralSpace,
@@ -46,11 +47,19 @@ import { readFieldValue, toFieldPatch } from './space-item-values'
 async function bulkApply(
   ids: Set<string>,
   patchFn: (item: SpaceItem) => Partial<SpaceItem>,
-  onUpdate: (id: string, patch: Partial<SpaceItem>) => Promise<void>,
+  onUpdate: (
+    id: string,
+    patch: Partial<SpaceItem>,
+    options?: { skipSubtaskCompleteConfirm?: boolean },
+  ) => Promise<void>,
   items: SpaceItem[],
 ) {
   const targets = items.filter((i) => ids.has(i.id))
-  const results = await Promise.allSettled(targets.map((item) => onUpdate(item.id, patchFn(item))))
+  const results = await Promise.allSettled(
+    targets.map((item) =>
+      onUpdate(item.id, patchFn(item), { skipSubtaskCompleteConfirm: true }),
+    ),
+  )
   const failed = results.filter((r) => r.status === 'rejected').length
   return { total: targets.length, failed }
 }
@@ -207,7 +216,11 @@ function CustomFieldsPanel({
   firstItem: SpaceItem
   selectedIds: Set<string>
   items: SpaceItem[]
-  onUpdateItem: (id: string, patch: Partial<SpaceItem>) => Promise<void>
+  onUpdateItem: (
+    id: string,
+    patch: Partial<SpaceItem>,
+    options?: { skipSubtaskCompleteConfirm?: boolean },
+  ) => Promise<void>
   onClose: () => void
   roster: TeamRosterEntry[]
   currentUserId: string | null
@@ -648,7 +661,11 @@ export interface BulkActionBarProps {
   currentUserId: string | null
   spaces: Space[]
   activeSpaceId: string | null
-  onUpdateItem: (id: string, patch: Partial<SpaceItem>) => Promise<void>
+  onUpdateItem: (
+    id: string,
+    patch: Partial<SpaceItem>,
+    options?: { skipSubtaskCompleteConfirm?: boolean },
+  ) => Promise<void>
   onDeleteItem: (id: string) => Promise<void>
   onCreateItem: (title: string, extra?: Record<string, unknown>) => Promise<SpaceItem | null>
   onClearSelection: () => void
@@ -711,13 +728,17 @@ export function BulkActionBar({
   )
 
   const firstItem = selectedItems[0] ?? null
-  const activeSpaceCampaignId = useMemo(() => {
+  const activeSpace = useMemo(() => {
     if (!activeSpaceId) return null
-    const space = spaces.find((s) => s.id === activeSpaceId)
-    return typeof space?.campaign_id === 'string' ? space.campaign_id : null
+    return spaces.find((s) => s.id === activeSpaceId) ?? null
   }, [spaces, activeSpaceId])
+  const activeSpaceCampaignId = useMemo(() => {
+    return typeof activeSpace?.campaign_id === 'string' ? activeSpace.campaign_id : null
+  }, [activeSpace])
+  const { campaignName: activeSpaceCampaignName } = useSpaceCampaignName(activeSpace)
   const statusField = useMemo(() => allFields.find((f) => f.id === 'status'), [allFields])
   const tagsField = useMemo(() => allFields.find((f) => f.id === 'tags'), [allFields])
+  const attendeesField = useMemo(() => allFields.find((f) => f.id === 'attendees'), [allFields])
   const itemLabel = itemKind === 'doc' ? 'doc' : 'task'
   const removableDocItems = useMemo(() => {
     if (itemKind !== 'doc' || !generalSpaceId) return []
@@ -787,7 +808,9 @@ export function BulkActionBar({
     const parent = selectedItems[0]!
     const children = selectedItems.slice(1)
     const results = await Promise.allSettled(
-      children.map((item) => onUpdateItem(item.id, { parent_item_id: parent.id })),
+      children.map((item) =>
+        onUpdateItem(item.id, { parent_item_id: parent.id }, { skipSubtaskCompleteConfirm: true }),
+      ),
     )
     const failed = results.filter((r) => r.status === 'rejected').length
     toastResult('Converted to subtasks', children.length, failed)
@@ -828,18 +851,53 @@ export function BulkActionBar({
   }, [selectedItems, allFields, duplicateItem, onClearSelection, onRefresh])
 
   const handlePageGraderSend = useCallback(
-    async (input: { clientId: string; note: string }) => {
+    async (input: {
+      clientId: string
+      clientName: string
+      taskType: string
+      note: string
+      dueDate: string
+      clientTagId: string
+      clientTagLabel: string
+      assignee: {
+        pageGraderUserId?: string
+        email?: string
+        name?: string
+      } | null
+    }) => {
       if (!activeSpaceId) {
         toast.error('No active space')
         return
       }
       setBusy(true)
       try {
+        if (tagsField && input.clientTagId) {
+          await bulkApply(
+            selectedIds,
+            (item) => {
+              const current = readFieldValue(item, 'tags')
+              const ids = Array.isArray(current)
+                ? current.filter((t): t is string => typeof t === 'string')
+                : []
+              if (ids.includes(input.clientTagId)) return {}
+              return toFieldPatch(item, 'tags', [...ids, input.clientTagId]) as Partial<SpaceItem>
+            },
+            onUpdateItem,
+            items,
+          )
+        }
+
         const { results } = await sendSpaceItemsToPageGrader({
           clientId: input.clientId,
           spaceId: activeSpaceId,
           spaceItemIds: [...selectedIds],
           note: input.note,
+          dueDate: input.dueDate,
+          workKind: 'task_request',
+          taskType: input.taskType,
+          clientTagId: input.clientTagId,
+          clientTagLabel: input.clientTagLabel,
+          assignee: input.assignee,
         })
         const created = results.filter((r) => r.status === 'created').length
         const skipped = results.filter((r) => r.status === 'skipped_already_sent').length
@@ -868,7 +926,16 @@ export function BulkActionBar({
         setBusy(false)
       }
     },
-    [activeSpaceId, selectedIds, onClearSelection, closePanel, onRefresh],
+    [
+      activeSpaceId,
+      selectedIds,
+      tagsField,
+      onUpdateItem,
+      items,
+      onClearSelection,
+      closePanel,
+      onRefresh,
+    ],
   )
 
   const handleDelete = useCallback(async () => {
@@ -1179,6 +1246,14 @@ export function BulkActionBar({
               <PageGraderBulkSendPanel
                 anchorRef={pageGraderRef}
                 selectedCount={selectedIds.size}
+                selectedItems={selectedItems}
+                roster={roster}
+                spaceId={activeSpaceId}
+                campaignId={activeSpaceCampaignId}
+                campaignName={activeSpaceCampaignName}
+                tagsField={tagsField}
+                attendeesField={attendeesField}
+                onCreateOption={onCreateOption}
                 onClose={closePanel}
                 onSend={handlePageGraderSend}
               />

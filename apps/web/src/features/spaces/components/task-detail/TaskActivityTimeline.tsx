@@ -9,6 +9,7 @@ import { AgentTaskExecutionBlock } from './AgentTaskExecutionBlock'
 import type { SendToAgentInstructionsSeed } from './SendTaskToAgentModal'
 import { TaskActivityAvatar } from './TaskActivityAvatar'
 import { TaskActivityComment } from './TaskActivityComment'
+import { getPageGraderWorkUrlFromActivityPayload } from './page-grader-activity'
 import {
   formatActivityDetail,
   formatEventLabel,
@@ -123,6 +124,10 @@ export function TaskActivityTimeline({
           authAvatarUrl: authProfile.avatarUrl,
         })
         const isLast = idx === merged.length - 1
+        const pageGraderUrl =
+          entry.event_type === 'field_change'
+            ? getPageGraderWorkUrlFromActivityPayload(entry.payload)
+            : null
         return (
           <div key={entry.id} className="flex min-w-0 gap-spacing-2">
             <div className="relative flex w-6 shrink-0 flex-col items-center">
@@ -189,6 +194,17 @@ export function TaskActivityTimeline({
                       {formatActivityDetail(entry)}
                     </p>
                   )}
+                  {pageGraderUrl ? (
+                    <a
+                      href={pageGraderUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="body-3 text-primary mt-spacing-1 inline-flex min-w-0 max-w-full truncate font-medium hover:underline"
+                      title={pageGraderUrl}
+                    >
+                      Open in Page Grader
+                    </a>
+                  ) : null}
                   {entry.event_type === 'created' && Array.isArray(entry.payload.attachments) && (
                     <TaskActivityFilePreview
                       from={[]}

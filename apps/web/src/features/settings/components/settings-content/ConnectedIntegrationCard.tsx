@@ -8,6 +8,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { FacebookPagePickerModal } from './FacebookPagePickerModal'
 import type { Integration, UserIntegration } from './integrations.types'
 import { LinkedInCompanyPagePickerModal } from './LinkedInCompanyPagePickerModal'
+import { PageGraderClientScopeMapModal } from './PageGraderClientScopeMapModal'
 import { YoutubeChannelPickerModal } from './YoutubeChannelPickerModal'
 
 interface ConnectedIntegrationCardProps {
@@ -141,6 +142,7 @@ export function ConnectedIntegrationCard({
   const [linkedInPickerOpen, setLinkedInPickerOpen] = useState(false)
   const [facebookPickerOpen, setFacebookPickerOpen] = useState(false)
   const [youtubePickerOpen, setYoutubePickerOpen] = useState(false)
+  const [pageGraderMapOpen, setPageGraderMapOpen] = useState(false)
   const labelInputRef = useRef<HTMLInputElement>(null)
   const ignoreNextBlurRef = useRef(false)
 
@@ -177,6 +179,17 @@ export function ConnectedIntegrationCard({
     userIntegration.metadata.youtube_channel_id.trim(),
   )
 
+  const isPageGraderConnected =
+    integration.provider.toLowerCase() === 'page_grader' &&
+    userIntegration.status === 'connected'
+  const pageGraderScopeMap =
+    userIntegration.metadata?.client_scope_map &&
+    typeof userIntegration.metadata.client_scope_map === 'object' &&
+    !Array.isArray(userIntegration.metadata.client_scope_map)
+      ? (userIntegration.metadata.client_scope_map as Record<string, unknown>)
+      : {}
+  const pageGraderMappedCount = Object.keys(pageGraderScopeMap).length
+
   const handleDisconnectConfirm = async () => {
     setIsDisconnecting(true)
     try {
@@ -189,19 +202,34 @@ export function ConnectedIntegrationCard({
 
   const connectionIdentity = useMemo(() => {
     const meta = userIntegration.metadata ?? {}
-    if (userIntegration.connection_label) return userIntegration.connection_label
-    if (typeof meta.connection_label === 'string' && meta.connection_label)
-      return meta.connection_label
-
     const provider = integration.provider.toLowerCase()
 
+    const labeled =
+      (typeof userIntegration.connection_label === 'string' &&
+        userIntegration.connection_label.trim()) ||
+      (typeof meta.connection_label === 'string' && meta.connection_label.trim()) ||
+      null
+    // Codex often stores account UUID as connection_label when email is missing.
+    const opaqueUuid = labeled && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(labeled)
+    if (labeled && !opaqueUuid) return labeled
+
+    if (provider === 'slack') {
+      return (
+        (typeof meta.teamName === 'string' && meta.teamName) ||
+        (typeof meta.team_name === 'string' && meta.team_name) ||
+        null
+      )
+    }
     if (provider === 'paypal') return (meta.email as string) ?? null
     if (provider === 'dropbox')
       return (meta.display_name as string) ?? (meta.email as string) ?? null
     if (provider === 'calendly') return (meta.calendly_user_email as string) ?? null
     if (provider === 'fireflies') return (meta.name as string) ?? (meta.email as string) ?? null
-    if (provider === 'fathom') return (meta.email as string) ?? null
+    if (provider === 'fathom') return (meta.email as string) ?? (meta.name as string) ?? null
     if (provider === 'stripe') return (meta.stripe_user_id as string) ?? null
+    if (provider === 'openai_codex' || provider === 'openai-codex') {
+      return (typeof meta.email === 'string' && meta.email) || null
+    }
 
     if (provider === 'meta' || provider === 'facebook' || provider === 'meta ads') {
       const pages = meta.pages as
@@ -223,15 +251,20 @@ export function ConnectedIntegrationCard({
     return null
   }, [userIntegration.connection_label, userIntegration.metadata, integration.provider])
 
-  const customLabel = userIntegration.connection_label?.trim() || null
+  const customLabel = (() => {
+    const raw = userIntegration.connection_label?.trim() || null
+    if (!raw) return null
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)) return null
+    return raw
+  })()
 
   const displayLabel = customLabel
     ? customLabel
     : connectionIdentity
-      ? accountIndex
+      ? accountIndex && accountIndex > 1
         ? `Account ${accountIndex}: ${connectionIdentity}`
         : connectionIdentity
-      : accountIndex
+      : accountIndex && accountIndex > 1
         ? `Account ${accountIndex}`
         : integration.name
 
@@ -294,12 +327,12 @@ export function ConnectedIntegrationCard({
     }
   }
 
-  const isDefault = userIntegration.scope_mode === 'org_shared' && userIntegration.is_default
+  const isDefault = Boolean(userIntegration.is_default)
   const canSetDefault =
-    userIntegration.scope_mode === 'org_shared' &&
-    !userIntegration.is_default &&
-    canManageOrgShared &&
-    !!onSetDefault
+    !isDefault &&
+    !!onSetDefault &&
+    (userIntegration.scope_mode === 'personal' ||
+      (userIntegration.scope_mode === 'org_shared' && canManageOrgShared))
   const needsReconnect = userIntegration.status === 'needs_reconnect'
   const canRefresh =
     userIntegration.status === 'connected' ||
@@ -402,13 +435,14 @@ export function ConnectedIntegrationCard({
                   </Tooltip>
                 ) : null}
 
-                {userIntegration.scope_mode === 'org_shared' ? (
+                {userIntegration.scope_mode === 'personal' ||
+                userIntegration.scope_mode === 'org_shared' ? (
                   <Tooltip
                     label={
                       isDefault
-                        ? 'Default connection'
+                        ? 'Default for sending / invites'
                         : canSetDefault
-                          ? 'Set as default'
+                          ? 'Set as default for sending / invites'
                           : 'Not default'
                     }
                   >
@@ -417,7 +451,9 @@ export function ConnectedIntegrationCard({
                       disabled={!canSetDefault}
                       onClick={() => canSetDefault && onSetDefault!(userIntegration)}
                       className={`flex items-center justify-center transition-colors disabled:cursor-default ${
-                        isDefault ? 'text-blue-400' : 'text-muted-foreground hover:text-foreground'
+                        isDefault
+                          ? 'text-foreground'
+                          : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
                       <Star className="h-3.5 w-3.5" fill={isDefault ? 'currentColor' : 'none'} />
@@ -534,6 +570,23 @@ export function ConnectedIntegrationCard({
             </button>
           </div>
         ) : null}
+
+        {isPageGraderConnected ? (
+          <div className="pb-spacing-1.5 pl-spacing-4 flex flex-wrap items-center justify-between gap-2">
+            <p className="typo-caption text-muted-foreground min-w-0 truncate">
+              {pageGraderMappedCount > 0
+                ? `${pageGraderMappedCount} client${pageGraderMappedCount === 1 ? '' : 's'} mapped to campaigns`
+                : 'No campaign/space mappings yet'}
+            </p>
+            <button
+              type="button"
+              onClick={() => setPageGraderMapOpen(true)}
+              className="badge-glass badge-glass-blue body-3 rounded-spacing-2 shrink-0 px-2 py-0.5 font-medium transition-opacity hover:opacity-90"
+            >
+              {pageGraderMappedCount > 0 ? 'Edit mappings' : 'Map clients'}
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {isLinkedInConnected ? (
@@ -559,6 +612,14 @@ export function ConnectedIntegrationCard({
           userIntegration={userIntegration}
           open={youtubePickerOpen}
           onClose={() => setYoutubePickerOpen(false)}
+          onSaved={() => onRefresh(userIntegration)}
+        />
+      ) : null}
+
+      {isPageGraderConnected ? (
+        <PageGraderClientScopeMapModal
+          open={pageGraderMapOpen}
+          onClose={() => setPageGraderMapOpen(false)}
           onSaved={() => onRefresh(userIntegration)}
         />
       ) : null}
