@@ -22,7 +22,9 @@ function createServiceWithNativePg(queryImpl: (sql: string, values?: unknown[]) 
     }),
   } as any
 
-  const missionOutboxService = new MissionOutboxService(missionsRepository)
+  const missionOutboxService = new MissionOutboxService(missionsRepository, {
+    client: {} as SupabaseClient,
+  } as any)
   const missionLifecycleService = new MissionLifecycleService(
     missionsRepository,
     postgresDirect,

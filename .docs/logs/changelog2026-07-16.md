@@ -1,5 +1,32 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 11:10] - [FIX]
+
+What: Fixed personal-user mission create never enqueueing `mission.plan.requested` (RLS blocked `mission_outbox` writes; Vercel API had no `SUPABASE_DIRECT_DB_URL`). Outbox enqueue now uses service role; added personal outbox write RLS; mission description is expandable; list status label aligned to Queue. Manually expanded both stuck Webinar Fulfillment missions to `pending_approval` with plans/subtasks. Added `SUPABASE_DIRECT_DB_URL` on Vercel `roas-api`.
+
+Why: Deleting a Space does not delete campaign missions; Playbook create succeeded for the mission row then failed to enqueue planning, so missions sat in Queue with empty execution plans. Description used `md:truncate` with only a tooltip.
+
+Impact: Refresh Missions — both Webinar Fulfillment rows should show pending approval with an Execution Plan. Approve to continue. **Agent execution still needs mission-worker claiming outbox** (worker is not connected to ROAS DB right now; Railway token in secrets is unauthorized). Deploy `roas-api` for service-role outbox path; RLS already live so user-JWT enqueue works after deploy of web description UI optional.
+
+Files: `20260716183000_mission_outbox_personal_write_rls.sql`, `mission-outbox.service.ts`, `MissionMetaRow.tsx`, `mission-list-config.ts`, `missions.native-pg.test.ts`
+
+## [2026-07-16 11:03] - [FIX]
+
+What: Sanitize Fathom call summaries before they land in (and when shown in) Space task descriptions. Unwraps long timestamp links to plain takeaway text, repairs mid-URL newlines, and strips `##` headers so the plain-text description UI is readable.
+Why: Fathom's `markdown_formatted` wraps every takeaway in a long `fathom.video` link and often breaks URLs across lines; we stored that raw and rendered it as plain text, so meetings looked like broken markdown.
+Impact: Existing Fathom meeting descriptions clean up on view; new webhook-created meetings store the cleaned text. Recording URL still lives on `custom_data.recording_url`.
+Files: `packages/api-shared/src/utils/sanitize-fathom-summary-markdown.ts`, `packages/api-shared/package.json`, `apps/api/.../space-automation-service-19.base.ts`, `apps/web/.../TaskDescription.tsx`, `.docs/logs/changelog2026-07-16.md`
+
+## [2026-07-16 10:50] - [ARCH]
+
+What: Deployed `e9983486` — Railway `roas-platform` (mission-worker) + `queue-worker` SUCCESS. Synced Nate’s runtime skills from DB (`/api/agents/nate/sync` → 57 files healthy).
+
+Why: Playbook Phase B/C expansion and seeded skills needed live mission-worker + agent workspace materialization.
+
+Impact: New Webinar Fulfillment missions expand through Gates 1–3. Nate has updated `roas-market-research`. Hire copywriter/designer/ads_manager when those roles are needed (template skills already in `skill_library`).
+
+Files: push `e9983486`, Fly runtime sync for Nate
+
 ## [2026-07-16 10:45] - [FEATURE]
 
 What: Seeded Agency Ops Phase B/C skills from the packaged zip into agent templates + `skill_library` / assignments, and wired Pre-B → Copy Package → Gate 2 → Phase C → Gate 3 → deck build into `webinar-fulfillment`.
@@ -127,4 +154,20 @@ What: Fixed Manage Agents Ops Desk roster clip (floor wrapper is now a flex colu
 Why: Ops Desk floor used `overflow-hidden` without flex, so `flex-1` + inner `overflow-auto` never got a height bound and the roster was clipped. Group-by team was a poor default when most orgs have no real teams.
 Impact: `/team` roster scrolls under the briefing; agents render flat unless you group. Brain/Flows/Spaces page shells less likely to break nested scroll.
 Files: `VibeyOpsDesk.tsx`, `AgentsGrid.tsx`, `AgentsGrid.test.tsx`, `team/page.tsx`, `brain/page.tsx`, `flows/page.tsx`, `spaces-page-client.tsx`
+
+
+## [2026-07-16 10:49] - [FIX]
+
+What: Clarified ROAS Autopilot on Manage Agents Ops Desk — enable modal explains what Autopilot does (watch campaigns, create/assign missions, retry stuck work); when on, Ops Desk shows an Autopilot badge, status hint, and Set strategy link into workspace Autopilot. Deduped Talk-to-Vibey copy. Added 10,000 org credits to dylan+vibeytest@roas.co.
+Why: Turning Autopilot on felt like a dead switch — no explanation of what happens next.
+Impact: Users see what Autopilot means and where to set campaign strategy; test account has more runway.
+Files: `AwarenessToggle.tsx`, `VibeyOpsDesk.tsx`, `VibeyOpsDeskBriefing.tsx`, `messages.config.ts`, org_credit_purchases (prod)
+
+
+## [2026-07-16 10:51] - [FEATURE]
+
+What: Talk to Vibey on Ops Desk now auto-opens sidebar chat and sends a kickoff so Vibey starts the check-in (floor notice + what to focus on today), with Ops Desk context attached.
+Why: Opening an empty composer wasn't functional enough — users need Vibey to initiate.
+Impact: Click Talk to Vibey → new Vibey thread with a live briefing ask.
+Files: `VibeyOpsDeskTalkButton.tsx`, `build-ops-desk-talk-kickoff.ts`, `use-global-chat-store.ts` (railIntent on seed), tests
 

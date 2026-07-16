@@ -112,7 +112,7 @@ export const SUBTASK_STATUS_LABEL: Record<SubtaskStatus, string> = {
 }
 
 export const STATUS_LABEL: Record<string, string> = {
-  inbox: 'Inbox',
+  inbox: 'Queue',
   backlog: 'Backlog',
   planning: 'Planning',
   pending_approval: 'Pending Approval',

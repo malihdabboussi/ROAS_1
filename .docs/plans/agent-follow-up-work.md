@@ -15,6 +15,18 @@ Entry template:
 …
 ```
 
+## 2026-07-16 - [FIX] Mission-worker not dispatching ROAS `mission_outbox`
+
+Status: Open
+Found while: Diagnosing stuck Webinar Fulfillment missions after Playbook start
+Files:
+
+- Railway service `roas-platform` (mission-worker)
+- `apps/mission-worker/.../missions.outbox-dispatcher.service.ts`
+  Evidence: Two `mission.plan.requested` rows stayed `pending`/`attempts=0` for minutes after `pg_notify`; `pg_stat_activity` showed no worker LISTEN on ROAS (`lhfgtsjetcardinpgouq`); `RAILWAY_TOKEN` in `scripts/roas/roas-secrets.env` returns Unauthorized.
+  Needed work: Re-auth Railway token; confirm worker `SUPABASE_URL`/`SUPABASE_DIRECT_DB_URL`/`REDIS_URL` point at ROAS; restart dispatcher; redeploy `roas-api` so service-role outbox + DIRECT_DB are live.
+  Deferred because: No valid Railway credentials in this session; plans manually expanded to unblock UI approval.
+
 ## 2026-07-16 - [FEATURE] Webinar playbook Phase B/C + Flows mission-playbook type
 
 Status: Open

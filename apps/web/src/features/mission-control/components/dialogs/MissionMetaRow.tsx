@@ -78,6 +78,34 @@ interface MissionMetaRowProps {
   onUpdated: () => void
 }
 
+const DESCRIPTION_COLLAPSE_CHARS = 180
+
+function MissionDescriptionText({ description }: { description: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const text = description.trim()
+  if (!text) {
+    return <span className="body-2 text-[var(--color-muted-foreground)]">—</span>
+  }
+  const needsCollapse = text.length > DESCRIPTION_COLLAPSE_CHARS
+  const shown =
+    !needsCollapse || expanded ? text : `${text.slice(0, DESCRIPTION_COLLAPSE_CHARS).trimEnd()}…`
+
+  return (
+    <div className="min-w-0 flex-1">
+      <p className="body-2 whitespace-pre-wrap text-[var(--color-foreground)]">{shown}</p>
+      {needsCollapse ? (
+        <button
+          type="button"
+          className="body-4 text-primary mt-1 font-medium"
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? 'Show less' : 'Show more'}
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
 export function MissionMetaRow({
   mission,
   liveMission,
@@ -115,7 +143,7 @@ export function MissionMetaRow({
           <div className="relative">
             <button
               type="button"
-              title="Status is managed by Vibey"
+              title="Status is managed by ROAS"
               disabled
               className={`body-2 flex items-center gap-1.5 rounded-md px-2 py-0.5 ${statusTextClass[currentStatus] ?? ''} cursor-not-allowed opacity-60`}
             >
@@ -217,16 +245,11 @@ export function MissionMetaRow({
         </div>
       </div>
 
-      <div className="col-span-1 flex flex-col gap-1 md:col-span-2 md:flex-row md:items-center md:gap-3">
-        <span className="body-2 w-20 shrink-0 text-[var(--color-muted-foreground)]">
+      <div className="col-span-1 flex flex-col gap-1 md:col-span-2 md:flex-row md:items-start md:gap-3">
+        <span className="body-2 w-20 shrink-0 text-[var(--color-muted-foreground)] md:pt-0.5">
           Description
         </span>
-        <span
-          className="body-2 min-w-0 flex-1 text-[var(--color-foreground)] md:truncate"
-          title={description || undefined}
-        >
-          {description || '—'}
-        </span>
+        <MissionDescriptionText description={description} />
       </div>
     </div>
   )
