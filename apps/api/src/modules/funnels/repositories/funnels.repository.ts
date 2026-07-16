@@ -11,9 +11,13 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  * Page columns safe for list (summary) responses — excludes the heavy
  * generated_html / generated_css / sections / theme_config payloads that
  * only the single-funnel GET needs.
+ *
+ * Intentionally omits `path` and `source_mode`: those columns land via later
+ * migrations, and selecting them on DBs that have not applied them returns 500
+ * for the entire All Artifacts / funnels list.
  */
 const FUNNEL_PAGE_SUMMARY_COLUMNS =
-  'id, funnel_id, name, page_type, path, order_index, is_published, source_mode, created_at, updated_at'
+  'id, funnel_id, name, page_type, order_index, is_published, created_at, updated_at'
 
 @Injectable()
 export class FunnelsRepository {

@@ -211,7 +211,14 @@ export function useAllArtifactRows({
         )
       }
 
-      await Promise.all(tasks)
+      // One kind failing (e.g. funnels/presentations 500) must not blank the
+      // whole All Artifacts grid — keep rows from kinds that succeeded.
+      const settled = await Promise.allSettled(tasks)
+      const failures = settled.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+      if (failures.length > 0 && rows.length === 0) {
+        const first = failures[0]?.reason
+        throw first instanceof Error ? first : new Error('Failed to load artifacts')
+      }
       return rows
     },
     [activeSpaceId, includeCampaignArtifacts, kinds, spaceFilter],

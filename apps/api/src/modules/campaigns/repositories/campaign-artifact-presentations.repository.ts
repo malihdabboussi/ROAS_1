@@ -13,14 +13,27 @@ export class CampaignArtifactPresentationsRepository {
     return data as Record<string, unknown>
   }
 
+  /**
+   * Summary omits `generated_html` and `slides` — those JSON/HTML blobs can
+   * exceed serverless response limits and 500 the All Artifacts list. Detail
+   * GET still returns the full row.
+   */
+  private static readonly PRESENTATION_SUMMARY_COLUMNS =
+    'id, user_id, campaign_id, offer_id, name, theme_id, file_url, status, metadata, created_at, updated_at, slug, published_url, domain_id, hide_branding, org_id, space_id'
+
   async listPresentations(
     supabase: SupabaseClient,
     campaignId: string,
     spaceId?: string,
+    options?: { summary?: boolean },
   ): Promise<Array<Record<string, unknown>>> {
     let query = supabase
       .from('presentations')
-      .select('*')
+      .select(
+        options?.summary
+          ? CampaignArtifactPresentationsRepository.PRESENTATION_SUMMARY_COLUMNS
+          : '*',
+      )
       .eq('campaign_id', campaignId)
       .order('created_at', { ascending: false })
     if (spaceId) query = query.eq('space_id', spaceId)

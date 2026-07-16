@@ -81,10 +81,10 @@ export class ArtifactsPresentationFilesBase extends ArtifactsSequencesBase {
       supabase,
       campaignId,
       spaceId,
+      options,
     )
     if (!options?.summary) return rows
-    // Summary: strip TSX/slide payloads from list responses; expose slides_count
-    // so card meta keeps working. GET /api/presentations/:id stays full.
+    // Summary query already excludes generated_html/slides; keep card contract.
     return rows.map((row: Record<string, unknown>) => ({
       ...row,
       generated_html: null,

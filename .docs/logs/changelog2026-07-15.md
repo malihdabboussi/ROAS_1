@@ -1,5 +1,15 @@
 # Changelog - July 15, 2026
 
+## [2026-07-15 17:24] - [FIX]
+
+What: All Artifacts — presentation list summary selects light columns (no `generated_html`/`slides`); funnel page summary omits missing `path`/`source_mode`; web uses `Promise.allSettled` so one kind 500 no longer blanks the grid.
+
+Why: Impact All Artifacts hung / looked broken while Docs worked — production still loaded full presentation blobs and failed funnels summary, blocking the whole tab.
+
+Impact: After `roas-api` + `roas-web` Production deploy, All Artifacts should return 200 for summary lists and show partial rows if one kind still fails.
+
+Files: `campaign-artifact-presentations.repository.ts`, `artifacts-presentation-files.base.ts`, `funnels.repository.ts`, `use-all-artifact-rows.ts`, repo tests
+
 ## [2026-07-15 17:06] - [FIX]
 
 What: Slack OAuth callback now sets `user_integrations.scope_mode` (`personal` / `org_shared`) on insert and update.
