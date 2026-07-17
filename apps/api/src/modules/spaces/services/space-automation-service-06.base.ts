@@ -30,6 +30,7 @@ import {
 } from './fathom-meeting-item-enrichment'
 import { buildCeoCallIdentity, resolveCeoCallKind } from './fathom-call-kind'
 import {
+  fallbackCeoMeetingTitle,
   provisionalFathomMeetingTitle,
   sanitizeCeoMeetingTitle,
 } from './fathom-meeting-title'
@@ -475,14 +476,21 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
         action_items: meeting.actionItems,
         recorded_by_email: meeting.recordedByEmail,
       })
-      if (aiTitle && aiTitle !== provisionalTitle) {
+      const resolvedTitle =
+        aiTitle ??
+        fallbackCeoMeetingTitle({
+          summary: meeting.summary,
+          calendarTitle: meeting.title,
+          attendees: meeting.attendees as Array<{ name?: string | null } | null>,
+        })
+      if (resolvedTitle && resolvedTitle !== provisionalTitle) {
         try {
           item = (await this.repo.updateItem(
             supabase,
             runUserId,
             spaceId,
             String(item.id),
-            { title: aiTitle },
+            { title: resolvedTitle },
             orgId,
           )) as Record<string, unknown>
         } catch (error) {

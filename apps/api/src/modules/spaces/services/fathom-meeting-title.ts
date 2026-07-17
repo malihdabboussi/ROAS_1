@@ -12,13 +12,69 @@ export function stripMeetingTitlePrefix(title: string): string {
     .trim()
 }
 
+export const PROVISIONAL_FATHOM_MEETING_TITLE = 'Call (naming…)'
+
 /** Provisional title while AI rename runs — never "Meeting:" / "Fathom meeting:". */
 export function provisionalFathomMeetingTitle(rawTitle: string): string {
   const stripped = stripMeetingTitlePrefix(rawTitle)
   if (!stripped || GENERIC_TITLE_RE.test(stripped)) {
-    return 'Call (naming…)'
+    return PROVISIONAL_FATHOM_MEETING_TITLE
   }
   return stripped.slice(0, 1000)
+}
+
+/**
+ * Deterministic CEO label when AI naming is unavailable (gateway down, etc.).
+ * Prefer Fathom "Meeting Purpose" from the summary; never leave the provisional forever.
+ */
+export function fallbackCeoMeetingTitle(input: {
+  summary?: string | null
+  calendarTitle?: string | null
+  attendees?: Array<{ name?: string | null } | null> | null
+}): string | null {
+  const purpose = extractMeetingPurpose(String(input.summary ?? ''))
+  if (purpose) {
+    const sanitized = sanitizeCeoMeetingTitle(purpose)
+    if (sanitized) return sanitized
+    // Purpose lines are often short; pad with a stable role word so sanitize passes.
+    const padded = sanitizeCeoMeetingTitle(`${purpose} review`)
+    if (padded) return padded
+  }
+
+  const stripped = stripMeetingTitlePrefix(String(input.calendarTitle ?? ''))
+  if (stripped && !GENERIC_TITLE_RE.test(stripped)) {
+    return sanitizeCeoMeetingTitle(stripped) ?? stripped.slice(0, 120)
+  }
+
+  const names = (input.attendees ?? [])
+    .map((a) => String(a?.name ?? '').trim().split(/\s+/)[0] ?? '')
+    .filter(Boolean)
+  const unique = [...new Set(names)].slice(0, 2)
+  if (unique.length >= 2) {
+    return sanitizeCeoMeetingTitle(`${unique[0]} + ${unique[1]} working session`)
+  }
+  if (unique.length === 1) {
+    return sanitizeCeoMeetingTitle(`${unique[0]} personal check-in`)
+  }
+  return null
+}
+
+function extractMeetingPurpose(summary: string): string | null {
+  if (!summary.trim()) return null
+  const purposeMatch = summary.match(
+    /Meeting Purpose\s*\n+([^\n]+(?:\n(?!Key Takeaways|Action Items|Next Steps)[^\n]+)*)/i,
+  )
+  if (purposeMatch?.[1]) {
+    return purposeMatch[1].replace(/\s+/g, ' ').trim().slice(0, 120)
+  }
+  // First non-empty line that is not a section header.
+  for (const line of summary.split('\n')) {
+    const t = line.trim()
+    if (!t) continue
+    if (/^(meeting purpose|key takeaways|action items|next steps|summary)\b/i.test(t)) continue
+    return t.slice(0, 120)
+  }
+  return null
 }
 
 /** Normalize an AI / agent title before write. */

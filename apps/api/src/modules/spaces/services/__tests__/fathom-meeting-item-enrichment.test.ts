@@ -6,6 +6,7 @@ import {
   upsertAttendeeTagOptions,
 } from '../fathom-meeting-item-enrichment'
 import {
+  fallbackCeoMeetingTitle,
   provisionalFathomMeetingTitle,
   sanitizeCeoMeetingTitle,
   stripMeetingTitlePrefix,
@@ -96,5 +97,16 @@ describe('fathom-meeting-item-enrichment', () => {
     expect(sanitizeCeoMeetingTitle('Here')).toBeNull()
     expect(sanitizeCeoMeetingTitle('Direct')).toBeNull()
     expect(sanitizeCeoMeetingTitle('{"title":"Nope"}')).toBeNull()
+  })
+
+  it('falls back to Meeting Purpose when AI naming is unavailable', () => {
+    expect(
+      fallbackCeoMeetingTitle({
+        summary:
+          'Meeting Purpose\n\nReview weekly wins and set personal goals for the upcoming week.\n\nKey Takeaways\n\n- Major Client Wins',
+        calendarTitle: 'Impromptu Zoom Meeting',
+        attendees: [{ name: 'Dylan Vanas' }],
+      }),
+    ).toBe('Review weekly wins and set personal goals for the upcoming week')
   })
 })

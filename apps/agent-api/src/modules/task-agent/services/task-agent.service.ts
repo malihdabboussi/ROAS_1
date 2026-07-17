@@ -603,7 +603,10 @@ export class TaskAgentService {
       msg.includes('too many requests') ||
       msg.includes('service unavailable') ||
       msg.includes('session store lock') ||
-      msg.includes('timeout waiting for session')
+      msg.includes('timeout waiting for session') ||
+      msg.includes('gateway connection') ||
+      msg.includes('fetch failed') ||
+      msg.includes('econnrefused')
     )
   }
 }
