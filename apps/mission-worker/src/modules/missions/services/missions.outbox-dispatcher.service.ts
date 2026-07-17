@@ -405,7 +405,7 @@ export class MissionsOutboxDispatcherService implements OnModuleInit, OnModuleDe
       }
     }
 
-    await this.missionsQueue.add(MISSIONS_QUEUE, mapped.data, {
+    const queuedJob = await this.missionsQueue.add(MISSIONS_QUEUE, mapped.data, {
       jobId: mapped.jobId,
       priority: mapped.priorityRank,
       attempts: 3,
@@ -413,6 +413,16 @@ export class MissionsOutboxDispatcherService implements OnModuleInit, OnModuleDe
       removeOnComplete: true,
       removeOnFail: 5000,
     })
+
+    const [jobState, workers, globalConcurrency, counts] = await Promise.all([
+      queuedJob.getState(),
+      this.missionsQueue.getWorkersCount(),
+      this.missionsQueue.getGlobalConcurrency(),
+      this.missionsQueue.getJobCounts('waiting', 'active', 'prioritized'),
+    ])
+    this.logger.log(
+      `Mission queue publish job=${mapped.jobId} state=${jobState} workers=${workers} global_concurrency=${globalConcurrency ?? 'unset'} waiting=${counts.waiting ?? 0} prioritized=${counts.prioritized ?? 0} active=${counts.active ?? 0}`,
+    )
 
     const mappedSignal = this.agentSignalService.mapOutboxEventToSignal(row.event_type)
     if (mappedSignal && !((row.payload as any)?.source === 'autonomous_ceo')) {

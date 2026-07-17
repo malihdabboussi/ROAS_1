@@ -18,7 +18,10 @@ function createService(overrides?: { queue?: Partial<Queue>; pgQuery?: any }) {
     getJob: vi.fn().mockResolvedValue(null),
     isPaused: vi.fn().mockResolvedValue(false),
     resume: vi.fn().mockResolvedValue(undefined),
-    add: vi.fn().mockResolvedValue({}),
+    getWorkersCount: vi.fn().mockResolvedValue(1),
+    getGlobalConcurrency: vi.fn().mockResolvedValue(null),
+    getJobCounts: vi.fn().mockResolvedValue({ waiting: 0, active: 1, prioritized: 0 }),
+    add: vi.fn().mockResolvedValue({ getState: vi.fn().mockResolvedValue('waiting') }),
     ...(overrides?.queue || {}),
   } as unknown as Queue
 
