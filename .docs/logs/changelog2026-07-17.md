@@ -62,3 +62,10 @@ What: Replaced mission preflight's duplicate partial action-domain map with the 
 Why: Static Ads was blocked before execution because mission preflight rejected the supported `create_ad` action; the same omission would have blocked `create_funnel` later.
 Impact: Supported playbook output actions share one source of truth, Static Ads and Funnel Design pass action recognition, and future playbook drift fails tests before deployment.
 Files: `mission-execute-helpers.ts`, `mission-output-contract-actions.test.ts`, `apps/mission-worker/package.json`, `pnpm-lock.yaml`, `documentation/features/missions.md`, `.docs/plans/mission-output-contract-capability-drift-audit.md`
+
+## [2026-07-17 15:10] - [FIX]
+
+What: Added `@vibey/agent-policy` to both synchronized mission-worker container build and runtime package sets.
+Why: Railway correctly installed the new worker dependency from `package.json`, but its curated Docker build context did not copy or build that workspace package, causing `TS2307` during deployment.
+Impact: Railway can compile the canonical preflight registry and the production worker can resolve it at runtime.
+Files: `apps/mission-worker/Dockerfile`, `docker/mission-worker.Dockerfile`

@@ -20,18 +20,21 @@ COPY patches/ patches/
 
 # Copy package.json for dependency resolution
 COPY packages/api-shared/package.json packages/api-shared/
+COPY packages/agent-policy/package.json packages/agent-policy/
 COPY packages/context-breakdown/package.json packages/context-breakdown/
 COPY apps/mission-worker/package.json apps/mission-worker/
 
 # Install dependencies (cached unless lock/package.json change)
-RUN pnpm install --no-frozen-lockfile --shamefully-hoist --filter @vibey/mission-worker --filter @vibey/api-shared --filter @vibey/context-breakdown
+RUN pnpm install --no-frozen-lockfile --shamefully-hoist --filter @vibey/mission-worker --filter @vibey/agent-policy --filter @vibey/api-shared --filter @vibey/context-breakdown
 
 # Copy source code
 COPY packages/api-shared/ packages/api-shared/
+COPY packages/agent-policy/ packages/agent-policy/
 COPY packages/context-breakdown/ packages/context-breakdown/
 COPY apps/mission-worker/ apps/mission-worker/
 
 # Build workspace deps first (mission-worker depends on them)
+RUN pnpm --filter @vibey/agent-policy build
 RUN pnpm --filter @vibey/context-breakdown build
 RUN pnpm --filter @vibey/api-shared build
 
@@ -52,6 +55,8 @@ COPY --from=builder /build/apps/mission-worker/package.json ./
 # Copy node_modules (hoisted) + workspace package runtimes
 COPY --from=builder /build/apps/mission-worker/node_modules ./node_modules
 COPY --from=builder /build/node_modules /node_modules
+COPY --from=builder /build/packages/agent-policy/dist ./packages/agent-policy/dist
+COPY --from=builder /build/packages/agent-policy/package.json ./packages/agent-policy/
 COPY --from=builder /build/packages/api-shared/dist ./packages/api-shared/dist
 COPY --from=builder /build/packages/api-shared/package.json ./packages/api-shared/
 COPY --from=builder /build/packages/context-breakdown/dist ./packages/context-breakdown/dist
@@ -59,6 +64,7 @@ COPY --from=builder /build/packages/context-breakdown/package.json ./packages/co
 
 # Symlink workspace packages so Node resolves @vibey/* imports
 RUN mkdir -p node_modules/@vibey && \
+    ln -sf /app/packages/agent-policy node_modules/@vibey/agent-policy && \
     ln -sf /app/packages/api-shared node_modules/@vibey/api-shared && \
     ln -sf /app/packages/context-breakdown node_modules/@vibey/context-breakdown
 
