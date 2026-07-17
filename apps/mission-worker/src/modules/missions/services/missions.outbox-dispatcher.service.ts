@@ -400,7 +400,9 @@ export class MissionsOutboxDispatcherService implements OnModuleInit, OnModuleDe
         } else {
           return true
         }
-      } else if (state !== 'completed' && state !== 'failed') {
+      } else if (state === 'completed' || state === 'failed') {
+        await existing.remove()
+      } else {
         return true
       }
     }

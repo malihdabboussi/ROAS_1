@@ -829,7 +829,7 @@ Files: `mission-internal.base.ts`, `mission-internal-plan.base.ts`, `mission-int
 
 ## [2026-07-16 18:19] - [FIX]
 
-What: Made the mission outbox dispatcher detect and resume a persisted paused BullMQ mission queue before publishing work, and record the published job state, worker count, global concurrency, and queue counts.
-Why: Production accepted and marked new planning events as processed while the mission processor received nothing, leaving Webinar Fulfillment indefinitely in `planning` after repeated retries and worker restarts.
-Impact: A queue pause can no longer silently convert accepted Mission retries into stranded planning state; the worker logs the recovery and publishes the waiting job.
+What: Made the mission outbox dispatcher remove terminal BullMQ jobs before republishing a reused durable outbox ID, detect and resume a persisted paused queue, and record live publish health.
+Why: Webinar Fulfillment retries reused the same outbox row after the original planning job failed. BullMQ returned that old failed job for every later `add`, so the outbox was marked processed without running the newly deployed API fix.
+Impact: Retrying a completed or failed durable Mission event now creates a fresh BullMQ run instead of replaying terminal queue state. Queue pauses are also recovered and publishes expose worker/concurrency/count evidence.
 Files: `missions.outbox-dispatcher.service.ts`, `missions.outbox-dispatcher.service.test.ts`

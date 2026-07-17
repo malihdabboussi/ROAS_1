@@ -99,6 +99,35 @@ describe('MissionsOutboxDispatcherService', () => {
     expect(queue.add).not.toHaveBeenCalled()
   })
 
+  it.each(['completed', 'failed'])('replaces a terminal %s job before republishing', async (state) => {
+    const terminalJob = {
+      getState: vi.fn().mockResolvedValue(state),
+      remove: vi.fn().mockResolvedValue(undefined),
+    }
+    const { service, queue } = createService({
+      queue: {
+        getJob: vi.fn().mockResolvedValue(terminalJob),
+      },
+    })
+
+    await (service as any).publishToQueue({
+      id: 'evt-terminal',
+      event_type: 'mission.plan.requested',
+      mission_id: 'm-1',
+      user_id: 'u-1',
+      dedupe_key: 'dedupe-terminal',
+      payload: null,
+      attempts: 0,
+      max_attempts: 8,
+    })
+
+    expect(terminalJob.remove).toHaveBeenCalledOnce()
+    expect(queue.add).toHaveBeenCalledOnce()
+    expect(terminalJob.remove.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(queue.add).mock.invocationCallOrder[0],
+    )
+  })
+
   it('resumes a persisted paused mission queue before publishing', async () => {
     const { service, queue } = createService({
       queue: {
