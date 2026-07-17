@@ -221,6 +221,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-17: Replaced mission preflight's partial action-domain map with the canonical agent-policy registry and added playbook coverage so supported actions such as `create_ad` and `create_funnel` cannot be rejected as unknown.
 - 2026-07-16: Made ready human-gate execute events perform the pending-to-`awaiting_human` transition, notification enqueue, and mission rollup instead of returning while leaving the gate pending.
 - 2026-07-16: Allowed personal mission owners to receive human approval subtasks while continuing to reject other human assignees when the mission has no organization.
 - 2026-07-16: Converted triage replacement into a full replan whenever cascade cancellation would erase ordinary downstream work, and moved replacement validation ahead of cancellation.

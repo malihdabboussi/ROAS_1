@@ -27,6 +27,7 @@
     "@sentry/nestjs": "^10.44.0",
     "@sentry/node": "^10.42.0",
     "@supabase/supabase-js": "^2.76.1",
+    "@vibey/agent-policy": "workspace:*",
     "@vibey/api-shared": "workspace:^",
     "@vibey/context-breakdown": "workspace:^",
     "bullmq": "^5.34.8",

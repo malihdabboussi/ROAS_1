@@ -55,3 +55,10 @@ What: Ops Desk working/idle badges now filter the agent roster; briefing lists p
 Why: Counts used agent.status while cards only showed mission focus, so "1 working" looked like everyone was idle.
 Impact: Click working/idle on the Ops Desk to see who matches; click again to clear.
 Files: `ops-desk-summary.ts`, `VibeyOpsDeskBriefing.tsx`, `VibeyOpsDesk.tsx`, `AgentsGrid.tsx`, `Team2ManageContent.tsx`, `messages.config.ts`
+
+## [2026-07-17 15:05] - [FIX]
+
+What: Replaced mission preflight's duplicate partial action-domain map with the canonical `@vibey/agent-policy` registry and added a Webinar Fulfillment contract drift test.
+Why: Static Ads was blocked before execution because mission preflight rejected the supported `create_ad` action; the same omission would have blocked `create_funnel` later.
+Impact: Supported playbook output actions share one source of truth, Static Ads and Funnel Design pass action recognition, and future playbook drift fails tests before deployment.
+Files: `mission-execute-helpers.ts`, `mission-output-contract-actions.test.ts`, `apps/mission-worker/package.json`, `pnpm-lock.yaml`, `documentation/features/missions.md`, `.docs/plans/mission-output-contract-capability-drift-audit.md`

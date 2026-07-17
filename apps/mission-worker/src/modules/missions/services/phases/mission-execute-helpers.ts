@@ -1,36 +1,10 @@
+import { ACTION_TO_DOMAIN, type Domain } from '@vibey/agent-policy'
 import type { MissionOutputContract } from '../persistence/mission-deliverables.repository'
 
-export type MissionPreflightDomain =
-  | 'manage_content'
-  | 'write_marketing_artifacts'
-  | 'manage_own_skills'
-  | 'write_brain'
-  | 'edit_brain_models'
-  | 'edit_brain_company'
-  | 'edit_brain_customer'
+export type MissionPreflightDomain = Domain
 
-export const CONTRACT_ACTION_DOMAINS: Record<string, MissionPreflightDomain> = {
-  save_document: 'manage_content',
-  create_pdf: 'manage_content',
-  create_docx: 'manage_content',
-  create_presentation: 'write_marketing_artifacts',
-  create_agent_skill: 'manage_own_skills',
-  update_agent_skill: 'manage_own_skills',
-  create_agent_skill_resource: 'manage_own_skills',
-  ingest_user_brain_document: 'write_brain',
-  ingest_user_brain_text: 'write_brain',
-  ingest_agent_brain_text: 'write_brain',
-  ingest_agent_brain_link: 'write_brain',
-  ingest_fathom_meeting: 'write_brain',
-  ingest_fireflies_transcript: 'write_brain',
-  create_brain_page: 'write_brain',
-  create_strategy_node: 'edit_brain_models',
-  propose_company_brain_signal: 'edit_brain_company',
-  create_company_brain_object: 'edit_brain_company',
-  update_company_brain_object: 'edit_brain_company',
-  save_customer_memory: 'edit_brain_customer',
-  ingest_customer_brain_text: 'edit_brain_customer',
-}
+export const CONTRACT_ACTION_DOMAINS: Partial<Record<string, MissionPreflightDomain>> =
+  ACTION_TO_DOMAIN
 
 export function activeSubtasksAllDone(statusRows: Array<{ status: unknown }>): boolean {
   const active = statusRows.filter((row) => String(row.status) !== 'cancelled')

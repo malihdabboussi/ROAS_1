@@ -806,6 +806,9 @@ importers:
       '@supabase/supabase-js':
         specifier: 2.49.4
         version: 2.49.4
+      '@vibey/agent-policy':
+        specifier: workspace:*
+        version: link:../../packages/agent-policy
       '@vibey/api-shared':
         specifier: workspace:^
         version: link:../../packages/api-shared
