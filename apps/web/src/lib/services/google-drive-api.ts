@@ -87,6 +87,16 @@ export async function uploadFileToDrive(
   )
 }
 
+export async function createGoogleDocFromHtml(
+  title: string,
+  html: string,
+): Promise<{ success: boolean; file: GoogleDriveFile }> {
+  return backendPost<{ success: boolean; file: GoogleDriveFile }>(
+    '/api/integrations/google-drive/files/google-doc',
+    { title, html },
+  )
+}
+
 export async function renameDriveFile(
   fileId: string,
   name: string,

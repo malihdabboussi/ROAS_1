@@ -3,6 +3,7 @@
 import { Settings2, TableProperties } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils/cn'
+import type { GoogleDriveFile } from '@/lib/services/google-drive-api'
 import { canExportSpaceDoc } from '../../doc-menu/export-space-doc'
 import { DocEditorExportDropdown } from './DocEditorExportDropdown'
 
@@ -15,6 +16,7 @@ export function DocEditorInlineRail({
   exportVisualHtml,
   exportCampaignId,
   exportCustomData,
+  onGoogleDocCreated,
   fieldsSlideOpen,
   pageSettingsOpen,
   setFieldsSlideOpen,
@@ -28,6 +30,7 @@ export function DocEditorInlineRail({
   exportVisualHtml?: string | null
   exportCampaignId?: string | null
   exportCustomData?: Record<string, unknown> | null
+  onGoogleDocCreated?: (file: GoogleDriveFile) => void | Promise<void>
   fieldsSlideOpen: boolean
   pageSettingsOpen: boolean
   setFieldsSlideOpen: (v: boolean | ((p: boolean) => boolean)) => void
@@ -65,6 +68,7 @@ export function DocEditorInlineRail({
                 visualHtml={exportVisualHtml}
                 campaignId={exportCampaignId}
                 customData={exportCustomData}
+                onGoogleDocCreated={onGoogleDocCreated}
                 menuPlacement="left"
                 buttonClassName={railBtnCls(false)}
               />

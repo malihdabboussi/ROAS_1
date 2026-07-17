@@ -25,6 +25,7 @@ import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { visualizeSpaceDoc } from '@/features/spaces/services/spaces.service'
 import { cn } from '@/lib/utils/cn'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
+import type { GoogleDriveFile } from '@/lib/services/google-drive-api'
 import type { SpaceItem } from '../../types'
 import { ShareModal } from '../ShareModal'
 import { CoverDropdown } from './cover/CoverDropdown'
@@ -34,6 +35,7 @@ import { DocBodyImageInsertMenu } from './editor/DocBodyImageInsertMenu'
 import { DocEditorCover } from './editor/DocEditorCover'
 import { DocEditorDropIndicator } from './editor/DocEditorDropIndicator'
 import { DocEditorExportDropdown } from './editor/DocEditorExportDropdown'
+import { googleDocMetadataPatch } from '../doc-menu/google-doc-export'
 import { DocEditorFloatingToolbarPortal } from './editor/DocEditorFloatingToolbarPortal'
 import { DocEditorInlineRail } from './editor/DocEditorInlineRail'
 import { DocEditorProseStyles } from './editor/DocEditorProseStyles'
@@ -279,6 +281,13 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
     [p.editor, p.item.doc_body],
   )
 
+  const saveGoogleDocLink = useCallback(
+    async (file: GoogleDriveFile) => {
+      await p.handleUpdateField({ custom_data: googleDocMetadataPatch(file) })
+    },
+    [p.handleUpdateField],
+  )
+
   const visualChromeIconBtnClass =
     'inline-flex shrink-0 items-center rounded-md border border-[var(--color-border)] p-1.5 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--foreground)]'
 
@@ -503,6 +512,7 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
                             visualHtml={p.docVisualHtml}
                             campaignId={p.campaignId}
                             customData={p.item.custom_data}
+                            onGoogleDocCreated={saveGoogleDocLink}
                           />
                           {p.canShareItem && (
                             <Tooltip label="Share" side="bottom">
@@ -657,6 +667,7 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
                             visualHtml={p.docVisualHtml}
                             campaignId={p.campaignId}
                             customData={p.item.custom_data}
+                            onGoogleDocCreated={saveGoogleDocLink}
                             showLabel
                           />
 
@@ -812,6 +823,7 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
               exportVisualHtml={p.docVisualHtml}
               exportCampaignId={p.campaignId}
               exportCustomData={p.item.custom_data}
+              onGoogleDocCreated={saveGoogleDocLink}
               fieldsSlideOpen={p.fieldsSlideOpen}
               pageSettingsOpen={p.pageSettingsOpen}
               setFieldsSlideOpen={p.setFieldsSlideOpen}

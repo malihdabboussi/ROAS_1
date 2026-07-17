@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { ComposioModule } from '../../composio/composio.module'
 import { GoogleDriveFilesController } from './controllers/google-drive-files.controller'
+import { GoogleDriveDocumentExportController } from './controllers/google-drive-document-export.controller'
 import { GoogleDriveController } from './controllers/google-drive.controller'
 import { GoogleDriveAdminClientRepository } from './repositories/google-drive-admin-client.repository'
 import { GoogleDriveRepository } from './repositories/google-drive.repository'
@@ -22,6 +23,7 @@ import { DriveSyncService } from './sync/drive-sync.service'
   controllers: [
     GoogleDriveController,
     GoogleDriveFilesController,
+    GoogleDriveDocumentExportController,
     DriveFolderMappingsController,
     DriveSyncInternalController,
     DrivePushWebhookController,

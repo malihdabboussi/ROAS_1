@@ -70,10 +70,17 @@ export const SPACES_ACTIONS_TOAST_ERRORS = {
   SAVE_CONTACT_EMAIL_FAILED: { userMessage: 'Failed to send email — try again.' },
   LINK_CONVERSATION_FAILED: { userMessage: 'Failed to link conversation — try again.' },
   VISUALIZE_DOC_FAILED: { userMessage: "Couldn't visualize this doc — try again." },
+  CREATE_GOOGLE_DOC_FAILED: {
+    userMessage: "Couldn't create the Google Doc — check your Drive connection and try again.",
+  },
+  SAVE_GOOGLE_DOC_LINK_FAILED: {
+    userMessage: 'Google Doc created, but its link could not be saved to Vibey.',
+  },
 } as const
 
 export const SPACES_ACTIONS_TOAST_SUCCESS = {
   ...CONVERSATION_ACTIONS_TOAST_SUCCESS,
+  GOOGLE_DOC_CREATED: { userMessage: 'Google Doc created and linked.' },
 } as const
 
 // ─── Calendar ────────────────────────────────────────────────────────────────

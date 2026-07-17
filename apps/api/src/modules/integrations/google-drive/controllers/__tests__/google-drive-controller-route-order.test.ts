@@ -26,6 +26,7 @@ const EXPECTED_GOOGLE_DRIVE_ROUTES = [
   'PATCH integrations/google-drive/files/:fileId/rename -> renameFile',
   'POST integrations/google-drive/files/:fileId/share -> shareFile',
   'DELETE integrations/google-drive/files/:fileId -> deleteFile',
+  'POST integrations/google-drive/files/google-doc -> createGoogleDoc',
 ]
 
 function asPath(value: unknown): string | null {

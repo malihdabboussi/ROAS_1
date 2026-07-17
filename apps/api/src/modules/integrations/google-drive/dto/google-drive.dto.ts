@@ -18,3 +18,8 @@ export const UploadDriveFileSchema = z.object({
   mimeType: z.string().min(1),
   folderId: z.string().optional(),
 })
+
+export const CreateGoogleDocSchema = z.object({
+  title: z.string().trim().min(1).max(250),
+  html: z.string().trim().min(1).max(5_000_000),
+})

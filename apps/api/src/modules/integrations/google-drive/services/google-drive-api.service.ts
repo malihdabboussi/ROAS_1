@@ -169,6 +169,20 @@ export class GoogleDriveApiService {
     throw new BadRequestException('Google Drive is not connected')
   }
 
+  async createGoogleDoc(
+    supabase: SupabaseClient,
+    userId: string,
+    title: string,
+    html: string,
+    orgId?: string | null,
+  ): Promise<GoogleDriveFile> {
+    const mode = await this.getConnectionMode(supabase, userId, orgId)
+    if (mode.kind === 'composio') {
+      return this.files.createGoogleDoc(userId, mode.connectedAccountId, title, html)
+    }
+    throw new BadRequestException('Google Drive is not connected')
+  }
+
   async renameFile(
     supabase: SupabaseClient,
     userId: string,

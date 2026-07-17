@@ -1,6 +1,6 @@
 # Space Items `custom_data` Conventions for Drive Sync
 
-Last updated: 2026-06-29
+Last updated: 2026-07-16
 
 ## Scope
 
@@ -106,6 +106,18 @@ Drive files mirrored as leaf or intermediate nodes:
 - `_drive_thumbnail_link`: Google `thumbnailLink` (optional)
 - `_drive_export_mime`: Export mime selected for body fetch (for Google-native types)
 
+## Native Space Doc → Google Docs Export
+
+Native Space Docs can create one editable Google Doc through the user's existing Google Drive
+connection. The editor exports its current rich-text HTML as a native
+`application/vnd.google-apps.document`, opens the new Google Doc, and saves the Google file identity
+back to the Space item. This is a one-time export, not a live sync: later clicks open the same Google
+Doc instead of creating duplicates.
+
+- `_google_doc_file_id`: created Google Doc file id
+- `_google_doc_web_view_link`: Google Docs edit URL returned by Drive
+- `_google_doc_exported_at`: ISO timestamp of the first successful export
+
 ## Hierarchy Rules
 
 - `parent_item_id` stores local parent chain.
@@ -122,6 +134,9 @@ Sync diffs should treat this pair as identity for insert/update/delete decisions
 
 ## Decision Log
 
+- 2026-07-16: Added one-time native Space Doc export to editable Google Docs through the existing
+  Drive connection. The saved `_google_doc_file_id` is the reuse identity; later editor actions open
+  that document and do not re-export or sync content.
 - 2026-06-16: Added agent-side Space schema field actions. `create_space_field` creates visible schema fields for user-creatable field types; `update_space_field` renames non-system fields, replaces select/multi-select options, and shows fields in existing views. Field deletion remains outside the V1 agent toolkit.
 - 2026-06-29: Space UI realtime now listens to active `spaces` row updates and merges `spaces.schema` changes into the Spaces store, so agent-updated field options such as task statuses appear without a manual refresh.
 - 2026-06-29: Shared Space list caches reload from Supabase Realtime when visible `spaces`, `space_shares`, or `space_view_shares` rows change. The task detail modal also listens to active-Space `space_items` updates so externally created, edited, moved, or deleted subtasks update in the open modal without refresh.

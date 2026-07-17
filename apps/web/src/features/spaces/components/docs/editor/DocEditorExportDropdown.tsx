@@ -2,8 +2,15 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Download, FileCode, FileText } from 'lucide-react'
+import { Download, ExternalLink, FileCode, FileText } from 'lucide-react'
+import { toast } from 'sonner'
+import {
+  SPACES_ACTIONS_TOAST_ERRORS,
+  SPACES_ACTIONS_TOAST_SUCCESS,
+} from '@/features/spaces/config/spaces-toast-errors.config'
+import { createGoogleDocFromHtml, type GoogleDriveFile } from '@/lib/services/google-drive-api'
 import { cn } from '@/lib/utils/cn'
+import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import {
   canExportSpaceDoc,
   exportSpaceDocDocx,
@@ -13,6 +20,8 @@ import {
   exportSpaceDocVisualHtml,
   exportSpaceDocVisualPdf,
 } from '../../doc-menu/export-space-doc'
+import { buildSpaceDocExportHtml } from '../../doc-menu/export-space-doc-html'
+import { googleDocHref } from '../../doc-menu/google-doc-export'
 
 export function DocEditorExportDropdown({
   title,
@@ -24,6 +33,7 @@ export function DocEditorExportDropdown({
   buttonClassName,
   menuPlacement = 'below',
   showLabel = false,
+  onGoogleDocCreated,
 }: {
   title: string
   getDocBody: () => string
@@ -36,6 +46,7 @@ export function DocEditorExportDropdown({
   menuPlacement?: 'below' | 'left' | 'above'
   /** Tree/header chrome: icon + "Export" label like Settings / Share. */
   showLabel?: boolean
+  onGoogleDocCreated?: (file: GoogleDriveFile) => void | Promise<void>
 }) {
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -44,6 +55,7 @@ export function DocEditorExportDropdown({
   const [exportingPdf, setExportingPdf] = useState(false)
   const [exportingDocx, setExportingDocx] = useState(false)
   const [exportingVisualPdf, setExportingVisualPdf] = useState(false)
+  const [creatingGoogleDoc, setCreatingGoogleDoc] = useState(false)
 
   const availability = useMemo(
     () =>
@@ -90,6 +102,56 @@ export function DocEditorExportDropdown({
   }, [open])
 
   const resolvedTitle = title.trim() || 'Untitled'
+  const savedGoogleDocHref = googleDocHref(customData)
+
+  const openGoogleDoc = useCallback(async () => {
+    if (savedGoogleDocHref) {
+      window.open(savedGoogleDocHref, '_blank', 'noopener,noreferrer')
+      setOpen(false)
+      return
+    }
+    if (!availability.canExportDocBody || creatingGoogleDoc) return
+
+    const pendingTab = window.open('about:blank', '_blank')
+    if (pendingTab) pendingTab.opener = null
+    setCreatingGoogleDoc(true)
+    setOpen(false)
+    try {
+      const result = await createGoogleDocFromHtml(
+        resolvedTitle,
+        buildSpaceDocExportHtml(resolvedTitle, getDocBody()),
+      )
+      const href =
+        result.file.webViewLink ||
+        `https://docs.google.com/document/d/${result.file.id}/edit`
+      if (pendingTab) pendingTab.location.replace(href)
+      else window.open(href, '_blank', 'noopener,noreferrer')
+
+      try {
+        await onGoogleDocCreated?.(result.file)
+        toast.success(SPACES_ACTIONS_TOAST_SUCCESS.GOOGLE_DOC_CREATED.userMessage)
+      } catch {
+        toast.error(SPACES_ACTIONS_TOAST_ERRORS.SAVE_GOOGLE_DOC_LINK_FAILED.userMessage)
+      }
+    } catch (error) {
+      pendingTab?.close()
+      toast.error(
+        sanitizeUserError(
+          error,
+          SPACES_ACTIONS_TOAST_ERRORS.CREATE_GOOGLE_DOC_FAILED.userMessage,
+        ),
+      )
+    } finally {
+      setCreatingGoogleDoc(false)
+    }
+  }, [
+    availability.canExportDocBody,
+    creatingGoogleDoc,
+    getDocBody,
+    onGoogleDocCreated,
+    resolvedTitle,
+    savedGoogleDocHref,
+  ])
 
   const exportPdf = useCallback(async () => {
     if (!availability.canExportDocBody || exportingPdf) return
@@ -161,6 +223,15 @@ export function DocEditorExportDropdown({
     >
       {availability.canExportDocBody ? (
         <>
+          <button
+            type="button"
+            onClick={() => void openGoogleDoc()}
+            disabled={creatingGoogleDoc}
+            className={rowCls}
+          >
+            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span>{creatingGoogleDoc ? 'Creating…' : 'Open in Google Docs'}</span>
+          </button>
           <button
             type="button"
             onClick={() => void exportPdf()}

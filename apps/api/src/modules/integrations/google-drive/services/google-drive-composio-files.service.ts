@@ -258,6 +258,66 @@ export class GoogleDriveComposioFilesService {
     return created as unknown as GoogleDriveFile
   }
 
+  async createGoogleDoc(
+    userId: string,
+    connectedAccountId: string,
+    title: string,
+    html: string,
+  ): Promise<GoogleDriveFile> {
+    if (Buffer.byteLength(html, 'utf8') > 4_500_000) {
+      throw new BadRequestException('Document is too large for Google Docs export')
+    }
+    const accessToken = await this.composio.getAccessTokenForToolkit(
+      userId,
+      'googledrive',
+      connectedAccountId,
+    )
+    if (!accessToken) {
+      throw new BadRequestException('Google Drive connection needs to be reconnected')
+    }
+
+    const boundary = `vibey-google-doc-${crypto.randomUUID()}`
+    const metadata = JSON.stringify({
+      name: title,
+      mimeType: 'application/vnd.google-apps.document',
+    })
+    const multipartBody = [
+      `--${boundary}`,
+      'Content-Type: application/json; charset=UTF-8',
+      '',
+      metadata,
+      `--${boundary}`,
+      'Content-Type: text/html; charset=UTF-8',
+      '',
+      html,
+      `--${boundary}--`,
+      '',
+    ].join('\r\n')
+    const query = new URLSearchParams({
+      uploadType: 'multipart',
+      fields: 'id,name,mimeType,webViewLink,parents,createdTime,modifiedTime',
+    })
+    const response = await fetch(`https://www.googleapis.com/upload/drive/v3/files?${query}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': `multipart/related; boundary=${boundary}`,
+        Accept: 'application/json',
+      },
+      body: multipartBody,
+    })
+    if (!response.ok) {
+      throw new BadRequestException('Failed to create Google Doc')
+    }
+
+    const file = (await response.json()) as GoogleDriveFile
+    if (!file.id) throw new BadRequestException('Google Drive did not return the created document')
+    return {
+      ...file,
+      webViewLink: file.webViewLink || `https://docs.google.com/document/d/${file.id}/edit`,
+    }
+  }
+
   async renameFile(
     userId: string,
     connectedAccountId: string,

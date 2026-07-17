@@ -16,7 +16,6 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Response } from 'express'
 import {
   AuthGuard,
-  buildExternalAssetRef,
   CurrentUser,
   OrgContext,
   OrgContextGuard,
@@ -26,6 +25,7 @@ import {
 import type { RequestScope } from '@vibey/api-shared'
 import { ListDriveFilesSchema } from '../dto/google-drive.dto'
 import { GoogleDriveApiService } from '../services/google-drive-api.service'
+import { buildGoogleDriveUploadResponse } from './google-drive-upload-response'
 
 @Controller('integrations/google-drive')
 export class GoogleDriveFilesController {
@@ -139,26 +139,7 @@ export class GoogleDriveFilesController {
       body.folderId,
       scope.orgId,
     )
-    const size = Number(file.size)
-    const parent = Array.isArray(file.parents) ? file.parents[0] : body.folderId
-    return {
-      success: true,
-      file,
-      asset_ref: buildExternalAssetRef({
-        provider: 'google_drive',
-        external_id: file.id,
-        file_path: parent ? `${parent}/${file.name}` : file.name,
-        url: file.webViewLink,
-        mime_type: file.mimeType ?? body.mimeType,
-        name: file.name,
-        original_filename: body.name,
-        file_size: Number.isFinite(size) ? size : buffer.length,
-        org_id: scope.orgId,
-        source: 'google_drive',
-        source_surface: 'google_drive',
-        metadata: { folder_id: body.folderId ?? null },
-      }),
-    }
+    return buildGoogleDriveUploadResponse(file, body, buffer.length, scope.orgId)
   }
 
   @Patch('files/:fileId/rename')

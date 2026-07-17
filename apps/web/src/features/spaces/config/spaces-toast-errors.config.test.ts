@@ -22,6 +22,12 @@ describe('spaces action toast config', () => {
     expect(SPACES_ACTIONS_TOAST_ERRORS.COPY_FAILED.userMessage).toBe(
       'Failed to copy — try again.',
     )
+    expect(SPACES_ACTIONS_TOAST_ERRORS.CREATE_GOOGLE_DOC_FAILED.userMessage).toBe(
+      "Couldn't create the Google Doc — check your Drive connection and try again.",
+    )
+    expect(SPACES_ACTIONS_TOAST_SUCCESS.GOOGLE_DOC_CREATED.userMessage).toBe(
+      'Google Doc created and linked.',
+    )
     expect(SPACES_ACTIONS_TOAST_SUCCESS.MOVED_TO_CAMPAIGN.userMessage).toBe(
       'Moved to campaign.',
     )
