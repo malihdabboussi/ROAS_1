@@ -11,6 +11,8 @@ const SOCIAL_ANALYSIS_INTERNAL_ID = 'scrapecreators'
 const SOCIAL_ANALYSIS_AGENT_ID = 'social_analysis'
 const SEO_RESEARCH_INTERNAL_ID = 'dataforseo'
 const SEO_RESEARCH_AGENT_ID = 'seo_research'
+const ADS_INTELLIGENCE_INTERNAL_ID = 'searchapi'
+const ADS_INTELLIGENCE_AGENT_ID = 'ads_intelligence'
 
 const INTEGRATION_ID_ALIASES: Record<string, string> = {
   activecampaign: 'active_campaign',
@@ -35,6 +37,12 @@ const INTEGRATION_ID_ALIASES: Record<string, string> = {
   seoresearch: SEO_RESEARCH_INTERNAL_ID,
   seo_research: SEO_RESEARCH_INTERNAL_ID,
   'seo-research': SEO_RESEARCH_INTERNAL_ID,
+  adsintelligence: ADS_INTELLIGENCE_INTERNAL_ID,
+  ads_intelligence: ADS_INTELLIGENCE_INTERNAL_ID,
+  'ads-intelligence': ADS_INTELLIGENCE_INTERNAL_ID,
+  searchapi: ADS_INTELLIGENCE_INTERNAL_ID,
+  search_api: ADS_INTELLIGENCE_INTERNAL_ID,
+  'search-api': ADS_INTELLIGENCE_INTERNAL_ID,
 }
 
 export function canonicalizeIntegrationId(rawId: string | null | undefined): string {
@@ -49,5 +57,6 @@ export function toAgentFacingIntegrationId(rawId: string | null | undefined): st
   const id = canonicalizeIntegrationId(rawId)
   if (id === SOCIAL_ANALYSIS_INTERNAL_ID) return SOCIAL_ANALYSIS_AGENT_ID
   if (id === SEO_RESEARCH_INTERNAL_ID) return SEO_RESEARCH_AGENT_ID
+  if (id === ADS_INTELLIGENCE_INTERNAL_ID) return ADS_INTELLIGENCE_AGENT_ID
   return id
 }

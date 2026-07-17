@@ -74,7 +74,7 @@ export class ArtifactIntegrationOrchestratorService {
       }
 
       let connectionState: Record<string, unknown> = { connected: false, status: 'disconnected' }
-      if (service === 'scrapecreators' || service === 'dataforseo') {
+      if (service === 'scrapecreators' || service === 'dataforseo' || service === 'searchapi') {
         connectionState = { connected: true, status: 'connected' }
       } else {
         try {

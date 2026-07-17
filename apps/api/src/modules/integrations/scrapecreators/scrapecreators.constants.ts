@@ -66,6 +66,11 @@ export const SCRAPECREATORS_ACTION_CREDITS: Record<string, number> = {
   facebook_post: 2,
   facebook_video_transcript: 2,
   facebook_comments: 2,
+  facebook_ad_library_search_companies: 2,
+  facebook_ad_library_company_ads: 2,
+  facebook_ad_library_search_ads: 2,
+  facebook_ad_library_ad: 2,
+  facebook_ad_library_ad_transcript: 2,
 
   // LinkedIn
   linkedin_profile: 2,

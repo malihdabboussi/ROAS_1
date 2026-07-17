@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { BillingModule } from '../../billing/billing.module'
+import { ScrapeCreatorsAdLibraryController } from './controllers/scrapecreators-ad-library.controller'
 import { ScrapeCreatorsInstagramController } from './controllers/scrapecreators-instagram.controller'
 import { ScrapeCreatorsLinkedinRedditController } from './controllers/scrapecreators-linkedin-reddit.controller'
 import { ScrapeCreatorsThreadsController } from './controllers/scrapecreators-threads.controller'
@@ -19,6 +20,7 @@ import { ScrapeCreatorsApiService } from './services/scrapecreators-api.service'
     ScrapeCreatorsInstagramController,
     ScrapeCreatorsYoutubeController,
     ScrapeCreatorsTwitterFacebookController,
+    ScrapeCreatorsAdLibraryController,
     ScrapeCreatorsLinkedinRedditController,
     ScrapeCreatorsThreadsController,
   ],

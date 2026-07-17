@@ -328,14 +328,16 @@ export class ArtifactLegacyIntegrationsService {
     integrationId: string,
   ): Promise<'legacy' | 'composio'> {
     const normalized = integrationId.trim().toLowerCase()
-    if (!normalized) return 'composio'
+    // Absent toolkit config means native/legacy (migration contract). Only an
+    // explicit composio metadata.execution_mode opts into Composio routing.
+    if (!normalized) return 'legacy'
 
     const { data, error } = await this.repository.findExecutionModeConfig(
       target.serviceClient,
       normalized,
     )
 
-    if (error || !data) return 'composio'
+    if (error || !data) return 'legacy'
 
     const metadata =
       data.metadata && typeof data.metadata === 'object' && !Array.isArray(data.metadata)
@@ -345,8 +347,8 @@ export class ArtifactLegacyIntegrationsService {
       .trim()
       .toLowerCase()
 
-    if (executionModeRaw === 'legacy') return 'legacy'
-    return 'composio'
+    if (executionModeRaw === 'composio') return 'composio'
+    return 'legacy'
   }
 
   private async listAvailableActionSlugs(

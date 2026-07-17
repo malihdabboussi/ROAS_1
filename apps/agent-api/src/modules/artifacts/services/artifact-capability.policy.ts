@@ -1325,6 +1325,25 @@ export function isIntegrationSubActionAllowed(
     }
   }
 
+  if (
+    normalizedService === 'searchapi' ||
+    normalizedService === 'ads_intelligence' ||
+    normalizedService === 'ads-intelligence' ||
+    normalizedService === 'adsintelligence'
+  ) {
+    if (policy.profile === 'vibey_ceo') {
+      return { allowed: true }
+    }
+    if (policy.profile === 'managed_domain' && policy.domain === 'marketing') {
+      return { allowed: true }
+    }
+    return {
+      allowed: false,
+      reason:
+        'Ads Intelligence is only for marketing-domain agents or Vibey. Use ask_agent to reach a marketing teammate for ad-library research.',
+    }
+  }
+
   if (policy.profile === 'vibey_ceo') {
     return { allowed: true }
   }

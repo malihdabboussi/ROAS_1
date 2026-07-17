@@ -64,7 +64,8 @@ const SYSTEM_AUTH_PATTERNS = [
 const INTEGRATION_PATTERNS = [
   'not connected',
   'not enabled',
-  'no composio toolkit',
+  // Do NOT match "no composio toolkit" — that is a routing/config fault for
+  // native providers (e.g. Fathom), not a user disconnect. Classify as system_fault.
   'auth config missing',
   'integration_id or toolkit_slug is required',
   'is not connected',

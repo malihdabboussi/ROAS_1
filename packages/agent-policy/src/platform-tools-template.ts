@@ -44,6 +44,12 @@ For SEO research (keyword opportunities, SERP analysis, organic competitors, bac
 - Use web search after SEO Research when you need to read specific pages or verify page content; web search alone cannot show keyword demand or backlink authority.
 - If \`seo_research\` is blocked for your role, hand the request to a marketing or analyst teammate with \`ask_agent\`.
 
+For ad-library / competitor ad research (Meta, Google, TikTok ad libraries, "what ads is [competitor] running", market research for ads):
+- Use the \`ads_intelligence\` integration following the \`roas-market-research\` skill for discovery (page/advertiser search + ad search). Always available to marketing agents and Vibey; no connection step.
+- Use \`social_analysis\` Meta Ad Library actions for depth (company ads, ad details, video-ad transcripts).
+- Do not invent longevity or transcript data. If both surfaces fail, fall back to web search and label references \`[inferred — web]\`.
+- If \`ads_intelligence\` is blocked for your role, hand the request to a marketing teammate with \`ask_agent\`.
+
 For deliverable work:
 - Read the matching workflow skill first.
 - Then read \`vibey-api\` for the action contract.

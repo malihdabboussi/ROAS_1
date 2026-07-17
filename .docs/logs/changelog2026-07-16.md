@@ -1,5 +1,33 @@
 # Changelog - July 16, 2026
 
+## [2026-07-16 21:28] - [STYLE]
+
+What: Replaced the raw Why/Story/Sensory/End-State/Ecology dump on sub-task detail with a clean card — “What this step is for” + “Done when”; agent-facing Story/Sensory/Ecology tucked under a collapsed “Agent brief”.
+Why: Plan intent read as an ugly instruction prop dump and made working sub-tasks feel cluttered.
+Impact: Hard-refresh `roas-web`. Open a running sub-task — brief shows in two lines; expand Agent brief only if needed.
+Files: `SubtaskPlanIntent.tsx`, `SubtaskDetailContent.tsx`
+
+## [2026-07-16 21:26] - [FIX]
+
+What: Mission docs now render as Vibey docs — preview detects HTML (no more raw tags); mission `save_document` dual-writes/updates matching Space Docs and links `entity_table=space_items`; backfilled Pre-Call / Strategy v2 / THE PLAN / Copy Package links on the live Webinar Fulfillment mission.
+Why: Mission path stored orphan `mission_deliverables.content` and preview used MarkdownRenderer, so HTML one-pagers from Strategy v2 / THE PLAN showed as literal tags. Template Space docs already existed but were not linked.
+Impact: Hard-refresh `roas-web`; reopen Strategy v2 / THE PLAN from the mission — they open the Space doc preview. New mission saves update Docs in the Space. Fly `agent-api` needed for the dual-write path on future runs.
+Files: `DeliverablePreviewBody.tsx`, `DeliverableHtmlPreview.tsx` (+test), `artifact-document-mission-deliverables.service.ts`, `artifact-legacy-runtime-core.service.ts`, `MissionDetailOverlayModals.tsx`
+
+## [2026-07-16 21:18] - [STYLE]
+
+What: Cleaned mission detail + sub-task modal UI — Action required gates move to the right sidebar on desktop; removed duplicated Live run (Activity keeps Locked in); larger subtask rows; tighter meta/description; deliverables default to list view; resizable main/activity split; Activity header polish.
+Why: Sub-task views felt cramped/doubled vs the main mission card; gates buried Action required on the left while Activity sat empty.
+Impact: Hard-refresh `roas-web`. Open a mission → subtasks read larger; open a Gate → approve panel is on the right; drag the divider to widen Activity.
+Files: `MissionDetailDesktopShell.tsx`, `SubtaskDetailContent.tsx`, `HumanGateReviewPanel.tsx`, `SubtasksSection.tsx`, `MissionMetaRow.tsx`, `ActivityTimeline.tsx`, `DeliverablesCarousel.tsx` (+tests)
+
+## [2026-07-16 20:32] - [FEATURE]
+
+What: Re-ported Agency Webinar Phase B/C skills from `roas-platform-skills.zip` into agent templates, refreshed `skill_library` + `agent_skills` (migration `20260716250000` applied on prod), uploaded binary assets via `seed-webinar-pipeline-skills.ts`. Playbook keys already match; env-aware Vibey artifact output kept (no `/mnt/user-data/outputs/` as the platform path).
+Why: Ensure playbook steps can load the correct skill keys and owners have the latest SKILL.md + assets for Pre-B → Phase C.
+Impact: Hired ads_manager / copywriter / designer agents now have refreshed markdown. **Blocker remains:** `roas-webinar-emails` is not in the zip or repo — Copy Package section 2 will not complete until that skill is supplied. Gate 2 surgical re-run is still intent text only (not engine fan-out).
+Files: `docker/agents/templates/{ads_manager,copywriter,designer,strategist}/skills/**`, `supabase/migrations/20260716250000_webinar_pipeline_skills_refresh.sql`, `scripts/generate-webinar-pipeline-skills-migration.ts`, `scripts/seed-webinar-pipeline-skills.ts`, `webinar-fulfillment.playbook.ts` (already wired)
+
 ## [2026-07-16 16:10] - [ARCH]
 
 What: Production sync — committed/pushed local `main` (`7e896094` + retrigger `9656d977`), applied 17 pending Supabase migrations on ROAS prod, redeployed Fly `roas-runtimes` (health ok, sync 66/66).
@@ -860,3 +888,100 @@ Why: Dependency resolution correctly queued Gate 1 after the launch brief comple
 Impact: Completed agent work now hands off to its dependent human approval gate, and the mission visibly enters its legitimate waiting-for-user state instead of appearing idle.
 
 Files: `mission-execute-phase.service.ts`, `mission-execute-helpers.ts`, `mission-subtask-guards.test.ts`, `documentation/features/missions.md`
+
+## [2026-07-16 19:43] - [FIX]
+
+What: Fixed Spaces/side-chat composer wiping typed text when the agent finished streaming. `ComposerInputStack` no longer swaps Fragment↔wrapper (which remounted ChatInput); draft hydration no longer re-runs on `initialValue` flicker.
+Why: Typing a follow-up while Vibey responded was lost the moment streaming ended.
+Impact: In-progress composer drafts survive stream start/stop across Spaces, Projects, Team HR chat, and Studio.
+Files: `ComposerInputStack.tsx`, `use-chat-input-draft.ts`, tests
+
+
+## [2026-07-16 20:01] - [FIX]
+
+What: Stopped the Spaces side-chat composer from disappearing after a reply. Global chat rail now keeps a bounded flex height (`overflow-hidden` + flex column), and composer footers are `shrink-0` so the sticky-turn spacer cannot clip the input off-screen.
+Why: After Vibey finished, the message list spacer filled the rail and the composer was clipped below the overflow edge — looking like the input “cleared” / vanished.
+Impact: Composer stays pinned at the bottom of Spaces / Team / Studio / Projects chat while drafts still survive stream end (prior remount fix).
+Files: `GlobalChatPanel.tsx`, `SpaceVibeyChatPanel.tsx`, `TeamHrSideChatPanel.tsx`, `ChatInterface.tsx`, `ProjectChatPane.tsx`, `AgentChatPanel.tsx`, `ComposerInputStack.tsx`
+
+
+## [2026-07-16 20:12] - [FIX]
+
+What: Fixed Spaces overlays when opening a task from chat/Media: Team hover flyout now clears on route change; Media image composer no longer uses z-dropdown over TaskDetailModal; opening a task switches to List/Table/Kanban instead of staying on Media. Clarified agent create_task guidance for named General/Opportunities destinations vs active campaign scope.
+Why: Clicking a created task left Media mounted under the modal (composer painted on top) and left the Team flyout stuck; tasks from Agency chat also defaulted to Impact because active scope injects that space_id.
+Impact: Task open lands on a task view with a clean modal; Team flyout no longer sticks on Spaces; agents instructed to cross-scope to General when the user names it.
+Files: `useSidebarController.ts`, `SpaceMediaView.tsx`, `SpaceContentRouter.tsx`, `SpaceItemsContainer.tsx`, `resolve-task-capable-view.ts`, `vibey-api/SKILL.md`, `vibey-api-action-docs.ts`
+## [2026-07-16 20:20] - [FEATURE]
+
+What: Replaced the cramped nested subtask popup with a full Mission-shell workspace. Space Mission rows now open subtasks directly; each subtask has scoped details, execution output, Activity, mapped deliverables, and Mission breadcrumb/back navigation on desktop and mobile.
+
+Why: Subtask rows opened the parent Mission, and the small secondary popup did not provide enough room to understand or manage an individual step.
+
+Impact: Users can enter any Mission step directly, review its own work and deliverables, message Vibey in that step's context, and return to the parent Mission without closing the workspace.
+
+Files: `MissionList.tsx`, `MissionListDesktopRows.tsx`, `MissionListMobileCards.tsx`, `MissionsView.tsx`, `useMissionsViewListState.ts`, Mission detail shells/view/state, subtask detail helpers/components/tests, `documentation/features/missions.md`
+
+## [2026-07-16 20:27] - [FEATURE]
+
+What: Account/org skill catalog foundation — creatable folders + tags, new skills owned as `agent_key='*'`, Skills page Group by Folder, `/` slash loads full catalog skills, migration promotes user skills to shared catalog ownership while keeping OpenClaw disk materialization.
+
+Why: Skills were agent-owned copies, so `/` and All skills could not treat mission/uploaded packs as shared library with folders like ROAS* Agency Automation.
+
+Impact: Create/upload skills once for the account; organize with folders/tags; any agent chat `/` can list catalog skills. Disk sync still materializes via existing `*` path.
+
+Files: `20260716240000_skill_catalog_folders_tags.sql`, `skill-catalog-organization.service.ts`, `skill-catalog.controller.ts`, skills-page UI/hooks, `use-chat-input-slash-data.ts`, `agent-skill-management.service.ts`, list merge prefer `*`
+
+## [2026-07-16 20:29] - [FIX]
+
+What: Enforced native editable Docs for mission subtasks whose output contract requires `save_document`; PDF, DOCX, and other file-export companions are now explicitly forbidden unless the contract requests that file action.
+
+Why: The verifier required a Doc but did not prevent the agent from also publishing an unusable PDF, so a webinar mission could technically pass while producing extra dead deliverables.
+
+Impact: Existing and future webinar Doc steps now publish only native Docs at execution time. Focused mission playbook and prompt tests plus the mission-worker typecheck pass.
+
+Files: `mission-execute-phase.service.ts`, `mission-subtask-guards.test.ts`, `documentation/features/missions.md`
+
+## [2026-07-16 20:35] - [FEATURE]
+
+What: Added a first-class human gate workspace with completed prerequisite work, compiled deliverables, contributors, resource links, next-step guidance, and explicit `Approve & continue` and `Request changes` actions. Changed API and worker mission aggregation so an active human gate rolls the parent Mission up to `awaiting_human`, and added a migration to correct existing `todo` rows.
+
+Why: Gate rows were visible but not actionable, users had to guess whether a chat message counted as approval, and downstream dependency-blocked tasks caused the parent Mission to incorrectly remain `todo` while waiting for the user.
+
+Impact: Users can review the full approval package, send scoped revision feedback without closing the gate, or approve once to record the decision and start eligible downstream work. Parent Mission status now accurately communicates when the user is the next actor.
+
+Files: `mission-internal-manager-subtasks.base.ts`, `mission-state.repository.ts`, `mission-state-aggregate.test.ts`, `mission-internal.service.test.ts`, `HumanGateReviewPanel.tsx`, subtask detail/view/state components and tests, `mission-human-subtasks.service.ts`, `messages.config.ts`, `20260716241000_backfill_mission_awaiting_human_rollup.sql`, `documentation/features/missions.md`
+
+## [2026-07-16 21:09] - [FEATURE]
+
+What: Added the supplied `roas-webinar-emails` skill and its six useful references/assets to the copywriter catalog, removed the duplicate human-copy prompt, made `dylans-super-voice` the single master voice and Human Enforcement layer, adapted output to a single native editable Doc, seeded it for future and system copywriters, and backfilled already-hired copywriters carrying the Copy Package orchestrator.
+
+Why: Webinar Fulfillment referenced the email/SMS skill but could not execute Copy Package section 2, leaving the mission with a known capability gap.
+
+Impact: The deterministic webinar playbook now reports a complete Phase B skill set. Existing and future copywriters can produce the email/SMS section without inventing content or creating PDF/DOCX/XLSX companions. Gate 2 surgical revision routing remains separately tracked.
+
+Files: `docker/agents/templates/copywriter/skills/roas-webinar-emails/`, `scripts/generate-webinar-pipeline-skills-migration.ts`, `scripts/seed-webinar-pipeline-skills.ts`, `20260716251000_webinar_pipeline_skills_with_emails.sql`, `webinar-fulfillment.playbook.ts`, `webinar-fulfillment.playbook.test.ts`, `documentation/features/missions.md`
+
+## [2026-07-16 21:34] - [FEATURE]
+
+What: Added one-click native Space Doc export to an editable Google Doc using the existing Google Drive connection. The first click creates and opens the document, saves its Google file id/link on the Space item, and later clicks reopen the same document. Split the new endpoint into a focused controller and extracted the existing Drive upload response formatter to keep the touched file controller below its lint limit.
+Why: Native Vibey Docs could only download PDF, Markdown, HTML, or DOCX; users wanted an editable Google Doc that opens immediately without repeated exports or a second Google integration.
+Impact: Native Docs now show `Open in Google Docs` in the export menu. This is a one-time export rather than live sync; future clicks reuse the saved Google Doc. Drive-disconnected and link-save failures surface actionable messages.
+Files: `google-drive-document-export.controller.ts`, `google-drive-upload-response.ts`, `google-drive-files.controller.ts`, `google-drive.dto.ts`, `google-drive-api.service.ts`, `google-drive-composio-files.service.ts`, `google-drive-api.ts`, `google-doc-export.ts`, `DocEditorExportDropdown.tsx`, `DocEditorInlineRail.tsx`, `DocEditorPanelInner.tsx`, Spaces toast config/tests, Google Drive focused tests, `documentation/features/space-items-custom-data-drive.md`
+
+## [2026-07-16 21:35] - [FEATURE]
+
+What: Added recoverable live work to running Mission subtasks, showed matching agent-created documents before final completion linkage, and changed the active badge to `Finalizing` once a document exists.
+
+Why: Agents were already persisting partial output and creating deliverables, but the subtask UI looked frozen and showed zero deliverables until verification completed.
+
+Impact: Refreshing or missing a realtime broadcast no longer hides saved progress; users can read work-in-progress and open a newly created document while the worker finishes verification.
+
+Files: `SubtaskDetailContent.tsx`, `subtask-detail.ts`, `subtask-detail.test.ts`, `useMissionExecStream.ts`, `messages.config.ts`, `mission-types.ts`, `documentation/features/missions.md`
+
+## [2026-07-16 21:35] - [FIX]
+
+What: Fixed Fathom chat transcript routing (missing Composio config now resolves to legacy/native), stopped classifying "No Composio toolkit" as disconnected, exposed SearchAPI as platform-managed `ads_intelligence`, added Scrape Creators Meta Ad Library actions on `social_analysis`, and rewrote `roas-market-research` off fake MCP tool names.
+Why: Chat told users to reconnect Fathom / SearchAPI / Scrape Creators even though native OAuth + API keys were working; market-research skill pointed at nonexistent MCP actions.
+Impact: After deploy of `roas-api` + Fly `roas-runtimes`, agents can `use_integration` Fathom transcripts and Ads Intelligence / Meta Ad Library actions. Migration already applied on ROAS prod DB.
+Files: `artifact-legacy-integrations.service.ts`, `artifact-error-classifier.ts`, `searchapi/*`, `scrapecreators-ad-library.controller.ts`, `integration-id.util.ts`, `integration-context.service.ts`, `artifact-capability.policy.ts`, `vibey-api-action-docs.ts`, `roas-market-research/SKILL.md`, `20260717043500_ads_intelligence_and_fathom_legacy_fix.sql`
+

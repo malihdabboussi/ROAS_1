@@ -41,11 +41,9 @@ function readKickoff(input: Record<string, unknown> | null | undefined): Mission
   return {
     start_at: normalizeStartAt(kickoff.start_at ?? input?.start_at),
     notes: typeof kickoff.notes === 'string' ? kickoff.notes : undefined,
-    transcript_url:
-      typeof kickoff.transcript_url === 'string' ? kickoff.transcript_url : undefined,
+    transcript_url: typeof kickoff.transcript_url === 'string' ? kickoff.transcript_url : undefined,
     drive_links: typeof kickoff.drive_links === 'string' ? kickoff.drive_links : undefined,
-    client_context:
-      typeof kickoff.client_context === 'string' ? kickoff.client_context : undefined,
+    client_context: typeof kickoff.client_context === 'string' ? kickoff.client_context : undefined,
   }
 }
 
@@ -68,7 +66,11 @@ export function expandWebinarFulfillmentPlaybook(
 ): MissionPlaybookPlanResult {
   const kickoff = readKickoff(input.mission.input)
   const startAt = normalizeStartAt(kickoff.start_at)
-  const strategist = pickAgent(['strategist', 'atlas', 'vibey'], input.workerAgentKeys, input.managerKey)
+  const strategist = pickAgent(
+    ['strategist', 'atlas', 'vibey'],
+    input.workerAgentKeys,
+    input.managerKey,
+  )
   const adsManager = pickAgent(
     ['ads_manager', 'blaze', 'strategist'],
     input.workerAgentKeys,
@@ -121,7 +123,8 @@ export function expandWebinarFulfillmentPlaybook(
       skillKey: SKILL_3,
       docTitle: 'THE PLAN — Launch Brief',
       why: 'Hand production a clear launch brief before copy and creative fan out.',
-      endState: 'THE PLAN launch brief doc exists with webinar promise, funnel path, and asset list.',
+      endState:
+        'THE PLAN launch brief doc exists with webinar promise, funnel path, and asset list.',
     },
   ]
 
@@ -220,7 +223,7 @@ export function expandWebinarFulfillmentPlaybook(
       story: 'Production stops guessing; ads and emails inherit observed competitor language.',
       sensory: 'The research brief cites real ads with longevity and transcripts where available.',
       endState: 'Doc "Market Research — [Client]" exists with raw JSON attachment.',
-      ecology: `Load skill ${SKILL_MARKET_RESEARCH}. Discover SearchAPI / Scrape Creators via search_available_integrations then use_integration (not tool_search). Save Doc "Market Research — [Client]" plus raw JSON attachment. Kickoff:\n${kickoffBits || '(none)'}`,
+      ecology: `Load skill ${SKILL_MARKET_RESEARCH}. Use platform-managed ads_intelligence + social_analysis via get_integration / use_integration (not MCP tool_search). Save Doc "Market Research — [Client]" plus raw JSON attachment. Kickoff:\n${kickoffBits || '(none)'}`,
     }),
     outputContract: docContract('Market Research — [Client]'),
   })
@@ -245,11 +248,12 @@ export function expandWebinarFulfillmentPlaybook(
     scheduledAt: null,
     intent: intent({
       why: 'Assemble one reviewable Copy Package from atomic skills (topics → emails → ads → scripts → LP).',
-      story: 'Reviewer opens one doc, five sections, one flags list, and a REVIEW MAP for surgical rejects.',
+      story:
+        'Reviewer opens one doc, five sections, one flags list, and a REVIEW MAP for surgical rejects.',
       sensory: 'Title + three discover-bullets read verbatim across sections.',
       endState:
         'One Doc "Copy Package" with 5 sections + Open flags + REVIEW MAP exists in Space Docs.',
-      ecology: `Load skill ${SKILL_COPY_PACKAGE}. Sequence atomic skills; write no copy in the orchestrator. Topics first. Include REVIEW MAP: ${REVIEW_MAP}. Save one Doc "Copy Package". Do NOT write to /mnt/user-data/outputs/. NOTE: section 2 requires roas-webinar-emails — if that skill is missing, block with a clear gap rather than inventing emails.`,
+      ecology: `Load skill ${SKILL_COPY_PACKAGE}. Sequence atomic skills; write no copy in the orchestrator. Topics first. Include REVIEW MAP: ${REVIEW_MAP}. Save one native editable Doc "Copy Package". Do not create PDF, DOCX, XLSX, or other file-export companions. Do NOT write to /mnt/user-data/outputs/.`,
     }),
     outputContract: docContract('Copy Package'),
   })
@@ -471,8 +475,8 @@ export function expandWebinarFulfillmentPlaybook(
       'Phase A strategy → Gate 1 → market research → Copy Package → Gate 2 → Phase C creatives (ads, image briefs, funnel, deck outline) → Gate 3 → Webinar Deck v1.',
     approach: `Follow playbook ${WEBINAR_FULFILLMENT_PLAYBOOK_ID} starting at ${startAt}. Do not invent a different lifecycle. Strategy→${strategist}; research/ads→${adsManager}; copy→${copywriter}; design→${designer}.`,
     capability_gap: {
-      exists: true,
-      note: 'roas-webinar-emails is referenced by the Copy Package orchestrator but is not seeded in this repo/zip yet — section 2 will block until that skill lands.',
+      exists: false,
+      note: '',
       suggested_hire: '',
     },
     harness: {
@@ -486,7 +490,7 @@ export function expandWebinarFulfillmentPlaybook(
             summary: 'Deterministic Phase A→B→C + Gates 1–3',
           },
         ],
-        missing: ['roas-webinar-emails skill (Copy Package section 2)'],
+        missing: [],
         sufficiency: {
           sufficientForPlan: true,
           sufficientForValidation: true,
@@ -497,13 +501,15 @@ export function expandWebinarFulfillmentPlaybook(
       assumptions: [
         {
           assumptionKey: 'AS-001',
-          statement: 'Campaign team includes strategist, ads_manager, copywriter, and designer capable workers (or fallbacks).',
+          statement:
+            'Campaign team includes strategist, ads_manager, copywriter, and designer capable workers (or fallbacks).',
           confidence: 'medium',
           impact: 'Wrong assignee weakens skill execution quality.',
         },
         {
           assumptionKey: 'AS-002',
-          statement: 'ads_manager runtime has SearchAPI (Ads Intelligence) and Scrape Creators MCP connectors for market research.',
+          statement:
+            'ads_manager runtime has platform-managed ads_intelligence (SearchAPI) and social_analysis (Scrape Creators Ad Library) actions for market research.',
           confidence: 'medium',
           impact: 'Pre-B research cannot pull live ad-library receipts without those connectors.',
         },
@@ -531,7 +537,6 @@ export function expandWebinarFulfillmentPlaybook(
     outOfScope: [
       'auto-skill-4 (built separately)',
       'Flow-builder Standard vs Mission chooser',
-      'Inventing roas-webinar-emails content',
       'PPTX export inside the platform',
     ],
     assignTo: strategist,

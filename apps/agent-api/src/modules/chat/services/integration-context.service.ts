@@ -148,6 +148,7 @@ export class IntegrationContextService {
       const providerIds = new Set(Array.from(grouped.keys()).map(toAgentFacingIntegrationId))
       providerIds.add('social_analysis')
       providerIds.add('seo_research')
+      providerIds.add('ads_intelligence')
       const providerNames = Array.from(providerIds)
       const lines: string[] = [
         '<connected_integrations>',

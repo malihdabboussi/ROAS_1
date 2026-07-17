@@ -26,6 +26,7 @@ import { OpenAICodexModule } from './openai-codex/openai-codex.module'
 import { PaypalModule } from './paypal/paypal.module'
 import { IntegrationsRepository } from './repositories/integrations.repository'
 import { ScrapeCreatorsModule } from './scrapecreators/scrapecreators.module'
+import { SearchApiModule } from './searchapi/searchapi.module'
 import { IntegrationsCalendarService } from './services/integrations-calendar.service'
 import { IntegrationsComposioCampaignService } from './services/integrations-composio-campaign.service'
 import { IntegrationsComposioHealthService } from './services/integrations-composio-health.service'
@@ -64,6 +65,7 @@ import { WordpressModule } from './wordpress/wordpress.module'
     FirefliesModule,
     PageGraderModule,
     ScrapeCreatorsModule,
+    SearchApiModule,
     DataForSeoModule,
     SupabaseIntegrationModule,
     WordpressModule,

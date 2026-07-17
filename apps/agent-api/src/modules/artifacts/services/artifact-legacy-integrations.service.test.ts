@@ -122,4 +122,54 @@ describe('ArtifactLegacyIntegrationsService', () => {
       'session',
     )
   })
+
+  it('routes providers with no Composio toolkit config through legacy HTTP', async () => {
+    const serviceClient = {
+      from: vi.fn((table: string) => {
+        if (table === 'project_composio_toolkit_config') {
+          return query({ data: null, error: null })
+        }
+        expect(table).toBe('integration_capabilities')
+        return query({
+          data: {
+            route_config: {
+              method: 'GET',
+              path: '/api/integrations/fathom/recordings/:recordingId/transcript',
+            },
+          },
+          error: null,
+        })
+      }),
+    }
+    const target = {
+      serviceClient,
+      mainApiCall: vi.fn(async () => ({ success: true, transcript: 'hello' })),
+      useComposioTool: vi.fn(async () => ({ success: false, error: 'should not run' })),
+    }
+    const service = new ArtifactLegacyIntegrationsService()
+
+    const result = await service.useIntegration(
+      target,
+      {
+        service: 'fathom',
+        integration_action: 'get_transcript',
+        params: { recordingId: '164183304' },
+      },
+      'session',
+    )
+
+    expect(target.useComposioTool).not.toHaveBeenCalled()
+    expect(target.mainApiCall).toHaveBeenCalled()
+    expect(result).toMatchObject({ success: true, transcript: 'hello' })
+  })
+
+  it('resolves missing toolkit config as legacy, not composio', async () => {
+    const serviceClient = {
+      from: vi.fn(() => query({ data: null, error: null })),
+    }
+    const service = new ArtifactLegacyIntegrationsService()
+    await expect(
+      service.resolveIntegrationExecutionMode({ serviceClient }, 'fathom'),
+    ).resolves.toBe('legacy')
+  })
 })

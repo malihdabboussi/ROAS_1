@@ -748,3 +748,4 @@
 20260319240000_missions_tasks_realtime.sql
 20260401300000_org_scope_notifications_awareness.sql
 20260407300000_campaign_brain_support.sql
+20260717043500_ads_intelligence_and_fathom_legacy_fix.sql
