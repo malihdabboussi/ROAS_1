@@ -6939,3 +6939,11 @@ Deferred because: Voice routing fix and mic-silence bug were scoped to capture/a
 - Evidence: `wc -l` = 710 (service hard limit 600); touched to recover a persisted paused BullMQ queue before publishing
 - Needed: Extract outbox claiming/persistence and event-to-job mapping into focused collaborators while preserving the dispatcher transaction and retry behavior
 - Why not now: the requested production recovery is a focused queue readiness fix; splitting the dispatcher would materially expand the incident change
+
+## 2026-07-16 — Artifact post-action verifier near LOC limit
+
+- Feature/app: agent-api / artifact verification
+- File: `apps/agent-api/src/modules/artifacts/services/artifact-post-action-verification.service.ts`
+- Evidence: `wc -l` = 557 after extracting its static action/table references; the service limit is 600 and the proactive extraction threshold is about 500
+- Needed: Extract database read-back/reference collection or URL verification into a focused collaborator
+- Why not now: the incident fix required correcting Mission and Space document reference routing; a second behavioral service split would expand the production recovery scope

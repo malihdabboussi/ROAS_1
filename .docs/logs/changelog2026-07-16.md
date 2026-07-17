@@ -840,3 +840,13 @@ What: Replaced the partial `mission_deliverables.idempotency_key` unique index w
 Why: Mission `save_document` emits `ON CONFLICT (idempotency_key)`, but PostgreSQL cannot match that target to a partial index without the same predicate, causing every Webinar strategy deliverable save to fail with `42P10`.
 Impact: Mission document saves remain idempotent across retries and can persist successfully; multiple rows with a null idempotency key remain valid under PostgreSQL unique-index semantics.
 Files: `20260716224000_fix_mission_deliverable_idempotency_conflict.sql`
+
+## [2026-07-16 19:01] - [FIX]
+
+What: Made artifact post-action verification read mission document results from `mission_deliverables` and pure Space document updates from `space_items`, while preserving `conversation_documents` verification for normal chat documents. Extracted the verifier's static action/table references to keep the service below the 600-line limit.
+
+Why: Successful Mission `save_document` and Space `update_document` operations were being rejected after persistence because the verifier always looked up document IDs in `conversation_documents`.
+
+Impact: Mission strategy deliverables and Space-only document updates can pass technical read-back verification instead of opening a false delivery-failure circuit after a successful write.
+
+Files: `artifact-post-action-verification.service.ts`, `artifact-post-action-verification-references.ts`, `artifact-post-action-verification.service.test.ts`

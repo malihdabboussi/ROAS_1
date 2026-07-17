@@ -100,6 +100,56 @@ describe('ArtifactPostActionVerificationService', () => {
     expect(readback.eq).toHaveBeenCalledWith('id', 'funnel-1')
   })
 
+  it('reads mission deliverable results back from mission_deliverables', async () => {
+    const readback = makeReadbackClient({ id: 'deliverable-1' })
+    const verifier = new ArtifactPostActionVerificationService()
+
+    const outcome = await verifier.verify({
+      host: makeHost(readback.client),
+      action: 'save_document',
+      data: { title: 'Strategy v2', content: 'Updated strategy' },
+      result: {
+        success: true,
+        id: 'deliverable-1',
+        deliverable_id: 'deliverable-1',
+        type: 'doc',
+      },
+      sessionKey:
+        'agent:gateway:subtask:nate:user-1:22222222-2222-2222-2222-222222222222',
+    })
+
+    expect(outcome.status).toBe('verified')
+    expect(readback.from).toHaveBeenCalledTimes(1)
+    expect(readback.from).toHaveBeenCalledWith('mission_deliverables')
+    expect(readback.eq).toHaveBeenCalledWith('id', 'deliverable-1')
+  })
+
+  it('reads pure space document updates back from space_items', async () => {
+    const readback = makeReadbackClient({ id: 'space-doc-1' })
+    const verifier = new ArtifactPostActionVerificationService()
+
+    const outcome = await verifier.verify({
+      host: makeHost(readback.client),
+      action: 'update_document',
+      data: { document_id: 'space-doc-1', content: 'Updated strategy' },
+      result: {
+        success: true,
+        document: {
+          id: 'space-doc-1',
+          document_id: 'space-doc-1',
+          source: 'space_doc',
+          space_id: 'space-1',
+        },
+      },
+      sessionKey,
+    })
+
+    expect(outcome.status).toBe('verified')
+    expect(readback.from).toHaveBeenCalledTimes(1)
+    expect(readback.from).toHaveBeenCalledWith('space_items')
+    expect(readback.eq).toHaveBeenCalledWith('id', 'space-doc-1')
+  })
+
   it('passes when a brain log action returns a readable entry id', async () => {
     const readback = makeReadbackClient({ id: 'brain-log-1' })
     const verifier = new ArtifactPostActionVerificationService()

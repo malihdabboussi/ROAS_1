@@ -1,5 +1,11 @@
 import { buildDeliveryFailureResult } from './artifact-post-action-error-results'
 import {
+  ACTION_RESULT_ID_TABLES,
+  ACTION_RESULT_OBJECT_ID_TABLES,
+  ARTIFACT_TYPE_TABLES,
+  ID_FIELD_TABLES,
+} from './artifact-post-action-verification-references'
+import {
   getPostActionVerificationPolicy,
   type ArtifactPostActionVerificationPolicy,
   type ArtifactPostActionVerificationStrategy,
@@ -54,80 +60,6 @@ type FetchLike = (
     headers?: Record<string, string>
   },
 ) => Promise<FetchResponseLike>
-
-const ARTIFACT_TYPE_TABLES: Record<string, string> = {
-  presentation: 'presentations',
-  presentation_file: 'presentation_files',
-  presentation_asset: 'presentation_assets',
-  funnel: 'funnels',
-  website: 'funnels',
-  funnel_page: 'funnel_pages',
-  website_page: 'funnel_pages',
-  form: 'forms',
-  media: 'media_assets',
-  media_asset: 'media_assets',
-  image: 'media_assets',
-  video: 'media_assets',
-  document: 'conversation_documents',
-  pdf: 'conversation_documents',
-  docx: 'conversation_documents',
-  space_item: 'space_items',
-  task: 'space_items',
-  social_post: 'social_posts',
-  blog_post: 'blog_posts',
-  mission: 'missions',
-  agent_skill: 'agent_skills',
-  skill_resource: 'agent_skill_resources',
-}
-
-const ID_FIELD_TABLES: Record<string, string> = {
-  presentation_id: 'presentations',
-  presentation_file_id: 'presentation_files',
-  presentation_asset_id: 'presentation_assets',
-  funnel_id: 'funnels',
-  website_id: 'funnels',
-  funnel_page_id: 'funnel_pages',
-  website_page_id: 'funnel_pages',
-  form_id: 'forms',
-  media_asset_id: 'media_assets',
-  mediaAssetId: 'media_assets',
-  document_id: 'conversation_documents',
-  space_item_id: 'space_items',
-  spaceItemId: 'space_items',
-  task_id: 'space_items',
-  social_post_id: 'social_posts',
-  blog_post_id: 'blog_posts',
-  mission_id: 'missions',
-  agent_skill_id: 'agent_skills',
-  skill_id: 'agent_skills',
-  skill_resource_id: 'agent_skill_resources',
-  memory_id: 'ns_memories',
-  memoryId: 'ns_memories',
-  company_signal_id: 'company_cortex_signals',
-  company_object_id: 'company_cortex_objects',
-}
-
-const ACTION_RESULT_ID_TABLES: Record<string, string> = {
-  create_presentation: 'presentations', update_presentation: 'presentations',
-  patch_presentation: 'presentations', create_funnel: 'funnels', create_website: 'funnels',
-  set_website_layout: 'funnels', create_form: 'forms', update_form: 'forms',
-  publish_form: 'forms', unpublish_form: 'forms', save_document: 'conversation_documents',
-  create_pdf: 'conversation_documents', create_docx: 'conversation_documents',
-  update_document: 'conversation_documents', create_social_post: 'social_posts',
-  update_social_post: 'social_posts', schedule_social_post: 'social_posts',
-  publish_social_post: 'social_posts', create_blog_post: 'blog_posts',
-  update_blog_post: 'blog_posts', create_mission: 'missions', update_mission: 'missions',
-  create_agent_skill: 'agent_skills', update_agent_skill: 'agent_skills',
-  create_agent_skill_resource: 'agent_skill_resources',
-  update_agent_skill_resource: 'agent_skill_resources', copy_skill_resource: 'agent_skill_resources',
-  upload_skill_asset: 'agent_skill_resources',
-}
-
-const ACTION_RESULT_OBJECT_ID_TABLES: Record<string, Record<string, string>> = {
-  log_brain_event: { entry: 'ns_brain_log' },
-  create_brain_belief_pattern: { pattern: 'ns_belief_patterns' },
-  update_brain_belief_pattern: { pattern: 'ns_belief_patterns' },
-}
 
 const URL_KEYS = new Set(
   'url uri file_url public_url signed_url download_url image_url video_url audio_url preview_url published_url storage_url'.split(
@@ -541,8 +473,23 @@ export class ArtifactPostActionVerificationService implements ArtifactPostAction
     }
 
     const actionTable = this.inferActionTable(action)
+    const resultDocument = isRecord(result) && isRecord(result.document) ? result.document : null
+    const spaceDocumentId =
+      nonEmptyString(resultDocument?.source) === 'space_doc'
+        ? nonEmptyString(resultDocument?.document_id ?? resultDocument?.id)
+        : null
     if (isRecord(result)) {
-      addRef(actionTable, result.id, `${action} result id`)
+      const missionDeliverableId = nonEmptyString(result.deliverable_id)
+      if (missionDeliverableId) {
+        addRef(
+          'mission_deliverables',
+          missionDeliverableId,
+          `${action} result deliverable_id`,
+        )
+      } else {
+        addRef(actionTable, result.id, `${action} result id`)
+      }
+      addRef('space_items', spaceDocumentId, `${action} result space document id`)
       for (const [field, table] of Object.entries(ID_FIELD_TABLES)) {
         addRef(table, result[field], `${action} result ${field}`)
       }
@@ -554,6 +501,7 @@ export class ArtifactPostActionVerificationService implements ArtifactPostAction
 
     walkRecords(result, (key, value) => {
       if (key === 'artifactId' && isRecord(result)) return
+      if (key === 'document_id' && nonEmptyString(value) === spaceDocumentId) return
       const table = ID_FIELD_TABLES[key]
       if (table) addRef(table, value, `${action} ${key}`)
     })
