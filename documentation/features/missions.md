@@ -177,6 +177,7 @@ The Fly machine reconciler also recognizes `AGENT_RUNTIME_MODE=shared` as an own
 - **`SubtaskAbortRegistry`** (mission-worker singleton): subtask execute registers the execution `AbortController`; `cancel_subtask` / `reassign_subtask` (when the subtask was `in_progress`) calls `abort()` so the OpenClaw stream stops immediately.
 - **Internal manager API**: `edit-subtask` rejects only `cancelled`; `retry-subtask` allows `blocked`, `done`, `revision`, `pending`, and `in_progress`, and flips mission `blocked`/`failed`/`error`/`review` → `in_progress`; `append-subtasks` flips `review`/`done`/`blocked`/`error`/`failed` → `todo` (clears `error` when leaving `error`/`failed`).
 - **Retry convergence**: comment directives compare the subtask status they planned against with the current status before acting. If triage or another recovery path already moved blocked work to `pending`/`in_progress`, the later directive converges without aborting it. A directive that began while the subtask was already `in_progress` still performs abort-and-retry for intentional mid-run steering. Triage `retry`/`reassign` decisions do not run a second ready-subtask sweep because the manager retry endpoint already enqueues execution.
+- **Replacement safety**: triage validates replacement work before cancelling anything. If cancelling the blocked subtask would also cancel ordinary downstream work, the worker converts the replacement into a full replan instead of truncating the mission. Validation-only dependents can still be cloned onto a local replacement.
 - **Execute phase**: mission is runnable unless status is `done` or `backlog` (so `review`/`blocked`/etc. can still run queued subtask work as needed).
 - **`enqueueReadySubtaskEvents`**: dependency resolution uses status for **all** subtasks (including `cancelled`) so dependents of cancelled deps unblock.
 - **Outbox dispatch**: `mission.subtask.*` events use an expanded mission-status allowlist (`blocked`, `error`, `failed` included) so execute/triage rows are not stuck retrying.
@@ -216,6 +217,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-16: Converted triage replacement into a full replan whenever cascade cancellation would erase ordinary downstream work, and moved replacement validation ahead of cancellation.
 - 2026-07-16: Applied the startup lease to queued recovered subtasks so the stalled and orphan watchdogs cannot enqueue overlapping executions during ordinary queue delay.
 - 2026-07-16: Preserved always-on Fly runtimes marked `AGENT_RUNTIME_MODE=shared` during machine reconciliation so the five-minute orphan cleanup cannot terminate active Mission streams.
 - 2026-07-16: Coordinated concurrent triage and comment retries so a delayed "try again" directive cannot abort work another recovery path just started, and removed the duplicate triage execute enqueue.

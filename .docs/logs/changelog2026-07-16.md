@@ -806,3 +806,13 @@ Why: The stalled watchdog requeued Pre-call, but the orphan watchdog treated the
 Impact: Recovered jobs get enough time to leave BullMQ and claim the subtask without a competing watchdog retry; genuinely lost queued work is still recovered after the startup lease.
 
 Files: `mission-execution-lease.ts`, `missions.scheduler-recovery.watchdogs.phase-b.ts`, mission recovery tests, `documentation/features/missions.md`
+
+## [2026-07-16 17:49] - [FIX]
+
+What: Guarded triage `replace` decisions so ordinary downstream dependents trigger a full replan before any cancellation; replacement payloads are now validated before cancellation.
+
+Why: Replacing the blocked Pre-call step cascaded through all nine dependent Webinar Fulfillment subtasks, but the manager only supplied one local replacement. The mission kept running while its remaining playbook was silently cancelled.
+
+Impact: A local replacement can no longer truncate the rest of a mission. Validation-only descendants still follow the replacement; broader dependency branches are rebuilt through the existing replan path.
+
+Files: `mission-subtask-triage.service.ts`, `mission-scope-normalization.test.ts`, `documentation/features/missions.md`

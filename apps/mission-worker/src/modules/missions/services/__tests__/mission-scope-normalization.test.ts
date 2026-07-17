@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import { normalizePlanSubtask } from '../../utils/normalize-intent'
-import { MissionSubtaskTriageService } from '../phases/mission-subtask-triage.service'
+import {
+  MissionSubtaskTriageService,
+  shouldReplanTriageReplacement,
+} from '../phases/mission-subtask-triage.service'
 import { MissionJsonService } from '../utils/mission-json.service'
 
 describe('mission scope normalization', () => {
@@ -123,5 +126,29 @@ describe('mission scope normalization', () => {
       assignTo: 'niko',
       dependsOn: ['copy-1', 'visual-new'],
     })
+  })
+
+  it('requires a replan when replacement would cancel ordinary downstream work', () => {
+    const rows = [
+      { id: 'precall', title: 'Pre-call strategy', status: 'blocked', depends_on: [] },
+      { id: 'launch', title: 'Launch brief', status: 'pending', depends_on: ['precall'] },
+      {
+        id: 'validation',
+        title: 'Assertion Harness Validation Report',
+        status: 'pending',
+        assigned_agent_key: 'niko',
+        depends_on: ['launch'],
+      },
+    ]
+    const dependentIds = new Set(['precall', 'launch', 'validation'])
+
+    expect(shouldReplanTriageReplacement(rows, dependentIds, 'precall')).toBe(true)
+    expect(
+      shouldReplanTriageReplacement(
+        [rows[0], { ...rows[2], depends_on: ['precall'] }],
+        new Set(['precall', 'validation']),
+        'precall',
+      ),
+    ).toBe(false)
   })
 })

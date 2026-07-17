@@ -121,7 +121,7 @@ Files:
 
 - `apps/web/src/features/mission-control/components/dialogs/SubtasksSection.tsx` (419 LOC; limit 400)
 - `apps/mission-worker/src/modules/missions/services/phases/mission-comment-directive.service.ts` (542 LOC; limit 500)
-- `apps/mission-worker/src/modules/missions/services/phases/mission-subtask-triage.service.ts` (405 LOC; approaching 500 LOC service limit)
+- `apps/mission-worker/src/modules/missions/services/phases/mission-subtask-triage.service.ts` (441 LOC; approaching service decomposition threshold)
   Evidence: `wc -l` after retry convergence fix; directive switch is still monolithic and triage owns decision execution plus replacement graph handling.
   Needed work: Extract assignee picker; split directive action handlers.
   Deferred because: In-scope work was preventing concurrent retry paths from aborting one another; further split is structure-only.

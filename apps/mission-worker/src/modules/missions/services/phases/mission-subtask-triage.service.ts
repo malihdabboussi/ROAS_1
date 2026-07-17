@@ -18,6 +18,28 @@ type TriageSiblingRow = {
   scheduled_at?: string | null
 }
 
+function isValidationTriageSubtask(row: TriageSiblingRow): boolean {
+  const title = String(row.title || '').toLowerCase()
+  const agentKey = String(row.assigned_agent_key || '').toLowerCase()
+  return (
+    /assertion|validation|quality gate|quality report|validator/.test(title) ||
+    (agentKey === 'niko' && /review|qa|quality|validation/.test(title))
+  )
+}
+
+export function shouldReplanTriageReplacement(
+  rows: TriageSiblingRow[],
+  dependentIds: Set<string>,
+  rootId: string,
+): boolean {
+  return rows.some((row) => {
+    const id = String(row.id)
+    if (id === rootId || !dependentIds.has(id)) return false
+    if (String(row.status) === 'cancelled') return false
+    return !isValidationTriageSubtask(row)
+  })
+}
+
 export function shouldSweepReadySubtasksAfterTriage(decision: string): boolean {
   return decision === 'cancel' || decision === 'replace'
 }
@@ -229,13 +251,6 @@ export class MissionSubtaskTriageService {
             dependentIds,
             String(subtaskId),
           )
-          await this.postManager('/manager/cancel-subtask', {
-            mission_id: missionId,
-            user_id: uid,
-            org_id: orgId,
-            subtask_id: subtaskId,
-            idempotency_key: `triage-replace-cancel-${subtaskId}-${job.id}`,
-          })
           const rawAdd = parsed.addSubtasks
           if (!Array.isArray(rawAdd) || rawAdd.length === 0) {
             throw new Error('replace requires addSubtasks array')
@@ -251,6 +266,32 @@ export class MissionSubtaskTriageService {
           if (normalized.length === 0) {
             throw new Error('replace: none of the addSubtasks could be normalised')
           }
+          if (
+            shouldReplanTriageReplacement(siblingRows, dependentIds, String(subtaskId))
+          ) {
+            const rationale =
+              typeof parsed.feedback === 'string' && parsed.feedback.trim()
+                ? parsed.feedback.trim()
+                : `Replacement of subtask ${subtaskId} affects ordinary downstream work`
+            await this.postManager('/manager/prepare-replan', {
+              mission_id: missionId,
+              user_id: uid,
+              org_id: orgId,
+              reason: `${rationale}. Preserving the full downstream mission requires a replan.`.slice(
+                0,
+                2000,
+              ),
+              idempotency_key: `triage-replace-replan-${subtaskId}-${job.id}`,
+            })
+            break
+          }
+          await this.postManager('/manager/cancel-subtask', {
+            mission_id: missionId,
+            user_id: uid,
+            org_id: orgId,
+            subtask_id: subtaskId,
+            idempotency_key: `triage-replace-cancel-${subtaskId}-${job.id}`,
+          })
           const replacementIds = normalized
             .map((st) => (typeof st.id === 'string' ? st.id : ''))
             .filter(Boolean)
@@ -374,12 +415,7 @@ export class MissionSubtaskTriageService {
   }
 
   private isValidationSubtask(row: TriageSiblingRow): boolean {
-    const title = String(row.title || '').toLowerCase()
-    const agentKey = String(row.assigned_agent_key || '').toLowerCase()
-    return (
-      /assertion|validation|quality gate|quality report|validator/.test(title) ||
-      (agentKey === 'niko' && /review|qa|quality|validation/.test(title))
-    )
+    return isValidationTriageSubtask(row)
   }
 
   private cloneValidationSubtaskForReplacement(
