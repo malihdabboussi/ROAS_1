@@ -94,6 +94,8 @@ export class MachineReconciliationService {
       const profile = context.profilesByMachineId.get(machine.id)
       const pool = context.poolByMachineId.get(machine.id)
 
+      if (!profile && !pool && this.isSharedRuntime(machine)) continue
+
       if (profile) {
         if (profile.runtimeStatus === 'running') continue
         const stopped = await this.stopDriftMachine(machine, profile.runtimeApp)
@@ -224,7 +226,7 @@ export class MachineReconciliationService {
         }
       } else if (pool) {
         report.drift.startedPoolDrift++
-      } else {
+      } else if (!this.isSharedRuntime(machine)) {
         report.drift.startedOrphanDrift++
       }
     }
@@ -373,6 +375,10 @@ export class MachineReconciliationService {
     const lastActivity = profile.lastActivityAt ? new Date(profile.lastActivityAt).getTime() : 0
     if (!Number.isFinite(lastActivity) || lastActivity <= 0) return true
     return Date.now() - lastActivity > this.staleStartingThresholdMs
+  }
+
+  private isSharedRuntime(machine: FlyMachineSummary): boolean {
+    return machine.env.AGENT_RUNTIME_MODE === 'shared'
   }
 
   private isStoppedLike(state: FlyMachineState): boolean {

@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MachineReconciliationService } from '../machine-reconciliation.service'
 
-function machine(id: string, state: 'started' | 'stopped') {
+function machine(
+  id: string,
+  state: 'started' | 'stopped',
+  env: Record<string, string> = {},
+) {
   return {
     id,
     name: id,
@@ -9,7 +13,7 @@ function machine(id: string, state: 'started' | 'stopped') {
     updatedAt: null,
     rawState: state,
     metadata: {},
-    env: {},
+    env,
   }
 }
 
@@ -110,7 +114,7 @@ describe('MachineReconciliationService', () => {
     )
     expect(machinesService.resetMachineIdentity).toHaveBeenCalledWith(
       'orphan-started',
-      'vibey-runtimes',
+      'roas-runtimes',
     )
     expect(machinesService.resetMachineIdentity).toHaveBeenCalledTimes(2)
     expect(machinesService.resetMachineIdentity.mock.invocationCallOrder[0]).toBeLessThan(
@@ -153,6 +157,30 @@ describe('MachineReconciliationService', () => {
     expect(report.actions.stoppedPoolMachines).toBe(0)
     expect(report.actions.failedResets).toBe(1)
     expect(report.machineIds.failedResets).toEqual(['pool-started'])
+    expect(flyState.stopMachine).not.toHaveBeenCalled()
+  })
+
+  it('preserves an unowned shared runtime instead of treating it as orphan drift', async () => {
+    const { service, flyState, machinesService } = makeService()
+    ;(
+      service as unknown as {
+        loadContext: () => Promise<{
+          flyMachines: ReturnType<typeof machine>[]
+          profilesByMachineId: Map<string, ReturnType<typeof profile>>
+          poolByMachineId: Map<string, ReturnType<typeof pool>>
+        }>
+      }
+    ).loadContext = vi.fn().mockResolvedValue({
+      flyMachines: [machine('shared-runtime', 'started', { AGENT_RUNTIME_MODE: 'shared' })],
+      profilesByMachineId: new Map(),
+      poolByMachineId: new Map(),
+    })
+
+    const report = await service.reconcileRuntimeState()
+
+    expect(report.drift.startedOrphanDrift).toBe(0)
+    expect(report.actions.stoppedOrphanMachines).toBe(0)
+    expect(machinesService.resetMachineIdentity).not.toHaveBeenCalled()
     expect(flyState.stopMachine).not.toHaveBeenCalled()
   })
 

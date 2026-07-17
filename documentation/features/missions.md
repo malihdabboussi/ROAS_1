@@ -170,6 +170,8 @@ Routing behavior:
 - Brain import jobs now dispatch through `agent-runtime-queue-brain-import`. Mission-worker owns the queue processor: sweep jobs call the API internal due-job endpoint, and concrete import jobs call the API internal process endpoint. The API remains the durable `brain_import_jobs` state owner and Atlas import service. Execution uses `AGENT_RUNTIME_BRAIN_IMPORT_CONCURRENCY`, `AGENT_RUNTIME_BRAIN_IMPORT_PER_USER_CONCURRENCY`, and `AGENT_RUNTIME_BRAIN_IMPORT_BATCH_SIZE` caps. Each Atlas import call uses `brain-import:{jobId}` as its OpenClaw lane. Sweep calls retry transient Main API enqueue failures with `AGENT_RUNTIME_BRAIN_IMPORT_MAIN_API_MAX_ATTEMPTS` and log path, origin, status, attempt, and retryability context when the upstream request fails.
 - Mission-worker Bull Board at `/admin/queues` monitors the five active runtime queues: chat, mission, Brain ops, Brain import, and automation. Mission/Brain use the mission-worker Bull connection; chat, Brain import, and automation use the agent-runtime Redis resolver and shared queue prefix.
 
+The Fly machine reconciler also recognizes `AGENT_RUNTIME_MODE=shared` as an ownership marker. A started shared runtime is not treated as orphan drift merely because it has no per-user `profiles` row or `machine_pool` row; profile, pool, and genuinely unowned non-shared machines keep their existing reconciliation behavior.
+
 ## Directive flexibility (manager + worker)
 
 - **`SubtaskAbortRegistry`** (mission-worker singleton): subtask execute registers the execution `AbortController`; `cancel_subtask` / `reassign_subtask` (when the subtask was `in_progress`) calls `abort()` so the OpenClaw stream stops immediately.
@@ -214,6 +216,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-16: Preserved always-on Fly runtimes marked `AGENT_RUNTIME_MODE=shared` during machine reconciliation so the five-minute orphan cleanup cannot terminate active Mission streams.
 - 2026-07-16: Coordinated concurrent triage and comment retries so a delayed "try again" directive cannot abort work another recovery path just started, and removed the duplicate triage execute enqueue.
 - 2026-07-16: Replaced priority-based, 15-minute-only stalled-subtask recovery with renewable execution leases, immediate startup recovery, a dedicated 30-second sweep, exact-timestamp reclaim guards, and surfaced outbox failures.
 - 2026-07-08: Added the designer `ui-component-design` system skill so product UI component work routes through a dedicated component design workflow instead of generic asset or page design.

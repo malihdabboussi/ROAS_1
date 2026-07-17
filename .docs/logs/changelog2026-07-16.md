@@ -786,3 +786,13 @@ Why: OpenClaw treated the missing WhatsApp plugin as a whole-config validation f
 Impact: The corrected runtime exposes `/v1/responses` again. Future plugin/config drift fails startup with exact validation issues instead of presenting a false-green runtime that blocks Missions.
 
 Files: `docker/openclaw.json`, `apps/openclaw/src/gateway/headless-http-server.ts`, `.docs/plans/agent-follow-up-work.md`
+
+## [2026-07-16 17:18] - [FIX]
+
+What: Exempted unowned Fly machines marked `AGENT_RUNTIME_MODE=shared` from orphan reconciliation while preserving cleanup for profile, pool, and genuine orphan drift.
+
+Why: The five-minute machine reconciliation job could not find the always-on shared `roas-runtimes` machine in `profiles` or `machine_pool`, classified it as orphaned, and repeatedly stopped it during active Mission streams.
+
+Impact: Shared Mission/Brain runtime streams are no longer terminated by routine machine cleanup. Dedicated and pooled machine reconciliation behavior is unchanged.
+
+Files: `machine-reconciliation.service.ts`, `machine-reconciliation.service.test.ts`, `documentation/features/missions.md`
