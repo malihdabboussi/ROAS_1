@@ -2,7 +2,10 @@ import { Logger } from '@nestjs/common'
 import { describe, expect, it, vi } from 'vitest'
 import { enqueueMissionOutboxEvent } from '../missions.scheduler-recovery.outbox'
 import type { MissionsSchedulerRecoveryCtx } from '../missions.scheduler-recovery.types'
-import { detectStalledSubtasks } from '../missions.scheduler-recovery.watchdogs.phase-b'
+import {
+  detectOrphanedPendingSubtasks,
+  detectStalledSubtasks,
+} from '../missions.scheduler-recovery.watchdogs.phase-b'
 
 describe('mission scheduler recovery', () => {
   it('does not enqueue when a stale snapshot loses the atomic reclaim race', async () => {
@@ -102,5 +105,51 @@ describe('mission scheduler recovery', () => {
         requeueExistingDedupeKey: true,
       }),
     ).rejects.toThrow('database unavailable')
+  })
+
+  it('uses queued execution state when checking an orphan recovery lease', async () => {
+    const pgQuery = vi.fn().mockImplementation(async (sql: string) => {
+      if (sql.includes('SELECT DISTINCT ms.mission_id')) {
+        return {
+          rows: [{ mission_id: 'mission-1', user_id: 'user-1', priority: 'normal' }],
+          rowCount: 1,
+        }
+      }
+      if (sql.includes('FROM mission_subtasks WHERE mission_id')) {
+        return {
+          rows: [
+            {
+              id: 'subtask-1',
+              status: 'pending',
+              depends_on: [],
+              updated_at: '2026-07-16T21:00:00.000Z',
+              execution_state: { execution_status: 'queued' },
+            },
+          ],
+          rowCount: 1,
+        }
+      }
+      throw new Error(`Unexpected SQL: ${sql}`)
+    })
+    const isPastMissionExecutionLease = vi.fn().mockReturnValue(false)
+    const enqueueOutboxEvent = vi.fn()
+    const ctx = {
+      databaseService: {
+        getClient: () => ({}),
+        hasPgPool: () => true,
+        pgQuery,
+      },
+      logger: new Logger('test'),
+      isPastMissionExecutionLease,
+      enqueueOutboxEvent,
+    } as unknown as MissionsSchedulerRecoveryCtx
+
+    await detectOrphanedPendingSubtasks(ctx)
+
+    expect(isPastMissionExecutionLease).toHaveBeenCalledWith(
+      '2026-07-16T21:00:00.000Z',
+      'queued',
+    )
+    expect(enqueueOutboxEvent).not.toHaveBeenCalled()
   })
 })

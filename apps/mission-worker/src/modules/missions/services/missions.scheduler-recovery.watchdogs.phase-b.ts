@@ -270,20 +270,21 @@ export async function detectOrphanedPendingSubtasks(ctx: MissionsSchedulerRecove
       status: string
       depends_on: string[] | null
       updated_at: string | null
+      execution_state: Record<string, unknown> | null
     }
     let subtasks: SubtaskRow[]
     if (ctx.databaseService.hasPgPool()) {
       try {
         subtasks = (
           await ctx.databaseService.pgQuery<SubtaskRow>(
-            `SELECT id, status, depends_on, updated_at FROM mission_subtasks WHERE mission_id = $1::uuid ORDER BY sort_order ASC`,
+            `SELECT id, status, depends_on, updated_at, execution_state FROM mission_subtasks WHERE mission_id = $1::uuid ORDER BY sort_order ASC`,
             [mission_id],
           )
         ).rows
       } catch {
         const { data } = await supabase
           .from('mission_subtasks')
-          .select('id, status, depends_on, updated_at')
+          .select('id, status, depends_on, updated_at, execution_state')
           .eq('mission_id', mission_id)
           .order('sort_order', { ascending: true })
         subtasks = (data || []) as SubtaskRow[]
@@ -291,7 +292,7 @@ export async function detectOrphanedPendingSubtasks(ctx: MissionsSchedulerRecove
     } else {
       const { data } = await supabase
         .from('mission_subtasks')
-        .select('id, status, depends_on, updated_at')
+        .select('id, status, depends_on, updated_at, execution_state')
         .eq('mission_id', mission_id)
         .order('sort_order', { ascending: true })
       subtasks = (data || []) as SubtaskRow[]
@@ -306,7 +307,11 @@ export async function detectOrphanedPendingSubtasks(ctx: MissionsSchedulerRecove
 
     for (const subtask of subtasks) {
       if (subtask.status !== 'pending') continue
-      if (!ctx.isPastMissionExecutionLease(subtask.updated_at)) continue
+      const executionStatus =
+        subtask.execution_state && typeof subtask.execution_state.execution_status === 'string'
+          ? subtask.execution_state.execution_status
+          : null
+      if (!ctx.isPastMissionExecutionLease(subtask.updated_at, executionStatus)) continue
       const deps = Array.isArray(subtask.depends_on) ? subtask.depends_on : []
       if (!deps.every(depSatisfied)) continue
 

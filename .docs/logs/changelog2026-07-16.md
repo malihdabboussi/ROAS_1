@@ -796,3 +796,13 @@ Why: The five-minute machine reconciliation job could not find the always-on sha
 Impact: Shared Mission/Brain runtime streams are no longer terminated by routine machine cleanup. Dedicated and pooled machine reconciliation behavior is unchanged.
 
 Files: `machine-reconciliation.service.ts`, `machine-reconciliation.service.test.ts`, `documentation/features/missions.md`
+
+## [2026-07-16 17:38] - [FIX]
+
+What: Made recovered `queued` mission subtasks use the six-minute startup lease, and passed their execution state into orphan-watchdog lease checks.
+
+Why: The stalled watchdog requeued Pre-call, but the orphan watchdog treated the queued row as abandoned after only 90 seconds and created a second execute intent. The overlapping execution aborted the first run.
+
+Impact: Recovered jobs get enough time to leave BullMQ and claim the subtask without a competing watchdog retry; genuinely lost queued work is still recovered after the startup lease.
+
+Files: `mission-execution-lease.ts`, `missions.scheduler-recovery.watchdogs.phase-b.ts`, mission recovery tests, `documentation/features/missions.md`

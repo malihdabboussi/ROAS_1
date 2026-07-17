@@ -35,6 +35,19 @@ describe('mission execution lease', () => {
     expect(isPastMissionExecutionLease(startingLeaseExpiredAt, now, undefined, 'starting')).toBe(true)
   })
 
+  it('allows queued work the same startup lease before recovery', () => {
+    const now = Date.parse('2026-07-16T22:00:00.000Z')
+    const activeLeaseExpiredAt = new Date(
+      now - DEFAULT_MISSION_EXECUTION_LEASE_TIMEOUT_MS,
+    ).toISOString()
+    const startingLeaseExpiredAt = new Date(
+      now - DEFAULT_MISSION_EXECUTION_START_LEASE_TIMEOUT_MS,
+    ).toISOString()
+
+    expect(isPastMissionExecutionLease(activeLeaseExpiredAt, now, undefined, 'queued')).toBe(false)
+    expect(isPastMissionExecutionLease(startingLeaseExpiredAt, now, undefined, 'queued')).toBe(true)
+  })
+
   it('throttles lease writes while still renewing well before expiry', () => {
     const lastWrite = 100_000
 

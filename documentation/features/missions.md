@@ -9,12 +9,12 @@ Active subtask execution uses `mission_subtasks.updated_at` as a renewable lease
 Recovery behavior:
 
 - The mission worker runs a stalled-work sweep immediately on startup and then every 30 seconds by default (`MISSIONS_RECOVERY_POLL_MS`). Operational loops and digests remain on the slower `MISSIONS_WATCHDOG_MS` schedule.
-- Runtime startup has a six-minute lease by default (`MISSIONS_EXECUTION_START_LEASE_TIMEOUT_MS`) to cover machine wake and readiness before the first stream event. The state switches from `starting` to `streaming` on that first event.
+- Queued work and runtime startup have a six-minute lease by default (`MISSIONS_EXECUTION_START_LEASE_TIMEOUT_MS`) to cover queue delay, machine wake, and readiness before the first stream event. The state switches from `starting` to `streaming` on that first event.
 - An active streaming execution lease expires after 90 seconds by default (`MISSIONS_EXECUTION_LEASE_TIMEOUT_MS`). Lease writes are throttled to 15 seconds by default (`MISSIONS_EXECUTION_LEASE_WRITE_MS`).
 - Before reclaiming an expired subtask, the worker probes its OpenClaw session. An active session is left alone.
 - Reclaim compares the row's exact `updated_at` value from the stale snapshot. If stream activity renewed it in the meantime, the update affects no rows and no recovery event is queued.
 - A recovered row preserves completed actions, clears the dead `current_tool`, returns to `pending`, and requeues the stable execute intent. Failed outbox writes now fail the recovery sweep visibly instead of logging false success.
-- Pending rows left between reclaim and enqueue are covered by the same short lease threshold and stable outbox dedupe key on the next sweep.
+- Pending rows left between reclaim and enqueue retain `execution_status = queued` and use the startup lease. This prevents the orphan watchdog from creating a second execute intent while the first recovered Bull job is still waiting to claim the row.
 
 With the defaults, a dead execution is normally eligible at 90 seconds and recovered on the next 30-second sweep, while real stream traffic keeps extending the lease.
 
@@ -216,6 +216,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-16: Applied the startup lease to queued recovered subtasks so the stalled and orphan watchdogs cannot enqueue overlapping executions during ordinary queue delay.
 - 2026-07-16: Preserved always-on Fly runtimes marked `AGENT_RUNTIME_MODE=shared` during machine reconciliation so the five-minute orphan cleanup cannot terminate active Mission streams.
 - 2026-07-16: Coordinated concurrent triage and comment retries so a delayed "try again" directive cannot abort work another recovery path just started, and removed the duplicate triage execute enqueue.
 - 2026-07-16: Replaced priority-based, 15-minute-only stalled-subtask recovery with renewable execution leases, immediate startup recovery, a dedicated 30-second sweep, exact-timestamp reclaim guards, and surfaced outbox failures.

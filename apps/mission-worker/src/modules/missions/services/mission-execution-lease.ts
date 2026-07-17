@@ -42,9 +42,10 @@ export function isPastMissionExecutionLease(
   if (!updatedAt) return false
   const updatedAtMs = new Date(updatedAt).getTime()
   if (!Number.isFinite(updatedAtMs)) return false
+  const isStartupState = executionStatus === 'starting' || executionStatus === 'queued'
   const resolvedTimeoutMs =
     leaseTimeoutMs ??
-    (executionStatus === 'starting'
+    (isStartupState
       ? getMissionExecutionStartLeaseTimeoutMs()
       : getMissionExecutionLeaseTimeoutMs())
   return nowMs - updatedAtMs >= resolvedTimeoutMs
