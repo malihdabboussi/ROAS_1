@@ -999,3 +999,10 @@ What: Fixed TypeScript possibly-undefined aspect ratio glyph math in `aspect-rat
 Why: Vercel web deploy failed on `parts[0]` / `parts[1]` possibly undefined, blocking full production rollout.
 Impact: `roas-web` can deploy again; aspect picker glyph still defaults invalid ratios to 1:1.
 Files: `apps/web/src/components/media/aspect-ratio-menu.tsx`
+
+## [2026-07-16 22:54] - [FIX]
+
+What: Removed unused execution-state memo in `useMissionExecStream` and committed `Mission.space_id` + `MissionExecutionState.partial_output` so `roas-web` TypeScript production builds pass.
+Why: Vercel web deploy failed first on unused `es`, then related mission typing gaps blocked a clean full rollout.
+Impact: `roas-web` can build and deploy with the rest of production.
+Files: `useMissionExecStream.ts`, `mission-types.ts`

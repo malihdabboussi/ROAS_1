@@ -24,6 +24,7 @@ export interface Mission {
   user_id: string
   parent_mission_id: string | null
   campaign_id: string | null
+  space_id?: string | null
   title: string
   brief: string | null
   description: string | null
@@ -78,6 +79,7 @@ export interface MissionToolStep {
 
 export interface MissionExecutionState {
   execution_status?: 'streaming' | 'complete' | 'failed'
+  partial_output?: string
   current_tool?: {
     name: string
     label: string

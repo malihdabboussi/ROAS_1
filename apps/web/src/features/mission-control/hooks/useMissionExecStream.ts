@@ -114,11 +114,6 @@ export interface UseMissionExecStreamResult {
 }
 
 export function useMissionExecStream(subtask: MissionSubtask | null): UseMissionExecStreamResult {
-  const es = useMemo(
-    () => normalizeExecutionState(subtask?.execution_state),
-    [subtask?.execution_state],
-  )
-
   const shouldSubscribe = !!subtask?.id && subtask.status === 'in_progress'
 
   const [toolBlocks, setToolBlocks] = useState<ToolBlock[]>([])
@@ -158,6 +153,18 @@ export function useMissionExecStream(subtask: MissionSubtask | null): UseMission
         return b
       }),
     )
+    const persistedOutput = state?.partial_output?.trim()
+    if (persistedOutput) {
+      setAssistantBlock((prev) =>
+        prev && prev.content.length > persistedOutput.length
+          ? prev
+          : {
+              type: 'text',
+              id: 'assistant-persisted',
+              content: persistedOutput,
+            },
+      )
+    }
     if (state?.execution_status === 'complete' || state?.execution_status === 'failed') {
       setStreamEnded(true)
     }
