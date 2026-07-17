@@ -69,14 +69,19 @@ describe('DeliverablesCarousel', () => {
 
     expect(screen.getByText('Deliverables & media')).toBeInTheDocument()
     expect(screen.getByText('3 items')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Grid view' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'List view' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Launch Offer' }))
+    fireEvent.click(screen.getByText('Launch Offer'))
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'offer-1' }))
 
+    fireEvent.click(screen.getByRole('button', { name: 'Grid view' }))
+    expect(screen.getByRole('button', { name: 'Grid view' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
     fireEvent.click(screen.getByRole('button', { name: 'List view' }))
     expect(screen.getByText('Name')).toBeInTheDocument()
     expect(screen.getByText('Launch Brief')).toBeInTheDocument()

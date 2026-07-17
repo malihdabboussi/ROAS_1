@@ -1,5 +1,5 @@
-import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
+import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { DriveFileBrowserModal } from '@/components/media/DriveFileBrowserModal'
 import { DropboxFileBrowserModal } from '@/components/media/DropboxFileBrowserModal'
 import { MediaPickerModal } from '@/components/media/MediaPickerModal'
@@ -7,14 +7,12 @@ import type {
   Mission,
   MissionAgent,
   MissionDeliverable,
-  MissionLog,
   MissionStatus,
   MissionSubtask,
   PrdContent,
   RecommendedHire,
 } from '../../types'
 import { PlanDetailModal } from './PlanDetailModal'
-import { SubtaskDetailModal } from './SubtaskDetailModal'
 
 interface MissionDetailOverlayModalsProps {
   previewDeliverable: MissionDeliverable | null
@@ -30,10 +28,6 @@ interface MissionDetailOverlayModalsProps {
   onApprovePlan: () => void
   onRejectPlan: () => void
   approvingPlan: boolean
-  selectedSubtaskId: string | null
-  missionLogs: MissionLog[]
-  onCloseSubtask: () => void
-  onSubtaskCommentSent: (log: MissionLog) => void
   showDrivePicker: boolean
   onCloseDrive: () => void
   onSelectCloudFile: (file: File) => void
@@ -59,10 +53,6 @@ export function MissionDetailOverlayModals({
   onApprovePlan,
   onRejectPlan,
   approvingPlan,
-  selectedSubtaskId,
-  missionLogs,
-  onCloseSubtask,
-  onSubtaskCommentSent,
   showDrivePicker,
   onCloseDrive,
   onSelectCloudFile,
@@ -73,10 +63,6 @@ export function MissionDetailOverlayModals({
   onSelectLibrary,
   campaignId,
 }: MissionDetailOverlayModalsProps) {
-  const selectedSubtask = selectedSubtaskId
-    ? (subtasks.find((item) => item.id === selectedSubtaskId) ?? null)
-    : null
-
   return (
     <>
       {previewDeliverable && (
@@ -84,6 +70,7 @@ export function MissionDetailOverlayModals({
           deliverable={previewDeliverable}
           agents={agents}
           campaignId={effectiveMission.campaign_id ?? previewDeliverable.campaign_id ?? null}
+          fallbackSpaceId={effectiveMission.space_id ?? null}
           hideOpenSourceMission
           renderEntityPreview={renderDeliverableEntityPreview}
           onClose={onClosePreview}
@@ -102,17 +89,6 @@ export function MissionDetailOverlayModals({
           approving={approvingPlan}
         />
       )}
-
-      {selectedSubtask ? (
-        <SubtaskDetailModal
-          missionId={effectiveMission.id}
-          subtask={selectedSubtask}
-          agents={agents}
-          logs={missionLogs}
-          onClose={onCloseSubtask}
-          onCommentSent={onSubtaskCommentSent}
-        />
-      ) : null}
 
       <DriveFileBrowserModal
         open={showDrivePicker}

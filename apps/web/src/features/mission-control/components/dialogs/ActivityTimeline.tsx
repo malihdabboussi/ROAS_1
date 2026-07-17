@@ -63,7 +63,7 @@ export function ActivityTimeline({
   onCommentSend,
   activityEndRef,
   timelineKey,
-  className = 'pb-spacing-2 hidden min-w-0 flex-[3] shrink-0 lg:flex lg:flex-col',
+  className = 'pb-spacing-2 hidden min-w-0 flex-1 shrink-0 lg:flex lg:flex-col',
   attachedFiles = [],
   onRemoveFile,
   onFileButtonClick,
@@ -137,9 +137,9 @@ export function ActivityTimeline({
 
   return (
     <div className={className}>
-      <div className="card-glass lg:rounded-spacing-2 flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="px-spacing-6 py-spacing-3 flex-shrink-0">
-          <h3 className="body-3 font-semibold text-[var(--color-foreground)]">Activity</h3>
+      <div className="card-glass lg:rounded-spacing-3 flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="border-border px-spacing-4 py-spacing-3 flex flex-shrink-0 items-center justify-between border-b">
+          <h3 className="body-2 text-foreground font-semibold">Activity</h3>
         </div>
         <div className="flex min-h-0 flex-1 flex-col">
           <ActivityTimelineLogList

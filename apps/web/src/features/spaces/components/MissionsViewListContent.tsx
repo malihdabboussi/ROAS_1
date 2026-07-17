@@ -33,6 +33,7 @@ export interface MissionsViewListContentProps {
   onPersistColumnWidths: () => void
   onToggleGroup: (groupKey: string) => void
   onSelectMission: (missionId: string) => void
+  onSelectSubtask: (missionId: string, subtaskId: string) => void
   onChanged: () => void
   onToggleSubtaskExpand: (missionId: string) => void
   onReorderColumns: (next: MissionColumnId[]) => Promise<void>
@@ -64,6 +65,7 @@ export function MissionsViewListContent({
   onPersistColumnWidths,
   onToggleGroup,
   onSelectMission,
+  onSelectSubtask,
   onChanged,
   onToggleSubtaskExpand,
   onReorderColumns,
@@ -79,6 +81,7 @@ export function MissionsViewListContent({
       campaigns={campaigns}
       selectedMissionId={selectedMissionId}
       onSelect={onSelectMission}
+      onSelectSubtask={onSelectSubtask}
       onChanged={onChanged}
       visibleColumns={visibleColumns}
       onAddColumn={onAddColumn}

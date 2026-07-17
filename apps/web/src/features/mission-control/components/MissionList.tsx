@@ -3,7 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { DragEvent, MouseEvent } from 'react'
 import { toast } from 'sonner'
-import type { MissionColumnId, MissionsConfig, SubtasksDisplayMode } from '@/lib/spaces/space-schema-types'
+import type {
+  MissionColumnId,
+  MissionsConfig,
+  SubtasksDisplayMode,
+} from '@/lib/spaces/space-schema-types'
+import { MISSION_CONTROL_TOAST_ERRORS } from '../config/mission-control-toast-errors.config'
+import { retryMission, trashMission } from '../services/missions.service'
+import type { Mission, MissionAgent, MissionDeliverable, MissionSubtask } from '../types'
 import {
   COLUMN_DEFS,
   DEFAULT_COLUMNS,
@@ -12,14 +19,11 @@ import {
   MISSION_LIST_DEFAULT_COL_PX,
   normalizeMissionColumnOrder,
 } from './mission-list-config'
-import { MISSION_CONTROL_TOAST_ERRORS } from '../config/mission-control-toast-errors.config'
-import { retryMission, trashMission } from '../services/missions.service'
-import type { Mission, MissionAgent, MissionDeliverable, MissionSubtask } from '../types'
+import { MissionMenuDropdown } from './mission-menu/MissionMenuDropdown'
 import { MissionListDeleteDialog } from './MissionListDeleteDialog'
 import { MissionListDesktopRows } from './MissionListDesktopRows'
 import { MissionListHeader } from './MissionListHeader'
 import { MissionListMobileCards } from './MissionListMobileCards'
-import { MissionMenuDropdown } from './mission-menu/MissionMenuDropdown'
 
 interface Campaign {
   id: string
@@ -33,6 +37,7 @@ interface MissionListProps {
   campaigns: Campaign[]
   selectedMissionId: string | null
   onSelect: (missionId: string) => void
+  onSelectSubtask?: (missionId: string, subtaskId: string) => void
   onChanged?: () => void
   visibleColumns?: MissionColumnId[]
   /** Trailing + column: opens view customize (e.g. mission column toggles) when set. */
@@ -66,6 +71,7 @@ export function MissionList({
   agents,
   campaigns: _campaigns,
   onSelect,
+  onSelectSubtask,
   onChanged,
   visibleColumns,
   onAddColumn,
@@ -190,12 +196,15 @@ export function MissionList({
     setMenuMission(mission)
   }, [])
 
-  const openMissionMenuFromButton = useCallback((e: MouseEvent<HTMLButtonElement>, mission: Mission) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setContextMenuPos(null)
-    setMenuMission(mission)
-  }, [])
+  const openMissionMenuFromButton = useCallback(
+    (e: MouseEvent<HTMLButtonElement>, mission: Mission) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setContextMenuPos(null)
+      setMenuMission(mission)
+    },
+    [],
+  )
 
   const handleConfirmDelete = async () => {
     if (!confirmDeleteId) return
@@ -287,6 +296,7 @@ export function MissionList({
         missions={missions}
         agents={agents}
         onSelect={onSelect}
+        onSelectSubtask={onSelectSubtask}
         subtasksByMissionId={subtasksByMissionId}
         expandedSubtaskMissionIds={expandedSubtaskMissionIds}
         onToggleSubtaskExpand={onToggleSubtaskExpand}
@@ -310,6 +320,7 @@ export function MissionList({
         activeCols={activeCols}
         gridTemplateWithTrail={gridTemplateWithTrail}
         onSelect={onSelect}
+        onSelectSubtask={onSelectSubtask}
         subtasksByMissionId={subtasksByMissionId}
         expandedSubtaskMissionIds={expandedSubtaskMissionIds}
         onToggleSubtaskExpand={onToggleSubtaskExpand}

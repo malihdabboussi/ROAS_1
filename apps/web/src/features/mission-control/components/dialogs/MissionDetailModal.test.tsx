@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Mission } from '../../types'
+import type { Mission, MissionDeliverable, MissionSubtask } from '../../types'
 import { MissionDetailModal } from './MissionDetailModal'
 
 const mocks = vi.hoisted(() => ({
@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   rejectMissionPlan: vi.fn(),
   toggleAutoApprovePlans: vi.fn(),
   updateSubtask: vi.fn(),
+  completeHumanSubtask: vi.fn(),
   openDrive: vi.fn(),
   openDropbox: vi.fn(),
   presignedUpload: vi.fn(),
@@ -81,6 +82,10 @@ vi.mock('../../services/missions.service', () => ({
   updateSubtask: mocks.updateSubtask,
 }))
 
+vi.mock('../../services/mission-human-subtasks.service', () => ({
+  completeHumanSubtask: mocks.completeHumanSubtask,
+}))
+
 function createMatchMedia(matches: boolean) {
   return vi.fn().mockImplementation((query: string) => ({
     matches,
@@ -119,6 +124,65 @@ const mission: Mission = {
   updated_at: '2026-06-22T00:00:00.000Z',
   started_at: null,
   completed_at: null,
+}
+
+const subtask: MissionSubtask = {
+  id: 'subtask-1',
+  mission_id: mission.id,
+  user_id: mission.user_id,
+  title: 'Draft launch copy',
+  status: 'done',
+  assigned_agent_key: null,
+  assignee_type: 'agent',
+  assigned_user_id: null,
+  awaiting_human_since: null,
+  sla_escalate_at: null,
+  sla_escalated_at: null,
+  bounce_reason: null,
+  sort_order: 0,
+  depends_on: [],
+  output: { content: 'Finished copy' },
+  feedback: null,
+  deliverable_id: 'deliverable-1',
+  scheduled_at: null,
+  created_at: mission.created_at,
+  updated_at: mission.updated_at,
+}
+
+const deliverable = {
+  id: 'deliverable-1',
+  mission_id: mission.id,
+  campaign_id: mission.campaign_id,
+  user_id: mission.user_id,
+  agent_key: 'atlas',
+  type: 'pdf',
+  title: 'Launch copy',
+  content: 'Launch copy body',
+  file_url: null,
+  file_name: null,
+  file_size: null,
+  mime_type: null,
+  metadata: {},
+  created_at: mission.created_at,
+} satisfies MissionDeliverable
+
+const humanGate: MissionSubtask = {
+  ...subtask,
+  id: 'gate-1',
+  title: 'Gate 1 — approve strategy package',
+  status: 'awaiting_human',
+  assignee_type: 'human',
+  assigned_user_id: mission.user_id,
+  depends_on: [subtask.id],
+  output: {},
+  deliverable_id: null,
+  intent: {
+    why: 'Human approval is required before production starts.',
+    story: 'Review the strategy package and request revisions if anything is wrong.',
+    sensory: 'The package is clear and ready for production.',
+    endState: 'Gate 1 is completed and market research starts.',
+    ecology: 'Use feedback for revisions and approve only when the package is ready.',
+  },
 }
 
 function mockDetailData() {
@@ -171,6 +235,104 @@ describe('MissionDetailModal', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
+  it('opens a subtask in the full detail shell and navigates back to the mission', () => {
+    mocks.useMissionDetailData.mockReturnValue({
+      ...mocks.useMissionDetailData(),
+      subtasks: [subtask],
+      deliverables: [deliverable],
+    })
+
+    render(
+      <MissionDetailModal
+        mission={mission}
+        initialSubtaskId={subtask.id}
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Draft launch copy' })).toBeTruthy()
+    expect(screen.getByText('Finished copy')).toBeTruthy()
+    expect(screen.getByText('Launch copy')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Launch Mission' }))
+
+    expect(screen.getByDisplayValue('Launch Mission')).toBeTruthy()
+  })
+
+  it('shows a human gate workspace and approves it to continue the mission', async () => {
+    mocks.completeHumanSubtask.mockResolvedValue({ ok: true, deliverable_id: 'approval-1' })
+    mocks.useMissionDetailData.mockReturnValue({
+      ...mocks.useMissionDetailData(),
+      subtasks: [subtask, humanGate],
+      deliverables: [deliverable],
+    })
+
+    render(
+      <MissionDetailModal
+        mission={{ ...mission, status: 'awaiting_human' }}
+        initialSubtaskId={humanGate.id}
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Your approval is needed')).toBeTruthy()
+    expect(screen.getByText('Draft launch copy')).toBeTruthy()
+    expect(screen.getByText('Launch copy')).toBeTruthy()
+    expect(screen.getByText('Gate 1 is completed and market research starts.')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Approve & continue' }))
+
+    await waitFor(() => {
+      expect(mocks.completeHumanSubtask).toHaveBeenCalledWith(mission.id, humanGate.id, {
+        summary: 'Approved Gate 1 — approve strategy package. Ready to continue.',
+      })
+    })
+  })
+
+  it('sends requested gate changes as scoped guidance without closing the gate', async () => {
+    mocks.addMissionComment.mockResolvedValue({
+      id: 'feedback-log',
+      mission_id: mission.id,
+      user_id: mission.user_id,
+      event_type: 'user.comment',
+      from_status: null,
+      to_status: null,
+      agent_key: null,
+      correlation_id: null,
+      payload: { message: 'Revise the pricing section.' },
+      created_at: new Date().toISOString(),
+    })
+    mocks.useMissionDetailData.mockReturnValue({
+      ...mocks.useMissionDetailData(),
+      subtasks: [subtask, humanGate],
+      deliverables: [deliverable],
+    })
+
+    render(
+      <MissionDetailModal
+        mission={{ ...mission, status: 'awaiting_human' }}
+        initialSubtaskId={humanGate.id}
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+      />,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Describe exactly what should change...'), {
+      target: { value: 'Revise the pricing section.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Request changes' }))
+
+    await waitFor(() => {
+      expect(mocks.addMissionComment).toHaveBeenCalledWith(
+        mission.id,
+        `Guidance for subtask "${humanGate.title}" (${humanGate.id}):\nRevise the pricing section.`,
+      )
+      expect(mocks.completeHumanSubtask).not.toHaveBeenCalled()
+    })
+  })
+
   it('opens the mobile activity shell', () => {
     vi.stubGlobal('matchMedia', createMatchMedia(true))
 
@@ -179,7 +341,7 @@ describe('MissionDetailModal', () => {
     fireEvent.click(screen.getByLabelText('Open timeline'))
 
     expect(screen.getAllByText('Activity')).toHaveLength(2)
-    expect(screen.getByPlaceholderText('Send a message...')).toBeTruthy()
+    expect(screen.getByPlaceholderText('Message Vibey...')).toBeTruthy()
   })
 
   it('sends a text comment from the activity composer', async () => {
@@ -198,7 +360,7 @@ describe('MissionDetailModal', () => {
 
     render(<MissionDetailModal mission={mission} onClose={vi.fn()} onUpdated={vi.fn()} />)
 
-    const composer = screen.getByPlaceholderText('Send a message...')
+    const composer = screen.getByPlaceholderText('Message Vibey...')
     fireEvent.change(composer, { target: { value: 'Ship it' } })
     fireEvent.keyDown(composer, { key: 'Enter' })
 

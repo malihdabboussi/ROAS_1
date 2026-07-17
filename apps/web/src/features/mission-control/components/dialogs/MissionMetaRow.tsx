@@ -78,13 +78,13 @@ interface MissionMetaRowProps {
   onUpdated: () => void
 }
 
-const DESCRIPTION_COLLAPSE_CHARS = 180
+const DESCRIPTION_COLLAPSE_CHARS = 120
 
 function MissionDescriptionText({ description }: { description: string }) {
   const [expanded, setExpanded] = useState(false)
   const text = description.trim()
   if (!text) {
-    return <span className="body-2 text-[var(--color-muted-foreground)]">—</span>
+    return <span className="body-3 text-muted-foreground">—</span>
   }
   const needsCollapse = text.length > DESCRIPTION_COLLAPSE_CHARS
   const shown =
@@ -92,11 +92,11 @@ function MissionDescriptionText({ description }: { description: string }) {
 
   return (
     <div className="min-w-0 flex-1">
-      <p className="body-2 whitespace-pre-wrap text-[var(--color-foreground)]">{shown}</p>
+      <p className="body-3 text-foreground whitespace-pre-wrap">{shown}</p>
       {needsCollapse ? (
         <button
           type="button"
-          className="body-4 text-primary mt-1 font-medium"
+          className="body-4 text-primary mt-spacing-1 font-medium"
           onClick={() => setExpanded((v) => !v)}
         >
           {expanded ? 'Show less' : 'Show more'}
@@ -136,18 +136,18 @@ export function MissionMetaRow({
   }))
 
   return (
-    <div className="grid flex-shrink-0 grid-cols-1 gap-x-6 gap-y-2 md:mt-4 md:grid-cols-2">
-      <div className="flex flex-col gap-y-2">
-        <div className="flex items-center gap-3">
-          <span className="body-2 w-20 shrink-0 text-[var(--color-muted-foreground)]">Status</span>
+    <div className="gap-x-spacing-6 gap-y-spacing-2 grid flex-shrink-0 grid-cols-1 md:mt-spacing-2 md:grid-cols-2">
+      <div className="gap-y-spacing-2 flex flex-col">
+        <div className="gap-spacing-3 flex items-center">
+          <span className="body-3 text-muted-foreground w-20 shrink-0">Status</span>
           <div className="relative">
             <button
               type="button"
               title="Status is managed by ROAS"
               disabled
-              className={`body-2 flex items-center gap-1.5 rounded-md px-2 py-0.5 ${statusTextClass[currentStatus] ?? ''} cursor-not-allowed opacity-60`}
+              className={`body-3 flex items-center gap-1.5 rounded-md px-2 py-0.5 ${statusTextClass[currentStatus] ?? ''} cursor-not-allowed opacity-60`}
             >
-              <StatusIcon className="h-3.5 w-3.5" />
+              <StatusIcon className="icon-sm" />
               <span>
                 {ALL_MISSION_STATUSES.find((s) => s.value === currentStatus)?.label ??
                   currentStatus}
@@ -156,23 +156,21 @@ export function MissionMetaRow({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="body-2 w-20 shrink-0 text-[var(--color-muted-foreground)]">
-            Priority
-          </span>
+        <div className="gap-spacing-3 flex items-center">
+          <span className="body-3 text-muted-foreground w-20 shrink-0">Priority</span>
           <div className="relative">
             <button
               type="button"
               onClick={() => setPriorityOpen(!priorityOpen)}
-              className={`body-2 hover:bg-hover-subtle flex items-center gap-1.5 rounded-md px-2 py-0.5 transition-colors ${activePriority.color}`}
+              className={`body-3 hover:bg-hover-subtle flex items-center gap-1.5 rounded-md px-2 py-0.5 transition-colors ${activePriority.color}`}
             >
-              <Flag className="h-3.5 w-3.5" />
+              <Flag className="icon-sm" />
               <span>{activePriority.label}</span>
             </button>
             {priorityOpen && (
               <>
-                <div className="fixed inset-0 z-[60]" onClick={() => setPriorityOpen(false)} />
-                <div className="mt-spacing-1 absolute left-0 top-full z-[70]" data-dropdown>
+                <div className="fixed inset-0 z-dropdown" onClick={() => setPriorityOpen(false)} />
+                <div className="mt-spacing-1 absolute left-0 top-full z-dropdown" data-dropdown>
                   <div className="dropdown-menu-solid p-spacing-2 min-w-40">
                     <div className="space-y-spacing-1">
                       {priorityOptions.map((p) => {
@@ -199,25 +197,23 @@ export function MissionMetaRow({
         </div>
       </div>
 
-      <div className="flex flex-col gap-y-2">
-        <div className="flex items-center gap-3">
-          <span className="body-2 w-20 shrink-0 text-[var(--color-muted-foreground)]">Created</span>
-          <span className="body-2 text-[var(--color-foreground)]">
+      <div className="gap-y-spacing-2 flex flex-col">
+        <div className="gap-spacing-3 flex items-center">
+          <span className="body-3 text-muted-foreground w-20 shrink-0">Created</span>
+          <span className="body-3 text-foreground">
             {new Date(mission.created_at).toLocaleDateString()}
           </span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="body-2 w-20 shrink-0 text-[var(--color-muted-foreground)]">
-            Completed
-          </span>
-          <span className="body-2 text-[var(--color-foreground)]">
+        <div className="gap-spacing-3 flex items-center">
+          <span className="body-3 text-muted-foreground w-20 shrink-0">Completed</span>
+          <span className="body-3 text-foreground">
             {mission.completed_at ? new Date(mission.completed_at).toLocaleDateString() : '—'}
           </span>
         </div>
       </div>
 
-      <div className="col-span-1 flex items-center gap-3 md:col-span-2">
-        <span className="body-2 w-20 shrink-0 text-[var(--color-muted-foreground)]">Assignees</span>
+      <div className="gap-spacing-3 col-span-1 flex items-center md:col-span-2">
+        <span className="body-3 text-muted-foreground w-20 shrink-0">Assignees</span>
         <div className="flex items-center">
           {assignedAgents.length > 0 ? (
             assignedAgents.map(({ key, agent }, i) => (
@@ -230,25 +226,23 @@ export function MissionMetaRow({
                   <img
                     src={agent.image_url}
                     alt={agent.name}
-                    className="h-5 w-5 rounded-full object-cover ring-2 ring-[var(--color-card)]"
+                    className="border-card h-5 w-5 rounded-full object-cover ring-2 ring-background"
                   />
                 ) : (
-                  <div className="bg-primary/20 text-primary flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ring-2 ring-[var(--color-card)]">
+                  <div className="bg-primary/20 text-primary flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ring-2 ring-background">
                     {(agent?.name ?? key).charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
             ))
           ) : (
-            <span className="body-2 text-[var(--color-muted-foreground)]">Unassigned</span>
+            <span className="body-3 text-muted-foreground">Unassigned</span>
           )}
         </div>
       </div>
 
-      <div className="col-span-1 flex flex-col gap-1 md:col-span-2 md:flex-row md:items-start md:gap-3">
-        <span className="body-2 w-20 shrink-0 text-[var(--color-muted-foreground)] md:pt-0.5">
-          Description
-        </span>
+      <div className="gap-spacing-1 col-span-1 flex flex-col md:col-span-2 md:flex-row md:items-start md:gap-spacing-3">
+        <span className="body-3 text-muted-foreground w-20 shrink-0 md:pt-0.5">Description</span>
         <MissionDescriptionText description={description} />
       </div>
     </div>

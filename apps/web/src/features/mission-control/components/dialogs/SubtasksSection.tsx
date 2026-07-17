@@ -73,7 +73,7 @@ export function SubtasksSection({
   }
 
   return (
-    <div className="md:border-t-glass md:pt-spacing-3 mb-3 mt-3 flex min-h-0 flex-1 flex-col overflow-hidden md:mt-4">
+    <div className="md:border-t-glass md:pt-spacing-4 mb-spacing-2 mt-spacing-4 flex min-h-0 flex-1 flex-col overflow-hidden">
       <ConfirmDialog
         open={Boolean(completeConfirm)}
         title="Mark this subtask complete?"
@@ -102,7 +102,7 @@ export function SubtasksSection({
       />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="flex flex-shrink-0 items-center justify-between">
-          <h3 className="body-2 text-muted-foreground font-semibold">
+          <h3 className="body-2 text-foreground font-semibold">
             {logsLoading || prdLoading
               ? 'Loading...'
               : subtasks.length > 0
@@ -116,17 +116,17 @@ export function SubtasksSection({
               className="body-3 text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
             >
               <span>Task overview</span>
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="icon-sm" />
             </button>
           )}
         </div>
-        <div className="scrollbar-hide mt-spacing-2 min-h-0 flex-1 overflow-y-auto">
+        <div className="scrollbar-hide mt-spacing-3 min-h-0 flex-1 overflow-y-auto">
           {logsLoading || prdLoading ? (
             <div className="flex h-full min-h-[200px] flex-col items-center justify-center">
               <VibeyLoadingOrb state="thinking" size="md" />
             </div>
           ) : subtasks.length > 0 ? (
-            <div>
+            <div className="space-y-spacing-1">
               {subtasks.map((subtask) => {
                 const hasDeps = subtask.depends_on && subtask.depends_on.length > 0
                 const depsReady =
@@ -183,7 +183,7 @@ export function SubtasksSection({
 
                 return (
                   <div key={subtask.id} className="border-b-glass last:border-b-0">
-                    <div className="hover:bg-hover-subtle relative flex items-center gap-2 rounded-lg px-2.5 py-1.5">
+                    <div className="hover:bg-hover-subtle relative flex items-center gap-spacing-3 rounded-spacing-2 px-spacing-3 py-spacing-3">
                       <Tooltip label={statusTooltip} side="top" wide={Boolean(issueDetail)}>
                         <button
                           type="button"
@@ -210,20 +210,20 @@ export function SubtasksSection({
                           }}
                           className="shrink-0"
                         >
-                          <StatusIcon className={`h-3.5 w-3.5 ${statusColor}`} />
+                          <StatusIcon className={`icon-sm ${statusColor}`} />
                         </button>
                       </Tooltip>
                       <button
                         type="button"
                         onClick={() => onOpenSubtask(subtask.id)}
-                        className="body-2 text-foreground flex min-w-0 flex-1 items-center gap-2 text-left"
+                        className="body-1 text-foreground flex min-w-0 flex-1 items-center gap-spacing-2 text-left"
                       >
                         <GitBranch
-                          className="text-muted-foreground h-3.5 w-3.5 shrink-0"
+                          className="text-muted-foreground icon-sm shrink-0"
                           aria-hidden
                         />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate">{subtask.title}</span>
+                          <span className="block truncate font-medium">{subtask.title}</span>
                           {issueDetail || subtask.feedback ? (
                             <Tooltip
                               label={issueDetail || subtask.feedback || statusMeta}
@@ -231,7 +231,7 @@ export function SubtasksSection({
                               wide
                               triggerClassName="block min-w-0"
                             >
-                              <span className="typo-caption text-muted-foreground block truncate">
+                              <span className="body-4 text-muted-foreground mt-spacing-1 block truncate">
                                 {statusMeta}
                                 {subtask.feedback ? (
                                   <span className="text-warning"> · {subtask.feedback}</span>
@@ -245,12 +245,12 @@ export function SubtasksSection({
                               </span>
                             </Tooltip>
                           ) : (
-                            <span className="typo-caption text-muted-foreground block truncate">
+                            <span className="body-4 text-muted-foreground mt-spacing-1 block truncate">
                               {statusMeta}
                             </span>
                           )}
                         </span>
-                        <ChevronRight className="text-muted-foreground/50 h-3 w-3 shrink-0" />
+                        <ChevronRight className="text-muted-foreground/50 icon-sm shrink-0" />
                       </button>
                       {isHuman ? (
                         <button
@@ -259,10 +259,10 @@ export function SubtasksSection({
                             e.stopPropagation()
                             router.push(`/spaces?tab=your-turn&item=${subtask.id}`)
                           }}
-                          className="body-3 gap-spacing-1 bg-primary/15 hover:bg-primary/25 text-primary flex shrink-0 items-center rounded-full px-1.5 py-0.5 transition-colors"
+                          className="body-3 gap-spacing-1 bg-primary/15 hover:bg-primary/25 text-primary flex shrink-0 items-center rounded-full px-spacing-2 py-spacing-1 transition-colors"
                           title="Open in Your Turn"
                         >
-                          <User className="h-3 w-3" />
+                          <User className="icon-sm" />
                           {assigneeLabel}
                         </button>
                       ) : (
@@ -274,7 +274,7 @@ export function SubtasksSection({
                               subtaskAssigneeOpenId === subtask.id ? null : subtask.id,
                             )
                           }}
-                          className="body-3 bg-secondary text-muted-foreground hover:text-foreground max-w-artifact-compact shrink-0 truncate rounded-full px-1.5 py-0.5 transition-colors"
+                          className="body-3 bg-secondary text-muted-foreground hover:text-foreground max-w-artifact-compact shrink-0 truncate rounded-full px-spacing-2 py-spacing-1 transition-colors"
                           title={`${assigneeFullName}${assigneeAgent?.role ? ` — ${assigneeAgent.role}` : ''} · Reassign`}
                         >
                           {assigneeLabel}
@@ -283,10 +283,10 @@ export function SubtasksSection({
                       {subtaskAssigneeOpenId === subtask.id && (
                         <>
                           <div
-                            className="fixed inset-0 z-[60]"
+                            className="fixed inset-0 z-dropdown"
                             onClick={() => setSubtaskAssigneeOpenId(null)}
                           />
-                          <div className="absolute right-2 top-8 z-[70] w-52" data-dropdown>
+                          <div className="absolute right-2 top-10 z-dropdown w-52" data-dropdown>
                             <div className="dropdown-menu-solid p-spacing-2">
                               <div className="space-y-spacing-1">
                                 {agents.map((agent) => {

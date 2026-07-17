@@ -12,13 +12,14 @@ import {
   SUBTASK_STATUS_STYLE,
 } from './mission-list-config'
 import { AgentsStackCell } from './MissionListAgents'
-import { MissionListProgressCell } from './MissionListProgressCell'
 import { MissionTitleText } from './MissionListCell'
+import { MissionListProgressCell } from './MissionListProgressCell'
 
 interface MissionListMobileCardsProps {
   missions: Mission[]
   agents: MissionAgent[]
   onSelect: (missionId: string) => void
+  onSelectSubtask?: (missionId: string, subtaskId: string) => void
   subtasksByMissionId?: Record<string, MissionSubtask[]>
   expandedSubtaskMissionIds?: Set<string>
   onToggleSubtaskExpand?: (missionId: string) => void
@@ -43,6 +44,7 @@ export function MissionListMobileCards({
   missions,
   agents,
   onSelect,
+  onSelectSubtask,
   subtasksByMissionId,
   expandedSubtaskMissionIds,
   onToggleSubtaskExpand,
@@ -172,7 +174,15 @@ export function MissionListMobileCards({
                     const cls = SUBTASK_STATUS_STYLE[st.status] ?? 'bg-zinc-500/15 text-zinc-400'
                     const label = SUBTASK_STATUS_LABEL[st.status] ?? st.status
                     return (
-                      <div key={st.id} className="flex flex-col gap-0.5">
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          onSelectSubtask?.(mission.id, st.id)
+                        }}
+                        className="hover:bg-hover-subtle rounded-spacing-1 flex w-full flex-col gap-0.5 text-left transition-colors"
+                      >
                         <div className="flex min-w-0 items-center gap-1.5">
                           {subtasksDisplayMode === 'separate' ? (
                             <GitBranch
@@ -195,7 +205,7 @@ export function MissionListMobileCards({
                         <span className={`typo-caption w-fit rounded-full px-2 py-0.5 ${cls}`}>
                           {label}
                         </span>
-                      </div>
+                      </button>
                     )
                   })}
                 </div>

@@ -1,100 +1,17 @@
-import type { Dispatch, ReactNode, RefObject, SetStateAction } from 'react'
-import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import type { AttachedFile } from '@/components/chat/FileAttachments'
-import type {
-  Mission,
-  MissionAccessRequest,
-  MissionAgent,
-  MissionDeliverable,
-  MissionLog,
-  MissionPriority,
-  MissionStatus,
-  MissionSubtask,
-  PrdContent,
-  RecommendedHire,
-} from '../../types'
+import type { MissionSubtask } from '../../types'
+import type { MissionDetailModalViewProps } from './mission-detail-modal-view.types'
 import { MissionAccessApprovalCard } from './MissionAccessApprovalCard'
 import { MissionDetailDesktopShell } from './MissionDetailDesktopShell'
 import { MissionDetailMobileShell } from './MissionDetailMobileShell'
 import { MissionDetailOverlayModals } from './MissionDetailOverlayModals'
-import type { RatingPayload } from './MissionRatingStrip'
-
-interface MissionDetailModalViewProps {
-  mission: Mission
-  liveMission: Mission | null
-  title: string
-  setTitle: (value: string) => void
-  description: string
-  setDescription: (value: string) => void
-  currentStatus: MissionStatus
-  currentPriority: MissionPriority
-  elevatedStacking: boolean
-  onClose: () => void
-  onUpdated: () => void
-  isMobile: boolean
-  mobileScreen: 'detail' | 'activity'
-  setMobileScreen: Dispatch<SetStateAction<'detail' | 'activity'>>
-  mobileMenuOpen: boolean
-  setMobileMenuOpen: Dispatch<SetStateAction<boolean>>
-  menuAnchor: HTMLElement | null
-  setMenuAnchor: Dispatch<SetStateAction<HTMLElement | null>>
-  prdLoading: boolean
-  logsLoading: boolean
-  planContent: PrdContent | null
-  planModalOpen: boolean
-  onClosePlan: () => void
-  recommendedHires: RecommendedHire[]
-  sortedLogs: MissionLog[]
-  subtasks: MissionSubtask[]
-  setSubtasks: Dispatch<SetStateAction<MissionSubtask[]>>
-  agents: MissionAgent[]
-  userProfile: { fullName: string; avatarUrl: string | null } | null
-  deliverables: MissionDeliverable[]
-  previewDeliverable: MissionDeliverable | null
-  setPreviewDeliverable: Dispatch<SetStateAction<MissionDeliverable | null>>
-  pendingAccessRequests: MissionAccessRequest[]
-  approvingAccess: boolean
-  onApproveAccess: () => void
-  commentText: string
-  sendingComment: boolean
-  setCommentText: (value: string) => void
-  onSendComment: () => void
-  onAppendMissionLog: (log: MissionLog) => void
-  activityEndRef: RefObject<HTMLDivElement | null>
-  attachedFiles: AttachedFile[]
-  onRemoveFile: (id: string) => void
-  onFileButtonClick: () => void
-  openDrive: () => void
-  openDropbox: () => void
-  setShowLibraryPicker: Dispatch<SetStateAction<boolean>>
-  maxFiles: number
-  fileInputRef: RefObject<HTMLInputElement | null>
-  acceptedTypes: string
-  onFileSelect: (files: FileList | readonly File[] | null) => void
-  onPasteFiles: (files: File[]) => void
-  onRatingSubmit: (payload: RatingPayload) => Promise<void>
-  ratingSending: boolean
-  ratingSubmitted: boolean
-  onViewPlan: () => void
-  onApprovePlan: () => void
-  onRejectPlan: () => void
-  approvingPlan: boolean
-  autoApprovePlans: boolean
-  onToggleAutoApprove: (enabled: boolean) => void
-  showDrivePicker: boolean
-  setShowDrivePicker: Dispatch<SetStateAction<boolean>>
-  onSelectCloudFile: (file: File) => void
-  showDropboxPicker: boolean
-  setShowDropboxPicker: Dispatch<SetStateAction<boolean>>
-  showLibraryPicker: boolean
-  onSelectLibrary: (url: string) => void
-  onRetry: () => Promise<void>
-  onArchive: () => void
-  onDelete: () => void
-  onStatusChange: (newStatus: MissionStatus) => Promise<void>
-  onPriorityChange: (newPriority: MissionPriority) => Promise<void>
-}
+import {
+  collectDependencySubtasks,
+  collectSubtaskResourceLinks,
+  filterSubtaskDeliverables,
+  filterSubtaskLogs,
+} from './subtask-detail'
 
 export function MissionDetailModalView({
   mission,
@@ -105,6 +22,8 @@ export function MissionDetailModalView({
   setDescription,
   currentStatus,
   currentPriority,
+  selectedSubtaskId,
+  setSelectedSubtaskId,
   elevatedStacking,
   onClose,
   onUpdated,
@@ -136,7 +55,12 @@ export function MissionDetailModalView({
   sendingComment,
   setCommentText,
   onSendComment,
-  onAppendMissionLog,
+  subtaskCommentText,
+  setSubtaskCommentText,
+  sendingSubtaskComment,
+  onSendSubtaskComment,
+  approvingHumanGate,
+  onApproveHumanGate,
   activityEndRef,
   attachedFiles,
   onRemoveFile,
@@ -171,8 +95,29 @@ export function MissionDetailModalView({
   onStatusChange,
   onPriorityChange,
 }: MissionDetailModalViewProps) {
-  const [selectedSubtaskId, setSelectedSubtaskId] = useState<string | null>(null)
   const effectiveMission = liveMission ?? mission
+  const selectedSubtask = selectedSubtaskId
+    ? (subtasks.find((item) => item.id === selectedSubtaskId) ?? null)
+    : null
+  const visibleDeliverables = selectedSubtask
+    ? filterSubtaskDeliverables(deliverables, selectedSubtask, subtasks)
+    : deliverables
+  const subtaskDetailProps = selectedSubtask
+    ? {
+        subtask: selectedSubtask,
+        agents,
+        userProfile,
+        deliverables: visibleDeliverables,
+        resourceLinks: collectSubtaskResourceLinks(selectedSubtask, subtasks, visibleDeliverables),
+        dependencies: collectDependencySubtasks(selectedSubtask, subtasks),
+        feedback: subtaskCommentText,
+        approving: approvingHumanGate,
+        sendingFeedback: sendingSubtaskComment,
+        onFeedbackChange: setSubtaskCommentText,
+        onRequestChanges: onSendSubtaskComment,
+        onApprove: onApproveHumanGate,
+      }
+    : null
   const accessApprovalCard: ReactNode = (
     <MissionAccessApprovalCard
       pendingAccessRequests={pendingAccessRequests}
@@ -208,7 +153,7 @@ export function MissionDetailModalView({
     onSubtasksChange: (updater: (prev: MissionSubtask[]) => MissionSubtask[]) =>
       setSubtasks((prev) => updater(prev)),
   }
-  const activityTimelineProps = {
+  const missionActivityTimelineProps = {
     logsLoading,
     isMissionLinked: true,
     sortedLogs,
@@ -245,6 +190,35 @@ export function MissionDetailModalView({
     autoApprovePlans,
     onToggleAutoApprove,
   }
+  const activityTimelineProps = selectedSubtask
+    ? {
+        ...missionActivityTimelineProps,
+        sortedLogs: filterSubtaskLogs(sortedLogs, selectedSubtask),
+        subtasks: [selectedSubtask],
+        createdAt: selectedSubtask.created_at,
+        commentText: subtaskCommentText,
+        sendingComment: sendingSubtaskComment,
+        onCommentChange: setSubtaskCommentText,
+        onCommentSend: onSendSubtaskComment,
+        timelineKey: `${mission.id}:${selectedSubtask.id}`,
+        attachedFiles: [],
+        onRemoveFile: undefined,
+        onFileButtonClick: undefined,
+        onOpenDrive: undefined,
+        onOpenDropbox: undefined,
+        onOpenLibrary: undefined,
+        fileInputRef: undefined,
+        acceptedTypes: undefined,
+        onFileSelect: undefined,
+        onPasteFiles: undefined,
+        missionStatus: undefined,
+        onRatingSubmit: undefined,
+        onViewPlan: undefined,
+        onApprove: undefined,
+        onReject: undefined,
+        onToggleAutoApprove: undefined,
+      }
+    : missionActivityTimelineProps
   const overlayModals = (
     <MissionDetailOverlayModals
       previewDeliverable={previewDeliverable}
@@ -260,12 +234,6 @@ export function MissionDetailModalView({
       onApprovePlan={onApprovePlan}
       onRejectPlan={onRejectPlan}
       approvingPlan={approvingPlan}
-      selectedSubtaskId={selectedSubtaskId}
-      missionLogs={sortedLogs}
-      onCloseSubtask={() => setSelectedSubtaskId(null)}
-      onSubtaskCommentSent={(log) => {
-        onAppendMissionLog(log)
-      }}
       showDrivePicker={showDrivePicker}
       onCloseDrive={() => setShowDrivePicker(false)}
       onSelectCloudFile={onSelectCloudFile}
@@ -290,6 +258,9 @@ export function MissionDetailModalView({
             mobileMenuOpen={mobileMenuOpen}
             setMobileMenuOpen={setMobileMenuOpen}
             title={title}
+            selectedSubtask={selectedSubtask}
+            subtaskDetailProps={subtaskDetailProps}
+            onBackToMission={() => setSelectedSubtaskId(null)}
             onClose={onClose}
             currentStatus={currentStatus}
             onRetry={onRetry}
@@ -298,7 +269,7 @@ export function MissionDetailModalView({
             missionMetaProps={missionMetaProps}
             subtasksProps={subtasksProps}
             accessApprovalCard={accessApprovalCard}
-            deliverables={deliverables}
+            deliverables={visibleDeliverables}
             onSelectDeliverable={setPreviewDeliverable}
             activityTimelineProps={activityTimelineProps}
             overlayModals={overlayModals}
@@ -314,6 +285,9 @@ export function MissionDetailModalView({
           shellZ={shellZ}
           onClose={onClose}
           title={title}
+          selectedSubtask={selectedSubtask}
+          subtaskDetailProps={subtaskDetailProps}
+          onBackToMission={() => setSelectedSubtaskId(null)}
           onTitleChange={setTitle}
           onOpenMenu={setMenuAnchor}
           menuAnchor={menuAnchor}
@@ -324,7 +298,7 @@ export function MissionDetailModalView({
           missionMetaProps={missionMetaProps}
           subtasksProps={subtasksProps}
           accessApprovalCard={accessApprovalCard}
-          deliverables={deliverables}
+          deliverables={visibleDeliverables}
           onSelectDeliverable={setPreviewDeliverable}
           activityTimelineProps={activityTimelineProps}
           overlayModals={overlayModals}

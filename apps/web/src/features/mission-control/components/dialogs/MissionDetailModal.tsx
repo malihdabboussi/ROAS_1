@@ -18,38 +18,32 @@ import {
   updateMissionStatus,
 } from '../../services/missions.service'
 import type {
-  Mission,
   MissionDeliverable,
   MissionLog,
   MissionPriority,
   MissionStatus,
   PrdContent,
-  RecommendedHire,
 } from '../../types'
 import { MISSION_DETAIL_ERRORS } from '../../types'
+import {
+  getMissionDetailDisplayData,
+  type MissionDetailModalProps,
+} from './mission-detail-modal-helpers'
 import { MissionDetailModalView } from './MissionDetailModalView'
 import { useMissionDetailCommentAttachments } from './useMissionDetailCommentAttachments'
-
-interface MissionDetailModalProps {
-  mission: Mission
-  onClose: () => void
-  onUpdated: () => void
-  /** Stack above another modal (e.g. deliverable preview uses z-[60]) */
-  elevatedStacking?: boolean
-}
+import { useSubtaskDetailState } from './useSubtaskDetailState'
 
 export function MissionDetailModal({
   mission,
   onClose,
   onUpdated,
   elevatedStacking = false,
+  initialSubtaskId = null,
 }: MissionDetailModalProps) {
   const [title, setTitle] = useState(mission.title)
   const [description, setDescription] = useState(mission.brief ?? mission.description ?? '')
   const [currentStatus, setCurrentStatus] = useState<MissionStatus>(mission.status)
   const [currentPriority, setCurrentPriority] = useState<MissionPriority>(mission.priority)
-  const [, setDeleting] = useState(false)
-  const [, setArchiving] = useState(false)
   const [previewDeliverable, setPreviewDeliverable] = useState<MissionDeliverable | null>(null)
   const [planModalOpen, setPlanModalOpen] = useState(false)
   const [approvingPlan, setApprovingPlan] = useState(false)
@@ -79,6 +73,23 @@ export function MissionDetailModal({
     setAccessRequests,
   } = useMissionDetailData({ mission })
   const {
+    selectedSubtaskId,
+    setSelectedSubtaskId,
+    subtaskCommentText,
+    setSubtaskCommentText,
+    sendingSubtaskComment,
+    handleSendSubtaskComment,
+    approvingHumanGate,
+    handleApproveHumanGate,
+  } = useSubtaskDetailState({
+    missionId: mission.id,
+    initialSubtaskId,
+    subtasks,
+    setSubtasks,
+    setMissionLogs,
+    onUpdated,
+  })
+  const {
     commentText,
     setCommentText,
     sendingComment,
@@ -107,11 +118,17 @@ export function MissionDetailModal({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key !== 'Escape') return
+      if (selectedSubtaskId) {
+        setSelectedSubtaskId(null)
+        setMobileScreen('detail')
+        return
+      }
+      onClose()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  }, [onClose, selectedSubtaskId])
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
@@ -144,20 +161,16 @@ export function MissionDetailModal({
   }, [])
 
   const handleDelete = async () => {
-    setDeleting(true)
     try {
       await trashMission(mission.id)
       onUpdated()
       onClose()
     } catch (err) {
       toast.error(sanitizeUserError(err, MISSION_DETAIL_ERRORS.DELETE_FAILED.userMessage))
-    } finally {
-      setDeleting(false)
     }
   }
 
   const handleArchive = async () => {
-    setArchiving(true)
     try {
       const newStatus: MissionStatus = currentStatus === 'archived' ? 'backlog' : 'archived'
       await updateMissionStatus(mission.id, { status: newStatus })
@@ -166,8 +179,6 @@ export function MissionDetailModal({
       if (newStatus === 'archived') onClose()
     } catch (err) {
       toast.error(sanitizeUserError(err, MISSION_DETAIL_ERRORS.UPDATE_FAILED.userMessage))
-    } finally {
-      setArchiving(false)
     }
   }
 
@@ -296,16 +307,9 @@ export function MissionDetailModal({
     [mission.id, setMissionLogs],
   )
 
-  const handleStatusChange = async (_newStatus: MissionStatus) => {
-    // Status is managed by mission lifecycle
-  }
-
+  const handleStatusChange = async (_newStatus: MissionStatus) => undefined
   const planContent = prd?.content as PrdContent | null
-  const recommendedHires = ((planContent as { recommended_hires?: RecommendedHire[] } | null)
-    ?.recommended_hires ?? []) as RecommendedHire[]
-  const sortedLogs = [...missionLogs].sort(
-    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-  )
+  const { recommendedHires, sortedLogs } = getMissionDetailDisplayData(planContent, missionLogs)
 
   return (
     <MissionDetailModalView
@@ -317,6 +321,8 @@ export function MissionDetailModal({
       setDescription={setDescription}
       currentStatus={currentStatus}
       currentPriority={currentPriority}
+      selectedSubtaskId={selectedSubtaskId}
+      setSelectedSubtaskId={setSelectedSubtaskId}
       elevatedStacking={elevatedStacking}
       onClose={onClose}
       onUpdated={onUpdated}
@@ -348,7 +354,12 @@ export function MissionDetailModal({
       sendingComment={sendingComment}
       setCommentText={setCommentText}
       onSendComment={handleSendComment}
-      onAppendMissionLog={(log) => setMissionLogs((prev) => [...prev, log])}
+      subtaskCommentText={subtaskCommentText}
+      setSubtaskCommentText={setSubtaskCommentText}
+      sendingSubtaskComment={sendingSubtaskComment}
+      onSendSubtaskComment={handleSendSubtaskComment}
+      approvingHumanGate={approvingHumanGate}
+      onApproveHumanGate={handleApproveHumanGate}
       activityEndRef={activityEndRef}
       attachedFiles={attachedFiles}
       onRemoveFile={handleRemoveFile}

@@ -1,7 +1,7 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { MissionList } from './MissionList'
 import type { Mission, MissionAgent, MissionSubtask } from '../types'
+import { MissionList } from './MissionList'
 
 const baseMission: Mission = {
   id: 'mission-1',
@@ -94,6 +94,7 @@ describe('MissionList', () => {
   })
 
   it('renders expanded subtasks with their status label', () => {
+    const onSelectSubtask = vi.fn()
     render(
       <MissionList
         missions={[baseMission]}
@@ -104,10 +105,15 @@ describe('MissionList', () => {
         subtasksByMissionId={{ 'mission-1': [subtask] }}
         expandedSubtaskMissionIds={new Set(['mission-1'])}
         onToggleSubtaskExpand={vi.fn()}
+        onSelectSubtask={onSelectSubtask}
       />,
     )
 
     expect(screen.getAllByText('Draft launch copy').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Awaiting you').length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getAllByText('Draft launch copy')[0]!)
+
+    expect(onSelectSubtask).toHaveBeenCalledWith('mission-1', 'subtask-1')
   })
 })

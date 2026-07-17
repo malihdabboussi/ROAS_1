@@ -11,6 +11,11 @@ export const MISSION_CONTROL_MESSAGES = {
   INBOX_TITLE: 'Inbox',
   MISSION_LIST_TITLE: 'Mission Inbox',
   MISSION_DETAIL_TITLE: 'Mission Detail',
+  HUMAN_GATE_APPROVED: 'Approved — the mission is continuing.',
+  HUMAN_GATE_APPROVAL_FAILED: "I couldn't approve this gate. Try again.",
+  HUMAN_GATE_CHANGES_SENT: 'Changes sent — this gate will stay open for review.',
+  SUBTASK_LIVE_DRAFT_TITLE: 'Live work',
+  SUBTASK_LIVE_DRAFT_DESCRIPTION: 'This updates as the agent works. The document may still change.',
   AGENT_PANEL_TITLE: 'Agent Status',
   DETAIL_EMPTY: 'Select a mission to see plan, timeline, and output.',
 } as const

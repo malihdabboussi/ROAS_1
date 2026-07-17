@@ -1,10 +1,14 @@
 import { Fragment } from 'react'
 import type { MouseEvent, RefObject } from 'react'
 import { MoreHorizontal } from 'lucide-react'
-import type { MissionColumnId, MissionsConfig, SubtasksDisplayMode } from '@/lib/spaces/space-schema-types'
+import type {
+  MissionColumnId,
+  MissionsConfig,
+  SubtasksDisplayMode,
+} from '@/lib/spaces/space-schema-types'
 import { cn } from '@/lib/utils/cn'
-import type { ColumnConfig } from './mission-list-config'
 import type { Mission, MissionAgent, MissionDeliverable, MissionSubtask } from '../types'
+import type { ColumnConfig } from './mission-list-config'
 import { MissionListCell, MissionListSubtaskCell } from './MissionListCell'
 
 interface MissionListDesktopRowsProps {
@@ -13,6 +17,7 @@ interface MissionListDesktopRowsProps {
   activeCols: ColumnConfig[]
   gridTemplateWithTrail: string
   onSelect: (missionId: string) => void
+  onSelectSubtask?: (missionId: string, subtaskId: string) => void
   subtasksByMissionId?: Record<string, MissionSubtask[]>
   expandedSubtaskMissionIds?: Set<string>
   onToggleSubtaskExpand?: (missionId: string) => void
@@ -51,6 +56,7 @@ export function MissionListDesktopRows({
   activeCols,
   gridTemplateWithTrail,
   onSelect,
+  onSelectSubtask,
   subtasksByMissionId,
   expandedSubtaskMissionIds,
   onToggleSubtaskExpand,
@@ -111,7 +117,9 @@ export function MissionListDesktopRows({
                   data-cell
                   className={cn(
                     'min-w-0 cursor-pointer overflow-hidden',
-                    col.id === 'title' ? 'flex items-center self-stretch py-0.5' : 'space-cell-hover',
+                    col.id === 'title'
+                      ? 'flex items-center self-stretch py-0.5'
+                      : 'space-cell-hover',
                   )}
                   onClick={(e) => handleMissionCellClick(e, col.id, mission)}
                   onPointerDown={(e) => e.stopPropagation()}
@@ -164,9 +172,7 @@ export function MissionListDesktopRows({
                   key={st.id}
                   className="hover:bg-hover-subtle group grid items-stretch gap-0 px-4 py-0 transition-colors"
                   style={{ gridTemplateColumns: gridTemplateWithTrail }}
-                  onClick={(e) => {
-                    if (e.target === e.currentTarget) onSelect(mission.id)
-                  }}
+                  onClick={() => onSelectSubtask?.(mission.id, st.id)}
                 >
                   {activeCols.map((col) => (
                     <div
@@ -179,7 +185,10 @@ export function MissionListDesktopRows({
                           ? 'flex items-center self-stretch py-0.5'
                           : 'space-cell-hover',
                       )}
-                      onClick={(e) => handleMissionCellClick(e, col.id, mission)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onSelectSubtask?.(mission.id, st.id)
+                      }}
                       onPointerDown={(e) => e.stopPropagation()}
                     >
                       <MissionListSubtaskCell

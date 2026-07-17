@@ -4,14 +4,14 @@ import { useRouter } from 'next/navigation'
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { MouseEvent } from 'react'
 import { toast } from 'sonner'
-import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
+import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { MissionDetailModal } from '@/components/missions/MissionDetailModalAdapter'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
-import { createMission, resolveMissionCreateToastMessage } from '@/lib/missions'
 import { billingApi } from '@/lib/billing/billing-api'
 import { fetchCampaignTeam } from '@/lib/campaigns'
 import type { DocumentAttachment } from '@/lib/chat/document-attachments'
+import { createMission, resolveMissionCreateToastMessage } from '@/lib/missions'
 import type { ViewDef } from '../types/space-schema'
 import { MissionCaptureModal } from './MissionCaptureModal'
 import { MissionsViewListContent } from './MissionsViewListContent'
@@ -80,6 +80,8 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
     loading,
     selectedMission,
     setSelectedMission,
+    selectedSubtaskId,
+    setSelectedSubtaskId,
     previewDeliverable,
     setPreviewDeliverable,
     loadData,
@@ -247,7 +249,11 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
       {selectedMission && (
         <MissionDetailModal
           mission={selectedMission}
-          onClose={() => setSelectedMission(null)}
+          initialSubtaskId={selectedSubtaskId}
+          onClose={() => {
+            setSelectedSubtaskId(null)
+            setSelectedMission(null)
+          }}
           onUpdated={() => void loadData()}
         />
       )}

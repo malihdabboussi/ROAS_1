@@ -1,10 +1,7 @@
 import type { RefObject } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowDown, Cloud, FolderOpen, HardDrive, Plus, Send, Upload } from 'lucide-react'
-import {
-  FileAttachments,
-  type AttachedFile,
-} from '@/components/chat/FileAttachments'
+import { FileAttachments, type AttachedFile } from '@/components/chat/FileAttachments'
 import { CloudAttachMenuItems } from '@/components/media/CloudAttachMenuItems'
 import { extractClipboardImageFiles } from '@/lib/media/clipboard-image'
 import { MissionRatingStrip, type RatingPayload } from './MissionRatingStrip'
@@ -61,6 +58,9 @@ export function ActivityTimelineComposer({
   const [attachDropdownOpen, setAttachDropdownOpen] = useState(false)
   const attachDropdownRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const attachmentsEnabled = Boolean(
+    onFileButtonClick || onOpenLibrary || (onOpenDrive && onOpenDropbox),
+  )
 
   const handleTextareaInput = useCallback(() => {
     const t = textareaRef.current
@@ -147,63 +147,65 @@ export function ActivityTimelineComposer({
 
           <div className="flex items-center justify-between px-2 py-1.5">
             <div className="flex items-center gap-1">
-              <div className="relative" ref={attachDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setAttachDropdownOpen((p) => !p)}
-                  disabled={attachedFiles.length >= maxFiles}
-                  className="button-glass-neutral flex h-7 w-7 items-center justify-center rounded-full transition-all disabled:opacity-30"
-                  title={attachedFiles.length >= maxFiles ? `Max ${maxFiles} files` : 'Attach'}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </button>
-                {attachDropdownOpen && (
-                  <div className="dropdown-menu-solid absolute bottom-full left-0 z-50 mb-1 w-48 py-1">
-                    {onFileButtonClick && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onFileButtonClick()
-                          setAttachDropdownOpen(false)
-                        }}
-                        className="body-3 flex w-full items-center gap-2 px-3 py-2 text-left text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
-                      >
-                        <Upload className="h-4 w-4" />
-                        Upload
-                      </button>
-                    )}
-                    {onOpenLibrary && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onOpenLibrary()
-                          setAttachDropdownOpen(false)
-                        }}
-                        className="body-3 flex w-full items-center gap-2 px-3 py-2 text-left text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
-                      >
-                        <FolderOpen className="h-4 w-4" />
-                        From Library
-                      </button>
-                    )}
-                    {onOpenDrive && onOpenDropbox && (
-                      <CloudAttachMenuItems
-                        onDrive={() => {
-                          void onOpenDrive()
-                          setAttachDropdownOpen(false)
-                        }}
-                        onDropbox={() => {
-                          void onOpenDropbox()
-                          setAttachDropdownOpen(false)
-                        }}
-                        onSelect={() => setAttachDropdownOpen(false)}
-                        driveIcon={<HardDrive className="h-4 w-4" />}
-                        dropboxIcon={<Cloud className="h-4 w-4" />}
-                        itemClassName="body-3 flex w-full items-center gap-2 px-3 py-2 text-left text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
+              {attachmentsEnabled ? (
+                <div className="relative" ref={attachDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setAttachDropdownOpen((p) => !p)}
+                    disabled={attachedFiles.length >= maxFiles}
+                    className="button-glass-neutral flex h-7 w-7 items-center justify-center rounded-full transition-all disabled:opacity-30"
+                    title={attachedFiles.length >= maxFiles ? `Max ${maxFiles} files` : 'Attach'}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                  {attachDropdownOpen && (
+                    <div className="dropdown-menu-solid absolute bottom-full left-0 z-50 mb-1 w-48 py-1">
+                      {onFileButtonClick && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onFileButtonClick()
+                            setAttachDropdownOpen(false)
+                          }}
+                          className="body-3 flex w-full items-center gap-2 px-3 py-2 text-left text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
+                        >
+                          <Upload className="h-4 w-4" />
+                          Upload
+                        </button>
+                      )}
+                      {onOpenLibrary && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onOpenLibrary()
+                            setAttachDropdownOpen(false)
+                          }}
+                          className="body-3 flex w-full items-center gap-2 px-3 py-2 text-left text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
+                        >
+                          <FolderOpen className="h-4 w-4" />
+                          From Library
+                        </button>
+                      )}
+                      {onOpenDrive && onOpenDropbox && (
+                        <CloudAttachMenuItems
+                          onDrive={() => {
+                            void onOpenDrive()
+                            setAttachDropdownOpen(false)
+                          }}
+                          onDropbox={() => {
+                            void onOpenDropbox()
+                            setAttachDropdownOpen(false)
+                          }}
+                          onSelect={() => setAttachDropdownOpen(false)}
+                          driveIcon={<HardDrive className="h-4 w-4" />}
+                          dropboxIcon={<Cloud className="h-4 w-4" />}
+                          itemClassName="body-3 flex w-full items-center gap-2 px-3 py-2 text-left text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
 
             <button

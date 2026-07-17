@@ -45,6 +45,7 @@ export function useMissionsViewListState({
   const [agents, setAgents] = useState<MissionAgent[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null)
+  const [selectedSubtaskId, setSelectedSubtaskId] = useState<string | null>(null)
   const [previewDeliverable, setPreviewDeliverable] = useState<MissionDeliverable | null>(null)
   const [collapsedMissionGroups, setCollapsedMissionGroups] = useState<Record<string, boolean>>({})
   const [deliverablesByMissionId, setDeliverablesByMissionId] = useState<
@@ -237,19 +238,25 @@ export function useMissionsViewListState({
       [groupKey]: !current[groupKey],
     }))
   }, [])
-
   const onSelectMission = useCallback(
     (missionId: string) => {
       const mission = missions.find((item) => item.id === missionId)
+      setSelectedSubtaskId(null)
       setSelectedMission(mission ?? null)
     },
     [missions],
   )
-
+  const onSelectSubtask = useCallback(
+    (missionId: string, subtaskId: string) => {
+      const mission = missions.find((item) => item.id === missionId)
+      setSelectedSubtaskId(mission ? subtaskId : null)
+      setSelectedMission(mission ?? null)
+    },
+    [missions],
+  )
   const onChanged = useCallback(() => {
     void loadData()
   }, [loadData])
-
   const listContentProps: MissionsViewListContentProps = {
     missionsForDisplay,
     sortedMissions,
@@ -270,6 +277,7 @@ export function useMissionsViewListState({
     onPersistColumnWidths: persistMissionListColumnWidths,
     onToggleGroup,
     onSelectMission,
+    onSelectSubtask,
     onChanged,
     onToggleSubtaskExpand: toggleSubtaskExpand,
     onReorderColumns: handleReorderMissionColumns,
@@ -277,12 +285,13 @@ export function useMissionsViewListState({
     onOpenDeliverable: setPreviewDeliverable,
     onListColumnResize: handleMissionListColumnResize,
   }
-
   return {
     agents,
     loading,
     selectedMission,
     setSelectedMission,
+    selectedSubtaskId,
+    setSelectedSubtaskId,
     previewDeliverable,
     setPreviewDeliverable,
     loadData,

@@ -38,7 +38,7 @@ describe('ActivityTimeline comment composer', () => {
         onPasteFiles={onPasteFiles}
       />,
     )
-    const textarea = screen.getByPlaceholderText('Send a message...')
+    const textarea = screen.getByPlaceholderText('Message Vibey...')
     const file = new File(['z'], 'clip.jpg', { type: 'image/jpeg' })
     fireEvent.paste(textarea, { clipboardData: fakeClipboardWithImageFiles([file]) })
     expect(onPasteFiles).toHaveBeenCalledTimes(1)
@@ -71,7 +71,7 @@ describe('ActivityTimeline comment composer', () => {
         onPasteFiles={onPasteFiles}
       />,
     )
-    const textarea = screen.getByPlaceholderText('Send a message...')
+    const textarea = screen.getByPlaceholderText('Message Vibey...')
     fireEvent.paste(textarea, { clipboardData: fakeClipboardTextOnly() })
     expect(onPasteFiles).not.toHaveBeenCalled()
   })

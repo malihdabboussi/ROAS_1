@@ -31,7 +31,7 @@ function unwrapPrefixedMarkdownHtml(text: string): string | null {
   const trimmed = text.trim()
   const preMatch = trimmed.match(/^<pre\b[^>]*>([\s\S]*)<\/pre>$/i)
   if (preMatch) {
-    return stripHtmlToText(preMatch[1])
+    return stripHtmlToText(preMatch[1] ?? '')
   }
   // Agent dual-write sometimes produced <p># Heading<br>## Sub</p> instead of <h1>/<h2>.
   if (/^<(?:p|div)\b/i.test(trimmed) && looksLikeMarkdown(stripHtmlToText(trimmed))) {
