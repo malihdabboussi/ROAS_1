@@ -992,3 +992,10 @@ What: Aligned remaining execution-mode resolvers with the Fathom fix — missing
 Why: The same inverted default still lived in API status/overview and Composio sync, so native OAuth integrations with a toolkit row but no mode could be forced to Composio (and overview could mark them disconnected without a Composio account).
 Impact: Status/overview/providerModes and agent `resolveComposioConfig` match agent-api routing. Native providers stay legacy unless explicitly configured for Composio.
 Files: `integrations-status.service.ts`, `integrations-overview.service.ts`, `composio.service.ts`, `artifact-integration-orchestrator.service.ts`, matching tests
+
+## [2026-07-16 22:36] - [FIX]
+
+What: Fixed TypeScript possibly-undefined aspect ratio glyph math in `aspect-ratio-menu.tsx` so `roas-web` production builds succeed.
+Why: Vercel web deploy failed on `parts[0]` / `parts[1]` possibly undefined, blocking full production rollout.
+Impact: `roas-web` can deploy again; aspect picker glyph still defaults invalid ratios to 1:1.
+Files: `apps/web/src/components/media/aspect-ratio-menu.tsx`

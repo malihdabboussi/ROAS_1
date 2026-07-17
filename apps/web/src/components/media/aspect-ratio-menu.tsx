@@ -38,8 +38,10 @@ export function AspectRatioGlyph({
   className?: string
 }) {
   const parts = ratio.split(':').map(Number)
-  const rw = parts[0] > 0 ? parts[0] : 1
-  const rh = parts[1] > 0 ? parts[1] : 1
+  const rawW = parts[0]
+  const rawH = parts[1]
+  const rw = typeof rawW === 'number' && Number.isFinite(rawW) && rawW > 0 ? rawW : 1
+  const rh = typeof rawH === 'number' && Number.isFinite(rawH) && rawH > 0 ? rawH : 1
   const size = 16
   const pad = 1.5
   const max = size - pad * 2
