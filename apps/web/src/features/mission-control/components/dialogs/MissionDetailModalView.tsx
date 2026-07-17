@@ -9,8 +9,10 @@ import { MissionDetailOverlayModals } from './MissionDetailOverlayModals'
 import {
   collectDependencySubtasks,
   collectSubtaskResourceLinks,
+  filterMissionDeliverables,
   filterSubtaskDeliverables,
   filterSubtaskLogs,
+  numberDeliverablesByTask,
 } from './subtask-detail'
 
 export function MissionDetailModalView({
@@ -99,9 +101,14 @@ export function MissionDetailModalView({
   const selectedSubtask = selectedSubtaskId
     ? (subtasks.find((item) => item.id === selectedSubtaskId) ?? null)
     : null
-  const visibleDeliverables = selectedSubtask
-    ? filterSubtaskDeliverables(deliverables, selectedSubtask, subtasks)
-    : deliverables
+  const visibleDeliverables = numberDeliverablesByTask(
+    filterMissionDeliverables(
+      selectedSubtask
+        ? filterSubtaskDeliverables(deliverables, selectedSubtask, subtasks)
+        : deliverables,
+    ),
+    subtasks,
+  )
   const subtaskDetailProps = selectedSubtask
     ? {
         subtask: selectedSubtask,

@@ -4,6 +4,7 @@ import {
   isSkillWriteLocked,
   isSystemAgentKey,
 } from '../lib/system-agent-keys'
+import { ACCOUNT_SKILL_AGENT_KEY } from '../lib/skill-catalog.constants'
 import { MissionsRepository } from '../repositories/missions.repository'
 import { MissionAgentGatewayService } from './gateways/mission-agent-gateway.service'
 
@@ -83,22 +84,26 @@ export class AgentSkillManagementService {
     },
     orgId?: string | null,
   ) {
-    if (isSkillWriteLocked(agentKey)) {
-      throw new ForbiddenException('Skills for this agent are managed by the platform')
-    }
-    await this.assertCanManageAgent(supabase, userId, agentKey, orgId)
+    // User-created skills are account/org catalog owned (`*`), not agent-owned.
+    // Agents still materialize them via existing agent_key OR '*' sync.
+    const catalogKey = ACCOUNT_SKILL_AGENT_KEY
+    const permissionKey =
+      agentKey !== ACCOUNT_SKILL_AGENT_KEY && !isSkillWriteLocked(agentKey) ? agentKey : 'vibey'
+    await this.assertCanManageAgent(supabase, userId, permissionKey, orgId)
     const created = await this.missionsRepository.createAgentSkill(supabase, {
       user_id: userId,
       org_id: orgId,
-      agent_key: agentKey,
+      agent_key: catalogKey,
       skill_key: payload.skill_key,
       name: payload.name,
       description: payload.description,
       markdown_content: payload.markdown_content,
       is_enabled: payload.is_enabled,
     })
+    const syncKey =
+      agentKey !== ACCOUNT_SKILL_AGENT_KEY && !isSkillWriteLocked(agentKey) ? agentKey : 'vibey'
     await this.missionAgentGatewayService
-      .triggerAgentSkillsSync(userId, agentKey, orgId)
+      .triggerAgentSkillsSync(userId, syncKey, orgId)
       .catch(() => undefined)
     return created
   }
@@ -176,11 +181,12 @@ export class AgentSkillManagementService {
     payload: { file_path: string; content?: string; content_type?: string; storage_url?: string },
     orgId?: string | null,
   ) {
-    await this.assertCanManageAgent(supabase, userId, agentKey, orgId)
+    const writeKey = agentKey === ACCOUNT_SKILL_AGENT_KEY ? ACCOUNT_SKILL_AGENT_KEY : agentKey
+    await this.assertCanManageAgent(supabase, userId, writeKey, orgId)
     return this.missionsRepository.createAgentSkillResource(supabase, {
       user_id: userId,
       org_id: orgId,
-      agent_key: agentKey,
+      agent_key: writeKey,
       skill_key: skillKey,
       file_path: payload.file_path,
       content: payload.content,
@@ -358,7 +364,14 @@ export class AgentSkillManagementService {
     agentKey: string,
     orgId?: string | null,
   ): Promise<void> {
-    const canManage = await this.missionsRepository.canManageAgent(supabase, userId, agentKey, orgId)
+    const permissionKey =
+      agentKey === ACCOUNT_SKILL_AGENT_KEY || isSkillWriteLocked(agentKey) ? 'vibey' : agentKey
+    const canManage = await this.missionsRepository.canManageAgent(
+      supabase,
+      userId,
+      permissionKey,
+      orgId,
+    )
     if (!canManage) {
       throw new ForbiddenException('You do not have permission to manage this agent')
     }

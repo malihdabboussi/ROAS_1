@@ -7,6 +7,24 @@ export type EntitySearchKind =
   | 'person'
   | 'agent'
   | 'conversation'
+  | 'campaign'
+  | 'artifact'
+  | 'deliverable'
+
+export type EntitySearchArtifactKind =
+  | 'offer'
+  | 'funnel'
+  | 'website'
+  | 'sequence'
+  | 'email'
+  | 'presentation'
+  | 'avatar'
+  | 'ad'
+  | 'ad_campaign'
+  | 'ad_set'
+  | 'social_post'
+  | 'blog_post'
+  | 'page'
 
 export interface EntitySearchResult {
   kind: EntitySearchKind
@@ -21,4 +39,9 @@ export interface EntitySearchResult {
   statusColor?: string | null
   /** Status option label from the space schema (e.g. 'In Progress'). */
   statusLabel?: string | null
+  campaignId?: string | null
+  campaignIcon?: string | null
+  artifactKind?: EntitySearchArtifactKind
+  sequenceId?: string
+  funnelId?: string
 }

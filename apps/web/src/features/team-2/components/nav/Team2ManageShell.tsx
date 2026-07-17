@@ -47,6 +47,11 @@ export function Team2ManageShell({
           onSectionChange('teams')
           onSelectTeam(null)
         }}
+        onNavigateTeamOverview={() => {
+          onSectionChange('agents')
+          onSelectTeam(null)
+          onNavigateAgentsRoot()
+        }}
         teams={teams}
         selectedTeamId={breadcrumbTeamId}
         onSelectTeam={onSelectTeam}

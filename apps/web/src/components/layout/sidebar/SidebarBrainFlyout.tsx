@@ -23,34 +23,31 @@ import { useBrainScopeNavOptions } from '@/features/brain/hooks/use-brain-scope-
 import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
 import { brainHomeHref, brainScopeHref } from '@/features/brain/lib/brain-scope-nav'
 import { dispatchBrainTrainModal } from '@/features/brain/lib/brain-training-modal.events'
-import { useTeam2Perms } from '@/features/team-2/hooks/use-team2-perms'
-import { useOrgStore } from '@/lib/org'
 
 const CAMPAIGN_KNOWLEDGE_RECENT_LIMIT = 5
-
-const CUSTOMER_PLACEHOLDER_OPTION: BrainScopeNavOption = {
-  id: 'customer',
-  label: 'Customer Brain',
-  agentId: null,
-  brainId: null,
-  scopeType: 'customer',
-}
 
 function scopeRowIcon(option: BrainScopeNavOption, fallback: ReactNode): ReactNode {
   const imageUrl = option.imageUrl?.trim()
   if (imageUrl) {
-    return <img src={imageUrl} alt="" className="h-4 w-4 shrink-0 rounded-full object-cover" />
+    return <img src={imageUrl} alt="" className="hub-dock-flyout-avatar" />
   }
   return fallback
 }
 
 function sectionHeader(label: string) {
+  return <p className="hub-dock-flyout-caption">{label}</p>
+}
+
+function EnableBrainRow({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <div className="flex items-center justify-between px-3 pb-1 pt-1">
-      <span className="text-[10px] font-medium tracking-wider text-[var(--color-muted-foreground)]">
-        {label}
-      </span>
-    </div>
+    <Link
+      href={brainHomeHref()}
+      data-hub-dock-navigate
+      onClick={() => onNavigate?.()}
+      className="hub-dock-flyout-row hub-dock-flyout-row-muted"
+    >
+      <span className="min-w-0 flex-1 truncate">Enable in Manage Brains</span>
+    </Link>
   )
 }
 
@@ -95,12 +92,13 @@ function BrainScopeRow({
     >
       <Link
         href={brainScopeHref(option.id)}
+        data-hub-dock-navigate
         onClick={() => onNavigate?.()}
-        className={`nav-glass-hover-purple body-3 flex w-full items-center gap-2 rounded-lg py-1.5 pl-3 pr-8 transition-all ${
-          isActive ? 'home-sidebar-item-active' : 'text-[var(--color-muted-foreground)]'
-        }`}
+        className={`hub-dock-flyout-row pr-8 ${isActive ? 'hub-dock-flyout-row-active' : ''}`}
       >
-        <span className="flex h-4 w-4 shrink-0 items-center justify-center">{icon}</span>
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full">
+          {icon}
+        </span>
         <span className="min-w-0 flex-1 truncate">{option.label}</span>
       </Link>
       <div className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center">
@@ -121,63 +119,12 @@ function BrainScopeRow({
   )
 }
 
-function CustomerBrainPlaceholderRow({
-  menuOpen,
-  onOpenMenu,
-}: {
-  menuOpen: boolean
-  onOpenMenu: (option: BrainScopeNavOption, clientX: number, clientY: number) => void
-}) {
-  const openMenuAt = (clientX: number, clientY: number) => {
-    onOpenMenu(CUSTOMER_PLACEHOLDER_OPTION, clientX, clientY)
-  }
-
-  const openMenuFromButton = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const rect = e.currentTarget.getBoundingClientRect()
-    onOpenMenu(CUSTOMER_PLACEHOLDER_OPTION, rect.right - 224, rect.bottom + 4)
-  }
-
-  return (
-    <div
-      className="group/brain-scope relative flex items-center"
-      onContextMenu={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        openMenuAt(e.clientX, e.clientY)
-      }}
-    >
-      <div className="body-3 flex w-full items-center gap-2 rounded-lg py-1.5 pl-3 pr-8 text-[var(--color-muted-foreground)]">
-        <Users className="h-4 w-4 shrink-0" />
-        <span className="min-w-0 flex-1 truncate">No customer brain yet</span>
-      </div>
-      <div className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center">
-        <button
-          type="button"
-          aria-label="Customer brain actions"
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
-          onClick={openMenuFromButton}
-          className={`absolute inset-0 flex items-center justify-center rounded p-0.5 text-[var(--color-muted-foreground)] transition-opacity hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)] ${
-            menuOpen ? 'opacity-100' : 'opacity-0 group-hover/brain-scope:opacity-100'
-          }`}
-        >
-          <MoreHorizontal className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    </div>
-  )
-}
-
 export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const currentScope = searchParams.get('scope') ?? null
   const { scopeOptions, agentsWithoutBrain, loading } = useBrainScopeNavOptions()
   const { getMenuContext, shareModalProps } = useBrainScopeMenuActions()
-  const isOrg = useOrgStore((s) => s.isOrgContext())
-  const perms = useTeam2Perms()
   const [menuState, setMenuState] = useState<{
     option: BrainScopeNavOption
     position: { x: number; y: number }
@@ -209,8 +156,6 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
       }
     }, [scopeOptions])
 
-  const showCustomerPlaceholderMenu = isOrg && perms.isAdmin && !customerBrain
-
   const openMenu = (option: BrainScopeNavOption, clientX: number, clientY: number) => {
     setMenuState({ option, position: { x: clientX, y: clientY } })
   }
@@ -224,38 +169,36 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
 
   return (
     <div>
-      <div className="mb-3 space-y-0.5">
+      <div className="mb-2 space-y-0.5">
         <Link
           href={brainHomeHref()}
+          data-hub-dock-navigate
           onClick={() => onNavigate?.()}
-          className={`nav-glass-hover-purple body-3 flex w-full items-center gap-2 rounded-lg px-3 py-1.5 transition-all ${
-            isManageBrainsActive
-              ? 'home-sidebar-item-active'
-              : 'text-[var(--color-muted-foreground)]'
-          }`}
+          className={`hub-dock-flyout-row ${isManageBrainsActive ? 'hub-dock-flyout-row-active' : ''}`}
         >
-          <LayoutGrid className="h-4 w-4 shrink-0" />
+          <LayoutGrid />
           <span className="min-w-0 flex-1 truncate">Manage Brains</span>
         </Link>
         <button
           type="button"
+          data-hub-dock-navigate
           onClick={() => {
             onNavigate?.()
             dispatchBrainTrainModal()
           }}
-          className="nav-glass-hover-purple body-3 flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-[var(--color-muted-foreground)] transition-all hover:text-[var(--foreground)]"
+          className="hub-dock-flyout-row"
         >
-          <GraduationCap className="h-4 w-4 shrink-0" />
+          <GraduationCap />
           <span className="min-w-0 flex-1 truncate text-left">Train Brain</span>
         </button>
       </div>
       {loading ? (
         <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">Loading…</p>
       ) : (
-        <div className="gap-spacing-6 flex flex-col">
+        <div className="gap-spacing-1 flex flex-col">
           <div className="space-y-0.5">
             {sectionHeader('User brains')}
-            {userBrain ? (
+            {userBrain?.brainId ? (
               <BrainScopeRow
                 option={userBrain}
                 pathname={pathname}
@@ -266,9 +209,7 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
                 onOpenMenu={openMenu}
               />
             ) : (
-              <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">
-                No user brain yet
-              </p>
+              <EnableBrainRow onNavigate={onNavigate} />
             )}
             {sharedBrains.map((option) => (
               <BrainScopeRow
@@ -311,26 +252,15 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
                 menuOpen={isMenuOpenFor(customerBrain.id)}
                 onOpenMenu={openMenu}
               />
-            ) : showCustomerPlaceholderMenu ? (
-              <CustomerBrainPlaceholderRow
-                menuOpen={isMenuOpenFor(CUSTOMER_PLACEHOLDER_OPTION.id)}
-                onOpenMenu={openMenu}
-              />
             ) : (
-              <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">
-                No customer brain yet
-              </p>
+              <EnableBrainRow onNavigate={onNavigate} />
             )}
           </div>
 
           <div className="space-y-0.5">
             {sectionHeader('Agent brains')}
-            {agentBrains.length === 0 ? (
-              agentsWithoutBrain.length === 0 ? (
-                <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">
-                  No agent brains yet
-                </p>
-              ) : null
+            {agentBrains.length === 0 && agentsWithoutBrain.length === 0 ? (
+              <EnableBrainRow onNavigate={onNavigate} />
             ) : (
               agentBrains.map((option) => (
                 <BrainScopeRow
@@ -348,14 +278,15 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
             {agentsWithoutBrain.length > 0 ? (
               <button
                 type="button"
+                data-hub-dock-navigate
                 onClick={() => {
                   onNavigate?.()
                   dispatchBrainAddAgentModal()
                 }}
-                className="hover:bg-hover-subtle flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+                className="hub-dock-flyout-row"
               >
-                <Plus className="h-4 w-4 shrink-0" />
-                <span className="body-3">Add Agent Brain</span>
+                <Plus />
+                <span className="min-w-0 flex-1 truncate text-left">Add Agent Brain</span>
               </button>
             ) : null}
           </div>
@@ -421,16 +352,5 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
 }
 
 export function SidebarBrainFlyout() {
-  return (
-    <>
-      <div className="flex items-center justify-between px-3 py-3">
-        <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
-          Brain
-        </span>
-      </div>
-      <div className="scrollbar-hide flex-1 overflow-y-auto px-2 pb-2">
-        <SidebarBrainNavLinks />
-      </div>
-    </>
-  )
+  return <SidebarBrainNavLinks />
 }

@@ -7,6 +7,11 @@ import type {
   ViewMode,
 } from '@/components/deliverables/deliverable-preview-modal.types'
 import { DeliverableA4PagedPreview } from '@/components/deliverables/DeliverableA4PagedPreview'
+import {
+  DeliverableHtmlPreview,
+  looksLikeDeliverableHtml,
+  resolveDeliverablePreviewHtml,
+} from '@/components/deliverables/DeliverableHtmlPreview'
 import { DocxFileDeliverablePreview } from '@/components/deliverables/DocxFileDeliverablePreview'
 import { normalizeDeliverableContent } from '@/components/deliverables/normalize-deliverable-content'
 import {
@@ -60,11 +65,14 @@ export function DeliverablePreviewBody({
     )
   }
 
+  const normalizedText = textToRender ? normalizeDeliverableContent(textToRender) : null
+  const textIsHtml = !!normalizedText && looksLikeDeliverableHtml(normalizedText)
   const showAsText = !!(isTextContent || (!deliverable.file_url && textToRender))
   const a4 = showAsText && viewMode === 'a4'
   const usePagedA4 =
     a4 &&
-    !!textToRender &&
+    !!normalizedText &&
+    !textIsHtml &&
     !(isEntityType && deliverable.entity_id && deliverable.type !== 'doc') &&
     !deliverable.file_url
 
@@ -111,21 +119,20 @@ export function DeliverablePreviewBody({
         />
       </div>
     )
-  ) : textToRender ? (
-    <MarkdownRenderer className="body-2 max-w-none leading-relaxed">
-      {normalizeDeliverableContent(textToRender)}
-    </MarkdownRenderer>
+  ) : normalizedText ? (
+    textIsHtml ? (
+      <DeliverableHtmlPreview html={resolveDeliverablePreviewHtml(normalizedText)} />
+    ) : (
+      <MarkdownRenderer className="body-2 max-w-none leading-relaxed">
+        {normalizedText}
+      </MarkdownRenderer>
+    )
   ) : (
     <div className="body-2 text-muted-foreground">No content to display</div>
   )
 
   if (usePagedA4) {
-    return (
-      <DeliverableA4PagedPreview
-        ref={contentRef}
-        markdown={normalizeDeliverableContent(textToRender as string)}
-      />
-    )
+    return <DeliverableA4PagedPreview ref={contentRef} markdown={normalizedText as string} />
   }
 
   if (a4) {

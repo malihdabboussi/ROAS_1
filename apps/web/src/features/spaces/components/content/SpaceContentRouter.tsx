@@ -225,6 +225,8 @@ export type SpaceContentRouterProps = {
   setArtifactDetailOpen: (v: boolean) => void
   setArtifactDeepDetail: (meta: { id: string; title: string } | null) => void
   setMediaDeepDetail: (meta: { id: string; title: string } | null) => void
+  /** True while TaskDetailModal is open — Media composer must stay under it. */
+  taskModalOpen?: boolean
   setReportingToolbarApi: (api: ReportingToolbarApi | null) => void
   setSelectedItem: (item: import('../../types').SpaceItem | null) => void
   /** Open task modal with correct parent stack for subtasks (list/kanban/calendar). */
@@ -302,6 +304,7 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
     setArtifactDeepDetail,
     setMediaDeepDetail,
     setReportingToolbarApi,
+    taskModalOpen = false,
     onUpdateItem: updateItem,
     onDeleteItem: deleteItem,
     onPushToAgent: pushToAgent,
@@ -352,6 +355,7 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
           campaignId={activeSpace.campaign_id ?? null}
           view={activeView}
           onMediaDeepMetaChange={setMediaDeepDetail}
+          taskModalOpen={taskModalOpen}
         />
       ) : isContactsView ? (
         activeSpace.campaign_id || contactsScope === 'all' ? (

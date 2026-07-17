@@ -1,10 +1,10 @@
 import React from 'react'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { MissionsView, type MissionsViewHandle } from './MissionsView'
 import type { MissionAgent } from '@/lib/agents'
 import type { Mission, MissionDeliverable } from '@/lib/missions'
 import type { ViewDef } from '../types/space-schema'
+import { MissionsView, type MissionsViewHandle } from './MissionsView'
 
 const mocks = vi.hoisted(() => ({
   fetchMissions: vi.fn(),
@@ -27,9 +27,9 @@ vi.mock('next/navigation', () => ({
 vi.mock('next/dynamic', () => ({
   default: (loader: () => Promise<{ default: React.ComponentType<Record<string, unknown>> }>) => {
     function DynamicComponent(props: Record<string, unknown>) {
-      const [Loaded, setLoaded] = React.useState<React.ComponentType<Record<string, unknown>> | null>(
-        null,
-      )
+      const [Loaded, setLoaded] = React.useState<React.ComponentType<
+        Record<string, unknown>
+      > | null>(null)
       React.useEffect(() => {
         let mounted = true
         void loader().then((mod) => {
@@ -153,10 +153,7 @@ vi.mock('@/components/deliverables/DeliverablePreviewModal', () => ({
     deliverable: MissionDeliverable
     renderEntityPreview?: unknown
   }) => (
-    <div
-      data-testid="deliverable-preview-modal"
-      data-renderer={typeof props.renderEntityPreview}
-    >
+    <div data-testid="deliverable-preview-modal" data-renderer={typeof props.renderEntityPreview}>
       {props.deliverable.title}
     </div>
   ),
@@ -352,8 +349,8 @@ describe('MissionsView', () => {
 
     renderMissionsView()
 
-    expect(await screen.findByText('No missions yet')).toBeInTheDocument()
-    expect(screen.getByText(/Create your first mission/)).toBeInTheDocument()
+    expect(await screen.findByText('Start with the playbook')).toBeInTheDocument()
+    expect(screen.getByText(/Webinar fulfillment is a guided mission/)).toBeInTheDocument()
     expect(consoleErrorSpy.mock.calls.flat().join('\n')).not.toContain('Maximum update depth')
     consoleErrorSpy.mockRestore()
   })

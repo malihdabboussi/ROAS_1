@@ -6,6 +6,7 @@ import { FeatureUpdateDetailModal } from '@/features/updates/components/FeatureU
 import { FeatureUpdatesPanel } from '@/features/updates/components/FeatureUpdatesPanel'
 import { useFeatureUpdates } from '@/features/updates/hooks/useFeatureUpdates'
 import type { FeatureUpdate } from '@/features/updates/types'
+import { useShellStore } from '@/components/shell/use-shell-store'
 import { DeleteCampaignDialog } from './DeleteCampaignDialog'
 import { NewCampaignModal } from './NewCampaignModal'
 import type { SidebarCampaignRow, SidebarProps } from './sidebar/sidebar-types'
@@ -19,6 +20,12 @@ export type { SidebarProps } from './sidebar/sidebar-types'
 
 export function Sidebar(props: SidebarProps) {
   const c = useSidebarController(props)
+  const sidebarPinned = useShellStore((s) => s.sidebarPinned)
+  const sidebarPeek = useShellStore((s) => s.sidebarPeek)
+  // Pin pushes layout; peek overlays (rail stays 72px). Never widen for peek.
+  const hqDesktopWidth =
+    c.sidebarMode === 'hq' ? (sidebarPinned ? 'md:w-[272px]' : 'md:w-[72px]') : c.desktopWidth
+  const hqPeeking = c.sidebarMode === 'hq' && sidebarPeek && !sidebarPinned
   const {
     updates: featureUpdateRows,
     loading: featureUpdatesLoading,
@@ -74,7 +81,11 @@ export function Sidebar(props: SidebarProps) {
           c.mobileDrawerOpen
             ? 'surface-card border-r-glass fixed inset-y-0 left-0 z-[999] h-dvh w-[280px]'
             : 'hidden h-full'
-        } md:relative md:z-50 md:flex md:h-full md:overflow-visible ${c.desktopWidth}`}
+        } md:relative md:flex md:h-full ${
+          hqPeeking ? 'md:z-40' : 'md:z-10'
+        } ${
+          c.sidebarMode === 'hq' ? 'md:overflow-visible' : 'md:overflow-hidden'
+        } ${c.sidebarMode === 'hq' ? hqDesktopWidth : c.desktopWidth}`}
       >
         <div
           className={`flex h-full min-h-0 flex-1 flex-col ${
@@ -147,7 +158,6 @@ export function Sidebar(props: SidebarProps) {
       <StudioSearchModal
         open={c.studioSearchOpen}
         onClose={() => c.setStudioSearchOpen(false)}
-        conversations={c.conversations}
         campaigns={c.sortedCampaigns.map((row: SidebarCampaignRow) => ({
           id: row.id,
           name: row.name,

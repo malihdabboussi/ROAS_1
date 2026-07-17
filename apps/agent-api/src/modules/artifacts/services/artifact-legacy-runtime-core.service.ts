@@ -433,7 +433,12 @@ export class ArtifactLegacyRuntimeCoreService {
     target: Record<string, any>,
     sessionKey: string,
     userId: string,
-  ): Promise<{ missionId: string; campaignId: string | null; orgId: string | null }> {
+  ): Promise<{
+    missionId: string
+    campaignId: string | null
+    orgId: string | null
+    spaceId: string | null
+  }> {
     const missionId = await this.resolveMissionIdForSession(target, sessionKey, userId)
     if (!missionId) throw new Error('mission_id required via mission session key')
     const { data: mission, error } = await this.repository.findMissionContext(
@@ -447,6 +452,7 @@ export class ArtifactLegacyRuntimeCoreService {
       missionId: String(mission.id),
       campaignId: (mission.campaign_id as string | null) ?? null,
       orgId: (mission.org_id as string | null) ?? null,
+      spaceId: (mission.space_id as string | null) ?? null,
     }
   }
 

@@ -8,7 +8,13 @@ import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendati
 import { surfaceFromPathname } from '../config/work-context.config'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 
-export function GlobalChatPanel() {
+export function GlobalChatPanel({
+  shellSidebarChrome = false,
+  onCollapseChat,
+}: {
+  shellSidebarChrome?: boolean
+  onCollapseChat?: () => void
+} = {}) {
   const pathname = usePathname() ?? ''
   const workContext = useGlobalChatStore((s) => s.workContext)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
@@ -36,9 +42,13 @@ export function GlobalChatPanel() {
       : `general:${workContext.surface}`
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <ChatSurfaceRecommendation />
-      <div className="min-h-0 flex-1">
+      {/*
+        Bound height for SpaceVibeyChatPanel: without overflow-hidden + flex column here,
+        the thread spacer can grow the panel past the rail and clip the composer off-screen.
+      */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <SpaceVibeyChatPanel
           key={panelKey}
           chatSurface={surfaceFromPathname(pathname)}
@@ -71,7 +81,8 @@ export function GlobalChatPanel() {
                 }
               : undefined
           }
-          onCollapseChat={() => setCollapsed(true)}
+          shellSidebarChrome={shellSidebarChrome}
+          onCollapseChat={onCollapseChat ?? (() => setCollapsed(true))}
         />
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { MessageSquare } from 'lucide-react'
 import {
   getConversationAgentDisplay,
@@ -66,6 +66,12 @@ export interface SpaceConversationsListProps {
   allAgentsMode?: boolean
   onAllAgentsModeChange?: (enabled: boolean) => void
   agentByKey?: Record<string, ConversationAgentDisplay>
+  hideNewButton?: boolean
+  /** When true, omit the inline list search (caller owns search UI). */
+  hideSearch?: boolean
+  /** Parent-owned search control shown after agent/filter when `hideSearch` is true. */
+  searchSlot?: ReactNode
+  headerEndSlot?: ReactNode
 }
 
 const INITIAL_SECTION_VISIBLE = 6
@@ -105,6 +111,10 @@ export function SpaceConversationsList({
   allAgentsMode,
   onAllAgentsModeChange,
   agentByKey,
+  hideNewButton,
+  hideSearch,
+  searchSlot,
+  headerEndSlot,
 }: SpaceConversationsListProps) {
   const [menuConversationId, setMenuConversationId] = useState<string | null>(null)
   const [menuAnchor, setMenuAnchor] = useState<{ top: number; left: number } | null>(null)
@@ -274,6 +284,10 @@ export function SpaceConversationsList({
         showAllAgentsToggle={showAllAgentsToggle}
         allAgentsMode={allAgentsMode}
         onAllAgentsModeChange={onAllAgentsModeChange}
+        hideNewButton={hideNewButton}
+        hideSearch={hideSearch}
+        searchSlot={searchSlot}
+        headerEndSlot={headerEndSlot}
       />
       <div className="min-h-0 flex-1 overflow-y-auto p-spacing-2">
         {loading ? (

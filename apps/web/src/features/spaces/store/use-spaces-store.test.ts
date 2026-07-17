@@ -24,6 +24,9 @@ const mocks = vi.hoisted(() => ({
   updateSpaceItem: vi.fn(),
   updateSpaceItemsBatch: vi.fn(),
   upsertViewOverride: vi.fn(),
+  cachedSpacesPeek: vi.fn(),
+  cachedSpacesReload: vi.fn(),
+  cachedSpacesMutate: vi.fn(),
 }))
 
 vi.mock('@/lib/team/team-roster-api', () => ({
@@ -36,6 +39,15 @@ vi.mock('@/lib/supabase/client', () => ({
       getUser: mocks.getUser,
     },
   }),
+}))
+
+vi.mock('../hooks/use-cached-spaces', () => ({
+  cachedSpaces: {
+    peek: () => mocks.cachedSpacesPeek(),
+    reload: () => mocks.cachedSpacesReload(),
+    mutate: (fn: unknown) => mocks.cachedSpacesMutate(fn),
+    invalidate: vi.fn(),
+  },
 }))
 
 vi.mock('../services/spaces.service', () => ({
@@ -97,6 +109,35 @@ describe('spaces active conversation storage', () => {
 
     expect(readStoredConversationId('space-1')).toBe('conversation-vibey')
     expect(readStoredAgentConversationId('space-1', 'vibey')).toBe('conversation-vibey')
+  })
+
+  it('loadSpaces keeps loading false when spaces are already warm', async () => {
+    const warmSpace = {
+      id: 'space-1',
+      name: 'Warm',
+      org_id: 'org-1',
+      user_id: 'user-1',
+      schema: { views: [] },
+    }
+    mocks.cachedSpacesPeek.mockReturnValue([warmSpace])
+    mocks.cachedSpacesReload.mockResolvedValue([warmSpace])
+    mocks.fetchSpaceItems.mockResolvedValue([])
+    mocks.fetchViewOverrides.mockResolvedValue([])
+
+    useSpacesStore.setState({
+      spaces: [warmSpace as never],
+      activeSpaceId: 'space-1',
+      loading: false,
+      items: [],
+      itemsLoadedForSpaceId: 'space-1',
+      itemsLoadedForQueryKey: 'all',
+    })
+
+    const pending = useSpacesStore.getState().loadSpaces()
+    expect(useSpacesStore.getState().loading).toBe(false)
+    await pending
+    expect(useSpacesStore.getState().loading).toBe(false)
+    expect(mocks.cachedSpacesReload).toHaveBeenCalled()
   })
 
   it('loads roster through the shared team roster API', async () => {

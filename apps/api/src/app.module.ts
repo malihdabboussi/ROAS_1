@@ -57,7 +57,6 @@ import { SkillRecommendationsModule } from './modules/skill-recommendations/skil
 import { SlackModule } from './modules/slack/slack.module'
 import { SpaceTemplatesModule } from './modules/space-templates/space-templates.module'
 import { SpacesModule } from './modules/spaces/spaces.module'
-import { StudioSearchModule } from './modules/studio-search/studio-search.module'
 import { TeamRosterModule } from './modules/team-roster/team-roster.module'
 import { TelegramModule } from './modules/telegram/telegram.module'
 import { ThemesModule } from './modules/themes/themes.module'
@@ -151,7 +150,6 @@ import { YourTurnModule } from './modules/your-turn/your-turn.module'
     SegmentsModule,
     SlackModule,
     SkillRecommendationsModule,
-    StudioSearchModule,
     TelegramModule,
     TranscribeModule,
     UsersModule,

@@ -48,7 +48,8 @@ export function SpacesContainer() {
     }
   }, [creatingDefaultSpace, ensureDefaultSpace, loading, setActiveSpace, spaces.length])
 
-  if (loading || creatingDefaultSpace) {
+  // Keep painting when we already have spaces (stale-while-revalidate).
+  if ((loading && spaces.length === 0) || creatingDefaultSpace) {
     return (
       <div className="flex h-full items-center justify-center">
         <VibeyLoadingOrb state="processing" size="lg" text="Loading spaces..." />

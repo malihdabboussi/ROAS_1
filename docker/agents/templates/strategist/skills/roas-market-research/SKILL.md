@@ -13,10 +13,7 @@ This skill produces the research brief that feeds the ad skills (roas-ad-kit Sec
 
 ## THE TOOLS (load before calling)
 
-**Environment-aware discovery (adapt only this section):**
-
-- **Vibey / platform agents:** do NOT call `tool_search`. Discover exact integration tool slugs with `search_available_integrations` (query for Ads Intelligence / SearchAPI / Scrape Creators / facebook ad library), then execute with `use_integration`. Never guess slugs or parameters. If those connectors are not in `<connected_integrations>`, stop and report the gap — do not invent ad-library data.
-- **claude.ai / MCP-deferred tools:** call `tool_search` first (e.g. `tool_search(query="facebook ad library")`) to load exact parameter schemas. Never guess parameters.
+All MCP tools are deferred — call `tool_search` first (e.g. `tool_search(query="facebook ad library")`) to load exact parameter schemas. Never guess parameters.
 
 **SearchAPI "Ads Intelligence" = DISCOVERY layer** (broad sweeps, advertiser resolution):
 - `SearchAPI:meta_ads_page_search` — resolve competitor names → Meta page IDs
@@ -35,7 +32,6 @@ This skill produces the research brief that feeds the ad skills (roas-ad-kit Sec
 - Organic layer: `v2_instagram_user_posts`, `v1_instagram_user_reels`, `v3_tiktok_profile_videos`, `v1_youtube_channel_videos`, transcript endpoints
 
 Either MCP covers ~80% of the Meta ground alone — if one errors, swap to the other before falling back.
-
 
 ---
 
@@ -124,9 +120,7 @@ Hook (0-3s): ... / Structure: ... / Proof: ... / Close: ...
 [the 2-3 references to model first and why; angles to feed Validate Messaging; anything to counter-position]
 ```
 
-### Output (environment-aware)
-**Vibey / native artifacts:** save Doc `"Market Research — [Client]"` via `save_document`, and attach the raw JSON pulls as `[client]-research-raw.json` (appendix; don't paste raw JSON into the brief). Do NOT write to `/mnt/user-data/outputs/`.
-**claude.ai fallback:** save the brief to `/mnt/user-data/outputs/` as markdown and present it; save the raw JSON alongside. When roas-ad-kit / roas-ad-copy called this skill mid-run, the References section drops directly into their research section — same six fields, no reshaping.
+Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above — do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai / no native artifacts (fallback), save to `/mnt/user-data/outputs/` and present. Attach raw JSON pulls as `[client]-research-raw.json` (appendix; don't paste raw JSON into the brief). When roas-ad-kit / roas-ad-copy called this skill mid-run, the References section drops directly into their research section — same six fields, no reshaping.
 
 ---
 

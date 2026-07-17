@@ -1,25 +1,23 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { MessageSquare, Search, X } from 'lucide-react'
+import { CheckSquare, FileText, MessageSquare, Package, Search, X } from 'lucide-react'
 import { LucideIcon } from '@/components/ui/IconPicker'
-import { fetchStudioArtifactSearch } from '@/features/studio/services/studio-search-api.service'
-import type { StudioSearchArtifactHit } from '@/features/studio/services/studio-search-api.service'
+import { STUDIO_SEARCH_MESSAGES } from '@/features/studio/config/studio-search-messages.config'
+import {
+  fetchStudioGlobalSearch,
+  type StudioGlobalSearchResult,
+  type StudioSearchArtifactHit,
+} from '@/features/studio/services/studio-search-api.service'
 import {
   artifactHitToSelection,
   type StudioSearchModalSelection,
 } from '@/features/studio/utils/open-studio-search-result'
 
-type SearchableConversation = { id: string; title: string | null; campaign_id?: string | null }
-
 type SearchableCampaign = { id: string; name: string; icon: string }
+type Row = { key: string; index: number; result: StudioGlobalSearchResult }
 
-type Row =
-  | { key: string; kind: 'conversation'; index: number; id: string; title: string }
-  | { key: string; kind: 'campaign'; index: number; data: SearchableCampaign }
-  | { key: string; kind: 'artifact'; index: number; hit: StudioSearchArtifactHit }
-
-const BADGE_LABEL: Record<StudioSearchArtifactHit['kind'], string> = {
+const ARTIFACT_BADGE_LABEL: Record<NonNullable<StudioGlobalSearchResult['artifactKind']>, string> = {
   offer: 'Offer',
   funnel: 'Funnel',
   website: 'Website',
@@ -38,111 +36,124 @@ const BADGE_LABEL: Record<StudioSearchArtifactHit['kind'], string> = {
 function useDebouncedValue<T>(value: T, ms: number): T {
   const [debounced, setDebounced] = useState(value)
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), ms)
-    return () => clearTimeout(t)
+    const timeout = setTimeout(() => setDebounced(value), ms)
+    return () => clearTimeout(timeout)
   }, [value, ms])
   return debounced
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    (error as { name?: unknown }).name === 'AbortError'
+  )
+}
+
+function mergeSearchResults(
+  current: StudioGlobalSearchResult[],
+  incoming: StudioGlobalSearchResult[],
+): StudioGlobalSearchResult[] {
+  const merged = new Map(current.map((item) => [`${item.kind}-${item.id}`, item]))
+  for (const item of incoming) merged.set(`${item.kind}-${item.id}`, item)
+  return [...merged.values()]
+}
+
+function resultBadge(result: StudioGlobalSearchResult): string {
+  if (result.kind === 'artifact' && result.artifactKind) {
+    return ARTIFACT_BADGE_LABEL[result.artifactKind]
+  }
+  const labels: Record<Exclude<StudioGlobalSearchResult['kind'], 'artifact'>, string> = {
+    task: 'Task',
+    doc: 'Doc',
+    deliverable: 'Deliverable',
+    conversation: 'Conversation',
+    campaign: 'Campaign',
+  }
+  return result.kind === 'artifact' ? 'Artifact' : labels[result.kind]
+}
+
+function ResultIcon({ result }: { result: StudioGlobalSearchResult }) {
+  const className = 'h-4 w-4'
+  if (result.kind === 'task') return <CheckSquare className={className} />
+  if (result.kind === 'doc') return <FileText className={className} />
+  if (result.kind === 'deliverable' || result.kind === 'artifact') {
+    return <Package className={className} />
+  }
+  if (result.kind === 'campaign') {
+    return <LucideIcon name={result.campaignIcon ?? 'folder-kanban'} className={className} />
+  }
+  return <MessageSquare className={className} />
 }
 
 interface StudioSearchModalProps {
   open: boolean
   onClose: () => void
-  conversations: SearchableConversation[]
   campaigns: SearchableCampaign[]
-  onSelect: (sel: StudioSearchModalSelection) => void
+  onSelect: (selection: StudioSearchModalSelection) => void
 }
 
 export function StudioSearchModal({
   open,
   onClose,
-  conversations,
   campaigns,
   onSelect,
 }: StudioSearchModalProps) {
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
-  const [artifactHits, setArtifactHits] = useState<StudioSearchArtifactHit[]>([])
-  const [artifactLoading, setArtifactLoading] = useState(false)
+  const [results, setResults] = useState<StudioGlobalSearchResult[]>([])
+  const [loading, setLoading] = useState(false)
+  const [failed, setFailed] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
-
   const debouncedQuery = useDebouncedValue(query, 220)
 
   useEffect(() => {
-    if (open) {
-      setQuery('')
-      setActiveIndex(0)
-      setArtifactHits([])
-      requestAnimationFrame(() => inputRef.current?.focus())
-    }
+    if (!open) return
+    setQuery('')
+    setActiveIndex(0)
+    setResults([])
+    setFailed(false)
+    requestAnimationFrame(() => inputRef.current?.focus())
   }, [open])
 
   useEffect(() => {
     if (!open) return
     const q = debouncedQuery.trim()
-    if (q.length < 1) {
-      setArtifactHits([])
-      setArtifactLoading(false)
+    if (!q) {
+      setResults([])
+      setLoading(false)
+      setFailed(false)
       return
     }
-    let cancelled = false
-    setArtifactLoading(true)
-    void fetchStudioArtifactSearch(q)
-      .then((items) => {
-        if (!cancelled) setArtifactHits(items)
+
+    const controller = new AbortController()
+    setResults([])
+    setLoading(true)
+    setFailed(false)
+    void fetchStudioGlobalSearch(q, controller.signal, (partial) => {
+      if (!controller.signal.aborted) {
+        setResults((current) => mergeSearchResults(current, partial))
+      }
+    })
+      .then((items) => setResults(items))
+      .catch((error: unknown) => {
+        if (isAbortError(error)) return
+        setResults([])
+        setFailed(true)
       })
       .finally(() => {
-        if (!cancelled) setArtifactLoading(false)
+        if (!controller.signal.aborted) setLoading(false)
       })
-    return () => {
-      cancelled = true
-    }
+
+    return () => controller.abort()
   }, [open, debouncedQuery])
 
-  const qLower = query.trim().toLowerCase()
-
-  const rows: Row[] = useMemo(() => {
-    const list: Row[] = []
-    let index = 0
-
-    const convs = conversations.filter(
-      (c) => c.title && (!qLower || (c.title ?? '').toLowerCase().includes(qLower)),
-    )
-    for (const c of convs) {
-      list.push({
-        key: `conv-${c.id}`,
-        kind: 'conversation',
-        index: index++,
-        id: c.id,
-        title: c.title ?? 'Untitled',
-      })
-    }
-
-    const camps = campaigns.filter((c) => !qLower || c.name.toLowerCase().includes(qLower))
-    for (const c of camps) {
-      list.push({
-        key: `camp-${c.id}`,
-        kind: 'campaign',
-        index: index++,
-        data: c,
-      })
-    }
-
-    const qArtifact = debouncedQuery.trim().toLowerCase()
-    if (qArtifact.length >= 1) {
-      for (const hit of artifactHits) {
-        if (!hit.campaign_id) continue
-        list.push({
-          key: `art-${hit.kind}-${hit.id}`,
-          kind: 'artifact',
-          index: index++,
-          hit,
-        })
-      }
-    }
-
-    return list
-  }, [conversations, campaigns, artifactHits, qLower, debouncedQuery])
+  const rows = useMemo<Row[]>(
+    () => results.map((result, index) => ({ key: `${result.kind}-${result.id}`, index, result })),
+    [results],
+  )
 
   useEffect(() => {
     if (activeIndex >= rows.length) setActiveIndex(Math.max(0, rows.length - 1))
@@ -151,56 +162,72 @@ export function StudioSearchModal({
   useEffect(() => {
     const list = listRef.current
     if (!list) return
-    const activeEl = list.querySelector(`[data-index="${activeIndex}"]`) as HTMLElement | null
-    activeEl?.scrollIntoView({ block: 'nearest' })
+    const activeElement = list.querySelector(
+      `[data-index="${activeIndex}"]`,
+    ) as HTMLElement | null
+    activeElement?.scrollIntoView({ block: 'nearest' })
   }, [activeIndex])
 
   const handleSelectRow = useCallback(
     (row: Row) => {
-      onClose()
-      if (row.kind === 'conversation') {
-        onSelect({ type: 'conversation', id: row.id })
+      const result = row.result
+      if (result.kind === 'conversation') {
+        onClose()
+        onSelect({ type: 'conversation', id: result.id })
         return
       }
-      if (row.kind === 'campaign') {
+      if (result.kind === 'campaign') {
+        onClose()
         onSelect({
           type: 'campaign',
-          id: row.data.id,
-          name: row.data.name,
-          icon: row.data.icon,
+          id: result.id,
+          name: result.label,
+          icon: result.campaignIcon,
         })
         return
       }
-      const campaign = campaigns.find((c) => c.id === row.hit.campaign_id)
-      if (!campaign) return
-      const sel = artifactHitToSelection(row.hit, campaign)
-      if (sel) onSelect(sel)
+      if (result.kind === 'artifact' && result.artifactKind) {
+        const campaign = campaigns.find((item) => item.id === result.campaignId)
+        if (!campaign) return
+        const hit: StudioSearchArtifactHit = {
+          kind: result.artifactKind,
+          id: result.id,
+          campaign_id: result.campaignId ?? null,
+          title: result.label,
+          ...(result.sequenceId ? { sequence_id: result.sequenceId } : {}),
+          ...(result.funnelId ? { funnel_id: result.funnelId } : {}),
+        }
+        const selection = artifactHitToSelection(hit, campaign)
+        if (!selection) return
+        onClose()
+        onSelect(selection)
+        return
+      }
+      if (result.url) {
+        onClose()
+        onSelect({ type: 'url', url: result.url })
+      }
     },
-    [onClose, onSelect, campaigns],
+    [campaigns, onClose, onSelect],
   )
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault()
-          setActiveIndex((i) => Math.min(i + 1, rows.length - 1))
-          break
-        case 'ArrowUp':
-          e.preventDefault()
-          setActiveIndex((i) => Math.max(i - 1, 0))
-          break
-        case 'Enter':
-          e.preventDefault()
-          if (rows[activeIndex]) handleSelectRow(rows[activeIndex])
-          break
-        case 'Escape':
-          e.preventDefault()
-          onClose()
-          break
+    (event: React.KeyboardEvent) => {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setActiveIndex((index) => Math.min(index + 1, rows.length - 1))
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        setActiveIndex((index) => Math.max(index - 1, 0))
+      } else if (event.key === 'Enter') {
+        event.preventDefault()
+        if (rows[activeIndex]) handleSelectRow(rows[activeIndex])
+      } else if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
       }
     },
-    [rows, activeIndex, handleSelectRow, onClose],
+    [activeIndex, handleSelectRow, onClose, rows],
   )
 
   if (!open) return null
@@ -215,7 +242,7 @@ export function StudioSearchModal({
       >
         <div
           className="rounded-spacing-4 w-full max-w-[560px] overflow-hidden border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
           onKeyDown={handleKeyDown}
         >
           <div className="gap-spacing-2 px-spacing-4 py-spacing-3 flex items-center border-b border-[var(--color-border)]">
@@ -223,10 +250,10 @@ export function StudioSearchModal({
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search tasks, campaigns, artifacts…"
+              placeholder={STUDIO_SEARCH_MESSAGES.PLACEHOLDER}
               value={query}
-              onChange={(e) => {
-                setQuery(e.target.value)
+              onChange={(event) => {
+                setQuery(event.target.value)
                 setActiveIndex(0)
               }}
               className="body-2 flex-1 bg-transparent text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none"
@@ -241,98 +268,53 @@ export function StudioSearchModal({
           </div>
 
           <div ref={listRef} className="scrollbar-hide py-spacing-2 max-h-[360px] overflow-y-auto">
-            {artifactLoading && debouncedQuery.trim().length >= 1 && (
+            {loading && (
               <p className="typo-caption px-spacing-4 py-spacing-1 text-[var(--color-muted-foreground)]">
-                Searching artifacts…
+                {STUDIO_SEARCH_MESSAGES.SEARCHING}
               </p>
             )}
-            {rows.length === 0 ? (
+            {failed ? (
               <div className="px-spacing-4 py-spacing-8 text-center">
-                <p className="body-2 text-[var(--color-muted-foreground)]">No results</p>
+                <p className="body-2 text-destructive">{STUDIO_SEARCH_MESSAGES.FAILED}</p>
+              </div>
+            ) : !loading && query.trim() && rows.length === 0 ? (
+              <div className="px-spacing-4 py-spacing-8 text-center">
+                <p className="body-2 text-[var(--color-muted-foreground)]">
+                  {STUDIO_SEARCH_MESSAGES.EMPTY}
+                </p>
               </div>
             ) : (
               rows.map((row) => {
-                const isActive = row.index === activeIndex
-
-                if (row.kind === 'conversation') {
-                  return (
-                    <button
-                      key={row.key}
-                      type="button"
-                      data-index={row.index}
-                      onClick={() => handleSelectRow(row)}
-                      onMouseEnter={() => setActiveIndex(row.index)}
-                      className={`gap-spacing-3 px-spacing-4 py-spacing-2 flex w-full items-center text-left transition-colors ${
-                        isActive
-                          ? 'bg-[var(--color-secondary)]'
-                          : 'hover:bg-[var(--color-secondary)]'
-                      }`}
-                    >
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted-foreground)]">
-                        <MessageSquare className="h-4 w-4" />
-                      </div>
-                      <span className="body-2 min-w-0 flex-1 truncate text-[var(--color-foreground)]">
-                        {row.title}
-                      </span>
-                      <span className="typo-caption shrink-0 rounded border border-[var(--color-border)] px-1.5 py-0.5 text-[var(--color-muted-foreground)]">
-                        Conversation
-                      </span>
-                    </button>
-                  )
-                }
-
-                if (row.kind === 'campaign') {
-                  return (
-                    <button
-                      key={row.key}
-                      type="button"
-                      data-index={row.index}
-                      onClick={() => handleSelectRow(row)}
-                      onMouseEnter={() => setActiveIndex(row.index)}
-                      className={`gap-spacing-3 px-spacing-4 py-spacing-2 flex w-full items-center text-left transition-colors ${
-                        isActive
-                          ? 'bg-[var(--color-secondary)]'
-                          : 'hover:bg-[var(--color-secondary)]'
-                      }`}
-                    >
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted-foreground)]">
-                        <LucideIcon name={row.data.icon} className="h-4 w-4" />
-                      </div>
-                      <span className="body-2 min-w-0 flex-1 truncate text-[var(--color-foreground)]">
-                        {row.data.name}
-                      </span>
-                      <span className="typo-caption shrink-0 rounded border border-[var(--color-border)] px-1.5 py-0.5 text-[var(--color-muted-foreground)]">
-                        Campaign
-                      </span>
-                    </button>
-                  )
-                }
-
-                const camp = campaigns.find((c) => c.id === row.hit.campaign_id)
+                const active = row.index === activeIndex
+                const result = row.result
+                const disabled = result.kind === 'artifact' && !campaigns.some((c) => c.id === result.campaignId)
                 return (
                   <button
                     key={row.key}
                     type="button"
                     data-index={row.index}
-                    disabled={!camp}
-                    onClick={() => camp && handleSelectRow(row)}
+                    disabled={disabled}
+                    onClick={() => handleSelectRow(row)}
                     onMouseEnter={() => setActiveIndex(row.index)}
                     className={`gap-spacing-3 px-spacing-4 py-spacing-2 flex w-full items-center text-left transition-colors disabled:opacity-40 ${
-                      isActive ? 'bg-[var(--color-secondary)]' : 'hover:bg-[var(--color-secondary)]'
+                      active ? 'bg-[var(--color-secondary)]' : 'hover:bg-[var(--color-secondary)]'
                     }`}
                   >
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted-foreground)]">
+                      <ResultIcon result={result} />
+                    </div>
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="body-2 truncate text-[var(--color-foreground)]">
-                        {row.hit.title}
+                        {result.label}
                       </span>
-                      {camp && (
+                      {result.subtitle && (
                         <span className="typo-caption truncate text-[var(--color-muted-foreground)]">
-                          {camp.name}
+                          {result.subtitle}
                         </span>
                       )}
                     </div>
                     <span className="typo-caption shrink-0 rounded border border-[var(--color-border)] px-1.5 py-0.5 text-[var(--color-muted-foreground)]">
-                      {BADGE_LABEL[row.hit.kind]}
+                      {resultBadge(result)}
                     </span>
                   </button>
                 )
@@ -341,24 +323,9 @@ export function StudioSearchModal({
           </div>
 
           <div className="gap-spacing-3 px-spacing-4 py-spacing-2 flex items-center border-t border-[var(--color-border)]">
-            <span className="typo-caption text-[var(--color-muted-foreground)]">
-              <kbd className="rounded border border-[var(--color-border)] px-1 py-0.5 font-mono text-[10px]">
-                ↑↓
-              </kbd>{' '}
-              navigate
-            </span>
-            <span className="typo-caption text-[var(--color-muted-foreground)]">
-              <kbd className="rounded border border-[var(--color-border)] px-1 py-0.5 font-mono text-[10px]">
-                ↵
-              </kbd>{' '}
-              select
-            </span>
-            <span className="typo-caption text-[var(--color-muted-foreground)]">
-              <kbd className="rounded border border-[var(--color-border)] px-1 py-0.5 font-mono text-[10px]">
-                esc
-              </kbd>{' '}
-              close
-            </span>
+            <span className="typo-caption text-[var(--color-muted-foreground)]">↑↓ navigate</span>
+            <span className="typo-caption text-[var(--color-muted-foreground)]">↵ select</span>
+            <span className="typo-caption text-[var(--color-muted-foreground)]">esc close</span>
           </div>
         </div>
       </div>

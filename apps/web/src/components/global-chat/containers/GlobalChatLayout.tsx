@@ -24,6 +24,7 @@ function shouldCollapseChatForRoute(pathname: string): boolean {
     pathname === '/home' ||
     pathname.startsWith('/home/') ||
     pathname.startsWith('/spaces') ||
+    pathname.startsWith('/campaigns') ||
     pathname.startsWith('/brain') ||
     pathname.startsWith('/flows') ||
     pathname.startsWith('/projects') ||

@@ -11,6 +11,7 @@ import type { AgentMenuContext, AgentTeam, MissionAgent } from '@/lib/agents'
 import type { Campaign } from '@/lib/campaigns'
 import type { ChatModelSettings } from '@/lib/chat/chat-model-settings'
 import type { useTeam2Perms } from '../hooks/use-team2-perms'
+import { TEAM_OPS_DESK_MESSAGES } from '../config/messages.config'
 import type { TeamAgentsViewKey, TeamManageSection } from '../lib/team-manage-nav'
 import { resolveAgentFocusLabel } from '../lib/ops-desk-summary'
 import type {
@@ -22,6 +23,7 @@ import { AgentAssignWorkModal } from './AgentAssignWorkModal'
 import { AgentsGrid } from './AgentsGrid'
 import { Team2DetailView } from './Team2DetailView'
 import { Team2ManageShell } from './nav/Team2ManageShell'
+import type { Team2StatusFilter } from './Team2Toolbar'
 import { TeamDetailView } from './teams/TeamDetailView'
 import { TeamsIndexView } from './teams/TeamsIndexView'
 import { VibeyOpsDesk } from './VibeyOpsDesk'
@@ -86,6 +88,7 @@ export function Team2ManageContent({
   assignedCampaignIdsForSelected,
 }: Team2ManageContentProps) {
   const [assignAgent, setAssignAgent] = useState<MissionAgent | null>(null)
+  const [statusFilters, setStatusFilters] = useState<Team2StatusFilter[]>([])
 
   const missions = data.missions ?? []
   const vibeyAgent = useMemo(
@@ -97,10 +100,18 @@ export function Team2ManageContent({
     const map: Record<string, string> = {}
     for (const agent of data.agents) {
       const focus = resolveAgentFocusLabel(agent, missions)
-      if (focus.kind === 'mission' && focus.label) map[agent.agent_key] = focus.label
+      if (focus.kind === 'mission' && focus.label) {
+        map[agent.agent_key] = focus.label
+      } else if (agent.status === 'working') {
+        map[agent.agent_key] = TEAM_OPS_DESK_MESSAGES.WORKING_NOW
+      }
     }
     return map
   }, [data.agents, missions])
+
+  const handleStatusFilterClick = useCallback((filter: 'working' | 'idle') => {
+    setStatusFilters((prev) => (prev.length === 1 && prev[0] === filter ? [] : [filter]))
+  }, [])
 
   const handleOpenAgent = useCallback(
     (agentKey: string, opts?: { infoTab?: AgentInfoPanelTab }) => {
@@ -295,11 +306,21 @@ export function Team2ManageContent({
         hasBrainForSelected={data.hasBrain}
         focusByAgentKey={focusByAgentKey}
         onAssignWork={(agent) => setAssignAgent(agent)}
+        statusFilters={statusFilters}
+        onStatusFiltersChange={setStatusFilters}
       />
     )
 
     if (vibeyAgent) {
-      return <VibeyOpsDesk agents={data.agents} missions={missions} floor={floor} />
+      return (
+        <VibeyOpsDesk
+          agents={data.agents}
+          missions={missions}
+          floor={floor}
+          statusFilters={statusFilters}
+          onStatusFilterClick={handleStatusFilterClick}
+        />
+      )
     }
 
     return floor

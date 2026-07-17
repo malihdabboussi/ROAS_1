@@ -8,6 +8,7 @@ import type {
 } from '@/lib/chat/studio-chat-runtime-adapter'
 import type { AttachedArtifact, ChatModelSettings } from '@/lib/chat'
 import type { UiSelectedArtifact } from '@/lib/chat/ui-selected-artifact'
+import { resolveSuggestedConversationTitle } from '@/lib/conversations/conversation-title'
 import { assignConversationCampaign } from '@/lib/conversations/conversations-api'
 
 interface AgentChatSendStreamParams {
@@ -185,14 +186,21 @@ export async function sendAgentChatMessage({
   setSessions(refreshedSessions)
 
   if (isFirstMessageInThread && content.trim()) {
-    void suggestConversationTitle(content.trim())
+    const firstMessage = content.trim()
+    void suggestConversationTitle(firstMessage)
       .then((result) => {
-        const title = (result.title ?? '').trim().slice(0, 80)
+        const title = resolveSuggestedConversationTitle(result.title, firstMessage, 80)
         if (!title) return
         const session = getSessions().find((item) => item.id === convId)
         if (session) onConversationUpdated({ ...session, title })
         beginSessionTitleReveal(convId!, title)
       })
-      .catch(() => {})
+      .catch(() => {
+        const title = resolveSuggestedConversationTitle(null, firstMessage, 80)
+        if (!title) return
+        const session = getSessions().find((item) => item.id === convId)
+        if (session) onConversationUpdated({ ...session, title })
+        beginSessionTitleReveal(convId!, title)
+      })
   }
 }

@@ -110,9 +110,7 @@ Run every shipping line (concept on-image text, angles, all six ad pieces) back 
 [which 2-3 to run first and why; note that concepts are design-ready as written and angles can be rendered by roas-ad-design; biggest available proof lift]
 ```
 
-### Output (environment-aware)
-**Vibey / native artifacts:** save as a Space Doc via `save_document`. Offer a DOCX only if asked. Do NOT write to `/mnt/user-data/outputs/`.
-**claude.ai fallback:** save to `/mnt/user-data/outputs/` and present it. Offer a DOCX only if asked.
+Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above — do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai / no native artifacts (fallback), save to `/mnt/user-data/outputs/` and present. Offer a DOCX only outside the platform / if asked.
 
 ---
 

@@ -17,6 +17,7 @@ export function subscribeOpenStudioSearch(handler: () => void) {
 export type StudioSearchModalSelection =
   | { type: 'conversation'; id: string }
   | { type: 'campaign'; id: string; name: string; icon?: string | null }
+  | { type: 'url'; url: string }
   | {
       type: 'artifact'
       campaignId: string

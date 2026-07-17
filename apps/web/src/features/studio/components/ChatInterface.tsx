@@ -938,7 +938,7 @@ export function ChatInterface() {
       {/* Composer */}
       <div
         ref={composerRef}
-        className="px-spacing-4 pb-spacing-4 pt-spacing-2 relative flex flex-col items-center"
+        className="px-spacing-4 pb-spacing-4 pt-spacing-2 relative flex shrink-0 flex-col items-center"
       >
         {/* Quick jump to latest message — floats just above the composer */}
         {userHasScrolledUp && messages.length > 0 && (

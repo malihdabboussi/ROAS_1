@@ -111,7 +111,7 @@ Plus one **saturation note** across the set.
 
 ## OUTPUT
 
-Write a durable research document the ad skills can consume. Title it clearly (e.g. "Market Research — [Client]"). Include:
+Write a durable research document the ad skills can consume. Title it exactly `WEB#4 — Market Research` (legacy titles like "Market Research — [Client]" still match). Include:
 1. Scope + data sources (name the exact `service` + `integration_action` calls used)
 2. Client snapshot (from campaign/brain context)
 3. Ranked references with the six fields above

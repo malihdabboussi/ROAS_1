@@ -273,6 +273,14 @@ export async function fetchSpaceItem(spaceId: string, itemId: string): Promise<S
   }
 }
 
+export async function updateSpaceItem(
+  spaceId: string,
+  itemId: string,
+  payload: Record<string, unknown>,
+): Promise<SpaceItem> {
+  return backendPatch<SpaceItem>(`/api/spaces/${spaceId}/items/${itemId}`, payload)
+}
+
 export interface VisualizeDocResult {
   success: true
   item_id: string

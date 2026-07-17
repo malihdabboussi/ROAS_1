@@ -158,6 +158,35 @@ describe('useChatInputDraft', () => {
     expect(store.setComposerDraft).toHaveBeenCalledWith('conversation-1', 'latest draft')
   })
 
+  it('does not wipe the live composer when initialValue changes without a restore nonce', () => {
+    const store = draftStore({ 'conversation-1': 'stored draft' })
+    const setValue = vi.fn()
+    const setDisplayText = vi.fn()
+    const options = defaultOptions({
+      value: 'typing follow-up',
+      initialValue: undefined,
+      getDraftStore: () => store,
+      setValue,
+      setDisplayText,
+    })
+
+    const { rerender } = renderHook((props: UseChatInputDraftOptions) => useChatInputDraft(props), {
+      initialProps: options,
+    })
+
+    setValue.mockClear()
+    setDisplayText.mockClear()
+
+    rerender({
+      ...options,
+      value: 'typing follow-up',
+      initialValue: undefined,
+    })
+
+    expect(setValue).not.toHaveBeenCalled()
+    expect(setDisplayText).not.toHaveBeenCalled()
+  })
+
   it('does not save or clear drafts on rerenders caused by new accessor identities', () => {
     const store = draftStore()
     const { rerender, unmount } = renderHook(

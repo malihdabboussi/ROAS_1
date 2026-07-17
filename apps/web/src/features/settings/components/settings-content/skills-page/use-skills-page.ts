@@ -11,6 +11,7 @@ export function useSkillsPage() {
     setSelectedAgentKey: agentsAndSkills.setSelectedAgentKey,
     setSkillsView: agentsAndSkills.setSkillsView,
     loadSkills: agentsAndSkills.loadSkills,
+    refreshSkills: agentsAndSkills.refreshSkills,
   })
   const detailResources = useSkillDetailResources({
     detailSkillResolved: agentsAndSkills.detailSkillResolved,

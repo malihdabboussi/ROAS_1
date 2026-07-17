@@ -1,7 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { EntitySearchKind, EntitySearchResult } from '../entity-search.types'
+import type {
+  EntitySearchArtifactKind,
+  EntitySearchKind,
+  EntitySearchResult,
+} from '../entity-search.types'
 import { EntitySearchRepository } from '../repositories/entity-search.repository'
+import { EntityArtifactSearchService } from './entity-artifact-search.service'
 
 const ALL_KINDS: EntitySearchKind[] = [
   'person',
@@ -25,7 +30,10 @@ function rank(q: string, result: EntitySearchResult): number {
 
 @Injectable()
 export class EntitySearchService {
-  constructor(private readonly entitySearchRepository: EntitySearchRepository) {}
+  constructor(
+    private readonly entitySearchRepository: EntitySearchRepository,
+    private readonly artifactSearchService?: EntityArtifactSearchService,
+  ) {}
 
   async search(
     supabase: SupabaseClient,
@@ -79,6 +87,12 @@ export class EntitySearchService {
         return this.searchMissions(supabase, userId, orgId, q, limit, offset)
       case 'conversation':
         return this.searchConversations(supabase, userId, orgId, q, limit, offset, campaignId)
+      case 'campaign':
+        return this.searchCampaigns(supabase, userId, orgId, q, limit, offset)
+      case 'artifact':
+        return this.searchArtifacts(supabase, q, orgId, limit)
+      case 'deliverable':
+        return this.searchDeliverables(supabase, userId, orgId, q, limit, offset)
       case 'person':
       case 'agent':
         return this.searchRoster(supabase, userId, orgId, q, limit, offset, kind)
@@ -98,15 +112,27 @@ export class EntitySearchService {
     offset: number,
     mode: 'task' | 'doc',
   ): Promise<EntitySearchResult[]> {
-    const rows = await this.entitySearchRepository.searchSpaceItems(
-      supabase,
-      userId,
-      orgId,
-      q,
-      limit,
-      offset,
-      mode,
-    )
+    const [rows, conversationDocuments] = await Promise.all([
+      this.entitySearchRepository.searchSpaceItems(
+        supabase,
+        userId,
+        orgId,
+        q,
+        limit,
+        offset,
+        mode,
+      ),
+      mode === 'doc'
+        ? this.entitySearchRepository.searchConversationDocuments(
+            supabase,
+            userId,
+            orgId,
+            q,
+            limit,
+            offset,
+          )
+        : Promise.resolve([]),
+    ])
 
     // For tasks, hydrate status color/label from each space's schema.
     let statusOptionsBySpace: Map<
@@ -136,14 +162,14 @@ export class EntitySearchService {
       }
     }
 
-    return rows.map((row: any) => {
+    const spaceResults = rows.map((row: any) => {
       const baseResult: EntitySearchResult = {
         kind: mode,
         id: row.id,
         label: row.title ?? 'Untitled',
         subtitle: mode === 'doc' ? 'Doc' : 'Task',
         iconUrl: null,
-        url: `/spaces/${row.space_id}/${row.id}`,
+        url: `/spaces?space=${encodeURIComponent(row.space_id)}&item=${encodeURIComponent(row.id)}`,
         status: mode === 'task' ? (row.status ?? null) : null,
       }
       if (mode === 'task' && row.status && row.space_id) {
@@ -155,6 +181,120 @@ export class EntitySearchService {
       }
       return baseResult
     })
+
+    const documentResults: EntitySearchResult[] = conversationDocuments.map((row: any) => ({
+      kind: 'doc',
+      id: row.id,
+      label: row.title?.trim() || 'Untitled document',
+      subtitle: row.document_type ? `Document · ${row.document_type}` : 'Document',
+      iconUrl: null,
+      url: row.conversation_id
+        ? `/team?c=${encodeURIComponent(String(row.conversation_id))}`
+        : null,
+      campaignId: row.campaign_id ?? null,
+    }))
+
+    return [...spaceResults, ...documentResults].slice(0, limit * 2)
+  }
+
+  private async searchCampaigns(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null,
+    q: string,
+    limit: number,
+    offset: number,
+  ): Promise<EntitySearchResult[]> {
+    const rows = await this.entitySearchRepository.searchCampaigns(
+      supabase,
+      userId,
+      orgId,
+      q,
+      limit,
+      offset,
+    )
+    return rows.map((row: any) => ({
+      kind: 'campaign',
+      id: row.id,
+      label: row.name?.trim() || 'Untitled campaign',
+      subtitle: 'Campaign',
+      iconUrl: null,
+      url: null,
+      campaignIcon: row.icon ?? null,
+    }))
+  }
+
+  private async searchArtifacts(
+    supabase: SupabaseClient,
+    q: string,
+    orgId: string | null,
+    limit: number,
+  ): Promise<EntitySearchResult[]> {
+    if (!this.artifactSearchService) return []
+    const { items } = await this.artifactSearchService.search(supabase, q, orgId)
+    return items
+      .map((item) => ({
+        kind: 'artifact' as const,
+        id: item.id,
+        label: item.title,
+        subtitle: this.artifactKindLabel(item.kind),
+        iconUrl: null,
+        url: null,
+        campaignId: item.campaign_id,
+        artifactKind: item.kind as EntitySearchArtifactKind,
+        ...(item.sequence_id ? { sequenceId: item.sequence_id } : {}),
+        ...(item.funnel_id ? { funnelId: item.funnel_id } : {}),
+      }))
+      .sort((a, b) => rank(q, a) - rank(q, b) || a.label.localeCompare(b.label))
+      .slice(0, limit)
+  }
+
+  private async searchDeliverables(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null,
+    q: string,
+    limit: number,
+    offset: number,
+  ): Promise<EntitySearchResult[]> {
+    const rows = await this.entitySearchRepository.searchDeliverables(
+      supabase,
+      userId,
+      orgId,
+      q,
+      limit,
+      offset,
+    )
+    return rows.map((row: any) => ({
+      kind: 'deliverable',
+      id: row.id,
+      label: row.title?.trim() || 'Untitled deliverable',
+      subtitle: row.type ? `Deliverable · ${row.type}` : 'Deliverable',
+      iconUrl: null,
+      url: row.mission_id
+        ? `/mission-control?mission=${encodeURIComponent(String(row.mission_id))}`
+        : null,
+      campaignId: row.campaign_id ?? null,
+    }))
+  }
+
+  private artifactKindLabel(kind: EntitySearchArtifactKind): string {
+    const labels: Record<EntitySearchArtifactKind, string> = {
+      offer: 'Offer',
+      funnel: 'Funnel',
+      website: 'Website',
+      sequence: 'Sequence',
+      email: 'Email',
+      presentation: 'Presentation',
+      avatar: 'Avatar',
+      ad: 'Ad',
+      ad_campaign: 'Ads',
+      ad_set: 'Ad set',
+      social_post: 'Social',
+      blog_post: 'Blog',
+      page: 'Page',
+    }
+    return labels[kind]
   }
 
   private async searchSpaces(

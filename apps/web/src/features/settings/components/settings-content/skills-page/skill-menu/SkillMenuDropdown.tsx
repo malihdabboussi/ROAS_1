@@ -15,6 +15,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import type { MissionAgent, MissionAgentSkill } from '@/features/mission-control/types'
+import { toast } from 'sonner'
 import { OtherAgentsSubmenuList } from './OtherAgentsSubmenuList'
 import type { SkillMenuActionsContext } from './skill-menu.types'
 import { useSkillMenuActions } from './use-skill-menu-actions'
@@ -33,6 +34,8 @@ export function SkillMenuDropdown({
   onToggleEnabled,
   onSkillsChanged,
   onRequestDelete,
+  catalogFolders,
+  onSetSkillFolder,
 }: {
   skill: MissionAgentSkill
   agents: MissionAgent[]
@@ -219,6 +222,50 @@ export function SkillMenuDropdown({
                 <span className="flex-1">Copy to agent</span>
                 <ChevronRight className="h-3 w-3 shrink-0" />
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!onSetSkillFolder) return
+                  const folders = catalogFolders ?? []
+                  if (folders.length === 0) {
+                    toast.info('Create a folder first from the toolbar')
+                    return
+                  }
+                  const names = folders.map((f, i) => `${i + 1}. ${f.name}`).join('\n')
+                  const answer = window
+                    .prompt(
+                      `Move to folder (number, or blank to unfile):\n${names}`,
+                      '1',
+                    )
+                    ?.trim()
+                  if (answer == null) return
+                  if (!answer) {
+                    void onSetSkillFolder(skill.skill_key, null).then(() => {
+                      toast.success('Removed from folder')
+                      onSkillsChanged()
+                      onClose()
+                    })
+                    return
+                  }
+                  const idx = Number(answer) - 1
+                  const folder = folders[idx]
+                  if (!folder) {
+                    toast.error('Invalid folder number')
+                    return
+                  }
+                  void onSetSkillFolder(skill.skill_key, folder.id).then(() => {
+                    toast.success(`Moved to ${folder.name}`)
+                    onSkillsChanged()
+                    onClose()
+                  })
+                }}
+                className={itemCls}
+                disabled={!onSetSkillFolder}
+              >
+                <FolderInput className={itemIcon} />
+                <span className="flex-1">Move to folder</span>
+              </button>
+
               <button
                 ref={moveButtonRef}
                 type="button"

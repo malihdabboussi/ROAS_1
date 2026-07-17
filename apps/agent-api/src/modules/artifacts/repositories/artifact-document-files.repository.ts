@@ -35,7 +35,7 @@ export class ArtifactDocumentFilesRepository {
   ): Promise<{ data: Record<string, unknown> | null; error: QueryError | null }> {
     return (await serviceClient
       .from('missions')
-      .select('id, user_id, campaign_id, org_id')
+      .select('id, user_id, campaign_id, org_id, space_id')
       .eq('id', missionId)
       .maybeSingle()) as {
       data: Record<string, unknown> | null

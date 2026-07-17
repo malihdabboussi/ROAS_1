@@ -1,0 +1,6556 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.16",
+    "lastTouchedAt": "2026-07-16T19:59:49.524Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-02-15T14:00:00.000Z",
+    "lastRunVersion": "2026.2.15",
+    "lastRunCommand": "configure",
+    "lastRunMode": "local"
+  },
+  "update": {
+    "checkOnStart": false
+  },
+  "browser": {
+    "enabled": false,
+    "headless": true,
+    "noSandbox": true,
+    "defaultProfile": "openclaw",
+    "ssrfPolicy": {
+      "dangerouslyAllowPrivateNetwork": false
+    },
+    "profiles": {
+      "openclaw": {
+        "cdpUrl": "http://127.0.0.1:18800",
+        "color": "#FF4500"
+      }
+    }
+  },
+  "auth": {
+    "profiles": {},
+    "order": {}
+  },
+  "models": {
+    "providers": {
+      "anthropic": {
+        "baseUrl": "https://api.anthropic.com",
+        "api": "anthropic-messages",
+        "models": [
+          {
+            "id": "claude-opus-4.6",
+            "name": "Claude Opus 4.6",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "claude-opus-4.7",
+            "name": "Claude Opus 4.7",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "claude-opus-4.8",
+            "name": "Claude Opus 4.8",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "claude-sonnet-4.6",
+            "name": "Claude Sonnet 4.6",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "claude-haiku-4.5",
+            "name": "Claude Haiku 4.5",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 64000
+          }
+        ]
+      },
+      "openrouter": {
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "anthropic/claude-opus-4.6",
+            "name": "Claude Opus 4.6 (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "anthropic/claude-opus-4.6-fast",
+            "name": "Claude Opus 4.6 Fast (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "anthropic/claude-opus-4.7",
+            "name": "Claude Opus 4.7 (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "anthropic/claude-opus-4.7-fast",
+            "name": "Claude Opus 4.7 Fast (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "anthropic/claude-opus-4.8",
+            "name": "Claude Opus 4.8 (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "anthropic/claude-opus-4.8-fast",
+            "name": "Claude Opus 4.8 Fast (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "anthropic/claude-fable-5",
+            "name": "Claude Fable 5 (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "anthropic/claude-sonnet-4.6",
+            "name": "Claude Sonnet 4.6 (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "anthropic/claude-haiku-4.5",
+            "name": "Claude Haiku 4.5 (via OpenRouter)",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 64000
+          },
+          {
+            "id": "google/gemini-3.5-flash",
+            "name": "Gemini 3.5 Flash (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file",
+              "audio",
+              "video"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1050000,
+            "maxTokens": 65500
+          },
+          {
+            "id": "google/gemini-3.1-pro-preview",
+            "name": "Gemini 3.1 Pro Preview (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file",
+              "audio",
+              "video"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1050000,
+            "maxTokens": 65536
+          },
+          {
+            "id": "minimax/minimax-m2.5",
+            "name": "MiniMax M2.5 (via OpenRouter)",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 204800,
+            "maxTokens": 196608
+          },
+          {
+            "id": "openai/gpt-5.4",
+            "name": "GPT-5.4 (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1050000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "openai/gpt-5.4-pro",
+            "name": "GPT-5.4 Pro (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1050000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "openai/gpt-5.5",
+            "name": "GPT-5.5 (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1050000,
+            "maxTokens": 128000
+          },
+          {
+            "id": "openai/gpt-5.3-codex",
+            "name": "GPT-5.3 Codex (via OpenRouter)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image",
+              "file"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 400000,
+            "maxTokens": 128000
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "openrouter/anthropic/claude-opus-4.6",
+        "fallbacks": [
+          "openrouter/anthropic/claude-sonnet-4.6",
+          "openrouter/google/gemini-3.1-pro-preview",
+          "openrouter/google/gemini-3.5-flash"
+        ]
+      },
+      "models": {
+        "openrouter/anthropic/claude-opus-4.6": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "anthropic"
+              ],
+              "order": [
+                "anthropic"
+              ]
+            }
+          }
+        },
+        "openrouter/anthropic/claude-opus-4.6-fast": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "anthropic"
+              ],
+              "order": [
+                "anthropic"
+              ]
+            }
+          }
+        },
+        "openrouter/anthropic/claude-opus-4.7": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "anthropic"
+              ],
+              "order": [
+                "anthropic"
+              ]
+            }
+          }
+        },
+        "openrouter/anthropic/claude-opus-4.7-fast": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "anthropic"
+              ],
+              "order": [
+                "anthropic"
+              ]
+            }
+          }
+        },
+        "openrouter/anthropic/claude-opus-4.8": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "anthropic"
+              ],
+              "order": [
+                "anthropic"
+              ]
+            }
+          }
+        },
+        "openrouter/anthropic/claude-opus-4.8-fast": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "anthropic"
+              ],
+              "order": [
+                "anthropic"
+              ]
+            }
+          }
+        },
+        "openrouter/anthropic/claude-fable-5": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "anthropic"
+              ],
+              "order": [
+                "anthropic"
+              ]
+            }
+          }
+        },
+        "openrouter/anthropic/claude-sonnet-4.6": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "anthropic"
+              ],
+              "order": [
+                "anthropic"
+              ]
+            }
+          }
+        },
+        "openrouter/anthropic/claude-haiku-4.5": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "anthropic"
+              ],
+              "order": [
+                "anthropic"
+              ]
+            }
+          }
+        },
+        "openrouter/google/gemini-3.5-flash": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "google-vertex"
+              ],
+              "order": [
+                "google-vertex"
+              ]
+            }
+          }
+        },
+        "openrouter/google/gemini-3.1-pro-preview": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "google-vertex"
+              ],
+              "order": [
+                "google-vertex"
+              ]
+            }
+          }
+        },
+        "openrouter/minimax/minimax-m2.5": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "minimax"
+              ],
+              "order": [
+                "minimax"
+              ]
+            }
+          }
+        },
+        "openrouter/openai/gpt-5.4": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "openai"
+              ],
+              "order": [
+                "openai"
+              ]
+            }
+          }
+        },
+        "openrouter/openai/gpt-5.4-pro": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "openai"
+              ],
+              "order": [
+                "openai"
+              ]
+            }
+          }
+        },
+        "openrouter/openai/gpt-5.5": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "openai"
+              ],
+              "order": [
+                "openai"
+              ]
+            }
+          }
+        },
+        "openrouter/openai/gpt-5.3-codex": {
+          "params": {
+            "openRouterRouting": {
+              "only": [
+                "openai"
+              ],
+              "order": [
+                "openai"
+              ]
+            }
+          }
+        }
+      },
+      "workspace": "${AGENTS_BASE_DIR}/vibey",
+      "skipBootstrap": true,
+      "promptMode": "vibey",
+      "bootstrapTotalMaxChars": 30000,
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "1h"
+      },
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "heartbeat": {
+        "every": "25m",
+        "target": "none"
+      },
+      "maxConcurrent": 6,
+      "subagents": {
+        "maxConcurrent": 4
+      },
+      "sandbox": {
+        "mode": "off"
+      }
+    },
+    "list": [
+      {
+        "id": "vibey",
+        "workspace": "${AGENTS_BASE_DIR}/vibey",
+        "skills": [
+          "awareness-evaluator",
+          "funnel-wireframe",
+          "mission-planner",
+          "mission-quality-evaluator",
+          "mission-reviewer",
+          "mission-worker-executor",
+          "presentation-builder",
+          "seo-research",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "heartbeat": {
+          "every": "25m",
+          "target": "none"
+        },
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "zane",
+        "workspace": "${AGENTS_BASE_DIR}/zane",
+        "skills": [
+          "code-quality-gate",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "rio",
+        "workspace": "${AGENTS_BASE_DIR}/rio",
+        "skills": [
+          "seedance-video-producer",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "atlas",
+        "workspace": "${AGENTS_BASE_DIR}/atlas",
+        "skills": [
+          "brain-timeline-synthesis",
+          "company-context-rule-lint",
+          "company-cortex-formation",
+          "company-daily-dream",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "hr",
+        "workspace": "${AGENTS_BASE_DIR}/hr",
+        "skills": [
+          "agent-builder",
+          "agent-design",
+          "disc-profiling",
+          "hiring",
+          "team-analyzer",
+          "team-building",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "viktor",
+        "workspace": "${AGENTS_BASE_DIR}/viktor",
+        "skills": [
+          "agent-integration",
+          "code-architecture",
+          "code-quality-gate",
+          "layout-guide",
+          "page-builder",
+          "project-scaffolding",
+          "runtime-architecture",
+          "spaces-component-kit",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "ivy",
+        "workspace": "${AGENTS_BASE_DIR}/ivy",
+        "skills": [
+          "ad-copy-writing",
+          "blog-writing",
+          "email-sequence-writing",
+          "landing-page-copy",
+          "offer-copy",
+          "social-caption-writing",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "orion",
+        "workspace": "${AGENTS_BASE_DIR}/orion",
+        "skills": [
+          "financial-reporting",
+          "invoice-management",
+          "revenue-tracking",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "niko",
+        "workspace": "${AGENTS_BASE_DIR}/niko",
+        "skills": [
+          "campaign-performance-analysis",
+          "competitive-research",
+          "executive-dashboard",
+          "revenue-reporting",
+          "social-performance-reporting",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "mara",
+        "workspace": "${AGENTS_BASE_DIR}/mara",
+        "skills": [
+          "campaign-planning",
+          "campaign-reporting",
+          "publish-authority",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "lux",
+        "workspace": "${AGENTS_BASE_DIR}/lux",
+        "skills": [
+          "funnel-builder",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "wren",
+        "workspace": "${AGENTS_BASE_DIR}/wren",
+        "skills": [
+          "ad-copy-writing",
+          "blog-writing",
+          "email-sequence-writing",
+          "landing-page-copy",
+          "offer-copy",
+          "social-caption-writing",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "tessa",
+        "workspace": "${AGENTS_BASE_DIR}/tessa",
+        "skills": [
+          "campaign-planning",
+          "campaign-reporting",
+          "publish-authority",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "rex",
+        "workspace": "${AGENTS_BASE_DIR}/rex",
+        "skills": [
+          "code-quality-gate",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "manager",
+        "workspace": "${AGENTS_BASE_DIR}/manager",
+        "skills": [
+          "mission-planner",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "designer",
+        "workspace": "${AGENTS_BASE_DIR}/designer",
+        "skills": [
+          "ad-creative-design",
+          "brand-design-system",
+          "funnel-page-design",
+          "image-production",
+          "social-graphic-design",
+          "ui-component-design",
+          "vibey-api",
+          "video-producer",
+          "video-production"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "media_producer",
+        "workspace": "${AGENTS_BASE_DIR}/media_producer",
+        "skills": [
+          "content-calendar",
+          "image-production",
+          "social-analytics",
+          "social-publishing",
+          "vibey-api",
+          "video-producer",
+          "video-production"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "brand_manager",
+        "workspace": "${AGENTS_BASE_DIR}/brand_manager",
+        "skills": [
+          "brand-voice-enforcement",
+          "content-audit",
+          "social-community-management",
+          "vibey-api",
+          "video-producer",
+          "video-production"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "ads_manager",
+        "workspace": "${AGENTS_BASE_DIR}/ads_manager",
+        "skills": [
+          "ad-creative-testing",
+          "ads-analytics",
+          "audience-targeting",
+          "meta-ads-management",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "aria",
+        "workspace": "${AGENTS_BASE_DIR}/aria",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "sage",
+        "workspace": "${AGENTS_BASE_DIR}/sage",
+        "skills": [
+          "code-quality-gate",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "copywriter",
+        "workspace": "${AGENTS_BASE_DIR}/copywriter",
+        "skills": [
+          "vibey-api",
+          "video-producer",
+          "video-production"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "viktor_2",
+        "workspace": "${AGENTS_BASE_DIR}/viktor_2",
+        "skills": [
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:699e3530-881c-4653-b507-4c4b5993538f:vibey",
+        "workspace": "${AGENTS_BASE_DIR}/org:699e3530-881c-4653-b507-4c4b5993538f:vibey",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "awareness-evaluator",
+          "blog-writing",
+          "brain-memory",
+          "chat-plan-management",
+          "email-campaign-publisher",
+          "email-sequence-builder",
+          "funnel-builder",
+          "image-production",
+          "integration-playbook",
+          "integrations",
+          "meta-publisher",
+          "mission-planner",
+          "mission-quality-evaluator",
+          "mission-reviewer",
+          "mission-worker-executor",
+          "offer-builder",
+          "onboarding-discovery",
+          "pdf-builder",
+          "presentation-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-publisher",
+          "team-management",
+          "theme-builder",
+          "vibey-api",
+          "video-analyzer",
+          "video-producer",
+          "video-production",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:699e3530-881c-4653-b507-4c4b5993538f:hr",
+        "workspace": "${AGENTS_BASE_DIR}/org:699e3530-881c-4653-b507-4c4b5993538f:hr",
+        "skills": [
+          "agent-builder",
+          "agent-design",
+          "chat-plan-management",
+          "disc-profiling",
+          "hiring",
+          "integration-playbook",
+          "skill-creator",
+          "team-analyzer",
+          "team-building",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:699e3530-881c-4653-b507-4c4b5993538f:viktor_2",
+        "workspace": "${AGENTS_BASE_DIR}/org:699e3530-881c-4653-b507-4c4b5993538f:viktor_2",
+        "skills": [
+          "chat-plan-management",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:atlas",
+        "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:atlas",
+        "skills": [
+          "brain-library-lint",
+          "brain-library-organization",
+          "brain-operations",
+          "brain-pattern-analysis",
+          "chat-plan-management",
+          "integration-playbook",
+          "knowledge-curation",
+          "knowledge-extraction",
+          "knowledge-intake",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:vibey",
+        "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:vibey",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "awareness-evaluator",
+          "blog-writing",
+          "brain-memory",
+          "chat-plan-management",
+          "email-campaign-publisher",
+          "email-sequence-builder",
+          "funnel-builder",
+          "image-production",
+          "integration-playbook",
+          "integrations",
+          "meta-publisher",
+          "mission-planner",
+          "mission-quality-evaluator",
+          "mission-reviewer",
+          "mission-worker-executor",
+          "offer-builder",
+          "onboarding-discovery",
+          "pdf-builder",
+          "presentation-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-publisher",
+          "team-management",
+          "theme-builder",
+          "vibey-api",
+          "video-analyzer",
+          "video-producer",
+          "video-production",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:hr",
+        "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:hr",
+        "skills": [
+          "agent-builder",
+          "agent-design",
+          "chat-plan-management",
+          "disc-profiling",
+          "hiring",
+          "integration-playbook",
+          "skill-creator",
+          "team-analyzer",
+          "team-building",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:viktor",
+        "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:viktor",
+        "skills": [
+          "agent-integration",
+          "chat-plan-management",
+          "code-architecture",
+          "code-quality-gate",
+          "integration-playbook",
+          "layout-guide",
+          "page-builder",
+          "project-scaffolding",
+          "runtime-architecture",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "eden",
+        "workspace": "${AGENTS_BASE_DIR}/eden",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:niko",
+        "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:niko",
+        "skills": [
+          "campaign-performance-analysis",
+          "chat-plan-management",
+          "competitive-research",
+          "executive-dashboard",
+          "integration-playbook",
+          "revenue-reporting",
+          "skill-creator",
+          "social-performance-reporting",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:ivy",
+        "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:ivy",
+        "skills": [
+          "ad-copy-writing",
+          "avatar-builder",
+          "blog-writing",
+          "carousel-designer",
+          "chat-plan-management",
+          "email-sequence-builder",
+          "email-sequence-writing",
+          "integration-playbook",
+          "landing-page-copy",
+          "lead-magnet-builder",
+          "offer-builder",
+          "offer-copy",
+          "pdf-builder",
+          "skill-creator",
+          "social-caption-writing",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:c041d93a-e8a4-4482-9e2e-e863da4348d0:atlas",
+        "workspace": "${AGENTS_BASE_DIR}/org:c041d93a-e8a4-4482-9e2e-e863da4348d0:atlas",
+        "skills": [
+          "brain-library-lint",
+          "brain-library-organization",
+          "brain-operations",
+          "brain-pattern-analysis",
+          "chat-plan-management",
+          "integration-playbook",
+          "knowledge-curation",
+          "knowledge-extraction",
+          "knowledge-intake",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:c041d93a-e8a4-4482-9e2e-e863da4348d0:vibey",
+        "workspace": "${AGENTS_BASE_DIR}/org:c041d93a-e8a4-4482-9e2e-e863da4348d0:vibey",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "awareness-evaluator",
+          "blog-writing",
+          "brain-memory",
+          "chat-plan-management",
+          "email-campaign-publisher",
+          "email-sequence-builder",
+          "funnel-builder",
+          "image-production",
+          "integration-playbook",
+          "integrations",
+          "meta-publisher",
+          "mission-planner",
+          "mission-quality-evaluator",
+          "mission-reviewer",
+          "mission-worker-executor",
+          "offer-builder",
+          "onboarding-discovery",
+          "pdf-builder",
+          "presentation-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-publisher",
+          "team-management",
+          "theme-builder",
+          "vibey-api",
+          "video-analyzer",
+          "video-producer",
+          "video-production",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:c041d93a-e8a4-4482-9e2e-e863da4348d0:hr",
+        "workspace": "${AGENTS_BASE_DIR}/org:c041d93a-e8a4-4482-9e2e-e863da4348d0:hr",
+        "skills": [
+          "agent-builder",
+          "agent-design",
+          "chat-plan-management",
+          "disc-profiling",
+          "hiring",
+          "integration-playbook",
+          "skill-creator",
+          "team-analyzer",
+          "team-building",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:c041d93a-e8a4-4482-9e2e-e863da4348d0:viktor",
+        "workspace": "${AGENTS_BASE_DIR}/org:c041d93a-e8a4-4482-9e2e-e863da4348d0:viktor",
+        "skills": [
+          "agent-integration",
+          "chat-plan-management",
+          "code-architecture",
+          "code-quality-gate",
+          "integration-playbook",
+          "layout-guide",
+          "page-builder",
+          "project-scaffolding",
+          "runtime-architecture",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:699e3530-881c-4653-b507-4c4b5993538f:lux",
+        "workspace": "${AGENTS_BASE_DIR}/org:699e3530-881c-4653-b507-4c4b5993538f:lux",
+        "skills": [
+          "ad-builder",
+          "brand-consistency",
+          "carousel-designer",
+          "chat-plan-management",
+          "conversion-design",
+          "experimentation-system",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "theme-builder",
+          "vibey-api",
+          "visual-design-systems"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "browser",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:699e3530-881c-4653-b507-4c4b5993538f:ivy",
+        "workspace": "${AGENTS_BASE_DIR}/org:699e3530-881c-4653-b507-4c4b5993538f:ivy",
+        "skills": [
+          "ad-copy-writing",
+          "avatar-builder",
+          "blog-writing",
+          "carousel-designer",
+          "chat-plan-management",
+          "content-strategy",
+          "direct-response-copy",
+          "email-sequence-builder",
+          "email-sequence-copy",
+          "email-sequence-writing",
+          "experimentation-system",
+          "integration-playbook",
+          "landing-page-copy",
+          "lead-magnet-builder",
+          "offer-builder",
+          "offer-copy",
+          "pdf-builder",
+          "skill-creator",
+          "social-caption-writing",
+          "social-intel",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:699e3530-881c-4653-b507-4c4b5993538f:niko",
+        "workspace": "${AGENTS_BASE_DIR}/org:699e3530-881c-4653-b507-4c4b5993538f:niko",
+        "skills": [
+          "campaign-performance-analysis",
+          "chat-plan-management",
+          "competitive-intel",
+          "competitive-research",
+          "content-tracking",
+          "executive-dashboard",
+          "executive-reporting",
+          "experimentation-system",
+          "integration-playbook",
+          "revenue-reporting",
+          "skill-creator",
+          "social-intel",
+          "social-performance-reporting",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:699e3530-881c-4653-b507-4c4b5993538f:video_editor",
+        "workspace": "${AGENTS_BASE_DIR}/org:699e3530-881c-4653-b507-4c4b5993538f:video_editor",
+        "skills": [
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org:699e3530-881c-4653-b507-4c4b5993538f:pixel",
+        "workspace": "${AGENTS_BASE_DIR}/org:699e3530-881c-4653-b507-4c4b5993538f:pixel",
+        "skills": [
+          "ad-builder",
+          "brand-consistency",
+          "carousel-designer",
+          "chat-plan-management",
+          "conversion-design",
+          "experimentation-system",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "theme-builder",
+          "vibey-api",
+          "visual-design-systems"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:nova",
+        "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:nova",
+        "skills": [
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:lux",
+        "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:lux",
+        "skills": [
+          "chat-plan-management",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:lux_2",
+        "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:lux_2",
+        "skills": [
+          "ad-builder",
+          "brand-consistency",
+          "carousel-designer",
+          "chat-plan-management",
+          "conversion-design",
+          "experimentation-system",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "theme-builder",
+          "vibey-api",
+          "visual-design-systems"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:rio_3",
+        "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:rio_3",
+        "skills": [
+          "carousel-designer",
+          "chat-plan-management",
+          "content-production",
+          "creator-partnerships",
+          "experimentation-system",
+          "integration-playbook",
+          "platform-distribution",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "social-publisher",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "rio_3",
+        "workspace": "${AGENTS_BASE_DIR}/rio_3",
+        "skills": [
+          "chat-plan-management",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:rio",
+        "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:rio",
+        "skills": [
+          "chat-plan-management",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:rio_2",
+        "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:rio_2",
+        "skills": [
+          "chat-plan-management",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org:c041d93a-e8a4-4482-9e2e-e863da4348d0:ivy",
+        "workspace": "${AGENTS_BASE_DIR}/org:c041d93a-e8a4-4482-9e2e-e863da4348d0:ivy",
+        "skills": [
+          "ad-copy-writing",
+          "avatar-builder",
+          "blog-writing",
+          "carousel-designer",
+          "chat-plan-management",
+          "content-strategy",
+          "direct-response-copy",
+          "email-sequence-builder",
+          "email-sequence-copy",
+          "email-sequence-writing",
+          "experimentation-system",
+          "integration-playbook",
+          "landing-page-copy",
+          "lead-magnet-builder",
+          "offer-builder",
+          "offer-copy",
+          "pdf-builder",
+          "skill-creator",
+          "social-caption-writing",
+          "social-intel",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        }
+      },
+      {
+        "id": "org:699e3530-881c-4653-b507-4c4b5993538f:atlas",
+        "workspace": "${AGENTS_BASE_DIR}/org:699e3530-881c-4653-b507-4c4b5993538f:atlas",
+        "skills": [
+          "brain-library-lint",
+          "brain-library-organization",
+          "brain-operations",
+          "brain-pattern-analysis",
+          "chat-plan-management",
+          "integration-playbook",
+          "knowledge-curation",
+          "knowledge-extraction",
+          "knowledge-intake",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org:699e3530-881c-4653-b507-4c4b5993538f:viktor",
+        "workspace": "${AGENTS_BASE_DIR}/org:699e3530-881c-4653-b507-4c4b5993538f:viktor",
+        "skills": [
+          "agent-integration",
+          "chat-plan-management",
+          "code-architecture",
+          "code-quality-gate",
+          "integration-playbook",
+          "layout-guide",
+          "page-builder",
+          "project-scaffolding",
+          "runtime-architecture",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "vera",
+        "workspace": "${AGENTS_BASE_DIR}/vera",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "jett",
+        "workspace": "${AGENTS_BASE_DIR}/jett",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "pixel",
+        "workspace": "${AGENTS_BASE_DIR}/pixel",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "ledger",
+        "workspace": "${AGENTS_BASE_DIR}/ledger",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "nico",
+        "workspace": "${AGENTS_BASE_DIR}/nico",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "blaze",
+        "workspace": "${AGENTS_BASE_DIR}/blaze",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "nova",
+        "workspace": "${AGENTS_BASE_DIR}/nova",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-atlas",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/atlas",
+        "skills": [
+          "brain-library-lint",
+          "brain-library-organization",
+          "brain-operations",
+          "brain-pattern-analysis",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "company-context-rule-lint",
+          "company-cortex-formation",
+          "company-daily-dream",
+          "customer-avatar-synthesis",
+          "customer-brain-pattern-analysis",
+          "customer-call-routing",
+          "integration-playbook",
+          "knowledge-curation",
+          "knowledge-extraction",
+          "knowledge-intake",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-niko",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/niko",
+        "skills": [
+          "campaign-performance-analysis",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "competitive-intel",
+          "competitive-research",
+          "content-tracking",
+          "executive-dashboard",
+          "executive-reporting",
+          "experimentation-system",
+          "integration-playbook",
+          "revenue-reporting",
+          "skill-creator",
+          "social-intel",
+          "social-performance-reporting",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-hr",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/hr",
+        "skills": [
+          "agent-builder",
+          "agent-design",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "disc-profiling",
+          "hiring",
+          "integration-playbook",
+          "skill-creator",
+          "team-analyzer",
+          "team-building",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-lux",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/lux",
+        "skills": [
+          "ad-builder",
+          "brand-consistency",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "conversion-design",
+          "experimentation-system",
+          "funnel-builder",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "theme-builder",
+          "vibey-api",
+          "visual-design-systems"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-video_editor",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/video_editor",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-ivy",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/ivy",
+        "skills": [
+          "ad-copy-writing",
+          "avatar-builder",
+          "blog-writing",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "content-strategy",
+          "direct-response-copy",
+          "email-sequence-builder",
+          "email-sequence-copy",
+          "email-sequence-writing",
+          "experimentation-system",
+          "integration-playbook",
+          "landing-page-copy",
+          "lead-magnet-builder",
+          "offer-builder",
+          "offer-copy",
+          "pdf-builder",
+          "skill-creator",
+          "social-caption-writing",
+          "social-intel",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-pixel",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/pixel",
+        "skills": [
+          "ad-builder",
+          "brand-consistency",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "conversion-design",
+          "experimentation-system",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "theme-builder",
+          "vibey-api",
+          "visual-design-systems"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-ffb7247d-7ac5-45a0-8503-bfc939f4c617-hr",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/ffb7247d-7ac5-45a0-8503-bfc939f4c617/hr",
+        "skills": [
+          "agent-builder",
+          "agent-design",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "disc-profiling",
+          "hiring",
+          "integration-playbook",
+          "skill-creator",
+          "team-analyzer",
+          "team-building",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-ffb7247d-7ac5-45a0-8503-bfc939f4c617-atlas",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/ffb7247d-7ac5-45a0-8503-bfc939f4c617/atlas",
+        "skills": [
+          "brain-library-lint",
+          "brain-library-organization",
+          "brain-operations",
+          "brain-pattern-analysis",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "company-context-rule-lint",
+          "company-cortex-formation",
+          "company-daily-dream",
+          "customer-avatar-synthesis",
+          "customer-brain-pattern-analysis",
+          "customer-call-routing",
+          "integration-playbook",
+          "knowledge-curation",
+          "knowledge-extraction",
+          "knowledge-intake",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-viktor",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/viktor",
+        "skills": [
+          "agent-integration",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "code-architecture",
+          "code-quality-gate",
+          "integration-playbook",
+          "layout-guide",
+          "page-builder",
+          "project-scaffolding",
+          "runtime-architecture",
+          "skill-creator",
+          "spaces-component-kit",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-ffb7247d-7ac5-45a0-8503-bfc939f4c617-ivy",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/ffb7247d-7ac5-45a0-8503-bfc939f4c617/ivy",
+        "skills": [
+          "ad-copy-writing",
+          "avatar-builder",
+          "blog-writing",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "email-sequence-builder",
+          "email-sequence-writing",
+          "integration-playbook",
+          "landing-page-copy",
+          "lead-magnet-builder",
+          "offer-builder",
+          "offer-copy",
+          "pdf-builder",
+          "skill-creator",
+          "social-caption-writing",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-vibey",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/vibey",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "awareness-evaluator",
+          "blog-writing",
+          "brain-memory",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "email-campaign-publisher",
+          "email-sequence-builder",
+          "funnel-builder",
+          "image-production",
+          "integration-playbook",
+          "integrations",
+          "meta-publisher",
+          "mission-planner",
+          "mission-quality-evaluator",
+          "mission-reviewer",
+          "mission-worker-executor",
+          "offer-builder",
+          "onboarding-discovery",
+          "pdf-builder",
+          "presentation-builder",
+          "seo-research",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "social-publisher",
+          "strategy-planner",
+          "team-management",
+          "theme-builder",
+          "vibey-api",
+          "video-analyzer",
+          "video-producer",
+          "video-production",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-ffb7247d-7ac5-45a0-8503-bfc939f4c617-niko",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/ffb7247d-7ac5-45a0-8503-bfc939f4c617/niko",
+        "skills": [
+          "campaign-performance-analysis",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "competitive-research",
+          "executive-dashboard",
+          "integration-playbook",
+          "revenue-reporting",
+          "skill-creator",
+          "social-performance-reporting",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-ffb7247d-7ac5-45a0-8503-bfc939f4c617-lux_2",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/ffb7247d-7ac5-45a0-8503-bfc939f4c617/lux_2",
+        "skills": [
+          "ad-builder",
+          "brand-consistency",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "conversion-design",
+          "experimentation-system",
+          "info-carousel-dr-inbar",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "theme-builder",
+          "vibey-api",
+          "visual-design-systems"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-ffb7247d-7ac5-45a0-8503-bfc939f4c617-rio_3",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/ffb7247d-7ac5-45a0-8503-bfc939f4c617/rio_3",
+        "skills": [
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "content-production",
+          "creator-partnerships",
+          "experimentation-system",
+          "integration-playbook",
+          "platform-distribution",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "social-publisher",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-c041d93a-e8a4-4482-9e2e-e863da4348d0-atlas",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/c041d93a-e8a4-4482-9e2e-e863da4348d0/atlas",
+        "skills": [
+          "brain-library-lint",
+          "brain-library-organization",
+          "brain-operations",
+          "brain-pattern-analysis",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "company-context-rule-lint",
+          "company-cortex-formation",
+          "company-daily-dream",
+          "customer-avatar-synthesis",
+          "customer-brain-pattern-analysis",
+          "customer-call-routing",
+          "integration-playbook",
+          "knowledge-curation",
+          "knowledge-extraction",
+          "knowledge-intake",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-c041d93a-e8a4-4482-9e2e-e863da4348d0-hr",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/c041d93a-e8a4-4482-9e2e-e863da4348d0/hr",
+        "skills": [
+          "agent-builder",
+          "agent-design",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "disc-profiling",
+          "hiring",
+          "integration-playbook",
+          "skill-creator",
+          "team-analyzer",
+          "team-building",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-ffb7247d-7ac5-45a0-8503-bfc939f4c617-vibey",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/ffb7247d-7ac5-45a0-8503-bfc939f4c617/vibey",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "awareness-evaluator",
+          "blog-writing",
+          "brain-memory",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "email-campaign-publisher",
+          "email-sequence-builder",
+          "funnel-builder",
+          "image-production",
+          "integration-playbook",
+          "integrations",
+          "meta-publisher",
+          "mission-planner",
+          "mission-quality-evaluator",
+          "mission-reviewer",
+          "mission-worker-executor",
+          "offer-builder",
+          "onboarding-discovery",
+          "pdf-builder",
+          "presentation-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-publisher",
+          "strategy-planner",
+          "team-management",
+          "theme-builder",
+          "vibey-api",
+          "video-analyzer",
+          "video-producer",
+          "video-production",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-ffb7247d-7ac5-45a0-8503-bfc939f4c617-viktor",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/ffb7247d-7ac5-45a0-8503-bfc939f4c617/viktor",
+        "skills": [
+          "agent-integration",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "code-architecture",
+          "code-quality-gate",
+          "integration-playbook",
+          "layout-guide",
+          "page-builder",
+          "project-scaffolding",
+          "runtime-architecture",
+          "skill-creator",
+          "spaces-component-kit",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-c041d93a-e8a4-4482-9e2e-e863da4348d0-ivy",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/c041d93a-e8a4-4482-9e2e-e863da4348d0/ivy",
+        "skills": [
+          "ad-copy-writing",
+          "avatar-builder",
+          "blog-writing",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "content-strategy",
+          "direct-response-copy",
+          "email-sequence-builder",
+          "email-sequence-copy",
+          "email-sequence-writing",
+          "experimentation-system",
+          "integration-playbook",
+          "landing-page-copy",
+          "lead-magnet-builder",
+          "offer-builder",
+          "offer-copy",
+          "pdf-builder",
+          "skill-creator",
+          "social-caption-writing",
+          "social-intel",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-c041d93a-e8a4-4482-9e2e-e863da4348d0-vibey",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/c041d93a-e8a4-4482-9e2e-e863da4348d0/vibey",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "awareness-evaluator",
+          "blog-writing",
+          "brain-memory",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "email-campaign-publisher",
+          "email-sequence-builder",
+          "funnel-builder",
+          "image-production",
+          "integration-playbook",
+          "integrations",
+          "meta-publisher",
+          "mission-planner",
+          "mission-quality-evaluator",
+          "mission-reviewer",
+          "mission-worker-executor",
+          "offer-builder",
+          "onboarding-discovery",
+          "pdf-builder",
+          "presentation-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-publisher",
+          "strategy-planner",
+          "team-management",
+          "theme-builder",
+          "vibey-api",
+          "video-analyzer",
+          "video-producer",
+          "video-production",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-c041d93a-e8a4-4482-9e2e-e863da4348d0-viktor",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/c041d93a-e8a4-4482-9e2e-e863da4348d0/viktor",
+        "skills": [
+          "agent-integration",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "code-architecture",
+          "code-quality-gate",
+          "integration-playbook",
+          "layout-guide",
+          "page-builder",
+          "project-scaffolding",
+          "runtime-architecture",
+          "skill-creator",
+          "spaces-component-kit",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "widget_builder",
+        "workspace": "${AGENTS_BASE_DIR}/widget_builder",
+        "skills": [
+          "supabase-dev",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-19847dc5-a29a-4684-87d0-4cf6560baa10-alex_te_support",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/19847dc5-a29a-4684-87d0-4cf6560baa10/alex_te_support",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "conversation-boundaries",
+          "external-user-safety",
+          "integration-playbook",
+          "skill-creator",
+          "support-protocol",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-19847dc5-a29a-4684-87d0-4cf6560baa10-atlas",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/19847dc5-a29a-4684-87d0-4cf6560baa10/atlas",
+        "skills": [
+          "brain-library-lint",
+          "brain-library-organization",
+          "brain-operations",
+          "brain-pattern-analysis",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "company-context-rule-lint",
+          "company-cortex-formation",
+          "company-daily-dream",
+          "customer-avatar-synthesis",
+          "customer-brain-pattern-analysis",
+          "customer-call-routing",
+          "integration-playbook",
+          "knowledge-curation",
+          "knowledge-extraction",
+          "knowledge-intake",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-19847dc5-a29a-4684-87d0-4cf6560baa10-hr",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/19847dc5-a29a-4684-87d0-4cf6560baa10/hr",
+        "skills": [
+          "agent-builder",
+          "agent-design",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "disc-profiling",
+          "hiring",
+          "integration-playbook",
+          "skill-creator",
+          "team-analyzer",
+          "team-building",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-19847dc5-a29a-4684-87d0-4cf6560baa10-zara",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/19847dc5-a29a-4684-87d0-4cf6560baa10/zara",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "conversation-boundaries",
+          "external-user-safety",
+          "integration-playbook",
+          "skill-creator",
+          "support-protocol",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-19847dc5-a29a-4684-87d0-4cf6560baa10-viktor",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/19847dc5-a29a-4684-87d0-4cf6560baa10/viktor",
+        "skills": [
+          "agent-integration",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "code-architecture",
+          "code-quality-gate",
+          "integration-playbook",
+          "layout-guide",
+          "page-builder",
+          "project-scaffolding",
+          "runtime-architecture",
+          "skill-creator",
+          "spaces-component-kit",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-19847dc5-a29a-4684-87d0-4cf6560baa10-vibey",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/19847dc5-a29a-4684-87d0-4cf6560baa10/vibey",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "awareness-evaluator",
+          "blog-writing",
+          "brain-memory",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "email-campaign-publisher",
+          "email-sequence-builder",
+          "funnel-builder",
+          "image-production",
+          "integration-playbook",
+          "integrations",
+          "meta-publisher",
+          "mission-planner",
+          "mission-quality-evaluator",
+          "mission-reviewer",
+          "mission-worker-executor",
+          "offer-builder",
+          "onboarding-discovery",
+          "pdf-builder",
+          "presentation-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-publisher",
+          "strategy-planner",
+          "team-management",
+          "theme-builder",
+          "vibey-api",
+          "video-analyzer",
+          "video-producer",
+          "video-production",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "policy_test_agent",
+        "workspace": "${AGENTS_BASE_DIR}/policy_test_agent",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "ace",
+        "workspace": "${AGENTS_BASE_DIR}/ace",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "tony",
+        "workspace": "${AGENTS_BASE_DIR}/tony",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-5fe45a9b-5b95-4cef-a287-d676cb9ff92a-maya_2",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/5fe45a9b-5b95-4cef-a287-d676cb9ff92a/maya_2",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "brand-consistency",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "content-strategy",
+          "creator-partnerships",
+          "email-sequence-builder",
+          "experimentation-system",
+          "funnel-builder",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "meta-publisher",
+          "offer-builder",
+          "pdf-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "social-publisher",
+          "theme-builder",
+          "vibey-api",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-5fe45a9b-5b95-4cef-a287-d676cb9ff92a-leo",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/5fe45a9b-5b95-4cef-a287-d676cb9ff92a/leo",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "competitive-intel",
+          "content-tracking",
+          "executive-reporting",
+          "experimentation-system",
+          "integration-playbook",
+          "skill-creator",
+          "social-intel",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-5fe45a9b-5b95-4cef-a287-d676cb9ff92a-sara",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/5fe45a9b-5b95-4cef-a287-d676cb9ff92a/sara",
+        "skills": [
+          "avatar-builder",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "content-strategy",
+          "direct-response-copy",
+          "email-sequence-builder",
+          "email-sequence-copy",
+          "experimentation-system",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "offer-builder",
+          "pdf-builder",
+          "skill-creator",
+          "social-intel",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-5fe45a9b-5b95-4cef-a287-d676cb9ff92a-devon",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/5fe45a9b-5b95-4cef-a287-d676cb9ff92a/devon",
+        "skills": [
+          "api-integrations",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "frontend-architecture",
+          "funnel-builder",
+          "integration-playbook",
+          "release-readiness",
+          "skill-creator",
+          "test-automation",
+          "vibey-api",
+          "web-development",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-5fe45a9b-5b95-4cef-a287-d676cb9ff92a-casey",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/5fe45a9b-5b95-4cef-a287-d676cb9ff92a/casey",
+        "skills": [
+          "ad-builder",
+          "brand-consistency",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "conversion-design",
+          "experimentation-system",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "theme-builder",
+          "vibey-api",
+          "visual-design-systems"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-5fe45a9b-5b95-4cef-a287-d676cb9ff92a-riley",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/5fe45a9b-5b95-4cef-a287-d676cb9ff92a/riley",
+        "skills": [
+          "briefing",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "content-tracking",
+          "delegation",
+          "delivery-tracking",
+          "experimentation-system",
+          "integration-playbook",
+          "marketing-strategy",
+          "routing",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-5fe45a9b-5b95-4cef-a287-d676cb9ff92a-owen",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/5fe45a9b-5b95-4cef-a287-d676cb9ff92a/owen",
+        "skills": [
+          "briefing",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "delegation",
+          "delivery-tracking",
+          "executive-reporting",
+          "integration-playbook",
+          "operations-strategy",
+          "routing",
+          "skill-creator",
+          "team-operating-system",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-8504033c-4c38-4b1a-bfde-4178e3075216-maya",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/8504033c-4c38-4b1a-bfde-4178e3075216/maya",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "brand-consistency",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "content-strategy",
+          "creator-partnerships",
+          "email-sequence-builder",
+          "experimentation-system",
+          "funnel-builder",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "meta-publisher",
+          "offer-builder",
+          "pdf-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "social-publisher",
+          "theme-builder",
+          "vibey-api",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-8504033c-4c38-4b1a-bfde-4178e3075216-leo",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/8504033c-4c38-4b1a-bfde-4178e3075216/leo",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "competitive-intel",
+          "content-tracking",
+          "executive-reporting",
+          "experimentation-system",
+          "integration-playbook",
+          "skill-creator",
+          "social-intel",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-8504033c-4c38-4b1a-bfde-4178e3075216-sara",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/8504033c-4c38-4b1a-bfde-4178e3075216/sara",
+        "skills": [
+          "avatar-builder",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "content-strategy",
+          "direct-response-copy",
+          "email-sequence-builder",
+          "email-sequence-copy",
+          "experimentation-system",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "offer-builder",
+          "pdf-builder",
+          "skill-creator",
+          "social-intel",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-8504033c-4c38-4b1a-bfde-4178e3075216-devon",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/8504033c-4c38-4b1a-bfde-4178e3075216/devon",
+        "skills": [
+          "api-integrations",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "frontend-architecture",
+          "funnel-builder",
+          "integration-playbook",
+          "release-readiness",
+          "skill-creator",
+          "test-automation",
+          "vibey-api",
+          "web-development",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-8504033c-4c38-4b1a-bfde-4178e3075216-casey",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/8504033c-4c38-4b1a-bfde-4178e3075216/casey",
+        "skills": [
+          "ad-builder",
+          "brand-consistency",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "conversion-design",
+          "experimentation-system",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "theme-builder",
+          "vibey-api",
+          "visual-design-systems"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-8504033c-4c38-4b1a-bfde-4178e3075216-riley",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/8504033c-4c38-4b1a-bfde-4178e3075216/riley",
+        "skills": [
+          "briefing",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "content-tracking",
+          "delegation",
+          "delivery-tracking",
+          "experimentation-system",
+          "integration-playbook",
+          "marketing-strategy",
+          "routing",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-8504033c-4c38-4b1a-bfde-4178e3075216-owen",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/8504033c-4c38-4b1a-bfde-4178e3075216/owen",
+        "skills": [
+          "briefing",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "delegation",
+          "delivery-tracking",
+          "executive-reporting",
+          "integration-playbook",
+          "operations-strategy",
+          "routing",
+          "skill-creator",
+          "team-operating-system",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800-maya",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800/maya",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "brand-consistency",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "content-strategy",
+          "creator-partnerships",
+          "email-sequence-builder",
+          "experimentation-system",
+          "funnel-builder",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "meta-publisher",
+          "offer-builder",
+          "pdf-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "social-publisher",
+          "theme-builder",
+          "vibey-api",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800-leo",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800/leo",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "competitive-intel",
+          "content-tracking",
+          "executive-reporting",
+          "experimentation-system",
+          "integration-playbook",
+          "skill-creator",
+          "social-intel",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800-sara",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800/sara",
+        "skills": [
+          "avatar-builder",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "content-strategy",
+          "direct-response-copy",
+          "email-sequence-builder",
+          "email-sequence-copy",
+          "experimentation-system",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "offer-builder",
+          "pdf-builder",
+          "skill-creator",
+          "social-intel",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800-devon",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800/devon",
+        "skills": [
+          "api-integrations",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "frontend-architecture",
+          "funnel-builder",
+          "integration-playbook",
+          "release-readiness",
+          "skill-creator",
+          "test-automation",
+          "vibey-api",
+          "web-development",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800-casey",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800/casey",
+        "skills": [
+          "ad-builder",
+          "brand-consistency",
+          "campaign-performance-reporting",
+          "carousel-designer",
+          "chat-plan-management",
+          "conversion-design",
+          "experimentation-system",
+          "integration-playbook",
+          "lead-magnet-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "theme-builder",
+          "vibey-api",
+          "visual-design-systems"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800-riley",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800/riley",
+        "skills": [
+          "briefing",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "content-tracking",
+          "delegation",
+          "delivery-tracking",
+          "experimentation-system",
+          "integration-playbook",
+          "marketing-strategy",
+          "routing",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800-owen",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800/owen",
+        "skills": [
+          "briefing",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "delegation",
+          "delivery-tracking",
+          "executive-reporting",
+          "integration-playbook",
+          "operations-strategy",
+          "routing",
+          "skill-creator",
+          "team-operating-system",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800-vibey",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/9fb9a0c1-7ce1-4d1a-9b4d-e68817e8f800/vibey",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "awareness-evaluator",
+          "blog-writing",
+          "brain-memory",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "email-campaign-publisher",
+          "email-sequence-builder",
+          "funnel-builder",
+          "image-production",
+          "integration-playbook",
+          "integrations",
+          "meta-publisher",
+          "mission-planner",
+          "mission-quality-evaluator",
+          "mission-reviewer",
+          "mission-worker-executor",
+          "offer-builder",
+          "onboarding-discovery",
+          "pdf-builder",
+          "presentation-builder",
+          "skill-creator",
+          "social-content-builder",
+          "social-publisher",
+          "strategy-planner",
+          "team-management",
+          "theme-builder",
+          "vibey-api",
+          "video-analyzer",
+          "video-producer",
+          "video-production",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-hormozi",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/hormozi",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-88c73613-a444-4d12-b181-2736b6ead76c-atlas",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/88c73613-a444-4d12-b181-2736b6ead76c/atlas",
+        "skills": [
+          "brain-library-lint",
+          "brain-library-organization",
+          "brain-operations",
+          "brain-pattern-analysis",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "company-context-rule-lint",
+          "company-cortex-formation",
+          "company-daily-dream",
+          "customer-avatar-synthesis",
+          "customer-brain-pattern-analysis",
+          "customer-call-routing",
+          "integration-playbook",
+          "knowledge-curation",
+          "knowledge-extraction",
+          "knowledge-intake",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-88c73613-a444-4d12-b181-2736b6ead76c-viktor",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/88c73613-a444-4d12-b181-2736b6ead76c/viktor",
+        "skills": [
+          "agent-integration",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "code-architecture",
+          "code-quality-gate",
+          "integration-playbook",
+          "layout-guide",
+          "page-builder",
+          "project-scaffolding",
+          "runtime-architecture",
+          "skill-creator",
+          "spaces-component-kit",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-f7e6065e-a2a5-453b-aa42-e3315131ee42-hr",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/f7e6065e-a2a5-453b-aa42-e3315131ee42/hr",
+        "skills": [
+          "agent-builder",
+          "agent-design",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "disc-profiling",
+          "hiring",
+          "integration-playbook",
+          "skill-creator",
+          "team-analyzer",
+          "team-building",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-9510e2a5-159c-409e-9962-f0f8d01aafee-hr",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/9510e2a5-159c-409e-9962-f0f8d01aafee/hr",
+        "skills": [
+          "agent-builder",
+          "agent-design",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "disc-profiling",
+          "hiring",
+          "integration-playbook",
+          "skill-creator",
+          "team-analyzer",
+          "team-building",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-88c73613-a444-4d12-b181-2736b6ead76c-hr",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/88c73613-a444-4d12-b181-2736b6ead76c/hr",
+        "skills": [
+          "agent-builder",
+          "agent-design",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "disc-profiling",
+          "hiring",
+          "integration-playbook",
+          "skill-creator",
+          "team-analyzer",
+          "team-building",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-refael",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/refael",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-loop",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/loop",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "flow-builder",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "user-37212aea-db05-4178-a6d2-265111a81a78-vibey",
+        "workspace": "${AGENTS_BASE_DIR}/users/37212aea-db05-4178-a6d2-265111a81a78/vibey",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "awareness-evaluator",
+          "blog-writing",
+          "brain-memory",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "email-campaign-publisher",
+          "email-sequence-builder",
+          "funnel-builder",
+          "image-production",
+          "integration-playbook",
+          "integrations",
+          "meta-publisher",
+          "mission-planner",
+          "mission-quality-evaluator",
+          "mission-reviewer",
+          "mission-worker-executor",
+          "offer-builder",
+          "onboarding-discovery",
+          "pdf-builder",
+          "presentation-builder",
+          "seo-research",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "social-publisher",
+          "strategy-planner",
+          "team-management",
+          "theme-builder",
+          "vibey-api",
+          "video-analyzer",
+          "video-producer",
+          "video-production",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "user-37212aea-db05-4178-a6d2-265111a81a78-tony",
+        "workspace": "${AGENTS_BASE_DIR}/users/37212aea-db05-4178-a6d2-265111a81a78/tony",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "seo-research",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "user-527a6be5-2743-4e37-94c5-3be79accdd65-vibey",
+        "workspace": "${AGENTS_BASE_DIR}/users/527a6be5-2743-4e37-94c5-3be79accdd65/vibey",
+        "skills": [
+          "ad-builder",
+          "avatar-builder",
+          "awareness-evaluator",
+          "blog-writing",
+          "brain-memory",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "email-campaign-publisher",
+          "email-sequence-builder",
+          "funnel-builder",
+          "image-production",
+          "integration-playbook",
+          "integrations",
+          "meta-publisher",
+          "mission-planner",
+          "mission-quality-evaluator",
+          "mission-reviewer",
+          "mission-worker-executor",
+          "offer-builder",
+          "onboarding-discovery",
+          "pdf-builder",
+          "presentation-builder",
+          "seo-research",
+          "skill-creator",
+          "social-content-builder",
+          "social-intel",
+          "social-publisher",
+          "strategy-planner",
+          "team-management",
+          "theme-builder",
+          "vibey-api",
+          "video-analyzer",
+          "video-producer",
+          "video-production",
+          "website-builder"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-699e3530-881c-4653-b507-4c4b5993538f-development_advisor",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/699e3530-881c-4653-b507-4c4b5993538f/development_advisor",
+        "skills": [
+          "ai-yc-product-digest",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-788cfdba-b9f3-4c8c-a16f-0de85ba446c0-hr",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/788cfdba-b9f3-4c8c-a16f-0de85ba446c0/hr",
+        "skills": [
+          "agent-builder",
+          "agent-design",
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "disc-profiling",
+          "hiring",
+          "integration-playbook",
+          "skill-creator",
+          "team-analyzer",
+          "team-building",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "loop",
+        "workspace": "${AGENTS_BASE_DIR}/loop",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "flow-builder",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "org-788cfdba-b9f3-4c8c-a16f-0de85ba446c0-loop",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/788cfdba-b9f3-4c8c-a16f-0de85ba446c0/loop",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "flow-builder",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "hormozi",
+        "workspace": "${AGENTS_BASE_DIR}/hormozi",
+        "skills": [
+          "campaign-performance-reporting",
+          "chat-plan-management",
+          "integration-playbook",
+          "skill-creator",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      },
+      {
+        "id": "nate",
+        "workspace": "${AGENTS_BASE_DIR}/nate",
+        "skills": [
+          "auto-skill-1-roas-precall-strategy",
+          "auto-skill-2-roas-strategy-adjust",
+          "auto-skill-3-roas-launch-brief",
+          "dylans-super-voice",
+          "roas-market-research",
+          "vibey-api"
+        ],
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        }
+      }
+    ]
+  },
+  "tools": {
+    "web": {
+      "search": {
+        "enabled": true,
+        "provider": "brave"
+      }
+    },
+    "sandbox": {
+      "tools": {
+        "allow": [
+          "read",
+          "web_search",
+          "web_fetch",
+          "exec",
+          "vibey_backend"
+        ],
+        "deny": [
+          "write",
+          "edit",
+          "process",
+          "apply_patch",
+          "image",
+          "browser",
+          "canvas",
+          "nodes",
+          "cron",
+          "gateway",
+          "sessions_list",
+          "sessions_history",
+          "sessions_send",
+          "sessions_spawn",
+          "session_status",
+          "tts",
+          "message",
+          "discord",
+          "memory_search",
+          "memory_get"
+        ]
+      }
+    }
+  },
+  "bindings": [],
+  "messages": {},
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto"
+  },
+  "hooks": {},
+  "channels": {},
+  "canvasHost": {
+    "enabled": false
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token"
+    },
+    "http": {
+      "endpoints": {
+        "chatCompletions": {
+          "enabled": true
+        },
+        "responses": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "skills": {},
+  "plugins": {
+    "allow": [
+      "vibey-backend",
+      "memory-core"
+    ],
+    "load": {
+      "paths": [
+        "${VIBEY_PLUGIN_PATH}",
+        "${MEMORY_CORE_PLUGIN_PATH}"
+      ]
+    },
+    "slots": {
+      "memory": "memory-core"
+    },
+    "entries": {
+      "vibey-backend": {
+        "enabled": true,
+        "config": {
+          "backendUrl": "http://localhost:3003"
+        }
+      },
+      "memory-core": {
+        "enabled": true
+      }
+    }
+  }
+}

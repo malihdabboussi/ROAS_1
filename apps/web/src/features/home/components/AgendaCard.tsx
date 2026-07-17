@@ -28,6 +28,11 @@ import {
   eventsGroupedByDayKey,
 } from '@/features/home/components/agenda-list-grouping'
 import { agendaListFetchWindow, filterEventsToWindow } from '@/features/home/lib/agenda-fetch-window'
+import {
+  dedupeAgendaEvents,
+  pickNextAgendaEvent,
+  tomorrowDayKey,
+} from '@/features/home/lib/agenda-list-view'
 import { askAboutAgendaInChat } from '@/features/home/lib/ask-agenda-in-chat'
 import { useWorkspaceSettingsModal } from '@/features/settings'
 import { cachedFetch, peekCachedFetch } from '@/lib/cache/keyed-fetch-cache'
@@ -237,22 +242,28 @@ export function AgendaCard({
   }, [day])
 
   const visibleEvents = useMemo(() => {
-    const sorted = [...events].sort(
-      (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime(),
+    const sorted = dedupeAgendaEvents(
+      [...events].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()),
     )
     if (!isToday) return sorted
     return sorted.filter((ev) => new Date(ev.end).getTime() > nowTick)
   }, [events, isToday, nowTick])
 
   const eventKey = (ev: CalendarAgendaEvent) => `${ev.account_id ?? ev.source}:${ev.id}`
+  const nextEvent = useMemo(
+    () => (isToday ? pickNextAgendaEvent(visibleEvents, nowTick) : null),
+    [isToday, visibleEvents, nowTick],
+  )
+  const nextEventKey = nextEvent ? eventKey(nextEvent) : null
+  const tomorrowKey = useMemo(() => tomorrowDayKey(nowTick, timezone), [nowTick, timezone])
   const [selectedEventKey, setSelectedEventKey] = useState<string | null>(null)
 
   useEffect(() => {
     setSelectedEventKey((curr) => {
       if (curr && visibleEvents.some((ev) => eventKey(ev) === curr)) return curr
-      return visibleEvents[0] ? eventKey(visibleEvents[0]) : null
+      return nextEventKey ?? (visibleEvents[0] ? eventKey(visibleEvents[0]) : null)
     })
-  }, [visibleEvents])
+  }, [visibleEvents, nextEventKey])
 
   const dividerDayKeys = useMemo(
     () =>
@@ -296,10 +307,10 @@ export function AgendaCard({
 
   return (
     <div className="section-card card-elevated flex h-[420px] flex-col overflow-hidden">
-      <div className="border-border flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-5">
+      <div className="agenda-card-header">
         <div className="flex items-center gap-2">
-          <CalendarClock className="text-muted-foreground h-4 w-4 shrink-0" />
-          <span className="body-2 text-foreground font-medium">Agenda</span>
+          <CalendarClock className="text-icon h-4 w-4 shrink-0" />
+          <span className="agenda-card-title">Agenda</span>
           {anyConnected ? (
             <button
               type="button"
@@ -480,12 +491,71 @@ export function AgendaCard({
             <VibeyLoadingOrb state="processing" size="sm" />
           </div>
         ) : view === 'list' ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
+          <div className="scrollbar-hide flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
             {visibleEvents.length === 0 && isToday ? (
               <p className="body-3 text-muted-foreground">No more events today.</p>
             ) : null}
-            {visibleEvents.length > 0 &&
-              (range === 'week' || range === 'month' ? (
+            {visibleEvents.length > 0 && isToday && nextEvent ? (
+              <div className="space-y-1">
+                <AgendaEventEntry
+                  ev={nextEvent}
+                  isExpanded
+                  isNextHero
+                  onSelect={() => setSelectedEventKey(nextEventKey)}
+                  onOpenMeeting={onOpenMeeting ? () => onOpenMeeting(nextEvent) : undefined}
+                  onOpenPrep={() => handlePrepClick(nextEvent)}
+                  nowTick={nowTick}
+                  showAccountLabel={showAccountLabel}
+                />
+                {(range === 'week' || range === 'month') &&
+                (groupedVisible.get(tomorrowKey)?.length ?? 0) > 0 ? (
+                  <AgendaWeekDaySeparator
+                    dayKey={tomorrowKey}
+                    nowTick={nowTick}
+                    timeZone={timezone}
+                  />
+                ) : null}
+                <div className="space-y-1">
+                  {dividerDayKeys.map((dk) => {
+                    if (skipDividerDayKey !== null && dk === skipDividerDayKey) return null
+                    const dayEvts = (groupedVisible.get(dk) ?? []).filter(
+                      (ev) => eventKey(ev) !== nextEventKey,
+                    )
+                    if (!dayEvts.length) return null
+                    return (
+                      <div key={dk}>
+                        {dk !== tomorrowKey ? (
+                          <AgendaWeekDaySeparator
+                            dayKey={dk}
+                            nowTick={nowTick}
+                            timeZone={timezone}
+                          />
+                        ) : null}
+                        <ul className="space-y-1">
+                          {dayEvts.map((ev) => (
+                            <li key={eventKey(ev)}>
+                              <AgendaEventEntry
+                                ev={ev}
+                                isExpanded={false}
+                                onSelect={() => setSelectedEventKey(eventKey(ev))}
+                                onOpenMeeting={
+                                  onOpenMeeting ? () => onOpenMeeting(ev) : undefined
+                                }
+                                onOpenPrep={() => handlePrepClick(ev)}
+                                nowTick={nowTick}
+                                showAccountLabel={showAccountLabel}
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : null}
+            {visibleEvents.length > 0 && !(isToday && nextEvent) ? (
+              range === 'week' || range === 'month' ? (
                 <div className="space-y-0.5">
                   {dividerDayKeys.map((dk) => {
                     const dayEvts = groupedVisible.get(dk)
@@ -539,7 +609,8 @@ export function AgendaCard({
                     </li>
                   ))}
                 </ul>
-              ))}
+              )
+            ) : null}
           </div>
         ) : (
           <AgendaCalendarPanel

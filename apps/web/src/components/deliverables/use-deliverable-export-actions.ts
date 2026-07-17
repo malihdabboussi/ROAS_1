@@ -1,10 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { exportPresentationDeliverable } from '@/components/deliverables/deliverable-presentation-export'
-import { normalizeDeliverableContent } from '@/components/deliverables/normalize-deliverable-content'
 import type { DeliverableEntityExportFormat } from '@/components/deliverables/deliverable-preview-modal.types'
+import { normalizeDeliverableContent } from '@/components/deliverables/normalize-deliverable-content'
 import {
   ARTIFACT_HTML2PDF_PAGEBREAK,
   ARTIFACT_INLINE_ERRORS,
@@ -40,24 +40,10 @@ export function useDeliverableExportActions({
   effectiveMarkdown: string | null
 }) {
   const contentRef = useRef<HTMLDivElement>(null)
-  const exportFooterTriggerRef = useRef<HTMLButtonElement>(null)
   const [exporting, setExporting] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [exportOpen, setExportOpen] = useState(false)
 
   const markdownSource = deliverable.content || effectiveMarkdown
-
-  useEffect(() => {
-    if (!exportOpen) return
-    const handleClick = (e: MouseEvent) => {
-      const t = e.target as HTMLElement
-      if (exportFooterTriggerRef.current?.contains(t)) return
-      if (t.closest('[data-dropdown="export-deliverable"]')) return
-      setExportOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [exportOpen])
 
   const handleExportPdf = useCallback(async () => {
     if (exporting) return
@@ -229,12 +215,9 @@ export function useDeliverableExportActions({
 
   return {
     contentRef,
-    exportFooterTriggerRef,
     exporting,
     copied,
     setCopied,
-    exportOpen,
-    setExportOpen,
     handleExportPdf,
     handleCopy,
     handleExportMd,

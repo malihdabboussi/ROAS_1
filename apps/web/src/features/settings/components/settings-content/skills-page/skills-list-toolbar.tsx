@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import * as Popover from '@radix-ui/react-popover'
 import { AnimatePresence, motion } from 'framer-motion'
-import { BookOpen, Check, Layers, ListFilter, Search } from 'lucide-react'
+import { BookOpen, Check, FolderPlus, Layers, ListFilter, Search } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { TOOLBAR_DOCK_SLOT_SPRING } from '@/lib/ui/toolbar-motion'
 import { skillsGroupByLabel } from './skills-catalog-sections'
@@ -31,6 +31,9 @@ export function SkillsListToolbar({
   skillUploadInputRef,
   handleUploadSkill,
   extracting,
+  folderBusy,
+  onCreateFolder,
+  onEnsureDefaultAgencyFolder,
 }: {
   skillsViewKey: 'all' | string
   skillsGroupBy: SkillsGroupBy
@@ -49,6 +52,9 @@ export function SkillsListToolbar({
   skillUploadInputRef: RefObject<HTMLInputElement | null>
   handleUploadSkill: (files: FileList | File[]) => void
   extracting: boolean
+  folderBusy?: boolean
+  onCreateFolder?: (name: string) => void | Promise<void>
+  onEnsureDefaultAgencyFolder?: () => void | Promise<void>
 }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [filterMenuOpen, setFilterMenuOpen] = useState(false)
@@ -244,6 +250,34 @@ export function SkillsListToolbar({
           </Popover.Root>
 
           <div className="border-l-glass mx-1 h-4 w-0 shrink-0 self-center" aria-hidden />
+
+          <Tooltip label="New folder" side="bottom">
+            <button
+              type="button"
+              disabled={folderBusy}
+              className={`${dockIconBtnCls} disabled:opacity-40`}
+              onClick={() => {
+                const name = window.prompt('Folder name', 'ROAS* Agency Automation')?.trim()
+                if (!name) return
+                void onCreateFolder?.(name)
+              }}
+              aria-label="New folder"
+            >
+              <FolderPlus className="icon-sm" />
+            </button>
+          </Tooltip>
+
+          <Tooltip label="Ensure ROAS* Agency Automation folder" side="bottom">
+            <button
+              type="button"
+              disabled={folderBusy}
+              className={`${dockIconBtnCls} disabled:opacity-40`}
+              onClick={() => void onEnsureDefaultAgencyFolder?.()}
+              aria-label="Ensure default agency folder"
+            >
+              <Layers className="icon-sm" />
+            </button>
+          </Tooltip>
 
           <SkillsNewSkillButton
             variant="toolbar"

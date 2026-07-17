@@ -83,27 +83,25 @@ export function SidebarTeam2Flyout({ pathname, embedded = false }: SidebarTeam2F
 
   const teamBody = (
     <>
-      <div className="mb-3 space-y-0.5">
+      <div className="mb-2 space-y-0.5">
         <Link
           href="/team"
-          className={`nav-glass-hover-purple body-3 flex w-full items-center gap-2 rounded-lg px-3 py-1.5 transition-all ${
-            pathname === '/team'
-              ? 'home-sidebar-item-active'
-              : 'text-[var(--color-muted-foreground)]'
-          }`}
+          data-hub-dock-navigate
+          className={`hub-dock-flyout-row ${pathname === '/team' ? 'hub-dock-flyout-row-active' : ''}`}
         >
-          <LayoutGrid className="h-4 w-4 shrink-0" />
+          <LayoutGrid />
           <span className="min-w-0 flex-1 truncate">Manage Agents</span>
         </Link>
         <Link
           href="/team/skills"
-          className={`nav-glass-hover-purple body-3 flex w-full items-center gap-2 rounded-lg px-3 py-1.5 transition-all ${
+          data-hub-dock-navigate
+          className={`hub-dock-flyout-row ${
             pathname === '/team/skills' || pathname.startsWith('/team/skills/')
-              ? 'home-sidebar-item-active'
-              : 'text-[var(--color-muted-foreground)]'
+              ? 'hub-dock-flyout-row-active'
+              : ''
           }`}
         >
-          <BookCheck className="h-4 w-4 shrink-0" />
+          <BookCheck />
           <span className="min-w-0 flex-1 truncate">Manage Skills</span>
         </Link>
       </div>
@@ -111,10 +109,8 @@ export function SidebarTeam2Flyout({ pathname, embedded = false }: SidebarTeam2F
       <div className="gap-spacing-6 flex flex-col">
           {showOrgCollaboration ? (
             <div className="group/teams">
-              <div className="flex items-center justify-between px-3 pb-1 pt-1">
-                <span className="text-[10px] font-medium tracking-wider text-[var(--color-muted-foreground)]">
-                  Teams
-                </span>
+              <div className="flex items-center justify-between pr-1">
+                <p className="hub-dock-flyout-caption">Teams</p>
                 <Tooltip label="New team" side="top">
                   <button
                     type="button"

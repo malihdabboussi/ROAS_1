@@ -45,7 +45,7 @@ Write a JSON **line spec** per line (a list for several lines) following the sch
 python assets/render_ad.py config.json
 ```
 
-Each line spec sets `text` (verbatim), `highlight`, optional `stamp` (`"LIVE ON"` gets the Zoom logo), `size`, `brand_color`, optional `brand_bg_light` / `brand_bg_dark`, and `out_prefix`. The engine produces `{prefix}_light.png`, `{prefix}_dark.png`, `{prefix}_bold.png` — light/dark branded, bold neutral. Write engine temp outputs to `/mnt/user-data/outputs/` in claude.ai; in Vibey, write to a local workspace path then register each PNG as an ad/media artifact (see deliver step).
+Each line spec sets `text` (verbatim), `highlight`, optional `stamp` (`"LIVE ON"` gets the Zoom logo), `size`, `brand_color`, optional `brand_bg_light` / `brand_bg_dark`, and `out_prefix`. The engine produces `{prefix}_light.png`, `{prefix}_dark.png`, `{prefix}_bold.png` — light/dark branded, bold neutral. Write outputs to `/mnt/user-data/outputs/`.
 
 `python assets/render_ad.py --demo` regenerates the three reference creatives (with the real Zoom logo).
 

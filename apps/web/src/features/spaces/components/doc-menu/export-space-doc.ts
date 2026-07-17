@@ -7,7 +7,7 @@ import {
   exportCampaignMarkdownDomToPdf,
   sanitizeFilename,
 } from '@/lib/artifacts'
-import { buildSpaceDocExportHtml } from './export-space-doc-html'
+import { buildSpaceDocExportHtml } from '@/lib/spaces/space-doc-export'
 
 function buildExportContentRoot(title: string, docBodyHtml: string): HTMLElement {
   const root = document.createElement('div')

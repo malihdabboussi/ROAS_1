@@ -532,7 +532,7 @@ export function ProjectChatPane({
 
       <div
         ref={composerRef}
-        className="px-spacing-4 pb-spacing-4 pt-spacing-2 relative flex flex-col items-center"
+        className="px-spacing-4 pb-spacing-4 pt-spacing-2 relative flex shrink-0 flex-col items-center"
       >
         {userHasScrolledUp && messages.length > 0 && (
           <div className="pointer-events-none absolute inset-x-0 -top-12 z-10 flex justify-center">

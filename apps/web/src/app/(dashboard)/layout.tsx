@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { resolveUserAvatarUrl, resolveUserDisplayName } from '@/lib/user-display'
+import { DashboardFrame } from './dashboard-frame.client'
 import { DashboardShell } from './dashboard-shell'
 import { DashboardSidebar } from './dashboard-sidebar.client'
 import { DashboardProviders } from './providers'
@@ -45,16 +46,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <DashboardProviders initialSidebarMode={initialSidebarMode}>
-      <div className="flex h-dvh overflow-y-hidden overflow-x-visible bg-[var(--background)]">
-        <DashboardSidebar
-          userName={userName}
-          email={user.email ?? undefined}
-          avatarUrl={avatarUrl}
-        />
-        <main className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
-          <DashboardShell>{children}</DashboardShell>
-        </main>
-      </div>
+      <DashboardFrame
+        sidebar={
+          <DashboardSidebar
+            userName={userName}
+            email={user.email ?? undefined}
+            avatarUrl={avatarUrl}
+          />
+        }
+      >
+        <DashboardShell>{children}</DashboardShell>
+      </DashboardFrame>
     </DashboardProviders>
   )
 }

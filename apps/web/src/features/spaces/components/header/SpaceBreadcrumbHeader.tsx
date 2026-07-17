@@ -1,7 +1,9 @@
 'use client'
 
 import type { RefObject } from 'react'
+import Link from 'next/link'
 import { ChevronDown, FolderKanban, Share2, User, Zap } from 'lucide-react'
+import { ShellBreadcrumb } from '@/components/shell/ShellBreadcrumb'
 import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
 import { Tooltip } from '@/components/ui/tooltip'
 import type { Space } from '../../types'
@@ -29,66 +31,75 @@ export function SpaceBreadcrumbHeader({
   onOpenAutomations,
   onOpenShare,
 }: SpaceBreadcrumbHeaderProps) {
-  return (
-    <div className="px-4 py-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="pl-spacing-2 flex min-w-0 items-center gap-1.5 text-sm">
-          <div className="flex items-center gap-1 text-[var(--color-muted-foreground)]">
-            {activeSpace.campaign_id ? (
-              <FolderKanban className="h-3.5 w-3.5 shrink-0" />
-            ) : (
-              <User className="h-3.5 w-3.5 shrink-0" />
-            )}
-            <span className="max-w-[120px] truncate">{folderLabel}</span>
-          </div>
+  const folderHref = activeSpace.campaign_id
+    ? `/campaigns/${activeSpace.campaign_id}`
+    : '/campaigns'
 
-          <span className="text-[var(--color-muted-foreground)]/50 select-none">/</span>
+  const trail = (
+    <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-1.5 text-sm">
+        <Link
+          href={folderHref}
+          className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+        >
+          {activeSpace.campaign_id ? (
+            <FolderKanban className="h-3.5 w-3.5 shrink-0" />
+          ) : (
+            <User className="h-3.5 w-3.5 shrink-0" />
+          )}
+          <span className="max-w-[120px] truncate">{folderLabel}</span>
+        </Link>
 
-          <button
-            ref={switcherTriggerRef}
-            type="button"
-            onClick={onToggleSwitcher}
-            className="hover:text-[var(--foreground)]/80 flex min-w-0 max-w-[min(100%,280px)] items-center gap-1 font-medium text-[var(--foreground)] transition-colors"
-            aria-label="Open space menu"
-          >
-            <LucideIcon
-              name={spaceIconName}
-              className={`h-3.5 w-3.5 shrink-0 ${spaceIconColor.textColor}`}
-            />
-            <span className="min-w-0 max-w-[200px] truncate">{activeSpace.title ?? 'Space'}</span>
-            <ChevronDown
-              className={`h-3 w-3 shrink-0 text-[var(--color-muted-foreground)] transition-transform ${switcherOpen ? 'rotate-180' : ''}`}
-            />
-          </button>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <Tooltip label="Flows" side="bottom">
-            <span className="inline-flex">
-              <button
-                type="button"
-                onClick={onOpenAutomations}
-                className="rounded-md p-1.5 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
-                aria-label="Flows"
-              >
-                <Zap className="h-3.5 w-3.5 shrink-0" />
-              </button>
-            </span>
-          </Tooltip>
-          <button
-            type="button"
-            onClick={onOpenShare}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
-          >
-            <Share2 className="h-3.5 w-3.5 shrink-0" />
-            Share
-          </button>
-        </div>
+        <span className="text-muted-foreground/50 select-none">/</span>
+
+        <button
+          ref={switcherTriggerRef}
+          type="button"
+          onClick={onToggleSwitcher}
+          className="text-foreground hover:text-foreground/80 flex min-w-0 max-w-[min(100%,280px)] items-center gap-1 font-medium transition-colors"
+          aria-label="Open space menu"
+        >
+          <LucideIcon
+            name={spaceIconName}
+            className={`h-3.5 w-3.5 shrink-0 ${spaceIconColor.textColor}`}
+          />
+          <span className="min-w-0 max-w-[200px] truncate">{activeSpace.title ?? 'Space'}</span>
+          <ChevronDown
+            className={`text-muted-foreground h-3 w-3 shrink-0 transition-transform ${switcherOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
       </div>
-      {activeSpace.description && (
-        <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
-          {activeSpace.description}
-        </p>
-      )}
+      <div className="flex shrink-0 items-center gap-1">
+        <Tooltip label="Flows" side="bottom">
+          <span className="inline-flex">
+            <button
+              type="button"
+              onClick={onOpenAutomations}
+              className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground rounded-md p-1.5 transition-colors"
+              aria-label="Flows"
+            >
+              <Zap className="h-3.5 w-3.5 shrink-0" />
+            </button>
+          </span>
+        </Tooltip>
+        <button
+          type="button"
+          onClick={onOpenShare}
+          className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors"
+        >
+          <Share2 className="h-3.5 w-3.5 shrink-0" />
+          Share
+        </button>
+      </div>
     </div>
+  )
+
+  return (
+    <>
+      <ShellBreadcrumb>{trail}</ShellBreadcrumb>
+      {activeSpace.description ? (
+        <p className="text-muted-foreground px-4 pb-2 pt-3 text-xs">{activeSpace.description}</p>
+      ) : null}
+    </>
   )
 }

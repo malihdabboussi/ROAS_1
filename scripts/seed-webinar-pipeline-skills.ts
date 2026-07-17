@@ -65,6 +65,12 @@ const SKILLS: SkillSeed[] = [
     category: 'agency_copy',
   },
   {
+    skillKey: 'roas-webinar-emails',
+    templateKeys: ['copywriter'],
+    diskAgent: 'copywriter',
+    category: 'agency_copy',
+  },
+  {
     skillKey: 'roas-webinar-topics',
     templateKeys: ['copywriter'],
     diskAgent: 'copywriter',
@@ -270,14 +276,17 @@ async function upsertSkill(supabase: SupabaseClient, supabaseUrl: string, skill:
       },
       { onConflict: 'skill_key,file_path' },
     )
-    if (resError) throw new Error(`library resource ${skill.skillKey}/${relPath}: ${resError.message}`)
+    if (resError)
+      throw new Error(`library resource ${skill.skillKey}/${relPath}: ${resError.message}`)
   }
 
   for (const templateKey of skill.templateKeys) {
-    const { error: aErr } = await supabase.from('template_skill_assignments').upsert(
-      { template_key: templateKey, skill_key: skill.skillKey, is_enabled: true },
-      { onConflict: 'template_key,skill_key' },
-    )
+    const { error: aErr } = await supabase
+      .from('template_skill_assignments')
+      .upsert(
+        { template_key: templateKey, skill_key: skill.skillKey, is_enabled: true },
+        { onConflict: 'template_key,skill_key' },
+      )
     if (aErr) throw new Error(`assignment ${templateKey}/${skill.skillKey}: ${aErr.message}`)
 
     const { error: sErr } = await supabase.from('agent_skills').upsert(
@@ -317,7 +326,8 @@ async function upsertSkill(supabase: SupabaseClient, supabaseUrl: string, skill:
             updated_at: new Date().toISOString(),
           })
           .eq('id', existing.id)
-        if (uErr) throw new Error(`update agent_skills ${templateKey}/${skill.skillKey}: ${uErr.message}`)
+        if (uErr)
+          throw new Error(`update agent_skills ${templateKey}/${skill.skillKey}: ${uErr.message}`)
       } else {
         throw new Error(`agent_skills ${templateKey}/${skill.skillKey}: ${sErr.message}`)
       }
@@ -377,14 +387,16 @@ async function main() {
     await upsertSkill(supabase, supabaseUrl, skill)
   }
   for (const extra of EXTRA_ASSIGNMENTS) {
-    const { error } = await supabase.from('template_skill_assignments').upsert(
-      { template_key: extra.templateKey, skill_key: extra.skillKey, is_enabled: true },
-      { onConflict: 'template_key,skill_key' },
-    )
+    const { error } = await supabase
+      .from('template_skill_assignments')
+      .upsert(
+        { template_key: extra.templateKey, skill_key: extra.skillKey, is_enabled: true },
+        { onConflict: 'template_key,skill_key' },
+      )
     if (error) throw new Error(`extra assignment: ${error.message}`)
     console.log(`  assigned ${extra.skillKey} → ${extra.templateKey}`)
   }
-  console.log('Done. FLAG: roas-webinar-emails still missing from zip/repo.')
+  console.log('Done. Webinar pipeline skill set is complete.')
 }
 
 main().catch((err) => {

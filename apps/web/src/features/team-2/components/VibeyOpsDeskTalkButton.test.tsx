@@ -25,6 +25,7 @@ const summary = {
     completedThisMonth: 0,
   },
   liveFocus: [],
+  workingAgents: [],
   idleAgents: [{ agentKey: 'nate', agentName: 'Nate' }],
 }
 

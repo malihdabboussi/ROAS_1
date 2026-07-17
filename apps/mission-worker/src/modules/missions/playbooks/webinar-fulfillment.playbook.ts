@@ -11,6 +11,9 @@ import {
   intent,
   pickAgent,
   presentationContract,
+  WEBINAR_FLOW_DOCS,
+  WEBINAR_FLOW_GATES,
+  WEBINAR_FLOW_TASKS,
 } from './webinar-fulfillment.helpers'
 
 export const WEBINAR_FULFILLMENT_PLAYBOOK_ID = 'webinar-fulfillment'
@@ -102,26 +105,26 @@ export function expandWebinarFulfillmentPlaybook(
   const allPhaseA: PhaseStep[] = [
     {
       id: 'st-precall',
-      title: `Pre-call strategy map (${SKILL_1})`,
+      title: WEBINAR_FLOW_TASKS.precall,
       skillKey: SKILL_1,
-      docTitle: 'Pre-Call Strategy Map',
+      docTitle: WEBINAR_FLOW_DOCS.precall,
       why: 'Walk into the client call already mapped so the call confirms strategy instead of discovering it.',
       endState:
         'A Pre-Call Strategy Map doc exists in this Space with suggested offers, avatars, and call agenda.',
     },
     {
       id: 'st-strategy-v2',
-      title: `Strategy v2 after call (${SKILL_2})`,
+      title: WEBINAR_FLOW_TASKS.strategyV2,
       skillKey: SKILL_2,
-      docTitle: 'Strategy v2',
+      docTitle: WEBINAR_FLOW_DOCS.strategyV2,
       why: 'Lock the corrected strategy after the onboarding call before production starts.',
       endState: 'A Strategy v2 doc exists reflecting call corrections and locked offer/avatar.',
     },
     {
       id: 'st-launch-brief',
-      title: `THE PLAN launch brief (${SKILL_3})`,
+      title: WEBINAR_FLOW_TASKS.thePlan,
       skillKey: SKILL_3,
-      docTitle: 'THE PLAN — Launch Brief',
+      docTitle: WEBINAR_FLOW_DOCS.thePlan,
       why: 'Hand production a clear launch brief before copy and creative fan out.',
       endState:
         'THE PLAN launch brief doc exists with webinar promise, funnel path, and asset list.',
@@ -182,7 +185,7 @@ export function expandWebinarFulfillmentPlaybook(
     const gateAssertion = nextAssertion()
     subtasks.push({
       id: 'st-gate-1',
-      title: 'Gate 1 — approve strategy package',
+      title: WEBINAR_FLOW_GATES.gate1,
       assignTo: humanAssign,
       dependsOn: [lastPhaseAId],
       assertionKeys: [gateAssertion],
@@ -213,7 +216,7 @@ export function expandWebinarFulfillmentPlaybook(
   const researchAssertion = nextAssertion()
   subtasks.push({
     id: 'st-market-research',
-    title: `Market research (${SKILL_MARKET_RESEARCH})`,
+    title: WEBINAR_FLOW_TASKS.marketResearch,
     assignTo: adsManager,
     dependsOn: afterStrategyId ? [afterStrategyId] : [],
     assertionKeys: [researchAssertion],
@@ -222,10 +225,10 @@ export function expandWebinarFulfillmentPlaybook(
       why: 'Ground every downstream copy unit in real ad-library receipts before Phase B.',
       story: 'Production stops guessing; ads and emails inherit observed competitor language.',
       sensory: 'The research brief cites real ads with longevity and transcripts where available.',
-      endState: 'Doc "Market Research — [Client]" exists with raw JSON attachment.',
-      ecology: `Load skill ${SKILL_MARKET_RESEARCH}. Use platform-managed ads_intelligence + social_analysis via get_integration / use_integration (not MCP tool_search). Save Doc "Market Research — [Client]" plus raw JSON attachment. Kickoff:\n${kickoffBits || '(none)'}`,
+      endState: `Doc "${WEBINAR_FLOW_DOCS.marketResearch}" exists with raw JSON attachment.`,
+      ecology: `Load skill ${SKILL_MARKET_RESEARCH}. Use platform-managed ads_intelligence + social_analysis via get_integration / use_integration (not MCP tool_search). Save Doc titled exactly "${WEBINAR_FLOW_DOCS.marketResearch}" plus raw JSON attachment. Kickoff:\n${kickoffBits || '(none)'}`,
     }),
-    outputContract: docContract('Market Research — [Client]'),
+    outputContract: docContract(WEBINAR_FLOW_DOCS.marketResearch),
   })
   assertions.push({
     assertionKey: researchAssertion,
@@ -233,7 +236,7 @@ export function expandWebinarFulfillmentPlaybook(
     statement: 'Market Research doc exists with receipts for this client niche.',
     priority: 'must',
     validatorType: 'human_review',
-    evidenceRequirement: 'Document titled like "Market Research — …" in Space Docs.',
+    evidenceRequirement: `Document titled "${WEBINAR_FLOW_DOCS.marketResearch}" in Space Docs.`,
     failureSeverity: 'blocker',
   })
 
@@ -241,7 +244,7 @@ export function expandWebinarFulfillmentPlaybook(
   const copyAssertion = nextAssertion()
   subtasks.push({
     id: 'st-copy-package',
-    title: `Copy Package (${SKILL_COPY_PACKAGE})`,
+    title: WEBINAR_FLOW_TASKS.copyPackage,
     assignTo: copywriter,
     dependsOn: ['st-market-research'],
     assertionKeys: [copyAssertion],
@@ -251,11 +254,10 @@ export function expandWebinarFulfillmentPlaybook(
       story:
         'Reviewer opens one doc, five sections, one flags list, and a REVIEW MAP for surgical rejects.',
       sensory: 'Title + three discover-bullets read verbatim across sections.',
-      endState:
-        'One Doc "Copy Package" with 5 sections + Open flags + REVIEW MAP exists in Space Docs.',
-      ecology: `Load skill ${SKILL_COPY_PACKAGE}. Sequence atomic skills; write no copy in the orchestrator. Topics first. Include REVIEW MAP: ${REVIEW_MAP}. Save one native editable Doc "Copy Package". Do not create PDF, DOCX, XLSX, or other file-export companions. Do NOT write to /mnt/user-data/outputs/.`,
+      endState: `One Doc "${WEBINAR_FLOW_DOCS.copyPackage}" with 5 sections + Open flags + REVIEW MAP exists in Space Docs.`,
+      ecology: `Load skill ${SKILL_COPY_PACKAGE}. Sequence atomic skills; write no copy in the orchestrator. Topics first. Include REVIEW MAP: ${REVIEW_MAP}. Save one native editable Doc titled exactly "${WEBINAR_FLOW_DOCS.copyPackage}". Do not create PDF, DOCX, XLSX, or other file-export companions. Do NOT write to /mnt/user-data/outputs/.`,
     }),
-    outputContract: docContract('Copy Package'),
+    outputContract: docContract(WEBINAR_FLOW_DOCS.copyPackage),
   })
   assertions.push({
     assertionKey: copyAssertion,
@@ -263,7 +265,7 @@ export function expandWebinarFulfillmentPlaybook(
     statement: 'Copy Package doc has 5 sections, open flags, and REVIEW MAP.',
     priority: 'must',
     validatorType: 'human_review',
-    evidenceRequirement: 'Document titled "Copy Package" in Space Docs.',
+    evidenceRequirement: `Document titled "${WEBINAR_FLOW_DOCS.copyPackage}" in Space Docs.`,
     failureSeverity: 'blocker',
   })
 
@@ -272,7 +274,7 @@ export function expandWebinarFulfillmentPlaybook(
     const gate2Assertion = nextAssertion()
     subtasks.push({
       id: 'st-gate-2',
-      title: 'Gate 2 — approve Copy Package',
+      title: WEBINAR_FLOW_GATES.gate2,
       assignTo: humanAssign,
       dependsOn: ['st-copy-package'],
       assertionKeys: [gate2Assertion],
@@ -304,7 +306,7 @@ export function expandWebinarFulfillmentPlaybook(
   const adAssertion = nextAssertion()
   subtasks.push({
     id: 'st-ad-design',
-    title: `Static ads (${SKILL_AD_DESIGN})`,
+    title: WEBINAR_FLOW_TASKS.staticAds,
     assignTo: adsManager,
     dependsOn: phaseCDepends,
     assertionKeys: [adAssertion],
@@ -331,7 +333,7 @@ export function expandWebinarFulfillmentPlaybook(
   const imageBriefAssertion = nextAssertion()
   subtasks.push({
     id: 'st-image-brief',
-    title: `Image briefs (${SKILL_IMAGE_BRIEF})`,
+    title: WEBINAR_FLOW_TASKS.imageBriefs,
     assignTo: designer,
     dependsOn: phaseCDepends,
     assertionKeys: [imageBriefAssertion],
@@ -339,11 +341,11 @@ export function expandWebinarFulfillmentPlaybook(
     intent: intent({
       why: 'Hand ImageGen paste-ready design prompts for non-text-on-texture concepts.',
       story: 'Designer/media can paste prompts without rewriting.',
-      sensory: 'Doc "Image Briefs" lists concepts with theme → prompt blocks.',
-      endState: 'Doc "Image Briefs" exists in Space Docs.',
-      ecology: `Load skill ${SKILL_IMAGE_BRIEF}. Save Doc "Image Briefs". Do not generate images unless asked.`,
+      sensory: `Doc "${WEBINAR_FLOW_DOCS.imageBriefs}" lists concepts with theme → prompt blocks.`,
+      endState: `Doc "${WEBINAR_FLOW_DOCS.imageBriefs}" exists in Space Docs.`,
+      ecology: `Load skill ${SKILL_IMAGE_BRIEF}. Save Doc titled exactly "${WEBINAR_FLOW_DOCS.imageBriefs}". Do not generate images unless asked.`,
     }),
-    outputContract: docContract('Image Briefs'),
+    outputContract: docContract(WEBINAR_FLOW_DOCS.imageBriefs),
   })
   assertions.push({
     assertionKey: imageBriefAssertion,
@@ -351,14 +353,14 @@ export function expandWebinarFulfillmentPlaybook(
     statement: 'Image Briefs doc exists.',
     priority: 'must',
     validatorType: 'human_review',
-    evidenceRequirement: 'Document titled "Image Briefs".',
+    evidenceRequirement: `Document titled "${WEBINAR_FLOW_DOCS.imageBriefs}".`,
     failureSeverity: 'blocker',
   })
 
   const funnelAssertion = nextAssertion()
   subtasks.push({
     id: 'st-funnel-design',
-    title: `Funnel design (${SKILL_FUNNEL_DESIGN})`,
+    title: WEBINAR_FLOW_TASKS.funnelDesign,
     assignTo: designer,
     dependsOn: phaseCDepends,
     assertionKeys: [funnelAssertion],
@@ -385,7 +387,7 @@ export function expandWebinarFulfillmentPlaybook(
   const deckOutlineAssertion = nextAssertion()
   subtasks.push({
     id: 'st-deck-outline',
-    title: `Deck Outline v1 (${SKILL_WEBINAR_DECK})`,
+    title: WEBINAR_FLOW_TASKS.deckOutline,
     assignTo: designer,
     dependsOn: phaseCDepends,
     assertionKeys: [deckOutlineAssertion],
@@ -393,11 +395,11 @@ export function expandWebinarFulfillmentPlaybook(
     intent: intent({
       why: 'Pause at Deck Outline v1 for human gate before building slides.',
       story: 'Outline locks the webinar arc before design directives and native build.',
-      sensory: 'Doc "Deck Outline v1" mirrors LP discover-bullets as three secrets.',
-      endState: 'Doc "Deck Outline v1" exists; no presentation built yet.',
-      ecology: `Load skill ${SKILL_WEBINAR_DECK}. Produce Doc "Deck Outline v1" only in this step. Do NOT build the presentation yet. Do NOT export PPTX.`,
+      sensory: `Doc "${WEBINAR_FLOW_DOCS.deckOutline}" mirrors LP discover-bullets as three secrets.`,
+      endState: `Doc "${WEBINAR_FLOW_DOCS.deckOutline}" exists; no presentation built yet.`,
+      ecology: `Load skill ${SKILL_WEBINAR_DECK}. Produce Doc titled exactly "${WEBINAR_FLOW_DOCS.deckOutline}" only in this step. Do NOT build the presentation yet. Do NOT export PPTX.`,
     }),
-    outputContract: docContract('Deck Outline v1'),
+    outputContract: docContract(WEBINAR_FLOW_DOCS.deckOutline),
   })
   assertions.push({
     assertionKey: deckOutlineAssertion,
@@ -405,7 +407,7 @@ export function expandWebinarFulfillmentPlaybook(
     statement: 'Deck Outline v1 doc exists before presentation build.',
     priority: 'must',
     validatorType: 'human_review',
-    evidenceRequirement: 'Document titled "Deck Outline v1".',
+    evidenceRequirement: `Document titled "${WEBINAR_FLOW_DOCS.deckOutline}".`,
     failureSeverity: 'blocker',
   })
 
@@ -414,7 +416,7 @@ export function expandWebinarFulfillmentPlaybook(
     const gate3Assertion = nextAssertion()
     subtasks.push({
       id: 'st-gate-3',
-      title: 'Gate 3 — approve Deck Outline v1',
+      title: WEBINAR_FLOW_GATES.gate3,
       assignTo: humanAssign,
       dependsOn: ['st-deck-outline'],
       assertionKeys: [gate3Assertion],
@@ -442,7 +444,7 @@ export function expandWebinarFulfillmentPlaybook(
   const deckBuildAssertion = nextAssertion()
   subtasks.push({
     id: 'st-deck-build',
-    title: `Webinar Deck v1 (${SKILL_WEBINAR_DECK})`,
+    title: WEBINAR_FLOW_TASKS.deckBuild,
     assignTo: designer,
     dependsOn: [afterDeckOutlineId],
     assertionKeys: [deckBuildAssertion],

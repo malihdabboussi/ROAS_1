@@ -143,6 +143,9 @@ export function Section({
   isSubmitting,
   favoriteIds,
   spaceRowProps,
+  flyoutMode = false,
+  onHoverCampaign,
+  onLeaveCampaign,
 }: {
   bucket: string
   label: string
@@ -166,7 +169,50 @@ export function Section({
   isSubmitting: boolean
   favoriteIds: Set<string>
   spaceRowProps: SpaceRowSharedProps
+  /** Compact dock-flyout: static chevron; hover opens nested spaces flyout. */
+  flyoutMode?: boolean
+  onHoverCampaign?: (bucket: string, anchor: DOMRect) => void
+  onLeaveCampaign?: () => void
 }) {
+  if (flyoutMode) {
+    const iconName = campaignRow?.icon ?? 'folder'
+    const iconColor = getIconColor(
+      (campaignRow?.config.icon_color as string | undefined) ?? 'default',
+    ).textColor
+    return (
+      <div
+        className="hub-dock-flyout-row group/section"
+        onMouseEnter={(e) => {
+          onHoverCampaign?.(bucket, e.currentTarget.getBoundingClientRect())
+        }}
+        onMouseLeave={(e) => {
+          const related = e.relatedTarget
+          if (
+            related instanceof Element &&
+            related.closest('[data-hub-dock-flyout-nested]')
+          ) {
+            return
+          }
+          onLeaveCampaign?.()
+        }}
+      >
+        <LucideIcon name={iconName} className={`hub-dock-flyout-row-icon ${iconColor}`} />
+        {campaignRow ? (
+          <Link
+            href={`/campaigns/${campaignRow.id}`}
+            data-hub-dock-navigate
+            className="min-w-0 flex-1 truncate"
+          >
+            {label}
+          </Link>
+        ) : (
+          <span className="min-w-0 flex-1 truncate text-left">{label}</span>
+        )}
+        <span className="hub-dock-flyout-count">{sectionSpaces.length}</span>
+      </div>
+    )
+  }
+
   return (
     <div>
       <div className="group/section rounded-spacing-2 hover:bg-hover-subtle flex items-center gap-0.5 transition-colors">

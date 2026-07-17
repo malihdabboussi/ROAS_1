@@ -108,6 +108,7 @@ function prepChipLabel(status: NonNullable<CalendarAgendaEvent['prep']>['status'
 export function AgendaEventEntry({
   ev,
   isExpanded,
+  isNextHero = false,
   onSelect,
   onOpenMeeting,
   onOpenPrep,
@@ -116,6 +117,7 @@ export function AgendaEventEntry({
 }: {
   ev: CalendarAgendaEvent
   isExpanded: boolean
+  isNextHero?: boolean
   onSelect: () => void
   onOpenMeeting?: () => void
   onOpenPrep?: () => void
@@ -132,11 +134,13 @@ export function AgendaEventEntry({
       transition={ENTRY_TRANSITION}
       onClick={!isExpanded ? onSelect : undefined}
       className={
-        isExpanded
-          ? 'card-glass rounded-xl border-l-[4px] p-4'
-          : 'hover:bg-hover-subtle cursor-pointer rounded-lg px-2 py-2 transition-colors'
+        isNextHero
+          ? 'agenda-next-card'
+          : isExpanded
+            ? 'card-glass rounded-xl border-l-[4px] p-4'
+            : 'hover:bg-hover-subtle cursor-pointer rounded-lg px-2 py-2 transition-colors'
       }
-      style={isExpanded ? { borderLeftColor: color.border } : undefined}
+      style={isExpanded && !isNextHero ? { borderLeftColor: color.border } : undefined}
       role={!isExpanded ? 'button' : undefined}
       tabIndex={!isExpanded ? 0 : undefined}
       onKeyDown={

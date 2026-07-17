@@ -33,6 +33,7 @@ import { AgentManagementService } from './services/agent-management.service'
 import { AgentOnboardingService } from './services/agent-onboarding.service'
 import { AgentProvisioningService } from './services/agent-provisioning.service'
 import { AgentSkillManagementService } from './services/agent-skill-management.service'
+import { SkillCatalogOrganizationService } from './services/skill-catalog-organization.service'
 import { WebinarFulfillmentTeamService } from './services/webinar-fulfillment-team.service'
 import { MissionAgentGatewayService } from './services/gateways/mission-agent-gateway.service'
 import { MissionAvatarService } from './services/media/mission-avatar.service'
@@ -116,6 +117,7 @@ import { MissionAgentTemplateService } from './services/templates/mission-agent-
     AgentOnboardingService,
     AgentProvisioningService,
     AgentSkillManagementService,
+    SkillCatalogOrganizationService,
     AgentManagementService,
     WebinarFulfillmentTeamService,
   ],
@@ -129,6 +131,8 @@ import { MissionAgentTemplateService } from './services/templates/mission-agent-
     MissionsInternalOperationsService,
     MissionsAgentOperationsService,
     AgentCheckpointsService,
+    AgentSkillManagementService,
+    SkillCatalogOrganizationService,
     MissionsRepository,
     MissionServiceRoleClientRepository,
     MissionAgentGatewayService,

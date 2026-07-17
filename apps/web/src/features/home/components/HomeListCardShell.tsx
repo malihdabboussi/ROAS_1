@@ -90,7 +90,7 @@ export function HomeListCardShell({
           </div>
         ) : (
           <>
-            <div className="flex-1 overflow-y-auto px-2 py-1">{children}</div>
+            <div className="flex-1 overflow-y-auto scrollbar-hide px-2 py-1">{children}</div>
             {footer ? (
               <div className="border-border shrink-0 border-t px-3 py-1.5">{footer}</div>
             ) : null}

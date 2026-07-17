@@ -20,6 +20,26 @@ function applyRange(query: any, offset: number, limit: number) {
 
 @Injectable()
 export class EntitySearchRepository {
+  async searchCampaigns(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null,
+    q: string,
+    limit: number,
+    offset: number,
+  ): Promise<any[]> {
+    let query = supabase
+      .from('campaigns')
+      .select('id,name,icon,updated_at')
+      .order('updated_at', { ascending: false })
+    query = applyTextFilter(query, 'name', q)
+    query = scoped(query, userId, orgId)
+    query = applyRange(query, offset, limit)
+    const { data, error } = await query
+    if (error) return []
+    return data ?? []
+  }
+
   async searchSpaceItems(
     supabase: SupabaseClient,
     userId: string,
@@ -63,6 +83,46 @@ export class EntitySearchRepository {
       .from('spaces')
       .select('id,title,description,updated_at')
       .order('updated_at', { ascending: false })
+    query = applyTextFilter(query, 'title', q)
+    query = scoped(query, userId, orgId)
+    query = applyRange(query, offset, limit)
+    const { data, error } = await query
+    if (error) return []
+    return data ?? []
+  }
+
+  async searchConversationDocuments(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null,
+    q: string,
+    limit: number,
+    offset: number,
+  ): Promise<any[]> {
+    let query = supabase
+      .from('conversation_documents')
+      .select('id,title,document_type,campaign_id,conversation_id,resource_id,updated_at')
+      .order('updated_at', { ascending: false })
+    query = applyTextFilter(query, 'title', q)
+    query = scoped(query, userId, orgId)
+    query = applyRange(query, offset, limit)
+    const { data, error } = await query
+    if (error) return []
+    return data ?? []
+  }
+
+  async searchDeliverables(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null,
+    q: string,
+    limit: number,
+    offset: number,
+  ): Promise<any[]> {
+    let query = supabase
+      .from('mission_deliverables')
+      .select('id,title,type,mission_id,campaign_id,created_at')
+      .order('created_at', { ascending: false })
     query = applyTextFilter(query, 'title', q)
     query = scoped(query, userId, orgId)
     query = applyRange(query, offset, limit)

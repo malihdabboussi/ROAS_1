@@ -318,15 +318,13 @@ describe('SidebarHqSection', () => {
     vi.clearAllMocks()
   })
 
-  it('renders the mobile HQ hub menu and expands spaces from the drawer', () => {
+  it('renders the mobile HQ hub menu drawer', () => {
     const setMobileDrawerOpen = vi.fn()
     const reloadSidebarLists = vi.fn(async () => undefined)
-    const toggleHubMenuSectionById = vi.fn()
     const controller = makeController({
       mobileDrawerOpen: true,
       setMobileDrawerOpen,
       reloadSidebarLists,
-      toggleHubMenuSectionById,
       hubMenuExpandedSections: new Set(),
       sidebarLists: [
         {
@@ -349,19 +347,15 @@ describe('SidebarHqSection', () => {
 
     expect(screen.getByText('Home')).toBeTruthy()
     expect(screen.getByText('Team')).toBeTruthy()
-    expect(screen.getByText('Spaces')).toBeTruthy()
-    expect(screen.getByText('Chat')).toBeTruthy()
-
-    fireEvent.click(screen.getByRole('button', { name: /Spaces/i }))
-
-    expect(toggleHubMenuSectionById).toHaveBeenCalledWith('spaces')
+    expect(screen.getByText('Campaigns')).toBeTruthy()
+    expect(screen.getByText('More')).toBeTruthy()
   })
 
-  it('renders the desktop projects panel and starts inline project creation', () => {
+  it('renders the More rail flyout with Projects and Flows', () => {
     const setIsCreatingProject = vi.fn()
     const controller = makeController({
       isAdmin: true,
-      activeManagePanel: 'projects',
+      activeManagePanel: 'more',
       pathname: '/projects/project-1',
       sidebarProjects: [{ id: 'project-1', name: 'Alpha Project' }],
       setIsCreatingProject,
@@ -369,10 +363,12 @@ describe('SidebarHqSection', () => {
 
     render(<SidebarHqSection c={controller} />)
 
-    expect(screen.getAllByText('Projects')).toHaveLength(2)
+    expect(screen.getAllByText('More').length).toBeGreaterThan(0)
+    expect(screen.getByText('Projects')).toBeTruthy()
+    expect(screen.getByText('Flows')).toBeTruthy()
     expect(screen.getByText('Alpha Project')).toBeTruthy()
 
-    fireEvent.click(screen.getByTitle('New Project'))
+    fireEvent.click(screen.getByTitle('New project'))
 
     expect(setIsCreatingProject).toHaveBeenCalledWith(true)
   })

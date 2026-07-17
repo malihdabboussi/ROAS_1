@@ -14,7 +14,7 @@ export function defaultAgentForSurface(surface: GlobalWorkSurface): string {
     case 'brain':
       return 'atlas'
     case 'team':
-      return GLOBAL_CHAT_DEFAULT_AGENT
+      return 'hr'
     case 'flows':
       return 'loop'
     case 'spaces':
@@ -25,7 +25,7 @@ export function defaultAgentForSurface(surface: GlobalWorkSurface): string {
 }
 
 export function surfaceFromPathname(pathname: string): GlobalWorkSurface {
-  if (pathname.startsWith('/spaces')) return 'spaces'
+  if (pathname.startsWith('/spaces') || pathname.startsWith('/campaigns')) return 'spaces'
   if (pathname.startsWith('/brain')) return 'brain'
   if (pathname.startsWith('/team')) return 'team'
   if (pathname.startsWith('/flows')) return 'flows'
@@ -55,14 +55,14 @@ export function routeRecommendation(
       }
     case 'team':
       return {
-        headline: 'Team recommends',
-        agentName: 'Vibey',
-        body: 'Vibey runs the ops floor — brief the team and deploy work. Jaime stays in the HR rail for hiring.',
-        suggestedAgentKey: 'vibey',
+        headline: 'HR recommends',
+        agentName: 'Jaime',
+        body: 'Jaime handles hiring, team structure, and agent staffing on the Team surface.',
+        suggestedAgentKey: 'hr',
       }
     case 'spaces':
       return {
-        headline: 'Spaces work best with',
+        headline: 'Campaigns work best with',
         agentName: 'ROAS',
         body: 'ROAS can read this space and help you ship in one flow.',
         suggestedAgentKey: 'vibey',
@@ -154,7 +154,7 @@ export function isAgentAllowedForWorkContext(
 
 export const WORK_SURFACE_LABELS: Record<GlobalWorkSurface, string> = {
   general: 'General',
-  spaces: 'Spaces',
+  spaces: 'Campaigns',
   brain: 'Brain',
   team: 'Team',
   flows: 'Flows',

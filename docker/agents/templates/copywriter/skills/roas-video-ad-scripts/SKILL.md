@@ -33,11 +33,7 @@ Per script add:
 - **Do NOT say** — claims to avoid on camera (uncleared results, income promises, anything the client can't back).
 
 ### Step 4 — Scrub and ship
-Read every script aloud in your head; anything that doesn't sound like a person talking gets rewritten. Full `dylans-super-voice` no-AI-smell pass.
-
-### Output (environment-aware)
-**Vibey / native artifacts:** register as a Space Doc via `save_document` (document_artifact). Do NOT write to `/mnt/user-data/outputs/`.
-**claude.ai fallback:** save to `/mnt/user-data/outputs/` and present.
+Read every script aloud in your head; anything that doesn't sound like a person talking gets rewritten. Full `dylans-super-voice` no-AI-smell pass. Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above — do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai / no native artifacts (fallback), save to `/mnt/user-data/outputs/` and present.
 
 ## OUTPUT FORMAT
 ```

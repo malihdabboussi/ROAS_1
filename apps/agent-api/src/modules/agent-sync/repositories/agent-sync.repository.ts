@@ -117,17 +117,40 @@ export class AgentSyncRepository {
 
   async listRuntimeSkills(supabase: SupabaseClient, input: RuntimeScope): Promise<QueryResult> {
     let query = this.applyRuntimeScope(
-      this.table(supabase, 'agent_skills')
-        .select(
-          'id, agent_key, skill_key, name, description, markdown_content, is_enabled, archetype_filter, user_id, org_id',
-        )
-        .or(`agent_key.eq.${input.agentKey},agent_key.eq.*`)
-        .eq('is_enabled', true),
+      this.table(supabase, 'agent_skills').select(
+        'id, agent_key, skill_key, name, description, markdown_content, is_enabled, archetype_filter, user_id, org_id',
+      ),
       input,
-    )
-    if (input.skillKeys?.length) query = query.in('skill_key', input.skillKeys)
+    ).eq('is_enabled', true)
+    // Slash/catalog resolve: allow any agent_key in scope for the requested keys.
+    // Full sync still prefers this agent + shared `*`.
+    if (input.skillKeys?.length) {
+      query = query.in('skill_key', input.skillKeys)
+    } else {
+      query = query.or(`agent_key.eq.${input.agentKey},agent_key.eq.*`)
+    }
     const { data, error } = await query
-    return { rows: (data ?? []) as Array<Record<string, unknown>>, errorMessage: error?.message ?? null }
+    const rows = (data ?? []) as Array<Record<string, unknown>>
+    if (!input.skillKeys?.length) {
+      return { rows, errorMessage: error?.message ?? null }
+    }
+    const preferred = new Map<string, Record<string, unknown>>()
+    for (const row of rows) {
+      const key = String(row.skill_key ?? '')
+      if (!key) continue
+      const existing = preferred.get(key)
+      const agentKey = String(row.agent_key ?? '')
+      if (
+        !existing ||
+        (existing.agent_key !== '*' && agentKey === '*') ||
+        (existing.agent_key !== input.agentKey &&
+          existing.agent_key !== '*' &&
+          agentKey === input.agentKey)
+      ) {
+        preferred.set(key, row)
+      }
+    }
+    return { rows: [...preferred.values()], errorMessage: error?.message ?? null }
   }
 
   async listRuntimeSkillResources(
@@ -135,14 +158,16 @@ export class AgentSyncRepository {
     input: RuntimeScope,
   ): Promise<QueryResult> {
     let query = this.applyRuntimeScope(
-      this.table(supabase, 'agent_skill_resources')
-        .select(
-          'agent_key, skill_key, file_path, content, content_type, storage_url, user_id, org_id',
-        )
-        .or(`agent_key.eq.${input.agentKey},agent_key.eq.*`),
+      this.table(supabase, 'agent_skill_resources').select(
+        'agent_key, skill_key, file_path, content, content_type, storage_url, user_id, org_id',
+      ),
       input,
     )
-    if (input.skillKeys?.length) query = query.in('skill_key', input.skillKeys)
+    if (input.skillKeys?.length) {
+      query = query.in('skill_key', input.skillKeys)
+    } else {
+      query = query.or(`agent_key.eq.${input.agentKey},agent_key.eq.*`)
+    }
     const { data, error } = await query
     return { rows: (data ?? []) as Array<Record<string, unknown>>, errorMessage: error?.message ?? null }
   }

@@ -641,6 +641,20 @@ Why: Search was reloading clients and picking the first match on every keystroke
 Impact: Search filters the list only; your pick stays until you click another client.
 Files: `PageGraderBulkSendPanel.tsx`
 
+## [2026-07-16 23:13] - [FIX]
+
+What: Made the captured `<pre>` body explicitly safe under strict indexed-access typing in the shared Markdown-to-HTML converter.
+Why: The production web build correctly recognized the regex match but TypeScript still treated capture group access as possibly undefined, blocking deployment.
+Impact: Existing stored-doc normalization behavior is unchanged, its focused tests pass, and the web production build can proceed past the converter.
+Files: `apps/web/src/lib/content/markdown-to-html.ts`
+
+## [2026-07-16 23:25] - [FEATURE]
+
+What: Deployed and smoke-tested the one-click Google Docs export across the production API and web applications.
+Why: The feature needed confirmation on the live custom domains after production-source TypeScript blockers elsewhere in the shared web release were cleared.
+Impact: `api.roas.io` exposes the authenticated Google Doc creation route, `app.roas.io` serves the new export action, and the standard production smoke suite passes 4/4 checks.
+Files: Production deployments `dpl_7Eff1zH4cRkUyAJoYKxS6WoHttFn` (API) and `dpl_3gS7eRahXaK84JFp4YakavSrbTVg` (web)
+
 ## [2026-07-16 12:46] - [FEATURE]
 
 What: Page Grader send picks Portal service-request types (Graphics, Copywriting, Video Editing, …) instead of Task vs Task request. ROAS pulls types from Page Grader `GET /task-types` (with Portal-aligned fallback) and sends `work.task_type` + `kind: task_request`.

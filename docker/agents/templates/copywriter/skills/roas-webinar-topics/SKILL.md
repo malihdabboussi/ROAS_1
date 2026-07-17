@@ -50,9 +50,7 @@ Order the options strongest-first and say which one you'd run and why, in two li
 ## RECOMMENDATION
 [the pick + two-line why]
 ```
-### Output (environment-aware)
-**Vibey / native artifacts:** register as a Space Doc via `save_document` (document_artifact). Do NOT write to `/mnt/user-data/outputs/`.
-**claude.ai fallback:** save to `/mnt/user-data/outputs/` and present.
+Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above — do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai / no native artifacts (fallback), save to `/mnt/user-data/outputs/` and present.
 
 ## HARD RULES
 - **Different angles, not synonyms.** If two options could share an ad, cut one.

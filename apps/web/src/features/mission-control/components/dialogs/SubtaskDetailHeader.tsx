@@ -1,4 +1,5 @@
 import { ChevronRight, X } from 'lucide-react'
+import { formatWebinarSubtaskTitle } from '@/lib/missions'
 
 interface SubtaskDetailHeaderProps {
   missionTitle: string
@@ -24,7 +25,9 @@ export function SubtaskDetailHeader({
           {missionTitle}
         </button>
         <ChevronRight className="icon-sm text-muted-foreground shrink-0" aria-hidden />
-        <h2 className="title-h2 text-foreground min-w-0 flex-1 truncate">{subtaskTitle}</h2>
+        <h2 className="title-h2 text-foreground min-w-0 flex-1 truncate">
+          {formatWebinarSubtaskTitle(subtaskTitle)}
+        </h2>
       </div>
       <button type="button" onClick={onClose} className="btn-icon-bare shrink-0" aria-label="Close">
         <X className="icon-sm" />

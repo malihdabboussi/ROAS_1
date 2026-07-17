@@ -9,6 +9,9 @@ export const EntitySearchKindSchema = z.enum([
   'person',
   'agent',
   'conversation',
+  'campaign',
+  'artifact',
+  'deliverable',
 ])
 
 export const EntitySearchQuerySchema = z.object({

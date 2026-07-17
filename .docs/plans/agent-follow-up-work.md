@@ -1,3 +1,73 @@
+## 2026-07-17 - [ARCH] HQ flyout files over component LOC limit
+
+Status: Open
+Found while: Sidebar submenu More / nested Campaigns / Brain enable rows
+Files:
+
+- `apps/web/src/components/layout/sidebar/SidebarHqHubMenuContent.tsx` (455)
+- `apps/web/src/components/layout/sidebar/SidebarHqSpacesGroupedList.tsx` (448)
+  Evidence: `wc -l` after Projects nested flyout + campaign spacing pass.
+  Needed work: Split dock flyout renderers / campaign sub-flyout into dedicated components.
+  Deferred because: Behavior delivery was in-scope; further split would expand this pass.
+
+
+## 2026-07-17 - [ARCH] Studio chat.service / SpaceVibeyChatPanel still over LOC (pre-existing)
+
+Status: Open
+Found while: Fixing Untitled conversation titles after failed first sends
+Files:
+
+- `apps/web/src/features/studio/services/chat.service.ts` (2796 LOC)
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` (2431 LOC)
+  Evidence: `wc -l` after early first-message title + suggest fallback edits.
+  Needed work: Continue extracting send/title/stream helpers; already logged elsewhere at length.
+  Deferred because: In-scope was title fallback behavior only.
+
+
+## 2026-07-17 - [PERF] Keep Spaces/chat mounted across sidebar nav (P1)
+
+Status: Open
+Found while: P0 stale-while-revalidate for Spaces/chat hover-menu navigation
+Files:
+
+- `apps/web/src/features/spaces/containers/SpacesContainer.tsx` / space route tree
+- `apps/web/src/components/shell/ShellChatMenu.tsx` / global chat panel mount lifecycle
+  Evidence: P0 removes cold loading flashes via cache TTL + SWR; remount on route change still tears down React trees.
+  Needed work: Keep Spaces + chat surfaces mounted (hidden) when navigating via sidebar so local UI state survives; polish hover-menu UX.
+  Deferred because: Cache/SWR was the approved P0; keep-mounted is a larger shell architecture change.
+
+
+## 2026-07-17 - [ARCH] use-spaces-store over LOC limit (pre-existing)
+
+Status: Open
+Found while: P0 Spaces/chat navigation performance
+Files:
+
+- `apps/web/src/features/spaces/store/use-spaces-store.ts` (1200 LOC; over 600)
+  Evidence: `wc -l` after SWR/TTL/invalidation edits; file was already far over limit.
+  Needed work: Split loadSpaces/items/mutations into focused store modules.
+  Deferred because: Out of scope for navigation perf; behavior change only.
+
+
+## 2026-07-17 - [FEATURE] Claude/ChatGPT shell follow-ups
+
+Status: Open
+Found while: Implementing / polishing phased shell redesign
+Files:
+
+- `apps/web/src/components/shell/ShellRightPanelSources.tsx` — Sources stub only
+- `apps/web/src/components/shell/ShellTopBar.tsx` — crumb ⋯ is present but options menu not wired
+- `apps/web/src/features/home/components/AgendaCard.tsx` — 629 LOC (over 600); split list-view render after NEXT hero work
+- `apps/web/src/features/brain/components/BrainVisualizationBreadcrumbLayer.tsx` — Brain scope crumbs still overlay the canvas; not yet using `ShellBreadcrumb`
+- `apps/web/src/features/home/hooks/use-home-chat-hero-collapsed.ts` — unused by Home; only SpaceMediaView uses HomeChatHeroToggle
+- `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx` — narrow drawer should hide campaign scope + mic via `data-shell-hide-narrow` hooks
+- `apps/web/src/components/layout/sidebar/SidebarHqHubMenuContent.tsx` (507) / `SidebarHqSpacesRows.tsx` (402) / `SidebarHqFlyouts.tsx` (359) — grew during shared flyout redesign
+- `apps/web/src/components/layout/sidebar/SidebarTeam2Flyout.tsx` — top actions use new row classes; agent/DM rows still older density
+  Evidence: Shared `HubDockFlyout` wired for rail + expanded; Campaigns accordion shipped.
+  Needed work: Wire crumb ⋯ actions; split AgendaCard; Sources ontology; prune unused home-collapse hook; split oversized sidebar flyout hosts; finish Team flyout row density.
+  Deferred because: Flyout shell/Campaigns accordion were in-scope; Team row polish + LOC splits are adjacent.
+
+
 ## 2026-07-16 - [FEATURE] Meetings Agenda view backfill + LOC cleanup
 
 Status: Open
@@ -6913,6 +6983,14 @@ Deferred because: Voice routing fix and mic-silence bug were scoped to capture/a
 - Needed: Split Move/Convert/Delete panels (already logged with Page Grader)
 - Why not now: same as prior BulkActionBar follow-up
 
+## 2026-07-17 — CampaignsHub LOC near limit
+
+- Feature/app: campaigns
+- File: `apps/web/src/app/(dashboard)/campaigns/_components/CampaignsHub.tsx` (351)
+- Evidence: Soft component limit ~300–400; card already extracted to `CampaignsHubCampaignCard.tsx`
+- Needed: Extract load/create/delete hooks; optional favorites filter
+- Why not now: Hub UX shipped; further split is polish
+
 ## 2026-07-16 — Page Grader scope-map / panel LOC (pre-existing grew)
 
 - Feature/app: spaces / settings / page-grader
@@ -7007,3 +7085,44 @@ Deferred because: Voice routing fix and mic-silence bug were scoped to capture/a
 - Evidence: `wc -l` after correcting `resolveComposioConfig` missing-mode default; already near the hard limit.
 - Needed work: Extract connect initiation / Composio config mapping into a focused collaborator.
 - Why not now: Requested work is the execution-mode polarity fix only.
+
+## 2026-07-17 - [OPS] Rename live webinar Space docs to WEB#N
+
+Status: Open
+Found while: Adding WEB#N flow numbering for webinar fulfillment docs
+Files:
+
+- Existing Agency Client (Webinar) Spaces still titled `Pre-Call Strategy Map` / `Copy Package` / etc.
+  Evidence: Template + playbook now use WEB#1–#8; dual-write aliases match legacy titles but UI order clarity needs rename.
+  Needed work: One-time SQL/script rename of seeded docs on live Spaces; refresh hired agent skill markdown for WEB# titles from templates.
+  Deferred because: Dual-write aliases unblock saves now; rename is cosmetic for existing Spaces and needs careful per-Space review.
+
+## 2026-07-17 — Mission deliverable UI and execute-phase LOC debt (pre-existing)
+
+- Feature/app: web mission-control
+- File: `apps/web/src/features/mission-control/components/dialogs/MissionDetailModalView.tsx`
+- Evidence: 316 LOC after the deliverable numbering wiring; the committed file was already 309 LOC before this change and exceeds the 300-line component guideline.
+- Needed work: Extract selected-subtask deliverable/activity view-model construction into a focused hook or pure helper.
+- Why not now: This change only adds the task-number transform to the existing view-model boundary; restructuring the full modal state flow would expand the requested deliverable UI change.
+
+- Feature/app: mission-worker missions
+- File: `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`
+- Evidence: 2,256 LOC after structured tool-receipt wiring; the committed file was already 2,248 LOC and exceeds the 600-line service guideline.
+- Needed work: Extract OpenClaw stream/checkpoint orchestration and tool receipt handling into a focused execution-stream collaborator.
+- Why not now: The requested fix needs the existing tool-completion chokepoint so every artifact action is covered; splitting the full execution phase would materially broaden the behavior and deployment risk.
+
+## 2026-07-17 — Space document preview and service LOC limits (pre-existing)
+
+- Feature/app: web / shared deliverables and Spaces
+- Files: `apps/web/src/components/deliverables/SpaceDocDeliverablePreview.tsx`, `apps/web/src/features/spaces/services/spaces.service.ts`
+- Evidence: After extracting the new Google action and full-screen visual overlay, the preview is exactly at the 400-line component limit; `spaces.service.ts` is 642 LOC versus the 600-line service target. Both files were already near or over their limits before this scoped change. The item update request moved to shared `spaces-api.ts`, reducing the feature service.
+- Needed work: Split Space document visual-mode orchestration from the read-only body preview, and continue decomposing Spaces sharing/activity APIs out of the feature service.
+- Why not now: Inline editing and broad Spaces service decomposition are separate behavior changes; this fix only centers Mission previews and exposes the existing Google export capability.
+
+## 2026-07-17 — Global verification blocked by unrelated dirty-work errors
+
+- Feature/app: api + web verification
+- Files: `apps/api/src/modules/integrations/fathom/services/fathom-oauth.service.ts`, `apps/web/src/components/global-chat/config/work-context.config.test.ts`, `apps/web/src/components/shell/ShellChatMenu.tsx`, Skills menu files, and pre-existing Studio tests
+- Evidence: Full API typecheck reports the unrelated `triggered_for` Fathom OAuth type mismatch. Full web typecheck reports unrelated roster fixture, shell null-index, Skills callback, and older ChatInput/chat-message test errors; no error points at the global-search files. Route inventory is also red from a large pre-existing set of uncommitted routes outside search, while the removed `/api/studio/search` route is absent from both current inventory and the edited snapshot.
+- Needed work: Reconcile the dirty route inventory snapshot and repair the listed type errors in their owning feature changes.
+- Why not now: Those files and routes belong to concurrent work already present in the workspace; changing them would overwrite or broaden beyond the requested search fix.

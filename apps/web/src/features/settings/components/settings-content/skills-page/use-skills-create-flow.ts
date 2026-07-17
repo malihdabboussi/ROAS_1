@@ -160,11 +160,13 @@ export function useSkillsCreateFlow({
   setSelectedAgentKey,
   setSkillsView,
   loadSkills,
+  refreshSkills,
 }: {
   selectedAgentKey: string
   setSelectedAgentKey: (agentKey: string) => void
   setSkillsView: (viewKey: 'all' | string) => void
   loadSkills: (agentKey: string) => Promise<void>
+  refreshSkills?: () => void
 }) {
   const [createOpen, setCreateOpen] = useState(false)
   const [addSkillMenuOpen, setAddSkillMenuOpen] = useState(false)
@@ -554,7 +556,6 @@ export function useSkillsCreateFlow({
   )
 
   const handleCreateSkill = useCallback(async () => {
-    if (!selectedAgentKey) return
     const skillKey = toSkillKey(draftName)
     if (!skillKey || !draftName.trim()) {
       setCreateError('Skill name is required')
@@ -564,10 +565,14 @@ export function useSkillsCreateFlow({
     setCreating(true)
     setCreateError(null)
 
+    // Account/org catalog ownership — not tied to the selected agent tab.
+    const { ACCOUNT_SKILL_AGENT_KEY } = await import('@/lib/agents/skill-catalog')
+    const catalogAgentKey = ACCOUNT_SKILL_AGENT_KEY
+
     try {
       await withRetry(
         () =>
-          createAgentSkill(selectedAgentKey, {
+          createAgentSkill(catalogAgentKey, {
             skill_key: skillKey,
             name: draftName.trim(),
             description: draftDescription.trim(),
@@ -580,13 +585,13 @@ export function useSkillsCreateFlow({
       for (const r of draftResources) {
         if (r.file) {
           await withRetry(
-            () => uploadSkillAsset(selectedAgentKey, skillKey, r.file!),
+            () => uploadSkillAsset(catalogAgentKey, skillKey, r.file!),
             RETRY_CONFIGS.API_CALL,
           )
         } else {
           await withRetry(
             () =>
-              createAgentSkillResource(selectedAgentKey, skillKey, {
+              createAgentSkillResource(catalogAgentKey, skillKey, {
                 file_path: r.file_path,
                 content: r.content ?? undefined,
                 content_type: r.content_type ?? undefined,
@@ -596,7 +601,8 @@ export function useSkillsCreateFlow({
         }
       }
 
-      await loadSkills(selectedAgentKey)
+      if (refreshSkills) refreshSkills()
+      else await loadSkills(selectedAgentKey || catalogAgentKey)
       if (draftRecommendationId) {
         await updateSkillRecommendationStatus(draftRecommendationId, 'converted').catch(() => {})
       }
@@ -615,6 +621,7 @@ export function useSkillsCreateFlow({
     draftResources,
     draftRecommendationId,
     loadSkills,
+    refreshSkills,
     resetCreateDialog,
   ])
 

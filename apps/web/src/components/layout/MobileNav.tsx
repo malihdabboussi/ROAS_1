@@ -102,7 +102,7 @@ const manageNavItems: MobileNavItem[] = [
     href: '/home',
     icon: <Inbox className="h-5 w-5" />,
   },
-  { id: 'spaces', label: 'Spaces', href: '/spaces', icon: <ListChecks className="h-5 w-5" /> },
+  { id: 'spaces', label: 'Campaigns', href: '/campaigns', icon: <ListChecks className="h-5 w-5" /> },
   { id: 'team-manage', label: 'Team', href: '/team', icon: <Users className="h-5 w-5" /> },
   { id: 'brain', label: 'Brain', href: '/brain', icon: <Brain className="h-5 w-5" /> },
 ]
@@ -128,6 +128,10 @@ export function MobileNav() {
 
     if (itemId === 'campaigns') {
       return pathname.startsWith('/campaigns') && searchParams.get('view') !== 'dashboard'
+    }
+
+    if (itemId === 'spaces') {
+      return pathname.startsWith('/campaigns') || pathname.startsWith('/spaces')
     }
 
     if (href === '/') return pathname === '/'

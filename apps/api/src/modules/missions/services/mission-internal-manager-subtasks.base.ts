@@ -62,22 +62,18 @@ export abstract class MissionInternalManagerSubtasksBase extends MissionInternal
         progressNotes: 'All subtasks completed — ready for review',
       }
     }
-    if (hasRunnablePending) {
-      return { nextStatus: 'todo', enqueueReview: false }
-    }
-    // Humans in the pipeline: if every non-done subtask is awaiting a human (or mixed with
-    // already-done work), the mission rolls up to `awaiting_human`. Distinct from `blocked`
-    // — SLA-clocked, not triage-required.
+    // An active human gate is the mission's next action even when later pending rows remain
+    // dependency-blocked behind it. Distinct from `blocked` — SLA-clocked, not triage-required.
     const hasAwaitingHuman = active.some((s) => String(s.status) === 'awaiting_human')
-    const allAwaitingOrDone = active.every((s) =>
-      ['awaiting_human', 'done'].includes(String(s.status)),
-    )
-    if (hasAwaitingHuman && allAwaitingOrDone) {
+    if (hasAwaitingHuman) {
       return {
         nextStatus: 'awaiting_human',
         enqueueReview: false,
-        progressNotes: 'Waiting on a teammate — SLA clock is running',
+        progressNotes: 'Waiting for your approval — review is required before work continues',
       }
+    }
+    if (hasRunnablePending) {
+      return { nextStatus: 'todo', enqueueReview: false }
     }
     const onlyStuck = active.every((s) => ['blocked', 'revision'].includes(String(s.status)))
     if (onlyStuck) {
@@ -126,6 +122,10 @@ export abstract class MissionInternalManagerSubtasksBase extends MissionInternal
     }
     if (aggregate.nextStatus === 'todo') {
       statusPatch.current_agent_key = null
+    }
+    if (aggregate.nextStatus === 'awaiting_human') {
+      statusPatch.current_agent_key = null
+      if (aggregate.progressNotes) statusPatch.progress_notes = aggregate.progressNotes
     }
 
     if (aggregate.nextStatus !== mission.status) {
@@ -403,6 +403,4 @@ export abstract class MissionInternalManagerSubtasksBase extends MissionInternal
       return { ok: true }
     })
   }
-
-
 }

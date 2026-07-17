@@ -35,6 +35,7 @@ import {
   activeSubtasksAllDone,
   CONTRACT_ACTION_DOMAINS,
   evaluateSubtaskOutputAlignment,
+  extractToolDeliverableReceipt,
   type MissionPreflightDomain,
   normalizeOutputContract,
 } from './mission-execute-helpers'
@@ -510,12 +511,14 @@ export class MissionExecutePhaseService {
             return
           }
           const resultSummary = truncateResultSummary(result)
+          const deliverableReceipt = isError ? null : extractToolDeliverableReceipt(result)
           completedActions.push({
             action: name,
-            title: toolCallId || 'done',
+            title: deliverableReceipt?.title || toolCallId || 'done',
             label,
             ...(toolAction ? { toolAction } : {}),
             ...(resultSummary ? { result_summary: resultSummary } : {}),
+            ...(deliverableReceipt ?? {}),
             state: isError ? 'failed' : 'complete',
             startedAt: meta?.startedAt ?? Date.now(),
             endedAt: new Date().toISOString(),
@@ -1221,6 +1224,10 @@ export class MissionExecutePhaseService {
       : this.buildSubtaskIntentDelta(subtask, latestComment)
 
     const outputContract = normalizeOutputContract(subtask.output_contract)
+    const outputContractExclusivity =
+      outputContract?.required_action === 'save_document'
+        ? 'Publish only the native editable Doc. Do not create PDF, DOCX, or other file-export companions unless the output contract explicitly requires that file action.'
+        : ''
     const outputContractBlock = outputContract
       ? [
           '\nOUTPUT_CONTRACT:',
@@ -1231,6 +1238,7 @@ export class MissionExecutePhaseService {
           '',
           'This contract is verified by code after your run. You are not done until the required artifact exists.',
           `Call ${outputContract.required_action} for the final output. Do not use a different artifact type as a fallback.`,
+          outputContractExclusivity,
         ].join('\n')
       : ''
     const assertionContext = this.buildSubtaskAssertionContext(plan, subtask)

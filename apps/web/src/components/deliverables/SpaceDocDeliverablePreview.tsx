@@ -1,13 +1,16 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { Download, FileText, Maximize2, RefreshCw, X } from 'lucide-react'
+import { Download, FileText, Maximize2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
+import { SpaceDocGoogleExportButton } from '@/components/deliverables/SpaceDocGoogleExportButton'
+import { VisualDocFullMode } from '@/components/deliverables/VisualDocFullMode'
 import { DocEditorProseStyles, DriveDocViewer, VisualDocView } from '@/components/spaces'
-import { HtmlMiniIframe } from '@/components/ui/HtmlMiniIframe'
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyChatOrb } from '@/components/vibey/vibey-chat-orb'
+import { fetchDocument } from '@/lib/artifacts'
+import { extractMarkdownFromDocumentContent } from '@/lib/content/document-content-markdown'
+import { markdownToHtml } from '@/lib/content/markdown-to-html'
 import {
   editorFontFamilyForStyle,
   editorFontSizePxForSize,
@@ -21,9 +24,6 @@ import {
   type DocViewMode,
   type SpaceItem,
 } from '@/lib/spaces'
-import { extractMarkdownFromDocumentContent } from '@/lib/content/document-content-markdown'
-import { markdownToHtml } from '@/lib/content/markdown-to-html'
-import { fetchDocument } from '@/lib/artifacts'
 import { cn } from '@/lib/utils/cn'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
@@ -129,8 +129,7 @@ export function SpaceDocDeliverablePreview({
     docVisualLastError,
     docVisualPresentationId,
   } = useMemo(() => parseDocEditorUiFromCustomData(customData), [customData])
-  const visualHtml =
-    typeof docVisualHtml === 'string' && docVisualHtml.trim() ? docVisualHtml : null
+  const visualHtml = typeof docVisualHtml === 'string' && docVisualHtml.trim() ? docVisualHtml : null
 
   useEffect(() => {
     let cancelled = false
@@ -279,6 +278,17 @@ export function SpaceDocDeliverablePreview({
           })}
         </div>
 
+        {docViewMode === 'doc' && hasDocBody ? (
+          <SpaceDocGoogleExportButton
+            spaceId={loadedItem?.space_id ?? spaceId}
+            itemId={loadedItem?.id ?? itemId}
+            title={title?.trim() || loadedItem?.title?.trim() || 'Untitled'}
+            docBody={docBody}
+            customData={customData}
+            onCustomDataChanged={setCustomData}
+          />
+        ) : null}
+
         {docViewMode === 'visual' ? (
           <div className="gap-spacing-1 flex shrink-0 items-center">
             {visualHtml ? (
@@ -379,42 +389,12 @@ export function SpaceDocDeliverablePreview({
         </div>
       )}
 
-      {typeof document !== 'undefined' && visualFullModeOpen && visualHtml
-        ? createPortal(
-            <div
-              className="z-modal-content bg-background fixed inset-0 flex flex-col"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Visual doc full mode"
-            >
-              <div className="px-spacing-4 py-spacing-2 flex shrink-0 items-center justify-end">
-                <Tooltip label="Close" side="bottom">
-                  <span className="inline-flex">
-                    <button
-                      type="button"
-                      className={visualChromeIconBtnClass}
-                      onClick={() => setVisualFullModeOpen(false)}
-                      aria-label="Close full mode"
-                    >
-                      <X className="h-3.5 w-3.5 shrink-0" />
-                    </button>
-                  </span>
-                </Tooltip>
-              </div>
-              <div className="p-spacing-4 min-h-0 flex-1">
-                <div className="surface-card rounded-spacing-4 border-border flex h-full min-h-0 flex-1 flex-col overflow-hidden border">
-                  <HtmlMiniIframe
-                    html={visualHtml}
-                    title="Visual doc full screen"
-                    interactive
-                    className="bg-background"
-                  />
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
+      <VisualDocFullMode
+        html={visualHtml}
+        open={visualFullModeOpen}
+        onClose={() => setVisualFullModeOpen(false)}
+        closeButtonClassName={visualChromeIconBtnClass}
+      />
     </div>
   )
 }

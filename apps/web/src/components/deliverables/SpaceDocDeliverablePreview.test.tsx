@@ -1,6 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
 import { SpaceDocDeliverablePreview } from './SpaceDocDeliverablePreview'
 
 const previewMocks = vi.hoisted(() => ({
@@ -8,9 +7,11 @@ const previewMocks = vi.hoisted(() => ({
   fetchDocument: vi.fn(),
   fetchSpaceItem: vi.fn(),
   fetchSpaceItemById: vi.fn(),
+  createGoogleDocFromHtml: vi.fn(),
   hashDocSource: vi.fn(),
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
+  updateSpaceItem: vi.fn(),
   visualizeSpaceDoc: vi.fn(),
   visualDocRenderCount: 0,
 }))
@@ -54,6 +55,7 @@ vi.mock('@/lib/spaces', async () => {
     ...actual,
     fetchSpaceItem: previewMocks.fetchSpaceItem,
     fetchSpaceItemById: previewMocks.fetchSpaceItemById,
+    updateSpaceItem: previewMocks.updateSpaceItem,
     exportSpaceDocVisualPdf: previewMocks.exportSpaceDocVisualPdf,
     hashDocSource: previewMocks.hashDocSource,
     visualizeSpaceDoc: previewMocks.visualizeSpaceDoc,
@@ -63,6 +65,18 @@ vi.mock('@/lib/spaces', async () => {
 vi.mock('@/components/vibey/vibey-chat-orb', () => ({
   VibeyChatOrb: () => <div data-testid="loading-orb" />,
 }))
+
+vi.mock('@/lib/services/google-drive-api', () => ({
+  createGoogleDocFromHtml: previewMocks.createGoogleDocFromHtml,
+}))
+
+vi.mock('@/lib/spaces/spaces-api', async () => {
+  const actual = await vi.importActual<Record<string, unknown>>('@/lib/spaces/spaces-api')
+  return {
+    ...actual,
+    updateSpaceItem: previewMocks.updateSpaceItem,
+  }
+})
 
 vi.mock('sonner', () => ({
   toast: {
@@ -108,13 +122,7 @@ function renderPreview() {
 
   function Harness() {
     renderCount += 1
-    return (
-      <SpaceDocDeliverablePreview
-        spaceId="space-1"
-        itemId="item-1"
-        title="Doc title"
-      />
-    )
+    return <SpaceDocDeliverablePreview spaceId="space-1" itemId="item-1" title="Doc title" />
   }
 
   render(<Harness />)
@@ -230,5 +238,50 @@ describe('SpaceDocDeliverablePreview', () => {
     expect(getRenderCount()).toBeLessThan(40)
     expect(previewMocks.visualDocRenderCount).toBeLessThan(20)
     consoleErrorSpy.mockRestore()
+  })
+
+  it('exports the loaded native doc to Google Docs and preserves Space metadata', async () => {
+    const replace = vi.fn()
+    const open = vi.spyOn(window, 'open').mockReturnValue({
+      close: vi.fn(),
+      location: { replace },
+      opener: null,
+    } as unknown as Window)
+    previewMocks.fetchSpaceItemById.mockResolvedValue({
+      ...baseSpaceItem,
+      doc_body: '<p>Source body</p>',
+      custom_data: { existing: 'value' },
+    })
+    previewMocks.createGoogleDocFromHtml.mockResolvedValue({
+      success: true,
+      file: {
+        id: 'google-doc-1',
+        name: 'Doc title',
+        mimeType: 'application/vnd.google-apps.document',
+        webViewLink: 'https://docs.google.com/document/d/google-doc-1/edit',
+      },
+    })
+    previewMocks.updateSpaceItem.mockResolvedValue(baseSpaceItem)
+
+    renderPreview()
+    await waitFor(() => expect(screen.getByText('Source body')).toBeTruthy())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export to Google Docs' }))
+
+    await waitFor(() =>
+      expect(previewMocks.createGoogleDocFromHtml).toHaveBeenCalledWith(
+        'Doc title',
+        expect.stringContaining('<p>Source body</p>'),
+      ),
+    )
+    expect(previewMocks.updateSpaceItem).toHaveBeenCalledWith('space-1', 'item-1', {
+      custom_data: expect.objectContaining({
+        existing: 'value',
+        _google_doc_file_id: 'google-doc-1',
+      }),
+    })
+    expect(replace).toHaveBeenCalledWith('https://docs.google.com/document/d/google-doc-1/edit')
+    expect(previewMocks.toastSuccess).toHaveBeenCalledWith('Google Doc created.')
+    open.mockRestore()
   })
 })

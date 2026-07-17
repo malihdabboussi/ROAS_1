@@ -47,7 +47,7 @@ Write a JSON config (schema in `references/design-system.md`): deck-level `style
 python assets/render_carousel.py config.json
 ```
 
-The engine writes `{prefix}_01.png ... {prefix}_NN.png` (claude.ai: `/mnt/user-data/outputs/`; Vibey: local workspace then register), one per slide, in order. Font auto-fits per slide within the safe zone, so short slides render big and denser slides step down.
+The engine writes `{prefix}_01.png ... {prefix}_NN.png` to `/mnt/user-data/outputs/`, one per slide, in order. Font auto-fits per slide within the safe zone, so short slides render big and denser slides step down.
 
 `python assets/render_carousel.py --demo` regenerates the reference deck.
 

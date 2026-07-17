@@ -38,6 +38,7 @@ import { useSpaceCustomizeStageBounds } from '../hooks/use-space-customize-stage
 import { useSpaceFieldOptionActions } from '../hooks/use-space-field-option-actions'
 import { useSpaceItemsRealtime } from '../hooks/use-space-items-realtime'
 import { useSpaceSocialAccountActions } from '../hooks/use-space-social-account-actions'
+import { resolveTaskCapableViewId } from '../lib/resolve-task-capable-view'
 import { useSpaceSwitcherState } from '../hooks/use-space-switcher-state'
 import { useSpaceToolbarFilters } from '../hooks/use-space-toolbar-filters'
 import { useSpaceToolbarState } from '../hooks/use-space-toolbar-state'
@@ -188,6 +189,18 @@ export function SpaceItemsContainer() {
   const activeViewId = useSpacesStore((s) => s.activeViewId)
   const setActiveView = useSpacesStore((s) => s.setActiveView)
   const storeUpdateItem = useSpacesStore((s) => s.updateItem)
+
+  const focusTaskCapableViewIfNeeded = useCallback(
+    (spaceId: string) => {
+      const space = useSpacesStore.getState().spaces.find((row) => row.id === spaceId)
+      const nextViewId = resolveTaskCapableViewId(
+        space?.schema?.views,
+        useSpacesStore.getState().activeViewId,
+      )
+      if (nextViewId) setActiveView(nextViewId)
+    },
+    [setActiveView],
+  )
   const updateItemsBatch = useSpacesStore((s) => s.updateItemsBatch)
   const deleteItem = useSpacesStore((s) => s.deleteItem)
   const pushToAgent = useSpacesStore((s) => s.pushToAgent)
@@ -455,6 +468,7 @@ export function SpaceItemsContainer() {
       setDocEditorItem(item)
     } else {
       setDocEditorItem(null)
+      focusTaskCapableViewIfNeeded(spaceParam)
       openSpaceItemModal(item)
     }
 
@@ -465,6 +479,7 @@ export function SpaceItemsContainer() {
     activeSpace,
     itemsLoadedForSpaceId,
     items,
+    focusTaskCapableViewIfNeeded,
     openSpaceItemModal,
     setDocEditorItem,
     setSelectedItem,
@@ -496,6 +511,7 @@ export function SpaceItemsContainer() {
       }
       const item = items.find((i) => i.id === d.itemId)
       if (item) {
+        focusTaskCapableViewIfNeeded(targetSpaceId)
         openSpaceItemModal(item)
         return
       }
@@ -510,6 +526,7 @@ export function SpaceItemsContainer() {
     return () => window.removeEventListener('space-vibey:open-task', onOpenTask as EventListener)
   }, [
     activeSpaceId,
+    focusTaskCapableViewIfNeeded,
     items,
     openSpaceItemModal,
     pathname,
@@ -618,8 +635,11 @@ export function SpaceItemsContainer() {
             setDocEditorItem(item)
           } else {
             setDocEditorItem(null)
+            focusTaskCapableViewIfNeeded(targetSpaceId)
             openSpaceItemModal(item)
           }
+        } else {
+          focusTaskCapableViewIfNeeded(targetSpaceId)
         }
         const p = new URLSearchParams(searchParams.toString())
         p.set('space', targetSpaceId)
@@ -707,6 +727,7 @@ export function SpaceItemsContainer() {
     }
   }, [
     activeSpaceId,
+    focusTaskCapableViewIfNeeded,
     items,
     openSpaceItemModal,
     pathname,
@@ -1784,6 +1805,7 @@ export function SpaceItemsContainer() {
               setArtifactDetailOpen={setArtifactDetailOpen}
               setArtifactDeepDetail={setArtifactDeepDetail}
               setMediaDeepDetail={setMediaDeepDetail}
+              taskModalOpen={Boolean(selectedItem)}
               setReportingToolbarApi={setReportingToolbarApi}
               setSelectedItem={setSelectedItem}
               openSpaceItemModal={openSpaceItemModal}

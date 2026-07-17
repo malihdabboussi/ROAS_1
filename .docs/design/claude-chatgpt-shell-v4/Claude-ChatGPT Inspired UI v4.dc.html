@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=MuseoModerno:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; }
+  * { box-sizing:border-box; }
+  ::-webkit-scrollbar { width:8px; }
+  ::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.18); border-radius:4px; }
+  .rail-scroll { scrollbar-width:none; }
+  .rail-scroll::-webkit-scrollbar { display:none; }
+  a { color:#059669; } a:hover { color:#10b981; }
+</style>
+</helmet>
+<div style="display:flex;flex-direction:column;height:100vh;background:#faf9f6;font-family:Inter,-apple-system,sans-serif;color:#1a1a1a;overflow:hidden">
+
+  <!-- TOP BAR -->
+  <header style="height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid rgba(0,0,0,0.08);background:rgba(255,253,248,0.8)">
+    <div style="display:flex;align-items:center;gap:4px">
+      <button onMouseEnter="{{ onSidebarBtnEnter }}" onMouseLeave="{{ onSidebarBtnLeave }}" onClick="{{ onSidebarBtnClick }}" title="Hover to peek, click to keep open" style="{{ sidebarBtnStyle }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="16" rx="3"></rect><line x1="9" y1="4" x2="9" y2="20"></line></svg>
+      </button>
+      <button style="width:30px;height:30px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#4b5563" style-hover="background:#e8e5df">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+      </button>
+      <button style="width:30px;height:30px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:default;color:#c2beb5">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+      </button>
+      <sc-if value="{{ sidebarCollapsed }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ goNewChat }}" title="New chat" style="width:30px;height:30px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#4b5563" style-hover="background:#e8e5df">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+        </button>
+      </sc-if>
+      <div style="width:1px;height:20px;background:rgba(0,0,0,0.1);margin:0 8px"></div>
+      <sc-if value="{{ isWork }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#1a1a1a">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="1.7"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+          <span style="font-weight:500">Ad performance review</span>
+          <button title="Section settings" style="width:24px;height:24px;border-radius:6px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#9ca3af" style-hover="background:#e8e5df;color:#4b5563">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg>
+          </button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notWork }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#1a1a1a">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="1.7"><path d="{{ crumbD }}"></path></svg>
+          <span style="font-weight:500">{{ crumbLabel }}</span>
+          <button title="Section settings" style="width:24px;height:24px;border-radius:6px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#9ca3af" style-hover="background:#e8e5df;color:#4b5563">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg>
+          </button>
+        </div>
+      </sc-if>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button style="display:flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:#fffdf8;cursor:pointer;color:#1a1a1a;font-size:12.5px;font-weight:500;font-family:Inter,sans-serif" style-hover="background:#f3f4f6">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="1.7"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"></path></svg>
+        Open in
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <button onClick="{{ toggleRight }}" title="Toggle summary panel" style="{{ rightToggleBtnStyle }}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><circle cx="4" cy="6" r="1" fill="currentColor"></circle><circle cx="4" cy="12" r="1" fill="currentColor"></circle><circle cx="4" cy="18" r="1" fill="currentColor"></circle></svg>
+      </button>
+      <sc-if value="{{ isSpaceDetail }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ toggleSpaceChat }}" title="Expand/collapse the space drawer" style="{{ spaceChatBtnStyle }}">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="16" rx="3"></rect><line x1="14" y1="4" x2="14" y2="20"></line><path d="M17.5 10l2 2-2 2"></path></svg>
+        </button>
+      </sc-if>
+    </div>
+  </header>
+
+  <!-- BODY -->
+  <div style="flex:1;display:flex;overflow:hidden;position:relative">
+
+    <!-- SIDEBAR -->
+    <aside onMouseEnter="{{ onSidebarEnter }}" onMouseLeave="{{ onSidebarLeave }}" style="{{ sidebarOuterStyle }}">
+      <sc-if value="{{ showRail }}" hint-placeholder-val="{{ false }}">
+        <div class="rail-scroll" style="display:flex;flex-direction:column;align-items:center;height:100%;width:72px;padding:10px 0;gap:11px;overflow-y:auto">
+          <img src="apps/web/public/Logos/roas/icon-black.png" alt="ROAS" style="width:36px;height:36px;object-fit:contain;margin-bottom:4px"></img>
+          <sc-for list="{{ railItems }}" as="n" hint-placeholder-count="7">
+            <button onClick="{{ n.select }}" onMouseEnter="{{ n.flyEnter }}" onMouseLeave="{{ n.flyLeave }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:transparent;border:none;cursor:pointer;padding:0">
+              <span style="{{ n.railStyle }}">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="{{ n.d }}"></path></svg>
+              </span>
+              <span style="{{ n.railLabelStyle }}">{{ n.name }}</span>
+            </button>
+          </sc-for>
+          <div style="flex:1"></div>
+          <div style="width:28px;height:28px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="color:#fff;font-size:11px;font-weight:700">D</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showExpandedAny }}" hint-placeholder-val="{{ true }}">
+        <div style="{{ expandedPanelStyle }}">
+          <div style="display:flex;flex-direction:column;height:100%;padding:12px;overflow:hidden">
+
+            <div style="display:flex;align-items:center;gap:8px;padding:2px 4px 12px">
+              <img src="apps/web/public/Logos/roas/wordmark-black.png" alt="ROAS" style="height:32px;width:auto;object-fit:contain"></img>
+            </div>
+
+            <div style="display:flex;gap:3px;background:#f3f4f6;border-radius:10px;padding:3px;margin-bottom:12px">
+              <button onClick="{{ goHome }}" style="{{ homeTabStyle }}">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>
+                Home
+              </button>
+              <button onClick="{{ goChat }}" style="{{ chatTabStyle }}">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.4-.7L3 21l1.8-5.6a8.38 8.38 0 0 1-.8-3.9 8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"></path></svg>
+                Chat
+              </button>
+
+            </div>
+
+            <button onClick="{{ goNewChat }}" style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:9px;border:1px solid rgba(16,185,129,0.5);background:linear-gradient(135deg,rgba(16,185,129,0.25) 0%,rgba(52,211,153,0.35) 50%,rgba(16,185,129,0.2) 100%);box-shadow:0 2px 8px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;color:#059669;font-size:13px;font-weight:600;font-family:Inter,sans-serif;margin-bottom:14px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+              New
+            </button>
+
+            <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:9px;font-size:13px;color:#6b7280;cursor:pointer;margin-bottom:6px" style-hover="background:#e8e5df">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
+              Search
+            </div>
+            <sc-if value="{{ isWorkMode }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto">
+                <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:6px">
+                  <sc-for list="{{ workNavItems }}" as="w" hint-placeholder-count="4">
+                    <button onClick="{{ w.select }}" style="{{ w.rowStyle }}">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0"><path d="{{ w.d }}"></path></svg>
+                      <span style="flex:1;text-align:left">{{ w.name }}</span>
+                      <sc-if value="{{ w.hasBadge }}" hint-placeholder-val="{{ false }}">
+                        <span style="{{ w.badgeStyle }}">{{ w.badge }}</span>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+                <button onClick="{{ toggleTaskBoard }}" style="{{ taskBoardHeaderStyle }}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="{{ taskChevronD }}"></path></svg>
+                  <span style="flex:1;text-align:left">Task Board</span>
+                </button>
+                <sc-if value="{{ taskBoardOpen }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-direction:column;gap:1px;margin:2px 0 10px">
+                    <sc-for list="{{ taskBoardPeople }}" as="tp" hint-placeholder-count="5">
+                      <div style="display:flex;align-items:center;gap:8px;padding:6px 8px 6px 28px;border-radius:8px;font-size:13px;color:#374151;cursor:pointer" style-hover="background:#e8e5df">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.7" style="flex-shrink:0"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                        <span style="width:8px;height:8px;border-radius:50%;background:{{ tp.color }};flex-shrink:0"></span>
+                        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ tp.name }}</span>
+                        <span style="font-size:11px;color:#9ca3af;flex-shrink:0">{{ tp.counts }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <button onClick="{{ toggleTools }}" style="display:flex;align-items:center;width:100%;padding:6px 8px;border:none;background:transparent;cursor:pointer;border-radius:8px" style-hover="background:#e8e5df">
+                  <span style="flex:1;text-align:left;font-size:11px;font-weight:600;letter-spacing:0.06em;color:#9ca3af;text-transform:uppercase">Tools</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="{{ toolsChevronD }}"></path></svg>
+                </button>
+                <sc-if value="{{ toolsOpen }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-direction:column;gap:1px;margin-top:2px">
+                    <sc-for list="{{ tools }}" as="tl" hint-placeholder-count="6">
+                      <div style="display:flex;align-items:center;gap:10px;padding:6.5px 10px;border-radius:8px;font-size:13px;color:#374151;cursor:pointer" style-hover="background:#e8e5df">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="flex-shrink:0;color:#6b7280"><path d="{{ tl.d }}"></path></svg>
+                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ tl.name }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isChatView }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto">
+                <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;color:#9ca3af;text-transform:uppercase;padding:0 8px;margin-bottom:5px">Pinned</div>
+                <div style="display:flex;flex-direction:column;gap:1px;margin-bottom:14px">
+                  <sc-for list="{{ pinnedConvos }}" as="pc" hint-placeholder-count="2">
+                    <div onClick="{{ pc.open }}" style="display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;font-size:13px;color:#374151;cursor:pointer" style-hover="background:#e8e5df">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.7" style="flex-shrink:0"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.4-.7L3 21l1.8-5.6a8.38 8.38 0 0 1-.8-3.9 8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"></path></svg>
+                      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pc.name }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;color:#9ca3af;text-transform:uppercase;padding:0 8px;margin-bottom:5px">Recents</div>
+                <div style="display:flex;flex-direction:column;gap:1px">
+                  <sc-for list="{{ recents }}" as="r" hint-placeholder-count="5">
+                    <div onClick="{{ r.open }}" style="display:flex;align-items:center;padding:7px 8px;border-radius:8px;font-size:13px;color:#374151;cursor:pointer" style-hover="background:#e8e5df">
+                      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ showHomeSidebar }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:16px">
+              <sc-for list="{{ navMain }}" as="n" hint-placeholder-count="4">
+                <button onClick="{{ n.select }}" onMouseEnter="{{ n.flyEnter }}" onMouseLeave="{{ n.flyLeave }}" style="{{ n.rowStyle }}">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0"><path d="{{ n.d }}"></path></svg>
+                  {{ n.name }}
+                </button>
+              </sc-for>
+              <button onMouseEnter="{{ onMoreEnter }}" onMouseLeave="{{ onMoreLeave }}" onClick="{{ onMoreClick }}" style="{{ moreRowStyle }}">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M6 9l6 6 6-6"></path></svg>
+                More
+              </button>
+            </div>
+            <sc-if value="{{ moreOpen }}" hint-placeholder-val="{{ false }}">
+              <div onMouseEnter="{{ onMorePopEnter }}" onMouseLeave="{{ onMoreLeave }}" style="{{ morePopStyle }}">
+                <sc-for list="{{ moreItems }}" as="mi" hint-placeholder-count="2">
+                  <button onClick="{{ mi.select }}" style="{{ mi.rowStyle }}">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0"><path d="{{ mi.d }}"></path></svg>
+                    {{ mi.name }}
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;color:#9ca3af;text-transform:uppercase;padding:0 8px;margin-bottom:5px">Pinned</div>
+            <div style="display:flex;flex-direction:column;gap:1px;margin-bottom:14px">
+              <sc-for list="{{ pinnedCampaigns }}" as="c" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;font-size:13px;cursor:pointer;color:#374151" style-hover="background:#e8e5df">
+                  <span style="width:7px;height:7px;border-radius:50%;background:{{ c.color }};flex-shrink:0"></span>
+                  <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.name }}</span>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;color:#9ca3af;text-transform:uppercase;padding:0 8px;margin-bottom:5px">Recents</div>
+            <div style="display:flex;flex-direction:column;gap:1px;flex:1;overflow-y:auto;min-height:0">
+              <sc-for list="{{ recents }}" as="r" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;padding:7px 8px;border-radius:8px;font-size:13px;color:#374151;cursor:pointer" style-hover="background:#e8e5df">
+                  <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</span>
+                </div>
+              </sc-for>
+            </div>
+            </sc-if>
+
+            <div style="display:flex;align-items:center;gap:9px;padding:10px 6px 2px;border-top:1px solid rgba(0,0,0,0.08);margin-top:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <span style="color:#fff;font-size:11px;font-weight:700">D</span>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:500;color:#1a1a1a">Dylan</div>
+                <div style="font-size:11px;color:#9ca3af">Pro plan</div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.8"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"></path></svg>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </aside>
+
+    <!-- SECTION FLYOUT -->
+    <sc-if value="{{ flyOpen }}" hint-placeholder-val="{{ false }}">
+      <div class="rail-scroll" onMouseEnter="{{ onFlyPopEnter }}" onMouseLeave="{{ onFlyLeave }}" style="{{ flyPopStyle }}">
+        <div style="font-size:11px;font-weight:600;letter-spacing:0.06em;color:#9ca3af;text-transform:uppercase;padding:4px 10px 8px">{{ flyTitle }}</div>
+        <sc-for list="{{ flyItems }}" as="fi" hint-placeholder-count="6">
+          <sc-if value="{{ fi.isCaption }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:11px;color:#9ca3af;padding:9px 10px 3px">{{ fi.name }}</div>
+          </sc-if>
+          <sc-if value="{{ fi.isLink }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ fi.click }}" style="display:flex;align-items:center;gap:9px;width:100%;padding:7px 10px;border-radius:8px;border:none;background:transparent;cursor:pointer;font-size:13px;color:#374151;text-align:left;font-family:Inter,sans-serif" style-hover="background:#f3f4f6">
+              <sc-if value="{{ fi.hasAvatar }}" hint-placeholder-val="{{ false }}">
+                <span style="{{ fi.avatarStyle }}">{{ fi.initial }}</span>
+              </sc-if>
+              <sc-if value="{{ fi.hasIcon }}" hint-placeholder-val="{{ true }}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0"><path d="{{ fi.d }}"></path></svg>
+              </sc-if>
+              <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ fi.name }}</span>
+              <sc-if value="{{ fi.hasCount }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:11.5px;color:#9ca3af">{{ fi.count }}</span>
+              </sc-if>
+            </button>
+          </sc-if>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- CENTER -->
+    <main onClick="{{ closeAllPopovers }}" style="flex:1;display:flex;flex-direction:row;overflow:hidden;min-width:0">
+      <sc-if value="{{ showChatDrawer }}" hint-placeholder-val="{{ false }}">
+            <div style="{{ spaceChatPanelStyle }}">
+              <sc-if value="{{ chatMin }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ restoreChat }}" title="Expand chat" style="width:30px;height:30px;border-radius:8px;border:none;background:linear-gradient(135deg,rgba(147,51,234,0.12),rgba(199,126,255,0.2));display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7c3aed">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.4-.7L3 21l1.8-5.6a8.38 8.38 0 0 1-.8-3.9 8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"></path></svg>
+                </button>
+              </sc-if>
+              <sc-if value="{{ chatMaxed }}" hint-placeholder-val="{{ true }}">
+              <div onMouseDown="{{ onChatDragStart }}" style="position:absolute;right:-3px;top:0;bottom:0;width:6px;cursor:col-resize;z-index:5"></div>
+              <div style="display:flex;justify-content:flex-end;padding:8px 8px 0;flex-shrink:0">
+                <button onClick="{{ minimizeChat }}" title="Minimize chat" style="width:24px;height:24px;border-radius:7px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#9ca3af" style-hover="background:#f3f4f6;color:#4b5563">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"></path></svg>
+                </button>
+              </div>
+              <sc-if value="{{ drawerHasConvo }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:1;overflow-y:auto;padding:12px 14px">
+                  <div style="padding-bottom:10px;border-bottom:1px solid rgba(0,0,0,0.06);margin-bottom:12px">
+                    <div style="font-size:12px;font-weight:600;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ drawerConvo }}</div>
+                    <div style="font-size:11px;color:#9ca3af;margin-top:2px">Vibey &#183; CEO</div>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+                    <div style="background:#f3f4f6;border-radius:12px;padding:8px 11px;max-width:92%;font-size:12.5px;line-height:1.5;color:#1a1a1a">Can you pull last week's ad performance for Q3 Launch and flag anything underperforming?</div>
+                  </div>
+                  <div style="font-size:11.5px;color:#9ca3af;margin-bottom:8px">Worked for 1m 40s</div>
+                  <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px">
+                    <sc-for list="{{ traces }}" as="t" hint-placeholder-count="3">
+                      <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#6b7280">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0"><path d="{{ t.d }}"></path></svg>
+                        {{ t.text }}
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="font-size:12.5px;line-height:1.6;color:#1a1a1a;margin-bottom:10px">Pulled the last 7 days across the Q3 Launch ad sets. Overall spend held steady, but CTR on the carousel set dropped 18% week-over-week and CPA on the retargeting set is up 24%.</div>
+                  <div style="font-size:12.5px;line-height:1.6;color:#1a1a1a">I paused the two lowest performers and drafted three replacement variants using the hooks from the top ad. They're in Files on the right &#8212; flag any you want to push live and I'll schedule them.</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ drawerEmpty }}" hint-placeholder-val="{{ true }}">
+                <div style="flex:1;overflow-y:auto">
+                  <div style="max-width:640px;margin:0 auto;padding:72px 16px 32px;width:100%">
+                    <div style="text-align:center;margin-bottom:20px">
+                      <span style="{{ drawerGreetingStyle }}">Good afternoon, Dylan</span>
+                    </div>
+                    <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:16px;padding:14px;box-shadow:0 2px 6px rgba(0,0,0,0.04),0 10px 20px rgba(0,0,0,0.06)">
+                      <div style="min-height:22px;color:#9ca3af;font-size:13.5px;margin-bottom:12px">What are we working on?</div>
+                      <div style="display:flex;align-items:center;gap:7px">
+                        <button style="width:26px;height:26px;border-radius:7px;border:1px solid rgba(0,0,0,0.08);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#4b5563;flex-shrink:0" style-hover="background:#f3f4f6">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                        </button>
+                        <button style="display:flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:7px;border:1px solid rgba(199,126,255,0.35);background:linear-gradient(135deg,rgba(147,51,234,0.1),rgba(199,126,255,0.16));cursor:pointer;color:#7c3aed;font-size:11.5px;font-weight:600;font-family:Inter,sans-serif;flex-shrink:0">
+                          Vibey &#183; CEO
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+                        </button>
+                        <sc-if value="{{ drawerWide }}" hint-placeholder-val="{{ false }}">
+                          <button style="display:flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:7px;border:1px solid rgba(0,0,0,0.08);background:transparent;cursor:pointer;color:#4b5563;font-size:11.5px;font-family:Inter,sans-serif;overflow:hidden;white-space:nowrap" style-hover="background:#f3f4f6">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                            All Campaigns
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M6 9l6 6 6-6"></path></svg>
+                          </button>
+                        </sc-if>
+                        <div style="flex:1"></div>
+                        <sc-if value="{{ drawerWide }}" hint-placeholder-val="{{ false }}">
+                          <button style="width:26px;height:26px;border-radius:7px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#4b5563" style-hover="background:#f3f4f6">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4"></path></svg>
+                          </button>
+                        </sc-if>
+                        <button style="width:28px;height:28px;border-radius:8px;border:none;background:#10b981;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgb(52,211,153)">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin:28px 0 4px">
+                      <span style="font-size:13px;font-weight:600;color:#4b5563">Active</span>
+                      <span style="font-size:12.5px;color:#9ca3af;cursor:pointer" style-hover="color:#4b5563">Clear active</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column">
+                      <sc-for list="{{ homeActive }}" as="item" hint-placeholder-count="3">
+                        <div style="display:flex;align-items:center;gap:10px;padding:12px 2px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                          <div style="position:relative;width:26px;height:26px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                            <span style="position:absolute;top:-1px;right:-1px;width:7px;height:7px;border-radius:50%;background:#10b981;border:1.5px solid #fffdf8"></span>
+                          </div>
+                          <div style="flex:1;min-width:0">
+                            <div style="font-size:13px;color:#1a1a1a;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ item.title }}</div>
+                            <div style="font-size:11.5px;color:#6b7280;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ item.subtitle }} &#183; {{ item.time }}</div>
+                          </div>
+                          <sc-if value="{{ item.needsReview }}" hint-placeholder-val="{{ false }}">
+                            <button style="height:26px;padding:0 11px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:#fffdf8;cursor:pointer;font-size:12px;font-weight:500;color:#1a1a1a;font-family:Inter,sans-serif;flex-shrink:0" style-hover="background:#f3f4f6">Review</button>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ drawerHasConvo }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:12px">
+                  <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:16px;padding:12px 13px;box-shadow:0 2px 6px rgba(0,0,0,0.04),0 10px 20px rgba(0,0,0,0.06)">
+                    <div style="min-height:20px;color:#9ca3af;font-size:13.5px;margin-bottom:10px">Reply to your agency...</div>
+                    <div style="display:flex;align-items:center;gap:7px">
+                      <button style="width:26px;height:26px;border-radius:7px;border:1px solid rgba(0,0,0,0.08);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#4b5563;flex-shrink:0" style-hover="background:#f3f4f6">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                      </button>
+                      <div style="flex:1"></div>
+                      <button style="width:28px;height:28px;border-radius:8px;border:none;background:#10b981;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgb(52,211,153)">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+              </sc-if>
+            </div>
+          </sc-if>
+
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div style="width:100%;height:100%;overflow-y:auto" data-screen-label="Home dashboard">
+          <div style="width:100%;max-width:820px;margin:0 auto;padding:20px 28px 48px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <span style="font-size:14px;font-weight:600;color:#374151">Your dashboard</span>
+              <div style="display:flex;align-items:center;gap:14px">
+                <span style="font-size:12.5px;color:#9ca3af;cursor:pointer" style-hover="color:#4b5563">Reorder</span>
+                <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:#6b7280;cursor:pointer" style-hover="color:#1a1a1a">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+                  Customize
+                </span>
+              </div>
+            </div>
+
+            <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,0.04),0 10px 20px rgba(0,0,0,0.06);margin-bottom:14px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="1.7"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
+                <span style="font-size:14px;font-weight:700">Agenda</span>
+                <img src="apps/web/public/Logos/roas/icon-black.png" alt="ROAS" style="height:16px;width:auto;object-fit:contain"></img>
+                <div style="flex:1"></div>
+                <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:#4b5563;cursor:pointer" style-hover="color:#1a1a1a">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"></path></svg>
+                  Prep today
+                </span>
+                <button style="width:28px;height:28px;border-radius:7px;border:none;background:rgba(59,130,246,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#2563eb">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg>
+                </button>
+                <button style="width:28px;height:28px;border-radius:7px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#4b5563" style-hover="background:#f3f4f6">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
+                </button>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                <button style="width:26px;height:26px;border-radius:7px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#4b5563" style-hover="background:#f3f4f6">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"></path></svg>
+                </button>
+                <span style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#1a1a1a;cursor:pointer">
+                  Jul 17 &#8211; 23
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+                </span>
+                <button style="width:26px;height:26px;border-radius:7px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#4b5563" style-hover="background:#f3f4f6">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg>
+                </button>
+              </div>
+              <div style="padding:14px 16px">
+                <div style="border:1px solid rgba(0,0,0,0.08);border-left:3px solid #f59e0b;background:#faf9f6;border-radius:12px;padding:16px;margin-bottom:14px">
+                  <div style="font-size:13.5px;font-weight:700;letter-spacing:0.02em">CALL WITH CODY SIZEMORE</div>
+                  <div style="font-size:12.5px;color:#6b7280;margin-top:3px">31m left &#183; 01:00 PM &#8211; 02:00 PM &#183; dylan@dylanvanas.com</div>
+                  <div style="text-align:center;font-size:13.5px;font-weight:600;margin:16px 0;cursor:pointer" style-hover="color:#059669">Open meeting</div>
+                  <button style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;height:38px;border-radius:9px;border:1px solid rgba(0,0,0,0.1);background:#fffdf8;cursor:pointer;font-size:13px;font-weight:500;color:#1a1a1a;font-family:Inter,sans-serif" style-hover="background:#f3f4f6">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"></path></svg>
+                    Start prep
+                  </button>
+                </div>
+                <div style="display:flex;justify-content:center;margin-bottom:12px">
+                  <span style="padding:4px 13px;border-radius:999px;border:1px solid rgba(0,0,0,0.1);background:#fffdf8;font-size:12px;font-weight:500;color:#4b5563">Tomorrow</span>
+                </div>
+                <sc-for list="{{ agendaEvents }}" as="ev" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid rgba(0,0,0,0.05)">
+                    <span style="width:3px;height:18px;border-radius:2px;background:#f59e0b;flex-shrink:0"></span>
+                    <span style="font-size:12px;font-weight:600;color:#6b7280;flex-shrink:0">{{ ev.time }}</span>
+                    <span style="font-size:13px;font-weight:500;color:#1a1a1a;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ev.title }}</span>
+                    <span style="font-size:12px;color:#9ca3af;flex-shrink:0">{{ ev.who }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:14px">
+              <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,0.04)">
+                <div style="display:flex;align-items:center;gap:7px;padding:13px 16px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="1.7"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                  <span style="font-size:13.5px;font-weight:700">My tasks</span>
+                  <span style="font-size:12px;color:#9ca3af">9</span>
+                  <div style="flex:1"></div>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.8" style="cursor:pointer"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
+                </div>
+                <div style="padding:6px">
+                  <sc-for list="{{ myTasks }}" as="mt" hint-placeholder-count="5">
+                    <div style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;cursor:pointer" style-hover="background:#f3f4f6">
+                      <span style="width:9px;height:9px;border-radius:50%;border:2px solid {{ mt.color }};flex-shrink:0"></span>
+                      <span style="font-size:13px;color:#1a1a1a;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ mt.title }}</span>
+                      <span style="font-size:11.5px;color:#9ca3af;flex-shrink:0">No due date</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,0.04)">
+                <div style="display:flex;align-items:center;gap:7px;padding:13px 16px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="1.7"><path d="M9 2h6a1 1 0 0 1 1 1v2H8V3a1 1 0 0 1 1-1zM16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
+                  <span style="font-size:13.5px;font-weight:700">Mission Approval queue</span>
+                </div>
+                <div style="padding:6px">
+                  <sc-for list="{{ approvals }}" as="ap" hint-placeholder-count="6">
+                    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px">
+                      <span style="width:9px;height:9px;border-radius:50%;border:2px solid #f59e0b;flex-shrink:0"></span>
+                      <span style="font-size:13px;color:#1a1a1a;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ap.title }}</span>
+                      <span style="display:flex;align-items:center;gap:3px;font-size:11.5px;color:#6b7280;flex-shrink:0">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                        {{ ap.waiting }}
+                      </span>
+                      <span style="font-size:12px;color:#6b7280;cursor:pointer;flex-shrink:0" style-hover="color:#1a1a1a">Dismiss</span>
+                      <button style="height:24px;padding:0 10px;border-radius:7px;border:1px solid rgba(16,185,129,0.5);background:rgba(16,185,129,0.15);cursor:pointer;color:#059669;font-size:12px;font-weight:600;font-family:Inter,sans-serif;flex-shrink:0" style-hover="background:rgba(16,185,129,0.25)">Accept</button>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+              <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,0.04)">
+                <div style="display:flex;align-items:center;gap:7px;padding:13px 16px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="1.7"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+                  <span style="font-size:13.5px;font-weight:700">Notification feed</span>
+                  <span style="font-size:11.5px;color:#9ca3af">(21 unread)</span>
+                </div>
+                <div style="padding:8px 6px">
+                  <sc-for list="{{ notifs }}" as="nf" hint-placeholder-count="4">
+                    <div style="display:flex;align-items:flex-start;gap:9px;padding:8px 10px;border-radius:9px;cursor:pointer" style-hover="background:#f3f4f6">
+                      <span style="width:8px;height:8px;border-radius:50%;background:{{ nf.color }};flex-shrink:0;margin-top:3px"></span>
+                      <div style="flex:1;min-width:0">
+                        <div style="font-size:10.5px;font-weight:600;letter-spacing:0.05em;color:#9ca3af;text-transform:uppercase">{{ nf.cat }}</div>
+                        <div style="font-size:13px;color:#374151;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ nf.text }}</div>
+                      </div>
+                      <span style="font-size:11.5px;color:#9ca3af;flex-shrink:0">{{ nf.date }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:7px;padding:13px 16px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="1.7"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.4-.7L3 21l1.8-5.6a8.38 8.38 0 0 1-.8-3.9 8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"></path></svg>
+                  <span style="font-size:13.5px;font-weight:700">Recent conversations</span>
+                </div>
+                <div style="padding:6px;flex:1">
+                  <sc-for list="{{ recentConvos }}" as="rc" hint-placeholder-count="6">
+                    <div style="display:flex;align-items:center;gap:9px;padding:7.5px 10px;border-radius:9px;cursor:pointer" style-hover="background:#f3f4f6">
+                      <span style="width:20px;height:20px;border-radius:50%;background:#f3f4f6;border:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#4b5563;flex-shrink:0">R</span>
+                      <span style="font-size:13px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ rc.name }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="text-align:center;padding:10px;border-top:1px solid rgba(0,0,0,0.06);font-size:12.5px;color:#9ca3af;cursor:pointer" style-hover="color:#4b5563">See more</div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isChat }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;height:100%;overflow-y:auto" data-screen-label="Chat">
+          <div style="width:100%;max-width:660px;margin:0 auto;padding:84px 24px 48px">
+            <h1 style="font-family:MuseoModerno,Inter,sans-serif;font-size:34px;font-weight:600;margin:0 0 28px;color:#1a1a1a;letter-spacing:-0.01em;text-align:center">Good afternoon, Dylan</h1>
+
+            <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:16px;padding:16px;box-shadow:0 2px 6px rgba(0,0,0,0.04),0 10px 20px rgba(0,0,0,0.06);margin-bottom:14px">
+              <div style="min-height:26px;color:#9ca3af;font-size:15px;margin-bottom:14px">What are we working on?</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#4b5563" style-hover="background:#f3f4f6">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                </button>
+                <button style="display:flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:8px;border:1px solid rgba(199,126,255,0.35);background:linear-gradient(135deg,rgba(147,51,234,0.1),rgba(199,126,255,0.16));cursor:pointer;color:#7c3aed;font-size:12.5px;font-weight:600;font-family:Inter,sans-serif">
+                  Vibey &#183; CEO
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+                </button>
+                <button style="display:flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);background:transparent;cursor:pointer;color:#4b5563;font-size:12.5px;font-family:Inter,sans-serif" style-hover="background:#f3f4f6">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                  All Campaigns
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+                </button>
+                <div style="flex:1"></div>
+                <button style="width:30px;height:30px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#4b5563" style-hover="background:#f3f4f6">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4"></path></svg>
+                </button>
+                <button style="width:32px;height:32px;border-radius:9px;border:none;background:#10b981;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgb(52,211,153)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+                </button>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin:36px 0 4px">
+              <span style="font-size:13px;font-weight:600;color:#4b5563">Active</span>
+              <span style="font-size:12.5px;color:#9ca3af;cursor:pointer" style-hover="color:#4b5563">Clear active</span>
+            </div>
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ homeActive }}" as="item" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                  <div style="position:relative;width:30px;height:30px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                    <span style="position:absolute;top:-1px;right:-1px;width:8px;height:8px;border-radius:50%;background:#10b981;border:1.5px solid #faf9f6"></span>
+                  </div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;color:#1a1a1a;font-weight:500">{{ item.title }}</div>
+                    <div style="font-size:12.5px;color:#6b7280;margin-top:1px">{{ item.subtitle }} · {{ item.time }}</div>
+                  </div>
+                  <sc-if value="{{ item.needsReview }}" hint-placeholder-val="{{ false }}">
+                    <button style="height:30px;padding:0 14px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);background:#fffdf8;cursor:pointer;font-size:13px;font-weight:500;color:#1a1a1a;font-family:Inter,sans-serif" style-hover="background:#f3f4f6">Review</button>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isConvo }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;flex:1;display:flex;flex-direction:column;align-items:center;overflow:hidden" data-screen-label="Conversation">
+          <div style="width:100%;flex:1;overflow-y:auto">
+            <div style="width:100%;max-width:740px;margin:0 auto;padding:24px 24px 16px">
+              <div style="text-align:center;font-size:12px;color:#9ca3af;margin-bottom:20px">Vibey &#183; CEO</div>
+              <div style="display:flex;justify-content:flex-end;margin-bottom:26px">
+                <div style="background:#f3f4f6;border-radius:16px;padding:11px 15px;max-width:78%;font-size:14px;line-height:1.55;color:#1a1a1a">Can you pull last week's ad performance for Q3 Launch and flag anything underperforming?</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+                <span style="font-size:13px;color:#9ca3af">Worked for 1m 40s</span>
+                <div style="flex:1;height:1px;background:rgba(0,0,0,0.06)"></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+                <sc-for list="{{ traces }}" as="t" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:9px;font-size:13px;color:#6b7280">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0"><path d="{{ t.d }}"></path></svg>
+                    {{ t.text }}
+                  </div>
+                </sc-for>
+              </div>
+              <div style="font-size:14.5px;line-height:1.65;color:#1a1a1a;margin-bottom:14px">Pulled the last 7 days across the Q3 Launch ad sets. Overall spend held steady, but CTR on the carousel set dropped 18% week-over-week and CPA on the retargeting set is up 24%.</div>
+              <div style="font-size:14.5px;line-height:1.65;color:#1a1a1a;margin-bottom:14px">I paused the two lowest performers and drafted three replacement variants using the hooks from the top ad. They're in Files on the right — flag any you want to push live and I'll schedule them.</div>
+            </div>
+          </div>
+          <div style="width:100%;max-width:740px;padding:0 24px 24px;flex-shrink:0">
+            <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:16px;padding:13px 14px;box-shadow:0 2px 6px rgba(0,0,0,0.04),0 10px 20px rgba(0,0,0,0.06)">
+              <div style="min-height:22px;color:#9ca3af;font-size:14px;margin-bottom:10px">Reply to your agency...</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button style="width:28px;height:28px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#4b5563" style-hover="background:#f3f4f6">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                </button>
+                <div style="flex:1"></div>
+                <button style="width:30px;height:30px;border-radius:9px;border:none;background:#10b981;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgb(52,211,153)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isClients }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;height:100%;overflow-y:auto" data-screen-label="Clients">
+          <div style="max-width:820px;margin:0 auto;padding:40px 28px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+              <h1 style="font-family:MuseoModerno,Inter,sans-serif;font-size:26px;font-weight:600;margin:0">Clients</h1>
+              <button style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:9px;border:1px solid rgba(16,185,129,0.5);background:linear-gradient(135deg,rgba(16,185,129,0.25) 0%,rgba(52,211,153,0.35) 50%,rgba(16,185,129,0.2) 100%);box-shadow:0 2px 8px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;color:#059669;font-size:13px;font-weight:600;font-family:Inter,sans-serif">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                New client
+              </button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ clientsList }}" as="cl" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:14px;background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:14px 16px;box-shadow:0 2px 6px rgba(0,0,0,0.04);cursor:pointer" style-hover="border-color:rgba(16,185,129,0.4)">
+                  <div style="{{ cl.avatarStyle }}">{{ cl.initials }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;font-weight:600">{{ cl.name }}</div>
+                    <div style="font-size:12.5px;color:#6b7280;margin-top:1px">{{ cl.sub }}</div>
+                  </div>
+                  <span style="{{ cl.statusStyle }}">{{ cl.status }}</span>
+                  <span style="font-size:12px;color:#9ca3af;flex-shrink:0;min-width:70px;text-align:right">{{ cl.last }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isRequests }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;height:100%;overflow-y:auto" data-screen-label="Requests">
+          <div style="max-width:760px;margin:0 auto;padding:40px 28px">
+            <h1 style="font-family:MuseoModerno,Inter,sans-serif;font-size:26px;font-weight:600;margin:0 0 22px">Requests</h1>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ requestsList }}" as="rq" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:14px;background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:14px 16px;box-shadow:0 2px 6px rgba(0,0,0,0.04);cursor:pointer" style-hover="border-color:rgba(16,185,129,0.4)">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;font-weight:600">{{ rq.title }}</div>
+                    <div style="font-size:12.5px;color:#6b7280;margin-top:1px">{{ rq.client }}</div>
+                  </div>
+                  <span style="{{ rq.statusStyle }}">{{ rq.status }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isMeetings }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;height:100%;overflow-y:auto" data-screen-label="L10 Meetings">
+          <div style="max-width:760px;margin:0 auto;padding:40px 28px">
+            <h1 style="font-family:MuseoModerno,Inter,sans-serif;font-size:26px;font-weight:600;margin:0 0 22px">L10 Meetings</h1>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ meetingsList }}" as="m" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:14px;background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:14px 16px;box-shadow:0 2px 6px rgba(0,0,0,0.04);cursor:pointer" style-hover="border-color:rgba(16,185,129,0.4)">
+                  <div style="padding:6px 10px;border-radius:8px;background:#f3f4f6;font-size:12px;font-weight:600;color:#4b5563;flex-shrink:0">{{ m.date }}</div>
+                  <div style="flex:1;min-width:0;font-size:14px;font-weight:600">{{ m.title }}</div>
+                  <span style="font-size:12px;color:#9ca3af;flex-shrink:0">{{ m.meta }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isTaskboard }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;height:100%;overflow-y:auto" data-screen-label="Task Board">
+          <div style="max-width:900px;margin:0 auto;padding:40px 28px">
+            <h1 style="font-family:MuseoModerno,Inter,sans-serif;font-size:26px;font-weight:600;margin:0 0 22px">Task Board</h1>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:start">
+              <sc-for list="{{ taskCols }}" as="col" hint-placeholder-count="3">
+                <div style="background:rgba(0,0,0,0.03);border:1px solid rgba(0,0,0,0.06);border-radius:12px;padding:10px">
+                  <div style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;padding:2px 6px 8px">{{ col.title }}</div>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <sc-for list="{{ col.cards }}" as="card" hint-placeholder-count="2">
+                      <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:10px;padding:11px 12px;box-shadow:0 2px 6px rgba(0,0,0,0.04);cursor:pointer" style-hover="border-color:rgba(147,51,234,0.35)">
+                        <div style="font-size:13px;color:#1a1a1a;line-height:1.45;margin-bottom:8px">{{ card.text }}</div>
+                        <div style="display:flex;align-items:center;gap:6px">
+                          <span style="width:8px;height:8px;border-radius:50%;background:{{ card.color }}"></span>
+                          <span style="font-size:11.5px;color:#9ca3af">{{ card.who }}</span>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isTeam }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;height:100%;overflow-y:auto" data-screen-label="Team">
+          <div style="max-width:1060px;margin:0 auto;padding:20px 24px 40px">
+            <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,0.04);padding:20px 22px;margin-bottom:18px;position:relative">
+              <div style="position:absolute;top:18px;right:22px;display:flex;align-items:center;gap:8px">
+                <span style="font-size:12.5px;color:#6b7280">ROAS Autopilot</span>
+                <span style="width:36px;height:20px;border-radius:999px;background:#e5e7eb;position:relative;cursor:pointer;display:inline-block"><span style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fffdf8;box-shadow:0 1px 2px rgba(0,0,0,0.15)"></span></span>
+              </div>
+              <div style="font-size:14.5px;font-weight:600;margin-bottom:2px">Hey Dylan.</div>
+              <div style="font-size:14px;color:#374151;margin-bottom:12px">Here's what's happening with your team.</div>
+              <div style="display:flex;gap:8px;margin-bottom:14px">
+                <sc-for list="{{ teamChips }}" as="tc" hint-placeholder-count="3">
+                  <span style="{{ tc.chipStyle }}">{{ tc.label }}</span>
+                </sc-for>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+                <sc-for list="{{ teamLines }}" as="tl" hint-placeholder-count="4">
+                  <div style="font-size:13.5px;color:#374151">{{ tl.pre }}<sc-if value="{{ tl.hasBold }}" hint-placeholder-val="{{ false }}"><strong style="color:#1a1a1a">{{ tl.bold }}</strong></sc-if></div>
+                </sc-for>
+              </div>
+              <div style="font-size:13.5px;color:#374151;margin-bottom:14px">Tell Vibey what's on your mind, or assign someone below.</div>
+              <button style="display:flex;align-items:center;gap:8px;height:36px;padding:0 16px;border-radius:9px;border:1px solid rgba(16,185,129,0.5);background:linear-gradient(135deg,rgba(16,185,129,0.25) 0%,rgba(52,211,153,0.35) 50%,rgba(16,185,129,0.2) 100%);box-shadow:0 2px 8px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;color:#059669;font-size:13px;font-weight:600;font-family:Inter,sans-serif">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.4-.7L3 21l1.8-5.6a8.38 8.38 0 0 1-.8-3.9 8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z"></path></svg>
+                Talk to Vibey
+              </button>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+              <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:#4b5563;cursor:pointer">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+                Group by
+              </span>
+              <button style="width:28px;height:28px;border-radius:7px;border:none;background:#e8e5df;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#1a1a1a">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"></path></svg>
+              </button>
+              <button style="width:28px;height:28px;border-radius:7px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#6b7280" style-hover="background:#f3f4f6">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg>
+              </button>
+              <div style="flex:1"></div>
+              <button style="width:28px;height:28px;border-radius:7px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#6b7280" style-hover="background:#f3f4f6">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
+              </button>
+              <button style="display:flex;align-items:center;gap:7px;height:32px;padding:0 13px;border-radius:9px;border:1px solid rgba(16,185,129,0.5);background:linear-gradient(135deg,rgba(16,185,129,0.25) 0%,rgba(52,211,153,0.35) 50%,rgba(16,185,129,0.2) 100%);box-shadow:0 2px 8px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;color:#059669;font-size:13px;font-weight:600;font-family:Inter,sans-serif">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                New Agent
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+              <sc-for list="{{ agents }}" as="ag" hint-placeholder-count="6">
+                <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.04);overflow:hidden;cursor:pointer" style-hover="border-color:rgba(16,185,129,0.4)">
+                  <div style="{{ ag.photoStyle }}">{{ ag.name }}</div>
+                  <div style="padding:12px 14px">
+                    <div style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ag.display }}</div>
+                    <div style="font-size:12.5px;color:#6b7280;margin-top:2px">{{ ag.role }}</div>
+                    <div style="font-size:12.5px;color:#9ca3af;margin-top:5px">{{ ag.assigned }}</div>
+                    <div style="font-size:12px;color:#9ca3af;margin-top:10px">{{ ag.date }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isProjects }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;height:100%;overflow-y:auto" data-screen-label="Projects">
+          <div style="max-width:860px;margin:0 auto;padding:40px 28px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+              <h1 style="font-family:MuseoModerno,Inter,sans-serif;font-size:26px;font-weight:600;margin:0">Projects</h1>
+              <button style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:9px;border:1px solid rgba(16,185,129,0.5);background:linear-gradient(135deg,rgba(16,185,129,0.25) 0%,rgba(52,211,153,0.35) 50%,rgba(16,185,129,0.2) 100%);box-shadow:0 2px 8px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;color:#059669;font-size:13px;font-weight:600;font-family:Inter,sans-serif">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                New project
+              </button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+              <sc-for list="{{ projectsList }}" as="p" hint-placeholder-count="3">
+                <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:14px;padding:18px;box-shadow:0 2px 6px rgba(0,0,0,0.04),0 10px 20px rgba(0,0,0,0.06);cursor:pointer" style-hover="border-color:rgba(16,185,129,0.4)">
+                  <div style="font-size:15px;font-weight:600;margin-bottom:6px">{{ p.name }}</div>
+                  <div style="font-size:13px;color:#6b7280;line-height:1.5;margin-bottom:14px">{{ p.desc }}</div>
+                  <div style="font-size:12px;color:#9ca3af">{{ p.updated }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isCampaigns }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;height:100%;overflow-y:auto" data-screen-label="Campaigns">
+          <div style="max-width:860px;margin:0 auto;padding:40px 28px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+              <h1 style="font-family:MuseoModerno,Inter,sans-serif;font-size:26px;font-weight:600;margin:0">Campaigns</h1>
+              <button style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:9px;border:1px solid rgba(16,185,129,0.5);background:linear-gradient(135deg,rgba(16,185,129,0.25) 0%,rgba(52,211,153,0.35) 50%,rgba(16,185,129,0.2) 100%);box-shadow:0 2px 8px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;color:#059669;font-size:13px;font-weight:600;font-family:Inter,sans-serif">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                New campaign
+              </button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+              <sc-for list="{{ campaignCards }}" as="c" hint-placeholder-count="4">
+                <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:14px;padding:18px;box-shadow:0 2px 6px rgba(0,0,0,0.04),0 10px 20px rgba(0,0,0,0.06);cursor:pointer" style-hover="border-color:rgba(16,185,129,0.4)">
+                  <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+                    <span style="width:9px;height:9px;border-radius:50%;background:{{ c.color }};flex-shrink:0"></span>
+                    <span style="font-size:15px;font-weight:600">{{ c.name }}</span>
+                  </div>
+                  <div style="font-size:13px;color:#6b7280;line-height:1.5;margin-bottom:16px">{{ c.goal }}</div>
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <span style="{{ c.statusStyle }}">{{ c.status }}</span>
+                    <span style="font-size:12px;color:#9ca3af">{{ c.updated }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSpaces }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;height:100%;overflow-y:auto" data-screen-label="Spaces">
+          <div style="max-width:760px;margin:0 auto;padding:40px 28px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+              <h1 style="font-family:MuseoModerno,Inter,sans-serif;font-size:26px;font-weight:600;margin:0">Spaces</h1>
+              <button style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:9px;border:1px solid rgba(16,185,129,0.5);background:linear-gradient(135deg,rgba(16,185,129,0.25) 0%,rgba(52,211,153,0.35) 50%,rgba(16,185,129,0.2) 100%);box-shadow:0 2px 8px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;color:#059669;font-size:13px;font-weight:600;font-family:Inter,sans-serif">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                New space
+              </button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ spacesList }}" as="sp" hint-placeholder-count="3">
+                <div onClick="{{ sp.open }}" style="display:flex;align-items:center;gap:14px;background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:14px 16px;box-shadow:0 2px 6px rgba(0,0,0,0.04);cursor:pointer" style-hover="border-color:rgba(147,51,234,0.35)">
+                  <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,rgba(147,51,234,0.12),rgba(199,126,255,0.2));display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#7c3aed">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"></path></svg>
+                  </div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;font-weight:600">{{ sp.name }}</div>
+                    <div style="font-size:12.5px;color:#6b7280;margin-top:1px">{{ sp.desc }}</div>
+                  </div>
+                  <span style="font-size:12px;color:#9ca3af;flex-shrink:0">{{ sp.meta }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isFlows }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;height:100%;display:flex;overflow:hidden" data-screen-label="Flows">
+          <div class="rail-scroll" style="width:220px;flex-shrink:0;padding:16px 12px;border-right:1px solid rgba(0,0,0,0.06);overflow-y:auto">
+            <button style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;height:36px;border-radius:9px;border:1px solid rgba(16,185,129,0.5);background:linear-gradient(135deg,rgba(16,185,129,0.25) 0%,rgba(52,211,153,0.35) 50%,rgba(16,185,129,0.2) 100%);box-shadow:0 2px 8px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;color:#059669;font-size:13px;font-weight:600;font-family:Inter,sans-serif;margin-bottom:14px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+              Add flow
+            </button>
+            <div style="display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:8px;font-size:13px;color:#374151;cursor:pointer" style-hover="background:#e8e5df">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+              My Loops
+            </div>
+            <div style="display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:8px;font-size:13px;color:#374151;cursor:pointer;margin-bottom:12px" style-hover="background:#e8e5df">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+              History
+            </div>
+            <div style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;color:#9ca3af;text-transform:uppercase;padding:0 10px;margin-bottom:4px">Templates</div>
+            <div style="display:flex;flex-direction:column;gap:1px;margin-bottom:12px">
+              <sc-for list="{{ flowTemplateCats }}" as="fc" hint-placeholder-count="4">
+                <div style="{{ fc.rowStyle }}">
+                  <span>{{ fc.name }}</span>
+                  <span style="font-size:11.5px;color:#9ca3af">{{ fc.count }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;color:#9ca3af;text-transform:uppercase;padding:0 10px;margin-bottom:4px">By workflow</div>
+            <div style="display:flex;flex-direction:column;gap:1px;margin-bottom:12px">
+              <sc-for list="{{ flowWorkflowCats }}" as="fw" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;font-size:13px;color:#374151;cursor:pointer" style-hover="background:#e8e5df">
+                  <span>{{ fw.name }}</span>
+                  <span style="font-size:11.5px;color:#9ca3af">{{ fw.count }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;color:#9ca3af;text-transform:uppercase;padding:0 10px;margin-bottom:4px">Connected apps</div>
+            <div style="display:flex;flex-direction:column;gap:1px;margin-bottom:12px">
+              <sc-for list="{{ flowApps }}" as="fa" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;font-size:13px;color:#374151;cursor:pointer" style-hover="background:#e8e5df">
+                  <span style="width:8px;height:8px;border-radius:2.5px;background:{{ fa.color }};flex-shrink:0"></span>
+                  <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ fa.name }}</span>
+                  <span style="font-size:11.5px;color:#9ca3af">{{ fa.count }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-top:1px solid rgba(0,0,0,0.06);font-size:13px;color:#374151;cursor:pointer">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg>
+              Webhooks
+            </div>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:16px 20px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+              <sc-for list="{{ flowTemplates }}" as="ft" hint-placeholder-count="8">
+                <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:16px;box-shadow:0 2px 6px rgba(0,0,0,0.04);cursor:pointer" style-hover="border-color:rgba(16,185,129,0.4)">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ ft.color }}" stroke-width="1.8" style="flex-shrink:0"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                    <span style="font-size:14px;font-weight:600">{{ ft.title }}</span>
+                  </div>
+                  <div style="font-size:13px;color:#6b7280;line-height:1.5">{{ ft.desc }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSpaceDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="{{ spaceDetailWrapStyle }}" data-screen-label="Space — Meetings">
+          
+          <sc-if value="{{ spaceWorkOpen }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;min-width:0;overflow-y:auto;overflow-x:hidden">
+          <div style="max-width:1080px;margin:0 auto;padding:20px 24px 40px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <div style="display:flex;align-items:center;gap:7px;font-size:14px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.7"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                <span style="color:#6b7280">General</span>
+                <span style="color:#c2beb5">/</span>
+                <span style="font-weight:600;color:#1a1a1a">Meetings</span>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+              </div>
+              <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:#6b7280;cursor:pointer" style-hover="color:#1a1a1a">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path></svg>
+                Share
+              </span>
+            </div>
+            <div style="font-size:13px;color:#6b7280;margin-bottom:14px">Every call in one place &#8212; who, details, acronyms, transcript link, and follow-ups from Fathom.</div>
+            <div class="rail-scroll" style="display:flex;gap:2px;border-bottom:1px solid rgba(0,0,0,0.08);margin-bottom:12px;overflow-x:auto">
+              <sc-for list="{{ spaceTabs }}" as="st" hint-placeholder-count="10">
+                <span style="{{ st.tabStyle }}">{{ st.name }}</span>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px">
+              <span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:#4b5563;cursor:pointer">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+                Group by
+              </span>
+              <div style="flex:1"></div>
+              <span style="display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:999px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.1);font-size:12px;font-weight:600;color:#059669">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"></path></svg>
+                Completed
+              </span>
+              <button style="display:flex;align-items:center;gap:6px;height:32px;padding:0 14px;border-radius:9px;border:1px solid rgba(16,185,129,0.5);background:linear-gradient(135deg,rgba(16,185,129,0.25) 0%,rgba(52,211,153,0.35) 50%,rgba(16,185,129,0.2) 100%);box-shadow:0 2px 8px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;color:#059669;font-size:13px;font-weight:600;font-family:Inter,sans-serif">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                Task
+              </button>
+            </div>
+            <div class="rail-scroll" style="overflow-x:auto">
+            <div style="min-width:680px">
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(0,0,0,0.08);font-size:11.5px;font-weight:600;color:#9ca3af">
+              <span style="flex:1;min-width:140px">Name</span>
+              <span style="width:90px;flex-shrink:0">Call Kind</span>
+              <span style="width:280px;flex-shrink:0">Attendees</span>
+              <span style="width:120px;flex-shrink:0;text-align:right">Call Date</span>
+            </div>
+            <sc-for list="{{ meetingsRows }}" as="mr" hint-placeholder-count="8">
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid rgba(0,0,0,0.05);cursor:pointer" style-hover="background:#f7f5f0">
+                <span style="width:9px;height:9px;border-radius:50%;border:2px solid #10b981;flex-shrink:0"></span>
+                <span style="flex:1;min-width:0;font-size:13px;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ mr.name }}</span>
+                <span style="width:90px;flex-shrink:0">
+                  <span style="display:inline-flex;align-items:center;gap:4px;padding:2.5px 9px;border-radius:999px;background:#f3f4f6;font-size:11.5px;color:#374151"><span style="width:6px;height:6px;border-radius:50%;background:#10b981"></span>Personal</span>
+                </span>
+                <span class="rail-scroll" style="width:280px;flex-shrink:0;display:flex;gap:5px;overflow-x:auto">
+                  <sc-for list="{{ mr.att }}" as="at" hint-placeholder-count="2">
+                    <span style="{{ at.pillStyle }}">{{ at.n }}</span>
+                  </sc-for>
+                  <sc-if value="{{ mr.hasExtra }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:11.5px;color:#9ca3af;align-self:center">{{ mr.extra }}</span>
+                  </sc-if>
+                </span>
+                <span style="width:120px;flex-shrink:0;text-align:right;font-size:12px;color:#6b7280">{{ mr.date }}</span>
+              </div>
+            </sc-for>
+            <div style="display:flex;align-items:center;gap:6px;padding:11px 12px;font-size:13px;color:#9ca3af;cursor:pointer" style-hover="color:#4b5563">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+              Add task
+            </div>
+            </div>
+            </div>
+          </div>
+          </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isBrain }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;height:100%;overflow-y:auto" data-screen-label="Brain">
+          <div style="max-width:860px;margin:0 auto;padding:40px 28px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+              <h1 style="font-family:MuseoModerno,Inter,sans-serif;font-size:26px;font-weight:600;margin:0">Brain</h1>
+              <button style="display:flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:9px;border:1px solid rgba(16,185,129,0.5);background:linear-gradient(135deg,rgba(16,185,129,0.25) 0%,rgba(52,211,153,0.35) 50%,rgba(16,185,129,0.2) 100%);box-shadow:0 2px 8px rgba(16,185,129,0.2),inset 0 1px 0 rgba(255,255,255,0.3);cursor:pointer;color:#059669;font-size:13px;font-weight:600;font-family:Inter,sans-serif">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                Add knowledge
+              </button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+              <sc-for list="{{ brainCards }}" as="b" hint-placeholder-count="4">
+                <div style="background:#fffdf8;border:1px solid rgba(0,0,0,0.08);border-radius:14px;padding:16px;box-shadow:0 2px 6px rgba(0,0,0,0.04)">
+                  <span style="{{ b.typeStyle }}">{{ b.type }}</span>
+                  <div style="font-size:13.5px;color:#1a1a1a;line-height:1.55;margin:10px 0 12px">{{ b.text }}</div>
+                  <div style="font-size:11.5px;color:#9ca3af">{{ b.source }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </main>
+
+    <!-- RIGHT PANEL -->
+    <aside style="{{ rightPanelStyle }}">
+      <div style="width:300px;height:100%;display:flex;flex-direction:column;padding:12px;overflow:hidden">
+        <div style="display:flex;gap:3px;background:#f3f4f6;border-radius:10px;padding:3px;margin-bottom:12px;flex-shrink:0">
+          <button onClick="{{ setRightTasks }}" style="{{ tasksTabStyle }}">Tasks</button>
+          <button onClick="{{ setRightFiles }}" style="{{ filesTabStyle }}">Files</button>
+          <button onClick="{{ setRightSources }}" style="{{ sourcesTabStyle }}">Sources</button>
+        </div>
+        <sc-if value="{{ rightIsTasks }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;overflow-y:auto">
+            <sc-for list="{{ tasks }}" as="t" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                <span style="{{ t.checkStyle }}"></span>
+                <span style="{{ t.labelStyle }}">{{ t.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ rightIsFiles }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;overflow-y:auto">
+            <sc-for list="{{ files }}" as="f" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid rgba(0,0,0,0.06);cursor:pointer;border-radius:8px" style-hover="background:#f3f4f6">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="1.6" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"></path></svg>
+                <div style="min-width:0">
+                  <div style="font-size:13px;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.name }}</div>
+                  <div style="font-size:11px;color:#9ca3af;margin-top:1px">{{ f.meta }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ rightIsSources }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;overflow-y:auto">
+            <sc-for list="{{ sources }}" as="s" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid rgba(0,0,0,0.06);cursor:pointer;border-radius:8px" style-hover="background:#f3f4f6">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="1.6" style="flex-shrink:0"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path></svg>
+                <div style="min-width:0">
+                  <div style="font-size:13px;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.name }}</div>
+                  <div style="font-size:11px;color:#9ca3af;margin-top:1px">{{ s.meta }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+
+class Component extends DCLogic {
+  state = {
+    mode: 'home',
+    view: 'home',
+    taskBoardOpen: true,
+    toolsOpen: true,
+    variant: 'hover',
+    hoverExpanded: false,
+    pinned: false,
+    toggleOpen: true,
+    rightOpen: true,
+    rightTab: 'tasks',
+    spaceChatOpen: false,
+    spaceWorkOpen: true,
+  };
+
+  nav = [
+    { key: 'home', name: 'Home', d: 'M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z' },
+    { key: 'team', name: 'Team', d: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' },
+    { key: 'spaces', name: 'Campaigns', d: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z' },
+    { key: 'brain', name: 'Brain', d: 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z' },
+    { key: 'projects', name: 'Projects', d: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
+    { key: 'flows', name: 'Flows', d: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z' },
+  ];
+  templateFanData = [
+    { name: 'Social post', d: 'M3 5h18v14H3zM3 15l5-5 4 4 3-3 6 6' },
+    { name: 'New ad', d: 'M3 11l18-5v12L3 14v-3zM11.6 16.8a3 3 0 1 1-5.8-1.6' },
+    { name: 'Funnel', d: 'M3 4h18l-7 8v6l-4 2v-8z' },
+    { name: 'Design', d: 'M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.4 0-1.1.9-2 2-2h2.4A4.6 4.6 0 0 0 21 10c0-3.9-4-7-9-7z' },
+    { name: 'Slide deck', d: 'M3 4h18v12H3zM12 16v4M8 20h8' },
+    { name: 'Email sequence', d: 'M3 5h18v14H3zM3 6l9 7 9-7' },
+  ];
+  agendaEventsData = [
+    { time: '07:15 AM', title: '810am golf', who: 'dylanvanas@gm\u2026' },
+    { time: '09:30 AM', title: 'Client kickoff \u2014 Fenwick Co.', who: 'dylan@dylanvanas.com' },
+  ];
+  myTasksData = [
+    { title: 'Gate 3 \u2014 approve Deck Outline v1', color: '#3b82f6' },
+    { title: 'Decide: FIFA / World Cup vlog concept', color: '#f59e0b' },
+    { title: 'Review and approve Series 4: Ranking\u2026', color: '#f59e0b' },
+    { title: 'Start AlchemistCEO podcast shoots', color: '#f59e0b' },
+    { title: 'Batch shoot Viral But Still Broke series', color: '#f59e0b' },
+    { title: 'Batch shoot No One Tells You This s\u2026', color: '#f59e0b' },
+  ];
+  approvalsData = [
+    { title: 'Update Impact report', waiting: '22h waiting' },
+    { title: 'Upgrade Hyros tracking', waiting: '1d waiting' },
+    { title: 'Draft proposal for Janine', waiting: '1d waiting' },
+    { title: 'Get Janine approval', waiting: '1d waiting' },
+    { title: 'Present expansion plan', waiting: '1d waiting' },
+    { title: 'Meet Nate re: launch', waiting: '1d waiting' },
+  ];
+  notifsData = [
+    { cat: 'Brain failed', color: '#ef4444', text: 'Brain import failed: Impromptu Zoom Meeting', date: 'Jul 17' },
+    { cat: 'Subtask awaiting', color: '#f59e0b', text: 'Your turn on \u201cWebinar Fulfillment\u201d', date: 'Jul 16' },
+    { cat: 'Plan approval', color: '#3b82f6', text: 'Plan ready: Webinar Fulfillment', date: 'Jul 16' },
+    { cat: 'Awareness', color: '#8b5cf6', text: 'Skill gap detected for mission \u201cWebinar\u201d', date: 'Jul 16' },
+  ];
+  recentConvosData = [
+    { name: 'Untitled conversation' },
+    { name: 'Help me with this meeting: Nate Tilley & Dy\u2026' },
+    { name: 'Regenerate the attached image at aspect r\u2026' },
+    { name: 'Draft that in my Slack channel' },
+    { name: 'Edit this attached image using edit_image\u2026' },
+    { name: 'Content-related batch requests' },
+  ];
+  agentsData = [
+    { name: 'Blaze', role: 'Meta Ads Manager', assigned: 'Nothing assigned', date: '7/16/26', color: '#d8e8dd' },
+    { name: 'Lux', role: 'Creative Director & Visual Designer', assigned: 'Nothing assigned', date: '7/16/26', color: '#dce3ee' },
+    { name: 'Ivy', role: 'Senior Conversion Copywriter', assigned: 'Nothing assigned', date: '7/16/26', color: '#e6ded2' },
+    { name: 'Reed', role: 'Agency Strategist', assigned: 'Webinar Fulfillment', date: '7/13/26', color: '#e8ddd3' },
+    { name: 'Jaime', role: 'Recruiter', assigned: 'Nothing assigned', date: '7/7/26', color: '#d9e6e2' },
+    { name: 'Atlas', role: 'Brain Scholar & Knowledge Curator', assigned: 'Nothing assigned', date: '7/7/26', color: '#e3ddeb' },
+  ];
+  teamChips = [
+    { label: '1 working', style: 'background:rgba(255,149,0,0.12);border:1px solid rgba(255,149,0,0.35);color:#b45309' },
+    { label: '6 idle', style: 'background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:#2563eb' },
+    { label: '1 blocked', style: 'background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#dc2626' },
+  ];
+  teamLines = [
+    { pre: 'Vibey \u00b7 CEO \u2192 ', bold: 'Webinar Fulfillment' },
+    { pre: 'Jaime \u00b7 Recruiter is free', bold: '' },
+    { pre: 'Reed \u00b7 Agency Strategist is free', bold: '' },
+    { pre: 'Ivy \u00b7 Senior Conversion Copywriter is free', bold: '' },
+  ];
+  flowTemplateCats = [
+    { name: 'My templates', count: '', active: false },
+    { name: 'All templates', count: '49', active: true },
+    { name: 'Featured', count: '14', active: false },
+    { name: 'New', count: '37', active: false },
+  ];
+  flowWorkflowCats = [
+    { name: 'Sales & CS', count: '15' },
+    { name: 'Inbound & comms', count: '9' },
+    { name: 'Team operations', count: '24' },
+    { name: 'Content & artifacts', count: '10' },
+    { name: 'Agency', count: '4' },
+  ];
+  flowApps = [
+    { name: 'Fathom', count: '3', color: '#3b82f6' },
+    { name: 'Email', count: '5', color: '#ef4444' },
+    { name: 'Slack', count: '5', color: '#8b5cf6' },
+    { name: 'Google Calendar', count: '2', color: '#2563eb' },
+    { name: 'Google Drive', count: '3', color: '#f59e0b' },
+  ];
+  flowTemplates = [
+    { color: '#3b82f6', title: 'Fathom Call Follow-Ups', desc: 'When a Fathom recording is ready, Vibey suggests concrete follow-up tasks for the call owner.' },
+    { color: '#3b82f6', title: 'Fathom Call Recap To Channel', desc: 'Posts a concise meeting recap, action items, and meeting link into a Space channel.' },
+    { color: '#3b82f6', title: 'Sales Call To CRM Note', desc: 'Creates a contact from the first non-recorder Fathom attendee and attaches the meeting recap as a CRM note.' },
+    { color: '#ef4444', title: 'Inbound Email To Task', desc: 'Turns a new Gmail or Outlook email into a task with sender, CC, subject, and body.' },
+    { color: '#ef4444', title: 'VIP Email Alert', desc: 'Flags emails from an important sender/domain and notifies the team channel.' },
+    { color: '#8b5cf6', title: 'Slack DM To Task', desc: 'Turns a Slack direct message into a task so the team can track it.' },
+    { color: '#8b5cf6', title: 'Slack Channel Mention To Agent', desc: 'Creates a task from a matching Slack message, then sends it to Vibey for triage.' },
+    { color: '#10b981', title: 'Form Submission To Contact', desc: 'Creates a CRM contact from submitted form answers.' },
+  ];
+  meetingsRows = [
+    { name: 'Review weekly wins and set personal goals for the upcom\u2026', att: [{ n: 'Dylan Vanas', c: '#eceef1', t: '#374151' }], extra: '', date: 'Jul 17, 8:07 AM' },
+    { name: 'Webinar design review \u2014 Dylan + team', att: [{ n: 'Dylan Vanas', c: '#eceef1', t: '#374151' }, { n: 'Filmar', c: '#fdeccc', t: '#b45309' }, { n: 'Nouman Raza', c: '#fde0d7', t: '#c2410c' }], extra: '', date: 'Jul 15, 11:59 AM' },
+    { name: 'Working session \u2014 Jul 15 afternoon', att: [{ n: 'Dylan Vanas', c: '#eceef1', t: '#374151' }], extra: '', date: 'Jul 15, 1:30 PM' },
+    { name: 'Webinar debrief \u2014 Yasir Khan', att: [{ n: 'Yasir Khan', c: '#dde8fd', t: '#2563eb' }, { n: 'Mika Nguyen', c: '#d9f2df', t: '#047857' }, { n: 'Nate Tilley', c: '#e7defb', t: '#7c3aed' }], extra: '+4', date: 'Jul 15, 10:30 AM' },
+    { name: 'Sales call \u2014 Jason client attention', att: [{ n: 'Dylan Vanas', c: '#eceef1', t: '#374151' }, { n: 'Jason Worrall', c: '#fde0d7', t: '#c2410c' }], extra: '', date: 'Jul 14, 3:13 PM' },
+    { name: 'Weekly client update - Christian Osgood', att: [{ n: 'Nate Tilley', c: '#e7defb', t: '#7c3aed' }, { n: 'Dylan Vanas', c: '#eceef1', t: '#374151' }, { n: 'Christian Osgood', c: '#d9f2df', t: '#047857' }], extra: '', date: 'Jul 14, 9:18 AM' },
+    { name: 'Webinar fulfillment process review', att: [{ n: 'Dylan Vanas', c: '#eceef1', t: '#374151' }, { n: 'The Shift Social', c: '#dde8fd', t: '#2563eb' }, { n: 'Aaron Mckeague', c: '#fde0d7', t: '#c2410c' }], extra: '+3', date: 'Jul 13, 10:00 AM' },
+    { name: 'Professional development sync', att: [{ n: 'Dylan Vanas', c: '#eceef1', t: '#374151' }, { n: 'Filmar', c: '#fdeccc', t: '#b45309' }, { n: 'Nouman Raza', c: '#fde0d7', t: '#c2410c' }], extra: '+14', date: 'Jul 10, 8:06 AM' },
+  ];
+  spaceTabs = ['All Meetings', 'Prep', 'Follow-ups', 'Action items', 'Agenda', 'Calendar', 'Meeting Logs', 'People', 'Missions', '+ View'];
+  favSpaces = [
+    { name: 'Creative Review', color: '#8b5cf6', meta: '6 items' },
+    { name: 'Weekly Reporting', color: '#10b981', meta: '4 items' },
+    { name: 'Client Deliverables', color: '#f59e0b', meta: '12 items' },
+  ];
+  favConvos = [
+    { name: 'Ad copy variations for Q3', time: '12m' },
+    { name: 'Competitor research summary', time: '2h' },
+    { name: 'Landing page brief', time: 'Yesterday' },
+  ];
+  workNav = [
+    { key: 'clients', name: 'Clients', badge: '1', badgeRed: true, d: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' },
+    { key: 'wcampaigns', name: 'Campaigns', badge: '4', badgeRed: false, d: 'M3 17l6-6 4 4 8-8M15 7h6v6' },
+    { key: 'requests', name: 'Requests', badge: '', badgeRed: false, d: 'M22 11.1V12a10 10 0 1 1-5.9-9.1M22 4L12 14l-3-3' },
+    { key: 'meetings', name: 'L10 Meetings', badge: '', badgeRed: false, d: 'M9 2h6a1 1 0 0 1 1 1v2H8V3a1 1 0 0 1 1-1zM16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2' },
+  ];
+  taskBoardPeople = [
+    { name: 'Aaron', color: '#8b5cf6', counts: '12 \u00b7 61' },
+    { name: 'Bryce', color: '#6366f1', counts: '12 \u00b7 26' },
+    { name: 'Nefi B.', color: '#ec4899', counts: '7 \u00b7 41' },
+    { name: 'Kamyla', color: '#d946ef', counts: '2 \u00b7 13' },
+    { name: 'Untitled', color: '#f59e0b', counts: '6 \u00b7 12' },
+  ];
+  tools = [
+    { name: 'Unit Leader Hub', d: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
+    { name: 'Performance', d: 'M3 3v18h18M7 15l4-4 3 3 5-6' },
+    { name: 'Creative Ops', d: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z' },
+    { name: 'Video Ops', d: 'M2 5h20v14H2zM7 5v14M17 5v14' },
+    { name: 'Webinars', d: 'M15 8l7-4v16l-7-4zM1 6h14v12H1z' },
+    { name: 'Offer Builder', d: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8' },
+    { name: 'Ad Inspo Wall', d: 'M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z' },
+    { name: 'Video Creative Ins\u2026', d: 'M3 5h18v14H3zM3 15l5-5 4 4 3-3 6 6' },
+    { name: 'Funnel Inspo', d: 'M3 4h18l-7 8v6l-4 2v-8z' },
+    { name: 'Ad Spy', d: 'M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12zM9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0' },
+    { name: 'Data Hub', d: 'M12 2c-5 0-9 1.3-9 3v14c0 1.7 4 3 9 3s9-1.3 9-3V5c0-1.7-4-3-9-3zM3 5c0 1.7 4 3 9 3s9-1.3 9-3M3 12c0 1.7 4 3 9 3s9-1.3 9-3' },
+    { name: 'Tracking Link', d: 'M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7' },
+  ];
+  clientsList = [
+    { initials: 'FC', color: '#f59e0b', name: 'Fenwick Co.', sub: '3 campaigns \u00b7 Bryce', status: 'Active', last: '2h ago' },
+    { initials: 'NT', color: '#6366f1', name: 'Nate Tilley', sub: '2 campaigns \u00b7 Aaron', status: 'Active', last: 'Today' },
+    { initials: 'BH', color: '#10b981', name: 'Blue Heron Realty', sub: '1 campaign \u00b7 Nefi', status: 'Onboarding', last: 'Yesterday' },
+    { initials: 'AC', color: '#ec4899', name: 'AlchemistCEO', sub: '2 campaigns \u00b7 Kamyla', status: 'Active', last: 'Jul 15' },
+    { initials: 'DG', color: '#8b5cf6', name: 'Derrick Geng', sub: '1 campaign \u00b7 Bryce', status: 'Paused', last: 'Jul 11' },
+  ];
+  requestsList = [
+    { title: 'New landing page hero', client: 'Fenwick Co.', status: 'New' },
+    { title: 'Swap webinar date on ads', client: 'Nate Tilley', status: 'In review' },
+    { title: 'Add UGC testimonial section', client: 'Blue Heron Realty', status: 'Done' },
+  ];
+  meetingsList = [
+    { date: 'Mon Jul 20', title: 'Weekly L10 \u2014 Pod Bryce', meta: '5 attendees' },
+    { date: 'Mon Jul 20', title: 'Weekly L10 \u2014 Pod Aaron', meta: '4 attendees' },
+    { date: 'Tue Jul 21', title: 'Leadership L10', meta: '6 attendees' },
+  ];
+  taskCols = [
+    { title: 'To do', cards: [{ text: 'Draft Fenwick replacement ads', who: 'Bryce', color: '#6366f1' }, { text: 'Refresh Blue Heron audiences', who: 'Nefi', color: '#ec4899' }] },
+    { title: 'In progress', cards: [{ text: 'Q3 webinar funnel build', who: 'Aaron', color: '#8b5cf6' }, { text: 'AlchemistCEO email sequence', who: 'Kamyla', color: '#d946ef' }] },
+    { title: 'Done', cards: [{ text: 'Nate Tilley ad library research', who: 'Aaron', color: '#8b5cf6' }] },
+  ];
+  teamList = [
+    { initials: 'AS', color: '#6366f1', name: 'Ad Strategist', role: 'Writes, tests, and rotates ad creative', status: 'Working' },
+    { initials: 'CM', color: '#10b981', name: 'Campaign Manager', role: 'Monitors spend and pacing across ad sets', status: 'Working' },
+    { initials: 'CW', color: '#f59e0b', name: 'Copywriter', role: 'Emails, landing pages, and funnel copy', status: 'Idle' },
+    { initials: 'RA', color: '#ec4899', name: 'Research Analyst', role: 'Competitor and ad library research', status: 'Idle' },
+  ];
+  projectsList = [
+    { name: 'ROAS Site Redesign', desc: 'New marketing site pages and components', updated: 'Updated today' },
+    { name: 'Book Launch Plan', desc: 'Assets and timeline for the fall launch', updated: 'Updated Jul 12' },
+    { name: 'Podcast Prep', desc: 'Guest research and episode outlines', updated: 'Updated Jul 8' },
+  ];
+  pinnedCampaigns = [
+    { name: 'Q3 Launch Campaign', color: '#10b981' },
+    { name: 'Fenwick Onboarding', color: '#f59e0b' },
+  ];
+  recents = [
+    { name: 'Ad copy variations for Q3' },
+    { name: 'Competitor research summary' },
+    { name: 'Landing page brief' },
+    { name: 'Email sequence draft' },
+    { name: 'Webinar registration page copy' },
+    { name: 'Retargeting audience refresh' },
+  ];
+  homeActive = [
+    { title: 'Q3 Launch Campaign', subtitle: 'Posted 3 new ad variants', time: '10 minutes ago', needsReview: true },
+    { title: 'Fenwick Onboarding', subtitle: 'Waiting on your approval', time: '40 minutes ago', needsReview: false },
+    { title: 'SEO Content Sprint', subtitle: 'Draft ready for review', time: '1 hour ago', needsReview: false },
+  ];
+  traces = [
+    { d: 'M21 12a9 9 0 1 1-9-9', text: 'Pulled 7-day performance across 12 ad sets' },
+    { d: 'M3 3v18h18M7 15l4-4 3 3 5-6', text: 'Compared CTR and CPA week-over-week' },
+    { d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6', text: 'Drafted 3 replacement variants' },
+  ];
+  tasks = [
+    { label: 'Review paused ad variants', done: false },
+    { label: 'Approve Fenwick onboarding email', done: false },
+    { label: 'Confirm SEO brief scope', done: true },
+  ];
+  files = [
+    { name: 'q3-ad-variants-v2.pdf', meta: 'Added 12m ago' },
+    { name: 'ad-performance-week28.csv', meta: 'Added 1h ago' },
+    { name: 'landing-page-brief.docx', meta: 'Yesterday' },
+  ];
+  campaignCards = [
+    { name: 'Q3 Launch Campaign', color: '#10b981', goal: 'Drive 500 webinar registrations ahead of the September launch.', status: 'Active', updated: 'Updated today' },
+    { name: 'Fenwick Onboarding', color: '#f59e0b', goal: 'Stand up the full funnel and first ad set for Fenwick Co.', status: 'Active', updated: 'Updated yesterday' },
+    { name: 'SEO Content Sprint', color: '#6366f1', goal: 'Publish 8 bottom-funnel articles targeting comparison keywords.', status: 'Draft', updated: 'Updated Jul 14' },
+    { name: 'Webinar Replay Push', color: '#ec4899', goal: 'Convert replay viewers with a 3-day FOMO email sequence.', status: 'Paused', updated: 'Updated Jul 10' },
+  ];
+  spacesList = [
+    { name: 'Creative Review', desc: 'Ad variants and landing pages waiting on approval', meta: '6 items' },
+    { name: 'Client Deliverables', desc: 'Finished work shared with Fenwick Co.', meta: '12 items' },
+    { name: 'Weekly Reporting', desc: 'Performance digests and recap docs', meta: '4 items' },
+  ];
+  flowsList = [
+    { name: 'New lead alert', trigger: 'When a lead submits the funnel form → Slack alert + CRM entry', status: 'Active', lastRun: '12m ago' },
+    { name: 'Weekly performance digest', trigger: 'Every Monday 9:00 → compile ad performance recap', status: 'Active', lastRun: 'Mon 9:00' },
+    { name: 'Ad fatigue monitor', trigger: 'When frequency > 3.5 → flag ad set for refresh', status: 'Paused', lastRun: 'Jul 11' },
+  ];
+  brainCards = [
+    { type: 'Insight', text: 'Carousel hooks referencing client results outperform generic hooks roughly 2:1.', source: 'From Q3 ad analysis' },
+    { type: 'Fact', text: 'Fenwick\u2019s ICP is B2B SaaS founders at 10\u201350 employee companies.', source: 'Onboarding call notes' },
+    { type: 'Decision', text: 'All new landing pages use the VSL-first layout going forward.', source: 'Decided Jul 8' },
+    { type: 'Framework', text: 'Hook \u2192 Proof \u2192 CTA structure for all short-form ad scripts.', source: 'Playbook' },
+  ];
+  sources = [
+    { name: 'Meta Ads Manager — Q3 Launch', meta: 'Live data · 12m ago' },
+    { name: 'Meta Ad Library — competitor set', meta: 'Pulled 1h ago' },
+    { name: 'GA4 — landing page funnel', meta: 'Yesterday' },
+  ];
+
+  segActive = 'flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#fffdf8;color:#1a1a1a;box-shadow:0 1px 2px rgba(0,0,0,0.06);border:none;border-radius:8px;padding:6px 0;font-size:12.5px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif';
+  segInactive = 'flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:transparent;color:#6b7280;border:none;border-radius:8px;padding:6px 0;font-size:12.5px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif';
+  smallActive = 'background:#fffdf8;color:#1a1a1a;box-shadow:0 1px 2px rgba(0,0,0,0.06);border:none;border-radius:7px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif';
+  smallInactive = 'background:transparent;color:#6b7280;border:none;border-radius:7px;padding:4px 10px;font-size:11.5px;font-weight:500;cursor:pointer;font-family:Inter,sans-serif';
+  navBase = 'display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;text-align:left;font-family:Inter,sans-serif;';
+  navSelected = 'background:linear-gradient(135deg,rgba(147,51,234,0.15) 0%,rgba(199,126,255,0.25) 50%,rgba(147,51,234,0.12) 100%);border:1px solid rgba(199,126,255,0.35);box-shadow:0 2px 12px rgba(147,51,234,0.12),inset 0 1px 0 rgba(255,255,255,0.2);color:#7c3aed;';
+  navDefault = 'background:transparent;border:1px solid transparent;color:#374151;';
+
+  openConvo(name) {
+    const v = this.state.view;
+    // In any section: open the chat in the drawer window, keep the section open.
+    if (v !== 'home' && v !== 'chat' && v !== 'convo') this.setState({ spaceChatOpen: true, drawerConvo: name, rightOpen: false, menuChat: true });
+    else this.setState({ mode: 'home', view: 'convo', convoTitle: name, menuChat: true });
+  }
+
+  sub = {
+    team: { title: 'Team', items: [
+      { name: 'Manage Agents', d: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', go: 'team' },
+      { name: 'Manage Skills', d: 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11', go: 'team' },
+      { cap: 'Direct messages' },
+      { name: 'Jaime \u00b7 Recruiter', avatar: '#10b981', go: 'team' },
+      { name: 'Atlas \u00b7 Brain Scholar & Knowledge Curator', avatar: '#8b5cf6', go: 'team' },
+      { name: 'Lux \u00b7 Creative Director & Visual Designer', avatar: '#6366f1', go: 'team' },
+      { name: 'Reed \u00b7 Agency Strategist', avatar: '#f59e0b', go: 'team' },
+      { name: 'Ivy \u00b7 Senior Conversion Copywriter', avatar: '#ec4899', go: 'team' },
+      { name: 'See more (2)', go: 'team' },
+    ] },
+    spaces: { title: 'Spaces', items: [
+      { cap: 'Campaigns' },
+      { name: 'General', d: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', count: '5', go: 'spacedetail' },
+      { name: 'Impact', d: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', count: '2', go: 'spacedetail' },
+      { name: 'Acme SaaS Retainer', d: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', count: '1', go: 'spacedetail' },
+      { name: 'Test Campaign', d: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', count: '1', go: 'spacedetail' },
+      { name: 'New campaign', d: 'M12 5v14M5 12h14', go: 'spaces' },
+    ] },
+    brain: { title: 'Brain', items: [
+      { name: 'Manage Brains', d: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', go: 'brain' },
+      { name: 'Train Brain', d: 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z', go: 'brain' },
+      { cap: 'User brains' },
+      { name: 'Dylan', d: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', go: 'brain' },
+      { cap: 'Customer brains' },
+      { name: 'Customer Brain', d: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', go: 'brain' },
+      { cap: 'Agent brains' },
+      { name: 'Add Agent Brain', d: 'M12 5v14M5 12h14', go: 'brain' },
+      { cap: 'Campaign Knowledge' },
+      { name: 'Acme SaaS Retainer Knowledge', d: 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z', go: 'brain' },
+      { name: 'Impact Knowledge', d: 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z', go: 'brain' },
+      { name: 'Test Campaign Knowledge', d: 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z', go: 'brain' },
+    ] },
+  };
+
+  flyEnter(key, e) {
+    if (!this.sub[key]) return;
+    clearTimeout(this._flyTimer);
+    const r = e.currentTarget.getBoundingClientRect();
+    this.setState({ flyKey: key, flyRect: { left: r.right + 6, top: Math.min(r.top, 200) } });
+  }
+  flyLeave() {
+    this._flyTimer = setTimeout(() => { if (!this.state.flyPinned) this.setState({ flyKey: null }); }, 300);
+  }
+  navClick(key, e) {
+    if (this.sub[key]) {
+      clearTimeout(this._flyTimer);
+      const r = e.currentTarget.getBoundingClientRect();
+      this.setState((p) => ({
+        view: key,
+        flyKey: p.flyPinned && p.flyKey === key ? null : key,
+        flyPinned: !(p.flyPinned && p.flyKey === key),
+        flyRect: { left: r.right + 6, top: Math.min(r.top, 200) },
+      }));
+    } else {
+      this.setState({ view: key, flyKey: null, flyPinned: false });
+    }
+  }
+
+  renderVals() {
+    const s = this.state;
+    const isHome = s.view === 'home';
+    const isWork = false;
+    const isHomeMode = s.mode === 'home';
+    const sectionNav = this.nav.find((n) => n.key === s.view) || this.workNav.find((n) => n.key === s.view) || (s.view === 'taskboard' ? { name: 'Task Board', d: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z' } : null) || (s.view === 'chat' ? { name: 'Chat', d: 'M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.4-.7L3 21l1.8-5.6a8.38 8.38 0 0 1-.8-3.9 8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z' } : null) || (s.view === 'spacedetail' ? { name: 'Spaces / General / Meetings', d: 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z' } : null) || (s.view === 'convo' ? { name: s.convoTitle || 'Conversation', d: 'M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.4-.7L3 21l1.8-5.6a8.38 8.38 0 0 1-.8-3.9 8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z' } : null);
+    const reqPill = (status) => {
+      const base = 'padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:600;flex-shrink:0;';
+      if (status === 'New') return base + 'background:rgba(239,68,68,0.1);color:#dc2626';
+      if (status === 'In review') return base + 'background:rgba(59,130,246,0.12);color:#2563eb';
+      return base + 'background:rgba(16,185,129,0.15);color:#059669';
+    };
+    const statusPill = (status) => {
+      const base = 'padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:600;flex-shrink:0;';
+      if (status === 'Active') return base + 'background:rgba(16,185,129,0.15);color:#059669';
+      if (status === 'Paused') return base + 'background:rgba(255,149,0,0.15);color:#b45309';
+      return base + 'background:#f3f4f6;color:#6b7280';
+    };
+    const typePill = (type) => {
+      const base = 'display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;';
+      if (type === 'Fact') return base + 'background:rgba(59,130,246,0.12);color:#2563eb';
+      if (type === 'Insight') return base + 'background:rgba(245,158,11,0.14);color:#b45309';
+      if (type === 'Decision') return base + 'background:rgba(239,68,68,0.1);color:#dc2626';
+      return base + 'background:rgba(16,185,129,0.14);color:#059669';
+    };
+    const variantIsAlways = s.variant === 'always';
+    const variantIsHover = s.variant === 'hover';
+    const variantIsToggle = s.variant === 'toggle';
+
+    const showRail = variantIsHover && !s.pinned;
+    const showExpandedInFlow = variantIsAlways || (variantIsHover && s.pinned) || (variantIsToggle && s.toggleOpen);
+    const showHoverOverlay = variantIsHover && !s.pinned && s.hoverExpanded;
+    const showExpandedAny = showExpandedInFlow || showHoverOverlay;
+
+    let outerWidth = '272px';
+    if (variantIsHover && !s.pinned) outerWidth = '72px';
+    if (variantIsToggle && !s.toggleOpen) outerWidth = '0px';
+
+    const sidebarOuterStyle = `width:${outerWidth};flex-shrink:0;position:relative;transition:width .18s ease;background:${showExpandedInFlow ? '#fffdf8' : 'transparent'};border-right:${outerWidth === '0px' ? 'none' : '1px solid rgba(0,0,0,0.08)'};overflow:visible;z-index:60`;
+    const expandedPanelStyle = showHoverOverlay
+      ? 'position:absolute;left:0;top:0;bottom:0;width:272px;background:#fffdf8;border-right:1px solid rgba(0,0,0,0.1);box-shadow:0 8px 16px rgba(0,0,0,0.06),0 24px 48px rgba(0,0,0,0.12);z-index:70'
+      : 'width:272px;height:100%';
+
+    const railBtn = (active) => `width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;${active ? 'background:linear-gradient(135deg,rgba(147,51,234,0.15),rgba(199,126,255,0.25));border:1px solid rgba(199,126,255,0.35);color:#7c3aed;' : 'background:transparent;border:1px solid transparent;color:#4b5563;'}`;
+
+    return {
+      isHome,
+      isWork,
+      notWork: true,
+      isHomeMode,
+      isWorkMode: !isHomeMode,
+      isCampaigns: s.view === 'campaigns' || s.view === 'wcampaigns',
+      isSpaces: s.view === 'spaces',
+      isFlows: s.view === 'flows',
+      isBrain: s.view === 'brain',
+      crumbLabel: sectionNav ? sectionNav.name : 'Home',
+      crumbD: sectionNav ? sectionNav.d : 'M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
+      // Home/Chat only swap the sidebar menu — they never navigate and never close an open chat drawer.
+      goHome: () => this.setState({ menuChat: false }),
+      goChat: () => this.setState({ menuChat: true }),
+      goNewChat: () => this.setState({ mode: 'home', view: 'chat', rightTab: 'tasks', menuChat: true, spaceChatOpen: false, drawerConvo: null }),
+      goWork: () => this.setState({ mode: 'work', view: 'clients', rightTab: 'files' }),
+      isChat: s.view === 'chat',
+      isConvo: s.view === 'convo',
+      showChatDrawer: s.spaceChatOpen && s.view !== 'home' && s.view !== 'chat' && s.view !== 'convo',
+      isChatView: !!s.menuChat,
+      showHomeSidebar: !s.menuChat,
+      homeTabStyle: !s.menuChat ? this.segActive : this.segInactive,
+      chatTabStyle: s.menuChat ? this.segActive : this.segInactive,
+      pinnedConvos: [
+        { name: 'Webinar campaign board' },
+        { name: 'Dylan super voice skill' },
+      ].map((c) => ({ ...c, open: () => this.openConvo(c.name) })),
+      workTabStyle: !isHomeMode ? this.segActive : this.segInactive,
+      templateFan: this.templateFanData.map((t, i) => ({
+        ...t,
+        cardStyle: `display:flex;flex-direction:column;align-items:center;background:#fffdf8;border:1px solid rgba(0,0,0,0.1);border-radius:12px;padding:16px 14px 12px;width:104px;box-shadow:0 2px 6px rgba(0,0,0,0.05);cursor:pointer;transform:rotate(${(i - 2.5) * 2.2}deg) translateY(${Math.abs(i - 2.5) * 3}px);margin:0 -6px;position:relative;z-index:${i}`,
+      })),
+      agendaEvents: this.agendaEventsData,
+      myTasks: this.myTasksData,
+      approvals: this.approvalsData,
+      notifs: this.notifsData,
+      recentConvos: this.recentConvosData,
+      isClients: s.view === 'clients',
+      isRequests: s.view === 'requests',
+      isMeetings: s.view === 'meetings',
+      isTaskboard: s.view === 'taskboard',
+      workNavItems: this.workNav.map((w) => ({
+        ...w,
+        hasBadge: !!w.badge,
+        select: () => this.setState({ view: w.key }),
+        rowStyle: this.navBase + (s.view === w.key ? this.navSelected : this.navDefault),
+        railStyle: railBtn(s.view === w.key),
+        railLabelStyle: `font-size:10px;font-weight:500;font-family:Inter,sans-serif;color:${s.view === w.key ? '#7c3aed' : '#4b5563'}`,
+        badgeStyle: `min-width:18px;height:18px;padding:0 5px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;flex-shrink:0;${w.badgeRed ? 'background:#ef4444;color:#fff' : 'background:#f3f4f6;color:#6b7280'}`,
+      })),
+      railItems: (s.view === 'chat' ? [this.nav[0], { key: 'chat', name: 'Chat', d: 'M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.4-.7L3 21l1.8-5.6a8.38 8.38 0 0 1-.8-3.9 8.5 8.5 0 0 1 8.5-8.5 8.38 8.38 0 0 1 8.5 8.5z' }] : this.nav).map((n) => ({
+        ...n,
+        select: () => this.setState({ view: n.key, flyKey: null, flyPinned: false }),
+        flyEnter: (e) => this.flyEnter(n.key, e),
+        flyLeave: () => this.flyLeave(),
+        railStyle: railBtn(s.view === n.key),
+        railLabelStyle: `font-size:10px;font-weight:500;font-family:Inter,sans-serif;color:${s.view === n.key ? '#7c3aed' : '#4b5563'}`,
+      })),
+      taskBoardPeople: this.taskBoardPeople,
+      tools: this.tools,
+      toggleTaskBoard: () => this.setState((p) => ({ view: 'taskboard', taskBoardOpen: p.view === 'taskboard' ? !p.taskBoardOpen : true })),
+      toggleTools: () => this.setState((p) => ({ toolsOpen: !p.toolsOpen })),
+      taskChevronD: s.taskBoardOpen ? 'M6 9l6 6 6-6' : 'M9 6l6 6-6 6',
+      toolsChevronD: s.toolsOpen ? 'M6 9l6 6 6-6' : 'M9 6l6 6-6 6',
+      taskBoardOpen: s.taskBoardOpen,
+      toolsOpen: s.toolsOpen,
+      taskBoardHeaderStyle: this.navBase + (s.view === 'taskboard' ? this.navSelected : this.navDefault),
+      clientsList: this.clientsList.map((c) => ({ ...c, statusStyle: statusPill(c.status === 'Onboarding' ? 'Paused' : c.status), avatarStyle: `width:34px;height:34px;border-radius:50%;background:${c.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:12px;font-weight:700` })),
+      requestsList: this.requestsList.map((r) => ({ ...r, statusStyle: reqPill(r.status) })),
+      meetingsList: this.meetingsList,
+      taskCols: this.taskCols,
+      campaignCards: this.campaignCards.map((c) => ({ ...c, statusStyle: statusPill(c.status) })),
+      spacesList: this.spacesList.map((sp) => ({ ...sp, open: () => this.setState({ view: 'spacedetail' }) })),
+      isSpaceDetail: s.view === 'spacedetail',
+      spaceChatOpen: s.spaceChatOpen,
+      spaceWorkOpen: s.spaceWorkOpen,
+      spaceDetailWrapStyle: s.spaceWorkOpen ? 'flex:1;min-width:0;height:100%;display:flex;overflow:hidden' : 'display:none',
+      spaceChatPanelStyle: (s.view === 'spacedetail' && !s.spaceWorkOpen)
+        ? 'flex:1;min-width:0;display:flex;flex-direction:column;background:#fffdf8;position:relative'
+        : `width:${s.chatWidth || 280}px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(0,0,0,0.08);background:#fffdf8;position:relative;overflow:hidden`,
+      chatMin: false,
+      chatMaxed: true,
+      // Minimize tucks the chat away into the Chat tab (conversation kept); clicking Chat brings it back.
+      minimizeChat: () => this.setState({ spaceChatOpen: false, spaceWorkOpen: true }),
+      restoreChat: () => this.setState({ spaceChatOpen: true }),
+      onChatDragStart: (e) => {
+        e.preventDefault();
+        const startX = e.clientX;
+        const startW = this.state.chatWidth || 280;
+        const move = (ev) => this.setState({ chatWidth: Math.min(560, Math.max(240, startW + (ev.clientX - startX))) });
+        const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+        window.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', up);
+      },
+      closeAllPopovers: () => {
+        if (this.state.flyKey || this.state.morePinned || this.state.moreHover) this.setState({ flyKey: null, flyPinned: false, morePinned: false, moreHover: false });
+      },
+      // Top-right box = right drawer: expands/collapses the space working area. Chat stays visible when work collapses.
+      toggleSpaceChat: () => this.setState((p) => ({ spaceWorkOpen: !p.spaceWorkOpen, spaceChatOpen: p.spaceWorkOpen ? true : p.spaceChatOpen })),
+      spaceChatBtnStyle: `width:30px;height:30px;border-radius:8px;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:${s.spaceWorkOpen ? '#7c3aed' : '#4b5563'};background:${s.spaceWorkOpen ? 'linear-gradient(135deg,rgba(147,51,234,0.12),rgba(199,126,255,0.2))' : 'transparent'}`,
+      agents: this.agentsData.map((a) => ({
+        ...a,
+        display: `${a.name} \u00b7 ${a.role}`,
+        photoStyle: `width:100%;aspect-ratio:1;border-radius:10px 10px 0 0;background:linear-gradient(160deg,${a.color},#efe9df);display:flex;align-items:center;justify-content:center;font-family:MuseoModerno,Inter,sans-serif;font-size:38px;font-weight:600;color:rgba(0,0,0,0.35)`,
+      })),
+      teamChips: this.teamChips.map((c) => ({ ...c, chipStyle: `padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;${c.style}` })),
+      teamLines: this.teamLines.map((l) => ({ ...l, hasBold: !!l.bold })),
+      flowTemplateCats: this.flowTemplateCats.map((c) => ({ ...c, rowStyle: `display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;font-size:13px;cursor:pointer;${c.active ? 'background:linear-gradient(135deg,rgba(147,51,234,0.12),rgba(199,126,255,0.2));color:#7c3aed;font-weight:600' : 'color:#374151'}` })),
+      flowWorkflowCats: this.flowWorkflowCats,
+      flowApps: this.flowApps,
+      flowTemplates: this.flowTemplates,
+      meetingsRows: this.meetingsRows.map((m) => ({ ...m, hasExtra: !!m.extra, att: m.att.map((a) => ({ ...a, pillStyle: `padding:2.5px 9px;border-radius:999px;font-size:11.5px;font-weight:500;background:${a.c};color:${a.t};white-space:nowrap` })) })),
+      spaceTabs: this.spaceTabs.map((t, i) => ({ name: t, tabStyle: `display:flex;align-items:center;gap:5px;padding:6px 10px;font-size:12.5px;font-weight:${i === 0 ? '600' : '500'};color:${i === 0 ? '#1a1a1a' : '#6b7280'};border-bottom:2px solid ${i === 0 ? '#1a1a1a' : 'transparent'};cursor:pointer;white-space:nowrap` })),
+      flowsList: this.flowsList.map((f) => ({ ...f, statusStyle: statusPill(f.status) })),
+      brainCards: this.brainCards.map((b) => ({ ...b, typeStyle: typePill(b.type) })),
+
+      variantIsToggle,
+      variantIsHover,
+      setVariantAlways: () => this.setState({ variant: 'always', hoverExpanded: false }),
+      setVariantHover: () => this.setState({ variant: 'hover', pinned: false, hoverExpanded: false }),
+      setVariantToggle: () => this.setState({ variant: 'toggle', toggleOpen: true, hoverExpanded: false }),
+      alwaysBtnStyle: variantIsAlways ? this.smallActive : this.smallInactive,
+      hoverBtnStyle: variantIsHover ? this.smallActive : this.smallInactive,
+      toggleBtnStyle: variantIsToggle ? this.smallActive : this.smallInactive,
+      toggleSidebarOpen: () => this.setState((p) => ({ toggleOpen: !p.toggleOpen })),
+      sidebarBtnStyle: `width:30px;height:30px;border-radius:8px;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:${(variantIsHover && s.pinned) || (variantIsToggle && s.toggleOpen) || variantIsAlways ? '#1a1a1a' : '#4b5563'};background:${(variantIsHover && s.pinned) || showHoverOverlay ? '#e8e5df' : 'transparent'}`,
+      onSidebarBtnEnter: () => {
+        clearTimeout(this._hideTimer);
+        if (this.state.variant === 'hover' && !this.state.pinned) this.setState({ hoverExpanded: true });
+      },
+      onSidebarBtnLeave: () => {
+        this._hideTimer = setTimeout(() => {
+          if (this.state.variant === 'hover') this.setState({ hoverExpanded: false });
+        }, 350);
+      },
+      onSidebarBtnClick: () => {
+        const st = this.state;
+        if (st.variant === 'hover') this.setState((p) => ({ pinned: !p.pinned, hoverExpanded: false }));
+        else if (st.variant === 'toggle') this.setState((p) => ({ toggleOpen: !p.toggleOpen }));
+        else this.setState({ variant: 'hover', pinned: false, hoverExpanded: false });
+      },
+
+      sidebarOuterStyle,
+      expandedPanelStyle,
+      showRail,
+      sidebarCollapsed: !showExpandedInFlow,
+      showExpandedAny,
+      onSidebarEnter: () => {
+        // Keep the overlay open if it's already expanded (mouse moved from the header button into it),
+        // but do NOT expand from hovering the rail itself — only the header button opens it.
+        clearTimeout(this._hideTimer);
+      },
+      onSidebarLeave: () => { if (this.state.variant === 'hover') this.setState({ hoverExpanded: false }); },
+      togglePin: () => this.setState((p) => ({ pinned: !p.pinned, hoverExpanded: false })),
+      pinBtnStyle: `width:28px;height:28px;border-radius:8px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:${s.pinned ? '#7c3aed' : '#9ca3af'}`,
+
+      navMain: this.nav.filter((n) => n.key !== 'projects' && n.key !== 'flows').map((n) => ({
+        ...n,
+        select: (e) => this.navClick(n.key, e),
+        flyEnter: (e) => this.flyEnter(n.key, e),
+        flyLeave: () => this.flyLeave(),
+        rowStyle: this.navBase + (s.view === n.key ? this.navSelected : this.navDefault),
+      })),
+      flyOpen: !!s.flyKey,
+      flyTitle: s.flyKey && this.sub[s.flyKey] ? this.sub[s.flyKey].title.toUpperCase() : '',
+      flyItems: (s.flyKey && this.sub[s.flyKey] ? this.sub[s.flyKey].items : []).map((it, i) => ({
+        key: i,
+        isCaption: !!it.cap,
+        isLink: !it.cap,
+        name: it.cap || it.name,
+        d: it.d || '',
+        hasIcon: !!it.d,
+        hasAvatar: !!it.avatar,
+        avatarStyle: `width:20px;height:20px;border-radius:50%;background:${it.avatar};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:10px;font-weight:700`,
+        initial: (it.name || '?').charAt(0),
+        hasCount: !!it.count,
+        count: it.count || '',
+        click: () => this.setState({ view: it.go, flyKey: null, flyPinned: false }),
+      })),
+      flyPopStyle: `position:fixed;left:${(s.flyRect && s.flyRect.left) || 260}px;top:${(s.flyRect && s.flyRect.top) || 120}px;z-index:120;background:#fffdf8;border:1px solid rgba(0,0,0,0.1);border-radius:12px;padding:8px 6px;box-shadow:0 4px 10px rgba(0,0,0,0.05),0 14px 28px rgba(0,0,0,0.08);min-width:220px;max-height:70vh;overflow-y:auto;display:flex;flex-direction:column;gap:1px`,
+      onFlyPopEnter: () => clearTimeout(this._flyTimer),
+      onFlyLeave: () => this.flyLeave(),
+      moreItems: this.nav.filter((n) => n.key === 'projects' || n.key === 'flows').map((n) => ({
+        ...n,
+        select: () => this.setState({ view: n.key, morePinned: false, moreHover: false }),
+        rowStyle: this.navBase + (s.view === n.key ? this.navSelected : this.navDefault),
+      })),
+      moreOpen: !!(s.morePinned || s.moreHover),
+      moreRowStyle: this.navBase + ((s.morePinned || s.moreHover || s.view === 'projects' || s.view === 'flows') ? 'background:#e8e5df;border:1px solid transparent;color:#374151;' : this.navDefault),
+      morePopStyle: `position:fixed;left:${(s.moreRect && s.moreRect.left) || 260}px;top:${(s.moreRect && s.moreRect.top) || 300}px;z-index:120;background:#fffdf8;border:1px solid rgba(0,0,0,0.1);border-radius:12px;padding:6px;box-shadow:0 4px 10px rgba(0,0,0,0.05),0 14px 28px rgba(0,0,0,0.08);min-width:170px;display:flex;flex-direction:column;gap:1px`,
+      onMoreEnter: (e) => {
+        clearTimeout(this._moreTimer);
+        const r = e.currentTarget.getBoundingClientRect();
+        this.setState({ moreHover: true, moreRect: { left: r.right + 6, top: r.top } });
+      },
+      onMoreLeave: () => {
+        this._moreTimer = setTimeout(() => { if (!this.state.morePinned) this.setState({ moreHover: false }); }, 300);
+      },
+      onMorePopEnter: () => clearTimeout(this._moreTimer),
+      onMoreClick: (e) => {
+        clearTimeout(this._moreTimer);
+        const r = e.currentTarget.getBoundingClientRect();
+        this.setState((p) => ({ morePinned: !p.morePinned, moreHover: false, moreRect: { left: r.right + 6, top: r.top } }));
+      },
+      navItems: this.nav.map((n) => ({
+        ...n,
+        select: () => this.setState({ view: n.key }),
+        rowStyle: this.navBase + (s.view === n.key ? this.navSelected : this.navDefault),
+        railStyle: railBtn(s.view === n.key),
+        railLabelStyle: `font-size:10px;font-weight:500;font-family:Inter,sans-serif;color:${s.view === n.key ? '#7c3aed' : '#4b5563'}`,
+      })),
+      isTeam: s.view === 'team',
+      isProjects: s.view === 'projects',
+      teamList: this.teamList.map((t) => ({ ...t, statusStyle: statusPill(t.status === 'Working' ? 'Active' : 'Draft'), avatarStyle: `width:34px;height:34px;border-radius:50%;background:${t.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:12px;font-weight:700` })),
+      projectsList: this.projectsList,
+      pinnedCampaigns: this.pinnedCampaigns,
+      recents: this.recents.map((r) => ({ ...r, open: () => this.openConvo(r.name) })),
+      drawerConvo: s.drawerConvo,
+      drawerWide: (s.view === 'spacedetail' && !s.spaceWorkOpen) || (s.chatWidth || 280) >= 360,
+      drawerGreetingStyle: `font-family:MuseoModerno,Inter,sans-serif;font-weight:600;color:#1a1a1a;letter-spacing:-0.01em;font-size:${((s.view === 'spacedetail' && !s.spaceWorkOpen) || (s.chatWidth || 280) >= 360) ? '24px' : '19px'};white-space:nowrap`,
+      drawerHasConvo: !!s.drawerConvo,
+      drawerEmpty: !s.drawerConvo,
+      homeActive: this.homeActive,
+      traces: this.traces,
+
+      rightToggleBtnStyle: `width:30px;height:30px;border-radius:8px;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#4b5563;background:${s.rightOpen ? '#e8e5df' : 'transparent'}`,
+      toggleRight: () => this.setState((p) => ({ rightOpen: !p.rightOpen })),
+      rightPanelStyle: `width:${s.rightOpen ? '300px' : '0px'};flex-shrink:0;background:#fffdf8;border-left:1px solid rgba(0,0,0,0.08);overflow:hidden;transition:width .18s ease`,
+      rightIsTasks: s.rightTab === 'tasks',
+      rightIsFiles: s.rightTab === 'files',
+      rightIsSources: s.rightTab === 'sources',
+      setRightTasks: () => this.setState({ rightTab: 'tasks' }),
+      setRightFiles: () => this.setState({ rightTab: 'files' }),
+      setRightSources: () => this.setState({ rightTab: 'sources' }),
+      tasksTabStyle: (s.rightTab === 'tasks' ? this.segActive : this.segInactive),
+      filesTabStyle: (s.rightTab === 'files' ? this.segActive : this.segInactive),
+      sourcesTabStyle: (s.rightTab === 'sources' ? this.segActive : this.segInactive),
+      tasks: this.tasks.map((t) => ({
+        ...t,
+        checkStyle: `width:15px;height:15px;border-radius:50%;flex-shrink:0;border:1.5px solid ${t.done ? '#10b981' : '#d1d5db'};background:${t.done ? '#10b981' : 'transparent'}`,
+        labelStyle: `font-size:13px;color:${t.done ? '#9ca3af' : '#1a1a1a'};text-decoration:${t.done ? 'line-through' : 'none'}`,
+      })),
+      files: this.files,
+      sources: this.sources,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

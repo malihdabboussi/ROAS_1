@@ -9,6 +9,7 @@ import {
   SPACES_ACTIONS_TOAST_SUCCESS,
 } from '@/features/spaces/config/spaces-toast-errors.config'
 import { createGoogleDocFromHtml, type GoogleDriveFile } from '@/lib/services/google-drive-api'
+import { buildSpaceDocExportHtml, googleDocHref } from '@/lib/spaces/space-doc-export'
 import { cn } from '@/lib/utils/cn'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import {
@@ -20,8 +21,6 @@ import {
   exportSpaceDocVisualHtml,
   exportSpaceDocVisualPdf,
 } from '../../doc-menu/export-space-doc'
-import { buildSpaceDocExportHtml } from '../../doc-menu/export-space-doc-html'
-import { googleDocHref } from '../../doc-menu/google-doc-export'
 
 export function DocEditorExportDropdown({
   title,
@@ -122,8 +121,7 @@ export function DocEditorExportDropdown({
         buildSpaceDocExportHtml(resolvedTitle, getDocBody()),
       )
       const href =
-        result.file.webViewLink ||
-        `https://docs.google.com/document/d/${result.file.id}/edit`
+        result.file.webViewLink || `https://docs.google.com/document/d/${result.file.id}/edit`
       if (pendingTab) pendingTab.location.replace(href)
       else window.open(href, '_blank', 'noopener,noreferrer')
 
@@ -136,10 +134,7 @@ export function DocEditorExportDropdown({
     } catch (error) {
       pendingTab?.close()
       toast.error(
-        sanitizeUserError(
-          error,
-          SPACES_ACTIONS_TOAST_ERRORS.CREATE_GOOGLE_DOC_FAILED.userMessage,
-        ),
+        sanitizeUserError(error, SPACES_ACTIONS_TOAST_ERRORS.CREATE_GOOGLE_DOC_FAILED.userMessage),
       )
     } finally {
       setCreatingGoogleDoc(false)
@@ -229,7 +224,7 @@ export function DocEditorExportDropdown({
             disabled={creatingGoogleDoc}
             className={rowCls}
           >
-            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <ExternalLink className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
             <span>{creatingGoogleDoc ? 'Creating…' : 'Open in Google Docs'}</span>
           </button>
           <button
@@ -302,10 +297,7 @@ export function DocEditorExportDropdown({
   ) : null
 
   const portaledMenu =
-    menuPlacement === 'below' &&
-    menuPanel &&
-    belowMenuPos &&
-    typeof document !== 'undefined'
+    menuPlacement === 'below' && menuPanel && belowMenuPos && typeof document !== 'undefined'
       ? createPortal(menuPanel, document.body)
       : menuPanel
 

@@ -16,6 +16,7 @@ import {
 import { ConfirmDialog } from '@/components/ui/dialogs/ConfirmDialog'
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { formatWebinarSubtaskTitle } from '@/lib/missions'
 import { updateSubtask } from '../../services/missions.service'
 import type { MissionAgent, MissionSubtask, PrdContent, SubtaskStatus } from '../../types'
 import {
@@ -202,7 +203,7 @@ export function SubtasksSection({
                             ) {
                               setCompleteConfirm({
                                 subtaskId: subtask.id,
-                                title: subtask.title,
+                                title: formatWebinarSubtaskTitle(subtask.title),
                               })
                               return
                             }
@@ -223,7 +224,9 @@ export function SubtasksSection({
                           aria-hidden
                         />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate font-medium">{subtask.title}</span>
+                          <span className="block truncate font-medium">
+                            {formatWebinarSubtaskTitle(subtask.title)}
+                          </span>
                           {issueDetail || subtask.feedback ? (
                             <Tooltip
                               label={issueDetail || subtask.feedback || statusMeta}

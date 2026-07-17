@@ -2241,7 +2241,14 @@ html:not(.dark) .text-color-deep {
   --color-foreground: #1a1a1a;
   --color-card: #fffdf8;
   --color-card-foreground: #1a1a1a;
-  --color-muted-foreground: #4b5563;
+  --color-muted-foreground: #6b7280;
+  --color-icon: #4b5563;
+  --color-tertiary: #9ca3af;
+  --color-nav: #374151;
+  --color-disabled: #c2beb5;
+  --color-shell-topbar: rgba(255, 253, 248, 0.8);
+  --color-shell-divider: rgba(0, 0, 0, 0.1);
+  --color-shell-border: rgba(0, 0, 0, 0.08);
   --color-secondary: #f3f4f6;
   --color-hover-subtle: rgba(0, 0, 0, 0.06);
   --color-border: rgba(0, 0, 0, 0.08);

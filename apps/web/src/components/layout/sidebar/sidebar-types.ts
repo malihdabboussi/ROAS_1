@@ -15,7 +15,11 @@ export type ManageRailItem = {
   icon: ReactNode
 } & (
   | { type: 'link'; href: string }
-  | { type: 'panel'; panelId: 'projects' | 'spaces' | 'team2' | 'brain'; href?: string }
+  | {
+      type: 'panel'
+      panelId: 'projects' | 'spaces' | 'team2' | 'brain' | 'more'
+      href?: string
+    }
   | { type: 'mode-switch' }
 )
 
