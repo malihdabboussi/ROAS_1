@@ -816,3 +816,13 @@ Why: Replacing the blocked Pre-call step cascaded through all nine dependent Web
 Impact: A local replacement can no longer truncate the rest of a mission. Validation-only descendants still follow the replacement; broader dependency branches are rebuilt through the existing replan path.
 
 Files: `mission-subtask-triage.service.ts`, `mission-scope-normalization.test.ts`, `documentation/features/missions.md`
+
+## [2026-07-16 17:54] - [FIX]
+
+What: Allowed a personal mission owner to be the human assignee for playbook approval gates while retaining membership validation for organization missions and rejecting other users on personal missions.
+
+Why: Webinar Fulfillment correctly generated three human gates for the personal mission, but plan persistence rejected every `human:<owner-id>` assignment solely because `org_id` was null.
+
+Impact: Personal playbooks with human approval gates can persist and run; they cannot assign unrelated users without an organization boundary.
+
+Files: `mission-internal.base.ts`, `mission-internal-plan.base.ts`, `mission-internal.service.test.ts`, `documentation/features/missions.md`

@@ -18,6 +18,10 @@ Recovery behavior:
 
 With the defaults, a dead execution is normally eligible at 90 seconds and recovered on the next 30-second sweep, while real stream traffic keeps extending the lease.
 
+## Personal mission human gates
+
+Playbooks can include human approval subtasks on both organization and personal missions. Organization missions validate that the assignee is an active member who accepts agent-assigned work. A personal mission may assign a human gate only to the mission owner, and the same profile preference check still applies. Root-ready human gates enter `awaiting_human`; dependent gates remain pending until their dependencies complete.
+
 ## Public agent slug namespace
 
 Personal public agent slugs share the `govibey.com` namespace with organization slugs. Organization slugs take priority:
@@ -217,6 +221,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-16: Allowed personal mission owners to receive human approval subtasks while continuing to reject other human assignees when the mission has no organization.
 - 2026-07-16: Converted triage replacement into a full replan whenever cascade cancellation would erase ordinary downstream work, and moved replacement validation ahead of cancellation.
 - 2026-07-16: Applied the startup lease to queued recovered subtasks so the stalled and orphan watchdogs cannot enqueue overlapping executions during ordinary queue delay.
 - 2026-07-16: Preserved always-on Fly runtimes marked `AGENT_RUNTIME_MODE=shared` during machine reconciliation so the five-minute orphan cleanup cannot terminate active Mission streams.

@@ -105,7 +105,7 @@ describe('MissionInternalService', () => {
     })
 
     await expect(
-      (service as any).assertHumanAssignee(supabase, 'org-1', 'user-1'),
+      (service as any).assertHumanAssignee(supabase, 'org-1', 'user-1', 'user-1'),
     ).resolves.toBeUndefined()
 
     expect(queries[0].table).toBe('org_members')
@@ -123,7 +123,27 @@ describe('MissionInternalService', () => {
     })
 
     await expect(
-      (service as any).assertHumanAssignee(supabase, 'org-1', 'user-1'),
+      (service as any).assertHumanAssignee(supabase, 'org-1', 'user-1', 'user-1'),
+    ).rejects.toBeInstanceOf(BadRequestException)
+  })
+
+  it('allows a personal mission owner to receive human approval subtasks', async () => {
+    const { service, supabase, queries } = createHarness({
+      profiles: [{ data: { accepts_agent_assignments: true }, error: null }],
+    })
+
+    await expect(
+      (service as any).assertHumanAssignee(supabase, null, 'user-1', 'user-1'),
+    ).resolves.toBeUndefined()
+
+    expect(queries.map(({ table }) => table)).toEqual(['profiles'])
+  })
+
+  it('rejects assigning another human on a personal mission', async () => {
+    const { service, supabase } = createHarness({})
+
+    await expect(
+      (service as any).assertHumanAssignee(supabase, null, 'user-2', 'user-1'),
     ).rejects.toBeInstanceOf(BadRequestException)
   })
 

@@ -21,7 +21,12 @@ export abstract class MissionInternalPlanBase extends MissionInternalBase {
     const humanCount = parsedSubtasks.filter((s) => s._assignee.type === 'human').length
     for (const st of parsedSubtasks) {
       if (st._assignee.type === 'human' && st._assignee.user_id) {
-        await this.assertHumanAssignee(preflightClient, dto.org_id, st._assignee.user_id)
+        await this.assertHumanAssignee(
+          preflightClient,
+          dto.org_id,
+          st._assignee.user_id,
+          dto.user_id,
+        )
       }
     }
     if (humanCount > 0) {

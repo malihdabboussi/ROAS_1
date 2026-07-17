@@ -78,21 +78,24 @@ export abstract class MissionInternalBase {
     supabase: SupabaseClient,
     orgId: string | null | undefined,
     userId: string,
+    missionOwnerId: string,
   ): Promise<void> {
-    if (!orgId) {
+    if (!orgId && userId !== missionOwnerId) {
       throw new BadRequestException(
-        `Cannot assign a subtask to human ${userId}: mission has no org_id.`,
+        `Cannot assign a personal mission subtask to human ${userId}: only the mission owner can be assigned.`,
       )
     }
-    const membership = await this.missionInternalRepository.findOrgMemberForAssignment(
-      supabase,
-      orgId,
-      userId,
-    )
-    if (!membership || membership.status !== 'active') {
-      throw new BadRequestException(
-        `User ${userId} is not an active member of this org; cannot assign a subtask.`,
+    if (orgId) {
+      const membership = await this.missionInternalRepository.findOrgMemberForAssignment(
+        supabase,
+        orgId,
+        userId,
       )
+      if (!membership || membership.status !== 'active') {
+        throw new BadRequestException(
+          `User ${userId} is not an active member of this org; cannot assign a subtask.`,
+        )
+      }
     }
     const profile = await this.missionInternalRepository.findProfileAssignmentPreference(
       supabase,

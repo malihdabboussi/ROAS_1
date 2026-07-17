@@ -13,6 +13,18 @@ Files:
   Deferred because: Vertical slice shipped; further splits/notes out of critical path.
 
 
+## 2026-07-16 - [ARCH] Split mission plan persistence before service limit
+
+Status: Open
+Found while: Allowing personal Webinar Fulfillment missions to persist human approval gates
+Files:
+
+- `apps/api/src/modules/missions/services/mission-internal-plan.base.ts` (460 LOC; approaching the 480 LOC decomposition recommendation)
+  Evidence: `wc -l` after threading mission-owner identity into human-assignee preflight.
+  Needed work: Extract native-transaction plan persistence and outbox emission into focused collaborators before adding more plan lifecycle behavior.
+  Deferred because: The in-scope production failure was the personal human-gate validation contract; structural decomposition would broaden the hot-path change.
+
+
 ## 2026-07-16 - [OPS] Deploy mission execution lease + Pre-call recovery
 
 Status: Open
