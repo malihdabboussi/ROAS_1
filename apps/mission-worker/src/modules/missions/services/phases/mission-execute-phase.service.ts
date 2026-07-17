@@ -2,7 +2,13 @@ import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Job } from 'bullmq'
 import { DatabaseService } from '../../../../lib/services/database.service'
-import type { AgentKey, MissionJobData, MissionJobResult, MissionStatus } from '../../types'
+import {
+  priorityToRank,
+  type AgentKey,
+  type MissionJobData,
+  type MissionJobResult,
+  type MissionStatus,
+} from '../../types'
 import { humanizeMissionError } from '../../utils/mission-humanize-error'
 import {
   isHiddenCampaignAction,
@@ -25,49 +31,20 @@ import {
 import { MissionStateRepository } from '../persistence/mission-state.repository'
 import { SubtaskAbortRegistry } from '../subtask-abort-registry.service'
 import { MissionJsonService } from '../utils/mission-json.service'
+import {
+  activeSubtasksAllDone,
+  CONTRACT_ACTION_DOMAINS,
+  evaluateSubtaskOutputAlignment,
+  type MissionPreflightDomain,
+  normalizeOutputContract,
+} from './mission-execute-helpers'
 import { MissionPhaseSupportService } from './mission-phase-support.service'
 
-type MissionPreflightDomain =
-  | 'manage_content'
-  | 'write_marketing_artifacts'
-  | 'manage_own_skills'
-  | 'write_brain'
-  | 'edit_brain_models'
-  | 'edit_brain_company'
-  | 'edit_brain_customer'
-
-const CONTRACT_ACTION_DOMAINS: Record<string, MissionPreflightDomain> = {
-  save_document: 'manage_content',
-  create_pdf: 'manage_content',
-  create_docx: 'manage_content',
-  create_presentation: 'write_marketing_artifacts',
-  create_agent_skill: 'manage_own_skills',
-  update_agent_skill: 'manage_own_skills',
-  create_agent_skill_resource: 'manage_own_skills',
-  ingest_user_brain_document: 'write_brain',
-  ingest_user_brain_text: 'write_brain',
-  ingest_agent_brain_text: 'write_brain',
-  ingest_agent_brain_link: 'write_brain',
-  ingest_fathom_meeting: 'write_brain',
-  ingest_fireflies_transcript: 'write_brain',
-  create_brain_page: 'write_brain',
-  create_strategy_node: 'edit_brain_models',
-  propose_company_brain_signal: 'edit_brain_company',
-  create_company_brain_object: 'edit_brain_company',
-  update_company_brain_object: 'edit_brain_company',
-  save_customer_memory: 'edit_brain_customer',
-  ingest_customer_brain_text: 'edit_brain_customer',
-}
+const HUMAN_SUBTASK_SLA_MS = 48 * 60 * 60 * 1000
 
 @Injectable()
 export class MissionExecutePhaseService {
   private readonly logger = new Logger(MissionExecutePhaseService.name)
-
-  /** Non-cancelled subtasks only; true when every active row is `done`. */
-  private activeSubtasksAllDone(statusRows: Array<{ status: unknown }>): boolean {
-    const active = statusRows.filter((s) => String(s.status) !== 'cancelled')
-    return active.length > 0 && active.every((s) => String(s.status) === 'done')
-  }
 
   constructor(
     private readonly databaseService: DatabaseService,
@@ -162,7 +139,7 @@ export class MissionExecutePhaseService {
         .from('mission_subtasks')
         .select('status')
         .eq('mission_id', missionId)
-      const everyDone = this.activeSubtasksAllDone(allSubs || [])
+      const everyDone = activeSubtasksAllDone(allSubs || [])
 
       if (everyDone) {
         await this.stateRepo.enqueueMissionOutboxEvent(supabase, {
@@ -210,6 +187,37 @@ export class MissionExecutePhaseService {
       // Humans are pulled-by-owner, not pushed by the execute worker. The awaiting_human
       // outbox event + human-subtask-notifier handle notification; the execute worker
       // must never call OpenClaw or claim the row as in_progress for a human assignee.
+      const nowIso = new Date().toISOString()
+      if (String(subtask.status) === 'pending') {
+        const { error } = await supabase
+          .from('mission_subtasks')
+          .update({
+            status: 'awaiting_human',
+            awaiting_human_since: nowIso,
+            sla_escalate_at: new Date(Date.now() + HUMAN_SUBTASK_SLA_MS).toISOString(),
+            updated_at: nowIso,
+          })
+          .eq('id', subtaskId)
+          .eq('mission_id', missionId)
+          .eq('status', 'pending')
+          .select('id')
+        if (error) throw error
+      }
+      await this.stateRepo.enqueueMissionOutboxEvent(supabase, {
+        missionId,
+        userId: String(mission.user_id),
+        orgId: mission.org_id ?? null,
+        eventType: 'mission.subtask.awaiting_human.requested',
+        dedupeKey: `mission:${missionId}:subtask:${subtaskId}:awaiting_human:execute`,
+        priorityRank: priorityToRank(mission.priority),
+        payload: {
+          phase: 'awaiting_human',
+          subtask_id: subtaskId,
+          assigned_user_id: subtask.assigned_user_id ?? null,
+          requested_by: 'execute_human_subtask_activation',
+        },
+      })
+      await this.stateRepo.recomputeMissionStatus(supabase, missionId)
       this.logger.log(
         `Skipping execute phase for human subtask ${subtaskId} (status=${subtask.status})`,
       )
@@ -229,7 +237,7 @@ export class MissionExecutePhaseService {
     const assignedAgent = (subtask.assigned_agent_key ||
       mission.assigned_agent_key ||
       'vibey') as AgentKey
-    const preflightContract = this.normalizeOutputContract(subtask.output_contract)
+    const preflightContract = normalizeOutputContract(subtask.output_contract)
     if (preflightContract) {
       const preflight = await this.preflightContractAction(
         supabase,
@@ -589,7 +597,7 @@ export class MissionExecutePhaseService {
 
       const latestComment =
         userComments.length > 0 ? userComments[userComments.length - 1] || '' : ''
-      const alignment = this.evaluateSubtaskOutputAlignment(subtask, parsedOutput, latestComment)
+      const alignment = evaluateSubtaskOutputAlignment(subtask, parsedOutput, latestComment)
       if (!alignment.ok) {
         const correctionDeadline = this.support.createExecutionDeadline({
           inactivityMs: executionTimeoutMs,
@@ -616,7 +624,7 @@ export class MissionExecutePhaseService {
         parsedOutput = this.jsonService.tryParseJson(correctedOutput.content as string)
       }
 
-      const outputContract = this.normalizeOutputContract(subtask.output_contract)
+      const outputContract = normalizeOutputContract(subtask.output_contract)
       if (outputContract) {
         const preferredDeliverableIds = this.extractArtifactManifestDeliverableIds(
           parsedOutput,
@@ -737,7 +745,7 @@ export class MissionExecutePhaseService {
         .from('mission_subtasks')
         .select('status')
         .eq('mission_id', missionId)
-      const allDone = allSubtasks != null && this.activeSubtasksAllDone(allSubtasks)
+      const allDone = allSubtasks != null && activeSubtasksAllDone(allSubtasks)
 
       if (allDone) {
         await this.stateRepo.updateMissionState(supabase, missionId, {
@@ -1212,7 +1220,7 @@ export class MissionExecutePhaseService {
         ].join('\n')
       : this.buildSubtaskIntentDelta(subtask, latestComment)
 
-    const outputContract = this.normalizeOutputContract(subtask.output_contract)
+    const outputContract = normalizeOutputContract(subtask.output_contract)
     const outputContractBlock = outputContract
       ? [
           '\nOUTPUT_CONTRACT:',
@@ -1663,37 +1671,6 @@ export class MissionExecutePhaseService {
       status: missionAfter.status as MissionStatus,
       processedAt: new Date().toISOString(),
       output: parsedOutput,
-    }
-  }
-
-  private normalizeOutputContract(value: unknown): MissionOutputContract | null {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return null
-    const record = value as Record<string, unknown>
-    const artifactKind = String(record.artifact_kind ?? '')
-    const requiredAction = String(record.required_action ?? '')
-    const requiredArtifactType = String(record.required_artifact_type ?? '')
-    if (
-      ![
-        'agent_skill',
-        'document_artifact',
-        'presentation_artifact',
-        'brain_ingestion',
-        'ad_artifact',
-        'funnel_artifact',
-        'media_artifact',
-      ].includes(artifactKind)
-    ) {
-      return null
-    }
-    if (!requiredAction || !requiredArtifactType) return null
-    return {
-      artifact_kind: artifactKind as MissionOutputContract['artifact_kind'],
-      required_action: requiredAction,
-      required_artifact_type: requiredArtifactType,
-      expected:
-        record.expected && typeof record.expected === 'object' && !Array.isArray(record.expected)
-          ? (record.expected as Record<string, unknown>)
-          : undefined,
     }
   }
 
@@ -2268,75 +2245,4 @@ export class MissionExecutePhaseService {
     }
   }
 
-  private evaluateSubtaskOutputAlignment(
-    subtask: Record<string, any>,
-    output: Record<string, unknown>,
-    latestComment: string,
-  ): { ok: boolean; reason: string } {
-    const content = String(output.content || '').trim()
-    const summary = String(output.summary || '').trim()
-    if (content.length < 40) {
-      return { ok: false, reason: 'output content is too short or missing' }
-    }
-    if (summary.length < 6) {
-      return { ok: false, reason: 'summary is too short or missing' }
-    }
-
-    if (subtask.status === 'revision' && subtask.feedback) {
-      const feedbackKeywords = this.extractIntentKeywords(String(subtask.feedback))
-      if (feedbackKeywords.length > 0) {
-        const corpus = `${content} ${summary}`.toLowerCase()
-        const hasFeedbackSignal = feedbackKeywords.some((kw) => corpus.includes(kw))
-        if (!hasFeedbackSignal) {
-          return { ok: false, reason: 'revision feedback was not reflected in the output' }
-        }
-      }
-    }
-
-    if (latestComment.trim().length > 0) {
-      const commentKeywords = this.extractIntentKeywords(latestComment)
-      if (commentKeywords.length > 0) {
-        const corpus = `${content} ${summary}`.toLowerCase()
-        const hasIntentSignal = commentKeywords.some((kw) => corpus.includes(kw))
-        if (!hasIntentSignal) {
-          return { ok: false, reason: 'latest user intent is not reflected in the output' }
-        }
-      }
-    }
-
-    return { ok: true, reason: 'aligned' }
-  }
-
-  private extractIntentKeywords(text: string): string[] {
-    const stop = new Set([
-      'please',
-      'this',
-      'that',
-      'with',
-      'from',
-      'about',
-      'there',
-      'their',
-      'have',
-      'your',
-      'would',
-      'could',
-      'should',
-      'make',
-      'need',
-      'want',
-      'task',
-      'comment',
-      'latest',
-      'user',
-      'intent',
-    ])
-    const words = text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .map((w) => w.trim())
-      .filter((w) => w.length >= 5 && !stop.has(w))
-    return [...new Set(words)].slice(0, 6)
-  }
 }

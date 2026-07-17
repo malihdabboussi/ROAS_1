@@ -850,3 +850,13 @@ Why: Successful Mission `save_document` and Space `update_document` operations w
 Impact: Mission strategy deliverables and Space-only document updates can pass technical read-back verification instead of opening a false delivery-failure circuit after a successful write.
 
 Files: `artifact-post-action-verification.service.ts`, `artifact-post-action-verification-references.ts`, `artifact-post-action-verification.service.test.ts`
+
+## [2026-07-16 19:36] - [FIX]
+
+What: Made a ready human Mission subtask transition from `pending` to `awaiting_human` when its execute event reaches the worker, start the 48-hour SLA clock, enqueue the user notification, and recompute the mission status. Extracted pure execution helpers so the already-large phase service dropped below its architecture baseline.
+
+Why: Dependency resolution correctly queued Gate 1 after the launch brief completed, but the execute phase only skipped OpenClaw and returned; it never activated the human row, so the approval gate stayed pending forever even though its outbox event processed successfully.
+
+Impact: Completed agent work now hands off to its dependent human approval gate, and the mission visibly enters its legitimate waiting-for-user state instead of appearing idle.
+
+Files: `mission-execute-phase.service.ts`, `mission-execute-helpers.ts`, `mission-subtask-guards.test.ts`, `documentation/features/missions.md`

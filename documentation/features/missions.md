@@ -20,7 +20,7 @@ With the defaults, a dead execution is normally eligible at 90 seconds and recov
 
 ## Personal mission human gates
 
-Playbooks can include human approval subtasks on both organization and personal missions. Organization missions validate that the assignee is an active member who accepts agent-assigned work. A personal mission may assign a human gate only to the mission owner, and the same profile preference check still applies. Root-ready human gates enter `awaiting_human`; dependent gates remain pending until their dependencies complete.
+Playbooks can include human approval subtasks on both organization and personal missions. Organization missions validate that the assignee is an active member who accepts agent-assigned work. A personal mission may assign a human gate only to the mission owner, and the same profile preference check still applies. Root-ready human gates enter `awaiting_human`; dependent gates remain pending until their dependencies complete. When dependency resolution publishes an execute event for a ready human row, the worker atomically activates it as `awaiting_human`, starts its SLA clock, emits the human notification event, and recomputes the mission rollup without calling OpenClaw.
 
 ## Public agent slug namespace
 
@@ -221,6 +221,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-16: Made ready human-gate execute events perform the pending-to-`awaiting_human` transition, notification enqueue, and mission rollup instead of returning while leaving the gate pending.
 - 2026-07-16: Allowed personal mission owners to receive human approval subtasks while continuing to reject other human assignees when the mission has no organization.
 - 2026-07-16: Converted triage replacement into a full replan whenever cascade cancellation would erase ordinary downstream work, and moved replacement validation ahead of cancellation.
 - 2026-07-16: Applied the startup lease to queued recovered subtasks so the stalled and orphan watchdogs cannot enqueue overlapping executions during ordinary queue delay.

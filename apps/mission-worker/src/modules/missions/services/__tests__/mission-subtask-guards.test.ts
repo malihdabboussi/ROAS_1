@@ -217,6 +217,83 @@ describe('MissionsService subtask lifecycle guards', () => {
     expect(subtaskSelectChain.eq).toHaveBeenCalledWith('mission_id', 'm-stale')
   })
 
+  it('activates a ready human subtask instead of leaving it pending', async () => {
+    const subtaskSelectChain = {
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: {
+          id: 'gate-1',
+          title: 'Approve strategy package',
+          status: 'pending',
+          assignee_type: 'human',
+          assigned_user_id: 'u1',
+          depends_on: ['strategy-1'],
+        },
+        error: null,
+      }),
+    }
+    const subtaskAwaitingChain = {
+      eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      select: vi.fn().mockResolvedValue({ data: [{ id: 'gate-1' }], error: null }),
+    }
+    const update = vi.fn().mockReturnValue(subtaskAwaitingChain)
+    const supabase = {
+      from: vi.fn().mockImplementation((table: string) => {
+        if (table !== 'mission_subtasks') throw new Error(`Unexpected table ${table}`)
+        return {
+          select: vi.fn().mockReturnValue(subtaskSelectChain),
+          update,
+        }
+      }),
+    }
+
+    const service = createExecuteService()
+    service.databaseService.getClient.mockReturnValue(supabase)
+    service.stateRepo.getMission.mockResolvedValue({
+      id: 'm-human',
+      user_id: 'u1',
+      org_id: null,
+      status: 'in_progress',
+      title: 'Mission',
+      priority: 'high',
+    })
+
+    const result = await service['processSubtaskExecution']({
+      data: {
+        missionId: 'm-human',
+        subtaskId: 'gate-1',
+        correlationId: 'c-human',
+        userId: 'u1',
+        phase: 'execute',
+      },
+    } as any)
+
+    expect(result).toMatchObject({
+      success: true,
+      status: 'awaiting_human',
+      output: { reason: 'human_subtask_skipped_by_execute_worker' },
+    })
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'awaiting_human',
+        awaiting_human_since: expect.any(String),
+        sla_escalate_at: expect.any(String),
+      }),
+    )
+    expect(service.stateRepo.enqueueMissionOutboxEvent).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({
+        eventType: 'mission.subtask.awaiting_human.requested',
+        payload: expect.objectContaining({
+          subtask_id: 'gate-1',
+          assigned_user_id: 'u1',
+        }),
+      }),
+    )
+    expect(service.stateRepo.recomputeMissionStatus).toHaveBeenCalledWith(supabase, 'm-human')
+  })
+
   it('routes kind:blocked output to blocked status with triage', async () => {
     const subtaskSelectChain = {
       eq: vi.fn().mockReturnThis(),
