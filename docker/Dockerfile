@@ -177,6 +177,11 @@ ENV AGENTS_BASE_DIR=/app/agents
 # ── Copy memory-core plugin (OpenClaw default slot requires it) ──
 COPY --from=openclaw-builder --chown=node:node /openclaw/extensions/memory-core /home/node/.openclaw/extensions/memory-core
 
+# Fail the image build when the baked config references a plugin that is not
+# present in the final runtime image. `config get` is read-only and runs the
+# same plugin-aware validation gate used before the gateway starts.
+RUN node /app/openclaw.mjs config get gateway.port > /dev/null
+
 # ── Copy agent-api startup script ─────────────────────────────
 COPY --chown=node:node docker/start-agent-api.sh /app/agent-api/start.sh
 RUN chmod +x /app/agent-api/start.sh

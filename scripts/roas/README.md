@@ -15,7 +15,7 @@ What it does:
 1. Applies section-9 secrets via `apply-fly-secrets.sh`
 2. **Swaps root `.dockerignore` → `docker/fly.dockerignore` for the build, then restores** (see below)
 3. Deploys from repo root with `docker/fly.roas.runtime.toml` + `docker/Dockerfile`
-4. Prints `/api/health`
+4. Prints `/api/health/deep` and fails when OpenClaw or auth is unreachable
 
 Post-deploy smoke:
 
@@ -51,7 +51,13 @@ Fly/Depot uses BuildKit, which reads `.dockerignore` from the build context root
 - `OPENCLAW_GATEWAY_URL=http://127.0.0.1:18789` (in-container gateway, not public URL)
 - **One machine** for shared mode (agent registration is per-machine)
 
-Health should report `mode=shared`, `sync=ok`. Gateway may show `degraded` briefly after deploy while OpenClaw warms.
+The image build runs OpenClaw's plugin-aware config validation after all runtime
+plugins are installed. An unknown plugin now fails the build before Fly can
+release it.
+
+Fly checks `/api/health/deep`, which returns a non-2xx response when OpenClaw or
+auth is unreachable. `/api/health` remains the lightweight process-health route
+for diagnostics during startup.
 
 ## Other scripts
 

@@ -44,6 +44,6 @@ echo "Deploying ${APP} (this may take several minutes)..."
   --dockerfile docker/Dockerfile \
   --strategy immediate
 
-echo "Health check:"
-curl -sS "https://${APP}.fly.dev/api/health" | head -c 400
+echo "Readiness check:"
+curl -fsS "https://${APP}.fly.dev/api/health/deep" | head -c 400
 echo

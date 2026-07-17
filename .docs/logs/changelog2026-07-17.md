@@ -1,5 +1,12 @@
 # Changelog - July 17, 2026
 
+## [2026-07-17 13:02] - [FIX]
+
+What: Added plugin-aware OpenClaw config validation to the final Fly image build and switched Fly runtime checks plus ROAS deploy smoke checks from lightweight process health to deep gateway/auth readiness.
+Why: A stale config could reference a missing plugin, crash OpenClaw, and still leave Fly reporting the agent-api process as healthy.
+Impact: Invalid runtime plugin configurations now fail before release, and Fly marks machines unhealthy when the gateway or auth dependency cannot serve agent work.
+Files: `docker/Dockerfile`, `docker/fly.roas.runtime.toml`, `docker/fly.runtime.toml`, `docker/fly.runtime.staging.toml`, `apps/agent-api/src/health.controller.test.ts`, `scripts/roas/deploy-fly-runtimes.sh`, `scripts/roas/smoke-deploy.sh`, `scripts/roas/README.md`
+
 ## [2026-07-17 12:59] - [FIX]
 
 What: Fathom webhook now listens for `shared_team_recordings` + `my_shared_with_team_recordings` (not only `my_recordings`). Recreated Dylan’s live webhook. Stopped absorbing teammate `recorded_by` emails into `fathom_aliases` (would force Call Kind=Personal).
@@ -48,4 +55,3 @@ What: Ops Desk working/idle badges now filter the agent roster; briefing lists p
 Why: Counts used agent.status while cards only showed mission focus, so "1 working" looked like everyone was idle.
 Impact: Click working/idle on the Ops Desk to see who matches; click again to clear.
 Files: `ops-desk-summary.ts`, `VibeyOpsDeskBriefing.tsx`, `VibeyOpsDesk.tsx`, `AgentsGrid.tsx`, `Team2ManageContent.tsx`, `messages.config.ts`
-

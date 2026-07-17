@@ -64,3 +64,38 @@ describe('HealthController runtime capabilities', () => {
     })
   })
 })
+
+describe('HealthController deep health', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('returns service unavailable when the gateway cannot be reached', async () => {
+    vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      if (String(input).includes('/v1/models')) {
+        throw new Error('connect ECONNREFUSED 127.0.0.1:18789')
+      }
+      return new Response('{}', { status: 200 })
+    })
+    const controller = new HealthController(makeSyncService() as never)
+
+    await expect(controller.deepHealthCheck()).rejects.toMatchObject({
+      status: 503,
+      response: {
+        status: 'error',
+        errors: ['gateway: connect ECONNREFUSED 127.0.0.1:18789'],
+      },
+    })
+  })
+
+  it('reports ready when both gateway and auth probes succeed', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }))
+    const controller = new HealthController(makeSyncService() as never)
+
+    await expect(controller.deepHealthCheck()).resolves.toMatchObject({
+      status: 'ok',
+      gateway: 'reachable',
+      auth: 'reachable',
+    })
+  })
+})

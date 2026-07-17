@@ -22,7 +22,7 @@ primary_region = "iad"
     interval = "30s"
     method = "get"
     timeout = "15s"
-    path = "/api/health"
+    path = "/api/health/deep"
 
 [[services]]
   protocol = "tcp"

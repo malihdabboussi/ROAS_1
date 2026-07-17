@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 API_URL="${API_URL:-https://api.roas.io}"
 WEB_URL="${WEB_URL:-https://app.roas.io}"
 FUNNELS_URL="${FUNNELS_URL:-https://sites.roas.io}"
-FLY_HEALTH_URL="${FLY_HEALTH_URL:-https://roas-runtimes.fly.dev/api/health}"
+FLY_HEALTH_URL="${FLY_HEALTH_URL:-https://roas-runtimes.fly.dev/api/health/deep}"
 
 pass=0
 fail=0
@@ -84,7 +84,7 @@ check "app.roas.io GET /" check_http_up "${WEB_URL}/"
 check "sites.roas.io GET /" check_http_up "${FUNNELS_URL}/"
 
 if [[ "${SMOKE_FLY:-0}" == "1" ]]; then
-  check "roas-runtimes Fly /api/health" check_json_ok "${FLY_HEALTH_URL}"
+  check "roas-runtimes Fly readiness" check_json_ok "${FLY_HEALTH_URL}"
 fi
 
 # Phase 3: public agent proxy on agents.roas.io. Needs a real published slug.
