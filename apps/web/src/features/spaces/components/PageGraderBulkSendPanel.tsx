@@ -91,9 +91,6 @@ export function PageGraderBulkSendPanel({
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
   const [step, setStep] = useState<Step>('client')
   const [clients, setClients] = useState<PageGraderClient[]>([])
-  const [clientTagMap, setClientTagMap] = useState<
-    Record<string, { tag_id: string; tag_label: string }>
-  >({})
   const [clientScopeMap, setClientScopeMap] = useState<PageGraderClientScopeMap>({})
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -161,7 +158,6 @@ export function PageGraderBulkSendPanel({
       .then((res) => {
         if (cancelled) return
         setClients(res.clients)
-        setClientTagMap(res.clientTagMap)
         setClientScopeMap(res.clientScopeMap)
         if (!defaultAppliedRef.current) {
           const preferred = resolveDefaultPageGraderClientId({

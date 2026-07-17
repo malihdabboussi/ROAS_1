@@ -1006,3 +1006,10 @@ What: Removed unused execution-state memo in `useMissionExecStream` and committe
 Why: Vercel web deploy failed first on unused `es`, then related mission typing gaps blocked a clean full rollout.
 Impact: `roas-web` can build and deploy with the rest of production.
 Files: `useMissionExecStream.ts`, `mission-types.ts`
+
+## [2026-07-16 23:12] - [FIX]
+
+What: Removed unused `clientTagMap` state from `PageGraderBulkSendPanel` (still uses `res.clientTagMap` for default client resolution).
+Why: `roas-web` production TypeScript failed on unused locals, blocking full deploy after the Google Docs export commit.
+Impact: Web production builds can proceed past Page Grader bulk send.
+Files: `PageGraderBulkSendPanel.tsx`
