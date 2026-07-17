@@ -833,3 +833,10 @@ What: Made the mission outbox dispatcher remove terminal BullMQ jobs before repu
 Why: Webinar Fulfillment retries reused the same outbox row after the original planning job failed. BullMQ returned that old failed job for every later `add`, so the outbox was marked processed without running the newly deployed API fix.
 Impact: Retrying a completed or failed durable Mission event now creates a fresh BullMQ run instead of replaying terminal queue state. Queue pauses are also recovered and publishes expose worker/concurrency/count evidence.
 Files: `missions.outbox-dispatcher.service.ts`, `missions.outbox-dispatcher.service.test.ts`
+
+## [2026-07-16 18:45] - [FIX]
+
+What: Replaced the partial `mission_deliverables.idempotency_key` unique index with an equivalent full unique index that PostgREST can infer for upserts.
+Why: Mission `save_document` emits `ON CONFLICT (idempotency_key)`, but PostgreSQL cannot match that target to a partial index without the same predicate, causing every Webinar strategy deliverable save to fail with `42P10`.
+Impact: Mission document saves remain idempotent across retries and can persist successfully; multiple rows with a null idempotency key remain valid under PostgreSQL unique-index semantics.
+Files: `20260716224000_fix_mission_deliverable_idempotency_conflict.sql`
