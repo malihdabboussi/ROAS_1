@@ -155,10 +155,12 @@ export class IntegrationsOverviewService {
         row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
           ? (row.metadata as Record<string, unknown>)
           : {}
+      // Absent / empty execution_mode means native/legacy. Only explicit
+      // metadata.execution_mode = 'composio' opts into Composio routing.
       const modeRaw = String(metadata.execution_mode ?? '')
         .trim()
         .toLowerCase()
-      const mode: 'legacy' | 'composio' = modeRaw === 'legacy' ? 'legacy' : 'composio'
+      const mode: 'legacy' | 'composio' = modeRaw === 'composio' ? 'composio' : 'legacy'
       composioExecutionModeByIntegrationId.set(row.integration_id, mode)
     }
 

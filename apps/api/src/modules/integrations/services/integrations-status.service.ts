@@ -146,11 +146,13 @@ export class IntegrationsStatusService {
       config?.metadata && typeof config.metadata === 'object' && !Array.isArray(config.metadata)
         ? (config.metadata as Record<string, unknown>)
         : {}
-    const executionMode = config
-      ? String(configMetadata.execution_mode ?? 'composio').toLowerCase() === 'legacy'
-        ? 'legacy'
-        : 'composio'
-      : 'legacy'
+    // Absent / empty execution_mode means native/legacy. Only explicit
+    // metadata.execution_mode = 'composio' opts into Composio routing.
+    const executionModeRaw = String(configMetadata.execution_mode ?? '')
+      .trim()
+      .toLowerCase()
+    const executionMode: 'legacy' | 'composio' =
+      config && executionModeRaw === 'composio' ? 'composio' : 'legacy'
 
     let connected = String(row?.status ?? '').toLowerCase() === 'connected'
     let forcedStatus: string | null = null

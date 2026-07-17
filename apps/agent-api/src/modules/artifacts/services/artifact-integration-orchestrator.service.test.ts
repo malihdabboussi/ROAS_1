@@ -208,4 +208,31 @@ describe('ArtifactIntegrationOrchestratorService connection repair', () => {
       }),
     )
   })
+
+  it('resolveComposioConfig defaults missing execution_mode to legacy', async () => {
+    const service = new ArtifactIntegrationOrchestratorService()
+    const host = {
+      serviceClient: {},
+      integrationsRepository: {
+        findComposioConfigByIntegrationId: vi.fn(async () => ({
+          data: {
+            integration_id: 'fathom',
+            toolkit_slug: 'fathom',
+            auth_config_id: null,
+            enabled: true,
+            metadata: {},
+          },
+          error: null,
+        })),
+      },
+    }
+
+    const config = await service.resolveComposioConfig(host, 'fathom', '')
+    expect(config).toMatchObject({
+      integration_id: 'fathom',
+      toolkit_slug: 'fathom',
+      enabled: true,
+      execution_mode: 'legacy',
+    })
+  })
 })

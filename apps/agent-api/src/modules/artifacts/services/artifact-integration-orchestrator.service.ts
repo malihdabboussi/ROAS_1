@@ -521,10 +521,14 @@ export class ArtifactIntegrationOrchestratorService {
         data.metadata && typeof data.metadata === 'object' && !Array.isArray(data.metadata)
           ? (data.metadata as Record<string, unknown>)
           : {}
+      // Absent / empty execution_mode means native/legacy. Only explicit
+      // metadata.execution_mode = 'composio' opts into Composio connect/routing.
       const mode =
-        String(metadata.execution_mode ?? '').toLowerCase() === 'legacy'
-          ? ('legacy' as const)
-          : ('composio' as const)
+        String(metadata.execution_mode ?? '')
+          .trim()
+          .toLowerCase() === 'composio'
+          ? ('composio' as const)
+          : ('legacy' as const)
       return {
         integration_id: String(data.integration_id),
         toolkit_slug: String(data.toolkit_slug),

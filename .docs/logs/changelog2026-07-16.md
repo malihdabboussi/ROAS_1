@@ -985,3 +985,10 @@ Why: Chat told users to reconnect Fathom / SearchAPI / Scrape Creators even thou
 Impact: After deploy of `roas-api` + Fly `roas-runtimes`, agents can `use_integration` Fathom transcripts and Ads Intelligence / Meta Ad Library actions. Migration already applied on ROAS prod DB.
 Files: `artifact-legacy-integrations.service.ts`, `artifact-error-classifier.ts`, `searchapi/*`, `scrapecreators-ad-library.controller.ts`, `integration-id.util.ts`, `integration-context.service.ts`, `artifact-capability.policy.ts`, `vibey-api-action-docs.ts`, `roas-market-research/SKILL.md`, `20260717043500_ads_intelligence_and_fathom_legacy_fix.sql`
 
+
+## [2026-07-16 21:49] - [FIX]
+
+What: Aligned remaining execution-mode resolvers with the Fathom fix — missing/empty `metadata.execution_mode` now defaults to `legacy`, and only explicit `composio` opts into Composio — across status, overview, capability sync, and agent orchestrator config mapping.
+Why: The same inverted default still lived in API status/overview and Composio sync, so native OAuth integrations with a toolkit row but no mode could be forced to Composio (and overview could mark them disconnected without a Composio account).
+Impact: Status/overview/providerModes and agent `resolveComposioConfig` match agent-api routing. Native providers stay legacy unless explicitly configured for Composio.
+Files: `integrations-status.service.ts`, `integrations-overview.service.ts`, `composio.service.ts`, `artifact-integration-orchestrator.service.ts`, matching tests

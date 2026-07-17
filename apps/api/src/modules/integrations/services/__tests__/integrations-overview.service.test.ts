@@ -8,6 +8,8 @@ function makeQuery(result: Record<string, unknown>) {
     eq: vi.fn(() => query),
     is: vi.fn(() => query),
     maybeSingle: vi.fn(async () => result),
+    then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) =>
+      Promise.resolve(result).then(resolve, reject),
   }
   return query
 }
@@ -285,6 +287,66 @@ describe('IntegrationsOverviewService', () => {
       expect.arrayContaining([
         expect.objectContaining({ integration_id: 'openai_codex', connected_count: 0 }),
         expect.objectContaining({ integration_id: 'anthropic_claude', connected_count: 0 }),
+      ]),
+    )
+  })
+
+  it('treats missing toolkit execution_mode as legacy so native OAuth stays connected', async () => {
+    const fathomRow = {
+      id: 'fathom-1',
+      user_id: 'user-1',
+      integration_id: 'fathom',
+      provider: 'fathom',
+      status: 'connected',
+      agent_enabled: true,
+      metadata: { access_token_present: true },
+      scope_mode: 'personal',
+    }
+    const repository = {
+      table: vi.fn((_client: unknown, table: string) => {
+        if (table === 'project_composio_toolkit_config') {
+          return makeQuery({
+            data: [
+              {
+                integration_id: 'fathom',
+                enabled: true,
+                metadata: {},
+              },
+            ],
+            error: null,
+          })
+        }
+        return makeQuery({ data: [fathomRow], error: null })
+      }),
+      findAdminPersonalOpenAICodexIntegration: vi.fn(async () => null),
+      findAdminPersonalAnthropicClaudeIntegration: vi.fn(async () => null),
+    }
+    const service = new IntegrationsOverviewService(
+      repository as never,
+      { listConnectedAccounts: vi.fn(async () => []) } as never,
+      {
+        applyScope: vi.fn(async () => ({ data: [fathomRow], error: null })),
+        isOrgContext: vi.fn(() => false),
+      } as never,
+      { hasSecret: vi.fn(async () => false) } as never,
+      { mapComposioToolkitToIntegrationId: vi.fn(() => null) } as never,
+      {} as never,
+      { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
+    )
+
+    const result = await service.getOverview({} as never, { id: 'user-1' }, {
+      orgId: null,
+    } as never)
+
+    expect(result.providerModes.fathom).toBe('legacy')
+    expect(result.connectedProviders).toContain('fathom')
+    expect(result.integrations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          integration_id: 'fathom',
+          status: 'connected',
+          metadata: expect.objectContaining({ execution_mode: 'legacy' }),
+        }),
       ]),
     )
   })

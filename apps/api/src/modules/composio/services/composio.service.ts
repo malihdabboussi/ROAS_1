@@ -481,7 +481,9 @@ export class ComposioService {
         cfg.metadata && typeof cfg.metadata === 'object' && !Array.isArray(cfg.metadata)
           ? (cfg.metadata as Record<string, unknown>)
           : {}
-      const executionMode = String(metadata.execution_mode ?? 'composio')
+      // Absent / empty execution_mode means native/legacy. Only explicit
+      // metadata.execution_mode = 'composio' opts into Composio capability sync.
+      const executionMode = String(metadata.execution_mode ?? '')
         .trim()
         .toLowerCase()
       if (executionMode !== 'composio') continue

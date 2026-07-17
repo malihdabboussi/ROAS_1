@@ -376,11 +376,11 @@ Files:
   Evidence: Playbook `outOfScope` explicitly lists Phase B copy package and Phase C creative; skills TBD from user. Flow Add Flow chooser deferred by plan.
   Needed work: Wire copy/creative skills into playbook phases + Gate 2/3; later Flows → Standard vs Mission playbook.
   Deferred because: User sequenced spine first; skills for B/C not provided yet.
-  Resolved: 2026-07-16 — Phase B/C skill keys + Gates 2/3 wired in playbook; skills seeded from zip. Remaining: Flows Standard vs Mission chooser; `roas-webinar-emails` still missing (orchestrator section 2 blocker).
+  Resolved: 2026-07-16 — Phase B/C skill keys + Gates 2/3 wired in playbook; all required skills, including `roas-webinar-emails`, are now seeded. Remaining: Flows Standard vs Mission chooser.
 
 ## 2026-07-16 - [FEATURE] Seed missing `roas-webinar-emails` for Copy Package section 2
 
-Status: Open
+Status: Resolved 2026-07-16
 Found while: Porting Phase B/C skills from `roas-platform-skills.zip`
 Files:
 
@@ -388,6 +388,19 @@ Files:
   Evidence: Skill not in zip inventory, not in repo under any agent template, zero glob hits for `roas-webinar-emails`.
   Needed work: Author/seed `roas-webinar-emails` under copywriter + library assignment; until then Copy Package section 2 blocks.
   Deferred because: User forbade inventing missing skill content.
+  Resolution: User supplied the packaged skill. Added its six useful resources, removed the duplicate human-copy prompt in favor of `dylans-super-voice` as the single master voice, added the native-Doc output contract, library/template/system rows, and existing-copywriter backfills; removed the playbook capability gap.
+
+## 2026-07-16 - [FEATURE] Mission deliverable modal → full TipTap Docs editor
+
+Status: Open
+Found while: Fixing raw-HTML Strategy v2 / THE PLAN previews
+Files:
+
+- `apps/web/src/components/deliverables/SpaceDocDeliverablePreview.tsx`
+- `apps/web/src/components/deliverables/DeliverablePreviewModal.tsx`
+  Evidence: Linked space-item deliverables now render via SpaceDocDeliverablePreview (HTML), but that surface is still read-only preview — editable TipTap lives in DocsView / DocEditorPanel.
+  Needed work: From mission deliverable preview, deep-link or embed the Space Docs editor for `entity_table=space_items` docs so approve/review edits stick in the same Vibey doc.
+  Deferred because: Root cause (orphan content + markdown renderer) fixed first; full editor embed is a larger UX change.
 
 ## 2026-07-16 - [ARCH] Gate 2 surgical section re-run is intent-only
 
@@ -396,8 +409,8 @@ Found while: Wiring Gate 2 REVIEW MAP into webinar-fulfillment playbook
 Files:
 
 - `apps/mission-worker/src/modules/missions/playbooks/webinar-fulfillment.playbook.ts`
-  Evidence: Gate 2 ecology encodes “re-run ONLY owning skill + reassemble”; mission-worker has no automated fan-out that spawns a single atomic skill subtask from a section-named reject comment.
-  Needed work: Mission revision path that parses section N → skill key → re-run + reassemble without re-running whole package.
+  Evidence: Gate 2 ecology encodes “re-run ONLY owning skill + reassemble”; mission-worker has no automated fan-out that spawns a single atomic skill subtask from a section-named reject comment. The deterministic playbook is now 553 LOC, near the 600-line service limit.
+  Needed work: Add a Mission revision path that parses section N → skill key → re-run + reassemble without re-running the whole package, and extract Phase B/C subtask builders while implementing that routing.
   Deferred because: User said do not redesign pipeline/gates/UI; encode contract in playbook only.
 
 ## 2026-07-15 - [FIX] Team agent `conv=` deep links still unused
@@ -6947,3 +6960,50 @@ Deferred because: Voice routing fix and mic-silence bug were scoped to capture/a
 - Evidence: `wc -l` = 557 after extracting its static action/table references; the service limit is 600 and the proactive extraction threshold is about 500
 - Needed: Extract database read-back/reference collection or URL verification into a focused collaborator
 - Why not now: the incident fix required correcting Mission and Space document reference routing; a second behavioral service split would expand the production recovery scope
+
+## 2026-07-16 — Skills catalog LOC / remaining product surface
+- Feature/app: web skills + api agents
+- File: `apps/web/.../use-skills-agents-and-skills.ts` (~659 LOC)
+- Evidence: Over architecture hook/service comfort zone after catalog org state
+- Needed work: Split catalog organization into `use-skills-catalog-organization.ts`; richer folder/tag pickers (not prompt); runtime materialize-on-slash for foreign skill_keys; channel slash to same catalog endpoint; tags UI beyond API
+- Why not now: Core catalog ownership + folders + slash listing shipped first
+
+## 2026-07-16 — Mission subtask guard test LOC debt (pre-existing)
+
+- Feature/app: mission-worker / missions
+- File: `apps/mission-worker/src/modules/missions/services/__tests__/mission-subtask-guards.test.ts`
+- Evidence: `wc -l` = 708 after adding the focused native-Doc output regression; the file was already 675 lines before this change and exceeds the 600-line architecture limit.
+- Needed work: Split execution-prompt contract tests from lifecycle and stale-job guards while preserving the shared service fixture.
+- Why not now: The requested fix needs regression coverage at the existing execution boundary; reorganizing unrelated mission guard tests would broaden the change.
+
+## 2026-07-16 — MissionStateRepository LOC debt (pre-existing)
+
+- Feature/app: mission-worker / missions
+- File: `apps/mission-worker/src/modules/missions/services/persistence/mission-state.repository.ts`
+- Evidence: `wc -l` = 735; the service already exceeded the 400-line lint limit before the human-gate aggregate precedence correction.
+- Needed work: Extract mission aggregate calculation and outbox-ready-subtask persistence into focused collaborators while preserving the shared advisory-lock boundary.
+- Why not now: The requested change is a focused lifecycle correction; splitting unrelated persistence and campaign-sync responsibilities would materially broaden the behavior under test.
+
+## 2026-07-16 — Mission execution stream hook LOC debt
+
+- Feature/app: web / mission-control
+- File: `apps/web/src/features/mission-control/hooks/useMissionExecStream.ts` (353 LOC; hook limit 300)
+- Evidence: `wc -l` after teaching the existing hook to recover persisted partial output; the hook already combined persisted execution-state mapping, realtime channel ownership, and tool/text block assembly.
+- Needed work: Extract persisted execution-state normalization/block construction into a focused utility or hook while keeping realtime subscription ownership in `useMissionExecStream`.
+- Why not now: The requested change is live mission visibility; restructuring the active realtime stream would expand regression risk beyond the focused recovery behavior.
+
+## 2026-07-16 — Composio service LOC over limit (pre-existing)
+
+- Feature/app: api / composio
+- File: `apps/api/src/modules/composio/services/composio.service.ts` (672 LOC; service limit 600)
+- Evidence: `wc -l` after the execution-mode default fix; file was already over the hard limit before this change.
+- Needed work: Extract `syncCapabilities` (Composio toolkit sync + legacy capability upsert + embedding) into a dedicated collaborator service.
+- Why not now: This change is a one-line polarity fix plus comment; splitting syncCapabilities would broaden scope beyond the missing-mode default bug class.
+
+## 2026-07-16 — Integration orchestrator near LOC limit (pre-existing)
+
+- Feature/app: agent-api / artifacts
+- File: `apps/agent-api/src/modules/artifacts/services/artifact-integration-orchestrator.service.ts` (596 LOC; service limit 600)
+- Evidence: `wc -l` after correcting `resolveComposioConfig` missing-mode default; already near the hard limit.
+- Needed work: Extract connect initiation / Composio config mapping into a focused collaborator.
+- Why not now: Requested work is the execution-mode polarity fix only.

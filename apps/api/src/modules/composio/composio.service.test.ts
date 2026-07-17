@@ -220,4 +220,43 @@ describe('ComposioService catalog data access', () => {
       }),
     )
   })
+
+  it('skips Composio capability sync when toolkit execution_mode is missing', async () => {
+    const config = {
+      get: vi.fn((key: string) => {
+        if (key === 'COMPOSIO_API_KEY') return 'composio-key'
+        if (key === 'COMPOSIO_BASE_URL') return undefined
+        if (key === 'GEMINI_API_KEY') return undefined
+        return undefined
+      }),
+    }
+    const repository = {
+      findSyncedIntegrationIds: vi.fn(async () => ({ data: [], error: null })),
+      findProjectToolkitConfigs: vi.fn(async () => ({
+        data: [
+          {
+            integration_id: 'unknown_native_provider',
+            toolkit_slug: 'unknown_native_provider',
+            enabled: true,
+            metadata: {},
+          },
+        ],
+        error: null,
+      })),
+      findIntegrationCapabilityCopy: vi.fn(async () => ({ data: null, error: null })),
+      upsertIntegrationCapability: vi.fn(async () => ({ error: null })),
+    }
+    const service = new ComposioService(config as never, repository as never)
+    vi.spyOn(service, 'listConnectedAccounts').mockResolvedValue([])
+    const listTools = vi.spyOn(service, 'listToolsForToolkits').mockResolvedValue([])
+
+    const result = await service.syncCapabilities('fallback-user', {
+      only: ['unknown_native_provider'],
+      force: true,
+    })
+
+    expect(result.composio).toBe(0)
+    expect(listTools).not.toHaveBeenCalled()
+    expect(repository.upsertIntegrationCapability).not.toHaveBeenCalled()
+  })
 })
