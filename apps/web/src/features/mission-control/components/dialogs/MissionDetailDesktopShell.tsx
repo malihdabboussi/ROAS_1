@@ -68,6 +68,26 @@ export function MissionDetailDesktopShell({
   const isActiveHumanGate =
     selectedSubtask?.assignee_type === 'human' && selectedSubtask.status === 'awaiting_human'
 
+  const gateLeadSlot =
+    isActiveHumanGate && subtaskDetailProps ? (
+      <HumanGateReviewPanel
+        subtask={subtaskDetailProps.subtask}
+        dependencies={subtaskDetailProps.dependencies}
+        agents={subtaskDetailProps.agents}
+        userProfile={subtaskDetailProps.userProfile}
+        deliverables={subtaskDetailProps.deliverables}
+        resourceLinks={subtaskDetailProps.resourceLinks}
+        feedback={subtaskDetailProps.feedback}
+        approving={subtaskDetailProps.approving}
+        sendingFeedback={subtaskDetailProps.sendingFeedback}
+        onFeedbackChange={subtaskDetailProps.onFeedbackChange}
+        onRequestChanges={subtaskDetailProps.onRequestChanges}
+        onApprove={subtaskDetailProps.onApprove}
+        compact
+        embedded
+      />
+    ) : null
+
   return (
     <div className={`fixed inset-0 ${shellZ} flex items-center justify-center`}>
       <div className="bg-modal-overlay absolute inset-0" onClick={onClose} />
@@ -125,28 +145,12 @@ export function MissionDetailDesktopShell({
           />
 
           <div ref={chatRef} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-            {isActiveHumanGate && subtaskDetailProps ? (
-              <div className="pr-spacing-1 mb-spacing-3 min-h-0 flex-1 overflow-y-auto">
-                <HumanGateReviewPanel
-                  subtask={subtaskDetailProps.subtask}
-                  dependencies={subtaskDetailProps.dependencies}
-                  agents={subtaskDetailProps.agents}
-                  userProfile={subtaskDetailProps.userProfile}
-                  deliverables={subtaskDetailProps.deliverables}
-                  resourceLinks={subtaskDetailProps.resourceLinks}
-                  feedback={subtaskDetailProps.feedback}
-                  approving={subtaskDetailProps.approving}
-                  sendingFeedback={subtaskDetailProps.sendingFeedback}
-                  onFeedbackChange={subtaskDetailProps.onFeedbackChange}
-                  onRequestChanges={subtaskDetailProps.onRequestChanges}
-                  onApprove={subtaskDetailProps.onApprove}
-                  compact
-                />
-              </div>
-            ) : null}
             <ActivityTimeline
               {...activityTimelineProps}
               className="pb-spacing-2 flex min-h-0 min-w-0 flex-1 flex-col"
+              title={isActiveHumanGate ? 'Review' : 'Activity'}
+              leadSlot={gateLeadSlot}
+              hideEmptyState={isActiveHumanGate}
             />
           </div>
         </div>

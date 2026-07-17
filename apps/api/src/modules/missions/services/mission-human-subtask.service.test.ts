@@ -178,6 +178,52 @@ describe('MissionHumanSubtaskService', () => {
     )
   })
 
+  it('completes a gate without files without creating a document deliverable', async () => {
+    const { service, humanSubtaskRepository, missionsRepository, missionOutboxService } =
+      createHarness({
+        mission_subtasks: [
+          { data: assignedHumanSubtask, error: null },
+          { data: null, error: null },
+          {
+            data: [
+              { id: 'subtask-1', status: 'done', depends_on: [], assignee_type: 'human' },
+              { id: 'subtask-2', status: 'done', depends_on: [], assignee_type: 'agent' },
+            ],
+            error: null,
+          },
+        ],
+        missions: [{ data: baseMission, error: null }, { data: null, error: null }],
+        __repositorySubtask: [{ data: assignedHumanSubtask }],
+        __repositoryMission: [{ data: baseMission }],
+        __repositoryAdvance: [
+          {
+            data: [
+              { id: 'subtask-1', status: 'done', depends_on: [], assignee_type: 'human' },
+              { id: 'subtask-2', status: 'done', depends_on: [], assignee_type: 'agent' },
+            ],
+          },
+        ],
+      })
+
+    await expect(
+      service.completeHuman('user-1', 'mission-1', 'subtask-1', {
+        summary: 'Approved Gate 1, approve strategy package. Ready to continue.',
+      }),
+    ).resolves.toEqual({ ok: true, deliverable_id: null })
+
+    expect(missionsRepository.createDeliverable).not.toHaveBeenCalled()
+    expect(humanSubtaskRepository.markHumanSubtaskDone).toHaveBeenCalledWith(
+      expect.anything(),
+      'mission-1',
+      'subtask-1',
+      expect.objectContaining({
+        status: 'done',
+        deliverable_id: null,
+      }),
+    )
+    expect(missionOutboxService.enqueueOutboxEvent).toHaveBeenCalled()
+  })
+
   it('bounces a human subtask back to a registered agent', async () => {
     const { service, missionOutboxService, missionsRepository } = createHarness({
       mission_subtasks: [

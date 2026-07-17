@@ -74,6 +74,9 @@ export function MissionDetailOverlayModals({
           hideOpenSourceMission
           renderEntityPreview={renderDeliverableEntityPreview}
           onClose={onClosePreview}
+          onBack={onClosePreview}
+          backLabel="Back to mission"
+          presentation="centered"
         />
       )}
 

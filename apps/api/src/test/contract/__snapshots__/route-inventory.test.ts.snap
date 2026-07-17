@@ -5224,10 +5224,6 @@ exports[`API route inventory contract > matches the committed method + path inve
   },
   {
     "method": "GET",
-    "path": "/api/studio/search",
-  },
-  {
-    "method": "GET",
     "path": "/api/team-roster",
   },
   {

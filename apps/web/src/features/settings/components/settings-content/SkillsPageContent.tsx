@@ -133,6 +133,12 @@ export default function SkillsPageContent() {
     folderUploadPathRef,
     downloadSkillResourceFile,
     downloadSkillMd,
+    catalogFolders,
+    skillKeyToFolderId,
+    folderBusy,
+    handleCreateFolder,
+    handleEnsureDefaultAgencyFolder,
+    handleSetSkillFolder,
   } = useSkillsPage()
 
   const { openAgent } = useAgentMenuActions()
@@ -375,6 +381,12 @@ export default function SkillsPageContent() {
           downloadSkillMd={() => {
             if (detailSkillResolved) downloadSkillMd(detailSkillResolved)
           }}
+          catalogFolders={catalogFolders}
+          skillKeyToFolderId={skillKeyToFolderId}
+          folderBusy={folderBusy}
+          onCreateFolder={handleCreateFolder}
+          onEnsureDefaultAgencyFolder={handleEnsureDefaultAgencyFolder}
+          onSetSkillFolder={handleSetSkillFolder}
         />
       </div>
 

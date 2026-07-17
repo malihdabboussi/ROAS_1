@@ -6,6 +6,61 @@ export type MissionPreflightDomain = Domain
 export const CONTRACT_ACTION_DOMAINS: Partial<Record<string, MissionPreflightDomain>> =
   ACTION_TO_DOMAIN
 
+export type ToolDeliverableReceipt = {
+  deliverable_id: string
+  title: string | null
+  file_url: string | null
+  file_name: string | null
+}
+
+export function extractToolDeliverableReceipt(result: unknown): ToolDeliverableReceipt | null {
+  const visited = new Set<object>()
+
+  const visit = (value: unknown, depth: number): ToolDeliverableReceipt | null => {
+    if (depth > 8 || value == null) return null
+    if (typeof value === 'string') {
+      const trimmed = value.trim()
+      if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return null
+      try {
+        return visit(JSON.parse(trimmed), depth + 1)
+      } catch {
+        return null
+      }
+    }
+    if (typeof value !== 'object') return null
+    if (visited.has(value)) return null
+    visited.add(value)
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const receipt = visit(item, depth + 1)
+        if (receipt) return receipt
+      }
+      return null
+    }
+
+    const record = value as Record<string, unknown>
+    const deliverableId =
+      typeof record.deliverable_id === 'string' ? record.deliverable_id.trim() : ''
+    if (deliverableId) {
+      return {
+        deliverable_id: deliverableId,
+        title: typeof record.title === 'string' ? record.title : null,
+        file_url: typeof record.file_url === 'string' ? record.file_url : null,
+        file_name: typeof record.file_name === 'string' ? record.file_name : null,
+      }
+    }
+
+    for (const key of ['content', 'text', 'details', 'data', 'result']) {
+      const receipt = visit(record[key], depth + 1)
+      if (receipt) return receipt
+    }
+    return null
+  }
+
+  return visit(result, 0)
+}
+
 export function activeSubtasksAllDone(statusRows: Array<{ status: unknown }>): boolean {
   const active = statusRows.filter((row) => String(row.status) !== 'cancelled')
   return active.length > 0 && active.every((row) => String(row.status) === 'done')

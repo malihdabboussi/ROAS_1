@@ -156,6 +156,39 @@ describe('MissionsService subtask lifecycle guards', () => {
     expect(prompt.taskUserMessage).toContain('action=create_pdf')
   })
 
+  it('forbids file-export companions when the output contract requires a native Doc', async () => {
+    const service = createExecuteService()
+    service.contextService.buildCampaignContext.mockResolvedValue('Campaign context block')
+    service.contextService.extractTopRelevantCampaignFacts.mockReturnValue(['Fact A'])
+
+    const prompt = await service['buildSubtaskExecutionPrompt'](
+      {} as any,
+      {
+        title: 'Webinar fulfillment',
+        brief: 'Create the Copy Package as a Doc',
+      },
+      { content: { summary: 'Build the webinar package' } },
+      {
+        title: 'Copy Package',
+        status: 'in_progress',
+        intent: {},
+        output_contract: {
+          artifact_kind: 'document_artifact',
+          required_action: 'save_document',
+          required_artifact_type: 'doc',
+          expected: { title: 'Copy Package' },
+        },
+      },
+      [],
+      '',
+      [],
+    )
+
+    expect(prompt.taskUserMessage).toContain('Call save_document for the final output')
+    expect(prompt.taskUserMessage).toContain('Publish only the native editable Doc')
+    expect(prompt.taskUserMessage).toContain('Do not create PDF, DOCX')
+  })
+
   it('skips stale subtask execute jobs when subtask is already done', async () => {
     const subtaskSelectChain = {
       eq: vi.fn().mockReturnThis(),

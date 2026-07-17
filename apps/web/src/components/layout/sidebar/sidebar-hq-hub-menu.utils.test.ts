@@ -9,6 +9,8 @@ describe('sidebar-hq-hub-menu.utils', () => {
   it('maps route prefixes to hub sections', () => {
     expect(hubSectionFromPathname('/team/skills')).toBe('team')
     expect(hubSectionFromPathname('/spaces/abc')).toBe('spaces')
+    expect(hubSectionFromPathname('/campaigns')).toBe('spaces')
+    expect(hubSectionFromPathname('/campaigns/abc')).toBe('spaces')
     expect(hubSectionFromPathname('/brain')).toBe('brain')
     expect(hubSectionFromPathname('/projects/1')).toBe('projects')
     expect(hubSectionFromPathname('/home')).toBeNull()

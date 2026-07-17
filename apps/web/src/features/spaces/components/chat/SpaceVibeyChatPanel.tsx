@@ -144,6 +144,7 @@ import { SpaceChatSubPanel } from './SpaceChatSubPanel'
 import { SpaceUndoButton } from './SpaceUndoButton'
 import type { SpaceVoiceRunTask } from './SpaceVoiceRunsView'
 import { SpaceVoiceSessionView } from './SpaceVoiceSessionView'
+import { resolveSuggestedConversationTitle } from '@/lib/conversations/conversation-title'
 import { stripLegacySpacesConversationTitle } from './strip-legacy-spaces-conversation-title'
 
 interface SpaceVibeyChatPanelProps {
@@ -166,6 +167,8 @@ interface SpaceVibeyChatPanelProps {
     awarenessContext: string
   } | null
   onCollapseChat?: () => void
+  /** Agent picker + history chrome live in the shell Chat sidebar. */
+  shellSidebarChrome?: boolean
 }
 
 type ChatMode = SpaceChatMode
@@ -222,6 +225,7 @@ export function SpaceVibeyChatPanel({
   brainContext,
   teamOpsContext,
   onCollapseChat,
+  shellSidebarChrome = false,
 }: SpaceVibeyChatPanelProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -1039,9 +1043,10 @@ export function SpaceVibeyChatPanel({
       }
 
       if (isFirstMessageInThread && content.trim()) {
-        void suggestConversationTitle(content.trim())
+        const firstMessage = content.trim()
+        void suggestConversationTitle(firstMessage)
           .then(async (res) => {
-            const title = (res.title ?? '').trim().slice(0, 200)
+            const title = resolveSuggestedConversationTitle(res.title, firstMessage, 200)
             if (!title) return
             await renameConversation(nextConversationId, title)
             setConversations((prev) =>
@@ -1049,7 +1054,19 @@ export function SpaceVibeyChatPanel({
             )
             useChatStore.getState().updateConversation(nextConversationId, { title })
           })
-          .catch(() => {})
+          .catch(async () => {
+            const title = resolveSuggestedConversationTitle(null, firstMessage, 200)
+            if (!title) return
+            try {
+              await renameConversation(nextConversationId, title)
+              setConversations((prev) =>
+                prev.map((c) => (c.id === nextConversationId ? { ...c, title } : c)),
+              )
+              useChatStore.getState().updateConversation(nextConversationId, { title })
+            } catch {
+              // Non-critical — chat.service already set a first-message title.
+            }
+          })
       }
     },
     [
@@ -1557,9 +1574,10 @@ export function SpaceVibeyChatPanel({
         persistActiveConversationId(spaceId, nextConversationId, activeAgentKey)
 
         if (payload.content.trim()) {
-          void suggestConversationTitle(payload.content.trim())
+          const firstMessage = payload.content.trim()
+          void suggestConversationTitle(firstMessage)
             .then(async (res) => {
-              const title = (res.title ?? '').trim().slice(0, 200)
+              const title = resolveSuggestedConversationTitle(res.title, firstMessage, 200)
               if (!title) return
               await renameConversation(nextConversationId, title)
               setConversations((prev) =>
@@ -1567,7 +1585,19 @@ export function SpaceVibeyChatPanel({
               )
               useChatStore.getState().updateConversation(nextConversationId, { title })
             })
-            .catch(() => {})
+            .catch(async () => {
+              const title = resolveSuggestedConversationTitle(null, firstMessage, 200)
+              if (!title) return
+              try {
+                await renameConversation(nextConversationId, title)
+                setConversations((prev) =>
+                  prev.map((c) => (c.id === nextConversationId ? { ...c, title } : c)),
+                )
+                useChatStore.getState().updateConversation(nextConversationId, { title })
+              } catch {
+                // Non-critical — chat.service already set a first-message title.
+              }
+            })
         }
       } catch (error) {
         toast.error(sanitizeUserError(error, CHAT_TOAST_ERRORS.CHAT_SEND_ERROR.userMessage))
@@ -1969,6 +1999,7 @@ export function SpaceVibeyChatPanel({
       onNewConversation={() => void handleNewConversation()}
       onShowVoiceRuns={() => setMode('voice-runs')}
       onShowConversations={() => setMode('conversations')}
+      hideHistoryChrome={shellSidebarChrome}
     />
   )
 
@@ -1986,12 +2017,14 @@ export function SpaceVibeyChatPanel({
           </div>
           {sessionTitle ? (
             <Tooltip label={sessionTitle} side="bottom" wide triggerClassName="flex min-w-0 flex-1">
-              <div className="body-3 text-muted-foreground px-spacing-2 w-full min-w-0 truncate text-center leading-tight">
+              <div className="body-3 text-foreground px-spacing-2 w-full min-w-0 truncate text-left leading-tight font-medium">
                 {sessionTitle}
               </div>
             </Tooltip>
           ) : (
-            <div className="min-w-0 flex-1" aria-hidden />
+            <div className="text-muted-foreground body-3 px-spacing-2 min-w-0 flex-1 truncate text-left">
+              New chat
+            </div>
           )}
           <div className="flex shrink-0 items-center">{chatHeaderActions}</div>
         </div>
@@ -2005,8 +2038,13 @@ export function SpaceVibeyChatPanel({
       data-spaces-chat-panel
       ref={chatPanelRef}
       className={cn(
-        'flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-[var(--border)]',
-        panelMode === 'conversations' ||
+        'flex h-full min-h-0 min-w-0 flex-col overflow-hidden',
+        // Shell chrome: fluid full-bleed chat (no card frame). Embedded uses card chrome.
+        shellSidebarChrome
+          ? 'bg-background'
+          : 'rounded-2xl border border-[var(--border)]',
+        !shellSidebarChrome &&
+          (panelMode === 'conversations' ||
           panelMode === 'voice-runs' ||
           panelMode === 'presentation-comments' ||
           panelMode === 'presentation-design' ||
@@ -2014,15 +2052,20 @@ export function SpaceVibeyChatPanel({
           panelMode === 'funnel-comments' ||
           panelMode === 'funnel-design' ||
           panelMode === 'funnel-tweaks'
-          ? 'surface-bg'
-          : 'surface-card',
+            ? 'surface-bg'
+            : 'surface-card'),
       )}
     >
       <VoiceApprovalProvider value={voiceActive ? voiceSession.sendApproval : null}>
         <ChatPanelSlideStack
           panelKey={panelMode}
           chatPanel={
-            <div className="surface-bg group flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <div
+              className={cn(
+                'group flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden',
+                shellSidebarChrome ? 'bg-background' : 'surface-bg',
+              )}
+            >
               {chatHeaderBlock}
 
               {voiceActive ? (
@@ -2229,7 +2272,7 @@ export function SpaceVibeyChatPanel({
 
                   <div
                     className={cn(
-                      'relative flex flex-col items-center px-3 pb-3 pt-2 md:px-4',
+                      'relative flex shrink-0 flex-col items-center px-3 pb-3 pt-2 md:px-4',
                       isStopping && 'opacity-70',
                     )}
                   >

@@ -1,6 +1,6 @@
 'use client'
 
-import { Brain, FolderGit2, House, ListChecks, Users, Workflow } from 'lucide-react'
+import { Brain, Ellipsis, House, ListChecks, Users } from 'lucide-react'
 import type { ManageRailItem } from './sidebar-types'
 
 export const manageRailItems: ManageRailItem[] = [
@@ -21,7 +21,7 @@ export const manageRailItems: ManageRailItem[] = [
   },
   {
     id: 'spaces',
-    label: 'Spaces',
+    label: 'Campaigns',
     type: 'panel',
     panelId: 'spaces',
     icon: <ListChecks className="icon-md" />,
@@ -35,17 +35,10 @@ export const manageRailItems: ManageRailItem[] = [
     icon: <Brain className="icon-md" />,
   },
   {
-    id: 'projects',
-    label: 'Projects',
+    id: 'more',
+    label: 'More',
     type: 'panel',
-    panelId: 'projects',
-    icon: <FolderGit2 className="icon-md" />,
-  },
-  {
-    id: 'flows',
-    label: 'Flows',
-    type: 'link',
-    href: '/flows',
-    icon: <Workflow className="icon-md" />,
+    panelId: 'more',
+    icon: <Ellipsis className="icon-md" />,
   },
 ]

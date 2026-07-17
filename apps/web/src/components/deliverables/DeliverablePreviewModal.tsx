@@ -5,9 +5,9 @@ import type {
   DeliverableEntityPreviewRenderer,
   ViewMode,
 } from '@/components/deliverables/deliverable-preview-modal.types'
+import { DeliverablePreviewActions } from '@/components/deliverables/DeliverablePreviewActions'
 import { DeliverablePreviewBody } from '@/components/deliverables/DeliverablePreviewBody'
 import { DeliverablePreviewBrainConfirmDialog } from '@/components/deliverables/DeliverablePreviewBrainConfirmDialog'
-import { DeliverablePreviewExportFooter } from '@/components/deliverables/DeliverablePreviewExportFooter'
 import { DeliverablePreviewModalHeader } from '@/components/deliverables/DeliverablePreviewModalHeader'
 import { DeliverablePreviewModalToolbar } from '@/components/deliverables/DeliverablePreviewModalToolbar'
 import { normalizeDeliverableContent } from '@/components/deliverables/normalize-deliverable-content'
@@ -42,6 +42,10 @@ export interface DeliverablePreviewModalProps {
   onDeliverableRenamed?: (title: string) => void
   /** Feature/container-owned entity renderer for non-doc artifact deliverables. */
   renderEntityPreview: DeliverableEntityPreviewRenderer
+  /** When set, header shows Back (same close as X — returns to parent surface). */
+  onBack?: () => void
+  backLabel?: string
+  presentation?: 'docked' | 'centered'
 }
 
 export function DeliverablePreviewModal({
@@ -58,8 +62,12 @@ export function DeliverablePreviewModal({
   fallbackSpaceId,
   onDeliverableRenamed,
   renderEntityPreview,
+  onBack,
+  backLabel = 'Back',
+  presentation = 'docked',
 }: DeliverablePreviewModalProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('wide')
+  const [expanded, setExpanded] = useState(false)
   const [isMobileToolbar, setIsMobileToolbar] = useState(false)
   const titleRename = useDeliverableTitleRename({
     deliverable,
@@ -79,12 +87,9 @@ export function DeliverablePreviewModal({
 
   const {
     contentRef,
-    exportFooterTriggerRef,
     exporting,
     copied,
     setCopied,
-    exportOpen,
-    setExportOpen,
     handleExportPdf,
     handleCopy,
     handleExportMd,
@@ -129,10 +134,7 @@ export function DeliverablePreviewModal({
           brainMenu.setBrainDropdownOpen(false)
           return
         }
-        if (exportOpen) {
-          setExportOpen(false)
-          return
-        }
+        e.stopPropagation()
         onClose()
       }
     }
@@ -140,8 +142,6 @@ export function DeliverablePreviewModal({
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [
     onClose,
-    exportOpen,
-    setExportOpen,
     brainMenu.confirmBrain,
     brainMenu.brainDropdownOpen,
     brainMenu.setBrainDropdownOpen,
@@ -178,22 +178,59 @@ export function DeliverablePreviewModal({
 
   const agent = agents.find((a) => a.agent_key === deliverable.agent_key)
 
-  const showExportFooter =
+  const exportMode = isEntityType && entityData != null ? 'entity' : 'text'
+  const exportAvailable =
     !entityContentLoading &&
     ((isTextType && !!(deliverable.content || effectiveContent)) ||
       (isEntityType && entityData != null))
 
   return (
-    <div className="z-modal-content fixed inset-0 flex items-center justify-center">
-      <div className="absolute inset-0 bg-modal-overlay" onClick={onClose} />
-      <div className="surface-card border-border container-modal-3xl wizard-container-border rounded-spacing-4 z-modal-layer-3 relative mx-4 flex min-h-0 w-full flex-col overflow-hidden border shadow-xl">
-        <DeliverablePreviewModalHeader {...titleRename} />
+    <div
+      data-deliverable-preview-presentation={presentation}
+      className={`z-modal-content fixed flex ${
+        expanded
+          ? 'inset-0 items-stretch justify-end'
+          : presentation === 'centered'
+            ? 'p-spacing-4 inset-0 items-center justify-center'
+            : 'top-spacing-10 mt-spacing-3 bottom-0 left-0 right-0 items-stretch justify-end'
+      }`}
+    >
+      <div className="bg-modal-overlay absolute inset-0" onClick={onClose} />
+      <div
+        className={`surface-card border-border wizard-container-border z-modal-layer-3 relative flex min-h-0 w-full flex-col overflow-hidden border shadow-xl ${
+          expanded
+            ? 'rounded-none'
+            : presentation === 'centered'
+              ? 'container-modal-3xl rounded-spacing-4'
+              : 'rounded-spacing-4 max-w-5xl border-y-0 border-r-0'
+        }`}
+      >
+        <DeliverablePreviewModalHeader
+          {...titleRename}
+          onBack={onBack}
+          backLabel={backLabel}
+          actions={
+            <DeliverablePreviewActions
+              deliverable={deliverable}
+              mode={exportMode}
+              copied={copied}
+              exporting={exporting}
+              exportAvailable={exportAvailable}
+              expanded={expanded}
+              onCopy={handleCopy}
+              onExportMd={handleExportMd}
+              onExportPdf={handleExportPdf}
+              onEntityExport={handleEntityExport}
+              onToggleExpanded={() => setExpanded((value) => !value)}
+              onClose={onClose}
+            />
+          }
+        />
 
         <div className="px-spacing-6 pb-spacing-3 flex flex-shrink-0 items-center justify-between gap-3 overflow-visible">
           <DeliverablePreviewMetaRow agent={agent} deliverable={deliverable} />
           <DeliverablePreviewModalToolbar
             deliverable={deliverable}
-            onClose={onClose}
             isTextType={isTextType}
             viewMode={viewMode}
             setViewMode={setViewMode}
@@ -240,22 +277,6 @@ export function DeliverablePreviewModal({
               renderEntityPreview={renderEntityPreview}
             />
           </div>
-          {showExportFooter ? (
-            <DeliverablePreviewExportFooter
-              anchorRef={exportFooterTriggerRef}
-              exportOpen={exportOpen}
-              setExportOpen={setExportOpen}
-              mode={isEntityType && entityData != null ? 'entity' : 'text'}
-              copied={copied}
-              exporting={exporting}
-              handleCopy={handleCopy}
-              handleExportMd={handleExportMd}
-              handleExportPdf={handleExportPdf}
-              handleEntityExport={handleEntityExport}
-              isMobileLayout={isMobileToolbar}
-              entityType={deliverable.type}
-            />
-          ) : null}
         </div>
       </div>
 

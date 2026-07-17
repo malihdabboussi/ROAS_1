@@ -47,7 +47,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
         body: welcomeDocBody('Agency Client (Webinar)', [
           '**Missions → Start playbook** — run Webinar Fulfillment (strategy → gate → copy → creative)',
           '**Deliverables (Kanban)** — track brief → paid for client-facing packages',
-          '**Docs** — Pre-Call map, Strategy v2, THE PLAN, Copy Package, Creative Pack',
+          '**Docs** — WEB#1–#8 flow docs (Pre-Call → Creative Pack)',
           '**Calendar** — call dates and launch deadlines',
           '**Channel** — internal client comms',
         ]),
@@ -55,7 +55,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
       },
       {
         kind: 'doc',
-        title: 'Pre-Call Strategy Map',
+        title: 'WEB#1 — Pre-Call Strategy Map',
         body: docBody([
           '## Pre-Call Strategy Map',
           '',
@@ -70,7 +70,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
       },
       {
         kind: 'doc',
-        title: 'Strategy v2',
+        title: 'WEB#2 — Strategy v2',
         body: docBody([
           '## Strategy v2',
           '',
@@ -84,9 +84,9 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
       },
       {
         kind: 'doc',
-        title: 'THE PLAN — Launch Brief',
+        title: 'WEB#3 — THE PLAN — Launch Brief',
         body: docBody([
-          '## THE PLAN',
+          '## THE PLAN — Launch Brief',
           '',
           'Launch brief for production (Phase A / skill 3).',
           '',
@@ -98,30 +98,71 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
       },
       {
         kind: 'doc',
-        title: 'Copy Package',
+        title: 'WEB#4 — Market Research',
         body: docBody([
-          '## Copy Package',
+          '## Market Research',
           '',
-          'Phase B (skills TBD) — topics, emails, Meta ads, scripts, landing page copy.',
+          'Filled by ads_manager after Gate 1 (observed ad-library receipts + raw JSON attachment).',
+          '',
+          '_Placeholder until the research subtask saves into this doc._',
         ]),
         sort_order: 4,
       },
       {
         kind: 'doc',
-        title: 'Creative Pack',
+        title: 'WEB#5 — Copy Package',
+        body: docBody([
+          '## Copy Package',
+          '',
+          'Filled by copywriter after market research (topics, emails, Meta ads, scripts, LP).',
+          '',
+          '_Placeholder until the Copy Package subtask saves into this doc. If this text is still here after that step, the agent did not overwrite it — reopen the mission deliverable or ask for a re-save titled exactly `WEB#5 — Copy Package`._',
+        ]),
+        sort_order: 5,
+      },
+      {
+        kind: 'doc',
+        title: 'WEB#6 — Image Briefs',
+        body: docBody([
+          '## Image Briefs',
+          '',
+          'Filled in Phase C — ImageGen paste-ready prompts.',
+          '',
+          '_Placeholder until the image-brief subtask saves into this doc._',
+        ]),
+        sort_order: 6,
+      },
+      {
+        kind: 'doc',
+        title: 'WEB#7 — Deck Outline v1',
+        body: docBody([
+          '## Deck Outline v1',
+          '',
+          'Filled in Phase C before Gate 3 — webinar arc only (no slides yet).',
+          '',
+          '_Placeholder until the deck-outline subtask saves into this doc._',
+        ]),
+        sort_order: 7,
+      },
+      {
+        kind: 'doc',
+        title: 'WEB#8 — Creative Pack',
         body: docBody([
           '## Creative Pack',
           '',
-          'Phase C (skills TBD) — static ads, theme images, landing visuals, deck.',
+          'Phase C rollup — static ads, theme images, landing visuals, deck.',
+          '',
+          '_Placeholder until creatives land in Deliverables / this pack._',
         ]),
-        sort_order: 5,
+        sort_order: 8,
       },
       {
         kind: 'task',
         title: 'Start Webinar Fulfillment playbook',
         status: 'brief',
-        description: 'Open Missions → Playbook (or use Start Webinar Fulfillment on the empty Missions screen) and fill kickoff fields.',
-        sort_order: 6,
+        description:
+          'Open Missions → Playbook (or use Start Webinar Fulfillment on the empty Missions screen) and fill kickoff fields.',
+        sort_order: 9,
       },
     ],
     automations: [],

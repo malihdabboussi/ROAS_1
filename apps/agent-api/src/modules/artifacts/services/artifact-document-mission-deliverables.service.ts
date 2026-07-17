@@ -1,5 +1,31 @@
 import { createHash } from 'crypto'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { ArtifactDocumentFilesRepository } from '../repositories/artifact-document-files.repository'
+import { markdownToHtml } from '../utils/markdown-to-html.util'
+import { createSpaceDocItem, resolveDocumentSpaceId } from './artifact-space-scope'
+import { ensureSpaceView } from './ensure-space-view'
+
+/** Title groups for webinar flow docs — dual-write matches any alias in the group. */
+const WEBINAR_FLOW_DOC_TITLE_GROUPS: string[][] = [
+  ['WEB#1 — Pre-Call Strategy Map', 'Pre-Call Strategy Map'],
+  ['WEB#2 — Strategy v2', 'Strategy v2'],
+  ['WEB#3 — THE PLAN — Launch Brief', 'THE PLAN — Launch Brief', 'THE PLAN'],
+  ['WEB#4 — Market Research', 'Market Research', 'Market Research — [Client]'],
+  ['WEB#5 — Copy Package', 'Copy Package'],
+  ['WEB#6 — Image Briefs', 'Image Briefs'],
+  ['WEB#7 — Deck Outline v1', 'Deck Outline v1'],
+  ['WEB#8 — Creative Pack', 'Creative Pack'],
+]
+
+function resolveSpaceDocTitleCandidates(title: string): string[] {
+  const group = WEBINAR_FLOW_DOC_TITLE_GROUPS.find((titles) => titles.includes(title))
+  return group ?? [title]
+}
+
+function canonicalSpaceDocTitle(title: string): string {
+  const group = WEBINAR_FLOW_DOC_TITLE_GROUPS.find((titles) => titles.includes(title))
+  return group?.[0] ?? title
+}
 
 type MissionDeliverableInput = {
   missionId: string
@@ -31,6 +57,8 @@ type PersistedMissionDeliverable = {
   file_url: string | null
   file_name: string | null
   metadata: Record<string, unknown>
+  space_item_id?: string
+  space_id?: string
 }
 
 export class ArtifactDocumentMissionDeliverablesService {
@@ -42,11 +70,8 @@ export class ArtifactDocumentMissionDeliverablesService {
     sessionKey: string,
     userId: string,
   ): Promise<{ persisted: PersistedMissionDeliverable; orgId: string | null }> {
-    const { missionId, campaignId, orgId } = await this.resolveMissionContextCompat(
-      target,
-      sessionKey,
-      userId,
-    )
+    const { missionId, campaignId, orgId, spaceId: missionSpaceId } =
+      await this.resolveMissionContextCompat(target, sessionKey, userId)
     const agentKey = target.parseAgentIdFromSessionKey(sessionKey) ?? 'unknown'
     const title = String(input.title).trim()
     const contentValue = input.content
@@ -66,6 +91,18 @@ export class ArtifactDocumentMissionDeliverablesService {
         logicalSlot: String((input.document_type as string) ?? 'doc'),
       }) ?? null
 
+    const spaceLink = await this.upsertMissionSpaceDoc(target, {
+      input,
+      userId,
+      orgId,
+      campaignId,
+      missionSpaceId,
+      title: title || 'Mission Deliverable',
+      contentValue,
+      contentText,
+      documentType: String((input.document_type as string) ?? 'upload'),
+    })
+
     const persisted = await this.persistMissionDeliverableCompat(target, {
       missionId,
       userId,
@@ -82,6 +119,14 @@ export class ArtifactDocumentMissionDeliverablesService {
           : null,
       metadata: {
         document_type: (input.document_type as string) ?? 'upload',
+        ...(spaceLink
+          ? {
+              entity_id: spaceLink.spaceItemId,
+              entity_table: 'space_items',
+              spaceId: spaceLink.spaceId,
+              internalUrl: `/spaces/${spaceLink.spaceId}/${spaceLink.spaceItemId}`,
+            }
+          : {}),
       },
       updateId: existingDeliverableId,
       idempotencyKey,
@@ -93,7 +138,15 @@ export class ArtifactDocumentMissionDeliverablesService {
       action: 'save_document',
       receipt: persisted as Record<string, unknown>,
     })
-    return { persisted, orgId }
+    return {
+      persisted: {
+        ...persisted,
+        ...(spaceLink
+          ? { space_item_id: spaceLink.spaceItemId, space_id: spaceLink.spaceId }
+          : {}),
+      },
+      orgId,
+    }
   }
 
   stringifyDeliverableContent(value: unknown): string {
@@ -106,14 +159,138 @@ export class ArtifactDocumentMissionDeliverablesService {
     }
   }
 
+  private documentContentToSpaceDocBody(value: unknown): string | null {
+    if (typeof value === 'string') return value
+    if (value == null) return null
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      const record = value as Record<string, unknown>
+      for (const key of ['html', 'text', 'markdown', 'source_content', 'content', 'body']) {
+        const raw = record[key]
+        if (typeof raw === 'string' && raw.trim().length > 0) return raw
+      }
+    }
+    return this.stringifyDeliverableContent(value)
+  }
+
+  private async upsertMissionSpaceDoc(
+    target: Record<string, any>,
+    input: {
+      input: Record<string, unknown>
+      userId: string
+      orgId: string | null
+      campaignId: string | null
+      missionSpaceId: string | null
+      title: string
+      contentValue: unknown
+      contentText: string
+      documentType: string
+    },
+  ): Promise<{ spaceId: string; spaceItemId: string } | null> {
+    try {
+      const scopedInput =
+        input.missionSpaceId && !String(input.input.space_id ?? '').trim()
+          ? { ...input.input, space_id: input.missionSpaceId }
+          : input.input
+      const spaceId =
+        (await resolveDocumentSpaceId(
+          target.serviceClient as SupabaseClient,
+          scopedInput,
+          input.campaignId,
+        )) ?? input.missionSpaceId
+      if (!spaceId) return null
+
+      const docBody =
+        markdownToHtml(this.documentContentToSpaceDocBody(input.contentValue) ?? input.contentText) ??
+        input.contentText
+      const existing = await this.findSpaceDocByTitle(
+        target.serviceClient as SupabaseClient,
+        spaceId,
+        input.title,
+      )
+
+      if (existing?.id) {
+        await target.serviceClient
+          .from('space_items')
+          .update({
+            title: canonicalSpaceDocTitle(input.title),
+            doc_body: docBody,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existing.id)
+          .eq('space_id', spaceId)
+        await ensureSpaceView({
+          supabase: target.serviceClient,
+          spaceId,
+          campaignId: input.campaignId,
+          viewType: 'docs',
+          logger: target.logger,
+        })
+        return { spaceId, spaceItemId: String(existing.id) }
+      }
+
+      const created = await createSpaceDocItem(target.serviceClient, {
+        spaceId,
+        userId: input.userId,
+        orgId: input.orgId,
+        title: canonicalSpaceDocTitle(input.title),
+        docBody,
+        documentType: input.documentType,
+        sourceId: `mission-doc:${canonicalSpaceDocTitle(input.title)}`,
+        fieldInput: scopedInput,
+      })
+      await ensureSpaceView({
+        supabase: target.serviceClient,
+        spaceId,
+        campaignId: input.campaignId,
+        viewType: 'docs',
+        logger: target.logger,
+      })
+      return { spaceId, spaceItemId: created.id }
+    } catch (error) {
+      target.logger?.warn?.(
+        `[mission_deliverable] space dual-write failed: ${error instanceof Error ? error.message : String(error)}`,
+      )
+      return null
+    }
+  }
+
+  private async findSpaceDocByTitle(
+    supabase: SupabaseClient,
+    spaceId: string,
+    title: string,
+  ): Promise<{ id: string } | null> {
+    const candidates = resolveSpaceDocTitleCandidates(title)
+    const { data, error } = await supabase
+      .from('space_items')
+      .select('id')
+      .eq('space_id', spaceId)
+      .eq('custom_data->>_view_type', 'doc')
+      .in('title', candidates)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error || !data?.id) return null
+    return { id: String(data.id) }
+  }
+
   private async resolveMissionContextCompat(
     target: Record<string, any>,
     sessionKey: string,
     userId: string,
-  ): Promise<{ missionId: string; campaignId: string | null; orgId: string | null }> {
+  ): Promise<{
+    missionId: string
+    campaignId: string | null
+    orgId: string | null
+    spaceId: string | null
+  }> {
     if (typeof target.resolveMissionContext === 'function') {
       const result = await target.resolveMissionContext(sessionKey, userId)
-      return { ...result, orgId: result.orgId ?? null }
+      return {
+        missionId: result.missionId,
+        campaignId: result.campaignId ?? null,
+        orgId: result.orgId ?? null,
+        spaceId: result.spaceId ?? null,
+      }
     }
     return this.resolveMissionContext(target, sessionKey, userId)
   }
@@ -122,7 +299,12 @@ export class ArtifactDocumentMissionDeliverablesService {
     target: Record<string, any>,
     sessionKey: string,
     userId: string,
-  ): Promise<{ missionId: string; campaignId: string | null; orgId: string | null }> {
+  ): Promise<{
+    missionId: string
+    campaignId: string | null
+    orgId: string | null
+    spaceId: string | null
+  }> {
     const missionId = await this.resolveMissionIdForSession(target, sessionKey, userId)
     if (!missionId) {
       throw new Error('mission_id required via mission session key')
@@ -139,6 +321,7 @@ export class ArtifactDocumentMissionDeliverablesService {
       missionId: String(mission.id),
       campaignId: (mission.campaign_id as string | null) ?? null,
       orgId: (mission.org_id as string | null) ?? null,
+      spaceId: (mission.space_id as string | null) ?? null,
     }
   }
 
@@ -231,6 +414,12 @@ export class ArtifactDocumentMissionDeliverablesService {
       source: input.source ?? 'mission',
       metadata: normalizedMetadata,
       org_id: input.orgId ?? null,
+      entity_id:
+        typeof normalizedMetadata.entity_id === 'string' ? normalizedMetadata.entity_id : null,
+      entity_table:
+        typeof normalizedMetadata.entity_table === 'string'
+          ? normalizedMetadata.entity_table
+          : null,
     }
 
     const { data, error } = await this.documentFilesRepository.saveMissionDeliverable(

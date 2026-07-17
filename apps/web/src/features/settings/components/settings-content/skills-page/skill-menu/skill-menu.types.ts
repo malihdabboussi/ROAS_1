@@ -12,4 +12,6 @@ export type SkillMenuActionsContext = {
   onToggleEnabled: (skill: MissionAgentSkill, enabled: boolean) => void | Promise<void>
   onSkillsChanged: () => void
   onRequestDelete: (skill: MissionAgentSkill) => void
+  catalogFolders?: Array<{ id: string; name: string }>
+  onSetSkillFolder?: (skillKey: string, folderId: string | null) => void | Promise<void>
 }

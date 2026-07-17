@@ -1,7 +1,7 @@
 'use client'
 
 import type { Dispatch, RefObject, SetStateAction } from 'react'
-import { FileText, MessageSquarePlus, Monitor, X } from 'lucide-react'
+import { FileText, MessageSquarePlus, Monitor } from 'lucide-react'
 import type {
   BrainOption,
   ViewMode,
@@ -18,7 +18,6 @@ import type { MissionDeliverable } from '@/lib/missions'
 
 export function DeliverablePreviewModalToolbar({
   deliverable,
-  onClose,
   isTextType,
   viewMode,
   setViewMode,
@@ -48,7 +47,6 @@ export function DeliverablePreviewModalToolbar({
   handleSelectCampaign,
 }: {
   deliverable: MissionDeliverable
-  onClose: () => void
   isTextType: boolean
   viewMode: ViewMode
   setViewMode: Dispatch<SetStateAction<ViewMode>>
@@ -136,9 +134,6 @@ export function DeliverablePreviewModalToolbar({
           </button>
         </Tooltip>
       )}
-      <button type="button" onClick={onClose} className="btn-icon-bare">
-        <X className="icon-sm" />
-      </button>
     </div>
   )
 }

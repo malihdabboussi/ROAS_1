@@ -47,6 +47,8 @@ interface AgentsGridProps {
   hasBrainForSelected: boolean
   focusByAgentKey?: Record<string, string>
   onAssignWork?: (agent: MissionAgent) => void
+  statusFilters?: Team2StatusFilter[]
+  onStatusFiltersChange?: (next: Team2StatusFilter[]) => void
 }
 
 export function AgentsGrid({
@@ -64,11 +66,15 @@ export function AgentsGrid({
   hasBrainForSelected,
   focusByAgentKey = {},
   onAssignWork,
+  statusFilters: statusFiltersProp,
+  onStatusFiltersChange,
 }: AgentsGridProps) {
   const [view, setView] = useState<Team2ViewMode>('grid')
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
-  const [statusFilters, setStatusFilters] = useState<Team2StatusFilter[]>([])
+  const [statusFiltersState, setStatusFiltersState] = useState<Team2StatusFilter[]>([])
+  const statusFilters = statusFiltersProp ?? statusFiltersState
+  const setStatusFilters = onStatusFiltersChange ?? setStatusFiltersState
   const [modelFilters, setModelFilters] = useState<string[]>([])
   const [sort, setSort] = useState<Team2Sort>('recent')
   const [groupBy, setGroupBy] = useState<Team2GroupBy>('none')
@@ -193,7 +199,11 @@ export function AgentsGrid({
   }, [agentsContext, setAgentsContext])
 
   const toggleStatus = (id: Team2StatusFilter) =>
-    setStatusFilters((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]))
+    setStatusFilters(
+      statusFilters.includes(id)
+        ? statusFilters.filter((s) => s !== id)
+        : [...statusFilters, id],
+    )
 
   const toggleModel = (id: string) =>
     setModelFilters((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]))

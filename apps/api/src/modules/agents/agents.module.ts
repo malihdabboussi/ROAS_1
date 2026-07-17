@@ -6,12 +6,14 @@ import { AgentSkillsController } from './controllers/agent-skills.controller'
 import { AgentWidgetController } from './controllers/agent-widget.controller'
 import { AgentWorkflowsController } from './controllers/agent-workflows.controller'
 import { AgentsController } from './controllers/agents.controller'
+import { SkillCatalogController } from './controllers/skill-catalog.controller'
 import { AgentsRepository } from './repositories/agents.repository'
 import { AgentsService } from './services/agents.service'
 
 @Module({
   imports: [MissionsModule],
   controllers: [
+    SkillCatalogController,
     AgentsController,
     AgentConfigController,
     AgentWidgetController,

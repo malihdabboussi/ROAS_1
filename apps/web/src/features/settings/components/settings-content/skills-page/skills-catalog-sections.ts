@@ -26,6 +26,7 @@ export function skillsGroupByLabel(
   _skillsViewKey: 'all' | string,
 ): string | null {
   if (groupBy === 'none') return null
+  if (groupBy === 'folder') return 'Folder'
   if (groupBy === 'agent') return 'Agent'
   if (groupBy === 'status') return 'Status'
   if (groupBy === 'type') return 'Type'
@@ -39,6 +40,7 @@ export function skillsGroupByOptions(skillsViewKey: 'all' | string): {
 }[] {
   const base = [
     { id: 'none' as const, label: 'None' },
+    { id: 'folder' as const, label: 'Folder' },
     ...(skillsViewKey === 'all' ? [{ id: 'agent' as const, label: 'Agent' }] : []),
     { id: 'status' as const, label: 'Status' },
     { id: 'type' as const, label: 'Type' },
@@ -69,9 +71,42 @@ export function buildSkillsCatalogSections(
   skillsViewKey: 'all' | string,
   agents: MissionAgent[],
   groupSort: SkillsGroupSort = 'asc',
+  folderMeta?: {
+    folders: Array<{ id: string; name: string }>
+    skillKeyToFolderId: Record<string, string>
+  },
 ): SkillsCatalogSection[] {
   if (groupBy === 'none' || skills.length === 0) {
     return [{ id: 'all', label: '', skills }]
+  }
+
+  if (groupBy === 'folder') {
+    const folders = folderMeta?.folders ?? []
+    const map = folderMeta?.skillKeyToFolderId ?? {}
+    const byFolder = new Map<string, MissionAgentSkill[]>()
+    const unfiled: MissionAgentSkill[] = []
+    for (const skill of skills) {
+      const folderId = map[skill.skill_key]
+      if (!folderId) {
+        unfiled.push(skill)
+        continue
+      }
+      const list = byFolder.get(folderId) ?? []
+      list.push(skill)
+      byFolder.set(folderId, list)
+    }
+    const sections: SkillsCatalogSection[] = folders
+      .filter((folder) => (byFolder.get(folder.id)?.length ?? 0) > 0)
+      .map((folder) => ({
+        id: folder.id,
+        label: folder.name,
+        color: 'violet',
+        skills: byFolder.get(folder.id) ?? [],
+      }))
+    if (unfiled.length > 0) {
+      sections.push({ id: 'unfiled', label: 'Unfiled', color: 'muted', skills: unfiled })
+    }
+    return applyGroupSectionSort(sections, groupBy, groupSort)
   }
 
   if (groupBy === 'agent' && skillsViewKey === 'all') {

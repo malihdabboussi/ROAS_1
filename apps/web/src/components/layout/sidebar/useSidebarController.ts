@@ -149,7 +149,7 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   const agentsFlyoutRef = useRef<HTMLDivElement>(null)
 
   const [activeManagePanel, setActiveManagePanel] = useState<
-    'projects' | 'spaces' | 'team2' | 'brain' | null
+    'projects' | 'spaces' | 'team2' | 'brain' | 'more' | null
   >(null)
   const [isPanelClosing, setIsPanelClosing] = useState(false)
   const [hubMenuOpen, setHubMenuOpen] = useState(false)
@@ -159,12 +159,19 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   )
   const [expandedSpaceCampaignIds, setExpandedSpaceCampaignIds] = useState<Set<string>>(new Set())
 
+  // Hover flyouts must not survive programmatic navigation (chat deep-links, task open, etc.).
+  useEffect(() => {
+    setActiveManagePanel(null)
+    setIsPanelClosing(false)
+    setCampaignsFlyout(false)
+    setAgentsFlyout(false)
+  }, [pathname])
+
   const hubSpacesDataEnabled =
     activeManagePanel === 'spaces' ||
     (hubMenuOpen && hubMenuExpandedSections.has('spaces'))
   const hubProjectsDataEnabled =
-    activeManagePanel === 'projects' ||
-    (hubMenuOpen && hubMenuExpandedSections.has('projects'))
+    activeManagePanel === 'projects' || activeManagePanel === 'more' || hubMenuOpen
 
   const { data: sidebarProjectsData } = useCachedProjects(hubProjectsDataEnabled)
   const sidebarProjects = sidebarProjectsData ?? []
@@ -215,7 +222,7 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   }, [])
 
   useEffect(() => {
-    if (activeManagePanel !== 'projects') {
+    if (activeManagePanel !== 'projects' && activeManagePanel !== 'more') {
       setIsCreatingProject(false)
       setNewProjectName('')
     }
@@ -253,17 +260,26 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     setHubMenuClosing(true)
   }, [hubMenuClosing, hubMenuOpen])
 
-  const toggleHubMenu = useCallback(() => {
-    if (hubMenuOpen) {
-      closeHubMenu()
-      return
-    }
+  const forceCloseHubMenu = useCallback(() => {
+    setHubMenuOpen(false)
+    setHubMenuClosing(false)
+  }, [])
+
+  const openHubMenu = useCallback(() => {
     setHubMenuOpen(true)
     setHubMenuClosing(false)
     setActiveManagePanel(null)
     setIsPanelClosing(false)
     setHubMenuExpandedSections(defaultHubMenuExpandedSections(pathname))
-  }, [closeHubMenu, hubMenuOpen, pathname])
+  }, [pathname])
+
+  const toggleHubMenu = useCallback(() => {
+    if (hubMenuOpen) {
+      closeHubMenu()
+      return
+    }
+    openHubMenu()
+  }, [closeHubMenu, hubMenuOpen, openHubMenu])
 
   const toggleHubMenuSectionById = useCallback((sectionId: HubMenuSectionId) => {
     setHubMenuExpandedSections((current) => toggleHubMenuSection(current, sectionId))
@@ -489,6 +505,10 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
         })
         return
       }
+      if (sel.type === 'url') {
+        router.push(sel.url)
+        return
+      }
       if (sel.type === 'artifact') {
         setActiveCampaign(sel.campaignId, sel.campaignName, sel.campaignIcon ?? 'folder-kanban')
         expandPanel('artifacts')
@@ -587,14 +607,8 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   const desktopWidth =
     sidebarMode === 'hq'
       ? hubExpanded
-        ? 'md:w-[328px]'
-        : activeManagePanel &&
-            activeManagePanel !== 'spaces' &&
-            activeManagePanel !== 'team2' &&
-            activeManagePanel !== 'brain' &&
-            !isPanelClosing
-          ? 'md:w-[320px]'
-          : 'md:w-[80px]'
+        ? 'md:w-[272px]'
+        : 'md:w-[72px]'
       : collapsed
         ? 'md:w-[72px]'
         : 'md:w-[264px]'
@@ -684,6 +698,8 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     hubMenuOpen,
     hubMenuClosing,
     hubMenuExpandedSections,
+    openHubMenu,
+    forceCloseHubMenu,
     toggleHubMenu,
     closeHubMenu,
     toggleHubMenuSectionById,

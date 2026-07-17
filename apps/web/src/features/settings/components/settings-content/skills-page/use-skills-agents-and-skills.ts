@@ -17,6 +17,14 @@ import type {
   MissionAgentSkillResource,
 } from '@/features/mission-control/types'
 import { exportCampaignMarkdownDomToPdf } from '@/lib/artifacts'
+import {
+  createSkillFolder,
+  ensureDefaultAgencySkillFolder,
+  fetchSkillCatalogBundle,
+  setSkillFolder,
+  type SkillFolder,
+  type SkillTag,
+} from '@/lib/agents/skill-catalog-api'
 import { formatSkillName } from '@/features/team/constants/team.constants'
 import { downloadJSON, downloadMarkdown } from './skills-export-utils'
 import {
@@ -68,6 +76,37 @@ export function useSkillsAgentsAndSkills() {
   const [dragAgentId, setDragAgentId] = useState<string | null>(null)
   const [dragOverAgentId, setDragOverAgentId] = useState<string | null>(null)
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
+  const [catalogFolders, setCatalogFolders] = useState<SkillFolder[]>([])
+  const [catalogTags, setCatalogTags] = useState<SkillTag[]>([])
+  const [skillKeyToFolderId, setSkillKeyToFolderId] = useState<Record<string, string>>({})
+  const [skillKeyToTagIds, setSkillKeyToTagIds] = useState<Record<string, string[]>>({})
+  const [folderBusy, setFolderBusy] = useState(false)
+
+  const reloadCatalogOrganization = useCallback(async () => {
+    try {
+      const bundle = await fetchSkillCatalogBundle()
+      setCatalogFolders(bundle.folders)
+      setCatalogTags(bundle.tags)
+      const folderMap: Record<string, string> = {}
+      for (const row of bundle.folderMemberships) {
+        folderMap[row.skill_key] = row.folder_id
+      }
+      setSkillKeyToFolderId(folderMap)
+      const tagMap: Record<string, string[]> = {}
+      for (const row of bundle.tagMemberships) {
+        const list = tagMap[row.skill_key] ?? []
+        list.push(row.tag_id)
+        tagMap[row.skill_key] = list
+      }
+      setSkillKeyToTagIds(tagMap)
+    } catch {
+      // Catalog org endpoints may be unavailable until migration/API deploy.
+    }
+  }, [])
+
+  useEffect(() => {
+    void reloadCatalogOrganization()
+  }, [reloadCatalogOrganization])
 
   useEffect(() => {
     let cancelled = false
@@ -127,7 +166,16 @@ export function useSkillsAgentsAndSkills() {
         summary: true,
         force: opts?.force,
       })
-      setSkills(rows)
+      // Catalog skills (`agent_key='*'`) are merged per agent; dedupe by skill_key
+      // so All skills shows one card per skill.
+      const seen = new Map<string, MissionAgentSkill>()
+      for (const row of rows) {
+        const existing = seen.get(row.skill_key)
+        if (!existing || (existing.agent_key !== '*' && row.agent_key === '*')) {
+          seen.set(row.skill_key, row)
+        }
+      }
+      setSkills([...seen.values()])
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : 'Failed to load skills')
       setSkills([])
@@ -427,6 +475,46 @@ export function useSkillsAgentsAndSkills() {
     if (skillsViewKey) void loadSkills(skillsViewKey, { force: true })
   }, [skillsViewKey, agentKeysKey, loadAllSkills, loadSkills])
 
+  const handleCreateFolder = useCallback(
+    async (name: string) => {
+      const trimmed = name.trim()
+      if (!trimmed) return
+      setFolderBusy(true)
+      try {
+        await createSkillFolder(trimmed)
+        await reloadCatalogOrganization()
+        setSkillsGroupBy('folder')
+      } finally {
+        setFolderBusy(false)
+      }
+    },
+    [reloadCatalogOrganization],
+  )
+
+  const handleEnsureDefaultAgencyFolder = useCallback(async () => {
+    setFolderBusy(true)
+    try {
+      await ensureDefaultAgencySkillFolder()
+      await reloadCatalogOrganization()
+      setSkillsGroupBy('folder')
+    } finally {
+      setFolderBusy(false)
+    }
+  }, [reloadCatalogOrganization])
+
+  const handleSetSkillFolder = useCallback(
+    async (skillKey: string, folderId: string | null) => {
+      await setSkillFolder(skillKey, folderId)
+      setSkillKeyToFolderId((prev) => {
+        const next = { ...prev }
+        if (!folderId) delete next[skillKey]
+        else next[skillKey] = folderId
+        return next
+      })
+    },
+    [],
+  )
+
   const deleteTargetAgent = useMemo(() => {
     if (!deleteTarget) return selectedAgent
     return agents.find((a) => a.agent_key === deleteTarget.agent_key) ?? selectedAgent
@@ -540,6 +628,15 @@ export function useSkillsAgentsAndSkills() {
     setDragOverAgentId,
     expandedFolders,
     setExpandedFolders,
+    catalogFolders,
+    catalogTags,
+    skillKeyToFolderId,
+    skillKeyToTagIds,
+    folderBusy,
+    handleCreateFolder,
+    handleEnsureDefaultAgencyFolder,
+    handleSetSkillFolder,
+    reloadCatalogOrganization,
     selectedAgent,
     handlePinAgent,
     handleRenameAgent,

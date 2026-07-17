@@ -176,7 +176,11 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
   },
 
   loadRoster: async () => {
-    const rows = await cachedFetch('team-roster:all', () => fetchTeamRoster({ kind: 'all' }))
+    const rows = await cachedFetch(
+      'team-roster:all',
+      () => fetchTeamRoster({ kind: 'all' }),
+      { ttlMs: 60_000 },
+    )
     set({ roster: rows, rosterLoaded: true })
     useSpacesStore.setState({ roster: rows, rosterLoaded: true })
   },

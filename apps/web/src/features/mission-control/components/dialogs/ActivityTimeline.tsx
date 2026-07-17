@@ -1,6 +1,6 @@
 'use client'
 
-import type { RefObject } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AttachedFile } from '@/components/chat/FileAttachments'
 import type { MissionAgent, MissionLog, MissionSubtask } from '../../types'
@@ -25,6 +25,12 @@ interface ActivityTimelineProps {
   activityEndRef: RefObject<HTMLDivElement | null>
   timelineKey?: string
   className?: string
+  /** Optional content above the log feed (e.g. human gate review). */
+  leadSlot?: ReactNode
+  /** Sidebar title. Defaults to Activity. */
+  title?: string
+  /** Skip the empty-state illustration when leadSlot already fills the panel. */
+  hideEmptyState?: boolean
   attachedFiles?: AttachedFile[]
   onRemoveFile?: (id: string) => void
   onFileButtonClick?: () => void
@@ -64,6 +70,9 @@ export function ActivityTimeline({
   activityEndRef,
   timelineKey,
   className = 'pb-spacing-2 hidden min-w-0 flex-1 shrink-0 lg:flex lg:flex-col',
+  leadSlot,
+  title = 'Activity',
+  hideEmptyState = false,
   attachedFiles = [],
   onRemoveFile,
   onFileButtonClick,
@@ -139,28 +148,37 @@ export function ActivityTimeline({
     <div className={className}>
       <div className="card-glass lg:rounded-spacing-3 flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="border-border px-spacing-4 py-spacing-3 flex flex-shrink-0 items-center justify-between border-b">
-          <h3 className="body-2 text-foreground font-semibold">Activity</h3>
+          <h3 className="body-2 text-foreground font-semibold">{title}</h3>
         </div>
         <div className="flex min-h-0 flex-1 flex-col">
-          <ActivityTimelineLogList
-            scrollRef={scrollRef}
-            onScroll={handleScroll}
-            logsLoading={logsLoading}
-            isMissionLinked={isMissionLinked}
-            sortedLogs={sortedLogs}
-            subtasks={subtasks}
-            agents={agents}
-            userProfile={userProfile}
-            createdAt={createdAt}
-            activityEndRef={activityEndRef}
-            missionStatus={missionStatus}
-            onViewPlan={onViewPlan}
-            onApprove={onApprove}
-            onReject={onReject}
-            approving={approving}
-            autoApprovePlans={autoApprovePlans}
-            onToggleAutoApprove={onToggleAutoApprove}
-          />
+          <div ref={scrollRef} onScroll={handleScroll} className="min-h-0 flex-1 overflow-y-auto">
+            {leadSlot ? (
+              <div className="border-border px-spacing-4 pt-spacing-4 pb-spacing-3 border-b">
+                {leadSlot}
+              </div>
+            ) : null}
+            <ActivityTimelineLogList
+              scrollRef={scrollRef}
+              onScroll={handleScroll}
+              logsLoading={logsLoading}
+              isMissionLinked={isMissionLinked}
+              sortedLogs={sortedLogs}
+              subtasks={subtasks}
+              agents={agents}
+              userProfile={userProfile}
+              createdAt={createdAt}
+              activityEndRef={activityEndRef}
+              missionStatus={missionStatus}
+              onViewPlan={onViewPlan}
+              onApprove={onApprove}
+              onReject={onReject}
+              approving={approving}
+              autoApprovePlans={autoApprovePlans}
+              onToggleAutoApprove={onToggleAutoApprove}
+              hideEmptyState={hideEmptyState || Boolean(leadSlot)}
+              nestScroll={false}
+            />
+          </div>
 
           {isMissionLinked && (
             <ActivityTimelineComposer

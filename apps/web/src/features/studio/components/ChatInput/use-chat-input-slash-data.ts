@@ -75,7 +75,8 @@ export function useChatInputSlashData({
         () => fetchJson(`/api/agents/${agentKey}/workflows`),
         { ttlMs: 300_000 },
       ),
-      loadCached(`agent-skills:${agentKey}`, () => fetchJson(`/api/agents/${agentKey}/skills`), {
+      // Account/org catalog — every skill in scope, not only this agent's copies.
+      loadCached(`skill-catalog:skills`, () => fetchJson(`/api/agents/skill-catalog/skills`), {
         ttlMs: 300_000,
       }),
     ]).then(([workflowsResult, skillsResult]) => {

@@ -173,6 +173,24 @@ describe('sendAgentChatMessage', () => {
     expect(input.suggestConversationTitle).toHaveBeenCalledWith('Build it')
   })
 
+  it('falls back to the first message when title suggestion fails', async () => {
+    const input = createInput({
+      content: 'Start our Ops Desk check-in',
+      getMessages: vi.fn(() => []),
+      suggestConversationTitle: vi.fn(async () => {
+        throw new Error('suggest failed')
+      }),
+    })
+
+    await sendAgentChatMessage(input)
+    await Promise.resolve()
+
+    expect(input.beginSessionTitleReveal).toHaveBeenCalledWith(
+      'session-1',
+      'Start our Ops Desk check-in',
+    )
+  })
+
   it('clears team draft metadata after a successful send', async () => {
     const draft = conversation('session-1', {
       metadata: { team_draft: true, draft_started_at: '2026-06-24T00:00:00.000Z', keep: true },

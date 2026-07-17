@@ -9,13 +9,14 @@ import {
   fetchSpaceItem,
   fetchSpaceItemById,
   fetchSpaceItems,
-  fetchSpacesPage as fetchSpacesPageBase,
   fetchSpaces as fetchSpacesBase,
+  fetchSpacesPage as fetchSpacesPageBase,
   renameItemCommentAttachment as renameItemCommentAttachmentApi,
+  updateSpaceItem,
   visualizeSpaceDoc,
+  type FetchSpacesOptions,
   type FetchSpacesPageOptions,
   type FetchSpacesPageResult,
-  type FetchSpacesOptions,
   type SpaceItemActivity,
   type SpaceItemFetchOptions,
   type VisualizeDocResult,
@@ -23,7 +24,7 @@ import {
 import { normalizeSpaceLegacyViews, omitSchemaAutomations } from '../lib/view-customization-merge'
 import type { Space, SpaceItem } from '../types'
 
-export { fetchSpaceItem, fetchSpaceItemById, fetchSpaceItems, visualizeSpaceDoc }
+export { fetchSpaceItem, fetchSpaceItemById, fetchSpaceItems, updateSpaceItem, visualizeSpaceDoc }
 export type { SpaceItemActivity }
 export type { SpaceItemFetchOptions }
 export type { FetchSpacesPageOptions, FetchSpacesPageResult }
@@ -191,14 +192,6 @@ export async function createSpaceItem(
   },
 ): Promise<SpaceItem> {
   return backendPost<SpaceItem>(`/api/spaces/${spaceId}/items`, input)
-}
-
-export async function updateSpaceItem(
-  spaceId: string,
-  itemId: string,
-  payload: Record<string, unknown>,
-): Promise<SpaceItem> {
-  return backendPatch<SpaceItem>(`/api/spaces/${spaceId}/items/${itemId}`, payload)
 }
 
 /**

@@ -86,6 +86,14 @@ describe('DeliverablesCarousel', () => {
     expect(screen.getByText('Name')).toBeInTheDocument()
     expect(screen.getByText('Launch Brief')).toBeInTheDocument()
     expect(screen.getByText('2.0 KB')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        new Date('2026-06-29T11:00:00.000Z').toLocaleString([], {
+          dateStyle: 'short',
+          timeStyle: 'short',
+        }),
+      ),
+    ).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Grid view' }))
     fireEvent.click(

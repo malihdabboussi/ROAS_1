@@ -53,7 +53,7 @@ export function DeliverablesCarousel({
 }: DeliverablesCarouselProps) {
   const deliverablesCarouselRef = useRef<HTMLDivElement>(null)
   const [collapsed, setCollapsed] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
 
   const { core, extra } = useMemo(() => {
     const c: MissionDeliverable[] = []

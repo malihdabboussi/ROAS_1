@@ -18,14 +18,16 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { MediaPickerModal } from '@/components/media/MediaPickerModal'
+import { SaveIndicator } from '@/components/ui/feedback/SaveIndicator'
 import { RichTextToolbar } from '@/components/ui/forms/rich-text-toolbar'
 import { HtmlMiniIframe } from '@/components/ui/HtmlMiniIframe'
 import { Tooltip } from '@/components/ui/tooltip'
-import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { visualizeSpaceDoc } from '@/features/spaces/services/spaces.service'
+import type { GoogleDriveFile } from '@/lib/services/google-drive-api'
+import { googleDocMetadataPatch } from '@/lib/spaces/space-doc-export'
+import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { cn } from '@/lib/utils/cn'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
-import type { GoogleDriveFile } from '@/lib/services/google-drive-api'
 import type { SpaceItem } from '../../types'
 import { ShareModal } from '../ShareModal'
 import { CoverDropdown } from './cover/CoverDropdown'
@@ -35,13 +37,11 @@ import { DocBodyImageInsertMenu } from './editor/DocBodyImageInsertMenu'
 import { DocEditorCover } from './editor/DocEditorCover'
 import { DocEditorDropIndicator } from './editor/DocEditorDropIndicator'
 import { DocEditorExportDropdown } from './editor/DocEditorExportDropdown'
-import { googleDocMetadataPatch } from '../doc-menu/google-doc-export'
 import { DocEditorFloatingToolbarPortal } from './editor/DocEditorFloatingToolbarPortal'
 import { DocEditorInlineRail } from './editor/DocEditorInlineRail'
 import { DocEditorProseStyles } from './editor/DocEditorProseStyles'
 import { DocPageSettingsSlideContent } from './editor/DocPageSettingsSlideContent'
 import { DocTableControls } from './editor/DocTableControls'
-import { SaveIndicator } from '@/components/ui/feedback/SaveIndicator'
 import { DocSubpagesEmbedded } from './subpages/DocSubpagesEmbedded'
 import type {
   DocFontSize,
@@ -268,13 +268,7 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
       return
     }
     setVisualDocFullModeOpen(true)
-  }, [
-    p.docVisualPresentationId,
-    p.item.space_id,
-    p.item.title,
-    p.requestClosePanel,
-    p.title,
-  ])
+  }, [p.docVisualPresentationId, p.item.space_id, p.item.title, p.requestClosePanel, p.title])
 
   const getDocBodyForExport = useCallback(
     () => p.editor?.getHTML() ?? p.item.doc_body ?? '',

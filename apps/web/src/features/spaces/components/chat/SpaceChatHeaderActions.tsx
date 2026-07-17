@@ -18,6 +18,8 @@ interface SpaceChatHeaderActionsProps {
   onNewConversation: () => void
   onShowVoiceRuns: () => void
   onShowConversations: () => void
+  /** When true, hide search / new / conversations — owned by the shell Chat sidebar. */
+  hideHistoryChrome?: boolean
 }
 
 export function SpaceChatHeaderActions({
@@ -33,12 +35,13 @@ export function SpaceChatHeaderActions({
   onNewConversation,
   onShowVoiceRuns,
   onShowConversations,
+  hideHistoryChrome = false,
 }: SpaceChatHeaderActionsProps) {
   return (
     <div
       className={cn(
         'gap-spacing-0 flex shrink-0 items-center transition-[opacity,transform] duration-200 ease-out',
-        searchOpen
+        searchOpen || hideHistoryChrome
           ? 'pointer-events-auto translate-x-0 opacity-100'
           : 'pointer-events-none translate-x-4 opacity-0 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100',
       )}
@@ -53,53 +56,57 @@ export function SpaceChatHeaderActions({
       >
         <RxDoubleArrowLeft className="icon-sm" aria-hidden />
       </button>
-      <motion.div
-        initial={false}
-        animate={{ width: searchOpen ? 192 : 0, opacity: searchOpen ? 1 : 0 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        className="shrink-0 overflow-hidden"
-      >
-        <div className="w-spacing-48 relative">
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => onSearchQueryChange(e.target.value)}
-            placeholder="Search..."
-            className="input-glass body-3 text-foreground h-spacing-8 rounded-spacing-2 py-spacing-1 pl-spacing-3 pr-spacing-8 w-full"
-            autoFocus={searchOpen}
-          />
+      {!hideHistoryChrome ? (
+        <>
+          <motion.div
+            initial={false}
+            animate={{ width: searchOpen ? 192 : 0, opacity: searchOpen ? 1 : 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="shrink-0 overflow-hidden"
+          >
+            <div className="w-spacing-48 relative">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => onSearchQueryChange(e.target.value)}
+                placeholder="Search..."
+                className="input-glass body-3 text-foreground h-spacing-8 rounded-spacing-2 py-spacing-1 pl-spacing-3 pr-spacing-8 w-full"
+                autoFocus={searchOpen}
+              />
+              <button
+                type="button"
+                onClick={onSearchClose}
+                className="text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 absolute right-0 top-1/2 flex -translate-y-1/2 items-center justify-center transition-colors"
+                aria-label="Close search"
+                title="Close search"
+              >
+                <X className="icon-sm" />
+              </button>
+            </div>
+          </motion.div>
+          {!searchOpen ? (
+            <button
+              type="button"
+              onClick={onSearchOpen}
+              className="text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 flex shrink-0 items-center justify-center transition-colors"
+              aria-label="Search in conversation"
+              title="Search"
+            >
+              <Search className="icon-sm" />
+            </button>
+          ) : null}
           <button
             type="button"
-            onClick={onSearchClose}
-            className="text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 absolute right-0 top-1/2 flex -translate-y-1/2 items-center justify-center transition-colors"
-            aria-label="Close search"
-            title="Close search"
+            onClick={onNewConversation}
+            disabled={voiceActive}
+            className="text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 flex shrink-0 items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="New conversation"
+            title="New conversation"
           >
-            <X className="icon-sm" />
+            <Plus className="icon-sm" />
           </button>
-        </div>
-      </motion.div>
-      {!searchOpen ? (
-        <button
-          type="button"
-          onClick={onSearchOpen}
-          className="text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 flex shrink-0 items-center justify-center transition-colors"
-          aria-label="Search in conversation"
-          title="Search"
-        >
-          <Search className="icon-sm" />
-        </button>
+        </>
       ) : null}
-      <button
-        type="button"
-        onClick={onNewConversation}
-        disabled={voiceActive}
-        className="text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 flex shrink-0 items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-        aria-label="New conversation"
-        title="New conversation"
-      >
-        <Plus className="icon-sm" />
-      </button>
       {voiceActive || hasVoiceTasks ? (
         <button
           type="button"
@@ -114,15 +121,17 @@ export function SpaceChatHeaderActions({
           ) : null}
         </button>
       ) : null}
-      <button
-        type="button"
-        onClick={onShowConversations}
-        className="text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 flex shrink-0 items-center justify-center transition-colors"
-        aria-label="Show conversations"
-        title="Conversations"
-      >
-        <List className="icon-sm" />
-      </button>
+      {!hideHistoryChrome ? (
+        <button
+          type="button"
+          onClick={onShowConversations}
+          className="text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 flex shrink-0 items-center justify-center transition-colors"
+          aria-label="Show conversations"
+          title="Conversations"
+        >
+          <List className="icon-sm" />
+        </button>
+      ) : null}
     </div>
   )
 }

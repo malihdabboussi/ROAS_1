@@ -1,21 +1,19 @@
 import { useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { MissionDeliverable } from '@/lib/missions'
 import type { BrainOption, ViewMode } from './deliverable-preview-modal.types'
+import { DeliverablePreviewModalToolbar } from './DeliverablePreviewModalToolbar'
 import type {
   CampaignPickerOption,
   CampaignToCampaignAction,
 } from './use-deliverable-campaign-menu'
-import type { MissionDeliverable } from '@/lib/missions'
-
-import { DeliverablePreviewModalToolbar } from './DeliverablePreviewModalToolbar'
 
 const toolbarMocks = vi.hoisted(() => ({
   handleBrainDropdownToggle: vi.fn(),
   handleCampaignDropdownToggle: vi.fn(),
   handleSelectCampaign: vi.fn(),
   handleStartConversation: vi.fn(),
-  onClose: vi.fn(),
   setBrainDropdownOpen: vi.fn(),
   setCampaignAction: vi.fn(),
   setConfirmBrain: vi.fn(),
@@ -65,8 +63,7 @@ function renderToolbar() {
   function Harness() {
     renderCount += 1
     const [viewMode, setViewMode] = useState<ViewMode>('wide')
-    const [campaignAction, updateCampaignAction] =
-      useState<CampaignToCampaignAction>('move')
+    const [campaignAction, updateCampaignAction] = useState<CampaignToCampaignAction>('move')
     const brainButtonRef = useRef<HTMLButtonElement>(null)
     const campaignButtonRef = useRef<HTMLButtonElement>(null)
 
@@ -81,7 +78,6 @@ function renderToolbar() {
     return (
       <DeliverablePreviewModalToolbar
         deliverable={fileDeliverable}
-        onClose={toolbarMocks.onClose}
         isTextType={false}
         viewMode={viewMode}
         setViewMode={setViewMode}
@@ -160,15 +156,10 @@ describe('DeliverablePreviewModalToolbar', () => {
     expect(toolbarMocks.setConfirmBrain).toHaveBeenCalledWith(brainOptions[0])
     expect(toolbarMocks.setBrainDropdownOpen).toHaveBeenCalledWith(false)
 
-    const discussButton = actionButtons[actionButtons.length - 2]
+    const discussButton = actionButtons[actionButtons.length - 1]
     if (!discussButton) throw new Error('Expected discuss button')
     fireEvent.click(discussButton)
     expect(toolbarMocks.handleStartConversation).toHaveBeenCalledTimes(1)
-
-    const closeButton = actionButtons[actionButtons.length - 1]
-    if (!closeButton) throw new Error('Expected close button')
-    fireEvent.click(closeButton)
-    expect(toolbarMocks.onClose).toHaveBeenCalledTimes(1)
 
     vi.runOnlyPendingTimers()
     expect(toolbarMocks.setCopied).toHaveBeenCalledWith(false)

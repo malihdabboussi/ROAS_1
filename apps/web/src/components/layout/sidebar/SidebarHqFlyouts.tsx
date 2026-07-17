@@ -3,20 +3,28 @@
 import {
   Suspense,
   useEffect,
+  useMemo,
   useState,
   type Dispatch,
-  type ReactNode,
   type RefObject,
   type SetStateAction,
 } from 'react'
-import { Eye, Plus, Search, X } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { useShellStore } from '@/components/shell/use-shell-store'
+import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
 import { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
-import { SidebarBrainFlyout } from './SidebarBrainFlyout'
-import { SidebarHqProjectList } from './SidebarHqProjectList'
+import { HubDockFlyout } from './HubDockFlyout'
+import { SidebarBrainNavLinks } from './SidebarBrainFlyout'
+import { SidebarHqMoreFlyoutBody } from './SidebarHqMoreFlyoutBody'
 import { SidebarHqSpacesGroupedList } from './SidebarHqSpacesGroupedList'
 import { SidebarTeam2Flyout } from './SidebarTeam2Flyout'
 import type { SidebarControllerReturn } from './useSidebarController'
+
+function railTriggerRect(panelId: string): DOMRect | null {
+  if (typeof document === 'undefined') return null
+  const el = document.querySelector(`[data-hub-rail-trigger="${panelId}"]`)
+  return el instanceof HTMLElement ? el.getBoundingClientRect() : null
+}
 
 export function SidebarHqFlyouts({
   placement = 'all',
@@ -26,11 +34,11 @@ export function SidebarHqFlyouts({
   spacesSearchQuery,
   setSpacesSearchQuery,
   spacesSearchInputRef,
-  hiddenSidebarCount,
-  hiddenEyeRef,
-  hiddenMenuOpen,
-  setHiddenMenuOpen,
-  openHiddenMenu,
+  hiddenSidebarCount: _hiddenSidebarCount,
+  hiddenEyeRef: _hiddenEyeRef,
+  hiddenMenuOpen: _hiddenMenuOpen,
+  setHiddenMenuOpen: _setHiddenMenuOpen,
+  openHiddenMenu: _openHiddenMenu,
   clearSpacesFlyoutCloseTimer,
   scheduleSpacesFlyoutClose,
   setBrowsePanelBucket,
@@ -55,89 +63,160 @@ export function SidebarHqFlyouts({
   setCreateSpaceModalFor: Dispatch<SetStateAction<{ campaignId: string | null } | null>>
   spaceUserState: ReturnType<typeof useSpaceUserState>
 }) {
-  const showInline = placement === 'all' || placement === 'inline'
   const showHover = (placement === 'all' || placement === 'hover') && !c.hubMenuOpen
+  const [pinned, setPinned] = useState(false)
+  const [anchor, setAnchor] = useState<DOMRect | null>(null)
+  const [subOpen, setSubOpen] = useState(false)
+  const flyoutCloseEpoch = useShellStore((s) => s.sidebarFlyoutCloseEpoch)
+
+  const hoverPanel =
+    showHover && !c.isPanelClosing
+      ? c.activeManagePanel === 'team2' ||
+        c.activeManagePanel === 'brain' ||
+        c.activeManagePanel === 'spaces' ||
+        c.activeManagePanel === 'more'
+        ? c.activeManagePanel
+        : null
+      : null
+
+  useEffect(() => {
+    if (!hoverPanel) {
+      setAnchor(null)
+      setPinned(false)
+      setSubOpen(false)
+      return
+    }
+    const measure = () => {
+      const rect = railTriggerRect(hoverPanel)
+      if (rect) setAnchor(rect)
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [hoverPanel])
+
+  const closeHover = () => {
+    setPinned(false)
+    setSubOpen(false)
+    setSpacesSearchOpen(false)
+    setSpacesSearchQuery('')
+    c.setIsCreatingProject(false)
+    c.setNewProjectName('')
+    c.setIsPanelClosing(true)
+  }
+
+  useEffect(() => {
+    if (flyoutCloseEpoch === 0) return
+    if (c.activeManagePanel) closeHover()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- close on epoch bump only
+  }, [flyoutCloseEpoch])
+
+  const campaignsBody = useMemo(
+    () =>
+      c.sidebarListsLoading ? (
+        <div className="flex justify-center px-2 py-6">
+          <VibeyLoadingOrb state="processing" size="sm" text="Loading spaces..." />
+        </div>
+      ) : (
+        <SidebarHqSpacesGroupedList
+          controller={c}
+          spaces={c.sidebarLists}
+          campaigns={c.manageCampaigns}
+          pathname={c.pathname}
+          expandedIds={c.expandedSpaceCampaignIds}
+          setExpandedIds={c.setExpandedSpaceCampaignIds}
+          onCreateSpace={(campaignId) => void c.handleCreateList(campaignId)}
+          patchCampaignConfig={c.patchCampaignConfig}
+          isSubmitting={c.isSubmittingList}
+          creatingName={c.newListName}
+          setCreatingName={c.setNewListName}
+          searchQuery={spacesSearchQuery}
+          onOpenBrowseTemplates={setBrowsePanelBucket}
+          onOpenCreateSpaceModal={(campaignId) => setCreateSpaceModalFor({ campaignId })}
+          spaceUserState={spaceUserState}
+          hasMore={c.sidebarListsHasMore}
+          loadingMore={c.sidebarListsLoadingMore}
+          onLoadMore={() => void c.loadMoreSidebarLists()}
+          flyoutMode
+          onHoldParentFlyout={clearSpacesFlyoutCloseTimer}
+          onReleaseParentFlyout={() => {
+            if (!pinned) scheduleSpacesFlyoutClose()
+          }}
+          onSubFlyoutOpenChange={setSubOpen}
+          onCloseParentFlyout={closeHover}
+        />
+      ),
+    [
+      c,
+      clearSpacesFlyoutCloseTimer,
+      pinned,
+      scheduleSpacesFlyoutClose,
+      setBrowsePanelBucket,
+      setCreateSpaceModalFor,
+      spaceUserState,
+      spacesSearchQuery,
+    ],
+  )
+
+  if (placement === 'inline') return null
 
   return (
     <>
-      {showInline &&
-        c.activeManagePanel &&
-        c.activeManagePanel !== 'spaces' &&
-        c.activeManagePanel !== 'team2' &&
-        c.activeManagePanel !== 'brain' && (
-          <InlineManageFlyoutPanel isPanelClosing={c.isPanelClosing}>
-            {c.activeManagePanel === 'projects' && (
-              <>
-                <div className="flex items-center justify-between px-3 py-3">
-                  <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
-                    Projects
-                  </span>
-                  {!c.isCreatingProject && (
-                    <button
-                      onClick={() => c.setIsCreatingProject(true)}
-                      className="rounded p-1 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
-                      title="New Project"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-                {c.isCreatingProject && (
-                  <div className="flex items-center gap-1.5 px-2 py-1">
-                    <input
-                      value={c.newProjectName}
-                      onChange={(e) => c.setNewProjectName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') void c.handleCreateProject()
-                        if (e.key === 'Escape') {
-                          c.setIsCreatingProject(false)
-                          c.setNewProjectName('')
-                        }
-                      }}
-                      onBlur={() => {
-                        if (!c.newProjectName.trim()) {
-                          c.setIsCreatingProject(false)
-                          c.setNewProjectName('')
-                        }
-                      }}
-                      disabled={c.isSubmittingProject}
-                      autoFocus
-                      placeholder={c.isSubmittingProject ? 'Creating...' : 'Project name'}
-                      className="h-7 flex-1 rounded-md bg-transparent px-2 text-[13px] text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none disabled:opacity-50"
-                    />
-                  </div>
-                )}
-                <div className="scrollbar-hide flex-1 overflow-y-auto px-2 py-2">
-                  {c.sidebarProjects.length === 0 ? (
-                    <p className="px-2 py-4 text-center text-[11px] text-[var(--color-muted-foreground)]">
-                      No projects yet
-                    </p>
-                  ) : (
-                    <SidebarHqProjectList
-                      projects={c.sidebarProjects}
-                      setSidebarProjects={c.setSidebarProjects}
-                      pathname={c.pathname}
-                    />
-                  )}
-                </div>
-              </>
-            )}
-          </InlineManageFlyoutPanel>
-        )}
-      {showHover && c.activeManagePanel === 'team2' && (
-        <HoverPanel
-          c={c}
-          onMouseEnter={clearSpacesFlyoutCloseTimer}
-          onMouseLeave={scheduleSpacesFlyoutClose}
+      {hoverPanel === 'team2' && anchor ? (
+        <HubDockFlyout
+          anchor={anchor}
+          title="Team"
+          onEnter={clearSpacesFlyoutCloseTimer}
+          onLeave={() => {
+            if (!pinned) scheduleSpacesFlyoutClose()
+          }}
+          onClose={closeHover}
+          pinned={pinned}
+          onPinnedChange={setPinned}
+          headerActions={[
+            {
+              kind: 'plus',
+              title: 'New agent',
+              onClick: () => {
+                closeHover()
+                c.router.push('/team')
+              },
+            },
+          ]}
         >
           <SidebarTeam2Flyout pathname={c.pathname} />
-        </HoverPanel>
-      )}
-      {showHover && c.activeManagePanel === 'brain' && (
-        <HoverPanel
-          c={c}
-          onMouseEnter={clearSpacesFlyoutCloseTimer}
-          onMouseLeave={scheduleSpacesFlyoutClose}
+        </HubDockFlyout>
+      ) : null}
+
+      {hoverPanel === 'brain' && anchor ? (
+        <HubDockFlyout
+          anchor={anchor}
+          title="Brain"
+          onEnter={clearSpacesFlyoutCloseTimer}
+          onLeave={() => {
+            if (!pinned) scheduleSpacesFlyoutClose()
+          }}
+          onClose={closeHover}
+          pinned={pinned}
+          onPinnedChange={setPinned}
+          headerActions={[
+            {
+              kind: 'search',
+              title: 'Search brains',
+              onClick: () => {
+                closeHover()
+                c.router.push('/brain')
+              },
+            },
+            {
+              kind: 'plus',
+              title: 'Add knowledge',
+              onClick: () => {
+                closeHover()
+                dispatchBrainAddAgentModal()
+              },
+            },
+          ]}
         >
           <Suspense
             fallback={
@@ -146,201 +225,75 @@ export function SidebarHqFlyouts({
               </p>
             }
           >
-            <SidebarBrainFlyout />
+            <SidebarBrainNavLinks onNavigate={closeHover} />
           </Suspense>
-        </HoverPanel>
-      )}
-      {showHover && c.activeManagePanel === 'spaces' && (
-        <HoverPanel
-          c={c}
-          onMouseEnter={clearSpacesFlyoutCloseTimer}
-          onMouseLeave={scheduleSpacesFlyoutClose}
+        </HubDockFlyout>
+      ) : null}
+
+      {hoverPanel === 'spaces' && anchor ? (
+        <HubDockFlyout
+          anchor={anchor}
+          title="Campaigns"
+          onEnter={clearSpacesFlyoutCloseTimer}
+          onLeave={() => {
+            if (!pinned && !subOpen) scheduleSpacesFlyoutClose()
+          }}
+          onClose={closeHover}
+          pinned={pinned}
+          onPinnedChange={setPinned}
+          leaveSuspended={subOpen}
+          headerActions={[
+            {
+              kind: 'search',
+              title: 'Search campaigns',
+              onClick: () => setSpacesSearchOpen(true),
+            },
+            {
+              kind: 'plus',
+              title: 'New campaign',
+              onClick: () => c.setShowNewCampaignModal(true),
+            },
+          ]}
+          searchOpen={spacesSearchOpen}
+          searchQuery={spacesSearchQuery}
+          onSearchQueryChange={setSpacesSearchQuery}
+          onSearchClose={() => {
+            setSpacesSearchOpen(false)
+            setSpacesSearchQuery('')
+          }}
+          searchPlaceholder="Search campaigns…"
+          searchInputRef={spacesSearchInputRef}
         >
-          {spacesSearchOpen ? (
-            <div className="gap-spacing-2 flex shrink-0 items-center px-3 py-3">
-              <div className="relative min-w-0 flex-1">
-                <Search
-                  className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-muted-foreground)]"
-                  aria-hidden
-                />
-                <input
-                  ref={spacesSearchInputRef}
-                  type="text"
-                  value={spacesSearchQuery}
-                  onChange={(e) => setSpacesSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      setSpacesSearchOpen(false)
-                      setSpacesSearchQuery('')
-                    }
-                  }}
-                  placeholder="Search spaces…"
-                  className="body-4 box-border h-8 w-full rounded-lg border border-[var(--color-border)] bg-[var(--background)] pl-7 pr-8 text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-primary)]"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSpacesSearchOpen(false)
-                    setSpacesSearchQuery('')
-                  }}
-                  className="text-muted-foreground hover:text-foreground absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md transition-colors"
-                  aria-label="Close search"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              {hiddenSidebarCount > 0 ? (
-                <button
-                  ref={hiddenEyeRef}
-                  type="button"
-                  onClick={() => {
-                    if (hiddenMenuOpen) setHiddenMenuOpen(false)
-                    else openHiddenMenu()
-                  }}
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
-                  aria-label="Show hidden from sidebar"
-                  title="Hidden from sidebar"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                </button>
-              ) : null}
-            </div>
-          ) : (
-            <div className="flex items-center justify-between px-3 py-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
-                Spaces
-              </span>
-              <div className="flex items-center gap-0.5">
-                {hiddenSidebarCount > 0 ? (
-                  <button
-                    ref={hiddenEyeRef}
-                    type="button"
-                    onClick={() => {
-                      if (hiddenMenuOpen) setHiddenMenuOpen(false)
-                      else openHiddenMenu()
-                    }}
-                    className="flex h-6 w-6 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
-                    aria-label="Show hidden from sidebar"
-                    title="Hidden from sidebar"
-                  >
-                    <Eye className="h-3.5 w-3.5" />
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => setSpacesSearchOpen(true)}
-                  className="flex h-6 w-6 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
-                  aria-label="Search spaces"
-                  title="Search spaces"
-                >
-                  <Search className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
-          <div className="scrollbar-hide flex-1 overflow-y-auto px-2 py-2">
-            {c.sidebarListsLoading ? (
-              <div className="flex justify-center px-2 py-6">
-                <VibeyLoadingOrb state="processing" size="sm" text="Loading spaces..." />
-              </div>
-            ) : (
-              <SidebarHqSpacesGroupedList
-                controller={c}
-                spaces={c.sidebarLists}
-                campaigns={c.manageCampaigns}
-                pathname={c.pathname}
-                expandedIds={c.expandedSpaceCampaignIds}
-                setExpandedIds={c.setExpandedSpaceCampaignIds}
-                onCreateSpace={(campaignId) => void c.handleCreateList(campaignId)}
-                patchCampaignConfig={c.patchCampaignConfig}
-                isSubmitting={c.isSubmittingList}
-                creatingName={c.newListName}
-                setCreatingName={c.setNewListName}
-                searchQuery={spacesSearchQuery}
-                onOpenBrowseTemplates={setBrowsePanelBucket}
-                onOpenCreateSpaceModal={(campaignId) => setCreateSpaceModalFor({ campaignId })}
-                spaceUserState={spaceUserState}
-                hasMore={c.sidebarListsHasMore}
-                loadingMore={c.sidebarListsLoadingMore}
-                onLoadMore={() => void c.loadMoreSidebarLists()}
-              />
-            )}
-          </div>
-        </HoverPanel>
-      )}
+          {campaignsBody}
+        </HubDockFlyout>
+      ) : null}
+
+      {hoverPanel === 'more' && anchor ? (
+        <HubDockFlyout
+          anchor={anchor}
+          title="More"
+          onEnter={clearSpacesFlyoutCloseTimer}
+          onLeave={() => {
+            if (!pinned && !subOpen) scheduleSpacesFlyoutClose()
+          }}
+          onClose={closeHover}
+          pinned={pinned}
+          onPinnedChange={setPinned}
+          leaveSuspended={subOpen}
+        >
+          <SidebarHqMoreFlyoutBody
+            c={c}
+            showProjects={c.isAdmin}
+            onNavigate={closeHover}
+            onHoldParentFlyout={clearSpacesFlyoutCloseTimer}
+            onReleaseParentFlyout={() => {
+              if (!pinned) scheduleSpacesFlyoutClose()
+            }}
+            onSubFlyoutOpenChange={setSubOpen}
+            onCloseParentFlyout={closeHover}
+          />
+        </HubDockFlyout>
+      ) : null}
     </>
-  )
-}
-
-function InlineManageFlyoutPanel({
-  isPanelClosing,
-  children,
-}: {
-  isPanelClosing: boolean
-  children: ReactNode
-}) {
-  const isVisible = useFlyoutSlideVisible(isPanelClosing)
-
-  return (
-    <div
-      className={`flex h-full min-h-0 min-w-0 items-stretch overflow-hidden py-3 pl-1.5 pr-1.5 transition-[width,padding] duration-300 ease-out ${
-        isPanelClosing ? 'w-0 pl-0 pr-0' : 'w-[248px]'
-      }`}
-    >
-      <div
-        className={`card-glass flex w-full flex-col overflow-hidden rounded-2xl transition-[transform,opacity] duration-300 ease-out ${flyoutSlideClass(
-          isVisible,
-        )}`}
-      >
-        {children}
-      </div>
-    </div>
-  )
-}
-
-function useFlyoutSlideVisible(isPanelClosing: boolean) {
-  const [isEntered, setIsEntered] = useState(false)
-
-  useEffect(() => {
-    if (isPanelClosing) {
-      setIsEntered(false)
-      return
-    }
-    const frame = requestAnimationFrame(() => setIsEntered(true))
-    return () => cancelAnimationFrame(frame)
-  }, [isPanelClosing])
-
-  return !isPanelClosing && isEntered
-}
-
-function flyoutSlideClass(isVisible: boolean) {
-  return isVisible ? 'translate-x-0 opacity-100' : 'pointer-events-none -translate-x-3 opacity-0'
-}
-
-function HoverPanel({
-  c,
-  onMouseEnter,
-  onMouseLeave,
-  children,
-}: {
-  c: SidebarControllerReturn
-  onMouseEnter: () => void
-  onMouseLeave: () => void
-  children: ReactNode
-}) {
-  const isVisible = useFlyoutSlideVisible(c.isPanelClosing)
-
-  return (
-    <div
-      className={`absolute bottom-3 left-full top-3 z-[100] ml-1.5 flex min-h-0 w-[248px] flex-col transition-[transform,opacity] duration-300 ease-out ${flyoutSlideClass(
-        isVisible,
-      )}`}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
-      <div className="dropdown-menu-solid rounded-spacing-4 flex h-full min-h-0 w-full flex-col overflow-hidden text-[var(--color-foreground)]">
-        {children}
-      </div>
-    </div>
   )
 }

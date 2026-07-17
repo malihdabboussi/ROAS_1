@@ -1,6 +1,9 @@
 'use client'
 
 import { useEffect, type Dispatch, type SetStateAction } from 'react'
+import { ShellMenuModeToggle, ShellSidebarNewButton } from '@/components/shell/ShellMenuChrome'
+import { ShellChatMenu } from '@/components/shell/ShellChatMenu'
+import { useShellStore } from '@/components/shell/use-shell-store'
 import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { SidebarHqHubMenuContent } from './SidebarHqHubMenuContent'
 import type { SidebarControllerReturn } from './useSidebarController'
@@ -28,24 +31,36 @@ export function SidebarHqHubMenuPane({
   c,
   ...contentProps
 }: HubMenuPaneProps) {
+  const menuMode = useShellStore((s) => s.menuMode)
+  const setSidebarPinned = useShellStore((s) => s.setSidebarPinned)
+
   useEffect(() => {
     if (!c.hubMenuOpen) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') c.closeHubMenu()
+      if (event.key === 'Escape') {
+        c.closeHubMenu()
+        setSidebarPinned(false)
+      }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [c.hubMenuOpen, c.closeHubMenu])
+  }, [c.hubMenuOpen, c.closeHubMenu, setSidebarPinned])
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <SidebarHqHubMenuContent
-        {...contentProps}
-        c={c}
-        variant="panel"
-        expandedSections={c.hubMenuExpandedSections}
-        onToggleSection={c.toggleHubMenuSectionById}
-      />
+      <ShellMenuModeToggle />
+      <ShellSidebarNewButton />
+      {menuMode === 'chat' ? (
+        <ShellChatMenu />
+      ) : (
+        <SidebarHqHubMenuContent
+          {...contentProps}
+          c={c}
+          variant="panel"
+          expandedSections={c.hubMenuExpandedSections}
+          onToggleSection={c.toggleHubMenuSectionById}
+        />
+      )}
     </div>
   )
 }

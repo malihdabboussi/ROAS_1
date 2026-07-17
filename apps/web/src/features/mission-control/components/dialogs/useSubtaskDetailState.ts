@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { formatWebinarSubtaskTitle } from '@/lib/missions'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { MISSION_CONTROL_MESSAGES } from '../../config/messages.config'
 import { completeHumanSubtask } from '../../services/mission-human-subtasks.service'
@@ -65,7 +66,7 @@ export function useSubtaskDetailState({
       return
     }
     setApprovingGate(true)
-    const summary = `Approved ${subtask.title}. Ready to continue.`
+    const summary = `Approved ${formatWebinarSubtaskTitle(subtask.title)}. Ready to continue.`
     try {
       const result = await completeHumanSubtask(missionId, subtask.id, { summary })
       const updatedAt = new Date().toISOString()

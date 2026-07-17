@@ -16,14 +16,23 @@ import {
 } from '../lib/ops-desk-summary'
 import { VibeyOpsDeskBriefing } from './VibeyOpsDeskBriefing'
 import { VibeyOpsDeskTalkButton } from './VibeyOpsDeskTalkButton'
+import type { Team2StatusFilter } from './Team2Toolbar'
 
 interface VibeyOpsDeskProps {
   agents: MissionAgent[]
   missions: Mission[]
   floor: React.ReactNode
+  statusFilters?: Team2StatusFilter[]
+  onStatusFilterClick?: (filter: 'working' | 'idle') => void
 }
 
-export function VibeyOpsDesk({ agents, missions, floor }: VibeyOpsDeskProps) {
+export function VibeyOpsDesk({
+  agents,
+  missions,
+  floor,
+  statusFilters = [],
+  onStatusFilterClick,
+}: VibeyOpsDeskProps) {
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
   const [firstName, setFirstName] = useState<string>(TEAM_OPS_DESK_MESSAGES.GREETING_FALLBACK_NAME)
   const [autopilotEnabled, setAutopilotEnabled] = useState(false)
@@ -67,6 +76,8 @@ export function VibeyOpsDesk({ agents, missions, floor }: VibeyOpsDeskProps) {
             firstName={firstName}
             summary={summary}
             autopilotEnabled={autopilotEnabled}
+            statusFilters={statusFilters}
+            onStatusFilterClick={onStatusFilterClick}
           />
           <div className="shrink-0">
             <AwarenessToggle

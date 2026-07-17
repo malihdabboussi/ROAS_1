@@ -16,6 +16,8 @@ export const MISSION_CONTROL_MESSAGES = {
   HUMAN_GATE_CHANGES_SENT: 'Changes sent — this gate will stay open for review.',
   SUBTASK_LIVE_DRAFT_TITLE: 'Live work',
   SUBTASK_LIVE_DRAFT_DESCRIPTION: 'This updates as the agent works. The document may still change.',
+  SUBTASK_OUTPUT_AGENT_TITLE: 'Agent notes',
+  SUBTASK_OUTPUT_HUMAN_TITLE: 'Your note',
   AGENT_PANEL_TITLE: 'Agent Status',
   DETAIL_EMPTY: 'Select a mission to see plan, timeline, and output.',
 } as const

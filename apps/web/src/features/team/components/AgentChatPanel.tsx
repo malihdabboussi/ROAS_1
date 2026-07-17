@@ -1212,8 +1212,8 @@ export function AgentChatPanel({
   const teamEmbeddedChrome = hideConversationsSidebar && hideHeader
   const threadHorizontalPad = teamEmbeddedChrome ? 'px-3 md:px-4' : 'px-4 md:px-8'
   const composerFooterClass = teamEmbeddedChrome
-    ? 'relative flex flex-col items-center px-3 pb-3 pt-2 md:px-4'
-    : 'relative flex flex-col items-center px-4 pb-4 pt-2 md:px-8'
+    ? 'relative flex shrink-0 flex-col items-center px-3 pb-3 pt-2 md:px-4'
+    : 'relative flex shrink-0 flex-col items-center px-4 pb-4 pt-2 md:px-8'
   const composerInput = (
     <ChatInput
       onSend={handleComposerSendWithQueueEdit}

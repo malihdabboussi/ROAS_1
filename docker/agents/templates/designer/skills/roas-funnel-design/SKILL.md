@@ -64,9 +64,7 @@ Present `index.html` first (the click-through + brand reference), then the page 
 
 ## OUTPUT
 
-**Vibey / native funnel builder:** a funnel artifact registered in the platform (spec → native build, or HTML review artifact then hi-fi — per Step 3). Do NOT leave a folder of files as the deliverable.
-
-**claude.ai fallback:** a folder in `/mnt/user-data/outputs/`:
+A folder in `/mnt/user-data/outputs/`:
 - `index.html` — funnel click-through + the documented brand reference (swatches + fonts).
 - one `<slug>.html` per page — self-contained, responsive, annotated wireframe, CTAs wired to the next page.
 

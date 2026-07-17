@@ -81,11 +81,14 @@ export function SpaceMediaView({
   campaignId,
   view,
   onMediaDeepMetaChange,
+  taskModalOpen = false,
 }: {
   spaceId: string
   campaignId: string | null
   view: ViewDef
   onMediaDeepMetaChange: (meta: { id: string; title: string } | null) => void
+  /** When a task modal is open over Media, keep the composer under the modal. */
+  taskModalOpen?: boolean
 }) {
   const mc = useMemo(
     () => ({ ...DEFAULT_MEDIA_VIEW_CONFIG, ...(view.media_config ?? {}) }),
@@ -172,11 +175,11 @@ export function SpaceMediaView({
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {/* Keep composer outside overflow-hidden so Aspect/Model menus are not clipped.
-          Drop z-dropdown while the slide-out editor is open so it cannot paint over History. */}
+          Drop below modal stacking while the slide-out editor or task modal is open. */}
       <div
         className={cn(
           'home-dashboard-v4 relative min-w-0 shrink-0 overflow-visible',
-          mediaId ? 'z-0' : 'z-dropdown',
+          mediaId || taskModalOpen ? 'z-0' : 'z-10',
         )}
       >
         <div className="home-dashboard-v4-hero-glow" aria-hidden />

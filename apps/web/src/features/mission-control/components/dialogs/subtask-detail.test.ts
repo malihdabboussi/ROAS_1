@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest'
 import type { MissionDeliverable, MissionLog, MissionSubtask } from '../../types'
 import {
   buildSubtaskScopedMessage,
+  filterMissionDeliverables,
   filterSubtaskDeliverables,
   filterSubtaskLogs,
-  getSubtaskLiveOutput,
-  getSubtaskLiveStatusLabel,
+  numberDeliverablesByTask,
+  resolveSubtaskOutputDisplay,
 } from './subtask-detail'
 
 const subtask = {
@@ -44,6 +45,85 @@ describe('subtask detail helpers', () => {
     expect(filterSubtaskDeliverables(deliverables, subtask).map((item) => item.id)).toEqual([
       'deliverable-1',
       'deliverable-2',
+    ])
+  })
+
+  it('keeps work visible when an execution receipt links it before final completion', () => {
+    const blockedSubtask = {
+      id: 'static-ads',
+      title: 'Static ads (roas-ad-design)',
+      status: 'blocked',
+      assigned_agent_key: 'blaze',
+      deliverable_id: null,
+      output: { kind: 'blocked' },
+      execution_state: {
+        completed_actions: [
+          {
+            action: 'campaign_capability',
+            result_summary: JSON.stringify({
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    success: true,
+                    deliverable_id: 'static-ads-draft',
+                  }),
+                },
+              ],
+            }),
+          },
+        ],
+      },
+    } as unknown as MissionSubtask
+    const deliverables = [
+      { id: 'static-ads-draft', title: 'Static Ads — Impact Elite Coaching', metadata: {} },
+      { id: 'unrelated', title: 'Other work', metadata: {} },
+    ] as unknown as MissionDeliverable[]
+
+    expect(filterSubtaskDeliverables(deliverables, blockedSubtask).map((item) => item.id)).toEqual([
+      'static-ads-draft',
+    ])
+  })
+
+  it('numbers deliverables by their non-human task order', () => {
+    const subtasks = [
+      {
+        id: 'strategy',
+        assignee_type: 'agent',
+        sort_order: 1,
+        deliverable_id: 'strategy-doc',
+        output: { artifact_manifest: [{ deliverable_id: 'strategy-pdf' }] },
+        execution_state: {},
+      },
+      {
+        id: 'gate',
+        assignee_type: 'human',
+        sort_order: 2,
+        deliverable_id: null,
+        output: {},
+        execution_state: {},
+      },
+      {
+        id: 'static-ads',
+        assignee_type: 'agent',
+        sort_order: 3,
+        deliverable_id: null,
+        output: {},
+        execution_state: {
+          completed_actions: [{ deliverable_id: 'static-ads-draft' }],
+        },
+      },
+    ] as unknown as MissionSubtask[]
+    const deliverables = [
+      { id: 'static-ads-draft', title: 'Static Ads — Impact Elite Coaching', metadata: {} },
+      { id: 'strategy-pdf', title: 'Strategy v2', metadata: {} },
+      { id: 'strategy-doc', title: 'Task 99 — Strategy v2', metadata: {} },
+    ] as unknown as MissionDeliverable[]
+
+    expect(numberDeliverablesByTask(deliverables, subtasks).map((item) => item.title)).toEqual([
+      'Task 2 — Static Ads — Impact Elite Coaching',
+      'Task 1 — Strategy v2',
+      'Task 1 — Strategy v2',
     ])
   })
 
@@ -105,17 +185,65 @@ describe('subtask detail helpers', () => {
     ])
   })
 
-  it('uses persisted partial output for live progress and labels saved work as finalizing', () => {
-    const activeSubtask = {
-      status: 'in_progress',
-      execution_state: {
-        execution_status: 'streaming',
-        partial_output: 'Drafting the email sequence now.',
+  it('hides human gate approval receipts from deliverable lists', () => {
+    const deliverables = [
+      {
+        id: 'real-doc',
+        type: 'doc',
+        title: 'WEB#3 — THE PLAN — Launch Brief',
+        metadata: {},
       },
-    } as unknown as MissionSubtask
+      {
+        id: 'gate-receipt',
+        type: 'doc',
+        title: 'Gate 1 — approve strategy package',
+        metadata: { source: 'human', files: [], links: [] },
+      },
+      {
+        id: 'human-file',
+        type: 'file',
+        title: 'Uploaded brief',
+        file_url: 'https://example.com/brief.pdf',
+        metadata: { source: 'human', files: [{ url: 'https://example.com/brief.pdf' }] },
+      },
+    ] as unknown as MissionDeliverable[]
 
-    expect(getSubtaskLiveOutput(activeSubtask)).toBe('Drafting the email sequence now.')
-    expect(getSubtaskLiveStatusLabel(activeSubtask, false)).toBe('Working')
-    expect(getSubtaskLiveStatusLabel(activeSubtask, true)).toBe('Finalizing')
+    expect(filterMissionDeliverables(deliverables).map((item) => item.id)).toEqual([
+      'real-doc',
+      'human-file',
+    ])
+  })
+
+  it('renders human gate output as a plain note, never raw JSON metadata', () => {
+    expect(
+      resolveSubtaskOutputDisplay({
+        summary: 'Approved Gate 2 — approve Copy Package. Ready to continue.',
+        deliverable_id: '80422e40-c28f-49cf-b060-2de3afe383ae',
+        artifact_manifest: [],
+        completed_by_human: true,
+        completed_by_user_id: 'user-1',
+      }),
+    ).toEqual({
+      titleKey: 'human',
+      body: 'Approved Gate 2 — approve Copy Package. Ready to continue.',
+    })
+
+    expect(
+      resolveSubtaskOutputDisplay({
+        deliverable_id: 'x',
+        artifact_manifest: [],
+        completed_by_human: true,
+      }),
+    ).toBeNull()
+
+    expect(
+      resolveSubtaskOutputDisplay({
+        content: '## Draft\n\nReady for review.',
+        artifact_manifest: [{ deliverable_id: 'd1' }],
+      }),
+    ).toEqual({
+      titleKey: 'agent',
+      body: '## Draft\n\nReady for review.',
+    })
   })
 })

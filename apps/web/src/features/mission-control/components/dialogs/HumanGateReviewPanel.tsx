@@ -17,6 +17,8 @@ interface HumanGateReviewPanelProps {
   onApprove: () => void
   /** Narrow sidebar layout (desktop right column). */
   compact?: boolean
+  /** Inside Activity card — drop outer chrome so it is one panel. */
+  embedded?: boolean
 }
 
 export function HumanGateReviewPanel({
@@ -33,6 +35,7 @@ export function HumanGateReviewPanel({
   onRequestChanges,
   onApprove,
   compact = false,
+  embedded = false,
 }: HumanGateReviewPanelProps) {
   const contributorKeys = [
     ...new Set(dependencies.map((item) => item.assigned_agent_key).filter(Boolean)),
@@ -44,9 +47,11 @@ export function HumanGateReviewPanel({
   return (
     <section
       className={
-        compact
-          ? 'border-border bg-card rounded-spacing-2 p-spacing-4 space-y-spacing-4 border'
-          : 'card-glass p-spacing-4 space-y-spacing-5'
+        embedded
+          ? 'space-y-spacing-4'
+          : compact
+            ? 'border-border bg-card rounded-spacing-2 p-spacing-4 space-y-spacing-4 border'
+            : 'card-glass p-spacing-4 space-y-spacing-5'
       }
     >
       <div className="space-y-spacing-2">
@@ -59,30 +64,32 @@ export function HumanGateReviewPanel({
         </p>
       </div>
 
-      <div className="space-y-spacing-2">
-        <h4 className="body-3 text-foreground font-semibold">What has been completed</h4>
-        <div className="space-y-spacing-1">
-          {dependencies.map((dependency) => (
-            <div
-              key={dependency.id}
-              className="bg-muted-20 rounded-spacing-2 px-spacing-3 py-spacing-2 gap-spacing-2 flex items-center"
-            >
-              <Check className="icon-sm text-success shrink-0" />
-              <span className="body-3 text-foreground min-w-0 flex-1 truncate">
-                {dependency.title}
-              </span>
-              <span className="body-4 text-muted-foreground capitalize">
-                {dependency.status.replace('_', ' ')}
-              </span>
-            </div>
-          ))}
+      {dependencies.length > 0 ? (
+        <div className="space-y-spacing-2">
+          <h4 className="body-3 text-foreground font-semibold">Upstream steps ready</h4>
+          <div className="space-y-spacing-1">
+            {dependencies.map((dependency) => (
+              <div
+                key={dependency.id}
+                className="bg-muted-20 rounded-spacing-2 px-spacing-3 py-spacing-2 gap-spacing-2 flex items-center"
+              >
+                <Check className="icon-sm text-success shrink-0" />
+                <span className="body-3 text-foreground min-w-0 flex-1 truncate">
+                  {dependency.title}
+                </span>
+                <span className="body-4 text-muted-foreground capitalize">
+                  {dependency.status.replace('_', ' ')}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="body-4 text-muted-foreground">
+            {deliverables.length > 0
+              ? `${deliverables.length} review ${deliverables.length === 1 ? 'asset is' : 'assets are'} on the left.`
+              : 'No review assets are attached yet.'}
+          </p>
         </div>
-        <p className="body-4 text-muted-foreground">
-          {deliverables.length > 0
-            ? `${deliverables.length} review ${deliverables.length === 1 ? 'asset is' : 'assets are'} on the left.`
-            : 'No review assets are attached yet.'}
-        </p>
-      </div>
+      ) : null}
 
       {!compact ? (
         <div className="gap-spacing-3 grid md:grid-cols-2">

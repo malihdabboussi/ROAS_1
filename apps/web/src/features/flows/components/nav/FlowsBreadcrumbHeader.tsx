@@ -1,6 +1,7 @@
 'use client'
 
 import { Workflow } from 'lucide-react'
+import { ShellBreadcrumb } from '@/components/shell/ShellBreadcrumb'
 import type { FlowSpaceNavItem } from '../../types/flow-space.types'
 import { FlowsInlineNameField } from '../FlowsInlineNameField'
 import { FlowsInlineDescriptionField } from '../FlowsInlineDescriptionField'
@@ -43,68 +44,68 @@ export function FlowsBreadcrumbHeader({
   const trimmedFlowName = flowName?.trim() ?? ''
   const flowsRootActive = !trimmedFlowName
 
-  return (
-    <div className="px-4 py-3">
-      <div className="pl-spacing-2 flex min-w-0 items-center gap-1.5 text-sm">
-        <button
-          type="button"
-          onClick={onNavigateFlowsRoot}
-          className={`flex min-w-0 items-center gap-1 transition-colors ${
-            flowsRootActive
-              ? 'font-medium text-[var(--foreground)]'
-              : 'text-[var(--color-muted-foreground)] hover:text-[var(--foreground)]'
-          }`}
-        >
-          <Workflow className="h-3.5 w-3.5 shrink-0" />
-          <span className="max-w-[140px] truncate">Flows</span>
-        </button>
+  const trail = (
+    <div className="flex min-w-0 items-center gap-1.5 text-sm">
+      <button
+        type="button"
+        onClick={onNavigateFlowsRoot}
+        className={`flex min-w-0 items-center gap-1 transition-colors ${
+          flowsRootActive
+            ? 'text-foreground font-medium'
+            : 'text-muted-foreground hover:text-foreground'
+        }`}
+      >
+        <Workflow className="h-3.5 w-3.5 shrink-0" />
+        <span className="max-w-[140px] truncate">Flows</span>
+      </button>
 
-        <span className="text-[var(--color-muted-foreground)]/50 select-none">/</span>
-        {trimmedFlowName && flowScopeLocations != null ? (
-          <FlowsFlowScopeBreadcrumb
-            locations={flowScopeLocations}
-            onNavigateToLocation={onNavigateToFlowLocation}
+      <span className="text-muted-foreground/50 select-none">/</span>
+      {trimmedFlowName && flowScopeLocations != null ? (
+        <FlowsFlowScopeBreadcrumb
+          locations={flowScopeLocations}
+          onNavigateToLocation={onNavigateToFlowLocation}
+        />
+      ) : (
+        <>
+          <FlowsCampaignBreadcrumbDropdown
+            selectedCampaignId={selectedCampaignId}
+            onSelectCampaign={onSelectCampaign}
           />
-        ) : (
-          <>
-            <FlowsCampaignBreadcrumbDropdown
-              selectedCampaignId={selectedCampaignId}
-              onSelectCampaign={onSelectCampaign}
-            />
 
-            <span className="text-[var(--color-muted-foreground)]/50 select-none">/</span>
-            <FlowsSpaceFilterBreadcrumbDropdown
-              spaces={spaces}
-              filterCampaignId={selectedCampaignId}
-              selectedSpaceId={selectedSpaceId}
-              onSelectSpace={onSelectSpace}
-            />
-          </>
-        )}
+          <span className="text-muted-foreground/50 select-none">/</span>
+          <FlowsSpaceFilterBreadcrumbDropdown
+            spaces={spaces}
+            filterCampaignId={selectedCampaignId}
+            selectedSpaceId={selectedSpaceId}
+            onSelectSpace={onSelectSpace}
+          />
+        </>
+      )}
 
-        {trimmedFlowName && onRenameFlow ? (
-          <>
-            <span className="text-[var(--color-muted-foreground)]/50 select-none">/</span>
-            <FlowsInlineNameField
-              value={trimmedFlowName}
-              onCommit={onRenameFlow}
-              disabled={renameFlowDisabled}
-              maxWidthClass="max-w-[200px]"
-            />
-            {onUpdateDescription ? (
-              <>
-                <span className="text-[var(--color-muted-foreground)]/50 select-none">·</span>
-                <FlowsInlineDescriptionField
-                  value={flowDescription}
-                  onCommit={onUpdateDescription}
-                  disabled={descriptionDisabled}
-                  maxWidthClass="max-w-[200px]"
-                />
-              </>
-            ) : null}
-          </>
-        ) : null}
-      </div>
+      {trimmedFlowName && onRenameFlow ? (
+        <>
+          <span className="text-muted-foreground/50 select-none">/</span>
+          <FlowsInlineNameField
+            value={trimmedFlowName}
+            onCommit={onRenameFlow}
+            disabled={renameFlowDisabled}
+            maxWidthClass="max-w-[200px]"
+          />
+          {onUpdateDescription ? (
+            <>
+              <span className="text-muted-foreground/50 select-none">·</span>
+              <FlowsInlineDescriptionField
+                value={flowDescription}
+                onCommit={onUpdateDescription}
+                disabled={descriptionDisabled}
+                maxWidthClass="max-w-[200px]"
+              />
+            </>
+          ) : null}
+        </>
+      ) : null}
     </div>
   )
+
+  return <ShellBreadcrumb>{trail}</ShellBreadcrumb>
 }

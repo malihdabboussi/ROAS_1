@@ -18,7 +18,7 @@ export function DeliverablesListView({
         <div>Name</div>
         <div>Type</div>
         <div>Size</div>
-        <div>Added</div>
+        <div>Created</div>
       </div>
       <div className="max-h-[min(40vh,22rem)] min-h-0 overflow-y-auto">
         {deliverables.map((d) => {
@@ -40,9 +40,16 @@ export function DeliverablesListView({
               <div className="text-muted-foreground tabular-nums">
                 {d.file_size ? formatFileSize(d.file_size) : '—'}
               </div>
-              <div className="text-muted-foreground">
-                {new Date(d.created_at).toLocaleDateString()}
-              </div>
+              <time
+                dateTime={d.created_at}
+                title={new Date(d.created_at).toLocaleString()}
+                className="text-muted-foreground truncate tabular-nums"
+              >
+                {new Date(d.created_at).toLocaleString([], {
+                  dateStyle: 'short',
+                  timeStyle: 'short',
+                })}
+              </time>
             </button>
           )
         })}

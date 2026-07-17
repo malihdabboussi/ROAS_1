@@ -647,20 +647,18 @@ export class MissionStateRepository {
         progressNotes: 'All subtasks completed — ready for review',
       }
     }
-    if (hasRunnablePending) {
-      return { nextStatus: 'todo', enqueueReview: false }
-    }
-    // Waiting-on-humans rollup — mirrors API MissionInternalService.
+    // An active human gate outranks later pending work that cannot start until it is approved.
+    // Mirrors API MissionInternalService.
     const hasAwaitingHuman = active.some((s) => String(s.status) === 'awaiting_human')
-    const allAwaitingOrDone = active.every((s) =>
-      ['awaiting_human', 'done'].includes(String(s.status)),
-    )
-    if (hasAwaitingHuman && allAwaitingOrDone) {
+    if (hasAwaitingHuman) {
       return {
         nextStatus: 'awaiting_human',
         enqueueReview: false,
-        progressNotes: 'Waiting on a teammate — SLA clock is running',
+        progressNotes: 'Waiting for your approval — review is required before work continues',
       }
+    }
+    if (hasRunnablePending) {
+      return { nextStatus: 'todo', enqueueReview: false }
     }
     const onlyStuck = active.every((s) => ['blocked', 'revision'].includes(String(s.status)))
     if (onlyStuck) {
@@ -708,6 +706,12 @@ export class MissionStateRepository {
               }
             : {}),
           ...(aggregate.nextStatus === 'todo' ? { current_agent_key: null } : {}),
+          ...(aggregate.nextStatus === 'awaiting_human'
+            ? {
+                current_agent_key: null,
+                ...(aggregate.progressNotes ? { progress_notes: aggregate.progressNotes } : {}),
+              }
+            : {}),
         })
       }
 

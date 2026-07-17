@@ -119,6 +119,10 @@ export function MissionDetailModal({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
+      if (previewDeliverable) {
+        setPreviewDeliverable(null)
+        return
+      }
       if (selectedSubtaskId) {
         setSelectedSubtaskId(null)
         setMobileScreen('detail')
@@ -128,7 +132,7 @@ export function MissionDetailModal({
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose, selectedSubtaskId])
+  }, [onClose, selectedSubtaskId, previewDeliverable])
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')

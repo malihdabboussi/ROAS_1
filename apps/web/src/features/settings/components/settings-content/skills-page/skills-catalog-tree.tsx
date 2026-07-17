@@ -276,6 +276,8 @@ export function SkillsCatalogTree({
   canViewOfficialSkillContent,
   onToggleEnabled,
   onOpenSkillMenu,
+  catalogFolders,
+  skillKeyToFolderId,
 }: {
   skills: MissionAgentSkill[]
   skillsViewKey: 'all' | string
@@ -290,6 +292,8 @@ export function SkillsCatalogTree({
   canViewOfficialSkillContent: boolean
   onToggleEnabled: (skill: MissionAgentSkill, enabled: boolean) => void | Promise<void>
   onOpenSkillMenu: (skill: MissionAgentSkill, position: { x: number; y: number }) => void
+  catalogFolders?: Array<{ id: string; name: string }>
+  skillKeyToFolderId?: Record<string, string>
 }) {
   const agentsByKey = useMemo(
     () => new Map(agents.map((agent) => [agent.agent_key, agent])),
@@ -297,8 +301,18 @@ export function SkillsCatalogTree({
   )
 
   const sections = useMemo(
-    () => buildSkillsCatalogSections(skills, skillsGroupBy, skillsViewKey, agents, skillsGroupSort),
-    [skills, skillsGroupBy, skillsGroupSort, skillsViewKey, agents],
+    () =>
+      buildSkillsCatalogSections(
+        skills,
+        skillsGroupBy,
+        skillsViewKey,
+        agents,
+        skillsGroupSort,
+        catalogFolders && skillKeyToFolderId
+          ? { folders: catalogFolders, skillKeyToFolderId }
+          : undefined,
+      ),
+    [skills, skillsGroupBy, skillsGroupSort, skillsViewKey, agents, catalogFolders, skillKeyToFolderId],
   )
 
   const showAgentStack = skillsViewKey === 'all' && skillsGroupBy !== 'agent'

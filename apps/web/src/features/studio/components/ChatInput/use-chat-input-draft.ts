@@ -117,7 +117,9 @@ export function useChatInputDraft({
     setValue(draft)
     setDisplayText(draft)
     resizeTextareaForDraft(textareaRef, draft, scheduleAnimationFrameRef.current)
-  }, [draftContextKey, initialValue, setValue, setDisplayText, textareaRef])
+    // Only re-hydrate when the draft identity changes — not when `initialValue` flickers.
+    // Restores from failed sends go through `restoreNonce`.
+  }, [draftContextKey, setValue, setDisplayText, textareaRef])
 
   useEffect(() => {
     const timer = setTimeout(() => {

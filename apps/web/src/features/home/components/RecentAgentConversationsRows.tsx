@@ -76,7 +76,7 @@ export function RecentAgentConversationsRows({
 
   return (
     <>
-      <ul className="flex-1 space-y-0 overflow-y-auto px-2 py-1">
+      <ul className="flex-1 space-y-0 overflow-y-auto scrollbar-hide px-2 py-1">
         {visibleRows.map((conversation) => {
           const title =
             stripLegacySpacesConversationTitle(conversation.title) || 'Untitled conversation'

@@ -1,5 +1,5 @@
 import HtmlToDocx from '@turbodocx/html-to-docx'
-import { buildSpaceDocExportHtml } from './export-space-doc-html'
+import { buildSpaceDocExportHtml } from '@/lib/spaces/space-doc-export'
 
 async function docxBytesFromRendererOutput(value: unknown): Promise<Uint8Array> {
   if (value instanceof Uint8Array) return value

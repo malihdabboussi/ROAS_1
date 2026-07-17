@@ -43,6 +43,12 @@ export function SkillsTreeSidebar({
   skillUploadInputRef,
   handleUploadSkill,
   extracting,
+  catalogFolders,
+  skillKeyToFolderId,
+  folderBusy,
+  onCreateFolder,
+  onEnsureDefaultAgencyFolder,
+  onSetSkillFolder,
 }: {
   agents: MissionAgent[]
   search: string
@@ -74,6 +80,12 @@ export function SkillsTreeSidebar({
   skillUploadInputRef: RefObject<HTMLInputElement | null>
   handleUploadSkill: (files: FileList | File[]) => void
   extracting: boolean
+  catalogFolders?: Array<{ id: string; name: string }>
+  skillKeyToFolderId?: Record<string, string>
+  folderBusy?: boolean
+  onCreateFolder?: (name: string) => void | Promise<void>
+  onEnsureDefaultAgencyFolder?: () => void | Promise<void>
+  onSetSkillFolder?: (skillKey: string, folderId: string | null) => void | Promise<void>
 }) {
   const [skillMenuState, setSkillMenuState] = useState<SkillMenuState | null>(null)
 
@@ -97,6 +109,9 @@ export function SkillsTreeSidebar({
         skillUploadInputRef={skillUploadInputRef}
         handleUploadSkill={handleUploadSkill}
         extracting={extracting}
+        folderBusy={folderBusy}
+        onCreateFolder={onCreateFolder}
+        onEnsureDefaultAgencyFolder={onEnsureDefaultAgencyFolder}
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
@@ -131,6 +146,8 @@ export function SkillsTreeSidebar({
               onOpenSkillMenu={(skill, position) =>
                 setSkillMenuState({ skill, pointerPosition: position })
               }
+              catalogFolders={catalogFolders}
+              skillKeyToFolderId={skillKeyToFolderId}
             />
           </div>
         )}
@@ -147,6 +164,8 @@ export function SkillsTreeSidebar({
           onToggleEnabled={onToggleEnabled}
           onSkillsChanged={onSkillsChanged}
           onRequestDelete={setDeleteTarget}
+          catalogFolders={catalogFolders}
+          onSetSkillFolder={onSetSkillFolder}
         />
       ) : null}
     </div>

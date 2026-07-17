@@ -1,6 +1,7 @@
 import { ChevronRight, Clock, GitBranch, RefreshCw, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { SelectCell } from '@/components/ui/forms/SelectCell'
+import { formatWebinarSubtaskTitle } from '@/lib/missions'
 import type { MissionColumnId, MissionsConfig, SubtasksDisplayMode } from '@/lib/spaces/space-schema-types'
 import { cn } from '@/lib/utils/cn'
 import { updateMission } from '../services/missions.service'
@@ -30,7 +31,7 @@ export function MissionTitleText({ text }: { text: string }) {
   return (
     <div className="flex min-h-7 w-full min-w-0 items-center">
       <span className="body-3 text-foreground min-w-0 flex-1 cursor-pointer truncate transition-colors group-hover:text-emerald-500">
-        {text}
+        {formatWebinarSubtaskTitle(text)}
       </span>
     </div>
   )

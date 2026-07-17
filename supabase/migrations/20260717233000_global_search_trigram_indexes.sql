@@ -1,0 +1,21 @@
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE INDEX IF NOT EXISTS idx_campaigns_name_trgm ON public.campaigns USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_conversations_title_trgm ON public.conversations USING gin (title gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_space_items_title_trgm ON public.space_items USING gin (title gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_conversation_documents_title_trgm ON public.conversation_documents USING gin (title gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_mission_deliverables_title_trgm ON public.mission_deliverables USING gin (title gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_offers_name_trgm ON public.offers USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_funnels_name_trgm ON public.funnels USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_sequences_name_trgm ON public.sequences USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_sequence_emails_subject_trgm ON public.sequence_emails USING gin (subject gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_presentations_name_trgm ON public.presentations USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_avatars_name_trgm ON public.avatars USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_ads_headline_trgm ON public.ads USING gin (headline gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_ads_primary_text_trgm ON public.ads USING gin (primary_text gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_ad_campaigns_name_trgm ON public.ad_campaigns USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_ad_sets_name_trgm ON public.ad_sets USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_social_posts_caption_trgm ON public.social_posts USING gin (caption gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_social_posts_headline_trgm ON public.social_posts USING gin (headline gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_title_trgm ON public.blog_posts USING gin (title gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_funnel_pages_name_trgm ON public.funnel_pages USING gin (name gin_trgm_ops);

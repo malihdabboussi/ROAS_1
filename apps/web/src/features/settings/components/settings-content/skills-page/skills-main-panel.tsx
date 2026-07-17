@@ -85,6 +85,12 @@ export function SkillsMainPanel({
   folderUploadPathRef,
   downloadSkillResourceFile,
   downloadSkillMd,
+  catalogFolders,
+  skillKeyToFolderId,
+  folderBusy,
+  onCreateFolder,
+  onEnsureDefaultAgencyFolder,
+  onSetSkillFolder,
 }: {
   agents: MissionAgent[]
   skillsViewKey: 'all' | string
@@ -156,6 +162,12 @@ export function SkillsMainPanel({
   folderUploadPathRef: RefObject<string | null>
   downloadSkillResourceFile: (resourceId: string) => void
   downloadSkillMd: () => void
+  catalogFolders?: Array<{ id: string; name: string }>
+  skillKeyToFolderId?: Record<string, string>
+  folderBusy?: boolean
+  onCreateFolder?: (name: string) => void | Promise<void>
+  onEnsureDefaultAgencyFolder?: () => void | Promise<void>
+  onSetSkillFolder?: (skillKey: string, folderId: string | null) => void | Promise<void>
 }) {
   const createTargetAgentKey = skillsViewKey === 'all' ? selectedAgentKey : skillsViewKey
   const createTargetAgentName =
@@ -251,6 +263,12 @@ export function SkillsMainPanel({
             skillUploadInputRef={skillUploadInputRef}
             handleUploadSkill={handleUploadSkill}
             extracting={extracting}
+            catalogFolders={catalogFolders}
+            skillKeyToFolderId={skillKeyToFolderId}
+            folderBusy={folderBusy}
+            onCreateFolder={onCreateFolder}
+            onEnsureDefaultAgencyFolder={onEnsureDefaultAgencyFolder}
+            onSetSkillFolder={onSetSkillFolder}
           />
         )}
       </div>

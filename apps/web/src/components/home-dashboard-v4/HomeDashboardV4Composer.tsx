@@ -32,6 +32,7 @@ export function HomeDashboardV4Composer({
   onSelectTemplate: (id: HomeDashboardTemplateId | null) => void
 }) {
   const seedComposer = useGlobalChatStore((s) => s.seedComposer)
+  const activeAgentKey = useGlobalChatStore((s) => s.activeAgentKey)
   const { data: cachedSpaceRows } = useCachedSpaces()
   const spaces = useMemo(() => cachedSpaceRows ?? [], [cachedSpaceRows])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -171,6 +172,7 @@ export function HomeDashboardV4Composer({
 
         seedComposer({
           content,
+          agentKey: activeAgentKey,
           documents,
           artifacts,
           model,
@@ -190,14 +192,14 @@ export function HomeDashboardV4Composer({
         setSending(false)
       }
     },
-    [activeCampaignId, isOrgOnly, seedComposer, sending, spaces, targetSpaceId],
+    [activeAgentKey, activeCampaignId, isOrgOnly, seedComposer, sending, spaces, targetSpaceId],
   )
 
   return (
     <ChatInput
       onSend={handleSend}
       disabled={sending}
-      agentKey="vibey"
+      agentKey={activeAgentKey}
       placeholder={placeholder}
       draftContextKeyOverride="home-dashboard-v4"
       spaceId={targetSpaceId}

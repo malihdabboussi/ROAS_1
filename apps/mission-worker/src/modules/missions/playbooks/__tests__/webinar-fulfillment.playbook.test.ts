@@ -47,18 +47,42 @@ describe('webinar-fulfillment playbook', () => {
     expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.assignTo).toBe('ads_manager')
     expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.assignTo).toBe('copywriter')
     expect(plan.subtasks.find((s) => s.id === 'st-funnel-design')?.assignTo).toBe('designer')
-    expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.outputContract?.expected).toEqual({
-      title: 'Copy Package',
-    })
+    expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.outputContract?.expected).toEqual(
+      {
+        title: 'WEB#5 — Copy Package',
+      },
+    )
+    expect(plan.subtasks.map((s) => s.title)).toEqual([
+      'Task 1 — Pre-call strategy map',
+      'Task 2 — Strategy v2 after call',
+      'Task 3 — THE PLAN launch brief',
+      'Gate 1 — approve strategy package',
+      'Task 4 — Market research',
+      'Task 5 — Copy Package',
+      'Gate 2 — approve Copy Package',
+      'Task 6 — Static ads',
+      'Task 7 — Image briefs',
+      'Task 8 — Funnel design',
+      'Task 9 — Deck Outline v1',
+      'Gate 3 — approve Deck Outline v1',
+      'Task 10 — Webinar Deck v1',
+    ])
     expect(plan.subtasks.find((s) => s.id === 'st-gate-2')?.intent.ecology).toMatch(
       /re-run ONLY the owning skill/i,
     )
     expect(plan.subtasks.find((s) => s.id === 'st-funnel-design')?.intent.ecology).toMatch(
       /WITHOUT reshaping/,
     )
-    expect(plan.subtasks.find((s) => s.id === 'st-deck-build')?.intent.ecology).toMatch(/NEVER export/)
-    expect(plan.capability_gap.exists).toBe(true)
-    expect(plan.capability_gap.note).toMatch(/roas-webinar-emails/)
+    expect(plan.subtasks.find((s) => s.id === 'st-deck-build')?.intent.ecology).toMatch(
+      /NEVER export/,
+    )
+    expect(plan.capability_gap).toEqual({ exists: false, note: '', suggested_hire: '' })
+    expect(plan.harness.contextSnapshot.missing).not.toContain(
+      'roas-webinar-emails skill (Copy Package section 2)',
+    )
+    expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.intent.ecology).not.toMatch(
+      /if that skill is missing/i,
+    )
   })
 
   it('skips precall when start_at is post_call but keeps B/C', () => {

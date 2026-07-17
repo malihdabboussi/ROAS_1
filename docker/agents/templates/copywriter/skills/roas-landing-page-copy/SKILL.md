@@ -33,11 +33,7 @@ Full copy, no stubs: headlines, subheads, bullets, button text, form labels, the
 Once for the deliverable: **mini brand guide** (font pairing, colors + hex with source noted, button style, overall look). Per page: **section guide** — the stacked blocks in order with one line on what each holds. Match `roas-funnel-build`'s handoff format exactly; this is what `roas-funnel-design` ingests.
 
 ### Step 4 — Scrub and ship
-Every shipping line through the `dylans-super-voice` no-AI-smell standard (em dashes, triplets, "it's not X it's Y," fake-candor openers — hunt and fix). Section-guide notes are instructions, not copy; they're exempt.
-
-### Output (environment-aware)
-**Vibey / native artifacts:** register as a Space Doc via `save_document` (document_artifact). Do NOT write to `/mnt/user-data/outputs/`.
-**claude.ai fallback:** save to `/mnt/user-data/outputs/` and present.
+Every shipping line through the `dylans-super-voice` no-AI-smell standard (em dashes, triplets, "it's not X it's Y," fake-candor openers — hunt and fix). Section-guide notes are instructions, not copy; they're exempt. Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above — do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai / no native artifacts (fallback), save to `/mnt/user-data/outputs/` and present.
 
 ## OUTPUT FORMAT
 ```

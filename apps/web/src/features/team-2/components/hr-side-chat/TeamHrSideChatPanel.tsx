@@ -76,7 +76,10 @@ import {
   setConversationArchived,
   setConversationPinned,
 } from '@/lib/conversations'
-import { stripLegacySpacesConversationTitle } from '@/lib/conversations/conversation-title'
+import {
+  resolveSuggestedConversationTitle,
+  stripLegacySpacesConversationTitle,
+} from '@/lib/conversations/conversation-title'
 import {
   CONVERSATION_ACTIONS_TOAST_ERRORS,
   CONVERSATION_ACTIONS_TOAST_SUCCESS,
@@ -685,9 +688,10 @@ export function TeamHrSideChatPanel({
       }
 
       if (isFirstMessageInThread && content.trim()) {
-        void suggestConversationTitle(content.trim())
+        const firstMessage = content.trim()
+        void suggestConversationTitle(firstMessage)
           .then(async (res) => {
-            const title = (res.title ?? '').trim().slice(0, 200)
+            const title = resolveSuggestedConversationTitle(res.title, firstMessage, 200)
             if (!title) return
             await renameConversation(nextConversationId, title)
             setConversations((prev) =>
@@ -695,7 +699,19 @@ export function TeamHrSideChatPanel({
             )
             useChatStore.getState().updateConversation(nextConversationId, { title })
           })
-          .catch(() => {})
+          .catch(async () => {
+            const title = resolveSuggestedConversationTitle(null, firstMessage, 200)
+            if (!title) return
+            try {
+              await renameConversation(nextConversationId, title)
+              setConversations((prev) =>
+                prev.map((c) => (c.id === nextConversationId ? { ...c, title } : c)),
+              )
+              useChatStore.getState().updateConversation(nextConversationId, { title })
+            } catch {
+              // Non-critical — chat.service already set a first-message title.
+            }
+          })
       }
     },
     [
@@ -1431,7 +1447,7 @@ export function TeamHrSideChatPanel({
 
               <div
                 className={cn(
-                  'relative flex flex-col items-center px-3 pb-3 pt-2 md:px-4',
+                  'relative flex shrink-0 flex-col items-center px-3 pb-3 pt-2 md:px-4',
                   isStopping && 'opacity-70',
                 )}
               >

@@ -1,5 +1,6 @@
 import type { MissionAgent } from '@/lib/agents/mission-agents-api'
 import type { Mission } from '@/lib/missions'
+import { TEAM_OPS_DESK_MESSAGES } from '../config/messages.config'
 import {
   activeMissionsForAgents,
   computeAgentStatusCounts,
@@ -14,7 +15,7 @@ export interface AgentFocusLine {
   agentKey: string
   agentName: string
   label: string
-  kind: 'mission' | 'idle'
+  kind: 'mission' | 'working' | 'idle'
   missionId?: string
 }
 
@@ -22,6 +23,7 @@ export interface OpsDeskSummary {
   statusCounts: TeamAgentStatusCounts
   missionStats: TeamMissionStats
   liveFocus: AgentFocusLine[]
+  workingAgents: Array<{ agentKey: string; agentName: string; label: string }>
   idleAgents: Array<{ agentKey: string; agentName: string }>
 }
 
@@ -88,12 +90,32 @@ export function buildOpsDeskSummary(
     })
   }
 
+  // Presence "working" can be chat/task runs without an open mission — still surface them.
+  for (const agent of floorAgents) {
+    if (agent.status !== 'working' || seenAgents.has(agent.agent_key)) continue
+    seenAgents.add(agent.agent_key)
+    liveFocus.push({
+      agentKey: agent.agent_key,
+      agentName: agent.name,
+      label: TEAM_OPS_DESK_MESSAGES.WORKING_NOW,
+      kind: 'working',
+    })
+  }
+
+  const workingAgents = liveFocus
+    .filter((row) => row.kind === 'mission' || row.kind === 'working')
+    .map((row) => ({
+      agentKey: row.agentKey,
+      agentName: row.agentName,
+      label: row.label,
+    }))
+
   const idleAgents = floorAgents
     .filter((a) => a.status === 'idle' || (!seenAgents.has(a.agent_key) && a.status !== 'working'))
     .filter((a) => a.agent_key !== 'vibey')
     .map((a) => ({ agentKey: a.agent_key, agentName: a.name }))
 
-  return { statusCounts, missionStats, liveFocus, idleAgents }
+  return { statusCounts, missionStats, liveFocus, workingAgents, idleAgents }
 }
 
 export function firstNameFromDisplayName(fullName: string, fallback: string): string {

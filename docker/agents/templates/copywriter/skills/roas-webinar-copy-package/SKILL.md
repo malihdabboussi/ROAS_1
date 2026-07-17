@@ -47,9 +47,7 @@ Compile into one markdown doc:
 [section → owning skill, so a reject re-runs the right unit:
 1→roas-webinar-topics · 2→roas-webinar-emails · 3→roas-ad-copy · 4→roas-video-ad-scripts · 5→roas-landing-page-copy]
 ```
-### Output (environment-aware)
-**Vibey / native artifacts:** save one Doc titled `"Copy Package"` (5 sections + Open flags + REVIEW MAP) via `save_document`. Do NOT write to `/mnt/user-data/outputs/`.
-**claude.ai fallback:** save the package (and the per-unit files) to `/mnt/user-data/outputs/`; present the package first.
+Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above — do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai / no native artifacts (fallback), save to `/mnt/user-data/outputs/` and present. Title the Doc exactly `WEB#5 — Copy Package` (legacy `Copy Package` still matches). Present the package first; keep per-unit files as attachments only if the platform supports them.
 
 ## HARD RULES
 - **No copy logic here.** If this skill is writing headlines, something's wrong — the atomic skill owns it.

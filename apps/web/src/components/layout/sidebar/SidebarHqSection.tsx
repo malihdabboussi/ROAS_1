@@ -11,9 +11,8 @@ import { SidebarHqMobileDrawer } from './SidebarHqMobileDrawer'
 import { SidebarHqRail } from './SidebarHqRail'
 import type { SidebarControllerReturn } from './useSidebarController'
 
-const SPACES_FLYOUT_CLOSE_DELAY_MS = 140
-const HOVER_CLOSE_PANELS = new Set(['spaces', 'team2', 'brain'])
-const adminOnlyRailItemIds = new Set(['projects', 'flows'])
+const SPACES_FLYOUT_CLOSE_DELAY_MS = 350
+const HOVER_CLOSE_PANELS = new Set(['spaces', 'team2', 'brain', 'more'])
 
 export function SidebarHqSection({
   c,
@@ -82,13 +81,7 @@ export function SidebarHqSection({
     [c.sidebarLists, spaceUserState.hiddenIds],
   )
   const hiddenSidebarCount = c.hiddenCampaigns.length + hiddenSpaces.length
-  const visibleRailItems = useMemo(
-    () =>
-      c.isAdmin
-        ? manageRailItems
-        : manageRailItems.filter((item) => !adminOnlyRailItemIds.has(item.id)),
-    [c.isAdmin],
-  )
+  const visibleRailItems = manageRailItems
 
   const openHiddenMenu = () => {
     if (hiddenEyeRef.current) {
@@ -141,7 +134,15 @@ export function SidebarHqSection({
         <div
           className="flex h-full min-h-0 flex-1 flex-row overflow-visible"
           onMouseEnter={clearSpacesFlyoutCloseTimer}
-          onMouseLeave={scheduleSpacesFlyoutClose}
+          onMouseLeave={(e) => {
+            if (
+              e.relatedTarget instanceof Element &&
+              e.relatedTarget.closest('[data-hub-dock-flyout]')
+            ) {
+              return
+            }
+            scheduleSpacesFlyoutClose()
+          }}
         >
           <div className="relative z-10 flex h-full shrink-0 flex-col">
             <SidebarHqRail
@@ -172,25 +173,6 @@ export function SidebarHqSection({
               spaceUserState={spaceUserState}
             />
           </div>
-          <SidebarHqFlyouts
-            placement="inline"
-            c={c}
-            spacesSearchOpen={spacesSearchOpen}
-            setSpacesSearchOpen={setSpacesSearchOpen}
-            spacesSearchQuery={spacesSearchQuery}
-            setSpacesSearchQuery={setSpacesSearchQuery}
-            spacesSearchInputRef={spacesSearchInputRef}
-            hiddenSidebarCount={hiddenSidebarCount}
-            hiddenEyeRef={hiddenEyeRef}
-            hiddenMenuOpen={hiddenMenuOpen}
-            setHiddenMenuOpen={setHiddenMenuOpen}
-            openHiddenMenu={openHiddenMenu}
-            clearSpacesFlyoutCloseTimer={clearSpacesFlyoutCloseTimer}
-            scheduleSpacesFlyoutClose={scheduleSpacesFlyoutClose}
-            setBrowsePanelBucket={setBrowsePanelBucket}
-            setCreateSpaceModalFor={setCreateSpaceModalFor}
-            spaceUserState={spaceUserState}
-          />
         </div>
       )}
 

@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 import { backendPatch } from '@/lib/api/backend-client'
-import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { createClient } from '@/lib/supabase/client'
 import { fetchTeamRoster, type TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { cachedSpaces } from '../hooks/use-cached-spaces'
@@ -38,6 +38,10 @@ import { NEW_SPACE_SCHEMA } from '../types/space-schema'
 
 const STORAGE_KEY = 'vibey.spaces.nav'
 const pendingItemMutationCounts = new Map<string, number>()
+
+function invalidateSpaceItemsFetchCache(spaceId: string) {
+  invalidateCachedFetch(`space-items:${spaceId}:`)
+}
 const queuedRealtimeItemChanges = new Map<string, SpaceItemRealtimeChange>()
 
 /**
@@ -456,7 +460,9 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
   loadRoster: async () => {
     try {
       const [roster, { data }] = await Promise.all([
-        cachedFetch('team-roster:all', () => fetchTeamRoster({ kind: 'all' })),
+        cachedFetch('team-roster:all', () => fetchTeamRoster({ kind: 'all' }), {
+          ttlMs: 60_000,
+        }),
         createClient().auth.getUser(),
       ])
       set({ roster, rosterLoaded: true, currentUserId: data.user?.id ?? null })
@@ -466,9 +472,13 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
   },
 
   loadSpaces: async () => {
-    set({ loading: true, loadError: null })
-    try {
-      const spaces = cachedSpaces.peek() ?? (await cachedSpaces.reload())
+    const peeked = cachedSpaces.peek()
+    const hasWarmSpaces = (peeked?.length ?? 0) > 0 || get().spaces.length > 0
+    // Stale-while-revalidate: never blank the page when we already have spaces.
+    if (!hasWarmSpaces) set({ loading: true, loadError: null })
+    else set({ loadError: null })
+
+    const applySpacesSnapshot = (spaces: Space[]) => {
       const currentActiveSpaceId = get().activeSpaceId ?? readStoredSpaceId()
       const hasActive = currentActiveSpaceId
         ? spaces.some((space) => space.id === currentActiveSpaceId)
@@ -496,13 +506,54 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
         loadError: null,
       }))
 
-      if (nextActiveSpaceId) {
-        await Promise.all([
-          get().loadItems(nextActiveSpaceId, nextActiveView),
-          get().loadViewOverrides(nextActiveSpaceId),
-        ])
+      return { nextActiveSpaceId, nextActiveView, hasActive }
+    }
+
+    const refreshActiveSpaceData = async (
+      nextActiveSpaceId: string | null,
+      nextActiveView: ViewDef | null,
+      awaitNetwork: boolean,
+    ) => {
+      if (!nextActiveSpaceId) return
+      const queryKey = itemFetchQueryKeyForView(nextActiveView)
+      const itemsReady =
+        get().itemsLoadedForSpaceId === nextActiveSpaceId &&
+        get().itemsLoadedForQueryKey === queryKey &&
+        get().items.length > 0
+      const work = Promise.all([
+        get().loadItems(nextActiveSpaceId, nextActiveView),
+        get().loadViewOverrides(nextActiveSpaceId),
+      ])
+      if (awaitNetwork && !itemsReady) await work
+      else void work
+    }
+
+    try {
+      const hadStoreSpaces = get().spaces.length > 0
+      const usedWarmSnapshot = Boolean(peeked) || hadStoreSpaces
+      const spaces =
+        peeked ?? (hadStoreSpaces ? get().spaces : await cachedSpaces.reload())
+      const applied = applySpacesSnapshot(spaces)
+      await refreshActiveSpaceData(
+        applied.nextActiveSpaceId,
+        applied.nextActiveView,
+        !hasWarmSpaces,
+      )
+
+      if (usedWarmSnapshot) {
+        void cachedSpaces
+          .reload()
+          .then((fresh) => {
+            const next = applySpacesSnapshot(fresh)
+            void refreshActiveSpaceData(next.nextActiveSpaceId, next.nextActiveView, false)
+          })
+          .catch(() => undefined)
       }
     } catch (error) {
+      if (get().spaces.length > 0) {
+        set({ loading: false, loadError: getErrorMessage(error) })
+        return
+      }
       set({
         loading: false,
         loadError: getErrorMessage(error),
@@ -587,8 +638,10 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
 
   loadViewOverrides: async (spaceId) => {
     try {
-      const rows = await cachedFetch(`space-view-overrides:${spaceId}`, () =>
-        fetchViewOverrides(spaceId),
+      const rows = await cachedFetch(
+        `space-view-overrides:${spaceId}`,
+        () => fetchViewOverrides(spaceId),
+        { ttlMs: 60_000 },
       )
       const map: Record<string, Partial<ViewDef>> = {}
       for (const row of rows) {
@@ -662,10 +715,11 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
   loadItems: async (spaceId, view) => {
     const queryKey = itemFetchQueryKeyForView(view)
     try {
-      // ttl 0 = concurrent calls (StrictMode double-effects, duplicate mounts)
-      // share one request; sequential calls still refetch.
-      const items = await cachedFetch(`space-items:${spaceId}:${queryKey}`, () =>
-        fetchSpaceItems(spaceId, itemFetchOptionsForView(view)),
+      // 30s SWR: revisiting Spaces paints from cache; mutations invalidate the key.
+      const items = await cachedFetch(
+        `space-items:${spaceId}:${queryKey}`,
+        () => fetchSpaceItems(spaceId, itemFetchOptionsForView(view)),
+        { ttlMs: 30_000 },
       )
       if (get().activeSpaceId !== spaceId) {
         itemsCacheBySpaceQuery.set(itemsCacheKey(spaceId, queryKey), items)
@@ -812,6 +866,7 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
         sort_order,
         ...extra,
       })
+      invalidateSpaceItemsFetchCache(activeSpaceId)
       set((s) => ({
         items: [...s.items.filter((i) => i.id !== tempId && i.id !== item.id), item],
       }))
@@ -891,6 +946,7 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
     }
     try {
       const item = await duplicateSpaceItemRequest(spaceId, itemId, input)
+      invalidateSpaceItemsFetchCache(spaceId)
       if (get().activeSpaceId !== spaceId) return item
       if (tempId) {
         set((s) => ({
@@ -943,6 +999,7 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
       }
       const updated = await updateSpaceItemRequest(activeSpaceId, itemId, payload)
       localUpdatedAt = updated.updated_at
+      invalidateSpaceItemsFetchCache(activeSpaceId)
       // Keep the optimistic state as source of truth; only adopt server-derived
       // updated_at so subsequent diffs use the latest timestamp. Replacing the
       // whole item caused flashes (stale frames between optimistic and server
@@ -998,6 +1055,7 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
       localUpdatedAtById = new Map(
         [...batchResults, ...singleResults].map((item) => [item.id, item.updated_at]),
       )
+      invalidateSpaceItemsFetchCache(activeSpaceId)
       set((s) => ({
         items: s.items.map((i) => (byId.has(i.id) ? byId.get(i.id)! : i)),
       }))
@@ -1039,6 +1097,7 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
     set((s) => ({ items: s.items.filter((i) => !removedIds.has(i.id)) }))
     try {
       await deleteSpaceItemRequest(activeSpaceId, itemId)
+      invalidateSpaceItemsFetchCache(activeSpaceId)
     } catch (error) {
       set((s) => ({ items: [...s.items, ...removed] }))
       throw error

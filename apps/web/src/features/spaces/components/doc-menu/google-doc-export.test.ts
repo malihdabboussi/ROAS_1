@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { googleDocHref, googleDocMetadataPatch } from './google-doc-export'
+import { googleDocHref, googleDocMetadataPatch } from '@/lib/spaces/space-doc-export'
 
 describe('Google Doc export metadata', () => {
   it('reuses a saved native Google Doc by its file id', () => {

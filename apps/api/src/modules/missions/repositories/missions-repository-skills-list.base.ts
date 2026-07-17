@@ -79,7 +79,8 @@ export abstract class MissionsRepositorySkillsListBase extends MissionsRepositor
       if (HIDDEN_AGENT_SKILL_KEYS.has(key)) continue
       if (key.includes('/')) continue
       const existing = seen.get(key)
-      if (!existing || (existing.agent_key === '*' && row.agent_key !== '*')) {
+      // Prefer account-catalog rows (`*`) over per-agent copies.
+      if (!existing || (existing.agent_key !== '*' && row.agent_key === '*')) {
         seen.set(key, row)
       }
     }
@@ -191,7 +192,8 @@ export abstract class MissionsRepositorySkillsListBase extends MissionsRepositor
         if (HIDDEN_AGENT_SKILL_KEYS.has(key)) continue
         if (key.includes('/')) continue
         const existing = seen.get(key)
-        if (!existing || (existing.agent_key === '*' && rowAgentKey !== '*')) {
+        // Prefer account-catalog rows (`*`) over per-agent copies.
+        if (!existing || (existing.agent_key !== '*' && rowAgentKey === '*')) {
           seen.set(key, row)
         }
       }

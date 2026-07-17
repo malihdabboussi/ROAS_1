@@ -2,13 +2,12 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DeliverableEntityPreviewRenderer } from '@/components/deliverables/deliverable-preview-modal.types'
 import type { MissionDeliverable } from '@/lib/missions'
-
 import { DeliverablePreviewModal } from './DeliverablePreviewModal'
 
 const modalMocks = vi.hoisted(() => ({
   bodyRenderCount: 0,
   entityAdapterRenderCount: 0,
-  exportFooterRenderCount: 0,
+  previewActionsRenderCount: 0,
   handleBrainDropdownToggle: vi.fn(),
   handleBrainIngest: vi.fn(),
   handleCampaignDropdownToggle: vi.fn(),
@@ -25,7 +24,6 @@ const modalMocks = vi.hoisted(() => ({
   setCampaignDropdownOpen: vi.fn(),
   setCopied: vi.fn(),
   setConfirmBrain: vi.fn(),
-  setExportOpen: vi.fn(),
   toastError: vi.fn(),
   updateMissionDeliverable: vi.fn(),
 }))
@@ -49,10 +47,10 @@ vi.mock('@/components/deliverables/DeliverablePreviewBrainConfirmDialog', () => 
   DeliverablePreviewBrainConfirmDialog: () => <div data-testid="brain-confirm-dialog" />,
 }))
 
-vi.mock('@/components/deliverables/DeliverablePreviewExportFooter', () => ({
-  DeliverablePreviewExportFooter: () => {
-    modalMocks.exportFooterRenderCount += 1
-    return <div data-testid="export-footer" />
+vi.mock('@/components/deliverables/DeliverablePreviewActions', () => ({
+  DeliverablePreviewActions: () => {
+    modalMocks.previewActionsRenderCount += 1
+    return <div data-testid="preview-actions" />
   },
 }))
 
@@ -110,15 +108,12 @@ vi.mock('@/components/deliverables/use-deliverable-export-actions', () => ({
   useDeliverableExportActions: () => ({
     contentRef: { current: null },
     copied: false,
-    exportFooterTriggerRef: { current: null },
-    exportOpen: false,
     exporting: false,
     handleCopy: modalMocks.handleCopy,
     handleEntityExport: modalMocks.handleEntityExport,
     handleExportMd: modalMocks.handleExportMd,
     handleExportPdf: modalMocks.handleExportPdf,
     setCopied: modalMocks.setCopied,
-    setExportOpen: modalMocks.setExportOpen,
   }),
 }))
 
@@ -185,7 +180,10 @@ const renderEntityPreview: DeliverableEntityPreviewRenderer = ({ deliverableType
   )
 }
 
-function renderModal(deliverable: MissionDeliverable = activityAttachmentDeliverable) {
+function renderModal(
+  deliverable: MissionDeliverable = activityAttachmentDeliverable,
+  presentation: 'docked' | 'centered' = 'docked',
+) {
   let renderCount = 0
 
   function Harness() {
@@ -196,20 +194,21 @@ function renderModal(deliverable: MissionDeliverable = activityAttachmentDeliver
         agents={[]}
         onClose={modalMocks.onClose}
         onDeliverableRenamed={modalMocks.onDeliverableRenamed}
+        presentation={presentation}
         renderEntityPreview={renderEntityPreview}
       />
     )
   }
 
-  render(<Harness />)
-  return { getRenderCount: () => renderCount }
+  const result = render(<Harness />)
+  return { ...result, getRenderCount: () => renderCount }
 }
 
 describe('DeliverablePreviewModal', () => {
   beforeEach(() => {
     modalMocks.bodyRenderCount = 0
     modalMocks.entityAdapterRenderCount = 0
-    modalMocks.exportFooterRenderCount = 0
+    modalMocks.previewActionsRenderCount = 0
     for (const value of Object.values(modalMocks)) {
       if (typeof value === 'function' && 'mockReset' in value) {
         value.mockReset()
@@ -277,9 +276,18 @@ describe('DeliverablePreviewModal', () => {
     expect(getRenderCount()).toBeLessThan(5)
     expect(modalMocks.bodyRenderCount).toBeLessThan(20)
     expect(modalMocks.entityAdapterRenderCount).toBeLessThan(20)
-    expect(modalMocks.exportFooterRenderCount).toBeLessThan(20)
+    expect(modalMocks.previewActionsRenderCount).toBeLessThan(20)
 
     consoleErrorSpy.mockRestore()
+  })
+
+  it('centers previews launched from a Mission without the docked top shelf', () => {
+    const { container } = renderModal(activityAttachmentDeliverable, 'centered')
+
+    const workspace = container.querySelector('[data-deliverable-preview-presentation]')
+    expect(workspace?.getAttribute('data-deliverable-preview-presentation')).toBe('centered')
+    expect(workspace?.className).toContain('items-center')
+    expect(workspace?.className).not.toContain('top-spacing-10')
   })
 
   it('renames persisted mission deliverables through the mission deliverable API without render churn', async () => {
@@ -309,7 +317,7 @@ describe('DeliverablePreviewModal', () => {
     expect(getRenderCount()).toBeLessThan(5)
     expect(modalMocks.bodyRenderCount).toBeLessThan(20)
     expect(modalMocks.entityAdapterRenderCount).toBeLessThan(20)
-    expect(modalMocks.exportFooterRenderCount).toBeLessThan(20)
+    expect(modalMocks.previewActionsRenderCount).toBeLessThan(20)
 
     consoleErrorSpy.mockRestore()
   })

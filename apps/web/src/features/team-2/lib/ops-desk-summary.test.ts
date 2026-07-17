@@ -93,7 +93,25 @@ describe('ops-desk-summary', () => {
     expect(summary.statusCounts.working).toBe(1)
     expect(summary.statusCounts.idle).toBe(1)
     expect(summary.liveFocus[0]?.label).toBe('Q3 offer brief')
+    expect(summary.workingAgents.map((a) => a.agentKey)).toEqual(['lux'])
     expect(summary.idleAgents.map((a) => a.agentKey)).toEqual(['copy'])
+  })
+
+  it('lists presence-working agents even when they have no mission', () => {
+    const agents = [
+      agent({ agent_key: 'lux', name: 'Lux', status: 'working' }),
+      agent({ agent_key: 'copy', name: 'Copy', status: 'idle' }),
+    ]
+    const summary = buildOpsDeskSummary(agents, [])
+    expect(summary.statusCounts.working).toBe(1)
+    expect(summary.liveFocus).toEqual([
+      expect.objectContaining({
+        agentKey: 'lux',
+        kind: 'working',
+        label: 'Working now',
+      }),
+    ])
+    expect(summary.workingAgents).toHaveLength(1)
   })
 
   it('extracts first name', () => {

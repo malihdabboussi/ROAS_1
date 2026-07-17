@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Check, ChevronDown, Download, GitBranch, RefreshCw, UserPlus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
+import { formatWebinarSubtaskTitle } from '@/lib/missions'
 import type {
   MissionHarnessAssertion,
   MissionHarnessSpec,
@@ -15,6 +16,7 @@ import type {
   RecommendedHire,
 } from '../../types'
 import { MISSION_DETAIL_ERRORS } from '../../types'
+import { resolveSubtaskOutputDisplay } from './subtask-detail'
 
 type ModalPlanContent = PrdContent & {
   approach?: string
@@ -194,23 +196,17 @@ function renderIntentBody(subtask: MissionSubtask) {
 }
 
 function renderAgentNotesBody(subtask: MissionSubtask) {
-  if (!subtask.output || Object.keys(subtask.output).length === 0) {
+  const display = resolveSubtaskOutputDisplay(subtask.output)
+  if (!display) {
     return <p className="body-3 text-muted-foreground py-spacing-1">No agent notes yet.</p>
   }
-  const inner = (
+  return (
     <div className="bg-muted/15 rounded-spacing-2 px-spacing-3 py-spacing-2 max-h-[min(42vh,22rem)] overflow-y-auto">
-      {typeof subtask.output.content === 'string' ? (
-        <MarkdownRenderer className="body-3 text-muted-foreground max-w-none leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-          {subtask.output.content}
-        </MarkdownRenderer>
-      ) : (
-        <pre className="body-3 text-muted-foreground overflow-x-auto whitespace-pre-wrap">
-          {JSON.stringify(subtask.output, null, 2)}
-        </pre>
-      )}
+      <MarkdownRenderer className="body-3 text-muted-foreground max-w-none leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+        {display.body}
+      </MarkdownRenderer>
     </div>
   )
-  return inner
 }
 
 function renderFeedbackBody(subtask: MissionSubtask) {
@@ -830,7 +826,9 @@ export function PlanDetailModal({
                               className="icon-sm text-muted-foreground shrink-0"
                               aria-hidden
                             />
-                            <span className="body-2 min-w-0 flex-1">{subtask.title}</span>
+                            <span className="body-2 min-w-0 flex-1">
+                              {formatWebinarSubtaskTitle(subtask.title)}
+                            </span>
                           </button>
                           <AnimatePresence initial={false}>
                             {isOpen && (

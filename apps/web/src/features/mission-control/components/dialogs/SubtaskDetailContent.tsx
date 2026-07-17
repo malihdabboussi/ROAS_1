@@ -10,6 +10,7 @@ import { HumanGateReviewPanel } from './HumanGateReviewPanel'
 import {
   getSubtaskLiveOutput,
   getSubtaskLiveStatusLabel,
+  resolveSubtaskOutputDisplay,
   type SubtaskResourceLink,
 } from './subtask-detail'
 import { SubtaskPlanIntent } from './SubtaskPlanIntent'
@@ -67,14 +68,16 @@ export function SubtaskDetailContent({
     subtask.intent?.endState ||
     subtask.intent?.ecology,
   )
+  const outputDisplay = resolveSubtaskOutputDisplay(subtask.output)
 
   return (
     <div className="py-spacing-4 min-h-0 flex-1 overflow-y-auto">
       <div className="gap-spacing-2 mb-spacing-5 flex flex-wrap items-center">
-        <span className="chip-glass-neutral body-3 rounded-full">{statusLabel}</span>
-        {isActiveHumanGate ? (
-          <span className="chip-glass-orange body-3 rounded-full">Your turn</span>
-        ) : null}
+        <span
+          className={`body-3 rounded-full ${isActiveHumanGate ? 'chip-glass-orange' : 'chip-glass-neutral'}`}
+        >
+          {statusLabel}
+        </span>
         <span className="body-3 text-muted-foreground">{agentLabel}</span>
         <span className="body-3 text-muted-foreground">
           Updated {formatRelativeTime(subtask.updated_at)}
@@ -152,19 +155,17 @@ export function SubtaskDetailContent({
           </section>
         ) : null}
 
-        {subtask.output && Object.keys(subtask.output).length > 0 ? (
+        {outputDisplay ? (
           <section className="space-y-spacing-2">
-            <h3 className="body-2 text-foreground font-semibold">Agent output</h3>
+            <h3 className="body-2 text-foreground font-semibold">
+              {outputDisplay.titleKey === 'human'
+                ? MISSION_CONTROL_MESSAGES.SUBTASK_OUTPUT_HUMAN_TITLE
+                : MISSION_CONTROL_MESSAGES.SUBTASK_OUTPUT_AGENT_TITLE}
+            </h3>
             <div className="bg-muted-20 rounded-spacing-2 px-spacing-3 py-spacing-2">
-              {typeof subtask.output.content === 'string' ? (
-                <MarkdownRenderer className="body-3 text-muted-foreground max-w-none leading-relaxed">
-                  {subtask.output.content}
-                </MarkdownRenderer>
-              ) : (
-                <pre className="body-3 text-muted-foreground overflow-x-auto whitespace-pre-wrap">
-                  {JSON.stringify(subtask.output, null, 2)}
-                </pre>
-              )}
+              <MarkdownRenderer className="body-3 text-muted-foreground max-w-none leading-relaxed">
+                {outputDisplay.body}
+              </MarkdownRenderer>
             </div>
           </section>
         ) : null}

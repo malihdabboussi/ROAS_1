@@ -2,8 +2,13 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { surfaceFromPathname } from '@/components/global-chat/config/work-context.config'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import {
+  shellSidebarExpanded,
+  useShellStore,
+} from '@/components/shell/use-shell-store'
 import { cn } from '@/lib/utils/cn'
 import { SidebarHqHubLogoButton } from './SidebarHqHubLogoButton'
 import { SidebarHqHubMenuPane, type HubMenuPaneProps } from './SidebarHqHubMenu'
@@ -29,12 +34,28 @@ export function SidebarHqRail({
   const router = useRouter()
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
+  const sidebarPinned = useShellStore((s) => s.sidebarPinned)
+  const sidebarPeek = useShellStore((s) => s.sidebarPeek)
+  const holdSidebarPeek = useShellStore((s) => s.holdSidebarPeek)
+  const scheduleSidebarPeekClose = useShellStore((s) => s.scheduleSidebarPeekClose)
+  const shellExpanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
+
+  useEffect(() => {
+    if (shellExpanded) {
+      if (!c.hubMenuOpen && !c.hubMenuClosing) c.openHubMenu()
+      return
+    }
+    // Peek/pin end: close instantly — animated close thrash causes the glitchy pop.
+    if (c.hubMenuOpen || c.hubMenuClosing) c.forceCloseHubMenu()
+  }, [shellExpanded, c.hubMenuOpen, c.hubMenuClosing, c.openHubMenu, c.forceCloseHubMenu])
 
   const syncWorkContextForPath = (href: string) => {
     setWorkContext({ surface: surfaceFromPathname(href) })
   }
 
-  const syncWorkContextForPanel = (panelId: 'projects' | 'spaces' | 'team2' | 'brain') => {
+  const syncWorkContextForPanel = (
+    panelId: 'projects' | 'spaces' | 'team2' | 'brain' | 'more',
+  ) => {
     if (panelId === 'spaces') {
       setWorkContext({ surface: 'spaces' })
       return
@@ -47,6 +68,10 @@ export function SidebarHqRail({
       setWorkContext({ surface: 'team' })
       return
     }
+    if (panelId === 'more') {
+      setWorkContext({ surface: 'general' })
+      return
+    }
     setWorkContext({ surface: 'general' })
   }
 
@@ -57,30 +82,56 @@ export function SidebarHqRail({
   }
 
   const closeHubIfOpen = () => {
-    if (c.hubMenuOpen) c.closeHubMenu()
+    if (c.hubMenuOpen || c.hubMenuClosing) c.forceCloseHubMenu()
+    useShellStore.getState().setSidebarPinned(false)
+    useShellStore.getState().setSidebarPeek(false)
+    useShellStore.getState().clearSidebarPeekClose()
   }
 
-  const toggleHubFromLogo = () => {
+  /** Home always clears chat query params so the dashboard shows. */
+  const goHome = () => {
     closeHoverManageFlyout()
-    c.toggleHubMenu()
+    closeHubIfOpen()
+    syncWorkContextForPath('/home')
+    setCollapsed(true)
+    c.setActiveManagePanel(null)
+    router.push('/home')
   }
 
-  const hubExpanded = c.hubMenuOpen || c.hubMenuClosing
+  const isPeeking = sidebarPeek && !sidebarPinned
+  const hubExpanded = c.hubMenuOpen || c.hubMenuClosing || shellExpanded
 
   return (
     <div
       className={cn(
-        'hub-sidebar-shell box-border flex h-full min-h-0 shrink-0 flex-col py-3 pl-2 transition-[width] duration-300 ease-out',
-        c.hubMenuOpen || c.hubMenuClosing ? 'hub-sidebar-shell-expanded' : 'hub-sidebar-shell-collapsed',
+        'hub-sidebar-shell box-border flex h-full min-h-0 shrink-0 flex-col transition-[width] duration-200 ease-out',
+        hubExpanded ? 'hub-sidebar-shell-expanded' : 'hub-sidebar-shell-collapsed',
+        // Hover peek pops over main content; pin stays in-flow.
+        isPeeking && 'hub-sidebar-shell-peek',
       )}
+      onMouseEnter={() => {
+        // Only hold an existing peek — rail hover must not expand the sidebar.
+        if (!sidebarPinned && sidebarPeek) holdSidebarPeek()
+      }}
+      onMouseLeave={() => {
+        if (!sidebarPinned) scheduleSidebarPeekClose()
+      }}
     >
-      <div className="card-glass flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl">
+      <div
+        className={cn(
+          'flex min-h-0 flex-1 flex-col overflow-hidden',
+          hubExpanded
+            ? 'bg-background shell-sidebar-panel'
+            : 'card-glass rounded-2xl',
+        )}
+      >
         <div className="hub-sidebar-logo-header shrink-0">
           <SidebarHqHubLogoButton
-            hubOpen={c.hubMenuOpen}
-            onToggle={toggleHubFromLogo}
+            hubOpen={hubExpanded}
+            onToggle={goHome}
           />
         </div>
+
         <div className="relative min-h-0 flex-1">
         <div
           className={cn(
@@ -97,8 +148,16 @@ export function SidebarHqRail({
                 return c.isActive(item.href)
               }
               if (item.type === 'panel') {
-                if (item.panelId === 'projects') return c.pathname.startsWith('/projects')
-                if (item.panelId === 'spaces') return c.pathname.startsWith('/spaces')
+                if (item.panelId === 'more') {
+                  return (
+                    c.pathname.startsWith('/projects') || c.pathname.startsWith('/flows')
+                  )
+                }
+                if (item.panelId === 'spaces') {
+                  return (
+                    c.pathname.startsWith('/spaces') || c.pathname.startsWith('/campaigns')
+                  )
+                }
                 if (item.panelId === 'team2') return c.pathname.startsWith('/team')
                 if (item.panelId === 'brain') return c.pathname.startsWith('/brain')
               }
@@ -119,7 +178,7 @@ export function SidebarHqRail({
               <span
                 className={`text-[10px] leading-tight transition-colors ${
                   isItemActive
-                    ? 'text-[var(--color-foreground)]'
+                    ? 'nav-glass-text-purple'
                     : 'text-[var(--color-muted-foreground)]'
                 }`}
               >
@@ -137,6 +196,10 @@ export function SidebarHqRail({
                   onClick={(e) => {
                     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
                     e.preventDefault()
+                    if (item.id === 'home') {
+                      goHome()
+                      return
+                    }
                     closeHubIfOpen()
                     syncWorkContextForPath(item.href)
                     c.setActiveManagePanel(null)
@@ -176,6 +239,7 @@ export function SidebarHqRail({
                 <button
                   key={item.id}
                   type="button"
+                  data-hub-rail-trigger="spaces"
                   onMouseEnter={() => {
                     clearSpacesFlyoutCloseTimer()
                     c.setIsPanelClosing(false)
@@ -190,7 +254,7 @@ export function SidebarHqRail({
                     closeHubIfOpen()
                     syncWorkContextForPanel('spaces')
                     setCollapsed(true)
-                    pushIfNeeded('/spaces')
+                    pushIfNeeded('/campaigns')
                     if (c.activeManagePanel === 'spaces' && !c.isPanelClosing) {
                       c.setIsPanelClosing(true)
                     }
@@ -207,6 +271,7 @@ export function SidebarHqRail({
                 <button
                   key={item.id}
                   type="button"
+                  data-hub-rail-trigger="team2"
                   onMouseEnter={() => {
                     clearSpacesFlyoutCloseTimer()
                     c.setIsPanelClosing(false)
@@ -237,6 +302,7 @@ export function SidebarHqRail({
                 <button
                   key={item.id}
                   type="button"
+                  data-hub-rail-trigger="brain"
                   onMouseEnter={() => {
                     clearSpacesFlyoutCloseTimer()
                     c.setIsPanelClosing(false)
@@ -262,53 +328,34 @@ export function SidebarHqRail({
                 </button>
               )
             }
-            if (item.type === 'panel') {
-              const panelHref = c.sidebarProjects[0] ? `/projects/${c.sidebarProjects[0].id}` : null
-              if (!panelHref) {
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      const alreadyOpen = c.activeManagePanel === item.panelId
-                      if (alreadyOpen) {
-                        c.setIsPanelClosing(true)
-                      } else {
-                        syncWorkContextForPanel(item.panelId)
-                        setCollapsed(true)
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel(item.panelId)
-                      }
-                    }}
-                    className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
-                  >
-                    {iconSpan}
-                    {labelSpan}
-                  </button>
-                )
-              }
+            if (item.type === 'panel' && item.panelId === 'more') {
               return (
-                <Link
+                <button
                   key={item.id}
-                  href={panelHref}
-                  onClick={(e) => {
-                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
-                    syncWorkContextForPanel(item.panelId)
-                    const alreadyOpen = c.activeManagePanel === item.panelId
-                    if (alreadyOpen) {
-                      e.preventDefault()
-                      c.setIsPanelClosing(true)
-                      return
-                    }
+                  type="button"
+                  data-hub-rail-trigger="more"
+                  onMouseEnter={() => {
+                    clearSpacesFlyoutCloseTimer()
+                    c.setIsPanelClosing(false)
+                    c.setActiveManagePanel('more')
+                  }}
+                  onFocus={() => {
+                    clearSpacesFlyoutCloseTimer()
+                    c.setIsPanelClosing(false)
+                    c.setActiveManagePanel('more')
+                  }}
+                  onClick={() => {
+                    closeHubIfOpen()
+                    syncWorkContextForPanel('more')
                     setCollapsed(true)
                     c.setIsPanelClosing(false)
-                    c.setActiveManagePanel(item.panelId)
+                    c.setActiveManagePanel('more')
                   }}
                   className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
                 >
                   {iconSpan}
                   {labelSpan}
-                </Link>
+                </button>
               )
             }
             return null

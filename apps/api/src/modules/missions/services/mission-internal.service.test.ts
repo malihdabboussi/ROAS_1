@@ -98,6 +98,22 @@ function createHarness(tableResults: Record<string, QueryResult[]>) {
 }
 
 describe('MissionInternalService', () => {
+  it('rolls a mission up to awaiting human when later work is still dependency-blocked', () => {
+    const { service } = createHarness({})
+
+    expect(
+      (service as any).computeMissionAggregateFromSubtasks([
+        { id: 'strategy', status: 'done', depends_on: [] },
+        { id: 'gate-1', status: 'awaiting_human', depends_on: ['strategy'] },
+        { id: 'market-research', status: 'pending', depends_on: ['gate-1'] },
+      ]),
+    ).toEqual({
+      nextStatus: 'awaiting_human',
+      enqueueReview: false,
+      progressNotes: 'Waiting for your approval — review is required before work continues',
+    })
+  })
+
   it('allows active org members who accept agent assignments to receive human subtasks', async () => {
     const { service, supabase, queries } = createHarness({
       org_members: [{ data: { user_id: 'user-1', status: 'active' }, error: null }],

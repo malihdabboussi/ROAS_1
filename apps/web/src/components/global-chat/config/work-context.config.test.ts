@@ -16,6 +16,8 @@ describe('work-context.config', () => {
 
   it('maps pathnames to surfaces', () => {
     expect(surfaceFromPathname('/spaces/foo')).toBe('spaces')
+    expect(surfaceFromPathname('/campaigns')).toBe('spaces')
+    expect(surfaceFromPathname('/campaigns/abc')).toBe('spaces')
     expect(surfaceFromPathname('/brain')).toBe('brain')
     expect(surfaceFromPathname('/team')).toBe('team')
     expect(surfaceFromPathname('/flows')).toBe('flows')
@@ -39,7 +41,7 @@ describe('work-context.config', () => {
 
   it('picks default agents per surface', () => {
     expect(defaultAgentForSurface('brain')).toBe('atlas')
-    expect(defaultAgentForSurface('team')).toBe('vibey')
+    expect(defaultAgentForSurface('team')).toBe('hr')
     expect(defaultAgentForSurface('flows')).toBe('loop')
     expect(defaultAgentForSurface('general')).toBe('vibey')
   })

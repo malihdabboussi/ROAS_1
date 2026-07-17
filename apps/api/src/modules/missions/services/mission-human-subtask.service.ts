@@ -91,28 +91,33 @@ export class MissionHumanSubtaskService {
       const files = body.files ?? []
       const links = body.links ?? []
       const firstFile = files[0]
-      const deliverableType = firstFile ? 'file' : 'doc'
+      const shouldCreateDeliverable = files.length > 0 || links.length > 0
 
-      const deliverable = await this.missionsRepository.createDeliverable(supabase, {
-        mission_id: missionId,
-        user_id: mission.user_id,
-        org_id: mission.org_id ?? null,
-        agent_key: HUMAN_AGENT_KEY,
-        type: deliverableType,
-        title: String(subtask.title || 'Human deliverable'),
-        content: body.summary,
-        file_url: firstFile?.url,
-        file_name: firstFile?.name,
-        file_size: firstFile?.size,
-        mime_type: firstFile?.mime_type,
-        metadata: {
-          source: 'human',
-          completed_by_user_id: actorUserId,
-          subtask_id: subtaskId,
-          files,
-          links,
-        },
-      })
+      // Gate approvals (approve & continue with no attached files) should not create
+      // user-facing docs — audit trail lives on subtask output + mission log.
+      const deliverable = shouldCreateDeliverable
+        ? await this.missionsRepository.createDeliverable(supabase, {
+            mission_id: missionId,
+            user_id: mission.user_id,
+            org_id: mission.org_id ?? null,
+            agent_key: HUMAN_AGENT_KEY,
+            type: firstFile ? 'file' : 'doc',
+            title: String(subtask.title || 'Human deliverable'),
+            content: body.summary,
+            file_url: firstFile?.url,
+            file_name: firstFile?.name,
+            file_size: firstFile?.size,
+            mime_type: firstFile?.mime_type,
+            metadata: {
+              source: 'human',
+              completed_by_user_id: actorUserId,
+              subtask_id: subtaskId,
+              files,
+              links,
+            },
+          })
+        : null
+      const deliverableId = (deliverable as { id?: string } | null)?.id ?? null
 
       const output = {
         artifact_manifest: [
@@ -122,7 +127,7 @@ export class MissionHumanSubtaskService {
         summary: body.summary,
         completed_by_human: true,
         completed_by_user_id: actorUserId,
-        deliverable_id: (deliverable as { id?: string })?.id ?? null,
+        deliverable_id: deliverableId,
       }
 
       const nowIso = new Date().toISOString()
@@ -133,7 +138,7 @@ export class MissionHumanSubtaskService {
         {
           status: 'done',
           output,
-          deliverable_id: (deliverable as { id?: string })?.id ?? null,
+          deliverable_id: deliverableId,
           awaiting_human_since: null,
           sla_escalate_at: null,
           sla_escalated_at: null,
@@ -168,7 +173,7 @@ export class MissionHumanSubtaskService {
         payload: {
           subtask_id: subtaskId,
           completed_by_user_id: actorUserId,
-          deliverable_id: (deliverable as { id?: string })?.id ?? null,
+          deliverable_id: deliverableId,
         },
       })
 
@@ -180,7 +185,7 @@ export class MissionHumanSubtaskService {
       this.metrics.log(
         `metric=human_subtask_completed mission=${missionId} subtask=${subtaskId} user=${actorUserId}`,
       )
-      return { ok: true, deliverable_id: (deliverable as { id?: string })?.id ?? null }
+      return { ok: true, deliverable_id: deliverableId }
     })
   }
 

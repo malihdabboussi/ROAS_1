@@ -99,7 +99,7 @@ export class ArtifactLegacyRuntimeRepository {
   ): Promise<QueryResult<Record<string, unknown>>> {
     return (await serviceClient
       .from('missions')
-      .select('id, user_id, campaign_id, org_id')
+      .select('id, user_id, campaign_id, org_id, space_id')
       .eq('id', missionId)
       .maybeSingle()) as QueryResult<Record<string, unknown>>
   }

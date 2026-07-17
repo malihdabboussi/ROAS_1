@@ -10,6 +10,10 @@ import {
 } from '@/lib/api/backend-client'
 import type { ChatModelSettings, ModelReasoningEffort } from '@/lib/chat/chat-model-settings'
 import {
+  isPlaceholderConversationTitle,
+  titleFromFirstUserMessage,
+} from '@/lib/conversations/conversation-title'
+import {
   duplicateConversation as duplicateConversationViaApi,
   fetchConversations,
 } from '@/lib/conversations/conversations-api'
@@ -1915,6 +1919,9 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
   }
 
   // 2. Create optimistic user message — IMMEDIATELY (before any network call)
+  const priorMessages = store.messagesByConversation[conversationId] ?? []
+  const isFirstUserTurn =
+    showUserMessage && !priorMessages.some((message) => message.role === 'user')
   const userMsgId = showUserMessage ? crypto.randomUUID() : null
   if (showUserMessage && userMsgId) {
     const userMsg: Message = {
@@ -1943,6 +1950,21 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
     store.addMessage(conversationId, userMsg)
     if (hasRealConversation) {
       store.promoteConversation(conversationId)
+    }
+    // Title from first message immediately — do not wait for stream success
+    // (failed/errored sends previously left "New Conversation" → "Untitled").
+    if (isFirstUserTurn) {
+      const earlyTitle = titleFromFirstUserMessage(params.content, 200)
+      const existing = store.conversations.find((c) => c.id === conversationId)
+      if (earlyTitle && isPlaceholderConversationTitle(existing?.title)) {
+        store.updateConversation(conversationId, {
+          title: earlyTitle,
+          updated_at: new Date().toISOString(),
+        })
+        if (hasRealConversation) {
+          void backendPatch(`/api/conversations/${conversationId}`, { title: earlyTitle })
+        }
+      }
     }
   }
 
@@ -2033,9 +2055,11 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
   // 4. Resolve conversation in background — UI already shows messages
   if (needsConversation) {
     try {
+      const initialTitle = titleFromFirstUserMessage(params.content, 200)
       const conv = await createNewConversation({
         ...(resolvedCampaignId ? { campaign_id: resolvedCampaignId } : {}),
         agent_id: 'vibey',
+        ...(initialTitle ? { title: initialTitle } : {}),
       })
       if (controller.signal.aborted) {
         throw new DOMException('Aborted', 'AbortError')
@@ -2045,6 +2069,11 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
       // and conversations are always in sync in the same render cycle
       if (!store.conversations.some((c) => c.id === conv.id)) {
         store.addConversation(conv)
+      } else if (initialTitle && isPlaceholderConversationTitle(conv.title)) {
+        store.updateConversation(conv.id, {
+          title: initialTitle,
+          updated_at: new Date().toISOString(),
+        })
       }
       // Swap pending → real: moves messages and updates activeConversationId atomically
       store.moveMessages(previousConversationId, conv.id)
@@ -2657,18 +2686,19 @@ export async function sendMessageStreaming(params: SendMessageParams): Promise<s
       persistedMessageId = finalMessageId
     }
 
-    // Auto-title on first exchange (full text up to cap — no ellipsis; matches Spaces rename max)
+    // Reaffirm first-message title after a successful turn (covers any race where
+    // create returned before the early title patch landed).
     const allMessages = store.messagesByConversation[conversationId!] ?? []
     if (allMessages.length <= 2) {
-      const maxLen = 200
-      const trimmed = params.content.trim()
-      const title = trimmed.length > maxLen ? trimmed.slice(0, maxLen) : trimmed
-      store.updateConversation(conversationId!, {
-        title,
-        updated_at: new Date().toISOString(),
-      })
-      if (!isPendingConversationId(conversationId)) {
-        void backendPatch(`/api/conversations/${conversationId}`, { title })
+      const title = titleFromFirstUserMessage(params.content, 200)
+      if (title) {
+        store.updateConversation(conversationId!, {
+          title,
+          updated_at: new Date().toISOString(),
+        })
+        if (!isPendingConversationId(conversationId)) {
+          void backendPatch(`/api/conversations/${conversationId}`, { title })
+        }
       }
     }
 
