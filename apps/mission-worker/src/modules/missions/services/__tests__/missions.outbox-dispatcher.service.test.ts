@@ -16,6 +16,8 @@ function createPublishSupabaseMock(missionStatus = 'planning') {
 function createService(overrides?: { queue?: Partial<Queue>; pgQuery?: any }) {
   const queue = {
     getJob: vi.fn().mockResolvedValue(null),
+    isPaused: vi.fn().mockResolvedValue(false),
+    resume: vi.fn().mockResolvedValue(undefined),
     add: vi.fn().mockResolvedValue({}),
     ...(overrides?.queue || {}),
   } as unknown as Queue
@@ -92,6 +94,32 @@ describe('MissionsOutboxDispatcherService', () => {
     })
 
     expect(queue.add).not.toHaveBeenCalled()
+  })
+
+  it('resumes a persisted paused mission queue before publishing', async () => {
+    const { service, queue } = createService({
+      queue: {
+        isPaused: vi.fn().mockResolvedValue(true),
+        resume: vi.fn().mockResolvedValue(undefined),
+      },
+    })
+
+    await (service as any).publishToQueue({
+      id: 'evt-paused',
+      event_type: 'mission.plan.requested',
+      mission_id: 'm-1',
+      user_id: 'u-1',
+      dedupe_key: 'dedupe-paused',
+      payload: null,
+      attempts: 0,
+      max_attempts: 8,
+    })
+
+    expect(queue.resume).toHaveBeenCalledOnce()
+    expect(queue.add).toHaveBeenCalledOnce()
+    expect(vi.mocked(queue.resume).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(queue.add).mock.invocationCallOrder[0],
+    )
   })
 
   it('marks row as dead_letter after max attempts', async () => {

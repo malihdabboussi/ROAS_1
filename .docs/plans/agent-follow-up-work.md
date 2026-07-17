@@ -6931,3 +6931,11 @@ Deferred because: Voice routing fix and mic-silence bug were scoped to capture/a
 - Evidence: `tsc --noEmit -p apps/openclaw/tsconfig.json` reports `Promise<boolean>` is not assignable to the unhandled-rejection observer's `void | Promise<void>` return type; the line is unchanged since the initial repository snapshot
 - Needed: Wrap the error-report call so the observer resolves `void`, then add focused observer coverage
 - Why not now: unrelated to the requested Mission gateway/config recovery
+
+## 2026-07-16 — Mission outbox dispatcher LOC (pre-existing)
+
+- Feature/app: mission-worker / missions
+- File: `apps/mission-worker/src/modules/missions/services/missions.outbox-dispatcher.service.ts`
+- Evidence: `wc -l` = 710 (service hard limit 600); touched to recover a persisted paused BullMQ queue before publishing
+- Needed: Extract outbox claiming/persistence and event-to-job mapping into focused collaborators while preserving the dispatcher transaction and retry behavior
+- Why not now: the requested production recovery is a focused queue readiness fix; splitting the dispatcher would materially expand the incident change

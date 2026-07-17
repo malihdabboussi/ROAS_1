@@ -368,6 +368,11 @@ export class MissionsOutboxDispatcherService implements OnModuleInit, OnModuleDe
       return false
     }
 
+    if (await this.missionsQueue.isPaused()) {
+      this.logger.warn('Mission queue was paused; resuming before outbox publish')
+      await this.missionsQueue.resume()
+    }
+
     const mapped = this.mapEventToJob(row)
     if (!mapped) {
       throw new Error(`Unsupported mission outbox event_type "${row.event_type}"`)
