@@ -224,6 +224,21 @@ export class FathomRepository {
     return Array.isArray(data?.fathom_aliases) ? (data.fathom_aliases as string[]) : []
   }
 
+  async getProfileIdentity(
+    userId: string,
+  ): Promise<{ email: string | null; full_name: string | null } | null> {
+    const { data } = await this.serviceClient.client
+      .from('profiles')
+      .select('email, full_name')
+      .eq('id', userId)
+      .maybeSingle()
+    if (!data) return null
+    return {
+      email: typeof data.email === 'string' ? data.email : null,
+      full_name: typeof data.full_name === 'string' ? data.full_name : null,
+    }
+  }
+
   async updateFathomAliases(userId: string, aliases: string[]): Promise<{ message?: string } | null> {
     const { error } = await this.serviceClient.client
       .from('profiles')

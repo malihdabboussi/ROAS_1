@@ -1,5 +1,12 @@
 # Changelog - July 17, 2026
 
+## [2026-07-17 12:59] - [FIX]
+
+What: Fathom webhook now listens for `shared_team_recordings` + `my_shared_with_team_recordings` (not only `my_recordings`). Recreated Dylan’s live webhook. Stopped absorbing teammate `recorded_by` emails into `fathom_aliases` (would force Call Kind=Personal).
+Why: Meetings only showed Personal because Fathom never delivered teammate-hosted Team Plan recordings to ROAS.
+Impact: New team Fathom calls will ingest into Meetings with call_kind Team when Dylan wasn’t on them. Hard-refresh after next teammate recording. Historical team calls still need a backfill if desired.
+Files: `fathom-oauth.service.ts` (+test), `fathom-webhook.service.ts`, `fathom.repository.ts`
+
 ## [2026-07-17 12:54] - [FIX]
 
 What: Fixed OpenClaw crash from missing `whatsapp` plugin in `docker/openclaw.json` (gateway was down → "Call (naming…)" + Gateway connection error: fetch failed). Added deterministic Meeting Purpose title fallback + gateway-error retries for task-agent. Redeployed Fly; renamed stuck personal weekly-wins call and re-invoked Vibey.

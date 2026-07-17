@@ -97,7 +97,13 @@ export class FathomOAuthService {
     const destinationUrl = `${this.apiUrl.replace(/\/$/, '')}/api/integrations/fathom/webhook`
     const webhook = await this.fathom.createWebhook(tokens.access_token, {
       destinationUrl,
-      triggeredFor: ['my_recordings'],
+      // Team plans: include shared team recordings so Meetings can label Personal vs Team.
+      // my_recordings alone only delivers Dylan-hosted calls.
+      triggeredFor: [
+        'my_recordings',
+        'shared_team_recordings',
+        'my_shared_with_team_recordings',
+      ],
       includeTranscript: true,
       includeSummary: true,
       includeActionItems: true,
@@ -105,7 +111,15 @@ export class FathomOAuthService {
     if (!webhook?.secret || !webhook?.id) {
       throw new BadRequestException('Fathom webhook creation failed: missing webhook id or secret')
     }
-    webhookMeta = { webhook_secret: webhook.secret, webhook_id: webhook.id }
+    webhookMeta = {
+      webhook_secret: webhook.secret,
+      webhook_id: webhook.id,
+      triggered_for: [
+        'my_recordings',
+        'shared_team_recordings',
+        'my_shared_with_team_recordings',
+      ],
+    }
 
     await this.upsertUserIntegration(parsedState.userId, tokens, webhookMeta, existingMeta, {
       scopeMode: parsedState.scopeMode ?? 'personal',

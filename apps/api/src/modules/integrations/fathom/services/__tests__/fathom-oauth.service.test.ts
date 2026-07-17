@@ -69,7 +69,11 @@ describe('FathomOAuthService', () => {
 
     expect(fathom.createWebhook).toHaveBeenCalledWith('access_1', {
       destinationUrl: 'https://api.vibey.test/api/integrations/fathom/webhook',
-      triggeredFor: ['my_recordings'],
+      triggeredFor: [
+        'my_recordings',
+        'shared_team_recordings',
+        'my_shared_with_team_recordings',
+      ],
       includeTranscript: true,
       includeSummary: true,
       includeActionItems: true,
@@ -81,6 +85,11 @@ describe('FathomOAuthService', () => {
         auto_ingest: false,
         webhook_secret: 'whsec_1',
         webhook_id: 'wh_1',
+        triggered_for: [
+          'my_recordings',
+          'shared_team_recordings',
+          'my_shared_with_team_recordings',
+        ],
       },
       { scopeMode: 'personal', orgId: null },
     )
