@@ -61,3 +61,13 @@ export async function fetchDeliverablesForMissions(
 export async function fetchSubtasks(missionId: string): Promise<MissionSubtask[]> {
   return backendGet<MissionSubtask[]>(`/api/missions/${missionId}/subtasks`)
 }
+
+export async function completeHumanMissionSubtask(
+  missionId: string,
+  subtaskId: string,
+  summary: string,
+): Promise<{ ok: true; deliverable_id: string | null }> {
+  return backendPost(`/api/missions/${missionId}/subtasks/${subtaskId}/complete-human`, {
+    summary,
+  })
+}

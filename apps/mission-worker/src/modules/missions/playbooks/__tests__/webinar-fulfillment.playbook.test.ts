@@ -34,6 +34,7 @@ describe('webinar-fulfillment playbook', () => {
       'st-market-research',
       'st-launch-brief',
       'st-gate-strategy',
+      'st-build-checklist',
       'st-copy-package',
       'st-gate-copy',
       'st-ad-design',
@@ -61,6 +62,13 @@ describe('webinar-fulfillment playbook', () => {
       /completed.*market research/i,
     )
     expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.assignTo).toBe('copywriter')
+    expect(plan.subtasks.find((s) => s.id === 'st-build-checklist')?.assignTo).toBe('vibey')
+    expect(plan.subtasks.find((s) => s.id === 'st-build-checklist')?.intent.ecology).toMatch(
+      /publishToTaskList true/,
+    )
+    expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.dependsOn).toEqual([
+      'st-build-checklist',
+    ])
     expect(plan.subtasks.find((s) => s.id === 'st-funnel-design')?.assignTo).toBe('designer')
     expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.outputContract?.expected).toEqual(
       {
@@ -69,6 +77,20 @@ describe('webinar-fulfillment playbook', () => {
     )
     expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.assignTo).toBe('designer')
     expect(plan.subtasks.find((s) => s.id === 'st-media-plan')?.assignTo).toBe('ads_manager')
+    expect(
+      plan.subtasks
+        .filter((s) =>
+          [
+            'st-copy-package',
+            'st-ad-design',
+            'st-image-brief',
+            'st-funnel-design',
+            'st-deck-bones',
+            'st-media-plan',
+          ].includes(s.id),
+        )
+        .every((s) => s.publishToTaskList === true),
+    ).toBe(true)
     expect(plan.subtasks.find((s) => s.id === 'st-gate-copy')?.intent.ecology).toMatch(
       /re-run ONLY the owning skill/i,
     )

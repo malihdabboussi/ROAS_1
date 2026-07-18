@@ -2,8 +2,8 @@ import { randomUUID } from 'crypto'
 import { ConflictException } from '@nestjs/common'
 import type { CreateMissionPlanDto } from '../dto'
 import { priorityToRank } from '../types/missions.types'
-import type { MissionParsedPlanSubtask } from './mission-internal.base'
 import { MissionInternalPlanBase } from './mission-internal-plan.base'
+import type { MissionParsedPlanSubtask } from './mission-internal.base'
 
 export abstract class MissionInternalRepositoryPlanBase extends MissionInternalPlanBase {
   protected async createPlanWithRepository(
@@ -19,11 +19,10 @@ export abstract class MissionInternalRepositoryPlanBase extends MissionInternalP
         dto.org_id,
       )
 
-      const activeSubtaskCount =
-        await this.missionInternalRepository.countActiveSubtasksForMission(
-          supabase,
-          dto.mission_id,
-        )
+      const activeSubtaskCount = await this.missionInternalRepository.countActiveSubtasksForMission(
+        supabase,
+        dto.mission_id,
+      )
       if (activeSubtaskCount > 0) {
         throw new ConflictException(
           'Active subtasks already exist for this mission. Use prepare-replan to cancel them first.',
@@ -57,10 +56,7 @@ export abstract class MissionInternalRepositoryPlanBase extends MissionInternalP
       })
 
       const subtaskScheduleMap = new Map<string, string | null>()
-      const subtaskAssigneeMap = new Map<
-        string,
-        MissionParsedPlanSubtask['_assignee']
-      >()
+      const subtaskAssigneeMap = new Map<string, MissionParsedPlanSubtask['_assignee']>()
       if (parsedSubtasks.length > 0) {
         const subtaskRows = parsedSubtasks.map((st, idx) => {
           const dbId = subtaskIdMap.get(st.id) ?? randomUUID()
@@ -85,6 +81,7 @@ export abstract class MissionInternalRepositoryPlanBase extends MissionInternalP
             depends_on: [] as string[],
             intent: st.intent || {},
             scheduled_at: st.scheduledAt ?? null,
+            publish_to_task_list: st.publishToTaskList === true,
             output_contract: st.outputContract ?? null,
             contract_status: st.outputContract ? 'pending' : null,
             contract_verification: null,

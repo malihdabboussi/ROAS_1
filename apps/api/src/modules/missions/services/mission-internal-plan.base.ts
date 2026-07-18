@@ -155,6 +155,7 @@ export abstract class MissionInternalPlanBase extends MissionInternalBase {
                   depends_on,
                   intent,
                   scheduled_at,
+                  publish_to_task_list,
                   output_contract,
                   contract_status,
                   contract_verification,
@@ -177,11 +178,12 @@ export abstract class MissionInternalPlanBase extends MissionInternalBase {
                   $13::uuid[],
                   $14::jsonb,
                   $15::timestamptz,
-                  $16::jsonb,
-                  $17::text,
-                  $18::jsonb,
-                  $19::int,
-                  $20::int
+                  $16::boolean,
+                  $17::jsonb,
+                  $18::text,
+                  $19::jsonb,
+                  $20::int,
+                  $21::int
                 )
               `,
                 [
@@ -200,6 +202,7 @@ export abstract class MissionInternalPlanBase extends MissionInternalBase {
                   dependsOn,
                   JSON.stringify(subtask.intent || {}),
                   subtask.scheduledAt ?? null,
+                  subtask.publishToTaskList === true,
                   subtask.outputContract ? JSON.stringify(subtask.outputContract) : null,
                   subtask.outputContract ? 'pending' : null,
                   null,
@@ -453,8 +456,5 @@ export abstract class MissionInternalPlanBase extends MissionInternalBase {
     }
 
     return this.createPlanWithRepository(dto, parsedSubtasks)
-
   }
-
-
 }

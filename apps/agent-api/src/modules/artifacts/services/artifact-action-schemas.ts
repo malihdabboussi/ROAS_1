@@ -1573,7 +1573,8 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
     },
     descriptions: {
       space_id: 'Target Space id.',
-      field_id: 'Optional category select field id. Defaults to category and creates it if missing.',
+      field_id:
+        'Optional category select field id. Defaults to category and creates it if missing.',
       label: 'Category label to append.',
       id: 'Optional category option id. If omitted, backend generates one from label.',
       color: 'Optional category color token/name.',
@@ -1636,7 +1637,15 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
   },
   update_space_view: {
     required: ['space_id', 'view_id'],
-    optional: ['campaign_id', 'scope_override', 'name', 'view_type', 'visible_field_ids', 'filters', 'config'],
+    optional: [
+      'campaign_id',
+      'scope_override',
+      'name',
+      'view_type',
+      'visible_field_ids',
+      'filters',
+      'config',
+    ],
     strict: true,
     types: {
       space_id: 'string',
@@ -1993,7 +2002,8 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       contact_id: 'Contacts table id.',
       include_email_bodies:
         'When true, include email HTML bodies. Omit for lighter communication summaries.',
-      channel: 'Optional filter. email returns emails only; widget, telegram, or app return matching conversations.',
+      channel:
+        'Optional filter. email returns emails only; widget, telegram, or app return matching conversations.',
     },
     useWhen: [
       'List communication records for a contact, including emails and widget/Telegram/app conversations.',
@@ -2528,11 +2538,20 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
   show_mission_deliverable: { required: ['mission_id'], optional: ['deliverable_id'] },
   create_mission_subtask: {
     required: ['mission_id', 'title'],
-    optional: ['assignTo', 'assigned_agent_key', 'dependsOn', 'intent', 'subtask'],
+    optional: [
+      'assignTo',
+      'assigned_agent_key',
+      'dependsOn',
+      'intent',
+      'publishToTaskList',
+      'subtask',
+    ],
+    types: { dependsOn: 'string_array', publishToTaskList: 'boolean' },
   },
   edit_mission_subtask: {
     required: ['mission_id', 'subtask_id'],
-    optional: ['title', 'assigned_agent_key', 'intent'],
+    optional: ['title', 'assigned_agent_key', 'dependsOn', 'intent'],
+    types: { dependsOn: 'string_array' },
   },
   cancel_mission_subtask: { required: ['mission_id', 'subtask_id'] },
   retry_mission_subtask: { required: ['mission_id', 'subtask_id'] },
@@ -3305,8 +3324,21 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
     ],
   },
   create_company_brain_object: {
-    required: ['object_type', 'title', 'truth', 'source_signal_ids', 'evidence_refs', 'retrieval_rule'],
-    optional: ['brain_id', 'status', 'confidence', 'confidence_basis', ...COMPANY_TEMPORAL_OPTIONAL_KEYS],
+    required: [
+      'object_type',
+      'title',
+      'truth',
+      'source_signal_ids',
+      'evidence_refs',
+      'retrieval_rule',
+    ],
+    optional: [
+      'brain_id',
+      'status',
+      'confidence',
+      'confidence_basis',
+      ...COMPANY_TEMPORAL_OPTIONAL_KEYS,
+    ],
     types: {
       object_type: 'string',
       title: 'string',

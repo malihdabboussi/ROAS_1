@@ -81,12 +81,14 @@ describe('mission DTO schemas', () => {
             ecology: 'No extra scope',
           },
           assertionKeys: ['launch-ready'],
+          publishToTaskList: true,
         },
       ],
       assignTo: 'operator',
     })
 
     expect(parsed.subtasks[0]?.assignTo).toBe(`${HUMAN_ASSIGN_PREFIX_VALUE}${userId}`)
+    expect(parsed.subtasks[0]?.publishToTaskList).toBe(true)
     expect(parseAssignTo(parsed.subtasks[0]!.assignTo)).toEqual({
       type: 'human',
       agent_key: null,

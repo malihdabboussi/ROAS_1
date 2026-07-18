@@ -264,11 +264,6 @@
       "limit": 400,
       "lines": 552
     },
-    "apps/web/src/features/spaces/components/task-detail/TaskDetailModal.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 573
-    },
     "apps/web/src/features/spaces/components/task-detail/TaskSubtasks.tsx": {
       "kind": "web-component",
       "limit": 400,

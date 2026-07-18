@@ -186,6 +186,7 @@ describe('ArtifactMissionsService', () => {
           title: 'Draft the follow-up',
           assignTo: 'copywriter',
           dependsOn: ['subtask-0'],
+          publishToTaskList: true,
           intent: {
             why: 'Needed',
             story: 'Story',
@@ -214,6 +215,7 @@ describe('ArtifactMissionsService', () => {
             title: 'Draft the follow-up',
             assignTo: 'copywriter',
             dependsOn: ['subtask-0'],
+            publishToTaskList: true,
             intent: {
               why: 'Needed',
               story: 'Story',
@@ -256,6 +258,35 @@ describe('ArtifactMissionsService', () => {
         subtask_id: 'subtask-1',
         assigned_agent_key: 'designer',
       },
+    )
+  })
+
+  it('updates Mission step dependencies through the edit-subtask endpoint', async () => {
+    const { supabase } = makeSupabase({})
+    const target = makeMissionTarget(supabase)
+    target.mainApiCall.mockResolvedValueOnce({ success: true })
+    const handlers = new ArtifactMissionsService().getHandlers(target)
+
+    await handlers.edit_mission_subtask(
+      {
+        mission_id: 'mission-1',
+        subtask_id: 'subtask-1',
+        dependsOn: ['dependency-1', 'dependency-2'],
+      },
+      'mission-session',
+    )
+
+    expect(target.mainApiCall).toHaveBeenCalledWith(
+      'POST',
+      '/api/internal/missions/manager/edit-subtask',
+      'mission-session',
+      expect.objectContaining({
+        mission_id: 'mission-1',
+        user_id: 'user-1',
+        org_id: 'org-1',
+        subtask_id: 'subtask-1',
+        dependsOn: ['dependency-1', 'dependency-2'],
+      }),
     )
   })
 

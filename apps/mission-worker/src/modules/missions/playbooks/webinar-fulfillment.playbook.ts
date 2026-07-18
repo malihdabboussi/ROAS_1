@@ -281,12 +281,37 @@ export function expandWebinarFulfillmentPlaybook(
 
   add(
     {
+      id: 'st-build-checklist',
+      title: WEBINAR_FLOW_TASKS.buildChecklist,
+      assignTo: input.managerKey || 'vibey',
+      dependsOn: [afterStrategy],
+      assertionKeys: [],
+      scheduledAt: null,
+      intent: intent({
+        why: 'Turn THE PLAN Build List into executable work without losing client-specific items.',
+        story:
+          'Vibey reconciles the Build List against the fixed playbook before production starts.',
+        sensory:
+          'Every concrete build item is represented by one Mission step and one linked Space Task.',
+        endState:
+          'Missing build work is assigned, published to the task list, and included in the final production dependency chain.',
+        ecology: `Read the Build List in "${WEBINAR_FLOW_DOCS.thePlan}" and list current Mission subtasks. Do not duplicate fixed copy, ads, image briefs, funnel, deck bones, or media-plan work. For each other concrete build item, call create_mission_subtask with the best human or agent owner, dependsOn set to this reconciliation step, and publishToTaskList true. Use the returned subtask IDs. Then call edit_mission_subtask on Media Plan with a dependsOn list that preserves its existing dependencies and adds every created ID, so production approval cannot finish early. Internal research or coordination notes stay Mission-only.`,
+      }),
+    },
+    'production',
+    'THE PLAN Build List is reconciled into linked Mission steps and Space Tasks.',
+  )
+  afterStrategy = 'st-build-checklist'
+
+  add(
+    {
       id: 'st-copy-package',
       title: WEBINAR_FLOW_TASKS.copyPackage,
       assignTo: copywriter,
       dependsOn: [afterStrategy],
       assertionKeys: [],
       scheduledAt: null,
+      publishToTaskList: true,
       intent: intent({
         why: 'Assemble one complete reviewable copy package.',
         story:
@@ -334,6 +359,7 @@ export function expandWebinarFulfillmentPlaybook(
       dependsOn: [afterCopy],
       assertionKeys: [],
       scheduledAt: null,
+      publishToTaskList: true,
       intent: intent({
         why: 'Turn locked ad lines into finished static creative.',
         story: 'Lux owns visual production; Blaze remains the media buyer.',
@@ -357,6 +383,7 @@ export function expandWebinarFulfillmentPlaybook(
       dependsOn: [afterCopy],
       assertionKeys: [],
       scheduledAt: null,
+      publishToTaskList: true,
       intent: intent({
         why: 'Provide complete generation briefs for the remaining campaign visuals.',
         story: 'Lux creates paste-ready prompts without duplicating rendered static ads.',
@@ -379,6 +406,7 @@ export function expandWebinarFulfillmentPlaybook(
       dependsOn: [afterCopy],
       assertionKeys: [],
       scheduledAt: null,
+      publishToTaskList: true,
       intent: intent({
         why: 'Build the approved registration experience in the native funnel builder.',
         story: 'Lux turns approved copy into the client funnel without rewriting it.',
@@ -400,6 +428,7 @@ export function expandWebinarFulfillmentPlaybook(
       dependsOn: [afterCopy],
       assertionKeys: [],
       scheduledAt: null,
+      publishToTaskList: true,
       intent: intent({
         why: 'Create the most important editable slides now without pretending the full webinar deck is finished.',
         story: 'Lux builds the bones future production can expand.',
@@ -423,6 +452,7 @@ export function expandWebinarFulfillmentPlaybook(
       dependsOn: ['st-ad-design', 'st-image-brief', 'st-funnel-design', 'st-deck-bones'],
       assertionKeys: [],
       scheduledAt: null,
+      publishToTaskList: true,
       intent: intent({
         why: 'Let the media buyer translate approved strategy and creative into a launch-ready buying plan.',
         story:

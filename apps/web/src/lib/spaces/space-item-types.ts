@@ -96,6 +96,7 @@ export interface SpaceItem {
   doc_body: string | null
   source: SpaceItemSource
   linked_mission_id: string | null
+  linked_mission_subtask_id?: string | null
   form_id: string | null
   task_execution_status: 'running' | 'done' | 'failed' | 'cancelled' | null
   is_private: boolean

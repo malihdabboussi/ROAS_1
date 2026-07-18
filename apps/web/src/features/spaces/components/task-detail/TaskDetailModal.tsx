@@ -3,12 +3,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
-import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
+import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import type { MissionAgent } from '@/lib/agents/mission-agents-api'
 import { fetchCampaignTeam } from '@/lib/campaigns'
 import type { MissionDeliverable } from '@/lib/missions'
+import {
+  resolveSpaceTaskUpdateError,
+  SPACES_ACTIONS_TOAST_ERRORS,
+} from '../../config/spaces-toast-errors.config'
 import { useTaskDetailData } from '../../hooks/useTaskDetailData'
+import { canUpdateLinkedMissionTaskStatus } from '../../lib/linked-mission-task-status'
 import { createSpaceItem, deleteSpaceItem, updateSpaceItem } from '../../services/spaces.service'
 import { useSpacesStore } from '../../store/use-spaces-store'
 import type { SpaceItem } from '../../types'
@@ -16,11 +21,11 @@ import { ShareModal } from '../ShareModal'
 import { useSpaceItemUpdate } from '../SpaceStatusCascadeConfirmProvider'
 import { TaskMenuDropdown } from '../task-menu/TaskMenuDropdown'
 import { SendTaskToAgentModal, type SendToAgentInstructionsSeed } from './SendTaskToAgentModal'
-import { TaskActivity } from './TaskActivity'
 import { campaignTeamToMissionAgents } from './task-campaign-agents'
+import type { TaskDetailModalProps } from './task-detail-modal.types'
+import { TaskActivity } from './TaskActivity'
 import { TaskDetailHeader } from './TaskDetailHeader'
 import { TaskDetailMainPanel } from './TaskDetailMainPanel'
-import type { TaskDetailModalProps } from './task-detail-modal.types'
 
 export function TaskDetailModal({
   item: initialItem,
@@ -128,7 +133,6 @@ export function TaskDetailModal({
     },
     [storeItems, onOpenTaskByItem],
   )
-
   const handleOpenConversationById = useCallback(
     (conversationId: string) => {
       if (onOpenConversationById) {
@@ -141,7 +145,6 @@ export function TaskDetailModal({
     },
     [onOpenConversationById, openConversationInSpaceChat, setChatCollapsed, onClose],
   )
-
   const handleUpdateField = useCallback(
     async (patch: Partial<SpaceItem>) => {
       const previous = item
@@ -151,13 +154,24 @@ export function TaskDetailModal({
         setItem({ ...item, ...patch } as SpaceItem)
       }
       try {
+        const canUpdate =
+          !patch.status ||
+          (await canUpdateLinkedMissionTaskStatus(item, patch.status, () =>
+            toast.message(SPACES_ACTIONS_TOAST_ERRORS.LINKED_AGENT_STEP_STATUS_MANAGED.userMessage),
+          ))
+        if (!canUpdate) return
         await storeUpdateItem(item.id, patch)
         const fresh = useSpacesStore.getState().items.find((row) => row.id === item.id)
         if (fresh) setItem(fresh)
         else setItem((current) => ({ ...current, ...patch }) as SpaceItem)
       } catch {
         setItem(previous)
-        toast.error('Failed to update task')
+        toast.error(
+          resolveSpaceTaskUpdateError(
+            Boolean(item.linked_mission_subtask_id),
+            patch.status === 'done',
+          ),
+        )
       }
     },
     [item, storeUpdateItem],
@@ -252,7 +266,7 @@ export function TaskDetailModal({
 
   const tree = (
     <div className="z-modal-content fixed inset-0 flex items-center justify-center">
-      <div className="absolute inset-0 bg-modal-overlay" onClick={onClose} />
+      <div className="bg-modal-overlay absolute inset-0" onClick={onClose} />
 
       <div
         data-dropzone

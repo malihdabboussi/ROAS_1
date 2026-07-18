@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { VALID_ACTIONS } from '../dtos/artifact-action.dto'
 import {
-  ACTION_PREFLIGHT_COVERAGE,
-  ACTION_PREFLIGHTS,
-  validateActionPreflight,
-} from './artifact-action-preflight'
-import {
   ACTIVE_PROMPTMODE_ACTIONS,
   getPromptModeActionLifecycle,
   isPromptModeActionOnHold,
 } from './artifact-action-lifecycle'
+import {
+  ACTION_PREFLIGHT_COVERAGE,
+  ACTION_PREFLIGHTS,
+  validateActionPreflight,
+} from './artifact-action-preflight'
 import {
   ACTION_SCHEMAS,
   describeActionContract,
@@ -184,21 +184,30 @@ describe('PromptMode action schema and preflight coverage', () => {
         }),
       })
 
-      await expect(validateActionPreflight(action, {}, { sessionKey: 'agent:hr:normal' })).resolves
-        .toMatchObject({
-          errorCode: 'DREAM_OPS_SESSION_REQUIRED',
-        })
       await expect(
-        validateActionPreflight(action, {}, {
-          sessionKey: 'agent:org-org-1-hr:dream_ops:designer:user-1:run-1::org:org-1',
-        }),
+        validateActionPreflight(action, {}, { sessionKey: 'agent:hr:normal' }),
       ).resolves.toMatchObject({
         errorCode: 'DREAM_OPS_SESSION_REQUIRED',
       })
       await expect(
-        validateActionPreflight(action, {}, {
-          sessionKey: 'agent:org-org-1-hr:dream_ops:hr:user-1:run-1::org:org-1',
-        }),
+        validateActionPreflight(
+          action,
+          {},
+          {
+            sessionKey: 'agent:org-org-1-hr:dream_ops:designer:user-1:run-1::org:org-1',
+          },
+        ),
+      ).resolves.toMatchObject({
+        errorCode: 'DREAM_OPS_SESSION_REQUIRED',
+      })
+      await expect(
+        validateActionPreflight(
+          action,
+          {},
+          {
+            sessionKey: 'agent:org-org-1-hr:dream_ops:hr:user-1:run-1::org:org-1',
+          },
+        ),
       ).resolves.toBeNull()
     }
   })
@@ -385,6 +394,31 @@ const removedBrainSchemaActions = [
 describe('validateActionData', () => {
   it('returns null for actions with no schema', () => {
     expect(validateActionData('not_a_real_action', {})).toBeNull()
+  })
+
+  it('validates task-list publishing and Mission dependency edits', () => {
+    expect(
+      validateActionData('create_mission_subtask', {
+        mission_id: 'mission-1',
+        title: 'Build event page',
+        publishToTaskList: true,
+        dependsOn: ['step-1'],
+      }),
+    ).toBeNull()
+    expect(
+      validateActionData('create_mission_subtask', {
+        mission_id: 'mission-1',
+        title: 'Build event page',
+        publishToTaskList: 'yes',
+      }),
+    ).toMatch(/publishToTaskList.*boolean/i)
+    expect(
+      validateActionData('edit_mission_subtask', {
+        mission_id: 'mission-1',
+        subtask_id: 'step-2',
+        dependsOn: 'step-1',
+      }),
+    ).toMatch(/dependsOn.*array/i)
   })
 
   describe('Space research action schemas', () => {
@@ -1099,9 +1133,9 @@ describe('validateActionData', () => {
         }),
       ).toBeNull()
       expect(validateActionData('update_contact_note', {})).toMatch(/contact_id.*required/i)
-      expect(
-        validateActionData('update_contact_note', { contact_id: 'contact-1' }),
-      ).toMatch(/note_id.*required/i)
+      expect(validateActionData('update_contact_note', { contact_id: 'contact-1' })).toMatch(
+        /note_id.*required/i,
+      )
       expect(
         validateActionData('update_contact_note', {
           contact_id: 'contact-1',
@@ -1111,9 +1145,7 @@ describe('validateActionData', () => {
       ).toBeNull()
       expect(validateActionData('get_contact_activity', {})).toMatch(/contact_id.*required/i)
       expect(validateActionData('get_contact_activity', { contact_id: 'contact-1' })).toBeNull()
-      expect(validateActionData('list_contact_communications', {})).toMatch(
-        /contact_id.*required/i,
-      )
+      expect(validateActionData('list_contact_communications', {})).toMatch(/contact_id.*required/i)
       expect(
         validateActionData('list_contact_communications', { contact_id: 'contact-1' }),
       ).toBeNull()
@@ -1126,9 +1158,9 @@ describe('validateActionData', () => {
           tags: ['vip'],
         }),
       ).toMatch(/Unknown field tags/i)
-      expect(
-        describeActionContract('create_contact')?.do_not_use_when.join(' '),
-      ).toContain('update_contact')
+      expect(describeActionContract('create_contact')?.do_not_use_when.join(' ')).toContain(
+        'update_contact',
+      )
     })
 
     it('preflights create_contact email format before runtime work', async () => {
@@ -1331,9 +1363,7 @@ describe('validateActionData', () => {
       expect(validateActionData('create_space_status', { space_id: 's1' })).toMatch(
         /label.*required/i,
       )
-      expect(validateActionData('create_space_view', { space_id: 's1' })).toMatch(
-        /name.*required/i,
-      )
+      expect(validateActionData('create_space_view', { space_id: 's1' })).toMatch(/name.*required/i)
       expect(validateActionData('update_space_view', { space_id: 's1' })).toMatch(
         /view_id.*required/i,
       )
@@ -1437,8 +1467,12 @@ describe('validateActionData', () => {
           color: 'orange',
         }),
       ).toBeNull()
-      expect(validateActionData('create_space_status', { space_id: 's1', label: 'Research' })).toBeNull()
-      expect(validateActionData('create_space_category', { space_id: 's1', label: 'Content' })).toBeNull()
+      expect(
+        validateActionData('create_space_status', { space_id: 's1', label: 'Research' }),
+      ).toBeNull()
+      expect(
+        validateActionData('create_space_category', { space_id: 's1', label: 'Content' }),
+      ).toBeNull()
       expect(validateActionData('create_space_tag', { space_id: 's1', label: 'Urgent' })).toBeNull()
       expect(
         validateActionData('create_space_view', {
