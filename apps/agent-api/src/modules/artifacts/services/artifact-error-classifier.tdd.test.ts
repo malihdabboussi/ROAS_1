@@ -62,6 +62,35 @@ describe('artifact wrong-action-family guidance', () => {
     expect(envelope.agent_guidance).toContain('narrower list_documents')
   })
 
+  it('treats missing PostgREST columns as terminal schema contract failures', () => {
+    const envelope = buildErrorEnvelope(
+      "Could not find the 'space_id' column of 'funnels' in the schema cache code=PGRST204",
+    )
+
+    expect(envelope).toMatchObject({
+      success: false,
+      error_code: 'ARTIFACT_SCHEMA_CONTRACT_MISMATCH',
+      error_class: 'platform_schema_contract_mismatch',
+      effect_state: 'failed_before_effect',
+      retry_policy: {
+        mode: 'do_not_retry_terminal',
+        max_attempts: 0,
+        stop_after_same_error: true,
+      },
+      correction: {
+        summary: 'Apply the missing database migration and reload the PostgREST schema cache.',
+      },
+      user_explanation: {
+        intent: 'needs_schema_repair',
+      },
+      retryable: false,
+    })
+    expect(envelope.agent_guidance).toContain('Do NOT retry')
+    expect(envelope.agent_guidance).toContain('database migration')
+    expect(envelope.agent_guidance).not.toContain('document_id')
+    expect(envelope.agent_guidance).not.toContain('list_documents')
+  })
+
   it('keeps unclassified failures away from platform-problem user wording', () => {
     const envelope = buildErrorEnvelope('renderer connection reset')
 

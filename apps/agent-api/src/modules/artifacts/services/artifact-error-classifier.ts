@@ -9,18 +9,13 @@ import type {
   AgentToolRetryPolicyMode,
   AgentToolUserExplanation,
 } from '@vibey/api-shared'
+import {
+  classifyArtifactError,
+  toArtifactErrorMessage,
+  type ArtifactErrorClass,
+} from './artifact-error-classification'
 
-export type ArtifactErrorClass =
-  | 'system_auth'
-  | 'integration_disconnected'
-  | 'rate_limit'
-  | 'credits_exhausted'
-  | 'wrong_action_family'
-  | 'permission_denied'
-  | 'validation'
-  | 'integration_validation'
-  | 'platform_data_query_failed'
-  | 'system_fault'
+export { classifyArtifactError, type ArtifactErrorClass } from './artifact-error-classification'
 
 export type ArtifactErrorReliability = AgentToolErrorReliability
 export type ArtifactErrorEffectState = AgentToolErrorEffectState
@@ -52,109 +47,6 @@ export interface ArtifactErrorEnvelope extends AgentToolErrorContract<ArtifactEr
   user_hint: string
 }
 
-const SYSTEM_AUTH_PATTERNS = [
-  'missing request context access token',
-  'invalid x-session-key',
-  'user mismatch',
-  'missing x-session-key header',
-  'missing refresh token',
-  'failed to refresh supabase token',
-]
-
-const INTEGRATION_PATTERNS = [
-  'not connected',
-  'not enabled',
-  // Do NOT match "no composio toolkit" — that is a routing/config fault for
-  // native providers (e.g. Fathom), not a user disconnect. Classify as system_fault.
-  'auth config missing',
-  'integration_id or toolkit_slug is required',
-  'is not connected',
-  'is disabled',
-  'analytics access token unavailable',
-]
-
-const RATE_LIMIT_PATTERNS = [
-  'rate limit',
-  'rate_limit',
-  'rate-limit',
-  '429',
-  'quota',
-  'resource_exhausted',
-  'too many requests',
-]
-
-const CREDITS_PATTERNS = ['credits_exhausted', 'credits exhausted', 'payment required']
-
-const WRONG_ACTION_FAMILY_PATTERNS = [
-  'wrong brain:',
-  'wrong action family',
-  'correct action family',
-  'is restricted to atlas',
-  'is restricted to hr',
-  'must be delegated to atlas',
-  'must be delegated to hr',
-  'delegate to atlas',
-  'delegate/ask atlas',
-  'delegate/ask hr',
-  'atlas brain/narrative action',
-  'for decks use create_presentation',
-  'not a presentation artifact',
-  'strategy model node',
-  'not an artifact',
-  'user memory, not deliverables',
-  'saves to the user brain',
-]
-
-const PERMISSION_DENIED_PATTERNS = [
-  'only admins or members of this agent’s team can update it',
-  "only admins or members of this agent's team can update it",
-  'only creators, admins, or owners can create agents',
-  'only admins can create manager agents',
-  'creators can only create inside teams they belong to',
-  'you can only create agents inside teams you belong to',
-  'insufficient brain permissions',
-  'could not verify brain permissions',
-  'access denied',
-  'forbidden',
-]
-
-const VALIDATION_PATTERNS = [
-  'is required',
-  'are required',
-  'not found',
-  'no fields to update',
-  'no valid fields to update',
-  'no updates provided',
-  'must be a valid',
-  'must be in the future',
-  'invalid format',
-  'structurally invalid',
-  'marker_not_unique',
-  'fallback_find_not_found',
-  'fallback_find_not_unique',
-  'incomplete_persona',
-  'unknown action',
-  'slug_conflict',
-  'unique constraint',
-  'duplicate key',
-  'violates check constraint',
-  'pgrst116',
-  'contains 0 rows',
-]
-
-const INTEGRATION_VALIDATION_PATTERNS = [
-  'integration action failed',
-  'composio',
-  'tool_slug',
-  'tool slug',
-  'tool not found',
-  'invalid tool',
-  'invalid arguments',
-  'invalid params',
-]
-
-const PLATFORM_DATA_QUERY_PATTERNS = ['postgrest', 'pgrst', 'db error', 'database error']
-
 const GUIDANCE: Record<ArtifactErrorClass, string> = {
   system_auth:
     "The user's session has expired. Do NOT retry this action or any other save/read action until they refresh. Tell the user to refresh their browser tab. You can still chat, draft content, and brainstorm — just no saves until they refresh.",
@@ -172,6 +64,8 @@ const GUIDANCE: Record<ArtifactErrorClass, string> = {
     'The action failed due to invalid or missing input data. Review the error message, correct the input, and retry. Common issues: missing required fields, IDs that do not exist, or invalid formats.',
   integration_validation:
     'The integration call failed because the action slug or input parameters are invalid. Do NOT switch to document tools. Call get_integration for the same service, inspect the exact action_slug and required params, then retry use_integration with corrected data.params.',
+  platform_schema_contract_mismatch:
+    'The database schema does not match this action contract. Do NOT retry this action or an adjacent artifact action. A human engineer must apply the missing database migration and reload the PostgREST schema cache before this workflow can continue.',
   platform_data_query_failed:
     'The data lookup failed. Do NOT retry the same broad lookup repeatedly. If you already have a document_id, call get_document with that exact document_id. Otherwise use a narrower list_documents call with campaign_id, space_id, or search.',
   system_fault:
@@ -191,6 +85,8 @@ const USER_HINTS: Record<ArtifactErrorClass, string> = {
   validation: 'I ran into a small hiccup — let me adjust and try again.',
   integration_validation:
     'The integration needs different inputs. I will check the integration action details and try again.',
+  platform_schema_contract_mismatch:
+    'This step needs a database schema repair before it can continue.',
   platform_data_query_failed:
     'I hit a lookup issue, so I will use the document ID or narrow the search.',
   system_fault: 'I was not able to do that just now. Let me try a different approach.',
@@ -205,6 +101,7 @@ const ERROR_CODE_BY_CLASS: Record<ArtifactErrorClass, string> = {
   permission_denied: 'ARTIFACT_PERMISSION_DENIED',
   validation: 'ARTIFACT_VALIDATION',
   integration_validation: 'ARTIFACT_INTEGRATION_VALIDATION',
+  platform_schema_contract_mismatch: 'ARTIFACT_SCHEMA_CONTRACT_MISMATCH',
   platform_data_query_failed: 'ARTIFACT_DATA_QUERY_FAILED',
   system_fault: 'ARTIFACT_SYSTEM_FAULT',
 }
@@ -218,6 +115,7 @@ const RELIABILITY_BY_CLASS: Record<ArtifactErrorClass, ArtifactErrorReliability>
   permission_denied: 'probable',
   validation: 'probable',
   integration_validation: 'probable',
+  platform_schema_contract_mismatch: 'probable',
   platform_data_query_failed: 'probable',
   system_fault: 'raw_unclassified',
 }
@@ -231,6 +129,7 @@ const EFFECT_STATE_BY_CLASS: Record<ArtifactErrorClass, ArtifactErrorEffectState
   permission_denied: 'failed_before_effect',
   validation: 'failed_before_effect',
   integration_validation: 'failed_before_effect',
+  platform_schema_contract_mismatch: 'failed_before_effect',
   platform_data_query_failed: 'unknown_effect',
   system_fault: 'unknown_effect',
 }
@@ -285,6 +184,13 @@ const RETRY_POLICY_BY_CLASS: Record<ArtifactErrorClass, ArtifactRetryPolicy> = {
     stop_after_same_error: true,
     reason: 'Retry only after checking the integration action contract and required params.',
   },
+  platform_schema_contract_mismatch: {
+    mode: 'do_not_retry_terminal',
+    max_attempts: 0,
+    stop_after_same_error: true,
+    reason:
+      'Changing the action payload cannot repair a missing database column or stale schema contract.',
+  },
   platform_data_query_failed: {
     mode: 'retry_with_corrected_payload',
     max_attempts: 1,
@@ -328,6 +234,9 @@ const CORRECTION_BY_CLASS: Record<ArtifactErrorClass, ArtifactCorrectionPlan> = 
     summary: 'Fetch the integration action contract and retry with corrected params.',
     next_tool_preference: ['get_integration', 'use_integration'],
   },
+  platform_schema_contract_mismatch: {
+    summary: 'Apply the missing database migration and reload the PostgREST schema cache.',
+  },
   platform_data_query_failed: {
     summary: 'Use an exact id when available, otherwise narrow the lookup query.',
     next_tool_preference: ['get_document', 'list_documents'],
@@ -354,6 +263,7 @@ const FALLBACK_BY_CLASS: Record<ArtifactErrorClass, ArtifactFallbackPlan | null>
   integration_validation: {
     summary: 'Inspect the integration contract before trying the integration call again.',
   },
+  platform_schema_contract_mismatch: null,
   platform_data_query_failed: {
     summary: 'Use a known id, active artifact context, or narrower list call.',
   },
@@ -364,14 +274,19 @@ const FALLBACK_BY_CLASS: Record<ArtifactErrorClass, ArtifactFallbackPlan | null>
 }
 
 const DIAGNOSIS_BY_CLASS: Record<ArtifactErrorClass, string> = {
-  system_auth: 'The action needs a valid browser session and the current session is missing or expired.',
+  system_auth:
+    'The action needs a valid browser session and the current session is missing or expired.',
   integration_disconnected: 'The requested external integration is not connected or enabled.',
   rate_limit: 'The target service rejected the call because of rate or quota pressure.',
-  credits_exhausted: 'The requested action consumes credits and no credits are currently available.',
+  credits_exhausted:
+    'The requested action consumes credits and no credits are currently available.',
   wrong_action_family: 'The selected tool family does not own the requested resource or workflow.',
   permission_denied: 'The caller does not have permission for the requested resource operation.',
   validation: 'The tool payload is missing required data or contains invalid data.',
-  integration_validation: 'The integration tool slug or params do not match the integration contract.',
+  integration_validation:
+    'The integration tool slug or params do not match the integration contract.',
+  platform_schema_contract_mismatch:
+    'The action requires a database column that is absent from the live PostgREST schema contract.',
   platform_data_query_failed: 'The data lookup failed or was too broad for the available context.',
   system_fault: 'The raw error did not match a reliable correctable failure class.',
 }
@@ -409,6 +324,10 @@ const USER_EXPLANATION_BY_CLASS: Record<ArtifactErrorClass, ArtifactUserExplanat
     intent: 'inspect_contract_and_retry',
     sentence: USER_HINTS.integration_validation,
   },
+  platform_schema_contract_mismatch: {
+    intent: 'needs_schema_repair',
+    sentence: USER_HINTS.platform_schema_contract_mismatch,
+  },
   platform_data_query_failed: {
     intent: 'narrow_lookup',
     sentence: USER_HINTS.platform_data_query_failed,
@@ -419,7 +338,10 @@ const USER_EXPLANATION_BY_CLASS: Record<ArtifactErrorClass, ArtifactUserExplanat
   },
 }
 
-const REPORT_LEVEL_BY_CLASS: Record<ArtifactErrorClass, ArtifactErrorObservability['report_level']> = {
+const REPORT_LEVEL_BY_CLASS: Record<
+  ArtifactErrorClass,
+  ArtifactErrorObservability['report_level']
+> = {
   system_auth: 'warn',
   integration_disconnected: 'info',
   rate_limit: 'warn',
@@ -428,11 +350,16 @@ const REPORT_LEVEL_BY_CLASS: Record<ArtifactErrorClass, ArtifactErrorObservabili
   permission_denied: 'warn',
   validation: 'info',
   integration_validation: 'warn',
+  platform_schema_contract_mismatch: 'error',
   platform_data_query_failed: 'warn',
   system_fault: 'error',
 }
 
-const LEGACY_RETRYABLE_CLASSES = new Set<ArtifactErrorClass>(['validation', 'integration_validation', 'rate_limit'])
+const LEGACY_RETRYABLE_CLASSES = new Set<ArtifactErrorClass>([
+  'validation',
+  'integration_validation',
+  'rate_limit',
+])
 
 const FORBIDDEN_USER_FRAMING = [
   'platform error',
@@ -443,35 +370,11 @@ const FORBIDDEN_USER_FRAMING = [
   'internal issue',
 ]
 
-function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : typeof error === 'string' ? error : String(error)
-}
-
-function matchesAny(message: string, patterns: string[]): boolean {
-  const lower = message.toLowerCase()
-  return patterns.some((p) => lower.includes(p))
-}
-
-export function classifyArtifactError(error: unknown): ArtifactErrorClass {
-  const message = toErrorMessage(error)
-
-  if (matchesAny(message, SYSTEM_AUTH_PATTERNS)) return 'system_auth'
-  if (matchesAny(message, WRONG_ACTION_FAMILY_PATTERNS)) return 'wrong_action_family'
-  if (matchesAny(message, PERMISSION_DENIED_PATTERNS)) return 'permission_denied'
-  if (matchesAny(message, CREDITS_PATTERNS)) return 'credits_exhausted'
-  if (matchesAny(message, RATE_LIMIT_PATTERNS)) return 'rate_limit'
-  if (matchesAny(message, INTEGRATION_PATTERNS)) return 'integration_disconnected'
-  if (matchesAny(message, INTEGRATION_VALIDATION_PATTERNS)) return 'integration_validation'
-  if (matchesAny(message, VALIDATION_PATTERNS)) return 'validation'
-  if (matchesAny(message, PLATFORM_DATA_QUERY_PATTERNS)) return 'platform_data_query_failed'
-  return 'system_fault'
-}
-
 export function buildErrorEnvelope(
   error: unknown,
   options: ArtifactErrorContractOptions = {},
 ): ArtifactErrorEnvelope {
-  const message = toErrorMessage(error)
+  const message = toArtifactErrorMessage(error)
   const errorClass = options.errorClass ?? classifyArtifactError(error)
   const errorCode = options.errorCode ?? ERROR_CODE_BY_CLASS[errorClass]
   const agentInstruction = options.agentInstruction ?? GUIDANCE[errorClass]
@@ -479,14 +382,18 @@ export function buildErrorEnvelope(
     ...USER_EXPLANATION_BY_CLASS[errorClass],
     ...(options.userExplanation ?? {}),
   }
-  const forbiddenUserFraming = [...new Set([...FORBIDDEN_USER_FRAMING, ...(options.forbiddenUserFraming ?? [])])]
+  const forbiddenUserFraming = [
+    ...new Set([...FORBIDDEN_USER_FRAMING, ...(options.forbiddenUserFraming ?? [])]),
+  ]
 
   return {
     success: false,
     error: message,
     error_code: errorCode,
     error_class: errorClass,
-    reliability: options.reliability ?? (options.errorClass ? 'high_confidence' : RELIABILITY_BY_CLASS[errorClass]),
+    reliability:
+      options.reliability ??
+      (options.errorClass ? 'high_confidence' : RELIABILITY_BY_CLASS[errorClass]),
     effect_state: options.effectState ?? EFFECT_STATE_BY_CLASS[errorClass],
     retry_policy: {
       ...RETRY_POLICY_BY_CLASS[errorClass],
@@ -540,7 +447,10 @@ export function buildErrorEnvelopeWithEscalation(
   if (entry && entry.errorClass === envelope.error_class) {
     entry.count++
   } else {
-    sessionFailureCounts.set(key, { errorClass: envelope.error_class, count: 1 })
+    sessionFailureCounts.set(key, {
+      errorClass: envelope.error_class,
+      count: 1,
+    })
   }
 
   const current = sessionFailureCounts.get(key)!
