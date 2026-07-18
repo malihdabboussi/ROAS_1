@@ -7150,3 +7150,11 @@ Files:
 - Evidence: `wc -l` = 572 after adding canonical library-backed universal default skills, near the 600-line backend service ceiling.
 - Needed work: Extract static default-skill definitions and universal-library resolution into a focused seed-catalog collaborator while keeping persistence orchestration in the seeder.
 - Why not now: The requested change needs one additional default-skill source; restructuring every existing seed and clone path would broaden the production change.
+
+## 2026-07-17 — Generated database types file exceeds type LOC limit
+
+- Feature/app: shared database contracts
+- File: `packages/db/src/types.ts`
+- Evidence: `wc -l` = 1,291 after synchronizing the repaired `funnel_pages` contract; the pre-existing monolithic types file exceeds the 500-line type-file guideline.
+- Needed work: Regenerate and split shared database types by domain without changing the public type exports consumed by applications.
+- Why not now: The production repair requires the existing funnel page type contract to match the database; decomposing every database table type is separate architecture work.

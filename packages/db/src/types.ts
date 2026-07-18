@@ -503,6 +503,14 @@ export interface Database {
           funnel_id: string
           name: string | null
           page_type: string | null
+          slug: string | null
+          generated_html: string
+          generated_css: string
+          generation_mode: string
+          content: Record<string, unknown>
+          seo: Record<string, unknown>
+          org_id: string | null
+          source_mode: string
           sections: Record<string, unknown>[]
           theme_config: Record<string, unknown>
           order_index: number
@@ -515,6 +523,14 @@ export interface Database {
           funnel_id: string
           name?: string | null
           page_type?: string | null
+          slug?: string | null
+          generated_html?: string
+          generated_css?: string
+          generation_mode?: string
+          content?: Record<string, unknown>
+          seo?: Record<string, unknown>
+          org_id?: string | null
+          source_mode?: string
           sections?: Record<string, unknown>[]
           theme_config?: Record<string, unknown>
           order_index?: number
@@ -527,6 +543,14 @@ export interface Database {
           funnel_id?: string
           name?: string | null
           page_type?: string | null
+          slug?: string | null
+          generated_html?: string
+          generated_css?: string
+          generation_mode?: string
+          content?: Record<string, unknown>
+          seo?: Record<string, unknown>
+          org_id?: string | null
+          source_mode?: string
           sections?: Record<string, unknown>[]
           theme_config?: Record<string, unknown>
           order_index?: number
