@@ -169,6 +169,18 @@ export class MissionHumanSubtaskRepository {
       .eq('id', missionId)
   }
 
+  async moveMissionToTodoIfAwaitingHuman(
+    supabase: SupabaseClient,
+    missionId: string,
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('missions')
+      .update({ status: 'todo', updated_at: new Date().toISOString() })
+      .eq('id', missionId)
+      .eq('status', 'awaiting_human')
+    if (error) throw new Error(error.message)
+  }
+
   async moveDependentHumanSubtaskAwaiting(
     supabase: SupabaseClient,
     subtaskId: string,
