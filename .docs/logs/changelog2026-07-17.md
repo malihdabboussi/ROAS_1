@@ -341,3 +341,10 @@ What: Restored the complete native funnel-page schema, including legacy page fie
 Why: Production retained the original `funnel_pages` shape and lacked bundle tables, so `add_funnel_page` failed after the funnel container was created.
 Impact: Native funnel pages can persist their editable HTML bundle instead of repeatedly blocking on one missing column after another.
 Files: `20260718030300_repair_funnel_page_bundle_schema.sql`, `packages/db/src/types.ts`, `documentation/features/missions.md`
+
+## [2026-07-17 21:37] - [FIX]
+
+What: Made mission output-contract fallback verification select recent tool-authored deliverables matching the current contract type instead of blindly accepting the mission-wide newest artifact.
+Why: Concurrent funnel and presentation subtasks finished together, causing the funnel verifier to inspect the newer deck and falsely report `Found presentation deliverable, expected funnel`.
+Impact: Parallel artifact subtasks verify their own output class and no longer trigger corrective retry loops after their artifacts were already created successfully.
+Files: `mission-deliverables.repository.ts`, `mission-deliverable-fallback.test.ts`, `documentation/features/missions.md`

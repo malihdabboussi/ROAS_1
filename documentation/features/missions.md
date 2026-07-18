@@ -118,6 +118,7 @@ The runner uses this as a deterministic gate:
 - **Schema-contract failures stop immediately**: missing PostgREST columns (`PGRST204`) are classified as terminal schema-contract mismatches. Agents do not retry the payload or switch to document lookup tools; the correction identifies the required database migration and schema-cache reload.
 - **Funnel bundle schema is complete**: the production contract includes the page fields and `funnel_files`/`funnel_assets` storage required by HTML bundle creation. The repair migration uses current organization campaign access policies and reloads the PostgREST schema after additive changes.
 - **Verification before done**: after execution, the worker verifies the required artifact exists. `document_artifact` checks tool-authored mission deliverables by type; `agent_skill` checks `agent_skills` by `agent_key` and `skill_key`. Missing/wrong artifacts keep the subtask out of `done`.
+- **Concurrent verification stays subtask-safe**: when parallel subtasks publish different artifact types, verification first uses the manifest receipt and then searches recent deliverables matching the current contract type/action. A newer deck can no longer make a completed funnel fail verification, or vice versa.
 - **DOCX deliverables**: Word documents use `create_docx`, persist as `mission_deliverables.type = 'file'`, and carry `mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'`. DOCX-specific contracts use `required_artifact_type = 'file'` with `expected.mime_type` and `expected.source_action = 'create_docx'`.
 - **Correction loop**: missing or wrong artifacts can trigger a clean corrective run with previous output and verifier evidence. Permission/capability failures route to Vibey/manager instead of retrying the same agent. Attempt counters cap repeated loops.
 - **Review guard**: review blocks if any completed subtask has an output contract that is not `verified`; manager quality review cannot approve an unchecked artifact.
@@ -249,6 +250,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-17: Made output-contract fallback selection type-aware so parallel artifact creation cannot cross-assign the newest deliverable to the wrong subtask.
 - 2026-07-17: Restored the complete HTML funnel-page storage contract after production drift left legacy `funnel_pages` columns and omitted bundle tables, blocking native webinar page creation.
 - 2026-07-17: Split webinar Phase B into WEB#5A Copy Package and WEB#5B Landing Page Copy, made Dylan's Super Voice a verified requirement at every writing owner plus final assembly, and simplified client-facing ad and video-script formatting.
 - 2026-07-17: Split Webinar Fulfillment creative production into editable Validate Messaging HTML, generated concept images, human creative approval, and native Meta ad assembly. Added terminal schema-contract guidance so missing database columns do not consume retry loops.

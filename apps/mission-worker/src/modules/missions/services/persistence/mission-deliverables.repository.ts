@@ -139,7 +139,28 @@ export class MissionDeliverablesRepository {
       .maybeSingle()
     if (error) throw error
 
-    return this.evaluateDeliverableContractRow(data as DeliverableContractRow | null, contract)
+    const latestRow = data as DeliverableContractRow | null
+    const latestResult = this.evaluateDeliverableContractRow(latestRow, contract)
+    if (latestResult.ok || !latestRow?.id) return latestResult
+
+    const { data: matchingData, error: matchingError } = await supabase
+      .from('mission_deliverables')
+      .select('id, type, title, metadata, mime_type, source_action')
+      .eq('mission_id', missionId)
+      .contains('metadata', { source: 'agent_tool' })
+      .eq('type', contract.required_artifact_type)
+      .order('created_at', { ascending: false })
+      .limit(20)
+    if (matchingError) throw matchingError
+
+    const matchingRows = (matchingData || []) as DeliverableContractRow[]
+    for (const row of matchingRows) {
+      const result = this.evaluateDeliverableContractRow(row, contract)
+      if (result.ok) return result
+    }
+    return matchingRows.length > 0
+      ? this.evaluateDeliverableContractRow(matchingRows[0] || null, contract)
+      : latestResult
   }
 
   private evaluateDeliverableContractRow(
