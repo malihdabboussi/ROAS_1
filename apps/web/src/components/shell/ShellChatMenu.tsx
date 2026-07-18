@@ -109,7 +109,9 @@ export function ShellChatMenu() {
   const agentByKey = useMemo(() => {
     const map: Record<string, ConversationAgentDisplay> = {}
     for (const agent of chatAgents) {
-      map[agent.agent_key] = {
+      const key = agent.agent_key?.trim()
+      if (!key) continue
+      map[key] = {
         name: agent.display_name,
         avatarUrl: agent.avatar_url ?? null,
       }

@@ -87,7 +87,7 @@ export class FathomOAuthService {
     }
 
     const existingMeta = await this.getIntegrationMetadata(parsedState.userId)
-    let webhookMeta: { webhook_secret: string; webhook_id: string }
+    let webhookMeta: { webhook_secret: string; webhook_id: string; triggered_for: string[] }
     if (typeof existingMeta.webhook_id === 'string' && existingMeta.webhook_id.trim().length > 0) {
       await this.fathom.deleteWebhook(tokens.access_token, existingMeta.webhook_id).catch((err) => {
         const message = err instanceof Error ? err.message : String(err)
@@ -292,7 +292,11 @@ export class FathomOAuthService {
   private async upsertUserIntegration(
     userId: string,
     tokens: FathomOAuthTokenResponse,
-    webhookMeta?: { webhook_secret?: string; webhook_id?: string } | null,
+    webhookMeta?: {
+      webhook_secret?: string
+      webhook_id?: string
+      triggered_for?: string[]
+    } | null,
     existingMetaHint?: Record<string, unknown>,
     scope?: { scopeMode: 'personal' | 'org_shared'; orgId: string | null },
   ): Promise<void> {
