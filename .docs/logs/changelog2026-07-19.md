@@ -134,3 +134,10 @@ Why: Recovered unfinished stash work so prod can run the export path users alrea
 Impact: After API+web deploy, mission Export to Google Docs creates `{Mission} — Deliverables` with each Space doc as a native Docs tab.
 Files: multi-tab Drive services, mission export endpoint, DeliverablesCarousel, SubtasksSection, docs/tests
 
+
+## [2026-07-19 15:17] - [ARCH]
+
+What: Consolidated `space-template-picker` onto local main via cherry-pick.
+Why: Multi-agent WIP was scattered across branches/stashes.
+Impact: Feature commit now lives on local main.
+Files: cherry-picked ad406337
