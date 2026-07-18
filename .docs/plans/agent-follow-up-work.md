@@ -7291,3 +7291,6 @@ Files:
 - Evidence: A final exported-component reference scan finds each exported symbol only at its own declaration, with no import, barrel re-export, test, or JSX consumer under `apps/web/src`.
 - Needed work: Confirm these surfaces are not retained for an imminent route migration, then remove the files and any now-dead helpers in one bounded cleanup.
 - Why not now: Unlike `SegmentViewDialog`, these larger surfaces represent whole alternate flows; their product ownership and replacement path need to be traced before deletion rather than inferred solely from a static reference count.
+
+## Deferred
+- Sidebar campaign flyout Browse templates fix deferred: SidebarHqSpacesGroupedList 487/400 LOC; extract before shipping.

@@ -141,7 +141,19 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
       },
       {
         kind: 'doc',
-        title: 'WEB#6 — Image Briefs',
+        title: 'WEB#6 — Validate Messaging Statics',
+        body: docBody([
+          '## Validate Messaging Statics',
+          '',
+          'Editable light / dark / bold text-led creatives from approved Validate Messaging lines.',
+          '',
+          '_Placeholder until the Validate Messaging statics subtask saves into this doc._',
+        ]),
+        sort_order: 7,
+      },
+      {
+        kind: 'doc',
+        title: 'WEB#7 — Image Briefs',
         body: docBody([
           '## Image Briefs',
           '',
@@ -149,11 +161,11 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
           '',
           '_Placeholder until the image-brief subtask saves into this doc._',
         ]),
-        sort_order: 7,
+        sort_order: 8,
       },
       {
         kind: 'doc',
-        title: 'WEB#7 — Media Plan',
+        title: 'WEB#8 — Media Plan',
         body: docBody([
           '## Media Plan',
           '',
@@ -161,7 +173,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
           '',
           '_Placeholder until the media-plan subtask saves into this doc._',
         ]),
-        sort_order: 8,
+        sort_order: 9,
       },
       {
         kind: 'task',
