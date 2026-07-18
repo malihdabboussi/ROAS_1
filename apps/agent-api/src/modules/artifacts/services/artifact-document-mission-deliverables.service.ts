@@ -13,7 +13,9 @@ const WEBINAR_FLOW_DOC_TITLE_GROUPS: string[][] = [
   ['WEB#4 — Market Research', 'Market Research', 'Market Research — [Client]'],
   ['WEB#5A - Copy Package', 'WEB#5 — Copy Package', 'Copy Package'],
   ['WEB#5B - Landing Page Copy', 'Landing Page Copy'],
-  ['WEB#6 — Image Briefs', 'Image Briefs'],
+  ['WEB#6 — Validate Messaging Statics', 'Validate Messaging Statics', 'Static Ads — [Campaign]'],
+  ['WEB#7 — Image Briefs', 'WEB#6 — Image Briefs', 'Image Briefs'],
+  ['WEB#8 — Media Plan', 'WEB#7 — Media Plan', 'Media Plan'],
   ['WEB#7 — Deck Outline v1', 'Deck Outline v1'],
   ['WEB#8 — Creative Pack', 'Creative Pack'],
 ]

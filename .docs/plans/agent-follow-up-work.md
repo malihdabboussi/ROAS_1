@@ -7127,10 +7127,18 @@ Files:
 - Needed work: Reconcile the dirty route inventory snapshot and repair the listed type errors in their owning feature changes.
 - Why not now: Those files and routes belong to concurrent work already present in the workspace; changing them would overwrite or broaden beyond the requested search fix.
 
-## 2026-07-17 — Webinar playbook near backend file limit
+## 2026-07-17 — Mission document deliverable service near LOC limit
 
-- Feature/app: mission-worker / Webinar Fulfillment playbook
-- File: `apps/mission-worker/src/modules/missions/playbooks/webinar-fulfillment.playbook.ts`
-- Evidence: The deterministic playbook is 536 LOC after moving Market Research ahead of THE PLAN, approaching the 600 LOC backend ceiling.
-- Needed work: Extract focused playbook task-group builders while preserving deterministic ordering and dependency tests.
-- Why not now: The requested research-order correction remains under the file limit; restructuring every phase in the same release would broaden regression risk.
+- Feature/app: agent-api / mission deliverables
+- File: `apps/agent-api/src/modules/artifacts/services/artifact-document-mission-deliverables.service.ts`
+- Evidence: `wc -l` = 584 after adding webinar document-title aliases, near the 600-line backend ceiling.
+- Needed work: Extract mission session parsing and execution-receipt checkpointing into focused collaborators.
+- Why not now: The requested change only aligns three title groups; moving persistence/session boundaries would broaden the production repair.
+
+## 2026-07-17 — Architecture scan blocked by broken OpenClaw symlink
+
+- Feature/app: repository architecture tooling
+- File: `apps/openclaw/src/canvas-host/a2ui/test-link-1782116645255-348bba5dc9fbd.txt`
+- Evidence: `node scripts/arch/check-loc.mjs` exits with `ENOENT` while traversing this pre-existing broken symlink. Manual counts confirm every code file changed here remains under 600 lines.
+- Needed work: Remove or repair the stale tracked symlink, then rerun the repository-wide architecture scan.
+- Why not now: The OpenClaw test-link artifact is unrelated to webinar missions and changing it would overlap another subsystem.

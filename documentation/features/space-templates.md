@@ -1,6 +1,6 @@
 # Space Templates
 
-**Last Modified:** 2026-07-16
+**Last Modified:** 2026-07-17
 
 ## Overview
 
@@ -58,6 +58,7 @@ Instantiate both on the **personal account** (no `X-Org-Id`). Slack audit for HQ
 - **2026-07-15:** Meetings views filter on `entry_type` (`field_value_filters`) so Follow-ups holds action items only; Fathom invitee emails upsert into campaign People.
 - **2026-07-16:** Added `agency-client-webinar` — Agency Client (Webinar) with Missions + Docs seeds for Webinar Fulfillment playbook kickoff. Additive seed: `supabase/migrations/20260716102000_seed_agency_client_webinar_space_template.sql`.
 - **2026-07-16:** `instantiate_space_template` writes `doc_body` again (was only `custom_data.body`, so Doc cards looked empty). Migration: `20260716104000_instantiate_space_template_doc_body.sql`. Agency webinar create seeds Vibey chat + opens Start Playbook.
+- **2026-07-17:** Agency Client (Webinar) now seeds separate `WEB#6` editable Validate Messaging statics, `WEB#7` image briefs, and `WEB#8` media plan placeholders so template Docs mirror the split creative mission flow.
 
 ## Regenerating seed SQL
 

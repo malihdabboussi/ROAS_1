@@ -1,73 +1,69 @@
 ---
 name: roas-ad-design
-description: Renders ROAS Meta ad creatives, the text-on-texture images that pair with the ad copy. From one locked line it outputs THREE creatives by default, light, dark, and bold. Light and dark carry the client's brand color (marker highlight plus an optional subtle background tint); bold stays neutral and stock. A centered Validate Messaging line on a paper or concrete texture, the identity phrase marker-highlighted or bolded, plus an optional FREE TRAINING / date / LIVE ON stamp ending in the official Zoom logo. Copy renders verbatim and no client logo ever appears. Supports brand colors and feed, square, and story sizes, and batch-renders sets. Load for the visual side of an ad. Triggers on "design the ad," "make the ad creative," "ad image," "render the ad," "creative for the validate messaging lines," "webinar ad creative," or turning ad copy into a finished graphic. Do NOT load to write the copy (that's roas-ad-copy), or for landing pages, logos, or non-ad graphics.
+description: Builds editable Validate Messaging static creatives as native HTML visual Docs. Use for text-led Meta statics built from approved identity-callout lines. Produces light, dark, and bold cuts without generating images or creating native ad records. Do not use for photographic concepts (roas-image-brief plus generate_image), ad copy (roas-ad-copy), or final ad assembly (ad-builder plus create_ad).
 ---
 
-# ROAS Ad Design — render the creative that pairs with the copy
+# ROAS Ad Design — editable Validate Messaging statics
 
-The visual half of the ad system. `roas-ad-copy` writes the Validate Messaging lines; this skill turns each line into finished Meta creatives in the house style: one centered line on a paper/concrete texture, the identity phrase emphasized, the Zoom stamp on training ads.
+Turn locked Validate Messaging lines into an editable native visual Doc. This is the non-generative creative lane: HTML remains reviewable and editable in the Space before a media buyer assembles approved assets into native ads.
 
-The renderer is `assets/render_ad.py` (Pillow + numpy + Poppins + the bundled `assets/zoom_logo.png`, self-contained, no browser/network). It reproduces the reference creatives faithfully. Drive the engine; don't build images by hand or with the visualizer. Read `references/design-system.md` before the first render.
+## Inputs
 
----
+1. Approved Validate Messaging lines from the Copy Package. Copy stays verbatim.
+2. The identity phrase to emphasize in each line.
+3. Campaign theme: brand accent color, light surface, dark surface, and typography.
+4. Optional factual event stamp: offer, date, and `LIVE ON ZOOM`.
 
-## THE RULES (locked)
+Do not ask for or add a client logo. Do not invent dates, claims, or scarcity.
 
-1. **Three outputs per line.** Every line renders LIGHT, DARK, and BOLD. A set is light + dark + bold for each line.
-2. **Brand = colors, on light + dark only.** Light and dark use the client's brand color for the marker (and an optional subtle background tint). BOLD is always neutral/stock, no client color. Brand identity is colors only; texture, layout, Poppins, and the stamp stay stock.
-3. **No client logo, ever.** The only logo on a creative is the Zoom logo in the stamp. No client/product logos or wordmarks.
-4. **Copy is verbatim.** Render the exact locked line from `roas-ad-copy`. Never rewrite, shorten, reflow, or "improve" it. Never add an em dash. Never cut words.
-5. **Keep it simple.** One line of copy, one highlighted phrase, the simple stamp, nothing else. See the design-tool guardrails in `references/design-system.md` when working in a design tool instead of the engine.
+## Workflow
 
----
+### 1. Plan the set
 
-## INPUTS — gather before rendering
+Produce three cuts per locked line:
 
-1. **The copy line(s)** — the locked Validate Messaging set from `roas-ad-copy`. Render one set (light/dark/bold) per line. If you don't have the lines, get them or write them first with `roas-ad-copy`. Render them verbatim.
-2. **The highlighted phrase** per line — the identity callout ("project manager"). Infer if obvious; otherwise ask.
-3. **Client brand color(s)** — at minimum a brand marker hex for light + dark. Optionally a light-background hex and a dark-background hex for a subtle tint. If none given, light/dark use stock yellow/red and you can flag that a brand color would be better.
-4. **Event stamp** — for live trainings, the offer + date + "LIVE ON" (the engine appends the Zoom logo). Omit for evergreen.
-5. **Size(s)** — portrait 1080×1350 (default), square, story. Render multiple if running feed + stories.
+- Light: light editorial surface with the campaign accent on the identity phrase.
+- Dark: dark premium surface with the same accent treatment.
+- Bold: neutral, high-contrast typographic cut without campaign color.
 
-Never ask for or use a client logo file. Brand identity is colors, not logos.
+Each cut is a 4:5 feed composition. Keep one message, one emphasized phrase, and an optional factual event stamp.
 
----
+### 2. Save the native Doc first
 
-## STEP 1 — DECIDE THE SET
+Call `save_document` with the exact mission title, normally `WEB#6 — Validate Messaging Statics`. Include:
 
-One line in → three creatives out (light branded, dark branded, bold neutral). Confirm the highlighted phrase per line and the brand color. State the plan (how many lines × light/dark/bold, which sizes) before rendering so it can be adjusted.
+- the source line and source section for every creative;
+- a short index of line number × cut;
+- the final locked copy;
+- any factual event stamp;
+- review notes and open flags.
 
-## STEP 2 — RENDER
+Save as soon as the content is ready so work remains visible even if a later visual action fails.
 
-Write a JSON **line spec** per line (a list for several lines) following the schema in `references/design-system.md`, then run the engine:
+### 3. Generate editable visual HTML
 
-```bash
-python assets/render_ad.py config.json
-```
+Call `generate_visual_html` on the saved Doc item. Build every cut in the same visual document. The HTML must:
 
-Each line spec sets `text` (verbatim), `highlight`, optional `stamp` (`"LIVE ON"` gets the Zoom logo), `size`, `brand_color`, optional `brand_bg_light` / `brand_bg_dark`, and `out_prefix`. The engine produces `{prefix}_light.png`, `{prefix}_dark.png`, `{prefix}_bold.png` — light/dark branded, bold neutral. Write outputs to `/mnt/user-data/outputs/`.
+- use semantic sections and editable text, not embedded screenshots;
+- preserve the approved copy exactly;
+- keep the emphasized identity phrase obvious at thumbnail size;
+- show light, dark, and bold cuts in a consistent grid;
+- avoid external scripts, image dependencies, client logos, and decorative clutter;
+- remain readable in the Space visual editor.
 
-`python assets/render_ad.py --demo` regenerates the three reference creatives (with the real Zoom logo).
+### 4. Verify and hand off
 
-## STEP 3 — REVIEW + PRESENT
+Open the Doc and confirm every expected line and cut is visible. Return the Doc as the deliverable and name any missing source fact as an open flag. Do not call `create_ad`; native ad assembly happens only after creative approval.
 
-`view` the PNGs: the highlight sits on the right phrase, the brand color is on light/dark (and bold is neutral), the Zoom logo reads correctly, nothing overflows the margins, copy matches the locked line exactly. Re-render if a line overflows a size. Then deliver per environment: in a platform with native ad/media artifacts (Vibey), register each PNG as an ad artifact / Deliverables card ("Static Ads — [Campaign]") instead of leaving loose files; in claude.ai, `present_files` all three per line. The engine and the creatives are identical either way — only the destination changes. Offer to pair them with the full ad copy (primary text, headline, CTA) from `roas-ad-copy` if that wasn't already delivered.
+## Hard rules
 
----
+- Copy is verbatim. Never rewrite, shorten, or add punctuation.
+- Three cuts per line by default: light, dark, bold.
+- Native Doc plus editable visual HTML only. No PNG renderer, PDF, or loose file export.
+- Register the Doc before the visual pass so partial work is recoverable.
+- Photographic or illustrative concepts go to `roas-image-brief` and `generate_image`.
+- Final copy-and-asset pairing goes to `ad-builder` and `create_ad` after approval.
 
-## COMMON PITFALLS
+## Handoff chain
 
-- **Not producing all three cuts.** Every line is light + dark + bold by default.
-- **Branding the bold cut.** Bold is neutral/stock, no client color, no tint. Only light and dark are branded.
-- **Adding a client logo.** Never. Only the Zoom logo in the stamp.
-- **Rewriting the copy.** Verbatim only. No em dashes, no cut words, no "improvements."
-- **Design clutter.** No background photos, no app/feed chrome, no badges or pills ("LIVE MASTERCLASS," "100% FREE"), no decorative elements, no logo lockups. One line, one highlight, the stamp.
-- **Building by hand or with the visualizer.** Use `render_ad.py`.
-- **Highlighting the wrong thing.** The marker goes on the identity phrase, not a random keyword.
-- **Stamp creep.** Offer + date + "LIVE ON" + Zoom logo. Not a sentence.
-
----
-
-## Where this sits
-
-`roas-ad-copy` (lines + Validate Messaging) → `roas-ad-design` (light/dark/bold creatives) → buyer assembles in Ads Manager → click hits the registration page → `roas-webinar-emails` / `roas-master-webinar`. Keep the identity and angle consistent across all of it.
+`roas-ad-copy` → `roas-ad-design` editable statics + `roas-image-brief` generated-image lane → human creative approval → `ad-builder` / `create_ad` → media plan.
