@@ -41,13 +41,14 @@ export const WEBINAR_FLOW_DOCS = {
   strategyV2: 'WEB#2 — Post-Call Strategy Map',
   thePlan: 'WEB#3 — THE PLAN — Launch Brief',
   marketResearch: 'WEB#4 — Market Research',
-  copyPackage: 'WEB#5 — Copy Package',
+  copyPackage: 'WEB#5A - Copy Package',
+  landingPageCopy: 'WEB#5B - Landing Page Copy',
   imageBriefs: 'WEB#6 — Image Briefs',
   mediaPlan: 'WEB#7 — Media Plan',
 } as const
 
 /** Agent work steps numbered in playbook order (gates stay Gate 1/2/3). */
-export function taskTitle(n: number, label: string): string {
+export function taskTitle(n: number | string, label: string): string {
   return `Task ${n} — ${label}`
 }
 
@@ -59,7 +60,8 @@ export const WEBINAR_FLOW_TASKS = {
   marketResearch: taskTitle(5, 'Market research'),
   thePlan: taskTitle(6, 'THE PLAN launch brief'),
   buildChecklist: taskTitle(7, 'Build checklist reconciliation'),
-  copyPackage: taskTitle(8, 'Complete webinar copy package'),
+  copyPackage: taskTitle('8A', 'Complete webinar copy package'),
+  landingPageCopy: taskTitle('8B', 'Landing page copy'),
   staticAds: taskTitle(9, 'Static Meta ads'),
   imageBriefs: taskTitle(10, 'Image briefs'),
   funnelDesign: taskTitle(11, 'Native webinar funnel'),
@@ -70,7 +72,7 @@ export const WEBINAR_FLOW_TASKS = {
 export const WEBINAR_FLOW_GATES = {
   precall: 'Gate 1 — review pre-call map and provide call',
   strategy: 'Gate 2 — approve strategy and client message',
-  copy: 'Gate 3 — approve Copy Package',
+  copy: 'Gate 3 — approve copy package and landing pages',
   production: 'Gate 4 — approve production package',
 } as const
 
@@ -89,7 +91,12 @@ export const WEBINAR_FLOW_DOC_ALIASES: Record<string, string[]> = {
     'Market Research — [Client]',
     WEBINAR_FLOW_DOCS.marketResearch,
   ],
-  [WEBINAR_FLOW_DOCS.copyPackage]: ['Copy Package', WEBINAR_FLOW_DOCS.copyPackage],
+  [WEBINAR_FLOW_DOCS.copyPackage]: [
+    'Copy Package',
+    'WEB#5 — Copy Package',
+    WEBINAR_FLOW_DOCS.copyPackage,
+  ],
+  [WEBINAR_FLOW_DOCS.landingPageCopy]: ['Landing Page Copy', WEBINAR_FLOW_DOCS.landingPageCopy],
   [WEBINAR_FLOW_DOCS.imageBriefs]: ['Image Briefs', WEBINAR_FLOW_DOCS.imageBriefs],
   [WEBINAR_FLOW_DOCS.mediaPlan]: ['Media Plan', WEBINAR_FLOW_DOCS.mediaPlan],
 }
@@ -112,7 +119,7 @@ export function funnelContract(): NonNullable<
     artifact_kind: 'funnel_artifact',
     required_action: 'create_funnel',
     required_artifact_type: 'funnel',
-    expected: { consume: 'Copy Package Section 5 design-handoff block as-is' },
+    expected: { consume: 'WEB#5B - Landing Page Copy design-handoff block as-is' },
   }
 }
 

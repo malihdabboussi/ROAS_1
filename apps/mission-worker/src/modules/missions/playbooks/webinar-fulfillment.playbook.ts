@@ -23,6 +23,7 @@ const SKILLS = {
   plan: 'auto-skill-3-roas-launch-brief',
   research: 'roas-market-research',
   copy: 'roas-webinar-copy-package',
+  landingCopy: 'roas-landing-page-copy',
   ads: 'roas-ad-design',
   images: 'roas-image-brief',
   funnel: 'roas-funnel-design',
@@ -30,7 +31,7 @@ const SKILLS = {
 } as const
 
 const REVIEW_MAP =
-  '1→roas-webinar-topics · 2→roas-webinar-emails · 3→roas-ad-copy · 4→roas-video-ad-scripts · 5→roas-landing-page-copy'
+  '5A.1→roas-webinar-topics · 5A.2→roas-webinar-emails · 5A.3→roas-ad-copy · 5A.4→roas-video-ad-scripts · 5B→roas-landing-page-copy'
 
 function readKickoff(input: Record<string, unknown> | null | undefined): MissionPlaybookKickoff {
   const raw =
@@ -295,7 +296,7 @@ export function expandWebinarFulfillmentPlaybook(
           'Every concrete build item is represented by one Mission step and one linked Space Task.',
         endState:
           'Missing build work is assigned, published to the task list, and included in the final production dependency chain.',
-        ecology: `Read the Build List in "${WEBINAR_FLOW_DOCS.thePlan}" and list current Mission subtasks. Do not duplicate fixed copy, ads, image briefs, funnel, deck bones, or media-plan work. For each other concrete build item, call create_mission_subtask with the best human or agent owner, dependsOn set to this reconciliation step, and publishToTaskList true. Use the returned subtask IDs. Then call edit_mission_subtask on Media Plan with a dependsOn list that preserves its existing dependencies and adds every created ID, so production approval cannot finish early. Internal research or coordination notes stay Mission-only.`,
+        ecology: `Read the Build List in "${WEBINAR_FLOW_DOCS.thePlan}" and list current Mission subtasks. Do not duplicate fixed copy package, landing-page copy, ads, image briefs, funnel, deck bones, or media-plan work. For each other concrete build item, call create_mission_subtask with the best human or agent owner, dependsOn set to this reconciliation step, and publishToTaskList true. Use the returned subtask IDs. Then call edit_mission_subtask on Media Plan with a dependsOn list that preserves its existing dependencies and adds every created ID, so production approval cannot finish early. Internal research or coordination notes stay Mission-only.`,
       }),
     },
     'production',
@@ -316,18 +317,41 @@ export function expandWebinarFulfillmentPlaybook(
         why: 'Assemble one complete reviewable copy package.',
         story:
           'Ivy runs the atomic copy skills internally but delivers one package in one mission step.',
-        sensory:
-          'Topics, emails, Meta ad lines, video scripts, landing copy, and open flags agree.',
+        sensory: 'Topics, emails, Meta ads, video scripts, and open flags agree.',
         endState: `One native Doc "${WEBINAR_FLOW_DOCS.copyPackage}" contains the complete package.`,
-        ecology: `Load ${SKILLS.copy}. Every copy skill must load dylans-super-voice as the master writing standard, then layer verified client voice from Brain context. Do not load human-written-copy. Keep emails together as one package. For live-now email use subject "Live on Zoom, waiting for you" or an approved factual variation. Use real scarcity only. REVIEW MAP: ${REVIEW_MAP}. Save one native editable Doc only. Never create PDF, DOCX, XLSX, or loose exports.`,
+        ecology: `Load ${SKILLS.copy} and dylans-super-voice. Keep Dylan's Super Voice active for every atomic skill and the final package check, then layer verified client facts and vocabulary from Brain context. Do not load human-written-copy. Keep emails and SMS together. For live-now email use subject "Live on Zoom, waiting for you" or an approved factual variation. Use real scarcity only. Format every ad variation as continuous ad text, followed only by operational fields such as on-image text, headline, button, and destination. Do not split ad prose into Hook, Body, or CTA. Format every video as Script, Shooting instructions, Overlays, then one shared Post-production section for all scripts. The spoken script is continuous unquoted text with no Hook, Body, CTA, Delivery, or Shot + setting labels. Before save, run a literal package-wide scan: zero em dashes in client-facing copy and zero residual AI patterns from the dylans-super-voice checklist. If a section fails, re-run its owning skill before assembly; do not silently repair it in the assembler. REVIEW MAP: ${REVIEW_MAP}. Save one native editable Doc only. Never create PDF, DOCX, XLSX, or loose exports.`,
       }),
       outputContract: docContract(WEBINAR_FLOW_DOCS.copyPackage),
     },
     'copy',
-    'One complete Copy Package exists in Space Docs.',
+    'WEB#5A Copy Package exists in Space Docs and passes Dylan Super Voice review.',
   )
 
-  let afterCopy = 'st-copy-package'
+  add(
+    {
+      id: 'st-landing-page-copy',
+      title: WEBINAR_FLOW_TASKS.landingPageCopy,
+      assignTo: copywriter,
+      dependsOn: ['st-copy-package'],
+      assertionKeys: [],
+      scheduledAt: null,
+      publishToTaskList: true,
+      intent: intent({
+        why: 'Give the funnel builder one clean, dedicated landing-page copy handoff.',
+        story:
+          'Ivy runs the landing-page skill after the title, promise, emails, ads, and scripts are aligned.',
+        sensory:
+          'The opt-in and confirmation pages use the picked title and approved promise without copy-package clutter.',
+        endState: `One native Doc "${WEBINAR_FLOW_DOCS.landingPageCopy}" contains complete page copy and design handoff.`,
+        ecology: `Load ${SKILLS.landingCopy} and dylans-super-voice. Consume "${WEBINAR_FLOW_DOCS.copyPackage}" and THE PLAN. Apply Dylan's Super Voice to every client-facing line, use verified client facts and vocabulary, do not load human-written-copy, and run the literal zero-em-dash plus anti-AI scan before saving. Save exactly "${WEBINAR_FLOW_DOCS.landingPageCopy}" as one native editable Doc. Never create PDF, DOCX, XLSX, or loose exports.`,
+      }),
+      outputContract: docContract(WEBINAR_FLOW_DOCS.landingPageCopy),
+    },
+    'copy',
+    'WEB#5B Landing Page Copy exists and passes Dylan Super Voice review.',
+  )
+
+  let afterCopy = 'st-landing-page-copy'
   if (hasHuman) {
     add(
       {
@@ -339,14 +363,14 @@ export function expandWebinarFulfillmentPlaybook(
         scheduledAt: null,
         intent: intent({
           why: 'Approve all copy before design begins.',
-          story: 'The reviewer approves one package or requests a surgical section revision.',
+          story: 'The reviewer approves WEB#5A and WEB#5B or requests a surgical section revision.',
           sensory: 'Feedback names the exact section and change.',
           endState: 'Copy is approved for production.',
-          ecology: `REVIEW MAP: ${REVIEW_MAP}. On needs_revision, re-run ONLY the owning skill with {{run.review_feedback}}, then reassemble the same Copy Package.`,
+          ecology: `REVIEW MAP: ${REVIEW_MAP}. On needs_revision, re-run ONLY the owning skill with {{run.review_feedback}}. Reassemble WEB#5A only for sections 5A.1-5A.4; update WEB#5B directly for landing-page feedback.`,
         }),
       },
       'compliance',
-      'Human approved the complete Copy Package.',
+      'Human approved WEB#5A Copy Package and WEB#5B Landing Page Copy.',
     )
     afterCopy = 'st-gate-copy'
   }
@@ -412,7 +436,7 @@ export function expandWebinarFulfillmentPlaybook(
         story: 'Lux turns approved copy into the client funnel without rewriting it.',
         sensory: 'The Funnels Space view contains the linked responsive funnel with approved copy.',
         endState: 'A native funnel exists in the Space Funnels view and links to this task.',
-        ecology: `Load ${SKILLS.funnel}. Consume Copy Package Section 5 WITHOUT reshaping the copy. Build a native funnel artifact in the Funnels view and link it to this task. Do not deliver loose HTML or a PDF.`,
+        ecology: `Load ${SKILLS.funnel}. Consume "${WEBINAR_FLOW_DOCS.landingPageCopy}" WITHOUT reshaping the copy. Build a native funnel artifact in the Funnels view and link it to this task. Do not deliver loose HTML or a PDF.`,
       }),
       outputContract: funnelContract(),
     },
@@ -498,7 +522,7 @@ export function expandWebinarFulfillmentPlaybook(
     kind: 'plan',
     title: 'Webinar Fulfillment',
     summary:
-      'Atlas context → pre-call gate → call intake → post-call strategy → market research → THE PLAN → strategy gate → complete copy package → copy gate → Lux production → Blaze media plan → production gate.',
+      'Atlas context → pre-call gate → call intake → post-call strategy → market research → THE PLAN → strategy gate → WEB#5A copy package → WEB#5B landing-page copy → copy gate → Lux production → Blaze media plan → production gate.',
     approach: `Follow the complete ${WEBINAR_FULFILLMENT_PLAYBOOK_ID} flow from pre-call preparation. Atlas owns context, Reed owns strategy, Ivy owns copy, Lux owns visual/funnel/deck production, and Blaze owns research/media planning.`,
     capability_gap: { exists: false, note: '', suggested_hire: '' },
     harness: {

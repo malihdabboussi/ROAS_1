@@ -28,6 +28,8 @@ The proven swipe copy lives in `assets/`. The transferable plays and their condi
 
 Load `dylans-super-voice` first. It is the single voice and anti-AI authority for every email and SMS in this machine.
 
+Confirm the skill loaded before drafting. If it is unavailable, stop and report the missing skill instead of approximating the voice from memory.
+
 - Use **Long-Form Copy** mode for email bodies and **Personal Voice** calibration for SMS.
 - Write with Dylan's voice DNA: direct, specific, conversational, properly capitalized, varied in rhythm, and free of corporate or AI phrasing.
 - Keep the presenter as the factual speaker. Use their name, offer, proof, stories, audience, and verified claims, but write the words through Dylan's Super Voice.
@@ -93,7 +95,7 @@ Pattern-match the swipe for FOMO mechanics; adapt the angles to the client; neve
 
 ## STEP 4 — SCRUB, THEN OUTPUT
 
-**Scrub first.** Before saving anything, run every email and SMS through the `dylans-super-voice` final checklist. Confirm that every fact and scarcity claim is verified, each send has one destination, and the copy contains no residual AI patterns. A sequence is not done until it passes the Dylan's Super Voice checklist.
+**Scrub first.** Before saving anything, run every email and SMS through the `dylans-super-voice` final checklist. Then search the complete batch for the literal `—` character, including subject lines, preview text, sign-offs, P.S. lines, and SMS. Any match sends that message back for a rewrite. Confirm that every fact and scarcity claim is verified, each send has one destination, and the copy contains no residual AI patterns. A sequence is not done until the complete batch passes.
 
 Then output. Default deliverable is clean markdown content that copies straight into an ESP. Structure:
 

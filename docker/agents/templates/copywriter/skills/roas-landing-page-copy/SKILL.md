@@ -3,7 +3,7 @@ name: roas-landing-page-copy
 description: Writes the COPY for a webinar registration funnel's front two pages — the Opt-In (registration) page and the Registration Confirmation (thank-you) page — for a ROAS client, from a strategy brief + picked webinar title. Full copy for every block (headlines, bullets, CTAs, host bio, confirmation steps) plus the per-page section guide and mini brand guide in the exact handoff format roas-funnel-design consumes. The isolated landing-page unit of the webinar pipeline. Load for "landing page copy," "registration page," "opt-in page," "write the LP," "thank-you page copy," "webinar page copy," or a webinar campaign needing its pages written. Do NOT load for a FULL multi-page funnel build (offer/replay/purchase pages — that's roas-funnel-build), to render/design the pages (roas-funnel-design), or to write ads or emails.
 ---
 
-# ROAS Landing Page Copy — the webinar funnel's front door, written
+# ROAS Landing Page Copy - WEB#5B
 
 The extracted landing-page unit of `roas-funnel-build`, scoped to the two pages a webinar campaign needs at launch: **Opt-In** and **Registration Confirmation**. Output lands in the exact section-guide + brand-guide + copy shape that `roas-funnel-design` renders with zero adaptation.
 
@@ -27,31 +27,33 @@ Use the webinar wireframe (Pages 1-2 of `roas-funnel-build/references/wireframe-
 **Confirmation blocks:** logo → "you're almost registered" headline → welcome-video note → date/time reminder + restated promise + countdown → Step 1 add-to-calendar → Step 2 join community → Step 3 what you'll learn (Lesson 1/2/3 = the discover-bullets, one line each) → bonus tease (show-up gift) → footer.
 
 ### Step 2 — Write every block
+Load `dylans-super-voice` and confirm it loaded before writing. If it is unavailable, stop and report the missing skill instead of approximating it from memory.
+
 Full copy, no stubs: headlines, subheads, bullets, button text, form labels, the urgency line, the host bio, the three lessons, the bonus tease. The client's voice, first person where the page speaks as the host. The confirmation page's whole job is show rate — calendar, community, and the attendance bonus are the levers; write them like they matter.
 
 ### Step 3 — Design handoff
 Once for the deliverable: **mini brand guide** (font pairing, colors + hex with source noted, button style, overall look). Per page: **section guide** — the stacked blocks in order with one line on what each holds. Match `roas-funnel-build`'s handoff format exactly; this is what `roas-funnel-design` ingests.
 
 ### Step 4 — Scrub and ship
-Every shipping line through the `dylans-super-voice` no-AI-smell standard (em dashes, triplets, "it's not X it's Y," fake-candor openers — hunt and fix). Section-guide notes are instructions, not copy; they're exempt. Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above — do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai / no native artifacts (fallback), save to `/mnt/user-data/outputs/` and present.
+Every shipping line goes through the `dylans-super-voice` no-AI-smell standard. Search the full client-facing page copy for the literal `—` character, plus triplets, "it's not X it's Y," fake-candor openers, and other AI patterns. Section-guide notes are instructions, not copy, but keep them plain and client-ready. Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) titled exactly `WEB#5B - Landing Page Copy`. Do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai or an environment without native artifacts, save to `/mnt/user-data/outputs/` and present.
 
 ## OUTPUT FORMAT
 ```
-# [Client] — Webinar Landing Pages ([webinar title])
+# [Client] - Webinar Landing Pages ([webinar title])
 **Flow:** Opt-In → Registration Confirmation | **Date/time:** ... | **Flags:** [brackets, brand source, missing proof]
 
-## Page 1 — Opt-In (Goal: capture registration)
+## Page 1 - Opt-In (Goal: capture registration)
 [full copy, every block]
 
-## Page 2 — Registration Confirmation (Goal: raise show rate)
+## Page 2 - Registration Confirmation (Goal: raise show rate)
 [full copy, every block]
 
 ## Design handoff
 ### Mini brand guide
 [fonts, colors/hex + source, button style, look]
-### Section guide — Opt-In
+### Section guide - Opt-In
 [blocks in order, one line each]
-### Section guide — Confirmation
+### Section guide - Confirmation
 [blocks in order, one line each]
 
 ## HANDOFF

@@ -1,6 +1,6 @@
-# Meta Ad Anatomy — what you're actually writing
+# Meta Ad Anatomy - what you're actually writing
 
-A Meta ad is a few distinct pieces, each with its own job. Write all of them, label them, and keep each one in its lane. Don't hand over a blob of "ad copy" that the buyer has to disassemble.
+A Meta ad has distinct platform fields, but the primary text should still read like one person wrote it in one pass. Use the anatomy to draft and QA. In the client-facing deliverable, keep the full primary text together instead of exposing Hook, Body, and CTA labels.
 
 ---
 
@@ -18,7 +18,16 @@ A Meta ad is a few distinct pieces, each with its own job. Write all of them, la
 
 **6. Display URL / destination** — where the click goes (the registration/landing page). Note it so the buyer wires it correctly.
 
-Deliver every ad as all six pieces, clearly labeled.
+Deliver each ad in this clean order:
+
+1. **Ad text** as one uninterrupted, unquoted block containing the opener, argument, and ask
+2. **On-image text**
+3. **Headline**
+4. **Description** when used
+5. **Button**
+6. **Destination**
+
+Never label parts of the primary text as Hook, Body, or CTA in the client-facing output.
 
 ---
 

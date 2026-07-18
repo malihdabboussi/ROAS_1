@@ -36,6 +36,7 @@ describe('webinar-fulfillment playbook', () => {
       'st-gate-strategy',
       'st-build-checklist',
       'st-copy-package',
+      'st-landing-page-copy',
       'st-gate-copy',
       'st-ad-design',
       'st-image-brief',
@@ -72,9 +73,18 @@ describe('webinar-fulfillment playbook', () => {
     expect(plan.subtasks.find((s) => s.id === 'st-funnel-design')?.assignTo).toBe('designer')
     expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.outputContract?.expected).toEqual(
       {
-        title: 'WEB#5 — Copy Package',
+        title: 'WEB#5A - Copy Package',
       },
     )
+    expect(
+      plan.subtasks.find((s) => s.id === 'st-landing-page-copy')?.outputContract?.expected,
+    ).toEqual({ title: 'WEB#5B - Landing Page Copy' })
+    expect(plan.subtasks.find((s) => s.id === 'st-landing-page-copy')?.dependsOn).toEqual([
+      'st-copy-package',
+    ])
+    expect(plan.subtasks.find((s) => s.id === 'st-gate-copy')?.dependsOn).toEqual([
+      'st-landing-page-copy',
+    ])
     expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.assignTo).toBe('designer')
     expect(plan.subtasks.find((s) => s.id === 'st-media-plan')?.assignTo).toBe('ads_manager')
     expect(
@@ -82,6 +92,7 @@ describe('webinar-fulfillment playbook', () => {
         .filter((s) =>
           [
             'st-copy-package',
+            'st-landing-page-copy',
             'st-ad-design',
             'st-image-brief',
             'st-funnel-design',
@@ -109,6 +120,15 @@ describe('webinar-fulfillment playbook', () => {
     )
     expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.intent.ecology).not.toMatch(
       /if that skill is missing/i,
+    )
+    expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.intent.ecology).toMatch(
+      /zero em dashes/i,
+    )
+    expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.intent.ecology).toMatch(
+      /continuous ad text/i,
+    )
+    expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.intent.ecology).toMatch(
+      /Script, Shooting instructions, Overlays/i,
     )
   })
 
@@ -195,7 +215,8 @@ describe('webinar-fulfillment playbook', () => {
   it('wires Gate 2 REVIEW MAP owners for surgical reject', () => {
     const plan = expandWebinarFulfillmentPlaybook(base)
     const gate2 = plan.subtasks.find((s) => s.id === 'st-gate-copy')
-    expect(gate2?.intent.ecology).toContain('3→roas-ad-copy')
+    expect(gate2?.intent.ecology).toContain('5A.3→roas-ad-copy')
+    expect(gate2?.intent.ecology).toContain('5B→roas-landing-page-copy')
     expect(gate2?.intent.ecology).toContain('{{run.review_feedback}}')
   })
 })

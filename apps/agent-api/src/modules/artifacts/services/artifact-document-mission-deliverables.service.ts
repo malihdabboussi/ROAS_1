@@ -11,7 +11,8 @@ const WEBINAR_FLOW_DOC_TITLE_GROUPS: string[][] = [
   ['WEB#2 — Strategy v2', 'Strategy v2'],
   ['WEB#3 — THE PLAN — Launch Brief', 'THE PLAN — Launch Brief', 'THE PLAN'],
   ['WEB#4 — Market Research', 'Market Research', 'Market Research — [Client]'],
-  ['WEB#5 — Copy Package', 'Copy Package'],
+  ['WEB#5A - Copy Package', 'WEB#5 — Copy Package', 'Copy Package'],
+  ['WEB#5B - Landing Page Copy', 'Landing Page Copy'],
   ['WEB#6 — Image Briefs', 'Image Briefs'],
   ['WEB#7 — Deck Outline v1', 'Deck Outline v1'],
   ['WEB#8 — Creative Pack', 'Creative Pack'],
@@ -70,8 +71,12 @@ export class ArtifactDocumentMissionDeliverablesService {
     sessionKey: string,
     userId: string,
   ): Promise<{ persisted: PersistedMissionDeliverable; orgId: string | null }> {
-    const { missionId, campaignId, orgId, spaceId: missionSpaceId } =
-      await this.resolveMissionContextCompat(target, sessionKey, userId)
+    const {
+      missionId,
+      campaignId,
+      orgId,
+      spaceId: missionSpaceId,
+    } = await this.resolveMissionContextCompat(target, sessionKey, userId)
     const agentKey = target.parseAgentIdFromSessionKey(sessionKey) ?? 'unknown'
     const title = String(input.title).trim()
     const contentValue = input.content
@@ -141,9 +146,7 @@ export class ArtifactDocumentMissionDeliverablesService {
     return {
       persisted: {
         ...persisted,
-        ...(spaceLink
-          ? { space_item_id: spaceLink.spaceItemId, space_id: spaceLink.spaceId }
-          : {}),
+        ...(spaceLink ? { space_item_id: spaceLink.spaceItemId, space_id: spaceLink.spaceId } : {}),
       },
       orgId,
     }
@@ -200,8 +203,9 @@ export class ArtifactDocumentMissionDeliverablesService {
       if (!spaceId) return null
 
       const docBody =
-        markdownToHtml(this.documentContentToSpaceDocBody(input.contentValue) ?? input.contentText) ??
-        input.contentText
+        markdownToHtml(
+          this.documentContentToSpaceDocBody(input.contentValue) ?? input.contentText,
+        ) ?? input.contentText
       const existing = await this.findSpaceDocByTitle(
         target.serviceClient as SupabaseClient,
         spaceId,

@@ -20,7 +20,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
     slug: 'agency-client-webinar',
     title: 'Agency Client (Webinar)',
     description:
-      'Fulfill a webinar client end-to-end with gated strategy, one complete copy package, native creative views, and a private channel.',
+      'Fulfill a webinar client end-to-end with gated strategy, a Dylan Super Voice copy package, dedicated landing-page copy, native creative views, and a private channel.',
     icon: 'megaphone',
     icon_color: 'violet',
     category: 'tier1_universal',
@@ -53,7 +53,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
         body: welcomeDocBody('Agency Client (Webinar)', [
           '**Missions → Start playbook** — run Webinar Fulfillment (context → strategy gates → copy gate → native production)',
           '**Deliverables (Kanban)** — track brief → paid for client-facing packages',
-          '**Docs** — WEB#1–#7 strategy, copy, research, briefs, and media plan',
+          '**Docs** — WEB#1–#7 strategy, WEB#5A copy, WEB#5B landing pages, research, briefs, and media plan',
           '**Meta Ads / Funnels / Presentations** — native editable production assets',
           '**Calendar** — call dates and launch deadlines',
           '**Channel** — internal client comms',
@@ -117,15 +117,27 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
       },
       {
         kind: 'doc',
-        title: 'WEB#5 — Copy Package',
+        title: 'WEB#5A - Copy Package',
         body: docBody([
           '## Copy Package',
           '',
-          'Filled by copywriter after market research (topics, emails, Meta ads, scripts, LP).',
+          'Filled by copywriter after market research (topics, emails, SMS, Meta ads, and video scripts).',
           '',
-          '_Placeholder until the Copy Package subtask saves into this doc. If this text is still here after that step, the agent did not overwrite it — reopen the mission deliverable or ask for a re-save titled exactly `WEB#5 — Copy Package`._',
+          '_Placeholder until the Copy Package subtask saves into this doc. If this text is still here after that step, reopen the mission deliverable or ask for a re-save titled exactly `WEB#5A - Copy Package`._',
         ]),
         sort_order: 5,
+      },
+      {
+        kind: 'doc',
+        title: 'WEB#5B - Landing Page Copy',
+        body: docBody([
+          '## Landing Page Copy',
+          '',
+          'Filled by copywriter through the dedicated landing-page skill after WEB#5A.',
+          '',
+          '_Placeholder until the Landing Page Copy subtask saves into this doc._',
+        ]),
+        sort_order: 6,
       },
       {
         kind: 'doc',
@@ -137,7 +149,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
           '',
           '_Placeholder until the image-brief subtask saves into this doc._',
         ]),
-        sort_order: 6,
+        sort_order: 7,
       },
       {
         kind: 'doc',
@@ -149,7 +161,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
           '',
           '_Placeholder until the media-plan subtask saves into this doc._',
         ]),
-        sort_order: 7,
+        sort_order: 8,
       },
       {
         kind: 'task',
@@ -157,7 +169,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
         status: 'brief',
         description:
           'Open Missions → Playbook (or use Start Webinar Fulfillment on the empty Missions screen) and fill kickoff fields.',
-        sort_order: 8,
+        sort_order: 9,
       },
     ],
     automations: [],
