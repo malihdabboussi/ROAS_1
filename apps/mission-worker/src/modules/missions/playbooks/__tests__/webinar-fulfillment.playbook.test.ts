@@ -43,6 +43,8 @@ describe('webinar-fulfillment playbook', () => {
       'st-generate-images',
       'st-funnel-design',
       'st-deck-bones',
+      'st-gate-creative',
+      'st-compile-ads',
       'st-media-plan',
       'st-gate-production',
     ])
@@ -96,8 +98,10 @@ describe('webinar-fulfillment playbook', () => {
             'st-landing-page-copy',
             'st-ad-design',
             'st-image-brief',
+            'st-generate-images',
             'st-funnel-design',
             'st-deck-bones',
+            'st-compile-ads',
             'st-media-plan',
           ].includes(s.id),
         )
@@ -206,8 +210,7 @@ describe('webinar-fulfillment playbook', () => {
     ])
     expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.dependsOn).toEqual(['st-gate-copy'])
     expect(plan.subtasks.find((s) => s.id === 'st-media-plan')?.dependsOn).toEqual([
-      'st-ad-design',
-      'st-image-brief',
+      'st-compile-ads',
       'st-funnel-design',
       'st-deck-bones',
     ])

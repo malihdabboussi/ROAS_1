@@ -8,7 +8,6 @@ import {
   docContract,
   intent,
   pickAgent,
-  presentationContract,
   WEBINAR_FLOW_DOCS,
   WEBINAR_FLOW_GATES,
   WEBINAR_FLOW_TASKS,
@@ -23,10 +22,6 @@ const SKILLS = {
   research: 'roas-market-research',
   copy: 'roas-webinar-copy-package',
   landingCopy: 'roas-landing-page-copy',
-  ads: 'roas-ad-design',
-  images: 'roas-image-brief',
-  funnel: 'roas-funnel-design',
-  deck: 'roas-webinar-deck',
 } as const
 
 const REVIEW_MAP =
@@ -374,105 +369,14 @@ export function expandWebinarFulfillmentPlaybook(
     afterCopy = 'st-gate-copy'
   }
 
-  add(
-    {
-      id: 'st-ad-design',
-      title: WEBINAR_FLOW_TASKS.staticAds,
-      assignTo: designer,
-      dependsOn: [afterCopy],
-      assertionKeys: [],
-      scheduledAt: null,
-      publishToTaskList: true,
-      intent: intent({
-        why: 'Turn locked ad lines into finished static creative.',
-        story: 'Lux owns visual production; Blaze remains the media buyer.',
-        sensory:
-          'The Meta Ads Space view shows editable ad artifacts using the locked message and brand.',
-        endState:
-          'Static Meta ad artifacts exist in the Space Meta Ads view and link back to this subtask.',
-        ecology: `Load ${SKILLS.ads}. Create native ad artifacts in the Space Meta Ads view from approved lines. Link the artifacts to this subtask. Do not save PDFs or loose file exports.`,
-      }),
-      outputContract: adContract('Static Ads — [Campaign]'),
-    },
-    'creative',
-    'Lux created static Meta ad artifacts in the Meta Ads view.',
-  )
-
-  add(
-    {
-      id: 'st-image-brief',
-      title: WEBINAR_FLOW_TASKS.imageBriefs,
-      assignTo: designer,
-      dependsOn: [afterCopy],
-      assertionKeys: [],
-      scheduledAt: null,
-      publishToTaskList: true,
-      intent: intent({
-        why: 'Provide complete generation briefs for the remaining campaign visuals.',
-        story: 'Lux creates paste-ready prompts without duplicating rendered static ads.',
-        sensory:
-          'Every brief specifies scene, style, lighting, palette, exact text, treatment, ratio, and avoid-list.',
-        endState: `"${WEBINAR_FLOW_DOCS.imageBriefs}" exists as a native Doc linked to this task.`,
-        ecology: `Load ${SKILLS.images}. Save exactly "${WEBINAR_FLOW_DOCS.imageBriefs}". Do not generate images unless the brief calls for actual production. Never create a PDF.`,
-      }),
-      outputContract: docContract(WEBINAR_FLOW_DOCS.imageBriefs),
-    },
-    'creative',
-    'Image generation briefs exist in Space Docs.',
-  )
-
-  add(
-    {
-      id: 'st-funnel-design',
-      title: WEBINAR_FLOW_TASKS.funnelDesign,
-      assignTo: designer,
-      dependsOn: [afterCopy],
-      assertionKeys: [],
-      scheduledAt: null,
-      publishToTaskList: true,
-      intent: intent({
-        why: 'Build the approved registration experience in the native funnel builder.',
-        story: 'Lux turns approved copy into the client funnel without rewriting it.',
-        sensory: 'The Funnels Space view contains the linked responsive funnel with approved copy.',
-        endState: 'A native funnel exists in the Space Funnels view and links to this task.',
-        ecology: `Load ${SKILLS.funnel}. Consume "${WEBINAR_FLOW_DOCS.landingPageCopy}" WITHOUT reshaping the copy. Build a native funnel artifact in the Funnels view and link it to this task. Do not deliver loose HTML or a PDF.`,
-      }),
-      outputContract: funnelContract(),
-    },
-    'funnel',
-    'Native webinar funnel exists in the Funnels view.',
-  )
-
-  add(
-    {
-      id: 'st-deck-bones',
-      title: WEBINAR_FLOW_TASKS.deckBones,
-      assignTo: designer,
-      dependsOn: [afterCopy],
-      assertionKeys: [],
-      scheduledAt: null,
-      publishToTaskList: true,
-      intent: intent({
-        why: 'Create the most important editable slides now without pretending the full webinar deck is finished.',
-        story: 'Lux builds the bones future production can expand.',
-        sensory:
-          'The presentation has a coherent visual system and the decisive teaching and offer slides.',
-        endState:
-          'A native editable presentation titled "Webinar Deck Bones" exists with 10-20 slides.',
-        ecology: `Load ${SKILLS.deck}. Build one native editable presentation titled "Webinar Deck Bones" with 10-20 slides only. Include title, promise, problem, big idea, mechanism, teaching framework/sections, proof, offer transition, and the complete offer stack: core product, bonuses, pricing/enrollment, guarantee if real, real scarcity, and CTA. This is bones, not a full deck. Never export PPTX or PDF. Link it to this task and the Presentations view.`,
-      }),
-      outputContract: presentationContract('Webinar Deck Bones'),
-    },
-    'deck',
-    'Webinar Deck Bones exists as a 10-20 slide native presentation.',
-  )
+  addWebinarCreativeProduction({ add, afterCopy, designer, adsManager, human, hasHuman })
 
   add(
     {
       id: 'st-media-plan',
       title: WEBINAR_FLOW_TASKS.mediaPlan,
       assignTo: adsManager,
-      dependsOn: ['st-ad-design', 'st-image-brief', 'st-funnel-design', 'st-deck-bones'],
+      dependsOn: ['st-compile-ads', 'st-funnel-design', 'st-deck-bones'],
       assertionKeys: [],
       scheduledAt: null,
       publishToTaskList: true,
@@ -521,8 +425,8 @@ export function expandWebinarFulfillmentPlaybook(
     kind: 'plan',
     title: 'Webinar Fulfillment',
     summary:
-      'Atlas context → pre-call gate → call intake → post-call strategy → market research → THE PLAN → strategy gate → WEB#5A copy package → WEB#5B landing-page copy → copy gate → Lux production → Blaze media plan → production gate.',
-    approach: `Follow the complete ${WEBINAR_FULFILLMENT_PLAYBOOK_ID} flow from pre-call preparation. Atlas owns context, Reed owns strategy, Ivy owns copy, Lux owns visual/funnel/deck production, and Blaze owns research/media planning.`,
+      'Atlas context → pre-call gate → call intake → post-call strategy → market research → THE PLAN → strategy gate → WEB#5A copy package → WEB#5B landing-page copy → copy gate → Lux creative production (statics, image briefs, generated images, funnel, deck bones) → creative gate → Blaze compiles approved ads → media plan → production gate.',
+    approach: `Follow the complete ${WEBINAR_FULFILLMENT_PLAYBOOK_ID} flow from pre-call preparation. Atlas owns context, Reed owns strategy, Ivy owns copy, Lux owns visual/funnel/deck production, Blaze owns research/ad compilation/media planning, and the creative gate approves Lux's assets before Blaze assembles native ads.`,
     capability_gap: { exists: false, note: '', suggested_hire: '' },
     harness: {
       contextSnapshot: {

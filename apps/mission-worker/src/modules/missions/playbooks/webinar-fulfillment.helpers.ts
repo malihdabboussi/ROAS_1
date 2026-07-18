@@ -43,8 +43,9 @@ export const WEBINAR_FLOW_DOCS = {
   marketResearch: 'WEB#4 — Market Research',
   copyPackage: 'WEB#5A - Copy Package',
   landingPageCopy: 'WEB#5B - Landing Page Copy',
-  imageBriefs: 'WEB#6 — Image Briefs',
-  mediaPlan: 'WEB#7 — Media Plan',
+  validateMessagingStatics: 'WEB#6 — Validate Messaging Statics',
+  imageBriefs: 'WEB#7 — Image Briefs',
+  mediaPlan: 'WEB#8 — Media Plan',
 } as const
 
 /** Agent work steps numbered in playbook order (gates stay Gate 1/2/3). */
@@ -62,18 +63,21 @@ export const WEBINAR_FLOW_TASKS = {
   buildChecklist: taskTitle(7, 'Build checklist reconciliation'),
   copyPackage: taskTitle('8A', 'Complete webinar copy package'),
   landingPageCopy: taskTitle('8B', 'Landing page copy'),
-  staticAds: taskTitle(9, 'Static Meta ads'),
+  staticAds: taskTitle(9, 'Validate Messaging statics'),
   imageBriefs: taskTitle(10, 'Image briefs'),
-  funnelDesign: taskTitle(11, 'Native webinar funnel'),
-  deckBones: taskTitle(12, 'Webinar Deck Bones'),
-  mediaPlan: taskTitle(13, 'Media plan'),
+  generatedImages: taskTitle(11, 'Generated concept images'),
+  funnelDesign: taskTitle(12, 'Native webinar funnel'),
+  deckBones: taskTitle(13, 'Webinar Deck Bones'),
+  compileAds: taskTitle(14, 'Compile approved Meta ads'),
+  mediaPlan: taskTitle(15, 'Media plan'),
 } as const
 
 export const WEBINAR_FLOW_GATES = {
   precall: 'Gate 1 — review pre-call map and provide call',
   strategy: 'Gate 2 — approve strategy and client message',
   copy: 'Gate 3 — approve copy package and landing pages',
-  production: 'Gate 4 — approve production package',
+  creative: 'Gate 4 — approve creative assets',
+  production: 'Gate 5 — approve production package',
 } as const
 
 /** Legacy titles still present on older Spaces — used for dual-write matching. */
@@ -97,8 +101,16 @@ export const WEBINAR_FLOW_DOC_ALIASES: Record<string, string[]> = {
     WEBINAR_FLOW_DOCS.copyPackage,
   ],
   [WEBINAR_FLOW_DOCS.landingPageCopy]: ['Landing Page Copy', WEBINAR_FLOW_DOCS.landingPageCopy],
-  [WEBINAR_FLOW_DOCS.imageBriefs]: ['Image Briefs', WEBINAR_FLOW_DOCS.imageBriefs],
-  [WEBINAR_FLOW_DOCS.mediaPlan]: ['Media Plan', WEBINAR_FLOW_DOCS.mediaPlan],
+  [WEBINAR_FLOW_DOCS.validateMessagingStatics]: [
+    'Validate Messaging Statics',
+    WEBINAR_FLOW_DOCS.validateMessagingStatics,
+  ],
+  [WEBINAR_FLOW_DOCS.imageBriefs]: [
+    'Image Briefs',
+    'WEB#6 — Image Briefs',
+    WEBINAR_FLOW_DOCS.imageBriefs,
+  ],
+  [WEBINAR_FLOW_DOCS.mediaPlan]: ['Media Plan', 'WEB#7 — Media Plan', WEBINAR_FLOW_DOCS.mediaPlan],
 }
 
 export function docContract(

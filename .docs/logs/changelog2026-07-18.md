@@ -81,3 +81,10 @@ What: Cleared remaining non-test TypeScript errors in web: removed unused `DockK
 Why: `pnpm exec tsc --noEmit` in `apps/web` failed on production source files and blocked deploy.
 Impact: Non-test `tsc` output is clean; only pre-existing test-file errors remain.
 Files: `SidebarHqHubMenuContent.tsx`, `use-shell-store.ts`, `ShellRightPanelPicker.tsx`, `SkillMenuDropdown.tsx`, `SpaceVibeyChatPanel.tsx`, `SpaceItemsContainer.tsx`
+
+## [2026-07-18 08:20] - [FIX]
+
+What: Restored the split webinar creative flow in mission-worker — added missing WEBINAR_FLOW keys, wired `addWebinarCreativeProduction`, renumbered docs WEB#6–8, and aligned web task titles plus Agency Client webinar template placeholders.
+Why: Railway `roas-platform` (mission-worker) failed nest build on every tip SHA after the parity ship.
+Impact: Mission-worker builds again; new Spaces get Validate Messaging statics / image briefs / media plan placeholders matching the playbook.
+Files: `webinar-fulfillment.helpers.ts`, `webinar-fulfillment.playbook.ts`, playbook test, `webinar-fulfillment-titles.ts`, `space-template-catalog-agency-client-webinar.ts`
