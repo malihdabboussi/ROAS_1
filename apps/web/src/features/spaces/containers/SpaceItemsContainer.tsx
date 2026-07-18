@@ -65,10 +65,7 @@ import {
 import { MEDIA_GROUP_BY_OPTIONS, normalizeMediaGroupBy } from '../lib/media-group-by-options'
 import { MISSION_GROUP_BY_OPTIONS } from '../lib/mission-group-by-options'
 import { usesPaidAdsInlineDetail } from '../lib/paid-ads-display-mode'
-import {
-  resolveTaskCapableViewId,
-  resolveTaskCapableViewId,
-} from '../lib/resolve-task-capable-view'
+import { resolveTaskCapableViewId } from '../lib/resolve-task-capable-view'
 import { updateSpace } from '../services/spaces.service'
 import { useSpacesStore } from '../store/use-spaces-store'
 import {
