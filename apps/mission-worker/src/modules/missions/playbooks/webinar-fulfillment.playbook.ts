@@ -27,6 +27,9 @@ const SKILLS = {
 const REVIEW_MAP =
   '5A.1→roas-webinar-topics · 5A.2→roas-webinar-emails · 5A.3→roas-ad-copy · 5A.4→roas-video-ad-scripts · 5B→roas-landing-page-copy'
 
+const CLIENT_WRITING_RULE =
+  'CLIENT WRITING RULE: If this step creates or revises any wording a client, prospect, attendee, presenter, or public audience will read or hear, load dylans-super-voice and confirm it loaded before drafting. It is the only voice authority. Do not load human-written-copy or dylans-voice. Client samples and Brain context may supply verified facts, vocabulary, and subject-matter texture, but they do not replace or override Dylan Super Voice. Apply its correct surface mode, run its complete final checklist, and search the shipping text for the literal `—` character before saving. If the skill is unavailable, block instead of approximating it. This includes client updates, Slack messages, recaps, approval requests, emails, SMS, ads, scripts, landing pages, slide copy, on-image text, and copy inside dynamically created build tasks. When creating another mission subtask that may write client-facing text, copy this rule into that subtask ecology.'
+
 function readKickoff(input: Record<string, unknown> | null | undefined): MissionPlaybookKickoff {
   const raw =
     input?.playbook_kickoff && typeof input.playbook_kickoff === 'object'
@@ -72,6 +75,9 @@ export function expandWebinarFulfillmentPlaybook(
     category: string,
     statement: string,
   ) => {
+    if (!task.assignTo.startsWith('human:')) {
+      task.intent.ecology = `${task.intent.ecology}\n\n${CLIENT_WRITING_RULE}`
+    }
     assertionNumber += 1
     const assertionKey = `A-${String(assertionNumber).padStart(3, '0')}`
     task.assertionKeys = [assertionKey]
@@ -239,7 +245,7 @@ export function expandWebinarFulfillmentPlaybook(
         story: 'Reed turns strategy and completed market research into THE PLAN.',
         sensory: 'The promise, funnel path, asset list, offer stack, proof, and constraints agree.',
         endState: `"${WEBINAR_FLOW_DOCS.thePlan}" exists as the production source of truth.`,
-        ecology: `Load skill ${SKILLS.plan}. Consume the completed "${WEBINAR_FLOW_DOCS.marketResearch}" document and preserve its observed-source labels; do not rerun or speculate about integration availability inside THE PLAN. Save exactly "${WEBINAR_FLOW_DOCS.thePlan}" as a native editable Doc. Include a draft client Slack approval message. Never create a PDF.`,
+        ecology: `Load skill ${SKILLS.plan} and dylans-super-voice. Consume the completed "${WEBINAR_FLOW_DOCS.marketResearch}" document and preserve its observed-source labels; do not rerun or speculate about integration availability inside THE PLAN. Save exactly "${WEBINAR_FLOW_DOCS.thePlan}" as a native editable Doc. Include a draft client Slack approval message written in Dylan Super Voice Professional Message mode. Never create a PDF.`,
       }),
       outputContract: docContract(WEBINAR_FLOW_DOCS.thePlan),
     },

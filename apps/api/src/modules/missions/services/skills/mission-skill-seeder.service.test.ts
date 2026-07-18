@@ -29,18 +29,64 @@ function createService(overrides: Record<string, unknown> = {}) {
   const missionAgentTemplateService = {
     loadTemplatePack: vi.fn().mockResolvedValue([{ file_name: 'AGENTS.md', content: 'follow' }]),
   }
+  const skillSeederRepository = overrides.skillSeederRepository as
+    | Record<string, unknown>
+    | undefined
+  const service = skillSeederRepository
+    ? new MissionSkillSeederService(
+        (overrides.missionsRepository ?? missionsRepository) as never,
+        (overrides.missionAgentTemplateService ?? missionAgentTemplateService) as never,
+        skillSeederRepository as never,
+      )
+    : new MissionSkillSeederService(
+        (overrides.missionsRepository ?? missionsRepository) as never,
+        (overrides.missionAgentTemplateService ?? missionAgentTemplateService) as never,
+      )
 
   return {
-    service: new MissionSkillSeederService(
-      (overrides.missionsRepository ?? missionsRepository) as never,
-      (overrides.missionAgentTemplateService ?? missionAgentTemplateService) as never,
-    ),
+    service,
     missionsRepository,
     missionAgentTemplateService,
+    skillSeederRepository,
   }
 }
 
 describe('MissionSkillSeederService', () => {
+  it('seeds Dylan Super Voice as a universal default from the skill library', async () => {
+    const skillSeederRepository = {
+      listLibrarySkills: vi.fn().mockResolvedValue({
+        rows: [
+          {
+            skill_key: 'dylans-super-voice',
+            name: "Dylan's Super Voice",
+            description: 'Master voice for human-facing writing',
+            markdown_content: "# Dylan's Super Voice",
+          },
+        ],
+      }),
+      listLibrarySkillResources: vi.fn().mockResolvedValue([]),
+    }
+    const { service, missionsRepository } = createService({ skillSeederRepository })
+    const supabase = {} as never
+
+    await service.seedDefaultSkills(supabase, 'user-1', 'agent-1', 'org-1')
+
+    expect(skillSeederRepository.listLibrarySkills).toHaveBeenCalledWith(supabase, [
+      'dylans-super-voice',
+    ])
+    expect(missionsRepository.internalUpsertAgentSkill).toHaveBeenCalledWith(
+      supabase,
+      'user-1',
+      'org-1',
+      'agent-1',
+      'dylans-super-voice',
+      "Dylan's Super Voice",
+      'Master voice for human-facing writing',
+      "# Dylan's Super Voice",
+      'default',
+    )
+  })
+
   it('clones selected skills and their resources to a target agent', async () => {
     const queries: Record<string, Array<Record<string, any>>> = {}
     const supabase = {
@@ -77,13 +123,9 @@ describe('MissionSkillSeederService', () => {
     }
     const { service, missionsRepository } = createService()
 
-    await service.cloneSelectedSkills(
-      supabase as never,
-      'user-1',
-      'source-agent',
-      'target-agent',
-      ['research'],
-    )
+    await service.cloneSelectedSkills(supabase as never, 'user-1', 'source-agent', 'target-agent', [
+      'research',
+    ])
 
     expect(queries.agent_skills?.[0]?.or).toHaveBeenCalledWith('user_id.eq.user-1,user_id.is.null')
     expect(queries.agent_skills?.[0]?.or).toHaveBeenCalledWith(

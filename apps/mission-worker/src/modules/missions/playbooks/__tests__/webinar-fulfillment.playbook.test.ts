@@ -267,4 +267,18 @@ describe('webinar-fulfillment playbook', () => {
     expect(gate2?.intent.ecology).toContain('5B→roas-landing-page-copy')
     expect(gate2?.intent.ecology).toContain('{{run.review_feedback}}')
   })
+
+  it('requires Dylan Super Voice exclusively for every agent-owned client-facing line', () => {
+    const plan = expandWebinarFulfillmentPlaybook(base)
+    const agentTasks = plan.subtasks.filter((subtask) => !subtask.assignTo.startsWith('human:'))
+
+    expect(agentTasks).not.toHaveLength(0)
+    for (const subtask of agentTasks) {
+      expect(subtask.intent.ecology).toContain('CLIENT WRITING RULE')
+      expect(subtask.intent.ecology).toContain('dylans-super-voice')
+      expect(subtask.intent.ecology).toContain('only voice authority')
+      expect(subtask.intent.ecology).toContain('human-written-copy')
+      expect(subtask.intent.ecology).toContain('dylans-voice')
+    }
+  })
 })

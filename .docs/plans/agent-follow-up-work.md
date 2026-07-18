@@ -7142,3 +7142,11 @@ Files:
 - Evidence: `node scripts/arch/check-loc.mjs` exits with `ENOENT` while traversing this pre-existing broken symlink. Manual counts confirm every code file changed here remains under 600 lines.
 - Needed work: Remove or repair the stale tracked symlink, then rerun the repository-wide architecture scan.
 - Why not now: The OpenClaw test-link artifact is unrelated to webinar missions and changing it would overlap another subsystem.
+
+## 2026-07-17 — Mission skill seeder near LOC limit
+
+- Feature/app: api / mission skills
+- File: `apps/api/src/modules/missions/services/skills/mission-skill-seeder.service.ts`
+- Evidence: `wc -l` = 572 after adding canonical library-backed universal default skills, near the 600-line backend service ceiling.
+- Needed work: Extract static default-skill definitions and universal-library resolution into a focused seed-catalog collaborator while keeping persistence orchestration in the seeder.
+- Why not now: The requested change needs one additional default-skill source; restructuring every existing seed and clone path would broaden the production change.

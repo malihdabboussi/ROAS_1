@@ -70,10 +70,12 @@ A FEW THINGS WE NEED FROM YOU
 ```
 
 Rules for the message:
+- Load `dylans-super-voice` before drafting. Use Professional Message mode as the only voice authority; do not combine it with `human-written-copy` or `dylans-voice`.
 - Real links, real numbers, no promised results (targets are fine).
 - The client's own good lines from the call get reused — people commit to plans that sound like them.
 - Anything we invented together on the call is presented as "the plan we built together," never as news.
 - No em dashes. No triplets. Fifth-grade reading level. Sounds like a sharp teammate, not a report.
+- Run the complete Dylan Super Voice checklist and a literal `—` scan before the message enters approval.
 
 ## Routing (every run)
 1. Strategy v2 → client Drive folder + portal Strategist tab.
