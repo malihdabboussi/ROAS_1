@@ -46,3 +46,10 @@ What: Corrected relative imports in extracted DocEditor panel helpers after the 
 Why: Vercel `roas-web` failed with Module not found for DocPropertiesSection, space-schema, and markdown-to-html.
 Impact: Unblocks web production build for the parity ship.
 Files: `use-doc-editor-panel-properties.tsx`, `resolve-initial-doc-body.ts`
+
+## [2026-07-18 07:50] - [FIX]
+
+What: Exported `RestorableChangeSet` from funnel-history.service for Nest public controller return typing.
+Why: Vercel `roas-api` failed TS4053 (type cannot be named).
+Impact: Unblocks API production build.
+Files: `apps/api/src/modules/funnels/services/funnel-history.service.ts`
