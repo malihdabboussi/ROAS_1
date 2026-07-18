@@ -473,6 +473,9 @@ export class MissionHumanSubtaskService {
     })
 
     const nowIso = new Date().toISOString()
+    if (nowReady.some((dep) => dep.assignee_type === 'agent')) {
+      await this.humanSubtaskRepository.moveMissionToTodoIfAwaitingHuman(supabase, missionId)
+    }
     for (const dep of nowReady as MissionHumanAdvanceSubtaskRow[]) {
       if (dep.assignee_type === 'human') {
         if (!dep.assigned_user_id) continue

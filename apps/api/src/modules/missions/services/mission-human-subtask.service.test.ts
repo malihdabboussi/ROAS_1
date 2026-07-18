@@ -45,14 +45,13 @@ function createHarness(tableResults: Record<string, QueryResult[]>) {
     findAgentInMissionOrg: vi.fn(async () => tableResults.__repositoryAgent?.[0]?.data),
     bounceSubtaskToAgent: vi.fn(),
     findOrgMemberForHumanAssignment: vi.fn(async () => tableResults.__repositoryMember?.[0]?.data),
-    findProfileAssignmentPreference: vi.fn(
-      async () => tableResults.__repositoryProfile?.[0]?.data,
-    ),
+    findProfileAssignmentPreference: vi.fn(async () => tableResults.__repositoryProfile?.[0]?.data),
     reassignSubtaskToHuman: vi.fn(),
     blockHumanSubtask: vi.fn(),
     insertSubtaskBlockedNotification: vi.fn(),
     listSubtasksForHumanAdvance: vi.fn(async () => tableResults.__repositoryAdvance?.[0]?.data),
     moveMissionToReview: vi.fn(),
+    moveMissionToTodoIfAwaitingHuman: vi.fn(),
     moveDependentHumanSubtaskAwaiting: vi.fn(),
   }
   const missionsRepository = {
@@ -109,29 +108,32 @@ describe('MissionHumanSubtaskService', () => {
   it('completes a human subtask, persists the deliverable, and requests review when all active work is done', async () => {
     const { service, humanSubtaskRepository, missionsRepository, missionOutboxService } =
       createHarness({
-      mission_subtasks: [
-        { data: assignedHumanSubtask, error: null },
-        { data: null, error: null },
-        {
-          data: [
-            { id: 'subtask-1', status: 'done', depends_on: [], assignee_type: 'human' },
-            { id: 'subtask-2', status: 'done', depends_on: [], assignee_type: 'agent' },
-          ],
-          error: null,
-        },
-      ],
-      missions: [{ data: baseMission, error: null }, { data: null, error: null }],
-      __repositorySubtask: [{ data: assignedHumanSubtask }],
-      __repositoryMission: [{ data: baseMission }],
-      __repositoryAdvance: [
-        {
-          data: [
-            { id: 'subtask-1', status: 'done', depends_on: [], assignee_type: 'human' },
-            { id: 'subtask-2', status: 'done', depends_on: [], assignee_type: 'agent' },
-          ],
-        },
-      ],
-    })
+        mission_subtasks: [
+          { data: assignedHumanSubtask, error: null },
+          { data: null, error: null },
+          {
+            data: [
+              { id: 'subtask-1', status: 'done', depends_on: [], assignee_type: 'human' },
+              { id: 'subtask-2', status: 'done', depends_on: [], assignee_type: 'agent' },
+            ],
+            error: null,
+          },
+        ],
+        missions: [
+          { data: baseMission, error: null },
+          { data: null, error: null },
+        ],
+        __repositorySubtask: [{ data: assignedHumanSubtask }],
+        __repositoryMission: [{ data: baseMission }],
+        __repositoryAdvance: [
+          {
+            data: [
+              { id: 'subtask-1', status: 'done', depends_on: [], assignee_type: 'human' },
+              { id: 'subtask-2', status: 'done', depends_on: [], assignee_type: 'agent' },
+            ],
+          },
+        ],
+      })
 
     await expect(
       service.completeHuman('user-1', 'mission-1', 'subtask-1', {
@@ -192,7 +194,10 @@ describe('MissionHumanSubtaskService', () => {
             error: null,
           },
         ],
-        missions: [{ data: baseMission, error: null }, { data: null, error: null }],
+        missions: [
+          { data: baseMission, error: null },
+          { data: null, error: null },
+        ],
         __repositorySubtask: [{ data: assignedHumanSubtask }],
         __repositoryMission: [{ data: baseMission }],
         __repositoryAdvance: [
@@ -222,6 +227,47 @@ describe('MissionHumanSubtaskService', () => {
       }),
     )
     expect(missionOutboxService.enqueueOutboxEvent).toHaveBeenCalled()
+  })
+
+  it('reopens an awaiting-human mission before enqueueing its next agent task', async () => {
+    const { service, humanSubtaskRepository, missionOutboxService } = createHarness({
+      __repositorySubtask: [{ data: assignedHumanSubtask }],
+      __repositoryMission: [{ data: baseMission }],
+      __repositoryAdvance: [
+        {
+          data: [
+            { id: 'subtask-1', status: 'done', depends_on: [], assignee_type: 'human' },
+            {
+              id: 'subtask-2',
+              status: 'pending',
+              depends_on: ['subtask-1'],
+              assignee_type: 'agent',
+              assigned_user_id: null,
+              scheduled_at: null,
+            },
+          ],
+        },
+      ],
+    })
+
+    await service.completeHuman('user-1', 'mission-1', 'subtask-1', {
+      summary: 'Approved. Continue to agent work.',
+    })
+
+    expect(humanSubtaskRepository.moveMissionToTodoIfAwaitingHuman).toHaveBeenCalledWith(
+      expect.anything(),
+      'mission-1',
+    )
+    expect(missionOutboxService.enqueueOutboxEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        eventType: 'mission.subtask.execute.requested',
+        payload: expect.objectContaining({ subtask_id: 'subtask-2' }),
+      }),
+    )
+    expect(
+      humanSubtaskRepository.moveMissionToTodoIfAwaitingHuman.mock.invocationCallOrder[0],
+    ).toBeLessThan(missionOutboxService.enqueueOutboxEvent.mock.invocationCallOrder[0])
   })
 
   it('bounces a human subtask back to a registered agent', async () => {
