@@ -8,6 +8,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import { PRESENTATION_MESSAGES } from '../../config/presentation.messages.config'
 import type { PresentationEditMode } from '../../types'
 
 const MODES: Array<{
@@ -16,7 +17,7 @@ const MODES: Array<{
   icon: typeof MousePointer2
 }> = [
   { id: 'markup', label: 'Markup', icon: MousePointer2 },
-  { id: 'edit', label: 'Design', icon: Edit3 },
+  { id: 'edit', label: PRESENTATION_MESSAGES.PROMPT_IN_CHAT, icon: Edit3 },
   { id: 'tweaks', label: 'Tweaks', icon: SlidersHorizontal },
   { id: 'comments', label: 'Comments', icon: MessageSquare },
 ]

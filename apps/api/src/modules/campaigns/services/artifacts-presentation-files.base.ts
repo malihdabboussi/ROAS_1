@@ -1,5 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { countPresentationSlides } from '@vibey/api-shared'
 import { ArtifactsSequencesBase } from './artifacts-sequences.base'
 import type { PresentationInitialFileInput } from './artifacts.types'
 
@@ -31,30 +32,39 @@ export class ArtifactsPresentationFilesBase extends ArtifactsSequencesBase {
         source_mode: 'html_bundle',
         entry_file: entryFile,
         html_runtime_version: 1,
+        slide_count: countPresentationSlides(
+          initialFiles.find((file) => file.path === entryFile)?.content ??
+            this.defaultPresentationIndexHtml,
+        ),
       },
       org_id: orgId ?? null,
       space_id: spaceId ?? null,
     })
-    if (initialFiles.length > 0) {
-      for (const file of initialFiles) {
+    try {
+      if (initialFiles.length > 0) {
+        for (const file of initialFiles) {
+          await this.upsertPresentationFile(
+            supabase,
+            userId,
+            String(data.id),
+            file.path,
+            file.content,
+            file.role ?? (file.path === entryFile ? 'entry' : 'source'),
+          )
+        }
+      } else {
         await this.upsertPresentationFile(
           supabase,
           userId,
           String(data.id),
-          file.path,
-          file.content,
-          file.role ?? (file.path === entryFile ? 'entry' : 'source'),
+          'index.html',
+          this.defaultPresentationIndexHtml,
+          'entry',
         )
       }
-    } else {
-      await this.upsertPresentationFile(
-        supabase,
-        userId,
-        String(data.id),
-        'index.html',
-        this.defaultPresentationIndexHtml,
-        'entry',
-      )
+    } catch (error) {
+      await this.artifactPresentationsRepo.deletePresentation(supabase, String(data.id))
+      throw error
     }
     await this.spaceAutomation?.processArtifactLifecycleEvent(supabase, {
       artifact_kind: 'presentation',
@@ -89,7 +99,12 @@ export class ArtifactsPresentationFilesBase extends ArtifactsSequencesBase {
       ...row,
       generated_html: null,
       slides: [],
-      slides_count: Array.isArray(row.slides) ? row.slides.length : 0,
+      slides_count:
+        typeof (row.metadata as Record<string, unknown> | null)?.slide_count === 'number'
+          ? Number((row.metadata as Record<string, unknown>).slide_count)
+          : Array.isArray(row.slides)
+            ? row.slides.length
+            : 0,
     }))
   }
 
@@ -145,6 +160,9 @@ export class ArtifactsPresentationFilesBase extends ArtifactsSequencesBase {
       source_mode: 'html_bundle',
       entry_file: currentMetadata.entry_file ?? (nextRole === 'entry' ? safePath : 'index.html'),
       html_runtime_version: currentMetadata.html_runtime_version ?? 1,
+      ...(safePath === (currentMetadata.entry_file ?? 'index.html')
+        ? { slide_count: countPresentationSlides(content) }
+        : {}),
     }
     await this.artifactPresentationsRepo.updatePresentationMetadata(
       supabase,

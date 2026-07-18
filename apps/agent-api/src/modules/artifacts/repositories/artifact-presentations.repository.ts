@@ -33,11 +33,21 @@ export class ArtifactPresentationsRepository {
     supabase: SupabaseClient,
     payload: Record<string, unknown>,
   ): Promise<{ data: PresentationRow; error: QueryError | null }> {
+    return (await supabase.from('presentations').insert(payload).select().single()) as {
+      data: PresentationRow
+      error: QueryError | null
+    }
+  }
+
+  async deletePresentation(
+    supabase: SupabaseClient,
+    input: { presentationId: string; userId: string },
+  ): Promise<{ error: QueryError | null }> {
     return (await supabase
       .from('presentations')
-      .insert(payload)
-      .select()
-      .single()) as { data: PresentationRow; error: QueryError | null }
+      .delete()
+      .eq('id', input.presentationId)
+      .eq('user_id', input.userId)) as { error: QueryError | null }
   }
 
   async findPresentation(

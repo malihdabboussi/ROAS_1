@@ -254,6 +254,16 @@ describe('PromptMode action schema and preflight coverage', () => {
   it('rejects full presentation bundles that cannot render before persistence', async () => {
     await expect(
       validateActionPreflight('create_presentation', {
+        name: 'Legacy TSX deck',
+        generated_html: 'export default () => <main style="color:red" />',
+      }),
+    ).resolves.toMatchObject({
+      error: expect.stringMatching(/files.*required/i),
+      errorCode: 'ARTIFACT_PRESENTATION_BUNDLE_INVALID',
+    })
+
+    await expect(
+      validateActionPreflight('create_presentation', {
         files: [{ path: 'styles.css', content: '.slide { width: 1280px; }' }],
       }),
     ).resolves.toMatchObject({
@@ -1736,6 +1746,12 @@ describe('validateActionData', () => {
           source_mode: 'html_bundle',
         }),
       ).toBeNull()
+      expect(
+        validateActionData('create_presentation', {
+          name: 'Legacy deck',
+          generated_html: 'export default () => <main />',
+        }),
+      ).toMatch(/files.*required/i)
       expect(
         validateActionData('write_presentation_file', {
           presentation_id: 'deck-1',

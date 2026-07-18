@@ -39,11 +39,6 @@
       "limit": 600,
       "lines": 676
     },
-    "apps/agent-api/src/modules/artifacts/services/artifact-presentations.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 1006
-    },
     "apps/agent-api/src/modules/brain/services/brain-live.service.ts": {
       "kind": "service",
       "limit": 600,

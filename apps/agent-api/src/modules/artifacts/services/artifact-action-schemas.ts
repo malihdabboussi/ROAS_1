@@ -862,7 +862,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
   get_presentation: { required: ['presentation_id'], types: { presentation_id: 'string' } },
   delete_presentation: { required: ['presentation_id'] },
   create_presentation: {
-    required: [],
+    required: ['files'],
     optional: [
       'name',
       'generated_html',
@@ -885,7 +885,10 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       source_mode: 'string',
     },
     useWhen: ['Create a new presentation artifact.', 'Save an HTML presentation file bundle.'],
-    doNotUseWhen: ['Renaming an existing presentation; use update_presentation with name.'],
+    doNotUseWhen: [
+      'Creating a legacy generated_html or slides payload; new presentations require a complete HTML file bundle.',
+      'Renaming an existing presentation; use update_presentation with name.',
+    ],
     examples: [
       {
         intent: 'create a presentation from HTML files',

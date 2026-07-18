@@ -7292,5 +7292,13 @@ Files:
 - Needed work: Confirm these surfaces are not retained for an imminent route migration, then remove the files and any now-dead helpers in one bounded cleanup.
 - Why not now: Unlike `SegmentViewDialog`, these larger surfaces represent whole alternate flows; their product ownership and replacement path need to be traced before deletion rather than inferred solely from a static reference count.
 
+## 2026-07-18 — Agent action schema registry exceeds LOC limit (pre-existing)
+
+- Feature/app: agent-api / artifact action contracts
+- File: `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`
+- Evidence: 4,236 LOC after tightening the existing `create_presentation` contract; the registry was already far above the 600-line service ceiling before this scoped change.
+- Needed work: Split action schemas into domain-owned catalogs while preserving the existing merged registry, lifecycle classifications, preflight coverage, and drift tests.
+- Why not now: The presentation repair only changes the existing presentation schema. Decomposing every unrelated action family would materially expand scope and regression risk.
+
 ## Deferred
 - Sidebar campaign flyout Browse templates fix deferred: SidebarHqSpacesGroupedList 487/400 LOC; extract before shipping.
