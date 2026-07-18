@@ -7,10 +7,13 @@ describe('formatWebinarSubtaskTitle', () => {
       formatWebinarSubtaskTitle('Pre-call strategy map (auto-skill-1-roas-precall-strategy)'),
     ).toBe('Task 2 — Pre-call strategy map')
     expect(formatWebinarSubtaskTitle('Copy Package (roas-webinar-copy-package)')).toBe(
-      'Task 7 — Complete webinar copy package',
+      'Task 8A — Complete webinar copy package',
     )
-    expect(formatWebinarSubtaskTitle('Task 7 — Complete webinar copy package')).toBe(
-      'Task 7 — Complete webinar copy package',
+    expect(formatWebinarSubtaskTitle('Task 8A — Complete webinar copy package')).toBe(
+      'Task 8A — Complete webinar copy package',
+    )
+    expect(formatWebinarSubtaskTitle('Landing Page Copy (roas-landing-page-copy)')).toBe(
+      'Task 8B — Landing page copy',
     )
   })
 

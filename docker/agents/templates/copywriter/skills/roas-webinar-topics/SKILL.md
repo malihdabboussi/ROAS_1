@@ -19,6 +19,8 @@ Pull from the brief/conversation first; ask only if genuinely missing.
 
 ## THE WORKFLOW
 
+Load `dylans-super-voice` before drafting and confirm it loaded. If it is unavailable, stop and report the missing skill instead of approximating it from memory. Keep it active through the title, teaching bullets, recommendation, and final literal `—` character scan.
+
 ### Step 1 — Extract the angle set
 From the brief + research, list the distinct angles available: the outcome angle (the result), the enemy angle (what to stop doing / who's lying to them), the mechanism angle (the named system), the identity angle (who this is for), the speed/ease angle (timeline or "without X"). Pick the 3-5 strongest — genuinely different doors into the same room.
 
@@ -35,10 +37,10 @@ Order the options strongest-first and say which one you'd run and why, in two li
 
 ## OUTPUT FORMAT
 ```
-# [Client] — Webinar Title Options ([date])
+# [Client] - Webinar Title Options ([date])
 **Offer it sells:** ... | **Buyer in one line:** ... | **Grounding:** [research brief used / strategy only — flagged]
 
-## Option 1 — [ANGLE NAME]
+## Option 1 - [ANGLE NAME]
 **Title:** ...
 **Promise:** ...
 **You'll discover:** 1) ... 2) ... 3) ...

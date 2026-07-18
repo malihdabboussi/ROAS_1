@@ -10,17 +10,25 @@ const WEBINAR_TASK_DISPLAY: Array<{ match: RegExp; title: string }> = [
     title: 'Task 3 — Atlas call and transcript intake',
   },
   { match: /^(Task\s*4\b|Post-call strategy map)/i, title: 'Task 4 — Post-call strategy map' },
-  { match: /^(Task\s*5\b|THE PLAN launch brief)/i, title: 'Task 5 — THE PLAN launch brief' },
-  { match: /^(Task\s*6\b|Market research)/i, title: 'Task 6 — Market research' },
+  { match: /^(Task\s*5\b|Market research)/i, title: 'Task 5 — Market research' },
+  { match: /^(Task\s*6\b|THE PLAN launch brief)/i, title: 'Task 6 — THE PLAN launch brief' },
   {
-    match: /^(Task\s*7\b|Complete webinar copy package|Copy Package)/i,
-    title: 'Task 7 — Complete webinar copy package',
+    match: /^(Task\s*7\b|Build checklist reconciliation)/i,
+    title: 'Task 7 — Build checklist reconciliation',
   },
-  { match: /^(Task\s*8\b|Static Meta ads)/i, title: 'Task 8 — Static Meta ads' },
-  { match: /^(Task\s*9\b|Image briefs)/i, title: 'Task 9 — Image briefs' },
-  { match: /^(Task\s*10\b|Native webinar funnel)/i, title: 'Task 10 — Native webinar funnel' },
-  { match: /^(Task\s*11\b|Webinar Deck Bones)/i, title: 'Task 11 — Webinar Deck Bones' },
-  { match: /^(Task\s*12\b|Media plan)/i, title: 'Task 12 — Media plan' },
+  {
+    match: /^(Task\s*8A\b|Complete webinar copy package|Copy Package)/i,
+    title: 'Task 8A — Complete webinar copy package',
+  },
+  {
+    match: /^(Task\s*8B\b|Landing Page Copy)/i,
+    title: 'Task 8B — Landing page copy',
+  },
+  { match: /^(Task\s*9\b|Static Meta ads)/i, title: 'Task 9 — Static Meta ads' },
+  { match: /^(Task\s*10\b|Image briefs)/i, title: 'Task 10 — Image briefs' },
+  { match: /^(Task\s*11\b|Native webinar funnel)/i, title: 'Task 11 — Native webinar funnel' },
+  { match: /^(Task\s*12\b|Webinar Deck Bones)/i, title: 'Task 12 — Webinar Deck Bones' },
+  { match: /^(Task\s*13\b|Media plan)/i, title: 'Task 13 — Media plan' },
 ]
 
 export function formatWebinarSubtaskTitle(title: string): string {

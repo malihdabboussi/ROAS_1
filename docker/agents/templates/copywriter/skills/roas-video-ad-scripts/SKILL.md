@@ -1,6 +1,6 @@
 ---
 name: roas-video-ad-scripts
-description: Writes CLIENT-FACING video ad scripts for ROAS webinar/offer campaigns — scripts the client films themselves on a phone (talking-head/UGC style), not AI-produced video. Each script is a shootable package — word-for-word lines with a timed hook, delivery notes a non-videographer can follow, a simple shot/setting note, and the caption-overlay + CTA plan. Produces 2-4 scripts across lengths (15/30/60s) and hook variants. Load for "video ad scripts," "scripts for the client to film," "UGC script," "talking head ad," "what should [client] say on camera," "film-it-yourself ad," or a campaign's video-ads line item when production is human, not AI. Do NOT load to produce/animate video with Higgsfield (roas-video-ads), write static ad copy (roas-ad-copy), or write the webinar itself.
+description: Writes clean CLIENT-FACING video ad scripts for ROAS webinar and offer campaigns that clients film themselves. Uses Dylan's Super Voice for natural spoken copy and verified client facts and vocabulary for specificity. Each script is delivered as uninterrupted, unquoted spoken text followed by Shooting instructions and Overlays, with one shared Post-production section for the full set. Load for video ad scripts, client-filmed scripts, UGC or talking-head ads, filming instructions, or what a client should say on camera. Do NOT load to produce AI video, write static ads, or write the webinar itself.
 ---
 
 # ROAS Video Ad Scripts — written for a client, a phone, and one take
@@ -20,40 +20,42 @@ The deliverable is scripts a real person can shoot without a crew: exact words, 
 From research + offer, choose each script's format: direct-to-camera callout, micro-story ("six months ago I..."), contrarian teardown ("stop doing X"), or objection-flip. Different formats across the set — this is the test matrix.
 
 ### Step 2 — Write each script
-Structure per script:
-- **HOOK (0-3s)** — the scroll-stopper, first words out of their mouth. Identity callout or pattern interrupt. This line does 80% of the work; write 2 alternates for at least one script.
-- **BODY** — the promise/mechanism/story, in spoken language: short sentences, contractions, the way this specific person actually talks. Read-aloud timing rules: ~2.5 words/second; a 30s script is ~70-75 words total, a 60s is ~145-150. Count them.
-- **CTA (last 3-5s)** — the exact ask, once, clean.
+Draft with an opening that stops the scroll, a spoken argument or story, and one clean ask. These are internal writing beats, not client-facing labels. Present the final spoken words as one uninterrupted block so the client can read or paste the script exactly as written. Do not put quotation marks around it. If alternate openings are useful, turn them into complete alternate script versions instead of attaching loose hook fragments.
+
+Use short sentences, contractions, and the way this specific person talks. Read-aloud timing rules: ~2.5 words/second; a 30s script is ~70-75 words total, a 60s script is ~145-150. Count them.
 
 ### Step 3 — Make it shootable
 Per script add:
-- **Delivery notes** — energy, pace, where to pause, which line to punch. Plain language ("say this like you're annoyed for them").
-- **Shot + setting** — one setup only: framing (chest-up, phone at eye level), location suggestion, lighting in one line (face a window). No multi-shot edits, no b-roll dependencies — one take must be enough.
-- **Overlay plan** — the 3-5 caption/text-overlay moments (hook text on screen, the key number, the CTA end frame) so the editor knows what to burn in.
-- **Do NOT say** — claims to avoid on camera (uncleared results, income promises, anything the client can't back).
+- **Shooting instructions** — combine delivery, pace, pauses, framing, setting, and lighting into short general directions a non-videographer can follow. Use one setup and make one take sufficient.
+- **Overlays** — list the 3-5 caption or text-overlay moments so the editor knows what to burn in.
+
+Put uncleared claims, income promises, or anything the client cannot back in the document's open flags, not between the script and filming directions.
+
+After all scripts, add one **Post-production** section that applies to the full set: caption style, basic cuts, audio cleanup, color treatment, end frame, aspect ratios, and export notes. Do not repeat editing directions under every script.
 
 ### Step 4 — Scrub and ship
-Read every script aloud in your head; anything that doesn't sound like a person talking gets rewritten. Full `dylans-super-voice` no-AI-smell pass. Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above — do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai / no native artifacts (fallback), save to `/mnt/user-data/outputs/` and present.
+Load `dylans-super-voice` before drafting and confirm it loaded. If it is unavailable, stop and report the missing skill instead of approximating it from memory. Keep it active through the final scrub. Read every script aloud; anything that does not sound like a person talking gets rewritten. Then search for the literal `—` character and run the complete Dylan's Super Voice anti-AI checklist across the spoken text, overlays, and client instructions. Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above. Do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai or an environment without native artifacts, save the markdown deliverable to `/mnt/user-data/outputs/` and present.
 
 ## OUTPUT FORMAT
 ```
-# [Client] — Video Ad Scripts ([campaign])
-**On camera:** ... | **CTA:** ... | **Grounding:** [research brief / concepts used]
+# [Client] - Video Ad Scripts ([campaign])
+**On camera:** ... | **Destination:** ... | **Grounding:** [research brief / concepts used]
+**Open flags:** [uncleared claims or missing facts]
 
-## Script 1 — [FORMAT] ([15s], ~[38] words)
-**HOOK (0-3s):** "..."
-  Alt hook A: "..." | Alt hook B: "..."
-**BODY:** "..."
-**CTA:** "..."
-**Delivery:** ...
-**Shot + setting:** ...
-**Overlays:** ...
-**Do not say:** ...
+## Script 1 ([15s], ~[38] words)
+### Script
+[complete spoken text, uninterrupted and without quotation marks]
+
+### Shooting instructions
+[delivery, pace, pauses, framing, setting, and lighting]
+
+### Overlays
+[overlay moments]
 
 [Scripts 2-4...]
 
-## FILMING NOTES (once, for the client)
-[phone setup, window light, 3 takes per script, send raw files — five plain lines max]
+## Post-production (all scripts)
+[captions, cuts, audio cleanup, color, end frame, aspect ratios, and exports]
 
 ## HANDOFF
 [which script to film first; note: if AI production is ever wanted, roas-video-ads consumes these as-is]
@@ -66,10 +68,11 @@ Read every script aloud in your head; anything that doesn't sound like a person 
 - **Real claims only.** Uncleared numbers/results go in "Do not say," not in the script.
 - **Model research structure, never lines.** Competitor transcripts inform the shape; the words are original.
 - **Scripts, not production.** No Higgsfield, no generation — that's roas-video-ads.
+- **Client-clean format.** No quotation marks around scripts and no Hook, Body, CTA, Delivery, or Shot + setting labels in the delivered document.
 
 ## COMMON PITFALLS
 - Writing "copy" instead of speech — if it reads like an ad and not like talking, it fails on camera.
 - Blowing the word count; clients speed up and the ad feels panicked.
 - Multi-scene scripts a solo founder can't shoot.
-- One hook per script — the hook is the test; give alternates.
+- Loose alternate hooks that force the client to reconstruct the script. Make each alternate a complete script version.
 - Forgetting the overlay plan; the editor guesses and the CTA never lands on screen.
