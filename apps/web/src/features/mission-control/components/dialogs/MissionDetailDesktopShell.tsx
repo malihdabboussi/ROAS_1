@@ -16,6 +16,7 @@ import { SubtasksSection } from './SubtasksSection'
 
 interface MissionDetailDesktopShellProps {
   shellZ: string
+  hideMissionSurface: boolean
   onClose: () => void
   title: string
   selectedSubtask: MissionSubtask | null
@@ -39,6 +40,7 @@ interface MissionDetailDesktopShellProps {
 
 export function MissionDetailDesktopShell({
   shellZ,
+  hideMissionSurface,
   onClose,
   title,
   selectedSubtask,
@@ -92,7 +94,10 @@ export function MissionDetailDesktopShell({
     <div className={`fixed inset-0 ${shellZ} flex items-center justify-center`}>
       <div className="bg-modal-overlay absolute inset-0" onClick={onClose} />
 
-      <div className="surface-card border-border container-modal-3xl rounded-spacing-4 pt-spacing-4 pb-spacing-6 pl-spacing-6 pr-spacing-6 relative z-10 mx-4 flex w-full flex-col overflow-hidden border shadow-xl">
+      <div
+        data-testid="mission-detail-surface"
+        className={`surface-card border-border container-modal-3xl rounded-spacing-4 pt-spacing-4 pb-spacing-6 pl-spacing-6 pr-spacing-6 relative z-10 mx-4 flex w-full flex-col overflow-hidden border shadow-xl ${hideMissionSurface ? 'hidden' : ''}`}
+      >
         {selectedSubtask ? (
           <SubtaskDetailHeader
             missionTitle={title}

@@ -290,6 +290,7 @@ export function MissionDetailModalView({
     ? createPortal(
         <MissionDetailDesktopShell
           shellZ={shellZ}
+          hideMissionSurface={previewDeliverable != null}
           onClose={onClose}
           title={title}
           selectedSubtask={selectedSubtask}
