@@ -42,7 +42,7 @@ export function addWebinarCreativeProduction(input: {
         sensory:
           'One native visual Doc shows every locked line as editable HTML in the approved brand system.',
         endState: `"${WEBINAR_FLOW_DOCS.validateMessagingStatics}" exists as an editable native visual Doc linked to this subtask.`,
-        ecology: `Load roas-ad-design. Use the approved Validate Messaging lines verbatim. Save one native Doc titled "${WEBINAR_FLOW_DOCS.validateMessagingStatics}", then call generate_visual_html on that Doc so the light, dark, and bold cuts remain editable in the Space. Do not call create_ad yet. Do not render PNGs, save PDFs, or leave loose files.`,
+        ecology: `Call list_themes, load the active campaign Theme with get_theme, and use its verified logo, colors, fonts, brand identity, and design settings. Block with the exact missing Theme fields if no active Theme exists. Load roas-ad-design. Use the approved Validate Messaging lines verbatim. Save one native Doc titled "${WEBINAR_FLOW_DOCS.validateMessagingStatics}", then call generate_visual_html on that Doc so the light, dark, and bold cuts remain editable in the Space. Do not call create_ad yet. Do not render PNGs, save PDFs, or leave loose files.`,
       }),
       outputContract: docContract(WEBINAR_FLOW_DOCS.validateMessagingStatics),
     },
@@ -65,7 +65,7 @@ export function addWebinarCreativeProduction(input: {
         sensory:
           'Every brief specifies scene, style, lighting, palette, exact text, treatment, ratio, and avoid-list.',
         endState: `"${WEBINAR_FLOW_DOCS.imageBriefs}" exists as a native Doc linked to this task.`,
-        ecology: `Load roas-image-brief. Save exactly "${WEBINAR_FLOW_DOCS.imageBriefs}". Brief only the photographic or illustrative concepts that belong in the image-generation lane. Keep Validate Messaging text statics in roas-ad-design. Never create a PDF.`,
+        ecology: `Call list_themes and get_theme for the active campaign Theme. Use its logo, palette, fonts, image_style_prompt, product_images, and headshot_images as the visual source of truth; block with exact missing fields when the Theme is absent. Load roas-image-brief. Save exactly "${WEBINAR_FLOW_DOCS.imageBriefs}". Brief only the photographic or illustrative concepts that belong in the image-generation lane. Keep Validate Messaging text statics in roas-ad-design. Never create a PDF.`,
       }),
       outputContract: docContract(WEBINAR_FLOW_DOCS.imageBriefs),
     },
@@ -89,7 +89,7 @@ export function addWebinarCreativeProduction(input: {
         sensory:
           'Each generated image appears as a timestamped Deliverable linked to this subtask and its source brief.',
         endState: 'Generated concept images exist as native image Deliverables for human review.',
-        ecology: `Load roas-image-brief and read "${WEBINAR_FLOW_DOCS.imageBriefs}". Call generate_image for each photographic or illustrative concept. Preserve the exact on-image text and brand constraints from the brief. Register every successful image immediately; do not wait for the whole batch before returning artifact references. Do not generate the Validate Messaging text statics.`,
+        ecology: `Call list_themes and get_theme for the active campaign Theme before generation. Load roas-image-brief and read "${WEBINAR_FLOW_DOCS.imageBriefs}". Call generate_image for each photographic or illustrative concept using the Theme palette, image style, logo rule, and approved reference assets. Preserve the exact on-image text and brand constraints from the brief. Register every successful image immediately; do not wait for the whole batch before returning artifact references. Do not generate the Validate Messaging text statics.`,
       }),
       outputContract: imageContract(),
     },
@@ -111,7 +111,7 @@ export function addWebinarCreativeProduction(input: {
         story: 'Lux turns approved copy into the client funnel without rewriting it.',
         sensory: 'The Funnels Space view contains the linked responsive funnel with approved copy.',
         endState: 'A native funnel exists in the Space Funnels view and links to this task.',
-        ecology: `Load roas-funnel-design. Consume "${WEBINAR_FLOW_DOCS.landingPageCopy}" WITHOUT reshaping the copy. Build a native funnel artifact in the Funnels view and link it to this task. Do not deliver loose HTML or a PDF.`,
+        ecology: `Call list_themes and get_theme for the active campaign Theme; use that theme_id and its logo, colors, fonts, social links, product images, and design settings. Block if no active Theme exists. Load roas-funnel-design. Consume "${WEBINAR_FLOW_DOCS.landingPageCopy}" WITHOUT reshaping the copy. Build a native funnel artifact in the Funnels view and link it to this task. Do not deliver loose HTML or a PDF.`,
       }),
       outputContract: funnelContract(),
     },
@@ -136,7 +136,7 @@ export function addWebinarCreativeProduction(input: {
         endState:
           'A native editable presentation titled "Webinar Deck Bones" exists with 10-20 slides.',
         ecology:
-          'Load roas-webinar-deck. Build one native editable presentation titled "Webinar Deck Bones" with 10-20 slides only. Include title, promise, problem, big idea, mechanism, teaching framework/sections, proof, offer transition, and the complete offer stack: core product, bonuses, pricing/enrollment, guarantee if real, real scarcity, and CTA. This is bones, not a full deck. Never export PPTX or PDF. Link it to this task and the Presentations view.',
+          'Call list_themes and get_theme for the active campaign Theme, then use its theme_id, logo, colors, fonts, image assets, and design settings. Block if no active Theme exists. Load roas-webinar-deck. Build one native editable presentation titled "Webinar Deck Bones" with 10-20 slides only. Include title, promise, problem, big idea, mechanism, teaching framework/sections, proof, offer transition, and the complete offer stack: core product, bonuses, pricing/enrollment, guarantee if real, real scarcity, and CTA. This is bones, not a full deck. Never export PPTX or PDF. Link it to this task and the Presentations view.',
       }),
       outputContract: presentationContract('Webinar Deck Bones'),
     },
@@ -186,7 +186,7 @@ export function addWebinarCreativeProduction(input: {
         sensory:
           'Each native ad pairs approved primary text, headline, CTA, destination, and one approved image asset.',
         endState: 'Approved ads exist in the Space Meta Ads view and link back to this subtask.',
-        ecology: `Load ad-builder. Read "${WEBINAR_FLOW_DOCS.copyPackage}" and use only assets approved at ${WEBINAR_FLOW_GATES.creative}. Call create_ad once per approved copy-and-asset pairing with the current campaign_id and space_id. Link every ad to this subtask. Do not redesign assets and do not publish to Meta.`,
+        ecology: `Call list_themes and get_theme for the active campaign Theme. Load ad-builder. Read "${WEBINAR_FLOW_DOCS.copyPackage}" and use only assets approved at ${WEBINAR_FLOW_GATES.creative}. Call create_ad once per approved copy-and-asset pairing with the current campaign_id, space_id, theme_id, and approved image_asset_id. Link every ad to this subtask. Do not create copy-only ad shells, redesign assets, or publish to Meta.`,
       }),
       outputContract: adContract('Approved Meta Ads — [Campaign]'),
     },

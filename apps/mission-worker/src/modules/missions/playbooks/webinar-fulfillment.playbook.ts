@@ -221,9 +221,13 @@ export function expandWebinarFulfillmentPlaybook(
         why: 'Ground THE PLAN and downstream production in observed market evidence.',
         story: 'Blaze researches the market and buyer language before Reed locks the launch brief.',
         sensory:
-          'The research cites real ads, longevity, hooks, source links, and the integration actions used.',
-        endState: `"${WEBINAR_FLOW_DOCS.marketResearch}" exists with evidence and source links.`,
-        ecology: `Load skill ${SKILLS.research}. Use platform-managed Ads Intelligence first and record the service, integration action, and source links in the document. Only say a provider or search surface is unavailable after an actual failed tool attempt, and record the returned error plus the fallback used. Save exactly "${WEBINAR_FLOW_DOCS.marketResearch}" as a native Doc. Attach raw research data when available. Do not design or render ads.`,
+          'The research cites real ads and sources, while the Campaign Theme holds the verified logo, palette, typography, identity, social links, and image assets.',
+        endState: `"${WEBINAR_FLOW_DOCS.marketResearch}" exists with evidence and source links, and one active Campaign Theme is selected with every brand field either populated or explicitly marked not found in the research ledger.`,
+        ecology: `Load skill ${SKILLS.research}. Use platform-managed Ads Intelligence first and record the service, integration action, and source links in the document. Only say a provider or search surface is unavailable after an actual failed tool attempt, and record the returned error plus the fallback used.
+
+Complete campaign brand setup during this step. Call list_campaign_media and inspect the client website, uploaded logo files, existing design images, product imagery, and team headshots. Call list_themes. When a client website is known, call extract_website_theme with its URL. Map verified evidence into the flat Theme fields: colors, font_heading, font_body, logo_asset_id, brand_voice, brand_values, social_links, design_settings, headshot_images, product_images, and image_style_prompt. If the campaign has an active Theme, call update_theme; otherwise call create_theme with the current campaign_id so it becomes active. Never replace verified user-entered Theme values with weaker inference.
+
+Add a Brand Evidence Ledger to "${WEBINAR_FLOW_DOCS.marketResearch}". For every Theme field, record its source and one status: confirmed, inferred, or not found. A missing value is not silently skipped. Save exactly "${WEBINAR_FLOW_DOCS.marketResearch}" as a native Doc and attach raw research data when available. Do not design or render ads.`,
       }),
       outputContract: docContract(WEBINAR_FLOW_DOCS.marketResearch),
     },
@@ -271,7 +275,7 @@ export function expandWebinarFulfillmentPlaybook(
             'The final gate note records client approval, requested changes, or the sent message link.',
           endState: 'Strategy is approved for research and copy production.',
           ecology:
-            'Review the Post-Call Strategy Map and THE PLAN. Review and send the drafted client Slack message. Record client approval or feedback in this gate before completing it.',
+            'Review the Post-Call Strategy Map, THE PLAN, the Market Research Brand Evidence Ledger, and the selected Campaign Theme. Confirm the logo, colors, fonts, identity, social links, and image assets or accept fields marked not found. Review and send the drafted client Slack message. Record client approval or feedback in this gate before completing it.',
         }),
       },
       'compliance',

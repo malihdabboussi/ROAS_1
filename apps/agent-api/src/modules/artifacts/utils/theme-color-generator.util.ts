@@ -37,6 +37,19 @@ export interface CompleteThemeColors extends UserThemeColors {
   danger: string
 }
 
+const DEFAULT_USER_THEME_COLORS: UserThemeColors = {
+  primary: '#6237C8',
+  primaryForeground: '#FFFFFF',
+  secondaryAccent1: '#F9598D',
+  secondaryAccent2: '#FB8B61',
+  heading: '#272525',
+  body: '#5A5858',
+  pageBackground: '#FFFFFF',
+  cardBackground: '#FAFAFA',
+  border: '#E5E5E5',
+  input: '#F3F3F3',
+}
+
 function hexToHSL(hex: string): { h: number; s: number; l: number } {
   hex = hex.replace('#', '')
   const r = parseInt(hex.substring(0, 2), 16) / 255
@@ -117,10 +130,13 @@ function extractSolidColor(value: string): string {
   return value
 }
 
-export function generateCompleteThemeColors(userColors: UserThemeColors): CompleteThemeColors {
-  const solidPrimary = extractSolidColor(userColors.primary)
+export function generateCompleteThemeColors(
+  userColors: Partial<UserThemeColors>,
+): CompleteThemeColors {
+  const colors = { ...DEFAULT_USER_THEME_COLORS, ...userColors }
+  const solidPrimary = extractSolidColor(colors.primary)
   return {
-    ...userColors,
+    ...colors,
     primaryLight: lightenColor(solidPrimary, 20),
     primaryDark: darkenColor(solidPrimary, 20),
     success: '#34C759',

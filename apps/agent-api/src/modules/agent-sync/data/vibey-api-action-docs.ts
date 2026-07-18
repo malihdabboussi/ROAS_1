@@ -502,9 +502,9 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   create_theme: {
     section: 'Themes',
     description:
-      'Creates a campaign theme. User sees: theme in Studio > Themes, auto-applied to new funnels, presentations, and ads. When: user provides brand colors, fonts, or voice guidelines. Persisted rows use flat fields (colors, fonts, brand_voice, design_settings) — same shape as get_theme and the REST API PUT /themes.',
+      'Creates and activates a campaign theme. User sees: theme in Studio > Themes, auto-applied to new funnels, presentations, and ads. Use it after verified website and campaign-media research to persist colors, fonts, logo, voice, values, social links, design settings, headshots, and product imagery. Persisted rows use flat fields — the same shape as get_theme and REST PUT /themes. Asset ids must come from campaign media; never invent one.',
     parameters:
-      '```json\n{"action":"create_theme","label":"Defining your brand theme","data":{"name":"Theme","colors":{"primary":"#10b981","primaryForeground":"#FFFFFF","secondaryAccent1":"#00B8D4","secondaryAccent2":"#FF5470","heading":"#161616","body":"#5C5C5C","pageBackground":"#FAFAFA","cardBackground":"#FFFFFF","border":"#E5E5E5","input":"#E7E7E7"},"font_heading":"Inter","font_body":"Inter"}}\n```',
+      '```json\n{"action":"create_theme","label":"Defining your brand theme","data":{"campaign_id":"UUID","name":"Theme","colors":{"primary":"#10b981","primaryForeground":"#FFFFFF","secondaryAccent1":"#00B8D4","secondaryAccent2":"#FF5470","heading":"#161616","body":"#5C5C5C","pageBackground":"#FAFAFA","cardBackground":"#FFFFFF","border":"#E5E5E5","input":"#E7E7E7"},"font_heading":"Inter","font_body":"Inter","logo_asset_id":"UUID","headshot_images":[{"asset_id":"UUID"}],"product_images":[{"asset_id":"UUID"}],"brand_voice":{"tone":"direct"},"brand_values":{"primary":"clarity"},"social_links":{"website":"https://example.com"},"design_settings":{"buttons":{"shape":"rounded"}},"image_style_prompt":"Premium editorial photography.","status":"active"}}\n```',
   },
   list_themes: {
     section: 'Themes',
@@ -534,7 +534,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   extract_website_theme: {
     section: 'Themes',
     description:
-      'Extracts branding tokens (colors, fonts, logo, brand voice, design settings) from a website URL using Firecrawl. Returns structured theme data including primary/accent colors, heading/body fonts, logo URL, brand voice, and border radius/button shape settings. Map the response into flat keys (colors, font_heading, font_body, brand_voice, brand_values, design_settings, logo_asset_id when applicable) to match get_theme, then call create_theme or update_theme — do not wrap everything in a single config blob.',
+      'Extracts branding tokens (colors, fonts, logo, brand voice, design settings) from the required website URL using Firecrawl. Returns structured theme data including primary/accent colors, heading/body fonts, logo URL, brand voice, and border radius/button shape settings. Map the response into flat keys (colors, font_heading, font_body, brand_voice, brand_values, design_settings, logo_asset_id only when a matching campaign-media asset exists) to match get_theme, then call create_theme or update_theme — do not wrap everything in a single config blob.',
     parameters:
       '```json\n{"action":"extract_website_theme","label":"Extracting brand identity from website","data":{"url":"https://example.com"}}\n```',
   },

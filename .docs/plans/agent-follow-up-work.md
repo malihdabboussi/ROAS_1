@@ -7166,3 +7166,11 @@ Files:
 - Evidence: The files are 309, 323, and 319 LOC after this change and were already over the 300-line frontend component target before the scoped preview/navigation wiring.
 - Needed work: Extract sibling-navigation state, mission-list column renderers, and Mission detail view-model assembly into focused collaborators without changing their public component boundaries.
 - Why not now: This repair changes only artifact identity matching, preview navigation, and stale-count expansion; decomposing three shared components would materially broaden deployment risk.
+
+## 2026-07-17 — Agent action schema catalog exceeds LOC limit (pre-existing)
+
+- Feature/app: agent-api / action contracts
+- File: `apps/agent-api/src/modules/artifacts/services/artifact-action-additional-schemas.ts`
+- Evidence: 695 LOC after adding the complete Theme contract; the file was already 647 LOC before this scoped change and exceeded the 600-line backend ceiling.
+- Needed work: Split the action schema catalog into domain-owned modules while preserving the single merged PromptMode registry and drift tests.
+- Why not now: The current repair changes only the existing Theme entries. Decomposing every unrelated action family would materially broaden a production-critical schema correction.

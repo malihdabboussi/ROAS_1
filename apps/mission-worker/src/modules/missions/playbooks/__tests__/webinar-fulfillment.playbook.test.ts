@@ -59,6 +59,29 @@ describe('webinar-fulfillment playbook', () => {
     expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.intent.ecology).toMatch(
       /actual failed tool attempt/i,
     )
+    for (const action of ['list_themes', 'extract_website_theme', 'create_theme', 'update_theme']) {
+      expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.intent.ecology).toContain(
+        action,
+      )
+    }
+    for (const field of [
+      'logo_asset_id',
+      'colors',
+      'font_heading',
+      'font_body',
+      'brand_voice',
+      'brand_values',
+      'social_links',
+      'headshot_images',
+      'product_images',
+    ]) {
+      expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.intent.ecology).toContain(
+        field,
+      )
+    }
+    expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.intent.ecology).toMatch(
+      /confirmed.*inferred.*not found/is,
+    )
     expect(plan.subtasks.find((s) => s.id === 'st-launch-brief')?.dependsOn).toEqual([
       'st-market-research',
     ])
@@ -97,6 +120,18 @@ describe('webinar-fulfillment playbook', () => {
     expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.intent.ecology).toMatch(
       /generate_visual_html/,
     )
+    for (const subtaskId of [
+      'st-ad-design',
+      'st-image-brief',
+      'st-generate-images',
+      'st-funnel-design',
+      'st-deck-bones',
+      'st-compile-ads',
+    ]) {
+      expect(plan.subtasks.find((s) => s.id === subtaskId)?.intent.ecology).toMatch(
+        /list_themes.*get_theme/is,
+      )
+    }
     expect(plan.subtasks.find((s) => s.id === 'st-generate-images')?.dependsOn).toEqual([
       'st-image-brief',
     ])

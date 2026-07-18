@@ -24,6 +24,22 @@ const BRANDING_THEME_UPDATE_KEYS = [
   'status',
 ] as const
 
+const BRANDING_THEME_CREATE_KEYS = [
+  'logo_asset_id',
+  'headshot_images',
+  'product_images',
+  'brand_values',
+  'social_links',
+  'design_settings',
+  'image_style_prompt',
+] as const
+
+const BRANDING_THEME_CREATE_DEFAULTS: Partial<Record<(typeof BRANDING_THEME_CREATE_KEYS)[number], unknown>> = {
+  headshot_images: [],
+  product_images: [],
+  social_links: {},
+}
+
 @Injectable()
 export class ArtifactThemesService {
   constructor(
@@ -128,7 +144,7 @@ export class ArtifactThemesService {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '')
 
-      // Support both flat `colors` and legacy `config.colors` payloads from the skill
+      // Support both flat `colors` and legacy `config.colors` payloads during migration.
       const rawColors =
         input.colors && typeof input.colors === 'object' && !Array.isArray(input.colors)
           ? (input.colors as Record<string, unknown>)
@@ -142,7 +158,7 @@ export class ArtifactThemesService {
         org_id: orgId ?? null,
         slug,
         name: (input.name as string) ?? 'Untitled Theme',
-        colors: rawColors,
+        colors: generateCompleteThemeColors(rawColors),
         font_heading:
           (input.font_heading as string | null) ??
           ((input.config as Record<string, unknown>)?.fonts as Record<string, unknown>)?.heading ??
@@ -155,8 +171,14 @@ export class ArtifactThemesService {
           (input.brand_voice as Record<string, unknown> | null) ??
           ((input.config as Record<string, unknown>)?.voice as Record<string, unknown> | null) ??
           null,
+        ...Object.fromEntries(
+          BRANDING_THEME_CREATE_KEYS.map((key) => [
+            key,
+            input[key] ?? BRANDING_THEME_CREATE_DEFAULTS[key] ?? null,
+          ]),
+        ),
         is_system: false,
-        status: 'draft',
+        status: (input.status as string | null) ?? 'draft',
       })
       if (error) throw error
       const theme = data as Record<string, any>
