@@ -74,3 +74,10 @@ What: Removed unused `siblingNavigation` memo from DeliverablePreviewModal.
 Why: TypeScript noUnusedLocals failed the `roas-web` production build.
 Impact: Unblocks web deploy; api already READY on tip.
 Files: `DeliverablePreviewModal.tsx`
+
+## [2026-07-18 07:52] - [FIX]
+
+What: Cleared remaining non-test TypeScript errors in web: removed unused `DockKey`, added `openRightPanelSurface` to shell store, mapped right-panel picker `artifacts` to `sources`, wrapped skill-folder callbacks with `Promise.resolve`, aligned `SpaceChatAgentPicker` call site, and fixed duplicate prop / nullable schema in `SpaceItemsContainer`.
+Why: `pnpm exec tsc --noEmit` in `apps/web` failed on production source files and blocked deploy.
+Impact: Non-test `tsc` output is clean; only pre-existing test-file errors remain.
+Files: `SidebarHqHubMenuContent.tsx`, `use-shell-store.ts`, `ShellRightPanelPicker.tsx`, `SkillMenuDropdown.tsx`, `SpaceVibeyChatPanel.tsx`, `SpaceItemsContainer.tsx`

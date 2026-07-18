@@ -388,7 +388,6 @@ export function SpaceItemsContainer() {
     focusTaskCapableViewIfNeeded,
     items,
     urlSpaceItemDeepLinkRef,
-    focusTaskCapableViewIfNeeded,
     openSpaceItemModal,
     setActiveSpace,
     setActiveView,
@@ -410,7 +409,7 @@ export function SpaceItemsContainer() {
 
   const { missionsViewRef } = useSpaceMissionsViewFocus({
     activeSpace,
-    activeSchema,
+    activeSchema: activeSchema ?? null,
     activeView,
     activeSpaceId,
     patchSchema,

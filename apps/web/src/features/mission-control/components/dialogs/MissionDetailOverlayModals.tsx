@@ -43,11 +43,11 @@ interface MissionDetailOverlayModalsProps {
 
 export function MissionDetailOverlayModals({
   previewDeliverable,
-  deliverables,
+  deliverables: _deliverables,
   agents,
   effectiveMission,
   onClosePreview,
-  onSelectPreview,
+  onSelectPreview: _onSelectPreview,
   planModalOpen,
   planContent,
   subtasks,

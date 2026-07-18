@@ -5,7 +5,7 @@ import { FileText, Layers3, ListChecks } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { ShellRightPanelTab } from './use-shell-store'
 
-export type ShellRightPanelSurface = Extract<ShellRightPanelTab, 'tasks' | 'files' | 'artifacts'>
+export type ShellRightPanelSurface = Extract<ShellRightPanelTab, 'tasks' | 'files' | 'sources'>
 
 const SURFACES: {
   id: ShellRightPanelSurface
@@ -14,7 +14,7 @@ const SURFACES: {
 }[] = [
   { id: 'tasks', label: 'Tasks', Icon: ListChecks },
   { id: 'files', label: 'Files', Icon: FileText },
-  { id: 'artifacts', label: 'Artifacts', Icon: Layers3 },
+  { id: 'sources', label: 'Sources', Icon: Layers3 },
 ]
 
 type ShellRightPanelPickerProps = {

@@ -2,7 +2,6 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { artifactTypeToSpaceViewType } from '../lib/artifact-type-to-space-view-type'
 import { useSpacesStore } from '../store/use-spaces-store'
 import type { SpaceItem } from '../types'
 

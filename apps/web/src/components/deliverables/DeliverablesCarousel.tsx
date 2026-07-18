@@ -48,7 +48,7 @@ export function DeliverablesCarousel({
   defaultCollapsed = false,
 }: DeliverablesCarouselProps) {
   const deliverablesCarouselRef = useRef<HTMLDivElement>(null)
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(defaultCollapsed)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
 
   const { core, extra } = useMemo(() => {

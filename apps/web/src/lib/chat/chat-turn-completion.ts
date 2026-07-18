@@ -1,10 +1,12 @@
 /** Minimal message shape used for assistant-turn completion checks. */
 export type ChatTurnMessage = {
+  id?: string
   role: string
   content?: string | null
   content_blocks?: unknown
   created_at: string
   metadata?: Record<string, unknown> | null
+  conversation_id?: string
 }
 
 const RECENT_ASSISTANT_TURN_MS = 5 * 60 * 1_000
@@ -22,7 +24,7 @@ function hasLegacyContentBlocks(message: ChatTurnMessage): boolean {
   )
 }
 
-export function getLastAssistantMessage(messages: ChatTurnMessage[]): ChatTurnMessage | undefined {
+export function getLastAssistantMessage<T extends ChatTurnMessage>(messages: T[]): T | undefined {
   return [...messages].reverse().find((message) => message.role === 'assistant')
 }
 
