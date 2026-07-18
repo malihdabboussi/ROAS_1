@@ -334,3 +334,10 @@ What: Made Dylan Super Voice the exclusive voice authority for every client-faci
 Why: The copy-package steps enforced the voice, but strategy and other mission owners could still create client-facing messages without explicitly loading the master voice skill.
 Impact: Any agent-owned webinar step that writes for a client or audience must load and verify Dylan Super Voice, reject legacy voice skills, and pass the full checklist plus literal em-dash scan before saving.
 Files: `webinar-fulfillment.playbook.ts`, `webinar-fulfillment.playbook.test.ts`, `mission-skill-seeder.service.ts`, `mission-skill-seeder.service.test.ts`, strategist strategy-adjust and launch-brief skills/resources, `20260718043000_universal_dylan_super_voice.sql`, `documentation/features/missions.md`
+
+## [2026-07-17 21:28] - [FIX]
+
+What: Restored the complete native funnel-page schema, including legacy page fields, HTML bundle file/asset tables, current organization campaign access policies, and PostgREST cache reload.
+Why: Production retained the original `funnel_pages` shape and lacked bundle tables, so `add_funnel_page` failed after the funnel container was created.
+Impact: Native funnel pages can persist their editable HTML bundle instead of repeatedly blocking on one missing column after another.
+Files: `20260718030300_repair_funnel_page_bundle_schema.sql`, `packages/db/src/types.ts`, `documentation/features/missions.md`
