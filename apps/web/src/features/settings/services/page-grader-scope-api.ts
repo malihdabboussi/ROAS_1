@@ -57,6 +57,31 @@ export async function savePageGraderClientScopeMapForSettings(
     : {}
 }
 
+export async function importPageGraderClientBrainForSettings(input: {
+  clientId: string
+  campaignId?: string
+  campaignName?: string
+  campaignHint?: string
+  spaceId?: string | null
+  spaceTitle?: string | null
+  dryRun?: boolean
+}): Promise<{
+  success: boolean
+  campaign?: { id: string; name?: string | null }
+  space?: { id: string; title?: string | null }
+  brainImport?: { jobId?: string | null; status?: string | null }
+}> {
+  return backendPost('/api/integrations/page-grader/import-client-brain', {
+    client_id: input.clientId,
+    dryRun: input.dryRun ?? false,
+    ...(input.campaignId ? { campaignId: input.campaignId } : {}),
+    ...(input.campaignName ? { campaignName: input.campaignName } : {}),
+    ...(input.campaignHint ? { campaignHint: input.campaignHint } : {}),
+    ...(input.spaceId ? { spaceId: input.spaceId } : {}),
+    ...(input.spaceTitle ? { spaceTitle: input.spaceTitle } : {}),
+  })
+}
+
 export function suggestCampaignForClient(
   clientName: string,
   campaigns: Array<{ id: string; name: string }>,
