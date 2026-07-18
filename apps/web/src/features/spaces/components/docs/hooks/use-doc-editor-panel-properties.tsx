@@ -2,10 +2,10 @@
 
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
-import type { SpaceItem } from '../../types'
-import type { FieldDef, SelectOption, ViewDef } from '../../types/space-schema'
-import { isSpaceFieldVisibleInUi } from '../../types/space-schema'
-import { DocPropertiesSection } from './properties/DocPropertiesSection'
+import type { SpaceItem } from '../../../types'
+import type { FieldDef, SelectOption, ViewDef } from '../../../types/space-schema'
+import { isSpaceFieldVisibleInUi } from '../../../types/space-schema'
+import { DocPropertiesSection } from '../properties/DocPropertiesSection'
 
 type UseDocEditorPanelPropertiesArgs = {
   item: SpaceItem

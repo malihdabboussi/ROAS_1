@@ -39,3 +39,10 @@ What: Split oversized shell/sidebar, spaces container/docs/chat, and Team HR cha
 Why: Pre-commit architecture gate blocked shipping the local production-parity tree.
 Impact: Commit can proceed; behavior unchanged, LOC/import gates green.
 Files: sidebar hub menu splits, spaces hooks/libs, team-2 hr-side-chat splits, `apps/web/src/lib/chat/chat-turn-completion.ts`, `scripts/arch/loc-allowlist.json`
+
+## [2026-07-18 07:45] - [FIX]
+
+What: Corrected relative imports in extracted DocEditor panel helpers after the LOC split.
+Why: Vercel `roas-web` failed with Module not found for DocPropertiesSection, space-schema, and markdown-to-html.
+Impact: Unblocks web production build for the parity ship.
+Files: `use-doc-editor-panel-properties.tsx`, `resolve-initial-doc-body.ts`
