@@ -210,6 +210,19 @@ export function DeliverablePreviewModal({
   }, [effectiveContent, deliverable.content, deliverable.title])
 
   const agent = agents.find((a) => a.agent_key === deliverable.agent_key)
+  const siblingNavigation = useMemo(() => {
+    if (!onSelectSibling) return undefined
+    const siblings = siblingDeliverables.filter((item) => item.type === deliverable.type)
+    const index = siblings.findIndex((item) => item.id === deliverable.id)
+    if (index < 0 || siblings.length < 2) return undefined
+    const itemLabel = deliverable.type === 'ad' ? 'ad' : 'deliverable'
+    return {
+      label: `${index + 1} of ${siblings.length}`,
+      itemLabel,
+      onPrevious: () => onSelectSibling(siblings[(index - 1 + siblings.length) % siblings.length]!),
+      onNext: () => onSelectSibling(siblings[(index + 1) % siblings.length]!),
+    }
+  }, [deliverable.id, deliverable.type, onSelectSibling, siblingDeliverables])
 
   const exportMode = isEntityType && entityData != null ? 'entity' : 'text'
   const exportAvailable =

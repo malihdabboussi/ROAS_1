@@ -48,6 +48,7 @@ export async function tryPersistMissionDeliverable(
     const userId = target.resolveUserId(sessionKey)
     const { missionId, campaignId, orgId } = await target.resolveMissionContext(sessionKey, userId)
     const agentKey = target.parseAgentIdFromSessionKey(sessionKey) ?? 'unknown'
+    const subtaskId = parseMissionSubtaskId(sessionKey)
     await target.persistMissionDeliverable({
       missionId,
       userId,
@@ -58,7 +59,11 @@ export async function tryPersistMissionDeliverable(
       title: entity.title,
       sourceAction: entity.sourceAction,
       content: null,
-      metadata: { entity_id: entity.entityId, entity_table: entity.entityTable },
+      metadata: {
+        entity_id: entity.entityId,
+        entity_table: entity.entityTable,
+        ...(subtaskId ? { subtask_id: subtaskId } : {}),
+      },
       idempotencyKey: `mission:${missionId}:${entity.entityTable}:${entity.entityId}`,
     })
   } catch (err) {
@@ -67,4 +72,14 @@ export async function tryPersistMissionDeliverable(
       err,
     )
   }
+}
+
+function parseMissionSubtaskId(sessionKey: string): string | null {
+  const base = sessionKey.split('::', 1)[0] ?? ''
+  const parts = base.split(':')
+  const modeIndex = parts.findIndex((part, index) => index >= 2 && part === 'subtask')
+  if (modeIndex < 0) return null
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  const candidates = parts.slice(modeIndex + 1).filter((part) => uuidPattern.test(part))
+  return candidates.at(-1) ?? null
 }

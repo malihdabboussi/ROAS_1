@@ -249,6 +249,8 @@ Before saving any skill:
     },
   ]
 
+  private static readonly UNIVERSAL_LIBRARY_SKILL_KEYS = ['dylans-super-voice']
+
   async cloneSelectedSkills(
     supabase: SupabaseClient,
     userId: string,
@@ -317,9 +319,23 @@ Before saving any skill:
     orgId?: string | null,
   ) {
     if (isSystemAgentKey(agentKey)) return
+    const { rows: universalSkills, errorMessage } =
+      await this.skillSeederRepository.listLibrarySkills(
+        supabase,
+        MissionSkillSeederService.UNIVERSAL_LIBRARY_SKILL_KEYS,
+      )
+    if (errorMessage) {
+      this.logger.warn(`Failed to load universal default skills for ${agentKey}: ${errorMessage}`)
+    }
+    const universalResources = universalSkills.length
+      ? await this.skillSeederRepository.listLibrarySkillResources(
+          supabase,
+          MissionSkillSeederService.UNIVERSAL_LIBRARY_SKILL_KEYS,
+        )
+      : []
     await Promise.all(
-      MissionSkillSeederService.DEFAULT_SKILLS.map((s) =>
-        this.missionsRepository
+      [...MissionSkillSeederService.DEFAULT_SKILLS, ...universalSkills].map(async (s) => {
+        await this.missionsRepository
           .internalUpsertAgentSkill(
             supabase,
             userId,
@@ -335,8 +351,22 @@ Before saving any skill:
             this.logger.warn(
               `Failed to seed default skill "${s.skill_key}" for ${agentKey}: ${(e as Error).message}`,
             ),
+          )
+        const resources = universalResources.filter((row) => row.skill_key === s.skill_key)
+        await Promise.all(
+          resources.map((resource) =>
+            this.missionsRepository.internalUpsertAgentSkillResource(
+              supabase,
+              userId,
+              agentKey,
+              resource.skill_key,
+              resource.file_path,
+              resource.content,
+              orgId,
+            ),
           ),
-      ),
+        )
+      }),
     )
   }
 

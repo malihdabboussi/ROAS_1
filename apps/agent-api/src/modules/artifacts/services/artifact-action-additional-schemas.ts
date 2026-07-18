@@ -19,12 +19,9 @@ const pagination = ['limit', 'offset']
 const adIds = ['ad_id', 'adId', 'ad_set_id', 'adSetId', 'campaign_id', 'campaignId']
 
 export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> = {
-  dream_inspect_agent: schema(
-    [],
-    ['agent_key'],
-    stringType(['agent_key']),
-    ['Inspect the target agent and its org-owned skills during a Jaime Agent Learning Dream.'],
-  ),
+  dream_inspect_agent: schema([], ['agent_key'], stringType(['agent_key']), [
+    'Inspect the target agent and its org-owned skills during a Jaime Agent Learning Dream.',
+  ]),
   dream_search_evidence: schema(
     [],
     ['source', 'limit', 'cursor'],
@@ -211,17 +208,45 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
     stringType(['name', 'description', 'image_url', ...campaignScope]),
   ),
   list_avatars: schema([], [...campaignScope], stringType(campaignScope)),
-  create_theme: schema([], ['name', 'description', 'colors', 'fonts', ...campaignScope], {
-    ...stringType(['name', 'description', ...campaignScope]),
-    colors: 'object',
-    fonts: 'object',
-  }),
-  list_themes: schema([], [...campaignScope], stringType(campaignScope)),
-  extract_website_theme: schema(
-    [['website_id', 'funnel_id']],
-    ['website_id', 'funnel_id'],
-    stringType(['website_id', 'funnel_id']),
+  create_theme: schema(
+    [],
+    [
+      'name',
+      'colors',
+      'font_heading',
+      'font_body',
+      'logo_asset_id',
+      'headshot_images',
+      'product_images',
+      'brand_voice',
+      'brand_values',
+      'social_links',
+      'design_settings',
+      'image_style_prompt',
+      'status',
+      ...campaignScope,
+    ],
+    {
+      ...stringType([
+        'name',
+        'font_heading',
+        'font_body',
+        'logo_asset_id',
+        'image_style_prompt',
+        'status',
+        ...campaignScope,
+      ]),
+      colors: 'object',
+      headshot_images: 'object_array',
+      product_images: 'object_array',
+      brand_voice: 'object',
+      brand_values: 'object',
+      social_links: 'object',
+      design_settings: 'object',
+    },
   ),
+  list_themes: schema([], [...campaignScope], stringType(campaignScope)),
+  extract_website_theme: schema(['url'], ['url'], stringType(['url'])),
 
   create_project: schema(['name'], ['description', 'dependencies', 'manifest'], {
     name: 'string',

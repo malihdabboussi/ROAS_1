@@ -196,6 +196,8 @@ function renderModal(
         onDeliverableRenamed={modalMocks.onDeliverableRenamed}
         presentation={presentation}
         renderEntityPreview={renderEntityPreview}
+        siblingDeliverables={siblingDeliverables}
+        onSelectSibling={onSelectSibling}
       />
     )
   }
@@ -241,6 +243,18 @@ describe('DeliverablePreviewModal', () => {
 
   afterEach(() => {
     cleanup()
+  })
+
+  it('navigates between sibling ads without closing the mission preview', () => {
+    const firstAd = { ...uuidDeliverable, id: 'ad-deliverable-1', type: 'ad' as const }
+    const secondAd = { ...uuidDeliverable, id: 'ad-deliverable-2', type: 'ad' as const }
+    const onSelectSibling = vi.fn()
+
+    renderModal(firstAd, 'centered', [firstAd, secondAd], onSelectSibling)
+
+    expect(screen.getByText('1 of 2')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Next ad' }))
+    expect(onSelectSibling).toHaveBeenCalledWith(secondAd)
   })
 
   it('renames task activity attachments through the Spaces activity API without render churn', async () => {

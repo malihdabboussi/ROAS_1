@@ -28,7 +28,7 @@ fi
 
 # project_id:VAR[,VAR...] — critical production vars baked at build time.
 CHECKS=(
-  "roas-api:prj_YwUti53Q9vB6rMKPB5cpW8w7h0qL:FLY_RUNTIME_APP,APPS_DOMAIN_SUFFIX"
+  "roas-api:prj_YwUti53Q9vB6rMKPB5cpW8w7h0qL:FLY_RUNTIME_APP,APPS_DOMAIN_SUFFIX,OPENROUTER_API_KEY,COMPOSIO_API_KEY,SENDGRID_API_KEY,FIRECRAWL_API_KEY,GEMINI_API_KEY,SCRAPECREATORS_API_KEY,DATAFORSEO_LOGIN,DATAFORSEO_PASSWORD,SEARCHAPI_API_KEY"
   "roas-web:prj_MTRba5SdYBFbiymrKqieGnGPjcBh:WORKER_SECRET"
 )
 
@@ -63,11 +63,15 @@ def api(path):
 
 
 try:
-    deps = api(f"/v6/deployments?projectId={pid}&teamId={team}&target=production&limit=1")["deployments"]
-    if not deps:
-        print(f"FAIL  {name}: no production deployment found")
+    deps = api(f"/v6/deployments?projectId={pid}&teamId={team}&target=production&limit=20")["deployments"]
+    deployment = next(
+        (item for item in deps if (item.get("state") or item.get("readyState")) == "READY"),
+        None,
+    )
+    if not deployment:
+        print(f"FAIL  {name}: no ready production deployment found")
         sys.exit(1)
-    build_ms = deps[0].get("createdAt") or deps[0].get("created")
+    build_ms = deployment.get("createdAt") or deployment.get("created")
     envs = api(f"/v9/projects/{pid}/env?teamId={team}").get("envs", [])
     by_key = {}
     for e in envs:

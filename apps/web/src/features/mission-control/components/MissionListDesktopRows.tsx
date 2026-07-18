@@ -139,6 +139,7 @@ export function MissionListDesktopRows({
                     agents={agents}
                     expandedSubtaskMissionIds={expandedSubtaskMissionIds}
                     onToggleSubtaskExpand={onToggleSubtaskExpand}
+                    loadedSubtaskCount={dSubList.length}
                     subtasksDisplayMode={subtasksDisplayMode}
                     progressShowNumber={progressShowNumber}
                     progressBarFill={progressBarFill}

@@ -229,9 +229,11 @@ export function MissionDetailModalView({
   const overlayModals = (
     <MissionDetailOverlayModals
       previewDeliverable={previewDeliverable}
+      deliverables={visibleDeliverables}
       agents={agents}
       effectiveMission={effectiveMission}
       onClosePreview={() => setPreviewDeliverable(null)}
+      onSelectPreview={setPreviewDeliverable}
       planModalOpen={planModalOpen}
       planContent={planContent}
       subtasks={subtasks}

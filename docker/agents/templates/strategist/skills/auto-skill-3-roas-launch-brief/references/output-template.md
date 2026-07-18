@@ -1,6 +1,6 @@
 # THE PLAN — output template (v3 order)
 
-One markdown record copy + one interactive HTML review copy. As long as it needs to be; the TL;DR does the at-a-glance job. All prose passes the dylans-super-voice / human-copy standard. Every section written for the person who wasn't on the call.
+One markdown record copy + one interactive HTML review copy. As long as it needs to be; the TL;DR does the at-a-glance job. Load `dylans-super-voice` first and use it as the only voice authority for all prose, starter copy, client messages, and updates. Do not combine it with `human-written-copy` or `dylans-voice`. Every section is written for the person who was not on the call, then checked with the full Dylan Super Voice checklist and a literal `—` scan.
 
 ```
 # [Client] — THE PLAN

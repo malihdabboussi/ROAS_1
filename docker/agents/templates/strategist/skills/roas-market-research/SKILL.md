@@ -1,6 +1,6 @@
 ---
 name: roas-market-research
-description: Pulls REAL competitor ad data for ROAS campaigns through the connected SearchAPI (Ads Intelligence) and Scrape Creators MCPs... Meta, Google, TikTok, and LinkedIn ad libraries, ranked by longevity, with video-ad transcripts for the winners and an optional organic-content layer. Replaces guesswork web searching with observed ad-library data. Load whenever a campaign needs market/competitor research... "run market research," "ad library research," "pull competitor ads," "what is [competitor] running," "what's working in this niche," "research the market for [client]," "check the ad library," or ANY time roas-ad-kit, roas-ad-copy, or roas-ad-concepts reaches its research step. Load aggressively before writing ads for a new campaign; never write blind. Do NOT load to write concepts, copy, or creative (roas-ad-kit / roas-ad-copy / roas-ad-design) — this skill only produces the research brief they consume.
+description: Pulls observed competitor ads through platform-managed Ads Intelligence and Social Analysis, then builds or updates the campaign Theme from verified website, logo, social, and media evidence. Use for market research, competitor or ad-library research, campaign brand setup, or before writing ads for a new campaign. Produces WEB#4 research plus the active Theme consumed by ads, funnels, decks, and image generation. Do not use it to write creative.
 ---
 
 # ROAS Market Research — observed ad-library data, not guesswork
@@ -49,6 +49,16 @@ Pull from the conversation/brief first; only ask if genuinely missing.
 ---
 
 ## THE WORKFLOW
+
+### Step 0 — Complete the campaign Theme
+Do this in the same research run so design never starts from an empty brand shell.
+
+1. Call `list_campaign_media` and inspect available logo files, product imagery, team headshots, and design references. Read the client website and known social profiles from campaign and Brain context.
+2. Call `list_themes`. If a campaign Theme is active, preserve verified user-entered values. If none is active, prepare one named for the client.
+3. When a website URL is available, call `extract_website_theme` with `url`. Treat extraction as evidence, not permission to overwrite stronger uploaded or user-confirmed values.
+4. Map evidence into the flat Theme fields: `colors`, `font_heading`, `font_body`, `logo_asset_id`, `brand_voice`, `brand_values`, `social_links`, `design_settings`, `headshot_images`, `product_images`, and `image_style_prompt`.
+5. Call `update_theme` for the active Theme or `create_theme` with `campaign_id` when none exists. The campaign must finish this step with one active Theme.
+6. Add a Brand Evidence Ledger to the research Doc. For every Theme field, record its source and exactly one status: `confirmed`, `inferred`, or `not found`. Never silently skip a field, invent an asset ID, or replace confirmed data with inference.
 
 ### Step 1 — Resolve advertisers
 Turn every named competitor into platform IDs: `meta_ads_page_search` (or `v1_facebook_adLibrary_search_companies`) for Meta; advertiser-search tools for Google/TikTok if in scope. Disambiguate by category/verification when multiple pages match — pick the one that's obviously the business, and note the choice.
@@ -118,6 +128,9 @@ Hook (0-3s): ... / Structure: ... / Proof: ... / Close: ...
 
 ## HANDOFF
 [the 2-3 references to model first and why; angles to feed Validate Messaging; anything to counter-position]
+
+## BRAND EVIDENCE LEDGER
+[active Theme name/ID; every Theme field with source + confirmed / inferred / not found]
 ```
 
 Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above — do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai / no native artifacts (fallback), save to `/mnt/user-data/outputs/` and present. Attach raw JSON pulls as `[client]-research-raw.json` (appendix; don't paste raw JSON into the brief). When roas-ad-kit / roas-ad-copy called this skill mid-run, the References section drops directly into their research section — same six fields, no reshaping.

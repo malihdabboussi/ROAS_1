@@ -159,7 +159,12 @@ export function MissionDetailMobileShell({
                 {accessApprovalCard}
               </>
             )}
-            <DeliverablesCarousel deliverables={deliverables} onSelect={onSelectDeliverable} />
+            <DeliverablesCarousel
+              deliverables={deliverables}
+              onSelect={onSelectDeliverable}
+              taskSectionChrome={!selectedSubtask}
+              defaultCollapsed={!selectedSubtask}
+            />
           </div>
         </div>
       ) : (

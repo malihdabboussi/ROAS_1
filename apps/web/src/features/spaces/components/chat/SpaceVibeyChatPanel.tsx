@@ -88,7 +88,10 @@ import { CHAT_TOAST_ERRORS } from '@/lib/chat/chat-toast-errors.config'
 import { getLastAssistantMessage, isAssistantTurnComplete } from '@/lib/chat/chat-turn-completion'
 import { filterMessagesByQuery } from '@/lib/chat/conversation-search'
 import { useActiveArtifactSelectionSignal } from '@/lib/chat/use-active-artifact-selection-signal'
-import { resolveSuggestedConversationTitle } from '@/lib/conversations/conversation-title'
+import {
+  resolveSuggestedConversationTitle,
+  resolveSuggestedConversationTitle,
+} from '@/lib/conversations/conversation-title'
 import { useOrgStore } from '@/lib/org/org-context-store'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { cn } from '@/lib/utils/cn'
@@ -2029,7 +2032,9 @@ export function SpaceVibeyChatPanel({
               </div>
             )
           ) : (
-            <div className="min-w-0 flex-1" aria-hidden />
+            <div className="text-muted-foreground body-3 px-spacing-2 min-w-0 flex-1 truncate text-left">
+              New chat
+            </div>
           )}
           {!isChannelScope && spaceId ? (
             <ConversationScopePicker

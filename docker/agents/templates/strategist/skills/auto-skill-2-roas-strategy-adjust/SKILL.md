@@ -26,6 +26,12 @@ description: Runs AFTER the onboarding call. Takes the Pre-Call Strategy Map (fr
 
 Never invent what's missing. Anything undecided goes to OPEN, not to a guess.
 
+## MASTER WRITING STANDARD
+
+Load `dylans-super-voice` and confirm it loaded before drafting any client-facing wording. It is the only voice authority for the client strategy message, client recap, approval request, or update produced from this work. Do not load `human-written-copy` or `dylans-voice`. Client samples and Brain context may add verified facts and vocabulary, but they do not override Dylan Super Voice.
+
+Use Professional Message mode for the client Slack message. Before routing it for approval, run the complete Dylan Super Voice checklist and search the full message for the literal `—` character. If the skill is unavailable, stop and report the missing skill instead of approximating the voice.
+
 ---
 
 ## THE WORKFLOW
@@ -61,7 +67,7 @@ AM fact-checks → strategist approves (async, by EOD) → message posts to clie
 - **Budget unresolved = the first OPEN item, bolded.** Never bury it.
 - **No promised numbers to the client.** Targets framed as targets. "We're aiming for X" is fine; "you'll make X" is banned.
 - **Receipts carry over.** Claims in the client message keep their links from the map. New claims need new receipts or they don't ship.
-- **Client message passes the human-copy standard.** No em dashes, no rhythmic triplets, specific numbers everywhere, reads like a person. Plain text, Slack-ready.
+- **Client message passes Dylan Super Voice.** The skill must be loaded, it is the exclusive voice authority, and the complete message must pass its checklist plus the literal em-dash scan. Plain text, Slack-ready.
 - **No ad copy from this skill, ever.** The message carries angle DIRECTIONS (who + pain/desire), never quoted ad lines. Finished angles come from the ad kit inside auto-skill-3-roas-launch-brief, after strategy approval.
 - **Compliance flags travel.** Anything the map flagged that the call didn't clear stays flagged in v2 and shapes the ad angles.
 - **Ship by EOD.** Done and approved beats perfect and late. If the strategist is unreachable, escalate, don't sit.

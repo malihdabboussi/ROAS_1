@@ -129,4 +129,21 @@ describe('MissionList', () => {
     subtaskRows.forEach((row) => fireEvent.keyDown(row, { key: ' ' }))
     expect(onSelectSubtask).toHaveBeenCalledTimes(2)
   })
+
+  it('keeps the expand control when loaded subtasks arrive before the mission summary count', () => {
+    render(
+      <MissionList
+        missions={[{ ...baseMission, subtask_total: 0 }]}
+        agents={[]}
+        campaigns={[]}
+        selectedMissionId={null}
+        onSelect={vi.fn()}
+        subtasksByMissionId={{ 'mission-1': [subtask] }}
+        expandedSubtaskMissionIds={new Set()}
+        onToggleSubtaskExpand={vi.fn()}
+      />,
+    )
+
+    expect(screen.getAllByRole('button', { name: 'Expand subtasks' }).length).toBeGreaterThan(0)
+  })
 })

@@ -152,28 +152,76 @@ describe('ArtifactOffersAdsService', () => {
         }),
       ],
     })
-    expect(records.find((record) => record.table === 'ads' && record.operation === 'insert'))
-      .toMatchObject({
-        payload: expect.objectContaining({
-          user_id: 'user-1',
-          org_id: null,
-          campaign_id: 'campaign-1',
-          ad_set_id: 'ad-set-1',
-          destination_url: 'https://example.com/offer',
-        }),
-      })
+    expect(
+      records.find((record) => record.table === 'ads' && record.operation === 'insert'),
+    ).toMatchObject({
+      payload: expect.objectContaining({
+        user_id: 'user-1',
+        org_id: null,
+        campaign_id: 'campaign-1',
+        ad_set_id: 'ad-set-1',
+        destination_url: 'https://example.com/offer',
+      }),
+    })
     expect(records.find((record) => record.table === 'ad_sets')).toMatchObject({
       filters: { id: 'ad-set-1' },
       selectColumns: 'ad_campaign_id',
     })
-    expect(records.find((record) => record.table === 'ads' && record.operation === 'update'))
-      .toMatchObject({
-        payload: {
-          tracking_url:
-            'https://example.com/offer?utm_source=meta&utm_medium=paid&utm_campaign=ad-campaign-1&utm_adset=ad-set-1&utm_content=ad-1',
-        },
-        filters: { id: 'ad-1' },
-      })
+    expect(
+      records.find((record) => record.table === 'ads' && record.operation === 'update'),
+    ).toMatchObject({
+      payload: {
+        tracking_url:
+          'https://example.com/offer?utm_source=meta&utm_medium=paid&utm_campaign=ad-campaign-1&utm_adset=ad-set-1&utm_content=ad-1',
+      },
+      filters: { id: 'ad-1' },
+    })
+  })
+
+  it('links every mission-created ad to the active subtask', async () => {
+    const subtaskId = '22222222-2222-2222-2222-222222222222'
+    const { client } = makeQueryClient((record) => {
+      if (record.table === 'ads' && record.operation === 'insert') {
+        return { data: { id: 'ad-1', headline: 'Hero Headline' }, error: null }
+      }
+      if (record.table === 'ads' && record.operation === 'update') {
+        return { data: null, error: null }
+      }
+      if (record.table === 'spaces') return { data: [], error: null }
+      return { data: null, error: null }
+    })
+    const target = {
+      ...makeTarget(client),
+      isMissionSessionKey: vi.fn(() => true),
+      parseAgentIdFromSessionKey: vi.fn(() => 'blaze'),
+      resolveMissionContext: vi.fn(async () => ({
+        missionId: 'mission-1',
+        campaignId: 'campaign-1',
+        orgId: null,
+      })),
+      persistMissionDeliverable: vi.fn(async () => ({ deliverable_id: 'deliverable-1' })),
+    }
+    const handlers = new ArtifactOffersAdsService().getHandlers(target)
+
+    await handlers.create_ad(
+      {
+        platform: 'meta',
+        placement: 'feed',
+        primary_text: 'Primary',
+        headline: 'Hero Headline',
+        destination_url: 'https://example.com',
+      },
+      `agent:gateway:subtask:blaze:user-1:${subtaskId}`,
+    )
+
+    expect(target.persistMissionDeliverable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          entity_id: 'ad-1',
+          subtask_id: subtaskId,
+        }),
+      }),
+    )
   })
 
   it('patches generated TSX with owner-scoped ad lookup and update', async () => {
@@ -200,18 +248,20 @@ describe('ArtifactOffersAdsService', () => {
     )
 
     expect(result).toEqual({ success: true, ad_id: 'ad-1', patched: 1 })
-    expect(records.find((record) => record.table === 'ads' && record.operation === null))
-      .toMatchObject({
-        selectColumns: 'id, generated_tsx',
-        filters: { id: 'ad-1', user_id: 'user-1' },
-        isFilters: { org_id: null },
-      })
-    expect(records.find((record) => record.table === 'ads' && record.operation === 'update'))
-      .toMatchObject({
-        payload: { generated_tsx: 'function Ad(){ return <div>New copy</div> }' },
-        filters: { id: 'ad-1', user_id: 'user-1' },
-        isFilters: { org_id: null },
-      })
+    expect(
+      records.find((record) => record.table === 'ads' && record.operation === null),
+    ).toMatchObject({
+      selectColumns: 'id, generated_tsx',
+      filters: { id: 'ad-1', user_id: 'user-1' },
+      isFilters: { org_id: null },
+    })
+    expect(
+      records.find((record) => record.table === 'ads' && record.operation === 'update'),
+    ).toMatchObject({
+      payload: { generated_tsx: 'function Ad(){ return <div>New copy</div> }' },
+      filters: { id: 'ad-1', user_id: 'user-1' },
+      isFilters: { org_id: null },
+    })
   })
 
   it('creates an ad campaign with default objective and space view indexing', async () => {

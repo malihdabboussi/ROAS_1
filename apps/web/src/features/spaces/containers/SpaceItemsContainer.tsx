@@ -65,7 +65,10 @@ import {
 import { MEDIA_GROUP_BY_OPTIONS, normalizeMediaGroupBy } from '../lib/media-group-by-options'
 import { MISSION_GROUP_BY_OPTIONS } from '../lib/mission-group-by-options'
 import { usesPaidAdsInlineDetail } from '../lib/paid-ads-display-mode'
-import { resolveTaskCapableViewId } from '../lib/resolve-task-capable-view'
+import {
+  resolveTaskCapableViewId,
+  resolveTaskCapableViewId,
+} from '../lib/resolve-task-capable-view'
 import { updateSpace } from '../services/spaces.service'
 import { useSpacesStore } from '../store/use-spaces-store'
 import {
@@ -107,7 +110,6 @@ const MediaImageWorkspacePanelHost = dynamic(
     ),
   { loading: PreviewHostLoading },
 )
-
 export function SpaceItemsContainer() {
   const items = useSpacesStore((s) => s.items)
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
@@ -117,7 +119,6 @@ export function SpaceItemsContainer() {
   const activeViewId = useSpacesStore((s) => s.activeViewId)
   const setActiveView = useSpacesStore((s) => s.setActiveView)
   const storeUpdateItem = useSpacesStore((s) => s.updateItem)
-
   const focusTaskCapableViewIfNeeded = useCallback(
     (spaceId: string) => {
       const space = useSpacesStore.getState().spaces.find((row) => row.id === spaceId)
@@ -146,11 +147,9 @@ export function SpaceItemsContainer() {
   const createSpace = useSpacesStore((s) => s.createSpace)
   const deleteSpace = useSpacesStore((s) => s.deleteSpace)
   const applyRealtimeItemChange = useSpacesStore((s) => s.applyRealtimeItemChange)
-
   // Subscribe to row-level item changes so agent/other-user edits appear
   // without full-list refetches that can clobber local optimistic UI.
   useSpaceItemsRealtime(activeSpaceId, applyRealtimeItemChange)
-
   useSpaceUrlViewSync()
 
   const patchSchema = patchActiveSpaceSchema as (s: SpaceSchema | Partial<SpaceSchema>) => void
@@ -389,6 +388,7 @@ export function SpaceItemsContainer() {
 
   useSpaceOpenInlineArtifactEvent({
     activeSpaceId,
+    focusTaskCapableViewIfNeeded,
     items,
     urlSpaceItemDeepLinkRef,
     focusTaskCapableViewIfNeeded,

@@ -186,6 +186,81 @@ describe('Mission deliverable repository', () => {
     })
   })
 
+  it('selects the latest matching contract type when concurrent subtasks publish artifacts', async () => {
+    const service = createService()
+    const preferredQuery: any = {
+      select: vi.fn(() => preferredQuery),
+      eq: vi.fn(() => preferredQuery),
+      contains: vi.fn(() => preferredQuery),
+      in: vi.fn(() => preferredQuery),
+      order: vi.fn(async () => ({ data: [], error: null })),
+    }
+    const latestQuery: any = {
+      select: vi.fn(() => latestQuery),
+      eq: vi.fn(() => latestQuery),
+      contains: vi.fn(() => latestQuery),
+      order: vi.fn(() => latestQuery),
+      limit: vi.fn(() => latestQuery),
+      maybeSingle: vi.fn(async () => ({
+        data: {
+          id: 'deliverable-deck',
+          type: 'presentation',
+          source_action: 'create_presentation',
+          metadata: { source: 'agent_tool', entity_id: 'presentation-entity' },
+        },
+        error: null,
+      })),
+    }
+    const matchingQuery: any = {
+      select: vi.fn(() => matchingQuery),
+      eq: vi.fn(() => matchingQuery),
+      contains: vi.fn(() => matchingQuery),
+      order: vi.fn(() => matchingQuery),
+      limit: vi.fn(async () => ({
+        data: [
+          {
+            id: 'deliverable-funnel',
+            type: 'funnel',
+            source_action: 'create_funnel',
+            metadata: {
+              source: 'agent_tool',
+              entity_id: 'funnel-entity',
+              source_action: 'create_funnel',
+            },
+          },
+        ],
+        error: null,
+      })),
+    }
+    let queryCount = 0
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table !== 'mission_deliverables') throw new Error(`Unexpected table ${table}`)
+        queryCount += 1
+        if (queryCount === 1) return preferredQuery
+        if (queryCount === 2) return latestQuery
+        return matchingQuery
+      }),
+    } as any
+
+    const result = await service.verifyOutputContract(
+      supabase,
+      'mission-1',
+      {
+        artifact_kind: 'funnel_artifact',
+        required_action: 'create_funnel',
+        required_artifact_type: 'funnel',
+      },
+      ['funnel-entity'],
+    )
+
+    expect(matchingQuery.eq).toHaveBeenCalledWith('type', 'funnel')
+    expect(result).toMatchObject({
+      ok: true,
+      found_artifact_id: 'deliverable-funnel',
+    })
+  })
+
   it('rejects missing document output contracts with corrective-run recovery', async () => {
     const service = createService()
     const supabase = {

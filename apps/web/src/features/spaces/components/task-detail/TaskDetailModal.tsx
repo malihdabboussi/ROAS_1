@@ -8,7 +8,12 @@ import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePr
 import type { MissionAgent } from '@/lib/agents/mission-agents-api'
 import { fetchCampaignTeam } from '@/lib/campaigns'
 import type { MissionDeliverable } from '@/lib/missions'
+import {
+  resolveSpaceTaskUpdateError,
+  SPACES_ACTIONS_TOAST_ERRORS,
+} from '../../config/spaces-toast-errors.config'
 import { useTaskDetailData } from '../../hooks/useTaskDetailData'
+import { canUpdateLinkedMissionTaskStatus } from '../../lib/linked-mission-task-status'
 import { createSpaceItem, deleteSpaceItem, updateSpaceItem } from '../../services/spaces.service'
 import { useSpacesStore } from '../../store/use-spaces-store'
 import type { SpaceItem } from '../../types'
@@ -55,7 +60,6 @@ export function TaskDetailModal({
   )
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
-
   const {
     subtasks,
     taskDeliverables,
@@ -65,10 +69,8 @@ export function TaskDetailModal({
     setSubtasks,
     appendActivityRow,
   } = useTaskDetailData(item)
-
   const [previewDeliverable, setPreviewDeliverable] = useState<MissionDeliverable | null>(null)
   const [missionAgents, setMissionAgents] = useState<MissionAgent[]>([])
-
   useEffect(() => {
     if (!campaignId) {
       setMissionAgents([])
@@ -78,16 +80,13 @@ export function TaskDetailModal({
       .then((team) => setMissionAgents(campaignTeamToMissionAgents(team)))
       .catch(() => setMissionAgents([]))
   }, [campaignId])
-
   useEffect(() => {
     setPortalTarget(document.body)
   }, [])
-
   useEffect(() => {
     setItem(initialItem)
     setTitle(initialItem.title)
   }, [initialItem])
-
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
@@ -105,7 +104,6 @@ export function TaskDetailModal({
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [onClose, shareOpen, sendToAgentOpen])
-
   const storeUpdateItem = useSpaceItemUpdate()
   const pushToAgent = useSpacesStore((s) => s.pushToAgent)
   const openConversationInSpaceChat = useSpacesStore((s) => s.openConversationInSpaceChat)
@@ -115,7 +113,6 @@ export function TaskDetailModal({
     (s) => s.spaces.find((sp) => sp.id === item.space_id)?.title ?? null,
   )
   const viewName = activeView.name ?? null
-
   const handleOpenTaskById = useCallback(
     (taskId: string) => {
       if (!onOpenTaskByItem) return
@@ -128,7 +125,6 @@ export function TaskDetailModal({
     },
     [storeItems, onOpenTaskByItem],
   )
-
   const handleOpenConversationById = useCallback(
     (conversationId: string) => {
       if (onOpenConversationById) {
@@ -141,7 +137,6 @@ export function TaskDetailModal({
     },
     [onOpenConversationById, openConversationInSpaceChat, setChatCollapsed, onClose],
   )
-
   const handleUpdateField = useCallback(
     async (patch: Partial<SpaceItem>) => {
       const previous = item
@@ -151,18 +146,28 @@ export function TaskDetailModal({
         setItem({ ...item, ...patch } as SpaceItem)
       }
       try {
+        const canUpdate =
+          !patch.status ||
+          (await canUpdateLinkedMissionTaskStatus(item, patch.status, () =>
+            toast.message(SPACES_ACTIONS_TOAST_ERRORS.LINKED_AGENT_STEP_STATUS_MANAGED.userMessage),
+          ))
+        if (!canUpdate) return
         await storeUpdateItem(item.id, patch)
         const fresh = useSpacesStore.getState().items.find((row) => row.id === item.id)
         if (fresh) setItem(fresh)
         else setItem((current) => ({ ...current, ...patch }) as SpaceItem)
       } catch {
         setItem(previous)
-        toast.error('Failed to update task')
+        toast.error(
+          resolveSpaceTaskUpdateError(
+            Boolean(item.linked_mission_subtask_id),
+            patch.status === 'done',
+          ),
+        )
       }
     },
     [item, storeUpdateItem],
   )
-
   const handleTitleBlur = useCallback(() => {
     const trimmed = title.trim()
     if (!trimmed) {
@@ -173,7 +178,6 @@ export function TaskDetailModal({
       void handleUpdateField({ title: trimmed })
     }
   }, [title, item.title, handleUpdateField])
-
   const handleDescriptionChange = useCallback(
     (description: string | null) => {
       void handleUpdateField({ description })

@@ -144,3 +144,14 @@ export function adContract(
     expected: { title },
   }
 }
+
+export function imageContract(): NonNullable<
+  MissionPlaybookPlanResult['subtasks'][number]['outputContract']
+> {
+  return {
+    artifact_kind: 'media_artifact',
+    required_action: 'generate_image',
+    required_artifact_type: 'image',
+    expected: { source: WEBINAR_FLOW_DOCS.imageBriefs },
+  }
+}

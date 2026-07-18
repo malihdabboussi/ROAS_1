@@ -16,6 +16,12 @@ description: Runs POST-CALL, immediately after auto-skill-2-roas-strategy-adjust
 **What this is:** the consolidation + recommendation step. Skills 1 and 2 produce hypothesis and truth; this merges them, adds the creative layer, and hands the strategist ONE thing to approve.
 **What this is not:** production. No finished ad sets, no page copy, no email sequences, no task tree — those come after approval (auto-skill-4 and the production skills).
 
+## MASTER WRITING STANDARD
+
+Load `dylans-super-voice` and confirm it loaded before writing THE PLAN, starter copy, client approval message, client update, or recap. It is the only voice authority. Do not load `human-written-copy` or `dylans-voice`. Client samples and Brain context may add verified facts, vocabulary, and subject-matter texture, but they do not replace or override Dylan Super Voice.
+
+Use the surface mode that matches the output: Long-Form Copy for marketing copy, Professional Message for client messages, and Operator Voice for internal team updates. Before saving, run the complete Dylan Super Voice checklist and search every shipping line for the literal `—` character. If the skill is unavailable, stop and report the missing skill instead of approximating the voice.
+
 ---
 
 ## THE WORKFLOW
@@ -70,7 +76,7 @@ Send to the strategist. They review everything in one sitting — plan, angles, 
 - **Reference first.** Before writing the recommended approach, name the closest past winning campaign (same format/type) and model its structure. The winning move is usually remembering the right reference, not inventing.
 - **Render, don't describe.** Every recommendation appears as the finished artifact — the named stack, the written anchor math, the drafted guarantee. "Name the sessions as components" is an instruction; the named components are the deliverable. Missing inputs get drafted anyway and marked [DRAFT — confirm].
 - **Write for the person who wasn't on the call.** Every fact expands to standalone sense ("Group discount: buy 5 tickets together, get 10% off — existing sales-team lever," never "Group 5+ = 10%"). No internal scaffolding labels (MENU 1, item 2b) in anything the reader sees.
-- **All narrative prose runs through the dylans-super-voice / human-copy standard.** If it reads like a database export or an AI summary, rewrite it.
+- **All narrative prose runs through Dylan Super Voice exclusively.** Keep `dylans-super-voice` loaded, do not combine it with either legacy voice skill, and rewrite anything that reads like a database export or AI summary.
 - **One control style: checkboxes.** Every reviewable item — angles, offer elements, bonuses, scarcity options — gets a simple ✓ checkbox + a shared notes field per section. Copy options (headlines, leads, titles) are pick-one groups. No keep/kill/edit buttons, no internal labels (MENU 1, item 2b). Locked facts get no controls at all.
 - **One doc to rule the account.** Handoffs, new team members, founder drop-ins: they read THE PLAN, nothing else.
 - **One checkpoint.** The strategist approves here, once, with everything in front of them. Downstream skills never wait on another strategist gate.

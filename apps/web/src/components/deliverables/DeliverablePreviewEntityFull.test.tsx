@@ -1,15 +1,22 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
 import { EntityFullPreview, FunnelFullPreview } from './DeliverablePreviewEntityFull'
 
 const previewMocks = vi.hoisted(() => ({
+  fetchFunnelPageBundle: vi.fn(),
   fetchFunnelWithPages: vi.fn(),
   sandpackRenderCount: 0,
 }))
 
 vi.mock('@/lib/artifacts', () => ({
+  fetchFunnelPageBundle: previewMocks.fetchFunnelPageBundle,
   fetchFunnelWithPages: previewMocks.fetchFunnelWithPages,
+}))
+
+vi.mock('@/features/studio/components/preview/FunnelHtmlPreview', () => ({
+  FunnelHtmlPreview: ({ bundle }: { bundle: { page: { id: string } } }) => (
+    <div data-testid="funnel-html-preview">{bundle.page.id}</div>
+  ),
 }))
 
 vi.mock('@/components/deliverables/StandaloneEmailDeliverablePreview', () => ({
@@ -19,7 +26,11 @@ vi.mock('@/components/deliverables/StandaloneEmailDeliverablePreview', () => ({
 }))
 
 vi.mock('@/features/studio/components/preview/AdPreview', () => ({
-  AdPreview: ({ adId }: { adId: string }) => <div data-testid="ad-preview">{adId}</div>,
+  AdPreview: ({ adId, hideToolbar }: { adId: string; hideToolbar?: boolean }) => (
+    <div data-testid="ad-preview" data-hide-toolbar={hideToolbar ? 'true' : 'false'}>
+      {adId}
+    </div>
+  ),
 }))
 
 vi.mock('@/features/studio/components/preview/AvatarPreview', () => ({
@@ -97,8 +108,54 @@ function renderFunnelPreview() {
 
 describe('DeliverablePreviewEntityFull', () => {
   beforeEach(() => {
+    previewMocks.fetchFunnelPageBundle.mockReset()
     previewMocks.fetchFunnelWithPages.mockReset()
     previewMocks.sandpackRenderCount = 0
+  })
+
+  it('loads html bundle pages and lets the reviewer move between funnel pages', async () => {
+    previewMocks.fetchFunnelWithPages.mockResolvedValue({
+      id: 'funnel-1',
+      pages: [
+        {
+          id: 'page-1',
+          name: 'Opt-in',
+          source_mode: 'html_bundle',
+          generated_html: null,
+          generated_css: null,
+          order_index: 1,
+        },
+        {
+          id: 'page-2',
+          name: 'Confirmation',
+          source_mode: 'html_bundle',
+          generated_html: null,
+          generated_css: null,
+          order_index: 2,
+        },
+      ],
+    })
+    previewMocks.fetchFunnelPageBundle.mockImplementation(
+      async (_funnelId: string, pageId: string) => ({
+        page: { id: pageId, funnel_id: 'funnel-1', name: pageId },
+        files: [],
+        shared_files: [],
+        assets: [],
+        entry_file: 'index.html',
+        source_mode: 'html_bundle',
+        has_entry: true,
+      }),
+    )
+
+    render(<FunnelFullPreview funnelId="funnel-1" />)
+
+    await waitFor(() =>
+      expect(screen.getByTestId('funnel-html-preview').textContent).toBe('page-1'),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmation' }))
+    await waitFor(() =>
+      expect(screen.getByTestId('funnel-html-preview').textContent).toBe('page-2'),
+    )
   })
 
   afterEach(() => {
@@ -150,6 +207,7 @@ describe('DeliverablePreviewEntityFull', () => {
   it('routes entity types to the existing preview components', () => {
     const { rerender } = render(<EntityFullPreview deliverableType="ad" entityId="ad-1" />)
     expect(screen.getByTestId('ad-preview').textContent).toBe('ad-1')
+    expect(screen.getByTestId('ad-preview').dataset.hideToolbar).toBe('false')
 
     rerender(<EntityFullPreview deliverableType="email" entityId="email-1" />)
     expect(screen.getByTestId('email-preview').textContent).toBe('email-1')

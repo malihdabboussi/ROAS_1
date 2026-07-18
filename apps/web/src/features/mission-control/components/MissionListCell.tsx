@@ -2,7 +2,11 @@ import { ChevronRight, Clock, GitBranch, RefreshCw, RotateCcw } from 'lucide-rea
 import { toast } from 'sonner'
 import { SelectCell } from '@/components/ui/forms/SelectCell'
 import { formatWebinarSubtaskTitle } from '@/lib/missions'
-import type { MissionColumnId, MissionsConfig, SubtasksDisplayMode } from '@/lib/spaces/space-schema-types'
+import type {
+  MissionColumnId,
+  MissionsConfig,
+  SubtasksDisplayMode,
+} from '@/lib/spaces/space-schema-types'
 import { cn } from '@/lib/utils/cn'
 import { updateMission } from '../services/missions.service'
 import type {
@@ -23,8 +27,8 @@ import {
   SUBTASK_STATUS_LABEL,
   SUBTASK_STATUS_STYLE,
 } from './mission-list-config'
-import { AgentCell, AgentsStackCell } from './MissionListAgents'
 import { MissionDeliverableCell } from './MissionDeliverableCell'
+import { AgentCell, AgentsStackCell } from './MissionListAgents'
 import { MissionListProgressCell } from './MissionListProgressCell'
 
 export function MissionTitleText({ text }: { text: string }) {
@@ -43,6 +47,7 @@ interface MissionListCellProps {
   agents: MissionAgent[]
   expandedSubtaskMissionIds?: Set<string>
   onToggleSubtaskExpand?: (missionId: string) => void
+  loadedSubtaskCount?: number
   subtasksDisplayMode?: SubtasksDisplayMode
   progressShowNumber: boolean
   progressBarFill: string | null
@@ -63,6 +68,7 @@ export function MissionListCell({
   agents,
   expandedSubtaskMissionIds,
   onToggleSubtaskExpand,
+  loadedSubtaskCount,
   subtasksDisplayMode,
   progressShowNumber,
   progressBarFill,
@@ -74,7 +80,7 @@ export function MissionListCell({
   onRetry,
   onChanged,
 }: MissionListCellProps) {
-  const stTotal = mission.subtask_total ?? 0
+  const stTotal = Math.max(mission.subtask_total ?? 0, loadedSubtaskCount ?? 0)
   const subExpanded = expandedSubtaskMissionIds?.has(mission.id) ?? false
   const reserveChevronSlot = Boolean(onToggleSubtaskExpand) && subtasksDisplayMode !== 'separate'
   const showSubChevron = reserveChevronSlot && stTotal > 0
@@ -286,7 +292,9 @@ export function MissionListSubtaskCell({
       const cls = SUBTASK_STATUS_STYLE[subtask.status] ?? 'bg-zinc-500/15 text-zinc-400'
       const label = SUBTASK_STATUS_LABEL[subtask.status] ?? subtask.status
       return (
-        <span className={`typo-caption inline-block whitespace-nowrap rounded-full px-2 py-0.5 ${cls}`}>
+        <span
+          className={`typo-caption inline-block whitespace-nowrap rounded-full px-2 py-0.5 ${cls}`}
+        >
           {label}
         </span>
       )
