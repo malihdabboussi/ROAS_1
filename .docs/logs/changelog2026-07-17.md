@@ -348,3 +348,10 @@ What: Made mission output-contract fallback verification select recent tool-auth
 Why: Concurrent funnel and presentation subtasks finished together, causing the funnel verifier to inspect the newer deck and falsely report `Found presentation deliverable, expected funnel`.
 Impact: Parallel artifact subtasks verify their own output class and no longer trigger corrective retry loops after their artifacts were already created successfully.
 Files: `mission-deliverables.repository.ts`, `mission-deliverable-fallback.test.ts`, `documentation/features/missions.md`
+
+## [2026-07-17 21:44] - [FIX]
+
+What: Restored production `presentation_files` and `presentation_assets` storage with current organization campaign access policies, realtime registration, and a PostgREST schema reload.
+Why: The presentation row and deliverable existed, but the deck builder could not save or verify its editable HTML bundle because both child tables were absent.
+Impact: New and retried presentation work can persist native HTML/CSS bundles without falling back to legacy generated HTML or reporting a delivery failure after creation.
+Files: `20260718030400_repair_presentation_bundle_schema.sql`, `documentation/features/missions.md`
