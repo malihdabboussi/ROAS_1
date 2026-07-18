@@ -31,7 +31,7 @@ interface RestoreHistoryScope extends HistoryScope {
   changeSetId: string
 }
 
-interface RestorableChangeSet {
+export interface RestorableChangeSet {
   id: string
   status: 'applied' | 'undone'
   source: FunnelChangeSource
