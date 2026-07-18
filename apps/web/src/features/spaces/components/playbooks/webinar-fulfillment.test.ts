@@ -7,7 +7,6 @@ import {
 describe('buildWebinarFulfillmentMissionPayload', () => {
   it('embeds playbook_id and kickoff on mission input', () => {
     const payload = buildWebinarFulfillmentMissionPayload({
-      start_at: 'post_call',
       client_context: 'Impact webinar',
       transcript_url: 'https://example.com/t',
       drive_links: '',
@@ -16,11 +15,11 @@ describe('buildWebinarFulfillmentMissionPayload', () => {
     expect(payload.title).toBe('Webinar Fulfillment')
     expect(payload.input.playbook_id).toBe(WEBINAR_FULFILLMENT_PLAYBOOK_ID)
     expect(payload.input.playbook_kickoff).toMatchObject({
-      start_at: 'post_call',
       client_context: 'Impact webinar',
       transcript_url: 'https://example.com/t',
       notes: 'Focus offer',
     })
-    expect(payload.brief).toContain('Start at: post_call')
+    expect(payload.input.playbook_kickoff).not.toHaveProperty('start_at')
+    expect(payload.brief).not.toContain('Start at:')
   })
 })

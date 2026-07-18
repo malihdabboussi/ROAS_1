@@ -1,7 +1,4 @@
-export type MissionPlaybookStartAt = 'pre_call' | 'post_call' | 'launch_brief'
-
 export type MissionPlaybookKickoff = {
-  start_at?: MissionPlaybookStartAt | string
   notes?: string
   transcript_url?: string
   drive_links?: string
