@@ -60,3 +60,10 @@ What: Removed duplicate `resolveSuggestedConversationTitle` import in SpaceVibey
 Why: Webpack failed web production compile with already-declared identifier.
 Impact: Unblocks `roas-web` build.
 Files: `SpaceVibeyChatPanel.tsx`
+
+## [2026-07-18 08:05] - [FIX]
+
+What: Removed duplicate `resolveTaskCapableViewId` import in SpaceItemsContainer.
+Why: Webpack failed `roas-web` with already-declared identifier after merge.
+Impact: Unblocks web production build; api/funnels already READY.
+Files: `SpaceItemsContainer.tsx`
