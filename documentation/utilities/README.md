@@ -13,12 +13,14 @@
 | `global-artifacts-api.ts`    | Account-wide artifact aggregation and shared viewer normalization        | `documentation/utilities/global-artifacts-api.md`       |
 | `open-in-new-tab.ts`         | Internal new-tab navigation with active org URL context                  | `documentation/utilities/open-in-new-tab.md`            |
 | `project-session-key.ts`     | Project-bound runtime session key derivation                             | `documentation/utilities/project-session-key.md`        |
+| `presentation-slide-count`   | Counts HTML-bundle slides for lightweight presentation metadata          | `documentation/utilities/presentation-slide-count.md`   |
 | `reporting date ranges`      | Timezone-safe local calendar boundaries for reporting presets            | `documentation/utilities/reporting-date-ranges.md`      |
 | `space-item-query.util.ts`   | Shared filtered `space_items` list query helpers with My Tasks filtering | `documentation/utilities/space-item-query-util.md`      |
 | `space-doc-export.ts`        | Shared native Space Doc HTML and Google export metadata helpers          | `documentation/utilities/space-doc-export.md`           |
 
 ## Recently Added
 
+- 2026-07-18: `presentation-slide-count` for HTML-bundle presentation metadata
 - 2026-07-17: `global-artifacts-api.ts` complete account-wide artifact aggregation and source filters
 - 2026-07-17: `canva-design-import` shared DOCX, PPTX, and PDF Canva handoff
 - 2026-07-17: `auth/access-routing.ts` safe auth destinations and callback query merging

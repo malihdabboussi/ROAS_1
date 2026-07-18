@@ -189,6 +189,7 @@ describe('ArtifactPresentationsService', () => {
           source_mode: 'html_bundle',
           entry_file: 'index.html',
           html_runtime_version: 1,
+          slide_count: 0,
         },
       }),
     })
@@ -205,6 +206,56 @@ describe('ArtifactPresentationsService', () => {
         }),
       ],
     })
+  })
+
+  it('stores the HTML slide count and removes the shell if bundle persistence fails', async () => {
+    const { client, records } = makeQueryClient((record) => {
+      if (record.table === 'presentations' && record.operation === 'insert') {
+        return {
+          data: {
+            id: 'presentation-1',
+            user_id: 'user-1',
+            org_id: null,
+            campaign_id: 'campaign-1',
+            name: 'Launch Deck',
+          },
+          error: null,
+        }
+      }
+      if (record.table === 'presentation_files' && record.operation === 'upsert') {
+        return { data: null, error: { message: 'bundle write failed' } }
+      }
+      if (record.table === 'presentations' && record.operation === 'delete') {
+        return { data: null, error: null }
+      }
+      return { data: null, error: null }
+    })
+    const handlers = new ArtifactPresentationsService().getHandlers(makeTarget(client))
+
+    await expect(
+      handlers.create_presentation(
+        {
+          name: 'Launch Deck',
+          files: [
+            {
+              path: 'index.html',
+              content:
+                '<!doctype html><html><body><main class="deck"><section class="slide"></section><section class="slide"></section></main></body></html>',
+            },
+          ],
+        },
+        'session-1',
+      ),
+    ).rejects.toMatchObject({ message: 'bundle write failed' })
+
+    expect(records.find((record) => record.table === 'presentations')).toMatchObject({
+      payload: expect.objectContaining({
+        metadata: expect.objectContaining({ slide_count: 2 }),
+      }),
+    })
+    expect(
+      records.find((record) => record.table === 'presentations' && record.operation === 'delete'),
+    ).toMatchObject({ filters: { id: 'presentation-1', user_id: 'user-1' } })
   })
 
   it('rejects a full HTML bundle without index.html before creating a presentation', async () => {
@@ -319,7 +370,9 @@ describe('ArtifactPresentationsService', () => {
       error: expect.stringMatching(/BUNDLE_INVALID.*NOT saved.*styles\.css/i),
     })
     expect(
-      records.find((record) => record.table === 'presentation_files' && record.operation === 'upsert'),
+      records.find(
+        (record) => record.table === 'presentation_files' && record.operation === 'upsert',
+      ),
     ).toBeUndefined()
   })
 
@@ -365,7 +418,11 @@ describe('ArtifactPresentationsService', () => {
       success: true,
       file: { presentation_id: 'presentation-1', path: 'index.html', role: 'entry' },
     })
-    expect(records.find((record) => record.table === 'presentation_files' && record.operation === 'upsert')).toMatchObject({
+    expect(
+      records.find(
+        (record) => record.table === 'presentation_files' && record.operation === 'upsert',
+      ),
+    ).toMatchObject({
       payload: [
         expect.objectContaining({
           presentation_id: 'presentation-1',

@@ -14,6 +14,16 @@ Build one native editable presentation titled `Webinar Deck Bones`. This is the 
 - Real host proof, offer details, brand direction, and campaign assets
 - Verified client voice plus `dylans-super-voice` for slide language
 
+## Load the campaign Theme first
+
+Call `list_themes`, then `get_theme` for the campaign's active Theme before composing slides. The Theme is the saved brand guide: use its colors, fonts, logo, image direction, brand identity, voice, values, and approved campaign media instead of rebuilding a mini brand guide from memory. Pass its `theme_id` to `create_presentation`, then confirm the saved presentation returns that same `theme_id` so reviewers can verify the source.
+
+If a Theme field is marked `not found` in the Market Research Brand Evidence Ledger, keep that element neutral or bracket it for review. Do not invent a logo, font, color, headshot, or social proof asset.
+
+**Example — complete Theme:** Use the saved yellow/black palette, selected logo asset, heading/body fonts, and approved headshots throughout the deck; attach referenced media to the presentation bundle.
+
+**Example — incomplete Theme:** If the Theme has confirmed colors but no logo, use the confirmed palette and a text wordmark placeholder labeled `[LOGO NOT FOUND]` rather than creating a fake logo.
+
 ## Required 10-20 slide bones
 
 1. Title slide using the approved title verbatim
@@ -38,7 +48,7 @@ Combine or expand these beats as needed, but stay between 10 and 20 slides. The 
 
 - Use the environment's native presentation actions and register the artifact in the Space Presentations view.
 - Link the presentation to the owning mission subtask.
-- Apply one coherent brand and slide-type system across the deck.
+- Apply the active campaign Theme as one coherent brand and slide-type system across the deck.
 - Keep slides visually led and concise. Speaker meaning can live in notes.
 - Match the approved title, promise, teaching bullets, offer, and CTA. Do not rewrite locked copy casually.
 - Use real proof, price, guarantee, and scarcity. Bracket unknowns instead of inventing them.
@@ -47,4 +57,4 @@ Combine or expand these beats as needed, but stay between 10 and 20 slides. The 
 
 ## Done when
 
-`Webinar Deck Bones` exists as a native editable 10-20 slide presentation, the complete offer stack is present, every unknown is visibly bracketed, and the mission subtask links to it.
+`Webinar Deck Bones` exists as a native editable 10-20 slide presentation, its `theme_id` matches the active campaign Theme, the complete offer stack is present, every unknown is visibly bracketed, and the mission subtask links to it.

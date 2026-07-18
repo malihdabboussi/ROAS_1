@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { countPresentationSlides } from '@vibey/api-shared'
 import { ArtifactPresentationsRepository } from '../repositories/artifact-presentations.repository'
 import {
   applyUniqueCandidateEdit,
@@ -109,14 +110,24 @@ export class ArtifactPresentationBundleService {
           typeof input.role === 'string' ? input.role : path === 'index.html' ? 'entry' : 'source',
       },
     ])
+    const currentMetadata =
+      resolved.presentation.metadata && typeof resolved.presentation.metadata === 'object'
+        ? (resolved.presentation.metadata as Record<string, unknown>)
+        : {}
+    const entryFile =
+      typeof currentMetadata.entry_file === 'string' && currentMetadata.entry_file.trim()
+        ? currentMetadata.entry_file
+        : 'index.html'
     await this.repository.updatePresentationFields(resolved.supabase, {
       presentationId: resolved.presentationId,
       updates: {
         generated_html: null,
         metadata: {
+          ...currentMetadata,
           source_mode: 'html_bundle',
-          entry_file: path === 'index.html' ? path : 'index.html',
+          entry_file: entryFile,
           html_runtime_version: 1,
+          ...(path === entryFile ? { slide_count: countPresentationSlides(content) } : {}),
         },
       },
     })

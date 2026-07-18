@@ -1,6 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
 import { PresentationToolbar } from './PresentationToolbar'
 
 const backendMocks = vi.hoisted(() => ({
@@ -146,5 +145,27 @@ describe('PresentationToolbar', () => {
     expect(screen.getByTestId('presentation-menu')).toBeTruthy()
     expect(childRenderCounts.menu).toBe(1)
     expect(renderCount).toBeLessThan(30)
+  })
+
+  it('makes the full editor the primary action in compact preview mode', () => {
+    const onOpenFullView = vi.fn()
+
+    render(
+      <PresentationToolbar
+        presentationId="presentation-1"
+        name="Launch Deck"
+        status="draft"
+        fileUrl={null}
+        generatedHtml={null}
+        publishedUrl={null}
+        onStatusChange={vi.fn()}
+        viewport="desktop"
+        onViewportChange={vi.fn()}
+        onOpenFullView={onOpenFullView}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit presentation' }))
+    expect(onOpenFullView).toHaveBeenCalledTimes(1)
   })
 })

@@ -94,6 +94,7 @@ describe('ArtifactsService', () => {
       expect(sb.presentations[0]?.metadata).toMatchObject({
         source_mode: 'html_bundle',
         entry_file: 'index.html',
+        slide_count: 0,
       })
       expect(sb.files).toHaveLength(1)
       expect(sb.files[0]?.path).toBe('index.html')
@@ -103,7 +104,8 @@ describe('ArtifactsService', () => {
 
     it('writes uploaded HTML as the initial entry file', async () => {
       const sb = createPresentationCreateSupabase()
-      const html = '<!doctype html><html><body><section>Uploaded</section></body></html>'
+      const html =
+        '<!doctype html><html><body><section class="slide">One</section><section class="slide">Two</section></body></html>'
 
       await service.createPresentation(
         sb as any,
@@ -121,11 +123,39 @@ describe('ArtifactsService', () => {
       expect(sb.presentations[0]?.metadata).toMatchObject({
         source_mode: 'html_bundle',
         entry_file: 'index.html',
+        slide_count: 2,
       })
       expect(sb.files).toHaveLength(1)
       expect(sb.files[0]?.path).toBe('index.html')
       expect(sb.files[0]?.content).toBe(html)
       expect(sb.files[0]?.mime_type).toBe('text/html')
+    })
+  })
+
+  describe('listPresentations', () => {
+    it('uses persisted HTML bundle metadata for summary slide counts', async () => {
+      const sb = createMockSupabase({
+        data: [
+          {
+            id: 'presentation-1',
+            name: 'Webinar Deck Bones',
+            metadata: { source_mode: 'html_bundle', slide_count: 15 },
+          },
+        ],
+        error: null,
+      })
+
+      const result = await service.listPresentations(sb as any, 'campaign-1', undefined, {
+        summary: true,
+      })
+
+      expect(result).toEqual([
+        expect.objectContaining({
+          id: 'presentation-1',
+          slides: [],
+          slides_count: 15,
+        }),
+      ])
     })
   })
 

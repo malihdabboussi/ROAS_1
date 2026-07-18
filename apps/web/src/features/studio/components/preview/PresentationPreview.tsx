@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { AlertCircle, Download, Loader2, MoreVertical } from 'lucide-react'
+import { PRESENTATION_MESSAGES } from '@/features/studio/config/presentation.messages.config'
 import { STUDIO_INLINE_ERRORS } from '@/features/studio/config/studio-inline-errors.config'
 import type { PresentationResolvedRenderTheme } from '../../lib/presentation-render-theme.util'
 import { resolvePresentationRenderTheme } from '../../lib/presentation-render-theme.util'
@@ -19,8 +20,8 @@ import type {
 } from '../../types'
 import { PresentationHtmlPreview } from './PresentationHtmlPreview'
 import { SandpackPreview } from './SandpackPreview'
-import { StudioPresentationMenuDropdown } from './StudioPresentationMenuDropdown'
 import type { ViewportSize } from './SandpackPreview'
+import { StudioPresentationMenuDropdown } from './StudioPresentationMenuDropdown'
 
 interface PresentationPreviewProps {
   presentationId: string
@@ -261,8 +262,9 @@ export function PresentationPreview({
         return (
           <div className="flex h-full flex-col items-center justify-center gap-2">
             <AlertCircle className="text-[var(--color-muted-foreground)]/40 h-8 w-8" />
-            <p className="text-sm text-[var(--color-muted-foreground)]">
-              No presentation content available
+            <p className="body-2 text-foreground">{PRESENTATION_MESSAGES.EMPTY_TITLE}</p>
+            <p className="body-4 text-muted-foreground max-w-md text-center">
+              {PRESENTATION_MESSAGES.EMPTY_BODY}
             </p>
           </div>
         )

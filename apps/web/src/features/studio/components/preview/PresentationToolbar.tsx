@@ -1,8 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { MoreVertical } from 'lucide-react'
+import { Edit3, MoreVertical } from 'lucide-react'
 import { toast } from 'sonner'
+import { PRESENTATION_MESSAGES } from '@/features/studio/config/presentation.messages.config'
 import { STUDIO_INLINE_ERRORS } from '@/features/studio/config/studio-inline-errors.config'
 import type {
   PresentationPreviewOverflowMenuProps,
@@ -285,26 +286,38 @@ export function PresentationToolbar({
               <div className="border-l-glass mx-1 h-4 w-0 shrink-0 self-center" aria-hidden />
             </>
           ) : (
-            <div className="hidden items-center gap-1 md:flex">
-              <PresentationViewportMenu
-                viewport={viewport}
-                onViewportChange={onViewportChange}
-                open={activeToolbarMenu === 'viewport'}
-                onOpenChange={(open) => setToolbarMenu('viewport', open)}
-              />
-              <PresentationDownloadMenu
-                fileUrl={fileUrl}
-                exporting={exporting}
-                copied={copied}
-                open={activeToolbarMenu === 'download'}
-                onOpenChange={(open) => setToolbarMenu('download', open)}
-                onCopyDownloadLink={copyToClipboard}
-                onDownloadHtml={() => void handleDownloadHtml()}
-                onExport={(format) => void handleExport(format)}
-                openingCanva={openingCanva}
-                onOpenCanva={() => void handleOpenCanva()}
-              />
-            </div>
+            <>
+              {onOpenFullView ? (
+                <button
+                  type="button"
+                  onClick={onOpenFullView}
+                  className="button-glass-accent body-4 h-spacing-7 gap-spacing-1 px-spacing-2 inline-flex items-center"
+                >
+                  <Edit3 className="icon-xs" />
+                  <span>{PRESENTATION_MESSAGES.EDIT_PRESENTATION}</span>
+                </button>
+              ) : null}
+              <div className="hidden items-center gap-1 md:flex">
+                <PresentationViewportMenu
+                  viewport={viewport}
+                  onViewportChange={onViewportChange}
+                  open={activeToolbarMenu === 'viewport'}
+                  onOpenChange={(open) => setToolbarMenu('viewport', open)}
+                />
+                <PresentationDownloadMenu
+                  fileUrl={fileUrl}
+                  exporting={exporting}
+                  copied={copied}
+                  open={activeToolbarMenu === 'download'}
+                  onOpenChange={(open) => setToolbarMenu('download', open)}
+                  onCopyDownloadLink={copyToClipboard}
+                  onDownloadHtml={() => void handleDownloadHtml()}
+                  onExport={(format) => void handleExport(format)}
+                  openingCanva={openingCanva}
+                  onOpenCanva={() => void handleOpenCanva()}
+                />
+              </div>
+            </>
           )}
 
           <button

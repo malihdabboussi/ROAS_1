@@ -30,7 +30,12 @@ export function PresentationCardMetaRows({
 }) {
   if (fieldIds.length === 0) return null
 
-  const slideN = presentation.slides_count ?? presentation.slides?.length ?? 0
+  const metadataSlideCount = presentation.metadata?.slide_count
+  const slideN =
+    presentation.slides_count ??
+    (typeof metadataSlideCount === 'number' ? metadataSlideCount : undefined) ??
+    presentation.slides?.length ??
+    0
 
   return (
     <div className="flex min-w-0 flex-col gap-1.5">

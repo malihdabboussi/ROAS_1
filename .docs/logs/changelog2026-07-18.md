@@ -88,3 +88,13 @@ What: Restored the split webinar creative flow in mission-worker — added missi
 Why: Railway `roas-platform` (mission-worker) failed nest build on every tip SHA after the parity ship.
 Impact: Mission-worker builds again; new Spaces get Validate Messaging statics / image briefs / media plan placeholders matching the playbook.
 Files: `webinar-fulfillment.helpers.ts`, `webinar-fulfillment.playbook.ts`, playbook test, `webinar-fulfillment-titles.ts`, `space-template-catalog-agency-client-webinar.ts`
+
+## 2026-07-18 00:08 - [FIX]
+
+What: Made HTML-bundle presentation slide counts durable, rejected legacy presentation payloads, removed failed-create shells transactionally, exposed an explicit presentation editor action, clarified empty-deck states, and required webinar decks to use the active campaign Theme.
+
+Why: Valid webinar decks were displayed as zero slides while failed retries accumulated empty or invalid legacy artifacts, and the compact presentation preview did not make the editing path clear.
+
+Impact: Saved HTML presentations now report their real slide count, incomplete creation attempts clean themselves up, agents can no longer create new React-TSX presentation artifacts through the legacy path, reviewers get direct Edit presentation and Prompt in chat controls, and generated webinar decks inherit verified campaign branding.
+
+Files: `packages/api-shared/src/services/presentation-slide-count.ts`, `apps/agent-api/src/modules/artifacts/`, `apps/api/src/modules/campaigns/services/artifacts-presentation-files.base.ts`, `apps/web/src/features/studio/`, `apps/web/src/features/spaces/components/artifacts/`, `docker/agents/templates/designer/skills/roas-webinar-deck/SKILL.md`, `supabase/migrations/20260718071000_presentation_bundle_slide_count_and_brand_contract.sql`, `scripts/arch/loc-allowlist.json`, presentation and utility documentation.

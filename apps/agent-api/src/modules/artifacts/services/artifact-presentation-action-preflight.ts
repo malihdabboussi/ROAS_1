@@ -1,9 +1,9 @@
+import { normalizeBundleFiles } from '../utils/html-bundle.util'
 import {
   formatPresentationContractIssues,
   validatePresentationFileBeforeSave,
   validatePresentationFilesBeforeSave,
 } from '../utils/presentation-html-contract.util'
-import { normalizeBundleFiles } from '../utils/html-bundle.util'
 import type { ActionPreflightFailure } from './artifact-action-preflight'
 
 export const PRESENTATION_ACTION_PREFLIGHT_OVERRIDES = {
@@ -69,7 +69,9 @@ function validatePresentationFilesPayload(
   }
 
   const entryFile =
-    typeof data.entry_file === 'string' && data.entry_file.trim() ? data.entry_file.trim() : 'index.html'
+    typeof data.entry_file === 'string' && data.entry_file.trim()
+      ? data.entry_file.trim()
+      : 'index.html'
   const report = validatePresentationFilesBeforeSave(files, entryFile)
   if (report.blockingIssues.length === 0) return null
   return presentationFailure(formatPresentationContractIssues(report.blockingIssues))
@@ -90,6 +92,11 @@ function validatePresentationFilePayload(
 export function validateCreatePresentationPreflight(
   data: Record<string, unknown>,
 ): ActionPreflightFailure | null {
+  if (!Object.prototype.hasOwnProperty.call(data, 'files')) {
+    return presentationFailure(
+      'files is required. Create a complete HTML presentation bundle with index.html.',
+    )
+  }
   return validatePresentationFilesPayload(data)
 }
 

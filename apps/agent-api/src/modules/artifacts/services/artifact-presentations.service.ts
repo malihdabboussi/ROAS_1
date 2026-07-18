@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { prepareFunnelPageForWrite } from '@vibey/api-shared'
+import { countPresentationSlides, prepareFunnelPageForWrite } from '@vibey/api-shared'
 import type { FunnelWriteContractResult } from '@vibey/api-shared'
+import { ArtifactPresentationsRepository } from '../repositories/artifact-presentations.repository'
 import {
   buildDeleteConfirmBlock,
   callOrExtracted,
@@ -10,7 +11,6 @@ import {
   formatPresentationContractIssues,
   validatePresentationFilesBeforeSave,
 } from '../utils/presentation-html-contract.util'
-import { ArtifactPresentationsRepository } from '../repositories/artifact-presentations.repository'
 import type { ArtifactActionHandler } from './artifact-action.registry'
 import { ArtifactPresentationBundleService } from './artifact-presentation-bundle.service'
 import { ArtifactPresentationLegacyEditService } from './artifact-presentation-legacy-edit.service'
@@ -214,6 +214,7 @@ export class ArtifactPresentationsService {
       : null
     const orgId = target.resolveOrgId?.(sessionKey) as string | null | undefined
     const spaceId = getActiveSpaceId(input)
+    const entryHtml = files.find((file) => file.path === entryFile)?.content ?? ''
     await target.emitProgress(onProgress, 'Saving your presentation')
     const { data, error } = await this.repository.createPresentation(supabase, {
       user_id: userId,
@@ -231,17 +232,31 @@ export class ArtifactPresentationsService {
               source_mode: 'html_bundle',
               entry_file: entryFile,
               html_runtime_version: 1,
+              slide_count: countPresentationSlides(entryHtml),
             }
           : undefined,
       ...(spaceId ? { space_id: spaceId } : {}),
     })
     if (error) throw error
     if (files.length > 0) {
-      await this.bundleService.writePresentationFileRows(
-        supabase,
-        data as Record<string, unknown>,
-        files,
-      )
+      try {
+        await this.bundleService.writePresentationFileRows(
+          supabase,
+          data as Record<string, unknown>,
+          files,
+        )
+      } catch (error) {
+        const cleanup = await this.repository.deletePresentation(supabase, {
+          presentationId: String(data.id),
+          userId,
+        })
+        if (cleanup.error) {
+          this.logger.error(
+            `Failed to remove incomplete presentation ${String(data.id)}: ${cleanup.error.message}`,
+          )
+        }
+        throw error
+      }
     }
     await ensureSpaceView({
       supabase,
@@ -302,7 +317,7 @@ export class ArtifactPresentationsService {
       await this.repository.findPresentation(supabase, {
         presentationId,
         userId,
-        columns: 'id, generated_html',
+        columns: 'id, generated_html, metadata',
       })
     if (existingError) throw existingError
     if (!existingPresentation) return { success: false, error: 'Presentation not found' }
@@ -329,12 +344,18 @@ export class ArtifactPresentationsService {
 
     const tsxSource = this.getPresentationTsxSource(input)
     if (files.length > 0) {
+      const existingMetadata =
+        existingPresentation.metadata && typeof existingPresentation.metadata === 'object'
+          ? (existingPresentation.metadata as Record<string, unknown>)
+          : {}
+      const entryHtml = files.find((file) => file.path === entryFile)?.content ?? ''
       updates.generated_html = null
       updates.metadata = {
+        ...existingMetadata,
         source_mode: 'html_bundle',
-        entry_file:
-          entryFile,
+        entry_file: entryFile,
         html_runtime_version: 1,
+        slide_count: countPresentationSlides(entryHtml),
       }
     } else if (tsxSource) {
       const pageName = String((input.name as string) ?? 'PresentationPage')
