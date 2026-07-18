@@ -88,10 +88,7 @@ import { CHAT_TOAST_ERRORS } from '@/lib/chat/chat-toast-errors.config'
 import { getLastAssistantMessage, isAssistantTurnComplete } from '@/lib/chat/chat-turn-completion'
 import { filterMessagesByQuery } from '@/lib/chat/conversation-search'
 import { useActiveArtifactSelectionSignal } from '@/lib/chat/use-active-artifact-selection-signal'
-import {
-  resolveSuggestedConversationTitle,
-  resolveSuggestedConversationTitle,
-} from '@/lib/conversations/conversation-title'
+import { resolveSuggestedConversationTitle } from '@/lib/conversations/conversation-title'
 import { useOrgStore } from '@/lib/org/org-context-store'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { cn } from '@/lib/utils/cn'
