@@ -64,8 +64,9 @@ export function MissionsViewEmptyState({
       <div className="space-y-spacing-2">
         <p className="title-h6 text-foreground">Start with the playbook</p>
         <p className="body-3 text-muted-foreground mx-auto max-w-sm">
-          Webinar fulfillment is a guided mission: strategy docs first, then you approve at Gate 1.
-          Freeform Mission is only if you need something outside that path.
+          Webinar fulfillment is a guided mission: Atlas context, gated strategy, one complete Copy
+          Package, Lux production, Blaze media planning, and final production approval. Freeform
+          Mission is only if you need something outside that path.
         </p>
       </div>
       {onStartPlaybook ? (
