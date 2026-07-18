@@ -62,15 +62,16 @@ export function TrainingPanelFathomDialog({
                   <h2 className="title-h6">FATHOM CALLS</h2>
                   <button
                     type="button"
+                    aria-label="Close Fathom calls"
                     onClick={() => onOpenChange(false)}
                     className="btn-icon-bare"
                   >
                     <X className="icon-xs" />
                   </button>
                 </div>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   Select calls to import. Each runs crystallization and memory extraction.
-                </p>
+                </DialogPrimitive.Description>
               </div>
               <div className="scrollbar-thin px-spacing-6 py-spacing-4 space-y-spacing-2 min-h-0 flex-1 overflow-y-auto sm:min-h-[320px]">
                 {loading ? (
@@ -86,6 +87,7 @@ export function TrainingPanelFathomDialog({
                     <div className="flex justify-end">
                       <button
                         type="button"
+                        aria-pressed={allSelected}
                         onClick={onToggleAll}
                         className="body-4 text-muted-foreground hover:text-foreground flex items-center gap-2"
                       >
@@ -103,10 +105,12 @@ export function TrainingPanelFathomDialog({
                       const meetingId = getTrainingPanelMeetingId(meeting)
                       const isSelected = selectedIds.has(meetingId)
                       return (
-                        <div
+                        <button
+                          type="button"
                           key={meetingId}
+                          aria-pressed={isSelected}
                           onClick={() => onToggleSelection(meetingId)}
-                          className={`rounded-spacing-2 px-spacing-3 py-spacing-2 gap-spacing-3 flex cursor-pointer items-center transition-colors ${
+                          className={`rounded-spacing-2 px-spacing-3 py-spacing-2 gap-spacing-3 flex w-full cursor-pointer items-center text-left transition-colors ${
                             isSelected
                               ? 'card-glass-blue'
                               : 'border-border bg-muted/20 hover:bg-muted/30 border'
@@ -127,7 +131,7 @@ export function TrainingPanelFathomDialog({
                               {formatTrainingPanelMeetingTime(meeting.created_at)}
                             </p>
                           </div>
-                        </div>
+                        </button>
                       )
                     })}
                     {nextCursor && (

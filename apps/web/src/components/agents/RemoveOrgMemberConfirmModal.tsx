@@ -27,39 +27,60 @@ export function RemoveOrgMemberConfirmModal({
     if (!open) setConfirmText('')
   }, [open])
 
+  useEffect(() => {
+    if (!open || removing) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose, open, removing])
+
   if (!open || typeof document === 'undefined') return null
 
   return createPortal(
     <div {...{ [VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD]: '' }}>
-      <div className="z-modal-backdrop fixed inset-0 bg-modal-overlay" onClick={onClose} />
+      <div
+        className="z-modal-backdrop bg-modal-overlay fixed inset-0"
+        onClick={removing ? undefined : onClose}
+      />
       <div className="z-modal-content fixed inset-0 flex items-center justify-center overflow-hidden p-2 sm:p-4 md:p-6">
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="remove-member-title"
+          aria-describedby="remove-member-description"
           className="surface-card wizard-container-border rounded-spacing-4 relative flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
         >
           <button
             type="button"
             onClick={onClose}
             disabled={removing}
             className="btn-icon-bare btn-close-absolute"
+            aria-label="Close remove member dialog"
           >
-            <span className="sr-only">Close</span>
             <X className="h-4 w-4" />
           </button>
           <div className="px-spacing-6 pt-spacing-6 pb-spacing-4 flex flex-col items-center text-center">
             <div className="bg-destructive/10 mb-spacing-3 flex h-12 w-12 items-center justify-center rounded-full">
               <AlertCircle className="text-destructive h-6 w-6" />
             </div>
-            <h2 className="title-h6 text-foreground">Remove from organization?</h2>
-            <p className="body-3 text-muted-foreground mt-spacing-2">
+            <h2 id="remove-member-title" className="title-h6 text-foreground">
+              Remove from organization?
+            </h2>
+            <p id="remove-member-description" className="body-3 text-muted-foreground mt-spacing-2">
               {displayName} will lose access to this organization. This cannot be undone.
             </p>
           </div>
           <div className="px-spacing-6 pb-spacing-4 space-y-spacing-2">
-            <label className="body-3 text-foreground block text-left">
+            <label
+              htmlFor="remove-member-confirmation"
+              className="body-3 text-foreground block text-left"
+            >
               Type <strong>{displayName}</strong> to confirm
             </label>
             <input
+              id="remove-member-confirmation"
               type="text"
               className="input-glass w-full"
               value={confirmText}

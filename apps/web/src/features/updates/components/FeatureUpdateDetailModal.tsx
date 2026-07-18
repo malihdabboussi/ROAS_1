@@ -76,7 +76,9 @@ export function FeatureUpdateDetailModal({ open, update, onClose }: FeatureUpdat
 
               <div className="px-spacing-6 pb-spacing-2 pt-spacing-4">
                 <h2 className="title-h6">{update.title}</h2>
-                <p className="body-2 text-muted-foreground mt-spacing-2">{update.description}</p>
+                <DialogPrimitive.Description className="body-2 text-muted-foreground mt-spacing-2">
+                  {update.description}
+                </DialogPrimitive.Description>
               </div>
 
               <div className="border-border px-spacing-6 py-spacing-4 flex items-center justify-between border-t">

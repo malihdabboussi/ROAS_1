@@ -60,7 +60,6 @@ export function TaskDetailModal({
   )
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
-
   const {
     subtasks,
     taskDeliverables,
@@ -70,10 +69,8 @@ export function TaskDetailModal({
     setSubtasks,
     appendActivityRow,
   } = useTaskDetailData(item)
-
   const [previewDeliverable, setPreviewDeliverable] = useState<MissionDeliverable | null>(null)
   const [missionAgents, setMissionAgents] = useState<MissionAgent[]>([])
-
   useEffect(() => {
     if (!campaignId) {
       setMissionAgents([])
@@ -83,16 +80,13 @@ export function TaskDetailModal({
       .then((team) => setMissionAgents(campaignTeamToMissionAgents(team)))
       .catch(() => setMissionAgents([]))
   }, [campaignId])
-
   useEffect(() => {
     setPortalTarget(document.body)
   }, [])
-
   useEffect(() => {
     setItem(initialItem)
     setTitle(initialItem.title)
   }, [initialItem])
-
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
@@ -110,7 +104,6 @@ export function TaskDetailModal({
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [onClose, shareOpen, sendToAgentOpen])
-
   const storeUpdateItem = useSpaceItemUpdate()
   const pushToAgent = useSpacesStore((s) => s.pushToAgent)
   const openConversationInSpaceChat = useSpacesStore((s) => s.openConversationInSpaceChat)
@@ -120,7 +113,6 @@ export function TaskDetailModal({
     (s) => s.spaces.find((sp) => sp.id === item.space_id)?.title ?? null,
   )
   const viewName = activeView.name ?? null
-
   const handleOpenTaskById = useCallback(
     (taskId: string) => {
       if (!onOpenTaskByItem) return
@@ -176,7 +168,6 @@ export function TaskDetailModal({
     },
     [item, storeUpdateItem],
   )
-
   const handleTitleBlur = useCallback(() => {
     const trimmed = title.trim()
     if (!trimmed) {
@@ -187,7 +178,6 @@ export function TaskDetailModal({
       void handleUpdateField({ title: trimmed })
     }
   }, [title, item.title, handleUpdateField])
-
   const handleDescriptionChange = useCallback(
     (description: string | null) => {
       void handleUpdateField({ description })

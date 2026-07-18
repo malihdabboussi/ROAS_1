@@ -89,6 +89,7 @@ describe('chat proxy warm-up stream', () => {
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     delete process.env.AGENT_BACKEND_URL
     delete process.env.NEXT_PUBLIC_SUPABASE_URL
     delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -307,6 +308,7 @@ describe('chat proxy warm-up stream', () => {
   })
 
   it('does not fall back to Fly when shared Railway chat fails before streaming', async () => {
+    vi.useFakeTimers()
     supabaseMocks.single.mockResolvedValue({
       data: {
         fly_machine_id: 'machine-1',
@@ -336,7 +338,9 @@ describe('chat proxy warm-up stream', () => {
     const response = await POST(createChatRequest(), {
       params: Promise.resolve({ path: ['chat'] }),
     })
-    const text = await response.text()
+    const textPromise = response.text()
+    await vi.runAllTimersAsync()
+    const text = await textPromise
 
     expect(text).toContain('"type":"error"')
     expect(text).toContain('"code":"temporary_unavailable"')

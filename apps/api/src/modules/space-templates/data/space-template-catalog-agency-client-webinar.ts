@@ -53,7 +53,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
         body: welcomeDocBody('Agency Client (Webinar)', [
           '**Missions → Start playbook** — run Webinar Fulfillment (context → strategy gates → copy gate → native production)',
           '**Deliverables (Kanban)** — track brief → paid for client-facing packages',
-          '**Docs** — WEB#1–#8 strategy, WEB#5A copy, WEB#5B landing pages, research, editable statics, briefs, and media plan',
+          '**Docs** — WEB#1–#7 strategy, WEB#5A copy, WEB#5B landing pages, research, briefs, and media plan',
           '**Meta Ads / Funnels / Presentations** — native editable production assets',
           '**Calendar** — call dates and launch deadlines',
           '**Channel** — internal client comms',
@@ -141,31 +141,19 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
       },
       {
         kind: 'doc',
-        title: 'WEB#6 — Validate Messaging Statics',
+        title: 'WEB#6 — Image Briefs',
         body: docBody([
-          '## Validate Messaging Statics',
+          '## Image Briefs',
           '',
-          'Filled by Lux with editable light, dark, and bold HTML cuts.',
+          'Filled in Phase C — ImageGen paste-ready prompts.',
           '',
-          '_Placeholder until the Validate Messaging statics subtask saves and generates the visual Doc._',
+          '_Placeholder until the image-brief subtask saves into this doc._',
         ]),
         sort_order: 7,
       },
       {
         kind: 'doc',
-        title: 'WEB#7 — Image Briefs',
-        body: docBody([
-          '## Image Briefs',
-          '',
-          'Filled with ImageGen-ready prompts for photographic and illustrative concepts.',
-          '',
-          '_Placeholder until the image-brief subtask saves into this doc._',
-        ]),
-        sort_order: 8,
-      },
-      {
-        kind: 'doc',
-        title: 'WEB#8 — Media Plan',
+        title: 'WEB#7 — Media Plan',
         body: docBody([
           '## Media Plan',
           '',
@@ -173,7 +161,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
           '',
           '_Placeholder until the media-plan subtask saves into this doc._',
         ]),
-        sort_order: 9,
+        sort_order: 8,
       },
       {
         kind: 'task',
@@ -181,7 +169,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
         status: 'brief',
         description:
           'Open Missions → Playbook (or use Start Webinar Fulfillment on the empty Missions screen) and fill kickoff fields.',
-        sort_order: 10,
+        sort_order: 9,
       },
     ],
     automations: [],

@@ -65,6 +65,8 @@ export function AddPriceModal({
                 <div className="flex items-center justify-between">
                   <h2 className="title-h6">Add Price</h2>
                   <button
+                    type="button"
+                    aria-label="Close add price"
                     onClick={() => {
                       form.resetAddPriceForm()
                       setOpen(false)
@@ -75,17 +77,20 @@ export function AddPriceModal({
                     <X className="icon-xs" />
                   </button>
                 </div>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   Add a price to{' '}
                   {products.find((p) => p.id === addPriceProductId)?.name ?? 'this product'}
-                </p>
+                </DialogPrimitive.Description>
               </div>
               <div className="px-spacing-6 py-spacing-4 space-y-spacing-4 flex-1 overflow-y-auto">
                 <form id="form-add-price" onSubmit={onSubmit} className="space-y-spacing-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={LABEL_CLASS}>Amount *</label>
+                      <label htmlFor="add-price-amount" className={LABEL_CLASS}>
+                        Amount *
+                      </label>
                       <input
+                        id="add-price-amount"
                         value={form.addPriceAmount}
                         onChange={(e) => form.setAddPriceAmount(e.target.value)}
                         placeholder="e.g. 97"
@@ -97,6 +102,7 @@ export function AddPriceModal({
                       />
                     </div>
                     <FormSelectDropdown
+                      id="add-price-currency"
                       label="Currency"
                       value={form.addPriceCurrency}
                       onChange={form.setAddPriceCurrency}
@@ -104,6 +110,7 @@ export function AddPriceModal({
                     />
                   </div>
                   <FormSelectDropdown
+                    id="add-price-billing"
                     label="Billing"
                     value={form.addPriceInterval}
                     onChange={(v) => form.setAddPriceInterval(v as '' | 'month' | 'year' | 'week')}

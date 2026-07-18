@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   Check,
   ChevronDown,
@@ -47,6 +47,7 @@ export function DeliverablePreviewActions({
   onEntityExport,
   onToggleExpanded,
   onClose,
+  documentActionTarget,
 }: {
   deliverable: MissionDeliverable
   mode: 'text' | 'entity'
@@ -60,6 +61,7 @@ export function DeliverablePreviewActions({
   onEntityExport: (format: DeliverableEntityExportFormat) => Promise<void>
   onToggleExpanded: () => void
   onClose: () => void
+  documentActionTarget?: ReactNode
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRootRef = useRef<HTMLDivElement>(null)
@@ -94,6 +96,8 @@ export function DeliverablePreviewActions({
           <span>{openTarget.label}</span>
         </a>
       ) : null}
+
+      {documentActionTarget}
 
       {exportAvailable ? (
         <div ref={menuRootRef} className="relative flex shrink-0 items-stretch">

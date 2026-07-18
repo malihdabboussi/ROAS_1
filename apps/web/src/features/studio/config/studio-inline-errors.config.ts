@@ -32,6 +32,8 @@ export const STUDIO_INLINE_ERRORS = {
   UNPUBLISH_FUNNEL: "Couldn't unpublish funnel. Try again.",
   FUNNEL_UNDO: "Couldn't undo funnel change. Try again.",
   FUNNEL_REDO: "Couldn't redo funnel change. Try again.",
+  FUNNEL_HISTORY_LOAD: "Couldn't load saved versions. Try again.",
+  FUNNEL_HISTORY_RESTORE: "Couldn't restore that version. Try again.",
   PUBLISH_PRESENTATION: "Couldn't publish presentation. Try again.",
   UNPUBLISH_PRESENTATION: "Couldn't unpublish presentation. Try again.",
   SAVE_EMAIL: "Couldn't save email. Try again.",

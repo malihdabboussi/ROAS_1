@@ -1,8 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Download, ExternalLink, FileCode, FileText } from 'lucide-react'
+import { ChevronDown, Download, ExternalLink, FileCode, FileText, Palette } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   SPACES_ACTIONS_TOAST_ERRORS,
@@ -21,6 +22,7 @@ import {
   exportSpaceDocVisualHtml,
   exportSpaceDocVisualPdf,
 } from '../../doc-menu/export-space-doc'
+import { useOpenSpaceDocInCanva } from '../../doc-menu/use-open-space-doc-in-canva'
 
 export function DocEditorExportDropdown({
   title,
@@ -32,7 +34,10 @@ export function DocEditorExportDropdown({
   buttonClassName,
   menuPlacement = 'below',
   showLabel = false,
+  triggerIcon = 'download',
   onGoogleDocCreated,
+  googleActionTarget = null,
+  googleActionOnly = false,
 }: {
   title: string
   getDocBody: () => string
@@ -45,7 +50,10 @@ export function DocEditorExportDropdown({
   menuPlacement?: 'below' | 'left' | 'above'
   /** Tree/header chrome: icon + "Export" label like Settings / Share. */
   showLabel?: boolean
+  triggerIcon?: 'download' | 'chevron'
   onGoogleDocCreated?: (file: GoogleDriveFile) => void | Promise<void>
+  googleActionTarget?: HTMLElement | null
+  googleActionOnly?: boolean
 }) {
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -188,6 +196,14 @@ export function DocEditorExportDropdown({
     }
   }, [availability.hasVisualHtml, exportingVisualPdf, resolvedTitle, visualHtml])
 
+  const { openingCanva, openInCanva } = useOpenSpaceDocInCanva({
+    canExport: availability.canExport,
+    title: resolvedTitle,
+    docBody: getDocBody(),
+    visualHtml,
+    onOpening: () => setOpen(false),
+  })
+
   if (!availability.canExport) return null
 
   const rowCls =
@@ -216,17 +232,28 @@ export function DocEditorExportDropdown({
       style={menuPanelStyle}
       role="menu"
     >
+      <button
+        type="button"
+        onClick={() => void openInCanva()}
+        disabled={openingCanva}
+        className={rowCls}
+      >
+        <Palette className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+        <span>{openingCanva ? 'Opening Canva…' : 'Open in Canva'}</span>
+      </button>
       {availability.canExportDocBody ? (
         <>
-          <button
-            type="button"
-            onClick={() => void openGoogleDoc()}
-            disabled={creatingGoogleDoc}
-            className={rowCls}
-          >
-            <ExternalLink className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-            <span>{creatingGoogleDoc ? 'Creating…' : 'Open in Google Docs'}</span>
-          </button>
+          {!googleActionTarget ? (
+            <button
+              type="button"
+              onClick={() => void openGoogleDoc()}
+              disabled={creatingGoogleDoc}
+              className={rowCls}
+            >
+              <ExternalLink className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+              <span>{creatingGoogleDoc ? 'Creating…' : 'Open in Google Docs'}</span>
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => void exportPdf()}
@@ -301,26 +328,69 @@ export function DocEditorExportDropdown({
       ? createPortal(menuPanel, document.body)
       : menuPanel
 
+  const googleAction =
+    googleActionTarget && availability.canExportDocBody && typeof document !== 'undefined'
+      ? createPortal(
+          <button
+            type="button"
+            onClick={() => void openGoogleDoc()}
+            disabled={creatingGoogleDoc}
+            className="button-glass-neutral body-3 gap-spacing-2 px-spacing-3 py-spacing-2 inline-flex items-center whitespace-nowrap"
+            aria-label={savedGoogleDocHref ? 'Open Google Doc' : 'Export to Google Docs'}
+          >
+            <Image
+              src="/Integrations/GoogleDocs.png"
+              alt=""
+              width={16}
+              height={16}
+              unoptimized
+              className="icon-sm shrink-0 object-contain"
+            />
+            <span>
+              {creatingGoogleDoc
+                ? 'Creating…'
+                : savedGoogleDocHref
+                  ? 'Open Google Doc'
+                  : 'Export to Google Docs'}
+            </span>
+          </button>,
+          googleActionTarget,
+        )
+      : null
+
+  if (googleActionOnly) return googleAction
+
   return (
-    <div ref={rootRef} data-doc-export-menu className={cn('relative z-[280] shrink-0', className)}>
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className={cn(
-          showLabel
-            ? 'flex items-center gap-1 text-[11px] text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--foreground)]'
-            : 'rounded-md p-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]',
-          buttonClassName,
-        )}
-        aria-label="Export document"
-        aria-haspopup="menu"
-        aria-expanded={open}
+    <>
+      {googleAction}
+      <div
+        ref={rootRef}
+        data-doc-export-menu
+        className={cn('relative z-[280] shrink-0', className)}
       >
-        <Download className={cn('shrink-0', showLabel ? 'h-3.5 w-3.5' : 'h-4 w-4')} />
-        {showLabel ? <span>Export</span> : null}
-      </button>
-      {menuPlacement === 'below' ? portaledMenu : menuPanel}
-    </div>
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className={cn(
+            showLabel
+              ? 'flex items-center gap-1 text-[11px] text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--foreground)]'
+              : 'rounded-md p-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]',
+            buttonClassName,
+          )}
+          aria-label="Export document"
+          aria-haspopup="menu"
+          aria-expanded={open}
+        >
+          {triggerIcon === 'chevron' ? (
+            <ChevronDown className="icon-sm shrink-0" />
+          ) : (
+            <Download className={cn('shrink-0', showLabel ? 'h-3.5 w-3.5' : 'h-4 w-4')} />
+          )}
+          {showLabel ? <span>Export</span> : null}
+        </button>
+        {menuPlacement === 'below' ? portaledMenu : menuPanel}
+      </div>
+    </>
   )
 }

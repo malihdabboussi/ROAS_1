@@ -5,6 +5,7 @@ import { EntityArtifactSearchService } from '../services/entity-artifact-search.
 class Query {
   eqCalls: Array<[string, unknown]> = []
   ilikeCalls: Array<[string, unknown]> = []
+  orCalls: string[] = []
 
   constructor(private readonly rows: Array<Record<string, unknown>>) {}
 
@@ -34,7 +35,8 @@ class Query {
     return this
   }
 
-  or() {
+  or(value: string) {
+    this.orCalls.push(value)
     return this
   }
 
@@ -58,16 +60,32 @@ function supabaseWithTables(tables: Record<string, Array<Record<string, unknown>
 }
 
 describe('EntityArtifactSearchService', () => {
-  it('returns no items for blank search without querying', async () => {
-    const { supabase } = supabaseWithTables({})
-    const result = await new EntityArtifactSearchService(new EntityArtifactSearchRepository()).search(
-      supabase as never,
-      '   ',
-      'org-1',
-    )
+  it('lists account artifacts for a blank query so library views are complete', async () => {
+    const { supabase } = supabaseWithTables({
+      presentations: [{ id: 'presentation-1', name: 'Account deck', campaign_id: 'campaign-1' }],
+      funnels: [{ id: 'funnel-1', name: 'Account funnel', campaign_id: 'campaign-1' }],
+    })
+    const result = await new EntityArtifactSearchService(
+      new EntityArtifactSearchRepository(),
+    ).search(supabase as never, '   ', 'user-1', 'org-1')
 
-    expect(result).toEqual({ items: [] })
-    expect(supabase.from).not.toHaveBeenCalled()
+    expect(result.items).toEqual(
+      expect.arrayContaining([
+        {
+          kind: 'presentation',
+          id: 'presentation-1',
+          campaign_id: 'campaign-1',
+          title: 'Account deck',
+        },
+        {
+          kind: 'funnel',
+          id: 'funnel-1',
+          campaign_id: 'campaign-1',
+          title: 'Account funnel',
+        },
+      ]),
+    )
+    expect(supabase.from).toHaveBeenCalledWith('presentations')
   })
 
   it('maps searchable artifacts and applies organization filtering', async () => {
@@ -83,11 +101,9 @@ describe('EntityArtifactSearchService', () => {
       ],
     })
 
-    const result = await new EntityArtifactSearchService(new EntityArtifactSearchRepository()).search(
-      supabase as never,
-      'Launch',
-      'org-1',
-    )
+    const result = await new EntityArtifactSearchService(
+      new EntityArtifactSearchRepository(),
+    ).search(supabase as never, 'Launch', 'user-1', 'org-1')
 
     expect(result.items).toEqual(
       expect.arrayContaining([
@@ -124,6 +140,23 @@ describe('EntityArtifactSearchService', () => {
       ]),
     )
     expect(queries.offers[0]?.ilikeCalls).toContainEqual(['name', '%Launch%'])
-    expect(queries.offers[0]?.eqCalls).toContainEqual(['org_id', 'org-1'])
+    expect(queries.offers[0]?.orCalls).toContain(
+      'org_id.eq.org-1,and(org_id.is.null,user_id.eq.user-1)',
+    )
+  })
+
+  it('includes only the signed-in user personal artifacts outside an organization', async () => {
+    const { supabase, queries } = supabaseWithTables({
+      presentations: [{ id: 'presentation-1', name: 'Legacy deck', campaign_id: 'campaign-1' }],
+    })
+
+    await new EntityArtifactSearchService(new EntityArtifactSearchRepository()).search(
+      supabase as never,
+      '',
+      'user-1',
+      null,
+    )
+
+    expect(queries.presentations[0]?.eqCalls).toContainEqual(['user_id', 'user-1'])
   })
 })

@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import { MissionDetailDesktopShell } from './MissionDetailDesktopShell'
 
 vi.mock('@/components/layout/ResizableDivider', () => ({
@@ -18,11 +18,7 @@ vi.mock('../mission-menu/MissionMenuDropdown', () => ({
   MissionMenuDropdown: () => null,
 }))
 vi.mock('./ActivityTimeline', () => ({ ActivityTimeline: () => null }))
-vi.mock('./DeliverablesCarousel', () => ({
-  DeliverablesCarousel: ({ defaultCollapsed }: { defaultCollapsed?: boolean }) => (
-    <div data-testid="deliverables" data-collapsed={String(defaultCollapsed)} />
-  ),
-}))
+vi.mock('./DeliverablesCarousel', () => ({ DeliverablesCarousel: () => null }))
 vi.mock('./HumanGateReviewPanel', () => ({ HumanGateReviewPanel: () => null }))
 vi.mock('./MissionDetailHeader', () => ({ MissionDetailHeader: () => null }))
 vi.mock('./MissionMetaRow', () => ({ MissionMetaRow: () => null }))
@@ -55,8 +51,6 @@ const baseProps = {
 }
 
 describe('MissionDetailDesktopShell', () => {
-  afterEach(cleanup)
-
   it('hides the mission surface while preserving the deliverable dock', () => {
     const { rerender } = render(<MissionDetailDesktopShell {...baseProps} />)
 
@@ -68,11 +62,5 @@ describe('MissionDetailDesktopShell', () => {
 
     expect(screen.getByTestId('mission-detail-surface').className.split(' ')).toContain('hidden')
     expect(screen.getByTestId('deliverable-dock')).toBeTruthy()
-  })
-
-  it('starts parent mission deliverables collapsed so subtasks retain the panel', () => {
-    render(<MissionDetailDesktopShell {...baseProps} />)
-
-    expect(screen.getByTestId('deliverables').getAttribute('data-collapsed')).toBe('true')
   })
 })

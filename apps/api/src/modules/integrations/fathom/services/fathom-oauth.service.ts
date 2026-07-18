@@ -87,7 +87,11 @@ export class FathomOAuthService {
     }
 
     const existingMeta = await this.getIntegrationMetadata(parsedState.userId)
-    let webhookMeta: { webhook_secret: string; webhook_id: string; triggered_for: string[] }
+    let webhookMeta: {
+      webhook_secret: string
+      webhook_id: string
+      triggered_for: string[]
+    }
     if (typeof existingMeta.webhook_id === 'string' && existingMeta.webhook_id.trim().length > 0) {
       await this.fathom.deleteWebhook(tokens.access_token, existingMeta.webhook_id).catch((err) => {
         const message = err instanceof Error ? err.message : String(err)
@@ -95,15 +99,16 @@ export class FathomOAuthService {
       })
     }
     const destinationUrl = `${this.apiUrl.replace(/\/$/, '')}/api/integrations/fathom/webhook`
+    const triggeredFor = [
+      'my_recordings',
+      'shared_team_recordings',
+      'my_shared_with_team_recordings',
+    ] as const
     const webhook = await this.fathom.createWebhook(tokens.access_token, {
       destinationUrl,
       // Team plans: include shared team recordings so Meetings can label Personal vs Team.
       // my_recordings alone only delivers Dylan-hosted calls.
-      triggeredFor: [
-        'my_recordings',
-        'shared_team_recordings',
-        'my_shared_with_team_recordings',
-      ],
+      triggeredFor: [...triggeredFor],
       includeTranscript: true,
       includeSummary: true,
       includeActionItems: true,
@@ -114,11 +119,7 @@ export class FathomOAuthService {
     webhookMeta = {
       webhook_secret: webhook.secret,
       webhook_id: webhook.id,
-      triggered_for: [
-        'my_recordings',
-        'shared_team_recordings',
-        'my_shared_with_team_recordings',
-      ],
+      triggered_for: [...triggeredFor],
     }
 
     await this.upsertUserIntegration(parsedState.userId, tokens, webhookMeta, existingMeta, {

@@ -115,6 +115,7 @@ export function AddAgentBrainModals() {
                     <h2 className="title-h6">ADD AGENT BRAIN</h2>
                     <button
                       type="button"
+                      aria-label="Close Add Agent Brain"
                       onClick={() => {
                         if (!upgradingAgentKey) setAddBrainModalOpen(false)
                       }}
@@ -123,11 +124,11 @@ export function AddAgentBrainModals() {
                       <X className="icon-xs" />
                     </button>
                   </div>
-                  <p className="body-3 text-muted-foreground mt-spacing-1">
+                  <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                     {isEnterprise
                       ? 'Give your agents their own dedicated brain with specific knowledge. Included in Enterprise.'
                       : 'Give your agents their own dedicated brain with specific knowledge. $10/month per agent.'}
-                  </p>
+                  </DialogPrimitive.Description>
                 </div>
                 <div className="px-spacing-6 py-spacing-4 space-y-spacing-2 flex-1 overflow-y-auto">
                   {agentsWithoutBrain.map((agent) => {
@@ -210,10 +211,10 @@ export function AddAgentBrainModals() {
             </VisuallyHidden.Root>
             <div className="surface-card border-subtle rounded-spacing-3 p-spacing-5 w-full max-w-md border">
               <h3 className="text-foreground title-h6 uppercase">Confirm charge</h3>
-              <p className="body-3 text-muted-foreground mt-spacing-2">
+              <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-2">
                 You will be charged <strong>$10/month</strong> for{' '}
                 {confirmUpgradeAgent?.agentName ?? 'this agent'}&apos;s Agent Brain. Are you sure?
-              </p>
+              </DialogPrimitive.Description>
               <div className="mt-spacing-4 gap-spacing-2 flex justify-end">
                 <button
                   type="button"

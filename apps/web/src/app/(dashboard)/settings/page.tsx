@@ -16,6 +16,7 @@ export default async function SettingsRedirectPage({
     else if (Array.isArray(value) && value[0]) qs.set(key, value[0])
   }
   if (!qs.has('tab')) qs.set('tab', 'manage')
+  qs.set('settings', 'integrations')
   const query = qs.toString()
   redirect(query ? `/home?${query}` : '/home?tab=manage')
 }

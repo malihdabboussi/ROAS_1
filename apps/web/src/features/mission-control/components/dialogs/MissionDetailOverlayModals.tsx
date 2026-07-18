@@ -81,8 +81,6 @@ export function MissionDetailOverlayModals({
           onBack={onClosePreview}
           backLabel="Back to mission"
           presentation="centered"
-          siblingDeliverables={deliverables}
-          onSelectSibling={onSelectPreview}
         />
       )}
 

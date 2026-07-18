@@ -12,8 +12,13 @@ import { MessageBubble } from '@/components/chat/MessageBubbleAdapter'
 import { MessageQueue } from '@/components/chat/MessageQueue'
 import { PlanStickyTracker } from '@/components/chat/PlanStickyTracker'
 import { VoiceApprovalProvider } from '@/components/chat/VoiceApprovalContext'
-import { ConversationShareModal } from '@/components/conversations'
+import {
+  ConversationHeaderTitle,
+  ConversationScopePicker,
+  ConversationShareModal,
+} from '@/components/conversations'
 import { globalChatSeedMatchesPanel } from '@/components/global-chat/lib/global-chat-seed-match'
+import type { GlobalWorkSurface } from '@/components/global-chat/lib/global-chat-storage'
 import {
   GLOBAL_CHAT_AGENT_SWITCH_EVENT,
   GLOBAL_CHAT_SEED_EVENT,
@@ -23,8 +28,6 @@ import {
   type GlobalChatSeedDetail,
   type GlobalChatVoiceStartDetail,
 } from '@/components/global-chat/store/use-global-chat-store'
-import type { GlobalWorkSurface } from '@/components/global-chat/lib/global-chat-storage'
-import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   useBrainLiveSession,
@@ -32,10 +35,6 @@ import {
 } from '@/features/brain/hooks/use-brain-live-session'
 import { RateLimitCard } from '@/features/studio/components/chat/RateLimitCard'
 import { StatusIndicator } from '@/features/studio/components/chat/StatusIndicator'
-import {
-  getLastAssistantMessage,
-  isAssistantTurnComplete,
-} from '@/features/studio/lib/chat-turn-completion'
 import { StreamInterruptedBar } from '@/features/studio/components/chat/StreamInterruptedBar'
 import {
   assignConversationCampaign,
@@ -46,6 +45,7 @@ import {
   duplicateConversation,
   fetchConversations,
   fetchMessages,
+  isStreamActive,
   mergeMessagesPreservingOrderedBlocks,
   needsStreamRecovery,
   readConversationModelSettings,
@@ -57,7 +57,6 @@ import {
   setConversationArchived,
   setConversationPinned,
   shouldSkipStreamRecovery,
-  isStreamActive,
   suggestConversationTitle,
   type ChatModelSettings,
 } from '@/features/studio/services/chat.service'
@@ -86,8 +85,13 @@ import { resolvePinnedAssistantMessageId } from '@/lib/chat/assistant-message-ac
 import type { AttachedArtifact } from '@/lib/chat/attached-artifact'
 import { toastMessageForChatSendError } from '@/lib/chat/chat-stream-errors.config'
 import { CHAT_TOAST_ERRORS } from '@/lib/chat/chat-toast-errors.config'
+import { getLastAssistantMessage, isAssistantTurnComplete } from '@/lib/chat/chat-turn-completion'
 import { filterMessagesByQuery } from '@/lib/chat/conversation-search'
 import { useActiveArtifactSelectionSignal } from '@/lib/chat/use-active-artifact-selection-signal'
+import {
+  resolveSuggestedConversationTitle,
+  resolveSuggestedConversationTitle,
+} from '@/lib/conversations/conversation-title'
 import { useOrgStore } from '@/lib/org/org-context-store'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { cn } from '@/lib/utils/cn'
@@ -123,6 +127,12 @@ import {
   type SpaceChatMode,
 } from './space-vibey-chat-mode-sync'
 import {
+  BOTTOM_SCROLL_THRESHOLD,
+  EMPTY_MESSAGES,
+  EMPTY_QUEUE,
+  VIBEY_ROSTER_FALLBACK,
+} from './space-vibey-chat-panel.constants'
+import {
   buildSpaceChatConversationUrl,
   conversationBelongsToChannel,
   conversationBelongsToSpace,
@@ -133,6 +143,7 @@ import {
   mergeConversationLists,
   readHomeChatSeedForSpace,
   resolveSpaceChatAutoFocusTarget,
+  resolveSpaceChatScope,
 } from './space-vibey-chat-panel.logic'
 import {
   resolveSpaceChatEmptyStateAgent,
@@ -144,7 +155,6 @@ import { SpaceChatSubPanel } from './SpaceChatSubPanel'
 import { SpaceUndoButton } from './SpaceUndoButton'
 import type { SpaceVoiceRunTask } from './SpaceVoiceRunsView'
 import { SpaceVoiceSessionView } from './SpaceVoiceSessionView'
-import { resolveSuggestedConversationTitle } from '@/lib/conversations/conversation-title'
 import { stripLegacySpacesConversationTitle } from './strip-legacy-spaces-conversation-title'
 
 interface SpaceVibeyChatPanelProps {
@@ -169,6 +179,7 @@ interface SpaceVibeyChatPanelProps {
   onCollapseChat?: () => void
   /** Agent picker + history chrome live in the shell Chat sidebar. */
   shellSidebarChrome?: boolean
+  headerLayout?: 'full' | 'compact'
 }
 
 type ChatMode = SpaceChatMode
@@ -182,40 +193,6 @@ type FocusedArtifact = {
   docKind?: string
 }
 
-const EMPTY_MESSAGES: Message[] = []
-const EMPTY_QUEUE: Array<{
-  id: string
-  content: string
-  documents?: DocumentAttachment[]
-  artifacts?: HighlightedArtifact[]
-  model?: string
-}> = []
-const BOTTOM_SCROLL_THRESHOLD = 80
-
-const VIBEY_ROSTER_FALLBACK: TeamRosterEntry = {
-  participant_id: 'agent:vibey',
-  kind: 'agent',
-  org_id: null,
-  user_id: null,
-  agent_key: DEFAULT_SPACE_CHAT_AGENT_KEY,
-  display_name: 'ROAS',
-  avatar_url: null,
-  role_label: null,
-  specialties: [],
-  accepts_assignments: true,
-  delegation_notes: null,
-  timezone: null,
-  working_hours: null,
-  out_of_office_until: null,
-  current_load: 0,
-  is_ready: true,
-  agent_level: null,
-  org_role: null,
-  email: null,
-  created_at: '',
-  updated_at: null,
-}
-
 export function SpaceVibeyChatPanel({
   spaceId,
   chatSurface,
@@ -226,6 +203,7 @@ export function SpaceVibeyChatPanel({
   teamOpsContext,
   onCollapseChat,
   shellSidebarChrome = false,
+  headerLayout = 'compact',
 }: SpaceVibeyChatPanelProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -450,10 +428,25 @@ export function SpaceVibeyChatPanel({
     () => conversations.find((conversation) => conversation.id === selectedConversationId) ?? null,
     [conversations, selectedConversationId],
   )
+  const [scopeOverride, setScopeOverride] = useState<{
+    campaignId: string | null
+    spaceId: string | null
+  } | null>(null)
+  useEffect(() => {
+    setScopeOverride(null)
+  }, [chatScopeStorageId, selectedConversationId])
+  const effectiveScope = resolveSpaceChatScope(
+    selectedConversation,
+    { campaignId, spaceId: spaceId ?? null },
+    scopeOverride,
+  )
+  const effectiveCampaignId = effectiveScope.campaignId
+  const effectiveSpaceId = effectiveScope.spaceId
+  const scopeMatchesVisibleSpace = effectiveSpaceId === (spaceId ?? null)
   const selectedConversationLevel = selectedConversation?.effective_level ?? 'admin'
   const selectedConversationReadOnly = selectedConversationLevel === 'view'
   const externalSendStateRef = useRef({
-    campaignId,
+    campaignId: effectiveCampaignId,
     enqueueMessage,
     isStopping,
     isStreaming,
@@ -461,7 +454,7 @@ export function SpaceVibeyChatPanel({
     selectedConversationReadOnly,
   })
   externalSendStateRef.current = {
-    campaignId,
+    campaignId: effectiveCampaignId,
     enqueueMessage,
     isStopping,
     isStreaming,
@@ -475,9 +468,7 @@ export function SpaceVibeyChatPanel({
     const allowLoop = chatSurface === 'flows'
     const agents = spacesRoster.filter(
       (entry) =>
-        entry.kind === 'agent' &&
-        entry.agent_key &&
-        (allowLoop || entry.agent_key !== 'loop'),
+        entry.kind === 'agent' && entry.agent_key && (allowLoop || entry.agent_key !== 'loop'),
     )
     const sorted = [...agents].sort((a, b) => a.display_name.localeCompare(b.display_name))
     if (sorted.some((entry) => entry.agent_key === DEFAULT_SPACE_CHAT_AGENT_KEY)) return sorted
@@ -615,12 +606,14 @@ export function SpaceVibeyChatPanel({
   }, [])
 
   useEffect(() => {
-    if (!campaignId) {
+    if (!effectiveCampaignId) {
       setCampaignModelStrategy(null)
       return
     }
     let cancelled = false
-    cachedFetch(`campaign:${campaignId}`, () => fetchCampaign(campaignId), { ttlMs: 60_000 })
+    cachedFetch(`campaign:${effectiveCampaignId}`, () => fetchCampaign(effectiveCampaignId), {
+      ttlMs: 60_000,
+    })
       .then((campaign) => {
         if (cancelled) return
         const config = (campaign.config ?? {}) as Record<string, unknown>
@@ -634,7 +627,7 @@ export function SpaceVibeyChatPanel({
     return () => {
       cancelled = true
     }
-  }, [campaignId, campaignConfigVersion])
+  }, [effectiveCampaignId, campaignConfigVersion])
 
   useEffect(() => {
     const el = scrollRef.current
@@ -880,10 +873,10 @@ export function SpaceVibeyChatPanel({
       return teamOpsContext.awarenessContext
     }
     return buildSpaceAwarenessContext({
-      activeViewType: activeView?.type,
-      activeViewName: activeView?.name,
-      campaignName,
-      focusedArtifact: focusedArtifactRef.current,
+      activeViewType: scopeMatchesVisibleSpace ? activeView?.type : undefined,
+      activeViewName: scopeMatchesVisibleSpace ? activeView?.name : undefined,
+      campaignName: scopeMatchesVisibleSpace ? campaignName : undefined,
+      focusedArtifact: scopeMatchesVisibleSpace ? focusedArtifactRef.current : null,
     })
   }, [
     activeView?.name,
@@ -893,6 +886,7 @@ export function SpaceVibeyChatPanel({
     channelContext,
     chatSurface,
     isChannelScope,
+    scopeMatchesVisibleSpace,
     teamOpsContext,
   ])
 
@@ -936,9 +930,9 @@ export function SpaceVibeyChatPanel({
           content: newContent,
           model: model || defaultModel || undefined,
           documents,
-          campaign_id: isChannelScope ? null : (campaignId ?? null),
-          space_id: isChannelScope ? null : (spaceId ?? null),
-          scope_kind: isChannelScope ? undefined : campaignId ? 'campaign' : 'personal',
+          campaign_id: isChannelScope ? null : effectiveCampaignId,
+          space_id: isChannelScope ? null : effectiveSpaceId,
+          scope_kind: isChannelScope ? undefined : effectiveCampaignId ? 'campaign' : 'personal',
           model_settings: modelSettings,
           system_context: systemContext,
         })
@@ -950,13 +944,13 @@ export function SpaceVibeyChatPanel({
     [
       buildContextForSend,
       activeAgentKey,
-      campaignId,
+      effectiveCampaignId,
+      effectiveSpaceId,
       conversations,
       isChannelScope,
       lastUserMessageId,
       selectedConversationId,
       selectedConversation?.default_model_id,
-      spaceId,
     ],
   )
 
@@ -986,13 +980,13 @@ export function SpaceVibeyChatPanel({
       if (!conversationId) {
         const conversation = await createNewConversation({
           agent_id: activeAgentKey,
-          ...(!isChannelScope && campaignId ? { campaign_id: campaignId } : {}),
+          ...(!isChannelScope && effectiveCampaignId ? { campaign_id: effectiveCampaignId } : {}),
           metadata: isChannelScope
             ? {
                 channel_id: channelContext?.channelId,
                 channel_name: channelContext?.channelName,
               }
-            : { space_id: spaceId },
+            : { space_id: effectiveSpaceId },
         })
         useChatStore.getState().addConversation(conversation)
         useChatStore.getState().setMessages(conversation.id, [])
@@ -1008,9 +1002,9 @@ export function SpaceVibeyChatPanel({
 
       const nextConversationId = await sendMessageStreaming({
         conversation_id: conversationId,
-        campaign_id: isChannelScope ? null : (campaignId ?? null),
-        space_id: isChannelScope ? null : (spaceId ?? null),
-        scope_kind: isChannelScope ? undefined : campaignId ? 'campaign' : 'personal',
+        campaign_id: isChannelScope ? null : effectiveCampaignId,
+        space_id: isChannelScope ? null : effectiveSpaceId,
+        scope_kind: isChannelScope ? undefined : effectiveCampaignId ? 'campaign' : 'personal',
         content,
         documents,
         highlighted_artifacts: artifacts?.map((artifact) => ({
@@ -1071,7 +1065,8 @@ export function SpaceVibeyChatPanel({
     },
     [
       buildContextForSend,
-      campaignId,
+      effectiveCampaignId,
+      effectiveSpaceId,
       channelContext?.channelId,
       channelContext?.channelName,
       chatScopeId,
@@ -1414,13 +1409,13 @@ export function SpaceVibeyChatPanel({
 
     const conversation = await createNewConversation({
       agent_id: activeAgentKey,
-      ...(!isChannelScope && campaignId ? { campaign_id: campaignId } : {}),
+      ...(!isChannelScope && effectiveCampaignId ? { campaign_id: effectiveCampaignId } : {}),
       metadata: isChannelScope
         ? {
             channel_id: channelContext?.channelId,
             channel_name: channelContext?.channelName,
           }
-        : { space_id: spaceId },
+        : { space_id: effectiveSpaceId },
     })
     useChatStore.getState().addConversation(conversation)
     useChatStore.getState().setMessages(conversation.id, [])
@@ -1434,13 +1429,13 @@ export function SpaceVibeyChatPanel({
     return conversation.id
   }, [
     activeAgentKey,
-    campaignId,
+    effectiveCampaignId,
+    effectiveSpaceId,
     channelContext?.channelId,
     channelContext?.channelName,
     chatScopeStorageId,
     isChannelScope,
     selectedConversationId,
-    spaceId,
   ])
 
   const handleVoiceStart = useCallback(() => {
@@ -1713,6 +1708,15 @@ export function SpaceVibeyChatPanel({
     },
     [],
   )
+
+  const handleConversationScopeUpdated = useCallback((updated: Conversation) => {
+    useChatStore.getState().updateConversation(updated.id, updated)
+    setConversations((prev) =>
+      prev.map((conversation) =>
+        conversation.id === updated.id ? { ...conversation, ...updated } : conversation,
+      ),
+    )
+  }, [])
 
   const handleDuplicateConversation = useCallback(
     async (conversationId: string, targetCampaignId?: string | null) => {
@@ -2013,19 +2017,36 @@ export function SpaceVibeyChatPanel({
               value={activeAgentKey}
               onChange={handleAgentChange}
               disabled={agentPickerDisabled}
+              compact={headerLayout === 'compact'}
             />
           </div>
-          {sessionTitle ? (
-            <Tooltip label={sessionTitle} side="bottom" wide triggerClassName="flex min-w-0 flex-1">
-              <div className="body-3 text-foreground px-spacing-2 w-full min-w-0 truncate text-left leading-tight font-medium">
-                {sessionTitle}
+          {headerLayout === 'full' ? (
+            sessionTitle && selectedConversationId ? (
+              <ConversationHeaderTitle
+                title={sessionTitle}
+                onRename={(title) => handleRenameConversation(selectedConversationId, title)}
+              />
+            ) : (
+              <div className="text-muted-foreground body-3 px-spacing-2 min-w-0 flex-1 truncate text-left">
+                New chat
               </div>
-            </Tooltip>
+            )
           ) : (
             <div className="text-muted-foreground body-3 px-spacing-2 min-w-0 flex-1 truncate text-left">
               New chat
             </div>
           )}
+          {!isChannelScope && spaceId ? (
+            <ConversationScopePicker
+              conversation={selectedConversation}
+              campaignId={effectiveCampaignId}
+              spaceId={effectiveSpaceId}
+              showLabel
+              compact={headerLayout === 'compact'}
+              onConversationUpdated={handleConversationScopeUpdated}
+              onScopeChanged={setScopeOverride}
+            />
+          ) : null}
           <div className="flex shrink-0 items-center">{chatHeaderActions}</div>
         </div>
       </div>
@@ -2040,9 +2061,7 @@ export function SpaceVibeyChatPanel({
       className={cn(
         'flex h-full min-h-0 min-w-0 flex-col overflow-hidden',
         // Shell chrome: fluid full-bleed chat (no card frame). Embedded uses card chrome.
-        shellSidebarChrome
-          ? 'bg-background'
-          : 'rounded-2xl border border-[var(--border)]',
+        shellSidebarChrome ? 'bg-background' : 'rounded-2xl border border-[var(--border)]',
         !shellSidebarChrome &&
           (panelMode === 'conversations' ||
           panelMode === 'voice-runs' ||
@@ -2122,7 +2141,7 @@ export function SpaceVibeyChatPanel({
                               conversationIdOverride={selectedConversationId}
                               knownSkillKeys={knownSkillKeys}
                               agentKey={activeAgentKey}
-                              campaignId={campaignId ?? undefined}
+                              campaignId={effectiveCampaignId ?? undefined}
                               assistantInlineAction={
                                 visibleUndoMessageIds.has(m.id) ? (
                                   <SpaceUndoButton message={m} />
@@ -2164,7 +2183,7 @@ export function SpaceVibeyChatPanel({
                                     conversationIdOverride={selectedConversationId}
                                     knownSkillKeys={knownSkillKeys}
                                     agentKey={activeAgentKey}
-                                    campaignId={campaignId ?? undefined}
+                                    campaignId={effectiveCampaignId ?? undefined}
                                   />
                                 </div>
                                 <div className="pointer-events-none h-6 bg-gradient-to-b from-[var(--color-background)] to-transparent" />
@@ -2192,7 +2211,7 @@ export function SpaceVibeyChatPanel({
                                       conversationIdOverride={selectedConversationId}
                                       knownSkillKeys={knownSkillKeys}
                                       agentKey={activeAgentKey}
-                                      campaignId={campaignId ?? undefined}
+                                      campaignId={effectiveCampaignId ?? undefined}
                                       assistantInlineAction={
                                         visibleUndoMessageIds.has(m.id) ? (
                                           <SpaceUndoButton message={m} />
@@ -2336,15 +2355,21 @@ export function SpaceVibeyChatPanel({
                           initialValue={composerRestore?.text}
                           initialDocuments={composerRestore?.documents}
                           restoreNonce={composerRestore?.nonce}
-                          campaignId={campaignId ?? undefined}
-                          spaceId={isChannelScope ? null : (spaceId ?? null)}
+                          campaignId={effectiveCampaignId ?? undefined}
+                          spaceId={isChannelScope ? null : effectiveSpaceId}
                           scopeKind={
-                            isChannelScope ? undefined : campaignId ? 'campaign' : 'personal'
+                            isChannelScope
+                              ? undefined
+                              : effectiveCampaignId
+                                ? 'campaign'
+                                : 'personal'
                           }
                           compact
                           agentKey={activeAgentKey}
                           dropZoneRef={chatPanelRef}
-                          spaceComposerSpaceTasks={spaceComposerSpaceTasks}
+                          spaceComposerSpaceTasks={
+                            scopeMatchesVisibleSpace ? spaceComposerSpaceTasks : []
+                          }
                           spaceComposerListenExternalAttach
                           onVoiceStart={handleVoiceStart}
                         />

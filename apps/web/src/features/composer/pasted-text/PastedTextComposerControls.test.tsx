@@ -49,7 +49,11 @@ describe('PastedTextComposerControls', () => {
       />,
     )
 
-    fireEvent.change(screen.getByRole('textbox'), {
+    expect(screen.getByRole('dialog', { name: 'Pasted text' })).toHaveAccessibleDescription(
+      'Review or edit the text before using it in your message.',
+    )
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Pasted text content' }), {
       target: { value: 'Updated pasted text' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))

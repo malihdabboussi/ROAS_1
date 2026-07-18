@@ -1,7 +1,6 @@
 import { createRef } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
 import { PresentationMenuDropdown } from './PresentationMenuDropdown'
 
 const actionsMock = vi.hoisted(() => ({
@@ -75,6 +74,7 @@ function renderMenu() {
   const onDownloadHtml = vi.fn()
   const onExportPdf = vi.fn()
   const onExportPpt = vi.fn()
+  const onOpenCanva = vi.fn()
 
   function Harness() {
     renderCount += 1
@@ -101,6 +101,8 @@ function renderMenu() {
             onDownloadHtml,
             onExportPdf,
             onExportPpt,
+            openingCanva: false,
+            onOpenCanva,
           }}
         />
       </>
@@ -119,6 +121,7 @@ function renderMenu() {
     onDownloadHtml,
     onExportPdf,
     onExportPpt,
+    onOpenCanva,
   }
 }
 
@@ -167,6 +170,7 @@ describe('PresentationMenuDropdown', () => {
       onDownloadHtml,
       onExportPdf,
       onExportPpt,
+      onOpenCanva,
     } = renderMenu()
 
     fireEvent.click(screen.getByText('Preview size'))
@@ -186,6 +190,9 @@ describe('PresentationMenuDropdown', () => {
 
     fireEvent.click(screen.getByText('Export as PPT'))
     expect(onExportPpt).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByText('Open in Canva'))
+    expect(onOpenCanva).toHaveBeenCalledTimes(1)
 
     fireEvent.click(screen.getByText('Full screen view'))
     expect(onOpenFullView).toHaveBeenCalledTimes(1)

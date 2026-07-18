@@ -8,6 +8,7 @@ import {
   docContract,
   intent,
   pickAgent,
+  presentationContract,
   WEBINAR_FLOW_DOCS,
   WEBINAR_FLOW_GATES,
   WEBINAR_FLOW_TASKS,
@@ -22,13 +23,14 @@ const SKILLS = {
   research: 'roas-market-research',
   copy: 'roas-webinar-copy-package',
   landingCopy: 'roas-landing-page-copy',
+  ads: 'roas-ad-design',
+  images: 'roas-image-brief',
+  funnel: 'roas-funnel-design',
+  deck: 'roas-webinar-deck',
 } as const
 
 const REVIEW_MAP =
   '5A.1→roas-webinar-topics · 5A.2→roas-webinar-emails · 5A.3→roas-ad-copy · 5A.4→roas-video-ad-scripts · 5B→roas-landing-page-copy'
-
-const CLIENT_WRITING_RULE =
-  'CLIENT WRITING RULE: If this step creates or revises any wording a client, prospect, attendee, presenter, or public audience will read or hear, load dylans-super-voice and confirm it loaded before drafting. It is the only voice authority. Do not load human-written-copy or dylans-voice. Client samples and Brain context may supply verified facts, vocabulary, and subject-matter texture, but they do not replace or override Dylan Super Voice. Apply its correct surface mode, run its complete final checklist, and search the shipping text for the literal `—` character before saving. If the skill is unavailable, block instead of approximating it. This includes client updates, Slack messages, recaps, approval requests, emails, SMS, ads, scripts, landing pages, slide copy, on-image text, and copy inside dynamically created build tasks. When creating another mission subtask that may write client-facing text, copy this rule into that subtask ecology.'
 
 function readKickoff(input: Record<string, unknown> | null | undefined): MissionPlaybookKickoff {
   const raw =
@@ -75,9 +77,6 @@ export function expandWebinarFulfillmentPlaybook(
     category: string,
     statement: string,
   ) => {
-    if (!task.assignTo.startsWith('human:')) {
-      task.intent.ecology = `${task.intent.ecology}\n\n${CLIENT_WRITING_RULE}`
-    }
     assertionNumber += 1
     const assertionKey = `A-${String(assertionNumber).padStart(3, '0')}`
     task.assertionKeys = [assertionKey]
@@ -221,13 +220,9 @@ export function expandWebinarFulfillmentPlaybook(
         why: 'Ground THE PLAN and downstream production in observed market evidence.',
         story: 'Blaze researches the market and buyer language before Reed locks the launch brief.',
         sensory:
-          'The research cites real ads and sources, while the Campaign Theme holds the verified logo, palette, typography, identity, social links, and image assets.',
-        endState: `"${WEBINAR_FLOW_DOCS.marketResearch}" exists with evidence and source links, and one active Campaign Theme is selected with every brand field either populated or explicitly marked not found in the research ledger.`,
-        ecology: `Load skill ${SKILLS.research}. Use platform-managed Ads Intelligence first and record the service, integration action, and source links in the document. Only say a provider or search surface is unavailable after an actual failed tool attempt, and record the returned error plus the fallback used.
-
-Complete campaign brand setup during this step. Call list_campaign_media and inspect the client website, uploaded logo files, existing design images, product imagery, and team headshots. Call list_themes. When a client website is known, call extract_website_theme with its URL. Map verified evidence into the flat Theme fields: colors, font_heading, font_body, logo_asset_id, brand_voice, brand_values, social_links, design_settings, headshot_images, product_images, and image_style_prompt. If the campaign has an active Theme, call update_theme; otherwise call create_theme with the current campaign_id so it becomes active. Never replace verified user-entered Theme values with weaker inference.
-
-Add a Brand Evidence Ledger to "${WEBINAR_FLOW_DOCS.marketResearch}". For every Theme field, record its source and one status: confirmed, inferred, or not found. A missing value is not silently skipped. Save exactly "${WEBINAR_FLOW_DOCS.marketResearch}" as a native Doc and attach raw research data when available. Do not design or render ads.`,
+          'The research cites real ads, longevity, hooks, source links, and the integration actions used.',
+        endState: `"${WEBINAR_FLOW_DOCS.marketResearch}" exists with evidence and source links.`,
+        ecology: `Load skill ${SKILLS.research}. Use platform-managed Ads Intelligence first and record the service, integration action, and source links in the document. Only say a provider or search surface is unavailable after an actual failed tool attempt, and record the returned error plus the fallback used. Save exactly "${WEBINAR_FLOW_DOCS.marketResearch}" as a native Doc. Attach raw research data when available. Do not design or render ads.`,
       }),
       outputContract: docContract(WEBINAR_FLOW_DOCS.marketResearch),
     },
@@ -249,7 +244,7 @@ Add a Brand Evidence Ledger to "${WEBINAR_FLOW_DOCS.marketResearch}". For every 
         story: 'Reed turns strategy and completed market research into THE PLAN.',
         sensory: 'The promise, funnel path, asset list, offer stack, proof, and constraints agree.',
         endState: `"${WEBINAR_FLOW_DOCS.thePlan}" exists as the production source of truth.`,
-        ecology: `Load skill ${SKILLS.plan} and dylans-super-voice. Consume the completed "${WEBINAR_FLOW_DOCS.marketResearch}" document and preserve its observed-source labels; do not rerun or speculate about integration availability inside THE PLAN. Save exactly "${WEBINAR_FLOW_DOCS.thePlan}" as a native editable Doc. Include a draft client Slack approval message written in Dylan Super Voice Professional Message mode. Never create a PDF.`,
+        ecology: `Load skill ${SKILLS.plan}. Consume the completed "${WEBINAR_FLOW_DOCS.marketResearch}" document and preserve its observed-source labels; do not rerun or speculate about integration availability inside THE PLAN. Save exactly "${WEBINAR_FLOW_DOCS.thePlan}" as a native editable Doc. Include a draft client Slack approval message. Never create a PDF.`,
       }),
       outputContract: docContract(WEBINAR_FLOW_DOCS.thePlan),
     },
@@ -275,7 +270,7 @@ Add a Brand Evidence Ledger to "${WEBINAR_FLOW_DOCS.marketResearch}". For every 
             'The final gate note records client approval, requested changes, or the sent message link.',
           endState: 'Strategy is approved for research and copy production.',
           ecology:
-            'Review the Post-Call Strategy Map, THE PLAN, the Market Research Brand Evidence Ledger, and the selected Campaign Theme. Confirm the logo, colors, fonts, identity, social links, and image assets or accept fields marked not found. Review and send the drafted client Slack message. Record client approval or feedback in this gate before completing it.',
+            'Review the Post-Call Strategy Map and THE PLAN. Review and send the drafted client Slack message. Record client approval or feedback in this gate before completing it.',
         }),
       },
       'compliance',
@@ -379,14 +374,105 @@ Add a Brand Evidence Ledger to "${WEBINAR_FLOW_DOCS.marketResearch}". For every 
     afterCopy = 'st-gate-copy'
   }
 
-  addWebinarCreativeProduction({ add, afterCopy, designer, adsManager, human, hasHuman })
+  add(
+    {
+      id: 'st-ad-design',
+      title: WEBINAR_FLOW_TASKS.staticAds,
+      assignTo: designer,
+      dependsOn: [afterCopy],
+      assertionKeys: [],
+      scheduledAt: null,
+      publishToTaskList: true,
+      intent: intent({
+        why: 'Turn locked ad lines into finished static creative.',
+        story: 'Lux owns visual production; Blaze remains the media buyer.',
+        sensory:
+          'The Meta Ads Space view shows editable ad artifacts using the locked message and brand.',
+        endState:
+          'Static Meta ad artifacts exist in the Space Meta Ads view and link back to this subtask.',
+        ecology: `Load ${SKILLS.ads}. Create native ad artifacts in the Space Meta Ads view from approved lines. Link the artifacts to this subtask. Do not save PDFs or loose file exports.`,
+      }),
+      outputContract: adContract('Static Ads — [Campaign]'),
+    },
+    'creative',
+    'Lux created static Meta ad artifacts in the Meta Ads view.',
+  )
+
+  add(
+    {
+      id: 'st-image-brief',
+      title: WEBINAR_FLOW_TASKS.imageBriefs,
+      assignTo: designer,
+      dependsOn: [afterCopy],
+      assertionKeys: [],
+      scheduledAt: null,
+      publishToTaskList: true,
+      intent: intent({
+        why: 'Provide complete generation briefs for the remaining campaign visuals.',
+        story: 'Lux creates paste-ready prompts without duplicating rendered static ads.',
+        sensory:
+          'Every brief specifies scene, style, lighting, palette, exact text, treatment, ratio, and avoid-list.',
+        endState: `"${WEBINAR_FLOW_DOCS.imageBriefs}" exists as a native Doc linked to this task.`,
+        ecology: `Load ${SKILLS.images}. Save exactly "${WEBINAR_FLOW_DOCS.imageBriefs}". Do not generate images unless the brief calls for actual production. Never create a PDF.`,
+      }),
+      outputContract: docContract(WEBINAR_FLOW_DOCS.imageBriefs),
+    },
+    'creative',
+    'Image generation briefs exist in Space Docs.',
+  )
+
+  add(
+    {
+      id: 'st-funnel-design',
+      title: WEBINAR_FLOW_TASKS.funnelDesign,
+      assignTo: designer,
+      dependsOn: [afterCopy],
+      assertionKeys: [],
+      scheduledAt: null,
+      publishToTaskList: true,
+      intent: intent({
+        why: 'Build the approved registration experience in the native funnel builder.',
+        story: 'Lux turns approved copy into the client funnel without rewriting it.',
+        sensory: 'The Funnels Space view contains the linked responsive funnel with approved copy.',
+        endState: 'A native funnel exists in the Space Funnels view and links to this task.',
+        ecology: `Load ${SKILLS.funnel}. Consume "${WEBINAR_FLOW_DOCS.landingPageCopy}" WITHOUT reshaping the copy. Build a native funnel artifact in the Funnels view and link it to this task. Do not deliver loose HTML or a PDF.`,
+      }),
+      outputContract: funnelContract(),
+    },
+    'funnel',
+    'Native webinar funnel exists in the Funnels view.',
+  )
+
+  add(
+    {
+      id: 'st-deck-bones',
+      title: WEBINAR_FLOW_TASKS.deckBones,
+      assignTo: designer,
+      dependsOn: [afterCopy],
+      assertionKeys: [],
+      scheduledAt: null,
+      publishToTaskList: true,
+      intent: intent({
+        why: 'Create the most important editable slides now without pretending the full webinar deck is finished.',
+        story: 'Lux builds the bones future production can expand.',
+        sensory:
+          'The presentation has a coherent visual system and the decisive teaching and offer slides.',
+        endState:
+          'A native editable presentation titled "Webinar Deck Bones" exists with 10-20 slides.',
+        ecology: `Load ${SKILLS.deck}. Build one native editable presentation titled "Webinar Deck Bones" with 10-20 slides only. Include title, promise, problem, big idea, mechanism, teaching framework/sections, proof, offer transition, and the complete offer stack: core product, bonuses, pricing/enrollment, guarantee if real, real scarcity, and CTA. This is bones, not a full deck. Never export PPTX or PDF. Link it to this task and the Presentations view.`,
+      }),
+      outputContract: presentationContract('Webinar Deck Bones'),
+    },
+    'deck',
+    'Webinar Deck Bones exists as a 10-20 slide native presentation.',
+  )
 
   add(
     {
       id: 'st-media-plan',
       title: WEBINAR_FLOW_TASKS.mediaPlan,
       assignTo: adsManager,
-      dependsOn: ['st-compile-ads', 'st-funnel-design', 'st-deck-bones'],
+      dependsOn: ['st-ad-design', 'st-image-brief', 'st-funnel-design', 'st-deck-bones'],
       assertionKeys: [],
       scheduledAt: null,
       publishToTaskList: true,
@@ -435,7 +521,7 @@ Add a Brand Evidence Ledger to "${WEBINAR_FLOW_DOCS.marketResearch}". For every 
     kind: 'plan',
     title: 'Webinar Fulfillment',
     summary:
-      'Atlas context → pre-call gate → call intake → post-call strategy → market research → THE PLAN → strategy gate → WEB#5A copy package → WEB#5B landing-page copy → copy gate → editable statics + generated images → creative gate → native ad assembly → media plan → production gate.',
+      'Atlas context → pre-call gate → call intake → post-call strategy → market research → THE PLAN → strategy gate → WEB#5A copy package → WEB#5B landing-page copy → copy gate → Lux production → Blaze media plan → production gate.',
     approach: `Follow the complete ${WEBINAR_FULFILLMENT_PLAYBOOK_ID} flow from pre-call preparation. Atlas owns context, Reed owns strategy, Ivy owns copy, Lux owns visual/funnel/deck production, and Blaze owns research/media planning.`,
     capability_gap: { exists: false, note: '', suggested_hire: '' },
     harness: {

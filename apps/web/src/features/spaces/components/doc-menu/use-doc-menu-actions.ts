@@ -16,6 +16,7 @@ import {
   exportSpaceDocVisualHtml,
   exportSpaceDocVisualPdf,
 } from './export-space-doc'
+import { useOpenSpaceDocInCanva } from './use-open-space-doc-in-canva'
 
 export interface DocMenuTarget {
   id: string
@@ -260,6 +261,13 @@ export function useDocMenuActions({
     }
   }, [doc.title, exportingVisualPdf, visualHtml])
 
+  const { openingCanva, openInCanva } = useOpenSpaceDocInCanva({
+    canExport,
+    title: doc.title,
+    docBody,
+    visualHtml,
+  })
+
   return {
     canExport,
     canExportDocBody,
@@ -267,6 +275,7 @@ export function useDocMenuActions({
     exportingPdf,
     exportingDocx,
     exportingVisualPdf,
+    openingCanva,
     copyLink,
     copyId,
     openInNewTab,
@@ -285,6 +294,7 @@ export function useDocMenuActions({
     exportDocx,
     exportVisualHtml,
     exportVisualPdf,
+    openInCanva,
     deleteDoc,
   }
 }

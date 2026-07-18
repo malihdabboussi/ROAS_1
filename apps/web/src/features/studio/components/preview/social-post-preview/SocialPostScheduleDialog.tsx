@@ -75,11 +75,18 @@ export function SocialPostScheduleDialog({
                 <DialogPrimitive.Title className="title-h6">
                   {isReschedule ? 'Reschedule Post' : 'Schedule Post'}
                 </DialogPrimitive.Title>
-                <button type="button" onClick={() => onOpenChange(false)} className="btn-icon-bare">
+                <button
+                  type="button"
+                  aria-label="Close schedule"
+                  onClick={() => onOpenChange(false)}
+                  className="btn-icon-bare"
+                >
                   <X className="icon-xs" />
                 </button>
               </div>
-              <p className="body-3 text-muted-foreground mt-spacing-1 truncate">{postTitle}</p>
+              <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1 truncate">
+                {postTitle}
+              </DialogPrimitive.Description>
             </div>
 
             <div className="px-spacing-6 py-spacing-4 gap-spacing-3 flex flex-col">

@@ -1,8 +1,9 @@
-import { ArrowRight, ExternalLink, FileText } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { AgentTurnFeedbackActions } from '@/components/chat/AgentTurnFeedbackActions'
 import { CHAT_MARKDOWN_CLASSNAME, renderChatMarkdown } from '@/lib/utils/chat-markdown.utils'
-import type { MissionCommentAttachment } from '../../services/missions.service'
 import type { MissionAgent, MissionLog, MissionSubtask } from '../../types'
+import { AutoApproveSwitch, PlanSwitch } from './ActivityTimelinePlanSwitch'
+import { UserCommentActivity, UserRatingActivity } from './ActivityTimelineUserActivities'
 import {
   formatAgentShortName,
   formatEventType,
@@ -28,16 +29,13 @@ interface ActivityTimelineLogItemProps {
   autoApprovePlans?: boolean
   onToggleAutoApprove?: (enabled: boolean) => void
 }
-
 function resolvePayload(log: MissionLog): Record<string, unknown> | null {
   return log.payload && typeof log.payload === 'object' ? log.payload : null
 }
-
 function resolveAgent(log: MissionLog, agents: MissionAgent[]): MissionAgent | undefined {
   if (!log.agent_key) return undefined
   return agents.find((agent) => agent.agent_key === log.agent_key)
 }
-
 function AgentActivityHeader({
   log,
   agents,
@@ -79,125 +77,6 @@ function AgentActivityHeader({
     </div>
   )
 }
-
-function UserHeader({
-  userProfile,
-  createdAt,
-}: {
-  userProfile: { fullName: string; avatarUrl: string | null } | null
-  createdAt: string
-}) {
-  return (
-    <div className="gap-spacing-2 flex items-start justify-between">
-      <div className="gap-spacing-1 flex min-w-0 items-center">
-        {userProfile?.avatarUrl ? (
-          <img
-            src={userProfile.avatarUrl}
-            alt={userProfile.fullName}
-            className="h-4 w-4 shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <div className="bg-primary/20 typo-2xs text-primary flex h-4 w-4 shrink-0 items-center justify-center rounded-full font-bold">
-            {(userProfile?.fullName ?? 'Y').charAt(0).toUpperCase()}
-          </div>
-        )}
-        <span className="body-3 text-foreground truncate font-medium">
-          {userProfile?.fullName ?? 'You'}
-        </span>
-      </div>
-      <span className="body-3 text-muted-foreground/50 shrink-0">
-        {formatRelativeTime(createdAt)}
-      </span>
-    </div>
-  )
-}
-
-function CommentAttachments({ attachments }: { attachments?: MissionCommentAttachment[] }) {
-  if (!attachments?.length) return null
-  return (
-    <div className="mt-1.5 flex flex-wrap gap-1.5">
-      {attachments.map((att, idx) => (
-        <a
-          key={idx}
-          href={att.fileUrl ?? '#'}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:bg-secondary/80 body-4 border-border bg-secondary group flex items-center gap-1.5 rounded-lg border px-2 py-1 transition-colors"
-        >
-          {att.type === 'image' ? (
-            <img src={att.fileUrl} alt={att.filename} className="h-8 w-8 rounded object-cover" />
-          ) : (
-            <FileText className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-          )}
-          <span className="body-4 text-foreground max-w-artifact-compact truncate">
-            {att.filename}
-          </span>
-          {att.fileUrl && (
-            <ExternalLink className="text-muted-foreground h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
-          )}
-        </a>
-      ))}
-    </div>
-  )
-}
-
-function UserRatingActivity({
-  log,
-  userProfile,
-}: {
-  log: MissionLog
-  userProfile: { fullName: string; avatarUrl: string | null } | null
-}) {
-  const ratingPayload = log.payload as { thumbs_up?: boolean; rating?: number; feedback?: string }
-  return (
-    <>
-      <UserHeader userProfile={userProfile} createdAt={log.created_at} />
-      <div className="rounded-spacing-1 px-spacing-2 py-spacing-1 mt-1 border border-warning/20 bg-warning/10">
-        <div className="flex items-center gap-2">
-          <span className="body-3 text-warning">
-            {ratingPayload.thumbs_up === true
-              ? '👍'
-              : ratingPayload.thumbs_up === false
-                ? '👎'
-                : ''}
-          </span>
-          {ratingPayload.rating != null && (
-            <span className="body-3 text-warning font-medium">{ratingPayload.rating}/10</span>
-          )}
-        </div>
-        {ratingPayload.feedback && (
-          <p className="body-3 text-foreground mt-0.5">{ratingPayload.feedback}</p>
-        )}
-      </div>
-    </>
-  )
-}
-
-function UserCommentActivity({
-  log,
-  userProfile,
-}: {
-  log: MissionLog
-  userProfile: { fullName: string; avatarUrl: string | null } | null
-}) {
-  const payload = log.payload as {
-    message?: string
-    attachments?: MissionCommentAttachment[]
-  }
-  return (
-    <>
-      <UserHeader userProfile={userProfile} createdAt={log.created_at} />
-      <div
-        className={`body-3 text-foreground mt-0.5 break-words ${CHAT_MARKDOWN_CLASSNAME}`}
-        dangerouslySetInnerHTML={{
-          __html: renderChatMarkdown(payload.message ?? ''),
-        }}
-      />
-      <CommentAttachments attachments={payload.attachments} />
-    </>
-  )
-}
-
 function LinkedSubtaskStatus({
   subtask,
   subtaskTitle,
@@ -206,9 +85,7 @@ function LinkedSubtaskStatus({
   subtaskTitle: string | null
 }) {
   if (!subtask && !subtaskTitle) return null
-  const statusLabel = subtask
-    ? formatSubtaskStatusLabel(subtask.status)
-    : null
+  const statusLabel = subtask ? formatSubtaskStatusLabel(subtask.status) : null
   return (
     <div className="mt-spacing-1 space-y-spacing-1">
       {(subtaskTitle || subtask?.title) && (
@@ -224,7 +101,6 @@ function LinkedSubtaskStatus({
     </div>
   )
 }
-
 function MissionProgressActivity({
   log,
   subtaskId,
@@ -241,9 +117,7 @@ function MissionProgressActivity({
   const execSubtask = subtaskId && isExecLog ? subtasks.find((st) => st.id === subtaskId) : null
   const linkedSubtask = subtaskId ? subtasks.find((st) => st.id === subtaskId) : null
   const displayNote =
-    typeof note === 'string'
-      ? note.replace(/\s+assigned to\s+[a-z0-9_]+$/i, '').trim()
-      : note
+    typeof note === 'string' ? note.replace(/\s+assigned to\s+[a-z0-9_]+$/i, '').trim() : note
 
   return (
     <div className="space-y-spacing-1 min-w-0">
@@ -254,10 +128,7 @@ function MissionProgressActivity({
           __html: renderChatMarkdown(displayNote || 'Progress update'),
         }}
       />
-      <LinkedSubtaskStatus
-        subtask={linkedSubtask}
-        subtaskTitle={linkedSubtask?.title ?? null}
-      />
+      <LinkedSubtaskStatus subtask={linkedSubtask} subtaskTitle={linkedSubtask?.title ?? null} />
       {execSubtask ? <MissionLockedIn subtask={execSubtask} defaultOpen /> : null}
       <AgentTurnFeedbackActions
         targetKind="mission_log"
@@ -269,7 +140,6 @@ function MissionProgressActivity({
     </div>
   )
 }
-
 function PlanPendingActivity({
   log,
   logIndex,
@@ -361,38 +231,6 @@ function PlanPendingActivity({
     </>
   )
 }
-
-function AutoApproveSwitch({
-  autoApprovePlans,
-  onToggleAutoApprove,
-}: {
-  autoApprovePlans?: boolean
-  onToggleAutoApprove: (enabled: boolean) => void
-}) {
-  return (
-    <div className="border-border mt-spacing-3 pt-spacing-3 flex items-center justify-between border-t">
-      <span className="body-3 text-muted-foreground">Auto-approve future plans</span>
-      <PlanSwitch checked={autoApprovePlans} onClick={() => onToggleAutoApprove(!autoApprovePlans)} />
-    </div>
-  )
-}
-
-function PlanSwitch({ checked, onClick }: { checked?: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={onClick}
-      className="switch-glass-primary relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-all duration-300"
-    >
-      <span
-        className={`switch-glass-primary-thumb pointer-events-none block h-4 w-4 rounded-full transition-transform duration-300 ${checked ? 'translate-x-4' : 'translate-x-1'}`}
-      />
-    </button>
-  )
-}
-
 function PlanApprovedActivity({ log, agents }: { log: MissionLog; agents: MissionAgent[] }) {
   const hired = (log.payload as { hired_agents?: Array<{ role_key: string; agent_key: string }> })
     ?.hired_agents
@@ -408,7 +246,6 @@ function PlanApprovedActivity({ log, agents }: { log: MissionLog; agents: Missio
     </div>
   )
 }
-
 function DefaultActivity({
   log,
   eventLabel,

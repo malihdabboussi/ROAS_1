@@ -183,8 +183,6 @@ const renderEntityPreview: DeliverableEntityPreviewRenderer = ({ deliverableType
 function renderModal(
   deliverable: MissionDeliverable = activityAttachmentDeliverable,
   presentation: 'docked' | 'centered' = 'docked',
-  siblingDeliverables: MissionDeliverable[] = [],
-  onSelectSibling?: (deliverable: MissionDeliverable) => void,
 ) {
   let renderCount = 0
 
@@ -304,6 +302,15 @@ describe('DeliverablePreviewModal', () => {
     expect(workspace?.getAttribute('data-deliverable-preview-presentation')).toBe('centered')
     expect(workspace?.className).toContain('items-center')
     expect(workspace?.className).not.toContain('top-spacing-10')
+    expect(screen.queryByRole('separator')).toBeNull()
+  })
+
+  it('opens general previews as a resizable 45-percent right dock', () => {
+    const { container } = renderModal()
+
+    const panel = container.querySelector('[data-deliverable-preview-panel]') as HTMLElement
+    expect(panel.style.width).toBe(`${Math.round(window.innerWidth * 0.45)}px`)
+    expect(screen.getByRole('separator')).toBeTruthy()
   })
 
   it('renames persisted mission deliverables through the mission deliverable API without render churn', async () => {

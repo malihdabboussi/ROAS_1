@@ -31,7 +31,12 @@ export interface FunnelChangeSetInput {
 export class FunnelHistoryRepository {
   async findLatestByStatus(
     supabase: SupabaseClient,
-    input: { funnelId: string; funnelPageId: string | null; status: FunnelChangeStatus },
+    input: {
+      funnelId: string
+      funnelPageId: string | null
+      status: FunnelChangeStatus
+      ascending?: boolean
+    },
   ) {
     let q = supabase
       .from('funnel_change_sets')
@@ -42,7 +47,7 @@ export class FunnelHistoryRepository {
       ? q.or(`funnel_page_id.eq.${input.funnelPageId},funnel_page_id.is.null`)
       : q.is('funnel_page_id', null)
     const { data, error } = await q
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: input.ascending ?? false })
       .limit(1)
       .maybeSingle()
     if (error) throw new Error(`Failed to read funnel history: ${error.message}`)
@@ -56,11 +61,37 @@ export class FunnelHistoryRepository {
     return this.findLatestByStatus(supabase, { ...input, status: 'applied' })
   }
 
-  async findLatestUndone(
+  async findNextUndone(
     supabase: SupabaseClient,
     input: { funnelId: string; funnelPageId: string | null },
   ) {
-    return this.findLatestByStatus(supabase, { ...input, status: 'undone' })
+    return this.findLatestByStatus(supabase, { ...input, status: 'undone', ascending: true })
+  }
+
+  async listRestorableChangeSets(
+    supabase: SupabaseClient,
+    input: {
+      funnelId: string
+      funnelPageId: string | null
+      ascending: boolean
+      limit?: number
+    },
+  ) {
+    let q = supabase
+      .from('funnel_change_sets')
+      .select(
+        'id, funnel_id, funnel_page_id, source, action, label, status, metadata, created_at, updated_at',
+      )
+      .eq('funnel_id', input.funnelId)
+      .in('status', ['applied', 'undone'])
+    q = input.funnelPageId
+      ? q.or(`funnel_page_id.eq.${input.funnelPageId},funnel_page_id.is.null`)
+      : q.is('funnel_page_id', null)
+    let orderedQuery = q.order('created_at', { ascending: input.ascending })
+    if (input.limit) orderedQuery = orderedQuery.limit(input.limit)
+    const { data, error } = await orderedQuery
+    if (error) throw new Error(`Failed to read funnel history timeline: ${error.message}`)
+    return data ?? []
   }
 
   async createChangeSet(supabase: SupabaseClient, input: FunnelChangeSetInput) {
@@ -94,7 +125,8 @@ export class FunnelHistoryRepository {
     }))
     if (items.length > 0) {
       const { error: itemsError } = await supabase.from('funnel_change_items').insert(items)
-      if (itemsError) throw new Error(`Failed to create funnel history items: ${itemsError.message}`)
+      if (itemsError)
+        throw new Error(`Failed to create funnel history items: ${itemsError.message}`)
     }
     return changeSet
   }
@@ -162,7 +194,9 @@ export class FunnelHistoryRepository {
       let q = supabase.from('funnel_files').delete().eq('funnel_id', input.funnelId)
       if (input.entityId) q = q.eq('id', input.entityId)
       if (input.path) q = q.eq('path', input.path)
-      q = input.funnelPageId ? q.eq('funnel_page_id', input.funnelPageId) : q.is('funnel_page_id', null)
+      q = input.funnelPageId
+        ? q.eq('funnel_page_id', input.funnelPageId)
+        : q.is('funnel_page_id', null)
       const { error } = await q
       if (error) throw new Error(`Failed to restore deleted funnel file: ${error.message}`)
       return

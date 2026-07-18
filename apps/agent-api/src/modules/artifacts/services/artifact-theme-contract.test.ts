@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ArtifactThemesService } from './artifact-themes.service'
 import { validateActionData } from './artifact-action-schemas'
+import { ArtifactThemesService } from './artifact-themes.service'
 
 describe('campaign theme agent contract', () => {
   it('accepts the complete flat campaign brand payload', () => {
@@ -22,9 +22,7 @@ describe('campaign theme agent contract', () => {
         status: 'active',
       }),
     ).toBeNull()
-    expect(
-      validateActionData('extract_website_theme', { url: 'https://example.com' }),
-    ).toBeNull()
+    expect(validateActionData('extract_website_theme', { url: 'https://example.com' })).toBeNull()
     expect(validateActionData('extract_website_theme', {})).toMatch(/url.*required/i)
   })
 

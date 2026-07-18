@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Circle,
   Clock,
-  GitBranch,
   RefreshCw,
   User,
 } from 'lucide-react'
@@ -121,13 +120,13 @@ export function SubtasksSection({
             </button>
           )}
         </div>
-        <div className="scrollbar-hide mt-spacing-3 min-h-0 flex-1 overflow-y-auto">
+        <div className="scrollbar-hide mt-spacing-2 min-h-0 flex-1 overflow-y-auto">
           {logsLoading || prdLoading ? (
             <div className="flex h-full min-h-[200px] flex-col items-center justify-center">
               <VibeyLoadingOrb state="thinking" size="md" />
             </div>
           ) : subtasks.length > 0 ? (
-            <div className="space-y-spacing-1">
+            <div className="border-border divide-y border-y">
               {subtasks.map((subtask) => {
                 const hasDeps = subtask.depends_on && subtask.depends_on.length > 0
                 const depsReady =
@@ -183,8 +182,8 @@ export function SubtasksSection({
                       (subtask.status === 'done' ? 'Mark as not done' : 'Mark complete'))
 
                 return (
-                  <div key={subtask.id} className="border-b-glass last:border-b-0">
-                    <div className="hover:bg-hover-subtle relative flex items-center gap-spacing-3 rounded-spacing-2 px-spacing-3 py-spacing-3">
+                  <div key={subtask.id} className="relative">
+                    <div className="hover:bg-hover-subtle gap-spacing-2 px-spacing-1 py-spacing-2 flex items-center">
                       <Tooltip label={statusTooltip} side="top" wide={Boolean(issueDetail)}>
                         <button
                           type="button"
@@ -217,43 +216,36 @@ export function SubtasksSection({
                       <button
                         type="button"
                         onClick={() => onOpenSubtask(subtask.id)}
-                        className="body-1 text-foreground flex min-w-0 flex-1 items-center gap-spacing-2 text-left"
+                        className="min-w-0 flex-1 text-left"
                       >
-                        <GitBranch
-                          className="text-muted-foreground icon-sm shrink-0"
-                          aria-hidden
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate font-medium">
-                            {formatWebinarSubtaskTitle(subtask.title)}
-                          </span>
-                          {issueDetail || subtask.feedback ? (
-                            <Tooltip
-                              label={issueDetail || subtask.feedback || statusMeta}
-                              side="bottom"
-                              wide
-                              triggerClassName="block min-w-0"
-                            >
-                              <span className="body-4 text-muted-foreground mt-spacing-1 block truncate">
-                                {statusMeta}
-                                {subtask.feedback ? (
-                                  <span className="text-warning"> · {subtask.feedback}</span>
-                                ) : null}
-                                {issueDetail ? (
-                                  <span className="text-muted-foreground/70">
-                                    {' '}
-                                    · Hover for details
-                                  </span>
-                                ) : null}
-                              </span>
-                            </Tooltip>
-                          ) : (
+                        <span className="body-3 text-foreground block truncate font-medium">
+                          {formatWebinarSubtaskTitle(subtask.title)}
+                        </span>
+                        {issueDetail || subtask.feedback ? (
+                          <Tooltip
+                            label={issueDetail || subtask.feedback || statusMeta}
+                            side="bottom"
+                            wide
+                            triggerClassName="block min-w-0"
+                          >
                             <span className="body-4 text-muted-foreground mt-spacing-1 block truncate">
                               {statusMeta}
+                              {subtask.feedback ? (
+                                <span className="text-warning"> · {subtask.feedback}</span>
+                              ) : null}
+                              {issueDetail ? (
+                                <span className="text-muted-foreground/70">
+                                  {' '}
+                                  · Hover for details
+                                </span>
+                              ) : null}
                             </span>
-                          )}
-                        </span>
-                        <ChevronRight className="text-muted-foreground/50 icon-sm shrink-0" />
+                          </Tooltip>
+                        ) : (
+                          <span className="body-4 text-muted-foreground mt-spacing-1 block truncate">
+                            {statusMeta}
+                          </span>
+                        )}
                       </button>
                       {isHuman ? (
                         <button
@@ -262,10 +254,10 @@ export function SubtasksSection({
                             e.stopPropagation()
                             router.push(`/spaces?tab=your-turn&item=${subtask.id}`)
                           }}
-                          className="body-3 gap-spacing-1 bg-primary/15 hover:bg-primary/25 text-primary flex shrink-0 items-center rounded-full px-spacing-2 py-spacing-1 transition-colors"
+                          className="body-4 gap-spacing-1 bg-primary/15 hover:bg-primary/25 text-primary px-spacing-2 py-spacing-1 flex shrink-0 items-center rounded-full transition-colors"
                           title="Open in Your Turn"
                         >
-                          <User className="icon-sm" />
+                          <User className="icon-xs" />
                           {assigneeLabel}
                         </button>
                       ) : (
@@ -277,7 +269,7 @@ export function SubtasksSection({
                               subtaskAssigneeOpenId === subtask.id ? null : subtask.id,
                             )
                           }}
-                          className="body-3 bg-secondary text-muted-foreground hover:text-foreground max-w-artifact-compact shrink-0 truncate rounded-full px-spacing-2 py-spacing-1 transition-colors"
+                          className="body-4 bg-muted text-muted-foreground hover:bg-hover-subtle hover:text-foreground max-w-artifact-compact px-spacing-2 py-spacing-1 shrink-0 truncate rounded-full transition-colors"
                           title={`${assigneeFullName}${assigneeAgent?.role ? ` — ${assigneeAgent.role}` : ''} · Reassign`}
                         >
                           {assigneeLabel}
@@ -286,12 +278,15 @@ export function SubtasksSection({
                       {subtaskAssigneeOpenId === subtask.id && (
                         <>
                           <div
-                            className="fixed inset-0 z-dropdown"
+                            className="z-dropdown fixed inset-0"
                             onClick={() => setSubtaskAssigneeOpenId(null)}
                           />
-                          <div className="absolute right-2 top-10 z-dropdown w-52" data-dropdown>
-                            <div className="dropdown-menu-solid p-spacing-2">
-                              <div className="space-y-spacing-1">
+                          <div
+                            className="z-dropdown mt-spacing-1 absolute right-0 top-full w-52"
+                            data-dropdown
+                          >
+                            <div className="dropdown-menu-solid p-spacing-1">
+                              <div className="gap-spacing-1 flex flex-col">
                                 {agents.map((agent) => {
                                   const isAgentSelected =
                                     agent.agent_key === subtask.assigned_agent_key
@@ -309,7 +304,10 @@ export function SubtasksSection({
                                           onSubtasksChange((prev) =>
                                             prev.map((item) =>
                                               item.id === subtask.id
-                                                ? { ...item, assigned_agent_key: agent.agent_key }
+                                                ? {
+                                                    ...item,
+                                                    assigned_agent_key: agent.agent_key,
+                                                  }
                                                 : item,
                                             ),
                                           )

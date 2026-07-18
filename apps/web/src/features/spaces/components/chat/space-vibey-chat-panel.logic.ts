@@ -34,7 +34,13 @@ export interface HomeChatSeedPayload {
 
 interface ConversationScopeLike {
   agent_id?: string | null
+  campaign_id?: string | null
   metadata?: Record<string, unknown> | null
+}
+
+export interface SpaceChatScope {
+  campaignId: string | null
+  spaceId: string | null
 }
 
 interface ConversationListLike extends ConversationScopeLike {
@@ -131,6 +137,24 @@ export function getConversationSpaceId(
 ): string | null {
   const value = conversation?.metadata?.space_id
   return typeof value === 'string' && value.length > 0 ? value : null
+}
+
+/** Effective campaign/space: override → conversation → panel context. */
+export function resolveSpaceChatScope(
+  conversation: ConversationScopeLike | null | undefined,
+  panelFallback: SpaceChatScope,
+  override: SpaceChatScope | null | undefined,
+): SpaceChatScope {
+  if (override) {
+    return { campaignId: override.campaignId, spaceId: override.spaceId }
+  }
+  if (conversation) {
+    return {
+      campaignId: conversation.campaign_id ?? null,
+      spaceId: getConversationSpaceId(conversation),
+    }
+  }
+  return { campaignId: panelFallback.campaignId, spaceId: panelFallback.spaceId }
 }
 
 export function getConversationChannelId(

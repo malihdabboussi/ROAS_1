@@ -43,15 +43,16 @@ export function TrainingPanelFirefliesDialog({
                   <h2 className="title-h6">FIREFLIES CALLS</h2>
                   <button
                     type="button"
+                    aria-label="Close Fireflies calls"
                     onClick={() => onOpenChange(false)}
                     className="btn-icon-bare"
                   >
                     <X className="icon-xs" />
                   </button>
                 </div>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   One click import runs crystallization and memory extraction.
-                </p>
+                </DialogPrimitive.Description>
               </div>
               <div className="px-spacing-6 py-spacing-4 space-y-spacing-2 flex-1 overflow-y-auto">
                 {loading ? (

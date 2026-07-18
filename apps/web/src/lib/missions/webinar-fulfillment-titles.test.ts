@@ -15,12 +15,6 @@ describe('formatWebinarSubtaskTitle', () => {
     expect(formatWebinarSubtaskTitle('Landing Page Copy (roas-landing-page-copy)')).toBe(
       'Task 8B — Landing page copy',
     )
-    expect(formatWebinarSubtaskTitle('Static Meta ads (roas-ad-design)')).toBe(
-      'Task 9 — Validate Messaging statics',
-    )
-    expect(formatWebinarSubtaskTitle('Task 6 — WEB#4 — Market Research')).toBe(
-      'Task 6 — WEB#4 — Market Research',
-    )
   })
 
   it('leaves gates numbered without rewriting approve copy', () => {

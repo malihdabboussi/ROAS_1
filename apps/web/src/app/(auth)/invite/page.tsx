@@ -4,12 +4,15 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
+import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { reportClientError } from '@/lib/log-client-error'
+import { AUTH_MESSAGES } from '../config/auth-messages.config'
 import { resolveAuthSignupErrorMessage } from '../config/auth-toast-errors.config'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL
 
 export default function InvitePage() {
+  const messages = AUTH_MESSAGES.DIRECT_INVITE
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -19,10 +22,8 @@ export default function InvitePage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const e = searchParams.get('email')
-    const c = searchParams.get('code')
-    if (e) setEmail(decodeURIComponent(e))
-    if (c) setCode(decodeURIComponent(c))
+    setEmail(searchParams.get('email') ?? '')
+    setCode(searchParams.get('code') ?? '')
   }, [searchParams])
 
   const onSubmit = async (ev: React.FormEvent) => {
@@ -34,7 +35,7 @@ export default function InvitePage() {
         error_code: 'api_url_missing',
         message: 'NEXT_PUBLIC_API_URL is not configured',
       })
-      setError('NEXT_PUBLIC_API_URL is not configured.')
+      setError(messages.connectionError)
       return
     }
     setLoading(true)
@@ -80,7 +81,7 @@ export default function InvitePage() {
         error_code: 'register_with_invite_no_session',
         message: 'register-with-invite returned no session token',
       })
-      setError('Something went wrong.')
+      setError(messages.error)
       setLoading(false)
     } catch {
       void reportClientError({
@@ -88,7 +89,7 @@ export default function InvitePage() {
         error_code: 'register_with_invite_network_error',
         message: 'register-with-invite fetch failed',
       })
-      setError('Could not connect. Try again.')
+      setError(messages.connectionError)
       setLoading(false)
     }
   }
@@ -106,51 +107,63 @@ export default function InvitePage() {
           alt="ROAS"
           className="mx-auto mb-[var(--spacing-3)] hidden h-16 w-16 object-contain dark:block"
         />
-        <h1 className="title-h1 text-foreground">CREATE ACCOUNT</h1>
-        <p className="body-2 text-muted-foreground mt-[var(--spacing-2)]">
-          Enter the invite code from your email
-        </p>
+        <h1 className="title-h1 text-foreground">{messages.title.toUpperCase()}</h1>
+        <p className="body-2 text-muted-foreground mt-[var(--spacing-2)]">{messages.body}</p>
       </div>
       <form onSubmit={(e) => void onSubmit(e)} className="space-y-[var(--spacing-4)]">
         <div>
-          <label className="body-3 text-muted-foreground mb-[var(--spacing-1)] block">Email</label>
+          <label
+            htmlFor="invite-email"
+            className="body-3 text-muted-foreground mb-[var(--spacing-1)] block"
+          >
+            {messages.emailLabel}
+          </label>
           <input
+            id="invite-email"
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="input-glass body-2 w-full rounded-[var(--spacing-2)] px-[var(--spacing-3)] py-[var(--spacing-2)]"
-            placeholder="you@domain.com"
+            placeholder={messages.emailPlaceholder}
             autoComplete="email"
           />
         </div>
         <div>
-          <label className="body-3 text-muted-foreground mb-[var(--spacing-1)] block">
-            Invite code
+          <label
+            htmlFor="invite-code"
+            className="body-3 text-muted-foreground mb-[var(--spacing-1)] block"
+          >
+            {messages.codeLabel}
           </label>
           <input
+            id="invite-code"
             type="text"
             required
             value={code}
             onChange={(e) => setCode(e.target.value)}
             className="input-glass body-2 w-full rounded-[var(--spacing-2)] px-[var(--spacing-3)] py-[var(--spacing-2)]"
-            placeholder="Your code"
+            placeholder={messages.codePlaceholder}
             autoComplete="one-time-code"
           />
         </div>
         <div>
-          <label className="body-3 text-muted-foreground mb-[var(--spacing-1)] block">
-            Password
+          <label
+            htmlFor="invite-password"
+            className="body-3 text-muted-foreground mb-[var(--spacing-1)] block"
+          >
+            {messages.passwordLabel}
           </label>
           <div className="relative">
             <input
+              id="invite-password"
               type={showPassword ? 'text' : 'password'}
               required
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input-glass body-2 w-full rounded-[var(--spacing-2)] px-[var(--spacing-3)] py-[var(--spacing-2)] pr-10"
-              placeholder="At least 6 characters"
+              placeholder={messages.passwordPlaceholder}
               autoComplete="new-password"
             />
             <button
@@ -163,19 +176,30 @@ export default function InvitePage() {
             </button>
           </div>
         </div>
-        {error && <p className="body-3 text-destructive">{error}</p>}
+        {error && (
+          <p role="alert" className="body-3 text-destructive">
+            {error}
+          </p>
+        )}
         <button
           type="submit"
           disabled={loading}
           className="button-glass-primary body-2 w-full rounded-[var(--spacing-2)] py-[var(--spacing-3)] font-medium disabled:opacity-50"
         >
-          {loading ? 'Creating account…' : 'Create account'}
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <VibeyLoadingOrb size="sm" />
+              <span>{messages.submitting}</span>
+            </span>
+          ) : (
+            messages.submit
+          )}
         </button>
       </form>
       <p className="body-3 text-muted-foreground mt-[var(--spacing-6)] text-center">
-        Already have an account?{' '}
+        {messages.existingAccount}{' '}
         <Link href="/login" className="text-primary underline">
-          Log in
+          {messages.login}
         </Link>
       </p>
     </div>

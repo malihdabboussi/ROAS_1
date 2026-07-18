@@ -133,6 +133,31 @@ describe('EntitySearchService', () => {
     })
   })
 
+  it('does not truncate a blank account artifact listing to the search result limit', async () => {
+    const items = Array.from({ length: 60 }, (_, index) => ({
+      kind: 'presentation' as const,
+      id: `presentation-${index}`,
+      campaign_id: 'campaign-1',
+      title: `Deck ${index}`,
+    }))
+    const artifactService = { search: vi.fn(async () => ({ items })) }
+    const service = new EntitySearchService({} as never, artifactService as never)
+
+    const result = await service.search(
+      {} as never,
+      'user-1',
+      'org-1',
+      '',
+      ['artifact'],
+      50,
+      0,
+      null,
+    )
+
+    expect(result.results).toHaveLength(60)
+    expect(artifactService.search).toHaveBeenCalledWith({}, '', 'user-1', 'org-1')
+  })
+
   it('returns searchable conversation documents and mission deliverables with usable targets', async () => {
     const repository = {
       searchSpaceItems: vi.fn(async () => []),
@@ -158,16 +183,7 @@ describe('EntitySearchService', () => {
     const service = new EntitySearchService(repository as never)
 
     await expect(
-      service.search(
-        {} as never,
-        'user-1',
-        'org-1',
-        'Impact',
-        ['doc', 'deliverable'],
-        10,
-        0,
-        null,
-      ),
+      service.search({} as never, 'user-1', 'org-1', 'Impact', ['doc', 'deliverable'], 10, 0, null),
     ).resolves.toEqual({
       results: [
         {

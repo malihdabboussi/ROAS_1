@@ -2,6 +2,10 @@ import * as fs from 'fs/promises'
 import * as path from 'path'
 import { Injectable } from '@nestjs/common'
 import {
+  createEmptySyncResult,
+  type AgentSyncOrchestrationContext,
+} from './agent-sync-orchestration.types'
+import {
   composeDefinitionContent,
   expandRuntimeIdentityDefinitions,
   isUserProfileDefinitionFile,
@@ -12,10 +16,6 @@ import {
   type SyncManifestEntry,
   type SyncResult,
 } from './agent-sync.types'
-import {
-  createEmptySyncResult,
-  type AgentSyncOrchestrationContext,
-} from './agent-sync-orchestration.types'
 
 @Injectable()
 export class AgentSyncAgentService {
@@ -163,6 +163,7 @@ export class AgentSyncAgentService {
           agentKey: gatewayAgentId,
           name: agentKey,
           workspace: agentDir,
+          role: registry?.role ?? undefined,
           definitions: runtimeData
             .filter((def) => !isUserProfileDefinitionFile(def.file_name))
             .map((def) => ({

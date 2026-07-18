@@ -32,6 +32,7 @@ export function DeliverablePreviewBody({
   effectiveContent,
   viewMode,
   fallbackSpaceId,
+  spaceDocActionTarget,
   renderEntityPreview,
 }: {
   contentRef: RefObject<HTMLDivElement | null>
@@ -44,6 +45,7 @@ export function DeliverablePreviewBody({
   viewMode: ViewMode
   /** When the deliverable is a Space doc, used if metadata lacks spaceId. */
   fallbackSpaceId?: string | null
+  spaceDocActionTarget?: HTMLElement | null
   renderEntityPreview: DeliverableEntityPreviewRenderer
 }) {
   const textToRender = deliverable.content || effectiveContent
@@ -81,6 +83,7 @@ export function DeliverablePreviewBody({
       spaceId={spaceDocCtx.spaceId}
       itemId={spaceDocCtx.itemId}
       title={deliverable.title}
+      googleActionTarget={spaceDocActionTarget}
     />
   ) : isEntityType && deliverable.entity_id && deliverable.type !== 'doc' ? (
     renderEntityPreview({

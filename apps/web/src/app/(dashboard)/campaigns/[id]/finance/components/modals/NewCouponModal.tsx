@@ -61,6 +61,8 @@ export function NewCouponModal({ open, saving, setOpen, onSubmit, form }: Props)
                 <div className="flex items-center justify-between">
                   <h2 className="title-h6">New Coupon</h2>
                   <button
+                    type="button"
+                    aria-label="Close new coupon"
                     onClick={() => {
                       form.resetCouponForm()
                       setOpen(false)
@@ -70,17 +72,20 @@ export function NewCouponModal({ open, saving, setOpen, onSubmit, form }: Props)
                     <X className="icon-xs" />
                   </button>
                 </div>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   Create a discount code for this campaign
-                </p>
+                </DialogPrimitive.Description>
               </div>
 
               <div className="px-spacing-6 py-spacing-4 space-y-spacing-4 flex-1 overflow-y-auto">
                 <form id="form-new-coupon" onSubmit={onSubmit} className="space-y-spacing-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={LABEL_CLASS}>Code</label>
+                      <label htmlFor="new-coupon-code" className={LABEL_CLASS}>
+                        Code
+                      </label>
                       <input
+                        id="new-coupon-code"
                         value={form.newCouponCode}
                         onChange={(e) => form.setNewCouponCode(e.target.value.toUpperCase())}
                         placeholder="e.g. LAUNCH20"
@@ -88,8 +93,11 @@ export function NewCouponModal({ open, saving, setOpen, onSubmit, form }: Props)
                       />
                     </div>
                     <div>
-                      <label className={LABEL_CLASS}>Display Name</label>
+                      <label htmlFor="new-coupon-name" className={LABEL_CLASS}>
+                        Display Name
+                      </label>
                       <input
+                        id="new-coupon-name"
                         value={form.newCouponName}
                         onChange={(e) => form.setNewCouponName(e.target.value)}
                         placeholder="Optional"
@@ -98,10 +106,17 @@ export function NewCouponModal({ open, saving, setOpen, onSubmit, form }: Props)
                     </div>
                   </div>
                   <div>
-                    <label className={LABEL_CLASS}>Discount Type</label>
-                    <div className="flex gap-2">
+                    <p id="new-coupon-discount-type" className={LABEL_CLASS}>
+                      Discount Type
+                    </p>
+                    <div
+                      role="group"
+                      aria-labelledby="new-coupon-discount-type"
+                      className="flex gap-2"
+                    >
                       <button
                         type="button"
+                        aria-pressed={form.newCouponType === 'percent'}
                         onClick={() => form.setNewCouponType('percent')}
                         className={`body-4 rounded-spacing-2 flex-1 px-3 py-2 transition-colors ${
                           form.newCouponType === 'percent'
@@ -113,6 +128,7 @@ export function NewCouponModal({ open, saving, setOpen, onSubmit, form }: Props)
                       </button>
                       <button
                         type="button"
+                        aria-pressed={form.newCouponType === 'amount'}
                         onClick={() => form.setNewCouponType('amount')}
                         className={`body-4 rounded-spacing-2 flex-1 px-3 py-2 transition-colors ${
                           form.newCouponType === 'amount'
@@ -126,8 +142,11 @@ export function NewCouponModal({ open, saving, setOpen, onSubmit, form }: Props)
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={LABEL_CLASS}>Value *</label>
+                      <label htmlFor="new-coupon-value" className={LABEL_CLASS}>
+                        Value *
+                      </label>
                       <input
+                        id="new-coupon-value"
                         value={form.newCouponValue}
                         onChange={(e) => form.setNewCouponValue(e.target.value)}
                         placeholder={form.newCouponType === 'percent' ? '20' : '50'}
@@ -140,6 +159,7 @@ export function NewCouponModal({ open, saving, setOpen, onSubmit, form }: Props)
                     </div>
                     {form.newCouponType === 'amount' && (
                       <FormSelectDropdown
+                        id="new-coupon-currency"
                         label="Currency"
                         value={form.newCouponCurrency}
                         onChange={form.setNewCouponCurrency}
@@ -153,6 +173,7 @@ export function NewCouponModal({ open, saving, setOpen, onSubmit, form }: Props)
                     )}
                   </div>
                   <FormSelectDropdown
+                    id="new-coupon-duration"
                     label="Duration"
                     value={form.newCouponDuration}
                     onChange={(v) =>
@@ -166,8 +187,11 @@ export function NewCouponModal({ open, saving, setOpen, onSubmit, form }: Props)
                   />
                   {form.newCouponDuration === 'repeating' && (
                     <div>
-                      <label className={LABEL_CLASS}>Duration in Months</label>
+                      <label htmlFor="new-coupon-duration-months" className={LABEL_CLASS}>
+                        Duration in Months
+                      </label>
                       <input
+                        id="new-coupon-duration-months"
                         value={form.newCouponDurationMonths}
                         onChange={(e) => form.setNewCouponDurationMonths(e.target.value)}
                         placeholder="e.g. 3"
@@ -178,8 +202,11 @@ export function NewCouponModal({ open, saving, setOpen, onSubmit, form }: Props)
                     </div>
                   )}
                   <div>
-                    <label className={LABEL_CLASS}>Max Uses</label>
+                    <label htmlFor="new-coupon-max-uses" className={LABEL_CLASS}>
+                      Max Uses
+                    </label>
                     <input
+                      id="new-coupon-max-uses"
                       value={form.newCouponMaxUses}
                       onChange={(e) => form.setNewCouponMaxUses(e.target.value)}
                       placeholder="Unlimited if empty"

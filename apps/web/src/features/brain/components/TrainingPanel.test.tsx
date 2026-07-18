@@ -236,10 +236,17 @@ describe('TrainingPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Import$/i }))
     fireEvent.click(await screen.findByRole('button', { name: /import from fathom/i }))
 
-    expect(await screen.findByText('Pipeline Review')).toBeTruthy()
+    const meetingButton = await screen.findByRole('button', { name: /Pipeline Review/ })
+    expect(meetingButton.getAttribute('aria-pressed')).toBe('false')
+    const fathomDialog = screen.getByRole('dialog', { name: 'Import Fathom Calls' })
+    expect(fathomDialog.getAttribute('aria-describedby')).toBe(
+      screen.getByText(/Select calls to import/).id,
+    )
+    expect(screen.getByRole('button', { name: 'Close Fathom calls' })).toBeTruthy()
     expect(mocks.listFathomMeetings).toHaveBeenCalledWith()
 
-    fireEvent.click(screen.getByText('Pipeline Review'))
+    fireEvent.click(meetingButton)
+    expect(meetingButton.getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(screen.getByRole('button', { name: /import 1 selected/i }))
 
     await waitFor(() => {
@@ -272,6 +279,11 @@ describe('TrainingPanel', () => {
     fireEvent.click(await screen.findByRole('button', { name: /import from fireflies/i }))
 
     expect(await screen.findByText('Customer Discovery')).toBeTruthy()
+    const firefliesDialog = screen.getByRole('dialog', { name: 'Import Fireflies Calls' })
+    expect(firefliesDialog.getAttribute('aria-describedby')).toBe(
+      screen.getByText(/One click import/).id,
+    )
+    expect(screen.getByRole('button', { name: 'Close Fireflies calls' })).toBeTruthy()
     expect(mocks.listFirefliesTranscripts).toHaveBeenCalledWith(30)
 
     fireEvent.click(screen.getByRole('button', { name: /^Import$/i }))
@@ -295,9 +307,7 @@ describe('TrainingPanel', () => {
 
     openPanel()
 
-    const fileInput = container.querySelector(
-      'input[accept*=".txt"]',
-    ) as HTMLInputElement | null
+    const fileInput = container.querySelector('input[accept*=".txt"]') as HTMLInputElement | null
     expect(fileInput).toBeTruthy()
     fireEvent.change(fileInput!, { target: { files: [file] } })
 

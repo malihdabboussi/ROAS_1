@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { markdownToHtml } from '../../lib/markdown-to-html'
+import { fetchSharedItem, type SharedItemResponse } from '../../services/spaces.service'
 import { DocEditorProseStyles } from '../docs/editor/DocEditorProseStyles'
 import {
   editorFontFamilyForStyle,
@@ -9,8 +11,6 @@ import {
   getDocCustomDataRecord,
   parseDocEditorUiFromCustomData,
 } from '../docs/lib/doc-editor-settings'
-import { markdownToHtml } from '../../lib/markdown-to-html'
-import { fetchSharedItem, type SharedItemResponse } from '../../services/spaces.service'
 
 function isDocLike(item: SharedItemResponse['item']): boolean {
   const customData = (item.custom_data ?? {}) as Record<string, unknown>
@@ -75,26 +75,26 @@ export function SharedItemView({ token }: { token: string }) {
           <VibeyLoadingOrb text="Loading shared item…" state="processing" size="lg" />
         </div>
       ) : error || !payload ? (
-        <div className="p-spacing-4 rounded-spacing-2 border border-border">
+        <div className="p-spacing-4 rounded-spacing-2 border-border border">
           <h1 className="text-lg font-semibold uppercase tracking-wide">Link unavailable</h1>
           <p className="body-3 mt-spacing-2 text-muted-foreground">
             This link is invalid or has expired.
           </p>
         </div>
       ) : (
-        <article className="p-spacing-4 space-y-spacing-4 rounded-spacing-2 border border-border">
+        <article className="p-spacing-4 space-y-spacing-4 rounded-spacing-2 border-border border">
           <div className="space-y-spacing-1">
             <p className="body-4 text-muted-foreground uppercase tracking-wide">
               Shared from {payload.space.title}
             </p>
-            <h1 className="text-2xl font-semibold">{title}</h1>
+            <h1 className="text-2xl font-semibold uppercase">{title}</h1>
             <p className="body-4 text-muted-foreground">
               Access: {payload.access_level} · Share: {payload.share_type}
             </p>
           </div>
 
           {isDoc ? (
-            <div className="doc-editor-surface p-spacing-4 min-h-0 rounded-spacing-2 border border-border bg-background">
+            <div className="doc-editor-surface p-spacing-4 rounded-spacing-2 border-border bg-background min-h-0 border">
               <DocEditorProseStyles
                 editorFontSizePx={editorFontSizePxForSize(docFontSize)}
                 editorFontFamily={editorFontFamilyForStyle(docFontStyle)}
@@ -108,16 +108,16 @@ export function SharedItemView({ token }: { token: string }) {
           ) : (
             <div className="space-y-spacing-3">
               <div className="gap-spacing-2 body-3 grid grid-cols-2">
-                <div className="px-spacing-3 py-spacing-2 rounded-spacing-2 border border-border">
+                <div className="px-spacing-3 py-spacing-2 rounded-spacing-2 border-border border">
                   <span className="body-4 text-muted-foreground">Status</span>
                   <p>{payload.item.status}</p>
                 </div>
-                <div className="px-spacing-3 py-spacing-2 rounded-spacing-2 border border-border">
+                <div className="px-spacing-3 py-spacing-2 rounded-spacing-2 border-border border">
                   <span className="body-4 text-muted-foreground">Due date</span>
                   <p>{payload.item.due_date || '—'}</p>
                 </div>
               </div>
-              <div className="p-spacing-3 body-3 rounded-spacing-2 border border-border">
+              <div className="p-spacing-3 body-3 rounded-spacing-2 border-border border">
                 <p className="body-4 mb-spacing-1 text-muted-foreground">Notes</p>
                 <div
                   className="prose prose-sm dark:prose-invert max-w-none"

@@ -63,18 +63,15 @@ export function numberDeliverablesByTask(
     .filter((subtask) => subtask.assignee_type !== 'human')
     .sort((a, b) => a.sort_order - b.sort_order)
   const taskNumberBySubtaskId = new Map(
-    orderedAgentTasks.map((subtask, index) => [
-      subtask.id,
-      String(subtask.title ?? '').match(/^Task\s+([0-9]+[A-Z]?)/i)?.[1] ?? String(index + 1),
-    ]),
+    orderedAgentTasks.map((subtask, index) => [subtask.id, index + 1]),
   )
-  const taskNumberByArtifactRef = new Map<string, string>()
+  const taskNumberByDeliverableId = new Map<string, number>()
 
   for (const subtask of orderedAgentTasks) {
     const taskNumber = taskNumberBySubtaskId.get(subtask.id)
     if (!taskNumber) continue
     for (const deliverableId of collectSubtaskDeliverableIds(subtask)) {
-      taskNumberByArtifactRef.set(deliverableId, taskNumber)
+      taskNumberByDeliverableId.set(deliverableId, taskNumber)
     }
   }
 
@@ -83,13 +80,10 @@ export function numberDeliverablesByTask(
       typeof deliverable.metadata?.subtask_id === 'string' ? deliverable.metadata.subtask_id : null
     const taskNumber =
       (metadataSubtaskId ? taskNumberBySubtaskId.get(metadataSubtaskId) : undefined) ??
-      taskNumberByArtifactRef.get(deliverable.id) ??
-      (deliverable.entity_id ? taskNumberByArtifactRef.get(deliverable.entity_id) : undefined)
+      taskNumberByDeliverableId.get(deliverable.id)
     if (!taskNumber) return deliverable
 
-    const title = (deliverable.title || 'Untitled')
-      .replace(/^Task\s*[0-9]+[A-Z]?\s*[—–-]\s*/i, '')
-      .trim()
+    const title = (deliverable.title || 'Untitled').replace(/^Task\s*\d+\s*[—–-]\s*/i, '').trim()
     return { ...deliverable, title: `Task ${taskNumber} — ${title}` }
   })
 }

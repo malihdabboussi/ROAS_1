@@ -6,14 +6,12 @@ export type WorkspaceSettingsSection =
   | 'properties'
   | 'integrations'
   | 'mcp'
-  | 'api-keys'
   | 'domains'
   | 'email'
   | 'brain'
   | 'models'
   | 'skill-recommendations'
   | 'autopilot'
-  | 'chrome-extension'
 
 export type OpenWorkspaceSettingsOptions = {
   /** When opening Integrations, jump to this integration row (Library tab filtered + scroll). */

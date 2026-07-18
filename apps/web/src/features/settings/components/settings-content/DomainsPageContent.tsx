@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { Plus } from 'lucide-react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { AddCustomDomainDialog } from '@/components/domains/AddCustomDomainDialog'
 import { CustomDomainsTable } from '@/components/domains/CustomDomainsTable'
+import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { customDomainsApi } from '@/lib/domains/custom-domains-api'
 import type { CustomDomain, DomainStatus } from '@/lib/domains/domains.types'
 
@@ -45,7 +45,7 @@ export default function DomainsPageContent() {
     <div className="p-spacing-4 sm:p-spacing-8 space-y-spacing-6">
       <div className="gap-spacing-4 flex items-start justify-between">
         <div className="min-w-0">
-          <h1 className="title-h5 text-foreground">Domains</h1>
+          <h1 className="title-h5 text-foreground uppercase">Domains</h1>
           <p className="body-3 text-muted-foreground mt-spacing-1">
             Manage your custom domains and DNS verification.
           </p>

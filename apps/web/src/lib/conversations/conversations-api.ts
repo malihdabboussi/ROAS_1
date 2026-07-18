@@ -153,10 +153,7 @@ export async function fetchConversationAssets(
   )
 }
 
-export async function setConversationPinned(
-  id: string,
-  pinned: boolean,
-): Promise<Conversation> {
+export async function setConversationPinned(id: string, pinned: boolean): Promise<Conversation> {
   if (isPendingConversationId(id)) {
     throw new Error('Cannot pin a pending conversation')
   }
@@ -200,6 +197,21 @@ export async function assignConversationSpace(
     throw new Error('Cannot assign space to a pending conversation')
   }
   return backendPatch<Conversation>(`/api/conversations/${conversationId}`, {
+    metadata: { space_id: spaceId },
+  })
+}
+
+/** Assign campaign + space in one patch (chat header scope picker). */
+export async function assignConversationScope(
+  conversationId: string,
+  campaignId: string | null,
+  spaceId: string | null,
+): Promise<Conversation> {
+  if (isPendingConversationId(conversationId)) {
+    throw new Error('Cannot assign scope to a pending conversation')
+  }
+  return backendPatch<Conversation>(`/api/conversations/${conversationId}`, {
+    campaign_id: campaignId,
     metadata: { space_id: spaceId },
   })
 }

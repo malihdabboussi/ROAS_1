@@ -188,4 +188,24 @@ describe('OrgInviteAcceptPage', () => {
     expect(mocks.clearOrgSensitiveState).toHaveBeenCalled()
     expect(mocks.replace).toHaveBeenCalledWith('/home')
   })
+
+  it('shows a recoverable error when invite acceptance is rejected', async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+    mocks.acceptInvitationAndBootstrap.mockResolvedValue({
+      success: false,
+      org_id: '',
+      role: '',
+    })
+
+    render(<OrgInviteAcceptPage />)
+
+    await screen.findByText('Acme Org')
+    fireEvent.click(screen.getByRole('button', { name: 'Accept Invitation' }))
+
+    expect(await screen.findByRole('heading', { name: 'INVITATION ERROR' })).toBeInTheDocument()
+    expect(
+      screen.getByText("I couldn't accept that invitation. Try again in a moment."),
+    ).toBeInTheDocument()
+    expect(mocks.replace).not.toHaveBeenCalled()
+  })
 })

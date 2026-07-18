@@ -1,11 +1,11 @@
 import type { RefObject } from 'react'
 import { SettingsDropdown } from '@/components/ui/forms/SettingsDropdown'
 import type { ConversationShareLevel } from '@/lib/conversations/conversation.types'
+import { ConversationShareMemberAvatar } from './ConversationShareMemberAvatar'
 import {
   CONVERSATION_SHARE_PERMISSION_DROPDOWN_OPTIONS,
   type ConversationShareRosterEntry,
 } from './ConversationShareTypes'
-import { ConversationShareMemberAvatar } from './ConversationShareMemberAvatar'
 
 interface ConversationShareInviteRowProps {
   inviteCandidates: ConversationShareRosterEntry[]
@@ -37,6 +37,7 @@ export function ConversationShareInviteRow({
           onKeyDown={(event) => {
             if (event.key === 'Enter') onInvite()
           }}
+          aria-label="Invite by name or email"
           placeholder="Invite by name or email"
           className="input-glass body-3 text-foreground h-spacing-8 rounded-spacing-2 px-spacing-3 py-spacing-1 min-w-0 flex-1"
         />

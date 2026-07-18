@@ -33,6 +33,7 @@ export function CustomFieldDeleteDialog({
               type="button"
               onClick={() => onOpenChange(false)}
               className="btn-icon-bare btn-close-absolute"
+              aria-label="Close"
             >
               <X className="icon-sm" />
             </button>
@@ -41,10 +42,10 @@ export function CustomFieldDeleteDialog({
                 <AlertTriangle className="text-destructive h-6 w-6" />
               </div>
               <h2 className="title-h6">Delete Custom Field</h2>
-              <p className="body-2 text-muted-foreground mt-spacing-2">
+              <DialogPrimitive.Description className="body-2 text-muted-foreground mt-spacing-2">
                 Are you sure you want to delete{' '}
                 <span className="font-semibold">&ldquo;{deletingField?.name}&rdquo;</span>?
-              </p>
+              </DialogPrimitive.Description>
             </div>
             <div className="gap-spacing-3 px-spacing-6 pb-spacing-6 flex">
               <button

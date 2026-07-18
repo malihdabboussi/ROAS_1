@@ -47,6 +47,8 @@ BEGIN
 END
 $migration$;
 
+-- Keep the runtime incident guide on the current ROAS Vercel projects. These
+-- replacements are safe when the skill is absent or already current.
 UPDATE public.agent_skills
 SET
   description = replace(

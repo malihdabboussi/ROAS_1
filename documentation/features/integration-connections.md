@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 16, 2026 (multi-account Agenda merge + personal default for sends)
+Last Modified: July 17, 2026 (native Canva design import)
 
 ## Data Flow
 
@@ -16,6 +16,7 @@ Last Modified: July 16, 2026 (multi-account Agenda merge + personal default for 
 10. Chat UI converts failed connection checks into an `integration_connect` block.
 11. The repair card renders the doctor summary/checks and gives one or more actions: connect, reconnect, open settings, or approve a personal fallback for this task.
 12. Composio execution failures also return `integration_doctor`, so the agent can explain and repair the failure instead of retrying a generic disconnected action.
+13. Canva handoffs use the selected personal or org-shared Composio connection. Images follow Canva's asset-upload path; documents and presentations send native DOCX, PPTX, or PDF bytes through Canva Design Import and poll until an editable design URL is ready.
 
 ## Code Examples
 
@@ -97,3 +98,4 @@ Reconnect result:
 - Integration execution should fail before side effects when the agent uses an unavailable action slug, omits capability-required params, or the Composio connection is not ready for agent use.
 - Google Calendar agenda reads events from all calendars in each connected Google account (capped per account, calendars fetched in parallel), not only `primary`.
 - OAuth callback fallback lands on `/home` (settings is a modal), not `/settings`.
+- Canva documents and presentations use native Design Import rather than flattening the whole artifact into an image. Standard docs become DOCX, visual docs become high-resolution PDF, and presentations become PPTX with editable text, shapes, and embedded images where the source format allows it.

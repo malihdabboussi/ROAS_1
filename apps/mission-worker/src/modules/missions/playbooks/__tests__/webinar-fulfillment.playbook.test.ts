@@ -43,8 +43,6 @@ describe('webinar-fulfillment playbook', () => {
       'st-generate-images',
       'st-funnel-design',
       'st-deck-bones',
-      'st-gate-creative',
-      'st-compile-ads',
       'st-media-plan',
       'st-gate-production',
     ])
@@ -58,29 +56,6 @@ describe('webinar-fulfillment playbook', () => {
     ])
     expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.intent.ecology).toMatch(
       /actual failed tool attempt/i,
-    )
-    for (const action of ['list_themes', 'extract_website_theme', 'create_theme', 'update_theme']) {
-      expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.intent.ecology).toContain(
-        action,
-      )
-    }
-    for (const field of [
-      'logo_asset_id',
-      'colors',
-      'font_heading',
-      'font_body',
-      'brand_voice',
-      'brand_values',
-      'social_links',
-      'headshot_images',
-      'product_images',
-    ]) {
-      expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.intent.ecology).toContain(
-        field,
-      )
-    }
-    expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.intent.ecology).toMatch(
-      /confirmed.*inferred.*not found/is,
     )
     expect(plan.subtasks.find((s) => s.id === 'st-launch-brief')?.dependsOn).toEqual([
       'st-market-research',
@@ -112,45 +87,6 @@ describe('webinar-fulfillment playbook', () => {
       'st-landing-page-copy',
     ])
     expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.assignTo).toBe('designer')
-    expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.outputContract).toMatchObject({
-      required_action: 'save_document',
-      required_artifact_type: 'doc',
-      expected: { title: 'WEB#6 — Validate Messaging Statics' },
-    })
-    expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.intent.ecology).toMatch(
-      /generate_visual_html/,
-    )
-    for (const subtaskId of [
-      'st-ad-design',
-      'st-image-brief',
-      'st-generate-images',
-      'st-funnel-design',
-      'st-deck-bones',
-      'st-compile-ads',
-    ]) {
-      expect(plan.subtasks.find((s) => s.id === subtaskId)?.intent.ecology).toMatch(
-        /list_themes.*get_theme/is,
-      )
-    }
-    expect(plan.subtasks.find((s) => s.id === 'st-generate-images')?.dependsOn).toEqual([
-      'st-image-brief',
-    ])
-    expect(plan.subtasks.find((s) => s.id === 'st-generate-images')?.outputContract).toMatchObject({
-      required_action: 'generate_image',
-      required_artifact_type: 'image',
-    })
-    expect(plan.subtasks.find((s) => s.id === 'st-gate-creative')?.dependsOn).toEqual([
-      'st-ad-design',
-      'st-generate-images',
-    ])
-    expect(plan.subtasks.find((s) => s.id === 'st-compile-ads')?.assignTo).toBe('ads_manager')
-    expect(plan.subtasks.find((s) => s.id === 'st-compile-ads')?.dependsOn).toEqual([
-      'st-gate-creative',
-    ])
-    expect(plan.subtasks.find((s) => s.id === 'st-compile-ads')?.outputContract).toMatchObject({
-      required_action: 'create_ad',
-      required_artifact_type: 'ad',
-    })
     expect(plan.subtasks.find((s) => s.id === 'st-media-plan')?.assignTo).toBe('ads_manager')
     expect(
       plan.subtasks
@@ -160,10 +96,8 @@ describe('webinar-fulfillment playbook', () => {
             'st-landing-page-copy',
             'st-ad-design',
             'st-image-brief',
-            'st-generate-images',
             'st-funnel-design',
             'st-deck-bones',
-            'st-compile-ads',
             'st-media-plan',
           ].includes(s.id),
         )
@@ -181,11 +115,7 @@ describe('webinar-fulfillment playbook', () => {
     expect(plan.subtasks.find((s) => s.id === 'st-deck-bones')?.intent.ecology).toMatch(
       /offer stack/i,
     )
-    expect(plan.capability_gap).toEqual({
-      exists: false,
-      note: '',
-      suggested_hire: '',
-    })
+    expect(plan.capability_gap).toEqual({ exists: false, note: '', suggested_hire: '' })
     expect(plan.harness.contextSnapshot.missing).not.toContain(
       'roas-webinar-emails skill (Copy Package section 2)',
     )
@@ -276,22 +206,10 @@ describe('webinar-fulfillment playbook', () => {
     ])
     expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.dependsOn).toEqual(['st-gate-copy'])
     expect(plan.subtasks.find((s) => s.id === 'st-media-plan')?.dependsOn).toEqual([
-      'st-compile-ads',
+      'st-ad-design',
+      'st-image-brief',
       'st-funnel-design',
       'st-deck-bones',
-    ])
-  })
-
-  it('assembles ads directly from both creative lanes when no human gate is available', () => {
-    const plan = expandWebinarFulfillmentPlaybook({
-      ...base,
-      mission: { ...base.mission, user_id: '' },
-    })
-
-    expect(plan.subtasks.some((subtask) => subtask.id === 'st-gate-creative')).toBe(false)
-    expect(plan.subtasks.find((subtask) => subtask.id === 'st-compile-ads')?.dependsOn).toEqual([
-      'st-ad-design',
-      'st-generate-images',
     ])
   })
 

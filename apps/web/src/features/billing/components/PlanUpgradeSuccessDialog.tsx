@@ -1,5 +1,6 @@
 'use client'
 
+import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { Check, Sparkles } from 'lucide-react'
 
 interface PlanUpgradeSuccessDialogProps {
@@ -13,31 +14,26 @@ export function PlanUpgradeSuccessDialog({
   onClose,
   planName,
 }: PlanUpgradeSuccessDialogProps) {
-  if (!open) return null
-
   return (
-    <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 z-50 bg-modal-overlay" onClick={onClose} />
-
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-        <div className="surface-card w-full max-w-md overflow-hidden rounded-2xl border border-[var(--color-border)] p-8 shadow-2xl">
+    <DialogPrimitive.Root open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="bg-modal-overlay fixed inset-0 z-50" />
+        <DialogPrimitive.Content className="surface-card border-border fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border p-8 shadow-2xl">
           {/* Success Icon */}
           <div className="mb-6 text-center">
-            <div className="border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border">
+            <div className="border-primary/20 bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border">
               <Sparkles className="text-primary h-8 w-8" />
             </div>
 
-            <h2 className="text-lg font-semibold text-[var(--color-foreground)]">
+            <DialogPrimitive.Title className="text-foreground text-lg font-semibold">
               WELCOME TO {planName.toUpperCase()}!
-            </h2>
-            <p className="body-2 text-muted-foreground mt-1">
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Description className="body-2 text-muted-foreground mt-1">
               Your plan has been upgraded successfully
-            </p>
+            </DialogPrimitive.Description>
 
             {/* Features unlocked */}
-            <div className="bg-[var(--color-secondary)]/30 mt-6 space-y-2 rounded-xl border border-[var(--color-border)] px-4 py-4 text-left">
+            <div className="bg-secondary/30 border-border mt-6 space-y-2 rounded-xl border px-4 py-4 text-left">
               <p className="body-3 text-muted-foreground mb-3 text-center">
                 You now have access to:
               </p>
@@ -48,7 +44,7 @@ export function PlanUpgradeSuccessDialog({
                 'Advanced features',
               ].map((feature) => (
                 <div key={feature} className="flex items-center gap-2">
-                  <Check className="h-3.5 w-3.5 flex-shrink-0 text-emerald-400" />
+                  <Check className="text-success h-3.5 w-3.5 flex-shrink-0" />
                   <span className="body-3 text-foreground">{feature}</span>
                 </div>
               ))}
@@ -63,8 +59,8 @@ export function PlanUpgradeSuccessDialog({
           >
             Let&apos;s go!
           </button>
-        </div>
-      </div>
-    </>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   )
 }

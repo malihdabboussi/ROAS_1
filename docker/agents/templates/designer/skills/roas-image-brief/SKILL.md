@@ -29,7 +29,7 @@ One paragraph per the spec template, formats tagged 4:5 + 9:16 (add 1:1 only if 
 Across the set: same palette family, same lighting mood, same text treatment language — the campaign should look like ONE campaign in the feed. Vary the scenes, not the system.
 
 ### Step 4 — Ship
-Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above — do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai / no native artifacts (fallback), save to `/mnt/user-data/outputs/` and present. Title the Doc exactly `WEB#7 — Image Briefs` (legacy `Image Briefs` and `WEB#6 — Image Briefs` still match). Prompts are the deliverable. In a mission, a separate generation step reads this Doc and calls `generate_image`; this skill does not hide image generation inside the brief step.
+Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above — do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai / no native artifacts (fallback), save to `/mnt/user-data/outputs/` and present. Title the Doc exactly `WEB#6 — Image Briefs` (legacy `Image Briefs` still matches). Prompts are the deliverable; do not generate the images unless asked (and if asked, the text-on-texture ones still route to roas-ad-design).
 
 ## OUTPUT FORMAT
 ```

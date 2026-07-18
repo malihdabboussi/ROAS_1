@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Brain,
@@ -8,9 +8,10 @@ import {
   ChevronRight,
   FolderGit2,
   House,
+  Layers3,
   List,
   ListChecks,
-  MoreHorizontal,
+  MessageSquare,
   PanelLeft,
   PanelRight,
   Search,
@@ -19,8 +20,12 @@ import {
   Workflow,
 } from 'lucide-react'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
+import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { dispatchOpenStudioSearch } from '@/features/studio/utils/open-studio-search-result'
+import { stripLegacySpacesConversationTitle } from '@/lib/conversations/conversation-title'
 import { cn } from '@/lib/utils/cn'
+import { isFullShellConversation } from './shell-chat-breadcrumb'
+import { isShellWorkspaceRoute } from './shell-route-policy'
 import { ShellOpenInMenu } from './ShellOpenInMenu'
 import { useShellOpenIn } from './ShellOpenInProvider'
 import { shellSidebarExpanded, useShellStore } from './use-shell-store'
@@ -34,6 +39,7 @@ function breadcrumbFromPath(
   }
   if (pathname.startsWith('/team')) return { label: 'Team', Icon: Users }
   if (pathname.startsWith('/brain')) return { label: 'Brain', Icon: Brain }
+  if (pathname.startsWith('/artifacts')) return { label: 'All Artifacts', Icon: Layers3 }
   if (pathname.startsWith('/projects')) return { label: 'Projects', Icon: FolderGit2 }
   if (pathname.startsWith('/flows')) return { label: 'Flows', Icon: Workflow }
   if (pathname.startsWith('/campaigns')) return { label: 'Campaigns', Icon: ListChecks }
@@ -49,6 +55,7 @@ function breadcrumbFromPath(
 export function ShellTopBar() {
   const pathname = usePathname() ?? '/home'
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const sidebarPinned = useShellStore((s) => s.sidebarPinned)
   const sidebarPeek = useShellStore((s) => s.sidebarPeek)
@@ -57,6 +64,8 @@ export function ShellTopBar() {
   const scheduleSidebarPeekClose = useShellStore((s) => s.scheduleSidebarPeekClose)
   const requestNewChat = useShellStore((s) => s.requestNewChat)
   const openFreshChatDrawer = useShellStore((s) => s.openFreshChatDrawer)
+  const restoreChatDrawer = useShellStore((s) => s.restoreChatDrawer)
+  const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
   const toggleRightPanel = useShellStore((s) => s.toggleRightPanel)
   const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
   const spaceWorkOpen = useShellStore((s) => s.spaceWorkOpen)
@@ -73,12 +82,28 @@ export function ShellTopBar() {
     return spaces.find((sp) => sp.id === activeSpaceId)?.title ?? null
   }, [activeSpaceId, spaces])
 
-  const crumb = breadcrumbFromPath(pathname, activeSpaceTitle)
+  const activeConversationId = useChatStore((s) => s.activeConversationId)
+  const conversations = useChatStore((s) => s.conversations)
+  const routeConversationId = searchParams.get('conv')
+  const breadcrumbConversationId = routeConversationId ?? activeConversationId
+  const activeConversationTitle = useMemo(() => {
+    const conversation = conversations.find((item) => item.id === breadcrumbConversationId)
+    return stripLegacySpacesConversationTitle(conversation?.title) || 'Chat'
+  }, [breadcrumbConversationId, conversations])
+
+  const fullConversation = isFullShellConversation({
+    pathname,
+    hasConversationParam: Boolean(routeConversationId),
+    spaceWorkOpen,
+    chatDrawerOpen,
+  })
+  const crumb = fullConversation
+    ? { label: activeConversationTitle, Icon: MessageSquare }
+    : breadcrumbFromPath(pathname, activeSpaceTitle)
   const CrumbIcon = crumb.Icon
   const expanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
   const onSpaces = pathname.startsWith('/spaces')
-  // ⋯ only when a page registered a trail (rename / section options). Never on Home.
-  const showCrumbMenu = Boolean(pageBreadcrumb)
+  const visiblePageBreadcrumb = fullConversation ? null : pageBreadcrumb
 
   const histIndex = useRef(0)
   const histMax = useRef(0)
@@ -99,18 +124,17 @@ export function ShellTopBar() {
     scheduleSidebarPeekClose()
   }, [scheduleSidebarPeekClose])
 
-  const isWorkspaceRoute =
-    pathname.startsWith('/spaces') ||
-    pathname.startsWith('/campaigns') ||
-    pathname.startsWith('/brain') ||
-    pathname.startsWith('/flows') ||
-    pathname.startsWith('/projects') ||
-    pathname.startsWith('/team')
-
   const goNewChat = () => {
-    // Section routes: dock a fresh chat drawer in place (stay on the page).
-    if (isWorkspaceRoute) {
-      openFreshChatDrawer()
+    // Section routes (Spaces, etc.): stay on the page.
+    // Chat already open → start a fresh new chat in the drawer.
+    // Chat closed → just open/restore the drawer (keep last conversation).
+    if (isShellWorkspaceRoute(pathname)) {
+      if (chatDrawerOpen) {
+        openFreshChatDrawer()
+      } else {
+        setMenuMode('chat')
+        restoreChatDrawer()
+      }
       return
     }
     // Home / chat routes: full new-chat screen.
@@ -154,10 +178,7 @@ export function ShellTopBar() {
         title="Back"
         onClick={goBack}
         disabled={!canGoBack}
-        className={cn(
-          'shell-topbar-icon-btn',
-          !canGoBack && 'shell-topbar-icon-btn-disabled',
-        )}
+        className={cn('shell-topbar-icon-btn', !canGoBack && 'shell-topbar-icon-btn-disabled')}
       >
         <ChevronLeft />
       </button>
@@ -166,36 +187,28 @@ export function ShellTopBar() {
         title="Forward"
         onClick={goForward}
         disabled={!canGoForward}
-        className={cn(
-          'shell-topbar-icon-btn',
-          !canGoForward && 'shell-topbar-icon-btn-disabled',
-        )}
+        className={cn('shell-topbar-icon-btn', !canGoForward && 'shell-topbar-icon-btn-disabled')}
       >
         <ChevronRight />
       </button>
 
-      {!expanded ? (
-        <button type="button" title="New chat" onClick={goNewChat} className="shell-topbar-icon-btn">
-          <SquarePen />
-        </button>
-      ) : null}
+      <button type="button" title="New chat" onClick={goNewChat} className="shell-topbar-icon-btn">
+        <SquarePen />
+      </button>
 
       <div className="shell-topbar-divider" aria-hidden />
 
       <div className="shell-topbar-crumb">
-        {pageBreadcrumb ? (
-          <div className="flex min-w-0 flex-1 items-center overflow-hidden">{pageBreadcrumb}</div>
+        {visiblePageBreadcrumb ? (
+          <div className="flex min-w-0 flex-1 items-center overflow-hidden">
+            {visiblePageBreadcrumb}
+          </div>
         ) : (
           <>
             <CrumbIcon className="shell-topbar-crumb-icon" aria-hidden />
             <span className="truncate">{crumb.label}</span>
           </>
         )}
-        {showCrumbMenu ? (
-          <button type="button" title="Section options" className="shell-topbar-crumb-menu">
-            <MoreHorizontal />
-          </button>
-        ) : null}
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">
@@ -226,7 +239,10 @@ export function ShellTopBar() {
             title={spaceWorkOpen ? 'Collapse space work area' : 'Expand space work area'}
             aria-pressed={!spaceWorkOpen}
             onClick={() => toggleSpaceWorkOpen()}
-            className={cn('shell-topbar-icon-btn', !spaceWorkOpen && 'shell-topbar-icon-btn-active')}
+            className={cn(
+              'shell-topbar-icon-btn',
+              !spaceWorkOpen && 'shell-topbar-icon-btn-active',
+            )}
           >
             <PanelRight />
           </button>

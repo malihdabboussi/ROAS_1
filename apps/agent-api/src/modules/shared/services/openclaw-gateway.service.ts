@@ -70,9 +70,25 @@ export class OpenClawGatewayService {
     'image',
     'tts',
   ] as const
+  private static readonly VISUAL_REVIEW_AGENT_KEYS = new Set(['designer', 'lux'])
 
-  private getEnforcedDenyTools(): readonly string[] {
-    return [...OpenClawGatewayService.CORE_DENY_TOOLS, 'browser']
+  private isVisualReviewAgent(agentId: string, role?: string, skills?: string[]): boolean {
+    const agentKey = this.parseScopedAgentId(agentId)?.agentKey ?? agentId
+    if (OpenClawGatewayService.VISUAL_REVIEW_AGENT_KEYS.has(agentKey)) return true
+    return (
+      role?.toLowerCase().includes('designer') === true &&
+      skills?.includes('funnel-site-design') === true
+    )
+  }
+
+  private getEnforcedDenyTools(
+    agentId: string,
+    role?: string,
+    skills?: string[],
+  ): readonly string[] {
+    return this.isVisualReviewAgent(agentId, role, skills)
+      ? OpenClawGatewayService.CORE_DENY_TOOLS
+      : [...OpenClawGatewayService.CORE_DENY_TOOLS, 'browser']
   }
 
   private get configPath(): string {
@@ -211,12 +227,20 @@ export class OpenClawGatewayService {
     await fs.writeFile(this.configPath, JSON.stringify(tokenized, null, 2), 'utf-8')
   }
 
-  private normalizeDenyTools(input: unknown): string[] {
+  private normalizeDenyTools(
+    input: unknown,
+    agentId: string,
+    role?: string,
+    skills?: string[],
+  ): string[] {
     const configured = Array.isArray(input)
       ? input.filter((tool): tool is string => typeof tool === 'string')
       : []
-    const enforced = this.getEnforcedDenyTools()
-    const merged = new Set<string>([...configured, ...enforced])
+    const allowedConfigured = this.isVisualReviewAgent(agentId, role, skills)
+      ? configured.filter((tool) => tool !== 'browser')
+      : configured
+    const enforced = this.getEnforcedDenyTools(agentId, role, skills)
+    const merged = new Set<string>([...allowedConfigured, ...enforced])
     return Array.from(merged)
   }
 
@@ -252,6 +276,7 @@ export class OpenClawGatewayService {
   private async reconcileAgentConfig(opts: {
     agentKey: string
     workspace: string
+    role?: string | undefined
     skills?: string[] | undefined
   }): Promise<boolean> {
     const config = await this.readConfig()
@@ -263,7 +288,7 @@ export class OpenClawGatewayService {
     const existingDeny = Array.isArray(tools.deny)
       ? tools.deny.filter((tool): tool is string => typeof tool === 'string')
       : []
-    const nextDeny = this.normalizeDenyTools(tools.deny)
+    const nextDeny = this.normalizeDenyTools(tools.deny, opts.agentKey, opts.role, opts.skills)
 
     let changed = false
     if (existing.promptMode !== OpenClawGatewayService.DEFAULT_PROMPT_MODE) {
@@ -426,6 +451,7 @@ export class OpenClawGatewayService {
   async createAgent(opts: {
     agentKey: string
     workspace: string
+    role?: string | undefined
     skills?: string[] | undefined
   }): Promise<{ ok: boolean }> {
     const config = await this.readConfig()
@@ -441,7 +467,7 @@ export class OpenClawGatewayService {
       workspace: opts.workspace,
       promptMode: OpenClawGatewayService.DEFAULT_PROMPT_MODE,
       tools: {
-        deny: [...this.getEnforcedDenyTools()],
+        deny: [...this.getEnforcedDenyTools(opts.agentKey, opts.role, opts.skills)],
       },
     }
 
@@ -505,6 +531,7 @@ export class OpenClawGatewayService {
     name: string
     workspace: string
     definitions: Array<{ file_name: string; content: string }>
+    role?: string | undefined
     skills?: string[] | undefined
   }): Promise<{ ok: boolean; created: boolean; filesWritten: number }> {
     const operation = async (): Promise<{
@@ -518,6 +545,7 @@ export class OpenClawGatewayService {
         const result = await this.createAgent({
           agentKey: opts.agentKey,
           workspace: opts.workspace,
+          role: opts.role,
           skills: opts.skills,
         })
         if (!result.ok) {
@@ -528,6 +556,7 @@ export class OpenClawGatewayService {
       await this.reconcileAgentConfig({
         agentKey: opts.agentKey,
         workspace: opts.workspace,
+        role: opts.role,
         skills: opts.skills,
       })
 

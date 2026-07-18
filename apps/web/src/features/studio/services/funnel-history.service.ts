@@ -13,6 +13,22 @@ export interface FunnelHistoryMutationResult extends FunnelHistoryState {
   change_set_id?: string | null
 }
 
+export interface FunnelHistoryEntry {
+  id: string
+  source: 'studio' | 'agent'
+  action: string
+  label: string | null
+  status: 'applied' | 'undone'
+  metadata?: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+export interface FunnelHistoryTimeline {
+  entries: FunnelHistoryEntry[]
+  current_change_set_id: string | null
+}
+
 function encodePageScope(funnelPageId?: string | null): string {
   if (!funnelPageId) return ''
   return `?funnel_page_id=${encodeURIComponent(funnelPageId)}`
@@ -28,6 +44,12 @@ export function fetchFunnelHistoryState(funnelId: string, funnelPageId?: string 
   )
 }
 
+export function fetchFunnelHistory(funnelId: string, funnelPageId?: string | null) {
+  return backendGet<FunnelHistoryTimeline>(
+    `/api/funnels/${funnelId}/history${encodePageScope(funnelPageId)}`,
+  )
+}
+
 export function undoFunnelChange(funnelId: string, funnelPageId?: string | null) {
   return backendPost<FunnelHistoryMutationResult>(
     `/api/funnels/${funnelId}/history/undo`,
@@ -40,4 +62,15 @@ export function redoFunnelChange(funnelId: string, funnelPageId?: string | null)
     `/api/funnels/${funnelId}/history/redo`,
     bodyForPage(funnelPageId),
   )
+}
+
+export function restoreFunnelVersion(
+  funnelId: string,
+  changeSetId: string,
+  funnelPageId?: string | null,
+) {
+  return backendPost<FunnelHistoryMutationResult>(`/api/funnels/${funnelId}/history/restore`, {
+    change_set_id: changeSetId,
+    ...bodyForPage(funnelPageId),
+  })
 }

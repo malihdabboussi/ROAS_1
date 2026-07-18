@@ -2,6 +2,16 @@
 
 import type { ReactNode } from 'react'
 import { create } from 'zustand'
+import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
+import {
+  activateSpaceWorkTab as activateTabInSession,
+  closeSpaceWorkTab as closeTabInSession,
+  EMPTY_SPACE_WORK_SESSION,
+  normalizeSpaceWorkSession,
+  upsertSpaceWorkTab,
+  type SpaceWorkSession,
+  type SpaceWorkTab,
+} from './space-work-tabs'
 
 const STORAGE_KEY = 'vibey.shell.v1'
 
@@ -20,6 +30,11 @@ export type ShellRightPanelState = {
   tab: ShellRightPanelTab
 }
 
+export type ShellArtifactViewerState = {
+  target: ShellArtifactViewerTarget | null
+  width: number
+}
+
 type PersistedShell = {
   sidebarPinned?: boolean
   menuMode?: ShellMenuMode
@@ -27,6 +42,8 @@ type PersistedShell = {
   rightPanelOpen?: boolean
   rightPanelTab?: ShellRightPanelTab
   spaceWorkOpen?: boolean
+  artifactViewerWidth?: number
+  spaceWorkBySpaceId?: Record<string, SpaceWorkSession>
 }
 
 function readPersisted(): PersistedShell {
@@ -50,13 +67,40 @@ function writePersisted(partial: PersistedShell) {
   }
 }
 
+function readPersistedSpaceWorkBySpaceId(
+  raw: PersistedShell['spaceWorkBySpaceId'],
+): Record<string, SpaceWorkSession> {
+  if (!raw || typeof raw !== 'object') return {}
+  const next: Record<string, SpaceWorkSession> = {}
+  for (const [spaceId, session] of Object.entries(raw)) {
+    if (!spaceId.trim()) continue
+    next[spaceId] = normalizeSpaceWorkSession(session)
+  }
+  return next
+}
+
+const CHAT_DRAWER_WIDTH_MIN = 240
+const CHAT_DRAWER_WIDTH_MAX = 560
+const ARTIFACT_VIEWER_WIDTH_MIN = 360
+const ARTIFACT_VIEWER_WIDTH_MAX = 720
+
+function clampChatDrawerWidth(width: number): number {
+  return Math.min(CHAT_DRAWER_WIDTH_MAX, Math.max(CHAT_DRAWER_WIDTH_MIN, width))
+}
+
+function clampArtifactViewerWidth(width: number): number {
+  return Math.min(ARTIFACT_VIEWER_WIDTH_MAX, Math.max(ARTIFACT_VIEWER_WIDTH_MIN, width))
+}
+
 interface ShellStore {
   sidebarPinned: boolean
   sidebarPeek: boolean
   menuMode: ShellMenuMode
   chatDrawer: ShellChatDrawerState
   spaceWorkOpen: boolean
+  spaceWorkBySpaceId: Record<string, SpaceWorkSession>
   rightPanel: ShellRightPanelState
+  artifactViewer: ShellArtifactViewerState
   newChatNonce: number
   /** Bumped to close HQ dock flyouts (Home/Chat, New, pin). */
   sidebarFlyoutCloseEpoch: number
@@ -77,9 +121,15 @@ interface ShellStore {
   setChatDrawerWidth: (width: number) => void
   setSpaceWorkOpen: (open: boolean) => void
   toggleSpaceWorkOpen: () => void
+  openSpaceWorkTab: (tab: SpaceWorkTab) => void
+  activateSpaceWorkTab: (spaceId: string, tabId: string) => void
+  closeSpaceWorkTab: (spaceId: string, tabId: string) => void
   setRightPanelOpen: (open: boolean) => void
   toggleRightPanel: () => void
   setRightPanelTab: (tab: ShellRightPanelTab) => void
+  openArtifactViewer: (target: ShellArtifactViewerTarget) => void
+  closeArtifactViewer: () => void
+  setArtifactViewerWidth: (width: number) => void
   requestNewChat: () => void
   /** Fresh chat in the docked left drawer (workspace routes); stays on current page. */
   openFreshChatDrawer: () => void
@@ -99,13 +149,18 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   chatDrawer: {
     open: false,
     conversationId: null,
-    width: persisted.chatDrawerWidth ?? 280,
+    width: clampChatDrawerWidth(persisted.chatDrawerWidth ?? 280),
     minimized: false,
   },
   spaceWorkOpen: persisted.spaceWorkOpen ?? true,
+  spaceWorkBySpaceId: readPersistedSpaceWorkBySpaceId(persisted.spaceWorkBySpaceId),
   rightPanel: {
     open: persisted.rightPanelOpen ?? false,
     tab: persisted.rightPanelTab ?? 'tasks',
+  },
+  artifactViewer: {
+    target: null,
+    width: clampArtifactViewerWidth(persisted.artifactViewerWidth ?? 480),
   },
   newChatNonce: 0,
   sidebarFlyoutCloseEpoch: 0,
@@ -170,10 +225,10 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         ...s.chatDrawer,
         open: true,
         minimized: false,
-        conversationId:
-          conversationId === undefined ? s.chatDrawer.conversationId : conversationId,
+        conversationId: conversationId === undefined ? s.chatDrawer.conversationId : conversationId,
       },
       rightPanel: { ...s.rightPanel, open: false },
+      artifactViewer: { ...s.artifactViewer, target: null },
     }))
     writePersisted({ rightPanelOpen: false })
   },
@@ -188,6 +243,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     set((s) => ({
       chatDrawer: { ...s.chatDrawer, open: true, minimized: false },
       rightPanel: { ...s.rightPanel, open: false },
+      artifactViewer: { ...s.artifactViewer, target: null },
     }))
     writePersisted({ rightPanelOpen: false })
   },
@@ -197,7 +253,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     }))
   },
   setChatDrawerWidth: (width) => {
-    const clamped = Math.min(560, Math.max(240, width))
+    const clamped = clampChatDrawerWidth(width)
     writePersisted({ chatDrawerWidth: clamped })
     set((s) => ({ chatDrawer: { ...s.chatDrawer, width: clamped } }))
   },
@@ -207,6 +263,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       set((s) => ({
         spaceWorkOpen: false,
         chatDrawer: { ...s.chatDrawer, open: true, minimized: false },
+        artifactViewer: { ...s.artifactViewer, target: null },
       }))
       return
     }
@@ -215,9 +272,45 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   toggleSpaceWorkOpen: () => {
     get().setSpaceWorkOpen(!get().spaceWorkOpen)
   },
+  openSpaceWorkTab: (tab) => {
+    const spaceId = tab.spaceId.trim()
+    if (!spaceId || !tab.id.trim()) return
+    set((s) => {
+      const current = s.spaceWorkBySpaceId[spaceId] ?? EMPTY_SPACE_WORK_SESSION
+      const nextSession = upsertSpaceWorkTab(current, { ...tab, spaceId })
+      const spaceWorkBySpaceId = { ...s.spaceWorkBySpaceId, [spaceId]: nextSession }
+      writePersisted({ spaceWorkBySpaceId, spaceWorkOpen: true })
+      return { spaceWorkBySpaceId, spaceWorkOpen: true }
+    })
+  },
+  activateSpaceWorkTab: (spaceId, tabId) => {
+    const key = spaceId.trim()
+    if (!key || !tabId.trim()) return
+    set((s) => {
+      const current = s.spaceWorkBySpaceId[key] ?? EMPTY_SPACE_WORK_SESSION
+      const nextSession = activateTabInSession(current, tabId)
+      const spaceWorkBySpaceId = { ...s.spaceWorkBySpaceId, [key]: nextSession }
+      writePersisted({ spaceWorkBySpaceId })
+      return { spaceWorkBySpaceId }
+    })
+  },
+  closeSpaceWorkTab: (spaceId, tabId) => {
+    const key = spaceId.trim()
+    if (!key || !tabId.trim()) return
+    set((s) => {
+      const current = s.spaceWorkBySpaceId[key] ?? EMPTY_SPACE_WORK_SESSION
+      const nextSession = closeTabInSession(current, tabId)
+      const spaceWorkBySpaceId = { ...s.spaceWorkBySpaceId, [key]: nextSession }
+      writePersisted({ spaceWorkBySpaceId })
+      return { spaceWorkBySpaceId }
+    })
+  },
   setRightPanelOpen: (open) => {
     writePersisted({ rightPanelOpen: open })
-    set((s) => ({ rightPanel: { ...s.rightPanel, open } }))
+    set((s) => ({
+      rightPanel: { ...s.rightPanel, open },
+      artifactViewer: open ? { ...s.artifactViewer, target: null } : s.artifactViewer,
+    }))
   },
   toggleRightPanel: () => {
     get().setRightPanelOpen(!get().rightPanel.open)
@@ -225,6 +318,21 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   setRightPanelTab: (tab) => {
     writePersisted({ rightPanelTab: tab })
     set((s) => ({ rightPanel: { ...s.rightPanel, tab } }))
+  },
+  openArtifactViewer: (target) => {
+    writePersisted({ rightPanelOpen: false })
+    set((s) => ({
+      artifactViewer: { ...s.artifactViewer, target },
+      rightPanel: { ...s.rightPanel, open: false },
+    }))
+  },
+  closeArtifactViewer: () => {
+    set((s) => ({ artifactViewer: { ...s.artifactViewer, target: null } }))
+  },
+  setArtifactViewerWidth: (width) => {
+    const clamped = clampArtifactViewerWidth(width)
+    writePersisted({ artifactViewerWidth: clamped })
+    set((s) => ({ artifactViewer: { ...s.artifactViewer, width: clamped } }))
   },
   requestNewChat: () => {
     set((s) => ({
@@ -238,6 +346,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         minimized: false,
       },
       spaceWorkOpen: true,
+      artifactViewer: { ...s.artifactViewer, target: null },
     }))
     writePersisted({ menuMode: 'chat', spaceWorkOpen: true })
   },
@@ -253,6 +362,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         minimized: false,
       },
       rightPanel: { ...s.rightPanel, open: false },
+      artifactViewer: { ...s.artifactViewer, target: null },
     }))
     writePersisted({ menuMode: 'chat', rightPanelOpen: false })
   },
@@ -272,4 +382,12 @@ export function shellSidebarExpanded(state: {
   sidebarPeek: boolean
 }): boolean {
   return state.sidebarPinned || state.sidebarPeek
+}
+
+export function selectSpaceWorkSession(
+  state: Pick<ShellStore, 'spaceWorkBySpaceId'>,
+  spaceId: string | null | undefined,
+): SpaceWorkSession {
+  if (!spaceId?.trim()) return EMPTY_SPACE_WORK_SESSION
+  return state.spaceWorkBySpaceId[spaceId] ?? EMPTY_SPACE_WORK_SESSION
 }

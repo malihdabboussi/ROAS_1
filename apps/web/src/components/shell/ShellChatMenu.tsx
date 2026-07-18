@@ -4,13 +4,13 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ListFilter } from 'lucide-react'
 import { toast } from 'sonner'
+import { ConversationShareModal } from '@/components/conversations'
 import { SpaceConversationsList } from '@/components/conversations/SpaceConversationsListAdapter'
 import { Team2FilterDropdown } from '@/components/filters'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
-import { dispatchOpenStudioSearch } from '@/features/studio/utils/open-studio-search-result'
-import { ShellSidebarSearchButton } from './ShellMenuChrome'
+import { cachedFetch, invalidateCachedFetch, peekCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import {
   assignConversationCampaign,
   deleteConversation,
@@ -24,21 +24,11 @@ import {
   type Conversation,
   type ConversationAgentDisplay,
 } from '@/lib/conversations'
-import { cachedFetch, invalidateCachedFetch, peekCachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { openInNewTab } from '@/lib/utils/open-in-new-tab'
+import { isShellWorkspaceRoute } from './shell-route-policy'
 import { useShellStore } from './use-shell-store'
 
 type ChatListFilter = 'all' | 'pinned' | 'campaign' | 'non-campaign' | `agent:${string}`
-
-function isWorkspacePath(pathname: string): boolean {
-  return (
-    pathname.startsWith('/spaces') ||
-    pathname.startsWith('/campaigns') ||
-    pathname.startsWith('/brain') ||
-    pathname.startsWith('/flows') ||
-    pathname.startsWith('/projects') ||
-    pathname.startsWith('/team')
-  )
-}
 
 function matchesChatFilter(conversation: Conversation, filter: ChatListFilter): boolean {
   if (filter === 'all') return true
@@ -67,10 +57,13 @@ export function ShellChatMenu() {
   const storeConversations = useChatStore((s) => s.conversations)
 
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
+  const activeOrgName = useOrgStore((s) => s.getActiveOrg()?.organizations.name ?? 'Workspace')
   const isOrgContext = Boolean(activeOrgId)
 
   const [allAgentsMode, setAllAgentsMode] = useState(false)
   const [listFilter, setListFilter] = useState<ChatListFilter>('all')
+  const [listQuery, setListQuery] = useState('')
+  const [shareConversation, setShareConversation] = useState<Conversation | null>(null)
   const [conversations, setConversations] = useState<Conversation[]>(() => {
     // Initial mount is always agent-scoped (allAgentsMode starts false).
     return peekCachedFetch<Conversation[]>(`shell-conversations:${activeAgentKey}`) ?? []
@@ -99,10 +92,7 @@ export function ShellChatMenu() {
   }, [storeConversations])
 
   const chatAgents = useMemo(
-    () =>
-      roster.filter(
-        (entry) => entry.kind === 'agent' && Boolean(entry.agent_key?.trim()),
-      ),
+    () => roster.filter((entry) => entry.kind === 'agent' && Boolean(entry.agent_key?.trim())),
     [roster],
   )
 
@@ -179,7 +169,7 @@ export function ShellChatMenu() {
   const openConversation = useCallback(
     (id: string) => {
       setMenuMode('chat')
-      if (isWorkspacePath(pathname)) {
+      if (isShellWorkspaceRoute(pathname)) {
         openChatDrawer(id)
         return
       }
@@ -210,123 +200,124 @@ export function ShellChatMenu() {
   const selectedConversationId = chatDrawer.conversationId ?? activeConversationId ?? null
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <SpaceConversationsList
-        conversations={visibleConversations}
-        selectedConversationId={selectedConversationId}
-        query=""
-        onQueryChange={() => undefined}
-        hideSearch
-        searchSlot={
-          <ShellSidebarSearchButton embedded onClick={() => dispatchOpenStudioSearch()} />
-        }
-        onSelectConversation={openConversation}
-        onNewConversation={handleNewConversation}
-        onDeleteConversation={async (conversationId) => {
-          await deleteConversation(conversationId)
-          invalidateCachedFetch('shell-conversations:')
-          useChatStore.getState().removeConversation(conversationId)
-          setConversations((prev) => prev.filter((c) => c.id !== conversationId))
-          if (selectedConversationId === conversationId) {
-            setActiveConversationId(null)
-            if (isWorkspacePath(pathname)) openChatDrawer(null)
-            else router.push('/home')
+    <>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <SpaceConversationsList
+          conversations={visibleConversations}
+          selectedConversationId={selectedConversationId}
+          query={listQuery}
+          onQueryChange={setListQuery}
+          onSelectConversation={openConversation}
+          onNewConversation={handleNewConversation}
+          onDeleteConversation={async (conversationId) => {
+            await deleteConversation(conversationId)
+            invalidateCachedFetch('shell-conversations:')
+            useChatStore.getState().removeConversation(conversationId)
+            setConversations((prev) => prev.filter((c) => c.id !== conversationId))
+            if (selectedConversationId === conversationId) {
+              setActiveConversationId(null)
+              if (isShellWorkspaceRoute(pathname)) openChatDrawer(null)
+              else router.push('/home')
+            }
+          }}
+          onRenameConversation={async (conversationId, title) => {
+            await renameConversation(conversationId, title)
+            invalidateCachedFetch('shell-conversations:')
+            useChatStore.getState().updateConversation(conversationId, { title })
+            setConversations((prev) =>
+              prev.map((c) => (c.id === conversationId ? { ...c, title } : c)),
+            )
+          }}
+          onTogglePinConversation={async (conversationId, pinned) => {
+            const updated = await setConversationPinned(conversationId, pinned)
+            invalidateCachedFetch('shell-conversations:')
+            useChatStore.getState().updateConversation(conversationId, {
+              metadata: updated.metadata,
+            })
+            setConversations((prev) =>
+              prev.map((c) => (c.id === conversationId ? { ...c, metadata: updated.metadata } : c)),
+            )
+          }}
+          onToggleArchiveConversation={async (conversationId, archived) => {
+            const updated = await setConversationArchived(conversationId, archived)
+            invalidateCachedFetch('shell-conversations:')
+            useChatStore.getState().updateConversation(conversationId, {
+              status: updated.status,
+            })
+            setConversations((prev) =>
+              prev.map((c) => (c.id === conversationId ? { ...c, status: updated.status } : c)),
+            )
+          }}
+          onMoveConversation={async (conversationId, campaignId) => {
+            const updated = await assignConversationCampaign(conversationId, campaignId)
+            invalidateCachedFetch('shell-conversations:')
+            useChatStore.getState().updateConversation(conversationId, {
+              campaign_id: updated.campaign_id,
+            })
+            setConversations((prev) =>
+              prev.map((c) =>
+                c.id === conversationId ? { ...c, campaign_id: updated.campaign_id } : c,
+              ),
+            )
+          }}
+          onDuplicateConversation={async (conversationId, campaignId) => {
+            const created = await duplicateConversation(conversationId, {
+              campaignId,
+              titlePrefix: 'Copy of ',
+            })
+            invalidateCachedFetch('shell-conversations:')
+            setConversations((prev) => [created, ...prev])
+            openConversation(created.id)
+          }}
+          onCopyConversationLink={(conversationId) => {
+            const url = `${window.location.origin}/home?conv=${encodeURIComponent(conversationId)}`
+            void navigator.clipboard.writeText(url)
+            toast.success('Link copied')
+          }}
+          onCopyConversationId={(conversationId) => {
+            void navigator.clipboard.writeText(conversationId)
+            toast.success('Conversation ID copied')
+          }}
+          onOpenConversationInNewTab={(conversationId) => {
+            openInNewTab(`/home?conv=${encodeURIComponent(conversationId)}`)
+          }}
+          onShareConversation={setShareConversation}
+          onBack={() => undefined}
+          loading={loading}
+          hideBackButton
+          hideHeaderBottomBorder
+          hideNewButton
+          isOrgContext={isOrgContext}
+          showAllAgentsToggle
+          allAgentsMode={allAgentsMode}
+          onAllAgentsModeChange={setAllAgentsMode}
+          agentByKey={agentByKey}
+          headerEndSlot={
+            <Team2FilterDropdown
+              label="Filter"
+              trigger="icon"
+              icon={<ListFilter className="icon-sm" />}
+              options={filterOptions}
+              currentId={listFilter}
+              onSelect={(id) => setListFilter(id as ChatListFilter)}
+              align="left"
+              menuClassName="min-w-48 max-h-72 overflow-y-auto"
+              showDescriptionAsTooltip
+            />
           }
-        }}
-        onRenameConversation={async (conversationId, title) => {
-          await renameConversation(conversationId, title)
-          invalidateCachedFetch('shell-conversations:')
-          useChatStore.getState().updateConversation(conversationId, { title })
-          setConversations((prev) =>
-            prev.map((c) => (c.id === conversationId ? { ...c, title } : c)),
-          )
-        }}
-        onTogglePinConversation={async (conversationId, pinned) => {
-          const updated = await setConversationPinned(conversationId, pinned)
-          invalidateCachedFetch('shell-conversations:')
-          useChatStore.getState().updateConversation(conversationId, {
-            metadata: updated.metadata,
-          })
-          setConversations((prev) =>
-            prev.map((c) =>
-              c.id === conversationId ? { ...c, metadata: updated.metadata } : c,
-            ),
-          )
-        }}
-        onToggleArchiveConversation={async (conversationId, archived) => {
-          const updated = await setConversationArchived(conversationId, archived)
-          invalidateCachedFetch('shell-conversations:')
-          useChatStore.getState().updateConversation(conversationId, {
-            status: updated.status,
-          })
-          setConversations((prev) =>
-            prev.map((c) =>
-              c.id === conversationId ? { ...c, status: updated.status } : c,
-            ),
-          )
-        }}
-        onMoveConversation={async (conversationId, campaignId) => {
-          const updated = await assignConversationCampaign(conversationId, campaignId)
-          invalidateCachedFetch('shell-conversations:')
-          useChatStore.getState().updateConversation(conversationId, {
-            campaign_id: updated.campaign_id,
-          })
-          setConversations((prev) =>
-            prev.map((c) =>
-              c.id === conversationId
-                ? { ...c, campaign_id: updated.campaign_id }
-                : c,
-            ),
-          )
-        }}
-        onDuplicateConversation={async (conversationId, campaignId) => {
-          const created = await duplicateConversation(conversationId, {
-            campaignId,
-            titlePrefix: 'Copy of ',
-          })
-          invalidateCachedFetch('shell-conversations:')
-          setConversations((prev) => [created, ...prev])
-          openConversation(created.id)
-        }}
-        onCopyConversationLink={(conversationId) => {
-          const url = `${window.location.origin}/home?conv=${encodeURIComponent(conversationId)}`
-          void navigator.clipboard.writeText(url)
-          toast.success('Link copied')
-        }}
-        onCopyConversationId={(conversationId) => {
-          void navigator.clipboard.writeText(conversationId)
-          toast.success('Conversation ID copied')
-        }}
-        onOpenConversationInNewTab={(conversationId) => {
-          window.open(`/home?conv=${encodeURIComponent(conversationId)}`, '_blank')
-        }}
-        onShareConversation={() => {
-          toast.message('Share from the chat panel when available')
-        }}
-        onBack={() => undefined}
-        loading={loading}
-        hideBackButton
-        hideHeaderBottomBorder
-        hideNewButton
-        isOrgContext={isOrgContext}
-        showAllAgentsToggle
-        allAgentsMode={allAgentsMode}
-        onAllAgentsModeChange={setAllAgentsMode}
-        agentByKey={agentByKey}
-        headerEndSlot={
-          <Team2FilterDropdown
-            label="Filter"
-            trigger="icon"
-            icon={<ListFilter className="icon-sm" />}
-            options={filterOptions}
-            currentId={listFilter}
-            onSelect={(id) => setListFilter(id as ChatListFilter)}
-            align="right"
-            menuClassName="min-w-48 max-h-72 overflow-y-auto"
-            showDescriptionAsTooltip
-          />
-        }
-      />
-    </div>
+        />
+      </div>
+      {isOrgContext ? (
+        <ConversationShareModal
+          activeOrgId={activeOrgId}
+          open={shareConversation !== null}
+          conversation={shareConversation}
+          orgName={activeOrgName}
+          roster={roster}
+          onClose={() => setShareConversation(null)}
+          onSharesChanged={() => void reloadConversations()}
+        />
+      ) : null}
+    </>
   )
 }

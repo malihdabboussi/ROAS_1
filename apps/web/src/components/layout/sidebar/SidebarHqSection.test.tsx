@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   mutateSpaces: vi.fn(),
   renameProject: vi.fn(),
   deleteProject: vi.fn(),
+  setActiveView: vi.fn(),
 }))
 
 vi.mock('next/link', () => ({
@@ -157,7 +158,22 @@ vi.mock('@/features/spaces/services/spaces.service', () => ({
 vi.mock('@/features/spaces/store/use-spaces-store', () => {
   const state = {
     activeSpaceId: 'space-1',
+    spaces: [
+      {
+        id: 'space-1',
+        title: 'Launch Space',
+        campaign_id: 'campaign-1',
+        schema: {
+          views: [
+            { id: 'all-artifacts', type: 'all_artifacts', name: 'All Artifacts' },
+            { id: 'docs', type: 'docs', name: 'Docs' },
+            { id: 'media', type: 'media', name: 'Media' },
+          ],
+        },
+      },
+    ],
     setActiveSpace: mocks.setActiveSpace,
+    setActiveView: mocks.setActiveView,
     loadRoster: mocks.loadRoster,
   }
   const useSpacesStore = (selector?: (s: typeof state) => unknown) =>
@@ -349,28 +365,6 @@ describe('SidebarHqSection', () => {
     expect(screen.getByText('Team')).toBeTruthy()
     expect(screen.getByText('Campaigns')).toBeTruthy()
     expect(screen.getByText('More')).toBeTruthy()
-  })
-
-  it('renders the More rail flyout with Projects and Flows', () => {
-    const setIsCreatingProject = vi.fn()
-    const controller = makeController({
-      isAdmin: true,
-      activeManagePanel: 'more',
-      pathname: '/projects/project-1',
-      sidebarProjects: [{ id: 'project-1', name: 'Alpha Project' }],
-      setIsCreatingProject,
-    })
-
-    render(<SidebarHqSection c={controller} />)
-
-    expect(screen.getAllByText('More').length).toBeGreaterThan(0)
-    expect(screen.getByText('Projects')).toBeTruthy()
-    expect(screen.getByText('Flows')).toBeTruthy()
-    expect(screen.getByText('Alpha Project')).toBeTruthy()
-
-    fireEvent.click(screen.getByTitle('New project'))
-
-    expect(setIsCreatingProject).toHaveBeenCalledWith(true)
   })
 
   it('loads the next spaces page from the desktop spaces panel', () => {

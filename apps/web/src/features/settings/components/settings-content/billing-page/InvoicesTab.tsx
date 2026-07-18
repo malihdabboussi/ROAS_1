@@ -44,14 +44,17 @@ export function InvoicesTab({ invoices, loading }: { invoices: Invoice[]; loadin
                 </p>
               )}
             </div>
-            <button
-              onClick={() => {
-                if (invoice.hosted_invoice_url) window.open(invoice.hosted_invoice_url, '_blank')
-              }}
-              className="body-3 px-spacing-3 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-spacing-2 py-1.5 transition-colors"
-            >
-              View invoice
-            </button>
+            {invoice.hosted_invoice_url ? (
+              <button
+                type="button"
+                onClick={() =>
+                  window.open(invoice.hosted_invoice_url ?? '', '_blank', 'noopener,noreferrer')
+                }
+                className="body-3 px-spacing-3 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-spacing-2 py-1.5 transition-colors"
+              >
+                View invoice
+              </button>
+            ) : null}
           </div>
         )
       })}

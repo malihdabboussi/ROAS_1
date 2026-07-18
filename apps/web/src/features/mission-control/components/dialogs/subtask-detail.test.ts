@@ -127,43 +127,6 @@ describe('subtask detail helpers', () => {
     ])
   })
 
-  it('links every artifact in a multi-output task when manifests contain entity ids', () => {
-    const subtasks = [
-      {
-        id: 'static-ads',
-        title: 'Task 8A — Static Meta ads',
-        assignee_type: 'agent',
-        sort_order: 10,
-        deliverable_id: 'deliverable-last',
-        output: {
-          artifact_manifest: [
-            { deliverable_id: 'ad-entity-1' },
-            { deliverable_id: 'ad-entity-2' },
-            { deliverable_id: 'ad-entity-3' },
-          ],
-        },
-        execution_state: {},
-      },
-    ] as unknown as MissionSubtask[]
-    const deliverables = [
-      { id: 'deliverable-1', entity_id: 'ad-entity-1', title: 'Ad one', metadata: {} },
-      {
-        id: 'deliverable-2',
-        entity_id: 'ad-entity-2',
-        title: 'Task 8A — Ad two',
-        metadata: {},
-      },
-      { id: 'deliverable-last', entity_id: 'ad-entity-3', title: 'Ad three', metadata: {} },
-    ] as unknown as MissionDeliverable[]
-
-    expect(filterSubtaskDeliverables(deliverables, subtasks[0]!, subtasks)).toHaveLength(3)
-    expect(numberDeliverablesByTask(deliverables, subtasks).map((item) => item.title)).toEqual([
-      'Task 8A — Ad one',
-      'Task 8A — Ad two',
-      'Task 8A — Ad three',
-    ])
-  })
-
   it('includes all upstream deliverables when reviewing a human gate', () => {
     const subtasks = [
       {

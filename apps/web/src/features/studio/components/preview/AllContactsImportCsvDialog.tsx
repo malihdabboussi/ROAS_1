@@ -133,6 +133,7 @@ export function AllContactsImportCsvDialog(props: {
               type="button"
               onClick={handleClose}
               className="btn-icon-bare btn-close-absolute"
+              aria-label="Close"
             >
               <X className="icon-sm" />
             </button>
@@ -140,16 +141,17 @@ export function AllContactsImportCsvDialog(props: {
               <FileSpreadsheet className="text-muted-foreground h-5 w-5" />
               <h2 className="title-h6">Import from CSV</h2>
             </div>
-            <p className="body-3 text-muted-foreground mb-spacing-4">
+            <DialogPrimitive.Description className="body-3 text-muted-foreground mb-spacing-4">
               Include an <span className="text-foreground">email</span> column. Optional:{' '}
               <span className="text-foreground">first_name</span>,{' '}
               <span className="text-foreground">last_name</span>,{' '}
               <span className="text-foreground">name</span>,{' '}
               <span className="text-foreground">phone</span>. Existing emails are skipped.
-            </p>
+            </DialogPrimitive.Description>
             <input
               ref={inputRef}
               type="file"
+              aria-label="CSV file"
               accept=".csv,text/csv"
               className="hidden"
               onChange={onPickFile}

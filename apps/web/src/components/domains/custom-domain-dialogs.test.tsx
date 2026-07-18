@@ -1,16 +1,18 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { backendGet } from '@/lib/api/backend-client'
+import { customDomainsApi } from '@/lib/domains/custom-domains-api'
+import type { CustomDomain } from '@/lib/domains/domains.types'
 import { AddCustomDomainDialog } from './AddCustomDomainDialog'
 import { ConnectCustomDomainModal } from './ConnectCustomDomainModal'
 import { CustomDomainDnsDialog } from './CustomDomainDnsDialog'
-import { customDomainsApi } from '@/lib/domains/custom-domains-api'
-import type { CustomDomain } from '@/lib/domains/domains.types'
+import { DeleteCustomDomainDialog } from './DeleteCustomDomainDialog'
 
 vi.mock('@/lib/domains/custom-domains-api', () => ({
   customDomainsApi: {
     add: vi.fn(),
     config: vi.fn(),
+    remove: vi.fn(),
     verify: vi.fn(),
   },
 }))
@@ -67,9 +69,13 @@ describe('custom domain shared dialogs', () => {
     const onDomainAdded = vi.fn()
     const onClose = vi.fn()
 
-    render(
-      <AddCustomDomainDialog isOpen onClose={onClose} onDomainAdded={onDomainAdded} />,
+    render(<AddCustomDomainDialog isOpen onClose={onClose} onDomainAdded={onDomainAdded} />)
+
+    const dialog = screen.getByRole('dialog', { name: 'Add Custom Domain' })
+    expect(dialog.getAttribute('aria-describedby')).toBe(
+      screen.getByText(/Add a domain you own/).id,
     )
+    expect(screen.getByRole('button', { name: 'Close add custom domain' })).toBeTruthy()
 
     fireEvent.change(screen.getByLabelText(/domain name/i), {
       target: { value: 'promo.example.com' },
@@ -88,13 +94,14 @@ describe('custom domain shared dialogs', () => {
 
   it('renders DNS verification records for the active domain', () => {
     render(
-      <CustomDomainDnsDialog
-        domain={customDomain()}
-        onClose={vi.fn()}
-        onDomainUpdated={vi.fn()}
-      />,
+      <CustomDomainDnsDialog domain={customDomain()} onClose={vi.fn()} onDomainUpdated={vi.fn()} />,
     )
 
+    const dialog = screen.getByRole('dialog', { name: 'DNS Records for promo.example.com' })
+    expect(dialog.getAttribute('aria-describedby')).toBe(
+      screen.getByText(/Add these DNS records/).id,
+    )
+    expect(screen.getByRole('button', { name: 'Close DNS records' })).toBeTruthy()
     expect(screen.getByText('promo.example.com')).toBeTruthy()
     expect(screen.getAllByText('CNAME').length).toBeGreaterThan(0)
     expect(screen.getAllByText('cname.vercel-dns.com').length).toBeGreaterThan(0)
@@ -116,9 +123,34 @@ describe('custom domain shared dialogs', () => {
       />,
     )
 
-    fireEvent.click(await screen.findByText('promo.example.com'))
+    const dialog = screen.getByRole('dialog', { name: 'Connect custom domain' })
+    expect(dialog.getAttribute('aria-describedby')).toBe(
+      screen.getByText('Pick a verified custom domain or add a new one.').id,
+    )
+    expect(screen.getByRole('button', { name: 'Close connect custom domain' })).toBeTruthy()
+    const domainOption = await screen.findByRole('button', { name: 'promo.example.com' })
+    expect(domainOption.getAttribute('aria-pressed')).toBe('false')
+    fireEvent.click(domainOption)
+    expect(domainOption.getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(screen.getByRole('button', { name: /^connect$/i }))
 
     await waitFor(() => expect(onConnect).toHaveBeenCalledWith('domain-1'))
+  })
+
+  it('describes and labels custom-domain deletion', () => {
+    render(
+      <DeleteCustomDomainDialog
+        domain={customDomain({ domain_type: 'custom' })}
+        onClose={vi.fn()}
+        onDeleted={vi.fn()}
+      />,
+    )
+
+    const dialog = screen.getByRole('dialog', { name: 'Delete Domain' })
+    expect(dialog.getAttribute('aria-describedby')).toBe(
+      screen.getByText('Permanently remove this custom domain.').id,
+    )
+    expect(screen.getByRole('button', { name: 'Close delete domain' })).toBeTruthy()
+    expect(screen.getByLabelText(/Type DELETE to confirm/)).toBeTruthy()
   })
 })

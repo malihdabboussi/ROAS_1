@@ -34,7 +34,9 @@ const BRANDING_THEME_CREATE_KEYS = [
   'image_style_prompt',
 ] as const
 
-const BRANDING_THEME_CREATE_DEFAULTS: Partial<Record<(typeof BRANDING_THEME_CREATE_KEYS)[number], unknown>> = {
+const BRANDING_THEME_CREATE_DEFAULTS: Partial<
+  Record<(typeof BRANDING_THEME_CREATE_KEYS)[number], unknown>
+> = {
   headshot_images: [],
   product_images: [],
   social_links: {},

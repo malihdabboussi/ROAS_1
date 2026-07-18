@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 
 export function DeliverablePreviewModalHeader({
   displayTitle,
@@ -15,7 +15,6 @@ export function DeliverablePreviewModalHeader({
   onBack,
   backLabel = 'Back',
   actions,
-  navigation,
 }: {
   displayTitle: string
   titleDraft: string
@@ -29,12 +28,6 @@ export function DeliverablePreviewModalHeader({
   onBack?: () => void
   backLabel?: string
   actions: ReactNode
-  navigation?: {
-    label: string
-    itemLabel: string
-    onPrevious: () => void
-    onNext: () => void
-  }
 }) {
   return (
     <div className="px-spacing-6 pt-spacing-4 pb-spacing-3 flex-shrink-0 overflow-visible">
@@ -48,7 +41,8 @@ export function DeliverablePreviewModalHeader({
           <span>{backLabel}</span>
         </button>
       ) : null}
-      <div className="gap-spacing-4 flex min-w-0 items-center justify-between">
+      <div className="gap-spacing-2 flex min-w-0 flex-col">
+        <div className="gap-spacing-2 flex flex-wrap items-center justify-end">{actions}</div>
         {editingTitle ? (
           <input
             autoFocus
@@ -78,39 +72,17 @@ export function DeliverablePreviewModalHeader({
               setEditingTitle(true)
             }}
             title="Click to rename"
-            className="block min-w-0 flex-1 cursor-text text-left"
+            className="block w-full min-w-0 cursor-text text-left"
           >
-            <h2 className="title-h6 text-foreground hover:bg-hover-subtle truncate rounded-md transition-colors">
+            <h2 className="title-h6 text-foreground hover:bg-hover-subtle break-words rounded-md transition-colors">
               {displayTitle}
             </h2>
           </button>
         ) : (
-          <h2 className="title-h6 text-foreground min-w-0 flex-1 truncate" title={displayTitle}>
+          <h2 className="title-h6 text-foreground min-w-0 break-words" title={displayTitle}>
             {displayTitle}
           </h2>
         )}
-        {navigation ? (
-          <div className="gap-spacing-1 flex shrink-0 items-center">
-            <button
-              type="button"
-              onClick={navigation.onPrevious}
-              className="btn-icon-bare"
-              aria-label={`Previous ${navigation.itemLabel}`}
-            >
-              <ChevronLeft className="icon-sm" />
-            </button>
-            <span className="body-4 text-muted-foreground tabular-nums">{navigation.label}</span>
-            <button
-              type="button"
-              onClick={navigation.onNext}
-              className="btn-icon-bare"
-              aria-label={`Next ${navigation.itemLabel}`}
-            >
-              <ChevronRight className="icon-sm" />
-            </button>
-          </div>
-        ) : null}
-        {actions}
       </div>
     </div>
   )

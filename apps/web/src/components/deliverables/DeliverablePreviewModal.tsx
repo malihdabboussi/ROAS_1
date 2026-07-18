@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import type {
   DeliverableEntityPreviewRenderer,
   ViewMode,
@@ -16,6 +17,7 @@ import { useDeliverableCampaignMenu } from '@/components/deliverables/use-delive
 import { useDeliverableEntityContent } from '@/components/deliverables/use-deliverable-entity-content'
 import { useDeliverableExportActions } from '@/components/deliverables/use-deliverable-export-actions'
 import { useDeliverableTitleRename } from '@/components/deliverables/use-deliverable-title-rename'
+import { ResizableDivider } from '@/components/layout/ResizableDivider'
 import type { MissionAgent } from '@/lib/agents/mission-agents-api'
 import type { MissionDeliverable } from '@/lib/missions'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
@@ -46,8 +48,6 @@ export interface DeliverablePreviewModalProps {
   onBack?: () => void
   backLabel?: string
   presentation?: 'docked' | 'centered'
-  siblingDeliverables?: MissionDeliverable[]
-  onSelectSibling?: (deliverable: MissionDeliverable) => void
 }
 
 export function DeliverablePreviewModal({
@@ -67,12 +67,17 @@ export function DeliverablePreviewModal({
   onBack,
   backLabel = 'Back',
   presentation = 'docked',
-  siblingDeliverables = [],
-  onSelectSibling,
 }: DeliverablePreviewModalProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('wide')
   const [expanded, setExpanded] = useState(false)
   const [isMobileToolbar, setIsMobileToolbar] = useState(false)
+  const [dockWidth, setDockWidth] = useState(() =>
+    typeof window === 'undefined' ? 640 : Math.round(window.innerWidth * 0.45),
+  )
+  const [resizing, setResizing] = useState(false)
+  const [spaceDocActionTarget, setSpaceDocActionTarget] = useState<HTMLDivElement | null>(null)
+  const dragStartX = useRef(0)
+  const dragStartWidth = useRef(dockWidth)
   const titleRename = useDeliverableTitleRename({
     deliverable,
     onDeliverableRenamed,
@@ -117,6 +122,30 @@ export function DeliverablePreviewModal({
   const campaignMenu = useDeliverableCampaignMenu(deliverable, {
     onCampaignMoved: onArtifactCampaignChanged,
   })
+
+  const handleResizeStart = useCallback(
+    (event: React.MouseEvent) => {
+      dragStartX.current = event.clientX
+      dragStartWidth.current = dockWidth
+      setResizing(true)
+    },
+    [dockWidth],
+  )
+
+  useEffect(() => {
+    if (!resizing) return
+    const onMove = (event: PointerEvent) => {
+      const nextWidth = dragStartWidth.current + dragStartX.current - event.clientX
+      setDockWidth(Math.min(window.innerWidth * 0.78, Math.max(400, nextWidth)))
+    }
+    const onUp = () => setResizing(false)
+    document.addEventListener('pointermove', onMove)
+    document.addEventListener('pointerup', onUp)
+    return () => {
+      document.removeEventListener('pointermove', onMove)
+      document.removeEventListener('pointerup', onUp)
+    }
+  }, [resizing])
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
@@ -213,20 +242,32 @@ export function DeliverablePreviewModal({
       }`}
     >
       <div className="bg-modal-overlay absolute inset-0" onClick={onClose} />
-      <div
+      {presentation === 'docked' && !expanded ? (
+        <ResizableDivider
+          onMouseDown={handleResizeStart}
+          isDragging={resizing}
+          compact
+          showGrip={false}
+        />
+      ) : null}
+      <motion.div
+        data-deliverable-preview-panel
+        initial={presentation === 'docked' ? { x: '100%' } : false}
+        animate={{ x: 0 }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
         className={`surface-card border-border wizard-container-border z-modal-layer-3 relative flex min-h-0 w-full flex-col overflow-hidden border shadow-xl ${
           expanded
             ? 'rounded-none'
             : presentation === 'centered'
               ? 'container-modal-3xl rounded-spacing-4'
-              : 'rounded-spacing-4 max-w-5xl border-y-0 border-r-0'
+              : 'rounded-spacing-4 border-y-0 border-r-0'
         }`}
+        style={!expanded && presentation === 'docked' ? { width: dockWidth } : undefined}
       >
         <DeliverablePreviewModalHeader
           {...titleRename}
           onBack={onBack}
           backLabel={backLabel}
-          navigation={siblingNavigation}
           actions={
             <DeliverablePreviewActions
               deliverable={deliverable}
@@ -235,6 +276,9 @@ export function DeliverablePreviewModal({
               exporting={exporting}
               exportAvailable={exportAvailable}
               expanded={expanded}
+              documentActionTarget={
+                <div ref={setSpaceDocActionTarget} className="flex shrink-0 items-center" />
+              }
               onCopy={handleCopy}
               onExportMd={handleExportMd}
               onExportPdf={handleExportPdf}
@@ -292,11 +336,12 @@ export function DeliverablePreviewModal({
               effectiveContent={effectiveContent}
               viewMode={viewMode}
               fallbackSpaceId={fallbackSpaceId}
+              spaceDocActionTarget={spaceDocActionTarget}
               renderEntityPreview={renderEntityPreview}
             />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <DeliverablePreviewBrainConfirmDialog
         confirmBrain={brainMenu.confirmBrain}

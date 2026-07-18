@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Mic, Send, Square } from 'lucide-react'
+import { MessageBubble } from '@/components/chat/MessageBubbleAdapter'
 import { VibeyChatOrb } from '@/components/vibey/vibey-chat-orb'
-import { MessageBubble } from '@/features/studio/components/MessageBubble'
 import { AgentIntroCard } from '../components/common/AgentIntroCard'
 import { ConversionBar } from '../components/common/ConversionBar'
 import { PoweredByVibey } from '../components/common/PoweredByVibey'
@@ -71,10 +71,10 @@ export function PublicAgentContainer({ agent }: PublicAgentContainerProps) {
           : undefined
 
   return (
-    <div className="flex h-dvh flex-col bg-[var(--color-background)]">
+    <div className="bg-background flex h-dvh flex-col">
       <ConversionBar />
 
-      <header className="flex items-center gap-3 border-b border-white/10 px-4 py-3 md:px-6">
+      <header className="border-border flex items-center gap-3 border-b px-4 py-3 md:px-6">
         <div className="relative">
           {agent.imageUrl ? (
             <img
@@ -83,11 +83,11 @@ export function PublicAgentContainer({ agent }: PublicAgentContainerProps) {
               className="h-10 w-10 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white/50">
+            <div className="bg-secondary text-muted-foreground flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold">
               {agent.name.charAt(0).toUpperCase()}
             </div>
           )}
-          <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[var(--color-background)] bg-emerald-500" />
+          <span className="border-background bg-success absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2" />
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="body-2 text-foreground truncate font-semibold">{agent.name}</h1>
@@ -146,11 +146,13 @@ export function PublicAgentContainer({ agent }: PublicAgentContainerProps) {
 
       {error && (
         <div className="px-4 py-2 text-center">
-          <p className="body-4 text-red-400">{error}</p>
+          <p role="alert" className="body-4 text-destructive">
+            {error}
+          </p>
         </div>
       )}
 
-      <div className="border-t border-white/10 px-4 py-3 md:px-6">
+      <div className="border-border border-t px-4 py-3 md:px-6">
         <div className="mx-auto flex max-w-3xl items-end gap-2">
           <textarea
             ref={inputRef}
@@ -161,12 +163,14 @@ export function PublicAgentContainer({ agent }: PublicAgentContainerProps) {
             disabled={inputDisabled}
             placeholder={`Message ${agent.name}...`}
             rows={1}
-            className="body-3 text-foreground placeholder:text-muted-foreground/40 flex-1 resize-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 outline-none transition-colors focus:border-white/20"
+            className="body-3 text-foreground placeholder:text-muted-foreground/40 border-border bg-secondary focus:border-ring flex-1 resize-none rounded-xl border px-4 py-3 outline-none transition-colors"
             style={{ maxHeight: 120 }}
           />
           <button
             type="button"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/40 transition-colors hover:bg-white/10 hover:text-white/70"
+            disabled
+            aria-label="Voice mode is coming soon"
+            className="bg-secondary text-muted-foreground flex h-11 w-11 shrink-0 cursor-not-allowed items-center justify-center rounded-xl opacity-50"
             title="Voice mode (coming soon)"
           >
             <Mic className="h-4 w-4" />
@@ -175,7 +179,7 @@ export function PublicAgentContainer({ agent }: PublicAgentContainerProps) {
             <button
               type="button"
               onClick={stopStreaming}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-500/20 text-red-400 transition-colors hover:bg-red-500/30"
+              className="bg-destructive/20 text-destructive hover:bg-destructive/30 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors"
               title="Stop"
             >
               <Square className="h-4 w-4" />
@@ -185,7 +189,7 @@ export function PublicAgentContainer({ agent }: PublicAgentContainerProps) {
               type="button"
               onClick={() => handleSend()}
               disabled={inputDisabled || !inputValue.trim()}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-30"
+              className="bg-secondary text-foreground hover:bg-hover-subtle flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors disabled:opacity-30"
               title="Send"
             >
               <Send className="h-4 w-4" />

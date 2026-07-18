@@ -6,13 +6,16 @@ import { ProviderBillingModule } from '../provider-billing/provider-billing.modu
 import { SpaceRetrievalModule } from '../space-retrieval/space-retrieval.module'
 import { MediaAdConceptsController } from './controllers/media-ad-concepts.controller'
 import { MediaAssetsController } from './controllers/media-assets.controller'
+import { MediaCanvaController } from './controllers/media-canva.controller'
 import { MediaImageGenerationController } from './controllers/media-image-generation.controller'
 import { MediaImageStreamController } from './controllers/media-image-stream.controller'
 import { MediaSocialCacheController } from './controllers/media-social-cache.controller'
 import { MediaUploadController } from './controllers/media-upload.controller'
 import { GeminiImageIntegration } from './integrations/gemini-image.integration'
-import { MediaRepository } from './repositories/media.repository'
+import { MediaCanvaIntegration } from './integrations/media-canva.integration'
+import { MediaCanvaRepository } from './repositories/media-canva.repository'
 import { MediaUploadRepository } from './repositories/media-upload.repository'
+import { MediaRepository } from './repositories/media.repository'
 import { AdConceptGenerationService } from './services/ad-concept-generation.service'
 import { MediaCanvaHandoffService } from './services/media-canva-handoff.service'
 import { MediaIndexerService } from './services/media-indexer.service'
@@ -34,6 +37,7 @@ import { MediaService } from './services/media.service'
     MediaImageStreamController,
     MediaAdConceptsController,
     MediaAssetsController,
+    MediaCanvaController,
   ],
   providers: [
     MediaService,
@@ -44,6 +48,8 @@ import { MediaService } from './services/media.service'
     MediaReaderService,
     MediaIndexerService,
     MediaCanvaHandoffService,
+    MediaCanvaIntegration,
+    MediaCanvaRepository,
   ],
   exports: [MediaService, AdConceptGenerationService, MediaReaderService, MediaIndexerService],
 })

@@ -39,6 +39,19 @@ describe('MessageQueue', () => {
     expect(onEdit).toHaveBeenCalledWith(queuedItems[0])
   })
 
+  it('uses a native named button to open a queued message for editing', () => {
+    const onEdit = vi.fn()
+    render(
+      <MessageQueue items={queuedItems} onRemove={vi.fn()} onSendNow={vi.fn()} onEdit={onEdit} />,
+    )
+
+    const editButton = screen.getByRole('button', { name: 'Edit First queued message' })
+    expect(editButton.tagName).toBe('BUTTON')
+    fireEvent.click(editButton)
+
+    expect(onEdit).toHaveBeenCalledWith(queuedItems[0])
+  })
+
   it('delegates send-now and remove actions without opening edit', () => {
     const onEdit = vi.fn()
     const onSendNow = vi.fn()

@@ -58,9 +58,11 @@ export interface PresentationPreviewOverflowMenuProps {
   onViewportChange: (viewport: PresentationViewportSize) => void
   fileUrl: string | null
   exporting: 'pdf' | 'ppt' | null
+  openingCanva: boolean
   copied: boolean
   onExportPdf: () => void
   onExportPpt: () => void
+  onOpenCanva: () => void
   onDownloadHtml: () => void
   onCopyDownloadLink?: () => void
 }

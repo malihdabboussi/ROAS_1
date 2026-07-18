@@ -83,12 +83,16 @@ export function AddFromUrlModal({ open, onClose, campaignId, onUploaded }: AddFr
         <DialogPrimitive.Content className="z-modal-layer-3 fixed inset-0 flex items-center justify-center p-4">
           <VisuallyHidden.Root>
             <DialogPrimitive.Title>Add from URL</DialogPrimitive.Title>
+            <DialogPrimitive.Description>
+              Import an image from a public web address.
+            </DialogPrimitive.Description>
           </VisuallyHidden.Root>
           <div className="surface-card card-elevated rounded-spacing-4 wizard-container-border w-full max-w-md overflow-hidden">
             <div className="px-spacing-5 pt-spacing-4 pb-spacing-3 flex items-center justify-between">
               <h3 className="title-h4 text-foreground">ADD FROM URL</h3>
               <button
                 type="button"
+                aria-label="Close URL import"
                 onClick={handleClose}
                 className="btn-icon-bare rounded-spacing-2"
               >
@@ -97,7 +101,11 @@ export function AddFromUrlModal({ open, onClose, campaignId, onUploaded }: AddFr
             </div>
 
             <div className="px-spacing-5 pb-spacing-5 space-y-spacing-4">
+              <label htmlFor="media-import-url" className="sr-only">
+                Image URL
+              </label>
               <input
+                id="media-import-url"
                 type="url"
                 value={url}
                 onChange={(e) => handleUrlChange(e.target.value)}

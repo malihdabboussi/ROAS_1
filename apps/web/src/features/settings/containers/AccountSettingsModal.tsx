@@ -6,7 +6,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { ArrowLeft, BarChart2, Building2, CreditCard, Palette, User, X } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
-import { useOrgStore } from '@/features/org/store/use-org-store'
+import { useOrgStore } from '@/lib/org/org-context-store'
 import type { AccountSettingsSection } from '../contexts/AccountSettingsModalContext'
 
 const DynamicLoadingFallback = () => (
@@ -128,7 +128,7 @@ export function AccountSettingsModal({
 
   if (isMobile) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-[var(--color-background)]">
+      <div className="bg-background fixed inset-0 z-50 flex flex-col">
         <div className="flex items-center gap-3 px-3 pb-1 pt-3">
           <button
             type="button"
@@ -138,7 +138,7 @@ export function AccountSettingsModal({
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <span className="body-2 min-w-0 flex-1 truncate text-center font-medium text-[var(--color-foreground)]">
+          <span className="body-2 text-foreground min-w-0 flex-1 truncate text-center font-medium">
             Account Settings
           </span>
           <div className="w-spacing-8" />
@@ -150,6 +150,8 @@ export function AccountSettingsModal({
               <button
                 key={item.id}
                 type="button"
+                aria-label={item.label}
+                aria-pressed={activeSection === item.id}
                 onClick={() => setActiveSection(item.id)}
                 className={`gap-spacing-2 h-spacing-8 rounded-spacing-3 flex items-center transition-all duration-[600ms] ease-in-out ${
                   activeSection === item.id
@@ -177,6 +179,9 @@ export function AccountSettingsModal({
         <DialogPrimitive.Content className="z-modal-layer-3 z-modal-dialog-root fixed inset-0 flex items-center justify-center overflow-visible">
           <VisuallyHidden.Root>
             <DialogPrimitive.Title>Account Settings</DialogPrimitive.Title>
+            <DialogPrimitive.Description>
+              Manage your profile, appearance, billing, and organization.
+            </DialogPrimitive.Description>
           </VisuallyHidden.Root>
 
           <div
@@ -194,7 +199,12 @@ export function AccountSettingsModal({
               <div className="surface-card wizard-container-border rounded-spacing-4 relative flex h-full w-full flex-col overflow-hidden">
                 <div className="px-spacing-4 py-spacing-3 flex items-center justify-between">
                   <h2 className="typo-caption text-muted-foreground uppercase">Account Settings</h2>
-                  <button type="button" onClick={onClose} className="btn-icon-bare">
+                  <button
+                    type="button"
+                    aria-label="Close account settings"
+                    onClick={onClose}
+                    className="btn-icon-bare"
+                  >
                     <X className="icon-sm" />
                   </button>
                 </div>
@@ -209,6 +219,8 @@ export function AccountSettingsModal({
                           return (
                             <button
                               key={item.id}
+                              type="button"
+                              aria-pressed={isActive}
                               onClick={() => setActiveSection(item.id)}
                               className={`gap-spacing-2 px-spacing-3 py-spacing-2 body-2 group flex w-full items-center text-left font-medium transition-all duration-200 ${
                                 isActive

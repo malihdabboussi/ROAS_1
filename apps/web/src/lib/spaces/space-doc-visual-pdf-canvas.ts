@@ -106,39 +106,49 @@ export async function canvasToVisualPdf(options: {
   canvas: HTMLCanvasElement
   filename: string
 }): Promise<void> {
+  const pdf = await buildVisualPdf(options.canvas)
+  pdf.save(options.filename)
+}
+
+export async function canvasToVisualPdfBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+  const pdf = await buildVisualPdf(canvas)
+  return pdf.output('blob')
+}
+
+async function buildVisualPdf(canvas: HTMLCanvasElement): Promise<jsPDF> {
   const { jsPDF } = await import('jspdf')
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
   const pageWidth = pdf.internal.pageSize.getWidth()
   const pageHeight = pdf.internal.pageSize.getHeight()
   const contentHeightMm = pageHeight - VISUAL_PDF_FOOTER_SPACE_MM
-  const pxPerMm = options.canvas.width / pageWidth
+  const pxPerMm = canvas.width / pageWidth
   const pageSliceHeightPx = Math.max(1, Math.floor(contentHeightMm * pxPerMm))
   const pageCanvas = document.createElement('canvas')
-  pageCanvas.width = options.canvas.width
+  pageCanvas.width = canvas.width
   const ctx = pageCanvas.getContext('2d')
-  const sourceCtx = options.canvas.getContext('2d')
+  const sourceCtx = canvas.getContext('2d')
   if (!ctx) throw new Error('Visual PDF canvas unavailable')
   if (!sourceCtx) throw new Error('Visual PDF source canvas unavailable')
 
   let sourceY = 0
   let pageIndex = 0
-  while (sourceY < options.canvas.height) {
-    const targetY = Math.min(sourceY + pageSliceHeightPx, options.canvas.height)
-    const breakY = findVisualPdfPageBreakY(options.canvas, sourceY, targetY)
+  while (sourceY < canvas.height) {
+    const targetY = Math.min(sourceY + pageSliceHeightPx, canvas.height)
+    const breakY = findVisualPdfPageBreakY(canvas, sourceY, targetY)
     const sliceHeight = Math.max(1, breakY - sourceY)
     const backgroundColor = sampleVisualPdfBackgroundColor(
       sourceCtx,
-      options.canvas.width,
+      canvas.width,
       Math.max(sourceY, breakY - 2),
     )
     pageCanvas.height = pageSliceHeightPx
     ctx.fillStyle = visualPdfColorCss(backgroundColor)
     ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height)
     ctx.drawImage(
-      options.canvas,
+      canvas,
       0,
       sourceY,
-      options.canvas.width,
+      canvas.width,
       sliceHeight,
       0,
       0,
@@ -162,5 +172,5 @@ export async function canvasToVisualPdf(options: {
     pageIndex += 1
   }
 
-  pdf.save(options.filename)
+  return pdf
 }

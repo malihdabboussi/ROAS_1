@@ -8,12 +8,11 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   ChevronRight,
   Download,
-  ExternalLink,
   Image as ImageIcon,
   Maximize2,
+  Minimize2,
   RefreshCw,
   Settings2,
-  Share2,
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -32,16 +31,20 @@ import type { SpaceItem } from '../../types'
 import { ShareModal } from '../ShareModal'
 import { CoverDropdown } from './cover/CoverDropdown'
 import { DocCoverGenerateModal } from './DocCoverPickerModal'
+import { DriveDocTitleChromeActions } from './DocEditorPanelInnerChrome'
 import { DriveDocViewer, driveFallbackOpenHref } from './DriveDocViewer'
 import { DocBodyImageInsertMenu } from './editor/DocBodyImageInsertMenu'
 import { DocEditorCover } from './editor/DocEditorCover'
 import { DocEditorDropIndicator } from './editor/DocEditorDropIndicator'
 import { DocEditorExportDropdown } from './editor/DocEditorExportDropdown'
 import { DocEditorFloatingToolbarPortal } from './editor/DocEditorFloatingToolbarPortal'
+import { DocEditorHeaderActions } from './editor/DocEditorHeaderActions'
 import { DocEditorInlineRail } from './editor/DocEditorInlineRail'
 import { DocEditorProseStyles } from './editor/DocEditorProseStyles'
+import { DocEditorTitleHeaderLayout } from './editor/DocEditorTitleHeaderLayout'
 import { DocPageSettingsSlideContent } from './editor/DocPageSettingsSlideContent'
 import { DocTableControls } from './editor/DocTableControls'
+import { slugifyVisualDocFilename } from './lib/slugify-visual-doc-filename'
 import { DocSubpagesEmbedded } from './subpages/DocSubpagesEmbedded'
 import type {
   DocFontSize,
@@ -53,33 +56,12 @@ import type {
 } from './types/doc-editor.types'
 import { VisualDocView } from './visual/VisualDocView'
 
-function slugifyVisualDocFilename(title: string): string {
-  const s = title
-    .trim()
-    .replace(/[/\\?%*:|"<>]/g, '-')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-  const base = s.slice(0, 80)
-  return base || 'visual-doc'
-}
-
-function DriveDocTitleChromeActions({ openInDriveHref }: { openInDriveHref: string }) {
-  return (
-    <a
-      href={openInDriveHref}
-      target="_blank"
-      rel="noreferrer"
-      className="inline-flex items-center gap-1 text-[11px] text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--foreground)]"
-    >
-      Open in Drive
-      <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-    </a>
-  )
-}
-
 export type DocEditorPanelInnerProps = {
   inline: boolean
+  embedded: boolean
+  googleActionTarget: HTMLElement | null
+  expanded: boolean
+  onToggleExpanded: () => void
   item: SpaceItem
   roster?: TeamRosterEntry[]
   campaignId?: string | null
@@ -411,16 +393,56 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
                 />
               )}
 
-              {!p.inline && (
+              {!p.inline && !p.embedded && (
                 <div className="mx-auto w-full" style={p.layoutWidthStyle}>
-                  <div className="group/title-row flex items-start gap-2 px-4 pb-2 pt-3">
-                    <div
-                      className="relative min-w-0 flex-1"
-                      style={{
-                        maskImage: 'linear-gradient(to right, black 85%, transparent 100%)',
-                        WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)',
-                      }}
-                    >
+                  <DocEditorTitleHeaderLayout
+                    actions={
+                      <>
+                        {p.isDriveDoc && driveOpenInHref ? (
+                          <DriveDocTitleChromeActions openInDriveHref={driveOpenInHref} />
+                        ) : null}
+                        {!p.isDriveDoc ? (
+                          <DocEditorHeaderActions
+                            title={p.title || p.item.title || 'Untitled'}
+                            getDocBody={getDocBodyForExport}
+                            visualHtml={p.docVisualHtml}
+                            campaignId={p.campaignId}
+                            customData={p.item.custom_data}
+                            onGoogleDocCreated={saveGoogleDocLink}
+                            onShare={p.canShareItem ? () => p.setShareOpen(true) : undefined}
+                          />
+                        ) : null}
+                        {!p.inline ? (
+                          <>
+                            <Tooltip label={p.expanded ? 'Collapse' : 'Expand'} side="bottom">
+                              <button
+                                type="button"
+                                onClick={p.onToggleExpanded}
+                                className="btn-icon-bare"
+                                aria-label={p.expanded ? 'Collapse document' : 'Expand document'}
+                              >
+                                {p.expanded ? (
+                                  <Minimize2 className="icon-sm" />
+                                ) : (
+                                  <Maximize2 className="icon-sm" />
+                                )}
+                              </button>
+                            </Tooltip>
+                            <Tooltip label="Close" side="bottom">
+                              <button
+                                type="button"
+                                onClick={p.requestClosePanel}
+                                className="btn-icon-bare"
+                                aria-label="Close document"
+                              >
+                                <X className="icon-sm" />
+                              </button>
+                            </Tooltip>
+                          </>
+                        ) : null}
+                      </>
+                    }
+                    title={
                       <input
                         ref={p.titleRef}
                         value={p.title}
@@ -430,112 +452,34 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
                           if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
                         }}
                         className={cn(
-                          'placeholder:text-[var(--color-muted-foreground)]/40 w-full bg-transparent font-bold leading-tight text-[var(--foreground)] outline-none',
+                          'placeholder:text-muted-foreground text-foreground w-full bg-transparent font-bold leading-tight outline-none',
                           p.docFontSize === 'small'
-                            ? 'text-3xl'
+                            ? 'title-h4'
                             : p.docFontSize === 'large'
-                              ? 'text-5xl'
-                              : 'text-4xl',
+                              ? 'title-h2'
+                              : 'title-h3',
                         )}
                         style={{ fontFamily: p.editorFontFamily }}
                         placeholder="Untitled"
                         readOnly={p.docLocked || p.isDriveDoc}
                       />
-                    </div>
-                    <div className="mt-1 flex shrink-0 items-center gap-2">
-                      {p.isDriveDoc && (
-                        <div
-                          className={cn(
-                            'flex max-w-none shrink-0 flex-wrap items-center gap-2 overflow-visible transition-opacity duration-200 ease-out',
-                            'pointer-events-none opacity-0',
-                            'group-hover/title-row:pointer-events-auto group-hover/title-row:opacity-100',
-                            'group-focus-within/title-row:pointer-events-auto group-focus-within/title-row:opacity-100',
-                          )}
-                        >
-                          <span className="inline-flex shrink-0 items-center gap-1 rounded bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-400">
-                            Drive
-                          </span>
-                          {driveOpenInHref ? (
-                            <DriveDocTitleChromeActions openInDriveHref={driveOpenInHref} />
-                          ) : null}
-                        </div>
-                      )}
-                      {!p.isDriveDoc && (
-                        <div
-                          className={cn(
-                            'flex max-w-none items-center gap-1 overflow-visible transition-[opacity,transform] duration-200 ease-out',
-                            'pointer-events-none translate-x-2 opacity-0',
-                            'group-hover/title-row:pointer-events-auto group-hover/title-row:translate-x-0 group-hover/title-row:opacity-100',
-                            'group-focus-within/title-row:pointer-events-auto group-focus-within/title-row:translate-x-0 group-focus-within/title-row:opacity-100',
-                          )}
-                        >
-                          {!p.docCoverUrl ? (
-                            <div className="relative z-[280] shrink-0">
-                              <button
-                                ref={p.fieldsCoverBtnRef}
-                                type="button"
-                                onClick={() => p.setCoverDropdownOpen((o) => !o)}
-                                className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[11px] text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
-                              >
-                                <ImageIcon className="h-4 w-4 shrink-0 text-[var(--color-muted-foreground)]" />
-                                Add cover
-                              </button>
-                              {p.coverDropdownOpen && (
-                                <CoverDropdown
-                                  ref={p.coverDropdownRef}
-                                  className="right-0 top-full mt-1"
-                                  onUpload={() => {
-                                    p.setCoverDropdownOpen(false)
-                                    p.coverFileInputRef.current?.click()
-                                  }}
-                                  onLibrary={() => {
-                                    p.setCoverDropdownOpen(false)
-                                    p.setCoverMediaPickerOpen(true)
-                                  }}
-                                  onGenerate={() => {
-                                    p.setCoverDropdownOpen(false)
-                                    p.setCoverGenerateOpen(true)
-                                  }}
-                                />
-                              )}
-                            </div>
-                          ) : null}
-                          <DocEditorExportDropdown
-                            title={p.title || p.item.title || 'Untitled'}
-                            getDocBody={getDocBodyForExport}
-                            visualHtml={p.docVisualHtml}
-                            campaignId={p.campaignId}
-                            customData={p.item.custom_data}
-                            onGoogleDocCreated={saveGoogleDocLink}
-                          />
-                          {p.canShareItem && (
-                            <Tooltip label="Share" side="bottom">
-                              <button
-                                type="button"
-                                onClick={() => p.setShareOpen(true)}
-                                className="shrink-0 rounded-md p-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
-                                aria-label="Share document"
-                              >
-                                <Share2 className="h-4 w-4" />
-                              </button>
-                            </Tooltip>
-                          )}
-                        </div>
-                      )}
-                      {p.isDriveDoc || !(p.docCoverUrl && p.docShowCover) ? (
-                        <button
-                          type="button"
-                          onClick={p.requestClosePanel}
-                          className="shrink-0 rounded-md p-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
-                          aria-label="Close document"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
+                    }
+                  />
                 </div>
               )}
+
+              {p.embedded && p.googleActionTarget && !p.isDriveDoc ? (
+                <DocEditorExportDropdown
+                  title={p.title || p.item.title || 'Untitled'}
+                  getDocBody={getDocBodyForExport}
+                  visualHtml={p.docVisualHtml}
+                  campaignId={p.campaignId}
+                  customData={p.item.custom_data}
+                  onGoogleDocCreated={saveGoogleDocLink}
+                  googleActionTarget={p.googleActionTarget}
+                  googleActionOnly
+                />
+              ) : null}
 
               {!p.inline && p.hasDocProperties && (
                 <div className="mx-auto w-full" style={p.layoutWidthStyle}>
@@ -571,7 +515,13 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
                 </div>
               )}
 
-              {!p.inline && !p.isDriveDoc && docViewMode === 'doc' && (
+              {p.embedded && !p.isDriveDoc ? (
+                <div className="mx-auto w-full" style={p.layoutWidthStyle}>
+                  {renderDocModeChrome()}
+                </div>
+              ) : null}
+
+              {(!p.inline || p.embedded) && !p.isDriveDoc && docViewMode === 'doc' && (
                 <div className="mx-auto w-full" style={p.layoutWidthStyle}>
                   <div className="px-4">
                     <RichTextToolbar
@@ -594,7 +544,7 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
               )}
 
               <div className="mx-auto w-full" style={p.layoutWidthStyle}>
-                {p.inline && (
+                {p.inline && !p.embedded && (
                   <div className="group/title-section rounded-lg px-0 pb-1 pt-1 outline-none transition-colors">
                     {p.isDriveDoc ? (
                       <div className="h-spacing-10 flex shrink-0 items-center">
@@ -616,14 +566,7 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
                       </div>
                     ) : (
                       <div className="h-spacing-10 flex shrink-0 items-center">
-                        <div
-                          className={cn(
-                            'flex w-full flex-wrap items-center gap-3 pb-0.5 pt-1 transition-opacity duration-150',
-                            'pointer-events-none opacity-0',
-                            'group-hover/title-section:pointer-events-auto group-hover/title-section:opacity-100',
-                            'group-focus-within/title-section:pointer-events-auto group-focus-within/title-section:opacity-100',
-                          )}
-                        >
+                        <div className="flex w-full flex-wrap items-center gap-3 pb-0.5 pt-1">
                           {!p.docCoverUrl && (
                             <div className="relative z-[280]">
                               <button
@@ -655,14 +598,14 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
                             </div>
                           )}
 
-                          <DocEditorExportDropdown
+                          <DocEditorHeaderActions
                             title={p.title || p.item.title || 'Untitled'}
                             getDocBody={getDocBodyForExport}
                             visualHtml={p.docVisualHtml}
                             campaignId={p.campaignId}
                             customData={p.item.custom_data}
                             onGoogleDocCreated={saveGoogleDocLink}
-                            showLabel
+                            onShare={p.canShareItem ? () => p.setShareOpen(true) : undefined}
                           />
 
                           <button
@@ -676,17 +619,6 @@ export function DocEditorPanelInner(p: DocEditorPanelInnerProps) {
                             <Settings2 className="h-3.5 w-3.5 shrink-0" />
                             Settings
                           </button>
-
-                          {p.canShareItem && (
-                            <button
-                              type="button"
-                              onClick={() => p.setShareOpen(true)}
-                              className="flex items-center gap-1 text-[11px] text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--foreground)]"
-                            >
-                              <Share2 className="h-3.5 w-3.5 shrink-0" />
-                              Share
-                            </button>
-                          )}
 
                           <div className="min-w-[1rem] flex-1" />
 

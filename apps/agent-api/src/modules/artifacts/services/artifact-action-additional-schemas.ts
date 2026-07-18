@@ -19,12 +19,9 @@ const pagination = ['limit', 'offset']
 const adIds = ['ad_id', 'adId', 'ad_set_id', 'adSetId', 'campaign_id', 'campaignId']
 
 export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> = {
-  dream_inspect_agent: schema(
-    [],
-    ['agent_key'],
-    stringType(['agent_key']),
-    ['Inspect the target agent and its org-owned skills during a Jaime Agent Learning Dream.'],
-  ),
+  dream_inspect_agent: schema([], ['agent_key'], stringType(['agent_key']), [
+    'Inspect the target agent and its org-owned skills during a Jaime Agent Learning Dream.',
+  ]),
   dream_search_evidence: schema(
     [],
     ['source', 'limit', 'cursor'],

@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ViewShareModal } from './ViewShareModal'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
+import { ViewShareModal } from './ViewShareModal'
 
 const mocks = vi.hoisted(() => ({
   deleteSpaceViewShare: vi.fn(),
@@ -150,6 +150,10 @@ describe('ViewShareModal', () => {
     )
 
     expect(screen.getByText('Share view')).toBeTruthy()
+    expect(screen.getByRole('dialog', { name: 'Share view' })).toHaveAccessibleDescription(
+      'Roadmap',
+    )
+    expect(screen.getByRole('textbox', { name: 'Invite by name' })).toBeTruthy()
     expect(screen.getByText('Roadmap')).toBeTruthy()
     expect(screen.getByText(/Share this view with everyone in/).textContent).toContain(
       'Acme Workspace',

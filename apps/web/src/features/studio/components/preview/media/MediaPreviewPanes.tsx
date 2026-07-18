@@ -27,7 +27,6 @@ export function DocumentPreview({
   const markdownExportRef = useRef<HTMLDivElement>(null)
   const pdfUrl = doc.content?.file_url
   const displayTitle = doc.title ?? 'Untitled'
-
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -71,7 +70,6 @@ export function ImagePreview({ asset, campaignId }: { asset: MediaAsset; campaig
   const displayTitle = asset.source_prompt ?? asset.name ?? 'Image'
   const visualExportRef = useRef<HTMLDivElement>(null)
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle')
-
   const handleCopy = useCallback(async () => {
     try {
       const res = await fetch(url, { mode: 'cors' })
@@ -107,14 +105,20 @@ export function ImagePreview({ asset, campaignId }: { asset: MediaAsset; campaig
             <Tooltip label="Full preview" side="bottom">
               <button
                 type="button"
-                onClick={() => window.open(url, '_blank')}
+                aria-label="Open image preview"
+                onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
                 className="btn-icon-glass"
               >
                 <Expand className="h-4 w-4" />
               </button>
             </Tooltip>
             <Tooltip label={copyStatus === 'copied' ? 'Copied!' : 'Copy image'} side="bottom">
-              <button type="button" onClick={handleCopy} className="btn-icon-glass">
+              <button
+                type="button"
+                aria-label={copyStatus === 'copied' ? 'Copied image' : 'Copy image'}
+                onClick={handleCopy}
+                className="btn-icon-glass"
+              >
                 <Copy className="h-4 w-4" />
               </button>
             </Tooltip>
@@ -182,14 +186,20 @@ export function VideoPreview({ asset, campaignId }: { asset: MediaAsset; campaig
             <Tooltip label="Full preview" side="bottom">
               <button
                 type="button"
-                onClick={() => window.open(url, '_blank')}
+                aria-label="Open video preview"
+                onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
                 className="btn-icon-glass"
               >
                 <Expand className="h-4 w-4" />
               </button>
             </Tooltip>
             <Tooltip label={copyStatus === 'copied' ? 'Copied!' : 'Copy video'} side="bottom">
-              <button type="button" onClick={handleCopy} className="btn-icon-glass">
+              <button
+                type="button"
+                aria-label={copyStatus === 'copied' ? 'Copied video' : 'Copy video'}
+                onClick={handleCopy}
+                className="btn-icon-glass"
+              >
                 <Copy className="h-4 w-4" />
               </button>
             </Tooltip>
@@ -319,7 +329,8 @@ export function FilePreview({ asset, campaignId }: { asset: MediaAsset; campaign
             <Tooltip label="Open" side="bottom">
               <button
                 type="button"
-                onClick={() => window.open(url, '_blank')}
+                aria-label="Open file"
+                onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
                 className="btn-icon-glass"
               >
                 <Expand className="h-4 w-4" />

@@ -1,9 +1,10 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { HomeDashboardTemplateChip } from '@/components/home-dashboard-v4/HomeDashboardTemplateChip'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import { HomeDashboardTemplateChip } from '@/components/home-dashboard-v4/HomeDashboardTemplateChip'
 import {
   homeDashboardTemplate,
   type HomeDashboardTemplateId,
@@ -13,15 +14,16 @@ import { useOrgStore } from '@/features/org/store/use-org-store'
 import { cachedSpaces, useCachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
 import { normalizeSpaceLegacyViews } from '@/features/spaces/lib/view-customization-merge'
 import { ensureGeneralSpace } from '@/features/spaces/services/spaces.service'
-import { matchesFlowsConceptSpace } from '@/lib/flows/flows-scope-storage'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { AttachedArtifact } from '@/features/studio/components/chat/ArtifactAttachments'
 import { ChatInput } from '@/features/studio/components/ChatInput'
 import type { ChatInputPlusMenuSpacePickerConfig } from '@/features/studio/components/ChatInput/chat-input-plus-menu-space.types'
 import { campaignListCacheKey, fetchCampaigns } from '@/features/studio/services/campaign.service'
 import type { ChatModelSettings } from '@/features/studio/services/chat.service'
+import { useChatStore } from '@/features/studio/store/use-chat-store'
 import type { Campaign, DocumentAttachment, MessageReference } from '@/features/studio/types'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { matchesFlowsConceptSpace } from '@/lib/flows/flows-scope-storage'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
 export function HomeDashboardV4Composer({
@@ -31,8 +33,10 @@ export function HomeDashboardV4Composer({
   selectedTemplate: HomeDashboardTemplateId | null
   onSelectTemplate: (id: HomeDashboardTemplateId | null) => void
 }) {
+  const router = useRouter()
   const seedComposer = useGlobalChatStore((s) => s.seedComposer)
   const activeAgentKey = useGlobalChatStore((s) => s.activeAgentKey)
+  const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
   const { data: cachedSpaceRows } = useCachedSpaces()
   const spaces = useMemo(() => cachedSpaceRows ?? [], [cachedSpaceRows])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -89,8 +93,7 @@ export function HomeDashboardV4Composer({
     return (
       [...spaces]
         .filter(
-          (space) =>
-            space.campaign_id === generalCampaignId && !matchesFlowsConceptSpace(space),
+          (space) => space.campaign_id === generalCampaignId && !matchesFlowsConceptSpace(space),
         )
         .sort((a, b) => {
           const aTime = new Date(a.updated_at ?? a.created_at ?? 0).getTime()
@@ -170,9 +173,11 @@ export function HomeDashboardV4Composer({
           }
         }
 
+        setActiveConversationId(null)
         seedComposer({
           content,
           agentKey: activeAgentKey,
+          railIntent: 'new',
           documents,
           artifacts,
           model,
@@ -186,13 +191,24 @@ export function HomeDashboardV4Composer({
               }
             : { surface: 'general' },
         })
+        router.push('/home?chat=starting')
       } catch (error) {
         toast.error(sanitizeUserError(error, HOME_TOAST_ERRORS.SEND_MESSAGE_FAILED.userMessage))
       } finally {
         setSending(false)
       }
     },
-    [activeAgentKey, activeCampaignId, isOrgOnly, seedComposer, sending, spaces, targetSpaceId],
+    [
+      activeAgentKey,
+      activeCampaignId,
+      isOrgOnly,
+      router,
+      seedComposer,
+      sending,
+      setActiveConversationId,
+      spaces,
+      targetSpaceId,
+    ],
   )
 
   return (

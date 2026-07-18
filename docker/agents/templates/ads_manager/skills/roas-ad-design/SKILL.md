@@ -44,12 +44,7 @@ Save as soon as the content is ready so work remains visible even if a later vis
 
 Call `generate_visual_html` on the saved Doc item. Build every cut in the same visual document. The HTML must:
 
-- use semantic sections and editable text, not embedded screenshots;
-- preserve the approved copy exactly;
-- keep the emphasized identity phrase obvious at thumbnail size;
-- show light, dark, and bold cuts in a consistent grid;
-- avoid external scripts, image dependencies, client logos, and decorative clutter;
-- remain readable in the Space visual editor.
+Each line spec sets `text` (verbatim), `highlight`, optional `stamp` (`"LIVE ON"` gets the Zoom logo), `size`, `brand_color`, optional `brand_bg_light` / `brand_bg_dark`, and `out_prefix`. The engine produces `{prefix}_light.png`, `{prefix}_dark.png`, `{prefix}_bold.png` — light/dark branded, bold neutral. Write outputs to `/mnt/user-data/outputs/`.
 
 ### 4. Verify and hand off
 

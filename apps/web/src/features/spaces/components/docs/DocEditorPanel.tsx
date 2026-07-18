@@ -2,20 +2,20 @@
 
 import { useSearchParams } from 'next/navigation'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { reportClientError } from '@/lib/log-client-error'
 import { presignPutUploadFile } from '@/lib/media/presigned-client-upload'
-import { markdownToHtml } from '../../lib/markdown-to-html'
+import { updateSpaceItem } from '@/lib/spaces'
+import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { useSpacesStore } from '../../store/use-spaces-store'
 import type { SpaceItem } from '../../types'
 import type { FieldDef, SelectOption, ViewDef } from '../../types/space-schema'
-import { isSpaceFieldVisibleInUi } from '../../types/space-schema'
 import { registerDocImageInsertHandler } from './doc-image-insert-bridge'
 import { clearDocSlashInsertText, type DocSlashInsertRange } from './doc-slash-insert-text'
 import { DocEditorPanelInner } from './DocEditorPanelInner'
 import { DocEditorPanelPortalShell } from './DocEditorPanelPortalShell'
 import { useDocBodyAutosave } from './hooks/use-doc-body-autosave'
 import { useDocCoverImage } from './hooks/use-doc-cover-image'
+import { useDocEditorPanelProperties } from './hooks/use-doc-editor-panel-properties'
 import { useDocEscapeKey } from './hooks/use-doc-escape-key'
 import { useDocFloatingToolbar } from './hooks/use-doc-floating-toolbar'
 import { useDocItemUpdate } from './hooks/use-doc-item-update'
@@ -29,7 +29,7 @@ import {
   parseDocEditorUiFromCustomData,
 } from './lib/doc-editor-settings'
 import { hashDocSource } from './lib/doc-visual-hash'
-import { DocPropertiesSection } from './properties/DocPropertiesSection'
+import { resolveInitialDocBody } from './lib/resolve-initial-doc-body'
 import type { DocSubpagesDisplayMode } from './types/doc-editor.types'
 
 export type { DocSubpagesDisplayMode } from './types/doc-editor.types'
@@ -52,15 +52,10 @@ export interface DocEditorPanelProps {
   onTagCustomSwatchesChange?: (fieldId: string, swatches: string[]) => void
   onCampaignDocsRefresh?: () => void
   inline?: boolean
+  embedded?: boolean
+  googleActionTarget?: HTMLElement | null
+  spaceIdOverride?: string | null
   onSelectChildDoc?: (itemId: string) => void
-}
-
-function resolveInitialDocBody(item: SpaceItem): string {
-  const raw = item.doc_body ?? item.notes ?? ''
-  if (!raw) return ''
-  // Always run through markdownToHtml — it keeps real semantic HTML and repairs
-  // markdown dumped into <pre> / <p># ...</p> leftovers from agent saves.
-  return markdownToHtml(raw) ?? raw
 }
 
 export function DocEditorPanel({
@@ -81,6 +76,9 @@ export function DocEditorPanel({
   onTagCustomSwatchesChange,
   onCampaignDocsRefresh,
   inline,
+  embedded = false,
+  googleActionTarget = null,
+  spaceIdOverride = null,
   onSelectChildDoc,
 }: DocEditorPanelProps) {
   const [item, setItem] = useState(initialItem)
@@ -102,11 +100,11 @@ export function DocEditorPanel({
   const [, setCoverUploading] = useState(false)
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
   const titleRef = useRef<HTMLInputElement>(null)
-  const [addPropOpen, setAddPropOpen] = useState(false)
   const [fieldsSlideOpen, setFieldsSlideOpen] = useState(false)
   const [pageSettingsOpen, setPageSettingsOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
-  const [docFieldsSectionOpen, setDocFieldsSectionOpen] = useState(true)
+  const [docFieldsSectionOpen, setDocFieldsSectionOpen] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const initialDocBodyContent = resolveInitialDocBody(initialItem)
   const [currentDocBodyHtml, setCurrentDocBodyHtml] = useState(initialDocBodyContent)
   const [currentDocBodyHash, setCurrentDocBodyHash] = useState<string | null>(null)
@@ -122,6 +120,17 @@ export function DocEditorPanel({
   const storeUpdateItem = useSpacesStore((s) => s.updateItem)
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const spaceItems = useSpacesStore((s) => s.items)
+  const owningSpaceId = spaceIdOverride ?? activeSpaceId
+  const updateOwningSpaceItem = useCallback(
+    async (itemId: string, patch: Partial<SpaceItem>) => {
+      if (spaceIdOverride && spaceIdOverride !== activeSpaceId) {
+        await updateSpaceItem(spaceIdOverride, itemId, patch)
+        return
+      }
+      await storeUpdateItem(itemId, patch)
+    },
+    [activeSpaceId, spaceIdOverride, storeUpdateItem],
+  )
 
   const { panelWidth, isResizing, handleResizePointerDown } = useDocPanelResize()
   const { panelSlideExiting, requestClosePanel, onSlideAnimationComplete } = useDocSlidePanelExit({
@@ -133,7 +142,7 @@ export function DocEditorPanel({
   const handleUpdateField = useDocItemUpdate({
     item,
     setItem,
-    storeUpdateItem,
+    storeUpdateItem: updateOwningSpaceItem,
     flushDocBodyRef,
     onCampaignDocsRefresh,
   })
@@ -168,7 +177,7 @@ export function DocEditorPanel({
   useEffect(() => {
     setFieldsSlideOpen(false)
     setPageSettingsOpen(false)
-    setDocFieldsSectionOpen(true)
+    setDocFieldsSectionOpen(false)
   }, [initialItem.id])
 
   // Must run before the autosave/editor hook effects on doc switch so they see
@@ -209,14 +218,21 @@ export function DocEditorPanel({
     docVisualPresentationId,
   } = useMemo(() => parseDocEditorUiFromCustomData(docCustomData), [docCustomData])
 
-  const docHiddenFields = useMemo(
-    () => new Set((docCustomData._doc_hidden_fields as string[] | undefined) ?? []),
-    [docCustomData],
-  )
-  const docExtraFields = useMemo(
-    () => (docCustomData._doc_extra_fields as string[] | undefined) ?? [],
-    [docCustomData],
-  )
+  const { hasDocProperties, canShareItem, renderPropertiesInner } = useDocEditorPanelProperties({
+    item,
+    view,
+    allFields,
+    roster,
+    currentUserId,
+    docCustomData,
+    handleUpdateField,
+    onEditCategories,
+    onEditStatuses,
+    onCreateOption,
+    onUpdateOption,
+    onDeleteOption,
+    onTagCustomSwatchesChange,
+  })
 
   const {
     coverRepositioning,
@@ -308,66 +324,14 @@ export function DocEditorPanel({
   const editorFontFamily = useMemo(() => editorFontFamilyForStyle(docFontStyle), [docFontStyle])
   const editorFontSizePx = useMemo(() => editorFontSizePxForSize(docFontSize), [docFontSize])
 
-  const visibleFieldIds = useMemo(() => {
-    const viewDefault = view?.visible_fields ?? (allFields ?? []).map((f) => f.id)
-    const merged = [...new Set([...viewDefault, ...docExtraFields])]
-    return merged.filter((id) => !docHiddenFields.has(id))
-  }, [view?.visible_fields, allFields, docExtraFields, docHiddenFields])
-
-  const propsFields = useMemo(() => {
-    const byId = new Map((allFields ?? []).map((f) => [f.id, f]))
-    return visibleFieldIds
-      .map((id) => byId.get(id))
-      .filter((f): f is FieldDef => !!f && isSpaceFieldVisibleInUi(f) && f.id !== 'title')
-  }, [visibleFieldIds, allFields])
-
-  const addableFields = useMemo(() => {
-    const visibleSet = new Set(visibleFieldIds)
-    return (allFields ?? []).filter(
-      (f) => isSpaceFieldVisibleInUi(f) && f.id !== 'title' && !visibleSet.has(f.id),
-    )
-  }, [visibleFieldIds, allFields])
-
-  const statusFieldForCell = useMemo(
-    () => (allFields ?? []).find((f) => f.id === 'status'),
-    [allFields],
-  )
-
-  const handleHideField = useCallback(
-    (fieldId: string) => {
-      const next = [
-        ...new Set([...((docCustomData._doc_hidden_fields as string[]) ?? []), fieldId]),
-      ]
-      void handleUpdateField({ custom_data: { _doc_hidden_fields: next } })
-    },
-    [docCustomData, handleUpdateField],
-  )
-
-  const handleAddField = useCallback(
-    (fieldId: string) => {
-      const currentExtra = (docCustomData._doc_extra_fields as string[] | undefined) ?? []
-      const currentHidden = (docCustomData._doc_hidden_fields as string[] | undefined) ?? []
-      const nextExtra = [...new Set([...currentExtra, fieldId])]
-      const nextHidden = currentHidden.filter((id) => id !== fieldId)
-      void handleUpdateField({
-        custom_data: {
-          _doc_extra_fields: nextExtra,
-          _doc_hidden_fields: nextHidden,
-        },
-      })
-      setAddPropOpen(false)
-    },
-    [docCustomData, handleUpdateField],
-  )
-
   const { saveStatus, handleDocBodyChange, flushDocBodyChange, localDocBodyRef } =
     useDocBodyAutosave({
       initialItemId: initialItem.id,
       baselineDocBodyOnIdChange: initialDocBodyContent,
       item,
-      activeSpaceId,
+      activeSpaceId: owningSpaceId,
       docBodyHydrationBlockedRef,
-      storeUpdateItem,
+      storeUpdateItem: updateOwningSpaceItem,
       onCampaignDocsRefresh,
       onHydrationUnblocked: resumeDocBodyHydration,
     })
@@ -491,59 +455,9 @@ export function DocEditorPanel({
   const currentDocBodyTrimmed = currentDocBodyHtml.trim()
   const hasCurrentDocBody = currentDocBodyTrimmed !== '' && currentDocBodyTrimmed !== '<p></p>'
 
-  const hasDocProperties = propsFields.length > 0 || addableFields.length > 0
-  const canShareItem = !item.id.startsWith('cdoc:') && !item.id.startsWith('mdel:')
-
   const layoutWidthStyle = docFullWidth
     ? ({ paddingLeft: 48, paddingRight: 48 } as const)
     : ({ maxWidth: 720 } as const)
-
-  const renderPropertiesInner = useCallback(
-    (singleColumn: boolean) =>
-      hasDocProperties ? (
-        <DocPropertiesSection
-          singleColumn={singleColumn}
-          propsFields={propsFields}
-          addableFields={addableFields}
-          item={item}
-          roster={roster ?? []}
-          currentUserId={currentUserId ?? null}
-          onUpdateField={handleUpdateField}
-          onHideField={handleHideField}
-          onEditStatuses={onEditStatuses}
-          onEditCategories={onEditCategories}
-          onCreateOption={onCreateOption}
-          onUpdateOption={onUpdateOption}
-          onDeleteOption={onDeleteOption}
-          onTagCustomSwatchesChange={onTagCustomSwatchesChange}
-          statusFieldForCell={statusFieldForCell}
-          allFields={allFields}
-          addPropOpen={addPropOpen}
-          setAddPropOpen={setAddPropOpen}
-          onAddField={handleAddField}
-        />
-      ) : null,
-    [
-      hasDocProperties,
-      propsFields,
-      addableFields,
-      item,
-      roster,
-      currentUserId,
-      handleUpdateField,
-      handleHideField,
-      onEditStatuses,
-      onEditCategories,
-      onCreateOption,
-      onUpdateOption,
-      onDeleteOption,
-      onTagCustomSwatchesChange,
-      statusFieldForCell,
-      allFields,
-      addPropOpen,
-      handleAddField,
-    ],
-  )
 
   void _unusedCategoryField
 
@@ -553,6 +467,10 @@ export function DocEditorPanel({
   const innerContent = (
     <DocEditorPanelInner
       inline={!!inline}
+      embedded={embedded}
+      googleActionTarget={googleActionTarget}
+      expanded={expanded}
+      onToggleExpanded={() => setExpanded((value) => !value)}
       item={itemForInner}
       roster={roster}
       campaignId={campaignId}
@@ -631,7 +549,7 @@ export function DocEditorPanel({
       insertBodyImage={insertBodyImage}
       clearPendingSlashText={clearPendingSlashText}
       discardPendingSlashRange={discardPendingSlashRange}
-      bodyImageSpaceId={activeSpaceId}
+      bodyImageSpaceId={owningSpaceId}
       docVisualHtml={docVisualHtml}
       docVisualStatus={docVisualStatus}
       docVisualUpdatedAt={docVisualUpdatedAt}
@@ -659,6 +577,7 @@ export function DocEditorPanel({
       requestClosePanel={requestClosePanel}
       panelSlideExiting={panelSlideExiting}
       panelWidth={panelWidth}
+      expanded={expanded}
       handleResizePointerDown={handleResizePointerDown}
       onSlideAnimationComplete={onSlideAnimationComplete}
     >

@@ -5,6 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { AuthOrbShell } from '@/components/auth/auth-orb-shell'
+import {
+  buildAppRedirectUrl,
+  buildAuthContinuationPath,
+  resolveAppRedirectPath,
+} from '@/lib/auth/access-routing'
 import { reportClientError } from '@/lib/log-client-error'
 import { createClient } from '@/lib/supabase/client'
 import { resolveAuthSignupErrorMessage } from '../config/auth-toast-errors.config'
@@ -41,7 +46,7 @@ export default function RegisterPage() {
   }, [router])
 
   const getRedirectPath = () => {
-    return searchParams.get('redirect') || '/home'
+    return resolveAppRedirectPath(searchParams.get('redirect'))
   }
 
   useEffect(() => {
@@ -122,7 +127,9 @@ export default function RegisterPage() {
 
     if (data?.session) {
       const rp = getRedirectPath()
-      window.location.href = promoCode ? `${rp}?promo=${promoCode}` : rp
+      window.location.href = promoCode
+        ? buildAppRedirectUrl(window.location.origin, rp, { promo: promoCode }).toString()
+        : rp
       return
     }
 
@@ -131,7 +138,9 @@ export default function RegisterPage() {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (!signInError) {
         const rp = getRedirectPath()
-        window.location.href = promoCode ? `${rp}?promo=${promoCode}` : rp
+        window.location.href = promoCode
+          ? buildAppRedirectUrl(window.location.origin, rp, { promo: promoCode }).toString()
+          : rp
         return
       }
     }
@@ -163,16 +172,21 @@ export default function RegisterPage() {
     )
   }
 
+  const signInHref = buildAuthContinuationPath('/login', getRedirectPath(), promoCode)
+
   return (
     <AuthOrbShell quotes={SIGNUP_QUOTES}>
       <div className="mb-spacing-8 text-center">
-        <h1 className="text-foreground text-3xl font-bold tracking-tight">Create account</h1>
+        <h1 className="text-foreground text-3xl font-bold uppercase tracking-tight">
+          Create account
+        </h1>
         <p className="body-2 text-muted-foreground mt-spacing-2">Start building with ROAS</p>
       </div>
 
       <div className="space-y-spacing-4">
         <div className="gap-spacing-2 flex flex-col">
           <button
+            type="button"
             onClick={() => void onOAuth('google')}
             disabled={loading}
             aria-label="Sign up with Google"
@@ -213,6 +227,7 @@ export default function RegisterPage() {
             )}
           </button>
           <button
+            type="button"
             onClick={() => void onOAuth('github')}
             disabled={loading}
             aria-label="Sign up with GitHub"
@@ -249,6 +264,7 @@ export default function RegisterPage() {
           <input
             type="email"
             required
+            aria-label="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@domain.com"
@@ -258,6 +274,7 @@ export default function RegisterPage() {
             <input
               type={showPassword ? 'text' : 'password'}
               required
+              aria-label="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
@@ -292,7 +309,7 @@ export default function RegisterPage() {
       </div>
 
       <div className="mt-spacing-6 text-center">
-        <Link href="/login" className="body-3 text-muted-foreground hover:text-foreground">
+        <Link href={signInHref} className="body-3 text-muted-foreground hover:text-foreground">
           Already have an account? Sign in
         </Link>
       </div>

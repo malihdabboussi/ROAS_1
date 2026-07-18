@@ -68,7 +68,7 @@ Bundled files (if you add any later): **`agent_skill_resources`** with matching 
 | Surface               | What lives there                                                                                                                                                                       |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Vercel — Frontend** | Web app UI and client / edge behavior — project **`prj_MTRba5SdYBFbiymrKqieGnGPjcBh`**.                                                                                                |
-| **Vercel — Backend**  | API / server workloads on Vercel — project **`prj_YwUti53Q9vB6rMKPB5cpW8w7h0qL`**.                                                                                                    |
+| **Vercel — Backend**  | API / server workloads on Vercel — project **`prj_YwUti53Q9vB6rMKPB5cpW8w7h0qL`**.                                                                                                     |
 | **Vercel — Funnels**  | Funnels app — project **`prj_QPESSHik40T2659GTyfZSOalJe4T`**.                                                                                                                          |
 | **Fly.io**            | **Agent API** (NestJS, exposed port) and **OpenClaw gateway** (internal). Same image; see **`fly-io-deploy`** (`vibey-runtimes` primary, `vibey-machines` legacy), `fly logs`, health. |
 | **Supabase**          | Database, auth, storage, edge functions, advisors, Postgres logs — **Supabase MCP** + **`supa-project`**.                                                                              |

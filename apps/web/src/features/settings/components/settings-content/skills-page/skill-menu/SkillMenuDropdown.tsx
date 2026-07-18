@@ -240,7 +240,7 @@ export function SkillMenuDropdown({
                     ?.trim()
                   if (answer == null) return
                   if (!answer) {
-                    void Promise.resolve(onSetSkillFolder(skill.skill_key, null)).then(() => {
+                    void onSetSkillFolder(skill.skill_key, null).then(() => {
                       toast.success('Removed from folder')
                       onSkillsChanged()
                       onClose()
@@ -253,7 +253,7 @@ export function SkillMenuDropdown({
                     toast.error('Invalid folder number')
                     return
                   }
-                  void Promise.resolve(onSetSkillFolder(skill.skill_key, folder.id)).then(() => {
+                  void onSetSkillFolder(skill.skill_key, folder.id).then(() => {
                     toast.success(`Moved to ${folder.name}`)
                     onSkillsChanged()
                     onClose()

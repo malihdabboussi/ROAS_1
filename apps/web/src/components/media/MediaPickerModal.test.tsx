@@ -1,8 +1,8 @@
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  WorkspaceSettingsModalProvider,
   useWorkspaceSettingsModal,
+  WorkspaceSettingsModalProvider,
 } from '@/lib/settings/workspace-settings-modal-context'
 import { MediaPickerModal } from './MediaPickerModal'
 
@@ -95,6 +95,10 @@ describe('MediaPickerModal', () => {
 
     await waitFor(() => expect(mocks.listAssets).toHaveBeenCalledTimes(1))
 
+    const dialog = screen.getByRole('dialog', { name: 'Media Library' })
+    expect(dialog.getAttribute('aria-describedby')).toBe(
+      screen.getByText('Browse, upload, and manage campaign media assets.').id,
+    )
     expect(screen.getByTestId('workspace-settings-status').textContent).toBe('closed')
     expect(settingsStatusRenderCount).toBeLessThan(8)
 

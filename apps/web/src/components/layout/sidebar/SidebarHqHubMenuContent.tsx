@@ -2,28 +2,24 @@
 
 import Link from 'next/link'
 import {
-  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
   type Dispatch,
-  type ReactNode,
   type SetStateAction,
 } from 'react'
 import { Brain, ChevronDown, House, ListChecks, Users } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
-import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
+import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { cn } from '@/lib/utils/cn'
-import { HubDockFlyout, HUB_DOCK_FLYOUT_LEAVE_MS } from './HubDockFlyout'
-import { SidebarBrainNavLinks } from './SidebarBrainFlyout'
-import { SidebarHqHubMenuSpacesSection } from './SidebarHqHubMenuSpacesSection'
-import { SidebarHqMoreFlyoutBody } from './SidebarHqMoreFlyoutBody'
-import { SidebarTeam2Flyout } from './SidebarTeam2Flyout'
+import { HUB_DOCK_FLYOUT_LEAVE_MS } from './HubDockFlyout'
 import type { HubMenuSectionId } from './sidebar-hq-hub-menu.types'
+import { SidebarHqHubMenuDockFlyouts, type HubMenuDockKey } from './SidebarHqHubMenuDockFlyouts'
+import { SidebarHqHubMenuNavRow } from './SidebarHqHubMenuNavRow'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 type DockKey = 'team' | 'spaces' | 'brain' | 'more'
@@ -145,12 +141,12 @@ export function SidebarHqHubMenuContent({
   const setChatCollapsed = useGlobalChatStore((s) => s.setCollapsed)
   const setMenuMode = useShellStore((s) => s.setMenuMode)
   const flyoutCloseEpoch = useShellStore((s) => s.sidebarFlyoutCloseEpoch)
-  const [dock, setDock] = useState<DockKey | null>(null)
+  const [dock, setDock] = useState<HubMenuDockKey | null>(null)
   const [anchor, setAnchor] = useState<DOMRect | null>(null)
   const [pinned, setPinned] = useState(false)
   const [subOpen, setSubOpen] = useState(false)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const rowEls = useRef<Partial<Record<DockKey, HTMLElement | null>>>({})
+  const rowEls = useRef<Partial<Record<HubMenuDockKey, HTMLElement | null>>>({})
   const clearClose = () => {
     if (closeTimer.current) {
       clearTimeout(closeTimer.current)
@@ -170,14 +166,14 @@ export function SidebarHqHubMenuContent({
     c.setNewProjectName('')
   }, [c.setIsCreatingProject, c.setNewProjectName, setSpacesSearchOpen, setSpacesSearchQuery])
 
-  const measure = useCallback((key: DockKey) => {
+  const measure = useCallback((key: HubMenuDockKey) => {
     const el = rowEls.current[key]
     if (!el) return null
     return el.getBoundingClientRect()
   }, [])
 
   const openDock = useCallback(
-    (key: DockKey) => {
+    (key: HubMenuDockKey) => {
       clearClose()
       const rect = measure(key)
       setDock(key)
@@ -220,10 +216,13 @@ export function SidebarHqHubMenuContent({
 
   return (
     <div
-      className={cn('hub-menu-content flex min-h-0 flex-1 flex-col', variant === 'drawer' && 'px-0')}
+      className={cn(
+        'hub-menu-content flex min-h-0 flex-1 flex-col',
+        variant === 'drawer' && 'px-0',
+      )}
     >
       <div className="scrollbar-hide min-h-0 flex-1 space-y-0.5 overflow-y-auto">
-        <NavRow
+        <SidebarHqHubMenuNavRow
           href="/home"
           active={c.pathname === '/home'}
           icon={<House />}
@@ -236,7 +235,7 @@ export function SidebarHqHubMenuContent({
           onHover={() => scheduleClose()}
         />
 
-        <NavRow
+        <SidebarHqHubMenuNavRow
           href="/team"
           active={c.pathname.startsWith('/team')}
           icon={<Users />}
@@ -252,7 +251,7 @@ export function SidebarHqHubMenuContent({
           onLeave={scheduleClose}
         />
 
-        <NavRow
+        <SidebarHqHubMenuNavRow
           href="/campaigns"
           active={c.pathname.startsWith('/campaigns') || c.pathname.startsWith('/spaces')}
           icon={<ListChecks />}
@@ -268,7 +267,7 @@ export function SidebarHqHubMenuContent({
           onLeave={scheduleClose}
         />
 
-        <NavRow
+        <SidebarHqHubMenuNavRow
           href="/brain"
           active={c.pathname.startsWith('/brain')}
           icon={<Brain />}
@@ -285,13 +284,14 @@ export function SidebarHqHubMenuContent({
         />
 
         {/* More = Projects + Flows — always available; hover opens docked menu */}
-        <NavRow
+        <SidebarHqHubMenuNavRow
           icon={<ChevronDown className="hub-menu-more-chevron" />}
           label="More"
           active={
             dock === 'more' ||
             c.pathname.startsWith('/projects') ||
-            c.pathname.startsWith('/flows')
+            c.pathname.startsWith('/flows') ||
+            c.pathname.startsWith('/artifacts')
           }
           rowRef={(el) => {
             rowEls.current.more = el
@@ -322,146 +322,34 @@ export function SidebarHqHubMenuContent({
         ) : null}
       </div>
 
-      {showFlyout && dock === 'team' && anchor ? (
-        <HubDockFlyout
-          anchor={anchor}
-          title="Team"
-          onEnter={clearClose}
-          onLeave={scheduleClose}
-          onClose={closeDock}
-          pinned={pinned}
-          onPinnedChange={setPinned}
-          headerActions={[
-            {
-              kind: 'plus',
-              title: 'New agent',
-              onClick: () => {
-                handleNavigate()
-                c.router.push('/team')
-              },
-            },
-          ]}
-        >
-          <SidebarTeam2Flyout pathname={c.pathname} embedded />
-        </HubDockFlyout>
-      ) : null}
-
-      {showFlyout && dock === 'spaces' && anchor ? (
-        <HubDockFlyout
-          anchor={anchor}
-          title="Campaigns"
-          onEnter={clearClose}
-          onLeave={scheduleClose}
-          onClose={closeDock}
-          pinned={pinned}
-          onPinnedChange={setPinned}
-          leaveSuspended={subOpen}
-          headerActions={[
-            {
-              kind: 'search',
-              title: 'Search campaigns',
-              onClick: () => setSpacesSearchOpen(true),
-            },
-            {
-              kind: 'plus',
-              title: 'New campaign',
-              onClick: () => c.setShowNewCampaignModal(true),
-            },
-          ]}
-          searchOpen={spacesSearchOpen}
-          searchQuery={spacesSearchQuery}
-          onSearchQueryChange={setSpacesSearchQuery}
-          onSearchClose={() => {
-            setSpacesSearchOpen(false)
-            setSpacesSearchQuery('')
-          }}
-          searchPlaceholder="Search campaigns…"
-          searchInputRef={spacesSearchInputRef}
-        >
-          <SidebarHqHubMenuSpacesSection
-            c={c}
-            spacesSearchOpen={spacesSearchOpen}
-            setSpacesSearchOpen={setSpacesSearchOpen}
-            spacesSearchQuery={spacesSearchQuery}
-            setSpacesSearchQuery={setSpacesSearchQuery}
-            spacesSearchInputRef={spacesSearchInputRef}
-            hiddenSidebarCount={hiddenSidebarCount}
-            hiddenEyeRef={hiddenEyeRef}
-            hiddenMenuOpen={hiddenMenuOpen}
-            setHiddenMenuOpen={setHiddenMenuOpen}
-            openHiddenMenu={openHiddenMenu}
-            setBrowsePanelBucket={setBrowsePanelBucket}
-            setCreateSpaceModalFor={setCreateSpaceModalFor}
-            spaceUserState={spaceUserState}
-            onHoldParentFlyout={clearClose}
-            onReleaseParentFlyout={scheduleClose}
-            onSubFlyoutOpenChange={setSubOpen}
-            onCloseParentFlyout={closeDock}
-          />
-        </HubDockFlyout>
-      ) : null}
-
-      {showFlyout && dock === 'brain' && anchor ? (
-        <HubDockFlyout
-          anchor={anchor}
-          title="Brain"
-          onEnter={clearClose}
-          onLeave={scheduleClose}
-          onClose={closeDock}
-          pinned={pinned}
-          onPinnedChange={setPinned}
-          headerActions={[
-            {
-              kind: 'search',
-              title: 'Search brains',
-              onClick: () => {
-                /* optional: focus manage brains */
-                handleNavigate()
-                c.router.push('/brain')
-              },
-            },
-            {
-              kind: 'plus',
-              title: 'Add knowledge',
-              onClick: () => {
-                handleNavigate()
-                dispatchBrainAddAgentModal()
-              },
-            },
-          ]}
-        >
-          <Suspense
-            fallback={
-              <p className="body-3 text-muted-foreground px-3 py-4 text-center">Loading…</p>
-            }
-          >
-            <SidebarBrainNavLinks onNavigate={handleNavigate} />
-          </Suspense>
-        </HubDockFlyout>
-      ) : null}
-
-      {showFlyout && dock === 'more' && anchor ? (
-        <HubDockFlyout
-          anchor={anchor}
-          title="More"
-          onEnter={clearClose}
-          onLeave={scheduleClose}
-          onClose={closeDock}
-          pinned={pinned}
-          onPinnedChange={setPinned}
-          leaveSuspended={subOpen}
-        >
-          <SidebarHqMoreFlyoutBody
-            c={c}
-            showProjects={showAdminSections}
-            onNavigate={handleNavigate}
-            onHoldParentFlyout={clearClose}
-            onReleaseParentFlyout={scheduleClose}
-            onSubFlyoutOpenChange={setSubOpen}
-            onCloseParentFlyout={closeDock}
-          />
-        </HubDockFlyout>
-      ) : null}
+      <SidebarHqHubMenuDockFlyouts
+        showFlyout={showFlyout}
+        dock={dock}
+        anchor={anchor}
+        clearClose={clearClose}
+        scheduleClose={scheduleClose}
+        closeDock={closeDock}
+        pinned={pinned}
+        setPinned={setPinned}
+        subOpen={subOpen}
+        setSubOpen={setSubOpen}
+        handleNavigate={handleNavigate}
+        c={c}
+        spacesSearchOpen={spacesSearchOpen}
+        setSpacesSearchOpen={setSpacesSearchOpen}
+        spacesSearchQuery={spacesSearchQuery}
+        setSpacesSearchQuery={setSpacesSearchQuery}
+        spacesSearchInputRef={spacesSearchInputRef}
+        hiddenSidebarCount={hiddenSidebarCount}
+        hiddenEyeRef={hiddenEyeRef}
+        hiddenMenuOpen={hiddenMenuOpen}
+        setHiddenMenuOpen={setHiddenMenuOpen}
+        openHiddenMenu={openHiddenMenu}
+        setBrowsePanelBucket={setBrowsePanelBucket}
+        setCreateSpaceModalFor={setCreateSpaceModalFor}
+        spaceUserState={spaceUserState}
+        showAdminSections={showAdminSections}
+      />
     </div>
   )
 }

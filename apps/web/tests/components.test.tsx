@@ -83,7 +83,7 @@ describe('Sidebar Component', () => {
       </AccountSettingsModalProvider>,
     )
 
-    expect(screen.getAllByText('Missions').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Campaigns').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('Team').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText('Brain').length).toBeGreaterThanOrEqual(1)
   })
@@ -129,17 +129,5 @@ describe('Sidebar Component', () => {
     )
 
     expect(screen.getByText('JD')).toBeDefined()
-  })
-})
-
-describe('MobileNav Component', () => {
-  it('renders mobile navigation items (create rail on non-manage routes)', async () => {
-    const { MobileNav } = await import('../src/components/layout/MobileNav')
-    render(<MobileNav />)
-
-    expect(screen.getByText('Team')).toBeDefined()
-    expect(screen.getByText('Campaigns')).toBeDefined()
-    expect(screen.getByText('Dashboard')).toBeDefined()
-    expect(screen.getByText('More')).toBeDefined()
   })
 })

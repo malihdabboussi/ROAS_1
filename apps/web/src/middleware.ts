@@ -26,6 +26,15 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   ])
 }
 
+function redirectToLogin(request: NextRequest) {
+  const destination = `${request.nextUrl.pathname}${request.nextUrl.search}`
+  const url = request.nextUrl.clone()
+  url.pathname = '/login'
+  url.search = ''
+  url.searchParams.set('redirect', destination)
+  return NextResponse.redirect(url)
+}
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -50,14 +59,20 @@ export async function middleware(request: NextRequest) {
 
   let authResult: Awaited<ReturnType<typeof supabase.auth.getUser>> | null = null
   authResult = await withTimeout(supabase.auth.getUser(), SUPABASE_TIMEOUT_MS)
-  const user = authResult?.data?.user ?? null
+  const sessionResult =
+    authResult === null ? await withTimeout(supabase.auth.getSession(), SUPABASE_TIMEOUT_MS) : null
+  const user = authResult?.data?.user ?? sessionResult?.data?.session?.user ?? null
 
   const dashboardPaths = [
+    '/artifacts',
     '/studio',
     '/dashboard',
     '/campaigns',
     '/brain',
     '/contacts',
+    '/flows',
+    '/lists',
+    '/projects',
     '/settings',
     '/home',
     '/spaces',
@@ -87,34 +102,24 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname === '/fast-track-success'
 
   if (isDashboard && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectToLogin(request)
   }
 
   if (isOnboardingPage && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectToLogin(request)
   }
 
   if (isNoOrgAccessPage && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectToLogin(request)
   }
 
   if (isSettingUpPage && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectToLogin(request)
   }
 
   const isOrgSetupPage = request.nextUrl.pathname === '/org-setup'
   if (isOrgSetupPage && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectToLogin(request)
   }
 
   if (

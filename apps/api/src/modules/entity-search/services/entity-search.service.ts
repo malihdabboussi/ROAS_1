@@ -90,7 +90,7 @@ export class EntitySearchService {
       case 'campaign':
         return this.searchCampaigns(supabase, userId, orgId, q, limit, offset)
       case 'artifact':
-        return this.searchArtifacts(supabase, q, orgId, limit)
+        return this.searchArtifacts(supabase, userId, q, orgId, limit)
       case 'deliverable':
         return this.searchDeliverables(supabase, userId, orgId, q, limit, offset)
       case 'person':
@@ -113,15 +113,7 @@ export class EntitySearchService {
     mode: 'task' | 'doc',
   ): Promise<EntitySearchResult[]> {
     const [rows, conversationDocuments] = await Promise.all([
-      this.entitySearchRepository.searchSpaceItems(
-        supabase,
-        userId,
-        orgId,
-        q,
-        limit,
-        offset,
-        mode,
-      ),
+      this.entitySearchRepository.searchSpaceItems(supabase, userId, orgId, q, limit, offset, mode),
       mode === 'doc'
         ? this.entitySearchRepository.searchConversationDocuments(
             supabase,
@@ -226,12 +218,13 @@ export class EntitySearchService {
 
   private async searchArtifacts(
     supabase: SupabaseClient,
+    userId: string,
     q: string,
     orgId: string | null,
     limit: number,
   ): Promise<EntitySearchResult[]> {
     if (!this.artifactSearchService) return []
-    const { items } = await this.artifactSearchService.search(supabase, q, orgId)
+    const { items } = await this.artifactSearchService.search(supabase, q, userId, orgId)
     return items
       .map((item) => ({
         kind: 'artifact' as const,
@@ -246,7 +239,7 @@ export class EntitySearchService {
         ...(item.funnel_id ? { funnelId: item.funnel_id } : {}),
       }))
       .sort((a, b) => rank(q, a) - rank(q, b) || a.label.localeCompare(b.label))
-      .slice(0, limit)
+      .slice(0, q ? limit : undefined)
   }
 
   private async searchDeliverables(

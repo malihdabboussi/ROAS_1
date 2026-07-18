@@ -68,16 +68,21 @@ export function CrystallizeBrainModal({
                   <p className="body-4 text-muted-foreground truncate">{brainLabel}</p>
                 </div>
               </div>
-              <button type="button" onClick={() => onOpenChange(false)} className="btn-icon-bare">
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className="btn-icon-bare"
+                aria-label="Close"
+              >
                 <X className="icon-xs" />
               </button>
             </div>
 
             <div className="px-spacing-5 py-spacing-4 gap-spacing-3 flex flex-col">
-              <p className="body-3 text-muted-foreground">
+              <DialogPrimitive.Description className="body-3 text-muted-foreground">
                 Are you sure you want to send Atlas a task to create Cortex Max documents, beliefs,
                 and perspectives for this brain?
-              </p>
+              </DialogPrimitive.Description>
             </div>
 
             <div className="border-border px-spacing-5 py-spacing-4 gap-spacing-2 flex justify-end border-t">

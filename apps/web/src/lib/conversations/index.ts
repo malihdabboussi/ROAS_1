@@ -1,3 +1,4 @@
+export * from './conversation-assets'
 export * from './conversation-toast-errors.config'
 export * from './conversation-list-sections'
 export * from './conversation-title'

@@ -17,9 +17,7 @@ type ShellOpenInMenuProps = {
  * Context-dependent export/open menu.
  * Renders only when the current surface has open targets (Drive doc, Google Docs, media, Canva).
  */
-export function ShellOpenInMenu({
-  targets = [],
-}: Pick<ShellOpenInMenuProps, 'targets'>) {
+export function ShellOpenInMenu({ targets = [] }: Pick<ShellOpenInMenuProps, 'targets'>) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const hasTargets = targets.length > 0
@@ -52,19 +50,33 @@ export function ShellOpenInMenu({
       </button>
 
       {open ? (
-        <div className="border-border bg-card absolute right-0 top-full z-50 mt-1 min-w-[200px] rounded-xl border p-1 shadow-2">
-          {targets.map((t) => (
-            <a
-              key={t.id}
-              href={t.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="body-3 text-foreground hover:bg-hover-subtle flex w-full items-center rounded-lg px-3 py-2"
-              onClick={() => setOpen(false)}
-            >
-              {t.label}
-            </a>
-          ))}
+        <div className="border-border bg-card shadow-2 absolute right-0 top-full z-50 mt-1 min-w-[200px] rounded-xl border p-1">
+          {targets.map((t) =>
+            t.href ? (
+              <a
+                key={t.id}
+                href={t.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="body-3 text-foreground hover:bg-hover-subtle flex w-full items-center rounded-lg px-3 py-2"
+                onClick={() => setOpen(false)}
+              >
+                {t.label}
+              </a>
+            ) : (
+              <button
+                key={t.id}
+                type="button"
+                className="body-3 text-foreground hover:bg-hover-subtle flex w-full items-center rounded-lg px-3 py-2 text-left"
+                onClick={() => {
+                  setOpen(false)
+                  void t.onSelect?.()
+                }}
+              >
+                {t.label}
+              </button>
+            ),
+          )}
         </div>
       ) : null}
     </div>

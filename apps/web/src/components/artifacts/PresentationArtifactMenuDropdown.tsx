@@ -13,11 +13,11 @@ import {
   Monitor,
   Trash2,
 } from 'lucide-react'
-import { PresentationArtifactMenuSubmenu } from './PresentationArtifactMenuSubmenu'
 import type {
   PresentationArtifactMenuDropdownProps,
   PresentationArtifactMenuSubmenuKind,
 } from './presentation-artifact-menu-types'
+import { PresentationArtifactMenuSubmenu } from './PresentationArtifactMenuSubmenu'
 
 const HOVER_CLOSE_DELAY_MS = 140
 const SUBMENU_WIDTH = 224
@@ -193,11 +193,11 @@ export function PresentationArtifactMenuDropdown({
                 }}
                 onClick={() => setOpenSubmenu((s) => (s === 'export' ? null : 'export'))}
                 className={itemCls}
-                disabled={previewOverflow.exporting !== null}
+                disabled={previewOverflow.exporting !== null || previewOverflow.openingCanva}
                 aria-haspopup="menu"
                 aria-expanded={openSubmenu === 'export'}
               >
-                {previewOverflow.exporting !== null ? (
+                {previewOverflow.exporting !== null || previewOverflow.openingCanva ? (
                   <Loader2 className={`${itemIcon} animate-spin`} />
                 ) : (
                   <Download className={itemIcon} />
@@ -286,7 +286,7 @@ export function PresentationArtifactMenuDropdown({
               setOpenSubmenu(null)
               onRequestDelete()
             }}
-            className="gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 flex w-full items-center text-left text-destructive transition-colors hover:bg-destructive/10 [&_svg]:text-destructive"
+            className="gap-spacing-2 body-3 rounded-spacing-2 px-spacing-2 py-spacing-1 text-destructive hover:bg-destructive/10 [&_svg]:text-destructive flex w-full items-center text-left transition-colors"
           >
             <Trash2 className={itemIcon} />
             <span>Delete</span>

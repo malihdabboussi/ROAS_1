@@ -202,7 +202,7 @@
     "apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 2460
+      "lines": 2454
     },
     "apps/web/src/features/spaces/components/contacts/ContactActivityTimeline.tsx": {
       "kind": "web-component",
@@ -242,17 +242,17 @@
     "apps/web/src/features/spaces/components/doc-menu/DocMenuDropdown.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 474
+      "lines": 445
     },
     "apps/web/src/features/spaces/components/docs/DocEditorPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 658
+      "lines": 587
     },
     "apps/web/src/features/spaces/components/docs/DocEditorPanelInner.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 1009
+      "lines": 986
     },
     "apps/web/src/features/spaces/components/docs/DriveFoldersPanel.tsx": {
       "kind": "web-component",
@@ -272,7 +272,7 @@
     "apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx": {
       "kind": "web-container",
       "limit": 600,
-      "lines": 1750
+      "lines": 1476
     },
     "apps/web/src/features/spaces/services/spaces.service.ts": {
       "kind": "service",
@@ -314,16 +314,6 @@
       "limit": 400,
       "lines": 466
     },
-    "apps/web/src/features/studio/components/preview/PresentationToolbar.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 707
-    },
-    "apps/web/src/features/studio/components/preview/artifacts/preview/ArtifactPreviewPane.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1113
-    },
     "apps/web/src/features/studio/services/artifact-preview.service.ts": {
       "kind": "service",
       "limit": 600,
@@ -352,7 +342,7 @@
     "apps/web/src/features/team-2/components/hr-side-chat/TeamHrSideChatPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 1437
+      "lines": 708
     },
     "apps/web/src/features/team/components/AgentChatPanel.tsx": {
       "kind": "web-component",

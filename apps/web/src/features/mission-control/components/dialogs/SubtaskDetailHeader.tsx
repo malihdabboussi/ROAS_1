@@ -15,17 +15,17 @@ export function SubtaskDetailHeader({
   onClose,
 }: SubtaskDetailHeaderProps) {
   return (
-    <div className="gap-spacing-4 py-spacing-3 flex items-center justify-between">
-      <div className="gap-spacing-2 flex min-w-0 flex-1 items-center">
+    <div className="gap-spacing-3 pb-spacing-2 flex items-start justify-between">
+      <div className="gap-spacing-1 flex min-w-0 flex-1 flex-col">
         <button
           type="button"
           onClick={onBack}
-          className="body-2 text-muted-foreground hover:text-foreground min-w-0 shrink truncate transition-colors"
+          className="body-4 text-muted-foreground hover:text-foreground gap-spacing-1 flex max-w-full items-center truncate transition-colors"
         >
-          {missionTitle}
+          <span className="truncate">{missionTitle}</span>
+          <ChevronRight className="icon-xs shrink-0" aria-hidden />
         </button>
-        <ChevronRight className="icon-sm text-muted-foreground shrink-0" aria-hidden />
-        <h2 className="title-h2 text-foreground min-w-0 flex-1 truncate">
+        <h2 className="title-h5 text-foreground min-w-0 truncate">
           {formatWebinarSubtaskTitle(subtaskTitle)}
         </h2>
       </div>

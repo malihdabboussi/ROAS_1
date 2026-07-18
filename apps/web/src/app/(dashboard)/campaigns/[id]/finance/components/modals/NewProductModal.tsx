@@ -75,6 +75,8 @@ export function NewProductModal({
                   <div className="flex items-center justify-between">
                     <h2 className="title-h6">New Product</h2>
                     <button
+                      type="button"
+                      aria-label="Close new product"
                       onClick={() => {
                         form.resetProductForm()
                         setOpen(false)
@@ -84,16 +86,19 @@ export function NewProductModal({
                       <X className="icon-xs" />
                     </button>
                   </div>
-                  <p className="body-3 text-muted-foreground mt-spacing-1">
+                  <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                     Create a Stripe product for this campaign
-                  </p>
+                  </DialogPrimitive.Description>
                 </div>
 
                 <div className="px-spacing-6 py-spacing-4 space-y-spacing-4 flex-1 overflow-y-auto">
                   <form id="form-new-product" onSubmit={onSubmit} className="space-y-spacing-4">
                     <div>
-                      <label className={LABEL_CLASS}>Name *</label>
+                      <label htmlFor="new-product-name" className={LABEL_CLASS}>
+                        Name *
+                      </label>
                       <input
+                        id="new-product-name"
                         value={form.newProductName}
                         onChange={(e) => form.setNewProductName(e.target.value)}
                         placeholder="Product name"
@@ -102,8 +107,11 @@ export function NewProductModal({
                       />
                     </div>
                     <div>
-                      <label className={LABEL_CLASS}>Description</label>
+                      <label htmlFor="new-product-description" className={LABEL_CLASS}>
+                        Description
+                      </label>
                       <textarea
+                        id="new-product-description"
                         value={form.newProductDesc}
                         onChange={(e) => form.setNewProductDesc(e.target.value)}
                         placeholder="Optional description"
@@ -112,7 +120,7 @@ export function NewProductModal({
                       />
                     </div>
                     <div>
-                      <label className={LABEL_CLASS}>Product Image</label>
+                      <p className={LABEL_CLASS}>Product Image</p>
                       {form.newProductImageUrl ? (
                         <div className="relative inline-block">
                           <img
@@ -122,6 +130,7 @@ export function NewProductModal({
                           />
                           <button
                             type="button"
+                            aria-label="Remove product image"
                             onClick={() => form.setNewProductImageUrl('')}
                             className="btn-icon-glass absolute -right-2 -top-2 h-6 w-6 rounded-full"
                           >
@@ -143,14 +152,18 @@ export function NewProductModal({
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <FormSelectDropdown
+                        id="new-product-currency"
                         label="Currency"
                         value={form.newProductCurrency}
                         onChange={form.setNewProductCurrency}
                         options={CURRENCY_OPTIONS}
                       />
                       <div>
-                        <label className={LABEL_CLASS}>Price Amount</label>
+                        <label htmlFor="new-product-price" className={LABEL_CLASS}>
+                          Price Amount
+                        </label>
                         <input
+                          id="new-product-price"
                           value={form.newProductPriceAmount}
                           onChange={(e) => form.setNewProductPriceAmount(e.target.value)}
                           placeholder="e.g. 97"
@@ -164,10 +177,17 @@ export function NewProductModal({
                     {form.newProductPriceAmount && (
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className={LABEL_CLASS}>Billing</label>
-                          <div className="flex gap-2">
+                          <p id="new-product-billing" className={LABEL_CLASS}>
+                            Billing
+                          </p>
+                          <div
+                            role="group"
+                            aria-labelledby="new-product-billing"
+                            className="flex gap-2"
+                          >
                             <button
                               type="button"
+                              aria-pressed={!form.newProductRecurring}
                               onClick={() => form.setNewProductRecurring(false)}
                               className={`body-4 rounded-spacing-2 flex-1 px-3 py-2 transition-colors ${
                                 !form.newProductRecurring
@@ -179,6 +199,7 @@ export function NewProductModal({
                             </button>
                             <button
                               type="button"
+                              aria-pressed={form.newProductRecurring}
                               onClick={() => form.setNewProductRecurring(true)}
                               className={`body-4 rounded-spacing-2 flex-1 px-3 py-2 transition-colors ${
                                 form.newProductRecurring
@@ -192,6 +213,7 @@ export function NewProductModal({
                         </div>
                         {form.newProductRecurring && (
                           <FormSelectDropdown
+                            id="new-product-interval"
                             label="Interval"
                             value={form.newProductInterval}
                             onChange={(v) =>
@@ -207,6 +229,7 @@ export function NewProductModal({
                       </div>
                     )}
                     <FormSelectDropdown
+                      id="new-product-tax-behavior"
                       label="Tax Behavior"
                       value={form.newProductTaxBehavior}
                       onChange={(v) =>

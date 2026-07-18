@@ -56,7 +56,8 @@ vi.mock('@/features/studio/services/campaign.service', () => ({
   fetchCampaigns: mocks.fetchCampaigns,
 }))
 
-vi.mock('@/lib/campaigns', () => ({
+vi.mock('@/lib/campaigns', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/campaigns')>()),
   fetchCampaigns: mocks.fetchCampaigns,
 }))
 

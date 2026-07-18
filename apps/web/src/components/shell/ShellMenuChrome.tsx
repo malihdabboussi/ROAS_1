@@ -1,8 +1,9 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { House, MessageSquare, Plus, Search } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { House, MessageSquare, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import { isShellWorkspaceRoute } from './shell-route-policy'
 import { useShellStore, type ShellMenuMode } from './use-shell-store'
 
 export function ShellMenuModeToggle() {
@@ -26,10 +27,7 @@ export function ShellMenuModeToggle() {
               setMenuMode(id)
               if (id === 'home') router.push('/home')
             }}
-            className={cn(
-              'shell-menu-mode-tab',
-              menuMode === id && 'shell-menu-mode-tab-active',
-            )}
+            className={cn('shell-menu-mode-tab', menuMode === id && 'shell-menu-mode-tab-active')}
           >
             <Icon />
             <span>{label}</span>
@@ -41,8 +39,10 @@ export function ShellMenuModeToggle() {
 }
 
 export function ShellSidebarNewButton() {
+  const pathname = usePathname() ?? '/home'
   const router = useRouter()
   const requestNewChat = useShellStore((s) => s.requestNewChat)
+  const openFreshChatDrawer = useShellStore((s) => s.openFreshChatDrawer)
   const setMenuMode = useShellStore((s) => s.setMenuMode)
 
   return (
@@ -50,6 +50,10 @@ export function ShellSidebarNewButton() {
       <button
         type="button"
         onClick={() => {
+          if (isShellWorkspaceRoute(pathname)) {
+            openFreshChatDrawer()
+            return
+          }
           requestNewChat()
           setMenuMode('chat')
           router.push('/home?chat=new')
@@ -61,22 +65,4 @@ export function ShellSidebarNewButton() {
       </button>
     </div>
   )
-}
-
-export function ShellSidebarSearchButton({
-  onClick,
-  embedded = false,
-}: {
-  onClick: () => void
-  /** When true, render as a flex child (no outer margin) for toolbar rows. */
-  embedded?: boolean
-}) {
-  const button = (
-    <button type="button" onClick={onClick} className="hub-menu-link-row text-muted-foreground">
-      <Search />
-      <span>Search</span>
-    </button>
-  )
-  if (embedded) return button
-  return <div className="mb-1.5">{button}</div>
 }

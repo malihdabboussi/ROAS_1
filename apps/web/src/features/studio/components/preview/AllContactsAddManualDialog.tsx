@@ -66,12 +66,16 @@ export function AllContactsAddManualDialog(props: {
         <DialogPrimitive.Content className="z-modal-layer-3 p-spacing-4 fixed inset-0 flex items-center justify-center overflow-hidden">
           <VisuallyHidden.Root>
             <DialogPrimitive.Title>Add contact</DialogPrimitive.Title>
+            <DialogPrimitive.Description>
+              Enter the contact details you want to save.
+            </DialogPrimitive.Description>
           </VisuallyHidden.Root>
           <div className="surface-card wizard-container-border rounded-spacing-4 p-spacing-6 relative w-full max-w-md">
             <button
               type="button"
               onClick={handleClose}
               className="btn-icon-bare btn-close-absolute"
+              aria-label="Close"
             >
               <X className="icon-sm" />
             </button>
@@ -79,16 +83,28 @@ export function AllContactsAddManualDialog(props: {
             <form onSubmit={handleSubmit} className="space-y-spacing-3">
               <div className="gap-spacing-2 grid grid-cols-2">
                 <div>
-                  <label className="body-4 text-muted-foreground mb-1 block">First name</label>
+                  <label
+                    htmlFor="contact-first-name"
+                    className="body-4 text-muted-foreground mb-1 block"
+                  >
+                    First name
+                  </label>
                   <input
+                    id="contact-first-name"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     className="input-glass h-9 w-full px-3"
                   />
                 </div>
                 <div>
-                  <label className="body-4 text-muted-foreground mb-1 block">Last name</label>
+                  <label
+                    htmlFor="contact-last-name"
+                    className="body-4 text-muted-foreground mb-1 block"
+                  >
+                    Last name
+                  </label>
                   <input
+                    id="contact-last-name"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     className="input-glass h-9 w-full px-3"
@@ -96,8 +112,11 @@ export function AllContactsAddManualDialog(props: {
                 </div>
               </div>
               <div>
-                <label className="body-4 text-muted-foreground mb-1 block">Email</label>
+                <label htmlFor="contact-email" className="body-4 text-muted-foreground mb-1 block">
+                  Email
+                </label>
                 <input
+                  id="contact-email"
                   type="email"
                   required
                   value={email}
@@ -106,8 +125,11 @@ export function AllContactsAddManualDialog(props: {
                 />
               </div>
               <div>
-                <label className="body-4 text-muted-foreground mb-1 block">Phone</label>
+                <label htmlFor="contact-phone" className="body-4 text-muted-foreground mb-1 block">
+                  Phone
+                </label>
                 <input
+                  id="contact-phone"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="input-glass h-9 w-full px-3"

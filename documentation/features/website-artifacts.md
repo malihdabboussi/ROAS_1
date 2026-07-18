@@ -1,6 +1,6 @@
 # Website Artifacts
 
-Last Modified: 2026-06-16
+Last Modified: 2026-07-17
 
 ## Overview
 
@@ -33,10 +33,12 @@ Studio or agent writes funnel_files
   -> capture before/after file snapshots in funnel_change_sets + funnel_change_items
   -> Undo applies before_snapshot to funnel_files
   -> Redo applies after_snapshot to funnel_files
+  -> Version history lists the 50 latest restorable page edits
+  -> Restore replays Undo/Redo in order until the selected version is current
   -> restored page rows are touched so previews refetch the active bundle
 ```
 
-History scope is the current page plus shared files. V1 does not version assets and does not expose a full history panel; the UI exposes only Undo and Redo controls in the funnel toolbar and iframe keyboard shortcuts.
+History scope is the current page plus shared files. The funnel toolbar exposes Undo, Redo, and a version-history menu for funnels and websites backed by HTML bundles. Each entry identifies whether Studio or Vibey made the edit and can restore that page version. History does not currently version assets, funnel settings, or legacy TSX page content.
 
 ## Backend Layer
 
@@ -62,9 +64,11 @@ Public direct slug rendering only resolves `funnels.status = "published"`. Draft
 
 History APIs:
 
+- `GET /api/funnels/:id/history?funnel_page_id=...`
 - `GET /api/funnels/:id/history/state?funnel_page_id=...`
 - `POST /api/funnels/:id/history/undo`
 - `POST /api/funnels/:id/history/redo`
+- `POST /api/funnels/:id/history/restore`
 
 ## Actions
 
@@ -86,14 +90,31 @@ Skill work follows `.cursor/skills/claude-skills/SKILL.md`: DB-backed `agent_ski
 
 Context-engineering guidance from `.docs/guidelines/ai/context-engineering.md` and `.docs/architecture/semantic-first-context-engineering.md` drove the explicit intent rules, allowed enums, examples, and retry constraints.
 
+### Premium Funnel and Site Design
+
+`funnel-site-design` is the canonical high-fidelity art-direction and visual-review skill. It sits between wireframing and implementation:
+
+1. The designer creates a subject-specific Design Contract with separate 1440px and 390px compositions.
+2. The funnel or website builder implements that contract using its normal efficient model.
+3. A fresh designer pass opens the real preview, inspects desktop and mobile screenshots, and returns concrete revisions.
+4. The builder revises and re-checks the acceptance criteria.
+
+The design lane uses `anthropic/claude-opus-4.8`; routine builder execution remains unchanged. Every enabled template that owns `funnel-builder` or `website-builder` receives the design skill, and existing Designer, Lux, and designer-role registry agents are backfilled. Canonical Designer/Lux runtimes may use the browser for visual review; custom designer-role runtimes receive that exception only when they own `funnel-site-design`. All other denied tools remain denied. The old platform-managed `funnel-page-design` skill is retired because it overlaps this workflow; user-authored skill copies and variants are preserved.
+
+The skill rejects effect counting and fabricated conversion pressure as quality proxies. Gradients, glow, motion, card grids, counters, urgency, testimonials, and statistics are used only when the subject and verified inputs justify them.
+
+Design Contracts mark substantive choices as Confirmed, Proposed, or Missing so fallback fonts, guessed tokens, draft copy, and arbitrary ratios cannot look production-approved. Shared design-system decisions are stated once, with page-specific detail reserved for choices that materially change implementation; the handoff should be scannable in under five minutes.
+
 ## Testing
 
 - `artifact-action-schemas.test.ts` covers `describe_action` allowed values and website examples.
 - `artifact-funnels.service.contract.test.ts` covers `create_website`, Home page defaults, `general-home-page -> home-page`, history capture, and full-replacement guardrails.
-- `funnel-history.service.test.ts` covers record, undo, redo, redo superseding, page/shared scope, and no-op edit behavior.
-- Web history tests cover the API client, undo/redo hook state, toolbar controls, and iframe `funnel:history` delegation.
+- `funnel-history.service.test.ts` covers record, undo, ordered redo, arbitrary version restore, redo superseding, page/shared scope, and no-op edit behavior.
+- Web history tests cover the API client, timeline loading, version restore, undo/redo hook state, toolbar controls, and iframe `funnel:history` delegation.
 - `agent-policy.test.ts` covers website action contracts and MCP exposure.
 - `supabase/functions/vibey-artifacts/ownership.test.ts` covers fallback Edge Function owner scoping before page writes.
+- `funnel-site-design-skill-contract.test.ts` covers the canonical skill, current builder-template handoff for future hires, all existing designer-role agents, responsive critique, user-authored copy preservation, legacy retirement, and Opus 4.8 routing.
+- `openclaw-gateway.visual-review.test.ts` covers browser review access for canonical Designer/Lux and trained custom designer-role runtimes while preserving the deny policy for untrained or non-designer agents.
 
 ## Decision Log
 
@@ -104,3 +125,6 @@ Context-engineering guidance from `.docs/guidelines/ai/context-engineering.md` a
 - **2026-06-07** — Added parent-funnel ownership checks before fallback Edge Function page writes. Reason: service-role fallback writes must not rely on client-supplied `funnel_id` or `page_id`.
 - **2026-06-07** — Restricted public direct slug rendering to published funnels. Reason: direct public routes must not expose draft rows or globally resolve unpublished duplicate slugs.
 - **2026-06-16** — Added durable file-level funnel history with Undo/Redo controls. Reason: small AI/UI edits must be recoverable and full bundle replacements must require explicit intent.
+- **2026-07-17** — Added a browsable page-version timeline and arbitrary restore for funnels and websites. Reason: durable change sets existed, but users could only step backward or forward one edit at a time and could not see or select saved versions.
+- **2026-07-17** — Added a high-fidelity design-contract and fresh screenshot-critique workflow for funnels and websites. Reason: wireframing and builder skills existed, but no specialist layer owned subject-specific art direction, deliberate mobile composition, or independent visual QA.
+- **2026-07-17** — Tightened Design Contracts after blind forward-testing. Reason: the first run was visually specific and evidence-safe but allowed provisional fallback typography and arbitrary layout percentages to read as approved decisions and produced a longer-than-needed handoff.
