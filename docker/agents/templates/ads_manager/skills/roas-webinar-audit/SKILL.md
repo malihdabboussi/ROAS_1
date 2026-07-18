@@ -9,7 +9,7 @@ The full post-run teardown for any ROAS client webinar. Built for two modes: a s
 
 This skill is the *diagnostic* side of the webinar engine. The build side lives in `roas-master-webinar`. Do not duplicate. This one picks up AFTER a webinar has run and we need to find what broke and where the money is still sitting.
 
-Always load `nate-tilley-voice` and `human-written-copy` alongside this skill when writing any client-facing or internal copy in the deliverable.
+Always load `dylans-super-voice` alongside this skill as the master writing and Human Enforcement standard.
 
 ---
 
@@ -214,7 +214,7 @@ Every client-facing audit produces a standard set of audience and performance ta
 
 ## VOICE RULES (non-negotiable)
 
-Load `nate-tilley-voice` and `human-written-copy` before writing anything in the deliverable. The audit is a ROAS product. It sounds like ROAS.
+Load `dylans-super-voice` before writing anything in the deliverable. The audit is a ROAS product and should sound like it.
 
 - Coffee-conversation tone. Operator to operator.
 - No forbidden words: leverage, seamless, transform, empower, harness, paradigm, robust, optimize, utilize

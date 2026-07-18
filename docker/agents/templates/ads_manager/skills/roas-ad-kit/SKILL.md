@@ -24,7 +24,7 @@ Read these before writing. They are the source of truth for the methodology; thi
 - **Validate Messaging:** `roas-ad-copy/references/validate-messaging.md`. 4-6 lines, each a different segment, same offer underneath.
 - **Ad anatomy + hooks:** `roas-ad-copy/references/ad-anatomy.md`. The six pieces; the hook carries the click and truncates ~125 chars.
 - **Ad Library research:** `roas-ad-copy/references/ad-library-research.md`. Required grounding step (below).
-- **Human-copy standard:** `roas-ad-copy/references/human-written-copy.md` (or `roas-ad-concepts/references/human-written-copy.md`). Every line that ships runs through it.
+- **Master copy standard:** load `dylans-super-voice`. Every line that ships passes its Human Enforcement layer.
 - **Design prompt spec (new, in this skill):** `references/design-prompt-spec.md`. How to write the per-concept design prompt.
 - **Worked example (in this skill):** `references/output-example.md`. The exact output shape, condensed. Match it.
 

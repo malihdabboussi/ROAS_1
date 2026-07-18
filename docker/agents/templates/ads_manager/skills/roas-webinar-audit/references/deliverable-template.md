@@ -2,7 +2,7 @@
 
 Load this during Step 5 when assembling the final output. Pick one of the three formats based on audience.
 
-All three formats follow the same voice rules (coffee conversation, no forbidden words, no em dashes, no triplets, diagnose the mechanics not the presenter). Load `nate-tilley-voice` and `human-written-copy` before writing.
+All three formats follow the same voice rules. Load `dylans-super-voice`, diagnose the mechanics rather than the presenter, and apply its Human Enforcement layer before saving.
 
 ---
 
@@ -217,4 +217,3 @@ Run this before sending any audit deliverable:
 - [ ] Section 1 (At a Glance) is bullets, not prose
 - [ ] If offer is a live-event ticket, leading metric is SEATS, not transactions
 - [ ] Total length is 3,000-5,000 words (tight, scannable, not comprehensive)
-

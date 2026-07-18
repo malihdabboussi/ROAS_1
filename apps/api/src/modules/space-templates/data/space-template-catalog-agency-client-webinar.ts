@@ -1,15 +1,18 @@
-import type { SpaceTemplateSeed } from './space-template-catalog.types'
 import {
   CLIENT_STATUSES,
   docBody,
   taskFields,
+  viewAds,
   viewCalendar,
   viewChannel,
   viewDocs,
+  viewFunnels,
   viewKanban,
   viewMissions,
+  viewPresentations,
   welcomeDocBody,
 } from './space-template-catalog-builders'
+import type { SpaceTemplateSeed } from './space-template-catalog.types'
 
 /** Agency webinar client fulfillment — ships with Webinar Fulfillment mission playbook. */
 export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
@@ -17,7 +20,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
     slug: 'agency-client-webinar',
     title: 'Agency Client (Webinar)',
     description:
-      'Fulfill a webinar client end-to-end — Missions playbook, strategy docs, copy package, creative pack, and a private channel.',
+      'Fulfill a webinar client end-to-end with gated strategy, one complete copy package, native creative views, and a private channel.',
     icon: 'megaphone',
     icon_color: 'violet',
     category: 'tier1_universal',
@@ -37,6 +40,9 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
         viewKanban('Deliverables', 'deliverables'),
         viewCalendar(),
         viewDocs(),
+        viewAds('Meta Ads', 'meta-ads'),
+        viewFunnels(),
+        viewPresentations(),
         viewChannel('#client-comms'),
       ],
     },
@@ -45,9 +51,10 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
         kind: 'doc',
         title: 'Welcome — how to run webinar fulfillment',
         body: welcomeDocBody('Agency Client (Webinar)', [
-          '**Missions → Start playbook** — run Webinar Fulfillment (strategy → gate → copy → creative)',
+          '**Missions → Start playbook** — run Webinar Fulfillment (context → strategy gates → copy gate → native production)',
           '**Deliverables (Kanban)** — track brief → paid for client-facing packages',
-          '**Docs** — WEB#1–#8 flow docs (Pre-Call → Creative Pack)',
+          '**Docs** — WEB#1–#7 strategy, copy, research, briefs, and media plan',
+          '**Meta Ads / Funnels / Presentations** — native editable production assets',
           '**Calendar** — call dates and launch deadlines',
           '**Channel** — internal client comms',
         ]),
@@ -70,9 +77,9 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
       },
       {
         kind: 'doc',
-        title: 'WEB#2 — Strategy v2',
+        title: 'WEB#2 — Post-Call Strategy Map',
         body: docBody([
-          '## Strategy v2',
+          '## Post-Call Strategy Map',
           '',
           'Post-call corrected strategy (Phase A / skill 2).',
           '',
@@ -134,27 +141,15 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
       },
       {
         kind: 'doc',
-        title: 'WEB#7 — Deck Outline v1',
+        title: 'WEB#7 — Media Plan',
         body: docBody([
-          '## Deck Outline v1',
+          '## Media Plan',
           '',
-          'Filled in Phase C before Gate 3 — webinar arc only (no slides yet).',
+          'Filled by Blaze after Lux completes native production assets.',
           '',
-          '_Placeholder until the deck-outline subtask saves into this doc._',
+          '_Placeholder until the media-plan subtask saves into this doc._',
         ]),
         sort_order: 7,
-      },
-      {
-        kind: 'doc',
-        title: 'WEB#8 — Creative Pack',
-        body: docBody([
-          '## Creative Pack',
-          '',
-          'Phase C rollup — static ads, theme images, landing visuals, deck.',
-          '',
-          '_Placeholder until creatives land in Deliverables / this pack._',
-        ]),
-        sort_order: 8,
       },
       {
         kind: 'task',
@@ -162,7 +157,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
         status: 'brief',
         description:
           'Open Missions → Playbook (or use Start Webinar Fulfillment on the empty Missions screen) and fill kickoff fields.',
-        sort_order: 9,
+        sort_order: 8,
       },
     ],
     automations: [],

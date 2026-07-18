@@ -188,6 +188,21 @@ export function viewFunnels(name = 'Funnels', id = 'funnels') {
   }
 }
 
+export function viewPresentations(name = 'Presentations', id = 'presentations') {
+  return {
+    id,
+    type: 'presentations',
+    name,
+    icon: 'presentation',
+    presentations_config: {
+      display_mode: 'grid',
+      time_range: 'all',
+      sort_by: 'created_at',
+      sort_dir: 'desc',
+    },
+  }
+}
+
 export function viewForms(name = 'Forms', id = 'forms') {
   return {
     id,

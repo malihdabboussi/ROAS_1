@@ -20,7 +20,7 @@ Do both, every time.
 
 Ads run from the client's page in the client's voice (the ad shows "Speaking with Yasir Khan," "Taylor Conroy"). Write as the client, first person, matching their existing ads/brand if samples exist.
 
-- **The human-copy standard is built in and mandatory.** It lives at `references/human-written-copy.md`. Load it before writing and apply it to every line, primary text, hooks, overlays, headlines, and the Validate Messaging set. Meta punishes AI smell harder than almost any channel; a generated-sounding hook tanks relevance and CPM.
+- **Dylan's Super Voice is mandatory.** Load `dylans-super-voice` before writing and apply its Human Enforcement layer to every line, primary text, hook, overlay, headline, and Validate Messaging angle.
 - **`dylans-voice` is NOT for the ad copy.** Only load it if Dylan wants a media-buyer brief or team handoff written in his operator-briefing style.
 
 ---
@@ -66,7 +66,7 @@ Keep the human-copy standard active the whole time you draft.
 
 ## STEP 4 — SCRUB, THEN OUTPUT
 
-**Scrub first.** Run every line (primary text, hooks, overlays, headlines, Validate Messaging set) back through `references/human-written-copy.md` as a final pass. Hunt the high-frequency offenders: em dashes, triplets, "it's not X it's Y," question-then-list, fake-candor openers, forbidden words, round-number tells. Fix in place. Not done until it passes.
+**Scrub first.** Run every line through the `dylans-super-voice` final checklist. Fix every violation in place. Not done until it passes.
 
 Then output. Default deliverable is a clean markdown doc (copies into Ads Manager / a buyer brief). Structure:
 
@@ -86,7 +86,7 @@ Offer a DOCX (to share with the client) or the buyer brief in Dylan's voice (`dy
 - **Writing blind.** No copy before the Ad Library research. Pull 3-5 references or get them from the client first.
 - **Burying the hook.** The first line of primary text carries the click and truncates at ~125 chars. The hook lands before the fold or it's dead.
 - **Handing over a copy blob.** Deliver the six labeled pieces, not an undifferentiated paragraph the buyer has to disassemble.
-- **AI tells.** Em dashes, triplets, fake-candor openers, forbidden words. Built-in standard at `references/human-written-copy.md`, plus the Step 4 scrub. Don't ship without it.
+- **AI tells.** Use the `dylans-super-voice` Human Enforcement layer and final checklist. Don't ship without it.
 - **Wrong voice.** Ad copy is the client's voice, not Dylan's and not ROAS's. Dylan's voice is only for a buyer brief.
 - **Overlay overload.** One identity callout per creative plus the event stamp. Less text on the image reads better.
 - **Unsupported claims / policy risk.** Keep income/results claims to what the client can back; avoid protected-attribute callouts Meta flags. Flag anything borderline.

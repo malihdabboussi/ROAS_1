@@ -15,7 +15,7 @@ import * as path from 'node:path'
 const REPO_ROOT = path.resolve(__dirname, '..')
 const OUT = path.join(
   REPO_ROOT,
-  'supabase/migrations/20260716251000_webinar_pipeline_skills_with_emails.sql',
+  'supabase/migrations/20260717200000_webinar_pipeline_flow_alignment.sql',
 )
 
 const BINARY_EXT = new Set([
@@ -55,9 +55,17 @@ const SKILLS: SkillSeed[] = [
   },
   {
     skillKey: 'roas-ad-design',
-    templateKeys: ['ads_manager'],
+    templateKeys: ['designer'],
     diskAgent: 'ads_manager',
     category: 'agency_ads',
+    existingAgentMarkerSkillKey: 'roas-webinar-deck',
+  },
+  {
+    skillKey: 'roas-ad-copy',
+    templateKeys: ['copywriter'],
+    diskAgent: 'ads_manager',
+    category: 'agency_copy',
+    existingAgentMarkerSkillKey: 'roas-webinar-copy-package',
   },
   {
     skillKey: 'roas-webinar-audit',
