@@ -67,3 +67,10 @@ What: Removed duplicate `resolveTaskCapableViewId` import in SpaceItemsContainer
 Why: Webpack failed `roas-web` with already-declared identifier after merge.
 Impact: Unblocks web production build; api/funnels already READY.
 Files: `SpaceItemsContainer.tsx`
+
+## [2026-07-18 08:15] - [FIX]
+
+What: Removed unused `siblingNavigation` memo from DeliverablePreviewModal.
+Why: TypeScript noUnusedLocals failed the `roas-web` production build.
+Impact: Unblocks web deploy; api already READY on tip.
+Files: `DeliverablePreviewModal.tsx`
