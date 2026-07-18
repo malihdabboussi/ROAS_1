@@ -7158,3 +7158,11 @@ Files:
 - Evidence: `wc -l` = 1,291 after synchronizing the repaired `funnel_pages` contract; the pre-existing monolithic types file exceeds the 500-line type-file guideline.
 - Needed work: Regenerate and split shared database types by domain without changing the public type exports consumed by applications.
 - Why not now: The production repair requires the existing funnel page type contract to match the database; decomposing every database table type is separate architecture work.
+
+## 2026-07-17 — Mission preview components exceed frontend LOC target (pre-existing)
+
+- Feature/app: web / Mission Control and shared deliverable previews
+- Files: `apps/web/src/components/deliverables/DeliverablePreviewModal.tsx`, `apps/web/src/features/mission-control/components/MissionListCell.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionDetailModalView.tsx`
+- Evidence: The files are 309, 323, and 319 LOC after this change and were already over the 300-line frontend component target before the scoped preview/navigation wiring.
+- Needed work: Extract sibling-navigation state, mission-list column renderers, and Mission detail view-model assembly into focused collaborators without changing their public component boundaries.
+- Why not now: This repair changes only artifact identity matching, preview navigation, and stale-count expansion; decomposing three shared components would materially broaden deployment risk.

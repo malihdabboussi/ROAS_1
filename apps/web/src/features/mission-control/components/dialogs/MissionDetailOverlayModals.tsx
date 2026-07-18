@@ -16,9 +16,11 @@ import { PlanDetailModal } from './PlanDetailModal'
 
 interface MissionDetailOverlayModalsProps {
   previewDeliverable: MissionDeliverable | null
+  deliverables: MissionDeliverable[]
   agents: MissionAgent[]
   effectiveMission: Mission
   onClosePreview: () => void
+  onSelectPreview: (deliverable: MissionDeliverable) => void
   planModalOpen: boolean
   planContent: PrdContent | null
   subtasks: MissionSubtask[]
@@ -41,9 +43,11 @@ interface MissionDetailOverlayModalsProps {
 
 export function MissionDetailOverlayModals({
   previewDeliverable,
+  deliverables,
   agents,
   effectiveMission,
   onClosePreview,
+  onSelectPreview,
   planModalOpen,
   planContent,
   subtasks,
@@ -77,6 +81,8 @@ export function MissionDetailOverlayModals({
           onBack={onClosePreview}
           backLabel="Back to mission"
           presentation="centered"
+          siblingDeliverables={deliverables}
+          onSelectSibling={onSelectPreview}
         />
       )}
 

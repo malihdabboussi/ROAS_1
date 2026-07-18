@@ -355,3 +355,10 @@ What: Restored production `presentation_files` and `presentation_assets` storage
 Why: The presentation row and deliverable existed, but the deck builder could not save or verify its editable HTML bundle because both child tables were absent.
 Impact: New and retried presentation work can persist native HTML/CSS bundles without falling back to legacy generated HTML or reporting a delivery failure after creation.
 Files: `20260718030400_repair_presentation_bundle_schema.sql`, `documentation/features/missions.md`
+
+## [2026-07-17 22:20] - [FIX]
+
+What: Reconciled Mission artifact entity ids with deliverable ids, preserved Task numbering across multi-output steps, added same-type deliverable navigation, restored ad platform/placement controls, rendered persisted HTML-bundle funnel pages, kept expansion available when mission summary counts are stale, made parent deliverables collapsible without displacing subtasks, and attached future artifacts directly to their originating subtask.
+Why: The completed webinar run stored valid artifacts across two identity layers, causing two ads to lose Task labels, the funnel preview to ignore its bundle, the repaired deck to remain disconnected, and the Mission row to hide loaded subtasks when its summary count lagged.
+Impact: Reviewers can navigate every ad from one preview, switch ad formats, inspect both funnel pages, reopen repaired presentations, and consistently expand Mission subtasks. Future multi-artifact tasks no longer depend on title inference for ownership.
+Files: `DeliverableEntityPreviewAdapter.tsx`, `DeliverablePreviewEntityFull.test.tsx`, `DeliverablePreviewModal.tsx`, `DeliverablePreviewModal.test.tsx`, `DeliverablePreviewModalHeader.tsx`, `DeliverablesCarousel.tsx`, `MissionListCell.tsx`, `MissionListDesktopRows.tsx`, `MissionList.test.tsx`, `MissionDetailDesktopShell.tsx`, `MissionDetailDesktopShell.test.tsx`, `MissionDetailMobileShell.tsx`, `MissionDetailModalView.tsx`, `MissionDetailOverlayModals.tsx`, `subtask-detail.ts`, `subtask-detail.test.ts`, `artifact-domain-handler-shared.util.ts`, `artifact-offers-ads.service.test.ts`, `documentation/features/missions.md`

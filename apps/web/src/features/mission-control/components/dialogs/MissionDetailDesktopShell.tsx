@@ -139,7 +139,12 @@ export function MissionDetailDesktopShell({
                 {accessApprovalCard}
               </div>
             )}
-            <DeliverablesCarousel deliverables={deliverables} onSelect={onSelectDeliverable} />
+            <DeliverablesCarousel
+              deliverables={deliverables}
+              onSelect={onSelectDeliverable}
+              taskSectionChrome={!selectedSubtask}
+              defaultCollapsed={!selectedSubtask}
+            />
           </div>
 
           <ResizableDivider

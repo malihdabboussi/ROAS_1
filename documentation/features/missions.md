@@ -12,6 +12,8 @@ While an agent subtask is running, persisted partial output appears as live work
 
 Successful artifact tool receipts persist their `deliverable_id` in the subtask execution checkpoint. Mission Control uses that durable receipt immediately, so draft work remains attached to its subtask even if contract verification later blocks the task. Deliverable titles are prefixed with the originating non-human task number (`Task N — …`); human approval gates do not consume task numbers, and multiple artifacts from the same task share its number. Deliverable list rows show the artifact's local creation date and time.
 
+Mission artifact previews retain the full output set for a task even when the tool receipt references entity ids while Mission Control stores separate deliverable-row ids. Same-type outputs expose previous/next navigation in the preview; ad previews also retain their native platform and placement controls. Native HTML-bundle funnels load their persisted page files and expose page navigation instead of relying on legacy generated HTML fields. The parent Mission starts its deliverables section collapsed so the subtask list remains visible, while individual subtask deliverables remain expanded for review. Newly created mission artifacts persist their originating `subtask_id`, making this association durable without title inference.
+
 The header displays `Mission > Subtask`. Selecting the Mission breadcrumb returns to the parent without closing the detail shell. On mobile, the back button performs the same level navigation before closing the Mission.
 
 ## Mission execution leases and restart recovery
@@ -251,6 +253,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-17: Matched mission artifact manifests by both deliverable-row and entity ids, added same-type preview navigation, restored native ad placement controls and HTML-bundle funnel pages, and persisted the originating subtask on future artifacts.
 - 2026-07-17: Restored production presentation bundle storage after the deck builder exposed that the legacy presentation table had never received its file and asset tables.
 - 2026-07-17: Made output-contract fallback selection type-aware so parallel artifact creation cannot cross-assign the newest deliverable to the wrong subtask.
 - 2026-07-17: Restored the complete HTML funnel-page storage contract after production drift left legacy `funnel_pages` columns and omitted bundle tables, blocking native webinar page creation.

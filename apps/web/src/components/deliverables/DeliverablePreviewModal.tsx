@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type {
   DeliverableEntityPreviewRenderer,
   ViewMode,
@@ -46,6 +46,8 @@ export interface DeliverablePreviewModalProps {
   onBack?: () => void
   backLabel?: string
   presentation?: 'docked' | 'centered'
+  siblingDeliverables?: MissionDeliverable[]
+  onSelectSibling?: (deliverable: MissionDeliverable) => void
 }
 
 export function DeliverablePreviewModal({
@@ -65,6 +67,8 @@ export function DeliverablePreviewModal({
   onBack,
   backLabel = 'Back',
   presentation = 'docked',
+  siblingDeliverables = [],
+  onSelectSibling,
 }: DeliverablePreviewModalProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('wide')
   const [expanded, setExpanded] = useState(false)
@@ -177,6 +181,19 @@ export function DeliverablePreviewModal({
   }, [effectiveContent, deliverable.content, deliverable.title])
 
   const agent = agents.find((a) => a.agent_key === deliverable.agent_key)
+  const siblingNavigation = useMemo(() => {
+    if (!onSelectSibling) return undefined
+    const siblings = siblingDeliverables.filter((item) => item.type === deliverable.type)
+    const index = siblings.findIndex((item) => item.id === deliverable.id)
+    if (index < 0 || siblings.length < 2) return undefined
+    const itemLabel = deliverable.type === 'ad' ? 'ad' : 'deliverable'
+    return {
+      label: `${index + 1} of ${siblings.length}`,
+      itemLabel,
+      onPrevious: () => onSelectSibling(siblings[(index - 1 + siblings.length) % siblings.length]!),
+      onNext: () => onSelectSibling(siblings[(index + 1) % siblings.length]!),
+    }
+  }, [deliverable.id, deliverable.type, onSelectSibling, siblingDeliverables])
 
   const exportMode = isEntityType && entityData != null ? 'entity' : 'text'
   const exportAvailable =
@@ -209,6 +226,7 @@ export function DeliverablePreviewModal({
           {...titleRename}
           onBack={onBack}
           backLabel={backLabel}
+          navigation={siblingNavigation}
           actions={
             <DeliverablePreviewActions
               deliverable={deliverable}

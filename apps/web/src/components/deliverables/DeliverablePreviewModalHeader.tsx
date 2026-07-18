@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function DeliverablePreviewModalHeader({
   displayTitle,
@@ -15,6 +15,7 @@ export function DeliverablePreviewModalHeader({
   onBack,
   backLabel = 'Back',
   actions,
+  navigation,
 }: {
   displayTitle: string
   titleDraft: string
@@ -28,6 +29,12 @@ export function DeliverablePreviewModalHeader({
   onBack?: () => void
   backLabel?: string
   actions: ReactNode
+  navigation?: {
+    label: string
+    itemLabel: string
+    onPrevious: () => void
+    onNext: () => void
+  }
 }) {
   return (
     <div className="px-spacing-6 pt-spacing-4 pb-spacing-3 flex-shrink-0 overflow-visible">
@@ -82,6 +89,27 @@ export function DeliverablePreviewModalHeader({
             {displayTitle}
           </h2>
         )}
+        {navigation ? (
+          <div className="gap-spacing-1 flex shrink-0 items-center">
+            <button
+              type="button"
+              onClick={navigation.onPrevious}
+              className="btn-icon-bare"
+              aria-label={`Previous ${navigation.itemLabel}`}
+            >
+              <ChevronLeft className="icon-sm" />
+            </button>
+            <span className="body-4 text-muted-foreground tabular-nums">{navigation.label}</span>
+            <button
+              type="button"
+              onClick={navigation.onNext}
+              className="btn-icon-bare"
+              aria-label={`Next ${navigation.itemLabel}`}
+            >
+              <ChevronRight className="icon-sm" />
+            </button>
+          </div>
+        ) : null}
         {actions}
       </div>
     </div>

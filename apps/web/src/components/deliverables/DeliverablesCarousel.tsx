@@ -2,14 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import * as Popover from '@radix-ui/react-popover'
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  Grid3x3,
-  List,
-} from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, FileText, Grid3x3, List } from 'lucide-react'
 import {
   CoreDeliverableCard,
   TaskSectionDeliverablesEmptyMockup,
@@ -39,6 +32,8 @@ export interface DeliverablesCarouselProps {
   iconBesideTitle?: boolean
   /** Task modal: match Subtasks section (chevron collapse, foreground title, count beside label). */
   taskSectionChrome?: boolean
+  /** Start the collapsible task-section presentation closed. */
+  defaultCollapsed?: boolean
 }
 
 export function DeliverablesCarousel({
@@ -50,9 +45,10 @@ export function DeliverablesCarousel({
   inlineExtraTypes,
   iconBesideTitle = false,
   taskSectionChrome = false,
+  defaultCollapsed = false,
 }: DeliverablesCarouselProps) {
   const deliverablesCarouselRef = useRef<HTMLDivElement>(null)
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(defaultCollapsed)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
 
   const { core, extra } = useMemo(() => {
@@ -83,7 +79,7 @@ export function DeliverablesCarousel({
         onClick={() => setViewMode('grid')}
         aria-pressed={viewMode === 'grid'}
         aria-label="Grid view"
-        className={`inline-flex h-spacing-7 aspect-square shrink-0 items-center justify-center rounded-spacing-2 transition-colors ${
+        className={`h-spacing-7 rounded-spacing-2 inline-flex aspect-square shrink-0 items-center justify-center transition-colors ${
           viewMode === 'grid'
             ? 'bg-hover-subtle text-foreground'
             : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground'
@@ -96,7 +92,7 @@ export function DeliverablesCarousel({
         onClick={() => setViewMode('list')}
         aria-pressed={viewMode === 'list'}
         aria-label="List view"
-        className={`inline-flex h-spacing-7 aspect-square shrink-0 items-center justify-center rounded-spacing-2 transition-colors ${
+        className={`h-spacing-7 rounded-spacing-2 inline-flex aspect-square shrink-0 items-center justify-center transition-colors ${
           viewMode === 'list'
             ? 'bg-hover-subtle text-foreground'
             : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground'
@@ -150,14 +146,14 @@ export function DeliverablesCarousel({
               ) : (
                 <ChevronDown className="icon-sm text-muted-foreground" />
               )}
-              <span className="body-2 font-semibold text-foreground">{headingLabel}</span>
+              <span className="body-2 text-foreground font-semibold">{headingLabel}</span>
             </button>
             {countLabel ? <span className="body-3 text-muted-foreground">{countLabel}</span> : null}
             {!collapsed ? <div className="ml-auto">{scrollControls}</div> : null}
           </div>
         ) : (
           <div className="mb-spacing-2 flex items-center justify-between">
-            <h3 className="body-2 font-semibold text-muted-foreground">
+            <h3 className="body-2 text-muted-foreground font-semibold">
               {headingLabel} ({totalCount})
             </h3>
             {scrollControls}
@@ -193,7 +189,7 @@ export function DeliverablesCarousel({
                       <div className="bg-muted-20 h-spacing-10 w-spacing-10 flex items-center justify-center rounded-full">
                         <FileText className="icon-md text-muted-foreground" />
                       </div>
-                      <span className="body-3 font-medium text-foreground">
+                      <span className="body-3 text-foreground font-medium">
                         Documents & Media ({extra.length})
                       </span>
                       <span className="typo-caption text-muted-foreground">Click to open</span>
@@ -208,8 +204,8 @@ export function DeliverablesCarousel({
                       className="dropdown-menu-solid z-dropdown max-h-[min(60vh,20rem)] w-[min(calc(100vw-2rem),20rem)] overflow-hidden p-0 shadow-xl outline-none"
                       onOpenAutoFocus={(e) => e.preventDefault()}
                     >
-                      <p className="px-spacing-3 py-spacing-2 m-0 border-b border-border">
-                        <span className="body-3 font-semibold text-muted-foreground">
+                      <p className="px-spacing-3 py-spacing-2 border-border m-0 border-b">
+                        <span className="body-3 text-muted-foreground font-semibold">
                           Documents & Media ({extra.length})
                         </span>
                       </p>
@@ -226,9 +222,9 @@ export function DeliverablesCarousel({
                                 {iconBesideTitle ? (
                                   <DeliverableTypeIconBadge type={d.type} />
                                 ) : (
-                                  <Icon className="icon-sm shrink-0 text-muted-foreground" />
+                                  <Icon className="icon-sm text-muted-foreground shrink-0" />
                                 )}
-                                <span className="body-3 min-w-0 flex-1 truncate font-medium text-foreground">
+                                <span className="body-3 text-foreground min-w-0 flex-1 truncate font-medium">
                                   {d.title || 'Untitled'}
                                 </span>
                                 {!iconBesideTitle ? (
@@ -252,7 +248,7 @@ export function DeliverablesCarousel({
               <p className="body-3 text-muted-foreground max-w-xs">{emptyStateLabel}</p>
             </div>
           ) : (
-            <p className="body-3 bg-muted-20 rounded-spacing-2 border-border px-spacing-4 py-spacing-6 border border-dashed text-center text-muted-foreground">
+            <p className="body-3 bg-muted-20 rounded-spacing-2 border-border px-spacing-4 py-spacing-6 text-muted-foreground border border-dashed text-center">
               {emptyStateLabel}
             </p>
           ))}

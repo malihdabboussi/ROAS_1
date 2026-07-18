@@ -40,6 +40,7 @@ export function filterSubtaskDeliverables(
 
     const explicitlyLinked =
       ids.has(deliverable.id) ||
+      (typeof deliverable.entity_id === 'string' && ids.has(deliverable.entity_id)) ||
       (typeof deliverable.metadata?.subtask_id === 'string' &&
         subtaskIds.has(deliverable.metadata.subtask_id))
     if (explicitlyLinked) return true
@@ -62,30 +63,32 @@ export function numberDeliverablesByTask(
     .filter((subtask) => subtask.assignee_type !== 'human')
     .sort((a, b) => a.sort_order - b.sort_order)
   const taskNumberBySubtaskId = new Map(
-    orderedAgentTasks.map((subtask, index) => [subtask.id, index + 1]),
+    orderedAgentTasks.map((subtask, index) => [
+      subtask.id,
+      String(subtask.title ?? '').match(/^Task\s+([0-9]+[A-Z]?)/i)?.[1] ?? String(index + 1),
+    ]),
   )
-  const taskNumberByDeliverableId = new Map<string, number>()
+  const taskNumberByArtifactRef = new Map<string, string>()
 
   for (const subtask of orderedAgentTasks) {
     const taskNumber = taskNumberBySubtaskId.get(subtask.id)
     if (!taskNumber) continue
     for (const deliverableId of collectSubtaskDeliverableIds(subtask)) {
-      taskNumberByDeliverableId.set(deliverableId, taskNumber)
+      taskNumberByArtifactRef.set(deliverableId, taskNumber)
     }
   }
 
   return deliverables.map((deliverable) => {
     const metadataSubtaskId =
-      typeof deliverable.metadata?.subtask_id === 'string'
-        ? deliverable.metadata.subtask_id
-        : null
+      typeof deliverable.metadata?.subtask_id === 'string' ? deliverable.metadata.subtask_id : null
     const taskNumber =
       (metadataSubtaskId ? taskNumberBySubtaskId.get(metadataSubtaskId) : undefined) ??
-      taskNumberByDeliverableId.get(deliverable.id)
+      taskNumberByArtifactRef.get(deliverable.id) ??
+      (deliverable.entity_id ? taskNumberByArtifactRef.get(deliverable.entity_id) : undefined)
     if (!taskNumber) return deliverable
 
     const title = (deliverable.title || 'Untitled')
-      .replace(/^Task\s*\d+\s*[—–-]\s*/i, '')
+      .replace(/^Task\s*[0-9]+[A-Z]?\s*[—–-]\s*/i, '')
       .trim()
     return { ...deliverable, title: `Task ${taskNumber} — ${title}` }
   })
@@ -110,11 +113,7 @@ function collectSubtaskDeliverableIds(subtask: MissionSubtask): Set<string> {
   return ids
 }
 
-function collectDeliverableIdsFromToolResult(
-  value: unknown,
-  ids: Set<string>,
-  depth = 0,
-): void {
+function collectDeliverableIdsFromToolResult(value: unknown, ids: Set<string>, depth = 0): void {
   if (depth > 8 || value == null) return
   if (typeof value === 'string') {
     const trimmed = value.trim()
