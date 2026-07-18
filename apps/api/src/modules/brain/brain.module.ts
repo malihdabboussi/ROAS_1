@@ -13,6 +13,7 @@ import { ImportJobsController } from './controllers/import-jobs.controller'
 import { MemoriesCrudController } from './controllers/memories-crud.controller'
 import { MemoriesStatusController } from './controllers/memories-status.controller'
 import { MemoriesController } from './controllers/memories.controller'
+import { PageGraderClientImportController } from './controllers/page-grader-client-import.controller'
 import { PendingCapturesController } from './controllers/pending-captures.controller'
 import { SearchController } from './controllers/search.controller'
 import { SkMutationsController } from './controllers/sk-mutations.controller'
@@ -87,6 +88,7 @@ import { GraphRequestService } from './services/graph-request.service'
 import { GraphService } from './services/graph.service'
 import { LinkExtractionService } from './services/link-extraction.service'
 import { MemoriesService } from './services/memories.service'
+import { PageGraderClientImportService } from './services/page-grader-client-import.service'
 import { PendingCapturesService } from './services/pending-captures.service'
 import { ScholarContextService } from './services/scholar-context.service'
 import { SearchService } from './services/search.service'
@@ -113,6 +115,7 @@ import { SnapshotsService } from './services/snapshots.service'
     SkQueryController,
     SkMutationsController,
     BrainCrossSuggestionsController,
+    PageGraderClientImportController,
   ],
   providers: [
     BrainAuthGuard,
@@ -176,6 +179,7 @@ import { SnapshotsService } from './services/snapshots.service'
     MemoryStatsRepository,
     MemoriesRepository,
     MemoriesService,
+    PageGraderClientImportService,
     PendingCapturesRepository,
     PendingCapturesService,
     ScholarContextRepository,
@@ -211,6 +215,7 @@ import { SnapshotsService } from './services/snapshots.service'
     EmotionalTaggingService,
     LinkExtractionService,
     MemoriesService,
+    PageGraderClientImportService,
     ScholarContextService,
     SearchService,
     SkService,
