@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { Brain, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns/campaign-api'
 import { fetchSpacesPage, type SpaceSummary } from '@/lib/spaces/spaces-api'
 import {
+  importPageGraderClientBrainForSettings,
   listPageGraderClientsForSettings,
   savePageGraderClientScopeMapForSettings,
   suggestCampaignForClient,
@@ -34,6 +36,7 @@ export function PageGraderClientScopeMapModal({
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [spaces, setSpaces] = useState<SpaceSummary[]>([])
   const [draft, setDraft] = useState<Record<string, DraftRow>>({})
+  const [importingClientId, setImportingClientId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -125,6 +128,37 @@ export function PageGraderClientScopeMapModal({
     }
   }
 
+  const handleImportBrain = async (client: PageGraderClient) => {
+    const row = draft[client.id]
+    const campaign = row?.campaignId ? campaigns.find((c) => c.id === row.campaignId) : null
+    const space =
+      row?.spaceId && row.campaignId
+        ? spaces.find((s) => s.id === row.spaceId && s.campaign_id === row.campaignId)
+        : null
+
+    setImportingClientId(client.id)
+    setError(null)
+    try {
+      const result = await importPageGraderClientBrainForSettings({
+        clientId: client.id,
+        campaignId: campaign?.id,
+        campaignName: campaign?.name,
+        campaignHint: campaign?.name ?? client.name,
+        spaceId: space?.id ?? null,
+        spaceTitle: space?.title ?? null,
+      })
+      const campaignName = result.campaign?.name ?? campaign?.name ?? client.name
+      toast.success(`Imported ${client.name} into ${campaignName}`)
+      onSaved()
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Could not import Page Grader brain'
+      setError(message)
+      toast.error(message)
+    } finally {
+      setImportingClientId(null)
+    }
+  }
+
   if (!open || typeof document === 'undefined') return null
 
   return createPortal(
@@ -174,7 +208,21 @@ export function PageGraderClientScopeMapModal({
                     key={client.id}
                     className="border-border space-y-2 rounded-lg border px-3 py-2"
                   >
-                    <p className="body-3 text-foreground truncate font-medium">{client.name}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="body-3 text-foreground min-w-0 truncate font-medium">
+                        {client.name}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void handleImportBrain(client)}
+                        disabled={importingClientId === client.id}
+                        className="button-glass-accent inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium disabled:opacity-50"
+                        title="Import this Page Grader client's intelligence into the ROAS brain"
+                      >
+                        <Brain className="h-3 w-3" />
+                        {importingClientId === client.id ? 'Importing' : 'Import brain'}
+                      </button>
+                    </div>
                     <label className="block">
                       <span className="typo-caption text-muted-foreground">Campaign</span>
                       <select
@@ -198,9 +246,7 @@ export function PageGraderClientScopeMapModal({
                     </label>
                     {row.campaignId ? (
                       <label className="block">
-                        <span className="typo-caption text-muted-foreground">
-                          Space (optional)
-                        </span>
+                        <span className="typo-caption text-muted-foreground">Space (optional)</span>
                         <select
                           value={row.spaceId}
                           onChange={(e) => {
