@@ -14,10 +14,9 @@ import {
   PowerOff,
   Trash2,
 } from 'lucide-react'
-import type { MissionAgent, MissionAgentSkill } from '@/features/mission-control/types'
 import { toast } from 'sonner'
 import { OtherAgentsSubmenuList } from './OtherAgentsSubmenuList'
-import type { SkillMenuActionsContext } from './skill-menu.types'
+import type { SkillMenuActionsContext, SkillMenuState } from './skill-menu.types'
 import { useSkillMenuActions } from './use-skill-menu-actions'
 
 const HOVER_CLOSE_DELAY_MS = 140
@@ -36,12 +35,7 @@ export function SkillMenuDropdown({
   onRequestDelete,
   catalogFolders,
   onSetSkillFolder,
-}: {
-  skill: MissionAgentSkill
-  agents: MissionAgent[]
-  pointerPosition: { x: number; y: number }
-  onClose: () => void
-} & SkillMenuActionsContext) {
+}: SkillMenuState & SkillMenuActionsContext & { onClose: () => void }) {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const exportButtonRef = useRef<HTMLButtonElement>(null)
   const copyButtonRef = useRef<HTMLButtonElement>(null)
@@ -233,14 +227,11 @@ export function SkillMenuDropdown({
                   }
                   const names = folders.map((f, i) => `${i + 1}. ${f.name}`).join('\n')
                   const answer = window
-                    .prompt(
-                      `Move to folder (number, or blank to unfile):\n${names}`,
-                      '1',
-                    )
+                    .prompt(`Move to folder (number, or blank to unfile):\n${names}`, '1')
                     ?.trim()
                   if (answer == null) return
                   if (!answer) {
-                    void onSetSkillFolder(skill.skill_key, null).then(() => {
+                    void Promise.resolve(onSetSkillFolder(skill.skill_key, null)).then(() => {
                       toast.success('Removed from folder')
                       onSkillsChanged()
                       onClose()
@@ -253,7 +244,7 @@ export function SkillMenuDropdown({
                     toast.error('Invalid folder number')
                     return
                   }
-                  void onSetSkillFolder(skill.skill_key, folder.id).then(() => {
+                  void Promise.resolve(onSetSkillFolder(skill.skill_key, folder.id)).then(() => {
                     toast.success(`Moved to ${folder.name}`)
                     onSkillsChanged()
                     onClose()

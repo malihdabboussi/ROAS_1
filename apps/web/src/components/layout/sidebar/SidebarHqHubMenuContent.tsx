@@ -13,7 +13,6 @@ import {
 import { Brain, ChevronDown, House, ListChecks, Users } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
-import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
 import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { cn } from '@/lib/utils/cn'
 import { HUB_DOCK_FLYOUT_LEAVE_MS } from './HubDockFlyout'
@@ -21,82 +20,6 @@ import type { HubMenuSectionId } from './sidebar-hq-hub-menu.types'
 import { SidebarHqHubMenuDockFlyouts, type HubMenuDockKey } from './SidebarHqHubMenuDockFlyouts'
 import { SidebarHqHubMenuNavRow } from './SidebarHqHubMenuNavRow'
 import type { SidebarControllerReturn } from './useSidebarController'
-
-type DockKey = 'team' | 'spaces' | 'brain' | 'more'
-
-function NavRow({
-  active,
-  icon,
-  label,
-  href,
-  onNavigate,
-  onHover,
-  onLeave,
-  rowRef,
-  trailing,
-}: {
-  active?: boolean
-  icon: ReactNode
-  label: string
-  href?: string
-  onNavigate?: () => void
-  onHover?: () => void
-  onLeave?: () => void
-  rowRef?: (el: HTMLElement | null) => void
-  trailing?: ReactNode
-}) {
-  const className = cn(
-    'hub-menu-link-row',
-    active && 'hub-menu-link-row-active nav-glass-selected-purple nav-glass-text-purple',
-  )
-  const inner = (
-    <>
-      <span className="shrink-0">{icon}</span>
-      <span className="body-3 flex-1 truncate text-left">{label}</span>
-      {trailing}
-    </>
-  )
-
-  const setRefs = (el: HTMLElement | null) => {
-    rowRef?.(el)
-  }
-
-  return (
-    <div
-      onMouseEnter={onHover}
-      onMouseLeave={(e) => {
-        // Pointer moved into the dock flyout — keep it open.
-        if (
-          e.relatedTarget instanceof Element &&
-          e.relatedTarget.closest('[data-hub-dock-flyout]')
-        ) {
-          return
-        }
-        onLeave?.()
-      }}
-    >
-      {href ? (
-        <Link
-          href={href}
-          onClick={onNavigate}
-          className={className}
-          ref={setRefs as (el: HTMLAnchorElement | null) => void}
-        >
-          {inner}
-        </Link>
-      ) : (
-        <button
-          type="button"
-          onClick={onNavigate}
-          className={cn(className, 'w-full')}
-          ref={setRefs as (el: HTMLButtonElement | null) => void}
-        >
-          {inner}
-        </button>
-      )}
-    </div>
-  )
-}
 
 export function SidebarHqHubMenuContent({
   c,

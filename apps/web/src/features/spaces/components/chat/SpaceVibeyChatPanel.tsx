@@ -75,7 +75,6 @@ import type {
   Conversation,
   DocumentAttachment,
   HighlightedArtifact,
-  Message,
   MessageReference,
 } from '@/features/studio/types'
 import { backendGet } from '@/lib/api/backend-client'
@@ -90,7 +89,6 @@ import { filterMessagesByQuery } from '@/lib/chat/conversation-search'
 import { useActiveArtifactSelectionSignal } from '@/lib/chat/use-active-artifact-selection-signal'
 import { resolveSuggestedConversationTitle } from '@/lib/conversations/conversation-title'
 import { useOrgStore } from '@/lib/org/org-context-store'
-import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { cn } from '@/lib/utils/cn'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
@@ -2014,7 +2012,6 @@ export function SpaceVibeyChatPanel({
               value={activeAgentKey}
               onChange={handleAgentChange}
               disabled={agentPickerDisabled}
-              compact={headerLayout === 'compact'}
             />
           </div>
           {headerLayout === 'full' ? (

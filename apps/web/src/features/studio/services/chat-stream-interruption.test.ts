@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { backendGet, backendPost } from '@/lib/api/backend-client'
 import { isAssistantTurnComplete } from '../lib/chat-turn-completion'
 import { useChatStore } from '../store/use-chat-store'
+import type { Message } from '../types'
 import {
-  abortRecovery,
   abortStream,
   applyRecoveredTimelineEvents,
   isRealAgentStreamEvent,
@@ -13,7 +13,6 @@ import {
   requestStopStream,
   shouldMarkConversationInterruptedForStreamError,
 } from './chat.service'
-import type { Message } from '../types'
 
 vi.mock('@/lib/utils/org-storage', () => ({
   getActiveOrgIdFromStorage: () => null,

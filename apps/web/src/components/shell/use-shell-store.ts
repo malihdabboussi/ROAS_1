@@ -127,6 +127,7 @@ interface ShellStore {
   setRightPanelOpen: (open: boolean) => void
   toggleRightPanel: () => void
   setRightPanelTab: (tab: ShellRightPanelTab) => void
+  openRightPanelSurface: (tab: ShellRightPanelTab) => void
   openArtifactViewer: (target: ShellArtifactViewerTarget) => void
   closeArtifactViewer: () => void
   setArtifactViewerWidth: (width: number) => void
@@ -318,6 +319,13 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   setRightPanelTab: (tab) => {
     writePersisted({ rightPanelTab: tab })
     set((s) => ({ rightPanel: { ...s.rightPanel, tab } }))
+  },
+  openRightPanelSurface: (tab) => {
+    writePersisted({ rightPanelOpen: true, rightPanelTab: tab })
+    set((s) => ({
+      rightPanel: { open: true, tab },
+      artifactViewer: { ...s.artifactViewer, target: null },
+    }))
   },
   openArtifactViewer: (target) => {
     writePersisted({ rightPanelOpen: false })
