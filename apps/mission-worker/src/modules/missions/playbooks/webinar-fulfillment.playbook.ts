@@ -210,6 +210,29 @@ export function expandWebinarFulfillmentPlaybook(
 
   add(
     {
+      id: 'st-market-research',
+      title: WEBINAR_FLOW_TASKS.marketResearch,
+      assignTo: adsManager,
+      dependsOn: [strategyDependency],
+      assertionKeys: [],
+      scheduledAt: null,
+      intent: intent({
+        why: 'Ground THE PLAN and downstream production in observed market evidence.',
+        story: 'Blaze researches the market and buyer language before Reed locks the launch brief.',
+        sensory:
+          'The research cites real ads, longevity, hooks, source links, and the integration actions used.',
+        endState: `"${WEBINAR_FLOW_DOCS.marketResearch}" exists with evidence and source links.`,
+        ecology: `Load skill ${SKILLS.research}. Use platform-managed Ads Intelligence first and record the service, integration action, and source links in the document. Only say a provider or search surface is unavailable after an actual failed tool attempt, and record the returned error plus the fallback used. Save exactly "${WEBINAR_FLOW_DOCS.marketResearch}" as a native Doc. Attach raw research data when available. Do not design or render ads.`,
+      }),
+      outputContract: docContract(WEBINAR_FLOW_DOCS.marketResearch),
+    },
+    'research',
+    'Market research exists with real sources and tool evidence.',
+  )
+  strategyDependency = 'st-market-research'
+
+  add(
+    {
       id: 'st-launch-brief',
       title: WEBINAR_FLOW_TASKS.thePlan,
       assignTo: strategist,
@@ -218,15 +241,15 @@ export function expandWebinarFulfillmentPlaybook(
       scheduledAt: null,
       intent: intent({
         why: 'Give production one locked launch brief.',
-        story: 'Reed turns strategy into THE PLAN.',
+        story: 'Reed turns strategy and completed market research into THE PLAN.',
         sensory: 'The promise, funnel path, asset list, offer stack, proof, and constraints agree.',
         endState: `"${WEBINAR_FLOW_DOCS.thePlan}" exists as the production source of truth.`,
-        ecology: `Load skill ${SKILLS.plan}. Save exactly "${WEBINAR_FLOW_DOCS.thePlan}" as a native editable Doc. Include a draft client Slack approval message. Never create a PDF.`,
+        ecology: `Load skill ${SKILLS.plan}. Consume the completed "${WEBINAR_FLOW_DOCS.marketResearch}" document and preserve its observed-source labels; do not rerun or speculate about integration availability inside THE PLAN. Save exactly "${WEBINAR_FLOW_DOCS.thePlan}" as a native editable Doc. Include a draft client Slack approval message. Never create a PDF.`,
       }),
       outputContract: docContract(WEBINAR_FLOW_DOCS.thePlan),
     },
     'strategy',
-    'THE PLAN exists with a client approval message.',
+    'THE PLAN exists with completed market research and a client approval message.',
   )
 
   let afterStrategy = 'st-launch-brief'
@@ -258,31 +281,10 @@ export function expandWebinarFulfillmentPlaybook(
 
   add(
     {
-      id: 'st-market-research',
-      title: WEBINAR_FLOW_TASKS.marketResearch,
-      assignTo: adsManager,
-      dependsOn: [afterStrategy],
-      assertionKeys: [],
-      scheduledAt: null,
-      intent: intent({
-        why: 'Ground downstream copy and media decisions in observed market evidence.',
-        story: 'Blaze researches the market and buyer language; Blaze does not design ads.',
-        sensory: 'The research cites real ads, longevity, hooks, and transcripts where available.',
-        endState: `"${WEBINAR_FLOW_DOCS.marketResearch}" exists with evidence and source links.`,
-        ecology: `Load skill ${SKILLS.research}. Save exactly "${WEBINAR_FLOW_DOCS.marketResearch}" as a native Doc. Attach raw research data when available. Do not design or render ads.`,
-      }),
-      outputContract: docContract(WEBINAR_FLOW_DOCS.marketResearch),
-    },
-    'research',
-    'Market research exists with real sources.',
-  )
-
-  add(
-    {
       id: 'st-copy-package',
       title: WEBINAR_FLOW_TASKS.copyPackage,
       assignTo: copywriter,
-      dependsOn: ['st-market-research'],
+      dependsOn: [afterStrategy],
       assertionKeys: [],
       scheduledAt: null,
       intent: intent({
@@ -466,7 +468,7 @@ export function expandWebinarFulfillmentPlaybook(
     kind: 'plan',
     title: 'Webinar Fulfillment',
     summary:
-      'Atlas context → pre-call gate → call intake → post-call strategy → strategy gate → research → complete copy package → copy gate → Lux production → Blaze media plan → production gate.',
+      'Atlas context → pre-call gate → call intake → post-call strategy → market research → THE PLAN → strategy gate → complete copy package → copy gate → Lux production → Blaze media plan → production gate.',
     approach: `Follow the complete ${WEBINAR_FULFILLMENT_PLAYBOOK_ID} flow from pre-call preparation. Atlas owns context, Reed owns strategy, Ivy owns copy, Lux owns visual/funnel/deck production, and Blaze owns research/media planning.`,
     capability_gap: { exists: false, note: '', suggested_hire: '' },
     harness: {

@@ -1,6 +1,6 @@
 ---
 name: bug-checking-and-report
-description: 'Triage production or development incidents: trace errors to the correct host (Vercel frontend, Vercel backend, Vercel funnels, Fly.io agent stack, Supabase, Railway workers) and respond with a short plain-English summary plus evidence and durable fixes. Use whenever the user pastes an error, stack trace, 4xx/5xx, timeout, failed deploy, Sentry alert, Vercel or Fly log lines, broken UX in prod/staging/dev, or asks what broke and where to fix it. Tools: Supabase MCP with skill supa-project; Vercel MCP for prj_TuDRfvRZATBoeOhAqfNcvpsfHHTT (frontend), prj_ABawEUiSMe7b3eX7RgnzaRraJ5tl (backend), and prj_3yuZ9Zx4d4MrWTpss8YhGsAPF1HM (funnels) when logs or deploys matter; Fly.io when agent-api, OpenClaw gateway, or machine health is implicated.'
+description: 'Triage production or development incidents: trace errors to the correct host (Vercel frontend, Vercel backend, Vercel funnels, Fly.io agent stack, Supabase, Railway workers) and respond with a short plain-English summary plus evidence and durable fixes. Use whenever the user pastes an error, stack trace, 4xx/5xx, timeout, failed deploy, Sentry alert, Vercel or Fly log lines, broken UX in prod/staging/dev, or asks what broke and where to fix it. Tools: Supabase MCP with skill supa-project; Vercel MCP for prj_MTRba5SdYBFbiymrKqieGnGPjcBh (frontend), prj_YwUti53Q9vB6rMKPB5cpW8w7h0qL (backend), and prj_QPESSHik40T2659GTyfZSOalJe4T (funnels) when logs or deploys matter; Fly.io when agent-api, OpenClaw gateway, or machine health is implicated.'
 ---
 
 # Bug checking and report
@@ -67,9 +67,9 @@ Bundled files (if you add any later): **`agent_skill_resources`** with matching 
 
 | Surface               | What lives there                                                                                                                                                                       |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Vercel — Frontend** | Web app UI and client / edge behavior — project **`prj_TuDRfvRZATBoeOhAqfNcvpsfHHTT`**.                                                                                                |
-| **Vercel — Backend**  | API / server workloads on Vercel — project **`prj_ABawEUiSMe7b3eX7RgnzaRraJ5tl`**.                                                                                                     |
-| **Vercel — Funnels**  | Funnels app — project **`prj_3yuZ9Zx4d4MrWTpss8YhGsAPF1HM`**.                                                                                                                          |
+| **Vercel — Frontend** | Web app UI and client / edge behavior — project **`prj_MTRba5SdYBFbiymrKqieGnGPjcBh`**.                                                                                                |
+| **Vercel — Backend**  | API / server workloads on Vercel — project **`prj_YwUti53Q9vB6rMKPB5cpW8w7h0qL`**.                                                                                                    |
+| **Vercel — Funnels**  | Funnels app — project **`prj_QPESSHik40T2659GTyfZSOalJe4T`**.                                                                                                                          |
 | **Fly.io**            | **Agent API** (NestJS, exposed port) and **OpenClaw gateway** (internal). Same image; see **`fly-io-deploy`** (`vibey-runtimes` primary, `vibey-machines` legacy), `fly logs`, health. |
 | **Supabase**          | Database, auth, storage, edge functions, advisors, Postgres logs — **Supabase MCP** + **`supa-project`**.                                                                              |
 | **Railway**           | Workers (auto-deploy from **main** per deploy runbook) — when the failure is worker/queue/cron related.                                                                                |
@@ -79,7 +79,7 @@ Start from the error: URL/host, service name, or stack frame should tell you whe
 ## Tools (use only when needed)
 
 1. **Supabase MCP** — Schema, data, `execute_sql`, advisors, Postgres logs. Align with **`supa-project`**; do not delete branches or tables without explicit user approval. For user-scoped rows, default to **`sefy@olympus-digital.com`** (see Primary operator).
-2. **Vercel MCP** — Deployments, build logs, runtime logs for **`prj_TuDRfvRZATBoeOhAqfNcvpsfHHTT`** (frontend), **`prj_ABawEUiSMe7b3eX7RgnzaRraJ5tl`** (backend), **`prj_3yuZ9Zx4d4MrWTpss8YhGsAPF1HM`** (funnels). Pick the project that matches the failing hostname or route.
+2. **Vercel MCP** — Deployments, build logs, runtime logs for **`prj_MTRba5SdYBFbiymrKqieGnGPjcBh`** (frontend), **`prj_YwUti53Q9vB6rMKPB5cpW8w7h0qL`** (backend), **`prj_QPESSHik40T2659GTyfZSOalJe4T`** (funnels). Pick the project that matches the failing hostname or route.
 3. **Fly.io** — When the failure mentions the machine URL, agent-api, gateway, OpenClaw, or Fly health. Use `fly logs`, `fly status`, and **`fly-io-deploy`**. Tie machines to this user via **`sefy@olympus-digital.com`** in `profiles` when you need their `fly_machine_id` / app.
 4. **Railway** — When the symptom points at background workers, not the web or Fly stack.
 

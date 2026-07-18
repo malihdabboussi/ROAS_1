@@ -7126,3 +7126,11 @@ Files:
 - Evidence: Full API typecheck reports the unrelated `triggered_for` Fathom OAuth type mismatch. Full web typecheck reports unrelated roster fixture, shell null-index, Skills callback, and older ChatInput/chat-message test errors; no error points at the global-search files. Route inventory is also red from a large pre-existing set of uncommitted routes outside search, while the removed `/api/studio/search` route is absent from both current inventory and the edited snapshot.
 - Needed work: Reconcile the dirty route inventory snapshot and repair the listed type errors in their owning feature changes.
 - Why not now: Those files and routes belong to concurrent work already present in the workspace; changing them would overwrite or broaden beyond the requested search fix.
+
+## 2026-07-17 — Webinar playbook and deploy-tool follow-up
+
+- Feature/app: mission-worker / deployment operations
+- Files: `apps/mission-worker/src/modules/missions/playbooks/webinar-fulfillment.playbook.ts`, `scripts/roas/deploy-railway-workers.sh`
+- Evidence: The deterministic playbook is 533 LOC after moving Market Research ahead of THE PLAN, approaching the 600 LOC backend ceiling. Railway variable synchronization could not run because no trusted Railway CLI is installed locally; downloading one at runtime while production tokens are present was rejected as a credential-exposure risk.
+- Needed work: Extract focused playbook task-group builders and install/pin a reviewed Railway CLI or add a first-party worker-variable sync path.
+- Why not now: The requested research-order correction remains under the file limit, and the worker bundle does not own SearchAPI. Changing credential tooling requires a separately reviewed operational change.

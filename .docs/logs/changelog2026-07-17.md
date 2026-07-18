@@ -1,5 +1,12 @@
 # Changelog - July 17, 2026
 
+## [2026-07-17 19:40] - [FIX]
+
+What: Synchronized all non-empty local production bundles to the current Vercel API, web, and funnels projects; refreshed Fly runtime secrets; moved Webinar Fulfillment Market Research before THE PLAN; required real integration failure evidence before an availability claim; updated the database-backed launch skill; expanded the Vercel environment freshness guard; corrected stale Vercel project IDs in the incident guide.
+Why: THE PLAN claimed SearchAPI was unavailable without attempting it, the launch brief ran before dedicated market research, and stale deployment/project metadata made secret drift harder to diagnose reliably.
+Impact: New Webinar Fulfillment missions ground THE PLAN in completed live research. Production provider credentials are synchronized and deployment freshness checks now cover every configured API provider used by roas-api. Existing unrelated production OAuth variables were preserved.
+Files: `apps/mission-worker/src/modules/missions/playbooks/webinar-fulfillment.playbook.ts`, `apps/mission-worker/src/modules/missions/playbooks/webinar-fulfillment.helpers.ts`, `apps/mission-worker/src/modules/missions/playbooks/__tests__/webinar-fulfillment.playbook.test.ts`, `supabase/migrations/20260718024000_webinar_research_before_launch_brief.sql`, `scripts/roas/verify-vercel-env-freshness.sh`, `.agents/skills/bug-checking-and-report/SKILL.md`, `documentation/features/missions.md`
+
 ## [2026-07-17 16:33] - [FIX]
 
 What: Replaced the partial Studio search route with server-backed global search for tasks, Space and conversation docs, mission deliverables, conversations, campaigns, and campaign artifacts; added progressive core/artifact loading, stale-request cancellation, explicit failure text, correct deep links, and trigram indexes for every searched title field.
