@@ -34,7 +34,7 @@ With the defaults, a dead execution is normally eligible at 90 seconds and recov
 
 Playbooks can include human approval subtasks on both organization and personal missions. Organization missions validate that the assignee is an active member who accepts agent-assigned work. A personal mission may assign a human gate only to the mission owner, and the same profile preference check still applies. Root-ready human gates enter `awaiting_human`; dependent gates remain pending until their dependencies complete. When dependency resolution publishes an execute event for a ready human row, the worker atomically activates it as `awaiting_human`, starts its SLA clock, emits the human notification event, and recomputes the mission rollup without calling OpenClaw.
 
-An active human gate takes precedence over downstream pending rows in the parent Mission aggregate. If no agent subtask is actively executing, the Mission status is `awaiting_human`, even when later tasks remain pending behind the gate. Approval calls the dedicated human-completion endpoint, records a human deliverable, closes the gate, and starts newly eligible downstream work. Requesting changes sends scoped gate guidance and leaves the gate open until the revised package is approved.
+An active human gate takes precedence over downstream pending rows in the parent Mission aggregate. If no agent subtask is actively executing, the Mission status is `awaiting_human`, even when later tasks remain pending behind the gate. Approval calls the dedicated human-completion endpoint, records a human deliverable, closes the gate, reopens an `awaiting_human` parent Mission to `todo` when an agent task becomes ready, and then publishes that task's execute event. Requesting changes sends scoped gate guidance and leaves the gate open until the revised package is approved.
 
 ## Public agent slug namespace
 
@@ -110,6 +110,8 @@ The runner uses this as a deterministic gate:
 - **Preflight before execution**: if a subtask requires an action the assigned agent cannot perform, the worker records `mission.subtask.preflight_failed`, increments `preflight_attempts`, and routes to manager/Vibey triage before blocking the user.
 - **Execution prompt contract**: when a contract exists, the execute prompt includes `OUTPUT_CONTRACT` with the required artifact kind, action, artifact type, and expected metadata. The agent is told not to use another artifact type as fallback.
 - **Native Doc exclusivity**: a contract requiring `save_document` publishes only the editable native Doc. PDF, DOCX, and other file-export companions are forbidden unless the output contract explicitly requires that file action.
+- **Webinar pre-call-first lifecycle**: every new Webinar Fulfillment mission runs the complete flow beginning with Atlas context preparation and Reed's pre-call strategy map. Kickoff transcripts, call links, and research enrich the flow but cannot skip pre-call work; legacy `start_at` values are ignored.
+- **Research before THE PLAN**: Webinar Fulfillment runs Blaze's Market Research immediately after post-call strategy and before Reed creates THE PLAN. Research records the platform service/action and source links; an integration may be called unavailable only after a real failed tool attempt with the returned error recorded. THE PLAN consumes the completed research document instead of rerunning or guessing at provider availability.
 - **Webinar Copy Package readiness**: the copywriter catalog includes `roas-webinar-emails` with its email/SMS references and swipes. `dylans-super-voice` is its single master voice and Human Enforcement layer; there is no duplicate human-copy reference. The Webinar Fulfillment playbook no longer reports section 2 as a capability gap, and existing copywriters carrying `roas-webinar-copy-package` receive both skills during migration.
 - **Verification before done**: after execution, the worker verifies the required artifact exists. `document_artifact` checks tool-authored mission deliverables by type; `agent_skill` checks `agent_skills` by `agent_key` and `skill_key`. Missing/wrong artifacts keep the subtask out of `done`.
 - **DOCX deliverables**: Word documents use `create_docx`, persist as `mission_deliverables.type = 'file'`, and carry `mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'`. DOCX-specific contracts use `required_artifact_type = 'file'` with `expected.mime_type` and `expected.source_action = 'create_docx'`.
@@ -118,7 +120,7 @@ The runner uses this as a deterministic gate:
 
 ## Task deliverable preview exports
 
-Task detail deliverables use the shared deliverable preview workspace used by Mission Control. General previews dock below the app top bar, while previews opened from inside a Mission center over that Mission so they do not create a second top shelf. Both presentations can expand to full screen. Space-backed docs expose `Open in Space`, which opens the canonical editable document; the Mission preview remains read-only so review does not silently mutate the source artifact. Agent `artifact_preview` activity blocks are normalized into `MissionDeliverable` entity pointers before preview, so entity-backed artifacts load their source row before export.
+Task detail deliverables use the shared deliverable preview workspace used by Mission Control. Previews opened from inside a Mission or one of its subtasks appear as centered modals over the still-visible Mission workspace; they are not resizable side docks. General previews outside Mission/task context continue to slide in from the right below the app top bar, open at 45% of the viewport, resize from the left edge, and expand to full screen. Space-backed docs mount the canonical editable Space editor inside either presentation, including Doc/Visual modes, the fixed rich-text toolbar, collapsed Fields, and autosave routed to the document's owning Space. `Open in Space` opens the same source item in its full Space destination. Agent `artifact_preview` activity blocks are normalized into `MissionDeliverable` entity pointers before preview, so entity-backed artifacts load their source row before export.
 
 The preview groups destination, Copy, downloads, expand/collapse, and close in the document header. Native Space docs also expose `Export to Google Docs`; the first export creates and opens the Google Doc and persists its file identity on the Space item, while later clicks reopen the same Google Doc. Text documents expose `Download as Markdown` and `Print as PDF` from the Copy split menu. Presentation entities expose HTML, PDF, and PowerPoint downloads; non-presentation entities keep PDF, Markdown, and JSON downloads. Direct file actions remain available for file-backed deliverables. Toolbar icon help uses the portaled tooltip component so nested task modals do not clip tooltip text.
 
@@ -212,6 +214,12 @@ Database triggers (see `supabase/migrations/20260321194500_mission_harness_task_
 
 **Data flow (summary):** `missions` (worker/API) ↔ `tasks` (UI) via triggers; worker drives `missions` + `mission_subtasks` + `mission_outbox`.
 
+### Mission step ↔ Space Task sync
+
+Concrete build work can set `publishToTaskList: true` on a Mission step. The persisted `mission_subtasks.publish_to_task_list` flag creates exactly one `space_items` row linked by `linked_mission_subtask_id`; title, status, owner, due date, description, and priority then follow the Mission step automatically. Human-owned linked tasks complete the exact Mission step through the standard human-completion endpoint, while agent-owned task status remains controlled by Mission execution.
+
+The Webinar Fulfillment playbook runs a Build Checklist reconciliation step after strategy approval. Vibey compares THE PLAN Build List with the fixed production steps, adds only missing client-specific work, publishes those steps as Space Tasks, and adds their IDs to the Media Plan dependency list. Published human work appears once in Your Turn through its Space Task rather than as a duplicate Mission-subtask row.
+
 ## Outbox dedupe policy
 
 - **Stable `dedupe_key`** for a single logical event (e.g. `mission:{id}:review:all-subtasks-done`) so retries/races do not spawn duplicate Bull jobs.
@@ -237,7 +245,14 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
-- 2026-07-17: Centered deliverable previews launched from Missions, kept Mission review read-only with explicit `Open in Space` editing, and exposed the native Space Doc Google export pipeline inside the preview.
+- 2026-07-17: Added one-to-one Mission-step ↔ Space-Task correlation for concrete build work and made Webinar Fulfillment reconcile THE PLAN Build List into missing, assigned, production-blocking steps before copy and production begin.
+- 2026-07-17: Moved Webinar Fulfillment Market Research ahead of THE PLAN. THE PLAN now consumes the completed research document, and agent instructions forbid unsupported integration-availability claims.
+- 2026-07-17: Human-gate approval now reopens an `awaiting_human` parent Mission before publishing newly eligible agent work, preserving the worker's guard against executing agents through a still-open human gate while preventing approved handoffs from dead-lettering.
+- 2026-07-17: Removed Webinar Fulfillment restart modes. New and legacy kickoff payloads always expand into the full pre-call-first lifecycle, so supplied transcripts and research add context without bypassing the pre-call map or its human call gate.
+- 2026-07-17: Reworked Webinar Fulfillment around explicit ownership and non-adjacent human gates: Atlas prepares context and call intake, Reed owns pre/post-call strategy and THE PLAN, Ivy delivers one complete Dylan's Super Voice Copy Package, Lux owns native ads/funnel/image briefs/10–20-slide Deck Bones, and Blaze owns market research plus the downstream media plan. Meta activation remains a separate explicit run.
+- 2026-07-17: Made Mission and subtask deliverable previews centered modals over their originating workspace while retaining right-side slide-outs everywhere else.
+- 2026-07-17: Replaced unsupported `/spaces/{spaceId}/{itemId}` deliverable links with the canonical Spaces query route and normalized previously persisted legacy links at open time.
+- 2026-07-17: Unified Mission Space-doc previews with the canonical editable Space editor, changed Mission previews to right-side slide-outs, and preserved Mission actions plus full-screen expansion around the shared editor.
 - 2026-07-17: Replaced the full-screen-only deliverable modal chrome with a docked artifact workspace, canonical `Open in Space` routing, grouped Copy/download actions, and explicit expand/collapse controls.
 - 2026-07-17: Persisted structured artifact receipts during execution and used them to keep blocked drafts visible, number deliverables by originating task, and show creation timestamps.
 - 2026-07-17: Replaced mission preflight's partial action-domain map with the canonical agent-policy registry and added playbook coverage so supported actions such as `create_ad` and `create_funnel` cannot be rejected as unknown.

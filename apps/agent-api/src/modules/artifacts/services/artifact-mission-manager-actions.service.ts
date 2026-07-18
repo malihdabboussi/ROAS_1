@@ -110,6 +110,7 @@ export class ArtifactMissionManagerActionsService {
           title: String(rawSubtask.title ?? '').trim(),
           assignTo: String(rawSubtask.assignTo ?? rawSubtask.assigned_agent_key ?? 'vibey'),
           dependsOn: Array.isArray(rawSubtask.dependsOn) ? rawSubtask.dependsOn : [],
+          ...(rawSubtask.publishToTaskList === true ? { publishToTaskList: true } : {}),
           intent:
             rawSubtask.intent && typeof rawSubtask.intent === 'object'
               ? rawSubtask.intent
@@ -138,6 +139,7 @@ export class ArtifactMissionManagerActionsService {
       ...(typeof input.assigned_agent_key === 'string'
         ? { assigned_agent_key: input.assigned_agent_key }
         : {}),
+      ...(Array.isArray(input.dependsOn) ? { dependsOn: input.dependsOn } : {}),
       ...(input.intent && typeof input.intent === 'object' ? { intent: input.intent } : {}),
     })
   }

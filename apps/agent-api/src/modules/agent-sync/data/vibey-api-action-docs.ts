@@ -1188,15 +1188,17 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   },
   create_mission_subtask: {
     section: 'Mission Manager',
-    description: 'Vibey-only. Creates a new subtask inside an existing mission.',
+    description:
+      'Vibey-only. Creates a new subtask inside an existing mission. Set publishToTaskList true for concrete build work that should also appear as a linked Space Task.',
     parameters:
-      '```json\n{"action":"create_mission_subtask","label":"Creating mission subtask","data":{"mission_id":"UUID","title":"Register the skill","assignTo":"tessa","intent":{"why":"...","story":"...","sensory":"...","endState":"...","ecology":"..."}}}\n```',
+      '```json\n{"action":"create_mission_subtask","label":"Creating mission subtask","data":{"mission_id":"UUID","title":"Register the skill","assignTo":"tessa","publishToTaskList":true,"dependsOn":["UUID"],"intent":{"why":"...","story":"...","sensory":"...","endState":"...","ecology":"..."}}}\n```',
   },
   edit_mission_subtask: {
     section: 'Mission Manager',
-    description: 'Vibey-only. Edits a subtask title, assigned agent, or intent packet.',
+    description:
+      'Vibey-only. Edits a subtask title, assigned agent, dependency list, or intent packet.',
     parameters:
-      '```json\n{"action":"edit_mission_subtask","label":"Editing mission subtask","data":{"mission_id":"UUID","subtask_id":"UUID","assigned_agent_key":"zane"}}\n```',
+      '```json\n{"action":"edit_mission_subtask","label":"Editing mission subtask","data":{"mission_id":"UUID","subtask_id":"UUID","dependsOn":["UUID"],"assigned_agent_key":"zane"}}\n```',
   },
   cancel_mission_subtask: {
     section: 'Mission Manager',

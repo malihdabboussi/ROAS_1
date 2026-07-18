@@ -210,6 +210,29 @@ export function expandWebinarFulfillmentPlaybook(
 
   add(
     {
+      id: 'st-market-research',
+      title: WEBINAR_FLOW_TASKS.marketResearch,
+      assignTo: adsManager,
+      dependsOn: [strategyDependency],
+      assertionKeys: [],
+      scheduledAt: null,
+      intent: intent({
+        why: 'Ground THE PLAN and downstream production in observed market evidence.',
+        story: 'Blaze researches the market and buyer language before Reed locks the launch brief.',
+        sensory:
+          'The research cites real ads, longevity, hooks, source links, and the integration actions used.',
+        endState: `"${WEBINAR_FLOW_DOCS.marketResearch}" exists with evidence and source links.`,
+        ecology: `Load skill ${SKILLS.research}. Use platform-managed Ads Intelligence first and record the service, integration action, and source links in the document. Only say a provider or search surface is unavailable after an actual failed tool attempt, and record the returned error plus the fallback used. Save exactly "${WEBINAR_FLOW_DOCS.marketResearch}" as a native Doc. Attach raw research data when available. Do not design or render ads.`,
+      }),
+      outputContract: docContract(WEBINAR_FLOW_DOCS.marketResearch),
+    },
+    'research',
+    'Market research exists with real sources and tool evidence.',
+  )
+  strategyDependency = 'st-market-research'
+
+  add(
+    {
       id: 'st-launch-brief',
       title: WEBINAR_FLOW_TASKS.thePlan,
       assignTo: strategist,
@@ -218,15 +241,15 @@ export function expandWebinarFulfillmentPlaybook(
       scheduledAt: null,
       intent: intent({
         why: 'Give production one locked launch brief.',
-        story: 'Reed turns strategy into THE PLAN.',
+        story: 'Reed turns strategy and completed market research into THE PLAN.',
         sensory: 'The promise, funnel path, asset list, offer stack, proof, and constraints agree.',
         endState: `"${WEBINAR_FLOW_DOCS.thePlan}" exists as the production source of truth.`,
-        ecology: `Load skill ${SKILLS.plan}. Save exactly "${WEBINAR_FLOW_DOCS.thePlan}" as a native editable Doc. Include a draft client Slack approval message. Never create a PDF.`,
+        ecology: `Load skill ${SKILLS.plan}. Consume the completed "${WEBINAR_FLOW_DOCS.marketResearch}" document and preserve its observed-source labels; do not rerun or speculate about integration availability inside THE PLAN. Save exactly "${WEBINAR_FLOW_DOCS.thePlan}" as a native editable Doc. Include a draft client Slack approval message. Never create a PDF.`,
       }),
       outputContract: docContract(WEBINAR_FLOW_DOCS.thePlan),
     },
     'strategy',
-    'THE PLAN exists with a client approval message.',
+    'THE PLAN exists with completed market research and a client approval message.',
   )
 
   let afterStrategy = 'st-launch-brief'
@@ -258,33 +281,37 @@ export function expandWebinarFulfillmentPlaybook(
 
   add(
     {
-      id: 'st-market-research',
-      title: WEBINAR_FLOW_TASKS.marketResearch,
-      assignTo: adsManager,
+      id: 'st-build-checklist',
+      title: WEBINAR_FLOW_TASKS.buildChecklist,
+      assignTo: input.managerKey || 'vibey',
       dependsOn: [afterStrategy],
       assertionKeys: [],
       scheduledAt: null,
       intent: intent({
-        why: 'Ground downstream copy and media decisions in observed market evidence.',
-        story: 'Blaze researches the market and buyer language; Blaze does not design ads.',
-        sensory: 'The research cites real ads, longevity, hooks, and transcripts where available.',
-        endState: `"${WEBINAR_FLOW_DOCS.marketResearch}" exists with evidence and source links.`,
-        ecology: `Load skill ${SKILLS.research}. Save exactly "${WEBINAR_FLOW_DOCS.marketResearch}" as a native Doc. Attach raw research data when available. Do not design or render ads.`,
+        why: 'Turn THE PLAN Build List into executable work without losing client-specific items.',
+        story:
+          'Vibey reconciles the Build List against the fixed playbook before production starts.',
+        sensory:
+          'Every concrete build item is represented by one Mission step and one linked Space Task.',
+        endState:
+          'Missing build work is assigned, published to the task list, and included in the final production dependency chain.',
+        ecology: `Read the Build List in "${WEBINAR_FLOW_DOCS.thePlan}" and list current Mission subtasks. Do not duplicate fixed copy, ads, image briefs, funnel, deck bones, or media-plan work. For each other concrete build item, call create_mission_subtask with the best human or agent owner, dependsOn set to this reconciliation step, and publishToTaskList true. Use the returned subtask IDs. Then call edit_mission_subtask on Media Plan with a dependsOn list that preserves its existing dependencies and adds every created ID, so production approval cannot finish early. Internal research or coordination notes stay Mission-only.`,
       }),
-      outputContract: docContract(WEBINAR_FLOW_DOCS.marketResearch),
     },
-    'research',
-    'Market research exists with real sources.',
+    'production',
+    'THE PLAN Build List is reconciled into linked Mission steps and Space Tasks.',
   )
+  afterStrategy = 'st-build-checklist'
 
   add(
     {
       id: 'st-copy-package',
       title: WEBINAR_FLOW_TASKS.copyPackage,
       assignTo: copywriter,
-      dependsOn: ['st-market-research'],
+      dependsOn: [afterStrategy],
       assertionKeys: [],
       scheduledAt: null,
+      publishToTaskList: true,
       intent: intent({
         why: 'Assemble one complete reviewable copy package.',
         story:
@@ -332,6 +359,7 @@ export function expandWebinarFulfillmentPlaybook(
       dependsOn: [afterCopy],
       assertionKeys: [],
       scheduledAt: null,
+      publishToTaskList: true,
       intent: intent({
         why: 'Turn locked ad lines into finished static creative.',
         story: 'Lux owns visual production; Blaze remains the media buyer.',
@@ -355,6 +383,7 @@ export function expandWebinarFulfillmentPlaybook(
       dependsOn: [afterCopy],
       assertionKeys: [],
       scheduledAt: null,
+      publishToTaskList: true,
       intent: intent({
         why: 'Provide complete generation briefs for the remaining campaign visuals.',
         story: 'Lux creates paste-ready prompts without duplicating rendered static ads.',
@@ -377,6 +406,7 @@ export function expandWebinarFulfillmentPlaybook(
       dependsOn: [afterCopy],
       assertionKeys: [],
       scheduledAt: null,
+      publishToTaskList: true,
       intent: intent({
         why: 'Build the approved registration experience in the native funnel builder.',
         story: 'Lux turns approved copy into the client funnel without rewriting it.',
@@ -398,6 +428,7 @@ export function expandWebinarFulfillmentPlaybook(
       dependsOn: [afterCopy],
       assertionKeys: [],
       scheduledAt: null,
+      publishToTaskList: true,
       intent: intent({
         why: 'Create the most important editable slides now without pretending the full webinar deck is finished.',
         story: 'Lux builds the bones future production can expand.',
@@ -421,6 +452,7 @@ export function expandWebinarFulfillmentPlaybook(
       dependsOn: ['st-ad-design', 'st-image-brief', 'st-funnel-design', 'st-deck-bones'],
       assertionKeys: [],
       scheduledAt: null,
+      publishToTaskList: true,
       intent: intent({
         why: 'Let the media buyer translate approved strategy and creative into a launch-ready buying plan.',
         story:
@@ -466,7 +498,7 @@ export function expandWebinarFulfillmentPlaybook(
     kind: 'plan',
     title: 'Webinar Fulfillment',
     summary:
-      'Atlas context → pre-call gate → call intake → post-call strategy → strategy gate → research → complete copy package → copy gate → Lux production → Blaze media plan → production gate.',
+      'Atlas context → pre-call gate → call intake → post-call strategy → market research → THE PLAN → strategy gate → complete copy package → copy gate → Lux production → Blaze media plan → production gate.',
     approach: `Follow the complete ${WEBINAR_FULFILLMENT_PLAYBOOK_ID} flow from pre-call preparation. Atlas owns context, Reed owns strategy, Ivy owns copy, Lux owns visual/funnel/deck production, and Blaze owns research/media planning.`,
     capability_gap: { exists: false, note: '', suggested_hire: '' },
     harness: {

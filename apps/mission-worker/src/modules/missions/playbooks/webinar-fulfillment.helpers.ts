@@ -56,14 +56,15 @@ export const WEBINAR_FLOW_TASKS = {
   precall: taskTitle(2, 'Pre-call strategy map'),
   atlasTranscript: taskTitle(3, 'Atlas call and transcript intake'),
   strategyV2: taskTitle(4, 'Post-call strategy map'),
-  thePlan: taskTitle(5, 'THE PLAN launch brief'),
-  marketResearch: taskTitle(6, 'Market research'),
-  copyPackage: taskTitle(7, 'Complete webinar copy package'),
-  staticAds: taskTitle(8, 'Static Meta ads'),
-  imageBriefs: taskTitle(9, 'Image briefs'),
-  funnelDesign: taskTitle(10, 'Native webinar funnel'),
-  deckBones: taskTitle(11, 'Webinar Deck Bones'),
-  mediaPlan: taskTitle(12, 'Media plan'),
+  marketResearch: taskTitle(5, 'Market research'),
+  thePlan: taskTitle(6, 'THE PLAN launch brief'),
+  buildChecklist: taskTitle(7, 'Build checklist reconciliation'),
+  copyPackage: taskTitle(8, 'Complete webinar copy package'),
+  staticAds: taskTitle(9, 'Static Meta ads'),
+  imageBriefs: taskTitle(10, 'Image briefs'),
+  funnelDesign: taskTitle(11, 'Native webinar funnel'),
+  deckBones: taskTitle(12, 'Webinar Deck Bones'),
+  mediaPlan: taskTitle(13, 'Media plan'),
 } as const
 
 export const WEBINAR_FLOW_GATES = {

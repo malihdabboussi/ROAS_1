@@ -327,6 +327,7 @@ export function MissionControlContainer() {
       {selectedMission && (
         <MissionDetailModal
           mission={selectedMission}
+          initialSubtaskId={searchParams?.get('subtask') ?? null}
           onClose={() => setSelectedMission(null)}
           onUpdated={() => void refresh()}
         />

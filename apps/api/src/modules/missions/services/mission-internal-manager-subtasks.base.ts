@@ -277,6 +277,21 @@ export abstract class MissionInternalManagerSubtasksBase extends MissionInternal
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
     if (dto.title !== undefined) updates.title = dto.title.trim().slice(0, 500)
     if (dto.assigned_agent_key !== undefined) updates.assigned_agent_key = dto.assigned_agent_key
+    if (dto.dependsOn !== undefined) {
+      const activeIds = await this.missionInternalRepository.listActiveSubtaskIds(
+        supabase,
+        dto.mission_id,
+      )
+      const invalidDependency = dto.dependsOn.find(
+        (dependencyId) => dependencyId === dto.subtask_id || !activeIds.has(dependencyId),
+      )
+      if (invalidDependency) {
+        throw new BadRequestException(
+          `Dependency ${invalidDependency} must be another active subtask in this mission`,
+        )
+      }
+      updates.depends_on = dto.dependsOn
+    }
     if (dto.intent !== undefined) {
       const prev =
         sub.intent && typeof sub.intent === 'object' && !Array.isArray(sub.intent)

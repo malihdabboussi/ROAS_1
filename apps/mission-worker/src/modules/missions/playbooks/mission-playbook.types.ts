@@ -69,6 +69,7 @@ export type MissionPlaybookPlanResult = {
     dependsOn: string[]
     assertionKeys: string[]
     scheduledAt: null
+    publishToTaskList?: boolean
     intent: {
       why: string
       story: string

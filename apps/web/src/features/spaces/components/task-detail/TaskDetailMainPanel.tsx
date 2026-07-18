@@ -1,11 +1,11 @@
 'use client'
 
 import { DeliverablesCarousel } from '@/components/deliverables/DeliverablesCarousel'
-import type { TeamRosterEntry } from '@/lib/team'
 import { EXTRA_DELIVERABLE_TYPES, type MissionDeliverable } from '@/lib/missions'
-import type { MissionSendOptions } from '../cells/MissionSendDropdown'
+import type { TeamRosterEntry } from '@/lib/team'
 import type { SpaceItem } from '../../types'
 import type { FieldDef, SelectOption, SpaceSchema, ViewDef } from '../../types/space-schema'
+import type { MissionSendOptions } from '../cells/MissionSendDropdown'
 import { TaskCursorStatusCard } from './TaskCursorStatusCard'
 import { TaskDescription } from './TaskDescription'
 import { TaskMetaFields } from './TaskMetaFields'
@@ -106,9 +106,12 @@ export function TaskDetailMainPanel({
             onPushToAgent={onPushToAgent}
           />
 
-          <div className="mt-spacing-4 mr-2 border-b border-border" />
+          <div className="mt-spacing-4 border-border mr-2 border-b" />
 
-          <TaskDescription description={item.description} onDescriptionChange={onDescriptionChange} />
+          <TaskDescription
+            description={item.description}
+            onDescriptionChange={onDescriptionChange}
+          />
 
           <TaskSubtasks
             subtasks={subtasks}
@@ -149,14 +152,16 @@ export function TaskDetailMainPanel({
 
           {item.linked_mission_id ? (
             <div className="mt-spacing-4">
-              <span className="body-2 mb-spacing-2 block text-muted-foreground">
+              <span className="body-2 mb-spacing-2 text-muted-foreground block">
                 Linked Mission
               </span>
               <a
-                href={`/mission-control?mission=${item.linked_mission_id}`}
-                className="body-2 gap-spacing-1 rounded-spacing-2 px-spacing-3 py-spacing-1-5 inline-flex items-center text-primary transition-colors hover:bg-hover-subtle"
+                href={`/mission-control?mission=${item.linked_mission_id}${item.linked_mission_subtask_id ? `&subtask=${item.linked_mission_subtask_id}` : ''}`}
+                className="body-2 gap-spacing-1 rounded-spacing-2 px-spacing-3 py-spacing-1-5 text-primary hover:bg-hover-subtle inline-flex items-center transition-colors"
               >
-                View in Mission Control
+                {item.linked_mission_subtask_id
+                  ? 'View linked Mission step'
+                  : 'View in Mission Control'}
               </a>
             </div>
           ) : null}

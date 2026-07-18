@@ -1,4 +1,7 @@
-import { CONVERSATION_ACTIONS_TOAST_ERRORS, CONVERSATION_ACTIONS_TOAST_SUCCESS } from '@/lib/conversations/conversation-toast-errors.config'
+import {
+  CONVERSATION_ACTIONS_TOAST_ERRORS,
+  CONVERSATION_ACTIONS_TOAST_SUCCESS,
+} from '@/lib/conversations/conversation-toast-errors.config'
 
 // ─── Reporting ───────────────────────────────────────────────────────────────
 export const SPACES_REPORTING_TOAST_ERRORS = {
@@ -63,6 +66,12 @@ export const SPACES_SHARE_TOAST_SUCCESS = {
 export const SPACES_ACTIONS_TOAST_ERRORS = {
   DELETE_SPACE_FAILED: { userMessage: 'Failed to delete space — try again.' },
   CREATE_ARTIFACT_FAILED: { userMessage: 'Could not create artifact — try again.' },
+  COMPLETE_LINKED_MISSION_STEP_FAILED: {
+    userMessage: 'Could not complete the linked Mission step — try again.',
+  },
+  LINKED_AGENT_STEP_STATUS_MANAGED: {
+    userMessage: 'This task follows its agent-owned Mission step automatically.',
+  },
   UNDO_FAILED: { userMessage: 'Could not update those task changes.' },
   REDO_NOTHING: { userMessage: 'Nothing to redo; sync cleared.' },
   UNDO_PARTIAL: { userMessage: 'Some changes could not be reverted.' },
@@ -77,6 +86,12 @@ export const SPACES_ACTIONS_TOAST_ERRORS = {
     userMessage: 'Google Doc created, but its link could not be saved to Vibey.',
   },
 } as const
+
+export function resolveSpaceTaskUpdateError(linkedMissionStep: boolean, markedDone: boolean) {
+  return linkedMissionStep && markedDone
+    ? SPACES_ACTIONS_TOAST_ERRORS.COMPLETE_LINKED_MISSION_STEP_FAILED.userMessage
+    : 'Failed to update task'
+}
 
 export const SPACES_ACTIONS_TOAST_SUCCESS = {
   ...CONVERSATION_ACTIONS_TOAST_SUCCESS,

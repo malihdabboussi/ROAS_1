@@ -103,6 +103,7 @@ export abstract class MissionsRepositoryPlansBase extends MissionsRepositoryMiss
       sort_order: number
       depends_on: string[]
       scheduled_at?: string | null
+      publish_to_task_list?: boolean
       intent?: Record<string, unknown>
       output_contract?: Record<string, unknown> | null
       contract_status?: string | null

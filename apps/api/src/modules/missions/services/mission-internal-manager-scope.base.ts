@@ -1,6 +1,10 @@
 import { randomUUID } from 'crypto'
 import { BadRequestException } from '@nestjs/common'
-import type { ManagerAmendFieldsDto, ManagerAppendSubtasksDto, ManagerPrepareReplanDto } from '../dto'
+import type {
+  ManagerAmendFieldsDto,
+  ManagerAppendSubtasksDto,
+  ManagerPrepareReplanDto,
+} from '../dto'
 import { priorityToRank } from '../types/missions.types'
 import { MissionInternalCallbackBase } from './mission-internal-callback.base'
 
@@ -83,9 +87,18 @@ export abstract class MissionInternalManagerScopeBase extends MissionInternalCal
         dto.mission_id,
       )
 
-      const uniqueAgentKeys = [...new Set(dto.subtasks.map((st) => st.assignTo))]
-      for (const agentKey of uniqueAgentKeys) {
-        await this.assertAgentRegisteredForUser(supabase, dto.user_id, agentKey, dto.org_id)
+      const parsedAssignees = dto.subtasks.map((st) => this.resolveSubtaskAssignee(st.assignTo))
+      for (const assignee of parsedAssignees) {
+        if (assignee.type === 'human' && assignee.user_id) {
+          await this.assertHumanAssignee(supabase, dto.org_id, assignee.user_id, dto.user_id)
+        } else if (assignee.agent_key) {
+          await this.assertAgentRegisteredForUser(
+            supabase,
+            dto.user_id,
+            assignee.agent_key,
+            dto.org_id,
+          )
+        }
       }
 
       const existingActiveIds = await this.missionInternalRepository.listActiveSubtaskIds(
@@ -102,6 +115,8 @@ export abstract class MissionInternalManagerScopeBase extends MissionInternalCal
       const appendScheduleMap = new Map<string, string | null>()
       const rows = dto.subtasks.map((st, idx) => {
         const dbId = subtaskIdMap.get(st.id)!
+        const assignee = parsedAssignees[idx]!
+        const isHuman = assignee.type === 'human'
         const dependsOn = (st.dependsOn || [])
           .map((depId) => subtaskIdMap.get(depId) || depId)
           .filter((id) => newMappedUUIDs.has(id) || existingActiveIds.has(id))
@@ -110,12 +125,19 @@ export abstract class MissionInternalManagerScopeBase extends MissionInternalCal
           id: dbId,
           mission_id: dto.mission_id,
           user_id: dto.user_id,
+          org_id: dto.org_id ?? null,
           title: st.title.trim().slice(0, 500),
-          assigned_agent_key: st.assignTo,
+          status: isHuman && dependsOn.length === 0 ? 'awaiting_human' : 'pending',
+          assignee_type: isHuman ? ('human' as const) : ('agent' as const),
+          assigned_agent_key: isHuman ? null : assignee.agent_key,
+          assigned_user_id: isHuman ? assignee.user_id : null,
+          awaiting_human_since: isHuman && dependsOn.length === 0 ? new Date().toISOString() : null,
+          sla_escalate_at: isHuman && dependsOn.length === 0 ? this.humanSubtaskSlaAt() : null,
           sort_order: maxSortOrder + 1 + idx,
           depends_on: dependsOn,
           intent: st.intent || {},
           scheduled_at: st.scheduledAt ?? null,
+          publish_to_task_list: st.publishToTaskList === true,
           output_contract: st.outputContract ?? null,
           contract_status: st.outputContract ? 'pending' : null,
           contract_verification: null,
@@ -130,6 +152,24 @@ export abstract class MissionInternalManagerScopeBase extends MissionInternalCal
         const mappedId = subtaskIdMap.get(st.id)
         if (!mappedId) continue
         if ((st.dependsOn || []).length > 0) continue
+        const assignee = parsedAssignees[dto.subtasks.indexOf(st)]!
+        if (assignee.type === 'human') {
+          await this.missionOutboxService.enqueueOutboxEvent(supabase, {
+            missionId: dto.mission_id,
+            userId: dto.user_id,
+            orgId: dto.org_id,
+            eventType: 'mission.subtask.awaiting_human.requested',
+            dedupeKey: `mission:${dto.mission_id}:subtask:${mappedId}:awaiting_human:append`,
+            priorityRank: priorityToRank(mission.priority),
+            payload: {
+              phase: 'awaiting_human',
+              subtask_id: mappedId,
+              assigned_user_id: assignee.user_id,
+              requested_by: 'manager_append',
+            },
+          })
+          continue
+        }
         await this.missionOutboxService.enqueueOutboxEvent(supabase, {
           missionId: dto.mission_id,
           userId: dto.user_id,
@@ -178,7 +218,14 @@ export abstract class MissionInternalManagerScopeBase extends MissionInternalCal
           ...(dto.idempotency_key ? { idempotency_key: dto.idempotency_key } : {}),
         },
       })
-      return { ok: true, appended: dto.subtasks.length }
+      return {
+        ok: true,
+        appended: dto.subtasks.length,
+        subtasks: dto.subtasks.map((subtask) => ({
+          planner_id: subtask.id,
+          subtask_id: subtaskIdMap.get(subtask.id),
+        })),
+      }
     })
   }
 
@@ -278,6 +325,4 @@ export abstract class MissionInternalManagerScopeBase extends MissionInternalCal
       return { ok: true, cancelled_subtask_count: cancelledCount }
     })
   }
-
-
 }

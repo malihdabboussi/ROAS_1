@@ -50,12 +50,17 @@ export const ManagerEditSubtaskDtoSchema = z
     subtask_id: z.string().uuid(),
     title: z.string().min(1).max(500).optional(),
     assigned_agent_key: AgentKeySchema.optional(),
+    dependsOn: z.array(z.string().uuid()).max(100).optional(),
     intent: IntentPacketSchema.partial().optional(),
     idempotency_key: z.string().min(8).max(255).optional(),
   })
   .refine(
-    (v) => v.title !== undefined || v.assigned_agent_key !== undefined || v.intent !== undefined,
-    { message: 'At least one of title, assigned_agent_key, intent is required' },
+    (v) =>
+      v.title !== undefined ||
+      v.assigned_agent_key !== undefined ||
+      v.dependsOn !== undefined ||
+      v.intent !== undefined,
+    { message: 'At least one of title, assigned_agent_key, dependsOn, intent is required' },
   )
 export type ManagerEditSubtaskDto = z.infer<typeof ManagerEditSubtaskDtoSchema>
 
@@ -90,13 +95,18 @@ export const AwarenessEditSubtaskDtoSchema = z
     subtask_id: z.string().uuid(),
     title: z.string().min(1).max(500).optional(),
     assigned_agent_key: AgentKeySchema.optional(),
+    dependsOn: z.array(z.string().uuid()).max(100).optional(),
     intent: IntentPacketSchema.partial().optional(),
     idempotency_key: z.string().min(8).max(255).optional(),
     awareness_session_id: z.string().uuid().optional(),
   })
   .refine(
-    (v) => v.title !== undefined || v.assigned_agent_key !== undefined || v.intent !== undefined,
-    { message: 'At least one of title, assigned_agent_key, intent is required' },
+    (v) =>
+      v.title !== undefined ||
+      v.assigned_agent_key !== undefined ||
+      v.dependsOn !== undefined ||
+      v.intent !== undefined,
+    { message: 'At least one of title, assigned_agent_key, dependsOn, intent is required' },
   )
 export type AwarenessEditSubtaskDto = z.infer<typeof AwarenessEditSubtaskDtoSchema>
 

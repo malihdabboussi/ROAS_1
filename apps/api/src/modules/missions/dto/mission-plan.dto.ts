@@ -150,6 +150,7 @@ export const PlanSubtaskSchema = z.object({
   assertionKeys: z.array(z.string().min(1).max(80)).max(40).optional().default([]),
   intent: IntentPacketSchema,
   scheduledAt: z.string().datetime().nullable().optional(),
+  publishToTaskList: z.boolean().optional().default(false),
   outputContract: MissionOutputContractSchema.optional(),
 })
 
