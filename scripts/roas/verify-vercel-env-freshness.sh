@@ -63,11 +63,15 @@ def api(path):
 
 
 try:
-    deps = api(f"/v6/deployments?projectId={pid}&teamId={team}&target=production&limit=1")["deployments"]
-    if not deps:
-        print(f"FAIL  {name}: no production deployment found")
+    deps = api(f"/v6/deployments?projectId={pid}&teamId={team}&target=production&limit=20")["deployments"]
+    deployment = next(
+        (item for item in deps if (item.get("state") or item.get("readyState")) == "READY"),
+        None,
+    )
+    if not deployment:
+        print(f"FAIL  {name}: no ready production deployment found")
         sys.exit(1)
-    build_ms = deps[0].get("createdAt") or deps[0].get("created")
+    build_ms = deployment.get("createdAt") or deployment.get("created")
     envs = api(f"/v9/projects/{pid}/env?teamId={team}").get("envs", [])
     by_key = {}
     for e in envs:
