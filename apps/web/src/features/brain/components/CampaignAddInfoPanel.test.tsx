@@ -281,7 +281,9 @@ describe('CampaignAddInfoPanel', () => {
 
   it('queues local text files from the import input', async () => {
     const { container } = renderCampaignAddInfoPanel()
-    const file = new File(['Campaign file knowledge.'], 'campaign-notes.txt', { type: 'text/plain' })
+    const file = new File(['Campaign file knowledge.'], 'campaign-notes.txt', {
+      type: 'text/plain',
+    })
     Object.defineProperty(file, 'text', {
       value: vi.fn().mockResolvedValue('Campaign file knowledge.'),
     })
@@ -350,10 +352,17 @@ describe('CampaignAddInfoPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /import/i }))
     fireEvent.click(await screen.findByRole('button', { name: /import from fathom/i }))
 
-    expect(await screen.findByText('Newer Call')).toBeTruthy()
+    const newerCall = await screen.findByRole('button', { name: /Newer Call/ })
+    expect(newerCall.getAttribute('aria-pressed')).toBe('false')
+    const fathomDialog = screen.getByRole('dialog', { name: 'Import Fathom Calls' })
+    expect(fathomDialog.getAttribute('aria-describedby')).toBe(
+      screen.getByText(/Select calls to import/).id,
+    )
+    expect(screen.getByRole('button', { name: 'Close Fathom calls' })).toBeTruthy()
     expect(screen.getByText('Older Call')).toBeTruthy()
 
-    fireEvent.click(screen.getByText('Newer Call'))
+    fireEvent.click(newerCall)
+    expect(newerCall.getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(screen.getByRole('button', { name: /import 1 selected/i }))
 
     await waitFor(() => {
@@ -367,26 +376,17 @@ describe('CampaignAddInfoPanel', () => {
   })
 
   it('loads Fireflies transcripts and queues a transcript for campaign import', async () => {
-    const transcript = {
-      id: 'transcript-1',
-      title: 'Fireflies Call',
-      date: 1782288000,
-    }
-    mocks.listFirefliesTranscripts.mockResolvedValue([transcript])
-
+    mocks.listFirefliesTranscripts.mockResolvedValue([
+      { id: 'transcript-1', title: 'Fireflies Call', date: 1782288000 },
+    ])
     renderCampaignAddInfoPanel()
-
     fireEvent.click(screen.getByRole('button', { name: /add information/i }))
     fireEvent.click(screen.getByRole('button', { name: /^import$/i }))
     fireEvent.click(await screen.findByRole('button', { name: /import from fireflies/i }))
-
     expect(await screen.findByText('Fireflies Call')).toBeTruthy()
     expect(mocks.listFirefliesTranscripts).toHaveBeenCalledWith(30)
-
     const transcriptRow = screen.getByText('Fireflies Call').closest('div')?.parentElement
-    expect(transcriptRow).toBeTruthy()
     fireEvent.click(within(transcriptRow as HTMLElement).getByRole('button', { name: /^import$/i }))
-
     await waitFor(() => {
       expect(mocks.importCampaignKnowledgeFromFirefliesTranscript).toHaveBeenCalledWith(
         'campaign-1',

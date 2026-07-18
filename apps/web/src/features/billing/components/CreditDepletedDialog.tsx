@@ -1,5 +1,6 @@
 'use client'
 
+import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { AlertCircle, Zap } from 'lucide-react'
 
 interface CreditDepletedDialogProps {
@@ -21,28 +22,23 @@ export function CreditDepletedDialog({
   onUpgrade,
   isFreeUser,
 }: CreditDepletedDialogProps) {
-  if (!open) return null
-
   return (
-    <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 z-50 bg-modal-overlay" onClick={onClose} />
-
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-        <div className="surface-card w-full max-w-md overflow-hidden rounded-2xl border border-[var(--color-border)] p-8 shadow-2xl">
+    <DialogPrimitive.Root open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="bg-modal-overlay fixed inset-0 z-50" />
+        <DialogPrimitive.Content className="surface-card border-border fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border p-8 shadow-2xl">
           <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-red-500/20 bg-red-500/10">
-              <AlertCircle className="h-8 w-8 text-red-400" />
+            <div className="border-destructive/20 bg-destructive/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border">
+              <AlertCircle className="text-destructive h-8 w-8" />
             </div>
 
-            <h2 className="text-lg font-semibold text-[var(--color-foreground)]">
+            <DialogPrimitive.Title className="text-foreground text-lg font-semibold">
               CREDITS DEPLETED
-            </h2>
-            <p className="body-2 text-muted-foreground mt-2">
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Description className="body-2 text-muted-foreground mt-2">
               You&apos;ve used all your credits for this month. To continue using AI features, you
               can {isFreeUser ? 'upgrade your plan' : 'buy more credits or upgrade your plan'}.
-            </p>
+            </DialogPrimitive.Description>
           </div>
 
           <div className="space-y-2">
@@ -71,8 +67,8 @@ export function CreditDepletedDialog({
               Maybe later
             </button>
           </div>
-        </div>
-      </div>
-    </>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   )
 }

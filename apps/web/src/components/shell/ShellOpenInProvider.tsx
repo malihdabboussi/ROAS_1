@@ -10,8 +10,11 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { toast } from 'sonner'
 import { driveFallbackOpenHref } from '@/components/spaces/DriveDocViewer'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
+import { CANVA_MESSAGES } from '@/lib/canva'
+import { connectComposioIntegration } from '@/lib/integrations/connect-composio-integration'
 import { connectGoogleDrive, getGoogleDriveStatus } from '@/lib/services/google-drive-api'
 import { openMediaAssetInCanva } from '@/lib/services/media-api'
 import { googleDocHref } from '@/lib/spaces/space-doc-export'
@@ -78,14 +81,40 @@ export function ShellOpenInProvider({ children }: { children: ReactNode }) {
         next.push({ id: 'asset-url', label: 'Open asset', href: focusMedia.url })
       }
       if (focusMedia?.canvaSupported && focusMedia.id) {
-        try {
-          const handoff = await openMediaAssetInCanva(focusMedia.id)
-          if (handoff.success && handoff.edit_url) {
-            next.push({ id: 'canva', label: 'Open in Canva', href: handoff.edit_url })
-          }
-        } catch {
-          /* ignore */
-        }
+        const mediaId = focusMedia.id
+        next.push({
+          id: 'canva',
+          label: 'Open in Canva',
+          onSelect: async () => {
+            const pendingTab = window.open('about:blank', '_blank')
+            if (pendingTab) pendingTab.opener = null
+            try {
+              let handoff = await openMediaAssetInCanva(mediaId)
+              if (!handoff.success && handoff.code === 'NOT_CONNECTED') {
+                const connection = await connectComposioIntegration('canva')
+                if (connection.status === 'oauth_opened') {
+                  pendingTab?.close()
+                  toast.message(CANVA_MESSAGES.CONNECTING)
+                  return
+                }
+                handoff = await openMediaAssetInCanva(mediaId)
+              }
+              if (!handoff.success) {
+                pendingTab?.close()
+                toast.error(CANVA_MESSAGES.IMPORT_FAILED)
+                return
+              }
+              toast.success(CANVA_MESSAGES.OPENING)
+              if (pendingTab) pendingTab.location.replace(handoff.edit_url)
+              else if (!window.open(handoff.edit_url, '_blank', 'noopener,noreferrer')) {
+                window.location.assign(handoff.edit_url)
+              }
+            } catch {
+              pendingTab?.close()
+              toast.error(CANVA_MESSAGES.IMPORT_FAILED)
+            }
+          },
+        })
       }
 
       if (focusItemId) {

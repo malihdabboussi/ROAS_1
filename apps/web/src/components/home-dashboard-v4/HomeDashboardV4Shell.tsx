@@ -6,9 +6,12 @@ import { cn } from '@/lib/utils/cn'
 
 export function HomeDashboardV4Shell({
   children,
+  topBar,
   chatCollapsed = false,
 }: {
   children: ReactNode
+  /** Renders above the column but inside the hero glow (e.g. agent picker). */
+  topBar?: ReactNode
   chatCollapsed?: boolean
 }) {
   return (
@@ -20,9 +23,11 @@ export function HomeDashboardV4Shell({
     >
       <div className="home-dashboard-v4-hero-glow" aria-hidden />
       <div className="home-dashboard-v4-hero-grid" aria-hidden />
+      {topBar ? <div className="relative shrink-0">{topBar}</div> : null}
       <div
         className={cn(
           'home-dashboard-v4-column',
+          topBar && 'home-dashboard-v4-column-with-top-bar',
           chatCollapsed && 'home-dashboard-v4-column-chat-collapsed',
         )}
       >

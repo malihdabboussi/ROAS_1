@@ -1,14 +1,39 @@
+## 2026-07-17 - [ARCH] Split Space doc menu surfaces after Canva export wiring
+
+Status: Open
+Found while: Adding native Canva document export
+Files:
+
+- `apps/web/src/features/spaces/components/doc-menu/DocMenuDropdown.tsx` (487 LOC; component limit 400)
+- `apps/web/src/features/spaces/components/doc-menu/use-doc-menu-actions.ts` (300 LOC; at hook limit)
+  Evidence: `wc -l` after extracting the shared Canva action into `use-open-space-doc-in-canva.ts`; the editor returned below its limit, but these pre-existing menu surfaces remain over/at their limits.
+  Needed work: Split the doc menu's export, move/copy, and core-action submenus; extract remaining export actions from the menu hook.
+  Deferred because: Native Canva import and removal of duplicate Canva orchestration were in scope; decomposing the full doc menu is separate behavior-neutral architecture work.
+
+
+## 2026-07-17 - [ARCH] SpaceItemsContainer still over LOC after space-work tab sync
+
+Status: Open
+Found while: Space work dock tabs (Phase A/B)
+Files:
+
+- `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx` (~1940 LOC)
+  Evidence: `wc -l` after adding `useSpaceWorkTabSync` call only.
+  Needed work: Continue extracting deep-link / event / toolbar wiring out of the container.
+  Deferred because: Tab sync belongs in a hook; splitting the container was out of scope for the dock ship.
+
+
 ## 2026-07-17 - [ARCH] HQ flyout files over component LOC limit
 
 Status: Open
 Found while: Sidebar submenu More / nested Campaigns / Brain enable rows
 Files:
 
-- `apps/web/src/components/layout/sidebar/SidebarHqHubMenuContent.tsx` (455)
 - `apps/web/src/components/layout/sidebar/SidebarHqSpacesGroupedList.tsx` (448)
   Evidence: `wc -l` after Projects nested flyout + campaign spacing pass.
-  Needed work: Split dock flyout renderers / campaign sub-flyout into dedicated components.
+  Needed work: Split campaign sub-flyout into dedicated components.
   Deferred because: Behavior delivery was in-scope; further split would expand this pass.
+  Note: `SidebarHqHubMenuContent.tsx` resolved 2026-07-18 — split into `SidebarHqHubMenuNavRow.tsx` + `SidebarHqHubMenuDockFlyouts.tsx` (281 LOC).
 
 
 ## 2026-07-17 - [ARCH] Studio chat.service / SpaceVibeyChatPanel still over LOC (pre-existing)
@@ -55,16 +80,15 @@ Status: Open
 Found while: Implementing / polishing phased shell redesign
 Files:
 
-- `apps/web/src/components/shell/ShellRightPanelSources.tsx` — Sources stub only
 - `apps/web/src/components/shell/ShellTopBar.tsx` — crumb ⋯ is present but options menu not wired
 - `apps/web/src/features/home/components/AgendaCard.tsx` — 629 LOC (over 600); split list-view render after NEXT hero work
 - `apps/web/src/features/brain/components/BrainVisualizationBreadcrumbLayer.tsx` — Brain scope crumbs still overlay the canvas; not yet using `ShellBreadcrumb`
 - `apps/web/src/features/home/hooks/use-home-chat-hero-collapsed.ts` — unused by Home; only SpaceMediaView uses HomeChatHeroToggle
 - `apps/web/src/components/home-dashboard-v4/HomeDashboardV4Composer.tsx` — narrow drawer should hide campaign scope + mic via `data-shell-hide-narrow` hooks
-- `apps/web/src/components/layout/sidebar/SidebarHqHubMenuContent.tsx` (507) / `SidebarHqSpacesRows.tsx` (402) / `SidebarHqFlyouts.tsx` (359) — grew during shared flyout redesign
+- `apps/web/src/components/layout/sidebar/SidebarHqSpacesRows.tsx` (402) / `SidebarHqFlyouts.tsx` (359) — grew during shared flyout redesign
 - `apps/web/src/components/layout/sidebar/SidebarTeam2Flyout.tsx` — top actions use new row classes; agent/DM rows still older density
   Evidence: Shared `HubDockFlyout` wired for rail + expanded; Campaigns accordion shipped.
-  Needed work: Wire crumb ⋯ actions; split AgendaCard; Sources ontology; prune unused home-collapse hook; split oversized sidebar flyout hosts; finish Team flyout row density.
+  Needed work: Wire crumb ⋯ actions; split AgendaCard; prune unused home-collapse hook; split oversized sidebar flyout hosts; finish Team flyout row density.
   Deferred because: Flyout shell/Campaigns accordion were in-scope; Team row polish + LOC splits are adjacent.
 
 
@@ -638,13 +662,13 @@ Files:
 ## 2026-07-15 - [ARCH] DocEditorPanelInner remains over component LOC limit
 
 Status: Open
-Found while: Option A visual-doc → presentation dual-write UI wiring
+Found while: Keeping the complete editable document title visible below the Space editor action bar
 Files:
 
 - `apps/web/src/features/spaces/components/docs/DocEditorPanelInner.tsx`
-  Evidence: `wc -l` reports 1047 LOC after Open Design wiring (frontend component target 400; hard ceiling 600).
+  Evidence: `wc -l` reports 1063 LOC after extracting the direct title/action layout (frontend component target 400; hard ceiling 600).
   Needed work: Split visual-mode chrome, doc chrome, media/share modals, and full-screen portal into focused components; keep prop contract stable.
-  Deferred because: In-scope change only added Open Design routing for `_doc_visual_presentation_id`; full split is adjacent debt already noted in prior follow-ups.
+  Deferred because: The in-scope title layout was extracted and behavior-locked; decomposing the remaining editor shell is separate architecture work.
 
 ## 2026-07-15 - [FEATURE] Sync `_doc_visual_html` when Design edits the linked presentation
 
@@ -7119,6 +7143,22 @@ Files:
 - Needed work: Split Space document visual-mode orchestration from the read-only body preview, and continue decomposing Spaces sharing/activity APIs out of the feature service.
 - Why not now: Inline editing and broad Spaces service decomposition are separate behavior changes; this fix only centers Mission previews and exposes the existing Google export capability.
 
+## 2026-07-17 — Canonical Space document editor LOC limit (pre-existing)
+
+- Feature/app: web / Spaces document editor
+- File: `apps/web/src/features/spaces/components/docs/DocEditorPanel.tsx`
+- Evidence: `wc -l` reports 683 LOC after adding the owning-Space save override; the component was already well above the 400-line component limit and owns document hydration, autosave, visual generation, exports, field state, uploads, and panel orchestration.
+- Needed work: Split the document persistence/context controller from editor presentation and move reusable inline-editor contracts behind a true shared boundary, replacing the temporary `SpaceDocEditorPanelAdapter` bridge.
+- Why not now: The requested fix reuses the canonical editor and adds one bounded persistence route; decomposing the full document controller would materially broaden the behavior and regression surface.
+
+## 2026-07-17 — Space Doc export dropdown decomposition
+
+- Feature/app: web / Spaces document editor
+- File: `apps/web/src/features/spaces/components/docs/editor/DocEditorExportDropdown.tsx`
+- Evidence: The touched export dropdown is 359 LOC, near the 400-line component target, because it owns Google creation state, five native export formats, two visual export formats, menu placement, and the persistent Google header portal.
+- Needed work: Extract Google document creation/open state and the export menu rows into focused hooks/components while preserving the header and inline-rail trigger variants.
+- Why not now: The requested change needed the existing Google action surfaced persistently and Fields collapsed; a broader export-controller refactor would expand the behavioral surface beyond this UI consistency fix.
+
 ## 2026-07-17 — Global verification blocked by unrelated dirty-work errors
 
 - Feature/app: api + web verification
@@ -7126,3 +7166,128 @@ Files:
 - Evidence: Full API typecheck reports the unrelated `triggered_for` Fathom OAuth type mismatch. Full web typecheck reports unrelated roster fixture, shell null-index, Skills callback, and older ChatInput/chat-message test errors; no error points at the global-search files. Route inventory is also red from a large pre-existing set of uncommitted routes outside search, while the removed `/api/studio/search` route is absent from both current inventory and the edited snapshot.
 - Needed work: Reconcile the dirty route inventory snapshot and repair the listed type errors in their owning feature changes.
 - Why not now: Those files and routes belong to concurrent work already present in the workspace; changing them would overwrite or broaden beyond the requested search fix.
+## 2026-07-17 — Mission task-number title persistence decision
+
+- Feature/app: Missions + Spaces documents
+- Files: `apps/web/src/features/mission-control/components/dialogs/subtask-detail.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-document-mission-deliverables.service.ts`
+- Evidence: Missions currently prefixes its display copy with `Task N`, while the underlying Space document keeps its source title. The webinar document publisher separately canonicalizes several titles to `WEB#N`, so persisting `Task N` automatically would create two competing number systems. The artifact document mission service is also 579 LOC, near its 600-line service limit.
+- Needed work: Choose one durable naming contract (`Task N`, `WEB#N`, or separate origin metadata), then persist it at artifact creation and backfill existing linked Space documents.
+- Why not now: The reported 404 has a deterministic routing fix; silently renaming existing customer documents without resolving the numbering contract could overwrite intentional titles and create `Task N — WEB#N` duplicates.
+## 2026-07-17 - Conversation scope picker near frontend LOC limit
+
+- Feature/app: Shared conversation UI / web
+- File: `apps/web/src/components/conversations/ConversationScopePicker.tsx`
+- Evidence: `wc -l` reports 397 LOC after moving the pre-existing Team picker into shared conversation UI, adding atomic scope selection plus General reset, and supporting a compact Space-only label; the 400-line ESLint limit passes but leaves no practical growth room.
+- Needed work: Split campaign loading and portaled campaign / Space menu rendering into focused shared hooks/components under behavior-lock tests.
+- Reason deferred: The requested behavior is complete and verified; a larger structural decomposition would be unrelated refactoring beyond the scope-assignment change.
+
+## 2026-07-17 — Shared API proxy route and test LOC limits (pre-existing)
+
+- Feature/app: web / authenticated agent proxy
+- Files: `apps/web/src/app/api/proxy/[...path]/route.ts`, `apps/web/src/app/api/proxy/[...path]/route.test.ts`
+- Evidence: `wc -l` reports 1,295 LOC for the shared API route versus the 400-line API route limit and 483 LOC for its test after adding the shared-runtime restart regression. The production route was already 1,286 LOC and the test already grouped all proxy behaviors in one file before this fix.
+- Needed work: Extract authenticated runtime resolution, agent fetch retry policy, chat SSE warm-up, and generic response relaying into focused server-only helpers with split behavior-lock test files.
+- Why not now: The incident fix changes one bounded retry policy; decomposing a proxy used by every frontend API request would materially broaden regression and rollout risk.
+
+## 2026-07-17 - [WEB/SHELL] SidebarHqRail near component LOC limit
+
+- Feature/app: web / Claude-ChatGPT shell
+- Files: `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx`
+- Evidence: `wc -l` reports 388 LOC (component soft max 400; 80% action threshold 320).
+- Needed work: Extract rail item rendering (link/panel button map) into a focused `SidebarHqRailItems.tsx` (or similar) so pin/peek + layer shell stay thin.
+- Why not now: In-scope fix only synced rail/menu visibility; decomposition is adjacent debt found while touching the file.
+
+## 2026-07-17 — Artifact trigger consumers near or above frontend LOC limits
+
+- Feature/app: web / shared artifact viewer consumers
+- Files: `apps/web/src/features/spaces/components/docs/DocEditorPanelInner.tsx`, `apps/web/src/features/spaces/components/artifacts/ArtifactSpaceView.tsx`, `apps/web/src/features/studio/components/message-bubble/FinalOutputCards.tsx`
+- Evidence: Current line counts are 1,074, 380, and 330 respectively; the component target is 400 LOC with extraction expected at 80%. `SpaceDocDeliverablePreview.tsx` was reduced from a 396-line duplicate renderer to a 34-line canonical-editor adapter in the document-unification change. Existing follow-ups cover the remaining large document editor and artifact ownership splits, while `FinalOutputCards.tsx` also has limited headroom.
+- Needed work: Continue the already-planned document/editor decomposition and extract final-output target mapping/card rendering before adding more output families.
+- Why not now: The artifact-viewer change only replaces click destinations and preserves each feature's established renderer/editor; decomposing these mature surfaces in the same change would materially broaden regression risk.
+
+## 2026-07-17 — Space Media view approaching component LOC limit
+
+- Feature/app: web / Spaces Media
+- File: `apps/web/src/features/spaces/views/media/SpaceMediaView.tsx`
+- Evidence: `wc -l` reports 347 LOC after removing the embedded generation composer; the component target is 400 LOC and the 80% extraction threshold is 320.
+- Needed work: Extract media group rendering and card/menu interactions into focused components while keeping fetching and new-chat orchestration in the view container.
+- Why not now: The requested change removes the duplicate composer and corrects artifact/chat behavior; restructuring the full gallery would broaden the interaction surface beyond this fix.
+
+## 2026-07-17 - [WEB/MISSIONS] SubtasksSection near component LOC limit
+
+- Feature/app: web / mission-control
+- Files: `apps/web/src/features/mission-control/components/dialogs/SubtasksSection.tsx`
+- Evidence: `wc -l` ~380 LOC after denser-row style pass (component soft max 400).
+- Needed work: Extract subtask row + assignee menu into `SubtaskListRow.tsx`.
+- Why not now: Scoped UI polish only; split would widen the change.
+
+## 2026-07-17 — Mission modal assertions lag current task-number labels
+
+- Feature/app: web / mission-control
+- File: `apps/web/src/features/mission-control/components/dialogs/MissionDetailModal.test.tsx`
+- Evidence: The full Mission modal suite has two pre-existing failures because assertions still search for the exact deliverable title `Launch copy`, while the current UI displays the numbered title `Task 1 — Launch copy`. The new dock-visibility regression passes independently.
+- Needed work: Update the affected fixtures/assertions as part of the task-number title persistence decision so tests encode the chosen durable naming contract.
+- Why not now: Renaming-contract cleanup is separate from hiding the Mission surface beneath an active document dock and is already tracked as an unresolved product decision.
+
+## 2026-07-17 — Funnel history coverage beyond page source files
+
+- Feature/app: API + web / funnels and websites
+- Files: `apps/api/src/modules/funnels/services/funnel-history.service.ts`, `apps/api/src/modules/funnels/repositories/funnel-history.repository.ts`
+- Evidence: Durable history snapshots and restores `funnel_files` for HTML bundle pages. Funnel settings, uploaded assets, and legacy TSX page content are outside the existing change-item restore contract.
+- Needed work: Define snapshot and restore contracts for settings, asset references, and legacy page content if product history must roll back the entire artifact rather than page source edits.
+- Why not now: The requested builder-style version timeline can safely reuse the existing file-level change sets; broad artifact rollback needs separate data-retention and ownership decisions.
+
+## 2026-07-17 — Artifact preview pane approaching component LOC limit
+
+- Feature/app: web / Studio artifact preview
+- File: `apps/web/src/features/studio/components/preview/artifacts/preview/ArtifactPreviewPane.tsx`
+- Evidence: `wc -l` reports 323 LOC after wiring the version-history timeline, just above the 320-line extraction threshold for a 400-line component target.
+- Needed work: Extract funnel toolbar/history orchestration into a focused preview hook or chrome component before adding more artifact families.
+- Why not now: This change adds a bounded history adapter to the existing toolbar; restructuring the multi-artifact preview would broaden the regression surface beyond funnel and website history.
+
+## 2026-07-17 — OpenClaw gateway service and test near backend LOC limit
+
+- Feature/app: agent-api / OpenClaw runtime policy
+- Files: `apps/agent-api/src/modules/shared/services/openclaw-gateway.service.ts`, `apps/agent-api/src/modules/shared/openclaw-gateway.service.test.ts`
+- Evidence: `wc -l` reports 575 LOC for the service and 517 LOC for its main test versus the 600-line maximum and 480-line extraction threshold. The new visual-review policy cases were already split into a focused 98-line test file.
+- Needed work: Extract agent tool-policy normalization and its focused tests into a dedicated policy service/test before expanding agent-specific runtime permissions further.
+- Why not now: The requested change is one bounded browser-policy exception for the existing Designer/Lux visual-review lane; decomposing runtime registration and reconciliation would broaden the change beyond funnel/site design quality.
+
+## 2026-07-17 — App cleanup follow-up: near-limit interaction surfaces
+
+- Feature/app: web / Brain training, sharing, themes, Mission activity, shell, and media preview
+- Files: `apps/web/src/features/brain/components/training/TrainingModal.tsx` (399 LOC), `apps/web/src/features/studio/components/preview/media/MediaPreviewPanes.tsx` (400 LOC), `apps/web/src/features/mission-control/components/dialogs/ActivityTimelineLogItem.tsx` (370 LOC), `apps/web/src/components/conversations/ConversationShareModal.tsx` (335 LOC), `apps/web/src/features/themes/components/ThemeBrandingImportDialog.tsx` (331 LOC), `ThemeFileImportDialog.tsx` (324 LOC), `apps/web/src/features/spaces/components/ViewShareModal.tsx` (328 LOC), and `apps/web/src/components/shell/ShellChatMenu.tsx` (323 LOC)
+- Evidence: Changed-file LOC and ESLint checks pass, but each file is at or above the 80% extraction threshold for the enforced 400-line frontend limit. `MediaPreviewPanes.tsx` is exactly at the limit and `TrainingModal.tsx` has one line of headroom.
+- Needed work: Extract each surface's repeated body/row or state-controller responsibility before adding behavior. Prioritize shared copy/open actions from media previews and modal body orchestration from Brain training.
+- Why not now: The requested cleanup fixed proven behavior/accessibility issues and already extracted the activity variants needed to pass lint; further splits would be behavior-neutral follow-up work.
+
+## 2026-07-17 — App cleanup follow-up: remaining false-link and modal debt
+
+- Feature/app: web / email sender identity, campaign deletion, and Cortex Max
+- Files: `apps/web/src/features/email/components/sender-identities/AddSenderIdentityDialog.tsx`, `apps/web/src/components/layout/DeleteCampaignDialog.tsx`, `apps/web/src/features/brain/components/CortexMaxModal.tsx`
+- Evidence: The final static scan still finds two `href="#"` preview links in `AddSenderIdentityDialog.tsx` at lines 641 and 645; that component is 714 LOC. `DeleteCampaignDialog.tsx` is 468 LOC and its Radix dialog has no description or named close action. `CortexMaxModal.tsx` is 378 LOC, has no dialog description and unnamed close actions, and contains substantial pre-existing inline geometry/style-token debt.
+- Needed work: Make the sender links explicitly non-interactive preview text (or provide real destinations), split the oversized sender/campaign dialogs, add dialog semantics under focused tests, and decompose/tokenize Cortex Max before expanding it.
+- Why not now: The sender preview and campaign/Cortex surfaces require coordinated decomposition to avoid touching over-limit components with partial fixes; the verified cleanup already removed the same false-link/modal defects from smaller in-scope surfaces.
+
+## 2026-07-17 — App cleanup follow-up: public agent composer height utility
+
+- Feature/app: web / public agent
+- File: `apps/web/src/features/public-agent/containers/PublicAgentContainer.tsx`
+- Evidence: The touched public-agent surface now uses shared message UI and token colors, but its textarea retains the pre-existing `style={{ maxHeight: 120 }}` because no approved utility exists for that cap.
+- Needed work: Approve and add a semantic composer max-height utility to both product globals files, then replace the inline geometry and cover textarea growth behavior.
+- Why not now: Repository styling rules require reporting and approval before inventing a missing utility; this cleanup did not change composer sizing behavior.
+
+## 2026-07-17 — App cleanup global verification remains red outside the cleanup slice
+
+- Feature/app: web / repository-wide verification
+- Evidence: The final focused cleanup suite passes 110/110 tests across 40 files and focused changed-file ESLint passes. The full web suite passes 1,903 tests with 14 failures in 12 unrelated files: `BrainHomeGridCard.test.tsx`, `flows-loop-awareness-context.test.ts`, `MissionDetailModal.test.tsx`, `SegmentFilterBuilder.test.tsx`, `SpaceChatAgentPicker.test.tsx`, `TaskMetaFields.test.tsx`, `space-calendar-day-items.test.ts`, the model/plus/slash ChatInput hook tests, `agent-widget-route-ownership.test.ts`, and `TeamOverviewView.test.tsx`. Full web lint reports 388 pre-existing LOC/boundary/direct-query errors across the broader app. A fresh full typecheck no longer reports any cleanup-file error, but remains red in concurrent shell, sidebar-row, ChatInput, Space picker/source-call, Skills, global-chat fixture, and Studio message-test changes.
+- Needed work: Repair each owning feature's fixture/contract drift, then rerun full lint, typecheck, and the entire web test suite from a clean integration point.
+- Why not now: These failures are outside the audited cleanup surfaces and occur in files already modified by concurrent workspace work; changing them here would overwrite or absorb unrelated work.
+
+## 2026-07-18 — App cleanup follow-up: exported components with no repository consumer
+
+- Feature/app: web / deliverables, channels, and global chat
+- Files: `apps/web/src/features/channels/components/BrainstormListView.tsx`, `apps/web/src/components/global-chat/containers/GlobalChatLayout.tsx`, `apps/web/src/components/global-chat/components/GlobalChatComposerFooter.tsx`, and `apps/web/src/components/deliverables/SpaceDocGoogleExportButton.tsx`
+- Evidence: A final exported-component reference scan finds each exported symbol only at its own declaration, with no import, barrel re-export, test, or JSX consumer under `apps/web/src`.
+- Needed work: Confirm these surfaces are not retained for an imminent route migration, then remove the files and any now-dead helpers in one bounded cleanup.
+- Why not now: Unlike `SegmentViewDialog`, these larger surfaces represent whole alternate flows; their product ownership and replacement path need to be traced before deletion rather than inferred solely from a static reference count.

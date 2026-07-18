@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import { Injectable } from '@nestjs/common'
+import type { AgentSyncOrchestrationContext } from './agent-sync-orchestration.types'
 import {
   composeDefinitionContent,
   expandRuntimeIdentityDefinitions,
@@ -13,7 +14,6 @@ import {
   type SyncManifestEntry,
   type SyncResult,
 } from './agent-sync.types'
-import type { AgentSyncOrchestrationContext } from './agent-sync-orchestration.types'
 
 @Injectable()
 export class AgentSyncOrgAgentService {
@@ -68,10 +68,7 @@ export class AgentSyncOrgAgentService {
     const orgSkillKeys = [...new Set(mergedSkills.map((skill) => skill.skill_key))]
     const orgLibraryResources = await ctx.fetchLibraryResources(orgSkillKeys)
     const mergedResources = ctx.mergeWithLibraryFallback(dedupedResources, orgLibraryResources)
-    const mergedWorkflows = ctx.deduplicateWorkflows(
-      (workflows ?? []) as AgentWorkflowRow[],
-      orgId,
-    )
+    const mergedWorkflows = ctx.deduplicateWorkflows((workflows ?? []) as AgentWorkflowRow[], orgId)
     synced += await ctx.syncAgentSkills(
       path.join(orgBase, agentKey),
       mergedSkills,
@@ -116,6 +113,7 @@ export class AgentSyncOrgAgentService {
         agentKey: openClawId,
         name: agentKey,
         workspace: agentDir,
+        role: registry?.role ?? undefined,
         definitions: runtimeDefs
           .filter((def) => !isUserProfileDefinitionFile(def.file_name))
           .map((def) => ({ file_name: def.file_name, content: def.content })),

@@ -37,20 +37,17 @@ export function MessageQueue<TItem extends ChatQueueItem>({
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
           >
-            <div
-              className="gap-spacing-2 rounded-spacing-2 px-spacing-2 py-spacing-1 group flex cursor-pointer items-center transition-opacity hover:opacity-80"
-              onClick={() => onEdit(item)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') onEdit(item)
-              }}
-            >
-              <span className="body-3 text-muted-foreground min-w-0 flex-1 truncate">
+            <div className="gap-spacing-2 rounded-spacing-2 px-spacing-2 py-spacing-1 group flex cursor-pointer items-center transition-opacity hover:opacity-80">
+              <button
+                type="button"
+                onClick={() => onEdit(item)}
+                aria-label={`Edit ${item.content}`}
+                className="body-3 text-muted-foreground min-w-0 flex-1 truncate text-left"
+              >
                 {item.content}
-              </span>
+              </button>
 
-              <div className="gap-0.5 flex shrink-0 items-center opacity-0 transition-opacity group-hover:opacity-100">
+              <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
                 <Tooltip label="Send now">
                   <button
                     type="button"

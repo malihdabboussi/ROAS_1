@@ -7,10 +7,6 @@ import { toast } from 'sonner'
 import { getIconColor } from '@/components/ui/IconPicker'
 import { useWorkspaceSettingsModal } from '@/features/settings/contexts/WorkspaceSettingsModalContext'
 import { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
-import {
-  VIBEY_OPEN_MEDIA_EVENT,
-  type VibeyOpenMediaDetail,
-} from '@/lib/media/open-media-asset-in-app'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 import type { ArtifactPreviewSelection } from '../components/artifacts/artifact-preview-selection'
 import {
@@ -21,13 +17,11 @@ import type { ContactsViewHandle } from '../components/contacts/ContactsView'
 import { SpaceContentRouter } from '../components/content'
 import { SpaceBreadcrumbHeader, SpaceMoreMenu, SpaceSwitcherDropdown } from '../components/header'
 import { MEDIA_QUERY_KEY, useMediaDetailQuery } from '../components/media/use-media-detail-query'
-import type { MissionsViewHandle } from '../components/MissionsView'
 import { SpaceModalsHost } from '../components/modals'
-import { SpaceItemUpdateProvider } from '../components/SpaceStatusCascadeConfirmProvider'
 import type { CampaignFinanceTabHandle } from '../components/reporting/FinanceOverviewView'
-import { buildNewViewDef, ViewSwitcher } from '../components/ViewSwitcher'
+import { SpaceItemUpdateProvider } from '../components/SpaceStatusCascadeConfirmProvider'
+import { ViewSwitcher } from '../components/ViewSwitcher'
 import { useAllSocialResearchAccountActions } from '../hooks/use-all-social-research-account-actions'
-import { cachedSpaces } from '../hooks/use-cached-spaces'
 import { useCustomizeViewActions } from '../hooks/use-customize-view-actions'
 import { useSpaceActiveView } from '../hooks/use-space-active-view'
 import { useSpaceArtifactActions } from '../hooks/use-space-artifact-actions'
@@ -36,13 +30,28 @@ import { useSpaceCampaignName } from '../hooks/use-space-campaign-name'
 import { useSpaceCurrentUserToolbarMeta } from '../hooks/use-space-current-user-toolbar-meta'
 import { useSpaceCustomizeStageBounds } from '../hooks/use-space-customize-stage-bounds'
 import { useSpaceFieldOptionActions } from '../hooks/use-space-field-option-actions'
+import {
+  useSpaceItemNavigationEvents,
+  useSpaceSelectedItemSync,
+} from '../hooks/use-space-item-navigation-events'
 import { useSpaceItemsRealtime } from '../hooks/use-space-items-realtime'
+import {
+  useSpaceFocusViewTypeEvent,
+  useSpaceMissionsViewFocus,
+} from '../hooks/use-space-missions-view-focus'
+import { useSpaceOpenInlineArtifactEvent } from '../hooks/use-space-open-inline-artifact-event'
+import {
+  useSpaceMediaDeepDetailClear,
+  useSpaceOpenMediaEvent,
+  useSpacePendingMediaQueryApply,
+} from '../hooks/use-space-open-media-event'
 import { useSpaceSocialAccountActions } from '../hooks/use-space-social-account-actions'
-import { resolveTaskCapableViewId } from '../lib/resolve-task-capable-view'
 import { useSpaceSwitcherState } from '../hooks/use-space-switcher-state'
 import { useSpaceToolbarFilters } from '../hooks/use-space-toolbar-filters'
 import { useSpaceToolbarState } from '../hooks/use-space-toolbar-state'
+import { useSpaceUrlViewSync } from '../hooks/use-space-url-view-sync'
 import { useSpaceUserState } from '../hooks/use-space-user-state'
+import { useSpaceWorkTabSync } from '../hooks/use-space-work-tab-sync'
 import { useUpdateItemWithSubtaskCompleteConfirm } from '../hooks/use-update-item-with-subtask-complete-confirm'
 import { useViewPatchFlush } from '../hooks/use-view-patch-flush'
 import { ALL_ARTIFACTS_GROUP_BY_OPTIONS, isArtifactSurfaceViewType } from '../lib/all-artifacts'
@@ -56,6 +65,7 @@ import {
 import { MEDIA_GROUP_BY_OPTIONS, normalizeMediaGroupBy } from '../lib/media-group-by-options'
 import { MISSION_GROUP_BY_OPTIONS } from '../lib/mission-group-by-options'
 import { usesPaidAdsInlineDetail } from '../lib/paid-ads-display-mode'
+import { resolveTaskCapableViewId } from '../lib/resolve-task-capable-view'
 import { updateSpace } from '../services/spaces.service'
 import { useSpacesStore } from '../store/use-spaces-store'
 import {
@@ -72,7 +82,6 @@ import {
   type SocialPlatform,
   type SocialResearchConfig,
   type SpaceSchema,
-  type ViewDef,
 } from '../types/space-schema'
 import { resolveToolbar } from '../views'
 import { SaveViewSlot } from '../views/_shared/SaveViewSeparator'
@@ -98,87 +107,6 @@ const MediaImageWorkspacePanelHost = dynamic(
     ),
   { loading: PreviewHostLoading },
 )
-
-type InlineArtifactOpenDetail = {
-  artifactType?: string
-  artifactId?: string
-  documentId?: string
-  name?: string
-  spaceId?: string
-  spaceItemId?: string
-}
-
-type OpenMissionsViewDetail = {
-  spaceId?: unknown
-  openCapture?: unknown
-  openPlaybook?: unknown
-}
-
-const MISSIONS_VIEW_CATALOG_ITEM = {
-  type: 'missions',
-  label: 'Missions',
-  icon: 'rocket',
-  description: 'Campaign mission control',
-} as const
-
-function buildMissionsViewForSchema(existingViews: ViewDef[]): ViewDef {
-  const base = buildNewViewDef(MISSIONS_VIEW_CATALOG_ITEM)
-  const existingIds = new Set(existingViews.map((view) => view.id))
-  const existingNames = new Set(existingViews.map((view) => view.name))
-  if (!existingIds.has(base.id) && !existingNames.has(base.name)) return base
-
-  let n = 2
-  let nextId = `${base.id}_${n}`
-  while (existingIds.has(nextId)) {
-    n += 1
-    nextId = `${base.id}_${n}`
-  }
-  let nextName = `${base.name} ${n}`
-  while (existingNames.has(nextName)) {
-    n += 1
-    nextName = `${base.name} ${n}`
-  }
-  return { ...base, id: nextId, name: nextName }
-}
-
-function artifactTypeToSpaceViewType(artifactType: string): string | null {
-  switch (artifactType) {
-    case 'funnel':
-      return 'funnels'
-    case 'offer':
-      return 'offers'
-    case 'ad-campaign':
-      return 'ad_campaigns'
-    case 'sequence':
-      return 'sequences'
-    case 'presentation':
-      return 'presentations'
-    case 'avatar':
-      return 'avatars'
-    case 'social-post':
-      return 'social_posts'
-    case 'ad':
-      return 'ads'
-    case 'blog-post':
-      return 'websites'
-    case 'document':
-    case 'space_doc':
-    case 'visual-doc':
-      return 'docs'
-    case 'email':
-      return 'emails'
-    case 'instagram-research':
-      return 'instagram_research'
-    case 'tiktok-research':
-      return 'tiktok_research'
-    case 'youtube-research':
-      return 'youtube_research'
-    case 'twitter-research':
-      return 'twitter_research'
-    default:
-      return null
-  }
-}
 
 export function SpaceItemsContainer() {
   const items = useSpacesStore((s) => s.items)
@@ -223,56 +151,17 @@ export function SpaceItemsContainer() {
   // without full-list refetches that can clobber local optimistic UI.
   useSpaceItemsRealtime(activeSpaceId, applyRealtimeItemChange)
 
+  useSpaceUrlViewSync()
+
   const patchSchema = patchActiveSpaceSchema as (s: SpaceSchema | Partial<SpaceSchema>) => void
 
-  const missionsViewRef = useRef<MissionsViewHandle | null>(null)
-  const pendingMissionCaptureOpenRef = useRef(false)
-  const pendingPlaybookOpenRef = useRef(false)
   const financeOverviewRef = useRef<CampaignFinanceTabHandle | null>(null)
   const contactsViewRef = useRef<ContactsViewHandle | null>(null)
   const spaceBelowViewTabsRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const urlSpaceViewSyncKeyRef = useRef<string | null>(null)
-  const urlSpaceItemDeepLinkRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    if (spaces.length === 0) return
-    const spaceParam = searchParams.get('space')
-    if (!spaceParam || !spaces.some((s) => s.id === spaceParam)) return
-    const vParam = searchParams.get('v')
-    const urlKey = `${spaceParam}\u0000${vParam ?? ''}`
-    const urlSearchChanged = urlSpaceViewSyncKeyRef.current !== urlKey
-    if (urlSearchChanged) urlSpaceViewSyncKeyRef.current = urlKey
-    if (activeSpaceId !== spaceParam) {
-      setActiveSpace(spaceParam)
-    }
-    const targetSpace = spaces.find((s) => s.id === spaceParam)
-    if (
-      urlSearchChanged &&
-      vParam &&
-      targetSpace?.schema?.views?.some((v: { id: string }) => v.id === vParam)
-    ) {
-      setActiveView(vParam)
-    }
-  }, [spaces, searchParams, activeSpaceId, setActiveSpace, setActiveView])
-
-  useEffect(() => {
-    const spaceParam = searchParams.get('space')
-    if (!spaceParam || spaces.some((space) => space.id === spaceParam)) return
-
-    let cancelled = false
-    void (async () => {
-      await cachedSpaces.reload()
-      if (cancelled) return
-      await useSpacesStore.getState().loadSpaces()
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [searchParams, spaces])
+  const prevActiveViewIdForArtifactQsRef = useRef<string | null>(null)
 
   const [artifactDeepDetail, setArtifactDeepDetail] = useState<{
     id: string
@@ -281,8 +170,6 @@ export function SpaceItemsContainer() {
   const [artifactPreviewSelection, setArtifactPreviewSelection] =
     useState<ArtifactPreviewSelection | null>(null)
   const [mediaDeepDetail, setMediaDeepDetail] = useState<{ id: string; title: string } | null>(null)
-  const prevActiveViewIdForArtifactQsRef = useRef<string | null>(null)
-  const pendingMediaOpenRef = useRef<{ id: string; title: string } | null>(null)
   const { artifactId, setArtifactQuery } = useArtifactDetailQuery()
   const { mediaId: mediaDetailId, setMediaQuery: setMediaDetailQuery } = useMediaDetailQuery()
 
@@ -443,97 +330,23 @@ export function SpaceItemsContainer() {
     handleContactDetailLayout,
   } = toolbar
 
-  useEffect(() => {
-    const spaceParam = searchParams.get('space')
-    const itemParam = searchParams.get('item')
-    if (!itemParam || !spaceParam || spaceParam !== activeSpaceId) {
-      urlSpaceItemDeepLinkRef.current = null
-      return
-    }
-    if (!activeSpace || activeSpace.id !== spaceParam) return
-    if (itemsLoadedForSpaceId !== activeSpaceId) return
+  useSpaceWorkTabSync({
+    spaceId: activeSpaceId,
+    docEditorItem,
+    selectedItem,
+  })
 
-    const sig = `${spaceParam}:${itemParam}`
-    if (urlSpaceItemDeepLinkRef.current === sig) return
-
-    const item = items.find((i) => i.id === itemParam)
-    if (!item) {
-      urlSpaceItemDeepLinkRef.current = sig
-      return
-    }
-
-    const vt = (item.custom_data as Record<string, unknown> | undefined)?._view_type
-    if (vt === 'doc') {
-      setSelectedItem(null)
-      setDocEditorItem(item)
-    } else {
-      setDocEditorItem(null)
-      focusTaskCapableViewIfNeeded(spaceParam)
-      openSpaceItemModal(item)
-    }
-
-    urlSpaceItemDeepLinkRef.current = sig
-  }, [
-    searchParams,
+  const { urlSpaceItemDeepLinkRef } = useSpaceItemNavigationEvents({
     activeSpaceId,
-    activeSpace,
-    itemsLoadedForSpaceId,
     items,
+    itemsLoadedForSpaceId,
     focusTaskCapableViewIfNeeded,
     openSpaceItemModal,
     setDocEditorItem,
     setSelectedItem,
-  ])
+  })
 
-  useEffect(() => {
-    if (!selectedItem) return
-    const fresh = items.find((i) => i.id === selectedItem.id)
-    if (fresh) setSelectedItem(fresh)
-    else setSelectedItem(null)
-  }, [items, selectedItem, setSelectedItem])
-
-  useEffect(() => {
-    const onOpenTask = (e: Event) => {
-      const d = (e as CustomEvent<{ itemId?: unknown; spaceId?: unknown }>).detail
-      if (typeof d?.itemId !== 'string') return
-      const targetSpaceId =
-        typeof d.spaceId === 'string' && d.spaceId.trim() ? d.spaceId.trim() : activeSpaceId
-      if (!targetSpaceId) return
-      if (targetSpaceId !== activeSpaceId) {
-        setActiveSpace(targetSpaceId)
-        urlSpaceItemDeepLinkRef.current = null
-        const p = new URLSearchParams(searchParams.toString())
-        p.set('space', targetSpaceId)
-        p.set('item', d.itemId)
-        const qs = p.toString()
-        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
-        return
-      }
-      const item = items.find((i) => i.id === d.itemId)
-      if (item) {
-        focusTaskCapableViewIfNeeded(targetSpaceId)
-        openSpaceItemModal(item)
-        return
-      }
-      urlSpaceItemDeepLinkRef.current = null
-      const p = new URLSearchParams(searchParams.toString())
-      p.set('space', targetSpaceId)
-      p.set('item', d.itemId)
-      const qs = p.toString()
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
-    }
-    window.addEventListener('space-vibey:open-task', onOpenTask as EventListener)
-    return () => window.removeEventListener('space-vibey:open-task', onOpenTask as EventListener)
-  }, [
-    activeSpaceId,
-    focusTaskCapableViewIfNeeded,
-    items,
-    openSpaceItemModal,
-    pathname,
-    router,
-    searchParams,
-    setActiveSpace,
-  ])
+  useSpaceSelectedItemSync(items, selectedItem, setSelectedItem)
 
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
   const openIntegrationsLibrary = useCallback(() => {
@@ -572,232 +385,40 @@ export function SpaceItemsContainer() {
     canCustomizeViews,
   } = activeViewStuff
 
-  useEffect(() => {
-    let retryTimer: ReturnType<typeof setTimeout> | null = null
-    const handleFocusViewType = (event: Event) => {
-      const viewType = (event as CustomEvent).detail?.view_type
-      if (typeof viewType !== 'string') return
-      const focusMatchingView = () => {
-        const currentSchema = useSpacesStore
-          .getState()
-          .spaces.find((space) => space.id === activeSpaceId)?.schema
-        const target = currentSchema?.views?.find((view) => view.type === viewType)
-        if (target) {
-          setActiveView(target.id)
-          return true
-        }
-        return false
-      }
-      retryTimer = setTimeout(() => {
-        if (focusMatchingView()) return
-        void useSpacesStore
-          .getState()
-          .refresh()
-          .then(() => {
-            retryTimer = setTimeout(focusMatchingView, 200)
-          })
-      }, 200)
-    }
-    window.addEventListener('space:focus-view-type', handleFocusViewType as EventListener)
-    return () => {
-      if (retryTimer) clearTimeout(retryTimer)
-      window.removeEventListener('space:focus-view-type', handleFocusViewType as EventListener)
-    }
-  }, [activeSpaceId, setActiveView])
+  useSpaceFocusViewTypeEvent(activeSpaceId, setActiveView)
 
-  useEffect(() => {
-    let retryTimer: ReturnType<typeof setTimeout> | null = null
-    const handleOpenInlineArtifact = (event: Event) => {
-      const detail = (event as CustomEvent<InlineArtifactOpenDetail>).detail
-      if (!detail?.artifactType || !detail?.artifactId) return
-
-      const targetSpaceId =
-        typeof detail.spaceId === 'string' && detail.spaceId.trim()
-          ? detail.spaceId.trim()
-          : activeSpaceId
-
-      // Tasks (and task-shaped space items) open in TaskDetailModal — they are not
-      // a Space "view type", so the view-map path below would no-op.
-      if (detail.artifactType === 'task') {
-        if (!targetSpaceId) return
-        if (targetSpaceId !== activeSpaceId) {
-          setActiveSpace(targetSpaceId)
-        }
-        urlSpaceItemDeepLinkRef.current = null
-        const item =
-          targetSpaceId === activeSpaceId
-            ? items.find((row) => row.id === detail.artifactId)
-            : null
-        if (item) {
-          const vt = (item.custom_data as Record<string, unknown> | undefined)?._view_type
-          if (vt === 'doc') {
-            setSelectedItem(null)
-            setDocEditorItem(item)
-          } else {
-            setDocEditorItem(null)
-            focusTaskCapableViewIfNeeded(targetSpaceId)
-            openSpaceItemModal(item)
-          }
-        } else {
-          focusTaskCapableViewIfNeeded(targetSpaceId)
-        }
-        const p = new URLSearchParams(searchParams.toString())
-        p.set('space', targetSpaceId)
-        p.set('item', detail.artifactId)
-        const qs = p.toString()
-        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
-        return
-      }
-
-      const viewType = artifactTypeToSpaceViewType(detail.artifactType)
-      if (!viewType) return
-      const isSpaceDoc =
-        detail.artifactType === 'space_doc' ||
-        detail.artifactType === 'visual-doc' ||
-        (detail.artifactType === 'document' && typeof detail.spaceItemId === 'string')
-      const targetItemId =
-        typeof detail.spaceItemId === 'string' && detail.spaceItemId.trim()
-          ? detail.spaceItemId.trim()
-          : isSpaceDoc
-            ? detail.artifactId
-            : null
-
-      if (targetSpaceId && targetSpaceId !== activeSpaceId) {
-        setActiveSpace(targetSpaceId)
-      }
-
-      if (isSpaceDoc && targetSpaceId && targetItemId) {
-        setArtifactPreviewSelection(null)
-        setArtifactQuery(null)
-        const item =
-          targetSpaceId === activeSpaceId ? items.find((i) => i.id === targetItemId) : null
-        if (
-          item &&
-          (item.custom_data as Record<string, unknown> | undefined)?._view_type === 'doc'
-        ) {
-          setSelectedItem(null)
-          setDocEditorItem(item)
-        }
-        const p = new URLSearchParams(searchParams.toString())
-        p.set('space', targetSpaceId)
-        p.set('item', targetItemId)
-        const qs = p.toString()
-        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
-      }
-
-      const focusMatchingView = () => {
-        const currentSchema = useSpacesStore
-          .getState()
-          .spaces.find((space) => space.id === targetSpaceId)?.schema
-        const target = currentSchema?.views?.find((view) => view.type === viewType)
-        if (target) {
-          setActiveView(target.id)
-          return true
-        }
-        return false
-      }
-
-      if (!isSpaceDoc) {
-        setArtifactPreviewSelection(null)
-        setArtifactQuery(detail.artifactId)
-      }
-      window.dispatchEvent(
-        new CustomEvent('space:artifact-focus', {
-          detail: {
-            type: detail.artifactType,
-            id: detail.artifactId,
-            name: detail.name ?? 'Artifact',
-          },
-        }),
-      )
-
-      const _focusedNow = focusMatchingView()
-      if (_focusedNow) return
-      void refresh().then(() => {
-        retryTimer = setTimeout(() => {
-          focusMatchingView()
-        }, 200)
-      })
-    }
-
-    window.addEventListener('vibey-open-artifact', handleOpenInlineArtifact as EventListener)
-    return () => {
-      if (retryTimer) clearTimeout(retryTimer)
-      window.removeEventListener('vibey-open-artifact', handleOpenInlineArtifact as EventListener)
-    }
-  }, [
+  useSpaceOpenInlineArtifactEvent({
     activeSpaceId,
-    focusTaskCapableViewIfNeeded,
     items,
+    urlSpaceItemDeepLinkRef,
+    focusTaskCapableViewIfNeeded,
     openSpaceItemModal,
-    pathname,
-    refresh,
-    router,
-    searchParams,
     setActiveSpace,
     setActiveView,
     setArtifactQuery,
+    setArtifactPreviewSelection,
     setDocEditorItem,
     setSelectedItem,
-  ])
+    refresh,
+  })
 
-  useEffect(() => {
-    let retryTimer: ReturnType<typeof setTimeout> | null = null
-    const handleOpenMedia = (event: Event) => {
-      const detail = (event as CustomEvent<VibeyOpenMediaDetail>).detail
-      const mediaAssetId = detail?.mediaAssetId?.trim()
-      if (!mediaAssetId) return
+  const { pendingMediaOpenRef } = useSpaceOpenMediaEvent({
+    activeSpaceId,
+    setActiveSpace,
+    setActiveView,
+    setMediaDeepDetail,
+    setMediaDetailQuery,
+    refresh,
+  })
 
-      const targetSpaceId =
-        typeof detail.spaceId === 'string' && detail.spaceId.trim()
-          ? detail.spaceId.trim()
-          : activeSpaceId
-      if (targetSpaceId && targetSpaceId !== activeSpaceId) {
-        setActiveSpace(targetSpaceId)
-      }
-
-      const title = detail.title?.trim() || 'Generated image'
-      const spacesState = useSpacesStore.getState()
-      const currentSchema = spacesState.spaces.find(
-        (space) => space.id === (targetSpaceId || activeSpaceId),
-      )?.schema
-      const mediaView = currentSchema?.views?.find((view) => view.type === 'media')
-      const alreadyOnMedia =
-        Boolean(mediaView) && spacesState.activeViewId === mediaView?.id
-
-      setMediaDeepDetail({ id: mediaAssetId, title })
-
-      if (alreadyOnMedia) {
-        pendingMediaOpenRef.current = null
-        setMediaDetailQuery(mediaAssetId)
-        return
-      }
-
-      // Defer ?media= until Media view is active — otherwise a non-media view
-      // effect clears the query before the view switch lands.
-      pendingMediaOpenRef.current = { id: mediaAssetId, title }
-
-      if (mediaView) {
-        setActiveView(mediaView.id)
-        return
-      }
-      void refresh().then(() => {
-        retryTimer = setTimeout(() => {
-          const schema = useSpacesStore
-            .getState()
-            .spaces.find((space) => space.id === (targetSpaceId || activeSpaceId))?.schema
-          const target = schema?.views?.find((view) => view.type === 'media')
-          if (target) setActiveView(target.id)
-        }, 200)
-      })
-    }
-
-    window.addEventListener(VIBEY_OPEN_MEDIA_EVENT, handleOpenMedia as EventListener)
-    return () => {
-      if (retryTimer) clearTimeout(retryTimer)
-      window.removeEventListener(VIBEY_OPEN_MEDIA_EVENT, handleOpenMedia as EventListener)
-    }
-  }, [activeSpaceId, refresh, setActiveSpace, setActiveView, setMediaDetailQuery])
+  const { missionsViewRef } = useSpaceMissionsViewFocus({
+    activeSpace,
+    activeSchema,
+    activeView,
+    activeSpaceId,
+    patchSchema,
+    setActiveView,
+  })
 
   useEffect(() => {
     setReportingToolbarApi(null)
@@ -871,74 +492,6 @@ export function SpaceItemsContainer() {
       clearSessionDraft,
       sessionViewDrafts,
     })
-
-  const focusMissionsView = useCallback(
-    async (options?: { openCapture?: boolean; openPlaybook?: boolean }) => {
-      if (!activeSpace || !activeSchema) return
-      if (options?.openCapture) pendingMissionCaptureOpenRef.current = true
-      if (options?.openPlaybook) pendingPlaybookOpenRef.current = true
-
-      const existingMissionsView = activeSchema.views.find((view) => view.type === 'missions')
-      if (existingMissionsView) {
-        setActiveView(existingMissionsView.id)
-        return
-      }
-
-      const newView = buildMissionsViewForSchema(activeSchema.views)
-      const nextSchema = { ...activeSchema, views: [...activeSchema.views, newView] }
-      patchSchema(nextSchema)
-      await updateSpace(activeSpace.id, { schema: nextSchema })
-      setActiveView(newView.id)
-    },
-    [activeSchema, activeSpace, patchSchema, setActiveView],
-  )
-
-  useEffect(() => {
-    const handleOpenMissionsView = (event: Event) => {
-      const detail = (event as CustomEvent<OpenMissionsViewDetail>).detail
-      if (typeof detail?.spaceId === 'string' && detail.spaceId !== activeSpaceId) return
-      void focusMissionsView({
-        openCapture: detail?.openCapture === true,
-        openPlaybook: detail?.openPlaybook === true,
-      })
-    }
-    window.addEventListener('space:open-missions-view', handleOpenMissionsView as EventListener)
-    return () =>
-      window.removeEventListener(
-        'space:open-missions-view',
-        handleOpenMissionsView as EventListener,
-      )
-  }, [activeSpaceId, focusMissionsView])
-
-  useEffect(() => {
-    if (!pendingMissionCaptureOpenRef.current || activeView?.type !== 'missions') return
-    let attempts = 0
-    const timer = window.setInterval(() => {
-      const handle = missionsViewRef.current
-      attempts += 1
-      if (!handle && attempts < 20) return
-      window.clearInterval(timer)
-      if (!handle) return
-      pendingMissionCaptureOpenRef.current = false
-      handle.openNewMissionCapture()
-    }, 50)
-    return () => window.clearInterval(timer)
-  }, [activeView?.id, activeView?.type])
-
-  useEffect(() => {
-    if (!pendingPlaybookOpenRef.current || activeView?.type !== 'missions') return
-    let attempts = 0
-    const timer = window.setInterval(() => {
-      const handle = missionsViewRef.current
-      attempts += 1
-      if (!handle && attempts < 20) return
-      window.clearInterval(timer)
-      if (!handle) return
-      pendingPlaybookOpenRef.current = false
-      handle.openStartPlaybook()
-    }, 50)
-    return () => window.clearInterval(timer)
-  }, [activeView?.id, activeView?.type])
 
   const {
     handleSaveForEveryone,
@@ -1202,21 +755,14 @@ export function SpaceItemsContainer() {
   const isAdsPerformanceView = activeView?.type === 'ads_performance'
   const isSocialReportingView = activeView?.type === 'social_reporting'
 
-  useEffect(() => {
-    if (!isMediaView) return
-    const pending = pendingMediaOpenRef.current
-    if (!pending) return
-    pendingMediaOpenRef.current = null
-    setMediaDeepDetail(pending)
-    setMediaDetailQuery(pending.id)
-  }, [isMediaView, setMediaDetailQuery])
+  useSpacePendingMediaQueryApply(
+    isMediaView,
+    pendingMediaOpenRef,
+    setMediaDeepDetail,
+    setMediaDetailQuery,
+  )
 
-  useEffect(() => {
-    if (mediaDetailId) return
-    // Keep optimistic title while a chat→media open is applying ?media=
-    if (pendingMediaOpenRef.current) return
-    setMediaDeepDetail(null)
-  }, [mediaDetailId])
+  useSpaceMediaDeepDetailClear(mediaDetailId, pendingMediaOpenRef, setMediaDeepDetail)
 
   useEffect(() => {
     if (isArtifactView || isDocsView || isMediaView) return
@@ -1587,347 +1133,347 @@ export function SpaceItemsContainer() {
 
   return (
     <SpaceItemUpdateProvider value={updateItem}>
-    <div
-      className={
-        isArtifactView
-          ? 'flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-bl-2xl rounded-br-2xl rounded-tl-2xl border border-[var(--border)]'
-          : 'flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--border)]'
-      }
-    >
-      <SpaceBreadcrumbHeader
-        activeSpace={activeSpace}
-        folderLabel={folderLabel}
-        spaceIconName={spaceIconName}
-        spaceIconColor={spaceIconColor}
-        switcherOpen={switcherOpen}
-        switcherTriggerRef={switcherTriggerRef}
-        onToggleSwitcher={() => setSwitcherOpen((o) => !o)}
-        onOpenAutomations={() => setAutomationsOpen(true)}
-        onOpenShare={() => {
-          setSpaceShareDualNavigator(false)
-          setSpaceShareOpen(true)
-        }}
-      />
-
-      <SpaceSwitcherDropdown
-        open={switcherOpen}
-        dropdownPos={dropdownPos}
-        dropdownRef={dropdownRef}
-        moreMenuBtnRef={moreMenuBtnRef}
-        activeSpace={activeSpace}
-        activeSpaceId={activeSpaceId}
-        activeSchema={activeSchema}
-        spaceIconName={spaceIconName}
-        spaceIconColor={spaceIconColor}
-        titleDraft={titleDraft}
-        setTitleDraft={setTitleDraft}
-        schemaEditorOpen={schemaEditorOpen}
-        switcherTree={switcherTree}
-        expandedSwitcherIds={expandedSwitcherIds}
-        setExpandedSwitcherIds={setExpandedSwitcherIds}
-        setActiveSpace={setActiveSpace}
-        setSwitcherOpen={setSwitcherOpen}
-        patchActiveSpaceSchema={patchActiveSpaceSchema}
-        closeCustomizePanel={closeCustomizePanel}
-        openCustomizeFromToolbar={openCustomizeFromToolbar}
-        moreMenuOpen={moreMenuOpen}
-        setMoreMenuOpen={setMoreMenuOpen}
-        setMoreMenuPos={setMoreMenuPos}
-      />
-
-      <SpaceMoreMenu
-        open={moreMenuOpen}
-        pos={moreMenuPos}
-        moreMenuRef={moreMenuRef}
-        activeSpace={activeSpace}
-        allCampaigns={allCampaigns}
-        isFavorite={activeSpace ? isFavorite(activeSpace.id) : false}
-        setMoreMenuOpen={setMoreMenuOpen}
-        setSwitcherOpen={setSwitcherOpen}
-        setAutomationsOpen={setAutomationsOpen}
-        setSpaceShareOpen={setSpaceShareOpen}
-        createSpace={createSpace}
-        deleteSpace={deleteSpace}
-        onToggleFavorite={() => {
-          if (activeSpace) void toggleFavorite(activeSpace.id)
-        }}
-        onRename={() => setSwitcherOpen(true)}
-        onPatchSchemaIcon={async (patch) => {
-          if (!activeSpace) return
-          const next = {
-            ...(activeSpace.schema as unknown as Record<string, unknown>),
-            ...patch,
-          }
-          patchActiveSpaceSchema(next)
-          await updateSpace(activeSpace.id, { schema: next as unknown as SpaceSchema })
-        }}
-        onOpenCampaign={
-          activeSpace?.campaign_id
-            ? () => {
-                openInNewTab(`/campaigns/${activeSpace.campaign_id}`)
-              }
-            : undefined
+      <div
+        className={
+          isArtifactView
+            ? 'flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-bl-2xl rounded-br-2xl rounded-tl-2xl border border-[var(--border)]'
+            : 'flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--border)]'
         }
-        onHide={
-          activeSpace && !activeSpace.share_meta
-            ? () => void toggleHidden(activeSpace.id, activeSpace.title ?? 'Untitled')
-            : undefined
-        }
-        onMoveToCampaign={async (cid) => {
-          if (!activeSpace) return
-          if ((activeSpace.campaign_id ?? null) === cid) return
-          try {
-            await updateSpace(activeSpace.id, { campaign_id: cid })
-            useSpacesStore.setState((s) => ({
-              spaces: s.spaces.map((sp) =>
-                sp.id === activeSpace.id ? { ...sp, campaign_id: cid } : sp,
-              ),
-            }))
-            toast.success('Moved space')
-          } catch {
-            toast.error('Failed to move space')
+      >
+        <SpaceBreadcrumbHeader
+          activeSpace={activeSpace}
+          folderLabel={folderLabel}
+          spaceIconName={spaceIconName}
+          spaceIconColor={spaceIconColor}
+          switcherOpen={switcherOpen}
+          switcherTriggerRef={switcherTriggerRef}
+          onToggleSwitcher={() => setSwitcherOpen((o) => !o)}
+          onOpenAutomations={() => setAutomationsOpen(true)}
+          onOpenShare={() => {
+            setSpaceShareDualNavigator(false)
+            setSpaceShareOpen(true)
+          }}
+        />
+
+        <SpaceSwitcherDropdown
+          open={switcherOpen}
+          dropdownPos={dropdownPos}
+          dropdownRef={dropdownRef}
+          moreMenuBtnRef={moreMenuBtnRef}
+          activeSpace={activeSpace}
+          activeSpaceId={activeSpaceId}
+          activeSchema={activeSchema}
+          spaceIconName={spaceIconName}
+          spaceIconColor={spaceIconColor}
+          titleDraft={titleDraft}
+          setTitleDraft={setTitleDraft}
+          schemaEditorOpen={schemaEditorOpen}
+          switcherTree={switcherTree}
+          expandedSwitcherIds={expandedSwitcherIds}
+          setExpandedSwitcherIds={setExpandedSwitcherIds}
+          setActiveSpace={setActiveSpace}
+          setSwitcherOpen={setSwitcherOpen}
+          patchActiveSpaceSchema={patchActiveSpaceSchema}
+          closeCustomizePanel={closeCustomizePanel}
+          openCustomizeFromToolbar={openCustomizeFromToolbar}
+          moreMenuOpen={moreMenuOpen}
+          setMoreMenuOpen={setMoreMenuOpen}
+          setMoreMenuPos={setMoreMenuPos}
+        />
+
+        <SpaceMoreMenu
+          open={moreMenuOpen}
+          pos={moreMenuPos}
+          moreMenuRef={moreMenuRef}
+          activeSpace={activeSpace}
+          allCampaigns={allCampaigns}
+          isFavorite={activeSpace ? isFavorite(activeSpace.id) : false}
+          setMoreMenuOpen={setMoreMenuOpen}
+          setSwitcherOpen={setSwitcherOpen}
+          setAutomationsOpen={setAutomationsOpen}
+          setSpaceShareOpen={setSpaceShareOpen}
+          createSpace={createSpace}
+          deleteSpace={deleteSpace}
+          onToggleFavorite={() => {
+            if (activeSpace) void toggleFavorite(activeSpace.id)
+          }}
+          onRename={() => setSwitcherOpen(true)}
+          onPatchSchemaIcon={async (patch) => {
+            if (!activeSpace) return
+            const next = {
+              ...(activeSpace.schema as unknown as Record<string, unknown>),
+              ...patch,
+            }
+            patchActiveSpaceSchema(next)
+            await updateSpace(activeSpace.id, { schema: next as unknown as SpaceSchema })
+          }}
+          onOpenCampaign={
+            activeSpace?.campaign_id
+              ? () => {
+                  openInNewTab(`/campaigns/${activeSpace.campaign_id}`)
+                }
+              : undefined
           }
-        }}
-        onCopyToCampaign={async (cid) => {
-          if (!activeSpace) return
-          try {
-            const dup = await createSpace(`${activeSpace.title} (copy)`)
-            if (cid !== null) await updateSpace(dup.id, { campaign_id: cid })
-            useSpacesStore.setState((s) => ({
-              spaces: s.spaces.map((sp) =>
-                sp.id === dup.id ? { ...sp, campaign_id: cid ?? null } : sp,
-              ),
-            }))
-            toast.success(`Copied as "${dup.title}"`)
-          } catch {
-            toast.error('Failed to copy space')
+          onHide={
+            activeSpace && !activeSpace.share_meta
+              ? () => void toggleHidden(activeSpace.id, activeSpace.title ?? 'Untitled')
+              : undefined
           }
-        }}
-      />
+          onMoveToCampaign={async (cid) => {
+            if (!activeSpace) return
+            if ((activeSpace.campaign_id ?? null) === cid) return
+            try {
+              await updateSpace(activeSpace.id, { campaign_id: cid })
+              useSpacesStore.setState((s) => ({
+                spaces: s.spaces.map((sp) =>
+                  sp.id === activeSpace.id ? { ...sp, campaign_id: cid } : sp,
+                ),
+              }))
+              toast.success('Moved space')
+            } catch {
+              toast.error('Failed to move space')
+            }
+          }}
+          onCopyToCampaign={async (cid) => {
+            if (!activeSpace) return
+            try {
+              const dup = await createSpace(`${activeSpace.title} (copy)`)
+              if (cid !== null) await updateSpace(dup.id, { campaign_id: cid })
+              useSpacesStore.setState((s) => ({
+                spaces: s.spaces.map((sp) =>
+                  sp.id === dup.id ? { ...sp, campaign_id: cid ?? null } : sp,
+                ),
+              }))
+              toast.success(`Copied as "${dup.title}"`)
+            } catch {
+              toast.error('Failed to copy space')
+            }
+          }}
+        />
 
-      <ViewSwitcher
-        views={visibleViews}
-        activeViewId={activeView?.id ?? null}
-        onSelectView={(viewId) => setActiveView(viewId)}
-        hasCampaign={!!activeSpace.campaign_id}
-        canAccessEditorViews={canCustomizeViews}
-        onAddView={async (newView) => {
-          if (!activeSchema || !activeSpace) return
-          const nextSchema = { ...activeSchema, views: [...activeSchema.views, newView] }
-          patchActiveSpaceSchema(nextSchema)
-          await updateSpace(activeSpace.id, { schema: nextSchema })
-          setActiveView(newView.id)
-        }}
-        onReorderViews={async (reorderedVisible) => {
-          if (!activeSchema || !activeSpace || reorderedVisible.length === 0) return
-          const visibleIds = new Set(visibleViews.map((v) => v.id))
-          const hiddenViews = activeSchema.views.filter((v) => !visibleIds.has(v.id))
-          const cleared = reorderedVisible.map((v) => ({ ...v, pinned_to_start: false }))
-          const nextSchema = { ...activeSchema, views: [...cleared, ...hiddenViews] }
-          patchActiveSpaceSchema(nextSchema)
-          await updateSpace(activeSpace.id, { schema: nextSchema })
-        }}
-        onTabContextCustomize={
-          canCustomizeViews
-            ? (viewId, anchorEl) => {
-                customizeDropdownAnchorRef.current = anchorEl
-                setCustomizeSubjectViewId(viewId)
-                setPanelInitialView('main')
-                setSchemaEditorOpen(true)
-              }
-            : undefined
-        }
-        rightSlot={null}
-      />
+        <ViewSwitcher
+          views={visibleViews}
+          activeViewId={activeView?.id ?? null}
+          onSelectView={(viewId) => setActiveView(viewId)}
+          hasCampaign={!!activeSpace.campaign_id}
+          canAccessEditorViews={canCustomizeViews}
+          onAddView={async (newView) => {
+            if (!activeSchema || !activeSpace) return
+            const nextSchema = { ...activeSchema, views: [...activeSchema.views, newView] }
+            patchActiveSpaceSchema(nextSchema)
+            await updateSpace(activeSpace.id, { schema: nextSchema })
+            setActiveView(newView.id)
+          }}
+          onReorderViews={async (reorderedVisible) => {
+            if (!activeSchema || !activeSpace || reorderedVisible.length === 0) return
+            const visibleIds = new Set(visibleViews.map((v) => v.id))
+            const hiddenViews = activeSchema.views.filter((v) => !visibleIds.has(v.id))
+            const cleared = reorderedVisible.map((v) => ({ ...v, pinned_to_start: false }))
+            const nextSchema = { ...activeSchema, views: [...cleared, ...hiddenViews] }
+            patchActiveSpaceSchema(nextSchema)
+            await updateSpace(activeSpace.id, { schema: nextSchema })
+          }}
+          onTabContextCustomize={
+            canCustomizeViews
+              ? (viewId, anchorEl) => {
+                  customizeDropdownAnchorRef.current = anchorEl
+                  setCustomizeSubjectViewId(viewId)
+                  setPanelInitialView('main')
+                  setSchemaEditorOpen(true)
+                }
+              : undefined
+          }
+          rightSlot={null}
+        />
 
-      <div ref={spaceBelowViewTabsRef} className="flex min-h-0 flex-1 flex-row overflow-hidden">
-        <div
-          className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
-          data-spaces-preview-dismiss-zone
-        >
-          <ToolbarForView ctx={toolbarCtx} />
+        <div ref={spaceBelowViewTabsRef} className="flex min-h-0 flex-1 flex-row overflow-hidden">
+          <div
+            className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+            data-spaces-preview-dismiss-zone
+          >
+            <ToolbarForView ctx={toolbarCtx} />
 
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-            <SpaceContentRouter
-              docsDriveGroupBy={docsDriveGroupBy}
-              docsDriveCardSize={docsDriveCardSize}
-              onDocsDriveBrowseActiveChange={setDocsDriveBrowseActive}
-              activeView={activeView}
-              activeSchema={activeSchema}
-              activeSpace={activeSpace}
-              isContactsView={isContactsView}
-              isIgResearchView={isIgResearchView}
-              isTiktokResearchView={isTiktokResearchView}
-              isYoutubeResearchView={isYoutubeResearchView}
-              isTwitterResearchView={isTwitterResearchView}
-              isAllSocialResearchView={isAllSocialResearchView}
-              isAdsResearchView={isAdsResearchView}
-              socialPlatform={socialPlatform}
-              isMissionsView={isMissionsView}
-              isDocsView={isDocsView}
-              isReportingView={isReportingView}
-              items={items}
-              campaignName={campaignName}
-              fieldsById={fieldsById}
-              fieldsForUi={fieldsForUi}
-              visibleFields={visibleFields}
-              roster={roster}
-              currentUserId={currentUserId}
-              filteredRegularItems={filteredRegularItems}
-              docItems={docItems}
-              docsCloud={docsCloud}
-              docsLoading={docsLoading}
-              includeCampaignArtifacts={includeCampaignArtifacts}
-              driveMappingsSyncing={driveMappingsSyncing}
-              hasDriveDocs={hasDriveDocs}
-              artifactPreviewSelection={artifactPreviewSelection}
-              setArtifactPreviewSelection={setArtifactPreviewSelection}
-              contactsSearch={contactsSearch}
-              contactsScope={contactsScope}
-              contactsStatusFilter={contactsStatusFilter}
-              contactsSort={contactsSort}
-              contactsLoading={contactsLoading}
-              activeContactsSegmentId={activeContactsSegmentId}
-              contactCommunicationTab={contactCommunicationTab}
-              spaceToolbarSearch={spaceToolbarSearch}
-              setSpaceToolbarSearch={setSpaceToolbarSearch}
-              financeToolbarSearch={financeToolbarSearch}
-              contactsViewRef={contactsViewRef}
-              missionsViewRef={missionsViewRef}
-              financeOverviewRef={financeOverviewRef}
-              handleViewPatch={handleViewPatch}
-              openCustomizeFromToolbar={openCustomizeFromToolbar}
-              setContactsLoading={setContactsLoading}
-              setContactDetailOpen={setContactDetailOpen}
-              resetContactCommunicationTab={resetContactCommunicationTab}
-              handleContactDetailLayout={handleContactDetailLayout}
-              handleCommunicationLoaded={handleCommunicationLoaded}
-              setArtifactDetailOpen={setArtifactDetailOpen}
-              setArtifactDeepDetail={setArtifactDeepDetail}
-              setMediaDeepDetail={setMediaDeepDetail}
-              taskModalOpen={Boolean(selectedItem)}
-              setReportingToolbarApi={setReportingToolbarApi}
-              setSelectedItem={setSelectedItem}
-              openSpaceItemModal={openSpaceItemModal}
-              setDocEditorItem={setDocEditorItem}
-              reloadCampaignDocs={reloadCampaignDocs}
-              setCategoryEditorOpen={setCategoryEditorOpen}
-              setStatusEditorOpen={setStatusEditorOpen}
-              onUpdateItem={updateItem}
-              onDeleteItem={deleteItem}
-              onPushToAgent={pushToAgent}
-              onCreateOption={handleCreateFieldOption}
-              onUpdateOption={handleUpdateFieldOption}
-              onDeleteOption={handleDeleteFieldOption}
-              onTagCustomSwatchesChange={handleTagCustomSwatchesChange}
-              artifactDeepToolbarExtras={<SaveViewSlot ctx={toolbarCtx} />}
-            />
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+              <SpaceContentRouter
+                docsDriveGroupBy={docsDriveGroupBy}
+                docsDriveCardSize={docsDriveCardSize}
+                onDocsDriveBrowseActiveChange={setDocsDriveBrowseActive}
+                activeView={activeView}
+                activeSchema={activeSchema}
+                activeSpace={activeSpace}
+                isContactsView={isContactsView}
+                isIgResearchView={isIgResearchView}
+                isTiktokResearchView={isTiktokResearchView}
+                isYoutubeResearchView={isYoutubeResearchView}
+                isTwitterResearchView={isTwitterResearchView}
+                isAllSocialResearchView={isAllSocialResearchView}
+                isAdsResearchView={isAdsResearchView}
+                socialPlatform={socialPlatform}
+                isMissionsView={isMissionsView}
+                isDocsView={isDocsView}
+                isReportingView={isReportingView}
+                items={items}
+                campaignName={campaignName}
+                fieldsById={fieldsById}
+                fieldsForUi={fieldsForUi}
+                visibleFields={visibleFields}
+                roster={roster}
+                currentUserId={currentUserId}
+                filteredRegularItems={filteredRegularItems}
+                docItems={docItems}
+                docsCloud={docsCloud}
+                docsLoading={docsLoading}
+                includeCampaignArtifacts={includeCampaignArtifacts}
+                driveMappingsSyncing={driveMappingsSyncing}
+                hasDriveDocs={hasDriveDocs}
+                artifactPreviewSelection={artifactPreviewSelection}
+                setArtifactPreviewSelection={setArtifactPreviewSelection}
+                contactsSearch={contactsSearch}
+                contactsScope={contactsScope}
+                contactsStatusFilter={contactsStatusFilter}
+                contactsSort={contactsSort}
+                contactsLoading={contactsLoading}
+                activeContactsSegmentId={activeContactsSegmentId}
+                contactCommunicationTab={contactCommunicationTab}
+                spaceToolbarSearch={spaceToolbarSearch}
+                setSpaceToolbarSearch={setSpaceToolbarSearch}
+                financeToolbarSearch={financeToolbarSearch}
+                contactsViewRef={contactsViewRef}
+                missionsViewRef={missionsViewRef}
+                financeOverviewRef={financeOverviewRef}
+                handleViewPatch={handleViewPatch}
+                openCustomizeFromToolbar={openCustomizeFromToolbar}
+                setContactsLoading={setContactsLoading}
+                setContactDetailOpen={setContactDetailOpen}
+                resetContactCommunicationTab={resetContactCommunicationTab}
+                handleContactDetailLayout={handleContactDetailLayout}
+                handleCommunicationLoaded={handleCommunicationLoaded}
+                setArtifactDetailOpen={setArtifactDetailOpen}
+                setArtifactDeepDetail={setArtifactDeepDetail}
+                setMediaDeepDetail={setMediaDeepDetail}
+                taskModalOpen={Boolean(selectedItem)}
+                setReportingToolbarApi={setReportingToolbarApi}
+                setSelectedItem={setSelectedItem}
+                openSpaceItemModal={openSpaceItemModal}
+                setDocEditorItem={setDocEditorItem}
+                reloadCampaignDocs={reloadCampaignDocs}
+                setCategoryEditorOpen={setCategoryEditorOpen}
+                setStatusEditorOpen={setStatusEditorOpen}
+                onUpdateItem={updateItem}
+                onDeleteItem={deleteItem}
+                onPushToAgent={pushToAgent}
+                onCreateOption={handleCreateFieldOption}
+                onUpdateOption={handleUpdateFieldOption}
+                onDeleteOption={handleDeleteFieldOption}
+                onTagCustomSwatchesChange={handleTagCustomSwatchesChange}
+                artifactDeepToolbarExtras={<SaveViewSlot ctx={toolbarCtx} />}
+              />
+            </div>
           </div>
+          {isArtifactView && activeSpace.campaign_id && !usesPaidAdsInlineDetail(activeView) ? (
+            <ArtifactPreviewPanelHost
+              parentRef={spaceBelowViewTabsRef}
+              campaignId={activeSpace.campaign_id}
+              selection={artifactPreviewSelection}
+              onClose={() => setArtifactPreviewSelection(null)}
+              onOpenFullView={() => {
+                if (artifactPreviewSelection) {
+                  setArtifactQuery(artifactPreviewSelection.id)
+                  setArtifactPreviewSelection(null)
+                }
+              }}
+            />
+          ) : null}
+          {isMediaView ? (
+            <MediaImageWorkspacePanelHost
+              parentRef={spaceBelowViewTabsRef}
+              mediaId={mediaDetailId}
+              spaceId={activeSpace.id}
+              campaignId={activeSpace.campaign_id ?? null}
+              onClose={() => {
+                setMediaDetailQuery(null)
+                setMediaDeepDetail(null)
+              }}
+              onMetaChange={setMediaDeepDetail}
+            />
+          ) : null}
         </div>
-        {isArtifactView && activeSpace.campaign_id && !usesPaidAdsInlineDetail(activeView) ? (
-          <ArtifactPreviewPanelHost
-            parentRef={spaceBelowViewTabsRef}
-            campaignId={activeSpace.campaign_id}
-            selection={artifactPreviewSelection}
-            onClose={() => setArtifactPreviewSelection(null)}
-            onOpenFullView={() => {
-              if (artifactPreviewSelection) {
-                setArtifactQuery(artifactPreviewSelection.id)
-                setArtifactPreviewSelection(null)
-              }
-            }}
-          />
-        ) : null}
-        {isMediaView ? (
-          <MediaImageWorkspacePanelHost
-            parentRef={spaceBelowViewTabsRef}
-            mediaId={mediaDetailId}
-            spaceId={activeSpace.id}
-            campaignId={activeSpace.campaign_id ?? null}
-            onClose={() => {
-              setMediaDetailQuery(null)
-              setMediaDeepDetail(null)
-            }}
-            onMetaChange={setMediaDeepDetail}
-          />
-        ) : null}
-      </div>
 
-      <SpaceModalsHost
-        activeSpace={activeSpace}
-        activeView={activeView}
-        activeSchema={activeSchema}
-        roster={roster}
-        fieldsForUi={fieldsForUi}
-        fieldsById={fieldsById}
-        currentUserId={currentUserId}
-        customizePanelTargetView={customizePanelTargetView}
-        panelInitialView={panelInitialView}
-        schemaEditorOpen={schemaEditorOpen}
-        canCustomizeViews={canCustomizeViews}
-        customizeDropdownAnchorRef={customizeDropdownAnchorRef}
-        customizeStageBounds={customizeStageBounds}
-        viewOverrides={viewOverrides}
-        isTeamSpace={isTeamSpace}
-        canSaveForEveryone={canSaveForEveryone}
-        statusEditorOpen={statusEditorOpen}
-        categoryEditorOpen={categoryEditorOpen}
-        automationsOpen={automationsOpen}
-        assigneeFilterOpen={assigneeFilterOpen}
-        spaceShareOpen={spaceShareOpen}
-        spaceShareDualNavigator={spaceShareDualNavigator}
-        docEditorItem={docEditorItem}
-        selectedItem={selectedItem}
-        taskHistory={taskHistory}
-        pushTaskAndOpen={pushTaskAndOpen}
-        popTask={popTask}
-        isContactsView={isContactsView}
-        contactsSegmentPanelOpen={contactsSegmentPanelOpen}
-        activeContactsSegmentId={activeContactsSegmentId}
-        contactsManualOpen={contactsManualOpen}
-        contactsCsvOpen={contactsCsvOpen}
-        contactsGhlOpen={contactsGhlOpen}
-        contactsAcOpen={contactsAcOpen}
-        contactsViewRef={contactsViewRef}
-        setAssigneeFilterOpen={setAssigneeFilterOpen}
-        closeCustomizePanel={closeCustomizePanel}
-        handleViewPatch={handleViewPatch}
-        handleViewPinToStart={handleViewPinToStart}
-        handleDeleteActiveView={handleDeleteActiveView}
-        handleIgAddAccount={handleIgAddAccount}
-        handleIgSyncAccount={handleIgSyncAccount}
-        handleIgRemoveAccount={handleIgRemoveAccount}
-        handleAllSocialAddAccount={handleAllSocialAddAccount}
-        handleAllSocialSyncAccount={handleAllSocialSyncAccount}
-        handleAllSocialRemoveAccount={handleAllSocialRemoveAccount}
-        handleSaveForEveryone={handleSaveForEveryone}
-        handleResetViewToDefault={handleResetViewToDefault}
-        setSpaceShareDualNavigator={setSpaceShareDualNavigator}
-        setSpaceShareOpen={setSpaceShareOpen}
-        setStatusEditorOpen={setStatusEditorOpen}
-        setCategoryEditorOpen={setCategoryEditorOpen}
-        setAutomationsOpen={setAutomationsOpen}
-        setDocEditorItem={setDocEditorItem}
-        setSelectedItem={setSelectedItem}
-        setContactsSegmentPanelOpen={setContactsSegmentPanelOpen}
-        setActiveContactsSegmentId={setActiveContactsSegmentId}
-        setActiveContactsSegmentName={setActiveContactsSegmentName}
-        setContactsManualOpen={setContactsManualOpen}
-        setContactsCsvOpen={setContactsCsvOpen}
-        setContactsGhlOpen={setContactsGhlOpen}
-        setContactsAcOpen={setContactsAcOpen}
-        refresh={refresh}
-        reloadCampaignDocs={reloadCampaignDocs}
-        onDocEditorDismiss={() => setArtifactQuery(null)}
-        toggleToolbarAssigneeParticipant={toggleToolbarAssigneeParticipant}
-        toggleToolbarMissionAgent={toggleToolbarMissionAgent}
-        handleCreateFieldOption={handleCreateFieldOption}
-        handleUpdateFieldOption={handleUpdateFieldOption}
-        handleDeleteFieldOption={handleDeleteFieldOption}
-        handleTagCustomSwatchesChange={handleTagCustomSwatchesChange}
-      />
-      {completeSubtasksDialog}
-    </div>
+        <SpaceModalsHost
+          activeSpace={activeSpace}
+          activeView={activeView}
+          activeSchema={activeSchema}
+          roster={roster}
+          fieldsForUi={fieldsForUi}
+          fieldsById={fieldsById}
+          currentUserId={currentUserId}
+          customizePanelTargetView={customizePanelTargetView}
+          panelInitialView={panelInitialView}
+          schemaEditorOpen={schemaEditorOpen}
+          canCustomizeViews={canCustomizeViews}
+          customizeDropdownAnchorRef={customizeDropdownAnchorRef}
+          customizeStageBounds={customizeStageBounds}
+          viewOverrides={viewOverrides}
+          isTeamSpace={isTeamSpace}
+          canSaveForEveryone={canSaveForEveryone}
+          statusEditorOpen={statusEditorOpen}
+          categoryEditorOpen={categoryEditorOpen}
+          automationsOpen={automationsOpen}
+          assigneeFilterOpen={assigneeFilterOpen}
+          spaceShareOpen={spaceShareOpen}
+          spaceShareDualNavigator={spaceShareDualNavigator}
+          docEditorItem={docEditorItem}
+          selectedItem={selectedItem}
+          taskHistory={taskHistory}
+          pushTaskAndOpen={pushTaskAndOpen}
+          popTask={popTask}
+          isContactsView={isContactsView}
+          contactsSegmentPanelOpen={contactsSegmentPanelOpen}
+          activeContactsSegmentId={activeContactsSegmentId}
+          contactsManualOpen={contactsManualOpen}
+          contactsCsvOpen={contactsCsvOpen}
+          contactsGhlOpen={contactsGhlOpen}
+          contactsAcOpen={contactsAcOpen}
+          contactsViewRef={contactsViewRef}
+          setAssigneeFilterOpen={setAssigneeFilterOpen}
+          closeCustomizePanel={closeCustomizePanel}
+          handleViewPatch={handleViewPatch}
+          handleViewPinToStart={handleViewPinToStart}
+          handleDeleteActiveView={handleDeleteActiveView}
+          handleIgAddAccount={handleIgAddAccount}
+          handleIgSyncAccount={handleIgSyncAccount}
+          handleIgRemoveAccount={handleIgRemoveAccount}
+          handleAllSocialAddAccount={handleAllSocialAddAccount}
+          handleAllSocialSyncAccount={handleAllSocialSyncAccount}
+          handleAllSocialRemoveAccount={handleAllSocialRemoveAccount}
+          handleSaveForEveryone={handleSaveForEveryone}
+          handleResetViewToDefault={handleResetViewToDefault}
+          setSpaceShareDualNavigator={setSpaceShareDualNavigator}
+          setSpaceShareOpen={setSpaceShareOpen}
+          setStatusEditorOpen={setStatusEditorOpen}
+          setCategoryEditorOpen={setCategoryEditorOpen}
+          setAutomationsOpen={setAutomationsOpen}
+          setDocEditorItem={setDocEditorItem}
+          setSelectedItem={setSelectedItem}
+          setContactsSegmentPanelOpen={setContactsSegmentPanelOpen}
+          setActiveContactsSegmentId={setActiveContactsSegmentId}
+          setActiveContactsSegmentName={setActiveContactsSegmentName}
+          setContactsManualOpen={setContactsManualOpen}
+          setContactsCsvOpen={setContactsCsvOpen}
+          setContactsGhlOpen={setContactsGhlOpen}
+          setContactsAcOpen={setContactsAcOpen}
+          refresh={refresh}
+          reloadCampaignDocs={reloadCampaignDocs}
+          onDocEditorDismiss={() => setArtifactQuery(null)}
+          toggleToolbarAssigneeParticipant={toggleToolbarAssigneeParticipant}
+          toggleToolbarMissionAgent={toggleToolbarMissionAgent}
+          handleCreateFieldOption={handleCreateFieldOption}
+          handleUpdateFieldOption={handleUpdateFieldOption}
+          handleDeleteFieldOption={handleDeleteFieldOption}
+          handleTagCustomSwatchesChange={handleTagCustomSwatchesChange}
+        />
+        {completeSubtasksDialog}
+      </div>
     </SpaceItemUpdateProvider>
   )
 }

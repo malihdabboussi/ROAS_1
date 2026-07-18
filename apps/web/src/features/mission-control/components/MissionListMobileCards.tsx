@@ -74,6 +74,7 @@ export function MissionListMobileCards({
           <div
             role="button"
             tabIndex={0}
+            aria-label={`Open mission ${mission.title}`}
             key={mission.id}
             onClick={() => onSelect(mission.id)}
             onContextMenu={
@@ -177,6 +178,7 @@ export function MissionListMobileCards({
                       <button
                         key={st.id}
                         type="button"
+                        aria-label={`Open subtask ${st.title}`}
                         onClick={(event) => {
                           event.stopPropagation()
                           onSelectSubtask?.(mission.id, st.id)

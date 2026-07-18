@@ -2,19 +2,12 @@ import { createRef } from 'react'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { MissionDeliverable } from '@/lib/missions'
-
 import { DeliverablePreviewBody } from './DeliverablePreviewBody'
 
 const bodyMocks = vi.hoisted(() => ({
   entityRenderCount: 0,
   renderEntityPreview: vi.fn(
-    ({
-      deliverableType,
-      entityId,
-    }: {
-      deliverableType: string
-      entityId: string
-    }) => {
+    ({ deliverableType, entityId }: { deliverableType: string; entityId: string }) => {
       bodyMocks.entityRenderCount += 1
       return (
         <div
@@ -36,7 +29,16 @@ vi.mock('@/components/deliverables/DocxFileDeliverablePreview', () => ({
 }))
 
 vi.mock('@/components/deliverables/SpaceDocDeliverablePreview', () => ({
-  SpaceDocDeliverablePreview: () => <div data-testid="space-doc-preview" />,
+  SpaceDocDeliverablePreview: ({
+    googleActionTarget,
+  }: {
+    googleActionTarget?: HTMLElement | null
+  }) => (
+    <div
+      data-testid="space-doc-preview"
+      data-google-target={googleActionTarget?.dataset.testid ?? ''}
+    />
+  ),
 }))
 
 vi.mock('@/components/ui/markdown-renderer', () => ({
@@ -122,5 +124,34 @@ describe('DeliverablePreviewBody', () => {
     expect(bodyMocks.entityRenderCount).toBeLessThan(5)
 
     consoleErrorSpy.mockRestore()
+  })
+
+  it('passes Mission header actions into the canonical Space document editor', () => {
+    const actionTarget = document.createElement('div')
+    actionTarget.dataset.testid = 'mission-google-action'
+    render(
+      <DeliverablePreviewBody
+        contentRef={createRef<HTMLDivElement>()}
+        deliverable={{
+          ...entityDeliverable,
+          type: 'doc',
+          entity_id: 'doc-1',
+          entity_table: 'space_items',
+          metadata: { spaceId: 'space-1' },
+        }}
+        entityContentLoading={false}
+        isEntityType
+        isTextContent
+        effectiveContent={null}
+        viewMode="wide"
+        fallbackSpaceId="space-1"
+        spaceDocActionTarget={actionTarget}
+        renderEntityPreview={bodyMocks.renderEntityPreview}
+      />,
+    )
+
+    expect(screen.getByTestId('space-doc-preview').dataset.googleTarget).toBe(
+      'mission-google-action',
+    )
   })
 })

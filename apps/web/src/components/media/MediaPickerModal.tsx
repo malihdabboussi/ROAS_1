@@ -173,6 +173,9 @@ export function MediaPickerModal({
           <DialogPrimitive.Content className="z-modal-layer-3 sm:p-spacing-4 md:p-spacing-6 fixed inset-0 flex items-center justify-center overflow-hidden p-2">
             <VisuallyHidden.Root>
               <DialogPrimitive.Title>Media Library</DialogPrimitive.Title>
+              <DialogPrimitive.Description>
+                Browse, upload, and manage campaign media assets.
+              </DialogPrimitive.Description>
             </VisuallyHidden.Root>
             <div className="relative h-full w-full max-w-none sm:h-[85vh] sm:max-h-[85vh] sm:max-w-5xl">
               <div className="surface-card card-elevated rounded-spacing-4 wizard-container-border flex h-full flex-col overflow-hidden">

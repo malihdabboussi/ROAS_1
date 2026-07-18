@@ -1,8 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { AuthOrbShell } from '@/components/auth/auth-orb-shell'
+import {
+  buildAppRedirectUrl,
+  buildAuthContinuationPath,
+  resolveAppRedirectPath,
+} from '@/lib/auth/access-routing'
 import { reportClientError } from '@/lib/log-client-error'
 import { createClient } from '@/lib/supabase/client'
 
@@ -27,10 +34,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
-  const [showForgotModal, setShowForgotModal] = useState(false)
-  const [forgotEmail, setForgotEmail] = useState('')
-  const [forgotStatus, setForgotStatus] = useState<string | null>(null)
-  const [forgotError, setForgotError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
 
   const supabase = createClient()
 
@@ -40,11 +44,12 @@ export default function LoginPage() {
     if (authError) setError(authError)
   }, [])
 
-  const getRedirectPath = useCallback(() => {
-    if (typeof window === 'undefined') return '/home'
-    const params = new URLSearchParams(window.location.search)
-    return params.get('redirect') || '/home'
-  }, [])
+  const getRedirectPath = () => resolveAppRedirectPath(searchParams.get('redirect'))
+
+  const getPromoCode = () => {
+    const promo = searchParams.get('promo')?.trim()
+    return promo ? promo.toUpperCase() : null
+  }
 
   const onOAuth = async (provider: 'google' | 'github') => {
     setLoading(true)
@@ -52,10 +57,13 @@ export default function LoginPage() {
       localStorage.setItem(LAST_PROVIDER_KEY, provider)
     } catch {}
     const redirectPath = getRedirectPath()
+    const callbackParams = new URLSearchParams({ redirect: redirectPath })
+    const promoCode = getPromoCode()
+    if (promoCode) callbackParams.set('promo', promoCode)
     const { error: oauthErr } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/callback?redirect=${encodeURIComponent(redirectPath)}`,
+        redirectTo: `${window.location.origin}/callback?${callbackParams.toString()}`,
       },
     })
     if (oauthErr) {
@@ -98,82 +106,28 @@ export default function LoginPage() {
       }
       return
     }
-    window.location.href = getRedirectPath()
+    window.location.href = buildAppRedirectUrl(window.location.origin, getRedirectPath(), {
+      promo: getPromoCode(),
+    }).toString()
   }
 
-  const onForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setForgotStatus(null)
-    setForgotError(null)
-    const redirectTo = `${window.location.origin}/oauth-callback?type=recovery&redirect=${encodeURIComponent('/reset-password')}`
-    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, { redirectTo })
-    if (error) {
-      void reportClientError({
-        feature: 'ui/auth_login',
-        error_code: 'password_reset_email_failed',
-        message: error.message,
-      })
-      setForgotError(error.message)
-    } else setForgotStatus('If the email exists, a reset link has been sent.')
-  }
+  const forgotPasswordHref = buildAuthContinuationPath(
+    '/forgot-password',
+    getRedirectPath(),
+    getPromoCode(),
+  )
 
   return (
-    <AuthOrbShell
-      quotes={VIBEY_QUOTES}
-      overlay={
-        showForgotModal ? (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-modal-overlay"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setShowForgotModal(false)
-            }}
-          >
-            <div className="card-glass card-elevated rounded-spacing-4 p-spacing-8 w-full max-w-[400px]">
-              <div className="mb-spacing-6 text-center">
-                <h2 className="title-h3">Reset your password</h2>
-                <p className="body-3 text-muted-foreground mt-1">
-                  We&apos;ll email you a magic link to reset it.
-                </p>
-              </div>
-              <form onSubmit={onForgotPassword} className="space-y-spacing-3">
-                <input
-                  type="email"
-                  required
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  placeholder="you@domain.com"
-                  autoFocus
-                  className="input-glass h-spacing-10 rounded-spacing-2 w-full"
-                />
-                {forgotStatus && <p className="body-3 text-muted-foreground">{forgotStatus}</p>}
-                {forgotError && <p className="body-3 text-destructive">{forgotError}</p>}
-                <button
-                  type="submit"
-                  className="chip-glass-green rounded-spacing-2 w-full px-4 py-2 font-medium"
-                >
-                  <span className="relative z-10">Send reset link</span>
-                </button>
-              </form>
-              <button
-                type="button"
-                onClick={() => setShowForgotModal(false)}
-                className="body-3 text-muted-foreground hover:text-foreground mt-4 w-full text-center"
-              >
-                Back to sign in
-              </button>
-            </div>
-          </div>
-        ) : undefined
-      }
-    >
+    <AuthOrbShell quotes={VIBEY_QUOTES}>
       <div className="mb-spacing-8 text-center">
-        <h1 className="text-foreground text-3xl font-bold tracking-tight">Sign in</h1>
+        <h1 className="text-foreground text-3xl font-bold uppercase tracking-tight">Sign in</h1>
         <p className="body-2 text-muted-foreground mt-spacing-2">Continue to ROAS</p>
       </div>
 
       <div className="space-y-spacing-4">
         <div className="gap-spacing-2 flex flex-col">
           <button
+            type="button"
             onClick={() => void onOAuth('google')}
             disabled={loading}
             aria-label="Sign in with Google"
@@ -214,6 +168,7 @@ export default function LoginPage() {
             )}
           </button>
           <button
+            type="button"
             onClick={() => void onOAuth('github')}
             disabled={loading}
             aria-label="Sign in with GitHub"
@@ -250,6 +205,7 @@ export default function LoginPage() {
           <input
             type="email"
             required
+            aria-label="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@domain.com"
@@ -259,6 +215,7 @@ export default function LoginPage() {
             <input
               type={showPassword ? 'text' : 'password'}
               required
+              aria-label="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
@@ -285,18 +242,12 @@ export default function LoginPage() {
       </div>
 
       <div className="mt-spacing-6 text-center">
-        <button
-          type="button"
-          onClick={() => {
-            setForgotEmail(email)
-            setForgotStatus(null)
-            setForgotError(null)
-            setShowForgotModal(true)
-          }}
+        <Link
+          href={forgotPasswordHref}
           className="body-3 text-muted-foreground hover:text-foreground"
         >
           Forgot password?
-        </button>
+        </Link>
       </div>
     </AuthOrbShell>
   )

@@ -57,7 +57,8 @@ function IntegrationReturnHandler() {
     const hasIntegrationReturnState = INTEGRATION_RETURN_KEYS.some(
       (key) => searchParams.get(key) !== null,
     )
-    if (!hasIntegrationReturnState) return
+    const hasIntegrationsDeepLink = searchParams.get('settings') === 'integrations'
+    if (!hasIntegrationReturnState && !hasIntegrationsDeepLink) return
 
     if (searchParams.get('composio_connected') === '1') {
       broadcastIntegrationOAuthEvent({

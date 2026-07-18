@@ -114,14 +114,13 @@ export function resolveSubtaskIssueDetail(
   },
   missionHints?: { progressNotes?: string | null; error?: string | null },
 ): string | null {
-  const output =
-    subtask.output && typeof subtask.output === 'object' ? subtask.output : null
-  const internal =
-    typeof output?._internal_error === 'string' ? output._internal_error.trim() : ''
+  const output = subtask.output && typeof subtask.output === 'object' ? subtask.output : null
+  const internal = typeof output?._internal_error === 'string' ? output._internal_error.trim() : ''
   if (internal) return internal
   const bounce = typeof subtask.bounce_reason === 'string' ? subtask.bounce_reason.trim() : ''
   if (bounce) return bounce
-  const progress = typeof missionHints?.progressNotes === 'string' ? missionHints.progressNotes.trim() : ''
+  const progress =
+    typeof missionHints?.progressNotes === 'string' ? missionHints.progressNotes.trim() : ''
   if (progress && /failed|error|404|503|gateway|triage/i.test(progress)) return progress
   const missionError = typeof missionHints?.error === 'string' ? missionHints.error.trim() : ''
   if (missionError && missionError !== subtask.feedback) return missionError
@@ -150,6 +149,30 @@ export function formatSubtaskStatusLabel(
       return 'Cancelled'
     default:
       return status.replace(/_/g, ' ')
+  }
+}
+
+/** Status pill for subtask detail header — always pair with `badge-glass`. */
+export function subtaskStatusBadgeTone(
+  status: string,
+  opts?: { dependencyBlocked?: boolean; awaitingHuman?: boolean },
+): string {
+  if (opts?.awaitingHuman || status === 'awaiting_human') return 'badge-glass-orange'
+  if (opts?.dependencyBlocked) return 'badge-glass-yellow'
+  switch (status) {
+    case 'done':
+      return 'badge-glass-green'
+    case 'in_progress':
+      return 'badge-glass-yellow'
+    case 'blocked':
+      return 'badge-glass-yellow'
+    case 'revision':
+      return 'badge-glass-purple'
+    case 'cancelled':
+      return 'badge-glass-muted'
+    case 'pending':
+    default:
+      return 'badge-glass-muted'
   }
 }
 

@@ -20,7 +20,12 @@ export function MediaPickerModalHeader(options: {
             Browse, upload, and manage your campaign assets.
           </p>
         </div>
-        <button type="button" onClick={onClose} className="btn-icon-bare rounded-spacing-2">
+        <button
+          type="button"
+          aria-label="Close media library"
+          onClick={onClose}
+          className="btn-icon-bare rounded-spacing-2"
+        >
           <X className="icon-md" />
         </button>
       </div>

@@ -2,11 +2,12 @@
 
 import { useCallback } from 'react'
 import { toast } from 'sonner'
+import { buildSpaceItemHref } from '@/lib/spaces/space-item-href'
 import { openInNewTab as openAppInNewTab } from '@/lib/utils/open-in-new-tab'
-import { useSpaceItemUpdate } from '../SpaceStatusCascadeConfirmProvider'
 import { transferSpaceItem, type DuplicateSpaceItemInclude } from '../../services/spaces.service'
 import { useSpacesStore } from '../../store/use-spaces-store'
 import type { SpaceItem } from '../../types'
+import { useSpaceItemUpdate } from '../SpaceStatusCascadeConfirmProvider'
 
 export interface UseTaskMenuActionsArgs {
   task: SpaceItem
@@ -18,11 +19,6 @@ export interface UseTaskMenuActionsArgs {
   onAddSubtask?: () => void
   /** Confirm + delete (caller may show a confirm modal). */
   onDelete?: () => void
-}
-
-function buildTaskUrl(spaceId: string, itemId: string): string {
-  if (typeof window === 'undefined') return `/spaces?space=${spaceId}&item=${itemId}`
-  return `${window.location.origin}/spaces?space=${spaceId}&item=${itemId}`
 }
 
 async function copyToClipboard(value: string): Promise<boolean> {
@@ -48,7 +44,7 @@ export function useTaskMenuActions({
   const duplicateItem = useSpacesStore((s) => s.duplicateItem)
 
   const copyLink = useCallback(async () => {
-    const ok = await copyToClipboard(buildTaskUrl(task.space_id, task.id))
+    const ok = await copyToClipboard(buildSpaceItemHref(task.space_id, task.id))
     if (ok) toast.success('Task link copied')
     else toast.error('Could not copy link')
   }, [task.space_id, task.id])
@@ -61,7 +57,7 @@ export function useTaskMenuActions({
 
   const openInNewTab = useCallback(() => {
     if (typeof window === 'undefined') return
-    openAppInNewTab(buildTaskUrl(task.space_id, task.id))
+    openAppInNewTab(buildSpaceItemHref(task.space_id, task.id))
   }, [task.space_id, task.id])
 
   const openDetail = useCallback(() => {

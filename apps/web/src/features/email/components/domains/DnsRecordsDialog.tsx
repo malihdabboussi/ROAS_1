@@ -94,34 +94,39 @@ export function DnsRecordsDialog({ domain, onClose }: DnsRecordsDialogProps) {
                     <h2 className="title-h6">{fullDomain}</h2>
                     {statusBadge}
                   </div>
-                  <button onClick={onClose} className="btn-icon-bare">
+                  <button
+                    type="button"
+                    aria-label="Close email DNS records"
+                    onClick={onClose}
+                    className="btn-icon-bare"
+                  >
                     <X className="icon-xs" />
                   </button>
                 </div>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   Add these DNS records to your domain provider to verify ownership
-                </p>
+                </DialogPrimitive.Description>
               </div>
 
               {/* Body */}
               <div className="px-spacing-6 py-spacing-4 space-y-spacing-6 flex-1 overflow-y-auto">
                 <div className="rounded-spacing-2 border-border overflow-hidden border">
-                  <table className="w-full table-fixed">
+                  <table className="w-full">
                     <thead>
                       <tr className="border-border bg-muted/30 border-b">
-                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground w-[12%] text-left font-medium">
+                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground text-left font-medium">
                           Type
                         </th>
-                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground w-[18%] text-left font-medium">
+                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground text-left font-medium">
                           Purpose
                         </th>
-                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground w-[28%] text-left font-medium">
+                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground text-left font-medium">
                           Host
                         </th>
-                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground w-[28%] text-left font-medium">
+                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground text-left font-medium">
                           Value
                         </th>
-                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground w-[14%] text-left font-medium">
+                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground text-left font-medium">
                           Status
                         </th>
                       </tr>
@@ -137,6 +142,8 @@ export function DnsRecordsDialog({ domain, onClose }: DnsRecordsDialogProps) {
                           </td>
                           <td className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground overflow-hidden font-mono">
                             <button
+                              type="button"
+                              aria-label={`Copy host ${getHostPrefix(record.host, activeDomain.domain)}`}
                               className="hover:text-foreground block w-full cursor-pointer truncate text-left transition-colors"
                               onClick={() =>
                                 copyToClipboard(getHostPrefix(record.host, activeDomain.domain))
@@ -152,6 +159,8 @@ export function DnsRecordsDialog({ domain, onClose }: DnsRecordsDialogProps) {
                           </td>
                           <td className="px-spacing-3 py-spacing-2 overflow-hidden">
                             <button
+                              type="button"
+                              aria-label={`Copy value ${record.data}`}
                               className="body-4 text-muted-foreground hover:text-foreground block w-full cursor-pointer truncate text-left font-mono transition-colors"
                               onClick={() => copyToClipboard(record.data)}
                               title={copiedValue === record.data ? 'Copied!' : 'Click to copy'}
@@ -166,7 +175,7 @@ export function DnsRecordsDialog({ domain, onClose }: DnsRecordsDialogProps) {
                                 <span className="body-4">Valid</span>
                               </span>
                             ) : (
-                              <span className="body-4 text-orange-500">Pending</span>
+                              <span className="body-4 text-warning">Pending</span>
                             )}
                           </td>
                         </tr>
@@ -181,6 +190,8 @@ export function DnsRecordsDialog({ domain, onClose }: DnsRecordsDialogProps) {
                         </td>
                         <td className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground overflow-hidden font-mono">
                           <button
+                            type="button"
+                            aria-label="Copy host _dmarc"
                             className="hover:text-foreground block w-full cursor-pointer truncate text-left transition-colors"
                             onClick={() => copyToClipboard('_dmarc')}
                           >
@@ -189,6 +200,8 @@ export function DnsRecordsDialog({ domain, onClose }: DnsRecordsDialogProps) {
                         </td>
                         <td className="px-spacing-3 py-spacing-2 overflow-hidden">
                           <button
+                            type="button"
+                            aria-label="Copy value v=DMARC1; p=none;"
                             className="body-4 text-muted-foreground hover:text-foreground block w-full cursor-pointer truncate text-left font-mono transition-colors"
                             onClick={() => copyToClipboard('v=DMARC1; p=none;')}
                           >

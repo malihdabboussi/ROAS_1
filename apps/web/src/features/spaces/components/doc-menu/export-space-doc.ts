@@ -8,6 +8,7 @@ import {
   sanitizeFilename,
 } from '@/lib/artifacts'
 import { buildSpaceDocExportHtml } from '@/lib/spaces/space-doc-export'
+import { createSpaceDocVisualPdfBlob } from '@/lib/spaces/space-doc-visual-pdf-export'
 
 function buildExportContentRoot(title: string, docBodyHtml: string): HTMLElement {
   const root = document.createElement('div')
@@ -95,21 +96,43 @@ export function exportSpaceDocHtml(title: string, docBody: string): void {
 export async function exportSpaceDocDocx(title: string, docBody: string): Promise<void> {
   const heading = title.trim() || 'Untitled'
   try {
-    const res = await fetch('/api/spaces/export-docx', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: heading, docBody }),
-    })
-    if (!res.ok) throw new Error('DOCX export failed')
-    const blob = await res.blob()
+    const blob = await createSpaceDocDocxBlob(heading, docBody)
     downloadDocx(blob, heading, 'doc')
   } catch {
     toast.error('Failed to export doc as DOCX')
   }
 }
 
+export async function createSpaceDocDocxBlob(title: string, docBody: string): Promise<Blob> {
+  const res = await fetch('/api/spaces/export-docx', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: title.trim() || 'Untitled', docBody }),
+  })
+  if (!res.ok) throw new Error('DOCX export failed')
+  return res.blob()
+}
+
 export function exportSpaceDocVisualHtml(title: string, visualHtml: string): void {
   downloadHTML(visualHtml, `${title.trim() || 'Untitled'}-visual`)
+}
+
+export async function createSpaceDocCanvaFile(options: {
+  title: string
+  docBody: string
+  visualHtml?: string | null
+}): Promise<{ blob: Blob; filename: string }> {
+  const title = options.title.trim() || 'Untitled'
+  if (options.visualHtml?.trim()) {
+    return {
+      blob: await createSpaceDocVisualPdfBlob({ title, visualHtml: options.visualHtml }),
+      filename: `${sanitizeFilename(`${title} visual`, 'visual-doc')}.pdf`,
+    }
+  }
+  return {
+    blob: await createSpaceDocDocxBlob(title, options.docBody),
+    filename: `${sanitizeFilename(title, 'doc')}.docx`,
+  }
 }
 
 export { exportSpaceDocVisualPdf } from '@/lib/spaces/space-doc-visual-pdf-export'

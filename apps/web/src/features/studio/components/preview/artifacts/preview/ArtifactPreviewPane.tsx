@@ -1,13 +1,6 @@
 'use client'
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type {
   BlogPostPreviewHandle,
   BlogPostSavePulse,
@@ -20,9 +13,9 @@ import { PresentationToolbar } from '@/features/studio/components/preview/Presen
 import { useCampaignMode } from '@/features/studio/contexts/CampaignModeContext'
 import { isFunnelHtmlBundleFullMode } from '@/features/studio/lib/funnel-view-mode.util'
 import { useFunnelFullModeStore } from '@/features/studio/store/use-funnel-full-mode-store'
-import { ArtifactPreviewContent } from './ArtifactPreviewContent'
-import type { ArtifactPreviewPaneProps } from './artifact-preview-pane.types'
 import { useArtifactPreviewChrome } from './artifact-preview-chrome'
+import type { ArtifactPreviewPaneProps } from './artifact-preview-pane.types'
+import { ArtifactPreviewContent } from './ArtifactPreviewContent'
 
 export type {
   ArtifactPreviewEmailPreviewProps,
@@ -112,8 +105,14 @@ export function ArtifactPreviewPane({
         canRedo={funnelHistory.canRedo}
         isLoading={funnelHistory.isLoading}
         pendingAction={funnelHistory.pendingAction}
+        entries={funnelHistory.entries}
+        historyLoading={funnelHistory.historyLoading}
+        currentChangeSetId={funnelHistory.currentChangeSetId}
+        restoringChangeSetId={funnelHistory.restoringChangeSetId}
         onUndo={() => void funnelHistory.undo()}
         onRedo={() => void funnelHistory.redo()}
+        onHistoryOpen={() => void funnelHistory.loadHistory()}
+        onRestore={(changeSetId) => void funnelHistory.restore(changeSetId)}
       />
     ) : null
 
@@ -192,46 +191,44 @@ export function ArtifactPreviewPane({
         selectedResource ? 'flex-1 opacity-100' : 'flex-[0_0_0%] opacity-0'
       }`}
     >
-      {selectedResource?.type === 'form' && renderFormPreview ? (
-        renderFormPreview({
-          formId: selectedResource.id,
-          toolbarLeading: spacesDeepBackButton,
-          fullscreenButton: spacesArtifactFullscreenBtn,
-          trailingAfterDivider: funnelTrailingChrome,
-          buildShowAddQuestionRail: !slideOverOnClose,
-          onOpenFullView: slideOverOnOpenFullView,
-        })
-      ) : (
-        selectedFunnel &&
-        (selectedResource?.type === 'page' || selectedResource?.type === 'funnel') && (
-          <>
-            <FunnelToolbar
-              funnelId={selectedFunnel.id}
-              funnelName={selectedFunnel.name}
-              status={selectedFunnel.status}
-              slug={selectedFunnel.slug}
-              publishedUrl={selectedFunnel.publishedUrl}
-              onStatusChange={onFunnelStatusChange}
-              viewport={funnelViewport}
-              onViewportChange={setFunnelViewport}
-              pages={funnelPages}
-              currentPageId={currentPageId}
-              onPageChange={onFunnelPageChange}
-              hideFunnelSettingsButton={Boolean(
-                slideOverOnClose || slideOverOnOpenFullView || spacesDeepWorkBack,
-              )}
-              leadingChrome={spacesDeepBackButton}
-              publishAdjacentChrome={spacesArtifactFullscreenBtn}
-              publishLeadingChrome={spacesFunnelOptionsButton}
-              trailingChrome={funnelTrailingChrome}
-              funnelFullMode={funnelHtmlBundleFullMode}
-              hidePagePicker={Boolean(spacesDeepWorkBack)}
-              historyChrome={funnelHistoryControls}
-            />
-            {spacesFunnelMenu}
-          </>
-        )
-      )}
+      {selectedResource?.type === 'form' && renderFormPreview
+        ? renderFormPreview({
+            formId: selectedResource.id,
+            toolbarLeading: spacesDeepBackButton,
+            fullscreenButton: spacesArtifactFullscreenBtn,
+            trailingAfterDivider: funnelTrailingChrome,
+            buildShowAddQuestionRail: !slideOverOnClose,
+            onOpenFullView: slideOverOnOpenFullView,
+          })
+        : selectedFunnel &&
+          (selectedResource?.type === 'page' || selectedResource?.type === 'funnel') && (
+            <>
+              <FunnelToolbar
+                funnelId={selectedFunnel.id}
+                funnelName={selectedFunnel.name}
+                status={selectedFunnel.status}
+                slug={selectedFunnel.slug}
+                publishedUrl={selectedFunnel.publishedUrl}
+                onStatusChange={onFunnelStatusChange}
+                viewport={funnelViewport}
+                onViewportChange={setFunnelViewport}
+                pages={funnelPages}
+                currentPageId={currentPageId}
+                onPageChange={onFunnelPageChange}
+                hideFunnelSettingsButton={Boolean(
+                  slideOverOnClose || slideOverOnOpenFullView || spacesDeepWorkBack,
+                )}
+                leadingChrome={spacesDeepBackButton}
+                publishAdjacentChrome={spacesArtifactFullscreenBtn}
+                publishLeadingChrome={spacesFunnelOptionsButton}
+                trailingChrome={funnelTrailingChrome}
+                funnelFullMode={funnelHtmlBundleFullMode}
+                hidePagePicker={Boolean(spacesDeepWorkBack)}
+                historyChrome={funnelHistoryControls}
+              />
+              {spacesFunnelMenu}
+            </>
+          )}
 
       {(selectedResource?.type === 'blog-post' || selectedResource?.type === 'blog-hub') &&
         selectedResource.funnelId &&

@@ -38,13 +38,6 @@ const IntegrationsPageContent = dynamic(
   () => import('../components/settings-content/IntegrationsPageContent'),
   { ssr: false, loading: DynamicLoadingFallback },
 )
-const ApiKeysPageContent = dynamic(
-  () => import('../components/settings-content/ApiKeysPageContent'),
-  {
-    ssr: false,
-    loading: DynamicLoadingFallback,
-  },
-)
 const DomainsPageContent = dynamic(
   () => import('../components/settings-content/DomainsPageContent'),
   {
@@ -71,10 +64,13 @@ const AutopilotPageContent = dynamic(
     loading: DynamicLoadingFallback,
   },
 )
-const ModelsPageContent = dynamic(() => import('../components/settings-content/ModelsPageContent'), {
-  ssr: false,
-  loading: DynamicLoadingFallback,
-})
+const ModelsPageContent = dynamic(
+  () => import('../components/settings-content/ModelsPageContent'),
+  {
+    ssr: false,
+    loading: DynamicLoadingFallback,
+  },
+)
 const SkillRecommendationsPageContent = dynamic(
   () => import('../components/settings-content/SkillRecommendationsPageContent'),
   { ssr: false, loading: DynamicLoadingFallback },
@@ -183,8 +179,6 @@ export function WorkspaceSettingsModal({
         return <IntegrationsPageContent />
       case 'mcp':
         return <McpPageContent />
-      case 'api-keys':
-        return <ApiKeysPageContent />
       case 'domains':
         return <DomainsPageContent />
       case 'email':
@@ -229,6 +223,8 @@ export function WorkspaceSettingsModal({
               <button
                 key={item.id}
                 type="button"
+                aria-label={item.label}
+                aria-pressed={activeSection === item.id}
                 onClick={() => setActiveSection(item.id)}
                 className={`gap-spacing-2 h-spacing-8 rounded-spacing-3 flex shrink-0 items-center transition-all duration-[600ms] ease-in-out ${
                   activeSection === item.id
@@ -263,6 +259,9 @@ export function WorkspaceSettingsModal({
         <DialogPrimitive.Content className="z-modal-layer-3 z-modal-dialog-root fixed inset-0 flex items-center justify-center overflow-visible">
           <VisuallyHidden.Root>
             <DialogPrimitive.Title>Workspace Settings</DialogPrimitive.Title>
+            <DialogPrimitive.Description>
+              Manage workspace services, intelligence, and communications.
+            </DialogPrimitive.Description>
           </VisuallyHidden.Root>
 
           <div
@@ -282,7 +281,12 @@ export function WorkspaceSettingsModal({
                   <h2 className="typo-caption text-muted-foreground uppercase">
                     Workspace Settings
                   </h2>
-                  <button type="button" onClick={onClose} className="btn-icon-bare">
+                  <button
+                    type="button"
+                    aria-label="Close workspace settings"
+                    onClick={onClose}
+                    className="btn-icon-bare"
+                  >
                     <X className="icon-sm" />
                   </button>
                 </div>
@@ -306,6 +310,8 @@ export function WorkspaceSettingsModal({
                                 return (
                                   <button
                                     key={item.id}
+                                    type="button"
+                                    aria-pressed={isActive}
                                     onClick={() => setActiveSection(item.id)}
                                     className={`gap-spacing-2 px-spacing-3 py-spacing-2 body-2 group flex w-full items-center text-left font-medium transition-all duration-200 ${
                                       isActive

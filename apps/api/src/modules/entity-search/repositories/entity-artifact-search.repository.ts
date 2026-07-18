@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-const CAP = 12
+const CAP = 100
 
 @Injectable()
 export class EntityArtifactSearchRepository {
-  async searchArtifacts(supabase: SupabaseClient, pattern: string, orgId?: string | null) {
+  async searchArtifacts(
+    supabase: SupabaseClient,
+    pattern: string,
+    userId: string,
+    orgId?: string | null,
+  ) {
     const [
       offers,
       funnelsClassic,
@@ -22,45 +27,49 @@ export class EntityArtifactSearchRepository {
       pages,
     ] = await Promise.all([
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase.from('offers').select('id, name, campaign_id').ilike('name', pattern).limit(CAP),
+          userId,
           orgId,
         ),
       ),
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase
             .from('funnels')
             .select('id, name, campaign_id, funnel_type')
             .ilike('name', pattern)
             .neq('funnel_type', 'website')
             .limit(CAP),
+          userId,
           orgId,
         ),
       ),
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase
             .from('funnels')
             .select('id, name, campaign_id, funnel_type')
             .ilike('name', pattern)
             .eq('funnel_type', 'website')
             .limit(CAP),
+          userId,
           orgId,
         ),
       ),
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase
             .from('sequences')
             .select('id, name, campaign_id')
             .ilike('name', pattern)
             .limit(CAP),
+          userId,
           orgId,
         ),
       ),
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase
             .from('sequence_emails')
             .select(
@@ -77,43 +86,48 @@ export class EntityArtifactSearchRepository {
             )
             .ilike('subject', pattern)
             .limit(CAP),
+          userId,
           orgId,
           'sequences.org_id',
+          null,
         ),
       ),
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase
             .from('presentations')
             .select('id, name, campaign_id')
             .ilike('name', pattern)
             .limit(CAP),
+          userId,
           orgId,
         ),
       ),
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase
             .from('avatars')
             .select('id, name, campaign_id')
             .ilike('name', pattern)
             .limit(CAP),
+          userId,
           orgId,
         ),
       ),
       this.mergeAds(supabase, pattern, orgId),
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase
             .from('ad_campaigns')
             .select('id, name, campaign_id')
             .ilike('name', pattern)
             .limit(CAP),
+          userId,
           orgId,
         ),
       ),
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase
             .from('ad_sets')
             .select(
@@ -129,23 +143,26 @@ export class EntityArtifactSearchRepository {
             )
             .ilike('name', pattern)
             .limit(CAP),
+          userId,
           orgId,
           'ad_campaigns.org_id',
+          null,
         ),
       ),
-      this.mergeSocialPosts(supabase, pattern, orgId),
+      this.mergeSocialPosts(supabase, pattern, userId, orgId),
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase
             .from('blog_posts')
             .select('id, title, campaign_id, funnel_id')
             .ilike('title', pattern)
             .limit(CAP),
+          userId,
           orgId,
         ),
       ),
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase
             .from('funnel_pages')
             .select(
@@ -162,8 +179,10 @@ export class EntityArtifactSearchRepository {
             )
             .ilike('name', pattern)
             .limit(CAP),
+          userId,
           orgId,
           'funnels.org_id',
+          null,
         ),
       ),
     ])
@@ -185,11 +204,27 @@ export class EntityArtifactSearchRepository {
     }
   }
 
-  private applyOrgFilter<
-    Q extends { eq: (column: string, value: string) => Q; is: (column: string, value: null) => Q },
-  >(query: Q, orgId: string | null | undefined, column = 'org_id'): Q {
-    if (orgId === undefined) return query
-    return (orgId ? query.eq(column, orgId) : query.is(column, null)) as Q
+  private applyAccountFilter<
+    Q extends {
+      eq: (column: string, value: string) => Q
+      is: (column: string, value: null) => Q
+      or: (filters: string) => Q
+    },
+  >(
+    query: Q,
+    userId: string,
+    orgId: string | null | undefined,
+    orgColumn = 'org_id',
+    userColumn: string | null = 'user_id',
+  ): Q {
+    if (!userColumn) {
+      if (orgId === undefined) return query
+      return (orgId ? query.eq(orgColumn, orgId) : query.is(orgColumn, null)) as Q
+    }
+    if (!orgId) return query.is(orgColumn, null).eq(userColumn, userId) as Q
+    return query.or(
+      `${orgColumn}.eq.${orgId},and(${orgColumn}.is.null,${userColumn}.eq.${userId})`,
+    ) as Q
   }
 
   private async mergeAds(
@@ -266,6 +301,7 @@ export class EntityArtifactSearchRepository {
   private async mergeSocialPosts(
     supabase: SupabaseClient,
     pattern: string,
+    userId: string,
     orgId?: string | null,
   ): Promise<
     { id: string; caption: string | null; headline: string | null; campaign_id: string | null }[]
@@ -278,22 +314,24 @@ export class EntityArtifactSearchRepository {
     }
     const [byCap, byHead] = await Promise.all([
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase
             .from('social_posts')
             .select('id, caption, headline, campaign_id')
             .ilike('caption', pattern)
             .limit(CAP),
+          userId,
           orgId,
         ),
       ),
       this.safeQuery(
-        this.applyOrgFilter(
+        this.applyAccountFilter(
           supabase
             .from('social_posts')
             .select('id, caption, headline, campaign_id')
             .ilike('headline', pattern)
             .limit(CAP),
+          userId,
           orgId,
         ),
       ),

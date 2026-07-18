@@ -85,7 +85,7 @@ export default function UnsubscribePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <h1 className="mb-2 text-lg font-semibold">Invalid Link</h1>
+            <h1 className="mb-2 text-lg font-semibold uppercase">Invalid Link</h1>
             <p className="text-sm text-white/50">
               This unsubscribe link is invalid or has expired.
             </p>
@@ -109,7 +109,7 @@ export default function UnsubscribePage() {
                 />
               </svg>
             </div>
-            <h1 className="mb-2 text-lg font-semibold">Unsubscribe</h1>
+            <h1 className="mb-2 text-lg font-semibold uppercase">Unsubscribe</h1>
             <p className="mb-6 text-sm text-white/50">
               {email
                 ? `Unsubscribe ${email} from future emails?`
@@ -123,6 +123,7 @@ export default function UnsubscribePage() {
             )}
 
             <button
+              type="button"
               onClick={handleUnsubscribe}
               disabled={isProcessing}
               className="w-full rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-black transition-all hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
@@ -145,7 +146,7 @@ export default function UnsubscribePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h1 className="mb-2 text-lg font-semibold">Unsubscribed</h1>
+            <h1 className="mb-2 text-lg font-semibold uppercase">Unsubscribed</h1>
             <p className="text-sm text-white/50">
               {email ? `${email} has` : 'You have'} been successfully unsubscribed.
             </p>
@@ -170,7 +171,7 @@ export default function UnsubscribePage() {
                 <line x1="3" y1="3" x2="21" y2="21" strokeWidth={2} />
               </svg>
             </div>
-            <h1 className="mb-2 text-lg font-semibold">Already Unsubscribed</h1>
+            <h1 className="mb-2 text-lg font-semibold uppercase">Already Unsubscribed</h1>
             <p className="text-sm text-white/50">
               {email ? `${email} is` : 'This email is'} already unsubscribed. No further action
               needed.
@@ -191,11 +192,12 @@ export default function UnsubscribePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <h1 className="mb-2 text-lg font-semibold">Something Went Wrong</h1>
+            <h1 className="mb-2 text-lg font-semibold uppercase">Something Went Wrong</h1>
             <p className="mb-4 text-sm text-white/50">
               {error || "We couldn't process your request."}
             </p>
             <button
+              type="button"
               onClick={() => window.location.reload()}
               className="rounded-xl border border-white/10 px-4 py-2 text-sm text-white/70 transition-all hover:bg-white/5"
             >

@@ -1,5 +1,8 @@
 export { ConversationActionsMenu } from './ConversationActionsMenu'
 export type { ConversationActionsMenuProps } from './ConversationActionsMenu'
+export { ConversationHeaderTitle } from './ConversationHeaderTitle'
+export { ConversationScopePicker } from './ConversationScopePicker'
+export type { ConversationScopePickerHandle } from './ConversationScopePicker'
 export { ConversationShareModal } from './ConversationShareModal'
 export type { ConversationShareModalProps } from './ConversationShareModal'
 export type { ConversationShareRosterEntry } from './ConversationShareTypes'

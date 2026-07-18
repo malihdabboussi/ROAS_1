@@ -36,4 +36,28 @@ describe('FunnelHistoryController', () => {
       funnelPageId: 'page-1',
     })
   })
+
+  it('passes timeline and restore scope to the history service', async () => {
+    const service = {
+      listHistory: vi.fn(async () => ({ entries: [] })),
+      restore: vi.fn(async () => ({ success: true, changed: true })),
+    }
+    const controller = new FunnelHistoryController(service as never)
+
+    await controller.listHistory({} as never, 'funnel-1', { funnel_page_id: 'page-1' })
+    await controller.restore({} as never, 'funnel-1', {
+      funnel_page_id: 'page-1',
+      change_set_id: 'change-1',
+    })
+
+    expect(service.listHistory).toHaveBeenCalledWith({} as never, {
+      funnelId: 'funnel-1',
+      funnelPageId: 'page-1',
+    })
+    expect(service.restore).toHaveBeenCalledWith({} as never, {
+      funnelId: 'funnel-1',
+      funnelPageId: 'page-1',
+      changeSetId: 'change-1',
+    })
+  })
 })

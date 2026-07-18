@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  fetchFunnelHistory,
   fetchFunnelHistoryState,
   redoFunnelChange,
+  restoreFunnelVersion,
   undoFunnelChange,
 } from './funnel-history.service'
 
@@ -40,6 +42,22 @@ describe('funnel history service', () => {
       funnel_page_id: 'page-1',
     })
     expect(backendPostMock).toHaveBeenNthCalledWith(2, '/api/funnels/funnel-1/history/redo', {
+      funnel_page_id: 'page-1',
+    })
+  })
+
+  it('loads the revision timeline and restores a selected version', async () => {
+    backendGetMock.mockResolvedValueOnce({ entries: [], current_change_set_id: null })
+    backendPostMock.mockResolvedValueOnce({ success: true, changed: true })
+
+    await fetchFunnelHistory('funnel-1', 'page-1')
+    await restoreFunnelVersion('funnel-1', 'change-1', 'page-1')
+
+    expect(backendGetMock).toHaveBeenCalledWith(
+      '/api/funnels/funnel-1/history?funnel_page_id=page-1',
+    )
+    expect(backendPostMock).toHaveBeenCalledWith('/api/funnels/funnel-1/history/restore', {
+      change_set_id: 'change-1',
       funnel_page_id: 'page-1',
     })
   })

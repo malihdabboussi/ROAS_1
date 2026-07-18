@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Bot,
@@ -13,6 +13,7 @@ import {
   FolderInput,
   FolderMinus,
   Fullscreen,
+  Palette,
   Share2,
   Trash2,
 } from 'lucide-react'
@@ -25,9 +26,9 @@ import {
   type DocMenuTarget,
   type UseDocMenuActionsArgs,
 } from './use-doc-menu-actions'
+import { useDocMenuDropdownPosition } from './use-doc-menu-dropdown-position'
 
 const HOVER_CLOSE_DELAY_MS = 140
-const SUBMENU_WIDTH = 240
 
 type SubmenuKind = 'move' | 'copy' | 'export' | null
 
@@ -54,16 +55,22 @@ export function DocMenuDropdown({
   onShare,
   onDelete,
 }: DocMenuDropdownProps) {
-  const dropdownRef = useRef<HTMLDivElement>(null)
   const moveButtonRef = useRef<HTMLButtonElement>(null)
   const copyButtonRef = useRef<HTMLButtonElement>(null)
   const exportButtonRef = useRef<HTMLButtonElement>(null)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [openSubmenu, setOpenSubmenu] = useState<SubmenuKind>(null)
-  const [pos, setPos] = useState<{ top: number; left: number }>({ top: -9999, left: -9999 })
-  const [subPos, setSubPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
   const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false)
   const [removing, setRemoving] = useState(false)
+
+  const { dropdownRef, pos, subPos, submenuWidth } = useDocMenuDropdownPosition({
+    anchorRef,
+    pointerPosition,
+    openSubmenu,
+    moveButtonRef,
+    copyButtonRef,
+    exportButtonRef,
+  })
 
   const cancelClose = () => {
     if (closeTimerRef.current) {
@@ -85,54 +92,6 @@ export function DocMenuDropdown({
   const { groups: otherSpaceGroups, totalCount: otherSpacesCount } = useOtherSpacesByCampaign(
     doc.space_id,
   )
-
-  useLayoutEffect(() => {
-    if (!dropdownRef.current) return
-    const dropRect = dropdownRef.current.getBoundingClientRect()
-    const vw = window.innerWidth
-    const vh = window.innerHeight
-    const pad = 8
-
-    if (pointerPosition) {
-      let top = pointerPosition.y
-      let left = pointerPosition.x + dropRect.width
-      if (top + dropRect.height > vh - pad) top = Math.max(pad, vh - dropRect.height - pad)
-      if (top < pad) top = pad
-      if (left > vw - pad) left = vw - pad
-      if (left - dropRect.width < pad) left = pad + dropRect.width
-      setPos({ top, left })
-      return
-    }
-
-    if (!anchorRef?.current) return
-    const anchorRect = anchorRef.current.getBoundingClientRect()
-    let top = anchorRect.bottom + 4
-    if (top + dropRect.height > vh - pad) top = anchorRect.top - dropRect.height - 4
-    if (top < pad) top = pad
-    const left = anchorRect.right
-    setPos({ top, left })
-  }, [anchorRef, pointerPosition])
-
-  useLayoutEffect(() => {
-    const anchor =
-      openSubmenu === 'move'
-        ? moveButtonRef.current
-        : openSubmenu === 'copy'
-          ? copyButtonRef.current
-          : openSubmenu === 'export'
-            ? exportButtonRef.current
-            : null
-    if (!anchor) return
-    const rect = anchor.getBoundingClientRect()
-    const vw = window.innerWidth
-    const vh = window.innerHeight
-    const pad = 8
-    let top = rect.top
-    let left = rect.right + 4
-    if (left + SUBMENU_WIDTH > vw - pad) left = rect.left - SUBMENU_WIDTH - 4
-    if (top + 240 > vh - pad) top = Math.max(pad, vh - 240 - pad)
-    setSubPos({ top, left })
-  }, [openSubmenu])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -341,12 +300,24 @@ export function DocMenuDropdown({
           style={{
             top: subPos.top,
             left: subPos.left,
-            width: SUBMENU_WIDTH,
+            width: submenuWidth,
             maxHeight: `calc(100vh - ${subPos.top + 8}px)`,
           }}
         >
           {openSubmenu === 'export' ? (
             <>
+              <button
+                type="button"
+                onClick={() => {
+                  void actions.openInCanva()
+                  close()
+                }}
+                disabled={actions.openingCanva}
+                className={submenuRowCls}
+              >
+                <Palette className={itemIcon} />
+                <span>{actions.openingCanva ? 'Opening Canva…' : 'Open in Canva'}</span>
+              </button>
               {actions.canExportDocBody ? (
                 <>
                   <button

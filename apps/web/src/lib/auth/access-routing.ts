@@ -2,6 +2,8 @@ export const APP_HOME_PATH = '/home' as const
 export const ONBOARDING_PATH = '/onboarding' as const
 export const NO_ORG_ACCESS_PATH = '/no-org-access' as const
 
+const REDIRECT_VALIDATION_ORIGIN = 'https://app.roas.invalid'
+
 export type AccessStatus = 'granted' | 'denied' | 'unknown'
 
 type ResolveAccessStatusInput = {
@@ -20,6 +22,44 @@ export type ResolveAuthenticatedRedirectInput = {
   fullyOnboarded: boolean
   isOrgOnly: boolean
   accessStatus: AccessStatus
+}
+
+export function resolveAppRedirectPath(requestedRedirect: string | null | undefined): string {
+  if (!requestedRedirect?.startsWith('/')) return APP_HOME_PATH
+
+  try {
+    const target = new URL(requestedRedirect, REDIRECT_VALIDATION_ORIGIN)
+    if (target.origin !== REDIRECT_VALIDATION_ORIGIN) return APP_HOME_PATH
+    return `${target.pathname}${target.search}${target.hash}`
+  } catch {
+    return APP_HOME_PATH
+  }
+}
+
+export function buildAppRedirectUrl(
+  appOrigin: string,
+  requestedRedirect: string | null | undefined,
+  searchParams: Record<string, string | null | undefined> = {},
+): URL {
+  const target = new URL(resolveAppRedirectPath(requestedRedirect), appOrigin)
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value) target.searchParams.set(key, value)
+  }
+  return target
+}
+
+export function buildAuthContinuationPath(
+  authPath: '/login' | '/forgot-password' | '/reset-password',
+  requestedRedirect: string | null | undefined,
+  promoCode: string | null | undefined,
+): string {
+  const params = new URLSearchParams()
+  const redirectPath = resolveAppRedirectPath(requestedRedirect)
+  if (redirectPath !== APP_HOME_PATH) params.set('redirect', redirectPath)
+  const normalizedPromo = promoCode?.trim().toUpperCase()
+  if (normalizedPromo) params.set('promo', normalizedPromo)
+  const query = params.toString()
+  return `${authPath}${query ? `?${query}` : ''}`
 }
 
 export function resolveAccessStatus({

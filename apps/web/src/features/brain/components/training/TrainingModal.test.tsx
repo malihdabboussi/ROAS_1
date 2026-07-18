@@ -120,10 +120,12 @@ function skSource(overrides: Partial<SkSource> = {}): SkSource {
   }
 }
 
-function renderTrainingModal(options: {
-  onOpenChange?: (open: boolean) => void
-  onRender?: () => void
-} = {}) {
+function renderTrainingModal(
+  options: {
+    onOpenChange?: (open: boolean) => void
+    onRender?: () => void
+  } = {},
+) {
   return render(
     <Profiler id="TrainingModal" onRender={options.onRender ?? vi.fn()}>
       <TrainingModal
@@ -132,7 +134,17 @@ function renderTrainingModal(options: {
         open
         onOpenChange={options.onOpenChange ?? vi.fn()}
         triggerless
-        trainableTargets={[target(), target({ scopeId: 'scope-agent', label: 'Maya', brainId: 'brain-agent', scopeType: 'agent', isAgentBrain: true, agentName: 'Maya' })]}
+        trainableTargets={[
+          target(),
+          target({
+            scopeId: 'scope-agent',
+            label: 'Maya',
+            brainId: 'brain-agent',
+            scopeType: 'agent',
+            isAgentBrain: true,
+            agentName: 'Maya',
+          }),
+        ]}
         selectedScopeIds={['scope-user']}
         onSelectedScopeIdsChange={vi.fn()}
       />
@@ -169,6 +181,11 @@ describe('TrainingModal', () => {
     renderTrainingModal({ onRender })
 
     expect(screen.getByText('TRAIN BRAIN')).toBeTruthy()
+    const dialog = screen.getByRole('dialog', { name: 'Train brain' })
+    expect(dialog.getAttribute('aria-describedby')).toBe(
+      screen.getByText(/Add one-time or recurring knowledge sources/).id,
+    )
+    expect(screen.getByRole('button', { name: 'Close training' })).toBeTruthy()
     expect(screen.getByText('Train which brains')).toBeTruthy()
     expect(screen.getByText('Staging (0)')).toBeTruthy()
 

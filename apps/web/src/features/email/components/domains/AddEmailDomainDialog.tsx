@@ -77,13 +77,18 @@ export function AddEmailDomainDialog({
               <div className="px-spacing-4 sm:px-spacing-6 pt-spacing-4 pb-spacing-2">
                 <div className="flex items-center justify-between">
                   <h2 className="title-h6">Add Sending Domain</h2>
-                  <button onClick={onClose} className="btn-icon-bare">
+                  <button
+                    type="button"
+                    aria-label="Close add sending domain"
+                    onClick={onClose}
+                    className="btn-icon-bare"
+                  >
                     <X className="icon-xs" />
                   </button>
                 </div>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   Authenticate your domain to send emails with better deliverability
-                </p>
+                </DialogPrimitive.Description>
               </div>
 
               {/* Body */}
@@ -127,6 +132,7 @@ export function AddEmailDomainDialog({
 
                 <button
                   type="button"
+                  aria-expanded={showAdvanced}
                   onClick={() => setShowAdvanced(!showAdvanced)}
                   className="gap-spacing-1 body-3 text-muted-foreground hover:text-foreground flex items-center transition-colors"
                 >

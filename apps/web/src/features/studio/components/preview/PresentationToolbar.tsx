@@ -8,6 +8,12 @@ import type {
   PresentationPreviewOverflowMenuProps,
   PresentationViewportSize,
 } from '@/lib/artifacts'
+import {
+  createPresentationPPTBlobFromIframe,
+  createPresentationPPTBlobFromSlides,
+  sanitizeFilename,
+} from '@/lib/artifacts'
+import { CANVA_MESSAGES, openCanvaDesignFile } from '@/lib/canva'
 import { fetchPresentation, fetchPresentationBundle } from '../../services/artifact-preview.service'
 import { usePresentationFullModeStore } from '../../store/use-presentation-full-mode-store'
 import {
@@ -21,8 +27,8 @@ import {
 import { PresentationDownloadMenu } from './PresentationDownloadMenu'
 import { PresentationEditModeToolbar } from './PresentationEditModeToolbar'
 import { PresentationShareMenu } from './PresentationShareMenu'
-import { StudioPresentationMenuDropdown } from './StudioPresentationMenuDropdown'
 import { PresentationViewportMenu } from './PresentationViewportMenu'
+import { StudioPresentationMenuDropdown } from './StudioPresentationMenuDropdown'
 
 // ============================================================================
 // Types
@@ -82,6 +88,7 @@ export function PresentationToolbar({
 }: PresentationToolbarProps) {
   const [copied, setCopied] = useState(false)
   const [exporting, setExporting] = useState<'pdf' | 'ppt' | null>(null)
+  const [openingCanva, setOpeningCanva] = useState(false)
   const [activeToolbarMenu, setActiveToolbarMenu] = useState<ToolbarMenu | null>(null)
   const [presentationMenuOpen, setPresentationMenuOpen] = useState(false)
   const presentationMenuBtnRef = useRef<HTMLButtonElement>(null)
@@ -174,6 +181,41 @@ export function PresentationToolbar({
     }
   }, [generatedHtml, name, presentationId])
 
+  const handleOpenCanva = useCallback(async () => {
+    if (openingCanva) return
+    setActiveToolbarMenu(null)
+    setOpeningCanva(true)
+    const title = name || 'presentation'
+    try {
+      const result = await openCanvaDesignFile({
+        title,
+        createFile: async () => {
+          const isTsxMode = !!document.querySelector('[data-presentation-export-iframe]')
+          if (isTsxMode) {
+            return {
+              blob: await createPresentationPPTBlobFromIframe(title),
+              filename: `${sanitizeFilename(title, 'presentation')}.pptx`,
+            }
+          }
+          const presentation = await fetchPresentation(presentationId)
+          const slides = Array.isArray(presentation.slides)
+            ? (presentation.slides as Record<string, unknown>[])
+            : []
+          return {
+            blob: await createPresentationPPTBlobFromSlides(slides, title),
+            filename: `${sanitizeFilename(title, 'presentation')}.pptx`,
+          }
+        },
+      })
+      if (result.status === 'opened') toast.success(CANVA_MESSAGES.OPENING)
+      else toast.message(CANVA_MESSAGES.CONNECTING)
+    } catch {
+      toast.error(CANVA_MESSAGES.IMPORT_FAILED)
+    } finally {
+      setOpeningCanva(false)
+    }
+  }, [name, openingCanva, presentationId])
+
   const showFullModeChrome = presentationFullMode
   const useCompactToolbarLayout = presentationFullMode
   const fullModeEditMode = usePresentationFullModeStore((s) => s.mode)
@@ -187,9 +229,11 @@ export function PresentationToolbar({
         onViewportChange,
         fileUrl,
         exporting,
+        openingCanva,
         copied,
         onExportPdf: () => void handleExport('pdf'),
         onExportPpt: () => void handleExport('ppt'),
+        onOpenCanva: () => void handleOpenCanva(),
         onDownloadHtml: () => void handleDownloadHtml(),
         onCopyDownloadLink: fileUrl
           ? async () => {
@@ -257,6 +301,8 @@ export function PresentationToolbar({
                 onCopyDownloadLink={copyToClipboard}
                 onDownloadHtml={() => void handleDownloadHtml()}
                 onExport={(format) => void handleExport(format)}
+                openingCanva={openingCanva}
+                onOpenCanva={() => void handleOpenCanva()}
               />
             </div>
           )}
@@ -274,7 +320,7 @@ export function PresentationToolbar({
             aria-label="Presentation options"
             aria-haspopup="menu"
             aria-expanded={presentationMenuOpen}
-            className="tooltip h-spacing-7 text-muted-foreground hover:bg-hover-subtle hover:text-foreground border-border inline-flex aspect-square shrink-0 items-center justify-center rounded-spacing-2 border transition-colors"
+            className="tooltip h-spacing-7 text-muted-foreground hover:bg-hover-subtle hover:text-foreground border-border rounded-spacing-2 inline-flex aspect-square shrink-0 items-center justify-center border transition-colors"
           >
             <MoreVertical className="icon-sm shrink-0" />
           </button>

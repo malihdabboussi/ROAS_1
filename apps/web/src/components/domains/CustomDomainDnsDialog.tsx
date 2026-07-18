@@ -5,11 +5,11 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { Check, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { customDomainsApi } from '@/lib/domains/custom-domains-api'
 import {
   DOMAINS_TOAST_ERRORS,
   DOMAINS_TOAST_SUCCESS,
 } from '@/lib/domains/domains-toast-errors.config'
-import { customDomainsApi } from '@/lib/domains/custom-domains-api'
 import type { CustomDomain, DnsRecord, DomainStatus } from '@/lib/domains/domains.types'
 
 function statusBadge(status: DomainStatus) {
@@ -163,13 +163,18 @@ export function CustomDomainDnsDialog({
                     <h2 className="title-h6">{activeDomain.domain_name}</h2>
                     {statusBadge(activeDomain.status)}
                   </div>
-                  <button onClick={onClose} className="btn-icon-bare">
+                  <button
+                    type="button"
+                    aria-label="Close DNS records"
+                    onClick={onClose}
+                    className="btn-icon-bare"
+                  >
                     <X className="icon-xs" />
                   </button>
                 </div>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   Add these DNS records to your domain provider to verify ownership.
-                </p>
+                </DialogPrimitive.Description>
               </div>
 
               <div className="px-spacing-4 sm:px-spacing-6 py-spacing-4 space-y-spacing-6 flex-1 overflow-y-auto">
@@ -195,12 +200,14 @@ export function CustomDomainDnsDialog({
                               <span className="body-3">Valid</span>
                             </span>
                           ) : (
-                            <span className="body-3 text-orange-500">Pending</span>
+                            <span className="body-3 text-warning">Pending</span>
                           )}
                         </div>
                         <div>
                           <span className="body-4 text-muted-foreground block">Host</span>
                           <button
+                            type="button"
+                            aria-label={`Copy host ${getHostPrefix(record, activeDomain.domain_name)}`}
                             onClick={() =>
                               copyToClipboard(getHostPrefix(record, activeDomain.domain_name))
                             }
@@ -212,8 +219,10 @@ export function CustomDomainDnsDialog({
                         <div>
                           <span className="body-4 text-muted-foreground block">Value</span>
                           <button
+                            type="button"
+                            aria-label={`Copy value ${record.value}`}
                             onClick={() => copyToClipboard(record.value)}
-                            className="body-3 text-foreground block w-full break-all text-left font-mono text-[11px]"
+                            className="body-4 text-foreground block w-full break-all text-left font-mono"
                           >
                             {record.value}
                           </button>
@@ -225,19 +234,19 @@ export function CustomDomainDnsDialog({
 
                 {/* Desktop: table */}
                 <div className="rounded-spacing-2 border-border hidden overflow-hidden border md:block">
-                  <table className="w-full table-fixed">
+                  <table className="w-full">
                     <thead>
                       <tr className="border-border bg-muted/30 border-b">
-                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground w-[14%] text-left font-medium">
+                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground text-left font-medium">
                           Type
                         </th>
-                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground w-[26%] text-left font-medium">
+                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground text-left font-medium">
                           Host
                         </th>
-                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground w-[46%] text-left font-medium">
+                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground text-left font-medium">
                           Value
                         </th>
-                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground w-[14%] text-left font-medium">
+                        <th className="px-spacing-3 py-spacing-2 body-4 text-muted-foreground text-left font-medium">
                           Status
                         </th>
                       </tr>
@@ -250,6 +259,8 @@ export function CustomDomainDnsDialog({
                           </td>
                           <td className="px-spacing-3 py-spacing-2 body-3 text-muted-foreground overflow-hidden font-mono">
                             <button
+                              type="button"
+                              aria-label={`Copy host ${getHostPrefix(record, activeDomain.domain_name)}`}
                               className="hover:text-foreground block w-full cursor-pointer truncate text-left transition-colors"
                               onClick={() =>
                                 copyToClipboard(getHostPrefix(record, activeDomain.domain_name))
@@ -265,6 +276,8 @@ export function CustomDomainDnsDialog({
                           </td>
                           <td className="px-spacing-3 py-spacing-2 overflow-hidden">
                             <button
+                              type="button"
+                              aria-label={`Copy value ${record.value}`}
                               className="body-3 text-muted-foreground hover:text-foreground block w-full cursor-pointer truncate text-left font-mono transition-colors"
                               onClick={() => copyToClipboard(record.value)}
                               title={copiedValue === record.value ? 'Copied!' : 'Click to copy'}
@@ -279,7 +292,7 @@ export function CustomDomainDnsDialog({
                                 <span className="body-3">Valid</span>
                               </span>
                             ) : (
-                              <span className="body-3 text-orange-500">Pending</span>
+                              <span className="body-3 text-warning">Pending</span>
                             )}
                           </td>
                         </tr>

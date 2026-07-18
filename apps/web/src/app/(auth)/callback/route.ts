@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { buildAppRedirectUrl } from '@/lib/auth/access-routing'
 import { reportWebServerError } from '@/lib/observability/server-error-reporter.server'
 import { resolveMarketingSiteUrl } from '@/lib/platform/platform-urls'
 
@@ -176,11 +177,7 @@ export async function GET(request: Request) {
       }
     }
 
-    const params = new URLSearchParams()
-    if (promo) params.set('promo', promo)
-    if (message) params.set('message', message)
-    const qs = params.toString() ? `?${params.toString()}` : ''
-    return NextResponse.redirect(`${origin}${redirect}${qs}`)
+    return NextResponse.redirect(buildAppRedirectUrl(origin, redirect, { promo, message }))
   }
   return NextResponse.redirect(new URL(resolveMarketingSiteUrl()))
 }

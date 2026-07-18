@@ -1,6 +1,9 @@
 'use client'
 
-import { useEffect, useState, type KeyboardEvent } from 'react'
+import { useEffect, useState } from 'react'
+import * as DialogPrimitive from '@radix-ui/react-dialog'
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
+import { X } from 'lucide-react'
 import { IconPicker, type IconColorId } from '@/components/ui/IconPicker'
 
 interface EditingCampaign {
@@ -43,8 +46,6 @@ export function NewCampaignModal({
     }
   }, [open, editingCampaign])
 
-  if (!open) return null
-
   function handleSubmit() {
     const trimmed = name.trim()
     if (!trimmed) return
@@ -54,42 +55,28 @@ export function NewCampaignModal({
     onClose()
   }
 
-  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      handleSubmit()
-    }
-    if (e.key === 'Escape') {
-      onClose()
-    }
-  }
-
   return (
-    <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 z-50 bg-modal-overlay" onClick={onClose} />
-
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="surface-card w-full max-w-md overflow-visible rounded-2xl border border-[var(--color-border)] shadow-2xl">
+    <DialogPrimitive.Root open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="bg-modal-overlay fixed inset-0 z-50" />
+        <DialogPrimitive.Content className="surface-card border-border fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-visible rounded-2xl border shadow-2xl">
+          <VisuallyHidden.Root>
+            <DialogPrimitive.Description>
+              Choose a name and icon for the campaign.
+            </DialogPrimitive.Description>
+          </VisuallyHidden.Root>
           {/* Header */}
           <div className="flex items-center justify-between px-6 pb-2 pt-6">
-            <h2 className="text-base font-semibold text-[var(--color-foreground)]">
-              {isEditing ? 'EDIT PROJECT' : 'CREATE PROJECT'}
-            </h2>
-            <button
-              onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+            <DialogPrimitive.Title className="text-foreground text-base font-semibold">
+              {isEditing ? 'EDIT CAMPAIGN' : 'CREATE CAMPAIGN'}
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Close
+              type="button"
+              className="text-muted-foreground hover:bg-secondary hover:text-foreground flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+              aria-label="Close campaign dialog"
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
+              <X className="h-4 w-4" />
+            </DialogPrimitive.Close>
           </div>
 
           {/* Body */}
@@ -101,8 +88,11 @@ export function NewCampaignModal({
                 handleSubmit()
               }}
             >
-              <label className="body-2 mb-2 block font-medium text-[var(--color-foreground)]">
-                Project name
+              <label
+                htmlFor="campaign-name"
+                className="body-2 text-foreground mb-2 block font-medium"
+              >
+                Campaign name
               </label>
               <div className="flex items-center gap-2">
                 <IconPicker
@@ -113,10 +103,10 @@ export function NewCampaignModal({
                   size="lg"
                 />
                 <input
+                  id="campaign-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  onKeyDown={handleKeyDown}
                   placeholder="Enter the name"
                   autoFocus
                   className="input-glass h-10 flex-1 px-3 text-sm"
@@ -143,8 +133,8 @@ export function NewCampaignModal({
               {isEditing ? 'Save' : 'Create'}
             </button>
           </div>
-        </div>
-      </div>
-    </>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   )
 }

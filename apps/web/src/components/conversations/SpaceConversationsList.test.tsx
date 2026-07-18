@@ -162,7 +162,7 @@ describe('SpaceConversationsList', () => {
       </Profiler>,
     )
 
-    fireEvent.change(screen.getByPlaceholderText('Search conversations...'), {
+    fireEvent.change(screen.getByPlaceholderText('Search'), {
       target: { value: 'Atlas' },
     })
 

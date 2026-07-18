@@ -9,8 +9,10 @@ import {
   VIBEY_DIRECT_INVITE_STORAGE_KEY,
 } from '@/app/(auth)/onboarding/lib/onboarding-access'
 import { AuthOrbShell } from '@/components/auth/auth-orb-shell'
+import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { reportClientError } from '@/lib/log-client-error'
 import { createClient } from '@/lib/supabase/client'
+import { AUTH_MESSAGES } from '../config/auth-messages.config'
 import { resolveAuthSignupErrorMessage } from '../config/auth-toast-errors.config'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL
@@ -25,6 +27,7 @@ const SIGNUP_QUOTES = [
 ]
 
 export default function JoinPage() {
+  const messages = AUTH_MESSAGES.DIRECT_JOIN
   const searchParams = useSearchParams()
   const supabase = createClient()
 
@@ -114,7 +117,7 @@ export default function JoinPage() {
         message: oauthErr.message,
         context: { provider },
       })
-      setError(oauthErr.message)
+      setError(messages.authError)
       setLoading(false)
     }
   }
@@ -148,7 +151,7 @@ export default function JoinPage() {
       ?.identities ?? undefined) as unknown[] | undefined
     if (Array.isArray(identities) && identities.length === 0) {
       setLoading(false)
-      setError('An account with this email already exists. You can sign in.')
+      setError(messages.accountExists)
       return
     }
 
@@ -167,7 +170,7 @@ export default function JoinPage() {
     }
 
     setLoading(false)
-    setMessage('Check your email to confirm your account.')
+    setMessage(messages.confirmation)
   }
 
   const onResend = async () => {
@@ -179,16 +182,16 @@ export default function JoinPage() {
         error_code: 'signup_resend_failed',
         message: error.message,
       })
-      setError(error.message)
+      setError(messages.resendError)
       return
     }
-    setMessage('Verification email sent. Check your inbox.')
+    setMessage(messages.resendSuccess)
   }
 
   if (codeValid === null) {
     return (
       <AuthOrbShell quotes={SIGNUP_QUOTES}>
-        <p className="body-2 text-muted-foreground text-center">Validating invite…</p>
+        <VibeyLoadingOrb size="sm" text={messages.validation} />
       </AuthOrbShell>
     )
   }
@@ -219,6 +222,7 @@ export default function JoinPage() {
       <div className="space-y-spacing-4">
         <div className="gap-spacing-2 flex flex-col">
           <button
+            type="button"
             onClick={() => void onOAuth('google')}
             disabled={loading}
             aria-label="Sign up with Google"
@@ -259,6 +263,7 @@ export default function JoinPage() {
             )}
           </button>
           <button
+            type="button"
             onClick={() => void onOAuth('github')}
             disabled={loading}
             aria-label="Sign up with GitHub"
@@ -292,21 +297,32 @@ export default function JoinPage() {
         </div>
 
         <form onSubmit={onEmailSignUp} className="space-y-spacing-3">
+          <label htmlFor="join-email" className="sr-only">
+            Email address
+          </label>
           <input
+            id="join-email"
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@domain.com"
+            autoComplete="email"
             className="input-glass h-spacing-10 rounded-spacing-2 w-full"
           />
           <div className="relative">
+            <label htmlFor="join-password" className="sr-only">
+              Password
+            </label>
             <input
+              id="join-password"
               type={showPassword ? 'text' : 'password'}
               required
+              minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
+              autoComplete="new-password"
               className="input-glass h-spacing-10 rounded-spacing-2 pr-spacing-8 w-full"
             />
             <button
@@ -318,9 +334,16 @@ export default function JoinPage() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {error && <p className="body-3 text-destructive">{error}</p>}
+          {error && (
+            <p role="alert" className="body-3 text-destructive">
+              {error}
+            </p>
+          )}
           {message && (
-            <div className="body-3 text-foreground border-border rounded-spacing-2 px-spacing-3 py-spacing-2 border text-center">
+            <div
+              role="status"
+              className="body-3 text-foreground border-border rounded-spacing-2 px-spacing-3 py-spacing-2 border text-center"
+            >
               {message}{' '}
               <button type="button" onClick={() => void onResend()} className="underline">
                 Resend

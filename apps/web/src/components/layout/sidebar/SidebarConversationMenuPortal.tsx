@@ -65,7 +65,13 @@ export function SidebarConversationMenuPortal({
       />
       <div
         data-conv-menu
-        className="fixed z-50 w-56 overflow-visible rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 shadow-lg"
+        role="menu"
+        aria-label={`Actions for ${conv.title || 'conversation'}`}
+        tabIndex={-1}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') onClose()
+        }}
+        className="border-border bg-card fixed z-50 w-56 overflow-visible rounded-lg border p-1 shadow-lg"
         style={{
           top: position.top,
           left: position.left,
@@ -73,21 +79,29 @@ export function SidebarConversationMenuPortal({
       >
         {showShare && (
           <button
+            type="button"
+            role="menuitem"
+            autoFocus
             onClick={onShareConversation}
-            className="body-2 flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
+            className="body-2 text-foreground hover:bg-secondary flex w-full items-center gap-2 rounded-md px-3 py-1.5 transition-colors"
           >
             <Share2 className="h-4 w-4" /> Share
           </button>
         )}
         <button
+          type="button"
+          role="menuitem"
+          autoFocus={!showShare}
           onClick={onStartRename}
-          className="body-2 flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
+          className="body-2 text-foreground hover:bg-secondary flex w-full items-center gap-2 rounded-md px-3 py-1.5 transition-colors"
         >
           <Edit2 className="h-4 w-4" /> Rename
         </button>
         <button
+          type="button"
+          role="menuitem"
           onClick={onToggleFavorite}
-          className="body-2 flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
+          className="body-2 text-foreground hover:bg-secondary flex w-full items-center gap-2 rounded-md px-3 py-1.5 transition-colors"
         >
           <Star className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
           {isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
@@ -95,39 +109,47 @@ export function SidebarConversationMenuPortal({
 
         <div className="relative">
           <button
+            type="button"
+            role="menuitem"
+            aria-haspopup="menu"
+            aria-expanded={moveSubmenuOpenId === conv.id}
             onClick={onToggleMoveSubmenu}
-            className="body-2 flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
+            className="body-2 text-foreground hover:bg-secondary flex w-full items-center gap-2 rounded-md px-3 py-1.5 transition-colors"
           >
             <FolderInput className="h-4 w-4" />
             <span className="flex-1 text-left">Move to Campaign</span>
             <ChevronRight className="h-3 w-3" />
           </button>
           {moveSubmenuOpenId === conv.id && (
-            <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 shadow-lg">
+            <div
+              role="menu"
+              aria-label="Move conversation to campaign"
+              className="border-border bg-card absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-lg border p-1 shadow-lg"
+            >
               <button
+                type="button"
+                role="menuitem"
                 onClick={() => {
                   onRequestNewCampaign()
                 }}
-                className="body-2 flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
+                className="body-2 text-foreground hover:bg-secondary flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left transition-colors"
               >
                 <Plus className="h-4 w-4" /> New Campaign
               </button>
-              {campaigns.length > 0 && (
-                <div className="my-1 border-t border-[var(--color-border)]" />
-              )}
+              {campaigns.length > 0 && <div className="border-border my-1 border-t" />}
               {campaigns.map((c) => (
                 <button
+                  type="button"
+                  role="menuitem"
                   key={c.id}
                   onClick={() => onMoveToCampaign(c.id)}
-                  className={`body-2 flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)] ${
-                    conv.campaign_id === c.id ? 'bg-[var(--color-primary)]/10' : ''
+                  className={`body-2 text-foreground hover:bg-secondary flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left transition-colors ${
+                    conv.campaign_id === c.id ? 'bg-primary/10' : ''
                   }`}
                 >
                   <LucideIcon name={c.icon} className="h-4 w-4 shrink-0" />
                   <span className="flex-1 truncate text-left">{c.name}</span>
-                  {conv.campaign_id === c.id && (
-                    <Check className="ml-auto h-3 w-3 text-[var(--color-primary)]" />
-                  )}
+                  {conv.campaign_id === c.id && <Check className="text-primary ml-auto h-3 w-3" />}
                 </button>
               ))}
             </div>
@@ -135,17 +157,21 @@ export function SidebarConversationMenuPortal({
         </div>
 
         <button
+          type="button"
+          role="menuitem"
           onClick={(e) => {
             e.stopPropagation()
             openInNewTab(`/team/${conv.id}`)
             onClose()
           }}
-          className="body-2 flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)]"
+          className="body-2 text-foreground hover:bg-secondary flex w-full items-center gap-2 rounded-md px-3 py-1.5 transition-colors"
         >
           <ExternalLink className="h-4 w-4" /> Open in new tab
         </button>
 
         <button
+          type="button"
+          role="menuitem"
           onClick={() => void onDeleteConversation()}
           className="body-2 text-destructive hover:bg-destructive/10 flex w-full items-center gap-2 rounded-md px-3 py-1.5 transition-colors"
         >

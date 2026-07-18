@@ -1,7 +1,7 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
+import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cn } from '@/lib/utils/cn'
 import { ShellRightPanelFiles } from './ShellRightPanelFiles'
 import { ShellRightPanelSources } from './ShellRightPanelSources'
@@ -14,43 +14,35 @@ const TABS: { id: ShellRightPanelTab; label: string }[] = [
   { id: 'sources', label: 'Sources' },
 ]
 
-function defaultTabForPath(pathname: string): ShellRightPanelTab {
-  if (pathname === '/home' || pathname.startsWith('/home/')) return 'tasks'
-  if (
-    pathname.startsWith('/spaces') ||
-    pathname.startsWith('/campaigns') ||
-    pathname.startsWith('/projects') ||
-    pathname.startsWith('/brain')
-  ) {
-    return 'files'
-  }
-  return 'tasks'
-}
+const EMPTY_MESSAGES: never[] = []
 
-export function ShellRightPanel() {
-  const pathname = usePathname() ?? '/home'
+export function ShellRightPanel({ conversationId }: { conversationId: string | null }) {
   const open = useShellStore((s) => s.rightPanel.open)
   const tab = useShellStore((s) => s.rightPanel.tab)
   const setRightPanelTab = useShellStore((s) => s.setRightPanelTab)
+  const messages = useChatStore((s) =>
+    conversationId ? (s.messagesByConversation[conversationId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES,
+  )
+  const tabs = conversationId ? TABS : TABS.slice(0, 1)
+  const activeTab = conversationId ? tab : 'tasks'
 
   useEffect(() => {
-    if (!open) return
-    setRightPanelTab(defaultTabForPath(pathname))
-  }, [pathname, open, setRightPanelTab])
+    if (open && !conversationId && tab !== 'tasks') setRightPanelTab('tasks')
+  }, [conversationId, open, setRightPanelTab, tab])
 
   if (!open) return null
 
   return (
-    <aside className="border-border bg-background flex h-full w-[300px] shrink-0 flex-col overflow-hidden border-l">
-      <div className="border-border flex shrink-0 gap-1 border-b p-2">
-        {TABS.map((t) => (
+    <aside className="border-border bg-background w-spacing-72 flex h-full shrink-0 flex-col overflow-hidden border-l">
+      <div className="border-border gap-spacing-1 p-spacing-2 flex shrink-0 border-b">
+        {tabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setRightPanelTab(t.id)}
             className={cn(
-              'body-3 flex-1 rounded-lg px-2 py-1.5 transition-colors',
-              tab === t.id
+              'body-3 px-spacing-2 py-spacing-1 flex-1 rounded-lg transition-colors',
+              activeTab === t.id
                 ? 'bg-secondary text-foreground font-medium'
                 : 'text-muted-foreground hover:bg-hover-subtle',
             )}
@@ -59,10 +51,16 @@ export function ShellRightPanel() {
           </button>
         ))}
       </div>
-      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto p-3">
-        {tab === 'tasks' ? <ShellRightPanelTasks /> : null}
-        {tab === 'files' ? <ShellRightPanelFiles /> : null}
-        {tab === 'sources' ? <ShellRightPanelSources /> : null}
+      <div className="scrollbar-hide p-spacing-3 min-h-0 flex-1 overflow-y-auto">
+        {activeTab === 'tasks' ? (
+          <ShellRightPanelTasks conversationId={conversationId} messages={messages} />
+        ) : null}
+        {activeTab === 'files' && conversationId ? (
+          <ShellRightPanelFiles conversationId={conversationId} messages={messages} />
+        ) : null}
+        {activeTab === 'sources' && conversationId ? (
+          <ShellRightPanelSources messages={messages} />
+        ) : null}
       </div>
     </aside>
   )

@@ -8,12 +8,7 @@ import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePr
 import type { MissionAgent } from '@/lib/agents/mission-agents-api'
 import { fetchCampaignTeam } from '@/lib/campaigns'
 import type { MissionDeliverable } from '@/lib/missions'
-import {
-  resolveSpaceTaskUpdateError,
-  SPACES_ACTIONS_TOAST_ERRORS,
-} from '../../config/spaces-toast-errors.config'
 import { useTaskDetailData } from '../../hooks/useTaskDetailData'
-import { canUpdateLinkedMissionTaskStatus } from '../../lib/linked-mission-task-status'
 import { createSpaceItem, deleteSpaceItem, updateSpaceItem } from '../../services/spaces.service'
 import { useSpacesStore } from '../../store/use-spaces-store'
 import type { SpaceItem } from '../../types'
@@ -133,6 +128,7 @@ export function TaskDetailModal({
     },
     [storeItems, onOpenTaskByItem],
   )
+
   const handleOpenConversationById = useCallback(
     (conversationId: string) => {
       if (onOpenConversationById) {
@@ -145,6 +141,7 @@ export function TaskDetailModal({
     },
     [onOpenConversationById, openConversationInSpaceChat, setChatCollapsed, onClose],
   )
+
   const handleUpdateField = useCallback(
     async (patch: Partial<SpaceItem>) => {
       const previous = item
@@ -154,24 +151,13 @@ export function TaskDetailModal({
         setItem({ ...item, ...patch } as SpaceItem)
       }
       try {
-        const canUpdate =
-          !patch.status ||
-          (await canUpdateLinkedMissionTaskStatus(item, patch.status, () =>
-            toast.message(SPACES_ACTIONS_TOAST_ERRORS.LINKED_AGENT_STEP_STATUS_MANAGED.userMessage),
-          ))
-        if (!canUpdate) return
         await storeUpdateItem(item.id, patch)
         const fresh = useSpacesStore.getState().items.find((row) => row.id === item.id)
         if (fresh) setItem(fresh)
         else setItem((current) => ({ ...current, ...patch }) as SpaceItem)
       } catch {
         setItem(previous)
-        toast.error(
-          resolveSpaceTaskUpdateError(
-            Boolean(item.linked_mission_subtask_id),
-            patch.status === 'done',
-          ),
-        )
+        toast.error('Failed to update task')
       }
     },
     [item, storeUpdateItem],

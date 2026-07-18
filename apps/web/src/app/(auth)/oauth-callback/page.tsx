@@ -1,16 +1,8 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import { useEffect } from 'react'
+import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { resolveMarketingSiteUrl } from '@/lib/platform/platform-urls'
-
-const VibeyLoadingSphereSimple = dynamic(
-  () =>
-    import('@/components/vibey/vibey-loading-sphere-simple').then(
-      (m) => m.VibeyLoadingSphereSimple,
-    ),
-  { ssr: false },
-)
 
 export default function OAuthCallbackPage() {
   useEffect(() => {
@@ -56,13 +48,8 @@ export default function OAuthCallbackPage() {
 
   return (
     <div className="surface-bg flex min-h-dvh flex-col items-center justify-center px-6">
-      <div className="mb-8 h-40 w-40">
-        <VibeyLoadingSphereSimple size="small" state="thinking" showBackground={true} />
-      </div>
-      <h1 className="title-h2 text-center text-[var(--color-foreground)]">LOADING YOUR STUDIO</h1>
-      <p className="body-2 mt-2 text-center text-[var(--color-muted-foreground)]">
-        Finalizing sign in...
-      </p>
+      <h1 className="sr-only">LOADING YOUR STUDIO</h1>
+      <VibeyLoadingOrb size="lg" text="Finalizing sign in..." />
     </div>
   )
 }

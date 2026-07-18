@@ -5,6 +5,7 @@ import {
   formatAgentShortName,
   formatRelativeTime,
   formatSubtaskStatusLabel,
+  subtaskStatusBadgeTone,
 } from './detail-helpers'
 import { HumanGateReviewPanel } from './HumanGateReviewPanel'
 import {
@@ -61,6 +62,9 @@ export function SubtaskDetailContent({
     subtask.status === 'in_progress'
       ? getSubtaskLiveStatusLabel(subtask, deliverables.length > 0)
       : formatSubtaskStatusLabel(subtask.status)
+  const statusTone = subtaskStatusBadgeTone(subtask.status, {
+    awaitingHuman: isActiveHumanGate,
+  })
   const hasPlanIntent = Boolean(
     subtask.intent?.why ||
     subtask.intent?.story ||
@@ -71,20 +75,19 @@ export function SubtaskDetailContent({
   const outputDisplay = resolveSubtaskOutputDisplay(subtask.output)
 
   return (
-    <div className="py-spacing-4 min-h-0 flex-1 overflow-y-auto">
-      <div className="gap-spacing-2 mb-spacing-5 flex flex-wrap items-center">
-        <span
-          className={`body-3 rounded-full ${isActiveHumanGate ? 'chip-glass-orange' : 'chip-glass-neutral'}`}
-        >
-          {statusLabel}
+    <div className="py-spacing-2 min-h-0 flex-1 overflow-y-auto">
+      <div className="gap-spacing-2 mb-spacing-3 flex flex-wrap items-center">
+        <span className={`badge-glass badge-glass-sm ${statusTone}`}>{statusLabel}</span>
+        <span className="body-4 text-muted-foreground">{agentLabel}</span>
+        <span className="text-muted-foreground/40" aria-hidden>
+          ·
         </span>
-        <span className="body-3 text-muted-foreground">{agentLabel}</span>
-        <span className="body-3 text-muted-foreground">
+        <span className="body-4 text-muted-foreground">
           Updated {formatRelativeTime(subtask.updated_at)}
         </span>
       </div>
 
-      <div className="space-y-spacing-5">
+      <div className="space-y-spacing-3">
         {isActiveHumanGate && showHumanGateInline ? (
           <HumanGateReviewPanel
             subtask={subtask}
@@ -103,7 +106,7 @@ export function SubtaskDetailContent({
         ) : null}
 
         {isActiveHumanGate && !showHumanGateInline ? (
-          <section className="space-y-spacing-2">
+          <section className="space-y-spacing-1">
             <h3 className="body-2 text-foreground font-semibold">Review package</h3>
             <p className="body-3 text-muted-foreground">
               {subtask.intent?.story ??
@@ -126,7 +129,7 @@ export function SubtaskDetailContent({
 
         {liveOutput ? (
           <section
-            className="border-border bg-card rounded-spacing-3 p-spacing-4 space-y-spacing-2 border"
+            className="border-border rounded-spacing-2 p-spacing-3 space-y-spacing-2 border"
             aria-live="polite"
           >
             <div className="gap-spacing-2 flex items-center">
@@ -147,7 +150,7 @@ export function SubtaskDetailContent({
         ) : null}
 
         {subtask.feedback ? (
-          <section className="space-y-spacing-2">
+          <section className="space-y-spacing-1">
             <h3 className="body-2 text-warning font-semibold">Issue</h3>
             <p className="body-3 bg-muted-20 text-warning rounded-spacing-2 px-spacing-3 py-spacing-2">
               {subtask.feedback}
@@ -156,13 +159,13 @@ export function SubtaskDetailContent({
         ) : null}
 
         {outputDisplay ? (
-          <section className="space-y-spacing-2">
+          <section className="space-y-spacing-1">
             <h3 className="body-2 text-foreground font-semibold">
               {outputDisplay.titleKey === 'human'
                 ? MISSION_CONTROL_MESSAGES.SUBTASK_OUTPUT_HUMAN_TITLE
                 : MISSION_CONTROL_MESSAGES.SUBTASK_OUTPUT_AGENT_TITLE}
             </h3>
-            <div className="bg-muted-20 rounded-spacing-2 px-spacing-3 py-spacing-2">
+            <div className="border-border rounded-spacing-2 px-spacing-3 py-spacing-2 border">
               <MarkdownRenderer className="body-3 text-muted-foreground max-w-none leading-relaxed">
                 {outputDisplay.body}
               </MarkdownRenderer>

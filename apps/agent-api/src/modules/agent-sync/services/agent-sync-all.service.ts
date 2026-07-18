@@ -2,6 +2,10 @@ import * as fs from 'fs/promises'
 import * as path from 'path'
 import { Injectable } from '@nestjs/common'
 import {
+  createEmptySyncResult,
+  type AgentSyncOrchestrationContext,
+} from './agent-sync-orchestration.types'
+import {
   composeDefinitionContent,
   expandRuntimeIdentityDefinitions,
   isUserProfileDefinitionFile,
@@ -13,17 +17,10 @@ import {
   type SyncManifestEntry,
   type SyncResult,
 } from './agent-sync.types'
-import {
-  createEmptySyncResult,
-  type AgentSyncOrchestrationContext,
-} from './agent-sync-orchestration.types'
 
 @Injectable()
 export class AgentSyncAllService {
-  async syncAll(
-    ctx: AgentSyncOrchestrationContext,
-    overrideUserId?: string,
-  ): Promise<SyncResult> {
+  async syncAll(ctx: AgentSyncOrchestrationContext, overrideUserId?: string): Promise<SyncResult> {
     const emptyResult = createEmptySyncResult()
     const effectiveUserId = overrideUserId || ctx.getUserId()
     if (!effectiveUserId) {
@@ -85,9 +82,7 @@ export class AgentSyncAllService {
       (row) => row.agent_key === 'vibey',
     )
     const userArchetype =
-      typeof vibeyRegistry?.config?.archetype === 'string'
-        ? vibeyRegistry.config.archetype
-        : null
+      typeof vibeyRegistry?.config?.archetype === 'string' ? vibeyRegistry.config.archetype : null
     const definitions = ctx.filterSystemAgentRows(
       ((definitionsRaw ?? []) as AgentDefinitionRow[]).filter(
         (row) =>
@@ -119,9 +114,7 @@ export class AgentSyncAllService {
     let synced = await this.writeDefinitionFiles(ctx, runtimeDefinitions, manifest)
 
     const skillsByAgent = this.groupByAgent(skills)
-    const resourcesByAgent = this.groupByAgent(
-      (skillResources ?? []) as AgentSkillResourceRow[],
-    )
+    const resourcesByAgent = this.groupByAgent((skillResources ?? []) as AgentSkillResourceRow[])
     const globalSkills = skillsByAgent.get('*') ?? []
     const globalResources = resourcesByAgent.get('*') ?? []
     skillsByAgent.delete('*')
@@ -283,7 +276,13 @@ export class AgentSyncAllService {
           globalResourceRows,
           input.libraryResources,
         )
-        synced += await input.ctx.syncAgentSkills(agentKey, merged, resourceRows, false, input.manifest)
+        synced += await input.ctx.syncAgentSkills(
+          agentKey,
+          merged,
+          resourceRows,
+          false,
+          input.manifest,
+        )
         input.skillsByAgent.set(agentKey, merged)
       }
 
@@ -298,10 +297,13 @@ export class AgentSyncAllService {
 
       const registry = input.registryByAgent.get(agentKey)
       if (registry) {
-        const { actions: allowedActions, domain } = await input.ctx.resolveAllowedActions(registry, {
-          orgId: null,
-          userId: input.effectiveUserId,
-        })
+        const { actions: allowedActions, domain } = await input.ctx.resolveAllowedActions(
+          registry,
+          {
+            orgId: null,
+            userId: input.effectiveUserId,
+          },
+        )
         await input.ctx.writeScopedVibeyApiSkill(
           agentKey,
           allowedActions,
@@ -325,6 +327,7 @@ export class AgentSyncAllService {
         name: agentKey,
         workspace,
         definitions: agentDefinitions,
+        role: registry?.role ?? undefined,
         skills: enabledSkillKeys,
       })
     }

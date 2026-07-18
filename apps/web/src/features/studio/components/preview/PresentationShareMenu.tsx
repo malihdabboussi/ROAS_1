@@ -119,7 +119,7 @@ export function PresentationShareMenu({
   const handlePresent = useCallback(async () => {
     onOpenChange(false)
     const url = await ensurePublished()
-    if (url) window.open(url, '_blank')
+    if (url) window.open(url, '_blank', 'noopener,noreferrer')
   }, [ensurePublished, onOpenChange])
 
   return (
@@ -149,7 +149,7 @@ export function PresentationShareMenu({
           ? createPortal(
               <div
                 data-lm-dropdown
-                className="surface-card border-border z-dropdown fixed w-80 rounded-spacing-3 border p-spacing-2 shadow-lg"
+                className="surface-card border-border z-dropdown rounded-spacing-3 p-spacing-2 fixed w-80 border shadow-lg"
                 style={{ top: position.top, left: position.left }}
               >
                 {!isPublished ? (
@@ -216,6 +216,7 @@ export function PresentationShareMenu({
                     <div className="px-spacing-3 py-spacing-2">
                       <div className="gap-spacing-1 flex items-center">
                         <input
+                          aria-label="Published presentation URL"
                           readOnly
                           value={publishedUrl}
                           onFocus={(event) => event.currentTarget.select()}
@@ -223,12 +224,13 @@ export function PresentationShareMenu({
                         />
                         <button
                           type="button"
+                          aria-label={copied ? 'Copied' : 'Copy published presentation URL'}
                           onClick={async () => {
                             await onCopy(publishedUrl)
                           }}
                           data-tooltip="Copy"
                           data-side="bottom"
-                          className="tooltip h-spacing-8 text-muted-foreground hover:text-foreground inline-flex aspect-square shrink-0 items-center justify-center rounded-spacing-2 transition-colors"
+                          className="tooltip h-spacing-8 text-muted-foreground hover:text-foreground rounded-spacing-2 inline-flex aspect-square shrink-0 items-center justify-center transition-colors"
                         >
                           {copied ? (
                             <Check className="icon-md text-success" />

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SocialPost } from '../../types'
 import SocialPostPreview from './SocialPostPreview'
@@ -219,6 +219,11 @@ describe('SocialPostPreview', () => {
     fireEvent.click(screen.getByRole('button', { name: /Schedule/i }))
 
     expect(await screen.findByText('Schedule Post')).toBeTruthy()
+    const scheduleDialog = screen.getByRole('dialog', { name: 'Schedule Post' })
+    expect(scheduleDialog.getAttribute('aria-describedby')).toBe(
+      within(scheduleDialog).getByText('Launch caption for social post').id,
+    )
+    expect(screen.getByRole('button', { name: 'Close schedule' })).toBeTruthy()
     expect(screen.getByText('Pick date & time')).toBeTruthy()
     expect(screen.getByText('Next available')).toBeTruthy()
     expect(screen.getByText('No posts scheduled')).toBeTruthy()

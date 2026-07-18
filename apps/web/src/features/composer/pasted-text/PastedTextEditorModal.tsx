@@ -55,6 +55,9 @@ export function PastedTextEditorModal({
                 <DialogPrimitive.Title className="title-h6 text-foreground">
                   Pasted text
                 </DialogPrimitive.Title>
+                <DialogPrimitive.Description className="sr-only">
+                  Review or edit the text before using it in your message.
+                </DialogPrimitive.Description>
                 <button
                   type="button"
                   onClick={() => onOpenChange(false)}
@@ -68,6 +71,7 @@ export function PastedTextEditorModal({
 
             <div className="px-spacing-6 py-spacing-3 flex min-h-0 flex-1 flex-col">
               <textarea
+                aria-label="Pasted text content"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 className="body-2 text-foreground border-border bg-background min-h-0 flex-1 resize-none rounded-lg border p-4 focus:outline-none"

@@ -38,6 +38,7 @@ export function DocEditorPanelPortalShell({
   requestClosePanel,
   panelSlideExiting,
   panelWidth,
+  expanded,
   handleResizePointerDown,
   onSlideAnimationComplete,
   children,
@@ -47,6 +48,7 @@ export function DocEditorPanelPortalShell({
   requestClosePanel: () => void
   panelSlideExiting: boolean
   panelWidth: number
+  expanded: boolean
   handleResizePointerDown: (e: React.PointerEvent) => void
   onSlideAnimationComplete: () => void
   children: ReactNode
@@ -79,31 +81,39 @@ export function DocEditorPanelPortalShell({
     >
       <motion.div
         ref={panelRef}
-        className="pointer-events-auto flex max-h-full shrink-0 items-stretch py-3"
+        className={cn(
+          'pointer-events-auto flex max-h-full shrink-0 items-stretch',
+          expanded ? 'h-full w-full' : 'py-spacing-3',
+        )}
         initial={{ x: '100%' }}
         animate={{ x: panelSlideExiting ? '100%' : 0 }}
         transition={{ type: 'spring', damping: 30, stiffness: 350 }}
         onAnimationComplete={onSlideAnimationComplete}
       >
-        <div
-          className="group relative flex w-4 flex-shrink-0 cursor-col-resize items-center justify-center"
-          onPointerDown={handleResizePointerDown}
-          role="separator"
-          aria-orientation="vertical"
-          tabIndex={0}
-        >
+        {!expanded ? (
           <div
-            className={`resize-divider-line-blue-compact absolute left-1/2 w-px -translate-x-1/2 transition-opacity ${
-              isResizing ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'
-            }`}
-          />
-          <GripVertical
-            className={`h-4 w-4 transition-opacity ${isResizing ? 'opacity-0' : 'text-muted-foreground opacity-0 group-hover:opacity-100'}`}
-          />
-        </div>
+            className="group relative flex w-4 flex-shrink-0 cursor-col-resize items-center justify-center"
+            onPointerDown={handleResizePointerDown}
+            role="separator"
+            aria-orientation="vertical"
+            tabIndex={0}
+          >
+            <div
+              className={`resize-divider-line-blue-compact absolute left-1/2 w-px -translate-x-1/2 transition-opacity ${
+                isResizing ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'
+              }`}
+            />
+            <GripVertical
+              className={`h-4 w-4 transition-opacity ${isResizing ? 'opacity-0' : 'text-muted-foreground opacity-0 group-hover:opacity-100'}`}
+            />
+          </div>
+        ) : null}
         <div
-          className="flex min-h-0 flex-col overflow-hidden rounded-l-2xl border border-r-0 border-[var(--border)] bg-[var(--background)] shadow-xl"
-          style={{ width: panelWidth }}
+          className={cn(
+            'border-border bg-background flex min-h-0 flex-col overflow-hidden border shadow-xl',
+            expanded ? 'w-full border-0' : 'rounded-l-2xl border-r-0',
+          )}
+          style={expanded ? undefined : { width: panelWidth }}
         >
           {children}
         </div>

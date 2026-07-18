@@ -63,18 +63,16 @@ export function FathomImportModal({
                     type="button"
                     onClick={() => onOpenChange(false)}
                     className="btn-icon-bare"
+                    aria-label="Close"
                   >
                     <X className="icon-xs" />
                   </button>
                 </div>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   Select calls to import. Each runs crystallization and memory extraction.
-                </p>
+                </DialogPrimitive.Description>
               </div>
-              <div
-                className="px-spacing-6 py-spacing-4 space-y-spacing-2 min-h-0 flex-1 overflow-y-auto sm:min-h-[320px]"
-                style={{ scrollbarWidth: 'thin' }}
-              >
+              <div className="scrollbar-thin px-spacing-6 py-spacing-4 space-y-spacing-2 min-h-0 flex-1 overflow-y-auto sm:min-h-[320px]">
                 {loadingFathom ? (
                   <div className="flex h-full min-h-[280px] items-center justify-center">
                     <div className="h-10 w-10">
@@ -119,10 +117,11 @@ export function FathomImportModal({
                       const meetingId = getMeetingId(meeting)
                       const isSelected = selectedFathomIds.has(meetingId)
                       return (
-                        <div
+                        <button
+                          type="button"
                           key={meetingId}
                           onClick={() => toggleFathomSelection(meetingId)}
-                          className={`rounded-spacing-2 px-spacing-3 py-spacing-2 gap-spacing-3 flex cursor-pointer items-center transition-colors ${
+                          className={`rounded-spacing-2 px-spacing-3 py-spacing-2 gap-spacing-3 flex w-full items-center text-left transition-colors ${
                             isSelected
                               ? 'card-glass-blue'
                               : 'border-border bg-muted/20 hover:bg-muted/30 border'
@@ -143,7 +142,7 @@ export function FathomImportModal({
                               {formatMeetingTime(meeting.created_at)}
                             </p>
                           </div>
-                        </div>
+                        </button>
                       )
                     })}
                     {fathomNextCursor && (

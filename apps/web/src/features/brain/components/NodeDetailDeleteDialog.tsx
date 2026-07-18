@@ -52,11 +52,11 @@ export function NodeDetailDeleteDialog({
                       ? 'Knowledge Entry'
                       : 'Memory'}
               </h2>
-              <p className="body-2 text-muted-foreground mt-spacing-2">
+              <DialogPrimitive.Description className="body-2 text-muted-foreground mt-spacing-2">
                 {isSource
                   ? 'This will permanently delete this source and ALL connected knowledge entries. This action cannot be undone.'
                   : `This will permanently delete this ${nodeType === 'snapshot' ? 'neural snapshot' : nodeType === 'sk_entry' ? 'knowledge entry' : 'memory'}. This action cannot be undone.`}
-              </p>
+              </DialogPrimitive.Description>
               {needsTypedConfirm && (
                 <div className="mt-spacing-4 space-y-spacing-2">
                   <label className="body-3 text-foreground">

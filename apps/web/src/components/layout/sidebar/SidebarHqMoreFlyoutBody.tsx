@@ -2,13 +2,13 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FolderGit2, Workflow } from 'lucide-react'
+import { FolderGit2, Layers3, Workflow } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { cn } from '@/lib/utils/cn'
 import {
-  HubDockFlyout,
   HUB_DOCK_SUB_FLYOUT_LEAVE_MS,
   HUB_DOCK_SUB_FLYOUT_OFFSET_PX,
+  HubDockFlyout,
 } from './HubDockFlyout'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -94,10 +94,7 @@ export function SidebarHqMoreFlyoutBody({
           onMouseEnter={(e) => openProjects(e.currentTarget.getBoundingClientRect())}
           onMouseLeave={(e) => {
             const related = e.relatedTarget
-            if (
-              related instanceof Element &&
-              related.closest('[data-hub-dock-flyout-nested]')
-            ) {
+            if (related instanceof Element && related.closest('[data-hub-dock-flyout-nested]')) {
               return
             }
             scheduleClose()
@@ -122,6 +119,22 @@ export function SidebarHqMoreFlyoutBody({
       >
         <Workflow />
         <span className="min-w-0 flex-1 truncate">Flows</span>
+      </Link>
+
+      <Link
+        href="/artifacts"
+        data-hub-dock-navigate
+        onClick={() => {
+          setWorkContext({ surface: 'general' })
+          onNavigate?.()
+        }}
+        className={cn(
+          'hub-dock-flyout-row',
+          c.pathname.startsWith('/artifacts') && 'hub-dock-flyout-row-active',
+        )}
+      >
+        <Layers3 />
+        <span className="min-w-0 flex-1 truncate">Artifacts</span>
       </Link>
 
       {showProjects && projectsOpen && projectsAnchor ? (

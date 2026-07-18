@@ -2,6 +2,8 @@ import { sanitizeFilename } from './artifact-downloads'
 import {
   PRESENTATION_DECK_EXPORT_HEIGHT,
   PRESENTATION_DECK_EXPORT_WIDTH,
+  PRESENTATION_EXPORT_HEIGHT,
+  PRESENTATION_EXPORT_WIDTH,
 } from './artifact-presentation-constants'
 import { getPresentationExportIframe } from './artifact-presentation-iframe-export'
 import { domToPresentationPptSlide } from './artifact-presentation-ppt-dom'
@@ -22,7 +24,7 @@ function extractSpeakerNotes(doc: Document): string[] {
   return parsed.map((item) => String(item ?? '').trim())
 }
 
-async function exportPresentationFromLiveIframe(title: string): Promise<string> {
+export async function createPresentationPPTBlobFromIframe(title: string): Promise<Blob> {
   const sourceIframe = getPresentationExportIframe()
   if (!sourceIframe?.contentDocument?.body) {
     throw new Error('Presentation preview not available for export')
@@ -44,7 +46,6 @@ async function exportPresentationFromLiveIframe(title: string): Promise<string> 
   pptx.subject = 'Presentation export'
   pptx.title = title || 'Presentation'
 
-  const filename = `${sanitizeFilename(title, 'presentation')}.pptx`
   const originalStyles = sections.map((s) => s.getAttribute('style') || '')
   const speakerNotes = extractSpeakerNotes(iframeDoc)
   const revealCss =
@@ -77,7 +78,7 @@ async function exportPresentationFromLiveIframe(title: string): Promise<string> 
       else section.removeAttribute('style')
     }
 
-    await pptx.writeFile({ fileName: filename })
+    return await writePptxBlob(pptx)
   } finally {
     sections.forEach((s, i) => {
       const orig = originalStyles[i]!
@@ -85,50 +86,71 @@ async function exportPresentationFromLiveIframe(title: string): Promise<string> 
       else s.removeAttribute('style')
     })
   }
-
-  return filename
 }
 
 export async function downloadPresentationPPTFromIframe(title: string): Promise<string> {
-  return exportPresentationFromLiveIframe(title)
+  const filename = `${sanitizeFilename(title, 'presentation')}.pptx`
+  downloadPptxBlob(await createPresentationPPTBlobFromIframe(title), filename)
+  return filename
 }
 
-export function downloadPresentationPPTFromSlides(
+export async function createPresentationPPTBlobFromSlides(
   slides: Record<string, unknown>[],
   title: string,
-): Promise<string> {
+): Promise<Blob> {
   if (!Array.isArray(slides) || slides.length === 0) {
     throw new Error('No slides to export')
   }
 
-  return (async () => {
-    const { host, nodes } = buildPresentationSlideDom(slides, title)
-    const filename = `${sanitizeFilename(title, 'presentation')}.pptx`
-    try {
-      const html2canvas = (await import('html2canvas-pro')).default
-      const PptxGenJS = (await import('pptxgenjs')).default
-      const pptx = new PptxGenJS()
-      pptx.layout = 'LAYOUT_WIDE'
-      pptx.author = 'ROAS'
-      pptx.subject = 'Presentation export'
-      pptx.title = title || 'Presentation'
+  const { host, nodes } = buildPresentationSlideDom(slides, title)
+  try {
+    const PptxGenJS = (await import('pptxgenjs')).default
+    const pptx = new PptxGenJS()
+    pptx.layout = 'LAYOUT_WIDE'
+    pptx.author = 'ROAS'
+    pptx.subject = 'Presentation export'
+    pptx.title = title || 'Presentation'
 
-      for (const node of nodes) {
-        const canvas = await html2canvas(node, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-        })
-        const imageData = canvas.toDataURL('image/png')
-        const slide = pptx.addSlide()
-        slide.addImage({ data: imageData, x: 0, y: 0, w: 13.333, h: 7.5 })
-      }
-
-      await pptx.writeFile({ fileName: filename })
-      return filename
-    } finally {
-      if (host.parentNode) host.parentNode.removeChild(host)
+    for (const node of nodes) {
+      const slide = pptx.addSlide()
+      await domToPresentationPptSlide(
+        node,
+        slide,
+        PRESENTATION_EXPORT_WIDTH,
+        PRESENTATION_EXPORT_HEIGHT,
+      )
     }
-  })()
+
+    return await writePptxBlob(pptx)
+  } finally {
+    if (host.parentNode) host.parentNode.removeChild(host)
+  }
+}
+
+export async function downloadPresentationPPTFromSlides(
+  slides: Record<string, unknown>[],
+  title: string,
+): Promise<string> {
+  const filename = `${sanitizeFilename(title, 'presentation')}.pptx`
+  downloadPptxBlob(await createPresentationPPTBlobFromSlides(slides, title), filename)
+  return filename
+}
+
+async function writePptxBlob(pptx: {
+  write: (options: { outputType: 'blob' }) => Promise<unknown>
+}): Promise<Blob> {
+  const output = await pptx.write({ outputType: 'blob' })
+  if (!(output instanceof Blob)) throw new Error('PPTX export did not return a file')
+  return output
+}
+
+function downloadPptxBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(url)
 }

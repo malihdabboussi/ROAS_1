@@ -26,6 +26,9 @@ export function DropboxFileBrowserModal(props: DropboxFileBrowserModalProps) {
         <DialogPrimitive.Content className="z-modal-layer-3 sm:p-spacing-4 md:p-spacing-6 fixed inset-0 flex items-center justify-center overflow-hidden p-2">
           <VisuallyHidden.Root>
             <DialogPrimitive.Title>Dropbox</DialogPrimitive.Title>
+            <DialogPrimitive.Description>
+              Browse and choose files from Dropbox.
+            </DialogPrimitive.Description>
           </VisuallyHidden.Root>
           <div className="relative h-full w-full max-w-none sm:h-[80vh] sm:max-h-[80vh] sm:max-w-4xl">
             <DropboxFileBrowserPanel layout="modal" {...props} />

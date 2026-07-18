@@ -6,11 +6,11 @@ import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { Globe, Loader2, Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { backendGet } from '@/lib/api/backend-client'
+import { customDomainsApi } from '@/lib/domains/custom-domains-api'
 import {
   DOMAINS_TOAST_ERRORS,
   DOMAINS_TOAST_SUCCESS,
 } from '@/lib/domains/domains-toast-errors.config'
-import { customDomainsApi } from '@/lib/domains/custom-domains-api'
 
 type DomainRow = {
   id: string
@@ -111,15 +111,21 @@ export function ConnectCustomDomainModal({
               <div className="px-spacing-4 sm:px-spacing-6 pt-spacing-4 pb-spacing-2">
                 <div className="flex items-center justify-between">
                   <h2 className="title-h6">{view === 'add' ? 'Add New Domain' : title}</h2>
-                  <button onClick={onClose} disabled={busy} className="btn-icon-bare">
+                  <button
+                    type="button"
+                    aria-label="Close connect custom domain"
+                    onClick={onClose}
+                    disabled={busy}
+                    className="btn-icon-bare"
+                  >
                     <X className="icon-xs" />
                   </button>
                 </div>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   {view === 'add'
                     ? 'Add a domain you own, then verify DNS to connect it.'
                     : 'Pick a verified custom domain or add a new one.'}
-                </p>
+                </DialogPrimitive.Description>
               </div>
 
               <div className="px-spacing-6 py-spacing-4 space-y-spacing-4 flex-1 overflow-y-auto">
@@ -169,6 +175,7 @@ export function ConnectCustomDomainModal({
                         <button
                           key={d.id}
                           type="button"
+                          aria-pressed={active}
                           onClick={() => setSelectedDomainId(d.id)}
                           className={`body-3 w-full rounded-lg border px-3 py-2 text-left transition-colors ${
                             active

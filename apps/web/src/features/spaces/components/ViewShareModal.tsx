@@ -153,7 +153,7 @@ export function ViewShareModal({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="z-modal-backdrop fixed inset-0 bg-modal-overlay" />
+        <DialogPrimitive.Overlay className="z-modal-backdrop bg-modal-overlay fixed inset-0" />
         <DialogPrimitive.Content className="z-modal-layer-3 p-spacing-4 fixed inset-0 flex items-center justify-center">
           <div
             className="surface-card wizard-container-border rounded-spacing-4 flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden border bg-[var(--color-card)] shadow-2xl"
@@ -165,7 +165,9 @@ export function ViewShareModal({
                   <DialogPrimitive.Title className="title-h6 text-foreground">
                     Share view
                   </DialogPrimitive.Title>
-                  <p className="body-3 text-muted-foreground mt-spacing-1 truncate">{viewName}</p>
+                  <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1 truncate">
+                    {viewName}
+                  </DialogPrimitive.Description>
                 </div>
                 <button
                   type="button"
@@ -181,9 +183,15 @@ export function ViewShareModal({
             <div className="px-spacing-6 py-spacing-4 space-y-spacing-5 flex min-h-0 flex-1 flex-col overflow-y-auto">
               {/* Invite row */}
               <div className="space-y-spacing-2">
-                <label className="body-2 text-foreground block font-medium">Invite by name</label>
+                <label
+                  htmlFor="view-share-invite-name"
+                  className="body-2 text-foreground block font-medium"
+                >
+                  Invite by name
+                </label>
                 <div className="gap-spacing-2 flex items-center">
                   <input
+                    id="view-share-invite-name"
                     value={inviteQuery}
                     onChange={(e) => setInviteQuery(e.target.value)}
                     placeholder="Type a teammate's name…"

@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import type { Dispatch, FormEvent, SetStateAction } from 'react'
-import { Building2, Eye, EyeOff, Loader2, XCircle } from 'lucide-react'
-import type { OrgInvitation, Organization } from '@/lib/org'
+import { Building2, Eye, EyeOff, XCircle } from 'lucide-react'
+import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import type { Organization, OrgInvitation } from '@/lib/org'
 
 export type InviteState = 'loading' | 'ready' | 'accepting' | 'accepted' | 'error'
 
@@ -37,15 +38,15 @@ type InviteAcceptReadyPanelProps = {
 export function InviteAcceptHeader({ state, invitation, error }: InviteAcceptHeaderProps) {
   return (
     <div className="mb-spacing-6 text-center">
-      <div className="mb-spacing-3 mx-auto flex h-spacing-16 w-spacing-16 items-center justify-center rounded-full bg-primary">
-        <Building2 className="h-8 w-8 text-primary-foreground" />
+      <div className="mb-spacing-3 h-spacing-16 w-spacing-16 bg-primary mx-auto flex items-center justify-center rounded-full">
+        <Building2 className="text-primary-foreground h-8 w-8" />
       </div>
 
       {state === 'loading' && (
         <>
           <h1 className="title-h1 text-foreground">LOADING INVITATION</h1>
           <div className="mt-spacing-4 flex justify-center">
-            <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+            <VibeyLoadingOrb size="sm" text="Loading invitation..." />
           </div>
         </>
       )}
@@ -66,11 +67,8 @@ export function InviteAcceptHeader({ state, invitation, error }: InviteAcceptHea
         <>
           <h1 className="title-h1 text-foreground">SETTING UP</h1>
           <div className="mt-spacing-4 flex justify-center">
-            <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+            <VibeyLoadingOrb size="sm" text="Getting your workspace ready..." />
           </div>
-          <p className="body-2 text-muted-foreground mt-spacing-3">
-            I&apos;m getting your workspace ready...
-          </p>
         </>
       )}
 
@@ -85,9 +83,11 @@ export function InviteAcceptHeader({ state, invitation, error }: InviteAcceptHea
         <>
           <h1 className="title-h1 text-foreground">INVITATION ERROR</h1>
           <div className="mt-spacing-4 flex justify-center">
-            <XCircle className="h-10 w-10 text-destructive" />
+            <XCircle className="text-destructive h-10 w-10" />
           </div>
-          <p className="body-2 text-destructive mt-spacing-3">{error}</p>
+          <p role="alert" className="body-2 text-destructive mt-spacing-3">
+            {error}
+          </p>
         </>
       )}
     </div>
@@ -146,7 +146,11 @@ export function InviteAcceptReadyPanel({
       )}
 
       {!isExpired && !isAlreadyAccepted && !isRevoked && isLoggedIn && (
-        <button type="button" onClick={onAccept} className="button-default button-glass-primary w-full">
+        <button
+          type="button"
+          onClick={onAccept}
+          className="button-default button-glass-primary w-full"
+        >
           Accept Invitation
         </button>
       )}
@@ -183,7 +187,11 @@ export function InviteAcceptReadyPanel({
           </div>
 
           <form onSubmit={onEmailSignUp} className="space-y-spacing-3">
+            <label htmlFor="org-invite-email" className="sr-only">
+              Email address
+            </label>
             <input
+              id="org-invite-email"
               type="email"
               required
               value={email}
@@ -192,7 +200,11 @@ export function InviteAcceptReadyPanel({
               className="input-glass h-spacing-9 rounded-spacing-2 w-full"
             />
             <div className="relative">
+              <label htmlFor="org-invite-password" className="sr-only">
+                Password
+              </label>
               <input
+                id="org-invite-password"
                 type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
@@ -209,7 +221,11 @@ export function InviteAcceptReadyPanel({
                 {showPassword ? <EyeOff className="icon-md" /> : <Eye className="icon-md" />}
               </button>
             </div>
-            {error && <p className="body-3 text-destructive">{error}</p>}
+            {error && (
+              <p role="alert" className="body-3 text-destructive">
+                {error}
+              </p>
+            )}
             {message && (
               <div className="body-3 text-foreground border-border rounded-spacing-2 px-spacing-3 py-spacing-2 border text-center">
                 {message}

@@ -114,7 +114,13 @@ export function MediaExportToolbar({
       {showDownloadMenu ? (
         <div className="relative">
           <Tooltip label="Download" side="bottom">
-            <button type="button" onClick={() => setMenuOpen((o) => !o)} className="btn-icon-glass">
+            <button
+              type="button"
+              aria-label="Download options"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((o) => !o)}
+              className="btn-icon-glass"
+            >
               <Download className="h-4 w-4" />
             </button>
           </Tooltip>

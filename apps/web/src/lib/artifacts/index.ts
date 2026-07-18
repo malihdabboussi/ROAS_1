@@ -21,6 +21,7 @@ export * from './offer-pdf-export'
 export * from './offer-step-preview'
 export * from './open-studio-artifact'
 export * from './pending-artifact-open'
+export * from './shell-artifact-viewer'
 export {
   fetchAdCampaign,
   fetchCampaignAds,

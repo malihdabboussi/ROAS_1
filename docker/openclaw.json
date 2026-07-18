@@ -1,7 +1,7 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.2.16",
-    "lastTouchedAt": "2026-07-17T04:06:00.699Z"
+    "lastTouchedAt": "2026-07-18T04:41:35.103Z"
   },
   "wizard": {
     "lastRunAt": "2026-02-15T14:00:00.000Z",
@@ -41,11 +41,7 @@
             "id": "claude-opus-4.6",
             "name": "Claude Opus 4.6",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -59,11 +55,7 @@
             "id": "claude-opus-4.7",
             "name": "Claude Opus 4.7",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -77,11 +69,7 @@
             "id": "claude-opus-4.8",
             "name": "Claude Opus 4.8",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -95,11 +83,7 @@
             "id": "claude-sonnet-4.6",
             "name": "Claude Sonnet 4.6",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -113,11 +97,7 @@
             "id": "claude-haiku-4.5",
             "name": "Claude Haiku 4.5",
             "reasoning": false,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -137,11 +117,7 @@
             "id": "anthropic/claude-opus-4.6",
             "name": "Claude Opus 4.6 (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -155,11 +131,7 @@
             "id": "anthropic/claude-opus-4.6-fast",
             "name": "Claude Opus 4.6 Fast (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -173,11 +145,7 @@
             "id": "anthropic/claude-opus-4.7",
             "name": "Claude Opus 4.7 (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -191,11 +159,7 @@
             "id": "anthropic/claude-opus-4.7-fast",
             "name": "Claude Opus 4.7 Fast (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -209,11 +173,7 @@
             "id": "anthropic/claude-opus-4.8",
             "name": "Claude Opus 4.8 (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -227,11 +187,7 @@
             "id": "anthropic/claude-opus-4.8-fast",
             "name": "Claude Opus 4.8 Fast (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -245,11 +201,7 @@
             "id": "anthropic/claude-fable-5",
             "name": "Claude Fable 5 (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -263,11 +215,7 @@
             "id": "anthropic/claude-sonnet-4.6",
             "name": "Claude Sonnet 4.6 (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -281,11 +229,7 @@
             "id": "anthropic/claude-haiku-4.5",
             "name": "Claude Haiku 4.5 (via OpenRouter)",
             "reasoning": false,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -299,13 +243,7 @@
             "id": "google/gemini-3.5-flash",
             "name": "Gemini 3.5 Flash (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file",
-              "audio",
-              "video"
-            ],
+            "input": ["text", "image", "file", "audio", "video"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -319,13 +257,7 @@
             "id": "google/gemini-3.1-pro-preview",
             "name": "Gemini 3.1 Pro Preview (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file",
-              "audio",
-              "video"
-            ],
+            "input": ["text", "image", "file", "audio", "video"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -339,9 +271,7 @@
             "id": "minimax/minimax-m2.5",
             "name": "MiniMax M2.5 (via OpenRouter)",
             "reasoning": false,
-            "input": [
-              "text"
-            ],
+            "input": ["text"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -355,11 +285,7 @@
             "id": "openai/gpt-5.4",
             "name": "GPT-5.4 (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -373,11 +299,7 @@
             "id": "openai/gpt-5.4-pro",
             "name": "GPT-5.4 Pro (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -391,11 +313,7 @@
             "id": "openai/gpt-5.5",
             "name": "GPT-5.5 (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -409,11 +327,7 @@
             "id": "openai/gpt-5.3-codex",
             "name": "GPT-5.3 Codex (via OpenRouter)",
             "reasoning": true,
-            "input": [
-              "text",
-              "image",
-              "file"
-            ],
+            "input": ["text", "image", "file"],
             "cost": {
               "input": 0,
               "output": 0,
@@ -441,192 +355,128 @@
         "openrouter/anthropic/claude-opus-4.6": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "anthropic"
-              ],
-              "order": [
-                "anthropic"
-              ]
+              "only": ["anthropic"],
+              "order": ["anthropic"]
             }
           }
         },
         "openrouter/anthropic/claude-opus-4.6-fast": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "anthropic"
-              ],
-              "order": [
-                "anthropic"
-              ]
+              "only": ["anthropic"],
+              "order": ["anthropic"]
             }
           }
         },
         "openrouter/anthropic/claude-opus-4.7": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "anthropic"
-              ],
-              "order": [
-                "anthropic"
-              ]
+              "only": ["anthropic"],
+              "order": ["anthropic"]
             }
           }
         },
         "openrouter/anthropic/claude-opus-4.7-fast": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "anthropic"
-              ],
-              "order": [
-                "anthropic"
-              ]
+              "only": ["anthropic"],
+              "order": ["anthropic"]
             }
           }
         },
         "openrouter/anthropic/claude-opus-4.8": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "anthropic"
-              ],
-              "order": [
-                "anthropic"
-              ]
+              "only": ["anthropic"],
+              "order": ["anthropic"]
             }
           }
         },
         "openrouter/anthropic/claude-opus-4.8-fast": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "anthropic"
-              ],
-              "order": [
-                "anthropic"
-              ]
+              "only": ["anthropic"],
+              "order": ["anthropic"]
             }
           }
         },
         "openrouter/anthropic/claude-fable-5": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "anthropic"
-              ],
-              "order": [
-                "anthropic"
-              ]
+              "only": ["anthropic"],
+              "order": ["anthropic"]
             }
           }
         },
         "openrouter/anthropic/claude-sonnet-4.6": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "anthropic"
-              ],
-              "order": [
-                "anthropic"
-              ]
+              "only": ["anthropic"],
+              "order": ["anthropic"]
             }
           }
         },
         "openrouter/anthropic/claude-haiku-4.5": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "anthropic"
-              ],
-              "order": [
-                "anthropic"
-              ]
+              "only": ["anthropic"],
+              "order": ["anthropic"]
             }
           }
         },
         "openrouter/google/gemini-3.5-flash": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "google-vertex"
-              ],
-              "order": [
-                "google-vertex"
-              ]
+              "only": ["google-vertex"],
+              "order": ["google-vertex"]
             }
           }
         },
         "openrouter/google/gemini-3.1-pro-preview": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "google-vertex"
-              ],
-              "order": [
-                "google-vertex"
-              ]
+              "only": ["google-vertex"],
+              "order": ["google-vertex"]
             }
           }
         },
         "openrouter/minimax/minimax-m2.5": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "minimax"
-              ],
-              "order": [
-                "minimax"
-              ]
+              "only": ["minimax"],
+              "order": ["minimax"]
             }
           }
         },
         "openrouter/openai/gpt-5.4": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "openai"
-              ],
-              "order": [
-                "openai"
-              ]
+              "only": ["openai"],
+              "order": ["openai"]
             }
           }
         },
         "openrouter/openai/gpt-5.4-pro": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "openai"
-              ],
-              "order": [
-                "openai"
-              ]
+              "only": ["openai"],
+              "order": ["openai"]
             }
           }
         },
         "openrouter/openai/gpt-5.5": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "openai"
-              ],
-              "order": [
-                "openai"
-              ]
+              "only": ["openai"],
+              "order": ["openai"]
             }
           }
         },
         "openrouter/openai/gpt-5.3-codex": {
           "params": {
             "openRouterRouting": {
-              "only": [
-                "openai"
-              ],
-              "order": [
-                "openai"
-              ]
+              "only": ["openai"],
+              "order": ["openai"]
             }
           }
         }
@@ -660,6 +510,7 @@
         "workspace": "${AGENTS_BASE_DIR}/vibey",
         "skills": [
           "awareness-evaluator",
+          "funnel-site-design",
           "funnel-wireframe",
           "mission-planner",
           "mission-quality-evaluator",
@@ -704,10 +555,7 @@
       {
         "id": "zane",
         "workspace": "${AGENTS_BASE_DIR}/zane",
-        "skills": [
-          "code-quality-gate",
-          "vibey-api"
-        ],
+        "skills": ["code-quality-gate", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -739,10 +587,7 @@
       {
         "id": "rio",
         "workspace": "${AGENTS_BASE_DIR}/rio",
-        "skills": [
-          "seedance-video-producer",
-          "vibey-api"
-        ],
+        "skills": ["seedance-video-producer", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -934,12 +779,7 @@
       {
         "id": "orion",
         "workspace": "${AGENTS_BASE_DIR}/orion",
-        "skills": [
-          "financial-reporting",
-          "invoice-management",
-          "revenue-tracking",
-          "vibey-api"
-        ],
+        "skills": ["financial-reporting", "invoice-management", "revenue-tracking", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -1010,12 +850,7 @@
       {
         "id": "mara",
         "workspace": "${AGENTS_BASE_DIR}/mara",
-        "skills": [
-          "campaign-planning",
-          "campaign-reporting",
-          "publish-authority",
-          "vibey-api"
-        ],
+        "skills": ["campaign-planning", "campaign-reporting", "publish-authority", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -1047,10 +882,7 @@
       {
         "id": "lux",
         "workspace": "${AGENTS_BASE_DIR}/lux",
-        "skills": [
-          "funnel-builder",
-          "vibey-api"
-        ],
+        "skills": ["funnel-builder", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -1122,12 +954,7 @@
       {
         "id": "tessa",
         "workspace": "${AGENTS_BASE_DIR}/tessa",
-        "skills": [
-          "campaign-planning",
-          "campaign-reporting",
-          "publish-authority",
-          "vibey-api"
-        ],
+        "skills": ["campaign-planning", "campaign-reporting", "publish-authority", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -1159,10 +986,7 @@
       {
         "id": "rex",
         "workspace": "${AGENTS_BASE_DIR}/rex",
-        "skills": [
-          "code-quality-gate",
-          "vibey-api"
-        ],
+        "skills": ["code-quality-gate", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -1194,10 +1018,7 @@
       {
         "id": "manager",
         "workspace": "${AGENTS_BASE_DIR}/manager",
-        "skills": [
-          "mission-planner",
-          "vibey-api"
-        ],
+        "skills": ["mission-planner", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -1232,7 +1053,7 @@
         "skills": [
           "ad-creative-design",
           "brand-design-system",
-          "funnel-page-design",
+          "funnel-site-design",
           "image-production",
           "social-graphic-design",
           "ui-component-design",
@@ -1251,7 +1072,6 @@
             "find",
             "ls",
             "process",
-            "browser",
             "canvas",
             "nodes",
             "cron",
@@ -1426,10 +1246,7 @@
       {
         "id": "sage",
         "workspace": "${AGENTS_BASE_DIR}/sage",
-        "skills": [
-          "code-quality-gate",
-          "vibey-api"
-        ],
+        "skills": ["code-quality-gate", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -1461,11 +1278,7 @@
       {
         "id": "copywriter",
         "workspace": "${AGENTS_BASE_DIR}/copywriter",
-        "skills": [
-          "vibey-api",
-          "video-producer",
-          "video-production"
-        ],
+        "skills": ["vibey-api", "video-producer", "video-production"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -1497,10 +1310,7 @@
       {
         "id": "viktor_2",
         "workspace": "${AGENTS_BASE_DIR}/viktor_2",
-        "skills": [
-          "skill-creator",
-          "vibey-api"
-        ],
+        "skills": ["skill-creator", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -1638,11 +1448,7 @@
       {
         "id": "org:699e3530-881c-4653-b507-4c4b5993538f:viktor_2",
         "workspace": "${AGENTS_BASE_DIR}/org:699e3530-881c-4653-b507-4c4b5993538f:viktor_2",
-        "skills": [
-          "chat-plan-management",
-          "skill-creator",
-          "vibey-api"
-        ],
+        "skills": ["chat-plan-management", "skill-creator", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -2335,12 +2141,7 @@
       {
         "id": "org:699e3530-881c-4653-b507-4c4b5993538f:video_editor",
         "workspace": "${AGENTS_BASE_DIR}/org:699e3530-881c-4653-b507-4c4b5993538f:video_editor",
-        "skills": [
-          "chat-plan-management",
-          "integration-playbook",
-          "skill-creator",
-          "vibey-api"
-        ],
+        "skills": ["chat-plan-management", "integration-playbook", "skill-creator", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -2419,12 +2220,7 @@
       {
         "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:nova",
         "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:nova",
-        "skills": [
-          "chat-plan-management",
-          "integration-playbook",
-          "skill-creator",
-          "vibey-api"
-        ],
+        "skills": ["chat-plan-management", "integration-playbook", "skill-creator", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -2456,11 +2252,7 @@
       {
         "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:lux",
         "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:lux",
-        "skills": [
-          "chat-plan-management",
-          "skill-creator",
-          "vibey-api"
-        ],
+        "skills": ["chat-plan-management", "skill-creator", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -2584,11 +2376,7 @@
       {
         "id": "rio_3",
         "workspace": "${AGENTS_BASE_DIR}/rio_3",
-        "skills": [
-          "chat-plan-management",
-          "skill-creator",
-          "vibey-api"
-        ],
+        "skills": ["chat-plan-management", "skill-creator", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -2620,11 +2408,7 @@
       {
         "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:rio",
         "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:rio",
-        "skills": [
-          "chat-plan-management",
-          "skill-creator",
-          "vibey-api"
-        ],
+        "skills": ["chat-plan-management", "skill-creator", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -2656,11 +2440,7 @@
       {
         "id": "org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:rio_2",
         "workspace": "${AGENTS_BASE_DIR}/org:ffb7247d-7ac5-45a0-8503-bfc939f4c617:rio_2",
-        "skills": [
-          "chat-plan-management",
-          "skill-creator",
-          "vibey-api"
-        ],
+        "skills": ["chat-plan-management", "skill-creator", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -4203,10 +3983,7 @@
       {
         "id": "widget_builder",
         "workspace": "${AGENTS_BASE_DIR}/widget_builder",
-        "skills": [
-          "supabase-dev",
-          "vibey-api"
-        ],
+        "skills": ["supabase-dev", "vibey-api"],
         "promptMode": "vibey",
         "tools": {
           "deny": [
@@ -6465,13 +6242,7 @@
     },
     "sandbox": {
       "tools": {
-        "allow": [
-          "read",
-          "web_search",
-          "web_fetch",
-          "exec",
-          "vibey_backend"
-        ],
+        "allow": ["read", "web_search", "web_fetch", "exec", "vibey_backend"],
         "deny": [
           "write",
           "edit",
@@ -6528,15 +6299,9 @@
   },
   "skills": {},
   "plugins": {
-    "allow": [
-      "vibey-backend",
-      "memory-core"
-    ],
+    "allow": ["vibey-backend", "memory-core"],
     "load": {
-      "paths": [
-        "${VIBEY_PLUGIN_PATH}",
-        "${MEMORY_CORE_PLUGIN_PATH}"
-      ]
+      "paths": ["${VIBEY_PLUGIN_PATH}", "${MEMORY_CORE_PLUGIN_PATH}"]
     },
     "slots": {
       "memory": "memory-core"

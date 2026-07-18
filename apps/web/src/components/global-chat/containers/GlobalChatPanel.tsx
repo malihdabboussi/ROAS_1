@@ -11,9 +11,11 @@ import { useGlobalChatStore } from '../store/use-global-chat-store'
 export function GlobalChatPanel({
   shellSidebarChrome = false,
   onCollapseChat,
+  presentation = 'compact',
 }: {
   shellSidebarChrome?: boolean
   onCollapseChat?: () => void
+  presentation?: 'full' | 'compact'
 } = {}) {
   const pathname = usePathname() ?? ''
   const workContext = useGlobalChatStore((s) => s.workContext)
@@ -82,6 +84,7 @@ export function GlobalChatPanel({
               : undefined
           }
           shellSidebarChrome={shellSidebarChrome}
+          headerLayout={presentation}
           onCollapseChat={onCollapseChat ?? (() => setCollapsed(true))}
         />
       </div>

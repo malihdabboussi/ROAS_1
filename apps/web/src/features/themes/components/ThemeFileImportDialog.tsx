@@ -125,13 +125,14 @@ export function ThemeFileImportDialog({ open, onClose, onImport }: ThemeFileImpo
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(o) => !o && handleCancel()}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-[100004] bg-modal-overlay" />
+        <DialogPrimitive.Overlay className="bg-modal-overlay fixed inset-0 z-[100004]" />
         <DialogPrimitive.Content className="p-spacing-4 fixed inset-0 z-[100005] flex items-center justify-center overflow-hidden">
-          <div className="surface-card rounded-spacing-4 relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden border border-[var(--color-border)]">
+          <div className="surface-card border-border rounded-spacing-4 relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden border">
             <button
               type="button"
               onClick={handleCancel}
               className="btn-icon-bare btn-close-absolute right-spacing-2 top-spacing-2 absolute"
+              aria-label="Close"
             >
               <X className="h-4 w-4" />
             </button>
@@ -139,29 +140,39 @@ export function ThemeFileImportDialog({ open, onClose, onImport }: ThemeFileImpo
               <DialogPrimitive.Title>
                 {THEME_MESSAGES.IMPORT_FILE_TITLE.message}
               </DialogPrimitive.Title>
+              <DialogPrimitive.Description>
+                Upload a PDF, image, or document to extract its branding.
+              </DialogPrimitive.Description>
             </VisuallyHidden.Root>
             <div className="px-spacing-6 py-spacing-4 flex-1 overflow-y-auto">
               {state === 'input' && (
                 <div className="space-y-spacing-6">
                   <div
+                    role={file ? undefined : 'button'}
+                    tabIndex={file ? undefined : 0}
+                    aria-label={file ? undefined : 'Choose branding file'}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(event) => {
+                      if (!file && (event.key === 'Enter' || event.key === ' ')) {
+                        event.preventDefault()
+                        fileInputRef.current?.click()
+                      }
+                    }}
                     className={`rounded-spacing-3 p-spacing-8 cursor-pointer border-2 border-dashed text-center transition-all ${
                       isDragging
-                        ? 'bg-[var(--color-primary)]/5 border-[var(--color-primary)]'
-                        : 'hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-muted)]/30 border-[var(--color-border)]'
+                        ? 'bg-primary/5 border-primary'
+                        : 'hover:border-primary/50 hover:bg-muted/30 border-border'
                     }`}
                   >
                     {file ? (
                       <div className="space-y-spacing-3">
-                        <FileText className="mx-auto h-12 w-12 text-[var(--color-primary)]" />
+                        <FileText className="text-primary mx-auto h-12 w-12" />
                         <div>
-                          <p className="body-2 font-medium text-[var(--color-foreground)]">
-                            {file.name}
-                          </p>
-                          <p className="typo-caption text-[var(--color-muted-foreground)]">
+                          <p className="body-2 text-foreground font-medium">{file.name}</p>
+                          <p className="typo-caption text-muted-foreground">
                             {(file.size / 1024 / 1024).toFixed(2)} MB
                           </p>
                         </div>
@@ -179,31 +190,33 @@ export function ThemeFileImportDialog({ open, onClose, onImport }: ThemeFileImpo
                       </div>
                     ) : (
                       <div className="space-y-spacing-3">
-                        <Upload className="mx-auto h-12 w-12 text-[var(--color-muted-foreground)]" />
+                        <Upload className="text-muted-foreground mx-auto h-12 w-12" />
                         <div>
-                          <p className="body-2 mb-spacing-2 font-medium text-[var(--color-foreground)]">
+                          <p className="body-2 text-foreground mb-spacing-2 font-medium">
                             Drop a file here or click to browse
                           </p>
-                          <p className="typo-caption text-[var(--color-muted-foreground)]">
-                            PDF, image, or doc
-                          </p>
+                          <p className="typo-caption text-muted-foreground">PDF, image, or doc</p>
                         </div>
                       </div>
                     )}
                     <input
                       ref={fileInputRef}
                       type="file"
+                      aria-label="Branding file"
                       accept={ACCEPT_TYPES}
                       onChange={(e) => {
                         const f = e.target.files?.[0]
                         if (f) handleFileSelect(f)
                       }}
+                      onClick={(event) => event.stopPropagation()}
                       className="hidden"
                     />
                   </div>
                   {error && (
-                    <div className="rounded-spacing-2 border-[var(--color-destructive)]/20 bg-[var(--color-destructive)]/10 p-spacing-4 border">
-                      <p className="body-3 text-[var(--color-destructive)]">{error}</p>
+                    <div className="rounded-spacing-2 border-destructive/20 bg-destructive/10 p-spacing-4 border">
+                      <p role="alert" className="body-3 text-destructive">
+                        {error}
+                      </p>
                     </div>
                   )}
                   <div className="gap-spacing-3 flex">
@@ -227,21 +240,19 @@ export function ThemeFileImportDialog({ open, onClose, onImport }: ThemeFileImpo
               )}
               {state === 'extracting' && (
                 <div className="py-spacing-12 text-center">
-                  <div className="mb-spacing-4 mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[var(--color-primary)] border-t-transparent" />
-                  <p className="body-2 text-[var(--color-muted-foreground)]">
-                    Extracting branding from file...
-                  </p>
+                  <div className="mb-spacing-4 border-primary mx-auto h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
+                  <p className="body-2 text-muted-foreground">Extracting branding from file...</p>
                 </div>
               )}
               {state === 'preview' && extractedData && (
                 <div className="space-y-spacing-6">
                   <div>
-                    <h3 className="body-1 mb-spacing-4 font-semibold text-[var(--color-foreground)]">
+                    <h3 className="body-1 text-foreground mb-spacing-4 font-semibold">
                       {THEME_MESSAGES.PREVIEW_TITLE.message}
                     </h3>
                     <div className="space-y-spacing-4">
                       <div>
-                        <p className="body-3 mb-spacing-2 font-medium text-[var(--color-muted-foreground)]">
+                        <p className="body-3 text-muted-foreground mb-spacing-2 font-medium">
                           {THEME_MESSAGES.PREVIEW_SECTION_PRIMARY.message}
                         </p>
                         <div className="gap-spacing-2 grid grid-cols-4">
@@ -252,28 +263,25 @@ export function ThemeFileImportDialog({ open, onClose, onImport }: ThemeFileImpo
                             { key: 'heading', label: 'Heading' },
                           ].map(({ key, label }) => (
                             <div key={key} className="gap-spacing-1 flex flex-col items-center">
+                              {/* By-design brand preview: extracted colors cannot use app tokens. */}
                               <div
-                                className="rounded-spacing-2 h-16 w-full border border-[var(--color-border)]"
+                                className="border-border rounded-spacing-2 h-16 w-full border"
                                 style={{
                                   background: (
                                     extractedData.colors as unknown as Record<string, string>
                                   )[key],
                                 }}
                               />
-                              <span className="typo-caption text-[var(--color-muted-foreground)]">
-                                {label}
-                              </span>
+                              <span className="typo-caption text-muted-foreground">{label}</span>
                             </div>
                           ))}
                         </div>
                       </div>
                       <div>
-                        <p className="body-3 mb-spacing-2 font-medium text-[var(--color-muted-foreground)]">
+                        <p className="body-3 text-muted-foreground mb-spacing-2 font-medium">
                           {THEME_MESSAGES.PREVIEW_SUGGESTED_NAME.message}
                         </p>
-                        <p className="body-2 text-[var(--color-foreground)]">
-                          {extractedData.suggestedName}
-                        </p>
+                        <p className="body-2 text-foreground">{extractedData.suggestedName}</p>
                       </div>
                     </div>
                   </div>

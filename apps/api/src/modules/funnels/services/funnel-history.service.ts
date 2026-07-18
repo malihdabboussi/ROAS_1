@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   FunnelHistoryRepository,
@@ -25,6 +25,21 @@ interface HistoryScope {
   funnelId: string
   funnelPageId?: string | null
   orgId?: string | null
+}
+
+interface RestoreHistoryScope extends HistoryScope {
+  changeSetId: string
+}
+
+interface RestorableChangeSet {
+  id: string
+  status: 'applied' | 'undone'
+  source: FunnelChangeSource
+  action: string
+  label: string | null
+  metadata: Record<string, unknown>
+  created_at: string
+  updated_at: string
 }
 
 const SNAPSHOT_COMPARE_KEYS = [
@@ -61,13 +76,26 @@ export class FunnelHistoryService {
     const scope = { funnelId: input.funnelId, funnelPageId: normalizePageId(input.funnelPageId) }
     const [undoCandidate, redoCandidate] = await Promise.all([
       this.historyRepo.findLatestApplied(supabase, scope),
-      this.historyRepo.findLatestUndone(supabase, scope),
+      this.historyRepo.findNextUndone(supabase, scope),
     ])
     return {
       can_undo: Boolean(undoCandidate),
       can_redo: Boolean(redoCandidate),
       undo_change_set_id: (undoCandidate as { id?: string } | null)?.id ?? null,
       redo_change_set_id: (redoCandidate as { id?: string } | null)?.id ?? null,
+    }
+  }
+
+  async listHistory(supabase: SupabaseClient, input: HistoryScope) {
+    const scope = { funnelId: input.funnelId, funnelPageId: normalizePageId(input.funnelPageId) }
+    const entries = (await this.historyRepo.listRestorableChangeSets(supabase, {
+      ...scope,
+      ascending: false,
+      limit: 50,
+    })) as RestorableChangeSet[]
+    return {
+      entries,
+      current_change_set_id: entries.find((entry) => entry.status === 'applied')?.id ?? null,
     }
   }
 
@@ -113,34 +141,92 @@ export class FunnelHistoryService {
 
   async undo(supabase: SupabaseClient, input: HistoryScope) {
     const scope = { funnelId: input.funnelId, funnelPageId: normalizePageId(input.funnelPageId) }
-    const changeSet = (await this.historyRepo.findLatestApplied(supabase, scope)) as
-      | { id: string }
-      | null
+    const changeSet = (await this.historyRepo.findLatestApplied(supabase, scope)) as {
+      id: string
+    } | null
     if (!changeSet) {
       return { success: true, changed: false, ...(await this.getState(supabase, input)) }
     }
-    const items = (await this.historyRepo.listChangeItems(supabase, changeSet.id)) as Array<
-      FunnelChangeItemInput & { funnel_page_id?: string | null }
-    >
-    await this.restoreItems(supabase, scope, items, 'before_snapshot')
-    await this.historyRepo.markChangeSetStatus(supabase, changeSet.id, 'undone')
-    return { success: true, changed: true, change_set_id: changeSet.id, ...(await this.getState(supabase, input)) }
+    await this.applyChangeSet(supabase, scope, changeSet.id, 'before_snapshot', 'undone')
+    return {
+      success: true,
+      changed: true,
+      change_set_id: changeSet.id,
+      ...(await this.getState(supabase, input)),
+    }
   }
 
   async redo(supabase: SupabaseClient, input: HistoryScope) {
     const scope = { funnelId: input.funnelId, funnelPageId: normalizePageId(input.funnelPageId) }
-    const changeSet = (await this.historyRepo.findLatestUndone(supabase, scope)) as
-      | { id: string }
-      | null
+    const changeSet = (await this.historyRepo.findNextUndone(supabase, scope)) as {
+      id: string
+    } | null
     if (!changeSet) {
       return { success: true, changed: false, ...(await this.getState(supabase, input)) }
     }
-    const items = (await this.historyRepo.listChangeItems(supabase, changeSet.id)) as Array<
+    await this.applyChangeSet(supabase, scope, changeSet.id, 'after_snapshot', 'applied')
+    return {
+      success: true,
+      changed: true,
+      change_set_id: changeSet.id,
+      ...(await this.getState(supabase, input)),
+    }
+  }
+
+  async restore(supabase: SupabaseClient, input: RestoreHistoryScope) {
+    const scope = { funnelId: input.funnelId, funnelPageId: normalizePageId(input.funnelPageId) }
+    const entries = (await this.historyRepo.listRestorableChangeSets(supabase, {
+      ...scope,
+      ascending: true,
+    })) as RestorableChangeSet[]
+    const targetIndex = entries.findIndex((entry) => entry.id === input.changeSetId)
+    if (targetIndex === -1) throw new NotFoundException('Funnel version not found')
+
+    const target = entries[targetIndex]!
+    const changes =
+      target.status === 'applied'
+        ? entries
+            .slice(targetIndex + 1)
+            .filter((entry) => entry.status === 'applied')
+            .reverse()
+            .map((entry) => ({
+              ...entry,
+              snapshotKey: 'before_snapshot' as const,
+              status: 'undone' as const,
+            }))
+        : entries
+            .slice(0, targetIndex + 1)
+            .filter((entry) => entry.status === 'undone')
+            .map((entry) => ({
+              ...entry,
+              snapshotKey: 'after_snapshot' as const,
+              status: 'applied' as const,
+            }))
+
+    for (const change of changes) {
+      await this.applyChangeSet(supabase, scope, change.id, change.snapshotKey, change.status)
+    }
+
+    return {
+      success: true,
+      changed: changes.length > 0,
+      restored_change_set_id: target.id,
+      ...(await this.getState(supabase, input)),
+    }
+  }
+
+  private async applyChangeSet(
+    supabase: SupabaseClient,
+    scope: { funnelId: string; funnelPageId: string | null },
+    changeSetId: string,
+    snapshotKey: 'before_snapshot' | 'after_snapshot',
+    status: 'applied' | 'undone',
+  ) {
+    const items = (await this.historyRepo.listChangeItems(supabase, changeSetId)) as Array<
       FunnelChangeItemInput & { funnel_page_id?: string | null }
     >
-    await this.restoreItems(supabase, scope, items, 'after_snapshot')
-    await this.historyRepo.markChangeSetStatus(supabase, changeSet.id, 'applied')
-    return { success: true, changed: true, change_set_id: changeSet.id, ...(await this.getState(supabase, input)) }
+    await this.restoreItems(supabase, scope, items, snapshotKey)
+    await this.historyRepo.markChangeSetStatus(supabase, changeSetId, status)
   }
 
   private async restoreItems(

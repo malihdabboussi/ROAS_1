@@ -101,10 +101,19 @@ export function MissionListDesktopRows({
         return (
           <Fragment key={mission.id}>
             <div
+              role="button"
+              tabIndex={0}
+              aria-label={`Open mission ${mission.title}`}
               className="hover:bg-hover-subtle group grid items-stretch gap-0 px-4 py-0 transition-colors"
               style={{ gridTemplateColumns: gridTemplateWithTrail }}
               onClick={(e) => {
                 if (e.target === e.currentTarget) onSelect(mission.id)
+              }}
+              onKeyDown={(e) => {
+                if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault()
+                  onSelect(mission.id)
+                }
               }}
               onContextMenu={
                 enableContextMenu ? (e) => openMissionMenuAtPointer(e, mission) : undefined
@@ -170,9 +179,18 @@ export function MissionListDesktopRows({
               dSubList.map((st) => (
                 <div
                   key={st.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open subtask ${st.title}`}
                   className="hover:bg-hover-subtle group grid items-stretch gap-0 px-4 py-0 transition-colors"
                   style={{ gridTemplateColumns: gridTemplateWithTrail }}
                   onClick={() => onSelectSubtask?.(mission.id, st.id)}
+                  onKeyDown={(e) => {
+                    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault()
+                      onSelectSubtask?.(mission.id, st.id)
+                    }
+                  }}
                 >
                   {activeCols.map((col) => (
                     <div

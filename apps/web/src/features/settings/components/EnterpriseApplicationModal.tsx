@@ -88,13 +88,21 @@ export function EnterpriseApplicationModal({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="z-modal-backdrop-above" />
         <DialogPrimitive.Content className="z-modal-layer-4 fixed inset-0 flex items-center justify-center p-4">
-          <div className="surface-card rounded-spacing-4 w-full max-w-lg border border-[var(--color-border)] shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
+          <div className="surface-card border-border rounded-spacing-4 w-full max-w-lg border shadow-2xl">
+            <div className="border-border flex items-center justify-between border-b px-6 py-4">
               <div className="flex items-center gap-3">
                 <Crown className="text-muted-foreground h-5 w-5" />
-                <h2 className="title-h5 text-foreground">Enterprise Application</h2>
+                <DialogPrimitive.Title className="title-h5 text-foreground">
+                  Enterprise Application
+                </DialogPrimitive.Title>
+                <DialogPrimitive.Description className="sr-only">
+                  Tell us about your company and how your team plans to use ROAS.
+                </DialogPrimitive.Description>
               </div>
-              <DialogPrimitive.Close className="text-muted-foreground hover:text-foreground rounded p-1 transition-colors">
+              <DialogPrimitive.Close
+                className="text-muted-foreground hover:text-foreground rounded p-1 transition-colors"
+                aria-label="Close"
+              >
                 <X className="h-4 w-4" />
               </DialogPrimitive.Close>
             </div>
@@ -102,8 +110,14 @@ export function EnterpriseApplicationModal({
             <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 px-6 py-5">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="body-3 text-muted-foreground mb-1 block">Email</label>
+                  <label
+                    htmlFor="enterprise-email"
+                    className="body-3 text-muted-foreground mb-1 block"
+                  >
+                    Email
+                  </label>
                   <input
+                    id="enterprise-email"
                     type="email"
                     value={email}
                     disabled
@@ -111,8 +125,14 @@ export function EnterpriseApplicationModal({
                   />
                 </div>
                 <div>
-                  <label className="body-3 text-muted-foreground mb-1 block">Full name</label>
+                  <label
+                    htmlFor="enterprise-name"
+                    className="body-3 text-muted-foreground mb-1 block"
+                  >
+                    Full name
+                  </label>
                   <input
+                    id="enterprise-name"
                     type="text"
                     value={name}
                     disabled
@@ -123,10 +143,14 @@ export function EnterpriseApplicationModal({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="body-3 text-muted-foreground mb-1 block">
+                  <label
+                    htmlFor="enterprise-company"
+                    className="body-3 text-muted-foreground mb-1 block"
+                  >
                     Company name <span className="text-destructive">*</span>
                   </label>
                   <input
+                    id="enterprise-company"
                     type="text"
                     required
                     value={companyName}
@@ -136,10 +160,14 @@ export function EnterpriseApplicationModal({
                   />
                 </div>
                 <div>
-                  <label className="body-3 text-muted-foreground mb-1 block">
+                  <label
+                    htmlFor="enterprise-company-size"
+                    className="body-3 text-muted-foreground mb-1 block"
+                  >
                     Company size <span className="text-destructive">*</span>
                   </label>
                   <select
+                    id="enterprise-company-size"
                     required
                     value={companySize}
                     onChange={(e) => setCompanySize(e.target.value)}
@@ -156,8 +184,14 @@ export function EnterpriseApplicationModal({
               </div>
 
               <div>
-                <label className="body-3 text-muted-foreground mb-1 block">Role / Job title</label>
+                <label
+                  htmlFor="enterprise-role"
+                  className="body-3 text-muted-foreground mb-1 block"
+                >
+                  Role / Job title
+                </label>
                 <input
+                  id="enterprise-role"
                   type="text"
                   value={roleTitle}
                   onChange={(e) => setRoleTitle(e.target.value)}
@@ -167,10 +201,14 @@ export function EnterpriseApplicationModal({
               </div>
 
               <div>
-                <label className="body-3 text-muted-foreground mb-1 block">
+                <label
+                  htmlFor="enterprise-use-case"
+                  className="body-3 text-muted-foreground mb-1 block"
+                >
                   How do you plan to use ROAS?
                 </label>
                 <textarea
+                  id="enterprise-use-case"
                   value={useCase}
                   onChange={(e) => setUseCase(e.target.value)}
                   rows={3}
@@ -181,10 +219,14 @@ export function EnterpriseApplicationModal({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="body-3 text-muted-foreground mb-1 block">
+                  <label
+                    htmlFor="enterprise-team-size"
+                    className="body-3 text-muted-foreground mb-1 block"
+                  >
                     How many team members?
                   </label>
                   <input
+                    id="enterprise-team-size"
                     type="text"
                     value={teamSize}
                     onChange={(e) => setTeamSize(e.target.value)}
@@ -193,8 +235,14 @@ export function EnterpriseApplicationModal({
                   />
                 </div>
                 <div>
-                  <label className="body-3 text-muted-foreground mb-1 block">Phone number</label>
+                  <label
+                    htmlFor="enterprise-phone"
+                    className="body-3 text-muted-foreground mb-1 block"
+                  >
+                    Phone number
+                  </label>
                   <input
+                    id="enterprise-phone"
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
@@ -205,8 +253,14 @@ export function EnterpriseApplicationModal({
               </div>
 
               <div>
-                <label className="body-3 text-muted-foreground mb-1 block">Company website</label>
+                <label
+                  htmlFor="enterprise-website"
+                  className="body-3 text-muted-foreground mb-1 block"
+                >
+                  Company website
+                </label>
                 <input
+                  id="enterprise-website"
                   type="url"
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
@@ -215,7 +269,11 @@ export function EnterpriseApplicationModal({
                 />
               </div>
 
-              {error && <p className="body-3 text-destructive">{error}</p>}
+              {error && (
+                <p role="alert" className="body-3 text-destructive">
+                  {error}
+                </p>
+              )}
 
               <button
                 type="submit"

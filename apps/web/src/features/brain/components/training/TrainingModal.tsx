@@ -15,18 +15,16 @@ import { RecurringTab } from './recurring/RecurringTab'
 import { dispatchTrainingItemToBrain } from './training-queue-dispatch'
 import { TrainingActivityTab } from './TrainingActivityTab'
 import { TrainingOneTimeTab } from './TrainingOneTimeTab'
+import type { BrainQueueDispatchResult, SourceKey } from './types'
 import { useTrainingModalIntegrations } from './use-training-modal-integrations'
 import { useTrainingStagingState } from './use-training-staging-state'
-import type { BrainQueueDispatchResult, SourceKey } from './types'
 
 interface TrainingModalProps {
   brainId: string | null
   isAgentBrain: boolean
   agentName?: string
-  /** Controlled open state. When provided, parent owns open/close. */
   open?: boolean
   onOpenChange?: (open: boolean) => void
-  /** When true, the built-in "Train brain" trigger button is not rendered. */
   triggerless?: boolean
   trainableTargets?: TrainableBrainTarget[]
   selectedScopeIds?: string[]
@@ -149,7 +147,6 @@ export default function TrainingModal({
     setModalTab('one-time')
   }, [open])
 
-  // ---- Global modal drop zone ----
   const handleModalDragEnter = (e: DragEvent<HTMLDivElement>) => {
     if (!e.dataTransfer.types.includes('Files')) return
     dragDepth.current += 1
@@ -263,6 +260,9 @@ export default function TrainingModal({
           >
             <VisuallyHidden.Root>
               <DialogPrimitive.Title>{trainTriggerLabel}</DialogPrimitive.Title>
+              <DialogPrimitive.Description>
+                Add one-time or recurring knowledge sources and review training activity.
+              </DialogPrimitive.Description>
             </VisuallyHidden.Root>
             <div
               className={cn(
@@ -280,7 +280,6 @@ export default function TrainingModal({
                 }
                 className="gap-spacing-0 flex min-h-0 flex-1 flex-col"
               >
-                {/* Header */}
                 <div className="px-spacing-5 py-spacing-3 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center">
                   <div className="flex min-w-0 items-center gap-2">
                     <GraduationCap className="icon-sm text-muted-foreground shrink-0" />
@@ -302,7 +301,12 @@ export default function TrainingModal({
                     </TabsTrigger>
                   </TabsList>
                   <div className="flex justify-end">
-                    <button type="button" onClick={() => setOpen(false)} className="btn-icon-bare">
+                    <button
+                      type="button"
+                      aria-label="Close training"
+                      onClick={() => setOpen(false)}
+                      className="btn-icon-bare"
+                    >
                       <X className="icon-xs" />
                     </button>
                   </div>
@@ -371,7 +375,6 @@ export default function TrainingModal({
                 </TabsContent>
               </Tabs>
 
-              {/* Modal drop overlay */}
               {modalDragOver ? (
                 <div className="rounded-spacing-3 border-primary bg-primary/10 pointer-events-none absolute inset-2 z-20 flex items-center justify-center border-2 border-dashed">
                   <div className="text-foreground body-2 flex items-center gap-2">

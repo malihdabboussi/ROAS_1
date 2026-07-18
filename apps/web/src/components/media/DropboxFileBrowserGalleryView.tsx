@@ -41,7 +41,26 @@ export function DropboxFileBrowserGalleryView({
               </button>
             ) : (
               <div
+                role={selectionEnabled && !isImported ? 'button' : undefined}
+                tabIndex={selectionEnabled && !isImported ? 0 : undefined}
+                aria-label={
+                  selectionEnabled && !isImported
+                    ? `${isFileSelected ? 'Deselect' : 'Select'} ${file.name}`
+                    : undefined
+                }
+                aria-pressed={selectionEnabled && !isImported ? isFileSelected : undefined}
                 onClick={() => selectionEnabled && !isImported && toggleFileSelection(file.id)}
+                onKeyDown={(event) => {
+                  if (
+                    !selectionEnabled ||
+                    isImported ||
+                    (event.key !== 'Enter' && event.key !== ' ')
+                  ) {
+                    return
+                  }
+                  event.preventDefault()
+                  toggleFileSelection(file.id)
+                }}
                 className={`rounded-spacing-2 relative aspect-square overflow-hidden border transition-colors ${isImported ? 'border-primary/30' : isFileSelected ? 'border-primary card-glass-blue' : 'border-border hover:border-primary/50'} ${selectionEnabled && !isImported ? 'cursor-pointer' : ''}`}
               >
                 <div className="bg-secondary flex h-full w-full flex-col items-center justify-center gap-2">
@@ -57,7 +76,7 @@ export function DropboxFileBrowserGalleryView({
                     </div>
                   </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 bg-secondary/95 p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="bg-secondary/95 absolute inset-x-0 bottom-0 p-2 opacity-0 transition-opacity group-hover:opacity-100">
                   <p className="body-4 text-foreground mb-1 truncate">{file.name}</p>
                   <div className="flex justify-end">{renderRowActions(file)}</div>
                 </div>

@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ConversationShareModal } from './ConversationShareModal'
 import type { ConversationShareLevel } from '@/lib/conversations/conversation.types'
+import { ConversationShareModal } from './ConversationShareModal'
 
 const mocks = vi.hoisted(() => ({
   deleteConversationShare: vi.fn(),
@@ -204,6 +204,18 @@ describe('ConversationShareModal', () => {
     expect(screen.getByText('edit')).toBeTruthy()
   })
 
+  it('announces itself as a dismissible dialog', () => {
+    const { onClose } = renderModal()
+
+    expect(screen.getByRole('dialog', { name: 'Share conversation' })).toHaveAccessibleDescription(
+      'Launch plan',
+    )
+    expect(screen.getByRole('textbox', { name: 'Invite by name or email' })).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Close share conversation' })).not.toBeNull()
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
   it('invites a roster member with the selected permission level', async () => {
     const { onSharesChanged } = renderModal()
 
@@ -234,10 +246,7 @@ describe('ConversationShareModal', () => {
     fireEvent.click(orgSwitch)
 
     await waitFor(() =>
-      expect(mocks.deleteConversationShare).toHaveBeenCalledWith(
-        'conversation-1',
-        'share-org-1',
-      ),
+      expect(mocks.deleteConversationShare).toHaveBeenCalledWith('conversation-1', 'share-org-1'),
     )
     expect(onSharesChanged).toHaveBeenCalledTimes(1)
   })

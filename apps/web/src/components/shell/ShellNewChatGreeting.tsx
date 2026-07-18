@@ -51,6 +51,10 @@ export function ShellNewChatGreeting({
     })
   }, [])
 
+  // Drawer empty-state is greeting + composer only (shell v4). Home owns
+  // templates / "For you" — never dump that chrome into the docked chat column.
+  const showHomeExtras = !inDrawer && !compact
+
   const hero = (
     <>
       <div className={cn(compact && '[&_.home-dashboard-v4-greeting]:text-[19px]')}>
@@ -70,7 +74,7 @@ export function ShellNewChatGreeting({
         />
       </div>
 
-      {!compact ? (
+      {showHomeExtras ? (
         <>
           <div className="mt-6">
             <HomeTemplateFan selected={selectedTemplate} onSelect={setSelectedTemplate} />
@@ -102,11 +106,16 @@ export function ShellNewChatGreeting({
 
   return (
     <HomeDashboardVisualProvider variant="v4">
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <ShellNewChatAgentBar />
-        <ChatSurfaceRecommendation />
-        <HomeDashboardV4Shell>{hero}</HomeDashboardV4Shell>
-      </div>
+      <HomeDashboardV4Shell
+        topBar={
+          <>
+            <ShellNewChatAgentBar />
+            <ChatSurfaceRecommendation />
+          </>
+        }
+      >
+        {hero}
+      </HomeDashboardV4Shell>
     </HomeDashboardVisualProvider>
   )
 }

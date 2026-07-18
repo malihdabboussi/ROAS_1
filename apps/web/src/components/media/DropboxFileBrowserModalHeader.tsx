@@ -10,7 +10,12 @@ export function DropboxFileBrowserModalHeader({ onClose }: { onClose: () => void
           <HardDrive className="text-primary h-5 w-5" />
           <h2 className="title-h6">Dropbox</h2>
         </div>
-        <button type="button" onClick={onClose} className="btn-icon-bare">
+        <button
+          type="button"
+          aria-label="Close Dropbox"
+          onClick={onClose}
+          className="btn-icon-bare"
+        >
           <X className="icon-xs" />
         </button>
       </div>

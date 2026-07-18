@@ -10,7 +10,7 @@ export function Typewriter({
   deleteSpeed = 35,
   delay = 2500,
 }: {
-  texts: string[]
+  texts: readonly string[]
   speed?: number
   deleteSpeed?: number
   delay?: number
@@ -64,7 +64,7 @@ export function AuthOrbShell({
   showHeroOrb = true,
   showQuoteFooter = true,
 }: {
-  quotes?: string[]
+  quotes?: readonly string[]
   children: ReactNode
   overlay?: ReactNode
   quoteAttribution?: string

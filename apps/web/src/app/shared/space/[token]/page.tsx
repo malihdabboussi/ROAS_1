@@ -22,7 +22,7 @@ export default async function SharedSpacePage({
         <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--color-muted-foreground)]">
           SHARING PAUSED
         </p>
-        <h1 className="mt-spacing-2 text-xl font-semibold text-[var(--foreground)]">
+        <h1 className="mt-spacing-2 text-xl font-semibold uppercase text-[var(--foreground)]">
           Public space links are paused
         </h1>
         <p className="body-3 mt-spacing-2 text-[var(--color-muted-foreground)]">

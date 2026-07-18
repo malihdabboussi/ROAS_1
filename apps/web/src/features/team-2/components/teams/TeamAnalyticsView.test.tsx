@@ -1,5 +1,5 @@
-import { act, cleanup, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TeamAnalyticsView } from './TeamAnalyticsView'
 
@@ -164,18 +164,18 @@ describe('TeamAnalyticsView', () => {
 
       expect(mocks.getTeamSpending).toHaveBeenCalledWith(
         'team-1',
-        '2026-06-15T00:00:00.000Z',
+        '2026-06-16T00:00:00.000Z',
         '2026-06-23T12:00:00.000Z',
         ['campaign-1'],
       )
       expect(mocks.getAgentSpending).toHaveBeenCalledWith({
-        startDate: '2026-06-15T00:00:00.000Z',
+        startDate: '2026-06-16T00:00:00.000Z',
         endDate: '2026-06-23T12:00:00.000Z',
         campaignIds: ['campaign-1'],
       })
       expect(mocks.getHumanSpending).toHaveBeenCalledWith(
         'org-1',
-        '2026-06-15T00:00:00.000Z',
+        '2026-06-16T00:00:00.000Z',
         '2026-06-23T12:00:00.000Z',
         ['campaign-1'],
       )

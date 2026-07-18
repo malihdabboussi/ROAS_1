@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   APP_HOME_PATH,
+  buildAppRedirectUrl,
+  buildAuthContinuationPath,
   NO_ORG_ACCESS_PATH,
   ONBOARDING_PATH,
-  type ResolveAuthenticatedRedirectInput,
   resolveAccessStatus,
+  resolveAppRedirectPath,
   resolveAuthenticatedRedirect,
+  type ResolveAuthenticatedRedirectInput,
 } from './access-routing'
 
 const baseInput: ResolveAuthenticatedRedirectInput = {
@@ -88,9 +91,9 @@ describe('resolveAuthenticatedRedirect', () => {
   })
 
   it('routes org-only onboarding users without access to no-org-access', () => {
-    expect(
-      resolve({ isOnboardingPage: true, isOrgOnly: true, accessStatus: 'denied' }),
-    ).toBe(NO_ORG_ACCESS_PATH)
+    expect(resolve({ isOnboardingPage: true, isOrgOnly: true, accessStatus: 'denied' })).toBe(
+      NO_ORG_ACCESS_PATH,
+    )
   })
 
   it('routes fully onboarded onboarding users with access home', () => {
@@ -114,13 +117,64 @@ describe('resolveAuthenticatedRedirect', () => {
   })
 
   it('leaves denied org-only users on no-org-access', () => {
-    expect(
-      resolve({ isNoOrgAccessPage: true, isOrgOnly: true, accessStatus: 'denied' }),
-    ).toBeNull()
+    expect(resolve({ isNoOrgAccessPage: true, isOrgOnly: true, accessStatus: 'denied' })).toBeNull()
   })
 
   it('preserves invite token and setting-up routes', () => {
     expect(resolve({ isAuthPage: true, isInviteTokenPage: true })).toBeNull()
     expect(resolve({ isSettingUpPage: true, fullyOnboarded: false })).toBeNull()
+  })
+})
+
+describe('resolveAppRedirectPath', () => {
+  it('preserves internal paths with query parameters and fragments', () => {
+    expect(resolveAppRedirectPath('/home?tab=manage#integrations')).toBe(
+      '/home?tab=manage#integrations',
+    )
+  })
+
+  it('falls back for absolute and protocol-relative destinations', () => {
+    expect(resolveAppRedirectPath('https://example.com/account')).toBe(APP_HOME_PATH)
+    expect(resolveAppRedirectPath('//example.com/account')).toBe(APP_HOME_PATH)
+    expect(resolveAppRedirectPath('/\\example.com/account')).toBe(APP_HOME_PATH)
+  })
+
+  it('falls back for empty and non-path destinations', () => {
+    expect(resolveAppRedirectPath(null)).toBe(APP_HOME_PATH)
+    expect(resolveAppRedirectPath('home')).toBe(APP_HOME_PATH)
+  })
+})
+
+describe('buildAppRedirectUrl', () => {
+  it('merges callback state into an existing redirect query', () => {
+    const redirect = buildAppRedirectUrl('https://app.roas.io', '/home?tab=manage', {
+      promo: 'LAUNCH',
+      message: 'Welcome back',
+    })
+
+    expect(redirect.toString()).toBe(
+      'https://app.roas.io/home?tab=manage&promo=LAUNCH&message=Welcome+back',
+    )
+  })
+
+  it('keeps the destination on the supplied app origin', () => {
+    const redirect = buildAppRedirectUrl('https://app.roas.io', 'https://example.com/account')
+
+    expect(redirect.toString()).toBe('https://app.roas.io/home')
+  })
+})
+
+describe('buildAuthContinuationPath', () => {
+  it('carries a safe destination and normalized promo to the next auth page', () => {
+    expect(buildAuthContinuationPath('/forgot-password', '/home?tab=manage', ' launch ')).toBe(
+      '/forgot-password?redirect=%2Fhome%3Ftab%3Dmanage&promo=LAUNCH',
+    )
+  })
+
+  it('omits default and unsafe destinations', () => {
+    expect(buildAuthContinuationPath('/login', '/home', null)).toBe('/login')
+    expect(buildAuthContinuationPath('/login', 'https://example.com', 'launch')).toBe(
+      '/login?promo=LAUNCH',
+    )
   })
 })

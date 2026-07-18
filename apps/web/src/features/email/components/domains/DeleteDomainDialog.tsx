@@ -55,6 +55,9 @@ export function DeleteDomainDialog({ domain, onClose }: DeleteDomainDialogProps)
         <DialogPrimitive.Content className="z-modal-layer-4 sm:p-spacing-4 md:p-spacing-6 fixed inset-0 flex items-center justify-center overflow-hidden p-2">
           <VisuallyHidden.Root>
             <DialogPrimitive.Title>Delete Domain</DialogPrimitive.Title>
+            <DialogPrimitive.Description>
+              Permanently remove this sending domain and its DNS records.
+            </DialogPrimitive.Description>
           </VisuallyHidden.Root>
 
           <div className="relative h-full w-full max-w-none sm:h-auto sm:max-h-[85vh] sm:max-w-lg">
@@ -66,7 +69,12 @@ export function DeleteDomainDialog({ domain, onClose }: DeleteDomainDialogProps)
                     <AlertTriangle className="icon-sm text-destructive" />
                     <h2 className="title-h6">Delete Domain</h2>
                   </div>
-                  <button onClick={onClose} className="btn-icon-bare">
+                  <button
+                    type="button"
+                    aria-label="Close delete sending domain"
+                    onClick={onClose}
+                    className="btn-icon-bare"
+                  >
                     <X className="icon-xs" />
                   </button>
                 </div>
@@ -105,10 +113,14 @@ export function DeleteDomainDialog({ domain, onClose }: DeleteDomainDialogProps)
                 )}
 
                 <div className="space-y-spacing-2">
-                  <label className="body-3 text-foreground">
+                  <label
+                    htmlFor="delete-sending-domain-confirmation"
+                    className="body-3 text-foreground"
+                  >
                     Type <strong>DELETE</strong> to confirm
                   </label>
                   <input
+                    id="delete-sending-domain-confirmation"
                     type="text"
                     className="input-glass w-full"
                     value={confirmText}

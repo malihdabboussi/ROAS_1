@@ -28,7 +28,7 @@ export function CampaignAddInfoFirefliesDialog({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="z-modal-backdrop fixed inset-0" />
         <DialogPrimitive.Content
-          className="z-modal-layer-3 sm:p-spacing-4 md:p-spacing-6 fixed inset-0 flex items-center justify-center overflow-hidden p-spacing-2"
+          className="z-modal-layer-3 sm:p-spacing-4 md:p-spacing-6 p-spacing-2 fixed inset-0 flex items-center justify-center overflow-hidden"
           onPointerDown={(e) => {
             if (e.target === e.currentTarget) onOpenChange(false)
           }}
@@ -41,13 +41,18 @@ export function CampaignAddInfoFirefliesDialog({
               <div className="px-spacing-4 sm:px-spacing-6 pt-spacing-4 pb-spacing-2">
                 <div className="flex items-center justify-between">
                   <h2 className="title-h6">FIREFLIES CALLS</h2>
-                  <button type="button" onClick={() => onOpenChange(false)} className="btn-icon-bare">
+                  <button
+                    type="button"
+                    aria-label="Close Fireflies calls"
+                    onClick={() => onOpenChange(false)}
+                    className="btn-icon-bare"
+                  >
                     <X className="icon-xs" />
                   </button>
                 </div>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   One click import runs crystallization and memory extraction.
-                </p>
+                </DialogPrimitive.Description>
               </div>
               <div className="px-spacing-6 py-spacing-4 space-y-spacing-2 flex-1 overflow-y-auto">
                 {loading ? (
@@ -78,7 +83,7 @@ export function CampaignAddInfoFirefliesDialog({
                           type="button"
                           disabled={!!importingMeetingId}
                           onClick={() => onImportTranscript(transcript)}
-                          className="button-glass-accent px-spacing-3 body-4 shrink-0 rounded-lg py-spacing-1 font-medium disabled:opacity-40"
+                          className="button-glass-accent px-spacing-3 body-4 py-spacing-1 shrink-0 rounded-lg font-medium disabled:opacity-40"
                         >
                           {importing ? <Loader2 className="icon-xs animate-spin" /> : 'Import'}
                         </button>

@@ -77,13 +77,14 @@ describe('MissionList', () => {
   })
 
   it('renders mission title, status, progress, and assigned agent', () => {
+    const onSelect = vi.fn()
     render(
       <MissionList
         missions={[baseMission]}
         agents={agents}
         campaigns={[]}
         selectedMissionId={null}
-        onSelect={vi.fn()}
+        onSelect={onSelect}
       />,
     )
 
@@ -91,6 +92,11 @@ describe('MissionList', () => {
     expect(screen.getAllByText('In Progress').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Atlas').length).toBeGreaterThan(0)
     expect(screen.getAllByText('0/1').length).toBeGreaterThan(0)
+
+    const missionRows = screen.getAllByRole('button', { name: 'Open mission Launch plan' })
+    expect(missionRows).toHaveLength(2)
+    missionRows.forEach((row) => fireEvent.keyDown(row, { key: 'Enter' }))
+    expect(onSelect).toHaveBeenCalledTimes(2)
   })
 
   it('renders expanded subtasks with their status label', () => {
@@ -115,5 +121,12 @@ describe('MissionList', () => {
     fireEvent.click(screen.getAllByText('Draft launch copy')[0]!)
 
     expect(onSelectSubtask).toHaveBeenCalledWith('mission-1', 'subtask-1')
+
+    const subtaskRows = screen.getAllByRole('button', {
+      name: 'Open subtask Draft launch copy',
+    })
+    expect(subtaskRows).toHaveLength(2)
+    subtaskRows.forEach((row) => fireEvent.keyDown(row, { key: ' ' }))
+    expect(onSelectSubtask).toHaveBeenCalledTimes(2)
   })
 })

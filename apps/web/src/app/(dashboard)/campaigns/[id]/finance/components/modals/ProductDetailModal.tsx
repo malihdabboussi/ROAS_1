@@ -37,13 +37,21 @@ export function ProductDetailModal({
         >
           <VisuallyHidden.Root>
             <DialogPrimitive.Title>{detailProduct?.name ?? 'Product'}</DialogPrimitive.Title>
+            <DialogPrimitive.Description>
+              Review this product and manage its prices.
+            </DialogPrimitive.Description>
           </VisuallyHidden.Root>
           <div className="relative h-full w-full max-w-none sm:h-auto sm:max-h-[85vh] sm:max-w-lg">
             <div className="surface-card card-elevated rounded-spacing-4 wizard-container-border flex h-full flex-col overflow-hidden">
               <div className="px-spacing-4 sm:px-spacing-6 pt-spacing-4 pb-spacing-2">
                 <div className="flex items-center justify-between">
                   <h2 className="title-h6">{detailProduct?.name}</h2>
-                  <button onClick={() => setDetailProduct(null)} className="btn-icon-bare">
+                  <button
+                    type="button"
+                    aria-label="Close product details"
+                    onClick={() => setDetailProduct(null)}
+                    className="btn-icon-bare"
+                  >
                     <X className="icon-xs" />
                   </button>
                 </div>
@@ -78,7 +86,7 @@ export function ProductDetailModal({
                 {(detailProduct?.prices ?? []).length > 0 ? (
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-white/5">
+                      <tr className="border-border border-b">
                         <th className="body-4 text-muted-foreground pb-1.5 text-left font-medium">
                           Type
                         </th>
@@ -92,7 +100,7 @@ export function ProductDetailModal({
                     </thead>
                     <tbody>
                       {(detailProduct?.prices ?? []).map((price) => (
-                        <tr key={price.id} className="border-b border-white/5 last:border-0">
+                        <tr key={price.id} className="border-border border-b last:border-0">
                           <td className="body-4 text-muted-foreground py-2">
                             {price.recurring
                               ? `Recurring / ${price.recurring.interval}`
@@ -105,6 +113,7 @@ export function ProductDetailModal({
                           <td className="py-2 text-right">
                             <button
                               type="button"
+                              aria-label={`Copy price ID ${price.id}`}
                               onClick={() => void navigator.clipboard.writeText(price.id)}
                               className="text-muted-foreground font-mono text-xs opacity-60 hover:opacity-100"
                               title="Copy price ID"

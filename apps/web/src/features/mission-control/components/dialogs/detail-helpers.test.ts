@@ -3,6 +3,7 @@ import {
   formatAgentShortName,
   formatSubtaskStatusLabel,
   resolveSubtaskIssueDetail,
+  subtaskStatusBadgeTone,
 } from './detail-helpers'
 
 describe('mission detail helpers', () => {
@@ -16,6 +17,15 @@ describe('mission detail helpers', () => {
     expect(formatSubtaskStatusLabel('blocked')).toBe('Blocked')
     expect(formatSubtaskStatusLabel('pending', { dependencyBlocked: true })).toBe('Waiting')
     expect(formatSubtaskStatusLabel('in_progress')).toBe('Working')
+  })
+
+  it('maps subtask status to badge-glass tones', () => {
+    expect(subtaskStatusBadgeTone('done')).toBe('badge-glass-green')
+    expect(subtaskStatusBadgeTone('in_progress')).toBe('badge-glass-yellow')
+    expect(subtaskStatusBadgeTone('pending', { awaitingHuman: true })).toBe('badge-glass-orange')
+    expect(subtaskStatusBadgeTone('pending', { dependencyBlocked: true })).toBe(
+      'badge-glass-yellow',
+    )
   })
 
   it('resolves hover issue detail from output then mission notes', () => {

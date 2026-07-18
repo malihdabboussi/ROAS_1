@@ -59,6 +59,8 @@ export function NewPaymentLinkModal({
                 <div className="flex items-center justify-between">
                   <h2 className="title-h6">New Payment Link</h2>
                   <button
+                    type="button"
+                    aria-label="Close new payment link"
                     onClick={() => {
                       form.resetLinkForm()
                       setOpen(false)
@@ -68,14 +70,15 @@ export function NewPaymentLinkModal({
                     <X className="icon-xs" />
                   </button>
                 </div>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   Create a shareable checkout link
-                </p>
+                </DialogPrimitive.Description>
               </div>
 
               <div className="px-spacing-6 py-spacing-4 space-y-spacing-4 flex-1 overflow-y-auto">
                 <form id="form-new-link" onSubmit={onSubmit} className="space-y-spacing-4">
                   <FormSelectDropdown
+                    id="new-payment-link-price"
                     label="Price *"
                     value={form.newLinkPriceId}
                     onChange={form.setNewLinkPriceId}
@@ -92,8 +95,11 @@ export function NewPaymentLinkModal({
                     formId="form-new-link"
                   />
                   <div>
-                    <label className={LABEL_CLASS}>Quantity</label>
+                    <label htmlFor="new-payment-link-quantity" className={LABEL_CLASS}>
+                      Quantity
+                    </label>
                     <input
+                      id="new-payment-link-quantity"
                       value={form.newLinkQuantity}
                       onChange={(e) => form.setNewLinkQuantity(e.target.value)}
                       placeholder="1"

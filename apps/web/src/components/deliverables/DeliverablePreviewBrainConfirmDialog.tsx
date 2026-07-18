@@ -33,10 +33,10 @@ export function DeliverablePreviewBrainConfirmDialog({
             <div className="surface-card card-elevated wizard-container-border rounded-spacing-4 container-modal-sm relative flex w-full flex-col overflow-hidden shadow-xl">
               <div className="px-spacing-6 pt-spacing-4 pb-spacing-2">
                 <h3 className="title-h6 text-foreground">Ingest into Brain</h3>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   Are you sure you want to ingest this deliverable into{' '}
-                  <span className="text-foreground font-semibold">{confirmBrain.label}</span>?
-                </p>
+                  <span className="text-foreground font-semibold">{confirmBrain.label}?</span>
+                </DialogPrimitive.Description>
               </div>
               <div className="border-border px-spacing-6 py-spacing-4 gap-spacing-2 flex items-center justify-end border-t">
                 <DialogPrimitive.Close asChild>

@@ -3,10 +3,11 @@
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { AuthOrbShell } from '@/components/auth/auth-orb-shell'
-import { orgService, useOrgStore } from '@/lib/org'
 import { reportClientError } from '@/lib/log-client-error'
+import { orgService, useOrgStore } from '@/lib/org'
 import { createClient } from '@/lib/supabase/client'
 import { clearOrgSensitiveState } from '@/lib/utils/clear-org-state'
+import { AUTH_MESSAGES } from '../../config/auth-messages.config'
 import { resolveAuthSignupErrorMessage } from '../../config/auth-toast-errors.config'
 import {
   InviteAcceptErrorFooter,
@@ -26,6 +27,7 @@ const SIGNUP_QUOTES = [
 ]
 
 export default function OrgInviteAcceptPage() {
+  const messages = AUTH_MESSAGES.ORGANIZATION_INVITE
   const { token } = useParams<{ token: string }>()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -60,7 +62,7 @@ export default function OrgInviteAcceptPage() {
         setInvitation(res.invitation)
         setState('ready')
       } else {
-        setError('Invitation not found')
+        setError(messages.loadError)
         setState('error')
       }
     } catch (err) {
@@ -73,7 +75,7 @@ export default function OrgInviteAcceptPage() {
       if (msg.includes('404') || msg.includes('not found') || msg.includes('Not Found')) {
         setError('This invitation does not exist or has already been used')
       } else {
-        setError(msg)
+        setError(messages.loadError)
       }
       setState('error')
     }
@@ -101,7 +103,15 @@ export default function OrgInviteAcceptPage() {
         clearOrgSensitiveState()
         const destination = res.requires_machine_setup === false ? '/home' : '/setting-up'
         router.replace(destination)
+        return
       }
+      void reportClientError({
+        feature: 'ui/org_invite_accept',
+        error_code: 'accept_invitation_rejected',
+        message: 'acceptInvitationAndBootstrap returned success false',
+      })
+      setError(messages.acceptError)
+      setState('error')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to accept invitation'
       void reportClientError({
@@ -109,7 +119,7 @@ export default function OrgInviteAcceptPage() {
         error_code: 'accept_invitation_failed',
         message: msg,
       })
-      setError(msg)
+      setError(messages.acceptError)
       setState('error')
     }
   }, [fetchMemberships, router, setActiveOrg, token])

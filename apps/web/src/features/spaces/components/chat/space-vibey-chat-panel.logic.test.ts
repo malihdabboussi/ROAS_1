@@ -1,16 +1,17 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Conversation, Message } from '@/lib/conversations/conversation.types'
 import {
-  DEFAULT_SPACE_CHAT_AGENT_KEY,
   buildSpaceChatConversationUrl,
   conversationBelongsToChannel,
   conversationBelongsToSpace,
+  DEFAULT_SPACE_CHAT_AGENT_KEY,
   getConversationAgentKey,
   isHomeChatSeedPending,
   mergeConversationLists,
   messageHasTaskMutation,
   readHomeChatSeedForSpace,
   resolveSpaceChatAutoFocusTarget,
+  resolveSpaceChatScope,
 } from './space-vibey-chat-panel.logic'
 
 function conversation(overrides: Partial<Conversation>): Conversation {
@@ -95,8 +96,9 @@ describe('space ROAS chat panel logic', () => {
   })
 
   it('detects assistant task mutations from metadata and ordered tool blocks', () => {
-    expect(messageHasTaskMutation(message({ role: 'user', metadata: { spaces_undoable: true } })))
-      .toBe(false)
+    expect(
+      messageHasTaskMutation(message({ role: 'user', metadata: { spaces_undoable: true } })),
+    ).toBe(false)
     expect(messageHasTaskMutation(message({ metadata: { spaces_undoable: true } }))).toBe(true)
     expect(
       messageHasTaskMutation(
@@ -117,6 +119,31 @@ describe('space ROAS chat panel logic', () => {
         message({ metadata: { content_blocks_ordered: [{ type: 'tool', name: 'search' }] } }),
       ),
     ).toBe(false)
+  })
+
+  it('resolves chat scope from override, conversation, then panel fallback', () => {
+    const panel = { campaignId: 'campaign-panel', spaceId: 'space-panel' }
+    expect(resolveSpaceChatScope(null, panel, null)).toEqual(panel)
+    expect(
+      resolveSpaceChatScope(
+        conversation({
+          campaign_id: 'campaign-conversation',
+          metadata: { space_id: 'space-conversation' },
+        }),
+        panel,
+        null,
+      ),
+    ).toEqual({ campaignId: 'campaign-conversation', spaceId: 'space-conversation' })
+    expect(
+      resolveSpaceChatScope(
+        conversation({
+          campaign_id: 'campaign-conversation',
+          metadata: { space_id: 'space-conversation' },
+        }),
+        panel,
+        { campaignId: 'campaign-override', spaceId: 'space-override' },
+      ),
+    ).toEqual({ campaignId: 'campaign-override', spaceId: 'space-override' })
   })
 
   it('resolves conversation agent, space, channel ownership, and merged ordering', () => {
@@ -222,9 +249,7 @@ describe('space ROAS chat panel logic', () => {
         message({
           id: 'assistant-2',
           metadata: {
-            content_blocks_ordered: [
-              { type: 'document_card', spaceItemId: 'doc-item-1' },
-            ],
+            content_blocks_ordered: [{ type: 'document_card', spaceItemId: 'doc-item-1' }],
           },
         }),
       ]),

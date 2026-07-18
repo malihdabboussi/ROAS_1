@@ -33,13 +33,10 @@ export class EntityArtifactSearchService {
   async search(
     supabase: SupabaseClient,
     rawQuery: string,
+    userId: string,
     orgId?: string | null,
   ): Promise<{ items: StudioSearchArtifactHit[] }> {
     const q = rawQuery.trim()
-    if (q.length < 1) {
-      return { items: [] }
-    }
-
     const pattern = `%${q}%`
 
     const {
@@ -56,7 +53,7 @@ export class EntityArtifactSearchService {
       socialPosts: socialPostsR,
       blogPosts: blogPostsR,
       pages: pagesR,
-    } = await this.repository.searchArtifacts(supabase, pattern, orgId)
+    } = await this.repository.searchArtifacts(supabase, pattern, userId, orgId)
 
     const items: StudioSearchArtifactHit[] = []
 

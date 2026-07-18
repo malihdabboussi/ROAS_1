@@ -184,7 +184,9 @@ describe('NodeDetailModal', () => {
     await waitFor(() => {
       expect(screen.getByText('Sefi Levi')).toBeTruthy()
     })
-    expect(mocks.backendGet).toHaveBeenCalledWith('/api/profile/11111111-1111-1111-1111-111111111111')
+    expect(mocks.backendGet).toHaveBeenCalledWith(
+      '/api/profile/11111111-1111-1111-1111-111111111111',
+    )
     expect(getCommitCount()).toBeLessThan(10)
   })
 
@@ -309,6 +311,10 @@ describe('NodeDetailModal', () => {
     fireEvent.click(deleteButton!)
 
     expect(screen.getByText('Delete Memory')).toBeTruthy()
+    const deleteDialog = screen.getByRole('dialog', { name: 'Confirm delete' })
+    expect(deleteDialog.getAttribute('aria-describedby')).toBe(
+      screen.getByText(/permanently delete this memory/).id,
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
 
     await waitFor(() => {
@@ -329,6 +335,10 @@ describe('NodeDetailModal', () => {
     fireEvent.click(copyButton!)
 
     expect(screen.getByText('COPY TO')).toBeTruthy()
+    const copyDialog = screen.getByRole('dialog', { name: 'Copy to' })
+    expect(copyDialog.getAttribute('aria-describedby')).toBe(
+      screen.getByText(/copy this item to the selected brain/).id,
+    )
     await waitFor(() => {
       expect(screen.getByText('Atlas Brain')).toBeTruthy()
     })

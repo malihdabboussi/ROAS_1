@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import * as DialogPrimitive from '@radix-ui/react-dialog'
 
 interface CreditPurchaseSuccessDialogProps {
   open: boolean
@@ -56,21 +57,16 @@ export function CreditPurchaseSuccessDialog({
   previousCredits,
   currentCredits,
 }: CreditPurchaseSuccessDialogProps) {
-  if (!open) return null
-
   return (
-    <>
-      {/* Backdrop with blur */}
-      <div className="fixed inset-0 z-50 bg-modal-overlay" onClick={onClose} />
-
-      {/* Centered Content */}
-      <div className="p-spacing-6 fixed inset-0 z-50 flex items-center justify-center">
-        <div className="surface-card card-elevated rounded-spacing-4 p-spacing-8 wizard-container-border w-full max-w-md">
+    <DialogPrimitive.Root open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="bg-modal-overlay fixed inset-0 z-50" />
+        <DialogPrimitive.Content className="surface-card card-elevated rounded-spacing-4 p-spacing-8 wizard-container-border fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2">
           {/* Success Icon - Large, centered */}
           <div className="mb-spacing-6 text-center">
-            <div className="mb-spacing-4 border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full border">
+            <div className="mb-spacing-4 border-primary/20 bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full border">
               <svg
-                className="h-8 w-8 text-[var(--color-primary)]"
+                className="text-primary h-8 w-8"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -84,13 +80,15 @@ export function CreditPurchaseSuccessDialog({
               </svg>
             </div>
 
-            <h2 className="title-h3 mb-spacing-2">Credits Added!</h2>
-            <p className="body-2 text-muted-foreground mb-spacing-4">
+            <DialogPrimitive.Title className="title-h3 mb-spacing-2">
+              Credits Added!
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Description className="body-2 text-muted-foreground mb-spacing-4">
               Your credit balance has been updated
-            </p>
+            </DialogPrimitive.Description>
 
             {/* Animated Number - Large, prominent */}
-            <div className="py-spacing-6 px-spacing-4 rounded-spacing-2 bg-[var(--color-muted)]/30 border border-[var(--color-border)]">
+            <div className="py-spacing-6 px-spacing-4 rounded-spacing-2 bg-muted/30 border-border border">
               <p className="body-3 text-muted-foreground mb-spacing-2">Total Credits Available</p>
               <p className="title-h2 text-foreground font-bold">
                 <AnimatedNumber
@@ -105,13 +103,14 @@ export function CreditPurchaseSuccessDialog({
 
           {/* Action Button - Glass Accent */}
           <button
+            type="button"
             onClick={onClose}
             className="button-glass-accent px-spacing-4 py-spacing-3 w-full rounded-lg text-sm font-medium"
           >
             <span className="relative z-10">Got it</span>
           </button>
-        </div>
-      </div>
-    </>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   )
 }

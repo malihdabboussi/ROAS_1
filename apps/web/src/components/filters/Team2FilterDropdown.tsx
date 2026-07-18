@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Check, ChevronDown } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils/cn'
 
 export interface FilterOption {
   id: string
@@ -45,7 +47,10 @@ interface Team2FilterDropdownProps {
   icon?: React.ReactNode
 }
 
-/** HubTool-style filter dropdown trigger (chip) + portal-less list (matches §8 of design guidelines). */
+const MENU_MIN_WIDTH = 192
+const MENU_VIEWPORT_PAD = 8
+
+/** HubTool-style filter dropdown — portaled solid menu (design guidelines §11). */
 export function Team2FilterDropdown({
   label,
   options,
@@ -66,7 +71,10 @@ export function Team2FilterDropdown({
 }: Team2FilterDropdownProps) {
   const [open, setOpen] = useState(false)
   const [unusedExpanded, setUnusedExpanded] = useState(false)
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const { primaryOptions, secondaryOptions } = useMemo(() => {
     if (!collapseDisabledOptions || onSelect) {
@@ -85,11 +93,50 @@ export function Team2FilterDropdown({
     if (!open) setUnusedExpanded(false)
   }, [open])
 
+  const reposition = () => {
+    const trigger = triggerRef.current
+    if (!trigger) return
+    const rect = trigger.getBoundingClientRect()
+    const menuWidth = Math.max(MENU_MIN_WIDTH, menuRef.current?.offsetWidth ?? MENU_MIN_WIDTH)
+    const menuHeight = menuRef.current?.offsetHeight ?? 240
+    let left = align === 'right' ? rect.right - menuWidth : rect.left
+    left = Math.min(
+      Math.max(MENU_VIEWPORT_PAD, left),
+      window.innerWidth - menuWidth - MENU_VIEWPORT_PAD,
+    )
+    let top = rect.bottom + 4
+    if (top + menuHeight > window.innerHeight - MENU_VIEWPORT_PAD) {
+      top = Math.max(MENU_VIEWPORT_PAD, rect.top - menuHeight - 4)
+    }
+    setMenuPos({ top, left, width: menuWidth })
+  }
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuPos(null)
+      return
+    }
+    reposition()
+  }, [open, align, options.length, unusedExpanded])
+
+  useEffect(() => {
+    if (!open) return
+    const onReposition = () => reposition()
+    window.addEventListener('resize', onReposition)
+    window.addEventListener('scroll', onReposition, true)
+    return () => {
+      window.removeEventListener('resize', onReposition)
+      window.removeEventListener('scroll', onReposition, true)
+    }
+  }, [open, align])
+
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      if (!rootRef.current?.contains(target)) setOpen(false)
+      if (rootRef.current?.contains(target)) return
+      if (menuRef.current?.contains(target)) return
+      setOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -111,8 +158,8 @@ export function Team2FilterDropdown({
 
   const iconTriggerClass = `inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
     isActive
-      ? 'bg-[var(--color-hover-subtle)] text-[var(--foreground)]'
-      : 'text-[var(--color-muted-foreground)] hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]'
+      ? 'bg-hover-subtle text-foreground'
+      : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground'
   }`
 
   function renderOptionRow(option: FilterOption) {
@@ -196,82 +243,101 @@ export function Team2FilterDropdown({
     )
   }
 
+  const menu =
+    open && typeof document !== 'undefined'
+      ? createPortal(
+          <div
+            ref={menuRef}
+            data-dropdown
+            className={cn(
+              'dropdown-menu-solid z-dropdown rounded-spacing-2 p-spacing-2 text-foreground fixed min-w-48',
+              menuClassName,
+            )}
+            style={
+              menuPos
+                ? { top: menuPos.top, left: menuPos.left, minWidth: menuPos.width }
+                : { visibility: 'hidden', top: 0, left: 0 }
+            }
+            role="menu"
+          >
+            {headerSlot ? <div className="mb-spacing-2">{headerSlot}</div> : null}
+            <div className="space-y-spacing-1">
+              {primaryOptions.map(renderOptionRow)}
+              {showUnusedToggle && !unusedExpanded ? (
+                <button
+                  type="button"
+                  className="body-4 text-muted-foreground hover:bg-hover-subtle hover:text-foreground rounded-spacing-1 px-spacing-2 py-spacing-1 w-full text-left transition-colors"
+                  onClick={() => setUnusedExpanded(true)}
+                >
+                  {showAllDisabledLabel}
+                </button>
+              ) : null}
+              {showUnusedToggle && unusedExpanded ? secondaryOptions.map(renderOptionRow) : null}
+              {showUnusedToggle && unusedExpanded ? (
+                <button
+                  type="button"
+                  className="body-4 text-muted-foreground hover:bg-hover-subtle hover:text-foreground rounded-spacing-1 px-spacing-2 py-spacing-1 w-full text-left transition-colors"
+                  onClick={() => setUnusedExpanded(false)}
+                >
+                  {showLessDisabledLabel}
+                </button>
+              ) : null}
+              {options.length === 0 ? (
+                <div className="body-4 text-muted-foreground px-spacing-2 py-spacing-1">
+                  No options
+                </div>
+              ) : null}
+            </div>
+          </div>,
+          document.body,
+        )
+      : null
+
   return (
     <div className="relative" ref={rootRef}>
-      {trigger === 'icon' ? (
-        <Tooltip label={tooltipText} side="bottom" triggerClassName="flex h-full items-center">
-          <span className="inline-flex">
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => setOpen((o) => !o)}
-              aria-haspopup="menu"
-              aria-expanded={open}
-              aria-label={tooltipText}
-              className={`${iconTriggerClass} disabled:cursor-not-allowed disabled:opacity-50`}
-            >
-              {icon}
-            </button>
-          </span>
-        </Tooltip>
-      ) : (
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => setOpen((o) => !o)}
-          aria-haspopup="menu"
-          aria-expanded={open}
-          className={`body-4 inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-3 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-            isActive
-              ? 'bg-[var(--color-hover-subtle)] text-[var(--foreground)]'
-              : 'text-[var(--color-muted-foreground)] hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]'
-          }`}
-        >
-          <span className="whitespace-nowrap">
-            {activeLabel ? `${label}: ${activeLabel}` : label}
-            {selectedCount > 0 ? ` · ${selectedCount}` : ''}
-          </span>
-          <ChevronDown className="icon-sm" />
-        </button>
-      )}
-      {open ? (
-        <div
-          data-dropdown
-          className={`dropdown-menu-solid z-dropdown mt-spacing-1 rounded-spacing-2 p-spacing-2 absolute top-full min-w-40 ${
-            menuClassName ?? ''
-          } ${align === 'right' ? 'right-0' : 'left-0'}`}
-          role="menu"
-        >
-          {headerSlot ? <div className="mb-spacing-2">{headerSlot}</div> : null}
-          <div className="space-y-spacing-1">
-            {primaryOptions.map(renderOptionRow)}
-            {showUnusedToggle && !unusedExpanded ? (
+      <div
+        ref={(el) => {
+          triggerRef.current = el
+        }}
+      >
+        {trigger === 'icon' ? (
+          <Tooltip label={tooltipText} side="bottom" triggerClassName="flex h-full items-center">
+            <span className="inline-flex">
               <button
                 type="button"
-                className="body-4 text-muted-foreground hover:bg-hover-subtle hover:text-foreground rounded-spacing-1 px-spacing-2 py-spacing-1 w-full text-left transition-colors"
-                onClick={() => setUnusedExpanded(true)}
+                disabled={disabled}
+                onClick={() => setOpen((o) => !o)}
+                aria-haspopup="menu"
+                aria-expanded={open}
+                aria-label={tooltipText}
+                className={`${iconTriggerClass} disabled:cursor-not-allowed disabled:opacity-50`}
               >
-                {showAllDisabledLabel}
+                {icon}
               </button>
-            ) : null}
-            {showUnusedToggle && unusedExpanded ? secondaryOptions.map(renderOptionRow) : null}
-            {showUnusedToggle && unusedExpanded ? (
-              <button
-                type="button"
-                className="body-4 text-muted-foreground hover:bg-hover-subtle hover:text-foreground rounded-spacing-1 px-spacing-2 py-spacing-1 w-full text-left transition-colors"
-                onClick={() => setUnusedExpanded(false)}
-              >
-                {showLessDisabledLabel}
-              </button>
-            ) : null}
-            {options.length === 0 ? (
-              <div className="body-4 text-muted-foreground px-spacing-2 py-spacing-1">
-                No options
-              </div>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+            </span>
+          </Tooltip>
+        ) : (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => setOpen((o) => !o)}
+            aria-haspopup="menu"
+            aria-expanded={open}
+            className={`body-4 inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-3 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              isActive
+                ? 'bg-hover-subtle text-foreground'
+                : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground'
+            }`}
+          >
+            <span className="whitespace-nowrap">
+              {activeLabel ? `${label}: ${activeLabel}` : label}
+              {selectedCount > 0 ? ` · ${selectedCount}` : ''}
+            </span>
+            <ChevronDown className="icon-sm" />
+          </button>
+        )}
+      </div>
+      {menu}
     </div>
   )
 }

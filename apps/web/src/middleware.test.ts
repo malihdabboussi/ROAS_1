@@ -136,4 +136,34 @@ describe('middleware access checks', () => {
     expect(response.headers.get('location')).toBeNull()
     expect(supabaseMockState.getSession).toHaveBeenCalled()
   })
+
+  it.each(['/artifacts', '/flows', '/lists', '/projects/project-1'])(
+    'protects the dashboard route %s',
+    async (pathname) => {
+      supabaseMockState.getUser.mockResolvedValue({ data: { user: null } })
+      supabaseMockState.getSession.mockResolvedValue({ data: { session: null } })
+      const { middleware } = await import('./middleware')
+
+      const response = await middleware(
+        createMiddlewareRequest(`https://app.vibey.test${pathname}`),
+      )
+
+      expect(response.headers.get('location')).toBe(
+        `https://app.vibey.test/login?redirect=${encodeURIComponent(pathname)}`,
+      )
+    },
+  )
+
+  it('preserves the requested dashboard query when sending a signed-out user to login', async () => {
+    supabaseMockState.getUser.mockResolvedValue({ data: { user: null } })
+    const { middleware } = await import('./middleware')
+
+    const response = await middleware(
+      createMiddlewareRequest('https://app.vibey.test/projects/project-1?tab=notes'),
+    )
+
+    expect(response.headers.get('location')).toBe(
+      'https://app.vibey.test/login?redirect=%2Fprojects%2Fproject-1%3Ftab%3Dnotes',
+    )
+  })
 })

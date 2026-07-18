@@ -55,7 +55,7 @@ export function NodeDetailTransferDialog({
           >
             <div className="px-spacing-6 pt-spacing-6 pb-spacing-4">
               <h2 className="title-h6 text-foreground">{isMove ? 'MOVE TO' : 'COPY TO'}</h2>
-              <p className="body-2 text-muted-foreground mt-spacing-2">
+              <DialogPrimitive.Description className="body-2 text-muted-foreground mt-spacing-2">
                 {isMove
                   ? isSource
                     ? 'This will move this source and all connected entries to the selected brain. It will be removed from the current brain.'
@@ -63,7 +63,7 @@ export function NodeDetailTransferDialog({
                   : isSource
                     ? 'This will copy this source and all connected entries to the selected brain. The original will remain.'
                     : 'This will copy this item to the selected brain. The original will remain.'}
-              </p>
+              </DialogPrimitive.Description>
               <div className="mt-spacing-4 space-y-spacing-2">
                 <label className="body-3 text-foreground font-medium">Destination</label>
                 <div className="relative" data-transfer-dropdown>

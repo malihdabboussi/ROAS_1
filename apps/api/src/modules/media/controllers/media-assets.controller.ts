@@ -22,16 +22,12 @@ import {
   type RequestScope,
 } from '@vibey/api-shared'
 import { QueryAssetsSchema, UpdateAssetSchema } from '../dto'
-import { MediaCanvaHandoffService } from '../services/media-canva-handoff.service'
 import { MediaService } from '../services/media.service'
 
 @Controller('media')
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
 export class MediaAssetsController {
-  constructor(
-    private readonly mediaService: MediaService,
-    private readonly mediaCanvaHandoffService: MediaCanvaHandoffService,
-  ) {}
+  constructor(private readonly mediaService: MediaService) {}
 
   /**
    * GET /api/media/assets
@@ -177,19 +173,5 @@ export class MediaAssetsController {
       throw new BadRequestException('Asset not found')
     }
     return { url }
-  }
-
-  /**
-   * POST /api/media/assets/:id/canva-handoff
-   * Import the image into Canva and return an edit_url
-   */
-  @Post('assets/:id/canva-handoff')
-  @HttpCode(HttpStatus.OK)
-  async openInCanva(
-    @CurrentUser() user: { id: string; email: string },
-    @OrgContext() scope: RequestScope,
-    @Param('id') id: string,
-  ) {
-    return this.mediaCanvaHandoffService.createHandoff(user, scope, id)
   }
 }

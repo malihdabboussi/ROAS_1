@@ -32,7 +32,8 @@ export function SegmentDeleteDialog({
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="btn-close-absolute flex h-8 w-8 items-center justify-center rounded-md text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
+              className="btn-icon-bare btn-close-absolute"
+              aria-label="Close"
             >
               <X className="icon-sm" />
             </button>
@@ -41,11 +42,11 @@ export function SegmentDeleteDialog({
                 <AlertTriangle className="text-destructive h-6 w-6" />
               </div>
               <h2 className="title-h6">Delete Segment</h2>
-              <p className="body-2 text-muted-foreground mt-spacing-2">
+              <DialogPrimitive.Description className="body-2 text-muted-foreground mt-spacing-2">
                 Are you sure you want to delete{' '}
                 <span className="font-semibold">&ldquo;{deletingSegment?.name}&rdquo;</span>? This
                 action cannot be undone.
-              </p>
+              </DialogPrimitive.Description>
             </div>
             <div className="gap-spacing-3 px-spacing-6 pb-spacing-6 flex">
               <button

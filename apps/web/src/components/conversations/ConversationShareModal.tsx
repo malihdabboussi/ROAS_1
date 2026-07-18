@@ -1,21 +1,21 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Tooltip } from '@/components/ui/tooltip'
-import {
-  deleteConversationShare,
-  fetchConversationShares,
-  upsertConversationShare,
-} from '@/lib/conversations/conversations-api'
 import { stripLegacySpacesConversationTitle } from '@/lib/conversations/conversation-title'
 import type {
   Conversation,
   ConversationShareLevel,
   ConversationShareRecord,
 } from '@/lib/conversations/conversation.types'
+import {
+  deleteConversationShare,
+  fetchConversationShares,
+  upsertConversationShare,
+} from '@/lib/conversations/conversations-api'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { ConversationShareInviteRow } from './ConversationShareInviteRow'
 import { ConversationSharePeopleList } from './ConversationSharePeopleList'
@@ -56,11 +56,6 @@ export function ConversationShareModal({
   const conversationId = conversation?.id ?? null
   const conversationName =
     stripLegacySpacesConversationTitle(conversation?.title) || 'Untitled conversation'
-
-  useEffect(() => {
-    if (!open) return
-    setTimeout(() => inviteInputRef.current?.focus(), 100)
-  }, [open])
 
   const loadShares = useCallback(async () => {
     if (!open || !conversationId) return
@@ -270,64 +265,71 @@ export function ConversationShareModal({
     [rosterHumanUserIds, shares],
   )
 
-  if (!open || !conversation || typeof document === 'undefined') return null
+  if (!conversation) return null
 
-  return createPortal(
-    <div
-      className="z-modal-backdrop fixed inset-0 flex items-center justify-center bg-modal-overlay"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose()
-      }}
-    >
-      <div className="z-modal-content surface-card wizard-container-border rounded-spacing-4 flex w-full max-w-lg flex-col overflow-hidden shadow-2xl">
-        <div className="px-spacing-6 pt-spacing-6 pb-spacing-4">
-          <div className="flex items-center justify-between">
-            <h2 className="title-h6 text-foreground font-semibold uppercase tracking-wide">
-              Share conversation
-            </h2>
-            <Tooltip label="Close" side="top" delayMs={200}>
-              <button type="button" onClick={onClose} className="btn-icon-bare shrink-0">
-                <X className="icon-sm" />
-              </button>
-            </Tooltip>
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="z-modal-backdrop bg-modal-overlay fixed inset-0" />
+        <DialogPrimitive.Content
+          className="z-modal-content surface-card wizard-container-border rounded-spacing-4 fixed left-1/2 top-1/2 flex w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden shadow-2xl"
+          onOpenAutoFocus={(event) => {
+            event.preventDefault()
+            inviteInputRef.current?.focus()
+          }}
+        >
+          <div className="px-spacing-6 pt-spacing-6 pb-spacing-4">
+            <div className="flex items-center justify-between">
+              <DialogPrimitive.Title className="title-h6 text-foreground font-semibold uppercase tracking-wide">
+                Share conversation
+              </DialogPrimitive.Title>
+              <Tooltip label="Close" side="top" delayMs={200}>
+                <DialogPrimitive.Close
+                  type="button"
+                  className="btn-icon-bare shrink-0"
+                  aria-label="Close share conversation"
+                >
+                  <X className="icon-sm" />
+                </DialogPrimitive.Close>
+              </Tooltip>
+            </div>
+            <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
+              <span className="text-foreground font-medium">{conversationName}</span>
+            </DialogPrimitive.Description>
           </div>
-          <p className="body-3 text-muted-foreground mt-spacing-1">
-            <span className="text-foreground font-medium">{conversationName}</span>
-          </p>
-        </div>
 
-        <ConversationShareInviteRow
-          inviteCandidates={inviteCandidates}
-          inviteInputRef={inviteInputRef}
-          inviteLevel={inviteLevel}
-          inviteQuery={inviteQuery}
-          onInvite={() => void handleInvite()}
-          onInviteLevelChange={setInviteLevel}
-          onInviteQueryChange={setInviteQuery}
-        />
+          <ConversationShareInviteRow
+            inviteCandidates={inviteCandidates}
+            inviteInputRef={inviteInputRef}
+            inviteLevel={inviteLevel}
+            inviteQuery={inviteQuery}
+            onInvite={() => void handleInvite()}
+            onInviteLevelChange={setInviteLevel}
+            onInviteQueryChange={setInviteQuery}
+          />
 
-        <ConversationSharePeopleList
-          activeOrgId={activeOrgId}
-          busyShareIds={busyShareIds}
-          inviteLevel={inviteLevel}
-          loading={loading}
-          orgName={orgName}
-          orgRowOpen={orgRowOpen}
-          roster={roster}
-          rosterByUserId={rosterByUserId}
-          shareByUserId={shareByUserId}
-          sharedOrgRow={sharedOrgRow}
-          sharedUsersNotInRoster={sharedUsersNotInRoster}
-          sharingOpen={sharingOpen}
-          onLevelChange={(share, level) => void handleLevelChange(share, level)}
-          onOrgRowOpenChange={setOrgRowOpen}
-          onRemoveShare={(share) => void handleRemoveShare(share)}
-          onSharingOpenChange={setSharingOpen}
-          onToggleOrgShare={() => void handleToggleOrgShare()}
-          onToggleShare={(entry, checked) => void handleToggleShare(entry, checked)}
-        />
-      </div>
-    </div>,
-    document.body,
+          <ConversationSharePeopleList
+            activeOrgId={activeOrgId}
+            busyShareIds={busyShareIds}
+            inviteLevel={inviteLevel}
+            loading={loading}
+            orgName={orgName}
+            orgRowOpen={orgRowOpen}
+            roster={roster}
+            rosterByUserId={rosterByUserId}
+            shareByUserId={shareByUserId}
+            sharedOrgRow={sharedOrgRow}
+            sharedUsersNotInRoster={sharedUsersNotInRoster}
+            sharingOpen={sharingOpen}
+            onLevelChange={(share, level) => void handleLevelChange(share, level)}
+            onOrgRowOpenChange={setOrgRowOpen}
+            onRemoveShare={(share) => void handleRemoveShare(share)}
+            onSharingOpenChange={setSharingOpen}
+            onToggleOrgShare={() => void handleToggleOrgShare()}
+            onToggleShare={(entry, checked) => void handleToggleShare(entry, checked)}
+          />
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   )
 }

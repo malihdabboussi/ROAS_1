@@ -6,8 +6,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Plus, Search, UsersRound, X } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
-const CONVERSATION_ICON_BUTTON_CLASS =
-  'btn-icon-bare hover:bg-hover-subtle shrink-0'
+const CONVERSATION_ICON_BUTTON_CLASS = 'btn-icon-bare hover:bg-hover-subtle shrink-0'
 
 interface SpaceConversationsHeaderProps {
   query: string
@@ -55,37 +54,48 @@ export function SpaceConversationsHeader({
   allAgentsMode,
   onAllAgentsModeChange,
 }: SpaceConversationsHeaderProps) {
-  const allAgentsButton =
-    showAllAgentsToggle ? (
-      <button
-        type="button"
-        onClick={() => onAllAgentsModeChange?.(!allAgentsMode)}
-        className={cn(
-          CONVERSATION_ICON_BUTTON_CLASS,
-          allAgentsMode && 'bg-hover-subtle text-foreground',
-        )}
-        aria-label={
-          allAgentsMode ? 'Show current agent conversations' : 'Show all agent conversations'
-        }
-        aria-pressed={allAgentsMode}
-        title={
-          allAgentsMode ? 'Show current agent conversations' : 'Show all agent conversations'
-        }
-      >
-        <UsersRound className="icon-sm" aria-hidden />
-      </button>
-    ) : null
+  const allAgentsButton = showAllAgentsToggle ? (
+    <button
+      type="button"
+      onClick={() => onAllAgentsModeChange?.(!allAgentsMode)}
+      className={cn(
+        CONVERSATION_ICON_BUTTON_CLASS,
+        allAgentsMode && 'bg-hover-subtle text-foreground',
+      )}
+      aria-label={
+        allAgentsMode ? 'Show current agent conversations' : 'Show all agent conversations'
+      }
+      aria-pressed={allAgentsMode}
+      title={allAgentsMode ? 'Show current agent conversations' : 'Show all agent conversations'}
+    >
+      <UsersRound className="icon-sm" aria-hidden />
+    </button>
+  ) : null
 
   const inlineSearch = !hideSearch ? (
-    <div className="relative min-w-0 flex-1">
-      <Search className="icon-left-center text-muted-foreground pointer-events-none icon-sm" />
-      <input
-        value={query}
-        onChange={(event) => onQueryChange(event.target.value)}
-        placeholder="Search conversations..."
-        className="input-glass body-3 text-foreground placeholder:text-muted-foreground h-spacing-8 rounded-spacing-2 box-border w-full py-spacing-1 pl-spacing-8 pr-spacing-2 outline-none"
-      />
-    </div>
+    hideHeaderBottomBorder ? (
+      <label className="hub-menu-link-row text-muted-foreground relative min-w-0 flex-1 cursor-text">
+        <Search className="shrink-0" aria-hidden />
+        <input
+          value={query}
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder="Search"
+          aria-label="Search"
+          className="body-3 text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent outline-none"
+        />
+      </label>
+    ) : (
+      <div className="relative min-w-0 flex-1">
+        <Search className="icon-left-center text-muted-foreground icon-sm pointer-events-none" />
+        <input
+          value={query}
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder="Search"
+          aria-label="Search"
+          className="input-glass body-3 text-foreground placeholder:text-muted-foreground h-spacing-8 rounded-spacing-2 py-spacing-1 pl-spacing-8 pr-spacing-2 box-border w-full outline-none"
+        />
+      </div>
+    )
   ) : searchSlot ? (
     <div className="min-w-0 flex-1">{searchSlot}</div>
   ) : null
@@ -94,7 +104,7 @@ export function SpaceConversationsHeader({
     <div
       className={cn(
         'gap-spacing-2 flex shrink-0 items-center',
-        hideHeaderBottomBorder ? 'pb-spacing-1' : 'p-spacing-3 border-b border-border',
+        hideHeaderBottomBorder ? 'pb-spacing-1' : 'p-spacing-3 border-border border-b',
       )}
     >
       {!hideBackButton ? (
@@ -193,6 +203,12 @@ export function SpaceConversationsHeader({
             ) : null}
           </div>
         </div>
+      ) : hideHeaderBottomBorder ? (
+        <>
+          {inlineSearch}
+          {allAgentsButton}
+          {headerEndSlot}
+        </>
       ) : (
         <>
           {allAgentsButton}

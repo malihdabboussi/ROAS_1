@@ -5,11 +5,11 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { customDomainsApi } from '@/lib/domains/custom-domains-api'
 import {
   DOMAINS_TOAST_ERRORS,
   DOMAINS_TOAST_SUCCESS,
 } from '@/lib/domains/domains-toast-errors.config'
-import { customDomainsApi } from '@/lib/domains/custom-domains-api'
 import type { CustomDomain } from '@/lib/domains/domains.types'
 
 export function AddCustomDomainDialog({
@@ -74,13 +74,19 @@ export function AddCustomDomainDialog({
               <div className="px-spacing-4 sm:px-spacing-6 pt-spacing-4 pb-spacing-2">
                 <div className="flex items-center justify-between">
                   <h2 className="title-h6">Add Custom Domain</h2>
-                  <button onClick={onClose} className="btn-icon-bare" disabled={isAdding}>
+                  <button
+                    type="button"
+                    aria-label="Close add custom domain"
+                    onClick={onClose}
+                    className="btn-icon-bare"
+                    disabled={isAdding}
+                  >
                     <X className="icon-xs" />
                   </button>
                 </div>
-                <p className="body-3 text-muted-foreground mt-spacing-1">
+                <DialogPrimitive.Description className="body-3 text-muted-foreground mt-spacing-1">
                   Add a domain you own, then verify DNS to connect it to funnels and presentations.
-                </p>
+                </DialogPrimitive.Description>
               </div>
 
               <div className="px-spacing-6 py-spacing-4 space-y-spacing-4 flex-1 overflow-y-auto">

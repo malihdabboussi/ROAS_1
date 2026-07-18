@@ -1,13 +1,12 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ResizableDivider } from '@/components/layout/ResizableDivider'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
-import { useChatStore } from '@/features/studio/store/use-chat-store'
+import { ResizableDivider } from '@/components/layout/ResizableDivider'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
+import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cn } from '@/lib/utils/cn'
-import { ShellNewChatGreeting } from './ShellNewChatGreeting'
 import { useShellStore } from './use-shell-store'
 
 export function ShellChatDrawer() {
@@ -34,6 +33,7 @@ export function ShellChatDrawer() {
       openConversationInSpaceChat(conversationId)
       setActiveConversationId(conversationId)
     } else {
+      // Fresh / empty drawer: normal chat empty state (not Home greeting chrome).
       setActiveConversationId(null)
     }
   }, [
@@ -72,8 +72,6 @@ export function ShellChatDrawer() {
 
   if (!open) return null
 
-  const narrow = width < 360
-
   return (
     <>
       <div
@@ -85,14 +83,7 @@ export function ShellChatDrawer() {
         data-shell-chat-drawer
       >
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {conversationId ? (
-            <GlobalChatPanel
-              shellSidebarChrome
-              onCollapseChat={() => minimizeChatDrawer()}
-            />
-          ) : (
-            <ShellNewChatGreeting compact={narrow} inDrawer />
-          )}
+          <GlobalChatPanel shellSidebarChrome onCollapseChat={() => minimizeChatDrawer()} />
         </div>
       </div>
       <ResizableDivider

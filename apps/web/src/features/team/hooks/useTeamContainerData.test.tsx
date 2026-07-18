@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { MissionAgent, MissionAgentSkill, MissionAgentWorkflow } from '@/lib/agents'
 import type { AgentChannel } from '@/lib/agents/agent-channels'
 import type { Campaign } from '@/lib/campaigns'
-import type { Mission } from '@/lib/missions'
 import type { LlmModelOption } from '@/lib/chat'
+import type { Mission } from '@/lib/missions'
 import { useTeamContainerData } from './useTeamContainerData'
 
 const mocks = vi.hoisted(() => ({
@@ -81,7 +81,8 @@ vi.mock('@/lib/billing/billing-api', () => ({
   },
 }))
 
-vi.mock('@/lib/campaigns', () => ({
+vi.mock('@/lib/campaigns', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/campaigns')>()),
   fetchAgentCampaignAssignments: mocks.fetchAgentCampaignAssignments,
   fetchCampaigns: mocks.fetchCampaigns,
 }))
@@ -329,9 +330,7 @@ describe('useTeamContainerData', () => {
       ])
       expect(result.current.hasBrain).toBe(true)
       expect(result.current.agentSkills.map((skill) => skill.name)).toEqual(['Research'])
-      expect(result.current.agentWorkflows.map((workflow) => workflow.name)).toEqual([
-        'Discovery',
-      ])
+      expect(result.current.agentWorkflows.map((workflow) => workflow.name)).toEqual(['Discovery'])
       expect(result.current.modelOptions).toEqual([modelOption])
       expect(result.current.selectedModelId).toBe('model-pro')
       expect(result.current.channels.map((channel) => channel.id)).toEqual(['channel-1'])

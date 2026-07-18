@@ -7036,7 +7036,8 @@ html.dark .btn-icon-glass-yellow:hover {
 
 /* Dropdown menu — solid background */
 .dropdown-menu-solid {
-  background: rgb(var(--vibe-white));
+  background: var(--color-card);
+  color: var(--color-foreground);
   border: 1px solid var(--color-border);
   border-radius: var(--spacing-2);
   box-shadow:
@@ -7045,8 +7046,9 @@ html.dark .btn-icon-glass-yellow:hover {
   z-index: 9999;
 }
 html.dark .dropdown-menu-solid {
-  background: #202020;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-card);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
   box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.4),
     0 2px 8px rgba(0, 0, 0, 0.3);
@@ -9486,6 +9488,9 @@ html.dark .chat-markdown-code-block__shadow {
   height: 560px;
   pointer-events: none;
   background: var(--hd4-hero-glow);
+  /* Soft bottom fade so the wash never ends in a hard band under the agent bar. */
+  mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
 }
 .home-dashboard-v4-hero-grid {
   position: absolute;
@@ -9498,7 +9503,8 @@ html.dark .chat-markdown-code-block__shadow {
     linear-gradient(var(--hd4-hero-grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--hd4-hero-grid-line) 1px, transparent 1px);
   background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 65% 80% at 50% 0%, #000, transparent 90%);
+  mask-image: radial-gradient(ellipse 70% 90% at 50% 0%, #000, transparent 92%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 90% at 50% 0%, #000, transparent 92%);
 }
 .home-dashboard-v4-column {
   width: 100%;
@@ -9511,6 +9517,10 @@ html.dark .chat-markdown-code-block__shadow {
   flex-direction: column;
   gap: 28px;
   box-sizing: border-box;
+}
+.home-dashboard-v4-column-with-top-bar {
+  /* Agent bar already owns the top inset; keep greeting closer without a dead band. */
+  padding-top: 28px;
 }
 .home-dashboard-v4-column-media-composer {
   max-width: 720px;
@@ -10120,9 +10130,7 @@ html.dark .chat-markdown-code-block__shadow {
     margin-left: auto;
   }
   .home-composer-v4-standard-footer > div:first-child button[aria-label='Open add menu'],
-  .home-composer-v4-shell
-    .home-composer-v4-standard-footer
-    button[aria-label='Open add menu'] {
+  .home-composer-v4-shell .home-composer-v4-standard-footer button[aria-label='Open add menu'] {
     width: 38px;
     height: 38px;
   }
@@ -10387,7 +10395,8 @@ html.dark .chat-markdown-code-block__shadow {
   width: 4.5rem;
   padding-top: var(--spacing-3);
   padding-bottom: var(--spacing-3);
-  padding-left: var(--spacing-2);
+  padding-left: var(--spacing-1);
+  padding-right: var(--spacing-1);
 }
 .hub-sidebar-shell-expanded {
   width: 17rem;
@@ -10422,11 +10431,11 @@ html.dark .chat-markdown-code-block__shadow {
 .hub-sidebar-logo-header {
   display: flex;
   height: auto;
-  width: 4.5rem;
+  width: 100%;
   shrink: 0;
   align-items: center;
   justify-content: center;
-  padding: 2px 4px 12px;
+  padding: 2px 0 12px;
 }
 .hub-sidebar-shell-expanded .hub-sidebar-logo-header {
   width: auto;
@@ -10520,31 +10529,6 @@ html.dark .chat-markdown-code-block__shadow {
   flex-shrink: 0;
   color: var(--color-icon);
 }
-.shell-topbar-crumb-menu {
-  display: flex;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--color-tertiary);
-  cursor: pointer;
-  transition:
-    background 0.12s ease-out,
-    color 0.12s ease-out;
-}
-.shell-topbar-crumb-menu:hover {
-  background: var(--color-hover-subtle);
-  color: var(--color-icon);
-}
-.shell-topbar-crumb-menu svg {
-  width: 14px;
-  height: 14px;
-}
-
 /* Home / Chat segmented toggle */
 .shell-menu-mode-toggle {
   display: flex;
@@ -10905,4 +10889,87 @@ html.dark .agenda-card-header {
   font-size: 14px;
   font-weight: 700;
   color: var(--color-foreground);
+}
+
+/* Space work dock (shell) */
+.shell-space-work-dock {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 1px solid var(--color-shell-border, var(--color-border));
+  background: var(--color-background);
+}
+.shell-space-work-tab-strip {
+  display: flex;
+  min-width: 0;
+  flex-shrink: 0;
+  align-items: stretch;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-border);
+  padding: 6px 8px;
+}
+.shell-space-work-tab {
+  display: flex;
+  max-width: 220px;
+  min-width: 0;
+  align-items: center;
+  gap: 2px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.shell-space-work-tab-active {
+  border-color: var(--color-border);
+  background: var(--color-secondary);
+}
+.shell-space-work-tab-main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  color: var(--color-foreground);
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: left;
+}
+.shell-space-work-tab-main:hover {
+  background: var(--color-hover-subtle);
+  border-radius: 8px;
+}
+.shell-space-work-tab-close {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 4px;
+  border-radius: 6px;
+  color: var(--color-muted-foreground);
+}
+.shell-space-work-tab-close:hover {
+  background: var(--color-hover-subtle);
+  color: var(--color-foreground);
+}
+.shell-space-work-empty {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  gap: 10px;
+  border-bottom: 1px solid var(--color-border);
+  padding: 10px 12px;
+  background: var(--color-card);
+}
+.shell-space-work-dock-body {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
 }

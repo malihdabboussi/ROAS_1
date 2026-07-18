@@ -1,0 +1,23 @@
+{
+  "skill_name": "funnel-site-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create the design direction for a webinar registration funnel for a manufacturing consultant. The only proof supplied is two annotated factory-floor process maps and a quote from Northline Components. Avoid dark tech and fake urgency.",
+      "expected_output": "A subject-specific Design Contract grounded in the process maps, with verified proof boundaries and deliberate desktop/mobile compositions.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Design a five-page website for a small coastal architecture studio. They have strong project photography and an existing navy/sand identity. They dislike template portfolios, bento grids, and excessive animation.",
+      "expected_output": "A website-wide art direction that preserves the identity, uses photography as evidence, differentiates page roles, and composes mobile intentionally.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "The builder says a landing page preview exists but did not provide an artifact id or preview location. Review desktop at 1440px and mobile at 390px, then give the builder exact revisions.",
+      "expected_output": "A clear statement that visual QA is blocked until a real preview can be opened; it must not invent a URL or claim screenshot-level findings.",
+      "files": []
+    }
+  ]
+}
