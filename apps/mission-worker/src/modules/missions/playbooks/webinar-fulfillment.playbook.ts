@@ -2,7 +2,6 @@ import type {
   MissionPlaybookExpandInput,
   MissionPlaybookKickoff,
   MissionPlaybookPlanResult,
-  MissionPlaybookStartAt,
 } from './mission-playbook.types'
 import {
   adContract,
@@ -33,18 +32,12 @@ const SKILLS = {
 const REVIEW_MAP =
   '1→roas-webinar-topics · 2→roas-webinar-emails · 3→roas-ad-copy · 4→roas-video-ad-scripts · 5→roas-landing-page-copy'
 
-function normalizeStartAt(value: unknown): MissionPlaybookStartAt {
-  if (value === 'post_call' || value === 'launch_brief' || value === 'pre_call') return value
-  return 'pre_call'
-}
-
 function readKickoff(input: Record<string, unknown> | null | undefined): MissionPlaybookKickoff {
   const raw =
     input?.playbook_kickoff && typeof input.playbook_kickoff === 'object'
       ? (input.playbook_kickoff as Record<string, unknown>)
       : {}
   return {
-    start_at: normalizeStartAt(raw.start_at ?? input?.start_at),
     notes: typeof raw.notes === 'string' ? raw.notes : undefined,
     transcript_url: typeof raw.transcript_url === 'string' ? raw.transcript_url : undefined,
     drive_links: typeof raw.drive_links === 'string' ? raw.drive_links : undefined,
@@ -56,7 +49,6 @@ export function expandWebinarFulfillmentPlaybook(
   input: MissionPlaybookExpandInput,
 ): MissionPlaybookPlanResult {
   const kickoff = readKickoff(input.mission.input)
-  const startAt = normalizeStartAt(kickoff.start_at)
   const atlas = 'atlas'
   const strategist = pickAgent(['strategist', 'reed'], input.workerAgentKeys, input.managerKey)
   const adsManager = pickAgent(['ads_manager', 'blaze'], input.workerAgentKeys, input.managerKey)
@@ -123,104 +115,98 @@ export function expandWebinarFulfillmentPlaybook(
   )
 
   let strategyDependency = 'st-atlas-context'
-  if (startAt === 'pre_call') {
+  add(
+    {
+      id: 'st-precall',
+      title: WEBINAR_FLOW_TASKS.precall,
+      assignTo: strategist,
+      dependsOn: [strategyDependency],
+      assertionKeys: [],
+      scheduledAt: null,
+      intent: intent({
+        why: 'Walk into the client call with a proposed strategy to confirm or correct.',
+        story: 'Reed prepares the call around decisions, not blank-page discovery.',
+        sensory: `"${WEBINAR_FLOW_DOCS.precall}" is specific to the client and includes the offer stack hypothesis.`,
+        endState: 'The pre-call map is saved as a native editable Space Doc.',
+        ecology: `Load skill ${SKILLS.precall}. Include suggested offer, complete offer-stack hypothesis, avatars, proof gaps, and confirm-or-correct agenda. Save exactly "${WEBINAR_FLOW_DOCS.precall}". Never create a PDF.`,
+      }),
+      outputContract: docContract(WEBINAR_FLOW_DOCS.precall),
+    },
+    'strategy',
+    'Pre-call strategy map exists in Space Docs.',
+  )
+  strategyDependency = 'st-precall'
+
+  if (hasHuman) {
     add(
       {
-        id: 'st-precall',
-        title: WEBINAR_FLOW_TASKS.precall,
-        assignTo: strategist,
+        id: 'st-gate-precall',
+        title: WEBINAR_FLOW_GATES.precall,
+        assignTo: human,
         dependsOn: [strategyDependency],
         assertionKeys: [],
         scheduledAt: null,
         intent: intent({
-          why: 'Walk into the client call with a proposed strategy to confirm or correct.',
-          story: 'Reed prepares the call around decisions, not blank-page discovery.',
-          sensory: `"${WEBINAR_FLOW_DOCS.precall}" is specific to the client and includes the offer stack hypothesis.`,
-          endState: 'The pre-call map is saved as a native editable Space Doc.',
-          ecology: `Load skill ${SKILLS.precall}. Include suggested offer, complete offer-stack hypothesis, avatars, proof gaps, and confirm-or-correct agenda. Save exactly "${WEBINAR_FLOW_DOCS.precall}". Never create a PDF.`,
-        }),
-        outputContract: docContract(WEBINAR_FLOW_DOCS.precall),
-      },
-      'strategy',
-      'Pre-call strategy map exists in Space Docs.',
-    )
-    strategyDependency = 'st-precall'
-
-    if (hasHuman) {
-      add(
-        {
-          id: 'st-gate-precall',
-          title: WEBINAR_FLOW_GATES.precall,
-          assignTo: human,
-          dependsOn: [strategyDependency],
-          assertionKeys: [],
-          scheduledAt: null,
-          intent: intent({
-            why: 'The human must review the pre-call map and supply the completed call before post-call work.',
-            story: 'Review the map, conduct the call, then attach or identify the call for Atlas.',
-            sensory:
-              'The gate comment contains a Fathom call, transcript, recording link, upload, or notes.',
-            endState: 'A usable call source is available and Atlas can begin transcript intake.',
-            ecology:
-              'Review the pre-call map. Then provide one of: a selected Fathom meeting, Fathom URL or recording ID, pasted/uploaded transcript, recording link, or detailed call notes. Do not approve without a call source.',
-          }),
-        },
-        'compliance',
-        'Human reviewed the pre-call map and provided the call source.',
-      )
-      strategyDependency = 'st-gate-precall'
-    }
-  }
-
-  if (startAt !== 'launch_brief') {
-    add(
-      {
-        id: 'st-atlas-transcript',
-        title: WEBINAR_FLOW_TASKS.atlasTranscript,
-        assignTo: atlas,
-        dependsOn: [strategyDependency],
-        assertionKeys: [],
-        scheduledAt: null,
-        intent: intent({
-          why: 'Turn the real onboarding call into trusted context before strategy is corrected.',
-          story:
-            'Atlas locates the Fathom call when connected or uses the supplied transcript source.',
+          why: 'The human must review the pre-call map and supply the completed call before post-call work.',
+          story: 'Review the map, conduct the call, then attach or identify the call for Atlas.',
           sensory:
-            'The call context retains source links, speaker meaning, decisions, objections, and proof.',
-          endState:
-            'Reed has a grounded call summary and transcript source for post-call strategy.',
-          ecology: `If Fathom is connected, list recent meetings, resolve the supplied meeting, retrieve its transcript, and ingest the useful context. Otherwise use the pasted/uploaded transcript, recording, or notes. Preserve the source. Never invent missing call content. Kickoff:\n${kickoffBits || '(gate supplies the call source)'}`,
+            'The gate comment contains a Fathom call, transcript, recording link, upload, or notes.',
+          endState: 'A usable call source is available and Atlas can begin transcript intake.',
+          ecology:
+            'Review the pre-call map. Then provide one of: a selected Fathom meeting, Fathom URL or recording ID, pasted/uploaded transcript, recording link, or detailed call notes. Do not approve without a call source.',
         }),
       },
-      'context',
-      'Atlas retrieved or processed the call transcript and preserved its source.',
+      'compliance',
+      'Human reviewed the pre-call map and provided the call source.',
     )
-    strategyDependency = 'st-atlas-transcript'
-
-    add(
-      {
-        id: 'st-strategy-v2',
-        title: WEBINAR_FLOW_TASKS.strategyV2,
-        assignTo: strategist,
-        dependsOn: [strategyDependency],
-        assertionKeys: [],
-        scheduledAt: null,
-        intent: intent({
-          why: 'Correct the proposed strategy using what the client actually said.',
-          story:
-            'Reed converts the call into locked strategic decisions and visible open questions.',
-          sensory: `"${WEBINAR_FLOW_DOCS.strategyV2}" clearly shows what changed after the call.`,
-          endState:
-            'A native post-call strategy map exists with the offer, avatar, proof, and constraints.',
-          ecology: `Load skill ${SKILLS.postcall}. Use Atlas call context and the pre-call map. Save exactly "${WEBINAR_FLOW_DOCS.strategyV2}". Never create a PDF.`,
-        }),
-        outputContract: docContract(WEBINAR_FLOW_DOCS.strategyV2),
-      },
-      'strategy',
-      'Post-call strategy map exists and reflects the client call.',
-    )
-    strategyDependency = 'st-strategy-v2'
+    strategyDependency = 'st-gate-precall'
   }
+
+  add(
+    {
+      id: 'st-atlas-transcript',
+      title: WEBINAR_FLOW_TASKS.atlasTranscript,
+      assignTo: atlas,
+      dependsOn: [strategyDependency],
+      assertionKeys: [],
+      scheduledAt: null,
+      intent: intent({
+        why: 'Turn the real onboarding call into trusted context before strategy is corrected.',
+        story:
+          'Atlas locates the Fathom call when connected or uses the supplied transcript source.',
+        sensory:
+          'The call context retains source links, speaker meaning, decisions, objections, and proof.',
+        endState: 'Reed has a grounded call summary and transcript source for post-call strategy.',
+        ecology: `If Fathom is connected, list recent meetings, resolve the supplied meeting, retrieve its transcript, and ingest the useful context. Otherwise use the pasted/uploaded transcript, recording, or notes. Preserve the source. Never invent missing call content. Kickoff:\n${kickoffBits || '(gate supplies the call source)'}`,
+      }),
+    },
+    'context',
+    'Atlas retrieved or processed the call transcript and preserved its source.',
+  )
+  strategyDependency = 'st-atlas-transcript'
+
+  add(
+    {
+      id: 'st-strategy-v2',
+      title: WEBINAR_FLOW_TASKS.strategyV2,
+      assignTo: strategist,
+      dependsOn: [strategyDependency],
+      assertionKeys: [],
+      scheduledAt: null,
+      intent: intent({
+        why: 'Correct the proposed strategy using what the client actually said.',
+        story: 'Reed converts the call into locked strategic decisions and visible open questions.',
+        sensory: `"${WEBINAR_FLOW_DOCS.strategyV2}" clearly shows what changed after the call.`,
+        endState:
+          'A native post-call strategy map exists with the offer, avatar, proof, and constraints.',
+        ecology: `Load skill ${SKILLS.postcall}. Use Atlas call context and the pre-call map. Save exactly "${WEBINAR_FLOW_DOCS.strategyV2}". Never create a PDF.`,
+      }),
+      outputContract: docContract(WEBINAR_FLOW_DOCS.strategyV2),
+    },
+    'strategy',
+    'Post-call strategy map exists and reflects the client call.',
+  )
+  strategyDependency = 'st-strategy-v2'
 
   add(
     {
@@ -481,11 +467,11 @@ export function expandWebinarFulfillmentPlaybook(
     title: 'Webinar Fulfillment',
     summary:
       'Atlas context → pre-call gate → call intake → post-call strategy → strategy gate → research → complete copy package → copy gate → Lux production → Blaze media plan → production gate.',
-    approach: `Follow ${WEBINAR_FULFILLMENT_PLAYBOOK_ID} starting at ${startAt}. Atlas owns context, Reed owns strategy, Ivy owns copy, Lux owns visual/funnel/deck production, and Blaze owns research/media planning.`,
+    approach: `Follow the complete ${WEBINAR_FULFILLMENT_PLAYBOOK_ID} flow from pre-call preparation. Atlas owns context, Reed owns strategy, Ivy owns copy, Lux owns visual/funnel/deck production, and Blaze owns research/media planning.`,
     capability_gap: { exists: false, note: '', suggested_hire: '' },
     harness: {
       contextSnapshot: {
-        summary: `Playbook ${WEBINAR_FULFILLMENT_PLAYBOOK_ID}; start_at=${startAt}. ${kickoffBits || 'No extra kickoff links.'}`,
+        summary: `Playbook ${WEBINAR_FULFILLMENT_PLAYBOOK_ID}; pre-call-first flow. ${kickoffBits || 'No extra kickoff links.'}`,
         sources: [
           {
             sourceType: 'playbook',

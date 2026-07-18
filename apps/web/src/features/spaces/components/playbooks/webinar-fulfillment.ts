@@ -1,9 +1,6 @@
 export const WEBINAR_FULFILLMENT_PLAYBOOK_ID = 'webinar-fulfillment' as const
 
-export type PlaybookStartAt = 'pre_call' | 'post_call' | 'launch_brief'
-
 export type PlaybookKickoffFields = {
-  start_at: PlaybookStartAt
   client_context: string
   transcript_url: string
   drive_links: string
@@ -23,7 +20,6 @@ export function buildWebinarFulfillmentMissionPayload(fields: PlaybookKickoffFie
   const title = 'Webinar Fulfillment'
   const briefParts = [
     'Run the Webinar Fulfillment playbook for this client Space.',
-    `Start at: ${fields.start_at}.`,
     fields.client_context.trim() ? `Client context: ${fields.client_context.trim()}` : null,
     fields.transcript_url.trim() ? `Transcript: ${fields.transcript_url.trim()}` : null,
     fields.drive_links.trim() ? `Drive/links: ${fields.drive_links.trim()}` : null,
@@ -37,7 +33,6 @@ export function buildWebinarFulfillmentMissionPayload(fields: PlaybookKickoffFie
     input: {
       playbook_id: WEBINAR_FULFILLMENT_PLAYBOOK_ID,
       playbook_kickoff: {
-        start_at: fields.start_at,
         client_context: fields.client_context.trim() || undefined,
         transcript_url: fields.transcript_url.trim() || undefined,
         drive_links: fields.drive_links.trim() || undefined,

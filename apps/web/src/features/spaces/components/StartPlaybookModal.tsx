@@ -5,31 +5,11 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import {
   SPACE_MISSION_PLAYBOOKS,
-  type PlaybookKickoffFields,
-  type PlaybookStartAt,
   WEBINAR_FULFILLMENT_PLAYBOOK_ID,
+  type PlaybookKickoffFields,
 } from './playbooks/webinar-fulfillment'
 
-const START_AT_OPTIONS: Array<{ id: PlaybookStartAt; label: string; hint: string }> = [
-  {
-    id: 'pre_call',
-    label: 'Pre-call',
-    hint: 'Skills 1 → 2 → 3, then Gate 1',
-  },
-  {
-    id: 'post_call',
-    label: 'Post-call',
-    hint: 'Skip pre-call map; start at Strategy v2',
-  },
-  {
-    id: 'launch_brief',
-    label: 'Launch brief',
-    hint: 'Only THE PLAN, then Gate 1',
-  },
-]
-
 const EMPTY_FIELDS: PlaybookKickoffFields = {
-  start_at: 'pre_call',
   client_context: '',
   transcript_url: '',
   drive_links: '',
@@ -43,7 +23,12 @@ interface StartPlaybookModalProps {
   onStart: (fields: PlaybookKickoffFields) => void
 }
 
-export function StartPlaybookModal({ open, submitting, onClose, onStart }: StartPlaybookModalProps) {
+export function StartPlaybookModal({
+  open,
+  submitting,
+  onClose,
+  onStart,
+}: StartPlaybookModalProps) {
   const [fields, setFields] = useState<PlaybookKickoffFields>(EMPTY_FIELDS)
   const playbook = SPACE_MISSION_PLAYBOOKS.find((p) => p.id === WEBINAR_FULFILLMENT_PLAYBOOK_ID)
 
@@ -79,38 +64,12 @@ export function StartPlaybookModal({ open, submitting, onClose, onStart }: Start
           </div>
 
           <div className="px-spacing-5 pb-spacing-5 space-y-spacing-4">
-            <div className="space-y-spacing-2">
-              <p className="body-4 text-foreground font-medium">Where to start</p>
-              <div className="gap-spacing-2 flex flex-col">
-                {START_AT_OPTIONS.map((opt) => {
-                  const selected = fields.start_at === opt.id
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => setFields((prev) => ({ ...prev, start_at: opt.id }))}
-                      className={`rounded-spacing-2 border px-spacing-3 py-spacing-2 text-left transition-opacity ${
-                        selected
-                          ? 'border-primary bg-primary/10'
-                          : 'border-border bg-secondary/40 hover:opacity-90'
-                      }`}
-                    >
-                      <span className="body-3 text-foreground block font-medium">{opt.label}</span>
-                      <span className="body-4 text-muted-foreground block">{opt.hint}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
             <label className="space-y-spacing-1 block">
               <span className="body-4 text-muted-foreground">Client / campaign context</span>
               <textarea
                 className="input-glass rounded-spacing-2 body-3 text-foreground min-h-20 w-full resize-y px-3 py-2"
                 value={fields.client_context}
-                onChange={(e) =>
-                  setFields((prev) => ({ ...prev, client_context: e.target.value }))
-                }
+                onChange={(e) => setFields((prev) => ({ ...prev, client_context: e.target.value }))}
                 placeholder="Who is the client, what did they buy, what does a win look like?"
                 disabled={submitting}
               />
@@ -122,16 +81,16 @@ export function StartPlaybookModal({ open, submitting, onClose, onStart }: Start
                 type="url"
                 className="input-glass rounded-spacing-2 body-3 text-foreground w-full px-3 py-2"
                 value={fields.transcript_url}
-                onChange={(e) =>
-                  setFields((prev) => ({ ...prev, transcript_url: e.target.value }))
-                }
+                onChange={(e) => setFields((prev) => ({ ...prev, transcript_url: e.target.value }))}
                 placeholder="https://"
                 disabled={submitting}
               />
             </label>
 
             <label className="space-y-spacing-1 block">
-              <span className="body-4 text-muted-foreground">Drive / research links (optional)</span>
+              <span className="body-4 text-muted-foreground">
+                Drive / research links (optional)
+              </span>
               <textarea
                 className="input-glass rounded-spacing-2 body-3 text-foreground min-h-16 w-full resize-y px-3 py-2"
                 value={fields.drive_links}

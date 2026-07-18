@@ -78,7 +78,7 @@ describe('webinar-fulfillment playbook', () => {
     )
   })
 
-  it('skips precall when start_at is post_call but keeps B/C', () => {
+  it('runs the full pre-call-first flow when a legacy post_call start is supplied', () => {
     const plan = expandWebinarFulfillmentPlaybook({
       ...base,
       mission: {
@@ -86,8 +86,10 @@ describe('webinar-fulfillment playbook', () => {
         input: { playbook_kickoff: { start_at: 'post_call' } },
       },
     })
-    expect(plan.subtasks.map((s) => s.id).slice(0, 4)).toEqual([
+    expect(plan.subtasks.map((s) => s.id).slice(0, 6)).toEqual([
       'st-atlas-context',
+      'st-precall',
+      'st-gate-precall',
       'st-atlas-transcript',
       'st-strategy-v2',
       'st-launch-brief',
@@ -95,7 +97,7 @@ describe('webinar-fulfillment playbook', () => {
     expect(plan.subtasks.some((s) => s.id === 'st-copy-package')).toBe(true)
   })
 
-  it('starts at launch brief only when requested', () => {
+  it('runs the full pre-call-first flow when a legacy launch_brief start is supplied', () => {
     const plan = expandWebinarFulfillmentPlaybook({
       ...base,
       mission: {
@@ -103,10 +105,13 @@ describe('webinar-fulfillment playbook', () => {
         input: { playbook_kickoff: { start_at: 'launch_brief' } },
       },
     })
-    expect(plan.subtasks.map((s) => s.id).slice(0, 3)).toEqual([
+    expect(plan.subtasks.map((s) => s.id).slice(0, 6)).toEqual([
       'st-atlas-context',
+      'st-precall',
+      'st-gate-precall',
+      'st-atlas-transcript',
+      'st-strategy-v2',
       'st-launch-brief',
-      'st-gate-strategy',
     ])
   })
 
