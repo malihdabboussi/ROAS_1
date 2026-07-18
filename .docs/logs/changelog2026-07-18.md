@@ -53,3 +53,10 @@ What: Exported `RestorableChangeSet` from funnel-history.service for Nest public
 Why: Vercel `roas-api` failed TS4053 (type cannot be named).
 Impact: Unblocks API production build.
 Files: `apps/api/src/modules/funnels/services/funnel-history.service.ts`
+
+## [2026-07-18 07:55] - [FIX]
+
+What: Removed duplicate `resolveSuggestedConversationTitle` import in SpaceVibeyChatPanel.
+Why: Webpack failed web production compile with already-declared identifier.
+Impact: Unblocks `roas-web` build.
+Files: `SpaceVibeyChatPanel.tsx`
