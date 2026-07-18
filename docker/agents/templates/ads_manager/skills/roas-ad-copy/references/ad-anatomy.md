@@ -50,7 +50,7 @@ Default to a small set of full ad variations (2-4), built off the Validate Messa
 
 ## Voice
 
-Ads run from the client's page in the client's voice (the ad shows "Speaking with Yasir Khan," "Taylor Conroy"). Write as the client, first person, matching their existing ads/brand if samples exist. Always run through `references/human-written-copy.md`. `dylans-voice` is only for a media-buyer brief or team handoff written by Dylan, never the ad copy itself.
+Ads run from the client's page in the client's voice. Write as the client, first person, matching verified client samples when they exist, with `dylans-super-voice` as the master prose and Human Enforcement standard.
 
 ---
 

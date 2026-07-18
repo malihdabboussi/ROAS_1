@@ -60,7 +60,7 @@ For each concept, lock four things before writing it up:
 
 1. **The mechanism** — which named device from the catalog.
 2. **The emotional truth** — the specific thing the buyer feels (called out, caught, ashamed, hopeful, vindicated). Specific beats broad: not "they want more clients," but "they're tired of bribing realtors with donuts to get a meeting."
-3. **The line** — the actual headline / on-image words. This is the words that ship, so it follows the same no-AI-smell bar as all ROAS copy (run it through the human-copy standard at `references/human-written-copy.md`). One accented word/phrase in the line is good (CHOSEN, DONUTS, FAR FROM GOD) — the design skill highlights it.
+3. **The line** — the actual headline / on-image words. This is the copy that ships, so run it through the `dylans-super-voice` Human Enforcement layer. One accented word or phrase is good; the design skill highlights it.
 4. **The visual** — what the image literally is. The visual must *do work*: literalize the metaphor, show the quiet-evidence artifact, or stage the split. No decorative stock-photo-of-a-smiling-person concepts — if the picture is interchangeable with any other ad, the concept is dead.
 
 **Cover both emotional poles across the set.** The same idea often runs as fear (man falling off the cliff) AND aspiration (man walking through the door to a new skyline). A good spread of 5-10 isn't all doom and isn't all dream — it gives the buyer both directions to test.
@@ -114,4 +114,4 @@ Save to `/mnt/user-data/outputs/` and present it. Offer a DOCX (for the client) 
 - **Too safe / too generic.** If it could run for any coach in any niche, it's not a concept yet. The winners are niche-specific and slightly uncomfortable.
 - **All one emotional pole.** All-fear is exhausting; all-aspiration is toothless. Give both across the set.
 - **Forgetting the handoff.** Each concept must carry a real line + a real visual so it drops straight into copy and design. A vague "do something about work-life balance" isn't a concept.
-- **AI smell in the lines.** The headline ships. No em-dashes-as-drama, no triplets, no "it's not X, it's Y" unless it's genuinely sharp. Run lines through `references/human-written-copy.md`.
+- **AI smell in the lines.** The headline ships. Run every line through `dylans-super-voice` before handoff.

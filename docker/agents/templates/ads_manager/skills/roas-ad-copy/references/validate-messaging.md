@@ -69,4 +69,4 @@ Always label which segment each line targets so the buyer knows what they're tes
 - Specific person, specific situation. If it could apply to anyone, it's too broad.
 - The reader should feel slightly called out, like you read their mind.
 - Same offer/promise across all variations. Only the entry point changes.
-- Run them through `references/human-written-copy.md` like everything else. No AI tells, no forbidden words, no triplets.
+- Run them through `dylans-super-voice` like everything else. No AI tells, forbidden words, or mechanical triplets.

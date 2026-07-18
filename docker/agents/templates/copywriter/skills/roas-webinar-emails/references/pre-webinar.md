@@ -39,7 +39,7 @@ Escalating brevity as it counts down. Each email paired with an SMS from the 1-h
 - **4 hours before** — "here's exactly what you're walking into." Walk the 5 things they'll see, with named case studies and numbers. "Bring something to write with." Builds the value frame right before go-time.
 - **1 hour before** — "1 hour." Short. The single biggest promise + link. SMS paired.
 - **15 minutes before** — "starting in 15... here's your link." Just the join link. SMS paired.
-- **Live now (5 min after start)** — the re-click trick. "Some people had issues with the link so I reset it on Zoom. Try this one: [link]. We already started, hop in." This legitimate-sounding reset recovers people who ignored every earlier reminder and is the highest-leverage pre-webinar send. SMS paired.
+- **Live now (5 min after start)** — last-minute hype and FOMO. Default subject: "Live on Zoom, waiting for you." Keep it short: "We're live now. Join us here: [link]." An approved variation is: "If you couldn't get in, try this link: [link]." Only mention actual access issues when they are known. SMS paired.
 
 ---
 

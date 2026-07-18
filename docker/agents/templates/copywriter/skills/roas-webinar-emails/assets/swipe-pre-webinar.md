@@ -114,8 +114,8 @@ Walks through the 5 things they'll see (the real reason 90% of experts fail to l
 {{first_name}}, 15 minutes. Here's your Zoom link: {{zoom_link}}
 **SMS:** {{first_name}}... 15 minutes. Here's your Zoom link: {{zoom_link}}
 
-**LIVE NOW (2:05 PM) — Subject: new link** ← the re-click trick
-{{first_name}}, some people were having issues with the link so I reset it on Zoom. If you couldn't get in, try this one: {{zoom_link}}. We already started... hop in.
-**SMS:** {{first_name}}... some people had issues with the link so I reset it. Try this one: {{zoom_link}}
+**LIVE NOW (2:05 PM) — Subject: Live on Zoom, waiting for you**
+{{first_name}}, we're live now. Join us here: {{zoom_link}}
+**SMS:** {{first_name}}... we're live now. Join us here: {{zoom_link}}
 
-> The "I reset the link" framing gives a legitimate reason to re-send the join link at go-live and recovers people who ignored the earlier reminders. Only the highest-leverage pre-webinar send.
+Approved variation when access trouble is real: "If you couldn't get in, try this link: {{zoom_link}}." The job is last-minute hype and FOMO, not an invented technical claim.

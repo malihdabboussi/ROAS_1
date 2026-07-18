@@ -5,11 +5,13 @@ describe('formatWebinarSubtaskTitle', () => {
   it('numbers agent tasks and strips skill slugs', () => {
     expect(
       formatWebinarSubtaskTitle('Pre-call strategy map (auto-skill-1-roas-precall-strategy)'),
-    ).toBe('Task 1 — Pre-call strategy map')
+    ).toBe('Task 2 — Pre-call strategy map')
     expect(formatWebinarSubtaskTitle('Copy Package (roas-webinar-copy-package)')).toBe(
-      'Task 5 — Copy Package',
+      'Task 7 — Complete webinar copy package',
     )
-    expect(formatWebinarSubtaskTitle('Task 5 — Copy Package')).toBe('Task 5 — Copy Package')
+    expect(formatWebinarSubtaskTitle('Task 7 — Complete webinar copy package')).toBe(
+      'Task 7 — Complete webinar copy package',
+    )
   })
 
   it('leaves gates numbered without rewriting approve copy', () => {

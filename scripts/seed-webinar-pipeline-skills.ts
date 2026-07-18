@@ -48,9 +48,15 @@ const SKILLS: SkillSeed[] = [
   },
   {
     skillKey: 'roas-ad-design',
-    templateKeys: ['ads_manager'],
+    templateKeys: ['designer'],
     diskAgent: 'ads_manager',
     category: 'agency_ads',
+  },
+  {
+    skillKey: 'roas-ad-copy',
+    templateKeys: ['copywriter'],
+    diskAgent: 'ads_manager',
+    category: 'agency_copy',
   },
   {
     skillKey: 'roas-webinar-audit',

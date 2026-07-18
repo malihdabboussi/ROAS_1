@@ -38,13 +38,12 @@ export function intent(parts: {
 /** Stable Space/mission doc titles for the webinar fulfillment flow (WEB#N). */
 export const WEBINAR_FLOW_DOCS = {
   precall: 'WEB#1 — Pre-Call Strategy Map',
-  strategyV2: 'WEB#2 — Strategy v2',
+  strategyV2: 'WEB#2 — Post-Call Strategy Map',
   thePlan: 'WEB#3 — THE PLAN — Launch Brief',
   marketResearch: 'WEB#4 — Market Research',
   copyPackage: 'WEB#5 — Copy Package',
   imageBriefs: 'WEB#6 — Image Briefs',
-  deckOutline: 'WEB#7 — Deck Outline v1',
-  creativePack: 'WEB#8 — Creative Pack',
+  mediaPlan: 'WEB#7 — Media Plan',
 } as const
 
 /** Agent work steps numbered in playbook order (gates stay Gate 1/2/3). */
@@ -53,28 +52,36 @@ export function taskTitle(n: number, label: string): string {
 }
 
 export const WEBINAR_FLOW_TASKS = {
-  precall: taskTitle(1, 'Pre-call strategy map'),
-  strategyV2: taskTitle(2, 'Strategy v2 after call'),
-  thePlan: taskTitle(3, 'THE PLAN launch brief'),
-  marketResearch: taskTitle(4, 'Market research'),
-  copyPackage: taskTitle(5, 'Copy Package'),
-  staticAds: taskTitle(6, 'Static ads'),
-  imageBriefs: taskTitle(7, 'Image briefs'),
-  funnelDesign: taskTitle(8, 'Funnel design'),
-  deckOutline: taskTitle(9, 'Deck Outline v1'),
-  deckBuild: taskTitle(10, 'Webinar Deck v1'),
+  atlasContext: taskTitle(1, 'Atlas context preparation'),
+  precall: taskTitle(2, 'Pre-call strategy map'),
+  atlasTranscript: taskTitle(3, 'Atlas call and transcript intake'),
+  strategyV2: taskTitle(4, 'Post-call strategy map'),
+  thePlan: taskTitle(5, 'THE PLAN launch brief'),
+  marketResearch: taskTitle(6, 'Market research'),
+  copyPackage: taskTitle(7, 'Complete webinar copy package'),
+  staticAds: taskTitle(8, 'Static Meta ads'),
+  imageBriefs: taskTitle(9, 'Image briefs'),
+  funnelDesign: taskTitle(10, 'Native webinar funnel'),
+  deckBones: taskTitle(11, 'Webinar Deck Bones'),
+  mediaPlan: taskTitle(12, 'Media plan'),
 } as const
 
 export const WEBINAR_FLOW_GATES = {
-  gate1: 'Gate 1 — approve strategy package',
-  gate2: 'Gate 2 — approve Copy Package',
-  gate3: 'Gate 3 — approve Deck Outline v1',
+  precall: 'Gate 1 — review pre-call map and provide call',
+  strategy: 'Gate 2 — approve strategy and client message',
+  copy: 'Gate 3 — approve Copy Package',
+  production: 'Gate 4 — approve production package',
 } as const
 
 /** Legacy titles still present on older Spaces — used for dual-write matching. */
 export const WEBINAR_FLOW_DOC_ALIASES: Record<string, string[]> = {
   [WEBINAR_FLOW_DOCS.precall]: ['Pre-Call Strategy Map', WEBINAR_FLOW_DOCS.precall],
-  [WEBINAR_FLOW_DOCS.strategyV2]: ['Strategy v2', WEBINAR_FLOW_DOCS.strategyV2],
+  [WEBINAR_FLOW_DOCS.strategyV2]: [
+    'Strategy v2',
+    'WEB#2 — Strategy v2',
+    'Post-Call Strategy Map',
+    WEBINAR_FLOW_DOCS.strategyV2,
+  ],
   [WEBINAR_FLOW_DOCS.thePlan]: ['THE PLAN — Launch Brief', 'THE PLAN', WEBINAR_FLOW_DOCS.thePlan],
   [WEBINAR_FLOW_DOCS.marketResearch]: [
     'Market Research',
@@ -83,13 +90,12 @@ export const WEBINAR_FLOW_DOC_ALIASES: Record<string, string[]> = {
   ],
   [WEBINAR_FLOW_DOCS.copyPackage]: ['Copy Package', WEBINAR_FLOW_DOCS.copyPackage],
   [WEBINAR_FLOW_DOCS.imageBriefs]: ['Image Briefs', WEBINAR_FLOW_DOCS.imageBriefs],
-  [WEBINAR_FLOW_DOCS.deckOutline]: ['Deck Outline v1', WEBINAR_FLOW_DOCS.deckOutline],
-  [WEBINAR_FLOW_DOCS.creativePack]: ['Creative Pack', WEBINAR_FLOW_DOCS.creativePack],
+  [WEBINAR_FLOW_DOCS.mediaPlan]: ['Media Plan', WEBINAR_FLOW_DOCS.mediaPlan],
 }
 
-export function docContract(title: string): NonNullable<
-  MissionPlaybookPlanResult['subtasks'][number]['outputContract']
-> {
+export function docContract(
+  title: string,
+): NonNullable<MissionPlaybookPlanResult['subtasks'][number]['outputContract']> {
   return {
     artifact_kind: 'document_artifact',
     required_action: 'save_document',
@@ -109,9 +115,9 @@ export function funnelContract(): NonNullable<
   }
 }
 
-export function presentationContract(title: string): NonNullable<
-  MissionPlaybookPlanResult['subtasks'][number]['outputContract']
-> {
+export function presentationContract(
+  title: string,
+): NonNullable<MissionPlaybookPlanResult['subtasks'][number]['outputContract']> {
   return {
     artifact_kind: 'presentation_artifact',
     required_action: 'create_presentation',
@@ -120,9 +126,9 @@ export function presentationContract(title: string): NonNullable<
   }
 }
 
-export function adContract(title: string): NonNullable<
-  MissionPlaybookPlanResult['subtasks'][number]['outputContract']
-> {
+export function adContract(
+  title: string,
+): NonNullable<MissionPlaybookPlanResult['subtasks'][number]['outputContract']> {
   return {
     artifact_kind: 'ad_artifact',
     required_action: 'create_ad',

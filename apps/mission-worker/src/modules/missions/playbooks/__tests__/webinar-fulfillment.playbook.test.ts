@@ -23,25 +23,28 @@ describe('webinar-fulfillment playbook', () => {
     managerKey: 'vibey',
   }
 
-  it('expands pre_call into Phase A→Gate1→research→copy→Gate2→Phase C→Gate3→deck', () => {
+  it('expands the approved Atlas, strategy, copy, production, and media flow', () => {
     const plan = expandWebinarFulfillmentPlaybook(base)
     expect(plan.subtasks.map((s) => s.id)).toEqual([
+      'st-atlas-context',
       'st-precall',
+      'st-gate-precall',
+      'st-atlas-transcript',
       'st-strategy-v2',
       'st-launch-brief',
-      'st-gate-1',
+      'st-gate-strategy',
       'st-market-research',
       'st-copy-package',
-      'st-gate-2',
+      'st-gate-copy',
       'st-ad-design',
       'st-image-brief',
       'st-funnel-design',
-      'st-deck-outline',
-      'st-gate-3',
-      'st-deck-build',
+      'st-deck-bones',
+      'st-media-plan',
+      'st-gate-production',
     ])
-    expect(plan.subtasks[0]?.assignTo).toBe('strategist')
-    expect(plan.subtasks.find((s) => s.id === 'st-gate-1')?.assignTo).toBe(
+    expect(plan.subtasks[0]?.assignTo).toBe('atlas')
+    expect(plan.subtasks.find((s) => s.id === 'st-gate-precall')?.assignTo).toBe(
       `human:${base.mission.user_id}`,
     )
     expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.assignTo).toBe('ads_manager')
@@ -52,29 +55,19 @@ describe('webinar-fulfillment playbook', () => {
         title: 'WEB#5 — Copy Package',
       },
     )
-    expect(plan.subtasks.map((s) => s.title)).toEqual([
-      'Task 1 — Pre-call strategy map',
-      'Task 2 — Strategy v2 after call',
-      'Task 3 — THE PLAN launch brief',
-      'Gate 1 — approve strategy package',
-      'Task 4 — Market research',
-      'Task 5 — Copy Package',
-      'Gate 2 — approve Copy Package',
-      'Task 6 — Static ads',
-      'Task 7 — Image briefs',
-      'Task 8 — Funnel design',
-      'Task 9 — Deck Outline v1',
-      'Gate 3 — approve Deck Outline v1',
-      'Task 10 — Webinar Deck v1',
-    ])
-    expect(plan.subtasks.find((s) => s.id === 'st-gate-2')?.intent.ecology).toMatch(
+    expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.assignTo).toBe('designer')
+    expect(plan.subtasks.find((s) => s.id === 'st-media-plan')?.assignTo).toBe('ads_manager')
+    expect(plan.subtasks.find((s) => s.id === 'st-gate-copy')?.intent.ecology).toMatch(
       /re-run ONLY the owning skill/i,
     )
     expect(plan.subtasks.find((s) => s.id === 'st-funnel-design')?.intent.ecology).toMatch(
       /WITHOUT reshaping/,
     )
-    expect(plan.subtasks.find((s) => s.id === 'st-deck-build')?.intent.ecology).toMatch(
-      /NEVER export/,
+    expect(plan.subtasks.find((s) => s.id === 'st-deck-bones')?.intent.ecology).toMatch(
+      /10.?20 slides/i,
+    )
+    expect(plan.subtasks.find((s) => s.id === 'st-deck-bones')?.intent.ecology).toMatch(
+      /offer stack/i,
     )
     expect(plan.capability_gap).toEqual({ exists: false, note: '', suggested_hire: '' })
     expect(plan.harness.contextSnapshot.missing).not.toContain(
@@ -94,10 +87,10 @@ describe('webinar-fulfillment playbook', () => {
       },
     })
     expect(plan.subtasks.map((s) => s.id).slice(0, 4)).toEqual([
+      'st-atlas-context',
+      'st-atlas-transcript',
       'st-strategy-v2',
       'st-launch-brief',
-      'st-gate-1',
-      'st-market-research',
     ])
     expect(plan.subtasks.some((s) => s.id === 'st-copy-package')).toBe(true)
   })
@@ -111,9 +104,9 @@ describe('webinar-fulfillment playbook', () => {
       },
     })
     expect(plan.subtasks.map((s) => s.id).slice(0, 3)).toEqual([
+      'st-atlas-context',
       'st-launch-brief',
-      'st-gate-1',
-      'st-market-research',
+      'st-gate-strategy',
     ])
   })
 
@@ -126,7 +119,7 @@ describe('webinar-fulfillment playbook', () => {
       ...base,
       workerAgentKeys: ['nate', 'ivy', 'blaze', 'lux'],
     })
-    expect(plan.subtasks[0]?.assignTo).toBe('nate')
+    expect(plan.subtasks.find((s) => s.id === 'st-precall')?.assignTo).toBe('nate')
     expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.assignTo).toBe('blaze')
     expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.assignTo).toBe('ivy')
     expect(plan.subtasks.find((s) => s.id === 'st-funnel-design')?.assignTo).toBe('lux')
@@ -138,22 +131,28 @@ describe('webinar-fulfillment playbook', () => {
       mission: { ...base.mission, org_id: null },
     })
     const ids = plan.subtasks.map((s) => s.id)
-    expect(ids).toContain('st-gate-1')
-    expect(ids).toContain('st-gate-2')
-    expect(ids).toContain('st-gate-3')
-    expect(plan.subtasks.find((s) => s.id === 'st-gate-1')?.assignTo).toBe(
+    expect(ids).toContain('st-gate-precall')
+    expect(ids).toContain('st-gate-strategy')
+    expect(ids).toContain('st-gate-copy')
+    expect(ids).toContain('st-gate-production')
+    expect(plan.subtasks.find((s) => s.id === 'st-gate-precall')?.assignTo).toBe(
       `human:${base.mission.user_id}`,
     )
     expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.dependsOn).toEqual([
-      'st-gate-1',
+      'st-gate-strategy',
     ])
-    expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.dependsOn).toEqual(['st-gate-2'])
-    expect(plan.subtasks.find((s) => s.id === 'st-deck-build')?.dependsOn).toEqual(['st-gate-3'])
+    expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.dependsOn).toEqual(['st-gate-copy'])
+    expect(plan.subtasks.find((s) => s.id === 'st-media-plan')?.dependsOn).toEqual([
+      'st-ad-design',
+      'st-image-brief',
+      'st-funnel-design',
+      'st-deck-bones',
+    ])
   })
 
   it('wires Gate 2 REVIEW MAP owners for surgical reject', () => {
     const plan = expandWebinarFulfillmentPlaybook(base)
-    const gate2 = plan.subtasks.find((s) => s.id === 'st-gate-2')
+    const gate2 = plan.subtasks.find((s) => s.id === 'st-gate-copy')
     expect(gate2?.intent.ecology).toContain('3→roas-ad-copy')
     expect(gate2?.intent.ecology).toContain('{{run.review_feedback}}')
   })
