@@ -30,6 +30,8 @@ export type PageGraderAssignee = {
   email: string | null
 }
 
+export type PageGraderClientPackage = Record<string, unknown>
+
 @Injectable()
 export class PageGraderIntegration {
   private readonly logger = new Logger(PageGraderIntegration.name)
@@ -155,5 +157,35 @@ export class PageGraderIntegration {
     const work = body.work as PageGraderWorkResult | undefined
     if (!work?.id) throw new BadRequestException('Page Grader create work returned no work id')
     return { work, status: res.status }
+  }
+
+  async getClientBrainPackage(
+    baseUrl: string,
+    apiKey: string,
+    clientId: string,
+  ): Promise<PageGraderClientPackage> {
+    const id = clientId.trim()
+    if (!id) throw new BadRequestException('Page Grader client id is required')
+    const url = `${this.normalizeBaseUrl(baseUrl)}/clients/${encodeURIComponent(id)}/brain-package`
+    const res = await fetch(url, { headers: this.authHeaders(apiKey) })
+    const text = await res.text().catch(() => '')
+    let body: Record<string, unknown> = {}
+    try {
+      body = text ? (JSON.parse(text) as Record<string, unknown>) : {}
+    } catch {
+      body = { error: text }
+    }
+    if (!res.ok) {
+      const errMsg =
+        typeof body.error === 'string' ? body.error : text || res.statusText || 'Request failed'
+      throw new BadRequestException(
+        `Page Grader client package fetch failed (${res.status}): ${errMsg}`,
+      )
+    }
+    const pkg = body.package
+    if (!pkg || typeof pkg !== 'object' || Array.isArray(pkg)) {
+      throw new BadRequestException('Page Grader client package response was empty')
+    }
+    return pkg as PageGraderClientPackage
   }
 }

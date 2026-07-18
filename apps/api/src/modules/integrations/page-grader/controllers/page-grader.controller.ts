@@ -21,17 +21,22 @@ import {
 } from '@vibey/api-shared'
 import {
   ConnectPageGraderSchema,
+  ImportPageGraderClientBrainSchema,
   ListPageGraderAssigneesSchema,
   ListPageGraderClientsSchema,
   SendPageGraderWorkSchema,
   UpsertPageGraderClientScopeMapSchema,
 } from '../dto/page-grader.dto'
 import { PageGraderApiService } from '../services/page-grader-api.service'
+import { PageGraderBrainImportService } from '../services/page-grader-brain-import.service'
 
 @Controller('integrations/page-grader')
 @UseGuards(AuthGuard, OrgContextGuard, OrgRoleGuard)
 export class PageGraderController {
-  constructor(private readonly api: PageGraderApiService) {}
+  constructor(
+    private readonly api: PageGraderApiService,
+    private readonly brainImport: PageGraderBrainImportService,
+  ) {}
 
   @Get('status')
   @RequireOrgRole('viewer')
@@ -50,11 +55,7 @@ export class PageGraderController {
         HttpStatus.BAD_REQUEST,
       )
     }
-    const result = await this.api.connect(
-      user.id,
-      validation.data.baseUrl,
-      validation.data.apiKey,
-    )
+    const result = await this.api.connect(user.id, validation.data.baseUrl, validation.data.apiKey)
     return { success: true, ...result }
   }
 
@@ -118,6 +119,24 @@ export class PageGraderController {
     }
     const result = await this.api.upsertClientScopeMap(user.id, validation.data)
     return { success: true, ...result }
+  }
+
+  @Post('import-client-brain')
+  @RequireOrgRole('editor')
+  async importClientBrain(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @Body() body: unknown,
+    @OrgContext() scope: RequestScope,
+  ) {
+    const validation = ImportPageGraderClientBrainSchema.safeParse(body)
+    if (!validation.success) {
+      throw new HttpException(
+        { success: false, error: 'Invalid request', details: validation.error.flatten() },
+        HttpStatus.BAD_REQUEST,
+      )
+    }
+    return this.brainImport.importClientBrain(supabase, user.id, validation.data, scope.orgId)
   }
 
   @Post('send')

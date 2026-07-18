@@ -71,6 +71,16 @@ export const UpsertPageGraderClientScopeMapSchema = z.object({
   mappings: z.array(PageGraderClientScopeMappingSchema).max(200),
 })
 
-export type UpsertPageGraderClientScopeMapDto = z.infer<
-  typeof UpsertPageGraderClientScopeMapSchema
->
+export type UpsertPageGraderClientScopeMapDto = z.infer<typeof UpsertPageGraderClientScopeMapSchema>
+
+export const ImportPageGraderClientBrainSchema = z.object({
+  client_id: z.string().uuid(),
+  dryRun: z.boolean().optional(),
+  campaignId: z.string().uuid().optional(),
+  campaignName: z.string().min(1).max(500).optional(),
+  campaignHint: z.string().min(1).max(200).optional(),
+  spaceId: z.string().uuid().optional(),
+  spaceTitle: z.string().min(1).max(500).optional(),
+})
+
+export type ImportPageGraderClientBrainDto = z.infer<typeof ImportPageGraderClientBrainSchema>
