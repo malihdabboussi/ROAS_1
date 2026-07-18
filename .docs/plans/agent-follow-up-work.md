@@ -7300,5 +7300,10 @@ Files:
 - Needed work: Split action schemas into domain-owned catalogs while preserving the existing merged registry, lifecycle classifications, preflight coverage, and drift tests.
 - Why not now: The presentation repair only changes the existing presentation schema. Decomposing every unrelated action family would materially expand scope and regression risk.
 
-## Deferred
-- Sidebar campaign flyout Browse templates fix deferred: SidebarHqSpacesGroupedList 487/400 LOC; extract before shipping.
+## 2026-07-18 — Sidebar campaign grouping component exceeds frontend LOC limit
+
+- Feature/app: web / shared sidebar Campaign and Space navigation
+- File: `apps/web/src/components/layout/sidebar/SidebarHqSpacesGroupedList.tsx`
+- Evidence: The Campaign template-launcher fix touches a pre-existing 473-line component; focused ESLint reports `max-lines` against the 400-line frontend limit. The behavior fix itself adds no lines to this file.
+- Needed work: Extract the nested Campaign Space flyout and its state into a focused sibling component or hook before adding more sidebar creation behavior.
+- Why not now: The requested fix changes one launcher callback and is covered by a regression test; decomposing the entire shared Campaign/Space navigation surface would materially broaden the interaction regression surface.

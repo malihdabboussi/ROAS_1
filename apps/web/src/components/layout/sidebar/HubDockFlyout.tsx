@@ -24,7 +24,7 @@ export const HUB_DOCK_SUB_FLYOUT_OFFSET_PX = 0
 export type HubDockFlyoutHeaderAction = {
   kind: 'search' | 'plus'
   title: string
-  onClick: () => void
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void
 }
 
 type HubDockFlyoutProps = {
@@ -179,7 +179,7 @@ export function HubDockFlyout({
                 data-hub-dock-keep-open
                 onClick={(e) => {
                   e.stopPropagation()
-                  action.onClick()
+                  action.onClick(e)
                 }}
                 className={cn(
                   'hub-dock-flyout-header-btn',

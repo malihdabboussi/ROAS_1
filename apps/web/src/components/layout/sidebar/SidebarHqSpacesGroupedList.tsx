@@ -415,7 +415,7 @@ export function SidebarHqSpacesGroupedList({
             {
               kind: 'plus',
               title: 'New space',
-              onClick: () => startCreating(subBucketData.campaignId),
+              onClick: (event) => openAddDropdown(event, subBucketData.campaignId),
             },
           ]}
         >

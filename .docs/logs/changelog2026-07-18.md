@@ -98,3 +98,10 @@ Why: Valid webinar decks were displayed as zero slides while failed retries accu
 Impact: Saved HTML presentations now report their real slide count, incomplete creation attempts clean themselves up, agents can no longer create new React-TSX presentation artifacts through the legacy path, reviewers get direct Edit presentation and Prompt in chat controls, and generated webinar decks inherit verified campaign branding.
 
 Files: `packages/api-shared/src/services/presentation-slide-count.ts`, `apps/agent-api/src/modules/artifacts/`, `apps/api/src/modules/campaigns/services/artifacts-presentation-files.base.ts`, `apps/web/src/features/studio/`, `apps/web/src/features/spaces/components/artifacts/`, `docker/agents/templates/designer/skills/roas-webinar-deck/SKILL.md`, `supabase/migrations/20260718071000_presentation_bundle_slide_count_and_brand_contract.sql`, `scripts/arch/loc-allowlist.json`, presentation and utility documentation.
+
+## [2026-07-18 15:56] - [FIX]
+
+What: Routed the nested Campaign flyout's New space action through the existing Blank space / Browse templates launcher and added a regression test for campaign-scoped template browsing.
+Why: That entry point bypassed the shared launcher and went directly to name-only blank-space creation, making Space templates inaccessible.
+Impact: Creating a Space from a Campaign flyout now offers templates and keeps the selected Campaign as the creation destination.
+Files: `apps/web/src/components/layout/sidebar/HubDockFlyout.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqSpacesGroupedList.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqSpacesGroupedList.test.tsx`
