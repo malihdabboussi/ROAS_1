@@ -204,6 +204,8 @@ export class ComposioService {
       details.access_token ??
       ''
     const token = String(raw).trim()
-    return token || null
+    // Composio often returns the literal "REDACTED" instead of the OAuth token.
+    if (!token || token.toUpperCase() === 'REDACTED') return null
+    return token
   }
 }

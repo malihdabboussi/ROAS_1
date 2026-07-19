@@ -108,8 +108,14 @@ describe('GoogleDriveApiService', () => {
 
   it('creates an editable native Google Doc through the connected Drive account', async () => {
     const composio = {
-      executeTool: vi.fn(),
-      getAccessTokenForToolkit: vi.fn().mockResolvedValue('drive-token'),
+      executeTool: vi.fn().mockResolvedValue({
+        successful: true,
+        data: {
+          id: 'google-doc-1',
+          name: 'Launch plan',
+          mimeType: 'application/vnd.google-apps.document',
+        },
+      }),
     }
     const repo = {
       findConnectionMode: vi.fn().mockResolvedValue({
@@ -117,17 +123,6 @@ describe('GoogleDriveApiService', () => {
         metadata: { composio_connected_account_id: 'account-1' },
       }),
     }
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          id: 'google-doc-1',
-          name: 'Launch plan',
-          mimeType: 'application/vnd.google-apps.document',
-          webViewLink: 'https://docs.google.com/document/d/google-doc-1/edit',
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      ),
-    )
     const service = createService(composio, repo)
 
     await expect(
@@ -144,21 +139,15 @@ describe('GoogleDriveApiService', () => {
       webViewLink: 'https://docs.google.com/document/d/google-doc-1/edit',
     })
 
-    expect(composio.getAccessTokenForToolkit).toHaveBeenCalledWith(
+    expect(composio.executeTool).toHaveBeenCalledWith(
+      'GOOGLEDRIVE_CREATE_FILE_FROM_TEXT',
       'user-1',
-      'googledrive',
+      {
+        file_name: 'Launch plan',
+        text_content: '<h1>Launch plan</h1><p>Ship it.</p>',
+        mime_type: 'application/vnd.google-apps.document',
+      },
       'account-1',
     )
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining('https://www.googleapis.com/upload/drive/v3/files?'),
-      expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({ Authorization: 'Bearer drive-token' }),
-      }),
-    )
-    const request = fetchMock.mock.calls[0]?.[1]
-    expect(String(request?.body)).toContain('application/vnd.google-apps.document')
-    expect(String(request?.body)).toContain('<p>Ship it.</p>')
-    fetchMock.mockRestore()
   })
 })

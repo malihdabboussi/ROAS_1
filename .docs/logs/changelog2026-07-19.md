@@ -1,5 +1,19 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 13:05] - [FIX]
+
+What: Create Google Docs via Composio `GOOGLEDRIVE_CREATE_FILE_FROM_TEXT` instead of a raw Drive upload using a Composio-extracted OAuth token; treat Composio `REDACTED` tokens as missing.
+Why: Composio now redacts access tokens from `connectedAccounts.get`, so Open in Google Docs got a fake token and Google returned 401 → “Failed to create Google Doc”.
+Impact: Open in Google Docs works again with a connected Google Drive account. Hard-refresh after API deploy.
+Files: `google-drive-composio-files.service.ts`, `composio.service.ts` (api + agent-api), google-drive-api unit test
+
+## [2026-07-19 12:45] - [FIX]
+
+What: Home dashboard card order/size now persists on the user account (`profiles.preferences.home_layout`) via `PATCH /api/profile/preferences`, with a per-user localStorage cache (`vibey-home-layout:{userId}`) and one-shot migrate from the old global key.
+Why: Reorder only wrote device-local `vibey-home-layout`, so layouts were lost across browsers/devices and could leak between accounts on a shared browser.
+Impact: After API + web deploy, reorder Home once; the same layout loads when you sign in elsewhere. First Home visit claims any leftover global local layout into the signed-in account, then removes it.
+Files: `profile.controller.ts`, `profile.service.ts`, `profile-preferences.dto.ts`, `use-home-layout.ts`, `home-layout-api.ts`, `home-cards.config.ts`, agent preference dump skip for UI blobs
+
 ## [2026-07-19 12:44] - [FIX]
 
 What: Stopped integrations overview from remapping collapsed/disconnected Composio rows back to `connected`, clear shared `composio_connected_account_id` on duplicates, prefer active rows during personal sync, filter Manage + composio accounts to active statuses.
