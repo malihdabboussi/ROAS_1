@@ -8,11 +8,13 @@ import type {
 
 export async function fetchMissions(opts?: {
   campaign_id?: string
+  space_id?: string
   limit?: number
 }): Promise<Mission[]> {
   const params = new URLSearchParams()
   params.set('limit', String(opts?.limit ?? 50))
   if (opts?.campaign_id) params.set('campaign_id', opts.campaign_id)
+  if (opts?.space_id) params.set('space_id', opts.space_id)
   return backendGet<Mission[]>(`/api/missions?${params.toString()}`)
 }
 
@@ -34,6 +36,14 @@ export async function fetchMissionById(
 
 export async function createMission(input: CreateMissionInput): Promise<Mission> {
   return backendPost<Mission>('/api/missions', input)
+}
+
+export async function exportMissionDeliverablesGoogleDoc(missionId: string): Promise<{
+  success: boolean
+  tabCount: number
+  file: { id: string; name?: string; webViewLink?: string }
+}> {
+  return backendPost(`/api/missions/${missionId}/deliverables/export-google-doc`, {})
 }
 
 export async function fetchDeliverablesForMissions(

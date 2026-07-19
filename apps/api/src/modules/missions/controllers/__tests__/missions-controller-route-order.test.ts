@@ -31,6 +31,7 @@ const EXPECTED_MISSIONS_ROUTES = [
   'GET missions/:id -> getById',
   'GET missions/:id/plan -> getPlan',
   'GET missions/:id/deliverables -> getDeliverables',
+  'POST missions/:id/deliverables/export-google-doc -> exportDeliverablesGoogleDoc',
   'GET missions/:id/logs -> getLogs',
   'GET missions/:id/access-requests -> listAccessRequests',
   'POST missions -> create',

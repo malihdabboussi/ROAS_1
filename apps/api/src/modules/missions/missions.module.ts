@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { BillingModule } from '../billing/billing.module'
 import { BrainModule } from '../brain/brain.module'
+import { GoogleDriveModule } from '../integrations/google-drive/google-drive.module'
 import { MachinesModule } from '../machines/machines.module'
 import { MediaModule } from '../media/media.module'
 import { SpaceRetrievalModule } from '../space-retrieval/space-retrieval.module'
@@ -23,8 +24,8 @@ import { AgentCheckpointsRepository } from './repositories/agent-checkpoints.rep
 import { MissionAvatarRepository } from './repositories/mission-avatar.repository'
 import { MissionHumanSubtaskRepository } from './repositories/mission-human-subtask.repository'
 import { MissionInternalRepository } from './repositories/mission-internal.repository'
-import { MissionSkillSeederRepository } from './repositories/mission-skill-seeder.repository'
 import { MissionServiceRoleClientRepository } from './repositories/mission-service-role-client.repository'
+import { MissionSkillSeederRepository } from './repositories/mission-skill-seeder.repository'
 import { MissionsPlanDecisionRepository } from './repositories/missions-plan-decision.repository'
 import { MissionsUserOperationsRepository } from './repositories/missions-user-operations.repository'
 import { MissionsRepository } from './repositories/missions.repository'
@@ -33,10 +34,9 @@ import { AgentManagementService } from './services/agent-management.service'
 import { AgentOnboardingService } from './services/agent-onboarding.service'
 import { AgentProvisioningService } from './services/agent-provisioning.service'
 import { AgentSkillManagementService } from './services/agent-skill-management.service'
-import { SkillCatalogOrganizationService } from './services/skill-catalog-organization.service'
-import { WebinarFulfillmentTeamService } from './services/webinar-fulfillment-team.service'
 import { MissionAgentGatewayService } from './services/gateways/mission-agent-gateway.service'
 import { MissionAvatarService } from './services/media/mission-avatar.service'
+import { MissionDeliverablesGoogleExportService } from './services/mission-deliverables-google-export.service'
 import { MissionHumanSubtaskService } from './services/mission-human-subtask.service'
 import { MissionInternalService } from './services/mission-internal.service'
 import { MissionLifecycleNativeTxService } from './services/mission-lifecycle-native-tx.service'
@@ -53,14 +53,17 @@ import { MissionsInternalOperationsService } from './services/missions-internal-
 import { MissionsPlanDecisionService } from './services/missions-plan-decision.service'
 import { MissionsQueryService } from './services/missions-query.service'
 import { MissionsUserOperationsService } from './services/missions-user-operations.service'
+import { SkillCatalogOrganizationService } from './services/skill-catalog-organization.service'
 import { MissionSkillSeederService } from './services/skills/mission-skill-seeder.service'
 import { AgentTemplateCatalogSeederService } from './services/templates/agent-template-catalog-seeder.service'
 import { MissionAgentTemplateService } from './services/templates/mission-agent-template.service'
+import { WebinarFulfillmentTeamService } from './services/webinar-fulfillment-team.service'
 
 @Module({
   imports: [
     BillingModule,
     BrainModule,
+    GoogleDriveModule,
     MediaModule,
     MachinesModule,
     SpacesModule,
@@ -84,6 +87,7 @@ import { MissionAgentTemplateService } from './services/templates/mission-agent-
   ],
   providers: [
     MissionsQueryService,
+    MissionDeliverablesGoogleExportService,
     MissionsCreationService,
     MissionsExecutionService,
     MissionsAccessApprovalService,

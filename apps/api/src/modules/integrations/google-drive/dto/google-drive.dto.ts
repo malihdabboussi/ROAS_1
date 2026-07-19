@@ -23,3 +23,16 @@ export const CreateGoogleDocSchema = z.object({
   title: z.string().trim().min(1).max(250),
   html: z.string().trim().min(1).max(5_000_000),
 })
+
+export const CreateGoogleDocTabsSchema = z.object({
+  title: z.string().trim().min(1).max(250),
+  tabs: z
+    .array(
+      z.object({
+        title: z.string().trim().min(1).max(250),
+        html: z.string().trim().min(1).max(5_000_000),
+      }),
+    )
+    .min(1)
+    .max(40),
+})

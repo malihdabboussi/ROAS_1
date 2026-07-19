@@ -27,6 +27,7 @@ interface MissionDetailMobileShellProps {
   accessApprovalCard: ReactNode
   deliverables: MissionDeliverable[]
   onSelectDeliverable: (deliverable: MissionDeliverable) => void
+  missionId: string
   activityTimelineProps: ComponentProps<typeof ActivityTimeline>
   overlayModals: ReactNode
 }
@@ -51,6 +52,7 @@ export function MissionDetailMobileShell({
   accessApprovalCard,
   deliverables,
   onSelectDeliverable,
+  missionId,
   activityTimelineProps,
   overlayModals,
 }: MissionDetailMobileShellProps) {
@@ -162,6 +164,7 @@ export function MissionDetailMobileShell({
             <DeliverablesCarousel
               deliverables={deliverables}
               onSelect={onSelectDeliverable}
+              missionId={missionId}
               taskSectionChrome={!selectedSubtask}
               defaultCollapsed={!selectedSubtask}
             />

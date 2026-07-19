@@ -1,6 +1,6 @@
 # Missions harness
 
-Last updated: 2026-07-17
+Last updated: 2026-07-19
 
 ## Full subtask workspace
 
@@ -97,6 +97,7 @@ Default behavior:
 - Mission creation from Space chat/action also ensures a `missions` Space view exists; the Spaces UI focuses that view after an agent-created mission and task-to-agent mission sends can open the Spaces new-mission modal.
 - Mission created outside a Space: `mission_visibility = 'private'`.
 - Campaign context (`campaign_id`) remains agent/reporting context and is not automatically the sharing boundary.
+- A Space Missions view requests and subscribes by its exact `space_id`, so sibling Spaces under the same campaign cannot display or receive each other's missions. Campaign-level mission screens continue to query by `campaign_id` when no Space scope is active.
 - Mission and subtask runtime session keys carry `campaign_id`, `space_id`, and `org_id` scope suffixes so tool-authored artifacts persist back to the same campaign and Space. Mission artifact creation refuses the legacy personal `General` campaign fallback when a mission session has no campaign scope.
 
 API read paths use `MissionPermissionsService` to filter mission lists and redact sensitive fields for view-only access. Sensitive mission detail endpoints such as logs, plans, subtasks, and deliverables require edit-level access.
@@ -124,7 +125,7 @@ The runner uses this as a deterministic gate:
 
 Task detail deliverables use the shared deliverable preview workspace used by Mission Control. Previews opened from inside a Mission or one of its subtasks appear as centered modals over the still-visible Mission workspace; they are not resizable side docks. General previews outside Mission/task context continue to slide in from the right below the app top bar, open at 45% of the viewport, resize from the left edge, and expand to full screen. Space-backed docs mount the canonical editable Space editor inside either presentation, including Doc/Visual modes, the fixed rich-text toolbar, collapsed Fields, and autosave routed to the document's owning Space. `Open in Space` opens the same source item in its full Space destination. Agent `artifact_preview` activity blocks are normalized into `MissionDeliverable` entity pointers before preview, so entity-backed artifacts load their source row before export.
 
-The preview groups destination, Copy, downloads, expand/collapse, and close in the document header. Native Space docs also expose `Export to Google Docs`; the first export creates and opens the Google Doc and persists its file identity on the Space item, while later clicks reopen the same Google Doc. Text documents expose `Download as Markdown` and `Print as PDF` from the Copy split menu. Presentation entities expose HTML, PDF, and PowerPoint downloads; non-presentation entities keep PDF, Markdown, and JSON downloads. Direct file actions remain available for file-backed deliverables. Toolbar icon help uses the portaled tooltip component so nested task modals do not clip tooltip text.
+The preview groups destination, Copy, downloads, expand/collapse, and close in the document header. Native Space docs also expose `Export to Google Docs`; the first export creates and opens the Google Doc and persists its file identity on the Space item, while later clicks reopen the same Google Doc. Mission detail also exposes `Export all` on the Deliverables list: it creates one Google Doc titled `{Mission} — Deliverables` where each Space-doc deliverable becomes a native Google Docs tab (first tab via markdown create; additional tabs via Docs `addDocumentTab`). Text documents expose `Download as Markdown` and `Print as PDF` from the Copy split menu. Presentation entities expose HTML, PDF, and PowerPoint downloads; non-presentation entities keep PDF, Markdown, and JSON downloads. Direct file actions remain available for file-backed deliverables. Toolbar icon help uses the portaled tooltip component so nested task modals do not clip tooltip text.
 
 ## Mission attachment asset references
 
@@ -247,7 +248,9 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-19: Mission Deliverables `Export all` creates one Google Doc with each Space-doc deliverable as a native Docs tab (`POST /missions/:id/deliverables/export-google-doc`).
 - 2026-07-19: Added an authoritative execution timestamp to Mission prompts so relative-date claims do not depend on model knowledge or unrelated document timestamps.
+- 2026-07-19: Made Space mission loading and realtime updates strictly `space_id`-scoped while preserving campaign-wide mission views, preventing a new Space from inheriting the completed mission history of sibling Spaces in the same campaign.
 - 2026-07-17: Split webinar Phase B into WEB#5A Copy Package and WEB#5B Landing Page Copy, made Dylan's Super Voice a verified requirement at every writing owner plus final assembly, and simplified client-facing ad and video-script formatting.
 - 2026-07-17: Added one-to-one Mission-step ↔ Space-Task correlation for concrete build work and made Webinar Fulfillment reconcile THE PLAN Build List into missing, assigned, production-blocking steps before copy and production begin.
 - 2026-07-17: Moved Webinar Fulfillment Market Research ahead of THE PLAN. THE PLAN now consumes the completed research document, and agent instructions forbid unsupported integration-availability claims.

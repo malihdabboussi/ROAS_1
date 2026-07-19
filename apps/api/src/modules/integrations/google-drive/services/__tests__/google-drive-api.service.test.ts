@@ -1,8 +1,9 @@
 import { BadRequestException } from '@nestjs/common'
 import { describe, expect, it, vi } from 'vitest'
-import { GoogleDriveComposioFilesService } from '../google-drive-composio-files.service'
-import { GoogleDriveComposioPayloadService } from '../google-drive-composio-payload.service'
 import { GoogleDriveApiService } from '../google-drive-api.service'
+import { GoogleDriveComposioFilesService } from '../google-drive-composio-files.service'
+import { GoogleDriveComposioMultiTabDocsService } from '../google-drive-composio-multi-tab-docs.service'
+import { GoogleDriveComposioPayloadService } from '../google-drive-composio-payload.service'
 import { GoogleDriveContentCacheService } from '../google-drive-content-cache.service'
 
 describe('GoogleDriveApiService', () => {
@@ -17,6 +18,7 @@ describe('GoogleDriveApiService', () => {
     return new GoogleDriveApiService(
       repo as never,
       new GoogleDriveComposioFilesService(composio as never, payload),
+      new GoogleDriveComposioMultiTabDocsService(composio as never, payload),
       new GoogleDriveContentCacheService(),
     )
   }
