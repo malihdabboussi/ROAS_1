@@ -190,7 +190,7 @@ export class PageGraderClientImportService {
     let query = supabase.from('campaigns').select('*').eq('id', campaignId).is('deleted_at', null)
     query = orgId ? query.eq('org_id', orgId) : query.eq('user_id', userId).is('org_id', null)
     const { data, error } = await query.maybeSingle()
-    if (error) throw new Error(`DB error: ${error.message}`)
+    if (error) throw new BadRequestException(`Could not load campaign: ${error.message}`)
     return data
   }
 
@@ -223,7 +223,8 @@ export class PageGraderClientImportService {
         ? query.eq('org_id', input.orgId)
         : query.eq('user_id', input.userId).is('org_id', null)
       const { data, error } = await query.maybeSingle()
-      if (error) throw new Error(`DB error: ${error.message}`)
+      if (error)
+        throw new BadRequestException(`Could not look up Page Grader campaign: ${error.message}`)
       if (data) return data
     }
 
@@ -245,7 +246,8 @@ export class PageGraderClientImportService {
         user_id: input.userId,
         org_id: input.orgId,
         name: input.name,
-        campaign_type: 'strategy',
+        // campaigns.campaign_type CHECK allows only these values (see schema.sql).
+        campaign_type: 'get-more-leads',
         status: 'active',
         config: {
           source: 'page_grader',
@@ -255,7 +257,7 @@ export class PageGraderClientImportService {
       })
       .select()
       .single()
-    if (error) throw new Error(`DB error: ${error.message}`)
+    if (error) throw new BadRequestException(`Could not create campaign: ${error.message}`)
     return data
   }
 
@@ -269,7 +271,8 @@ export class PageGraderClientImportService {
       .eq('campaign_id', input.campaignId)
       .limit(1)
       .maybeSingle()
-    if (existingError) throw new Error(`DB error: ${existingError.message}`)
+    if (existingError)
+      throw new BadRequestException(`Could not load campaign brain: ${existingError.message}`)
     if (existing?.id) return existing
 
     const { data, error } = await supabase
@@ -287,7 +290,7 @@ export class PageGraderClientImportService {
       .select('id')
       .single()
     if (error && !error.message.includes('idx_ns_brains_campaign')) {
-      throw new Error(`DB error: ${error.message}`)
+      throw new BadRequestException(`Could not create campaign brain: ${error.message}`)
     }
     return data
   }
@@ -301,7 +304,7 @@ export class PageGraderClientImportService {
     let query = supabase.from('spaces').select('*').eq('id', spaceId)
     query = orgId ? query.eq('org_id', orgId) : query.eq('user_id', userId).is('org_id', null)
     const { data, error } = await query.maybeSingle()
-    if (error) throw new Error(`DB error: ${error.message}`)
+    if (error) throw new BadRequestException(`Could not load space: ${error.message}`)
     return data
   }
 
@@ -320,7 +323,7 @@ export class PageGraderClientImportService {
       .limit(1)
     query = orgId ? query.eq('org_id', orgId) : query.eq('user_id', userId).is('org_id', null)
     const { data, error } = await query.maybeSingle()
-    if (error) throw new Error(`DB error: ${error.message}`)
+    if (error) throw new BadRequestException(`Could not load campaign space: ${error.message}`)
     return data
   }
 
@@ -362,7 +365,7 @@ export class PageGraderClientImportService {
       })
       .select()
       .single()
-    if (error) throw new Error(`DB error: ${error.message}`)
+    if (error) throw new BadRequestException(`Could not create space: ${error.message}`)
     return data
   }
 

@@ -106,7 +106,7 @@ describe('PageGraderClientImportService', () => {
         user_id: 'user-1',
         org_id: 'org-1',
         name: 'Multi-Family Strategy',
-        campaign_type: 'strategy',
+        campaign_type: 'get-more-leads',
       }),
     )
     expect(spaceQuery.insert).toHaveBeenCalledWith(

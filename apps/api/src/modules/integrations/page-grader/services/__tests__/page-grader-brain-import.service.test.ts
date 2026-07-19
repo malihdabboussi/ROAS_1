@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { PageGraderBrainImportService } from '../page-grader-brain-import.service'
 
 describe('PageGraderBrainImportService', () => {
-  it('pulls a Page Grader client package and imports it into ROAS', async () => {
+  it('pulls a Page Grader client package, imports it, and persists the client scope map', async () => {
     const pageGrader = {
       getClientBrainPackage: vi.fn().mockResolvedValue({
         envelope: { page_grader_client_id: '11111111-1111-1111-1111-111111111111' },
@@ -19,14 +19,20 @@ describe('PageGraderBrainImportService', () => {
     const clientImport = {
       importPackage: vi.fn().mockResolvedValue({
         success: true,
-        campaign: { id: 'campaign-1', name: 'Multi-Family Strategy' },
+        dryRun: false,
+        campaign: { action: 'create', id: 'campaign-1', name: 'Multi-Family Strategy' },
+        space: { action: 'create', id: 'space-1', title: 'Multi-Family Strategy' },
         brainImport: { jobId: 'job-1', status: 'queued' },
       }),
+    }
+    const api = {
+      mergeClientScopeEntry: vi.fn().mockResolvedValue({ client_scope_map: {} }),
     }
     const service = new PageGraderBrainImportService(
       pageGrader as never,
       vault as never,
       clientImport as never,
+      api as never,
     )
 
     const result = await service.importClientBrain(
@@ -55,10 +61,58 @@ describe('PageGraderBrainImportService', () => {
       }),
       { userId: 'user-1', orgId: 'org-1' },
     )
+    expect(api.mergeClientScopeEntry).toHaveBeenCalledWith('user-1', {
+      clientId: '11111111-1111-1111-1111-111111111111',
+      campaignId: 'campaign-1',
+      campaignName: 'Multi-Family Strategy',
+      spaceId: 'space-1',
+      spaceTitle: 'Multi-Family Strategy',
+    })
     expect(result).toMatchObject({
       success: true,
       campaign: { id: 'campaign-1' },
       brainImport: { jobId: 'job-1' },
     })
+  })
+
+  it('skips scope-map persistence on dryRun', async () => {
+    const pageGrader = {
+      getClientBrainPackage: vi.fn().mockResolvedValue({
+        envelope: { page_grader_client_id: '11111111-1111-1111-1111-111111111111' },
+        client: { name: '1DS Collective' },
+      }),
+    }
+    const vault = {
+      getSecret: vi.fn(async () => 'secret'),
+    }
+    const clientImport = {
+      importPackage: vi.fn().mockResolvedValue({
+        success: true,
+        dryRun: true,
+        campaign: { action: 'create', id: null, name: '1DS Collective' },
+      }),
+    }
+    const api = {
+      mergeClientScopeEntry: vi.fn(),
+    }
+    const service = new PageGraderBrainImportService(
+      pageGrader as never,
+      vault as never,
+      clientImport as never,
+      api as never,
+    )
+
+    await service.importClientBrain(
+      {} as never,
+      'user-1',
+      {
+        client_id: '11111111-1111-1111-1111-111111111111',
+        dryRun: true,
+        campaignName: '1DS Collective',
+      },
+      null,
+    )
+
+    expect(api.mergeClientScopeEntry).not.toHaveBeenCalled()
   })
 })

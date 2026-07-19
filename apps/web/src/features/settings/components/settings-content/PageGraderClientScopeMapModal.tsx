@@ -1,8 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { Brain, X } from 'lucide-react'
+import * as DialogPrimitive from '@radix-ui/react-dialog'
+import { Search, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns/campaign-api'
@@ -14,6 +14,8 @@ import {
   suggestCampaignForClient,
   type PageGraderClient,
 } from '../../services/page-grader-scope-api'
+import { filterPageGraderClientsByQuery } from './page-grader-client-scope-map'
+import { PageGraderClientScopeMapRow } from './PageGraderClientScopeMapRow'
 
 type DraftRow = {
   campaignId: string
@@ -37,6 +39,7 @@ export function PageGraderClientScopeMapModal({
   const [spaces, setSpaces] = useState<SpaceSummary[]>([])
   const [draft, setDraft] = useState<Record<string, DraftRow>>({})
   const [importingClientId, setImportingClientId] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -80,6 +83,7 @@ export function PageGraderClientScopeMapModal({
 
   useEffect(() => {
     if (!open) return
+    setQuery('')
     void load()
   }, [open, load])
 
@@ -93,6 +97,11 @@ export function PageGraderClientScopeMapModal({
     }
     return map
   }, [spaces])
+
+  const filteredClients = useMemo(
+    () => filterPageGraderClientsByQuery(clients, query),
+    [clients, query],
+  )
 
   const mappedCount = Object.values(draft).filter((row) => row.campaignId).length
 
@@ -130,25 +139,81 @@ export function PageGraderClientScopeMapModal({
 
   const handleImportBrain = async (client: PageGraderClient) => {
     const row = draft[client.id]
-    const campaign = row?.campaignId ? campaigns.find((c) => c.id === row.campaignId) : null
+    const mapped = Boolean(row?.campaignId)
+    const campaign = mapped ? campaigns.find((c) => c.id === row?.campaignId) : null
     const space =
-      row?.spaceId && row.campaignId
+      mapped && row?.spaceId && row.campaignId
         ? spaces.find((s) => s.id === row.spaceId && s.campaign_id === row.campaignId)
         : null
 
     setImportingClientId(client.id)
     setError(null)
     try {
-      const result = await importPageGraderClientBrainForSettings({
-        clientId: client.id,
-        campaignId: campaign?.id,
-        campaignName: campaign?.name,
-        campaignHint: campaign?.name ?? client.name,
-        spaceId: space?.id ?? null,
-        spaceTitle: space?.title ?? null,
-      })
-      const campaignName = result.campaign?.name ?? campaign?.name ?? client.name
-      toast.success(`Imported ${client.name} into ${campaignName}`)
+      const result = await importPageGraderClientBrainForSettings(
+        mapped
+          ? {
+              clientId: client.id,
+              campaignId: campaign?.id,
+              campaignName: campaign?.name,
+              campaignHint: campaign?.name ?? client.name,
+              spaceId: space?.id ?? null,
+              spaceTitle: space?.title ?? null,
+            }
+          : {
+              clientId: client.id,
+              campaignName: client.name,
+              spaceTitle: client.name,
+            },
+      )
+      const campaignId = result.campaign?.id?.trim() ?? ''
+      const campaignName = result.campaign?.name?.trim() || campaign?.name || client.name
+      const spaceId = result.space?.id?.trim() ?? ''
+      const spaceTitle = result.space?.title?.trim() || client.name
+      const createdCampaign = result.campaign?.action === 'create' || !mapped
+
+      if (campaignId) {
+        setDraft((prev) => ({
+          ...prev,
+          [client.id]: { campaignId, spaceId },
+        }))
+        setCampaigns((prev) => {
+          if (prev.some((c) => c.id === campaignId)) return prev
+          return [
+            ...prev,
+            {
+              id: campaignId,
+              user_id: '',
+              name: campaignName,
+              campaign_type: 'get-more-leads',
+              status: 'active',
+              config: {},
+              metrics: {},
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+          ]
+        })
+        if (spaceId) {
+          setSpaces((prev) => {
+            if (prev.some((s) => s.id === spaceId)) return prev
+            return [
+              ...prev,
+              {
+                id: spaceId,
+                title: spaceTitle,
+                campaign_id: campaignId,
+                schema: { version: 1, fields: [], views: [] },
+              },
+            ]
+          })
+        }
+      }
+
+      toast.success(
+        createdCampaign
+          ? `Created ${campaignName} and started brain import`
+          : `Imported ${client.name} into ${campaignName}`,
+      )
       onSaved()
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Could not import Page Grader brain'
@@ -159,146 +224,120 @@ export function PageGraderClientScopeMapModal({
     }
   }
 
-  if (!open || typeof document === 'undefined') return null
-
-  return createPortal(
-    <div className="fixed inset-0 z-[100010] flex items-center justify-center p-4">
-      <button
-        type="button"
-        className="bg-modal-overlay absolute inset-0"
-        aria-label="Close"
-        onClick={onClose}
-      />
-      <div className="surface-card border-border relative z-[1] flex max-h-[80vh] w-full max-w-lg flex-col rounded-xl border shadow-lg">
-        <div className="border-border flex items-center justify-between gap-2 border-b px-4 py-3">
-          <div className="min-w-0">
-            <h3 className="body-2 text-foreground font-semibold">Map Page Grader clients</h3>
-            <p className="body-3 text-muted-foreground">
-              Link portal clients to ROAS campaigns (and optional spaces). Suggested matches use
-              names like Impact → Impact Elite Coaching.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground shrink-0 rounded p-1"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-          {loading ? (
-            <div className="flex min-h-[160px] items-center justify-center">
-              <VibeyLoadingOrb size="sm" text="Loading clients…" />
-            </div>
-          ) : error && clients.length === 0 ? (
-            <p className="body-3 text-destructive">{error}</p>
-          ) : clients.length === 0 ? (
-            <p className="body-3 text-muted-foreground">No Page Grader clients found.</p>
-          ) : (
-            <div className="space-y-3">
-              {clients.map((client) => {
-                const row = draft[client.id] ?? { campaignId: '', spaceId: '' }
-                const campaignSpaces = row.campaignId
-                  ? (spacesByCampaign.get(row.campaignId) ?? [])
-                  : []
-                return (
-                  <div
-                    key={client.id}
-                    className="border-border space-y-2 rounded-lg border px-3 py-2"
+  return (
+    <DialogPrimitive.Root
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+    >
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="z-modal-backdrop-above fixed inset-0" />
+        <DialogPrimitive.Content className="z-modal-layer-4 p-spacing-4 fixed inset-0 flex items-center justify-center overflow-hidden">
+          <div className="surface-card wizard-container-border rounded-spacing-4 flex w-full max-w-lg flex-col overflow-hidden">
+            <div className="border-border shrink-0 space-y-3 border-b px-4 py-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <DialogPrimitive.Title className="body-2 text-foreground font-semibold">
+                    Map Page Grader clients
+                  </DialogPrimitive.Title>
+                  <DialogPrimitive.Description className="body-3 text-muted-foreground">
+                    Link portal clients to ROAS campaigns (and optional spaces). Suggested matches
+                    use names like Impact → Impact Elite Coaching.
+                  </DialogPrimitive.Description>
+                </div>
+                <DialogPrimitive.Close asChild>
+                  <button
+                    type="button"
+                    aria-label="Close"
+                    className="text-muted-foreground hover:text-foreground shrink-0 rounded p-1"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="body-3 text-foreground min-w-0 truncate font-medium">
-                        {client.name}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => void handleImportBrain(client)}
-                        disabled={importingClientId === client.id}
-                        className="button-glass-accent inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium disabled:opacity-50"
-                        title="Import this Page Grader client's intelligence into the ROAS brain"
-                      >
-                        <Brain className="h-3 w-3" />
-                        {importingClientId === client.id ? 'Importing' : 'Import brain'}
-                      </button>
-                    </div>
-                    <label className="block">
-                      <span className="typo-caption text-muted-foreground">Campaign</span>
-                      <select
-                        value={row.campaignId}
-                        onChange={(e) => {
-                          const campaignId = e.target.value
-                          setDraft((prev) => ({
-                            ...prev,
-                            [client.id]: { campaignId, spaceId: '' },
-                          }))
-                        }}
-                        className="border-border bg-background text-foreground mt-1 w-full rounded-md border px-2 py-1.5 text-xs outline-none"
-                      >
-                        <option value="">Not mapped</option>
-                        {campaigns.map((campaign) => (
-                          <option key={campaign.id} value={campaign.id}>
-                            {campaign.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    {row.campaignId ? (
-                      <label className="block">
-                        <span className="typo-caption text-muted-foreground">Space (optional)</span>
-                        <select
-                          value={row.spaceId}
-                          onChange={(e) => {
-                            const spaceId = e.target.value
-                            setDraft((prev) => ({
-                              ...prev,
-                              [client.id]: { ...row, spaceId },
-                            }))
-                          }}
-                          className="border-border bg-background text-foreground mt-1 w-full rounded-md border px-2 py-1.5 text-xs outline-none"
-                        >
-                          <option value="">Any space in campaign</option>
-                          {campaignSpaces.map((space) => (
-                            <option key={space.id} value={space.id}>
-                              {space.title}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    ) : null}
-                  </div>
-                )
-              })}
+                    <X className="h-4 w-4" />
+                  </button>
+                </DialogPrimitive.Close>
+              </div>
+              <label className="relative block">
+                <span className="sr-only">Search clients</span>
+                <Search
+                  className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
+                  aria-hidden
+                />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search clients…"
+                  className="border-border bg-background text-foreground placeholder:text-muted-foreground h-spacing-9 w-full rounded-md border py-1.5 pl-8 pr-2 text-xs outline-none"
+                />
+              </label>
             </div>
-          )}
-        </div>
 
-        <div className="border-border flex items-center justify-between gap-2 border-t px-4 py-3">
-          <p className="typo-caption text-muted-foreground">{mappedCount} mapped</p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-muted-foreground hover:bg-hover-subtle rounded-md px-3 py-1.5 text-xs"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={loading || saving || clients.length === 0}
-              onClick={() => void handleSave()}
-              className="button-glass-accent rounded-md px-3 py-1.5 text-xs font-medium disabled:opacity-50"
-            >
-              {saving ? 'Saving…' : 'Save mappings'}
-            </button>
+            <div className="modal-nested-scroll-body px-4 py-3">
+              {loading ? (
+                <div className="flex min-h-[160px] items-center justify-center">
+                  <VibeyLoadingOrb size="sm" text="Loading clients…" />
+                </div>
+              ) : error && clients.length === 0 ? (
+                <p className="body-3 text-destructive">{error}</p>
+              ) : clients.length === 0 ? (
+                <p className="body-3 text-muted-foreground">No Page Grader clients found.</p>
+              ) : filteredClients.length === 0 ? (
+                <p className="body-3 text-muted-foreground">No clients match “{query.trim()}”.</p>
+              ) : (
+                <div className="space-y-3">
+                  {filteredClients.map((client) => {
+                    const row = draft[client.id] ?? { campaignId: '', spaceId: '' }
+                    return (
+                      <PageGraderClientScopeMapRow
+                        key={client.id}
+                        client={client}
+                        row={row}
+                        campaigns={campaigns}
+                        campaignSpaces={
+                          row.campaignId ? (spacesByCampaign.get(row.campaignId) ?? []) : []
+                        }
+                        isImporting={importingClientId === client.id}
+                        onDraftChange={(clientId, next) => {
+                          setDraft((prev) => ({ ...prev, [clientId]: next }))
+                        }}
+                        onImportBrain={(c) => void handleImportBrain(c)}
+                      />
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="border-border flex shrink-0 items-center justify-between gap-2 border-t px-4 py-3">
+              <p className="typo-caption text-muted-foreground">
+                {mappedCount} mapped
+                {query.trim() ? ` · showing ${filteredClients.length}` : ''}
+              </p>
+              <div className="flex gap-2">
+                <DialogPrimitive.Close asChild>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:bg-hover-subtle rounded-md px-3 py-1.5 text-xs"
+                  >
+                    Cancel
+                  </button>
+                </DialogPrimitive.Close>
+                <button
+                  type="button"
+                  disabled={loading || saving || clients.length === 0}
+                  onClick={() => void handleSave()}
+                  className="button-glass-accent rounded-md px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+                >
+                  {saving ? 'Saving…' : 'Save mappings'}
+                </button>
+              </div>
+            </div>
+            {error && clients.length > 0 ? (
+              <p className="text-destructive shrink-0 px-4 pb-3 text-xs">{error}</p>
+            ) : null}
           </div>
-        </div>
-        {error && clients.length > 0 ? (
-          <p className="text-destructive px-4 pb-3 text-xs">{error}</p>
-        ) : null}
-      </div>
-    </div>,
-    document.body,
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   )
 }

@@ -7,12 +7,14 @@ import { PageGraderController } from './controllers/page-grader.controller'
 import { PageGraderIntegration } from './integrations/page-grader.integration'
 import { PageGraderApiService } from './services/page-grader-api.service'
 import { PageGraderBrainImportService } from './services/page-grader-brain-import.service'
+import { PageGraderSendWorkService } from './services/page-grader-send-work.service'
 
 @Module({
   imports: [ConfigModule, SpacesModule, BrainModule],
   controllers: [PageGraderController],
   providers: [
     PageGraderIntegration,
+    PageGraderSendWorkService,
     PageGraderApiService,
     PageGraderBrainImportService,
     IntegrationConnectionsRepository,

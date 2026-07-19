@@ -1,3 +1,19 @@
+## 2026-07-19 - [ARCH] Page Grader API/modal LOC split (done in ship branch)
+
+Status: Done
+Found while: Consolidating multi-agent Page Grader WIP onto main
+Files:
+
+- `apps/api/src/modules/integrations/page-grader/services/page-grader-api.service.ts` (now under 600)
+- `apps/api/src/modules/integrations/page-grader/services/page-grader-send-work.service.ts`
+- `apps/api/src/modules/integrations/page-grader/services/page-grader-api.helpers.ts`
+- `apps/web/src/features/settings/components/settings-content/PageGraderClientScopeMapModal.tsx` (now under 400)
+- `apps/web/src/features/settings/components/settings-content/PageGraderClientScopeMapRow.tsx`
+  Evidence: Split required to pass pre-commit LOC gate while landing create-import + client pagination.
+  Needed work: None for this ship.
+  Deferred because: N/A — completed in `ship/page-grader-create-import-full-clients`.
+
+
 ## 2026-07-19 - [ARCH] PageGraderClientScopeMapModal over component LOC limit
 
 Status: Open

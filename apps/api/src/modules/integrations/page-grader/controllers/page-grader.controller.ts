@@ -4,6 +4,7 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Param,
   Post,
   Query,
   UseGuards,
@@ -80,6 +81,16 @@ export class PageGraderController {
       )
     }
     const result = await this.api.listClients(user.id, validation.data)
+    return { success: true, ...result }
+  }
+
+  @Get('clients/:clientId/meta-context')
+  @RequireOrgRole('viewer')
+  async getClientMetaContext(
+    @CurrentUser() user: { id: string },
+    @Param('clientId') clientId: string,
+  ) {
+    const result = await this.api.getClientMetaContext(user.id, clientId)
     return { success: true, ...result }
   }
 

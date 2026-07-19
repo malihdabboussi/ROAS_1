@@ -9,7 +9,17 @@ export type ConnectPageGraderDto = z.infer<typeof ConnectPageGraderSchema>
 
 export const ListPageGraderClientsSchema = z.object({
   q: z.string().optional(),
-  limit: z.coerce.number().min(1).max(100).optional(),
+  limit: z.coerce.number().min(1).max(500).optional(),
+  offset: z.coerce.number().min(0).max(10_000).optional(),
+  /** When true (default for settings), page until all clients are returned. */
+  all: z
+    .union([z.literal('true'), z.literal('false'), z.boolean()])
+    .optional()
+    .transform((value) => {
+      if (value === undefined) return undefined
+      if (typeof value === 'boolean') return value
+      return value === 'true'
+    }),
 })
 
 export type ListPageGraderClientsDto = z.infer<typeof ListPageGraderClientsSchema>

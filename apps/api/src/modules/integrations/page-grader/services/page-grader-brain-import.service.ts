@@ -4,6 +4,7 @@ import { PageGraderClientImportService } from '../../../brain/services/page-grad
 import { VaultService } from '../../../vault/services/vault.service'
 import type { ImportPageGraderClientBrainDto } from '../dto/page-grader.dto'
 import { PageGraderIntegration } from '../integrations/page-grader.integration'
+import { PageGraderApiService } from './page-grader-api.service'
 
 const PROVIDER = 'page_grader'
 const LABEL_BASE_URL = 'base_url'
@@ -15,6 +16,7 @@ export class PageGraderBrainImportService {
     private readonly pageGrader: PageGraderIntegration,
     private readonly vault: VaultService,
     private readonly clientImport: PageGraderClientImportService,
+    private readonly api: PageGraderApiService,
   ) {}
 
   private async getCreds(userId: string) {
@@ -38,7 +40,7 @@ export class PageGraderBrainImportService {
       creds.apiKey,
       dto.client_id,
     )
-    return this.clientImport.importPackage(
+    const result = await this.clientImport.importPackage(
       supabase,
       userId,
       {
@@ -52,5 +54,36 @@ export class PageGraderBrainImportService {
       },
       { userId, orgId: orgId ?? null } as never,
     )
+
+    if (dto.dryRun) return result
+
+    const campaignId =
+      result && typeof result === 'object' && result.campaign && typeof result.campaign === 'object'
+        ? String((result.campaign as { id?: unknown }).id ?? '').trim()
+        : ''
+    const campaignName =
+      result && typeof result === 'object' && result.campaign && typeof result.campaign === 'object'
+        ? String((result.campaign as { name?: unknown }).name ?? '').trim() || null
+        : null
+    const spaceId =
+      result && typeof result === 'object' && result.space && typeof result.space === 'object'
+        ? String((result.space as { id?: unknown }).id ?? '').trim() || null
+        : null
+    const spaceTitle =
+      result && typeof result === 'object' && result.space && typeof result.space === 'object'
+        ? String((result.space as { title?: unknown }).title ?? '').trim() || null
+        : null
+
+    if (campaignId) {
+      await this.api.mergeClientScopeEntry(userId, {
+        clientId: dto.client_id,
+        campaignId,
+        campaignName,
+        spaceId,
+        spaceTitle,
+      })
+    }
+
+    return result
   }
 }
