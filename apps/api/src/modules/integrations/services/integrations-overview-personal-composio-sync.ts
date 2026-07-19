@@ -244,6 +244,12 @@ export async function syncPersonalComposioOverviewAccounts(input: {
     }
   }
 
+  await collapseDuplicateComposioConnectionRows({
+    supabase: input.supabase,
+    data: input.data,
+    core: input.core,
+  })
+
   await repairDuplicatePersonalConnectionLabels({
     supabase: input.supabase,
     userId: input.userId,
@@ -258,6 +264,80 @@ export async function syncPersonalComposioOverviewAccounts(input: {
     activeComposioIntegrationIds,
     pendingComposioIntegrationIds,
   }
+}
+
+/**
+ * Multiple user_integrations rows can share one composio_connected_account_id
+ * (reconnect races / old upserts). Keep one canonical row per connection id and
+ * disconnect the rest so Manage/Library stop listing the same account N times.
+ */
+async function collapseDuplicateComposioConnectionRows(input: {
+  supabase: SupabaseClient
+  data: Array<Record<string, unknown>>
+  core: IntegrationsCoreService
+}): Promise<void> {
+  const ACTIVE = new Set(['connected', 'pending', 'needs_reconnect'])
+  const byConnectionId = new Map<string, Array<Record<string, unknown>>>()
+  for (const row of input.data) {
+    if (!ACTIVE.has(String(row.status ?? '').toLowerCase())) continue
+    const connectionId = getRowComposioConnectionId(row)
+    if (!connectionId) continue
+    const list = byConnectionId.get(connectionId) ?? []
+    list.push(row)
+    byConnectionId.set(connectionId, list)
+  }
+
+  const removeIds = new Set<string>()
+  const now = new Date().toISOString()
+  for (const [connectionId, rows] of byConnectionId) {
+    if (rows.length < 2) continue
+    const keep = pickCanonicalComposioConnectionRow(rows)
+    const keepId = String(keep.id ?? '').trim()
+    for (const row of rows) {
+      const id = String(row.id ?? '').trim()
+      if (!id || id === keepId) continue
+      removeIds.add(id)
+      const meta =
+        row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+          ? (row.metadata as Record<string, unknown>)
+          : {}
+      await input.core.updateIntegrationById(input.supabase, id, {
+        status: 'disconnected',
+        metadata: {
+          ...meta,
+          composio_connected_account_id: connectionId,
+          collapsed_duplicate_of: keepId || null,
+          disconnected_at: now,
+        },
+      })
+    }
+  }
+
+  if (removeIds.size === 0) return
+  for (let i = input.data.length - 1; i >= 0; i -= 1) {
+    const id = String(input.data[i]?.id ?? '').trim()
+    if (removeIds.has(id)) input.data.splice(i, 1)
+  }
+}
+
+function pickCanonicalComposioConnectionRow(
+  rows: Array<Record<string, unknown>>,
+): Record<string, unknown> {
+  return [...rows].sort((a, b) => {
+    const aDefault = a.is_default ? 1 : 0
+    const bDefault = b.is_default ? 1 : 0
+    if (aDefault !== bDefault) return bDefault - aDefault
+    const aConnected = String(a.status ?? '').toLowerCase() === 'connected' ? 1 : 0
+    const bConnected = String(b.status ?? '').toLowerCase() === 'connected' ? 1 : 0
+    if (aConnected !== bConnected) return bConnected - aConnected
+    const aLabel = String(a.connection_label ?? '').trim() ? 1 : 0
+    const bLabel = String(b.connection_label ?? '').trim() ? 1 : 0
+    if (aLabel !== bLabel) return bLabel - aLabel
+    const aTime = String(a.connected_at ?? a.updated_at ?? '')
+    const bTime = String(b.connected_at ?? b.updated_at ?? '')
+    if (aTime !== bTime) return aTime.localeCompare(bTime)
+    return String(a.id ?? '').localeCompare(String(b.id ?? ''))
+  })[0]!
 }
 
 async function repairDuplicatePersonalConnectionLabels(input: {

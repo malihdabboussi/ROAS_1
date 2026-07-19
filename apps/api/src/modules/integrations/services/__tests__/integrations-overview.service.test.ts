@@ -127,6 +127,126 @@ describe('IntegrationsOverviewService', () => {
     )
   })
 
+  it('collapses multiple rows that share the same Composio connection id', async () => {
+    const row1 = {
+      id: 'ui-keep',
+      user_id: 'user-1',
+      integration_id: 'google_calendar',
+      provider: 'google_calendar',
+      status: 'connected',
+      agent_enabled: true,
+      is_default: true,
+      connection_label: 'dylanvanas@gmail.com',
+      connected_at: '2026-07-01T00:00:00.000Z',
+      metadata: {
+        composio_connected_account_id: 'ca-1',
+        composio_toolkit_slug: 'googlecalendar',
+      },
+      scope_mode: 'personal',
+    }
+    const row2 = {
+      id: 'ui-dup-a',
+      user_id: 'user-1',
+      integration_id: 'google_calendar',
+      provider: 'google_calendar',
+      status: 'connected',
+      agent_enabled: true,
+      is_default: false,
+      connection_label: 'dylanvanas@gmail.com',
+      connected_at: '2026-07-02T00:00:00.000Z',
+      metadata: {
+        composio_connected_account_id: 'ca-1',
+        composio_toolkit_slug: 'googlecalendar',
+      },
+      scope_mode: 'personal',
+    }
+    const row3 = {
+      id: 'ui-dup-b',
+      user_id: 'user-1',
+      integration_id: 'google_calendar',
+      provider: 'google_calendar',
+      status: 'connected',
+      agent_enabled: true,
+      is_default: false,
+      connection_label: 'dylanvanas@gmail.com',
+      connected_at: '2026-07-03T00:00:00.000Z',
+      metadata: {
+        composio_connected_account_id: 'ca-1',
+        composio_toolkit_slug: 'googlecalendar',
+      },
+      scope_mode: 'personal',
+    }
+    const updateIntegrationById = vi.fn(async () => ({ error: null }))
+    const repository = {
+      table: vi.fn((_client: unknown, table: string) => {
+        if (table === 'project_composio_toolkit_config') {
+          return makeQuery({ data: [], error: null })
+        }
+        return makeQuery({ data: [row1, row2, row3], error: null })
+      }),
+      findAdminPersonalOpenAICodexIntegration: vi.fn(async () => null),
+      findAdminPersonalAnthropicClaudeIntegration: vi.fn(async () => null),
+    }
+    const service = new IntegrationsOverviewService(
+      repository as never,
+      {
+        listConnectedAccounts: vi.fn(async () => [
+          { id: 'ca-1', status: 'ACTIVE', toolkitSlug: 'googlecalendar' },
+        ]),
+      } as never,
+      {
+        applyScope: vi.fn(async () => ({ data: [row1, row2, row3], error: null })),
+        isOrgContext: vi.fn(() => false),
+      } as never,
+      { hasSecret: vi.fn(async () => false) } as never,
+      {
+        mapComposioToolkitToIntegrationId: vi.fn((slug: string) =>
+          slug === 'googlecalendar' ? 'google_calendar' : null,
+        ),
+        updateIntegrationById,
+        resolveConnectionIdentity: vi.fn(async () => 'dylanvanas@gmail.com'),
+        upsertPersonalScopedIntegration: vi.fn(),
+        insertPersonalScopedIntegration: vi.fn(),
+      } as never,
+      {} as never,
+      { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
+    )
+
+    const result = await service.getOverview({} as never, { id: 'user-1' }, {
+      orgId: null,
+    } as never)
+
+    const calendarRows = result.integrations.filter(
+      (row) => row.integration_id === 'google_calendar',
+    )
+    expect(calendarRows).toHaveLength(1)
+    expect(calendarRows[0]).toEqual(
+      expect.objectContaining({
+        id: 'ui-keep',
+        connection_label: 'dylanvanas@gmail.com',
+        status: 'connected',
+      }),
+    )
+    expect(updateIntegrationById).toHaveBeenCalledWith(
+      expect.anything(),
+      'ui-dup-a',
+      expect.objectContaining({ status: 'disconnected' }),
+    )
+    expect(updateIntegrationById).toHaveBeenCalledWith(
+      expect.anything(),
+      'ui-dup-b',
+      expect.objectContaining({ status: 'disconnected' }),
+    )
+    expect(result.groupedIntegrations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          integration_id: 'google_calendar',
+          connected_count: 1,
+        }),
+      ]),
+    )
+  })
+
   it('reclaims stomped duplicate rows onto distinct Composio account ids', async () => {
     const row1 = {
       id: 'ui-1',
@@ -350,6 +470,7 @@ describe('IntegrationsOverviewService', () => {
       ]),
     )
   })
+
   it('includes connected Page Grader rows in personal overview', async () => {
     const pageGraderRow = {
       id: 'ui-pg-1',
@@ -410,5 +531,4 @@ describe('IntegrationsOverviewService', () => {
       ]),
     )
   })
-
 })
