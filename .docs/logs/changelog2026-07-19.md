@@ -155,3 +155,10 @@ What: Consolidated mission branch-access fix onto local main; extracted outbox d
 Why: Multi-agent WIP was on a side branch/worktree; commit was blocked by pre-existing outbox LOC debt.
 Impact: `awaiting_access_approval` outbox dispatch lives on local main.
 Files: mission access cherry-pick, `missions.outbox-dispatcher.mapping.ts`
+
+## [2026-07-19 15:19] - [ARCH]
+
+What: Consolidated `slack-people-shadow` onto local main via cherry-pick.
+Why: Multi-agent work was scattered off main.
+Impact: Feature now lives on local main.
+Files: cherry-picked 1e05f891

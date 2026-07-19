@@ -7348,3 +7348,16 @@ Files:
 - Evidence: `wc -l` reports 499 LOC, above the 480-line extraction threshold but below the 600-line maximum.
 - Needed work: Extract the remaining strategy/copy task construction into a focused playbook module before adding more webinar stages.
 - Why not now: The requested change repairs a production-blocking plan validation failure with a bounded instruction and contract-test fix; broader playbook decomposition would increase the concurrent merge surface.
+
+## 2026-07-19 - [FEATURE] Generate proactive Slack proposals automatically
+
+Status: Open
+Found while: Slack people directory and manual Shadow review/send loop
+Files:
+
+- `supabase/migrations/20260719142000_slack_people_shadow_mode.sql`
+- `apps/api/src/modules/slack/services/slack-people.service.ts`
+- `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx`
+  Evidence: Admin test proposals now support approve/dismiss transitions and atomically claimed explicit sending only after approval plus an `active` recipient. The system still does not observe team activity or create proposals automatically.
+  Needed work: Add the proactive observation/classification runner and write its message/workflow proposals through the hard action schema, lifecycle/preflight, structured agent-tool error, and workflow circuit-breaker contracts.
+  Deferred because: Autonomous agent-facing proposal generation introduces a new tool and workflow surface; it requires its own schema, preflight, policy, failure-circuit, and drift coverage before it can safely run from Slack activity.

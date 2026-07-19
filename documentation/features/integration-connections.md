@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 17, 2026 (native Canva design import)
+Last Modified: July 19, 2026 (Page Grader Meta context bridge)
 
 ## Data Flow
 
@@ -17,6 +17,10 @@ Last Modified: July 17, 2026 (native Canva design import)
 11. The repair card renders the doctor summary/checks and gives one or more actions: connect, reconnect, open settings, or approve a personal fallback for this task.
 12. Composio execution failures also return `integration_doctor`, so the agent can explain and repair the failure instead of retrying a generic disconnected action.
 13. Canva handoffs use the selected personal or org-shared Composio connection. Images follow Canva's asset-upload path; documents and presentations send native DOCX, PPTX, or PDF bytes through Canva Design Import and poll until an editable design URL is ready.
+14. Organization Slack refreshes persist every non-bot workspace identity in `channel_members`, including its email, resolved platform user or external contact, relationship kind, and per-person delivery mode.
+15. Team → People reads those organization-owned records for admins. Unresolved identities remain durable ghost profiles so later platform-user or Customer Brain contact matches do not lose their history.
+16. Proactive Slack messages and discovered workflows use `slack_shadow_actions` as their review ledger. Admins can create a harmless test proposal, approve or dismiss it, and send it only after both approval and an explicit switch of that person to `active`. Creating or reviewing a proposal never sends it.
+17. Page Grader can expose the Meta account, Page, pixel, and campaign identifiers already mapped to a client through a read-only client Meta context endpoint. Vibey uses its stored Page Grader connection to proxy this context for launch preparation; Page Grader credentials and Meta tokens never enter the response.
 
 ## Code Examples
 
@@ -99,3 +103,7 @@ Reconnect result:
 - Google Calendar agenda reads events from all calendars in each connected Google account (capped per account, calendars fetched in parallel), not only `primary`.
 - OAuth callback fallback lands on `/home` (settings is a modal), not `/settings`.
 - Canva documents and presentations use native Design Import rather than flattening the whole artifact into an image. Standard docs become DOCX, visual docs become high-resolution PDF, and presentations become PPTX with editable text, shapes, and embedded images where the source format allows it.
+- A Slack identity is not automatically a platform account. `channel_members` is the durable provider identity; `vibey_user_id` links a managed teammate, `contact_id` links an external person into Customer Brain, and an unmatched row remains a ghost profile.
+- Slack people are organization-owned for admin visibility even though one organization member owns the OAuth connection and sync cursor.
+- Shadow Mode is the safe default for proactive outreach. `off` blocks proposal creation, `shadow` permits review without delivery, and `active` permits an admin to explicitly send only an approved ledger record. Sending atomically claims the approved record before Slack delivery so concurrent requests cannot both send it; failed deliveries remain visible as `failed`. Automated observation and proposal generation remain separate follow-up work.
+- Page Grader is discovery context, not a second Meta publisher. Vibey owns Mission approvals, Meta mutations, and audit history. When Page Grader has exactly one active mapped ad account it may recommend that identifier; multiple active accounts require a human selection.

@@ -70,6 +70,23 @@ export class SlackSenderResolverService {
       }
 
       const role = contact?.contact_type ?? null
+      const vibeyUserId = email ? (byEmail.get(email.toLowerCase()) ?? null) : null
+      await this.slackRuntimeRepo.upsertResolvedSlackPerson(supabase, {
+        user_id: input.userId,
+        org_id: input.orgId ?? null,
+        platform: 'slack',
+        platform_id: slackUserId,
+        display_name: this.displayName(slackUser, slackUserId),
+        username: slackUser?.name ?? null,
+        avatar_url: slackUser?.profile?.image_72 ?? null,
+        title: slackUser?.profile?.title ?? null,
+        timezone: null,
+        email,
+        is_bot: slackUser?.is_bot ?? false,
+        vibey_user_id: vibeyUserId,
+        contact_id: contact?.id ?? null,
+        relationship_kind: vibeyUserId ? 'team_member' : contact ? 'external' : 'unknown',
+      })
       out.set(slackUserId, {
         slackUserId,
         displayName: this.displayName(slackUser, slackUserId),
@@ -77,7 +94,7 @@ export class SlackSenderResolverService {
         contactId: contact?.id ?? null,
         contactRole: role,
         qualifiesForCustomerBrain: role ? CUSTOMER_BRAIN_CONTACT_ROLES.has(role) : false,
-        vibeyUserId: email ? (byEmail.get(email.toLowerCase()) ?? null) : null,
+        vibeyUserId,
       })
     }
 

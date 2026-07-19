@@ -73,11 +73,25 @@ export class SlackRuntimeRepository {
     if (error) throw error
   }
 
+  async upsertResolvedSlackPerson(
+    supabase: SupabaseClient,
+    member: Record<string, unknown>,
+  ): Promise<void> {
+    await this.upsertChannelMember(supabase, {
+      ...member,
+      last_seen_at: new Date().toISOString(),
+    })
+  }
+
   async findChannelMemberByPlatform(
     supabase: SupabaseClient,
     userId: string,
     platformId: string,
-  ): Promise<{ platform_id?: string; display_name?: string | null; username?: string | null } | null> {
+  ): Promise<{
+    platform_id?: string
+    display_name?: string | null
+    username?: string | null
+  } | null> {
     const { data } = await supabase
       .from('channel_members')
       .select('platform_id, display_name, username, notes')
@@ -192,7 +206,10 @@ export class SlackRuntimeRepository {
     conversationId: string,
     campaignId: string,
   ): Promise<void> {
-    await supabase.from('conversations').update({ campaign_id: campaignId }).eq('id', conversationId)
+    await supabase
+      .from('conversations')
+      .update({ campaign_id: campaignId })
+      .eq('id', conversationId)
   }
 
   async createSlackConversation(

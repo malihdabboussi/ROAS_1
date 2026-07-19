@@ -176,6 +176,60 @@ export interface SlackResolvedSender {
   vibeyUserId: string | null
 }
 
+export type SlackRelationshipKind = 'team_member' | 'external' | 'unknown'
+export type SlackDeliveryMode = 'off' | 'shadow' | 'active'
+export type SlackShadowActionKind = 'message' | 'workflow'
+export type SlackShadowActionStatus =
+  | 'proposed'
+  | 'approved'
+  | 'dismissed'
+  | 'sending'
+  | 'sent'
+  | 'failed'
+
+export interface SlackDiscoveredPerson {
+  id: string
+  platform_id: string
+  display_name: string
+  username: string | null
+  avatar_url: string | null
+  title: string | null
+  timezone: string | null
+  email: string | null
+  is_bot: boolean
+  vibey_user_id: string | null
+  contact_id: string | null
+  relationship_kind: SlackRelationshipKind
+  delivery_mode: SlackDeliveryMode
+  last_seen_at: string
+}
+
+export interface SlackShadowAction {
+  id: string
+  agent_key: string
+  target_member_id: string | null
+  action_kind: SlackShadowActionKind
+  proposed_content: string
+  rationale: string | null
+  status: SlackShadowActionStatus
+  source_channel_id: string | null
+  source_message_ts: string | null
+  workflow_key: string | null
+  reviewed_by: string | null
+  reviewed_at: string | null
+  sent_at: string | null
+  metadata: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+export interface SlackShadowActionDeliveryRecord extends SlackShadowAction {
+  target: {
+    platform_id: string
+    delivery_mode: SlackDeliveryMode
+  } | null
+}
+
 export interface SlackHistoryMessage {
   user?: string
   text?: string
