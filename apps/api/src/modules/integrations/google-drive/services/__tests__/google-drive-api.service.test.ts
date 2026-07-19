@@ -111,9 +111,7 @@ describe('GoogleDriveApiService', () => {
       executeTool: vi.fn().mockResolvedValue({
         successful: true,
         data: {
-          id: 'google-doc-1',
-          name: 'Launch plan',
-          mimeType: 'application/vnd.google-apps.document',
+          document_id: 'google-doc-1',
         },
       }),
     }
@@ -140,12 +138,11 @@ describe('GoogleDriveApiService', () => {
     })
 
     expect(composio.executeTool).toHaveBeenCalledWith(
-      'GOOGLEDRIVE_CREATE_FILE_FROM_TEXT',
+      'GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN',
       'user-1',
       {
-        file_name: 'Launch plan',
-        text_content: '<h1>Launch plan</h1><p>Ship it.</p>',
-        mime_type: 'application/vnd.google-apps.document',
+        title: 'Launch plan',
+        markdown_text: '# Launch plan\n\nShip it.',
       },
       'account-1',
     )

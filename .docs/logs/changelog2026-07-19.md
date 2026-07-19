@@ -1,5 +1,12 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 13:23] - [FIX]
+
+What: Export Open in Google Docs via `GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN` after converting space-doc HTML to Markdown (headings, lists, tables, links, marks).
+Why: `GOOGLEDRIVE_CREATE_FILE_FROM_TEXT` wrote the HTML source as plain text, so Docs showed raw tags instead of formatted content.
+Impact: New exports open as real formatted Google Docs. Re-export existing docs to replace ugly HTML dumps.
+Files: `html-to-google-docs-markdown.ts`, `google-drive-composio-files.service.ts`, unit tests
+
 ## [2026-07-19 13:05] - [FIX]
 
 What: Create Google Docs via Composio `GOOGLEDRIVE_CREATE_FILE_FROM_TEXT` instead of a raw Drive upload using a Composio-extracted OAuth token; treat Composio `REDACTED` tokens as missing.
