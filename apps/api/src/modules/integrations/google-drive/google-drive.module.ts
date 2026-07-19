@@ -1,17 +1,18 @@
 import { Module } from '@nestjs/common'
 import { ComposioModule } from '../../composio/composio.module'
-import { GoogleDriveFilesController } from './controllers/google-drive-files.controller'
 import { GoogleDriveDocumentExportController } from './controllers/google-drive-document-export.controller'
+import { GoogleDriveFilesController } from './controllers/google-drive-files.controller'
 import { GoogleDriveController } from './controllers/google-drive.controller'
+import { DriveFolderMappingsRepository } from './repositories/drive-folder-mappings.repository'
 import { GoogleDriveAdminClientRepository } from './repositories/google-drive-admin-client.repository'
 import { GoogleDriveRepository } from './repositories/google-drive.repository'
 import { GoogleDriveApiService } from './services/google-drive-api.service'
 import { GoogleDriveComposioFilesService } from './services/google-drive-composio-files.service'
+import { GoogleDriveComposioMultiTabDocsService } from './services/google-drive-composio-multi-tab-docs.service'
 import { GoogleDriveComposioPayloadService } from './services/google-drive-composio-payload.service'
 import { GoogleDriveConnectionService } from './services/google-drive-connection.service'
 import { GoogleDriveContentCacheService } from './services/google-drive-content-cache.service'
 import { DriveFolderMappingsController } from './sync/drive-folder-mappings.controller'
-import { DriveFolderMappingsRepository } from './repositories/drive-folder-mappings.repository'
 import { DrivePushInternalController } from './sync/drive-push-internal.controller'
 import { DrivePushWebhookController } from './sync/drive-push-webhook.controller'
 import { DriveSyncDiffService } from './sync/drive-sync-diff.service'
@@ -33,6 +34,7 @@ import { DriveSyncService } from './sync/drive-sync.service'
     GoogleDriveApiService,
     GoogleDriveAdminClientRepository,
     GoogleDriveComposioFilesService,
+    GoogleDriveComposioMultiTabDocsService,
     GoogleDriveComposioPayloadService,
     GoogleDriveContentCacheService,
     GoogleDriveConnectionService,

@@ -68,15 +68,12 @@ export class ChatProfileContextService {
         if (prefs && Object.keys(prefs).length > 0) {
           lines.push('- Preferences:')
           for (const [key, value] of Object.entries(prefs)) {
+            // Skip UI blobs (e.g. home_layout) — only surface primitive preference values.
+            if (value === null || value === undefined || typeof value === 'object') continue
             const label = key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-            const display =
-              typeof value === 'string'
-                ? value
-                : Array.isArray(value)
-                  ? value.join(', ')
-                  : JSON.stringify(value)
-            lines.push(`  - ${label}: ${display}`)
+            lines.push(`  - ${label}: ${String(value)}`)
           }
+          if (lines[lines.length - 1] === '- Preferences:') lines.pop()
         }
       }
     }

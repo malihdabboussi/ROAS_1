@@ -4,15 +4,25 @@ import type { MissionAccessRequest } from '../../types'
 interface MissionAccessApprovalCardProps {
   pendingAccessRequests: MissionAccessRequest[]
   approvingAccess: boolean
-  onApproveAccess: () => void
+  denyingAccess: boolean
+  onApproveAccess: (ids: string[]) => void
+  onDenyAccess: (ids: string[]) => void
 }
 
 export function MissionAccessApprovalCard({
   pendingAccessRequests,
   approvingAccess,
+  denyingAccess,
   onApproveAccess,
+  onDenyAccess,
 }: MissionAccessApprovalCardProps) {
   if (pendingAccessRequests.length === 0) return null
+  const ids = pendingAccessRequests.map((request) => request.id)
+  const images = pendingAccessRequests.every(
+    (request) =>
+      request.capability_id === 'generate_media' ||
+      request.metadata?.required_action === 'generate_image',
+  )
 
   return (
     <div className="card-glass p-spacing-3">
@@ -27,14 +37,28 @@ export function MissionAccessApprovalCard({
               .map((request) => `${request.agent_key}: ${request.capability_id}`)
               .join(', ')}
           </div>
-          <button
-            type="button"
-            onClick={() => void onApproveAccess()}
-            disabled={approvingAccess}
-            className="button-primary button-small mt-spacing-3"
-          >
-            {approvingAccess ? 'Approving...' : 'Approve access'}
-          </button>
+          <div className="mt-spacing-3 gap-spacing-2 flex flex-wrap">
+            <button
+              type="button"
+              onClick={() => void onApproveAccess(ids)}
+              disabled={approvingAccess || denyingAccess}
+              className="button-primary button-small"
+            >
+              {approvingAccess
+                ? 'Approving...'
+                : images
+                  ? 'Approve image generation'
+                  : 'Approve access'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void onDenyAccess(ids)}
+              disabled={approvingAccess || denyingAccess}
+              className="button-secondary button-small"
+            >
+              {denyingAccess ? 'Denying...' : 'Deny'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

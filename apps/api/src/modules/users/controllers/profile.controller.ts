@@ -17,6 +17,10 @@ import {
   UpdateDefaultAccountSchema,
   type UpdateDefaultAccountInput,
 } from '../dto/profile-default-account.dto'
+import {
+  UpdatePreferencesSchema,
+  type UpdatePreferencesInput,
+} from '../dto/profile-preferences.dto'
 import { ProfileService } from '../services/profile.service'
 
 @Controller('profile')
@@ -53,6 +57,15 @@ export class ProfileController {
     @Body(new ZodValidationPipe(UpdateDefaultAccountSchema)) body: UpdateDefaultAccountInput,
   ) {
     return this.profileService.updateDefaultAccount(user, supabase, body)
+  }
+
+  @Patch('preferences')
+  async updatePreferences(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @Body(new ZodValidationPipe(UpdatePreferencesSchema)) body: UpdatePreferencesInput,
+  ) {
+    return this.profileService.updatePreferences(user, supabase, body)
   }
 
   @Patch('onboarding')

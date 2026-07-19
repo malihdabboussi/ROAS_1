@@ -214,7 +214,7 @@ async function findOrphanedCandidatesViaSupabase(
     .from('missions')
     .select('id, user_id, priority')
     .in('id', missionIds)
-    .in('status', ['in_progress', 'todo'])
+    .in('status', ['in_progress', 'todo', 'awaiting_access_approval'])
   if (!missions?.length) return []
 
   return missions.map((m) => ({
@@ -249,7 +249,7 @@ export async function detectOrphanedPendingSubtasks(ctx: MissionsSchedulerRecove
     try {
       candidateMissions = (
         await ctx.databaseService.pgQuery<CandidateRow>(
-          `SELECT DISTINCT ms.mission_id, m.user_id, m.priority FROM mission_subtasks ms JOIN missions m ON m.id = ms.mission_id WHERE ms.status = 'pending' AND m.status IN ('in_progress', 'todo') LIMIT 100`,
+          `SELECT DISTINCT ms.mission_id, m.user_id, m.priority FROM mission_subtasks ms JOIN missions m ON m.id = ms.mission_id WHERE ms.status = 'pending' AND m.status IN ('in_progress', 'todo', 'awaiting_access_approval') LIMIT 100`,
           [],
         )
       ).rows

@@ -142,6 +142,7 @@ export function MissionDetailDesktopShell({
             <DeliverablesCarousel
               deliverables={deliverables}
               onSelect={onSelectDeliverable}
+              missionId={menuMission.id}
               taskSectionChrome={!selectedSubtask}
               defaultCollapsed={!selectedSubtask}
             />

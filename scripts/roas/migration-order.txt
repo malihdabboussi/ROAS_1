@@ -749,3 +749,5 @@
 20260401300000_org_scope_notifications_awareness.sql
 20260407300000_campaign_brain_support.sql
 20260717043500_ads_intelligence_and_fathom_legacy_fix.sql
+20260719142000_slack_people_shadow_mode.sql
+20260719143000_meta_ads_launch_skill.sql

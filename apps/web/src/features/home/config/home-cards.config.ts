@@ -7,6 +7,11 @@ import type {
 
 export const HOME_LAYOUT_STORAGE_KEY = 'vibey-home-layout'
 
+/** Per-user local cache so shared browsers do not leak another account's layout. */
+export function homeLayoutStorageKey(userId: string): string {
+  return `${HOME_LAYOUT_STORAGE_KEY}:${userId}`
+}
+
 export const DEFAULT_HOME_CARD_IDS: HomeCardId[] = [
   'favorite_spaces',
   'favorite_conversations',

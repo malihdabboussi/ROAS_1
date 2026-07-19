@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_HOME_CARD_IDS, homeCardGridSize, parseHomeLayout } from './home-cards.config'
+import {
+  DEFAULT_HOME_CARD_IDS,
+  homeCardGridSize,
+  homeLayoutStorageKey,
+  parseHomeLayout,
+} from './home-cards.config'
 
 describe('home card config', () => {
+  it('scopes the local layout cache by user id', () => {
+    expect(homeLayoutStorageKey('user-abc')).toBe('vibey-home-layout:user-abc')
+  })
   it('keeps agent improvement suggestions out of Home cards', () => {
     expect(DEFAULT_HOME_CARD_IDS).not.toContain('skill_recommendations')
     expect(parseHomeLayout({ cardIds: ['skill_recommendations', 'my_tasks'] }).cardIds).toEqual([

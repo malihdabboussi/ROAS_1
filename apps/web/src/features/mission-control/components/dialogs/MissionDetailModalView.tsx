@@ -52,7 +52,9 @@ export function MissionDetailModalView({
   setPreviewDeliverable,
   pendingAccessRequests,
   approvingAccess,
+  denyingAccess,
   onApproveAccess,
+  onDenyAccess,
   commentText,
   sendingComment,
   setCommentText,
@@ -123,13 +125,26 @@ export function MissionDetailModalView({
         onFeedbackChange: setSubtaskCommentText,
         onRequestChanges: onSendSubtaskComment,
         onApprove: onApproveHumanGate,
+        accessApprovalCard: (
+          <MissionAccessApprovalCard
+            pendingAccessRequests={pendingAccessRequests.filter(
+              (request) => request.subtask_id === selectedSubtask.id,
+            )}
+            approvingAccess={approvingAccess}
+            denyingAccess={denyingAccess}
+            onApproveAccess={onApproveAccess}
+            onDenyAccess={onDenyAccess}
+          />
+        ),
       }
     : null
   const accessApprovalCard: ReactNode = (
     <MissionAccessApprovalCard
       pendingAccessRequests={pendingAccessRequests}
       approvingAccess={approvingAccess}
+      denyingAccess={denyingAccess}
       onApproveAccess={onApproveAccess}
+      onDenyAccess={onDenyAccess}
     />
   )
   const missionMetaProps = {
@@ -280,6 +295,7 @@ export function MissionDetailModalView({
             accessApprovalCard={accessApprovalCard}
             deliverables={visibleDeliverables}
             onSelectDeliverable={setPreviewDeliverable}
+            missionId={effectiveMission.id}
             activityTimelineProps={activityTimelineProps}
             overlayModals={overlayModals}
           />,

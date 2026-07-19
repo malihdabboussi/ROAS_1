@@ -76,11 +76,12 @@ export function Team2Container() {
       replaceSearchParams((params) => {
         if (next === 'agents') params.delete('section')
         else params.set('section', next)
-        if (next === 'teams') {
+        if (next === 'teams' || next === 'people') {
           params.delete('agent')
           params.delete('panel')
           params.delete('session')
           params.delete('tab')
+          params.delete('team')
         }
       })
     },

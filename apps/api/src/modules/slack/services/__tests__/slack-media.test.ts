@@ -230,7 +230,9 @@ describe('SlackService media helpers', () => {
     it('uploads inbound Slack media to campaign storage and returns the public URL', async () => {
       const { svc } = createService()
       const upload = vi.fn().mockResolvedValue({ error: null })
-      const getPublicUrl = vi.fn(() => ({ data: { publicUrl: 'https://cdn.example.com/file.png' } }))
+      const getPublicUrl = vi.fn(() => ({
+        data: { publicUrl: 'https://cdn.example.com/file.png' },
+      }))
       const storageFrom = vi.fn(() => ({ upload, getPublicUrl }))
       vi.spyOn(svc as any, 'getServiceRoleClient').mockReturnValue({
         storage: { from: storageFrom },
@@ -249,7 +251,9 @@ describe('SlackService media helpers', () => {
         Buffer.from('image'),
         { contentType: 'image/png', upsert: false },
       )
-      expect(getPublicUrl).toHaveBeenCalledWith(expect.stringMatching(/^user-1\/slack\/.+-logo\.png$/))
+      expect(getPublicUrl).toHaveBeenCalledWith(
+        expect.stringMatching(/^user-1\/slack\/.+-logo\.png$/),
+      )
       expect(result).toBe('https://cdn.example.com/file.png')
     })
   })
@@ -474,10 +478,16 @@ describe('SlackService media helpers', () => {
         error: null,
       })
       const supabase = { from: vi.fn(() => orgMembers) }
+      const runtimeRepository = {
+        listActiveOrgMembersWithProfileEmails: vi
+          .fn()
+          .mockResolvedValue([{ user_id: 'vibey-user-1', profiles: { email: 'ada@example.com' } }]),
+        upsertResolvedSlackPerson: vi.fn(),
+      }
       const resolver = new (SlackSenderResolverService as any)(
         contactIdentifiers,
         slackApi,
-        new SlackRuntimeRepository(),
+        runtimeRepository,
       ) as SlackSenderResolverService
 
       const result = await resolver.resolveSlackSenders(supabase as never, {
@@ -493,7 +503,18 @@ describe('SlackService media helpers', () => {
         email: 'ada@example.com',
         vibeyUserId: 'vibey-user-1',
       })
-      expect(supabase.from).toHaveBeenCalledWith('org_members')
+      expect(runtimeRepository.listActiveOrgMembersWithProfileEmails).toHaveBeenCalledWith(
+        supabase,
+        'org-1',
+      )
+      expect(runtimeRepository.upsertResolvedSlackPerson).toHaveBeenCalledWith(
+        supabase,
+        expect.objectContaining({
+          platform_id: 'U1',
+          vibey_user_id: 'vibey-user-1',
+          relationship_kind: 'team_member',
+        }),
+      )
     })
   })
 

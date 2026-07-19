@@ -152,3 +152,29 @@ export const SlackAttachSenderDtoSchema = z.object({
   contact_id: z.string().uuid(),
 })
 export type SlackAttachSenderDto = z.infer<typeof SlackAttachSenderDtoSchema>
+
+export const SlackPersonIdParamSchema = z.object({
+  id: z.string().uuid(),
+})
+export type SlackPersonIdParam = z.infer<typeof SlackPersonIdParamSchema>
+
+export const SlackDeliveryModeSchema = z.enum(['off', 'shadow', 'active'])
+export const SlackDeliveryModeDtoSchema = z.object({
+  delivery_mode: SlackDeliveryModeSchema,
+})
+export type SlackDeliveryModeDto = z.infer<typeof SlackDeliveryModeDtoSchema>
+
+export const SlackShadowActionsQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(200).optional(),
+})
+export type SlackShadowActionsQuery = z.infer<typeof SlackShadowActionsQuerySchema>
+
+export const SlackShadowActionIdParamSchema = z.object({
+  id: z.string().uuid(),
+})
+export type SlackShadowActionIdParam = z.infer<typeof SlackShadowActionIdParamSchema>
+
+export const SlackShadowReviewDtoSchema = z.object({
+  status: z.enum(['approved', 'dismissed']),
+})
+export type SlackShadowReviewDto = z.infer<typeof SlackShadowReviewDtoSchema>

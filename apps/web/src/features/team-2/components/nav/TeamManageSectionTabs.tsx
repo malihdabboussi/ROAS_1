@@ -1,6 +1,6 @@
 'use client'
 
-import { LayoutGrid, Users } from 'lucide-react'
+import { LayoutGrid, UserRoundSearch, Users } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { TeamManageSection } from '../../lib/team-manage-nav'
 
@@ -20,16 +20,14 @@ function SectionTab({
       type="button"
       onClick={onSelect}
       className={cn(
-        'relative flex min-w-0 shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors hover:bg-[var(--color-hover-subtle)]',
-        selected
-          ? 'text-[var(--foreground)]'
-          : 'text-[var(--color-muted-foreground)] hover:text-[var(--foreground)]',
+        'hover:bg-secondary relative flex min-w-0 shrink-0 items-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors',
+        selected ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
       )}
     >
       {icon}
-      <span className="max-w-[140px] truncate">{label}</span>
+      <span className="max-w-36 truncate">{label}</span>
       {selected ? (
-        <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[var(--foreground)]" />
+        <span className="bg-foreground absolute bottom-0 left-2 right-2 h-0.5 rounded-full" />
       ) : null}
     </button>
   )
@@ -43,7 +41,7 @@ export function TeamManageSectionTabs({
   onSelectSection: (section: TeamManageSection) => void
 }) {
   return (
-    <div className="flex w-full min-w-0 shrink-0 items-center border-b border-[var(--border)] px-4">
+    <div className="border-border flex w-full min-w-0 shrink-0 items-center border-b px-4">
       <div className="flex min-h-0 min-w-0 flex-1 items-center gap-1">
         <SectionTab
           selected={activeSection === 'teams'}
@@ -56,6 +54,12 @@ export function TeamManageSectionTabs({
           onSelect={() => onSelectSection('agents')}
           icon={<LayoutGrid className="h-3.5 w-3.5 shrink-0" />}
           label="Agents"
+        />
+        <SectionTab
+          selected={activeSection === 'people'}
+          onSelect={() => onSelectSection('people')}
+          icon={<UserRoundSearch className="h-3.5 w-3.5 shrink-0" />}
+          label="People"
         />
       </div>
     </div>

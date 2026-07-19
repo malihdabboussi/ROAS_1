@@ -2413,6 +2413,15 @@ html:not(.dark) .text-color-deep {
   color: var(--color-muted-foreground);
 }
 
+/* Nested modal list body: fills remaining card height and scrolls inside the shell */
+.modal-nested-scroll-body {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 /* ── Ported from apps/web Team / AgentCard (marketing your-team carousel) ── */
 .surface-card { background: var(--bg-card); color: var(--text-primary); }
 /* When studio preview root + surface-card both apply, prefer app modal shell (card) over preview canvas */

@@ -118,6 +118,11 @@ Doc instead of creating duplicates.
 - `_google_doc_web_view_link`: Google Docs edit URL returned by Drive
 - `_google_doc_exported_at`: ISO timestamp of the first successful export
 
+Mission Control can also export many Space-doc deliverables at once into a single Google Doc with
+native tabs (`POST /api/missions/:id/deliverables/export-google-doc`, backed by
+`POST /api/integrations/google-drive/files/google-doc-tabs`). That bulk export does not write
+`_google_doc_*` metadata onto each Space item; single-doc export from the editor still owns reuse.
+
 ## Hierarchy Rules
 
 - `parent_item_id` stores local parent chain.
@@ -134,6 +139,8 @@ Sync diffs should treat this pair as identity for insert/update/delete decisions
 
 ## Decision Log
 
+- 2026-07-19: Added mission bulk export of Space-doc deliverables into one multi-tab Google Doc.
+  Single-doc editor export still persists `_google_doc_*` reuse metadata; bulk export does not.
 - 2026-07-16: Added one-time native Space Doc export to editable Google Docs through the existing
   Drive connection. The saved `_google_doc_file_id` is the reuse identity; later editor actions open
   that document and do not re-export or sync content.

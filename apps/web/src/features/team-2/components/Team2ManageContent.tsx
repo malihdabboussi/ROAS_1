@@ -2,27 +2,25 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { AgentInfoPanel, type AgentInfoPanelProps } from '@/components/agents/AgentInfoPanel'
-import {
-  showsAgentAccessTab,
-  type AgentInfoPanelTab,
-} from '@/lib/agents/agent-info-panel-tabs'
-import { backendPatch } from '@/lib/api/backend-client'
 import type { AgentMenuContext, AgentTeam, MissionAgent } from '@/lib/agents'
+import { showsAgentAccessTab, type AgentInfoPanelTab } from '@/lib/agents/agent-info-panel-tabs'
+import { backendPatch } from '@/lib/api/backend-client'
 import type { Campaign } from '@/lib/campaigns'
 import type { ChatModelSettings } from '@/lib/chat/chat-model-settings'
-import type { useTeam2Perms } from '../hooks/use-team2-perms'
 import { TEAM_OPS_DESK_MESSAGES } from '../config/messages.config'
-import type { TeamAgentsViewKey, TeamManageSection } from '../lib/team-manage-nav'
+import type { useTeam2Perms } from '../hooks/use-team2-perms'
 import { resolveAgentFocusLabel } from '../lib/ops-desk-summary'
+import type { TeamAgentsViewKey, TeamManageSection } from '../lib/team-manage-nav'
+import { AgentAssignWorkModal } from './AgentAssignWorkModal'
+import { AgentsGrid } from './AgentsGrid'
+import { Team2ManageShell } from './nav/Team2ManageShell'
+import { SlackPeopleView } from './people/SlackPeopleView'
 import type {
   Team2ManageData,
   Team2ManageDerived,
   Team2ManageHandlers,
 } from './team2-manage-content.types'
-import { AgentAssignWorkModal } from './AgentAssignWorkModal'
-import { AgentsGrid } from './AgentsGrid'
 import { Team2DetailView } from './Team2DetailView'
-import { Team2ManageShell } from './nav/Team2ManageShell'
 import type { Team2StatusFilter } from './Team2Toolbar'
 import { TeamDetailView } from './teams/TeamDetailView'
 import { TeamsIndexView } from './teams/TeamsIndexView'
@@ -246,6 +244,10 @@ export function Team2ManageContent({
   )
 
   const content = (() => {
+    if (manageSection === 'people' && showOrgTeams) {
+      return <SlackPeopleView />
+    }
+
     if (manageSection === 'teams' && showOrgTeams) {
       if (selectedTeamId) {
         return (
@@ -335,7 +337,9 @@ export function Team2ManageContent({
       onSelectTeam={onSelectTeam}
       onNavigateAgentsRoot={() => onNavigateAgentsRoot('all')}
       selectedAgent={selectedFromUrl}
-      canMoveAgent={selectedFromUrl ? getAgentMenuContextForGrid(selectedFromUrl).canMoveTeam : false}
+      canMoveAgent={
+        selectedFromUrl ? getAgentMenuContextForGrid(selectedFromUrl).canMoveTeam : false
+      }
       onMoveAgentToTeam={onMoveAgentToTeam}
       showOrgTeams={showOrgTeams}
     >

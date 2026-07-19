@@ -19,10 +19,7 @@ import type {
 } from '../types'
 import { invalidateAgentSkillsCache } from './agent-skills.service'
 
-export {
-  fetchReadyEmployeeLibrary,
-  hireReadyEmployee,
-} from '@/lib/agents/ready-employees-api'
+export { fetchReadyEmployeeLibrary, hireReadyEmployee } from '@/lib/agents/ready-employees-api'
 export {
   createMission,
   fetchDeliverablesForMissions,
@@ -147,6 +144,16 @@ export async function approveMissionAccessRequests(
   return backendPost(`/api/missions/${missionId}/access-requests/approve`, {
     ...(requestIds?.length ? { request_ids: requestIds } : {}),
   })
+}
+
+export async function denyMissionAccessRequests(
+  missionId: string,
+  requestIds?: string[],
+): Promise<{ ok: boolean; denied: MissionAccessRequest[]; blocked_subtask_ids: string[] }> {
+  return backendPost(
+    `/api/missions/${missionId}/access-requests/deny`,
+    requestIds?.length ? { request_ids: requestIds } : {},
+  )
 }
 
 export async function retryMission(missionId: string): Promise<Mission> {

@@ -126,4 +126,25 @@ describe('DeliverablesCarousel', () => {
     ).toBe(false)
     consoleError.mockRestore()
   })
+
+  it('shows Export to Google Docs when missionId has space-doc deliverables', () => {
+    render(
+      <DeliverablesCarousel
+        deliverables={[
+          {
+            ...baseDeliverable,
+            id: 'space-doc-1',
+            type: 'doc',
+            title: 'Email 1',
+            entity_table: 'space_items',
+            entity_id: 'item-1',
+          },
+        ]}
+        onSelect={vi.fn()}
+        missionId="mission-1"
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Export to Google Docs' })).toBeInTheDocument()
+  })
 })

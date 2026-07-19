@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { MISSION_MESSAGES } from '../config/messages.config'
 import type { AgentKey, MissionStatus, SubtaskStatus } from '../types/missions.types'
 import { MissionsRepositoryMissionsBase } from './missions-repository-missions.base'
 
@@ -170,7 +171,8 @@ export abstract class MissionsRepositoryPlansBase extends MissionsRepositoryMiss
     const { data: pending, error: pendingError } = await pendingQuery
     if (pendingError)
       throw new Error(`Failed to load pending mission access requests: ${pendingError.message}`)
-    if (!pending?.length) return { mission, approved: [] }
+    if (!pending?.length)
+      return { mission, approved: [], missionStatus: mission.status as MissionStatus }
 
     const nowIso = new Date().toISOString()
     const ids = pending.map((row: { id: string }) => row.id)
@@ -211,13 +213,84 @@ export abstract class MissionsRepositoryPlansBase extends MissionsRepositoryMiss
         throw new Error(`Failed to reopen access-gated subtasks: ${subtaskError.message}`)
     }
 
+    const { count: pendingCount, error: countError } = await supabase
+      .from('mission_agent_access_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('mission_id', missionId)
+      .eq('status', 'pending')
+    if (countError)
+      throw new Error(`Failed to count remaining mission access requests: ${countError.message}`)
+    const missionStatus: MissionStatus = pendingCount ? 'awaiting_access_approval' : 'todo'
     await this.updateMissionStatus(supabase, missionId, userId, orgId, {
-      status: 'todo',
+      status: missionStatus,
       current_agent_key: null,
-      progress_notes: 'Access approved. Resuming mission execution.',
+      progress_notes: pendingCount
+        ? MISSION_MESSAGES.ACCESS_PARTIALLY_APPROVED_PROGRESS
+        : MISSION_MESSAGES.ACCESS_APPROVED_PROGRESS,
     })
+    return { mission, approved: approved || [], missionStatus }
+  }
 
-    return { mission, approved: approved || [] }
+  async denyMissionAccessRequests(
+    supabase: SupabaseClient,
+    missionId: string,
+    userId: string,
+    orgId: string | null | undefined,
+    requestIds?: string[],
+  ) {
+    const mission = await this.findMissionById(supabase, missionId, userId, orgId)
+    let query = supabase
+      .from('mission_agent_access_requests')
+      .select('*')
+      .eq('mission_id', missionId)
+      .eq('status', 'pending')
+    if (requestIds?.length) query = query.in('id', requestIds)
+    const { data: pending, error } = await query
+    if (error) throw new Error(`Failed to load pending mission access requests: ${error.message}`)
+    if (!pending?.length)
+      return { mission, denied: [], missionStatus: mission.status as MissionStatus }
+    const ids = pending.map((r: { id: string }) => r.id)
+    const now = new Date().toISOString()
+    const { data: denied, error: denyError } = await supabase
+      .from('mission_agent_access_requests')
+      .update({ status: 'denied', updated_at: now })
+      .in('id', ids)
+      .select('*')
+    if (denyError) throw new Error(`Failed to deny mission access requests: ${denyError.message}`)
+    const subtaskIds = [
+      ...new Set(
+        pending
+          .map((r: { subtask_id?: string | null }) => r.subtask_id)
+          .filter((id: string | null | undefined): id is string => !!id),
+      ),
+    ]
+    if (subtaskIds.length)
+      await supabase
+        .from('mission_subtasks')
+        .update({
+          status: 'blocked',
+          awaiting_human_since: null,
+          feedback: MISSION_MESSAGES.ACCESS_DENIED_SUBTASK_FEEDBACK,
+          contract_status: 'blocked',
+          updated_at: now,
+        })
+        .in('id', subtaskIds)
+        .eq('mission_id', missionId)
+        .eq('status', 'awaiting_human')
+    const { count } = await supabase
+      .from('mission_agent_access_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('mission_id', missionId)
+      .eq('status', 'pending')
+    const missionStatus: MissionStatus = count ? 'awaiting_access_approval' : 'blocked'
+    await this.updateMissionStatus(supabase, missionId, userId, orgId, {
+      status: missionStatus,
+      current_agent_key: null,
+      progress_notes: count
+        ? MISSION_MESSAGES.ACCESS_PARTIALLY_DENIED_PROGRESS
+        : MISSION_MESSAGES.ACCESS_DENIED_PROGRESS,
+    })
+    return { mission, denied: denied || [], missionStatus }
   }
 
   async getSubtaskById(

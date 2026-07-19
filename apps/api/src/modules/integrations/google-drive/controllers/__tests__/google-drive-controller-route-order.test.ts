@@ -27,6 +27,7 @@ const EXPECTED_GOOGLE_DRIVE_ROUTES = [
   'POST integrations/google-drive/files/:fileId/share -> shareFile',
   'DELETE integrations/google-drive/files/:fileId -> deleteFile',
   'POST integrations/google-drive/files/google-doc -> createGoogleDoc',
+  'POST integrations/google-drive/files/google-doc-tabs -> createGoogleDocWithTabs',
 ]
 
 function asPath(value: unknown): string | null {

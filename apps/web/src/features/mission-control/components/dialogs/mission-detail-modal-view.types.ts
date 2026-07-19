@@ -51,7 +51,9 @@ export interface MissionDetailModalViewProps {
   setPreviewDeliverable: Dispatch<SetStateAction<MissionDeliverable | null>>
   pendingAccessRequests: MissionAccessRequest[]
   approvingAccess: boolean
-  onApproveAccess: () => void
+  denyingAccess: boolean
+  onApproveAccess: (ids: string[]) => void
+  onDenyAccess: (ids: string[]) => void
   commentText: string
   sendingComment: boolean
   setCommentText: (value: string) => void

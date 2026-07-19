@@ -8,6 +8,7 @@ import {
   resolveMachineProfileRow,
 } from '@vibey/api-shared'
 import type { UpdateDefaultAccountInput } from '../dto/profile-default-account.dto'
+import type { UpdatePreferencesInput } from '../dto/profile-preferences.dto'
 import { UsersRepository } from '../repositories/users.repository'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -15,6 +16,11 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 type ProfileUser = {
   id: string
   email: string
+}
+
+function asPreferencesRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  return value as Record<string, unknown>
 }
 
 @Injectable()
@@ -27,7 +33,7 @@ export class ProfileService {
     const { data, error } = await this.usersRepository.getProfile(
       supabase,
       user.id,
-      `id, full_name, avatar_url, company_name, industry, website, onboarding_completed, onboarding_data, ${this.machineColumns.machineId}, ${this.machineColumns.runtimeType}, ${this.machineColumns.runtimeUrl}, onboarding_animation_seen, account_mode, default_account_mode, default_org_id`,
+      `id, full_name, avatar_url, company_name, industry, website, onboarding_completed, onboarding_data, preferences, ${this.machineColumns.machineId}, ${this.machineColumns.runtimeType}, ${this.machineColumns.runtimeUrl}, onboarding_animation_seen, account_mode, default_account_mode, default_org_id`,
     )
 
     if (error) throw new BadRequestException(error.message)
@@ -41,6 +47,7 @@ export class ProfileService {
         website?: string | null
         onboarding_completed?: boolean | null
         onboarding_data?: Record<string, unknown> | null
+        preferences?: Record<string, unknown> | null
         onboarding_animation_seen?: boolean | null
         account_mode?: string | null
         default_account_mode?: string | null
@@ -61,6 +68,7 @@ export class ProfileService {
       website: profileData?.website ?? null,
       onboarding_completed: profileData?.onboarding_completed ?? false,
       onboarding_data: profileData?.onboarding_data ?? null,
+      preferences: asPreferencesRecord(profileData?.preferences),
       fly_machine_id: machine.machineId ?? null,
       agent_runtime_type: machine.runtimeType,
       agent_runtime_url: machine.runtimeUrl,
@@ -105,6 +113,29 @@ export class ProfileService {
     const { error } = await this.usersRepository.updateProfile(supabase, user.id, payload)
     if (error) throw new BadRequestException(error.message)
     return { ok: true }
+  }
+
+  async updatePreferences(
+    user: { id: string },
+    supabase: SupabaseClient,
+    body: UpdatePreferencesInput,
+  ) {
+    const { data, error } = await this.usersRepository.getProfile(supabase, user.id, 'preferences')
+    if (error) throw new BadRequestException(error.message)
+
+    const current = asPreferencesRecord(
+      (data as { preferences?: unknown } | null)?.preferences ?? null,
+    )
+    const next: Record<string, unknown> = { ...current }
+    if (body.home_layout !== undefined) {
+      next.home_layout = body.home_layout
+    }
+
+    const { error: updateError } = await this.usersRepository.updateProfile(supabase, user.id, {
+      preferences: next,
+    })
+    if (updateError) throw new BadRequestException(updateError.message)
+    return { ok: true, preferences: next }
   }
 
   async updateDefaultAccount(

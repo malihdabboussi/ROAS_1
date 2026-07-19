@@ -25,3 +25,21 @@ export const TEAM_OPS_DESK_MESSAGES = {
   COUNTS_IDLE: 'idle',
   COUNTS_BLOCKED: 'blocked',
 } as const
+
+export const SLACK_PEOPLE_MESSAGES = {
+  LOAD_ERROR: 'Could not load your Slack people. Try again.',
+  MODE_ERROR: 'Could not save that delivery mode.',
+  DISCONNECTED: 'Connect Slack to discover teammates and external people.',
+  SHADOW_SAFETY:
+    'Creating or reviewing a proposal never sends it. Only an approved proposal for an Active person can be sent with Send now.',
+  EMPTY_ACTIONS:
+    'New message and workflow proposals will appear here before anything is delivered.',
+  TEST_PROPOSAL_ERROR: "Couldn't create that test proposal. Check the person's mode and try again.",
+  TEST_PROPOSAL_CREATED: 'Test proposal added to the Shadow inbox.',
+  REVIEW_ERROR: "Couldn't save that review. Refresh and try again.",
+  REVIEW_APPROVED: 'Approved. Set this person to Active when you are ready to send.',
+  REVIEW_DISMISSED: 'Dismissed. Nothing was sent.',
+  SEND_ERROR: "Couldn't send that message. Confirm the person is Active and Slack is connected.",
+  SEND_SUCCESS: 'Sent through Slack.',
+  ACTIVE_REQUIRED: 'Set this person to Active before Send now becomes available.',
+} as const

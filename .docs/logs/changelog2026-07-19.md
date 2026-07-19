@@ -1,5 +1,19 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 15:58] - [FIX]
+
+What: Fixed Page Grader Map clients modal scroll/search by adding the missing `modal-nested-scroll-body` utility and constraining the card with `max-h-[90vh]` so the header (search) stays visible and the list scrolls inside.
+Why: The modal referenced a CSS class that was never added to `globals.css`, and the card had no max height, so ~100+ clients overflowed the viewport and clipped the search chrome — looking like a short non-scrollable list.
+Impact: Hard-refresh after `roas-web` deploy. Open Map clients → search + scroll the full roster; footer shows total client count.
+Files: `PageGraderClientScopeMapModal.tsx`, `apps/web` + `apps/website` `globals.css`
+
+## [2026-07-19 15:14] - [FIX]
+
+What: Home dashboard card order/size persists on the user account (`profiles.preferences.home_layout`) via `PATCH /api/profile/preferences`, with a per-user localStorage cache and one-shot migrate from the old global key. Agent profile context skips UI preference blobs.
+Why: Reorder only wrote device-local `vibey-home-layout`, so layouts were lost across browsers/devices and could leak between accounts on a shared browser.
+Impact: After `roas-api` + `roas-web` deploy, reorder Home once; the same layout loads when you sign in elsewhere.
+Files: `profile.controller.ts`, `profile.service.ts`, `profile-preferences.dto.ts`, `use-home-layout.ts`, `home-layout-api.ts`, `home-cards.config.ts`, agent preference dump filters
+
 ## [2026-07-19 15:09] - [FEATURE]
 
 What: Added a gated Meta Ads Launch mission, a read-only PageGrader account-context bridge, aligned Meta action contracts, and the `roas-meta-ads-launch` agent skill.
@@ -126,3 +140,67 @@ What: Typed collapse metadata as `Record<string, unknown>` so deleting `composio
 Why: `roas-api` production build failed TS2551 on PR #20 merge tip.
 Impact: Unblocks API deploy of the Google Calendar duplicate remap fix.
 Files: `integrations-overview-personal-composio-sync.ts`
+
+## [2026-07-19 15:12] - [FEATURE]
+
+What: Ship mission Deliverables export to one multi-tab Google Doc (Export to Google Docs + Docs logo), plus compact subtask assignee chips.
+Why: Recovered unfinished stash work so prod can run the export path users already see in UI.
+Impact: After API+web deploy, mission Export to Google Docs creates `{Mission} — Deliverables` with each Space doc as a native Docs tab.
+Files: multi-tab Drive services, mission export endpoint, DeliverablesCarousel, SubtasksSection, docs/tests
+
+
+## [2026-07-19 15:17] - [ARCH]
+
+What: Consolidated `space-template-picker` onto local main via cherry-pick.
+Why: Multi-agent WIP was scattered across branches/stashes.
+Impact: Feature commit now lives on local main.
+Files: cherry-picked ad406337
+
+## [2026-07-19 15:17] - [ARCH]
+
+What: Consolidated `mission-branch-access` onto local main via cherry-pick.
+Why: Multi-agent WIP was scattered across branches/stashes.
+Impact: Feature commit now lives on local main.
+Files: cherry-picked f700224d
+
+## [2026-07-19 15:18] - [ARCH]
+
+What: Consolidated mission branch-access fix onto local main; extracted outbox dispatcher mapping to clear the 600 LOC gate.
+Why: Multi-agent WIP was on a side branch/worktree; commit was blocked by pre-existing outbox LOC debt.
+Impact: `awaiting_access_approval` outbox dispatch lives on local main.
+Files: mission access cherry-pick, `missions.outbox-dispatcher.mapping.ts`
+
+## [2026-07-19 15:19] - [ARCH]
+
+What: Consolidated `slack-people-shadow` onto local main via cherry-pick.
+Why: Multi-agent work was scattered off main.
+Impact: Feature now lives on local main.
+Files: cherry-picked 1e05f891
+
+## [2026-07-19 15:19] - [ARCH]
+
+What: Consolidated `meta-ads-launch` onto local main via cherry-pick.
+Why: Multi-agent work was scattered off main.
+Impact: Feature now lives on local main.
+Files: cherry-picked 2acf0e6f
+
+## [2026-07-19 15:19] - [ARCH]
+
+What: Consolidated multi-agent finished work onto local `main`: home layout, space template picker note, mission branch-access, Slack people shadow mode, Meta ads launch playbook. Extracted outbox dispatcher mapping for LOC gate. Dropped superseded stashes.
+Why: Agents had been stashing/branching WIP off main; local main is the consolidation point.
+Impact: Local main is ahead of origin with those features. Webinar artifact-preview repair (`14d515e0`) still needs a manual merge (code conflicts). One broad snapshot stash kept.
+Files: cherry-picks on main; `missions.outbox-dispatcher.mapping.ts`
+
+## [2026-07-19 15:46] - [FIX]
+
+What: Verified the premium funnel/site design migration against the actual ROAS production project, forced a fresh Lux runtime synchronization, confirmed the skill and all three references on the Fly machine, and ran the standard production smoke checks.
+Why: An earlier audit used the generic Vibey production project instead of the ROAS production project and incorrectly reported that the training migration had not run.
+Impact: ROAS production has one valid canonical design skill, three resources, three enabled agent skill copies, complete Lux registry assignment and Opus 4.8 routing, no managed legacy copy, a healthy synchronized runtime, and four passing production smoke checks.
+Files: Operational verification of `supabase/migrations/20260718055800_premium_funnel_site_design_workflow.sql`, `docker/agents/templates/designer/skills/funnel-site-design/*`, `docker/openclaw.json`, and the `roas-runtimes` Fly deployment.
+
+## [2026-07-19 16:00] - [FIX]
+
+What: Replaced mission execution's incomplete local role-domain lookup with the shared agent-policy role defaults and additive team/agent policy resolution.
+Why: Lux's managed marketing role already grants `generate_media`, but mission preflight omitted that domain and incorrectly paused generated concept images for human access approval.
+Impact: Creative image subtasks proceed without approval when the assigned role already permits media generation; explicit agent denies still override defaults.
+Files: `mission-action-policy.ts`, `mission-action-policy.test.ts`, `mission-execute-phase.service.ts`, `documentation/features/missions.md`
