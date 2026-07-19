@@ -350,4 +350,65 @@ describe('IntegrationsOverviewService', () => {
       ]),
     )
   })
+  it('includes connected Page Grader rows in personal overview', async () => {
+    const pageGraderRow = {
+      id: 'ui-pg-1',
+      user_id: 'user-1',
+      integration_id: 'page_grader',
+      provider: 'page_grader',
+      status: 'connected',
+      agent_enabled: true,
+      metadata: { base_url_host: 'mjaxhuehopzbsuhmseeg.supabase.co' },
+      scope_mode: 'personal',
+    }
+    const inCalls: Array<{ column: string; ids: string[] }> = []
+    const repository = {
+      table: vi.fn((_client: unknown, table: string) => {
+        if (table === 'project_composio_toolkit_config') {
+          return makeQuery({ data: [], error: null })
+        }
+        const query = makeQuery({ data: [pageGraderRow], error: null })
+        query.in = vi.fn((column: string, ids: string[]) => {
+          inCalls.push({ column, ids })
+          return query
+        })
+        return query
+      }),
+      findAdminPersonalOpenAICodexIntegration: vi.fn(async () => null),
+      findAdminPersonalAnthropicClaudeIntegration: vi.fn(async () => null),
+    }
+    const service = new IntegrationsOverviewService(
+      repository as never,
+      { listConnectedAccounts: vi.fn(async () => []) } as never,
+      {
+        applyScope: vi.fn(async () => ({ data: [pageGraderRow], error: null })),
+        isOrgContext: vi.fn(() => false),
+      } as never,
+      {
+        hasSecret: vi.fn(async (_userId: string, provider: string, label: string) => {
+          return provider === 'page_grader' && (label === 'base_url' || label === 'api_key')
+        }),
+      } as never,
+      { mapComposioToolkitToIntegrationId: vi.fn(() => null) } as never,
+      {} as never,
+      { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
+    )
+
+    const result = await service.getOverview({} as never, { id: 'user-1' }, {
+      orgId: null,
+    } as never)
+
+    expect(inCalls.some((call) => call.ids.includes('page_grader'))).toBe(true)
+    expect(result.connectedProviders).toContain('page_grader')
+    expect(result.integrations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'ui-pg-1',
+          integration_id: 'page_grader',
+          status: 'connected',
+        }),
+      ]),
+    )
+  })
+
 })
