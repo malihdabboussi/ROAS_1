@@ -12,6 +12,7 @@ import {
   RefreshCw,
   User,
 } from 'lucide-react'
+import { AgentAvatar } from '@/components/agents'
 import { ConfirmDialog } from '@/components/ui/dialogs/ConfirmDialog'
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
@@ -257,8 +258,10 @@ export function SubtasksSection({
                           className="body-4 gap-spacing-1 bg-primary/15 hover:bg-primary/25 text-primary px-spacing-2 py-spacing-1 flex shrink-0 items-center rounded-full transition-colors"
                           title="Open in Your Turn"
                         >
-                          <User className="icon-xs" />
-                          {assigneeLabel}
+                          <span className="bg-primary/20 flex h-5 w-5 shrink-0 items-center justify-center rounded-full">
+                            <User className="icon-xs" />
+                          </span>
+                          <span className="truncate">{assigneeLabel}</span>
                         </button>
                       ) : (
                         <button
@@ -269,10 +272,17 @@ export function SubtasksSection({
                               subtaskAssigneeOpenId === subtask.id ? null : subtask.id,
                             )
                           }}
-                          className="body-4 bg-muted text-muted-foreground hover:bg-hover-subtle hover:text-foreground max-w-artifact-compact px-spacing-2 py-spacing-1 shrink-0 truncate rounded-full transition-colors"
+                          className="body-4 gap-spacing-1 text-muted-foreground hover:bg-hover-subtle hover:text-foreground px-spacing-2 py-spacing-1 flex shrink-0 items-center rounded-full transition-colors"
                           title={`${assigneeFullName}${assigneeAgent?.role ? ` — ${assigneeAgent.role}` : ''} · Reassign`}
                         >
-                          {assigneeLabel}
+                          {assigneeAgent ? (
+                            <AgentAvatar agent={assigneeAgent} className="h-5 w-5" />
+                          ) : (
+                            <span className="bg-secondary text-muted-foreground typo-2xs flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-bold">
+                              {assigneeLabel.charAt(0).toUpperCase() || '?'}
+                            </span>
+                          )}
+                          <span className="truncate">{assigneeLabel}</span>
                         </button>
                       )}
                       {subtaskAssigneeOpenId === subtask.id && (

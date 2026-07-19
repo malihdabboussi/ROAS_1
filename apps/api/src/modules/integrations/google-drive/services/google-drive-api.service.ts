@@ -8,6 +8,10 @@ import type {
   GoogleDriveListFilesOptions,
 } from '../types/google-drive.types'
 import { GoogleDriveComposioFilesService } from './google-drive-composio-files.service'
+import {
+  GoogleDriveComposioMultiTabDocsService,
+  type GoogleDocTabInput,
+} from './google-drive-composio-multi-tab-docs.service'
 import { GoogleDriveContentCacheService } from './google-drive-content-cache.service'
 
 type DriveContentKind = 'html' | 'csv' | 'pdf' | 'embed'
@@ -24,6 +28,7 @@ export class GoogleDriveApiService {
   constructor(
     private readonly repo: GoogleDriveRepository,
     private readonly files: GoogleDriveComposioFilesService,
+    private readonly multiTabDocs: GoogleDriveComposioMultiTabDocsService,
     private readonly contentCache: GoogleDriveContentCacheService,
   ) {}
 
@@ -157,14 +162,7 @@ export class GoogleDriveApiService {
   ): Promise<GoogleDriveFile> {
     const mode = await this.getConnectionMode(supabase, userId, orgId)
     if (mode.kind === 'composio') {
-      return this.files.uploadFile(
-        userId,
-        mode.connectedAccountId,
-        name,
-        mimeType,
-        body,
-        folderId,
-      )
+      return this.files.uploadFile(userId, mode.connectedAccountId, name, mimeType, body, folderId)
     }
     throw new BadRequestException('Google Drive is not connected')
   }
@@ -179,6 +177,20 @@ export class GoogleDriveApiService {
     const mode = await this.getConnectionMode(supabase, userId, orgId)
     if (mode.kind === 'composio') {
       return this.files.createGoogleDoc(userId, mode.connectedAccountId, title, html)
+    }
+    throw new BadRequestException('Google Drive is not connected')
+  }
+
+  async createGoogleDocWithTabs(
+    supabase: SupabaseClient,
+    userId: string,
+    title: string,
+    tabs: GoogleDocTabInput[],
+    orgId?: string | null,
+  ): Promise<GoogleDriveFile> {
+    const mode = await this.getConnectionMode(supabase, userId, orgId)
+    if (mode.kind === 'composio') {
+      return this.multiTabDocs.createGoogleDocWithTabs(userId, mode.connectedAccountId, title, tabs)
     }
     throw new BadRequestException('Google Drive is not connected')
   }

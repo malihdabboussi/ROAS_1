@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common'
@@ -21,6 +22,7 @@ import {
   type RequestScope,
 } from '@vibey/api-shared'
 import { MissionIdParamSchema, type MissionIdParam } from '../dto'
+import { MissionDeliverablesGoogleExportService } from '../services/mission-deliverables-google-export.service'
 import { MissionsAccessApprovalService } from '../services/missions-access-approval.service'
 import { MissionsExecutionService } from '../services/missions-execution.service'
 import { MissionsQueryService } from '../services/missions-query.service'
@@ -32,6 +34,7 @@ export class MissionsQueryController {
     private readonly missionsQueryService: MissionsQueryService,
     private readonly missionsExecutionService: MissionsExecutionService,
     private readonly missionsAccessApprovalService: MissionsAccessApprovalService,
+    private readonly missionDeliverablesGoogleExportService: MissionDeliverablesGoogleExportService,
   ) {}
 
   @Patch('bulk')
@@ -119,6 +122,22 @@ export class MissionsQueryController {
     @OrgContext() scope: RequestScope,
   ) {
     return this.missionsQueryService.getDeliverables(supabase, user.id, params.id, scope.orgId)
+  }
+
+  @Post(':id/deliverables/export-google-doc')
+  async exportDeliverablesGoogleDoc(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @Param(new ZodValidationPipe(MissionIdParamSchema)) params: MissionIdParam,
+    @OrgContext() scope: RequestScope,
+  ) {
+    const result = await this.missionDeliverablesGoogleExportService.exportSpaceDocsToGoogleDoc(
+      supabase,
+      user.id,
+      params.id,
+      scope.orgId,
+    )
+    return { success: true, file: result.file, tabCount: result.tabCount }
   }
 
   @Get(':id/logs')

@@ -280,6 +280,7 @@ export function MissionDetailModalView({
             accessApprovalCard={accessApprovalCard}
             deliverables={visibleDeliverables}
             onSelectDeliverable={setPreviewDeliverable}
+            missionId={effectiveMission.id}
             activityTimelineProps={activityTimelineProps}
             overlayModals={overlayModals}
           />,

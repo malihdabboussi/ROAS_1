@@ -1,21 +1,27 @@
 'use client'
 
+import Image from 'next/image'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import * as Popover from '@radix-ui/react-popover'
 import { ChevronDown, ChevronLeft, ChevronRight, FileText, Grid3x3, List } from 'lucide-react'
+import { toast } from 'sonner'
+import { DELIVERABLE_PREVIEW_MESSAGES } from '@/components/deliverables/deliverable-preview-messages.config'
 import {
   CoreDeliverableCard,
   TaskSectionDeliverablesEmptyMockup,
 } from '@/components/deliverables/DeliverablesCarouselCard'
 import { DeliverablesListView } from '@/components/deliverables/DeliverablesCarouselListView'
+import { isSpaceItemDocDeliverable } from '@/components/deliverables/space-doc-deliverable'
 import {
   CORE_DELIVERABLE_TYPES,
   DELIVERABLE_ICONS,
   DELIVERABLE_TYPE_LABEL,
   DeliverableTypeIconBadge,
+  exportMissionDeliverablesGoogleDoc,
   type DeliverableType,
   type MissionDeliverable,
 } from '@/lib/missions'
+import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
 export interface DeliverablesCarouselProps {
   deliverables: MissionDeliverable[]
@@ -34,6 +40,8 @@ export interface DeliverablesCarouselProps {
   taskSectionChrome?: boolean
   /** Start the collapsible task-section presentation closed. */
   defaultCollapsed?: boolean
+  /** Mission detail: export space-doc deliverables into one Google Doc (native tabs). */
+  missionId?: string | null
 }
 
 export function DeliverablesCarousel({
@@ -46,10 +54,12 @@ export function DeliverablesCarousel({
   iconBesideTitle = false,
   taskSectionChrome = false,
   defaultCollapsed = false,
+  missionId = null,
 }: DeliverablesCarouselProps) {
   const deliverablesCarouselRef = useRef<HTMLDivElement>(null)
   const [collapsed, setCollapsed] = useState(defaultCollapsed)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
+  const [exportingGoogleDoc, setExportingGoogleDoc] = useState(false)
 
   const { core, extra } = useMemo(() => {
     const c: MissionDeliverable[] = []
@@ -71,9 +81,59 @@ export function DeliverablesCarousel({
   const totalCount = deliverables.length
   const hasItems = core.length > 0 || extra.length > 0
   const countLabel = totalCount === 1 ? '1 item' : totalCount > 0 ? `${totalCount} items` : null
+  const spaceDocCount = useMemo(
+    () => deliverables.filter(isSpaceItemDocDeliverable).length,
+    [deliverables],
+  )
+  const canExportAllToGoogleDocs = Boolean(missionId) && spaceDocCount > 0
+
+  const exportAllToGoogleDocs = useCallback(async () => {
+    if (!missionId || exportingGoogleDoc) return
+    if (spaceDocCount === 0) {
+      toast.error(DELIVERABLE_PREVIEW_MESSAGES.GOOGLE_DOC_TABS_NONE)
+      return
+    }
+    const pendingTab = window.open('about:blank', '_blank')
+    if (pendingTab) pendingTab.opener = null
+    setExportingGoogleDoc(true)
+    try {
+      const result = await exportMissionDeliverablesGoogleDoc(missionId)
+      const href =
+        result.file.webViewLink || `https://docs.google.com/document/d/${result.file.id}/edit`
+      if (pendingTab) pendingTab.location.replace(href)
+      else window.open(href, '_blank', 'noopener,noreferrer')
+      toast.success(DELIVERABLE_PREVIEW_MESSAGES.GOOGLE_DOC_TABS_CREATED(result.tabCount))
+    } catch (cause) {
+      pendingTab?.close()
+      toast.error(
+        sanitizeUserError(cause, DELIVERABLE_PREVIEW_MESSAGES.GOOGLE_DOC_TABS_CREATE_FAILED),
+      )
+    } finally {
+      setExportingGoogleDoc(false)
+    }
+  }, [exportingGoogleDoc, missionId, spaceDocCount])
 
   const scrollControls = hasItems ? (
     <div className="gap-spacing-2 flex items-center">
+      {canExportAllToGoogleDocs ? (
+        <button
+          type="button"
+          onClick={() => void exportAllToGoogleDocs()}
+          disabled={exportingGoogleDoc}
+          className="button-glass-neutral body-3 gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex shrink-0 items-center whitespace-nowrap"
+          aria-label="Export to Google Docs"
+        >
+          <Image
+            src="/Integrations/GoogleDocs.png"
+            alt=""
+            width={16}
+            height={16}
+            unoptimized
+            className="icon-sm shrink-0 object-contain"
+          />
+          <span>{exportingGoogleDoc ? 'Exporting…' : 'Export to Google Docs'}</span>
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={() => setViewMode('grid')}

@@ -119,3 +119,11 @@ What: Typed collapse metadata as `Record<string, unknown>` so deleting `composio
 Why: `roas-api` production build failed TS2551 on PR #20 merge tip.
 Impact: Unblocks API deploy of the Google Calendar duplicate remap fix.
 Files: `integrations-overview-personal-composio-sync.ts`
+
+## [2026-07-19 15:12] - [FEATURE]
+
+What: Ship mission Deliverables export to one multi-tab Google Doc (Export to Google Docs + Docs logo), plus compact subtask assignee chips.
+Why: Recovered unfinished stash work so prod can run the export path users already see in UI.
+Impact: After API+web deploy, mission Export to Google Docs creates `{Mission} — Deliverables` with each Space doc as a native Docs tab.
+Files: multi-tab Drive services, mission export endpoint, DeliverablesCarousel, SubtasksSection, docs/tests
+
