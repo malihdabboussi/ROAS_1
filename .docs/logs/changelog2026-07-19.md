@@ -1,5 +1,26 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 14:40] - [FEATURE]
+
+What: Shipped Page Grader Create & import brain, full client pagination, and `campaign_type: get-more-leads` create-path fix onto a main-based branch; split `page-grader-api` send-work/helpers and client-map row to pass LOC gates.
+Why: Multi-agent WIP left those fixes uncommitted while changelog already described them; agents need one branch from current main.
+Impact: After merge + `roas-api`/`roas-web` deploy, Map clients lists the full roster and unmapped **Create & import brain** works.
+Files: page-grader API/integration/DTO/brain-import/client-import, `PageGraderClientScopeMapModal.tsx`, `PageGraderClientScopeMapRow.tsx`, helpers/send-work split, unit tests
+
+## [2026-07-19 14:31] - [FEATURE]
+
+What: Connected the administrator Shadow Mode test loop: create a harmless proposal, approve or dismiss it, and explicitly send an approved message only after the target person is Active.
+Why: Admins need to validate the complete review experience safely before automated observation and proposal generation are introduced.
+Impact: Proposal creation and review never send Slack messages. Off blocks proposals, Shadow blocks delivery, approval is mandatory, and Slack receives a DM only when an admin clicks Send now for an Active person.
+Files: Slack people controller/service/repository/DTO/types/tests, Team People UI/hook/service/messages/tests, integration documentation, follow-up plan
+
+## [2026-07-19 14:20] - [FEATURE]
+
+What: Added an organization-admin Slack people directory and Shadow Mode foundation: workspace identities persist as platform teammates, external contacts, or ghost profiles; per-person delivery intent defaults to Shadow; proposed messages and workflows have a durable review ledger; and Team now has a People + Shadow inbox view.
+Why: Proactive team help needs durable person memory and an observable, reversible rollout path before any automated Slack outreach is allowed to send.
+Impact: Admins share one view of Slack-discovered people and can record Off, Shadow, or Active intent. No proactive outbound runner was enabled in this slice, so existing Slack messaging behavior is unchanged.
+Files: `20260719142000_slack_people_shadow_mode.sql`, Slack people controller/service/repository/types/tests, Slack sender resolution, Team People UI/hook/service/navigation/tests, integration documentation
+
 ## [2026-07-19 13:42] - [FIX]
 
 What: Added an authoritative current UTC timestamp and temporal-comparison rule to every Mission OpenClaw instruction packet.

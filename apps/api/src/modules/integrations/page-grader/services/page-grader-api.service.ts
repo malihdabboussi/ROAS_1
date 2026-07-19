@@ -1,9 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { ConfigService } from '@nestjs/config'
 import { SupabaseServiceClient } from '@vibey/api-shared'
 import { VaultService } from '../../../vault/services/vault.service'
-import { SpacesService } from '../../../spaces/services/spaces.service'
 import { IntegrationConnectionsRepository } from '../../repositories/integration-connections.repository'
 import type {
   ListPageGraderAssigneesDto,
@@ -11,26 +9,21 @@ import type {
   SendPageGraderWorkDto,
   UpsertPageGraderClientScopeMapDto,
 } from '../dto/page-grader.dto'
-
-export type PageGraderClientScopeEntry = {
-  campaign_id: string
-  campaign_name?: string
-  space_id?: string | null
-  space_title?: string | null
-}
 import { PageGraderIntegration } from '../integrations/page-grader.integration'
+import {
+  FALLBACK_PAGE_GRADER_TASK_TYPES,
+  getPageGraderCreds,
+  PAGE_GRADER_LABEL_API_KEY,
+  PAGE_GRADER_LABEL_BASE_URL,
+  PAGE_GRADER_PROVIDER,
+  parseClientScopeMap,
+  safeHost,
+  type PageGraderClientScopeEntry,
+  type PageGraderSendResult,
+} from './page-grader-api.helpers'
+import { PageGraderSendWorkService } from './page-grader-send-work.service'
 
-const PROVIDER = 'page_grader'
-const LABEL_BASE_URL = 'base_url'
-const LABEL_API_KEY = 'api_key'
-
-export type PageGraderSendResult = {
-  space_item_id: string
-  status: 'created' | 'skipped_already_sent' | 'failed'
-  work_id?: string
-  work_url?: string
-  error?: string
-}
+export type { PageGraderClientScopeEntry, PageGraderSendResult }
 
 @Injectable()
 export class PageGraderApiService {
@@ -40,32 +33,40 @@ export class PageGraderApiService {
     private readonly pageGrader: PageGraderIntegration,
     private readonly vault: VaultService,
     private readonly connections: IntegrationConnectionsRepository,
-    private readonly spaces: SpacesService,
     private readonly svc: SupabaseServiceClient,
-    private readonly config: ConfigService,
+    private readonly sendWorkService: PageGraderSendWorkService,
   ) {}
 
   private async getCreds(userId: string) {
-    const [baseUrl, apiKey] = await Promise.all([
-      this.vault.getSecret(userId, PROVIDER, LABEL_BASE_URL),
-      this.vault.getSecret(userId, PROVIDER, LABEL_API_KEY),
-    ])
-    if (!baseUrl || !apiKey) throw new BadRequestException('Page Grader is not connected')
-    return { baseUrl, apiKey }
+    return getPageGraderCreds(this.vault, userId)
   }
 
   async connect(userId: string, baseUrl: string, apiKey: string) {
     await this.pageGrader.healthCheck(baseUrl, apiKey)
 
     await Promise.all([
-      this.vault.storeSecret(userId, PROVIDER, LABEL_BASE_URL, baseUrl, 'custom', {}),
-      this.vault.storeSecret(userId, PROVIDER, LABEL_API_KEY, apiKey, 'api_key', {}),
+      this.vault.storeSecret(
+        userId,
+        PAGE_GRADER_PROVIDER,
+        PAGE_GRADER_LABEL_BASE_URL,
+        baseUrl,
+        'custom',
+        {},
+      ),
+      this.vault.storeSecret(
+        userId,
+        PAGE_GRADER_PROVIDER,
+        PAGE_GRADER_LABEL_API_KEY,
+        apiKey,
+        'api_key',
+        {},
+      ),
     ])
 
     // Catalog parent must exist before user_integrations insert (FK).
     await this.connections.ensureAvailable({
-      id: PROVIDER,
-      provider: PROVIDER,
+      id: PAGE_GRADER_PROVIDER,
+      provider: PAGE_GRADER_PROVIDER,
       name: 'Page Grader',
       description:
         'Send Space tasks to Page Grader as workload for client funnel, copy, and design teams.',
@@ -78,10 +79,10 @@ export class PageGraderApiService {
     })
 
     const now = new Date().toISOString()
-    await this.connections.upsertConnection(PROVIDER, userId, {
+    await this.connections.upsertConnection(PAGE_GRADER_PROVIDER, userId, {
       user_id: userId,
-      integration_id: PROVIDER,
-      provider: PROVIDER,
+      integration_id: PAGE_GRADER_PROVIDER,
+      provider: PAGE_GRADER_PROVIDER,
       status: 'connected',
       access_token: null,
       refresh_token: null,
@@ -98,22 +99,30 @@ export class PageGraderApiService {
 
   async disconnect(userId: string) {
     await Promise.all([
-      this.vault.deleteSecret(userId, PROVIDER, LABEL_BASE_URL),
-      this.vault.deleteSecret(userId, PROVIDER, LABEL_API_KEY),
+      this.vault.deleteSecret(userId, PAGE_GRADER_PROVIDER, PAGE_GRADER_LABEL_BASE_URL),
+      this.vault.deleteSecret(userId, PAGE_GRADER_PROVIDER, PAGE_GRADER_LABEL_API_KEY),
     ])
-    await this.connections.markPersonalDisconnected(PROVIDER, userId)
+    await this.connections.markPersonalDisconnected(PAGE_GRADER_PROVIDER, userId)
   }
 
   async getStatus(userId: string) {
-    const hasUrl = await this.vault.hasSecret(userId, PROVIDER, LABEL_BASE_URL)
-    const hasKey = await this.vault.hasSecret(userId, PROVIDER, LABEL_API_KEY)
+    const hasUrl = await this.vault.hasSecret(
+      userId,
+      PAGE_GRADER_PROVIDER,
+      PAGE_GRADER_LABEL_BASE_URL,
+    )
+    const hasKey = await this.vault.hasSecret(
+      userId,
+      PAGE_GRADER_PROVIDER,
+      PAGE_GRADER_LABEL_API_KEY,
+    )
     if (!hasUrl || !hasKey) return { connected: false, status: null, baseUrlHost: null }
 
     const { data } = await this.svc.client
       .from('user_integrations')
       .select('status, connected_at, metadata')
       .eq('user_id', userId)
-      .eq('integration_id', PROVIDER)
+      .eq('integration_id', PAGE_GRADER_PROVIDER)
       .is('org_id', null)
       .maybeSingle()
 
@@ -132,7 +141,40 @@ export class PageGraderApiService {
 
   async listClients(userId: string, opts: ListPageGraderClientsDto) {
     const creds = await this.getCreds(userId)
-    const clients = await this.pageGrader.listClients(creds.baseUrl, creds.apiKey, opts)
+    const fetchAll = opts.all !== false && opts.offset == null
+    const pageSize = Math.min(opts.limit ?? 100, 100)
+    const clients: Awaited<ReturnType<typeof this.pageGrader.listClients>> = []
+    const seenIds = new Set<string>()
+
+    if (fetchAll) {
+      let offset = 0
+      // Cap pages so a runaway Portal listing cannot hang the settings request.
+      for (let page = 0; page < 50; page += 1) {
+        const batch = await this.pageGrader.listClients(creds.baseUrl, creds.apiKey, {
+          q: opts.q,
+          limit: pageSize,
+          offset,
+        })
+        let added = 0
+        for (const client of batch) {
+          if (!client?.id || seenIds.has(client.id)) continue
+          seenIds.add(client.id)
+          clients.push(client)
+          added += 1
+        }
+        // Stop when Portal returns a short page, or when offset is ignored (no new ids).
+        if (batch.length < pageSize || added === 0) break
+        offset += batch.length
+      }
+    } else {
+      const batch = await this.pageGrader.listClients(creds.baseUrl, creds.apiKey, {
+        q: opts.q,
+        limit: opts.limit ?? pageSize,
+        offset: opts.offset ?? 0,
+      })
+      clients.push(...batch)
+    }
+
     const [clientTagMap, clientScopeMap] = await Promise.all([
       this.readClientTagMap(userId),
       this.readClientScopeMap(userId),
@@ -142,6 +184,16 @@ export class PageGraderApiService {
       client_tag_map: clientTagMap,
       client_scope_map: clientScopeMap,
     }
+  }
+
+  async getClientMetaContext(userId: string, clientId: string) {
+    const creds = await this.getCreds(userId)
+    const metaContext = await this.pageGrader.getClientMetaContext(
+      creds.baseUrl,
+      creds.apiKey,
+      clientId,
+    )
+    return { meta_context: metaContext }
   }
 
   async listTaskTypes(userId: string) {
@@ -178,6 +230,32 @@ export class PageGraderApiService {
     return { client_scope_map: next }
   }
 
+  /** Merge one client → campaign/space mapping without wiping other clients. */
+  async mergeClientScopeEntry(
+    userId: string,
+    input: {
+      clientId: string
+      campaignId: string
+      campaignName?: string | null
+      spaceId?: string | null
+      spaceTitle?: string | null
+    },
+  ) {
+    await this.getCreds(userId)
+    const existing = await this.readClientScopeMap(userId)
+    const next: Record<string, PageGraderClientScopeEntry> = {
+      ...existing,
+      [input.clientId]: {
+        campaign_id: input.campaignId,
+        ...(input.campaignName ? { campaign_name: input.campaignName } : {}),
+        space_id: input.spaceId ?? null,
+        ...(input.spaceTitle ? { space_title: input.spaceTitle } : {}),
+      },
+    }
+    await this.writeClientScopeMap(userId, next)
+    return { client_scope_map: next }
+  }
+
   async sendWork(
     supabase: SupabaseClient,
     userId: string,
@@ -185,233 +263,7 @@ export class PageGraderApiService {
     orgId?: string | null,
     orgRole?: import('@vibey/api-shared').OrgRole | null,
   ): Promise<{ success: boolean; results: PageGraderSendResult[] }> {
-    const creds = await this.getCreds(userId)
-    const appUrl = (this.config.get<string>('APP_URL') || 'https://app.roas.io').replace(
-      /\/+$/,
-      '',
-    )
-    const workKind = dto.work_kind ?? 'task_request'
-    const taskType = dto.task_type
-    const results: PageGraderSendResult[] = []
-
-    for (const itemId of dto.space_item_ids) {
-      try {
-        const item = (await this.spaces.getItem(
-          supabase,
-          userId,
-          dto.space_id,
-          itemId,
-          orgId,
-          orgRole,
-        )) as Record<string, unknown>
-
-        const customData =
-          item.custom_data && typeof item.custom_data === 'object'
-            ? (item.custom_data as Record<string, unknown>)
-            : {}
-        const existingPg =
-          customData.page_grader && typeof customData.page_grader === 'object'
-            ? (customData.page_grader as Record<string, unknown>)
-            : null
-
-        // Already linked: still call Page Grader create (idempotent) so ClickUp push can retry.
-        if (typeof existingPg?.work_id === 'string' && existingPg.work_id.trim()) {
-          try {
-            const { work } = await this.pageGrader.createWork(creds.baseUrl, creds.apiKey, {
-              client_id: dto.client_id,
-              source: {
-                system: 'roas',
-                org_id: orgId ?? null,
-                space_id: dto.space_id,
-                space_item_id: itemId,
-                space_url: `${appUrl}/spaces/${dto.space_id}?item=${itemId}`,
-              },
-              work: {
-                kind: workKind,
-                task_type: taskType,
-                title: String(item.title ?? '').trim() || 'Untitled task',
-                description: '',
-                priority: mapRoasPriority(item.priority),
-                due_at:
-                  typeof dto.due_date === 'string' && dto.due_date.trim()
-                    ? dto.due_date.trim().slice(0, 10)
-                    : typeof item.due_date === 'string'
-                      ? item.due_date
-                      : null,
-              },
-            })
-            if (work.url && work.url !== existingPg.work_url) {
-              await this.spaces.updateItem(
-                supabase,
-                userId,
-                dto.space_id,
-                itemId,
-                {
-                  custom_data: {
-                    page_grader: {
-                      ...existingPg,
-                      work_id: work.id,
-                      work_url: work.url,
-                    },
-                  },
-                },
-                orgId,
-                orgRole,
-              )
-            }
-            results.push({
-              space_item_id: itemId,
-              status: 'skipped_already_sent',
-              work_id: work.id,
-              work_url: work.url,
-            })
-          } catch (err) {
-            results.push({
-              space_item_id: itemId,
-              status: 'skipped_already_sent',
-              work_id: existingPg.work_id,
-              work_url: typeof existingPg.work_url === 'string' ? existingPg.work_url : undefined,
-              error: err instanceof Error ? err.message : String(err),
-            })
-          }
-          continue
-        }
-
-        const parentContext = await this.resolveParentContext(
-          supabase,
-          userId,
-          dto.space_id,
-          item,
-          orgId,
-          orgRole,
-        )
-        const assignees = dto.assignee
-          ? [
-              {
-                ...(dto.assignee.page_grader_user_id
-                  ? { page_grader_user_id: dto.assignee.page_grader_user_id }
-                  : {}),
-                ...(dto.assignee.email ? { email: dto.assignee.email } : {}),
-                ...(dto.assignee.name ? { name: dto.assignee.name } : {}),
-              },
-            ]
-          : await this.resolveAssigneeEmails(item)
-
-        const title = String(item.title ?? '').trim() || 'Untitled task'
-        const description = buildDescription(item, parentContext, dto.note)
-        const existingTags = Array.isArray(customData.tags)
-          ? customData.tags.filter((t): t is string => typeof t === 'string')
-          : []
-        const nextTags =
-          dto.client_tag_id && !existingTags.includes(dto.client_tag_id)
-            ? [...existingTags, dto.client_tag_id]
-            : existingTags
-        const dueAt =
-          typeof dto.due_date === 'string' && dto.due_date.trim()
-            ? dto.due_date.trim().slice(0, 10)
-            : typeof item.due_date === 'string' && item.due_date.trim()
-              ? item.due_date.trim().slice(0, 10)
-              : null
-        const operatorNote = dto.note?.trim() || ''
-        const existingNotes = typeof item.notes === 'string' ? item.notes.trim() : ''
-        const nextNotes = mergeOperatorNoteIntoNotes(existingNotes, operatorNote)
-
-        const payload = {
-          client_id: dto.client_id,
-          note: operatorNote || undefined,
-          source: {
-            system: 'roas',
-            org_id: orgId ?? null,
-            space_id: dto.space_id,
-            space_item_id: itemId,
-            space_url: `${appUrl}/spaces/${dto.space_id}?item=${itemId}`,
-          },
-          work: {
-            kind: workKind,
-            task_type: taskType,
-            title,
-            description,
-            priority: mapRoasPriority(item.priority),
-            due_at: dueAt,
-            tags: nextTags,
-            assignees,
-            context: parentContext,
-          },
-        }
-
-        const { work, status } = await this.pageGrader.createWork(
-          creds.baseUrl,
-          creds.apiKey,
-          payload,
-        )
-
-        const itemPatch: Record<string, unknown> = {
-          custom_data: {
-            ...(dto.client_tag_id ? { tags: nextTags } : {}),
-            page_grader: {
-              client_id: dto.client_id,
-              work_id: work.id,
-              work_kind: work.kind,
-              task_type: taskType,
-              work_url: work.url,
-              sent_at: new Date().toISOString(),
-              sent_by_user_id: userId,
-              client_tag_id: dto.client_tag_id ?? null,
-            },
-          },
-        }
-        if (dueAt && dueAt !== String(item.due_date ?? '').trim().slice(0, 10)) {
-          itemPatch.due_date = dueAt
-        }
-        if (nextNotes !== null && nextNotes !== existingNotes) {
-          itemPatch.notes = nextNotes
-        }
-
-        await this.spaces.updateItem(
-          supabase,
-          userId,
-          dto.space_id,
-          itemId,
-          itemPatch,
-          orgId,
-          orgRole,
-        )
-
-        results.push({
-          space_item_id: itemId,
-          status: status === 200 ? 'skipped_already_sent' : 'created',
-          work_id: work.id,
-          work_url: work.url,
-        })
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        this.logger.warn(`Page Grader send failed for ${itemId}: ${message}`)
-        results.push({
-          space_item_id: itemId,
-          status: 'failed',
-          error: message,
-        })
-      }
-    }
-
-    if (
-      dto.client_tag_id &&
-      dto.client_tag_label &&
-      results.some((r) => r.status === 'created' || r.status === 'skipped_already_sent')
-    ) {
-      await this.rememberClientTag(
-        userId,
-        dto.client_id,
-        dto.client_tag_id,
-        dto.client_tag_label,
-      ).catch((err) =>
-        this.logger.warn(
-          `Failed to remember Page Grader client tag map: ${err instanceof Error ? err.message : String(err)}`,
-        ),
-      )
-    }
-
-    return { success: results.every((r) => r.status !== 'failed'), results }
+    return this.sendWorkService.sendWork(supabase, userId, dto, orgId, orgRole)
   }
 
   private async readClientTagMap(
@@ -421,7 +273,7 @@ export class PageGraderApiService {
       .from('user_integrations')
       .select('metadata')
       .eq('user_id', userId)
-      .eq('integration_id', PROVIDER)
+      .eq('integration_id', PAGE_GRADER_PROVIDER)
       .is('org_id', null)
       .maybeSingle()
     const metadata =
@@ -452,7 +304,7 @@ export class PageGraderApiService {
       .from('user_integrations')
       .select('id, metadata')
       .eq('user_id', userId)
-      .eq('integration_id', PROVIDER)
+      .eq('integration_id', PAGE_GRADER_PROVIDER)
       .is('org_id', null)
       .maybeSingle()
     if (!data?.id) return
@@ -488,7 +340,7 @@ export class PageGraderApiService {
       .from('user_integrations')
       .select('metadata')
       .eq('user_id', userId)
-      .eq('integration_id', PROVIDER)
+      .eq('integration_id', PAGE_GRADER_PROVIDER)
       .is('org_id', null)
       .maybeSingle()
     const metadata =
@@ -506,7 +358,7 @@ export class PageGraderApiService {
       .from('user_integrations')
       .select('id, metadata')
       .eq('user_id', userId)
-      .eq('integration_id', PROVIDER)
+      .eq('integration_id', PAGE_GRADER_PROVIDER)
       .is('org_id', null)
       .maybeSingle()
     if (!data?.id) throw new BadRequestException('Page Grader is not connected')
@@ -526,167 +378,4 @@ export class PageGraderApiService {
       .eq('id', data.id)
     if (error) throw new BadRequestException(error.message)
   }
-
-  private async resolveParentContext(
-    supabase: SupabaseClient,
-    userId: string,
-    spaceId: string,
-    item: Record<string, unknown>,
-    orgId?: string | null,
-    orgRole?: import('@vibey/api-shared').OrgRole | null,
-  ) {
-    const customData =
-      item.custom_data && typeof item.custom_data === 'object'
-        ? (item.custom_data as Record<string, unknown>)
-        : {}
-    const external =
-      customData.external_automation && typeof customData.external_automation === 'object'
-        ? (customData.external_automation as Record<string, unknown>)
-        : {}
-
-    let parentMeetingTitle: string | null = null
-    const parentId =
-      typeof item.parent_item_id === 'string' ? item.parent_item_id : null
-    if (parentId) {
-      try {
-        const parent = (await this.spaces.getItem(
-          supabase,
-          userId,
-          spaceId,
-          parentId,
-          orgId,
-          orgRole,
-        )) as Record<string, unknown>
-        parentMeetingTitle = String(parent.title ?? '').trim() || null
-      } catch {
-        parentMeetingTitle = null
-      }
-    }
-
-    return {
-      parent_meeting_title: parentMeetingTitle,
-      parent_space_item_id: parentId,
-      fathom_url:
-        typeof customData.fathom_url === 'string'
-          ? customData.fathom_url
-          : typeof external.fathom_url === 'string'
-            ? external.fathom_url
-            : null,
-      recording_url:
-        typeof customData.recording_url === 'string' ? customData.recording_url : null,
-      call_kind: typeof customData.entry_type === 'string' ? customData.entry_type : null,
-    }
-  }
-
-  private async resolveAssigneeEmails(item: Record<string, unknown>) {
-    const assignees = Array.isArray(item.assignees) ? item.assignees : []
-    const out: Array<{ email?: string; name?: string; roas_user_id?: string }> = []
-
-    for (const raw of assignees) {
-      if (!raw || typeof raw !== 'object') continue
-      const a = raw as { type?: string; id?: string }
-      if (a.type !== 'human' || !a.id) continue
-      try {
-        const { data } = await this.svc.client.auth.admin.getUserById(a.id)
-        const email = data.user?.email?.trim()
-        const name =
-          typeof data.user?.user_metadata?.full_name === 'string'
-            ? data.user.user_metadata.full_name
-            : typeof data.user?.user_metadata?.name === 'string'
-              ? data.user.user_metadata.name
-              : undefined
-        out.push({
-          roas_user_id: a.id,
-          ...(email ? { email } : {}),
-          ...(name ? { name } : {}),
-        })
-      } catch {
-        out.push({ roas_user_id: a.id })
-      }
-    }
-    return out
-  }
-}
-
-const FALLBACK_PAGE_GRADER_TASK_TYPES: Array<{ id: string; label: string; hint: string }> = [
-  { id: 'design', label: 'Graphics', hint: 'Design / graphic design requests' },
-  { id: 'copy', label: 'Copywriting', hint: 'Copy and messaging requests' },
-  { id: 'funnel', label: 'Funnels & Pages', hint: 'Funnel builds and landing pages' },
-  { id: 'ad', label: 'Ads & Media Buying', hint: 'Ad creative and media buying' },
-  { id: 'video', label: 'Video Editing', hint: 'Video editing requests' },
-  { id: 'ghl', label: 'CRM / LeadConnector', hint: 'GHL / LeadConnector projects' },
-  { id: 'other', label: 'Special / Other', hint: 'Anything that doesn’t fit the other types' },
-]
-
-function parseClientScopeMap(raw: unknown): Record<string, PageGraderClientScopeEntry> {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
-  const out: Record<string, PageGraderClientScopeEntry> = {}
-  for (const [clientId, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (!clientId || !value || typeof value !== 'object' || Array.isArray(value)) continue
-    const row = value as Record<string, unknown>
-    const campaignId = typeof row.campaign_id === 'string' ? row.campaign_id.trim() : ''
-    if (!campaignId) continue
-    const campaignName =
-      typeof row.campaign_name === 'string' && row.campaign_name.trim()
-        ? row.campaign_name.trim()
-        : undefined
-    const spaceId =
-      typeof row.space_id === 'string' && row.space_id.trim()
-        ? row.space_id.trim()
-        : row.space_id === null
-          ? null
-          : undefined
-    const spaceTitle =
-      typeof row.space_title === 'string' && row.space_title.trim()
-        ? row.space_title.trim()
-        : undefined
-    out[clientId] = {
-      campaign_id: campaignId,
-      ...(campaignName ? { campaign_name: campaignName } : {}),
-      ...(spaceId !== undefined ? { space_id: spaceId } : {}),
-      ...(spaceTitle ? { space_title: spaceTitle } : {}),
-    }
-  }
-  return out
-}
-
-function safeHost(baseUrl: string): string | null {
-  try {
-    return new URL(baseUrl).host
-  } catch {
-    return null
-  }
-}
-
-function mapRoasPriority(raw: unknown): string {
-  const value = String(raw ?? '').trim().toLowerCase()
-  if (value === 'urgent' || value === 'high' || value === 'low' || value === 'normal') return value
-  if (value === 'medium') return 'normal'
-  return 'normal'
-}
-
-function buildDescription(
-  item: Record<string, unknown>,
-  parentContext: Record<string, unknown>,
-  note?: string,
-): string {
-  const parts: string[] = []
-  const notes = typeof item.notes === 'string' ? item.notes.trim() : ''
-  const description = typeof item.description === 'string' ? item.description.trim() : ''
-  if (description) parts.push(description)
-  if (notes && notes !== description) parts.push(notes)
-  if (note?.trim()) parts.push(`Operator note: ${note.trim()}`)
-  if (parentContext.parent_meeting_title) {
-    parts.push(`From meeting: ${String(parentContext.parent_meeting_title)}`)
-  }
-  return parts.join('\n\n')
-}
-
-/** Appends operator note to Space notes once; returns null when nothing to write. */
-function mergeOperatorNoteIntoNotes(existingNotes: string, operatorNote: string): string | null {
-  if (!operatorNote) return null
-  const marker = `Operator note: ${operatorNote}`
-  if (existingNotes.includes(marker)) return existingNotes
-  if (!existingNotes) return marker
-  return `${existingNotes}\n\n${marker}`
 }

@@ -67,8 +67,8 @@ export async function importPageGraderClientBrainForSettings(input: {
   dryRun?: boolean
 }): Promise<{
   success: boolean
-  campaign?: { id: string; name?: string | null }
-  space?: { id: string; title?: string | null }
+  campaign?: { action?: 'create' | 'reuse'; id: string; name?: string | null }
+  space?: { action?: 'create' | 'reuse'; id: string; title?: string | null }
   brainImport?: { jobId?: string | null; status?: string | null }
 }> {
   return backendPost('/api/integrations/page-grader/import-client-brain', {

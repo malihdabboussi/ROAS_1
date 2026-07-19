@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PageGraderApiService } from '../page-grader-api.service'
+import { PageGraderSendWorkService } from '../page-grader-send-work.service'
 
 describe('PageGraderApiService.sendWork', () => {
   const pageGrader = {
     createWork: vi.fn(),
     healthCheck: vi.fn(),
     listClients: vi.fn(),
+    getClientMetaContext: vi.fn(),
   }
   const vault = {
     getSecret: vi.fn(),
@@ -53,13 +55,19 @@ describe('PageGraderApiService.sendWork', () => {
       if (label === 'api_key') return 'test-key'
       return null
     })
+    const sendWorkService = new PageGraderSendWorkService(
+      pageGrader as never,
+      vault as never,
+      spaces as never,
+      svc as never,
+      config as never,
+    )
     service = new PageGraderApiService(
       pageGrader as never,
       vault as never,
       connections as never,
-      spaces as never,
       svc as never,
-      config as never,
+      sendWorkService,
     )
   })
 
@@ -176,5 +184,73 @@ describe('PageGraderApiService.sendWork', () => {
       undefined,
     )
     expect(result.results[0]?.status).toBe('created')
+  })
+
+  it('pages through all Page Grader clients for settings listing', async () => {
+    pageGrader.listClients
+      .mockResolvedValueOnce(
+        Array.from({ length: 100 }, (_, i) => ({
+          id: `c-${i}`,
+          name: `Client ${i}`,
+          status: 'active',
+        })),
+      )
+      .mockResolvedValueOnce([
+        { id: 'c-100', name: 'Client 100', status: 'active' },
+        { id: 'c-101', name: 'Client 101', status: 'active' },
+      ])
+    svc.client.from.mockReturnValue({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            is: vi.fn(() => ({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { id: 'ui-1', metadata: {} },
+              }),
+            })),
+          })),
+        })),
+      })),
+    })
+
+    const result = await service.listClients('user-1', {})
+
+    expect(pageGrader.listClients).toHaveBeenCalledTimes(2)
+    expect(pageGrader.listClients).toHaveBeenNthCalledWith(
+      1,
+      'https://example.supabase.co/functions/v1/roas-api',
+      'test-key',
+      { q: undefined, limit: 100, offset: 0 },
+    )
+    expect(pageGrader.listClients).toHaveBeenNthCalledWith(
+      2,
+      'https://example.supabase.co/functions/v1/roas-api',
+      'test-key',
+      { q: undefined, limit: 100, offset: 100 },
+    )
+    expect(result.clients).toHaveLength(102)
+  })
+
+  it('returns safe Page Grader Meta context through the stored connection', async () => {
+    const metaContext = {
+      client: { id: 'client-1', name: 'Acme' },
+      connected: true,
+      accounts: [{ ad_account_id: 'act_123', active: true }],
+      recommended_ad_account_id: 'act_123',
+      pages: [],
+      pixels: [],
+      campaigns: [],
+      provenance: { source: 'page_grader', generated_at: '2026-07-19T20:00:00.000Z' },
+    }
+    pageGrader.getClientMetaContext.mockResolvedValue(metaContext)
+
+    const result = await service.getClientMetaContext('user-1', 'client-1')
+
+    expect(pageGrader.getClientMetaContext).toHaveBeenCalledWith(
+      'https://example.supabase.co/functions/v1/roas-api',
+      'test-key',
+      'client-1',
+    )
+    expect(result).toEqual({ meta_context: metaContext })
   })
 })
