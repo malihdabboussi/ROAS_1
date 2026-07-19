@@ -267,54 +267,31 @@ export class GoogleDriveComposioFilesService {
     if (Buffer.byteLength(html, 'utf8') > 4_500_000) {
       throw new BadRequestException('Document is too large for Google Docs export')
     }
-    const accessToken = await this.composio.getAccessTokenForToolkit(
+    // Composio redacts OAuth access tokens from connectedAccounts.get, so direct
+    // Google Drive upload APIs fail with 401. Create the native Doc through the
+    // Composio tool that executes with the linked account server-side.
+    const raw = await this.composio.executeTool(
+      'GOOGLEDRIVE_CREATE_FILE_FROM_TEXT',
       userId,
-      'googledrive',
+      {
+        file_name: title,
+        text_content: html,
+        mime_type: 'application/vnd.google-apps.document',
+      },
       connectedAccountId,
     )
-    if (!accessToken) {
-      throw new BadRequestException('Google Drive connection needs to be reconnected')
-    }
-
-    const boundary = `vibey-google-doc-${crypto.randomUUID()}`
-    const metadata = JSON.stringify({
-      name: title,
-      mimeType: 'application/vnd.google-apps.document',
-    })
-    const multipartBody = [
-      `--${boundary}`,
-      'Content-Type: application/json; charset=UTF-8',
-      '',
-      metadata,
-      `--${boundary}`,
-      'Content-Type: text/html; charset=UTF-8',
-      '',
-      html,
-      `--${boundary}--`,
-      '',
-    ].join('\r\n')
-    const query = new URLSearchParams({
-      uploadType: 'multipart',
-      fields: 'id,name,mimeType,webViewLink,parents,createdTime,modifiedTime',
-    })
-    const response = await fetch(`https://www.googleapis.com/upload/drive/v3/files?${query}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': `multipart/related; boundary=${boundary}`,
-        Accept: 'application/json',
-      },
-      body: multipartBody,
-    })
-    if (!response.ok) {
+    const payload = this.payload.unwrap(raw)
+    const payloadRecord = this.payload.asRecord(payload)
+    const created = this.payload.asRecord(payloadRecord?.['data']) ?? payloadRecord
+    const fileId = this.payload.asString(created?.id)
+    if (!created || !fileId) {
       throw new BadRequestException('Failed to create Google Doc')
     }
-
-    const file = (await response.json()) as GoogleDriveFile
-    if (!file.id) throw new BadRequestException('Google Drive did not return the created document')
+    const file = created as unknown as GoogleDriveFile
     return {
       ...file,
-      webViewLink: file.webViewLink || `https://docs.google.com/document/d/${file.id}/edit`,
+      id: fileId,
+      webViewLink: file.webViewLink || `https://docs.google.com/document/d/${fileId}/edit`,
     }
   }
 
