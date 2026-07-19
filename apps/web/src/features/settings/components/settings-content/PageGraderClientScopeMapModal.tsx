@@ -234,8 +234,8 @@ export function PageGraderClientScopeMapModal({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="z-modal-backdrop-above fixed inset-0" />
         <DialogPrimitive.Content className="z-modal-layer-4 p-spacing-4 fixed inset-0 flex items-center justify-center overflow-hidden">
-          <div className="surface-card wizard-container-border rounded-spacing-4 flex w-full max-w-lg flex-col overflow-hidden">
-            <div className="border-border shrink-0 space-y-3 border-b px-4 py-3">
+          <div className="surface-card wizard-container-border rounded-spacing-4 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden">
+            <div className="modal-scroll-header-edge border-border shrink-0 space-y-3 border-b px-4 py-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <DialogPrimitive.Title className="body-2 text-foreground font-semibold">
@@ -310,7 +310,7 @@ export function PageGraderClientScopeMapModal({
 
             <div className="border-border flex shrink-0 items-center justify-between gap-2 border-t px-4 py-3">
               <p className="typo-caption text-muted-foreground">
-                {mappedCount} mapped
+                {mappedCount} mapped · {clients.length} clients
                 {query.trim() ? ` · showing ${filteredClients.length}` : ''}
               </p>
               <div className="flex gap-2">
