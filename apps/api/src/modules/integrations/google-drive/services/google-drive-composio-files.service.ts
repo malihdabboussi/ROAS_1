@@ -8,6 +8,7 @@ import type {
   GoogleDriveListFilesOptions,
 } from '../types/google-drive.types'
 import { GoogleDriveComposioPayloadService } from './google-drive-composio-payload.service'
+import { htmlToGoogleDocsMarkdown } from './html-to-google-docs-markdown'
 
 @Injectable()
 export class GoogleDriveComposioFilesService {
@@ -267,23 +268,30 @@ export class GoogleDriveComposioFilesService {
     if (Buffer.byteLength(html, 'utf8') > 4_500_000) {
       throw new BadRequestException('Document is too large for Google Docs export')
     }
-    // Composio redacts OAuth access tokens from connectedAccounts.get, so direct
-    // Google Drive upload APIs fail with 401. Create the native Doc through the
-    // Composio tool that executes with the linked account server-side.
+    // Composio redacts OAuth tokens, so raw Drive HTML upload is unavailable.
+    // CREATE_FILE_FROM_TEXT pastes HTML as plain text. Markdown create yields a
+    // properly formatted Google Doc (headings/tables/lists) via the Docs toolkit
+    // using the same Drive-connected account (drive scope covers Docs writes).
+    const markdown = htmlToGoogleDocsMarkdown(html)
+    if (!markdown.trim()) {
+      throw new BadRequestException('Document has no exportable content')
+    }
     const raw = await this.composio.executeTool(
-      'GOOGLEDRIVE_CREATE_FILE_FROM_TEXT',
+      'GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN',
       userId,
       {
-        file_name: title,
-        text_content: html,
-        mime_type: 'application/vnd.google-apps.document',
+        title: title.trim() || 'Untitled',
+        markdown_text: markdown,
       },
       connectedAccountId,
     )
     const payload = this.payload.unwrap(raw)
     const payloadRecord = this.payload.asRecord(payload)
     const created = this.payload.asRecord(payloadRecord?.['data']) ?? payloadRecord
-    const fileId = this.payload.asString(created?.id)
+    const fileId =
+      this.payload.asString(created?.document_id) ??
+      this.payload.asString(created?.id) ??
+      this.payload.asString(created?.documentId)
     if (!created || !fileId) {
       throw new BadRequestException('Failed to create Google Doc')
     }
@@ -291,6 +299,8 @@ export class GoogleDriveComposioFilesService {
     return {
       ...file,
       id: fileId,
+      name: title.trim() || file.name || 'Untitled',
+      mimeType: file.mimeType || 'application/vnd.google-apps.document',
       webViewLink: file.webViewLink || `https://docs.google.com/document/d/${fileId}/edit`,
     }
   }
