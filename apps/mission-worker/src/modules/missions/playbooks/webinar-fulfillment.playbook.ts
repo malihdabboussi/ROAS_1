@@ -27,6 +27,9 @@ const SKILLS = {
 const REVIEW_MAP =
   '5A.1→roas-webinar-topics · 5A.2→roas-webinar-emails · 5A.3→roas-ad-copy · 5A.4→roas-video-ad-scripts · 5B→roas-landing-page-copy'
 
+const CLIENT_WRITING_RULE =
+  'CLIENT WRITING RULE: For client-facing text, load dylans-super-voice as the only voice authority. Do not load human-written-copy or dylans-voice; block if the required skill is unavailable.'
+
 function readKickoff(input: Record<string, unknown> | null | undefined): MissionPlaybookKickoff {
   const raw =
     input?.playbook_kickoff && typeof input.playbook_kickoff === 'object'
@@ -72,6 +75,9 @@ export function expandWebinarFulfillmentPlaybook(
     category: string,
     statement: string,
   ) => {
+    if (!task.assignTo.startsWith('human:')) {
+      task.intent.ecology = `${task.intent.ecology}\n\n${CLIENT_WRITING_RULE}`
+    }
     assertionNumber += 1
     const assertionKey = `A-${String(assertionNumber).padStart(3, '0')}`
     task.assertionKeys = [assertionKey]
@@ -313,7 +319,7 @@ export function expandWebinarFulfillmentPlaybook(
           'Ivy runs the atomic copy skills internally but delivers one package in one mission step.',
         sensory: 'Topics, emails, Meta ads, video scripts, and open flags agree.',
         endState: `One native Doc "${WEBINAR_FLOW_DOCS.copyPackage}" contains the complete package.`,
-        ecology: `Load ${SKILLS.copy} and dylans-super-voice. Keep Dylan's Super Voice active for every atomic skill and the final package check, then layer verified client facts and vocabulary from Brain context. Do not load human-written-copy. Keep emails and SMS together. For live-now email use subject "Live on Zoom, waiting for you" or an approved factual variation. Use real scarcity only. Format every ad variation as continuous ad text, followed only by operational fields such as on-image text, headline, button, and destination. Do not split ad prose into Hook, Body, or CTA. Format every video as Script, Shooting instructions, Overlays, then one shared Post-production section for all scripts. The spoken script is continuous unquoted text with no Hook, Body, CTA, Delivery, or Shot + setting labels. Before save, run a literal package-wide scan: zero em dashes in client-facing copy and zero residual AI patterns from the dylans-super-voice checklist. If a section fails, re-run its owning skill before assembly; do not silently repair it in the assembler. REVIEW MAP: ${REVIEW_MAP}. Save one native editable Doc only. Never create PDF, DOCX, XLSX, or loose exports.`,
+        ecology: `Load ${SKILLS.copy} and dylans-super-voice. Use verified Brain facts and client vocabulary. Keep email and SMS together; live-now email uses "Live on Zoom, waiting for you" or an approved factual variation. Use only real scarcity. Format ads as continuous ad text plus on-image text, headline, button, and destination; no Hook/Body/CTA sections. Format videos as Script, Shooting instructions, Overlays, then one shared Post-production section; spoken copy stays continuous and unquoted. Require zero em dashes and zero voice-checklist AI patterns before saving. Re-run a failing section's owning skill. REVIEW MAP: ${REVIEW_MAP}. Save one native editable Doc; no loose exports.`,
       }),
       outputContract: docContract(WEBINAR_FLOW_DOCS.copyPackage),
     },

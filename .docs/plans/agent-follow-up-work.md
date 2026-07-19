@@ -7307,3 +7307,10 @@ Files:
 - Evidence: The Campaign template-launcher fix touches a pre-existing 473-line component; focused ESLint reports `max-lines` against the 400-line frontend limit. The behavior fix itself adds no lines to this file.
 - Needed work: Extract the nested Campaign Space flyout and its state into a focused sibling component or hook before adding more sidebar creation behavior.
 - Why not now: The requested fix changes one launcher callback and is covered by a regression test; decomposing the entire shared Campaign/Space navigation surface would materially broaden the interaction regression surface.
+## 2026-07-19 — Webinar fulfillment playbook near backend LOC threshold
+
+- Feature/app: mission-worker / Webinar Fulfillment playbook
+- File: `apps/mission-worker/src/modules/missions/playbooks/webinar-fulfillment.playbook.ts`
+- Evidence: `wc -l` reports 499 LOC, above the 480-line extraction threshold but below the 600-line maximum.
+- Needed work: Extract the remaining strategy/copy task construction into a focused playbook module before adding more webinar stages.
+- Why not now: The requested change repairs a production-blocking plan validation failure with a bounded instruction and contract-test fix; broader playbook decomposition would increase the concurrent merge surface.

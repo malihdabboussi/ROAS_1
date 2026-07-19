@@ -224,6 +224,16 @@ describe('webinar-fulfillment playbook', () => {
     expect(gate2?.intent.ecology).toContain('{{run.review_feedback}}')
   })
 
+  it('keeps every generated intent field within the mission plan API contract', () => {
+    const plan = expandWebinarFulfillmentPlaybook(base)
+
+    for (const subtask of plan.subtasks) {
+      for (const [field, value] of Object.entries(subtask.intent)) {
+        expect(value.length, `${subtask.id}.intent.${field}`).toBeLessThanOrEqual(1000)
+      }
+    }
+  })
+
   it('requires Dylan Super Voice exclusively for every agent-owned client-facing line', () => {
     const plan = expandWebinarFulfillmentPlaybook(base)
     const agentTasks = plan.subtasks.filter((subtask) => !subtask.assignTo.startsWith('human:'))

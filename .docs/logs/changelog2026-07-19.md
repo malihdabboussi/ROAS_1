@@ -1,5 +1,12 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 12:36] - [FIX]
+
+What: Shortened the webinar Copy Package instruction packet to fit the mission-plan API contract, restored the shared Dylan Super Voice rule for agent-owned steps, and added regression coverage for every generated intent field's 1,000-character limit.
+Why: The V3 Webinar Fulfillment mission generated all 21 steps but Task 10's `intent.ecology` exceeded the API limit, so the worker retried the same invalid plan three times and marked the mission failed.
+Impact: New webinar plans pass API validation without losing the copy formatting, review-map, or voice requirements.
+Files: `apps/mission-worker/src/modules/missions/playbooks/webinar-fulfillment.playbook.ts`, `apps/mission-worker/src/modules/missions/playbooks/__tests__/webinar-fulfillment.playbook.test.ts`
+
 
 ## [2026-07-19 12:14] - [FIX]
 
