@@ -72,6 +72,7 @@ describe('ProfileController profile routes', () => {
       website: null,
       onboarding_completed: false,
       onboarding_data: { step: 2 },
+      preferences: {},
       fly_machine_id: 'machine-1',
       agent_runtime_type: 'shared_railway',
       agent_runtime_url: 'https://railway-agent.vibey.test',
@@ -153,6 +154,48 @@ describe('ProfileController profile routes', () => {
       default_org_id: null,
     })
     expect(updateQuery.eq).toHaveBeenCalledWith('id', 'user-1')
+  })
+
+  it('shallow-merges profile preferences and replaces home_layout wholesale', async () => {
+    const profilesQuery = createQuery({
+      data: {
+        preferences: {
+          theme: 'dark',
+          home_layout: { cardIds: ['my_tasks'] },
+        },
+      },
+      error: null,
+    })
+    const controller = createController()
+    const supabase = createProfileSupabase(profilesQuery)
+
+    await expect(
+      controller.updatePreferences({ id: 'user-1' }, supabase as never, {
+        home_layout: {
+          cardIds: ['favorite_spaces', 'my_tasks'],
+          cardSizes: { my_tasks: 'full' },
+        },
+      }),
+    ).resolves.toEqual({
+      ok: true,
+      preferences: {
+        theme: 'dark',
+        home_layout: {
+          cardIds: ['favorite_spaces', 'my_tasks'],
+          cardSizes: { my_tasks: 'full' },
+        },
+      },
+    })
+    expect(profilesQuery.update).toHaveBeenCalledWith({
+      preferences: {
+        theme: 'dark',
+        home_layout: {
+          cardIds: ['favorite_spaces', 'my_tasks'],
+          cardSizes: { my_tasks: 'full' },
+        },
+      },
+    })
+    expect(profilesQuery.eq).toHaveBeenCalledWith('id', 'user-1')
   })
 
   it('validates active org membership before saving an org as the default account', async () => {

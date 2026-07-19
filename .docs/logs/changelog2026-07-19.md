@@ -1,5 +1,12 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 15:14] - [FIX]
+
+What: Home dashboard card order/size persists on the user account (`profiles.preferences.home_layout`) via `PATCH /api/profile/preferences`, with a per-user localStorage cache and one-shot migrate from the old global key. Agent profile context skips UI preference blobs.
+Why: Reorder only wrote device-local `vibey-home-layout`, so layouts were lost across browsers/devices and could leak between accounts on a shared browser.
+Impact: After `roas-api` + `roas-web` deploy, reorder Home once; the same layout loads when you sign in elsewhere.
+Files: `profile.controller.ts`, `profile.service.ts`, `profile-preferences.dto.ts`, `use-home-layout.ts`, `home-layout-api.ts`, `home-cards.config.ts`, agent preference dump filters
+
 ## [2026-07-19 14:40] - [FEATURE]
 
 What: Shipped Page Grader Create & import brain, full client pagination, and `campaign_type: get-more-leads` create-path fix onto a main-based branch; split `page-grader-api` send-work/helpers and client-map row to pass LOC gates.
