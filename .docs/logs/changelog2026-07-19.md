@@ -34,3 +34,10 @@ What: Page Grader client map modal scrolls reliably (`overflow-hidden` on the ca
 Why: Long client lists could not be scrolled, and there was no way to find a client by name.
 Impact: Hard-refresh. Open Map Page Grader clients → search and scroll the list; save still applies all draft mappings.
 Files: `PageGraderClientScopeMapModal.tsx`, `page-grader-client-scope-map.ts`, `page-grader-client-scope-map.test.ts`
+
+## [2026-07-19 12:54] - [FIX]
+
+What: Typed collapse metadata as `Record<string, unknown>` so deleting `composio_connected_account_id` typechecks on Vercel.
+Why: `roas-api` production build failed TS2551 on PR #20 merge tip.
+Impact: Unblocks API deploy of the Google Calendar duplicate remap fix.
+Files: `integrations-overview-personal-composio-sync.ts`

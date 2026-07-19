@@ -328,7 +328,7 @@ async function collapseDuplicateComposioConnectionRows(input: {
         row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
           ? (row.metadata as Record<string, unknown>)
           : {}
-      const nextMeta = {
+      const nextMeta: Record<string, unknown> = {
         ...meta,
         collapsed_duplicate_of: keepId || null,
         previous_composio_connected_account_id: connectionId,
