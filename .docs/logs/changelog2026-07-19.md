@@ -1,5 +1,34 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 13:43] - [FIX]
+
+What: Preserve TipTap `<br>` / hard breaks as separate Markdown paragraphs during Google Docs export (also treat `<div>` like block paragraphs).
+Why: Soft breaks inside a single `<p>` were stripped, so labels like Subject/Preview and Webinar date/Event collapsed onto one line in Docs.
+Impact: Re-export docs after API deploy — field lines and section spacing stay separated.
+Files: `html-to-google-docs-markdown.ts`, unit tests
+
+
+## [2026-07-19 13:42] - [FIX]
+
+What: Added an authoritative current UTC timestamp and temporal-comparison rule to every Mission OpenClaw instruction packet.
+Why: Ivy correctly received the July 22, 2026 webinar date but labeled it past during a July 19, 2026 run because Mission execution supplied no current-date reference.
+Impact: Mission agents compare full calendar dates against the execution timestamp before describing deadlines or events as past, current, or upcoming.
+Files: `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts`, `apps/mission-worker/src/modules/missions/services/__tests__/mission-tool-access-smoke.test.ts`, `documentation/features/missions.md`
+
+## [2026-07-19 13:35] - [FIX]
+
+What: Page Grader client listing now supports `offset` (max page 500) and ROAS Settings auto-pages until all clients are loaded (113 today), with dedupe if offset is ignored.
+Why: Map clients only fetched the first 50 alphabetically, so the list stopped around “Ak…” and later clients (e.g. Multifamily Strategy) never appeared.
+Impact: After `roas-api` deploy (+ Portal `roas-api` already live), Map clients shows the full Portal roster; search can find every client.
+Files: Page Grader `supabase/functions/roas-api/index.ts` (deployed); ROAS `page-grader.integration.ts`, `page-grader-api.service.ts`, `page-grader.dto.ts`, api service unit test
+
+## [2026-07-19 13:31] - [FIX]
+
+What: Page Grader create/import now inserts campaigns with `campaign_type: 'get-more-leads'` (valid CHECK value) instead of `'strategy'`, and surfaces DB failures as `BadRequestException` instead of opaque 500s.
+Why: Create & import brain failed with Internal server error because `campaigns.campaign_type` only allows `get-more-leads` | `book-more-calls` | `launch-a-webinar`.
+Impact: After `roas-api` deploy, unmapped clients (e.g. 7-Figure CEOs) can create a campaign + space and import brain successfully.
+Files: `apps/api/src/modules/brain/services/page-grader-client-import.service.ts`, `page-grader-client-import.service.test.ts`
+
 ## [2026-07-19 13:23] - [FIX]
 
 What: Export Open in Google Docs via `GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN` after converting space-doc HTML to Markdown (headings, lists, tables, links, marks).
