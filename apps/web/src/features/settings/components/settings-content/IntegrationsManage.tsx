@@ -5,6 +5,8 @@ import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { IntegrationAccountsGroup } from './IntegrationAccountsGroup'
 import type { Integration, UserIntegration } from './integrations.types'
 
+const ACTIVE_STATUSES = new Set(['connected', 'pending', 'needs_reconnect'])
+
 interface IntegrationsManageProps {
   userIntegrations: UserIntegration[]
   availableIntegrations: Integration[]
@@ -43,6 +45,7 @@ export function IntegrationsManage({
   const groupedIntegrations = useMemo(() => {
     const grouped = new Map<string, UserIntegration[]>()
     for (const row of userIntegrations) {
+      if (!ACTIVE_STATUSES.has(row.status)) continue
       const key = row.integration_id
       const bucket = grouped.get(key) ?? []
       bucket.push(row)
@@ -75,9 +78,11 @@ export function IntegrationsManage({
     )
   }
 
+  const hasActiveConnections = groupedIntegrations.length > 0
+
   return (
     <div className="space-y-spacing-6">
-      {userIntegrations.length > 0 ? (
+      {hasActiveConnections ? (
         <div className="space-y-spacing-4">
           {groupedIntegrations.map(({ integration, rows }) => (
             <IntegrationAccountsGroup

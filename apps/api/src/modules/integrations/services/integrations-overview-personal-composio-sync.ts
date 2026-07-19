@@ -58,10 +58,31 @@ export async function syncPersonalComposioOverviewAccounts(input: {
     }
   }
 
+  const ACTIVE_ROW_STATUSES = new Set(['connected', 'pending', 'needs_reconnect'])
   const rowsByConnectionId = new Map<string, Record<string, unknown>>()
   for (const row of input.data) {
     const connectionId = getRowComposioConnectionId(row)
-    if (connectionId) rowsByConnectionId.set(connectionId, row)
+    if (!connectionId) continue
+    const existing = rowsByConnectionId.get(connectionId)
+    if (!existing) {
+      rowsByConnectionId.set(connectionId, row)
+      continue
+    }
+    // Prefer an active canonical row over a collapsed/disconnected duplicate that
+    // still carries the same composio_connected_account_id in metadata.
+    const existingActive = ACTIVE_ROW_STATUSES.has(String(existing.status ?? '').toLowerCase())
+    const rowActive = ACTIVE_ROW_STATUSES.has(String(row.status ?? '').toLowerCase())
+    if (rowActive && !existingActive) {
+      rowsByConnectionId.set(connectionId, row)
+      continue
+    }
+    if (rowActive === existingActive) {
+      const rowConnected = String(row.status ?? '').toLowerCase() === 'connected'
+      const existingConnected = String(existing.status ?? '').toLowerCase() === 'connected'
+      if (rowConnected && !existingConnected) {
+        rowsByConnectionId.set(connectionId, row)
+      }
+    }
   }
 
   for (const account of activeComposioAccounts) {
@@ -250,6 +271,12 @@ export async function syncPersonalComposioOverviewAccounts(input: {
     core: input.core,
   })
 
+  await clearComposioIdsOnDisconnectedDuplicates({
+    supabase: input.supabase,
+    data: input.data,
+    core: input.core,
+  })
+
   await repairDuplicatePersonalConnectionLabels({
     supabase: input.supabase,
     userId: input.userId,
@@ -301,15 +328,19 @@ async function collapseDuplicateComposioConnectionRows(input: {
         row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
           ? (row.metadata as Record<string, unknown>)
           : {}
+      const nextMeta = {
+        ...meta,
+        collapsed_duplicate_of: keepId || null,
+        previous_composio_connected_account_id: connectionId,
+        disconnected_at: now,
+      }
+      delete nextMeta.composio_connected_account_id
       await input.core.updateIntegrationById(input.supabase, id, {
         status: 'disconnected',
-        metadata: {
-          ...meta,
-          composio_connected_account_id: connectionId,
-          collapsed_duplicate_of: keepId || null,
-          disconnected_at: now,
-        },
+        metadata: nextMeta,
       })
+      row.status = 'disconnected'
+      row.metadata = nextMeta
     }
   }
 
@@ -317,6 +348,42 @@ async function collapseDuplicateComposioConnectionRows(input: {
   for (let i = input.data.length - 1; i >= 0; i -= 1) {
     const id = String(input.data[i]?.id ?? '').trim()
     if (removeIds.has(id)) input.data.splice(i, 1)
+  }
+}
+
+/**
+ * Disconnected duplicates from earlier collapse runs may still carry the shared
+ * composio_connected_account_id. Clear it so overview/list endpoints cannot treat
+ * them as live connections when Composio still reports that account as ACTIVE.
+ */
+async function clearComposioIdsOnDisconnectedDuplicates(input: {
+  supabase: SupabaseClient
+  data: Array<Record<string, unknown>>
+  core: IntegrationsCoreService
+}): Promise<void> {
+  const ACTIVE = new Set(['connected', 'pending', 'needs_reconnect'])
+  const activeConnectionIds = new Set<string>()
+  for (const row of input.data) {
+    if (!ACTIVE.has(String(row.status ?? '').toLowerCase())) continue
+    const connectionId = getRowComposioConnectionId(row)
+    if (connectionId) activeConnectionIds.add(connectionId)
+  }
+
+  for (const row of input.data) {
+    if (String(row.status ?? '').toLowerCase() !== 'disconnected') continue
+    const connectionId = getRowComposioConnectionId(row)
+    if (!connectionId || !activeConnectionIds.has(connectionId)) continue
+    const id = String(row.id ?? '').trim()
+    if (!id) continue
+    const meta =
+      row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+        ? { ...(row.metadata as Record<string, unknown>) }
+        : {}
+    meta.previous_composio_connected_account_id =
+      meta.previous_composio_connected_account_id ?? connectionId
+    delete meta.composio_connected_account_id
+    await input.core.updateIntegrationById(input.supabase, id, { metadata: meta })
+    row.metadata = meta
   }
 }
 

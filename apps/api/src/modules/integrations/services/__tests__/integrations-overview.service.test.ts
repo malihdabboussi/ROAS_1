@@ -230,13 +230,31 @@ describe('IntegrationsOverviewService', () => {
     expect(updateIntegrationById).toHaveBeenCalledWith(
       expect.anything(),
       'ui-dup-a',
-      expect.objectContaining({ status: 'disconnected' }),
+      expect.objectContaining({
+        status: 'disconnected',
+        metadata: expect.objectContaining({
+          collapsed_duplicate_of: 'ui-keep',
+          previous_composio_connected_account_id: 'ca-1',
+        }),
+      }),
     )
     expect(updateIntegrationById).toHaveBeenCalledWith(
       expect.anything(),
       'ui-dup-b',
-      expect.objectContaining({ status: 'disconnected' }),
+      expect.objectContaining({
+        status: 'disconnected',
+        metadata: expect.objectContaining({
+          collapsed_duplicate_of: 'ui-keep',
+          previous_composio_connected_account_id: 'ca-1',
+        }),
+      }),
     )
+    const collapsedMetaCalls = updateIntegrationById.mock.calls.filter(
+      (call) => call[1] === 'ui-dup-a' || call[1] === 'ui-dup-b',
+    )
+    for (const call of collapsedMetaCalls) {
+      expect(call[2]?.metadata).not.toHaveProperty('composio_connected_account_id')
+    }
     expect(result.groupedIntegrations).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -244,6 +262,119 @@ describe('IntegrationsOverviewService', () => {
           connected_count: 1,
         }),
       ]),
+    )
+  })
+
+  it('does not remap already-disconnected duplicate rows back to connected', async () => {
+    const keep = {
+      id: 'ui-keep',
+      user_id: 'user-1',
+      integration_id: 'google_calendar',
+      provider: 'google_calendar',
+      status: 'connected',
+      agent_enabled: true,
+      is_default: true,
+      connection_label: 'dylanvanas@gmail.com',
+      metadata: {
+        composio_connected_account_id: 'ca-1',
+        composio_toolkit_slug: 'googlecalendar',
+      },
+      scope_mode: 'personal',
+    }
+    const disconnectedDups = [1, 2, 3, 4].map((n) => ({
+      id: `ui-dup-${n}`,
+      user_id: 'user-1',
+      integration_id: 'google_calendar',
+      provider: 'google_calendar',
+      status: 'disconnected',
+      agent_enabled: true,
+      is_default: false,
+      connection_label: 'dylanvanas@gmail.com',
+      metadata: {
+        composio_connected_account_id: 'ca-1',
+        composio_toolkit_slug: 'googlecalendar',
+        collapsed_duplicate_of: 'ui-keep',
+      },
+      scope_mode: 'personal',
+    }))
+    const other = {
+      id: 'ui-other',
+      user_id: 'user-1',
+      integration_id: 'google_calendar',
+      provider: 'google_calendar',
+      status: 'connected',
+      agent_enabled: true,
+      is_default: false,
+      connection_label: 'dylan@dylanvanas.com',
+      metadata: {
+        composio_connected_account_id: 'ca-2',
+        composio_toolkit_slug: 'googlecalendar',
+      },
+      scope_mode: 'personal',
+    }
+    const rows = [keep, ...disconnectedDups, other]
+    const updateIntegrationById = vi.fn(async () => ({ error: null }))
+    const repository = {
+      table: vi.fn((_client: unknown, table: string) => {
+        if (table === 'project_composio_toolkit_config') {
+          return makeQuery({ data: [], error: null })
+        }
+        return makeQuery({ data: rows, error: null })
+      }),
+      findAdminPersonalOpenAICodexIntegration: vi.fn(async () => null),
+      findAdminPersonalAnthropicClaudeIntegration: vi.fn(async () => null),
+    }
+    const service = new IntegrationsOverviewService(
+      repository as never,
+      {
+        listConnectedAccounts: vi.fn(async () => [
+          { id: 'ca-1', status: 'ACTIVE', toolkitSlug: 'googlecalendar' },
+          { id: 'ca-2', status: 'ACTIVE', toolkitSlug: 'googlecalendar' },
+        ]),
+      } as never,
+      {
+        applyScope: vi.fn(async () => ({ data: rows, error: null })),
+        isOrgContext: vi.fn(() => false),
+      } as never,
+      { hasSecret: vi.fn(async () => false) } as never,
+      {
+        mapComposioToolkitToIntegrationId: vi.fn((slug: string) =>
+          slug === 'googlecalendar' ? 'google_calendar' : null,
+        ),
+        updateIntegrationById,
+        resolveConnectionIdentity: vi.fn(async (_integrationId, _userId, connectionId) =>
+          connectionId === 'ca-2' ? 'dylan@dylanvanas.com' : 'dylanvanas@gmail.com',
+        ),
+        upsertPersonalScopedIntegration: vi.fn(),
+        insertPersonalScopedIntegration: vi.fn(),
+      } as never,
+      {} as never,
+      { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
+    )
+
+    const result = await service.getOverview({} as never, { id: 'user-1' }, {
+      orgId: null,
+    } as never)
+
+    const calendarRows = result.integrations.filter(
+      (row) => row.integration_id === 'google_calendar',
+    )
+    const connectedCalendar = calendarRows.filter((row) => row.status === 'connected')
+    expect(connectedCalendar).toHaveLength(2)
+    expect(connectedCalendar.map((row) => row.id).sort()).toEqual(['ui-keep', 'ui-other'])
+    expect(
+      calendarRows.filter((row) => String(row.id ?? '').startsWith('ui-dup-')).every(
+        (row) => row.status === 'disconnected',
+      ),
+    ).toBe(true)
+    expect(updateIntegrationById).toHaveBeenCalledWith(
+      expect.anything(),
+      'ui-dup-1',
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          previous_composio_connected_account_id: 'ca-1',
+        }),
+      }),
     )
   })
 
