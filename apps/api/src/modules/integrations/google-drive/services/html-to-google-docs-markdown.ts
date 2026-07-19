@@ -1,6 +1,9 @@
 /**
  * Convert TipTap/space-doc HTML into Markdown for GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN.
  * Keeps headings, lists, tables, links, and basic inline marks — not a full HTML engine.
+ *
+ * TipTap hard breaks (`<br>`) become separate Markdown paragraphs so Google Docs
+ * keeps field labels / subject+preview lines from collapsing onto one line.
  */
 export function htmlToGoogleDocsMarkdown(html: string): string {
   let text = String(html ?? '')
@@ -12,16 +15,20 @@ export function htmlToGoogleDocsMarkdown(html: string): string {
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<\/?(html|head|body|meta|title)[^>]*>/gi, '')
 
+  // Normalize TipTap/ProseMirror hard breaks before block parsing.
+  text = text.replace(/<br\s*\/?>/gi, '\n')
+
   text = text.replace(/<table[\s\S]*?<\/table>/gi, (tableHtml) => convertTable(tableHtml))
 
   text = text.replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, (_m, body: string) => {
     const code = decodeEntities(stripTags(body)).replace(/^\n+|\n+$/g, '')
-    return `\n\`\`\`\n${code}\n\`\`\`\n`
+    return `\n\n\`\`\`\n${code}\n\`\`\`\n\n`
   })
 
   text = text.replace(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi, (_m, level: string, body: string) => {
     const n = Math.max(1, Math.min(6, Number.parseInt(level, 10) || 1))
-    return `\n${'#'.repeat(n)} ${inlineToMarkdown(body)}\n`
+    const heading = blockContentToMarkdown(body).replace(/\n+/g, ' ').trim()
+    return heading ? `\n\n${'#'.repeat(n)} ${heading}\n\n` : '\n\n'
   })
 
   text = text.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_m, body: string) => {
@@ -29,7 +36,7 @@ export function htmlToGoogleDocsMarkdown(html: string): string {
       .split('\n')
       .map((line) => (line.trim() ? `> ${line}` : '>'))
       .join('\n')
-    return `\n${inner}\n`
+    return `\n\n${inner}\n\n`
   })
 
   text = text.replace(/<(ul|ol)[^>]*>([\s\S]*?)<\/\1>/gi, (_m, tag: string, body: string) => {
@@ -38,19 +45,26 @@ export function htmlToGoogleDocsMarkdown(html: string): string {
     const items = [...body.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((match) => {
       i += 1
       const prefix = ordered ? `${i}. ` : '- '
-      return `${prefix}${inlineToMarkdown(match[1] ?? '')}`
-    })
-    return items.length ? `\n${items.join('\n')}\n` : ''
+      const item = blockContentToMarkdown(match[1] ?? '')
+        .replace(/\n+/g, ' ')
+        .trim()
+      return item ? `${prefix}${item}` : ''
+    }).filter(Boolean)
+    return items.length ? `\n\n${items.join('\n')}\n\n` : ''
   })
 
-  text = text.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (_m, body: string) => {
-    const line = inlineToMarkdown(body)
-    return line ? `\n${line}\n` : '\n'
+  text = text.replace(/<(p|div)[^>]*>([\s\S]*?)<\/\1>/gi, (_m, _tag: string, body: string) => {
+    const lines = blockContentToMarkdown(body)
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+    if (lines.length === 0) return '\n\n'
+    // One Markdown paragraph per visual line so Docs keeps the breaks.
+    return `\n\n${lines.join('\n\n')}\n\n`
   })
 
-  text = text.replace(/<br\s*\/?>/gi, '\n')
   text = text.replace(/<\/div>/gi, '\n')
-  text = inlineToMarkdown(text)
+  text = blockContentToMarkdown(text)
 
   return text
     .replace(/\r/g, '')
@@ -59,10 +73,20 @@ export function htmlToGoogleDocsMarkdown(html: string): string {
     .trim()
 }
 
+function blockContentToMarkdown(html: string): string {
+  return String(html ?? '')
+    .split('\n')
+    .map((line) => inlineToMarkdown(line))
+    .join('\n')
+}
+
 function convertTable(tableHtml: string): string {
   const rows = [...tableHtml.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)].map((rowMatch) => {
     const cells = [...rowMatch[1].matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi)].map((cell) =>
-      inlineToMarkdown(cell[1] ?? '').replace(/\|/g, '\\|').trim(),
+      blockContentToMarkdown(cell[1] ?? '')
+        .replace(/\n+/g, ' ')
+        .replace(/\|/g, '\\|')
+        .trim(),
     )
     return cells
   })
@@ -80,7 +104,7 @@ function convertTable(tableHtml: string): string {
     `| ${header.map(() => '---').join(' | ')} |`,
     ...body.map((row) => `| ${row.join(' | ')} |`),
   ]
-  return `\n${lines.join('\n')}\n`
+  return `\n\n${lines.join('\n')}\n\n`
 }
 
 function inlineToMarkdown(html: string): string {
