@@ -169,3 +169,10 @@ What: Consolidated `meta-ads-launch` onto local main via cherry-pick.
 Why: Multi-agent work was scattered off main.
 Impact: Feature now lives on local main.
 Files: cherry-picked 2acf0e6f
+
+## [2026-07-19 15:19] - [ARCH]
+
+What: Consolidated multi-agent finished work onto local `main`: home layout, space template picker note, mission branch-access, Slack people shadow mode, Meta ads launch playbook. Extracted outbox dispatcher mapping for LOC gate. Dropped superseded stashes.
+Why: Agents had been stashing/branching WIP off main; local main is the consolidation point.
+Impact: Local main is ahead of origin with those features. Webinar artifact-preview repair (`14d515e0`) still needs a manual merge (code conflicts). One broad snapshot stash kept.
+Files: cherry-picks on main; `missions.outbox-dispatcher.mapping.ts`
