@@ -4151,6 +4151,15 @@ html.dark .modal-scroll-header-edge {
   box-shadow: 0 14px 28px -10px rgba(0, 0, 0, 0.72);
 }
 
+/* Nested modal list body: fills remaining card height and scrolls inside the shell */
+.modal-nested-scroll-body {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 /* ============================================================================
    SECTION 27: WIZARD CONTAINER BORDER
    ============================================================================

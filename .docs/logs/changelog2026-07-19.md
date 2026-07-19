@@ -1,5 +1,12 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 15:58] - [FIX]
+
+What: Fixed Page Grader Map clients modal scroll/search by adding the missing `modal-nested-scroll-body` utility and constraining the card with `max-h-[90vh]` so the header (search) stays visible and the list scrolls inside.
+Why: The modal referenced a CSS class that was never added to `globals.css`, and the card had no max height, so ~100+ clients overflowed the viewport and clipped the search chrome — looking like a short non-scrollable list.
+Impact: Hard-refresh after `roas-web` deploy. Open Map clients → search + scroll the full roster; footer shows total client count.
+Files: `PageGraderClientScopeMapModal.tsx`, `apps/web` + `apps/website` `globals.css`
+
 ## [2026-07-19 15:14] - [FIX]
 
 What: Home dashboard card order/size persists on the user account (`profiles.preferences.home_layout`) via `PATCH /api/profile/preferences`, with a per-user localStorage cache and one-shot migrate from the old global key. Agent profile context skips UI preference blobs.
@@ -176,3 +183,10 @@ What: Consolidated multi-agent finished work onto local `main`: home layout, spa
 Why: Agents had been stashing/branching WIP off main; local main is the consolidation point.
 Impact: Local main is ahead of origin with those features. Webinar artifact-preview repair (`14d515e0`) still needs a manual merge (code conflicts). One broad snapshot stash kept.
 Files: cherry-picks on main; `missions.outbox-dispatcher.mapping.ts`
+
+## [2026-07-19 15:46] - [FIX]
+
+What: Verified the premium funnel/site design migration against the actual ROAS production project, forced a fresh Lux runtime synchronization, confirmed the skill and all three references on the Fly machine, and ran the standard production smoke checks.
+Why: An earlier audit used the generic Vibey production project instead of the ROAS production project and incorrectly reported that the training migration had not run.
+Impact: ROAS production has one valid canonical design skill, three resources, three enabled agent skill copies, complete Lux registry assignment and Opus 4.8 routing, no managed legacy copy, a healthy synchronized runtime, and four passing production smoke checks.
+Files: Operational verification of `supabase/migrations/20260718055800_premium_funnel_site_design_workflow.sql`, `docker/agents/templates/designer/skills/funnel-site-design/*`, `docker/openclaw.json`, and the `roas-runtimes` Fly deployment.
