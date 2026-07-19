@@ -14,6 +14,13 @@ Why: Reorder only wrote device-local `vibey-home-layout`, so layouts were lost a
 Impact: After `roas-api` + `roas-web` deploy, reorder Home once; the same layout loads when you sign in elsewhere.
 Files: `profile.controller.ts`, `profile.service.ts`, `profile-preferences.dto.ts`, `use-home-layout.ts`, `home-layout-api.ts`, `home-cards.config.ts`, agent preference dump filters
 
+## [2026-07-19 15:09] - [FEATURE]
+
+What: Added a gated Meta Ads Launch mission, a read-only PageGrader account-context bridge, aligned Meta action contracts, and the `roas-meta-ads-launch` agent skill.
+Why: Approved ad assets need a reliable path from campaign context into correctly mapped, paused Meta campaigns without asking Blaze to design creative or activating spend before human review.
+Impact: Teams can start a dedicated Meta launch playbook, reconcile supplied or Space assets, confirm the mapped Meta setup, build paused campaign assets, and approve activation separately. PageGrader remains read-only and written outputs use Dylan Super Voice rules.
+Files: Meta Ads mission playbook and tests, Missions picker and PageGrader context service, Meta action schemas/docs/tests, `20260719143000_meta_ads_launch_skill.sql`, missions documentation
+
 ## [2026-07-19 14:40] - [FEATURE]
 
 What: Shipped Page Grader Create & import brain, full client pagination, and `campaign_type: get-more-leads` create-path fix onto a main-based branch; split `page-grader-api` send-work/helpers and client-map row to pass LOC gates.
