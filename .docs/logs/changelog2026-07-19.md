@@ -162,3 +162,10 @@ What: Consolidated `slack-people-shadow` onto local main via cherry-pick.
 Why: Multi-agent work was scattered off main.
 Impact: Feature now lives on local main.
 Files: cherry-picked 1e05f891
+
+## [2026-07-19 15:19] - [ARCH]
+
+What: Consolidated `meta-ads-launch` onto local main via cherry-pick.
+Why: Multi-agent work was scattered off main.
+Impact: Feature now lives on local main.
+Files: cherry-picked 2acf0e6f

@@ -12,14 +12,16 @@ import { billingApi } from '@/lib/billing/billing-api'
 import { fetchCampaignTeam } from '@/lib/campaigns'
 import type { DocumentAttachment } from '@/lib/chat/document-attachments'
 import { createMission, resolveMissionCreateToastMessage } from '@/lib/missions'
+import { getMappedPageGraderMetaContext } from '../services/page-grader-send.service'
 import type { ViewDef } from '../types/space-schema'
 import { MissionCaptureModal } from './MissionCaptureModal'
 import { MissionsViewListContent } from './MissionsViewListContent'
 import {
-  buildWebinarFulfillmentMissionPayload,
-  type PlaybookKickoffFields,
-} from './playbooks/webinar-fulfillment'
-import { StartPlaybookModal } from './StartPlaybookModal'
+  buildMetaAdsLaunchMissionPayload,
+  META_ADS_LAUNCH_PLAYBOOK_ID,
+} from './playbooks/meta-ads-launch'
+import { buildWebinarFulfillmentMissionPayload } from './playbooks/webinar-fulfillment'
+import { StartPlaybookModal, type PlaybookStartRequest } from './StartPlaybookModal'
 import { useMissionsViewListState } from './useMissionsViewListState'
 
 function documentsToMissionAttachments(documents: DocumentAttachment[]) {
@@ -207,21 +209,28 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
   )
 
   const handleStartPlaybook = useCallback(
-    async (fields: PlaybookKickoffFields) => {
+    async (request: PlaybookStartRequest) => {
       if (!campaignId) return
       setSubmitting(true)
       try {
-        const payload = buildWebinarFulfillmentMissionPayload(fields)
+        const pageGraderContext =
+          request.playbookId === META_ADS_LAUNCH_PLAYBOOK_ID
+            ? await getMappedPageGraderMetaContext({ campaignId, spaceId }).catch(() => null)
+            : null
+        const payload =
+          request.playbookId === META_ADS_LAUNCH_PLAYBOOK_ID
+            ? buildMetaAdsLaunchMissionPayload(request.fields, pageGraderContext)
+            : buildWebinarFulfillmentMissionPayload(request.fields)
         const mission = await createMission({
           ...payload,
           campaign_id: campaignId,
           space_id: spaceId || undefined,
-          idempotency_key: `playbook-webinar-${crypto.randomUUID()}`,
+          idempotency_key: `playbook-${request.playbookId}-${crypto.randomUUID()}`,
         })
         setPlaybookOpen(false)
         await loadData()
         setSelectedMission(mission)
-        toast.success('Webinar Fulfillment playbook started')
+        toast.success(`${payload.title} playbook started`)
       } catch (err) {
         toast.error(err instanceof Error ? err.message : resolveMissionCreateToastMessage(err))
       } finally {
@@ -287,7 +296,7 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
         open={playbookOpen}
         submitting={submitting}
         onClose={() => setPlaybookOpen(false)}
-        onStart={(fields) => void handleStartPlaybook(fields)}
+        onStart={(request) => void handleStartPlaybook(request)}
       />
     </div>
   )

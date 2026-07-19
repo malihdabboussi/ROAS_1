@@ -20,10 +20,22 @@ describe('StartPlaybookModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start playbook' }))
 
     expect(onStart).toHaveBeenCalledWith({
-      client_context: '',
-      transcript_url: '',
-      drive_links: '',
-      notes: '',
+      playbookId: 'webinar-fulfillment',
+      fields: { client_context: '', transcript_url: '', drive_links: '', notes: '' },
+    })
+  })
+
+  it('starts the Meta Ads Launch workflow', () => {
+    const onStart = vi.fn()
+    render(<StartPlaybookModal open submitting={false} onClose={vi.fn()} onStart={onStart} />)
+    fireEvent.click(screen.getByRole('button', { name: /Meta Ads Launch/i }))
+    fireEvent.change(screen.getByLabelText('Approved asset links'), {
+      target: { value: 'https://drive.example/ads' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Start playbook' }))
+    expect(onStart).toHaveBeenCalledWith({
+      playbookId: 'meta-ads-launch',
+      fields: expect.objectContaining({ asset_links: 'https://drive.example/ads' }),
     })
   })
 })

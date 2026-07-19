@@ -637,9 +637,9 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   publish_ad_to_meta: {
     section: 'Meta',
     description:
-      'Publishes an ad artifact to Meta. User sees: ad status changes to Published in Studio > Ads; ad goes live on Meta. Requires: create_ad first, Meta connected (check_meta_connection), defaults saved (save_meta_defaults). targeting may include custom_audiences and excluded_custom_audiences (arrays of { id: string }).',
+      'Publishes a local ad or campaign structure to Meta in PAUSED state for review. This does not authorize live delivery. Requires Meta connected and exact account settings approved.',
     parameters:
-      '```json\n{"action":"publish_ad_to_meta","label":"Publishing your ad","data":{"ad_id":"UUID","ad_account_id":"act_...","page_id":"...","targeting":{"geo_locations":{"countries":["US"]},"custom_audiences":[{"id":"META_AUDIENCE_ID"}]}}\n```',
+      '```json\n{"action":"publish_ad_to_meta","label":"Building your paused Meta campaign","data":{"campaign_id":"LOCAL_CAMPAIGN_UUID","ad_account_id":"act_...","page_id":"...","targeting":{"geo_locations":{"countries":["US"]}}}}\n```',
   },
   save_meta_defaults: {
     section: 'Meta',

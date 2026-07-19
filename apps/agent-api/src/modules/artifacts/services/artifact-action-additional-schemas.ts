@@ -1,3 +1,4 @@
+import { PROMPTMODE_META_ACTION_SCHEMAS } from './artifact-action-meta-schemas'
 import type { ActionParamType, ActionSchema } from './artifact-action-schemas'
 
 type RequiredField = string | string[]
@@ -15,8 +16,6 @@ function schema(
 }
 
 const campaignScope = ['campaign_id', 'campaignId', 'space_id', 'scope_override']
-const pagination = ['limit', 'offset']
-const adIds = ['ad_id', 'adId', 'ad_set_id', 'adSetId', 'campaign_id', 'campaignId']
 
 export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> = {
   dream_inspect_agent: schema([], ['agent_key'], stringType(['agent_key']), [
@@ -123,71 +122,6 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
   create_offer: schema([], ['name', 'processing_status', ...campaignScope], stringType(['name'])),
   list_offers: schema([], [...campaignScope], stringType(campaignScope)),
   list_custom_fields: schema(),
-
-  create_ad: schema(
-    [],
-    [
-      'ad_set_id',
-      'adSetId',
-      'campaign_id',
-      'campaignId',
-      'headline',
-      'primary_text',
-      'description',
-      'image_url',
-      'image_asset_id',
-      'generated_tsx',
-      'destination_url',
-    ],
-    stringType(adIds),
-  ),
-  list_ads: schema([], [...adIds, ...pagination], {
-    ...stringType(adIds),
-    limit: 'number',
-    offset: 'number',
-  }),
-  create_ad_campaign: schema(
-    [],
-    ['name', 'objective', 'budget_type', 'daily_budget', 'lifetime_budget', ...campaignScope],
-    {
-      ...stringType(['name', 'objective', 'budget_type', ...campaignScope]),
-      daily_budget: 'number',
-      lifetime_budget: 'number',
-    },
-  ),
-  create_ad_set: schema(
-    [],
-    ['ad_campaign_id', 'adCampaignId', 'name', 'budget', 'targeting', ...campaignScope],
-    {
-      ...stringType(['ad_campaign_id', 'adCampaignId', 'name', ...campaignScope]),
-      budget: 'number',
-      targeting: 'object',
-    },
-  ),
-  get_ad_campaign: schema(
-    [['ad_campaign_id', 'adCampaignId']],
-    ['ad_campaign_id', 'adCampaignId'],
-    stringType(['ad_campaign_id', 'adCampaignId']),
-  ),
-  get_ad_set: schema(
-    [['ad_set_id', 'adSetId']],
-    ['ad_set_id', 'adSetId'],
-    stringType(['ad_set_id', 'adSetId']),
-  ),
-  update_ad_campaign: schema(
-    [['ad_campaign_id', 'adCampaignId']],
-    ['ad_campaign_id', 'adCampaignId', 'name', 'objective', 'status'],
-    stringType(['ad_campaign_id', 'adCampaignId', 'name', 'objective', 'status']),
-  ),
-  update_ad_set: schema(
-    [['ad_set_id', 'adSetId']],
-    ['ad_set_id', 'adSetId', 'name', 'status', 'budget', 'targeting'],
-    {
-      ...stringType(['ad_set_id', 'adSetId', 'name', 'status']),
-      budget: 'number',
-      targeting: 'object',
-    },
-  ),
 
   list_websites: schema([], [...campaignScope], stringType(campaignScope)),
   list_presentations: schema([], [...campaignScope], stringType(campaignScope)),
@@ -338,47 +272,7 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
     patches: 'object_array',
   }),
 
-  check_meta_connection: schema(),
-  list_meta_ad_accounts: schema(),
-  list_meta_pages: schema(),
-  publish_ad_to_meta: schema(
-    ['ad_id'],
-    ['ad_id', 'ad_account_id', 'page_id'],
-    stringType(['ad_id', 'ad_account_id', 'page_id']),
-  ),
-  save_meta_defaults: schema(
-    [],
-    ['ad_account_id', 'page_id', 'pixel_id'],
-    stringType(['ad_account_id', 'page_id', 'pixel_id']),
-  ),
-  get_meta_ad_status: schema(['meta_ad_id'], ['meta_ad_id'], stringType(['meta_ad_id'])),
-  get_meta_ads_insights: schema([], ['ad_account_id', 'since', 'until', 'level'], {
-    ...stringType(['ad_account_id', 'level']),
-    since: 'iso_date',
-    until: 'iso_date',
-  }),
-  get_delivery_estimate: schema([], ['ad_account_id', 'targeting', 'optimization_goal'], {
-    ad_account_id: 'string',
-    targeting: 'object',
-    optimization_goal: 'string',
-  }),
-  list_meta_audiences: schema([], ['ad_account_id'], stringType(['ad_account_id'])),
-  create_meta_custom_audience: schema(
-    ['name'],
-    ['name', 'description', 'ad_account_id'],
-    stringType(['name', 'description', 'ad_account_id']),
-  ),
-  create_meta_lookalike_audience: schema(
-    ['source_audience_id'],
-    ['source_audience_id', 'name', 'country'],
-    stringType(['source_audience_id', 'name', 'country']),
-  ),
-  list_meta_pixel_events: schema([], ['pixel_id'], stringType(['pixel_id'])),
-  create_meta_pixel_event: schema(['event_name'], ['event_name', 'pixel_id', 'payload'], {
-    event_name: 'string',
-    pixel_id: 'string',
-    payload: 'object',
-  }),
+  ...PROMPTMODE_META_ACTION_SCHEMAS,
 
   get_capabilities: schema(),
   search_available_integrations: schema([], ['query', 'service', 'limit'], {

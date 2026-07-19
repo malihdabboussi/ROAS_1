@@ -21,6 +21,17 @@ export type PageGraderSendItemResult = {
   error?: string
 }
 
+export type PageGraderMetaContext = {
+  client: { id: string; name: string }
+  connected: boolean
+  accounts: Array<Record<string, unknown>>
+  recommended_ad_account_id: string | null
+  pages: Array<Record<string, unknown>>
+  pixels: Array<Record<string, unknown>>
+  campaigns: Array<Record<string, unknown>>
+  provenance: { source: 'page_grader'; generated_at: string }
+}
+
 export type PageGraderClientScopeMappingInput = {
   clientId: string
   campaignId: string
@@ -68,6 +79,25 @@ export async function savePageGraderClientScopeMap(
   return res?.client_scope_map && typeof res.client_scope_map === 'object'
     ? res.client_scope_map
     : {}
+}
+
+export async function getMappedPageGraderMetaContext(input: {
+  campaignId: string
+  spaceId?: string | null
+}): Promise<PageGraderMetaContext | null> {
+  const { clients, clientScopeMap } = await listPageGraderClients()
+  const client = clients.find((item) => {
+    const scope = clientScopeMap[item.id]
+    return (
+      (input.spaceId && scope?.space_id === input.spaceId) ||
+      scope?.campaign_id === input.campaignId
+    )
+  })
+  if (!client) return null
+  const response = await backendGet<{ meta_context?: PageGraderMetaContext }>(
+    `/api/integrations/page-grader/clients/${encodeURIComponent(client.id)}/meta-context`,
+  )
+  return response.meta_context ?? null
 }
 
 export async function listPageGraderTaskTypes(): Promise<PageGraderTaskTypeOption[]> {
