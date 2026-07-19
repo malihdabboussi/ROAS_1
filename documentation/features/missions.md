@@ -1,6 +1,6 @@
 # Missions harness
 
-Last updated: 2026-07-17
+Last updated: 2026-07-19
 
 ## Full subtask workspace
 
@@ -114,6 +114,7 @@ The runner uses this as a deterministic gate:
 - **Webinar pre-call-first lifecycle**: every new Webinar Fulfillment mission runs the complete flow beginning with Atlas context preparation and Reed's pre-call strategy map. Kickoff transcripts, call links, and research enrich the flow but cannot skip pre-call work; legacy `start_at` values are ignored.
 - **Research before THE PLAN**: Webinar Fulfillment runs Blaze's Market Research immediately after post-call strategy and before Reed creates THE PLAN. Research records the platform service/action and source links; an integration may be called unavailable only after a real failed tool attempt with the returned error recorded. THE PLAN consumes the completed research document instead of rerunning or guessing at provider availability.
 - **Webinar Copy Package readiness**: `WEB#5A - Copy Package` runs topics, email/SMS, Meta ads, and client-filmed scripts through `dylans-super-voice`, then performs a package-wide zero-em-dash and anti-AI rejection check before saving. Ads publish as continuous ad text rather than Hook/Body/CTA fragments. Video scripts publish as unquoted Script, Shooting instructions, and Overlays blocks with one shared Post-production section. `WEB#5B - Landing Page Copy` runs `roas-landing-page-copy` as its own Mission step and native Doc, and the funnel consumes that handoff directly. Existing copywriters receive the refreshed skills during migration; `human-written-copy` remains removed.
+- **Meta Ads Launch playbook**: Missions can start a dedicated launch flow that reconciles approved Space and external assets, enriches the kickoff with the mapped PageGrader Meta context when available, requires human approval of the exact account and launch settings, then lets Blaze build campaigns, ad sets, and ads in PAUSED state. A second human gate reviews and activates the build manually. PageGrader remains read-only; Vibey owns Meta mutations and native Doc audit history.
 - **Verification before done**: after execution, the worker verifies the required artifact exists. `document_artifact` checks tool-authored mission deliverables by type; `agent_skill` checks `agent_skills` by `agent_key` and `skill_key`. Missing/wrong artifacts keep the subtask out of `done`.
 - **Concurrent verification stays subtask-safe**: when parallel subtasks publish different artifact types, verification first uses the manifest receipt and then searches recent deliverables matching the current contract type/action. A newer deck can no longer make a completed funnel fail verification, or vice versa.
 - **DOCX deliverables**: Word documents use `create_docx`, persist as `mission_deliverables.type = 'file'`, and carry `mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'`. DOCX-specific contracts use `required_artifact_type = 'file'` with `expected.mime_type` and `expected.source_action = 'create_docx'`.
@@ -247,6 +248,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-19: Added the Meta Ads Launch playbook with PageGrader read-only discovery, Blaze-owned paused builds, native Doc manifests, and human gates before build and live activation.
 - 2026-07-19: Added an authoritative execution timestamp to Mission prompts so relative-date claims do not depend on model knowledge or unrelated document timestamps.
 - 2026-07-17: Split webinar Phase B into WEB#5A Copy Package and WEB#5B Landing Page Copy, made Dylan's Super Voice a verified requirement at every writing owner plus final assembly, and simplified client-facing ad and video-script formatting.
 - 2026-07-17: Added one-to-one Mission-step ↔ Space-Task correlation for concrete build work and made Webinar Fulfillment reconcile THE PLAN Build List into missing, assigned, production-blocking steps before copy and production begin.

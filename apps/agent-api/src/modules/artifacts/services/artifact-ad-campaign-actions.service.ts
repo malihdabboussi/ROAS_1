@@ -89,7 +89,7 @@ export class ArtifactAdCampaignActionsService {
     const userId = target.resolveUserId(sessionKey)
     const supabase = await target.getUserClient(userId, sessionKey as string)
 
-    const adCampaignId = input.ad_campaign_id as string
+    const adCampaignId = (input.ad_campaign_id ?? input.adCampaignId) as string
     if (!adCampaignId) {
       return { success: false, error: 'ad_campaign_id is required. Create an ad campaign first.' }
     }
@@ -116,10 +116,7 @@ export class ArtifactAdCampaignActionsService {
       target.logger.error(`[create_ad_set] Insert failed: ${error.message}`)
       throw error
     }
-    const { data: campaign } = await this.repository.findAdCampaignForAdSet(
-      supabase,
-      adCampaignId,
-    )
+    const { data: campaign } = await this.repository.findAdCampaignForAdSet(supabase, adCampaignId)
     const resolvedSpaceId =
       spaceId ??
       (typeof campaign?.space_id === 'string' && campaign.space_id.trim()
