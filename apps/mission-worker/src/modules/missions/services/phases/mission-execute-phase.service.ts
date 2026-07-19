@@ -31,6 +31,7 @@ import {
 import { MissionStateRepository } from '../persistence/mission-state.repository'
 import { SubtaskAbortRegistry } from '../subtask-abort-registry.service'
 import { MissionJsonService } from '../utils/mission-json.service'
+import { resolveMissionEffectiveDomains } from './mission-action-policy'
 import {
   activeSubtasksAllDone,
   CONTRACT_ACTION_DOMAINS,
@@ -1712,22 +1713,17 @@ export class MissionExecutePhaseService {
       return { allowed: false, reason: `Agent "${agentKey}" is deactivated.` }
     }
 
-    const roleDomains = this.resolveRoleDomains(agent as Record<string, unknown>, agentKey)
     const teamId = typeof agent.team_id === 'string' ? agent.team_id : ''
     const teamGrants = teamId ? await this.loadActionDomainGrants(supabase, teamId) : []
     const overrides = await this.loadActionDomainOverrides(supabase, agentKey, mission)
     const isSystem = ['vibey', 'atlas', 'brain_scholar', 'hr'].includes(agentKey)
-    const usesActionDomainPolicy =
-      !isSystem &&
-      (teamGrants.length > 0 || overrides.allowExtra.length > 0 || overrides.deny.length > 0)
-
-    const effectiveDomains = new Set<string>()
-    for (const domain of usesActionDomainPolicy ? [] : roleDomains) effectiveDomains.add(domain)
-    if (!isSystem) {
-      for (const domain of teamGrants) effectiveDomains.add(domain)
-      for (const domain of overrides.allowExtra) effectiveDomains.add(domain)
-      for (const domain of overrides.deny) effectiveDomains.delete(domain)
-    }
+    const effectiveDomains = resolveMissionEffectiveDomains(
+      agent as Record<string, unknown>,
+      agentKey,
+      isSystem ? [] : teamGrants,
+      isSystem ? [] : overrides.allowExtra,
+      isSystem ? [] : overrides.deny,
+    )
     if (overrides.deny.includes(requiredDomain)) {
       return {
         allowed: false,
@@ -1781,67 +1777,6 @@ export class MissionExecutePhaseService {
     if (!grant) return false
     if (!grant.expires_at) return true
     return new Date(grant.expires_at).getTime() > Date.now()
-  }
-
-  private resolveRoleDomains(agent: Record<string, unknown>, fallbackAgentKey: string): string[] {
-    const agentKey = String(agent.agent_key ?? fallbackAgentKey).toLowerCase()
-    const config =
-      agent.config && typeof agent.config === 'object' && !Array.isArray(agent.config)
-        ? (agent.config as Record<string, unknown>)
-        : {}
-    const profile = String(config.capability_profile ?? '')
-    if (profile === 'vibey_ceo' || agentKey === 'vibey') {
-      return [
-        'manage_content',
-        'write_marketing_artifacts',
-        'manage_own_skills',
-        'write_brain',
-        'edit_brain_models',
-        'edit_brain_company',
-        'edit_brain_customer',
-      ]
-    }
-    if (profile === 'system_hr' || agentKey === 'hr') {
-      return ['manage_own_skills']
-    }
-    if (profile === 'system_brain' || agentKey === 'atlas' || agentKey === 'brain_scholar') {
-      return [
-        'manage_content',
-        'write_brain',
-        'edit_brain_models',
-        'edit_brain_company',
-        'edit_brain_customer',
-      ]
-    }
-    if (profile === 'system_builder' || agentKey === 'viktor' || agentKey === 'widget_builder') {
-      return ['manage_content']
-    }
-    const domain = String(config.capability_domain ?? this.inferManagedDomain(agentKey, agent.role))
-    const baseline = ['manage_content']
-    if (domain === 'marketing') return [...baseline, 'write_marketing_artifacts']
-    return baseline
-  }
-
-  private inferManagedDomain(agentKey: string, role: unknown): string {
-    const roleText = String(role ?? '').toLowerCase()
-    if (/(copywriter|designer|creative|brand|media|marketing|social)/.test(roleText)) {
-      return 'marketing'
-    }
-    if (/(analyst|finance|data|performance)/.test(roleText)) return 'analyst'
-    if (/(developer|engineer|automation|integrations|qa|full-stack|full stack)/.test(roleText)) {
-      return 'developer'
-    }
-    if (/(operations|project.?manag|coordinator|program.?manag)/.test(roleText)) {
-      return 'operations'
-    }
-    if (['copywriter', 'designer', 'media_producer', 'brand_manager'].includes(agentKey)) {
-      return 'marketing'
-    }
-    if (['analyst', 'cfo'].includes(agentKey)) return 'analyst'
-    if (['developer', 'automation_integrations_engineer', 'qa_engineer'].includes(agentKey)) {
-      return 'developer'
-    }
-    return 'operations'
   }
 
   private async loadActionDomainGrants(

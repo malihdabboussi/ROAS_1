@@ -50,7 +50,7 @@ This keeps `acme.govibey.com` owned by the `acme` organization namespace instead
 
 Mission execution now treats missing agent capability as a user-resolvable access gate instead of a silent blocked state.
 
-When a subtask has an `output_contract`, the execute worker still preflights the assigned agent before calling OpenClaw. If normal role, team, and override policy allow the required action domain, execution continues. If an explicit deny exists, the old hard failure path still applies. If the only problem is that the agent lacks the needed action domain for this mission, the worker creates a `mission_agent_access_requests` row and moves the mission to `awaiting_access_approval`.
+When a subtask has an `output_contract`, the execute worker still preflights the assigned agent before calling OpenClaw. Role defaults come from the shared agent-policy package; team grants and agent allows add to those defaults, while an explicit agent deny removes the domain and keeps the hard failure path. If the only problem is that the agent genuinely lacks the needed action domain for this mission, the worker creates a `mission_agent_access_requests` row and moves the mission to `awaiting_access_approval`.
 
 The gate is mission-scoped:
 
@@ -262,6 +262,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 - 2026-07-17: Replaced the full-screen-only deliverable modal chrome with a docked artifact workspace, canonical `Open in Space` routing, grouped Copy/download actions, and explicit expand/collapse controls.
 - 2026-07-17: Persisted structured artifact receipts during execution and used them to keep blocked drafts visible, number deliverables by originating task, and show creation timestamps.
 - 2026-07-17: Replaced mission preflight's partial action-domain map with the canonical agent-policy registry and added playbook coverage so supported actions such as `create_ad` and `create_funnel` cannot be rejected as unknown.
+- 2026-07-19: Replaced the execute worker's stale role-domain resolver with shared role defaults and additive policy merging, preventing managed creative agents from requesting human approval for their existing `generate_media` permission.
 - 2026-07-16: Surfaced persisted partial execution output and matching tool-created deliverables during active subtask execution, with an explicit finalization state before verification completes.
 - 2026-07-16: Completed the Webinar Copy Package capability set by seeding `roas-webinar-emails`, backfilling existing copywriters, and removing the section-2 capability blocker.
 - 2026-07-16: Made human gates first-class review workspaces with upstream deliverables/resources, explicit approval and revision actions, and `awaiting_human` parent rollup precedence over dependency-blocked pending work.

@@ -190,3 +190,10 @@ What: Verified the premium funnel/site design migration against the actual ROAS 
 Why: An earlier audit used the generic Vibey production project instead of the ROAS production project and incorrectly reported that the training migration had not run.
 Impact: ROAS production has one valid canonical design skill, three resources, three enabled agent skill copies, complete Lux registry assignment and Opus 4.8 routing, no managed legacy copy, a healthy synchronized runtime, and four passing production smoke checks.
 Files: Operational verification of `supabase/migrations/20260718055800_premium_funnel_site_design_workflow.sql`, `docker/agents/templates/designer/skills/funnel-site-design/*`, `docker/openclaw.json`, and the `roas-runtimes` Fly deployment.
+
+## [2026-07-19 16:00] - [FIX]
+
+What: Replaced mission execution's incomplete local role-domain lookup with the shared agent-policy role defaults and additive team/agent policy resolution.
+Why: Lux's managed marketing role already grants `generate_media`, but mission preflight omitted that domain and incorrectly paused generated concept images for human access approval.
+Impact: Creative image subtasks proceed without approval when the assigned role already permits media generation; explicit agent denies still override defaults.
+Files: `mission-action-policy.ts`, `mission-action-policy.test.ts`, `mission-execute-phase.service.ts`, `documentation/features/missions.md`

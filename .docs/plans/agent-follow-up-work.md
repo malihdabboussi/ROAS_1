@@ -7349,6 +7349,14 @@ Files:
 - Needed work: Extract the remaining strategy/copy task construction into a focused playbook module before adding more webinar stages.
 - Why not now: The requested change repairs a production-blocking plan validation failure with a bounded instruction and contract-test fix; broader playbook decomposition would increase the concurrent merge surface.
 
+## 2026-07-19 — Mission execute phase exceeds backend service LOC limit
+
+- Feature/app: mission-worker / mission execution
+- File: `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`
+- Evidence: `wc -l` reports 2,193 LOC after removing the duplicated role-policy methods, above the 600-line backend service maximum.
+- Needed work: Continue extracting execution phases and preflight/access coordination into focused services with characterization coverage.
+- Why not now: This production blocker removes the duplicated policy and moves the new policy mapping into an 88-line helper; decomposing the remaining execution state machine would substantially broaden the deployment and regression surface.
+
 ## 2026-07-19 - [FEATURE] Generate proactive Slack proposals automatically
 
 Status: Open
