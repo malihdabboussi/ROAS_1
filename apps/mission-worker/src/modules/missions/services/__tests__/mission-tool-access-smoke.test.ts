@@ -190,6 +190,25 @@ describe('Mission worker tool access smoke', () => {
     expect(JSON.parse(init.body).lane).toBe('mission:mission-1')
   })
 
+  it('gives every mission an authoritative current date for temporal claims', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-19T20:33:00.000Z'))
+    try {
+      const service = createService()
+      const instructions = service['buildStaticMissionInstructions']({
+        id: 'mission-date-context',
+        user_id: 'user-1',
+      })
+
+      expect(instructions).toContain('CURRENT_DATETIME_UTC=2026-07-19T20:33:00.000Z')
+      expect(instructions).toContain(
+        'Compare full calendar dates against CURRENT_DATETIME_UTC before labeling anything past, current, or upcoming.',
+      )
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('routes analyst worker mission call through artifact gateway', async () => {
     const service = createService()
     service['resolveAgentSelectedModel'] = vi.fn(async () => null)

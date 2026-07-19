@@ -109,6 +109,7 @@ The runner uses this as a deterministic gate:
 
 - **Preflight before execution**: if a subtask requires an action the assigned agent cannot perform, the worker records `mission.subtask.preflight_failed`, increments `preflight_attempts`, and routes to manager/Vibey triage before blocking the user.
 - **Execution prompt contract**: when a contract exists, the execute prompt includes `OUTPUT_CONTRACT` with the required artifact kind, action, artifact type, and expected metadata. The agent is told not to use another artifact type as fallback.
+- **Temporal reference**: every Mission OpenClaw instruction packet includes the exact current UTC timestamp. Agents compare full calendar dates against that value before labeling an event or deadline past, current, or upcoming; an explicit campaign timezone takes precedence when present.
 - **Native Doc exclusivity**: a contract requiring `save_document` publishes only the editable native Doc. PDF, DOCX, and other file-export companions are forbidden unless the output contract explicitly requires that file action.
 - **Webinar pre-call-first lifecycle**: every new Webinar Fulfillment mission runs the complete flow beginning with Atlas context preparation and Reed's pre-call strategy map. Kickoff transcripts, call links, and research enrich the flow but cannot skip pre-call work; legacy `start_at` values are ignored.
 - **Research before THE PLAN**: Webinar Fulfillment runs Blaze's Market Research immediately after post-call strategy and before Reed creates THE PLAN. Research records the platform service/action and source links; an integration may be called unavailable only after a real failed tool attempt with the returned error recorded. THE PLAN consumes the completed research document instead of rerunning or guessing at provider availability.
@@ -246,6 +247,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-19: Added an authoritative execution timestamp to Mission prompts so relative-date claims do not depend on model knowledge or unrelated document timestamps.
 - 2026-07-17: Split webinar Phase B into WEB#5A Copy Package and WEB#5B Landing Page Copy, made Dylan's Super Voice a verified requirement at every writing owner plus final assembly, and simplified client-facing ad and video-script formatting.
 - 2026-07-17: Added one-to-one Mission-step ↔ Space-Task correlation for concrete build work and made Webinar Fulfillment reconcile THE PLAN Build List into missing, assigned, production-blocking steps before copy and production begin.
 - 2026-07-17: Moved Webinar Fulfillment Market Research ahead of THE PLAN. THE PLAN now consumes the completed research document, and agent instructions forbid unsupported integration-availability claims.

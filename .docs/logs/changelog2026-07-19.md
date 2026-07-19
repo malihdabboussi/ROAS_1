@@ -1,5 +1,12 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 13:42] - [FIX]
+
+What: Added an authoritative current UTC timestamp and temporal-comparison rule to every Mission OpenClaw instruction packet.
+Why: Ivy correctly received the July 22, 2026 webinar date but labeled it past during a July 19, 2026 run because Mission execution supplied no current-date reference.
+Impact: Mission agents compare full calendar dates against the execution timestamp before describing deadlines or events as past, current, or upcoming.
+Files: `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts`, `apps/mission-worker/src/modules/missions/services/__tests__/mission-tool-access-smoke.test.ts`, `documentation/features/missions.md`
+
 ## [2026-07-19 13:43] - [FIX]
 
 What: Preserve TipTap `<br>` / hard breaks as separate Markdown paragraphs during Google Docs export (also treat `<div>` like block paragraphs).

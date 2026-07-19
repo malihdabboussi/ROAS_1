@@ -318,6 +318,7 @@ export class MissionOpenclawGateway {
   private buildStaticMissionInstructions(mission: Record<string, any>): string {
     const agentToken =
       this.configService.get<string>('VIBEY_AGENT_TOKEN') ?? process.env.VIBEY_AGENT_TOKEN ?? ''
+    const currentDatetimeUtc = new Date().toISOString()
     return [
       `AGENT_TOKEN=${agentToken}`,
       `USER_ID=${mission.user_id}`,
@@ -325,6 +326,8 @@ export class MissionOpenclawGateway {
       `CAMPAIGN_ID=${mission.campaign_id ?? ''}`,
       `SPACE_ID=${mission.space_id ?? ''}`,
       `MISSION_ID=${mission.id}`,
+      `CURRENT_DATETIME_UTC=${currentDatetimeUtc}`,
+      'TEMPORAL_REFERENCE=Compare full calendar dates against CURRENT_DATETIME_UTC before labeling anything past, current, or upcoming. Use an explicit campaign timezone when provided; otherwise use UTC. Do not infer the current date from model knowledge or document timestamps.',
     ].join('\n')
   }
 
