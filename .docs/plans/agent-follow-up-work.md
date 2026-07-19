@@ -1,3 +1,29 @@
+## 2026-07-19 - [ARCH] PageGraderClientScopeMapModal over component LOC limit
+
+Status: Open
+Found while: One-click Create & import brain UX
+Files:
+
+- `apps/web/src/features/settings/components/settings-content/PageGraderClientScopeMapModal.tsx` (414 LOC; component limit 400)
+  Evidence: `wc -l` after unmapped create+import path and helper copy.
+  Needed work: Extract client row + import handler into a small subcomponent/hook.
+  Deferred because: Behavior change was in-scope; split was not required for the one-click ship.
+
+
+## 2026-07-19 - [ARCH] Integrations overview / composio services over LOC
+
+Status: Open
+Found while: Fixing Google Calendar duplicate Manage rows resurfacing after collapse
+Files:
+
+- `apps/api/src/modules/integrations/services/integrations-overview.service.ts` (534 LOC; service limit 600, near ceiling)
+- `apps/api/src/modules/integrations/services/integrations-composio.service.ts` (631 LOC; over 600)
+- `apps/api/src/modules/integrations/services/integrations-overview-personal-composio-sync.ts` (455 LOC)
+  Evidence: `wc -l` after remap/collapse/metadata-clear fixes.
+  Needed work: Extract overview status mapping + composio list/connect paths into focused helpers; share ACTIVE status set with web Manage/Library.
+  Deferred because: Root-cause fix for remapped disconnected duplicates was in scope; full service split is separate.
+
+
 ## 2026-07-17 - [ARCH] Split Space doc menu surfaces after Canva export wiring
 
 Status: Open
@@ -29,7 +55,7 @@ Status: Open
 Found while: Sidebar submenu More / nested Campaigns / Brain enable rows
 Files:
 
-- `apps/web/src/components/layout/sidebar/SidebarHqSpacesGroupedList.tsx` (448)
+- `apps/web/src/components/layout/sidebar/SidebarHqSpacesGroupedList.tsx` (473)
   Evidence: `wc -l` after Projects nested flyout + campaign spacing pass.
   Needed work: Split campaign sub-flyout into dedicated components.
   Deferred because: Behavior delivery was in-scope; further split would expand this pass.
@@ -7292,21 +7318,13 @@ Files:
 - Needed work: Confirm these surfaces are not retained for an imminent route migration, then remove the files and any now-dead helpers in one bounded cleanup.
 - Why not now: Unlike `SegmentViewDialog`, these larger surfaces represent whole alternate flows; their product ownership and replacement path need to be traced before deletion rather than inferred solely from a static reference count.
 
-## 2026-07-18 — Agent action schema registry exceeds LOC limit (pre-existing)
+## 2026-07-18 — Presentation preview surfaces near component extraction threshold
 
-- Feature/app: agent-api / artifact action contracts
-- File: `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`
-- Evidence: 4,236 LOC after tightening the existing `create_presentation` contract; the registry was already far above the 600-line service ceiling before this scoped change.
-- Needed work: Split action schemas into domain-owned catalogs while preserving the existing merged registry, lifecycle classifications, preflight coverage, and drift tests.
-- Why not now: The presentation repair only changes the existing presentation schema. Decomposing every unrelated action family would materially expand scope and regression risk.
-
-## 2026-07-18 — Sidebar campaign grouping component exceeds frontend LOC limit
-
-- Feature/app: web / shared sidebar Campaign and Space navigation
-- File: `apps/web/src/components/layout/sidebar/SidebarHqSpacesGroupedList.tsx`
-- Evidence: The Campaign template-launcher fix touches a pre-existing 473-line component; focused ESLint reports `max-lines` against the 400-line frontend limit. The behavior fix itself adds no lines to this file.
-- Needed work: Extract the nested Campaign Space flyout and its state into a focused sibling component or hook before adding more sidebar creation behavior.
-- Why not now: The requested fix changes one launcher callback and is covered by a regression test; decomposing the entire shared Campaign/Space navigation surface would materially broaden the interaction regression surface.
+- Feature/app: web / Studio artifact preview
+- Files: `apps/web/src/features/studio/components/preview/artifacts/preview/ArtifactPreviewContent.tsx`, `apps/web/src/features/studio/components/preview/PresentationToolbar.tsx`
+- Evidence: `wc -l` reports 340 and 365 LOC respectively after replacing the duplicate lightweight presentation branch with the existing full presentation workspace and clarifying its chat-edit action. Both are above the 320-line extraction threshold but below the 400-line maximum.
+- Needed work: Split the remaining artifact-family render branches into focused content components and extract presentation export handlers before adding another preview family or toolbar action.
+- Why not now: The requested fix removes a duplicate presentation path and reduces the file by 15 lines; restructuring unrelated artifact previews would broaden the regression surface.
 ## 2026-07-19 — Webinar fulfillment playbook near backend LOC threshold
 
 - Feature/app: mission-worker / Webinar Fulfillment playbook

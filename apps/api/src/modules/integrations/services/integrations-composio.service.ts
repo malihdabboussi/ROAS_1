@@ -196,7 +196,9 @@ export class IntegrationsComposioService {
     const { data, error } = await query
     if (error) return { success: false, error: error.message, accounts: [] }
 
+    const ACTIVE_STATUSES = new Set(['connected', 'pending', 'needs_reconnect'])
     const scopedRows = ((data ?? []) as Array<Record<string, unknown>>).filter((row) => {
+      if (!ACTIVE_STATUSES.has(String(row.status ?? '').toLowerCase())) return false
       const scopeMode = String(row.scope_mode ?? '')
       if (scope.orgId) {
         return scopeMode === 'org_shared' || (scopeMode === 'personal' && row.user_id === user.id)

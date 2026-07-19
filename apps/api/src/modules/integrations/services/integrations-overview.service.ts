@@ -343,12 +343,17 @@ export class IntegrationsOverviewService {
         }
       }
       const rowConnectionId = getRowComposioConnectionId(row as Record<string, unknown>)
+      const rowStatus = String(row.status ?? '').toLowerCase()
+      // Never resurrect intentionally disconnected rows just because Composio still
+      // lists their old connected_account_id as ACTIVE (duplicate collapse leaves
+      // those rows in DB with the shared id until metadata is cleared).
       if (
-        (rowConnectionId && activeComposioConnectionIds.has(rowConnectionId)) ||
-        (!rowConnectionId &&
-          !isOrgContext &&
-          activeComposioIntegrationIds.has(integrationId)) ||
-        (rowId && activatedOrgRowIds.has(rowId))
+        rowStatus !== 'disconnected' &&
+        ((rowConnectionId && activeComposioConnectionIds.has(rowConnectionId)) ||
+          (!rowConnectionId &&
+            !isOrgContext &&
+            activeComposioIntegrationIds.has(integrationId)) ||
+          (rowId && activatedOrgRowIds.has(rowId)))
       ) {
         return {
           ...row,
