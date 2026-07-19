@@ -13,6 +13,7 @@ import { InternalMissionAwarenessActionsController } from './controllers/interna
 import { InternalMissionAwarenessController } from './controllers/internal-mission-awareness.controller'
 import { InternalMissionManagerController } from './controllers/internal-mission-manager.controller'
 import { InternalMissionsController } from './controllers/internal-missions.controller'
+import { MissionsAccessApprovalController } from './controllers/missions-access-approval.controller'
 import { MissionsFeedbackController } from './controllers/missions-feedback.controller'
 import { MissionsLifecycleController } from './controllers/missions-lifecycle.controller'
 import { MissionsQueryController } from './controllers/missions-query.controller'
@@ -75,6 +76,7 @@ import { WebinarFulfillmentTeamService } from './services/webinar-fulfillment-te
     MissionsUserController,
     MissionsQueryController,
     MissionsLifecycleController,
+    MissionsAccessApprovalController,
     MissionsStatusController,
     MissionsSubtasksController,
     MissionsFeedbackController,

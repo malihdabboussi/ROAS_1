@@ -7,7 +7,6 @@ import { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { useMissionDetailData } from '../../hooks/useMissionDetailData'
 import {
-  approveMissionAccessRequests,
   approveMissionPlan,
   fetchProfileSettings,
   rejectMissionPlan,
@@ -30,6 +29,7 @@ import {
   type MissionDetailModalProps,
 } from './mission-detail-modal-helpers'
 import { MissionDetailModalView } from './MissionDetailModalView'
+import { useMissionAccessApproval } from './useMissionAccessApproval'
 import { useMissionDetailCommentAttachments } from './useMissionDetailCommentAttachments'
 import { useSubtaskDetailState } from './useSubtaskDetailState'
 
@@ -47,7 +47,6 @@ export function MissionDetailModal({
   const [previewDeliverable, setPreviewDeliverable] = useState<MissionDeliverable | null>(null)
   const [planModalOpen, setPlanModalOpen] = useState(false)
   const [approvingPlan, setApprovingPlan] = useState(false)
-  const [approvingAccess, setApprovingAccess] = useState(false)
   const [autoApprovePlans, setAutoApprovePlans] = useState(false)
   const [ratingSending, setRatingSending] = useState(false)
   const [ratingSubmitted, setRatingSubmitted] = useState(false)
@@ -222,31 +221,14 @@ export function MissionDetailModal({
 
   const pendingAccessRequests = accessRequests.filter((request) => request.status === 'pending')
 
-  const handleApproveAccess = useCallback(async () => {
-    if (pendingAccessRequests.length === 0) return
-    setApprovingAccess(true)
-    try {
-      const requestIds = pendingAccessRequests.map((request) => request.id)
-      await approveMissionAccessRequests(mission.id, requestIds)
-      setAccessRequests((prev) =>
-        prev.map((request) =>
-          requestIds.includes(request.id)
-            ? {
-                ...request,
-                status: 'approved',
-                approved_at: new Date().toISOString(),
-              }
-            : request,
-        ),
-      )
-      toast.success('Access approved')
-      onUpdated()
-    } catch (err) {
-      toast.error(sanitizeUserError(err, 'Failed to approve access'))
-    } finally {
-      setApprovingAccess(false)
-    }
-  }, [mission.id, onUpdated, pendingAccessRequests, setAccessRequests])
+  const { approvingAccess, denyingAccess, handleApproveAccess, handleDenyAccess } =
+    useMissionAccessApproval({
+      missionId: mission.id,
+      requests: pendingAccessRequests,
+      setRequests: setAccessRequests,
+      setSubtasks,
+      onUpdated,
+    })
 
   const handlePriorityChange = async (newPriority: MissionPriority) => {
     setCurrentPriority(newPriority)
@@ -353,7 +335,9 @@ export function MissionDetailModal({
       setPreviewDeliverable={setPreviewDeliverable}
       pendingAccessRequests={pendingAccessRequests}
       approvingAccess={approvingAccess}
+      denyingAccess={denyingAccess}
       onApproveAccess={handleApproveAccess}
+      onDenyAccess={handleDenyAccess}
       commentText={commentText}
       sendingComment={sendingComment}
       setCommentText={setCommentText}

@@ -36,8 +36,9 @@ import {
   CONTRACT_ACTION_DOMAINS,
   evaluateSubtaskOutputAlignment,
   extractToolDeliverableReceipt,
-  type MissionPreflightDomain,
   normalizeOutputContract,
+  resolveMissionStatusWhileSubtaskRuns,
+  type MissionPreflightDomain,
 } from './mission-execute-helpers'
 import { MissionPhaseSupportService } from './mission-phase-support.service'
 
@@ -281,7 +282,7 @@ export class MissionExecutePhaseService {
       }
 
       await this.stateRepo.updateMissionState(supabase, missionId, {
-        status: 'in_progress',
+        status: resolveMissionStatusWhileSubtaskRuns(mission.status as MissionStatus),
         current_agent_key: assignedAgent,
         progress_notes: `Working on subtask: ${subtask.title}`,
       })
@@ -424,7 +425,9 @@ export class MissionExecutePhaseService {
                 .eq('mission_id', missionId)
                 .maybeSingle()
           if (currentResult.error) {
-            throw new Error(`Failed to renew subtask execution lease: ${currentResult.error.message}`)
+            throw new Error(
+              `Failed to renew subtask execution lease: ${currentResult.error.message}`,
+            )
           }
           const current = currentResult.data
           if (shouldWriteLease && current) lastLeaseWriteAt = nowMs
@@ -2252,5 +2255,4 @@ export class MissionExecutePhaseService {
       },
     }
   }
-
 }

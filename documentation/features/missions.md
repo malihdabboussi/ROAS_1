@@ -57,8 +57,8 @@ The gate is mission-scoped:
 - `mission_agent_access_requests` records the mission, subtask, agent, capability kind/id, reason, status, approver, timestamps, and metadata from the output contract.
 - Approved rows are read by worker preflight as mission-local grants. They do not mutate team defaults, org permissions, or `agent_overrides`.
 - The API exposes `GET /missions/:id/access-requests` and `POST /missions/:id/access-requests/approve`.
-- Approval marks pending requests `approved`, reopens access-gated subtasks to `pending`, sets the mission back to `todo`, logs `mission.access_approval.approved`, and requeues `mission.subtask.execute.requested`.
-- Mission Control subscribes to the access request table and shows an "Agent access needed" card inside the mission detail modal with the exact agent/domain pairs.
+- Approval or denial affects only the selected access-gated subtask and its dependent branch. Independent pending work remains dispatchable and recoverable while the mission reports `awaiting_access_approval`.
+- Mission Control shows explicit `Approve image generation` and `Deny` controls inside the affected task, and uses the same persisted pending/queued status labels in overview and detail.
 
 This fixes the class of failures where a campaign mission can plan correctly, assign the right worker, then produce no artifacts because the worker did not have permission to persist the required deliverable. The user now sees the missing access as the next decision rather than an empty blocked mission.
 

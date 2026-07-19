@@ -68,6 +68,11 @@ export const MissionIdParamSchema = z.object({
 
 export type MissionIdParam = z.infer<typeof MissionIdParamSchema>
 
+export const MissionAccessRequestDecisionDtoSchema = z.object({
+  request_ids: z.array(z.string().uuid()).min(1).optional(),
+})
+export type MissionAccessRequestDecisionDto = z.infer<typeof MissionAccessRequestDecisionDtoSchema>
+
 export const SubtaskIdParamSchema = z.object({
   subtaskId: z.string().uuid(),
 })

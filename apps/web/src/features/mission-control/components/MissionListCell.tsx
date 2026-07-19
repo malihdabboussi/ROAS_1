@@ -24,12 +24,12 @@ import {
   MISSION_LIST_PRIORITY_FIELD,
   STATUS_LABEL,
   STATUS_STYLE,
-  SUBTASK_STATUS_LABEL,
   SUBTASK_STATUS_STYLE,
 } from './mission-list-config'
 import { MissionDeliverableCell } from './MissionDeliverableCell'
 import { AgentCell, AgentsStackCell } from './MissionListAgents'
 import { MissionListProgressCell } from './MissionListProgressCell'
+import { formatSubtaskStatusLabel } from './subtask-status'
 
 export function MissionTitleText({ text }: { text: string }) {
   return (
@@ -290,7 +290,9 @@ export function MissionListSubtaskCell({
       )
     case 'status': {
       const cls = SUBTASK_STATUS_STYLE[subtask.status] ?? 'bg-zinc-500/15 text-zinc-400'
-      const label = SUBTASK_STATUS_LABEL[subtask.status] ?? subtask.status
+      const label = formatSubtaskStatusLabel(subtask.status, {
+        executionStatus: subtask.execution_state?.execution_status,
+      })
       return (
         <span
           className={`typo-caption inline-block whitespace-nowrap rounded-full px-2 py-0.5 ${cls}`}

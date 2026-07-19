@@ -1,12 +1,9 @@
+import type { ReactNode } from 'react'
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import { MISSION_CONTROL_MESSAGES } from '../../config/messages.config'
 import type { MissionAgent, MissionDeliverable, MissionSubtask } from '../../types'
-import {
-  formatAgentShortName,
-  formatRelativeTime,
-  formatSubtaskStatusLabel,
-  subtaskStatusBadgeTone,
-} from './detail-helpers'
+import { formatSubtaskStatusLabel } from '../subtask-status'
+import { formatAgentShortName, formatRelativeTime, subtaskStatusBadgeTone } from './detail-helpers'
 import { HumanGateReviewPanel } from './HumanGateReviewPanel'
 import {
   getSubtaskLiveOutput,
@@ -29,6 +26,7 @@ interface SubtaskDetailContentProps {
   onFeedbackChange: (value: string) => void
   onRequestChanges: () => void
   onApprove: () => void
+  accessApprovalCard?: ReactNode
   /** Desktop puts the gate panel in the right sidebar; mobile keeps it inline. */
   showHumanGateInline?: boolean
 }
@@ -46,6 +44,7 @@ export function SubtaskDetailContent({
   onFeedbackChange,
   onRequestChanges,
   onApprove,
+  accessApprovalCard,
   showHumanGateInline = true,
 }: SubtaskDetailContentProps) {
   const agent = agents.find((item) => item.agent_key === subtask.assigned_agent_key)
@@ -61,7 +60,9 @@ export function SubtaskDetailContent({
   const statusLabel =
     subtask.status === 'in_progress'
       ? getSubtaskLiveStatusLabel(subtask, deliverables.length > 0)
-      : formatSubtaskStatusLabel(subtask.status)
+      : formatSubtaskStatusLabel(subtask.status, {
+          executionStatus: subtask.execution_state?.execution_status,
+        })
   const statusTone = subtaskStatusBadgeTone(subtask.status, {
     awaitingHuman: isActiveHumanGate,
   })
@@ -88,6 +89,7 @@ export function SubtaskDetailContent({
       </div>
 
       <div className="space-y-spacing-3">
+        {accessApprovalCard}
         {isActiveHumanGate && showHumanGateInline ? (
           <HumanGateReviewPanel
             subtask={subtask}

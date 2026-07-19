@@ -78,7 +78,7 @@ export interface MissionToolStep {
 }
 
 export interface MissionExecutionState {
-  execution_status?: 'streaming' | 'complete' | 'failed'
+  execution_status?: 'queued' | 'streaming' | 'complete' | 'failed'
   partial_output?: string
   current_tool?: {
     name: string

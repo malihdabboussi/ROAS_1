@@ -1,10 +1,15 @@
 import { ACTION_TO_DOMAIN, type Domain } from '@vibey/agent-policy'
+import type { MissionStatus } from '../../types'
 import type { MissionOutputContract } from '../persistence/mission-deliverables.repository'
 
 export type MissionPreflightDomain = Domain
 
 export const CONTRACT_ACTION_DOMAINS: Partial<Record<string, MissionPreflightDomain>> =
   ACTION_TO_DOMAIN
+
+export function resolveMissionStatusWhileSubtaskRuns(status: MissionStatus): MissionStatus {
+  return status === 'awaiting_access_approval' ? status : 'in_progress'
+}
 
 export type ToolDeliverableReceipt = {
   deliverable_id: string

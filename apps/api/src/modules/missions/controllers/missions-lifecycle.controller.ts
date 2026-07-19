@@ -35,7 +35,6 @@ import {
   type MissionIdParam,
   type UpdateMissionDto,
 } from '../dto'
-import { MissionsAccessApprovalService } from '../services/missions-access-approval.service'
 import { MissionsCancellationService } from '../services/missions-cancellation.service'
 import { MissionsCreationService } from '../services/missions-creation.service'
 import { MissionsExecutionService } from '../services/missions-execution.service'
@@ -48,7 +47,6 @@ export class MissionsLifecycleController {
   constructor(
     private readonly missionsCreationService: MissionsCreationService,
     private readonly missionsExecutionService: MissionsExecutionService,
-    private readonly missionsAccessApprovalService: MissionsAccessApprovalService,
     private readonly missionsPlanDecisionService: MissionsPlanDecisionService,
     private readonly missionsCancellationService: MissionsCancellationService,
     private readonly missionsUserOperationsService: MissionsUserOperationsService,
@@ -122,25 +120,6 @@ export class MissionsLifecycleController {
     @OrgContext() scope: RequestScope,
   ) {
     return this.missionsPlanDecisionService.rejectPlan(supabase, user.id, params.id, scope.orgId)
-  }
-
-  @Post(':id/access-requests/approve')
-  @HttpCode(HttpStatus.OK)
-  @UseGuards(CreditsGuard)
-  async approveAccessRequests(
-    @CurrentUser() user: { id: string },
-    @Supabase() supabase: SupabaseClient,
-    @Param(new ZodValidationPipe(MissionIdParamSchema)) params: MissionIdParam,
-    @Body() body: { request_ids?: string[] },
-    @OrgContext() scope: RequestScope,
-  ) {
-    return this.missionsAccessApprovalService.approve(
-      supabase,
-      user.id,
-      params.id,
-      scope.orgId,
-      body.request_ids,
-    )
   }
 
   @Post(':id/retry')

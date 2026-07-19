@@ -19,10 +19,10 @@ import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { formatWebinarSubtaskTitle } from '@/lib/missions'
 import { updateSubtask } from '../../services/missions.service'
 import type { MissionAgent, MissionSubtask, PrdContent, SubtaskStatus } from '../../types'
+import { formatSubtaskStatusLabel } from '../subtask-status'
 import {
   formatAgentShortName,
   formatRelativeTime,
-  formatSubtaskStatusLabel,
   resolveSubtaskIssueDetail,
 } from './detail-helpers'
 
@@ -169,6 +169,7 @@ export function SubtasksSection({
                   : formatAgentShortName(assigneeFullName) || assigneeFullName
                 const statusLabel = formatSubtaskStatusLabel(subtask.status, {
                   dependencyBlocked: isBlocked,
+                  executionStatus: subtask.execution_state?.execution_status,
                 })
                 const statusMeta = `${statusLabel} · ${formatRelativeTime(subtask.updated_at)}`
                 const issueDetail = resolveSubtaskIssueDetail(subtask, {
