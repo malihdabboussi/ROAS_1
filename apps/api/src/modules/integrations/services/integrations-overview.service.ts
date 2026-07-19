@@ -54,6 +54,7 @@ const INTEGRATION_IDS_FOR_OVERVIEW = [
   'vercel',
   'zoom',
   'active_campaign',
+  'page_grader',
   'whop',
   'fanbasis',
   'paypal',
@@ -314,6 +315,9 @@ export class IntegrationsOverviewService {
     const activeCampaignVaultLinked =
       (await this.vault.hasSecret(user.id, 'active_campaign', 'api_url')) &&
       (await this.vault.hasSecret(user.id, 'active_campaign', 'api_key'))
+    const pageGraderVaultLinked =
+      (await this.vault.hasSecret(user.id, 'page_grader', 'base_url')) &&
+      (await this.vault.hasSecret(user.id, 'page_grader', 'api_key'))
 
     const integrations = (
       data as Array<{
@@ -378,7 +382,8 @@ export class IntegrationsOverviewService {
         row.status === 'connected' &&
         !hasComposioAccount &&
         !NATIVE_OAUTH_OVERRIDES.includes(row.integration_id) &&
-        !(row.integration_id === 'active_campaign' && activeCampaignVaultLinked)
+        !(row.integration_id === 'active_campaign' && activeCampaignVaultLinked) &&
+        !(row.integration_id === 'page_grader' && pageGraderVaultLinked)
       ) {
         return {
           ...row,
