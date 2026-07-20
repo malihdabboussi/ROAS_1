@@ -47,6 +47,7 @@ describe('webinar-fulfillment playbook', () => {
       'st-compile-ads',
       'st-media-plan',
       'st-gate-production',
+      'st-launch-bible',
     ])
     expect(plan.subtasks[0]?.assignTo).toBe('atlas')
     expect(plan.subtasks.find((s) => s.id === 'st-gate-precall')?.assignTo).toBe(
@@ -90,6 +91,22 @@ describe('webinar-fulfillment playbook', () => {
     ])
     expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.assignTo).toBe('designer')
     expect(plan.subtasks.find((s) => s.id === 'st-media-plan')?.assignTo).toBe('ads_manager')
+    expect(plan.subtasks.find((s) => s.id === 'st-launch-bible')).toMatchObject({
+      assignTo: 'atlas',
+      dependsOn: ['st-gate-production'],
+      outputContract: {
+        artifact_kind: 'document_artifact',
+        required_action: 'compile_webinar_launch_bible',
+        required_artifact_type: 'file',
+        expected: {
+          mime_type: 'application/vnd.google-apps.document',
+          source_action: 'compile_webinar_launch_bible',
+        },
+      },
+    })
+    expect(plan.subtasks.find((s) => s.id === 'st-launch-bible')?.intent.ecology).toMatch(
+      /0 - Overview.*1 - ICP Sheet.*7 - SMS & Emails/s,
+    )
     expect(
       plan.subtasks
         .filter((s) =>

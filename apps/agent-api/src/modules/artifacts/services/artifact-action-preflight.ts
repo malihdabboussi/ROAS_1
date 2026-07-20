@@ -1,10 +1,17 @@
 import { canonicalizeIntegrationId } from '../../shared/utils/integration-id.util'
 import { VALID_ACTIONS } from '../dtos/artifact-action.dto'
-import { parseConversationIdFromSessionKey, parseDreamOpsSessionKey } from './artifact-action.registry'
+import {
+  parseConversationIdFromSessionKey,
+  parseDreamOpsSessionKey,
+} from './artifact-action.registry'
 import {
   PRESENTATION_ACTION_PREFLIGHT_OVERRIDES,
   PRESENTATION_ACTION_PREFLIGHTS,
 } from './artifact-presentation-action-preflight'
+import {
+  WEBINAR_LAUNCH_BIBLE_PREFLIGHT_OVERRIDES,
+  WEBINAR_LAUNCH_BIBLE_PREFLIGHTS,
+} from './artifact-webinar-launch-bible-preflight'
 
 type ArtifactAction = (typeof VALID_ACTIONS)[number]
 
@@ -42,6 +49,7 @@ type ActionPreflightValidator = (
 
 const ACTION_PREFLIGHT_OVERRIDES: Partial<Record<ArtifactAction, ActionPreflightCoverage>> = {
   ...PRESENTATION_ACTION_PREFLIGHT_OVERRIDES,
+  ...WEBINAR_LAUNCH_BIBLE_PREFLIGHT_OVERRIDES,
   analyze_video: {
     mode: 'static_preflight',
     reason:
@@ -108,8 +116,7 @@ const ACTION_PREFLIGHT_OVERRIDES: Partial<Record<ArtifactAction, ActionPreflight
   },
   propose_company_brain_signal: {
     mode: 'static_preflight',
-    reason:
-      'Company signal proposals must carry evidence refs or source metadata before review.',
+    reason: 'Company signal proposals must carry evidence refs or source metadata before review.',
   },
   create_company_brain_object: {
     mode: 'static_preflight',
@@ -118,35 +125,43 @@ const ACTION_PREFLIGHT_OVERRIDES: Partial<Record<ArtifactAction, ActionPreflight
   },
   dream_inspect_agent: {
     mode: 'static_preflight',
-    reason: 'Dream Ops tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
+    reason:
+      'Dream Ops tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
   },
   dream_search_evidence: {
     mode: 'static_preflight',
-    reason: 'Dream Ops tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
+    reason:
+      'Dream Ops tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
   },
   dream_propose_skill_create: {
     mode: 'static_preflight',
-    reason: 'Dream Ops proposal tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
+    reason:
+      'Dream Ops proposal tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
   },
   dream_propose_skill_update: {
     mode: 'static_preflight',
-    reason: 'Dream Ops proposal tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
+    reason:
+      'Dream Ops proposal tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
   },
   dream_propose_skill_resource_update: {
     mode: 'static_preflight',
-    reason: 'Dream Ops proposal tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
+    reason:
+      'Dream Ops proposal tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
   },
   dream_propose_agent_file_update: {
     mode: 'static_preflight',
-    reason: 'Dream Ops proposal tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
+    reason:
+      'Dream Ops proposal tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
   },
   dream_route_out: {
     mode: 'static_preflight',
-    reason: 'Dream Ops route-out tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
+    reason:
+      'Dream Ops route-out tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
   },
   dream_finish: {
     mode: 'static_preflight',
-    reason: 'Dream Ops finish tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
+    reason:
+      'Dream Ops finish tools are internal to Jaime Dream Ops sessions and require HR dream identity.',
   },
 }
 
@@ -163,6 +178,7 @@ export const ACTION_PREFLIGHT_COVERAGE: Record<ArtifactAction, ActionPreflightCo
 
 export const ACTION_PREFLIGHTS: Partial<Record<ArtifactAction, ActionPreflightValidator>> = {
   ...PRESENTATION_ACTION_PREFLIGHTS,
+  ...WEBINAR_LAUNCH_BIBLE_PREFLIGHTS,
   analyze_video: validateAnalyzeVideoPreflight,
   transcribe_audio: validateTranscribeAudioPreflight,
   process_media: validateProcessMediaPreflight,

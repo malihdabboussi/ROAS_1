@@ -37,6 +37,23 @@ export const CreateDeliverableDtoSchema = z.object({
 
 export type CreateDeliverableDto = z.infer<typeof CreateDeliverableDtoSchema>
 
+export const MissionGoogleDocTabSchema = z.object({
+  title: z.string().min(1).max(100),
+  html: z.string().min(1).max(750000),
+  parent_title: z.string().min(1).max(100).optional(),
+})
+
+export const ExportMissionGoogleDocSchema = z
+  .object({
+    title: z.string().min(1).max(500).optional(),
+    deliverable_title: z.string().min(1).max(500).optional(),
+    source: z.enum(['mission_deliverables', 'webinar_launch_bible']).optional(),
+    tabs: z.array(MissionGoogleDocTabSchema).min(1).max(30).optional(),
+  })
+  .default({})
+
+export type ExportMissionGoogleDocDto = z.infer<typeof ExportMissionGoogleDocSchema>
+
 export const MissionCommentAttachmentDtoSchema = z.object({
   filename: z.string().min(1).max(500),
   mimeType: z.string().min(1).max(255),

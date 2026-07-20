@@ -8,6 +8,7 @@ import { markdownToGoogleDocsTabRequests } from './markdown-to-google-docs-tab-r
 export type GoogleDocTabInput = {
   title: string
   html: string
+  parentTitle?: string
 }
 
 const FIRST_TAB_ID = 't.0'
@@ -31,7 +32,11 @@ export class GoogleDriveComposioMultiTabDocsService {
       .map((tab) => {
         const tabTitle = truncateTitle(tab.title)
         const markdown = htmlToGoogleDocsMarkdown(tab.html)
-        return { title: tabTitle, markdown }
+        return {
+          title: tabTitle,
+          markdown,
+          parentTitle: tab.parentTitle ? truncateTitle(tab.parentTitle) : undefined,
+        }
       })
       .filter((tab) => tab.markdown.trim().length > 0)
 
@@ -68,12 +73,20 @@ export class GoogleDriveComposioMultiTabDocsService {
         },
       },
     ])
+    const tabIdsByTitle = new Map<string, string>([[prepared[0]!.title, FIRST_TAB_ID]])
 
     for (const tab of prepared.slice(1)) {
+      const parentTabId = tab.parentTitle ? tabIdsByTitle.get(tab.parentTitle) : undefined
+      if (tab.parentTitle && !parentTabId) {
+        throw new BadRequestException(`Google Doc parent tab not found: ${tab.parentTitle}`)
+      }
       const addRaw = await this.updateDocument(userId, connectedAccountId, fileId, [
         {
           addDocumentTab: {
-            tabProperties: { title: tab.title },
+            tabProperties: {
+              title: tab.title,
+              ...(parentTabId ? { parentTabId } : {}),
+            },
           },
         },
       ])
@@ -81,6 +94,7 @@ export class GoogleDriveComposioMultiTabDocsService {
       if (!tabId) {
         throw new BadRequestException('Failed to create a Google Doc tab')
       }
+      tabIdsByTitle.set(tab.title, tabId)
       const requests = markdownToGoogleDocsTabRequests(tab.markdown, tabId)
       await this.updateDocumentBatched(userId, connectedAccountId, fileId, requests)
     }

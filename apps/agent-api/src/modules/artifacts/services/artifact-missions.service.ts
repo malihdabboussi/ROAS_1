@@ -57,6 +57,14 @@ export class ArtifactMissionsService {
           data,
           sessionKey,
         ),
+      compile_webinar_launch_bible: (data, sessionKey) =>
+        this.callOrExtracted(
+          target,
+          'compileWebinarLaunchBible',
+          () => this.apiActions.compileWebinarLaunchBible(target, data, sessionKey),
+          data,
+          sessionKey,
+        ),
       update_mission: (data, sessionKey) =>
         this.callOrExtracted(
           target,

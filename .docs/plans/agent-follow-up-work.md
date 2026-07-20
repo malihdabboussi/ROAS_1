@@ -3436,7 +3436,7 @@ Found while: Completing Phase 2 Batch 80 Type D cleanup for `ArtifactMissionsSer
 Files:
 
 - apps/agent-api/src/modules/artifacts/services/artifact-missions.service.ts
-  Evidence: `wc -l` reports `artifact-missions.service.ts` at 583 LOC after extracting manager actions and API passthrough/read actions. The file is under the 600 LOC service limit, but it has only 17 LOC of hard-limit headroom.
+  Evidence: `wc -l` now reports `artifact-missions.service.ts` at 591 LOC after adding the Launch Bible mission action route. The file is under the 600 LOC service limit, but it has only 9 LOC of hard-limit headroom.
   Needed work: If future mission actions are added, extract the remaining create/list/detail/update orchestration into focused mission creation, mission visibility/read, or mission update/indexing services before growing the facade.
   Deferred because: Batch 80 resolved the hard violation and kept behavior locked through focused mission action tests. Further splitting is headroom work, not needed to finish the current Type D target.
 
@@ -7345,9 +7345,9 @@ Files:
 
 - Feature/app: mission-worker / Webinar Fulfillment playbook
 - File: `apps/mission-worker/src/modules/missions/playbooks/webinar-fulfillment.playbook.ts`
-- Evidence: `wc -l` reports 499 LOC, above the 480-line extraction threshold but below the 600-line maximum.
+- Evidence: `wc -l` now reports 527 LOC after adding the final Launch Bible handoff, above the 480-line extraction threshold but below the 600-line maximum.
 - Needed work: Extract the remaining strategy/copy task construction into a focused playbook module before adding more webinar stages.
-- Why not now: The requested change repairs a production-blocking plan validation failure with a bounded instruction and contract-test fix; broader playbook decomposition would increase the concurrent merge surface.
+- Why not now: The requested change adds one bounded final handoff step; broader playbook decomposition would increase the concurrent merge surface.
 
 ## 2026-07-19 — Mission execute phase exceeds backend service LOC limit
 

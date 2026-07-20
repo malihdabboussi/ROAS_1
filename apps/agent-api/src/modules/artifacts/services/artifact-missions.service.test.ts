@@ -171,6 +171,39 @@ describe('ArtifactMissionsService', () => {
     expect(target.mainApiCall).not.toHaveBeenCalled()
   })
 
+  it('compiles a webinar Launch Bible through the mission export endpoint', async () => {
+    const { supabase } = makeSupabase({})
+    const target = makeMissionTarget(supabase)
+    target.mainApiCall.mockResolvedValueOnce({
+      success: true,
+      deliverable_id: 'launch-bible-1',
+      file: { webViewLink: 'https://docs.google.com/document/d/doc-1/edit' },
+    })
+    const handlers = new ArtifactMissionsService().getHandlers(target)
+    const tabs = [
+      { title: '0 - Overview', html: '<h1>Overview</h1>' },
+      { title: '1 - ICP Sheet', html: '<h1>ICP</h1>' },
+    ]
+
+    const result = await handlers.compile_webinar_launch_bible(
+      { mission_id: 'mission-1', title: 'Impact Webinar Launch Bible', tabs },
+      'mission-session',
+    )
+
+    expect(result).toMatchObject({ success: true, deliverable_id: 'launch-bible-1' })
+    expect(target.mainApiCall).toHaveBeenCalledWith(
+      'POST',
+      '/api/missions/mission-1/deliverables/export-google-doc',
+      'mission-session',
+      {
+        title: 'Impact Webinar Launch Bible',
+        tabs,
+        deliverable_title: 'Task 16 — Webinar Launch Bible',
+        source: 'webinar_launch_bible',
+      },
+    )
+  })
+
   it('creates mission manager subtasks through the internal manager endpoint', async () => {
     const { supabase } = makeSupabase({})
     const target = makeMissionTarget(supabase)

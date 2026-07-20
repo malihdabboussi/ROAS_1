@@ -70,6 +70,7 @@ export const WEBINAR_FLOW_TASKS = {
   deckBones: taskTitle(13, 'Webinar Deck Bones'),
   compileAds: taskTitle(14, 'Compile approved Meta ads'),
   mediaPlan: taskTitle(15, 'Media plan'),
+  launchBible: taskTitle(16, 'Compile Webinar Launch Bible'),
 } as const
 
 export const WEBINAR_FLOW_GATES = {
@@ -165,5 +166,19 @@ export function imageContract(): NonNullable<
     required_action: 'generate_image',
     required_artifact_type: 'image',
     expected: { source: WEBINAR_FLOW_DOCS.imageBriefs },
+  }
+}
+
+export function launchBibleContract(): NonNullable<
+  MissionPlaybookPlanResult['subtasks'][number]['outputContract']
+> {
+  return {
+    artifact_kind: 'document_artifact',
+    required_action: 'compile_webinar_launch_bible',
+    required_artifact_type: 'file',
+    expected: {
+      mime_type: 'application/vnd.google-apps.document',
+      source_action: 'compile_webinar_launch_bible',
+    },
   }
 }

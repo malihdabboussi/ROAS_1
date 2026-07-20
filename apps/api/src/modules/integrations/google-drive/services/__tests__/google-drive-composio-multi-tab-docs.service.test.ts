@@ -96,4 +96,63 @@ describe('GoogleDriveComposioMultiTabDocsService', () => {
       'account-1',
     )
   })
+
+  it('creates child tabs beneath an earlier parent tab', async () => {
+    const executeTool = vi
+      .fn()
+      .mockResolvedValueOnce({ successful: true, data: { document_id: 'doc-1' } })
+      .mockResolvedValueOnce({ successful: true, data: {} })
+      .mockResolvedValueOnce({
+        successful: true,
+        data: {
+          replies: [
+            {
+              addDocumentTab: { tabProperties: { tabId: 't.funnels', title: '3 - Funnel Pages' } },
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({ successful: true, data: {} })
+      .mockResolvedValueOnce({
+        successful: true,
+        data: {
+          replies: [
+            { addDocumentTab: { tabProperties: { tabId: 't.optin', title: 'P1 - Opt-in Page' } } },
+          ],
+        },
+      })
+      .mockResolvedValue({ successful: true, data: {} })
+    const service = new GoogleDriveComposioMultiTabDocsService(
+      { executeTool } as never,
+      new GoogleDriveComposioPayloadService(),
+    )
+
+    await service.createGoogleDocWithTabs('user-1', 'account-1', 'Launch Bible', [
+      { title: '0 - Overview', html: '<h1>Overview</h1>' },
+      { title: '3 - Funnel Pages', html: '<h1>Funnel Pages</h1>' },
+      {
+        title: 'P1 - Opt-in Page',
+        parentTitle: '3 - Funnel Pages',
+        html: '<h1>Opt-in</h1>',
+      },
+    ])
+
+    expect(executeTool).toHaveBeenCalledWith(
+      'GOOGLEDOCS_UPDATE_EXISTING_DOCUMENT',
+      'user-1',
+      expect.objectContaining({
+        editDocs: [
+          expect.objectContaining({
+            addDocumentTab: {
+              tabProperties: {
+                title: 'P1 - Opt-in Page',
+                parentTabId: 't.funnels',
+              },
+            },
+          }),
+        ],
+      }),
+      'account-1',
+    )
+  })
 })
