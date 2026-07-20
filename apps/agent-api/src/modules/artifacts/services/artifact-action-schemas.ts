@@ -2541,7 +2541,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
     strict: true,
     types: { mission_id: 'string', title: 'string', tabs: 'object_array' },
     useWhen: [
-      'Compile the final approved Webinar Fulfillment assets into the ROAS Launch Bible tab structure, replacing template sample bodies with campaign-ready content.',
+      'Compile the final approved Webinar Fulfillment assets into the ROAS Launch Bible tab structure, replacing template sample bodies with campaign-ready content. P4 contains only on-page replay landing-page copy; replay delivery and post-webinar email/SMS belong in 7 - SMS & Emails.',
     ],
     examples: [
       {

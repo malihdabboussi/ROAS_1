@@ -98,6 +98,50 @@ describe('GoogleDriveComposioMultiTabDocsService', () => {
     )
   })
 
+  it('collapses exact consecutive duplicate lines when filling a copied template', async () => {
+    const executeTool = vi
+      .fn()
+      .mockResolvedValueOnce({ successful: true, data: { document_id: 'copy-1' } })
+      .mockResolvedValueOnce({
+        successful: true,
+        data: {
+          tabs: [
+            {
+              tabProperties: { tabId: 't.icp', title: '1 - ICP SHEET' },
+              documentTab: { body: { content: [{ endIndex: 20 }] } },
+            },
+          ],
+        },
+      })
+      .mockResolvedValue({ successful: true, data: {} })
+    const service = new GoogleDriveComposioMultiTabDocsService(
+      { executeTool } as never,
+      new GoogleDriveComposioPayloadService(),
+    )
+
+    await service.copyGoogleDocTemplateWithTabs(
+      'user-1',
+      'account-1',
+      'template-1',
+      'Impact Launch Bible',
+      [
+        {
+          title: '1 - ICP Sheet',
+          html: '<h1>Campaign ICP</h1><p>WEB#2 — Post-Call Strategy Map</p><p>WEB#2 — Post-Call Strategy Map</p><p>Client: Impact Elite</p>',
+        },
+      ],
+    )
+
+    const updateCalls = executeTool.mock.calls.filter(
+      ([toolName]) => toolName === 'GOOGLEDOCS_UPDATE_EXISTING_DOCUMENT',
+    )
+    const insertedText = updateCalls
+      .flatMap(([, , payload]) => (payload as { editDocs: Record<string, unknown>[] }).editDocs)
+      .map((request) => (request.insertText as { text?: string } | undefined)?.text ?? '')
+      .join('')
+    expect(insertedText.match(/WEB#2 — Post-Call Strategy Map/g)).toHaveLength(1)
+  })
+
   it('creates a multi-tab Google Doc via markdown create + addDocumentTab', async () => {
     const executeTool = vi
       .fn()

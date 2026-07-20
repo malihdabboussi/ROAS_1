@@ -26,6 +26,15 @@ const HEADING_STYLE: Record<number, string> = {
   6: 'HEADING_6',
 }
 
+const HEADING_TEXT_STYLE: Record<number, { bold: boolean; fontSize: number }> = {
+  1: { bold: true, fontSize: 20 },
+  2: { bold: true, fontSize: 16 },
+  3: { bold: true, fontSize: 14 },
+  4: { bold: true, fontSize: 12 },
+  5: { bold: true, fontSize: 11 },
+  6: { bold: true, fontSize: 11 },
+}
+
 export function markdownToGoogleDocsTabRequests(
   markdown: string,
   tabId: string,
@@ -180,7 +189,12 @@ function flowBlocksToRequests(
 
   let cursor = startIndex
   let fullText = ''
-  const paragraphStyles: Array<{ start: number; end: number; namedStyleType: string }> = []
+  const paragraphStyles: Array<{
+    start: number
+    end: number
+    level: number
+    namedStyleType: string
+  }> = []
   const textStyles: Array<{ start: number; end: number; bold?: boolean; italic?: boolean }> = []
   const bulletRanges: Array<{ start: number; end: number }> = []
   const orderedRanges: Array<{ start: number; end: number }> = []
@@ -210,6 +224,7 @@ function flowBlocksToRequests(
       paragraphStyles.push({
         start,
         end,
+        level: block.level,
         namedStyleType: HEADING_STYLE[block.level] ?? 'HEADING_1',
       })
     } else if (block.kind === 'bullet') {
@@ -233,10 +248,39 @@ function flowBlocksToRequests(
       },
     },
     {
+      updateTextStyle: {
+        range: { startIndex, endIndex: startIndex + fullText.length, tabId },
+        textStyle: {
+          bold: false,
+          italic: false,
+          underline: false,
+          strikethrough: false,
+          fontSize: { magnitude: 11, unit: 'PT' },
+          weightedFontFamily: { fontFamily: 'Arial' },
+        },
+        fields:
+          'bold,italic,underline,strikethrough,backgroundColor,fontSize,weightedFontFamily',
+      },
+    },
+    {
       updateParagraphStyle: {
         range: { startIndex, endIndex: startIndex + fullText.length, tabId },
-        paragraphStyle: { namedStyleType: 'NORMAL_TEXT' },
-        fields: 'namedStyleType',
+        paragraphStyle: {
+          namedStyleType: 'NORMAL_TEXT',
+          alignment: 'START',
+          direction: 'LEFT_TO_RIGHT',
+          lineSpacing: 115,
+          spaceAbove: { magnitude: 0, unit: 'PT' },
+          spaceBelow: { magnitude: 0, unit: 'PT' },
+          indentStart: { magnitude: 0, unit: 'PT' },
+          indentEnd: { magnitude: 0, unit: 'PT' },
+          indentFirstLine: { magnitude: 0, unit: 'PT' },
+          keepWithNext: false,
+          keepLinesTogether: false,
+          avoidWidowAndOrphan: false,
+        },
+        fields:
+          'namedStyleType,alignment,direction,lineSpacing,spaceAbove,spaceBelow,indentStart,indentEnd,indentFirstLine,keepWithNext,keepLinesTogether,avoidWidowAndOrphan',
       },
     },
   ]
@@ -247,6 +291,17 @@ function flowBlocksToRequests(
         range: { startIndex: style.start, endIndex: style.end, tabId },
         paragraphStyle: { namedStyleType: style.namedStyleType },
         fields: 'namedStyleType',
+      },
+    })
+    const headingText = HEADING_TEXT_STYLE[style.level] ?? HEADING_TEXT_STYLE[1]!
+    requests.push({
+      updateTextStyle: {
+        range: { startIndex: style.start, endIndex: style.end, tabId },
+        textStyle: {
+          bold: headingText.bold,
+          fontSize: { magnitude: headingText.fontSize, unit: 'PT' },
+        },
+        fields: 'bold,fontSize',
       },
     })
   }

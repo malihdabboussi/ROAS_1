@@ -86,6 +86,18 @@ function validateWebinarLaunchBiblePreflight(
       'WEBINAR_LAUNCH_BIBLE_PARENT_INVALID',
     )
   }
+  const replayPage = rows.find((row) => row.title === 'P4 - Replay Page')
+  const replayPageHtml = stringValue(replayPage?.html)?.toLowerCase() ?? ''
+  if (
+    /post-webinar sequence|email\s+\d+\s+of\s+\d+|send timing:|subject line(?:\s|\()/i.test(
+      replayPageHtml,
+    )
+  ) {
+    return failure(
+      'P4 - Replay Page may contain only on-page replay landing-page copy. Move replay delivery, post-webinar email/SMS, and replay-plus-offer follow-up into 7 - SMS & Emails.',
+      'WEBINAR_LAUNCH_BIBLE_REPLAY_MESSAGES_MISPLACED',
+    )
+  }
   return null
 }
 

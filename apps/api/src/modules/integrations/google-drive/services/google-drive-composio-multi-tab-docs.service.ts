@@ -36,7 +36,7 @@ export class GoogleDriveComposioMultiTabDocsService {
     title: string,
     tabs: GoogleDocTabInput[],
   ): Promise<GoogleDriveFile> {
-    const prepared = this.prepareTabs(tabs)
+    const prepared = this.prepareTabs(tabs, true)
     const docTitle = title.trim() || 'Webinar Launch Bible'
     const copiedRaw = await this.composio.executeTool(
       'GOOGLEDOCS_COPY_DOCUMENT',
@@ -157,11 +157,13 @@ export class GoogleDriveComposioMultiTabDocsService {
     }
   }
 
-  private prepareTabs(tabs: GoogleDocTabInput[]) {
+  private prepareTabs(tabs: GoogleDocTabInput[], collapseDuplicateLines = false) {
     const prepared = tabs
       .map((tab) => ({
         title: truncateTitle(tab.title),
-        markdown: htmlToGoogleDocsMarkdown(tab.html),
+        markdown: collapseDuplicateLines
+          ? collapseConsecutiveDuplicateLines(htmlToGoogleDocsMarkdown(tab.html))
+          : htmlToGoogleDocsMarkdown(tab.html),
         parentTitle: tab.parentTitle ? truncateTitle(tab.parentTitle) : undefined,
       }))
       .filter((tab) => tab.markdown.trim().length > 0)
@@ -271,6 +273,21 @@ export class GoogleDriveComposioMultiTabDocsService {
     }
     return null
   }
+}
+
+function collapseConsecutiveDuplicateLines(markdown: string): string {
+  const output: string[] = []
+  let previousContent = ''
+  for (const line of markdown.split('\n')) {
+    const content = line.trim()
+    if (content && content === previousContent) {
+      if (output[output.length - 1]?.trim().length === 0) output.pop()
+      continue
+    }
+    output.push(line)
+    if (content) previousContent = content
+  }
+  return output.join('\n')
 }
 
 function truncateTitle(value: string): string {

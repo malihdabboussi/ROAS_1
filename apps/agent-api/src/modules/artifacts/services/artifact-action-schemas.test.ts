@@ -2122,6 +2122,20 @@ describe('validateActionData', () => {
           })),
         }),
       ).resolves.toBeNull()
+      await expect(
+        validateActionPreflight('compile_webinar_launch_bible', {
+          tabs: requiredTabs.map((title) => ({
+            title,
+            html:
+              title === 'P4 - Replay Page'
+                ? '<h1>Replay Page</h1><h2>Email 4 of 6 — Replay + Offer</h2><p>Subject line: Here is the replay.</p>'
+                : `<h1>${title}</h1>`,
+            ...(title.match(/^P[1-4] - /) ? { parent_title: '3 - Funnel Pages' } : {}),
+          })),
+        }),
+      ).resolves.toMatchObject({
+        errorCode: 'WEBINAR_LAUNCH_BIBLE_REPLAY_MESSAGES_MISPLACED',
+      })
       const outOfOrderTabs = requiredTabs.map((title) => ({
         title,
         html: `<h1>${title}</h1>`,

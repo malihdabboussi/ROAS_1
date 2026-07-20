@@ -34,9 +34,30 @@ describe('markdownToGoogleDocsTabRequests', () => {
     expect(requests).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          updateTextStyle: expect.objectContaining({
+            range: { startIndex: 1, endIndex: 24, tabId: 't.abc' },
+            textStyle: expect.objectContaining({
+              bold: false,
+              italic: false,
+              underline: false,
+              strikethrough: false,
+              fontSize: { magnitude: 11, unit: 'PT' },
+              weightedFontFamily: { fontFamily: 'Arial' },
+            }),
+            fields:
+              'bold,italic,underline,strikethrough,backgroundColor,fontSize,weightedFontFamily',
+          }),
+        }),
+        expect.objectContaining({
           updateParagraphStyle: expect.objectContaining({
             range: { startIndex: 1, endIndex: 24, tabId: 't.abc' },
-            paragraphStyle: { namedStyleType: 'NORMAL_TEXT' },
+            paragraphStyle: expect.objectContaining({
+              namedStyleType: 'NORMAL_TEXT',
+              alignment: 'START',
+              indentStart: { magnitude: 0, unit: 'PT' },
+              indentEnd: { magnitude: 0, unit: 'PT' },
+              indentFirstLine: { magnitude: 0, unit: 'PT' },
+            }),
           }),
         }),
         expect.objectContaining({
@@ -46,7 +67,7 @@ describe('markdownToGoogleDocsTabRequests', () => {
         }),
         expect.objectContaining({
           updateTextStyle: expect.objectContaining({
-            textStyle: { bold: true },
+            textStyle: expect.objectContaining({ bold: true }),
           }),
         }),
       ]),
@@ -100,15 +121,15 @@ describe('markdownToGoogleDocsTabRequests', () => {
         location: { index: 40, tabId: 't.abc' },
       },
     })
-    expect(requests[1]).toEqual(
+    expect(requests[2]).toEqual(
       expect.objectContaining({
         updateParagraphStyle: expect.objectContaining({
           range: { startIndex: 40, endIndex: 57, tabId: 't.abc' },
-          paragraphStyle: { namedStyleType: 'NORMAL_TEXT' },
+          paragraphStyle: expect.objectContaining({ namedStyleType: 'NORMAL_TEXT' }),
         }),
       }),
     )
-    expect(requests[2]).toEqual(
+    expect(requests[3]).toEqual(
       expect.objectContaining({
         updateParagraphStyle: expect.objectContaining({
           range: { startIndex: 40, endIndex: 57, tabId: 't.abc' },
