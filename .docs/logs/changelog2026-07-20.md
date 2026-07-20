@@ -188,3 +188,19 @@ Why: Full call notes exceeded Slack’s length limit and left `[label](url)` lin
 Impact: Review DMs and ✅ confirm replies are complete, linkable, and copy/forward-ready without Page Grader.
 
 Files: `meeting-follow-up-slack-confirm.service.ts`, `meeting-follow-up-slack-message.ts`, tests, changelog.
+
+## [2026-07-20 14:24] - [FIX]
+What: Deployed `roas-api` production from `af12111d` (Campaign Knowledge edge load by space_id). Vercel deployment `dpl_BCZP1h3ep6pBmX4XVLn7YQuaYTAQ` READY.
+Why: Ship the blank org Sakha Campaign Knowledge graph fix to `api.roas.io`.
+Impact: Org Campaign Knowledge graphs with large object sets should load instead of returning empty after edge-query failure.
+Files: Operational deploy of `apps/api` space-retrieval edge fix.
+
+## [2026-07-20 14:28] - [FIX]
+
+What: Rendered Fathom owner timestamp links in “From the call” as bold name headers with tasks nested under them, instead of hyperlinked name bullets.
+
+Why: Fathom stores owners as `[Nate:](url)` list items; converting those to Slack bullets made names look like weird linked bullets.
+
+Impact: From the call reads as Nate / Dylan / Aaron sections with clickable names and normal task bullets underneath.
+
+Files: `meeting-follow-up-slack-message.ts`, tests, changelog.

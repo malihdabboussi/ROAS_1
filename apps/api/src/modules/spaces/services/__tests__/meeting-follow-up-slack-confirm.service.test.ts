@@ -263,11 +263,40 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     expect(summary).toContain('*Key takeaways*')
     expect(summary).toContain('• Bandwidth crisis')
     expect(summary).toContain('*From the call*')
-    expect(summary).toContain('<https://fathom.video/share/x?timestamp=1|Nate>')
-    expect(summary).toContain('Train Betty')
+    expect(summary).toContain('*<https://fathom.video/share/x?timestamp=1|Nate>*')
+    expect(summary).toContain('• Train Betty')
+    expect(summary).not.toContain('• <https://fathom.video/share/x?timestamp=1|Nate>')
     expect(summary).not.toContain('Operational Crisis & Bandwidth')
     expect(summary).not.toContain('long detail that should not appear')
     expect(summary).not.toContain('[Nate:](')
+  })
+
+  it('formats owner timestamp links as headers instead of bullets', () => {
+    const formatted = service.briefMeetingSummary({
+      custom_data: {
+        summary: [
+          'Next Steps',
+          '',
+          '  - [Nate:](https://fathom.video/share/x?timestamp=1)',
+          '      - Train Betty',
+          '      - Finalize automation',
+          '  - [Dylan:](https://fathom.video/share/x?timestamp=2)',
+          '      - Show Aaron reporting tools',
+        ].join('\n'),
+      },
+    })
+
+    expect(formatted).toBe(
+      [
+        '*From the call*',
+        '*<https://fathom.video/share/x?timestamp=1|Nate>*',
+        '• Train Betty',
+        '• Finalize automation',
+        '',
+        '*<https://fathom.video/share/x?timestamp=2|Dylan>*',
+        '• Show Aaron reporting tools',
+      ].join('\n'),
+    )
   })
 
   it('converts markdown timestamp links to Slack mrkdwn', () => {

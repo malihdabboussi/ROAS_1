@@ -51,32 +51,36 @@ export function briefMeetingSummary(callItem: Record<string, unknown> | null): s
   const cleaned = raw
     .replace(/^#+\s*/gm, '')
     .replace(/\*\*/g, '')
-    .replace(/[ \t]+/g, ' ')
+    // Collapse mid-line whitespace only — keep leading indent for nested lists
+    .replace(/(?<=\S)[ \t]+/g, ' ')
+    .replace(/[ \t]+$/gm, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 
-  const purpose = extractSummarySection(
-    cleaned,
-    ['Meeting Purpose', 'Purpose'],
-    ['Key Takeaways', 'Takeaways', 'Topics', 'Next Steps', 'Action Items'],
+  const purpose = formatSectionBullets(
+    extractSummarySection(
+      cleaned,
+      ['Meeting Purpose', 'Purpose'],
+      ['Key Takeaways', 'Takeaways', 'Topics', 'Next Steps', 'Action Items'],
+    ),
   )
-  const takeaways = extractSummarySection(
-    cleaned,
-    ['Key Takeaways', 'Takeaways'],
-    ['Topics', 'Next Steps', 'Action Items', 'Solutions'],
+  const takeaways = formatSectionBullets(
+    extractSummarySection(
+      cleaned,
+      ['Key Takeaways', 'Takeaways'],
+      ['Topics', 'Next Steps', 'Action Items', 'Solutions'],
+    ),
   )
-  const nextSteps = extractSummarySection(
-    cleaned,
-    ['Next Steps', 'Action Items'],
-    ['Topics', 'Solutions'],
+  const nextSteps = formatOwnerGroupedNextSteps(
+    extractSummarySection(cleaned, ['Next Steps', 'Action Items'], ['Topics', 'Solutions']),
   )
 
   const parts: string[] = []
   if (purpose) parts.push(`*Purpose*\n${purpose}`)
   if (takeaways) parts.push(`*Key takeaways*\n${takeaways}`)
   if (nextSteps) parts.push(`*From the call*\n${nextSteps}`)
-  const brief = parts.length > 0 ? parts.join('\n\n') : cleaned
-  return markdownLinksToSlack(brief)
+  const brief = parts.length > 0 ? parts.join('\n\n') : markdownLinksToSlack(cleaned)
+  return brief
 }
 
 export function extractSummarySection(
@@ -108,13 +112,43 @@ export function extractSummarySection(
 
   return raw
     .slice(bodyStart, end)
-    .replace(/^[ \t]*[-*][ \t]+/gm, (match) => {
-      const indent = match.match(/^[ \t]*/)?.[0] ?? ''
-      const depth = Math.min(2, Math.floor(indent.length / 2))
-      return `${'  '.repeat(depth)}• `
-    })
     .replace(/\n{3,}/g, '\n\n')
     .trim()
+}
+
+/** Fathom often stores owners as `[Nate:](timestamp-url)` bullets — render as headers, not bullets. */
+export function formatOwnerGroupedNextSteps(raw: string): string {
+  if (!raw.trim()) return ''
+  const out: string[] = []
+  for (const line of raw.split('\n')) {
+    const ownerOnly = line.match(/^[ \t]*[-*][ \t]+\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)\s*$/)
+    if (ownerOnly) {
+      const name = String(ownerOnly[1]).replace(/:\s*$/, '').trim()
+      if (out.length > 0) out.push('')
+      out.push(`*<${ownerOnly[2]}|${name || 'clip'}>*`)
+      continue
+    }
+
+    const task = line.match(/^[ \t]*[-*][ \t]+(.+)$/)
+    if (task) {
+      out.push(`• ${markdownLinksToSlack(task[1].trim())}`)
+      continue
+    }
+
+    const trimmed = line.trim()
+    if (trimmed) out.push(markdownLinksToSlack(trimmed))
+  }
+  return out.join('\n').trim()
+}
+
+export function formatSectionBullets(raw: string): string {
+  if (!raw.trim()) return ''
+  return markdownLinksToSlack(
+    raw
+      .replace(/^[ \t]*[-*][ \t]+/gm, '• ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim(),
+  )
 }
 
 export function markdownLinksToSlack(text: string): string {
