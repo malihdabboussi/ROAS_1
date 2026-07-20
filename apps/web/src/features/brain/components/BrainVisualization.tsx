@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useMemo, useRef, useEffect } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useOrgStore } from '@/lib/org'
 import { useBrainHealthRealtime } from '../hooks/use-brain-health-realtime'
@@ -13,8 +13,8 @@ import { useBrainVisualizationGraphData } from '../hooks/use-brain-visualization
 import { useBrainVisualizationScopeSelection } from '../hooks/use-brain-visualization-scope-selection'
 import { useBrainVisualizationSearch } from '../hooks/use-brain-visualization-search'
 import { useBrainVisualizationUiState } from '../hooks/use-brain-visualization-ui-state'
-import { deriveBrainVisualizationGraphState } from '../lib/brain-visualization-derived-state'
 import { buildBrainChatAwarenessContext } from '../lib/brain-chat-awareness'
+import { deriveBrainVisualizationGraphState } from '../lib/brain-visualization-derived-state'
 import { useBrainStore } from '../store/use-brain-store'
 import { BrainNodeDetailModalHost } from './BrainNodeDetailModalHost'
 import { BrainVisualizationAddInfoLayer } from './BrainVisualizationAddInfoLayer'
@@ -213,23 +213,27 @@ export default function BrainVisualization() {
   useEffect(() => {
     if (!topRightScopeReady || !selectedScope) return
     const brainId = selectedScope.brainId ?? brainScopeRuntime.graphBrainId ?? null
+    const campaignId = selectedScope.campaignId ?? brainScopeRuntime.queueCampaignId ?? null
     setWorkContext({
       surface: 'brain',
       brainScopeId: selectedScopeId,
       brainId,
+      campaignId,
       brainScopeLabel: selectedScope.label,
       brainAwarenessContext: buildBrainChatAwarenessContext({
         scopeLabel: selectedScope.label,
         brainId,
+        campaignId,
+        scopeType: selectedScope.scopeType,
         totalMemories: activeGraphData?.stats.total_memories ?? healthData?.total_memories,
-        totalConnections:
-          activeGraphData?.stats.total_connections ?? healthData?.total_connections,
+        totalConnections: activeGraphData?.stats.total_connections ?? healthData?.total_connections,
       }),
     })
   }, [
     activeGraphData?.stats.total_connections,
     activeGraphData?.stats.total_memories,
     brainScopeRuntime.graphBrainId,
+    brainScopeRuntime.queueCampaignId,
     healthData?.total_connections,
     healthData?.total_memories,
     selectedScope,

@@ -1,3 +1,15 @@
+## 2026-07-20 - [ARCH] Page Grader memories insert without embeddings
+
+Status: Open (manual org backfill started)
+Found while: Campaign Knowledge chat reported empty despite 500 graph objects
+Files:
+
+- `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts` (`upsertMemories` sets no embedding)
+- `scripts/roas/backfill-campaign-brain-embeddings.py`
+  Evidence: All Multifamily/Sakha `ns_memories` and `space_semantic_chunks` had `embedding IS NULL` after sync/backfill.
+  Needed work: Queue or batch-embed on Page Grader ingest (async worker) so future syncs are searchable without a script; optionally embed `space_semantic_chunks` for space-retrieval search.
+  Deferred because: Chat awareness fix unblocks correct tool use; embedding backfill covers current org brains without slowing the ingest request path.
+
 ## 2026-07-19 - [BUG] Page Grader campaign brain import stuck — Atlas write path broken
 
 Status: Done (2026-07-19) — deterministic dual-write ingest + hybrid continuous sync shipped; stuck Multifamily job marked failed earlier.
