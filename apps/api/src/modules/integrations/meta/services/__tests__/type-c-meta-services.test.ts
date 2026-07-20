@@ -1,16 +1,16 @@
 import { Test } from '@nestjs/testing'
 import { describe, expect, it, vi } from 'vitest'
+import { GoogleDriveApiService } from '../../../google-drive/services/google-drive-api.service'
+import { MetaIntegration } from '../../integrations/meta.integration'
 import { MetaEligibilityRepository } from '../../repositories/meta-eligibility.repository'
 import { MetaInsightsRepository } from '../../repositories/meta-insights.repository'
 import { MetaPublishRepository } from '../../repositories/meta-publish.repository'
 import { MetaSyncRepository } from '../../repositories/meta-sync.repository'
-import { MetaIntegration } from '../../integrations/meta.integration'
-import { GoogleDriveApiService } from '../../../google-drive/services/google-drive-api.service'
 import { MetaAccountsService } from '../meta-api/meta-accounts.service'
 import { MetaBudgetService } from '../meta-api/meta-budget.service'
 import { MetaInsightsService } from '../meta-api/meta-insights.service'
-import { MetaPublishBatchService } from '../meta-api/meta-publish-batch.service'
 import { MetaPublishBatchPersistenceService } from '../meta-api/meta-publish-batch-persistence.service'
+import { MetaPublishBatchService } from '../meta-api/meta-publish-batch.service'
 import { MetaPublishMediaService } from '../meta-api/meta-publish-media.service'
 import { MetaPublishSharedService } from '../meta-api/meta-publish-shared.service'
 import { MetaPublishSingleService } from '../meta-api/meta-publish-single.service'
@@ -318,7 +318,10 @@ describe('Type C Meta service behavior', () => {
     const result = await service.getInsights(client, 'user_1', {
       campaignId: 'store_campaign_1',
       level: 'campaign',
+      orgId: 'org_1',
     })
+
+    expect(oauth.getAccessToken).toHaveBeenCalledWith(client, 'user_1', 'org_1')
 
     expect(result.summary).toMatchObject({
       spend: 10,
@@ -392,7 +395,10 @@ describe('Type C Meta service behavior', () => {
   })
 
   it('syncs a fetched Meta hierarchy into new local campaign, ad set, and ad rows', async () => {
-    const { client, inserts } = createTableClient({})
+    const { client, inserts } = createTableClient({
+      campaigns: { org_id: 'org_1', user_id: 'user_1' },
+      spaces: [{ id: 'space_general', title: 'General' }],
+    })
     const meta = {
       fetchFullHierarchy: vi.fn().mockResolvedValue({
         total_campaigns: 1,
@@ -434,7 +440,10 @@ describe('Type C Meta service behavior', () => {
     } as any
     const oauth = { getAccessToken: vi.fn().mockResolvedValue('token') } as any
     const shared = { normalizeObjective: vi.fn().mockReturnValue('OUTCOME_TRAFFIC') } as any
-    const service = new MetaSyncService(meta, oauth, shared, new MetaSyncRepository())
+    const indexSource = vi.fn().mockResolvedValue({ indexed: 1 })
+    const service = new MetaSyncService(meta, oauth, shared, new MetaSyncRepository(), {
+      indexSource,
+    } as any)
 
     await expect(
       service.syncAdAccount(client, 'user_1', 'store_campaign_1', 'act_1'),
@@ -456,7 +465,19 @@ describe('Type C Meta service behavior', () => {
       meta_campaign_id: 'meta_campaign_1',
       daily_budget: 25,
       source: 'meta',
+      org_id: 'org_1',
+      space_id: 'space_general',
     })
+    expect(indexSource).toHaveBeenCalledTimes(3)
+    expect(indexSource).toHaveBeenCalledWith(
+      client,
+      expect.objectContaining({
+        sourceType: 'ad',
+        force: true,
+        orgId: 'org_1',
+        spaceId: 'space_general',
+      }),
+    )
   })
 
   it('allows Meta connection for platform admins', async () => {

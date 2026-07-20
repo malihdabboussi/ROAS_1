@@ -1,3 +1,51 @@
+## 2026-07-20 - [PERF] Meta sync indexes ads synchronously with embeddings
+
+Status: Open
+Found while: Wiring Meta ads into Campaign Knowledge
+Files:
+
+- `apps/api/src/modules/integrations/meta/services/meta-api/meta-sync.service.ts`
+  Evidence: Each reconciled `ad_campaign` / `ad_set` / `ad` calls `indexSource(force: true)` which embeds chunks inline. Large Meta accounts (hundreds of ads) will slow sync responses.
+  Needed work: Queue ad knowledge indexing/embedding asynchronously (same class of work as Page Grader dual-write async embeddings).
+  Deferred because: Correctness of campaign-ads → Campaign Knowledge was the user ask; latency hardening is separate.
+
+## 2026-07-20 - [ARCH] AgendaCard / precall service over LOC after Fathom merge
+
+Status: Open
+Found while: Shipping Personal Home Phase 4 (Agenda ∪ Fathom)
+Files:
+
+- `apps/web/src/features/home/components/AgendaCard.tsx` (~658 LOC; limit 600)
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts` (~602 LOC; limit 600)
+  Evidence: Phase 4 open-routing + Fathom enrichment grew both files past the soft limit.
+  Needed work: Extract Agenda list chrome / open helpers; split related-call enrichment into a dedicated helper module.
+  Deferred because: Behavior ship for Phase 4 was in scope; decomposition is adjacent cleanup.
+
+## 2026-07-20 - [OPS] Apply Personal campaign migrations on ROAS
+
+Status: Done 2026-07-20
+Found while: Landing Personal campaign Home surface
+Files:
+
+- `supabase/migrations/20260720195000_personal_system_campaign.sql`
+- `supabase/migrations/20260720200000_rehome_personal_meetings_to_personal_campaign.sql`
+  Evidence: Applied via `scripts/roas/apply-via-supabase-api.sh` to `lhfgtsjetcardinpgouq` (rehome INSERT needed `NULL::uuid` cast).
+  Needed work: —
+  Deferred because: —
+
+## 2026-07-20 - [FEATURE] Agenda ∪ Fathom calls merge (Personal Home Phase 4)
+
+Status: Done 2026-07-20
+Found while: Shipping Personal campaign + Home personal-account surface (Phases 1–3)
+Files:
+
+- `apps/web/src/features/home/components/AgendaCard.tsx`
+- `apps/api/src/modules/integrations/services/integrations-calendar.service.ts`
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts`
+  Evidence: Unmatched Fathom calls now emit `source: 'fathom'` agenda rows; UI badges and opens call items.
+  Needed work: —
+  Deferred because: —
+
 ## 2026-07-20 - [PERF] Page Grader knowledge index no longer capped at 500
 
 Status: Open
@@ -7571,13 +7619,30 @@ Files:
 - Needed work: Split view configs, automation contracts, and core Space schema types into domain-owned modules while preserving the public Spaces type boundary.
 - Why not now: The requested behavior requires one persisted view-config field; restructuring the shared schema registry would overlap unrelated automation edits already present in this worktree.
 
-## 2026-07-20 - [ARCH] Meeting follow-up Slack confirm service near LOC soft limit
+## 2026-07-20 - [ARCH] Meeting follow-up Slack confirm and People repository near LOC limits
 
 Status: Open
 Found while: Fixing silent ✅ reply failure
 Files:
 
-- `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.service.ts` (~462 LOC; soft limit ~480)
-  Evidence: Added shareable reply + Slack org resolution helpers.
-  Needed work: Extract message builders / pending lookup into a small helper module before next feature (thread revise loop).
-  Deferred because: In-scope was making ✅ visible and shareable for retest.
+- `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.service.ts` (589 LOC; above the 480 LOC service extraction threshold and near the 600 LOC maximum)
+- `apps/api/src/modules/slack/services/slack.service.ts` (567 LOC; near the 600 LOC maximum)
+- `apps/api/src/modules/slack/repositories/slack-people.repository.ts` (~390 LOC; near the 400 LOC repository limit)
+  Evidence: Agent-written draft orchestration, immutable Shadow approval/delivery, and person email lookup now share these existing boundaries.
+  Needed work: Extract post-call agent drafting, revision, and pending-confirm delivery into focused collaborators; move meeting-event routing out of the core Slack service; split Slack identity lookup from Shadow action persistence before Phase 2 adds channels, group DMs, and thread conversations.
+  Deferred because: The requested Phase 1 work needed one durable proposal and exact approved delivery; a broader backend boundary refactor would overlap the upcoming conversation-command-center phase.
+
+## 2026-07-20 — page-grader-client-import near LOC limit
+- Feature/app: brain / Page Grader sync (`apps/api`)
+- File: `apps/api/src/modules/brain/services/page-grader-client-import.service.ts` (604 LOC)
+- Evidence: `wc -l` after org-prefer remap hardening
+- Needed work: Split campaign/space discovery helpers into a dedicated collaborator to stay under the 600 LOC service limit
+- Why deferred: In-scope fix was blank org Campaign Knowledge + personal dupe remap; full extract out of scope
+
+## 2026-07-20 — Web typecheck blocked by AgendaCard syntax errors
+
+- Feature/app: web / Home agenda
+- File: `apps/web/src/features/home/components/AgendaCard.tsx`
+- Evidence: Full web typecheck stops on six parser errors around lines 577-620 (`TS1005`, `TS1381`, and `TS1382`). Focused Ads Research lint and tests pass, and none of the failing lines are in the Ads Research change.
+- Needed work: Repair the malformed JSX in both affected AgendaCard branches, then rerun the full web typecheck.
+- Why not now: AgendaCard is outside the Ads Research identity and rerun fix and is already part of unrelated concurrent worktree changes.

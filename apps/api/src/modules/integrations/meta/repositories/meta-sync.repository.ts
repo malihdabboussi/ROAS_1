@@ -81,4 +81,38 @@ export class MetaSyncRepository {
       QueryResult<Row>
     >
   }
+
+  async getCampaignScope(
+    client: SupabaseClient,
+    campaignId: string,
+  ): Promise<{ org_id: string | null; user_id: string | null } | null> {
+    const { data } = await client
+      .from('campaigns')
+      .select('org_id, user_id')
+      .eq('id', campaignId)
+      .maybeSingle()
+    if (!data) return null
+    return {
+      org_id: typeof data.org_id === 'string' ? data.org_id : null,
+      user_id: typeof data.user_id === 'string' ? data.user_id : null,
+    }
+  }
+
+  async findGeneralSpaceId(client: SupabaseClient, campaignId: string): Promise<string | null> {
+    const { data } = await client
+      .from('spaces')
+      .select('id, title')
+      .eq('campaign_id', campaignId)
+      .order('created_at', { ascending: true })
+      .limit(20)
+    const rows = (data ?? []) as Array<{ id?: unknown; title?: unknown }>
+    const general = rows.find(
+      (row) =>
+        String(row.title ?? '')
+          .trim()
+          .toLowerCase() === 'general',
+    )
+    const chosen = general ?? rows[0]
+    return chosen?.id ? String(chosen.id) : null
+  }
 }

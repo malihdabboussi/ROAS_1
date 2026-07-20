@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { SpaceSemanticEdgeInput } from './space-semantic-edge.types'
 import { SpaceStructuralEdgeBuilderService } from './services/space-structural-edge-builder.service'
+import type { SpaceSemanticEdgeInput } from './space-semantic-edge.types'
 
 function buildService(views: Array<Record<string, unknown>>) {
   let captured: SpaceSemanticEdgeInput[] = []
@@ -60,6 +60,56 @@ describe('SpaceStructuralEdgeBuilderService view membership', () => {
       toSourceType: 'space_doc',
       toSourceId: 'doc-1',
       edgeType: 'contains_doc',
+    })
+  })
+
+  it('links ads under ad_set without starring them off Space', async () => {
+    const { service, edges } = buildService([])
+    const adAsset = {
+      sourceType: 'ad',
+      sourceId: 'ad-1',
+      spaceId: 'space-1',
+      campaignId: 'campaign-1',
+      parentType: null,
+      parentId: null,
+    }
+
+    await service.replaceStructuralEdgesForSource({} as any, adAsset, {
+      ad_set_id: 'adset-1',
+      custom_data: null,
+    })
+
+    const built = edges()
+    expect(built.find((e) => e.edgeType === 'contains_ad')).toMatchObject({
+      fromSourceType: 'ad_set',
+      fromSourceId: 'adset-1',
+      toSourceType: 'ad',
+      toSourceId: 'ad-1',
+    })
+    expect(built.some((e) => e.fromSourceType === 'space')).toBe(false)
+  })
+
+  it('keeps Space → ad_campaign so the ads tree hangs off General', async () => {
+    const { service, edges } = buildService([])
+    const adCampaignAsset = {
+      sourceType: 'ad_campaign',
+      sourceId: 'adc-1',
+      spaceId: 'space-1',
+      campaignId: 'campaign-1',
+      parentType: null,
+      parentId: null,
+    }
+
+    await service.replaceStructuralEdgesForSource({} as any, adCampaignAsset, {
+      custom_data: null,
+    })
+
+    expect(edges().find((e) => e.fromSourceType === 'space')).toMatchObject({
+      fromSourceType: 'space',
+      fromSourceId: 'space-1',
+      toSourceType: 'ad_campaign',
+      toSourceId: 'adc-1',
+      edgeType: 'contains_artifact',
     })
   })
 })

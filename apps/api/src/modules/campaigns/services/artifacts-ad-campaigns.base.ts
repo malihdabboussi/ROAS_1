@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common'
+import { NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ArtifactsAdsBase } from './artifacts-ads.base'
 
@@ -36,13 +36,18 @@ export class ArtifactsAdCampaignsBase extends ArtifactsAdsBase {
     orgId?: string | null,
     spaceId?: string | null,
   ): Promise<Record<string, unknown>> {
-    return this.artifactAdsRepo.createAdCampaign(supabase, {
+    const created = await this.artifactAdsRepo.createAdCampaign(supabase, {
       user_id: userId,
       campaign_id: campaignId,
       name,
       org_id: orgId ?? null,
       space_id: spaceId ?? null,
     })
+    const id = String((created as Record<string, unknown>).id ?? '')
+    if (id) {
+      await this.indexCampaignAdAsset(supabase, 'ad_campaign', id, userId, orgId, spaceId)
+    }
+    return created
   }
 
   async updateAdCampaign(
@@ -65,7 +70,7 @@ export class ArtifactsAdCampaignsBase extends ArtifactsAdsBase {
       metadata?: Record<string, unknown>
     },
   ): Promise<Record<string, unknown>> {
-    await this.getAdCampaign(supabase, id)
+    const existing = await this.getAdCampaign(supabase, id)
     const allowedKeys = [
       'name',
       'objective',
@@ -88,7 +93,16 @@ export class ArtifactsAdCampaignsBase extends ArtifactsAdsBase {
         updates[key] = data[key as keyof typeof data]
       }
     }
-    return this.artifactAdsRepo.updateAdCampaign(supabase, id, updates)
+    const updated = await this.artifactAdsRepo.updateAdCampaign(supabase, id, updates)
+    await this.indexCampaignAdAsset(
+      supabase,
+      'ad_campaign',
+      id,
+      String((existing as Record<string, unknown>).user_id ?? ''),
+      ((existing as Record<string, unknown>).org_id as string | null | undefined) ?? null,
+      ((existing as Record<string, unknown>).space_id as string | null | undefined) ?? null,
+    )
+    return updated
   }
 
   async deleteAdCampaign(
@@ -113,9 +127,13 @@ export class ArtifactsAdCampaignsBase extends ArtifactsAdsBase {
       }
       if (adIds.length > 0) {
         await this.artifactAdsRepo.deleteAdsByIds(supabase, adIds, 'Failed to delete campaign ads')
+        for (const adId of adIds) {
+          await this.deleteCampaignAdAsset(supabase, 'ad', adId)
+        }
       }
     }
     await this.artifactAdsRepo.deleteAdCampaign(supabase, id)
+    await this.deleteCampaignAdAsset(supabase, 'ad_campaign', id)
   }
 
   async deleteUngroupedAds(
@@ -127,6 +145,9 @@ export class ArtifactsAdCampaignsBase extends ArtifactsAdsBase {
     const ids = await this.artifactAdsRepo.listUngroupedAdIds(supabase, userId, campaignId)
     if (ids.length === 0) return { deleted: 0 }
     await this.artifactAdsRepo.deleteAdsByIds(supabase, ids, 'Failed to delete ungrouped ads')
+    for (const adId of ids) {
+      await this.deleteCampaignAdAsset(supabase, 'ad', adId)
+    }
     return { deleted: ids.length }
   }
 
@@ -170,6 +191,17 @@ export class ArtifactsAdCampaignsBase extends ArtifactsAdsBase {
       campaignInsert,
       'Failed to duplicate ad campaign',
     )
+    await this.indexCampaignAdAsset(
+      supabase,
+      'ad_campaign',
+      String(duplicatedCampaign.id),
+      userId,
+      ((duplicatedCampaign as Record<string, unknown>).org_id as string | null | undefined) ??
+        orgId ??
+        null,
+      ((duplicatedCampaign as Record<string, unknown>).space_id as string | null | undefined) ??
+        null,
+    )
     const childAdSets = await this.artifactAdsRepo.listAdSetsForDuplication(supabase, id, userId)
 
     let duplicatedAdSetCount = 0
@@ -182,6 +214,17 @@ export class ArtifactsAdCampaignsBase extends ArtifactsAdsBase {
         shouldDraftCampaign,
       )
       duplicatedAdSetCount += 1
+      await this.indexCampaignAdAsset(
+        supabase,
+        'ad_set',
+        String(duplicatedAdSet.id),
+        userId,
+        ((duplicatedAdSet as Record<string, unknown>).org_id as string | null | undefined) ??
+          orgId ??
+          null,
+        ((duplicatedAdSet as Record<string, unknown>).space_id as string | null | undefined) ??
+          null,
+      )
 
       const childAds = await this.artifactAdsRepo.listAdsForDuplication(
         supabase,
@@ -190,13 +233,23 @@ export class ArtifactsAdCampaignsBase extends ArtifactsAdsBase {
       )
 
       for (const ad of childAds ?? []) {
-        await (this as any).duplicateAdRecord(
+        const duplicatedAd = await (this as any).duplicateAdRecord(
           supabase,
           ad as Record<string, unknown>,
           String(duplicatedAdSet.id),
           shouldDraftCampaign,
         )
         duplicatedAdCount += 1
+        await this.indexCampaignAdAsset(
+          supabase,
+          'ad',
+          String(duplicatedAd.id),
+          userId,
+          ((duplicatedAd as Record<string, unknown>).org_id as string | null | undefined) ??
+            orgId ??
+            null,
+          ((duplicatedAd as Record<string, unknown>).space_id as string | null | undefined) ?? null,
+        )
       }
     }
 

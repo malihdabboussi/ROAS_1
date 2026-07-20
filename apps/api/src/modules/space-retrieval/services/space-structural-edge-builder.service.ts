@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SpaceRetrievalRepository } from '../repositories/space-retrieval.repository'
-import { SpaceSemanticEdgeWriterService } from './space-semantic-edge-writer.service'
 import type { SpaceSemanticEdgeInput, SpaceSemanticEdgeType } from '../space-semantic-edge.types'
+import { SpaceSemanticEdgeWriterService } from './space-semantic-edge-writer.service'
 
 type StructuralAsset = {
   sourceType: string
@@ -56,6 +56,9 @@ export class SpaceStructuralEdgeBuilderService {
     // When the item is already linked under a Space view, keep a clean
     // Space → View → Item hierarchy instead of also drawing Space → Item.
     if (linkedToView) return
+    // Ads hang under ad_campaign → ad_set → ad. Direct Space → ad/ad_set
+    // edges would star-graph hundreds of creatives off General.
+    if (asset.sourceType === 'ad' || asset.sourceType === 'ad_set') return
     edges.push({
       fromSourceType: 'space',
       fromSourceId: asset.spaceId,

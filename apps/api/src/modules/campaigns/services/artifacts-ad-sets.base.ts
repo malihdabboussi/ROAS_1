@@ -20,15 +20,21 @@ export class ArtifactsAdSetsBase extends ArtifactsAdCampaignsBase {
     spaceId?: string | null,
   ): Promise<Record<string, unknown>> {
     const adCampaign = await this.getAdCampaign(supabase, adCampaignId)
-    return this.artifactAdsRepo.createAdSet(supabase, {
+    const resolvedSpaceId =
+      spaceId ?? ((adCampaign as Record<string, unknown>).space_id as string | null) ?? null
+    const created = await this.artifactAdsRepo.createAdSet(supabase, {
       user_id: userId,
       ad_campaign_id: adCampaignId,
       campaign_id: (adCampaign as Record<string, unknown>).campaign_id ?? null,
       name,
       org_id: orgId ?? null,
-      space_id:
-        spaceId ?? ((adCampaign as Record<string, unknown>).space_id as string | null) ?? null,
+      space_id: resolvedSpaceId,
     })
+    const id = String((created as Record<string, unknown>).id ?? '')
+    if (id) {
+      await this.indexCampaignAdAsset(supabase, 'ad_set', id, userId, orgId, resolvedSpaceId)
+    }
+    return created
   }
 
   async updateAdSet(
@@ -47,7 +53,7 @@ export class ArtifactsAdSetsBase extends ArtifactsAdCampaignsBase {
       metadata?: Record<string, unknown>
     },
   ): Promise<Record<string, unknown>> {
-    await this.getAdSet(supabase, id)
+    const existing = await this.getAdSet(supabase, id)
     const allowedKeys = [
       'name',
       'status',
@@ -66,7 +72,16 @@ export class ArtifactsAdSetsBase extends ArtifactsAdCampaignsBase {
         updates[key] = data[key as keyof typeof data]
       }
     }
-    return this.artifactAdsRepo.updateAdSet(supabase, id, updates)
+    const updated = await this.artifactAdsRepo.updateAdSet(supabase, id, updates)
+    await this.indexCampaignAdAsset(
+      supabase,
+      'ad_set',
+      id,
+      String((existing as Record<string, unknown>).user_id ?? ''),
+      ((existing as Record<string, unknown>).org_id as string | null | undefined) ?? null,
+      ((existing as Record<string, unknown>).space_id as string | null | undefined) ?? null,
+    )
+    return updated
   }
 
   async deleteAdSet(
@@ -86,11 +101,15 @@ export class ArtifactsAdSetsBase extends ArtifactsAdCampaignsBase {
       const adIds = await this.artifactAdsRepo.listAdIdsByAdSet(supabase, id, userId)
       if (adIds.length > 0) {
         await this.artifactAdsRepo.deleteAdsByIds(supabase, adIds, 'Failed to delete ad set ads')
+        for (const adId of adIds) {
+          await this.deleteCampaignAdAsset(supabase, 'ad', adId)
+        }
       }
     } else {
       await this.artifactAdsRepo.ungroupAdsByAdSet(supabase, id, userId)
     }
     await this.artifactAdsRepo.deleteAdSet(supabase, id)
+    await this.deleteCampaignAdAsset(supabase, 'ad_set', id)
   }
 
   async duplicateAdSet(

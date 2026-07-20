@@ -345,6 +345,11 @@ export class ArtifactsContentBase extends ArtifactsDocumentsBase {
     }))
 
     const ads = await this.artifactContentRepo.insertAds(supabase, rows)
+    for (const ad of ads ?? []) {
+      const id = String((ad as Record<string, unknown>).id ?? '')
+      if (!id) continue
+      await this.indexCampaignAdAsset(supabase, 'ad', id, userId, orgId, spaceId)
+    }
     return { ads }
   }
 }

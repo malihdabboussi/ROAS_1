@@ -131,7 +131,60 @@ export class ArtifactsAdsBase extends ArtifactsPresentationPublishBase {
       updates.tracking_url = this.buildTrackingUrl(data.destination_url, id, adSetId, adCampaignId)
     }
 
-    return this.artifactAdsRepo.updateAd(supabase, id, updates)
+    const updated = await this.artifactAdsRepo.updateAd(supabase, id, updates)
+    await this.indexCampaignAdAsset(
+      supabase,
+      'ad',
+      id,
+      String((existing as Record<string, unknown>).user_id ?? ''),
+      ((existing as Record<string, unknown>).org_id as string | null | undefined) ?? null,
+      ((existing as Record<string, unknown>).space_id as string | null | undefined) ?? null,
+    )
+    return updated
+  }
+
+  protected async indexCampaignAdAsset(
+    supabase: SupabaseClient,
+    sourceType: 'ad_campaign' | 'ad_set' | 'ad',
+    sourceId: string,
+    userId: string,
+    orgId?: string | null,
+    spaceId?: string | null,
+  ): Promise<void> {
+    if (!userId || !sourceId) return
+    try {
+      await this.spaceRetrievalIndex.indexSource(supabase, {
+        sourceType,
+        sourceId,
+        userId,
+        orgId: orgId ?? undefined,
+        spaceId: spaceId ?? undefined,
+        force: true,
+      })
+    } catch (error) {
+      this.logger.warn(
+        `Campaign Knowledge index failed for ${sourceType}/${sourceId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+    }
+  }
+
+  protected async deleteCampaignAdAsset(
+    supabase: SupabaseClient,
+    sourceType: 'ad_campaign' | 'ad_set' | 'ad',
+    sourceId: string,
+  ): Promise<void> {
+    if (!sourceId) return
+    try {
+      await this.spaceRetrievalIndex.deleteSource(supabase, sourceType, sourceId)
+    } catch (error) {
+      this.logger.warn(
+        `Campaign Knowledge delete failed for ${sourceType}/${sourceId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+    }
   }
 
   protected buildTrackingUrl(
@@ -162,6 +215,7 @@ export class ArtifactsAdsBase extends ArtifactsPresentationPublishBase {
       'Ad is live on Meta. Pause it before deleting.',
     )
     await this.artifactAdsRepo.deleteAd(supabase, id)
+    await this.deleteCampaignAdAsset(supabase, 'ad', id)
   }
 
   async duplicateAd(supabase: SupabaseClient, userId: string, id: string, orgId?: string | null) {

@@ -4,7 +4,7 @@ Last Modified: July 20, 2026
 
 ## Overview
 
-Mapped Page Grader clients sync continuously into ROAS campaign brains. Page Grader remains the Client Intel source cache; ROAS is the canonical agentic memory (Brain canvas + Campaign Knowledge).
+Mapped Page Grader clients sync continuously into ROAS campaign brains. Page Grader remains the Client Intel source cache; ROAS is the canonical agentic memory (Brain canvas + Campaign Knowledge). Campaign-attached Meta ads (`ad_campaign` / `ad_set` / `ad`) are also indexed into Campaign Knowledge on Meta sync and Studio ad CRUD so agents can retrieve live creatives alongside Client Intel.
 
 ## Data Flow
 
@@ -61,3 +61,4 @@ Page Grader env for push: `ROAS_BRAIN_WEBHOOK_URL`, `ROAS_BRAIN_WEBHOOK_SECRET` 
 - **2026-07-20:** Brain Campaign Knowledge in ROAS org opens org-scoped campaign duplicates, while Page Grader `client_scope_map` had pointed at personal copies — UI showed 15/9 objects vs full personal backfills. Org General spaces were backfilled; scope map retargeted to org Multifamily (`af082417…` / General `7aefc857…`) and Sakha (`a922909b…` / General `ae308930…`). Stale Failed Atlas `campaign_file_import` removed.
 - **2026-07-20:** Org Campaign Knowledge blank on Sakha was caused by graph edge query `.in(from_object_id, ~800 uuids)` failing PostgREST; edges now load by `space_id`. Stale `client_scope_map` pointed at empty personal campaigns — remapped to org Sakha/Multifamily and soft-deleted personal empties; personal sync upgrades personal mapped campaigns to org.
 - **2026-07-20:** Campaign Knowledge UI showed Objects: 500 / Connections: 0 / all “Conversation doc” because (1) graph API defaulted to limit 500 and used list length as totals, (2) Page Grader dual-write forced `conversation_document`, (3) Space hub objects were never indexed so structural Space→item edges were skipped. Graph default/max raised (2500/5000) with true stats; ingest maps PG provenance to avatar/offer/channel_message/space_doc/etc, indexes the Space hub first, and drops stale conversation_document duplicates. Prod Multifamily/Sakha remapped + edged via `scripts/roas/repair-page-grader-campaign-knowledge-graph.py`.
+- **2026-07-20:** Campaign-attached Meta ads (`ad_campaign` / `ad_set` / `ad`) now index into Campaign Knowledge on Meta sync and Studio ad CRUD (`force: true`, General space + org scope). Structural edges are Space → ad_campaign → ad_set → ad (no Space → ad star). Existing rows: `scripts/roas/backfill-campaign-ads-knowledge.py`.

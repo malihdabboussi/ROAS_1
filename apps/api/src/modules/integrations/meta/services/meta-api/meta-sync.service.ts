@@ -1,13 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { SpaceRetrievalIndexService } from '../../../../space-retrieval/services/space-retrieval-index.service'
 import { MetaIntegration } from '../../integrations/meta.integration'
 import { MetaSyncRepository } from '../../repositories/meta-sync.repository'
-import type {
-  MetaFetchedAd,
-  MetaFetchedAdSet,
-  MetaFetchedCampaign,
-  MetaFetchedHierarchy,
-} from '../../types/meta.types'
+import type { MetaFetchedAd, MetaFetchedAdSet, MetaFetchedCampaign } from '../../types/meta.types'
 import { MetaOAuthService } from '../meta-oauth.service'
 import { MetaPublishSharedService } from './meta-publish-shared.service'
 
@@ -23,6 +19,11 @@ export type SyncResult = {
   total_ads: number
 }
 
+type KnowledgeScope = {
+  orgId: string | null
+  spaceId: string | null
+}
+
 @Injectable()
 export class MetaSyncService {
   private readonly logger = new Logger(MetaSyncService.name)
@@ -32,6 +33,7 @@ export class MetaSyncService {
     private readonly oauth: MetaOAuthService,
     private readonly publishShared: MetaPublishSharedService,
     private readonly repository: MetaSyncRepository,
+    @Optional() private readonly spaceRetrievalIndex?: SpaceRetrievalIndexService,
   ) {}
 
   /**
@@ -50,6 +52,7 @@ export class MetaSyncService {
     )
 
     const hierarchy = await this.meta.fetchFullHierarchy(accessToken, adAccountId)
+    const knowledgeScope = await this.resolveKnowledgeScope(supabase, vibeyStoreCampaignId)
 
     const result: SyncResult = {
       campaigns_created: 0,
@@ -71,6 +74,7 @@ export class MetaSyncService {
         adAccountId,
         metaCampaign,
         result,
+        knowledgeScope,
       )
 
       for (const metaAdSet of metaCampaign.ad_sets) {
@@ -81,10 +85,19 @@ export class MetaSyncService {
           adCampaignId,
           metaAdSet,
           result,
+          knowledgeScope,
         )
 
         for (const metaAd of metaAdSet.ads) {
-          await this.reconcileAd(supabase, userId, vibeyStoreCampaignId, adSetId, metaAd, result)
+          await this.reconcileAd(
+            supabase,
+            userId,
+            vibeyStoreCampaignId,
+            adSetId,
+            metaAd,
+            result,
+            knowledgeScope,
+          )
         }
       }
     }
@@ -105,6 +118,7 @@ export class MetaSyncService {
     adAccountId: string,
     meta: MetaFetchedCampaign,
     result: SyncResult,
+    knowledgeScope: KnowledgeScope,
   ): Promise<string> {
     const existing = await this.repository.findCampaignByMetaId(supabase, userId, meta.id)
 
@@ -130,6 +144,7 @@ export class MetaSyncService {
       })
 
       result.campaigns_updated++
+      await this.indexAdAsset(supabase, 'ad_campaign', String(existing.id), userId, knowledgeScope)
       return String(existing.id)
     }
 
@@ -145,6 +160,8 @@ export class MetaSyncService {
       lifetime_budget: lifetimeBudget,
       source: 'meta',
       metadata: campaignMetadata,
+      org_id: knowledgeScope.orgId,
+      space_id: knowledgeScope.spaceId,
     })
 
     if (error || !created) {
@@ -155,6 +172,7 @@ export class MetaSyncService {
     }
 
     result.campaigns_created++
+    await this.indexAdAsset(supabase, 'ad_campaign', String(created.id), userId, knowledgeScope)
     return String(created.id)
   }
 
@@ -165,6 +183,7 @@ export class MetaSyncService {
     adCampaignId: string,
     meta: MetaFetchedAdSet,
     result: SyncResult,
+    knowledgeScope: KnowledgeScope,
   ): Promise<string> {
     const existing = await this.repository.findAdSetByMetaId(supabase, userId, meta.id)
 
@@ -187,6 +206,7 @@ export class MetaSyncService {
       })
 
       result.ad_sets_updated++
+      await this.indexAdAsset(supabase, 'ad_set', String(existing.id), userId, knowledgeScope)
       return String(existing.id)
     }
 
@@ -205,6 +225,8 @@ export class MetaSyncService {
       start_time: meta.start_time ?? null,
       end_time: meta.end_time ?? null,
       source: 'meta',
+      org_id: knowledgeScope.orgId,
+      space_id: knowledgeScope.spaceId,
     })
 
     if (error || !created) {
@@ -213,6 +235,7 @@ export class MetaSyncService {
     }
 
     result.ad_sets_created++
+    await this.indexAdAsset(supabase, 'ad_set', String(created.id), userId, knowledgeScope)
     return String(created.id)
   }
 
@@ -223,6 +246,7 @@ export class MetaSyncService {
     adSetId: string,
     meta: MetaFetchedAd,
     result: SyncResult,
+    knowledgeScope: KnowledgeScope,
   ): Promise<string> {
     const existing = await this.repository.findAdByMetaId(supabase, userId, meta.id)
 
@@ -245,6 +269,7 @@ export class MetaSyncService {
       })
 
       result.ads_updated++
+      await this.indexAdAsset(supabase, 'ad', String(existing.id), userId, knowledgeScope)
       return String(existing.id)
     }
 
@@ -260,6 +285,8 @@ export class MetaSyncService {
       headline,
       cta_type: ctaType,
       source: 'meta',
+      org_id: knowledgeScope.orgId,
+      space_id: knowledgeScope.spaceId,
       metadata: {
         meta_creative_id: creative?.id ?? null,
         synced_at: new Date().toISOString(),
@@ -272,7 +299,46 @@ export class MetaSyncService {
     }
 
     result.ads_created++
+    await this.indexAdAsset(supabase, 'ad', String(created.id), userId, knowledgeScope)
     return String(created.id)
+  }
+
+  private async resolveKnowledgeScope(
+    supabase: SupabaseClient,
+    vibeyStoreCampaignId: string,
+  ): Promise<KnowledgeScope> {
+    const scope = await this.repository.getCampaignScope(supabase, vibeyStoreCampaignId)
+    const spaceId = await this.repository.findGeneralSpaceId(supabase, vibeyStoreCampaignId)
+    return {
+      orgId: scope?.org_id ?? null,
+      spaceId,
+    }
+  }
+
+  private async indexAdAsset(
+    supabase: SupabaseClient,
+    sourceType: 'ad_campaign' | 'ad_set' | 'ad',
+    sourceId: string,
+    userId: string,
+    knowledgeScope: KnowledgeScope,
+  ): Promise<void> {
+    if (!this.spaceRetrievalIndex) return
+    try {
+      await this.spaceRetrievalIndex.indexSource(supabase, {
+        sourceType,
+        sourceId,
+        userId,
+        orgId: knowledgeScope.orgId,
+        spaceId: knowledgeScope.spaceId ?? undefined,
+        force: true,
+      })
+    } catch (error) {
+      this.logger.warn(
+        `Campaign Knowledge index failed for ${sourceType}/${sourceId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+    }
   }
 
   private campaignMetadataWithRawObjective(

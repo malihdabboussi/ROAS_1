@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
+import { SpaceRetrievalModule } from '../../space-retrieval/space-retrieval.module'
 import { GoogleDriveModule } from '../google-drive/google-drive.module'
 import { IntegrationConnectionsRepository } from '../repositories/integration-connections.repository'
 import { MetaAdAssetsController } from './controllers/meta-ad-assets.controller'
@@ -22,8 +23,8 @@ import { MetaAccountsService } from './services/meta-api/meta-accounts.service'
 import { MetaBudgetService } from './services/meta-api/meta-budget.service'
 import { MetaFetchService } from './services/meta-api/meta-fetch.service'
 import { MetaInsightsService } from './services/meta-api/meta-insights.service'
-import { MetaPublishBatchService } from './services/meta-api/meta-publish-batch.service'
 import { MetaPublishBatchPersistenceService } from './services/meta-api/meta-publish-batch-persistence.service'
+import { MetaPublishBatchService } from './services/meta-api/meta-publish-batch.service'
 import { MetaPublishMediaService } from './services/meta-api/meta-publish-media.service'
 import { MetaPublishSharedService } from './services/meta-api/meta-publish-shared.service'
 import { MetaPublishSingleService } from './services/meta-api/meta-publish-single.service'
@@ -35,7 +36,7 @@ import { MetaOAuthService } from './services/meta-oauth.service'
 import { MetaPublishRequestService } from './services/meta-publish-request.service'
 
 @Module({
-  imports: [ConfigModule, GoogleDriveModule],
+  imports: [ConfigModule, GoogleDriveModule, SpaceRetrievalModule],
   controllers: [
     MetaController,
     MetaAdAssetsController,

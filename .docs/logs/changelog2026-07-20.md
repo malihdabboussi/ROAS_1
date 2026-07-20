@@ -1,11 +1,11 @@
 # Changelog - July 20, 2026
 
-## [2026-07-20 15:15] - [FIX]
+## [2026-07-20 15:18] - [FEATURE]
 
-What: Ads Research now requires Atlas to produce a sourced client identity check from the exact campaign, Space, linked files, and Customer Brain before Blaze can analyze ads. Company Brain, Meta account labels, and competitor findings are explicitly separated from client facts. The visual report adds Rerun Research, which opens Blaze for a verified replacement run without reusing contaminated deliverables.
-Why: A completed run incorrectly treated the client as a generic media agency, claimed a mounted Meta account was disconnected, and recommended work for an inferred vertical.
-Impact: New runs block on missing or conflicting identity evidence. Existing incorrect reports can be rerun through a context and Meta preflight, then replaced with a fresh mission after human confirmation.
-Files: Ads Research mission playbook and tests, run report and tests, Ads Research messages, and Social Research documentation.
+What: Agenda now merges unmatched personal Meetings Fathom `entry_type=call` rows into the calendar window as Fathom-badged rows; opening one opens the existing call item. Agenda enrichment runs even with no calendar connected. Applied Personal campaign uniqueness + rehome migrations on ROAS.
+Why: Phase 4 of Personal Home — Fathom recordings without a matching calendar event were invisible on Agenda; Personal campaign DB foundation needed on ROAS.
+Impact: Home Agenda = calendar events ∪ unmatched Fathom calls in range; matched calls stay related attachments. ROAS now has `idx_campaigns_single_personal_per_user` and personal Meetings rehomed under Personal.
+Files: `meetings-precall-prep.helpers.ts`, `meetings-precall-prep.service.ts`, `integrations-calendar.service.ts`, `calendar-api.ts`, `AgendaCard.tsx`, `AgendaCardEventEntry.tsx`, migrations, helper tests.
 
 ## [2026-07-20 15:13] - [FIX]
 
@@ -13,6 +13,13 @@ What: Hub dock flyouts no longer dismiss on mousedown inside portaled context me
 Why: Portaled menus lived outside `[data-hub-dock-flyout]` so outside-click unmounted them before handlers ran; shell fresh-chat only cleared drawer ids while SpaceVibeyChatPanel kept/restored its selection.
 Impact: Brain/Team/Campaigns item menus work from the dock; workspace pen/New match open→fresh and closed→last-chat.
 Files: `HubDockFlyout.tsx`, `floating-control-attrs.ts`, brain/space/campaign/team/channel menus, `IconLibraryPopup.tsx`, `ShellChatDrawer.tsx`, `SpaceVibeyChatPanel.tsx`, tests.
+
+## [2026-07-20 14:53] - [FEATURE]
+
+What: Home (and Fathom Meetings) always resolve the personal-account Meetings / Personal Dashboard — same surface inside every org. Added Personal system campaign foundation, rehome migration, prep/enrichment writes that follow the space’s `org_id`, and default Home feed scope `personal`.
+Why: Opening Home in an org was binding Agenda prep and related calls to the org Personal Dashboard (or missing personal Meetings entirely). Product rule: Home pulls your personal campaign, not a per-org clone.
+Impact: Agenda prep, related recordings, and default My Tasks/feeds use personal-account data while org Campaigns stay org-scoped. Apply migrations `20260720195000_personal_system_campaign.sql` and `20260720200000_rehome_personal_meetings_to_personal_campaign.sql`.
+Files: `resolve-meetings-space-id.ts`, `calendar-api.ts`, `home-feed-scope.ts`, `meetings-precall-prep.service.ts`, `integrations-calendar.service.ts`, `fathom-oauth.service.ts`, campaigns Personal ensure/sidebar, migrations, `space-templates.md`, plan.
 
 ## [2026-07-20 14:00] - [FEATURE]
 
@@ -239,12 +246,72 @@ Impact: From the call sections read as normal owner headers with task bullets.
 
 Files: `meeting-follow-up-slack-message.ts`, tests, `meeting-follow-up-slack.md`.
 
+## [2026-07-20 14:41] - [FIX]
+
+What: Fixed mission-side Meta insight requests to retain the active organization context, required Blaze to verify the live Meta connection before declaring data unavailable, and replaced the Ads Research setup form with a one-click Blaze chat intake.
+
+Why: A mounted client account could appear disconnected inside an Ads Research mission because the organization header was lost between the agent API and Meta insights API. The separate research form also duplicated the conversational setup the user wanted Blaze to handle.
+
+Impact: Ads Research now resolves the same organization-scoped Meta connection shown in Paid Ads. Run Research opens Blaze, asks the three intake questions, creates the mission after the answers, and keeps completed research runs below. Missing documents alone can no longer be reported as proof that Meta is disconnected.
+
+Files: Meta agent/API insight path, Ads Research mission playbook, Research Runs UI and messages, focused regression tests, and `documentation/features/social-research.md`.
+
+## [2026-07-20 14:58] - [FEATURE]
+
+What: Replaced the generic mission-first Ads Research run experience with a dedicated visual report that combines saved ad-library cards, source counts, analysis documents, recommendations, copy, and scripts. Added durable many-mission linking to saved ad searches and kept Mission Details as a secondary action.
+
+Why: Research missions were producing visual saved searches and useful documents, but opening a run only exposed the operational mission modal. The visual evidence was stranded in Library Search and the user could not review the complete research story in one place.
+
+Impact: Clicking a research run now opens a full Ads Research report. Users can inspect the actual ad images and videos Blaze researched, open every generated document, and still reach mission status and approvals when needed. New mission searches are linked directly, while older runs recover searches created during their execution window.
+
+Files: Ads Research run detail UI and tests, saved-search API types/service/repository/controller, agent research action and docs, database migration, feature documentation, and changelog.
+
+## [2026-07-20 15:03] - [FEATURE]
+
+What: Added Pixel's database-backed `post-call-delivery` skill, generated the shareable recap once, stored that exact draft in the Slack Shadow ledger, and made ✅ approval claim and deliver the immutable proposal. Added People / Conversations navigation, made agent detail open in Chat, and moved Work into the right-side agent panel.
+
+Why: The meeting loop needed to become one durable capability of the always-aware Slack agent, with visible Shadow review and no template regeneration after approval. People and agent screens also needed consistent conversation-first navigation.
+
+Impact: Post-call recaps can be reviewed in Slack and Team → People → Conversations, approved safely, and delivered exactly as reviewed. The agent UI now prioritizes Chat while preserving Work as contextual detail. The broader Viktor-style progression is documented as phased Shadow-first rollout.
+
+Files: `supabase/migrations/20260720234500_vibey_post_call_delivery_skill.sql`, `docker/agents/vibey/skills/post-call-delivery/SKILL.md`, Task Agent drafting/controller/tests, meeting follow-up confirm/message/tests, Slack People repository/module, People navigation/tests, agent Chat/Work panel files/tests, feature documentation, and follow-up log.
+
+## [2026-07-20 15:10] - [FEATURE]
+
+What: Added the post-call Slack revision loop. The initial DM is explicitly an internal review brief; replies in its thread are processed as feedback, create a replacement client-facing Shadow draft, dismiss the superseded version, and return the updated proposal in-thread. ✅ delivers the latest stored draft.
+
+Why: Internal meeting context and approval guidance should not be confused with the message intended for a client, and reviewers need to iterate naturally in Slack before approving anything.
+
+Impact: A reviewer can now reply with changes such as tone, length, ownership, or removal requests and see the revised client-facing version before approval. Changed drafts cannot inherit approval from the version they replaced.
+
+Files: Slack event routing, meeting follow-up confirm/message service and tests, Pixel post-call skill migration/runtime mirror, feature documentation, and follow-up log.
+
 ## [2026-07-20 15:15] - [FEATURE]
 
 What: Index Meta-synced and Studio-created `ad_campaign` / `ad_set` / `ad` rows into Campaign Knowledge (`force: true`), with Space→ad_campaign→ad_set→ad edges (no Space→ad star). Added `scripts/roas/backfill-campaign-ads-knowledge.py` for existing org campaigns.
 
 Why: Campaign Knowledge only had Page Grader memories; agents could not retrieve campaign-attached Meta ads already stored on the campaign.
 
-Impact: Future Meta syncs and ad CRUD write into the knowledge graph; existing Sakha/Multifamily ads can be backfilled. Structural builder skips Space→ad/ad_set edges to keep the graph hierarchical.
+Impact: Future Meta syncs and ad CRUD write into the knowledge graph; existing Sakha ads backfilled. Structural builder skips Space→ad/ad_set edges to keep the graph hierarchical.
 
-Files: `meta-sync.service.ts`, `meta-sync.repository.ts`, `meta.module.ts`, `space-structural-edge-builder.service.ts`, `artifacts-ads.base.ts`, `artifacts-ad-campaigns.base.ts`, `artifacts-ad-sets.base.ts`, `artifacts-content.base.ts`, tests, `scripts/roas/backfill-campaign-ads-knowledge.py`, `documentation/features/page-grader-campaign-brain-sync.md`.
+Files: `meta-sync.service.ts`, `meta-sync.repository.ts`, `meta.module.ts`, `space-structural-edge-builder.service.ts`, `artifacts-ads.base.ts`, `artifacts-ad-campaigns.base.ts`, `artifacts-ad-sets.base.ts`, `artifacts-content.base.ts`, tests, backfill script, `page-grader-campaign-brain-sync.md`.
+
+## [2026-07-20 15:45] - [FIX]
+
+What: Widened Google agenda helper `source` union to include `fathom` so Nest build matches `CalendarAgendaEvent`.
+
+Why: Unrelated dirty-tree type error blocked `roas-api` production deploy of ads → Campaign Knowledge.
+
+Impact: `vercel-build` typecheck passes for calendar agenda parse callback.
+
+Files: `integrations-calendar-google-agenda.ts`.
+
+## [2026-07-20 15:47] - [FEATURE]
+
+What: Backfilled Sakha org Campaign Knowledge with 26 ad_campaigns / 62 ad_sets / 450 ads (+ hierarchy edges). Deployed `roas-api` `dpl_GhZXNuBaCAbT8USvRvAdPXtLsPmg` → `api.roas.io`.
+
+Why: Existing Meta rows were never indexed; live Meta sync path needed the new indexer in production.
+
+Impact: Sakha Campaign Knowledge now includes Meta ads; future Meta syncs index ads with `force: true`. Multifamily org had 0 ads (no-op).
+
+Files: `scripts/roas/backfill-campaign-ads-knowledge.py` (prod run), operational deploy.

@@ -12,7 +12,7 @@ type AgendaEvent = {
   html_link: string | null
   color_id: string | null
   attendees: unknown[]
-  source: 'google_calendar' | 'outlook'
+  source: 'google_calendar' | 'outlook' | 'fathom'
 }
 
 type ExecuteTool = (
