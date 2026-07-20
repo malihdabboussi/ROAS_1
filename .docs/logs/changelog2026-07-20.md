@@ -7,6 +7,13 @@ Why: Manual one-by-one ad-library search did not connect current account perform
 Impact: A campaign can now launch comprehensive ad research directly from its Ads Research view, inspect mission progress and native deliverables, and approve selected directions for a future Ad Creation mission. Research does not create final visuals, publish ads, or generate PDFs.
 Files: Ads Research mission playbook and tests, Ads Research run workspace and launcher, toolbar surface bridge, mission payload builder, market-research skill migration and contract test, and social research documentation.
 
+## [2026-07-20 13:58] - [FIX]
+
+What: Pen / green New now start a fresh docked chat when the drawer is open, and restore the last thread when it is closed (shell conversation id stays in sync with the panel).
+Why: Shell only cleared `chatDrawer.conversationId` / `activeConversationId`; `SpaceVibeyChatPanel` kept its own selection, and remounts revived the stored chat after a fresh-chat request.
+Impact: Workspace routes: closed + pen → last chat; open + pen or green New → empty new chat in the drawer.
+Files: `ShellChatDrawer.tsx`, `SpaceVibeyChatPanel.tsx`, `ShellChatDrawer.test.tsx`
+
 ## [2026-07-20 13:34] - [FIX]
 
 What: Renamed the unified Paid Ads workspace modes to Analyze and Launch, placed Analyze first, and made Analyze the default for views without a saved mode.
@@ -152,3 +159,32 @@ Why: Reaction approved follow-ups in the DB but the thread reply failed silently
 Impact: ✅ now posts a thread reply with meeting summary, Fathom link, owned follow-ups, and an explicit “not sent to Page Grader yet” note.
 
 Files: `meeting-follow-up-slack-confirm.service.ts`, tests, changelog.
+
+## [2026-07-20 13:55] - [FIX]
+What: Set main ROAS account (`dylan@dylanvanas.com`) and ROAS org (`roas` / `f69bd799-…`) from Free/no-org-sub to active Ultra (`ultra-monthly`) on `roas-production`.
+Why: User requested non-free / most premium self-serve tier for the main account and ROAS org.
+Impact: User and org billing entitlement now Ultra (40k base credits catalog tier). Direct DB grant; no Stripe subscription attached.
+Files: Operational update on Supabase `lhfgtsjetcardinpgouq` (`user_subscriptions`, `org_subscriptions`).
+
+## [2026-07-20 14:05] - [FEATURE]
+
+What: Added visible Slack channel context to People cards, list rows, person details, and People search, including a compact first-channel indicator with a complete hover list.
+Why: Unfamiliar Slack identities could not be connected to the client or team channels that explain who they are.
+Impact: Admins can identify people by shared channel context while every manually selected Internal, External, or Ignored classification remains unchanged during Slack refreshes. Channel context is fetched live and requires no database migration.
+Files: Slack API integration, sender resolver, People API types/service, People roster/detail UI, messages config, focused tests, and `documentation/features/integration-connections.md`.
+
+## [2026-07-20 14:15] - [FIX]
+What: Fixed org Campaign Knowledge blank graph (edge query no longer uses a huge `.in(from_object_id)` that fails PostgREST on ~800 Sakha objects); remapped Page Grader `client_scope_map` to ROAS org Sakha/Multifamily; soft-deleted fresh empty personal duplicates; personal sync now upgrades stale personal mapped campaigns to the org campaign.
+Why: User works in org; personal PG pulls were a bug. Scope map still pointed at empty personal Sakha, and the graph API failed loading edges for the filled org campaign.
+Impact: Org Sakha/Multifamily scope map correct; empty personal dupes soft-deleted. API edge load fix needs deploy to clear blank Brain canvas.
+Files: `space-retrieval.repository.ts`, `page-grader-client-import.service.ts`, tests; prod `user_integrations`/`campaigns` on `lhfgtsjetcardinpgouq`
+
+## [2026-07-20 14:18] - [FIX]
+
+What: Made meeting Slack confirm messages a compact shareable recap (Purpose + Key takeaways + owned action items), converted Fathom markdown timestamp links to Slack mrkdwn, and stopped dumping Topics so messages no longer cut off mid-word.
+
+Why: Full call notes exceeded Slack’s length limit and left `[label](url)` links unclickable, so the confirm reply was not usable to forward into a channel or to another attendee.
+
+Impact: Review DMs and ✅ confirm replies are complete, linkable, and copy/forward-ready without Page Grader.
+
+Files: `meeting-follow-up-slack-confirm.service.ts`, `meeting-follow-up-slack-message.ts`, tests, changelog.

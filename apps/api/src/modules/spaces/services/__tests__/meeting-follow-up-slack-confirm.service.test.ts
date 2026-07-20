@@ -93,7 +93,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       expect.objectContaining({
         channel_id: 'D123',
         text: expect.stringMatching(
-          /Summary:[\s\S]*Align on urgent[\s\S]*- Operational bandwidth[\s\S]*Open Fathom recording[\s\S]*Ship AM loop — _owner: Dylan_[\s\S]*Fix reporting SoT — _owner: Nate_/,
+          /Purpose[\s\S]*Align on urgent[\s\S]*Key takeaways[\s\S]*Operational bandwidth[\s\S]*Open Fathom recording[\s\S]*Proposed action items[\s\S]*Ship AM loop — _owner: Dylan_[\s\S]*Fix reporting SoT — _owner: Nate_/,
         ),
       }),
     )
@@ -226,19 +226,52 @@ describe('MeetingFollowUpSlackConfirmService', () => {
         channel_id: 'D123',
         thread_ts: '1710000000.000100',
         text: expect.stringMatching(
-          /Confirmed — shareable follow-up[\s\S]*Nate and Dylan ops[\s\S]*Align on urgent[\s\S]*Open Fathom recording[\s\S]*Ship AM loop — _owner: Dylan_[\s\S]*Not sent to Page Grader yet/,
+          /Meeting recap: Nate and Dylan ops[\s\S]*Align on urgent[\s\S]*Action items[\s\S]*Ship AM loop — _owner: Dylan_[\s\S]*Open Fathom recording[\s\S]*Copy\/forward this recap/,
         ),
       }),
     )
   })
 
-  it('keeps the full structured meeting summary instead of flattening or truncating it', () => {
+  it('builds a shareable purpose + takeaways brief and converts Fathom markdown links', () => {
     const summary = service.briefMeetingSummary({
       custom_data: {
-        summary: 'Key takeaways:\n- First important point\n- Second important point',
+        summary: [
+          'Meeting Purpose',
+          '',
+          'Align on ops.',
+          '',
+          'Key Takeaways',
+          '',
+          '- Bandwidth crisis',
+          '',
+          'Topics',
+          '',
+          'Operational Crisis & Bandwidth',
+          '',
+          '  - Problem: long detail that should not appear in Slack brief',
+          '',
+          'Next Steps',
+          '',
+          '  - [Nate:](https://fathom.video/share/x?timestamp=1)',
+          '      - Train Betty',
+        ].join('\n'),
       },
     })
 
-    expect(summary).toBe('Key takeaways:\n- First important point\n- Second important point')
+    expect(summary).toContain('*Purpose*')
+    expect(summary).toContain('Align on ops.')
+    expect(summary).toContain('*Key takeaways*')
+    expect(summary).toContain('• Bandwidth crisis')
+    expect(summary).not.toContain('Operational Crisis & Bandwidth')
+    expect(summary).not.toContain('long detail that should not appear')
+    expect(summary).not.toContain('[Nate:](')
+  })
+
+  it('converts markdown timestamp links to Slack mrkdwn', () => {
+    expect(
+      service.markdownLinksToSlack(
+        '- [Workflow:](https://fathom.video/share/x?timestamp=932.0) Ship it',
+      ),
+    ).toBe('- <https://fathom.video/share/x?timestamp=932.0|Workflow> Ship it')
   })
 })

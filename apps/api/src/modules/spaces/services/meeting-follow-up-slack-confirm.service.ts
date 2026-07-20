@@ -5,6 +5,15 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { SupabaseServiceClient } from '@vibey/api-shared'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
 import { SpacesRepository } from '../repositories/spaces.repository'
+import {
+  briefMeetingSummary,
+  buildConfirmMessage,
+  buildShareableConfirmReply,
+  formatFollowUpLine,
+  markdownLinksToSlack,
+  resolveFathomUrl,
+  resolveFollowUpOwner,
+} from './meeting-follow-up-slack-message'
 
 export const SLACK_FOLLOW_UP_CONFIRM_KEY = 'slack_follow_up_confirm'
 export const DEFAULT_CONFIRM_REACTION = 'white_check_mark'
@@ -122,7 +131,7 @@ export class MeetingFollowUpSlackConfirmService {
       'https://app.roas.io'
     ).replace(/\/+$/, '')
     const meetingUrl = `${appUrl}/spaces/${input.spaceId}?item=${input.callItemId}`
-    const text = this.buildConfirmMessage({
+    const text = buildConfirmMessage({
       callTitle: input.callTitle,
       callItem,
       followUps,
@@ -252,7 +261,7 @@ export class MeetingFollowUpSlackConfirmService {
         this.repo.findItemById(supabase, pending.spaceId, pending.callItemId),
         this.repo.findItemsByIds(supabase, pending.spaceId, pending.payload.space_item_ids),
       ])
-      const reply = this.buildShareableConfirmReply({
+      const reply = buildShareableConfirmReply({
         callItem: (callItem as Record<string, unknown> | null) ?? null,
         followUps,
       })
@@ -270,27 +279,14 @@ export class MeetingFollowUpSlackConfirmService {
     return true
   }
 
-  buildShareableConfirmReply(input: {
-    callItem: Record<string, unknown> | null
-    followUps: Array<Record<string, unknown>>
-  }): string {
-    const title = String(input.callItem?.title ?? 'Meeting').trim() || 'Meeting'
-    const summary = this.briefMeetingSummary(input.callItem)
-    const fathomUrl = this.resolveFathomUrl(input.callItem)
-    const lines = input.followUps.map((item, index) => this.formatFollowUpLine(item, index))
-
-    return [
-      `*Confirmed — shareable follow-up*`,
-      `*${title}*`,
-      '',
-      ...(summary ? [`*Summary:*`, summary, ''] : []),
-      ...(fathomUrl ? [`<${fathomUrl}|Open Fathom recording>`, ''] : []),
-      `*Follow-ups*`,
-      ...lines,
-      '',
-      `_Confirmed in ROAS. Not sent to Page Grader yet._`,
-    ].join('\n')
-  }
+  // Test / reuse wrappers around pure message helpers
+  buildShareableConfirmReply = buildShareableConfirmReply
+  buildConfirmMessage = buildConfirmMessage
+  formatFollowUpLine = formatFollowUpLine
+  resolveFollowUpOwner = resolveFollowUpOwner
+  briefMeetingSummary = briefMeetingSummary
+  markdownLinksToSlack = markdownLinksToSlack
+  resolveFathomUrl = resolveFathomUrl
 
   /** Call items can be personal (org_id null) while Slack is connected on an org. */
   private async resolveSlackSendOrgId(
@@ -314,98 +310,6 @@ export class MeetingFollowUpSlackConfirmService {
     }
     if (typeof data?.org_id === 'string' && data.org_id.trim()) return data.org_id.trim()
     return preferredOrgId
-  }
-
-  buildConfirmMessage(input: {
-    callTitle: string
-    callItem: Record<string, unknown> | null
-    followUps: Array<Record<string, unknown>>
-    confirmReaction: string
-    meetingUrl: string
-  }): string {
-    const title = String(input.callTitle || 'Meeting').trim() || 'Meeting'
-    const summary = this.briefMeetingSummary(input.callItem)
-    const fathomUrl = this.resolveFathomUrl(input.callItem)
-    const lines = input.followUps.map((item, index) => this.formatFollowUpLine(item, index))
-
-    return [
-      `*Meeting follow-ups ready for review*`,
-      `*${title}*`,
-      '',
-      ...(summary ? [`*Summary:* ${summary}`, ''] : []),
-      ...(fathomUrl ? [`<${fathomUrl}|Open Fathom recording>`, ''] : []),
-      `Here's what I pulled from the call:`,
-      ...lines,
-      '',
-      `React with :${input.confirmReaction}: to confirm these follow-ups in ROAS.`,
-      `Reply in this thread if anything should change (feedback loop ships next).`,
-      `<${input.meetingUrl}|Open in Meetings>`,
-    ].join('\n')
-  }
-
-  formatFollowUpLine(item: Record<string, unknown>, index: number): string {
-    const title = String(item.title ?? 'Untitled').trim() || 'Untitled'
-    const owner = this.resolveFollowUpOwner(item)
-    return owner
-      ? `${index + 1}. ${title} — _owner: ${owner}_`
-      : `${index + 1}. ${title} — _owner: unassigned_`
-  }
-
-  resolveFollowUpOwner(item: Record<string, unknown>): string | null {
-    const customData =
-      item.custom_data && typeof item.custom_data === 'object'
-        ? (item.custom_data as Record<string, unknown>)
-        : {}
-    const suggestedName = String(customData.suggested_assignee_name ?? '').trim()
-    if (suggestedName) return suggestedName
-    const suggestedEmail = String(customData.suggested_assignee_email ?? '').trim()
-    if (suggestedEmail) return suggestedEmail
-
-    const assignees = Array.isArray(item.assignees) ? item.assignees : []
-    for (const raw of assignees) {
-      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue
-      const row = raw as Record<string, unknown>
-      const label = String(row.name ?? row.email ?? row.id ?? '').trim()
-      if (label) return label
-    }
-
-    if (item.assignee_type === 'human' && typeof item.assignee_id === 'string') {
-      return item.assignee_id
-    }
-    return null
-  }
-
-  briefMeetingSummary(callItem: Record<string, unknown> | null): string {
-    if (!callItem) return ''
-    const customData =
-      callItem.custom_data && typeof callItem.custom_data === 'object'
-        ? (callItem.custom_data as Record<string, unknown>)
-        : {}
-    const fromCustom = String(customData.summary ?? '').trim()
-    const fromDescription = String(callItem.description ?? '').trim()
-    const raw = fromCustom || fromDescription
-    if (!raw) return ''
-
-    return raw
-      .replace(/^#+\s*/gm, '')
-      .replace(/\*\*/g, '')
-      .replace(/[ \t]+/g, ' ')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim()
-  }
-
-  resolveFathomUrl(callItem: Record<string, unknown> | null): string | null {
-    if (!callItem) return null
-    const customData =
-      callItem.custom_data && typeof callItem.custom_data === 'object'
-        ? (callItem.custom_data as Record<string, unknown>)
-        : {}
-    for (const key of ['fathom_url', 'recording_url', 'meeting_url', 'url'] as const) {
-      const value = String(customData[key] ?? '').trim()
-      if (value.startsWith('http')) return value
-    }
-    const columnUrl = String(callItem.recording_url ?? '').trim()
-    return columnUrl.startsWith('http') ? columnUrl : null
   }
 
   private async findPendingByMessage(
