@@ -76,6 +76,11 @@ export function knowledgeObjectsToBrainGraph(
   objects: KnowledgeGraphObject[],
   edges: KnowledgeGraphEdge[] = [],
   scope: 'space' | 'campaign',
+  stats?: {
+    total_objects?: number
+    total_edges?: number
+    by_source_type?: Record<string, number>
+  },
 ): BrainGraphData {
   const incomingNodeIds = new Set(edges.map((edge) => edge.to_node_id))
   const nodes = objects.map((object) =>
@@ -98,10 +103,13 @@ export function knowledgeObjectsToBrainGraph(
     nodes,
     connections,
     stats: {
-      total_memories: nodes.length,
+      total_memories: stats?.total_objects ?? nodes.length,
       total_experiences: 0,
-      total_connections: connections.length,
-      by_type: byType,
+      total_connections: stats?.total_edges ?? connections.length,
+      by_type:
+        stats?.by_source_type && Object.keys(stats.by_source_type).length > 0
+          ? stats.by_source_type
+          : byType,
       hub_nodes: [],
     },
   }

@@ -42,12 +42,15 @@ CAMPAIGNS = {
     "multifamily_org": {
         "campaign_id": "af082417-8ae9-44d0-b5f5-4f8fd309f04a",
         "brain_id": "49856b8b-7777-4266-9214-2a4322c2e7f6",
+        # Prefer personal mapped brain (same PG client; richer/ fresher sync target).
+        "memory_brain_id": "f7af474f-b375-46d8-a72e-fb74345c24a0",
         "space_id": "7aefc857-2a52-456a-b8e4-4e663e3950e7",
         "page_grader_client_id": "9e1226dc-d054-4f61-a653-798bcc7cb518",
     },
     "sakha_org": {
         "campaign_id": "a922909b-eff9-4652-854b-789d5e445c1c",
         "brain_id": "b3974abc-f9da-4847-8592-6181490bda67",
+        "memory_brain_id": "3e8c9d1f-472d-4388-8572-1156fa859bc4",
         "space_id": "ae308930-337e-49ba-8159-d3a0e4c48e02",
         "page_grader_client_id": "f49751a5-7d3f-44a0-9553-6f22d918c010",
     },
@@ -73,6 +76,26 @@ def load_env() -> None:
 
 def sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def resolve_source_type(memory_source_type: str | None, title: str | None) -> str:
+    st = (memory_source_type or "").lower()
+    t = (title or "").lower()
+    if st == "page_grader_seed" or "_seed" in st:
+        if t.startswith("avatar") or "avatar:" in t:
+            return "avatar"
+        if t.startswith("offer") or "offer:" in t:
+            return "offer"
+        if "overview" in t or "client profile" in t:
+            return "campaign_overview_snapshot"
+        return "space_doc"
+    if any(x in st for x in ("slack", "clickup", "discord")):
+        return "channel_message"
+    if any(x in st for x in ("call", "meeting", "fathom", "fireflies", "transcript")):
+        return "conversation_document"
+    if any(x in st for x in ("drive", "dropbox", "notion", "google", "doc")):
+        return "space_doc"
+    return "space_doc"
 
 
 def with_retry(fn, label: str, attempts: int = 5):
@@ -124,7 +147,6 @@ def existing_source_ids(sb: Any, space_id: str, pg_client: str) -> set[str]:
                 sb.table("space_semantic_objects")
                 .select("source_id")
                 .eq("space_id", space_id)
-                .eq("source_type", "conversation_document")
                 .like("source_id", f"pg:{pg_client}:%")
                 .range(s, e)
                 .execute()
@@ -161,7 +183,8 @@ def mirror_campaign(sb: Any, key: str, limit: int | None) -> None:
     user_id = camp["user_id"]
     org_id = camp["org_id"]
 
-    memories = fetch_all_memories(sb, brain_id)
+    memory_brain_id = cfg.get("memory_brain_id") or brain_id
+    memories = fetch_all_memories(sb, memory_brain_id)
     if limit is not None:
         memories = memories[:limit]
     seen = existing_source_ids(sb, space_id, pg_client)
@@ -179,13 +202,14 @@ def mirror_campaign(sb: Any, key: str, limit: int | None) -> None:
             if not content:
                 continue
             content_hash = mem.get("content_hash") or sha256(content)
-            source_id = f"pg:{pg_client}:{content_hash[:24]}"
+            source_id = f"pg:{pg_client}:{campaign_id[:8]}:{content_hash[:24]}"
             if source_id in seen:
                 continue
             seen.add(source_id)
             title = (mem.get("source_title") or mem.get("memory_type") or "Page Grader memory")[
                 :200
             ]
+            source_type = resolve_source_type(mem.get("source_type"), title)
             objects.append(
                 {
                     "scope_type": "org" if org_id else "personal",
@@ -193,7 +217,7 @@ def mirror_campaign(sb: Any, key: str, limit: int | None) -> None:
                     "org_id": org_id,
                     "space_id": space_id,
                     "campaign_id": campaign_id,
-                    "source_type": "conversation_document",
+                    "source_type": source_type,
                     "source_id": source_id,
                     "parent_type": None,
                     "parent_id": None,
@@ -256,7 +280,7 @@ def mirror_campaign(sb: Any, key: str, limit: int | None) -> None:
                     "org_id": org_id,
                     "space_id": space_id,
                     "campaign_id": campaign_id,
-                    "source_type": "conversation_document",
+                    "source_type": obj["source_type"],
                     "source_id": obj["source_id"],
                     "source_title": obj["title"],
                     "chunk_index": 0,
@@ -294,21 +318,23 @@ def mirror_campaign(sb: Any, key: str, limit: int | None) -> None:
 
 def fail_stuck_atlas_job(sb: Any) -> None:
     job_id = "c2ada134-355f-40ac-a061-447e25943c3a"
+    now = datetime.now(timezone.utc).isoformat()
     sb.table("brain_import_jobs").update(
         {
             "status": "failed",
             "last_error": "Superseded by page_grader_brain_sync dual-write; Atlas campaign_file_import cannot write campaign brains.",
-            "completed_at": datetime.now(timezone.utc).isoformat(),
+            "completed_at": now,
+            "notified_at": now,
         }
-    ).eq("id", job_id).in_("status", ["retry", "processing", "pending"]).execute()
-    print(f"marked stuck Atlas job {job_id} failed")
+    ).eq("id", job_id).execute()
+    print(f"dismissed stuck Atlas job {job_id}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--campaign",
-        choices=["multifamily", "sakha", "multifamily_org", "sakha_org", "all", "mapped"],
+        choices=["multifamily", "sakha", "multifamily_org", "sakha_org", "all", "mapped", "org"],
         default="mapped",
     )
     parser.add_argument("--limit", type=int, default=None)
@@ -325,6 +351,8 @@ def main() -> None:
         targets = list(CAMPAIGNS)
     elif args.campaign == "mapped":
         targets = ["multifamily", "sakha"]
+    elif args.campaign == "org":
+        targets = ["multifamily_org", "sakha_org"]
     else:
         targets = [args.campaign]
     for key in targets:

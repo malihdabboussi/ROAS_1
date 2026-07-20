@@ -7527,9 +7527,17 @@ Files:
 
 - Feature/app: web / Paid Ads
 - Files: `apps/web/src/features/studio/components/preview/AdsPerformanceView.tsx`, `apps/web/src/components/artifacts/paid-ads/AdsPerformanceViewAdapter.tsx`
-- Evidence: The unified Paid Ads workspace reuses the existing 981-line Studio-owned performance view through the same narrow shared-adapter pattern already used by Paid Ads Meta modals.
+- Evidence: The unified Paid Ads workspace reuses the existing 984-line Studio-owned performance view through the same narrow shared-adapter pattern already used by Paid Ads Meta modals. Focused lint still reports the pre-existing cross-feature imports and 400-line maximum violation.
 - Needed work: Move reporting data, sync orchestration, and presentation into a shared Paid Ads domain boundary, split the oversized performance component, and let both Studio and Spaces consume that shared surface.
 - Why not now: The requested change unifies the user workflow; relocating and decomposing the complete reporting feature would materially broaden the change beyond the Creating/Reporting toggle.
+
+## 2026-07-20 — Studio analytics service near extraction limit
+
+- Feature/app: web / Studio reporting
+- File: `apps/web/src/features/studio/services/analytics.service.ts`
+- Evidence: The service is 542 LOC after adding four additive Meta result fields, above the 480-line extraction threshold but below its enforced 600-line service limit.
+- Needed work: Move Meta Ads reporting contracts and API calls into a focused Paid Ads analytics module while preserving the existing Studio service exports.
+- Why not now: This repair changes only the shared response contract; relocating every reporting consumer would broaden the production metrics fix.
 
 ## 2026-07-20 — Space schema type registry exceeds frontend file limit
 

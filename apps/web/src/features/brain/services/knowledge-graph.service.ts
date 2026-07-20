@@ -89,7 +89,7 @@ export async function fetchKnowledgeGraphStatsBatch(input: {
 
 export async function fetchSpaceKnowledgeGraph(spaceId: string): Promise<KnowledgeGraphResponse> {
   return backendGet<KnowledgeGraphResponse>(
-    `/api/space-retrieval/knowledge/spaces/${encodeURIComponent(spaceId)}/graph`,
+    `/api/space-retrieval/knowledge/spaces/${encodeURIComponent(spaceId)}/graph?limit=5000`,
   )
 }
 
@@ -97,6 +97,6 @@ export async function fetchCampaignKnowledgeRollupGraph(
   campaignId: string,
 ): Promise<KnowledgeGraphResponse> {
   return backendGet<KnowledgeGraphResponse>(
-    `/api/space-retrieval/knowledge/campaigns/${encodeURIComponent(campaignId)}/graph`,
+    `/api/space-retrieval/knowledge/campaigns/${encodeURIComponent(campaignId)}/graph?limit=5000`,
   )
 }

@@ -80,7 +80,12 @@ export function useBrainVisualizationGraphData({
     setKnowledgeLoading(true)
     try {
       const data = await fetchCampaignKnowledgeRollupGraph(activeCampaignId)
-      const mapped = knowledgeObjectsToBrainGraph(data.objects, data.edges, data.scope.type)
+      const mapped = knowledgeObjectsToBrainGraph(
+        data.objects,
+        data.edges,
+        data.scope.type,
+        data.stats,
+      )
       knowledgeGraphSnapshotByCampaignId.set(activeCampaignId, mapped)
       setKnowledgeGraphData(mapped)
     } catch {

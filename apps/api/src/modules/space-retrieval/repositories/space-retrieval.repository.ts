@@ -56,10 +56,7 @@ export class SpaceRetrievalRepository {
   }
 
   /** Campaign-level edges that have no space (counted alongside space membership). */
-  async listCampaignSpacelessEdges(
-    supabase: SupabaseClient,
-    campaignIds: string[],
-  ): Promise<any> {
+  async listCampaignSpacelessEdges(supabase: SupabaseClient, campaignIds: string[]): Promise<any> {
     return supabase
       .from('space_semantic_edges')
       .select('campaign_id, id')
@@ -75,10 +72,7 @@ export class SpaceRetrievalRepository {
    * when a space is reassigned, so the graph/stats must resolve membership live.
    */
   async resolveCampaignSpaceIds(supabase: SupabaseClient, campaignId: string): Promise<string[]> {
-    const { data, error } = await supabase
-      .from('spaces')
-      .select('id')
-      .eq('campaign_id', campaignId)
+    const { data, error } = await supabase.from('spaces').select('id').eq('campaign_id', campaignId)
     if (error) throw new Error(`Failed to resolve campaign spaces: ${error.message}`)
     return ((data ?? []) as Array<{ id: string }>).map((row) => row.id)
   }
@@ -101,7 +95,9 @@ export class SpaceRetrievalRepository {
       const list = input.spaceIds.map((id) => `"${id}"`).join(',')
       query =
         input.campaignId && list
-          ? query.or(`space_id.in.(${list}),and(space_id.is.null,campaign_id.eq.${input.campaignId})`)
+          ? query.or(
+              `space_id.in.(${list}),and(space_id.is.null,campaign_id.eq.${input.campaignId})`,
+            )
           : query.in('space_id', input.spaceIds)
     } else if (input.spaceId) {
       query = query.eq('space_id', input.spaceId)
@@ -109,6 +105,16 @@ export class SpaceRetrievalRepository {
       query = query.eq('campaign_id', input.campaignId)
     }
     return query
+  }
+
+  async listGraphHubObjects(supabase: SupabaseClient, spaceIds: string[]): Promise<any> {
+    return supabase
+      .from('space_semantic_objects')
+      .select(
+        'id, source_type, source_id, title, summary, user_id, org_id, space_id, campaign_id, parent_type, parent_id, metadata, source_updated_at, indexed_at, content_hash, created_at, updated_at, space_semantic_chunks(id)',
+      )
+      .eq('source_type', 'space')
+      .in('space_id', spaceIds)
   }
 
   async listGraphEdges(

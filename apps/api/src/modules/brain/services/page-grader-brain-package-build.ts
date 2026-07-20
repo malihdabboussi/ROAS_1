@@ -52,6 +52,60 @@ export type PageGraderEvidenceRow = {
 export const PAGE_GRADER_MAX_MEMORY_CHARS = 8000
 export const PAGE_GRADER_MEMORY_BATCH = 100
 
+/** Campaign Knowledge `space_semantic_objects.source_type` for a Page Grader memory. */
+export type PageGraderKnowledgeSourceType =
+  | 'avatar'
+  | 'offer'
+  | 'channel_message'
+  | 'space_doc'
+  | 'conversation_document'
+  | 'campaign_overview_snapshot'
+
+/**
+ * Map Page Grader memory provenance onto Campaign Knowledge object kinds.
+ * Avoids labeling every dual-write as `conversation_document`.
+ */
+export function resolvePageGraderKnowledgeSourceType(input: {
+  memorySourceType?: string | null
+  sourceTitle?: string | null
+}): PageGraderKnowledgeSourceType {
+  const st = (input.memorySourceType || '').toLowerCase()
+  const title = (input.sourceTitle || '').toLowerCase()
+
+  if (st === 'page_grader_seed' || st.includes('_seed')) {
+    if (title.startsWith('avatar') || title.includes('avatar:')) return 'avatar'
+    if (title.startsWith('offer') || title.includes('offer:')) return 'offer'
+    if (title.includes('overview') || title.includes('client profile')) {
+      return 'campaign_overview_snapshot'
+    }
+    return 'space_doc'
+  }
+
+  if (st.includes('slack') || st.includes('clickup') || st.includes('discord')) {
+    return 'channel_message'
+  }
+  if (
+    st.includes('call') ||
+    st.includes('meeting') ||
+    st.includes('fathom') ||
+    st.includes('fireflies') ||
+    st.includes('transcript')
+  ) {
+    return 'conversation_document'
+  }
+  if (
+    st.includes('drive') ||
+    st.includes('dropbox') ||
+    st.includes('notion') ||
+    st.includes('google') ||
+    st.includes('doc')
+  ) {
+    return 'space_doc'
+  }
+
+  return 'space_doc'
+}
+
 export function pageGraderSha256(text: string): string {
   return createHash('sha256').update(text).digest('hex')
 }

@@ -8,6 +8,7 @@ import {
   computePageGraderPackageContentHash,
   PAGE_GRADER_MEMORY_BATCH,
   pageGraderStringValue,
+  resolvePageGraderKnowledgeSourceType,
   type PageGraderEvidenceRow,
   type PageGraderMemoryRow,
   type PageGraderPackage,
@@ -89,6 +90,11 @@ export class PageGraderBrainPackageIngestService {
 
     let knowledgeIndexed = 0
     if (spaceId) {
+      await this.ensureSpaceIndexed(supabase, {
+        userId: input.userId,
+        orgId: input.orgId ?? null,
+        spaceId,
+      })
       knowledgeIndexed = await this.indexKnowledgeObjects(supabase, {
         userId: input.userId,
         orgId: input.orgId ?? null,
@@ -286,6 +292,28 @@ export class PageGraderBrainPackageIngestService {
     return chosen?.id ? String(chosen.id) : null
   }
 
+  private async ensureSpaceIndexed(
+    supabase: SupabaseClient,
+    input: { userId: string; orgId: string | null; spaceId: string },
+  ): Promise<void> {
+    try {
+      await this.spaceRetrievalIndex.indexSource(supabase, {
+        sourceType: 'space',
+        sourceId: input.spaceId,
+        userId: input.userId,
+        orgId: input.orgId ?? undefined,
+        spaceId: input.spaceId,
+        force: true,
+      })
+    } catch (error) {
+      this.logger.warn(
+        `Page Grader space hub index failed for ${input.spaceId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+    }
+  }
+
   private async indexKnowledgeObjects(
     supabase: SupabaseClient,
     input: {
@@ -298,13 +326,19 @@ export class PageGraderBrainPackageIngestService {
     },
   ): Promise<number> {
     let indexed = 0
-    // Cap for sync latency; hourly catch-up / force re-sync continues the rest.
-    const toIndex = input.rows.slice(0, 500)
-    for (const row of toIndex) {
+    for (const row of input.rows) {
+      const sourceType = resolvePageGraderKnowledgeSourceType({
+        memorySourceType: row.source_type,
+        sourceTitle: row.source_title,
+      })
       const sourceId = `pg:${input.pageGraderClientId}:${row.content_hash.slice(0, 24)}`
       try {
+        // Prior dual-write used conversation_document for every row; drop the stale kind.
+        if (sourceType !== 'conversation_document') {
+          await this.spaceRetrievalIndex.deleteSource(supabase, 'conversation_document', sourceId)
+        }
         const result = await this.spaceRetrievalIndex.indexSource(supabase, {
-          sourceType: 'conversation_document',
+          sourceType,
           sourceId,
           userId: input.userId,
           orgId: input.orgId ?? undefined,

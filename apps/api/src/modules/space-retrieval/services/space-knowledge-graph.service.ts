@@ -83,28 +83,44 @@ export class SpaceKnowledgeGraphService {
   async getSpaceGraph(
     supabase: SupabaseClient,
     spaceId: string,
-    limit = 500,
+    limit = 2500,
   ): Promise<SpaceKnowledgeGraphResponse> {
-    const objects = await this.listObjects(supabase, { spaceId, limit })
+    const [listed, hubs, statsMap] = await Promise.all([
+      this.listObjects(supabase, { spaceId, limit }),
+      this.listHubObjects(supabase, [spaceId]),
+      this.loadScopeStatsMap(supabase, 'space_id', [spaceId]),
+    ])
+    const objects = this.mergePreferHubs(hubs, listed, limit)
     const edges = await this.listEdges(supabase, { spaceId, objectIds: objects.map((o) => o.id) })
-    return this.response('space', objects, edges, { space_id: spaceId })
+    return this.response('space', objects, edges, { space_id: spaceId }, statsMap[spaceId])
   }
 
   async getCampaignGraph(
     supabase: SupabaseClient,
     campaignId: string,
-    limit = 500,
+    limit = 2500,
   ): Promise<SpaceKnowledgeGraphResponse> {
     const spaceIds = await this.repository.resolveCampaignSpaceIds(supabase, campaignId)
     if (spaceIds.length === 0) {
       return this.response('campaign', [], [], { campaign_id: campaignId })
     }
-    const objects = await this.listObjects(supabase, { spaceIds, campaignId, limit })
+    const [listed, hubs, statsMap] = await Promise.all([
+      this.listObjects(supabase, { spaceIds, campaignId, limit }),
+      this.listHubObjects(supabase, spaceIds),
+      this.loadCampaignStatsMap(supabase, [campaignId]),
+    ])
+    const objects = this.mergePreferHubs(hubs, listed, limit)
     const edges = await this.listEdges(supabase, {
       spaceIds,
       objectIds: objects.map((o) => o.id),
     })
-    return this.response('campaign', objects, edges, { campaign_id: campaignId })
+    return this.response(
+      'campaign',
+      objects,
+      edges,
+      { campaign_id: campaignId },
+      statsMap[campaignId],
+    )
   }
 
   async getStatsBatch(
@@ -180,7 +196,12 @@ export class SpaceKnowledgeGraphService {
     const bucketFor = (campaignId: string): Bucket => {
       let bucket = buckets.get(campaignId)
       if (!bucket) {
-        bucket = { objectIds: new Set(), edgeIds: new Set(), by_source_type: {}, last_updated: null }
+        bucket = {
+          objectIds: new Set(),
+          edgeIds: new Set(),
+          by_source_type: {},
+          last_updated: null,
+        }
         buckets.set(campaignId, bucket)
       }
       return bucket
@@ -200,7 +221,11 @@ export class SpaceKnowledgeGraphService {
     }
 
     if (allSpaceIds.length > 0) {
-      const { data, error } = await this.repository.listScopeObjects(supabase, 'space_id', allSpaceIds)
+      const { data, error } = await this.repository.listScopeObjects(
+        supabase,
+        'space_id',
+        allSpaceIds,
+      )
       if (error) throw new Error(`Failed to load campaign stats: ${error.message}`)
       for (const row of (data ?? []) as Array<Record<string, unknown>>) {
         const campaignId = spaceToCampaign.get(this.optionalString(row.space_id) ?? '')
@@ -333,32 +358,7 @@ export class SpaceKnowledgeGraphService {
   ): Promise<SpaceKnowledgeGraphObject[]> {
     const { data, error } = await this.repository.listGraphObjects(supabase, input)
     if (error) throw new Error(`Failed to load Space Knowledge graph: ${error.message}`)
-
-    return ((data ?? []) as Array<Record<string, unknown>>).map((row) => {
-      const metadata = this.record(row.metadata)
-      const chunkRows = Array.isArray(row.space_semantic_chunks) ? row.space_semantic_chunks : []
-      return {
-        id: String(row.id),
-        source_type: String(row.source_type ?? 'space'),
-        source_id: String(row.source_id ?? row.id),
-        title: String(row.title ?? ''),
-        summary: String(row.summary ?? ''),
-        user_id: String(row.user_id ?? ''),
-        org_id: this.optionalString(row.org_id),
-        space_id: this.optionalString(row.space_id),
-        campaign_id: this.optionalString(row.campaign_id),
-        parent_type: this.optionalString(row.parent_type),
-        parent_id: this.optionalString(row.parent_id),
-        metadata,
-        retrieve_via: metadata.retrieve_via ? this.record(metadata.retrieve_via) : null,
-        source_updated_at: this.optionalString(row.source_updated_at),
-        indexed_at: this.optionalString(row.indexed_at),
-        content_hash: this.optionalString(row.content_hash),
-        chunk_count: chunkRows.length,
-        created_at: String(row.created_at ?? ''),
-        updated_at: String(row.updated_at ?? row.created_at ?? ''),
-      }
-    })
+    return this.mapObjects((data ?? []) as Array<Record<string, unknown>>)
   }
 
   private async listEdges(
@@ -390,11 +390,68 @@ export class SpaceKnowledgeGraphService {
       }))
   }
 
+  /** Space hubs must stay in the payload so Space→item structural edges resolve. */
+  private async listHubObjects(
+    supabase: SupabaseClient,
+    spaceIds: string[],
+  ): Promise<SpaceKnowledgeGraphObject[]> {
+    const ids = [...new Set(spaceIds.filter(Boolean))]
+    if (ids.length === 0) return []
+    const { data, error } = await this.repository.listGraphHubObjects(supabase, ids)
+    if (error) throw new Error(`Failed to load Space Knowledge hubs: ${error.message}`)
+    return this.mapObjects((data ?? []) as Array<Record<string, unknown>>)
+  }
+
+  private mergePreferHubs(
+    hubs: SpaceKnowledgeGraphObject[],
+    listed: SpaceKnowledgeGraphObject[],
+    limit: number,
+  ): SpaceKnowledgeGraphObject[] {
+    const seen = new Set<string>()
+    const out: SpaceKnowledgeGraphObject[] = []
+    for (const object of [...hubs, ...listed]) {
+      if (seen.has(object.id)) continue
+      seen.add(object.id)
+      out.push(object)
+      if (out.length >= limit) break
+    }
+    return out
+  }
+
+  private mapObjects(rows: Array<Record<string, unknown>>): SpaceKnowledgeGraphObject[] {
+    return rows.map((row) => {
+      const metadata = this.record(row.metadata)
+      const chunkRows = Array.isArray(row.space_semantic_chunks) ? row.space_semantic_chunks : []
+      return {
+        id: String(row.id),
+        source_type: String(row.source_type ?? 'space'),
+        source_id: String(row.source_id ?? row.id),
+        title: String(row.title ?? ''),
+        summary: String(row.summary ?? ''),
+        user_id: String(row.user_id ?? ''),
+        org_id: this.optionalString(row.org_id),
+        space_id: this.optionalString(row.space_id),
+        campaign_id: this.optionalString(row.campaign_id),
+        parent_type: this.optionalString(row.parent_type),
+        parent_id: this.optionalString(row.parent_id),
+        metadata,
+        retrieve_via: metadata.retrieve_via ? this.record(metadata.retrieve_via) : null,
+        source_updated_at: this.optionalString(row.source_updated_at),
+        indexed_at: this.optionalString(row.indexed_at),
+        content_hash: this.optionalString(row.content_hash),
+        chunk_count: chunkRows.length,
+        created_at: String(row.created_at ?? ''),
+        updated_at: String(row.updated_at ?? row.created_at ?? ''),
+      }
+    })
+  }
+
   private response(
     type: KnowledgeGraphScope,
     objects: SpaceKnowledgeGraphObject[],
     edges: SpaceKnowledgeGraphEdge[],
     scope: { space_id?: string; campaign_id?: string },
+    trueStats?: KnowledgeGraphScopeStats,
   ): SpaceKnowledgeGraphResponse {
     const bySourceType: Record<string, number> = {}
     for (const object of objects) {
@@ -405,9 +462,12 @@ export class SpaceKnowledgeGraphService {
       objects,
       edges,
       stats: {
-        total_objects: objects.length,
-        total_edges: edges.length,
-        by_source_type: bySourceType,
+        total_objects: trueStats?.total_objects ?? objects.length,
+        total_edges: trueStats?.total_edges ?? edges.length,
+        by_source_type:
+          trueStats && Object.keys(trueStats.by_source_type).length > 0
+            ? trueStats.by_source_type
+            : bySourceType,
       },
     }
   }

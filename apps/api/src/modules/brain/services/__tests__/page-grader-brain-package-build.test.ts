@@ -3,6 +3,7 @@ import {
   buildPageGraderSeedMemories,
   buildPageGraderSourceMemories,
   computePageGraderPackageContentHash,
+  resolvePageGraderKnowledgeSourceType,
 } from '../page-grader-brain-package-build'
 
 const pkg = {
@@ -47,5 +48,38 @@ describe('page-grader-brain-package-build', () => {
       envelope: { ...pkg.envelope, exported_at: '2099-01-01T00:00:00.000Z' },
     })
     expect(a).toBe(b)
+  })
+
+  it('maps Page Grader memory provenance to Campaign Knowledge source types', () => {
+    expect(
+      resolvePageGraderKnowledgeSourceType({
+        memorySourceType: 'page_grader_seed',
+        sourceTitle: 'Avatar: Owner',
+      }),
+    ).toBe('avatar')
+    expect(
+      resolvePageGraderKnowledgeSourceType({
+        memorySourceType: 'page_grader_seed',
+        sourceTitle: 'Offer: Retainer',
+      }),
+    ).toBe('offer')
+    expect(
+      resolvePageGraderKnowledgeSourceType({
+        memorySourceType: 'page_grader_slack',
+        sourceTitle: 'Slack thread',
+      }),
+    ).toBe('channel_message')
+    expect(
+      resolvePageGraderKnowledgeSourceType({
+        memorySourceType: 'page_grader_call',
+        sourceTitle: 'Kickoff call',
+      }),
+    ).toBe('conversation_document')
+    expect(
+      resolvePageGraderKnowledgeSourceType({
+        memorySourceType: 'page_grader_google_drive',
+        sourceTitle: 'Brief',
+      }),
+    ).toBe('space_doc')
   })
 })
