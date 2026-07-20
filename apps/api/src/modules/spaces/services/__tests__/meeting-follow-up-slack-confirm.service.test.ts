@@ -7,6 +7,7 @@ import {
 describe('MeetingFollowUpSlackConfirmService', () => {
   const repo = {
     findItemsByIds: vi.fn(),
+    findItemById: vi.fn(),
     updateItem: vi.fn(),
   }
   const config = {
@@ -92,7 +93,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       expect.objectContaining({
         channel_id: 'D123',
         text: expect.stringMatching(
-          /Summary:.*Align on urgent[\s\S]*Open Fathom recording[\s\S]*Ship AM loop — _owner: Dylan_[\s\S]*Fix reporting SoT — _owner: Nate_/,
+          /Summary:[\s\S]*Align on urgent[\s\S]*- Operational bandwidth[\s\S]*Open Fathom recording[\s\S]*Ship AM loop — _owner: Dylan_[\s\S]*Fix reporting SoT — _owner: Nate_/,
         ),
       }),
     )
@@ -134,5 +135,110 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     })
     expect(result).toEqual({ skipped: true, reason: 'no_follow_ups' })
     expect(slackTools.sendMessage).not.toHaveBeenCalled()
+  })
+
+  it('confirms follow-ups inside ROAS and replies in the Slack thread', async () => {
+    const query: Record<string, ReturnType<typeof vi.fn>> = {}
+    query.select = vi.fn(() => query)
+    query.eq = vi.fn(() => query)
+    query.limit = vi.fn(() => query)
+    query.maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        id: 'call-1',
+        space_id: 'space-1',
+        user_id: 'user-1',
+        org_id: 'org-1',
+        custom_data: {
+          slack_follow_up_confirm: {
+            status: 'pending',
+            channel_id: 'D123',
+            message_ts: '1710000000.000100',
+            space_id: 'space-1',
+            space_item_ids: ['fu-1'],
+            confirm_reaction: 'white_check_mark',
+            dm_email: DEFAULT_ADMIN_DM_EMAIL,
+            requested_at: '2026-07-20T00:00:00.000Z',
+          },
+        },
+      },
+      error: null,
+    })
+    const serviceSupabase = { from: vi.fn(() => query) }
+    moduleRef.get.mockReturnValue({ client: serviceSupabase })
+    repo.updateItem.mockResolvedValue({})
+    repo.findItemById.mockResolvedValue({
+      id: 'call-1',
+      title: 'Nate and Dylan ops',
+      description: 'Align on urgent operational challenges.',
+      custom_data: { fathom_url: 'https://fathom.video/calls/753783387' },
+    })
+    repo.findItemsByIds.mockResolvedValue([
+      {
+        id: 'fu-1',
+        title: 'Ship AM loop',
+        custom_data: { suggested_assignee_name: 'Dylan' },
+      },
+    ])
+    // Call org can be null while Slack lives on an org-scoped agent channel.
+    serviceSupabase.from = vi.fn((table: string) => {
+      if (table === 'agent_channels') {
+        const channelQuery: Record<string, ReturnType<typeof vi.fn>> = {}
+        channelQuery.select = vi.fn(() => channelQuery)
+        channelQuery.eq = vi.fn(() => channelQuery)
+        channelQuery.order = vi.fn(() => channelQuery)
+        channelQuery.limit = vi.fn(() => channelQuery)
+        channelQuery.maybeSingle = vi.fn().mockResolvedValue({
+          data: { org_id: 'slack-org-1' },
+          error: null,
+        })
+        return channelQuery
+      }
+      return query
+    })
+    slackTools.sendMessage.mockResolvedValue({ success: true, ts: '1710000001.000100' })
+
+    await expect(
+      service.handleReactionAdded({
+        channelId: 'D123',
+        messageTs: '1710000000.000100',
+        reaction: 'white_check_mark',
+        slackUserId: 'U_DYLAN',
+      }),
+    ).resolves.toBe(true)
+
+    expect(repo.updateItem).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      'space-1',
+      'call-1',
+      expect.objectContaining({
+        custom_data: expect.objectContaining({
+          slack_follow_up_confirm: expect.objectContaining({ status: 'approved' }),
+        }),
+      }),
+      'org-1',
+    )
+    expect(slackTools.sendMessage).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      'slack-org-1',
+      expect.objectContaining({
+        channel_id: 'D123',
+        thread_ts: '1710000000.000100',
+        text: expect.stringMatching(
+          /Confirmed — shareable follow-up[\s\S]*Nate and Dylan ops[\s\S]*Align on urgent[\s\S]*Open Fathom recording[\s\S]*Ship AM loop — _owner: Dylan_[\s\S]*Not sent to Page Grader yet/,
+        ),
+      }),
+    )
+  })
+
+  it('keeps the full structured meeting summary instead of flattening or truncating it', () => {
+    const summary = service.briefMeetingSummary({
+      custom_data: {
+        summary: 'Key takeaways:\n- First important point\n- Second important point',
+      },
+    })
+
+    expect(summary).toBe('Key takeaways:\n- First important point\n- Second important point')
   })
 })

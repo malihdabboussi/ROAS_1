@@ -170,10 +170,6 @@ export const AutomationActionSchema = z.discriminatedUnion('type', [
     type: z.literal('request_slack_follow_up_confirm'),
     dm_email: z.string().email().optional(),
     confirm_reaction: z.string().min(1).max(80).optional(),
-    page_grader_client_id: z.string().uuid().optional(),
-    page_grader_task_type: z
-      .enum(['design', 'copy', 'funnel', 'ghl', 'ad', 'video', 'other', 'general'])
-      .optional(),
     suggestion_ids: z.array(z.string().uuid()).max(50).optional(),
     continuation: ContinuationSchema,
   }),

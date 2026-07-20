@@ -372,10 +372,6 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
       dmEmail: typeof action.dm_email === 'string' ? action.dm_email : undefined,
       confirmReaction:
         typeof action.confirm_reaction === 'string' ? action.confirm_reaction : undefined,
-      pageGraderClientId:
-        typeof action.page_grader_client_id === 'string' ? action.page_grader_client_id : undefined,
-      pageGraderTaskType:
-        typeof action.page_grader_task_type === 'string' ? action.page_grader_task_type : undefined,
     })
   }
 

@@ -30,8 +30,32 @@ Files:
 
 - `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.service.ts`
   Evidence: DM copy says feedback loop ships next; only reaction_added approve is implemented.
-  Needed work: Ingest Slack thread replies → revise follow-ups → re-ask confirm → then Page Grader.
+  Needed work: Interpret Slack thread replies as revision requests, update follow-ups in ROAS, and re-ask for confirmation.
   Deferred because: User asked for emoji MVP via DM first while channels are created.
+
+## 2026-07-20 - [FEATURE] Slack group and channel Shadow inbox
+
+Status: Open
+Found while: Making per-person Slack conversations thread-aware
+Files:
+
+- `apps/api/src/modules/slack/services/slack-people.service.ts`
+- `apps/web/src/features/team-2/components/people/SlackShadowConversationView.tsx`
+  Evidence: Person detail now shows complete DM thread replies, but group DMs and channels are conversation identities rather than people and do not yet have a dedicated managed inbox.
+  Needed work: Add a channel/group conversation directory, source-channel labels, threaded history, channel-level Shadow proposals, and navigation that mirrors the per-person conversation screen.
+  Deferred because: Reusing a person record for a group would corrupt identity and Brain routing; the channel inbox needs a separate data contract and screen.
+
+## 2026-07-20 - [FEATURE] Managed Person Brain compounding pipeline
+
+Status: Open
+Found while: Separating person identity memory from Customer Brain
+Files:
+
+- `supabase/migrations/20260720220000_slack_managed_person_brains.sql`
+- `apps/api/src/modules/slack/services/slack-people.service.ts`
+  Evidence: Slack-only people can now receive a distinct organization-managed, non-default User Brain. Live DM history remains a review surface and is not automatically ingested.
+  Needed work: Define the approved Slack evidence sources, incremental cursor, retention/deletion behavior, attribution, relationship links into Customer Brain and Campaign Knowledge, and a visible learning enabled/paused control before scheduled compounding begins.
+  Deferred because: Automatically training a Brain from private/team communication is a new data-write and retention policy, not a display-layer change.
 
 ## 2026-07-20 - [ARCH] space-automation-service-07 over LOC after resume fix
 
@@ -7546,3 +7570,14 @@ Files:
 - Evidence: `wc -l` reports 1,399 LOC after adding the two-value Paid Ads workspace-mode field, above the 400-line frontend maximum.
 - Needed work: Split view configs, automation contracts, and core Space schema types into domain-owned modules while preserving the public Spaces type boundary.
 - Why not now: The requested behavior requires one persisted view-config field; restructuring the shared schema registry would overlap unrelated automation edits already present in this worktree.
+
+## 2026-07-20 - [ARCH] Meeting follow-up Slack confirm service near LOC soft limit
+
+Status: Open
+Found while: Fixing silent ✅ reply failure
+Files:
+
+- `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.service.ts` (~462 LOC; soft limit ~480)
+  Evidence: Added shareable reply + Slack org resolution helpers.
+  Needed work: Extract message builders / pending lookup into a small helper module before next feature (thread revise loop).
+  Deferred because: In-scope was making ✅ visible and shareable for retest.

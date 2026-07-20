@@ -1,5 +1,19 @@
 # Changelog - July 20, 2026
 
+## [2026-07-20 13:34] - [FIX]
+
+What: Renamed the unified Paid Ads workspace modes to Analyze and Launch, placed Analyze first, and made Analyze the default for views without a saved mode.
+Why: Paid Ads should open on existing campaign performance before presenting campaign creation and publishing controls.
+Impact: New and legacy Paid Ads views open in Analyze, while an explicitly saved Launch selection remains respected.
+Files: Paid Ads mode resolver, workspace toggle labels and tests, Paid Ads workspace test, and integration connection documentation.
+
+## [2026-07-20 13:31] - [FEATURE]
+
+What: Added a card/list toggle to Manage People, inline list controls for person type and agent delivery, and reusable Brain controls that can map a portal teammate or create a Slack-only Person Brain.
+Why: Admins needed the fast one-click controls in list view and a durable Brain path for people who do not have portal accounts.
+Impact: Slack-only people can now become organization-scoped contacts connected to Customer Brain, while portal teammates continue to use their own accessible User Brain. Creating the identity route does not automatically ingest Slack DMs.
+Files: Slack People controller/service/repositories/tests, Team People roster/detail/hook/client/messages/tests, and integration connection documentation.
+
 ## [2026-07-20 13:14] - [FEATURE]
 
 What: Post-call Slack confirm DM now includes a short meeting summary, Fathom recording link, and per-task owner; reaction confirm handler ships with deploy.
@@ -114,3 +128,20 @@ What: Repaired Meta Paid Ads reporting so completed registrations and purchases 
 Why: Reporting ignored Meta completed-registration actions, read ad-account context from a field the query did not return, and separately refetched all-time metrics before loading a generic publishing-oriented chat.
 Impact: Webinar campaigns now show their real registration results, purchase campaigns retain purchase results, Meta opens the correct account and object, and Blaze analyzes only the campaigns and date range the user selected without requesting publishing setup.
 Files: `meta-insights.repository.ts`, `meta-api.types.ts`, `meta-insights.service.ts`, `meta-sync.service.ts`, `analytics.service.ts`, `AdsPerformanceView.tsx`, `AdAnalysisPanel.tsx`, `meta-ads-analysis.ts`, tests, messages config, and `documentation/features/integration-connections.md`.
+
+## [2026-07-20 13:45] - [FEATURE]
+
+What: Made People conversations chronological and thread-aware with timestamps, actual-versus-sample labels, correct agent/human alignment, Slack formatting, and hover rationale; changed Slack-only Person Brains to distinct organization-managed User Brains; made checkmark confirmation acknowledge approval in the Slack thread and removed its Page Grader dispatch coupling.
+Why: The review screen mixed real messages with phantom proposals, reversed the speakers, flattened Slack formatting, omitted thread replies and timestamps, and incorrectly modeled every unmapped person through Customer Brain. Checkmark approval also looked inert and crossed into the separate Page Grader product.
+Impact: Admins can audit what actually happened versus what is only proposed, follow DM threads, understand why a draft exists, create a person-centric managed Brain, and receive an explicit ROAS confirmation reply after reacting in Slack. Group/channel inboxes and automatic Brain ingestion remain separately guarded follow-up work.
+Files: Slack People API/types/repositories/tests and People conversation/Brain UI, `20260720220000_slack_managed_person_brains.sql`, meeting follow-up Slack confirmation service/action schemas/tests, `spaces-automation.md`, `integration-connections.md`, and follow-up work log.
+
+## [2026-07-20 13:51] - [FIX]
+
+What: Fixed Slack ✅ confirm so the thread gets a shareable summary reply by resolving the bot token from the org-scoped Slack channel (call items can have null org_id), and clarified that confirm stays in ROAS without Page Grader send.
+
+Why: Reaction approved follow-ups in the DB but the thread reply failed silently when Slack lived on an org while the meeting call was personal (org_id null). Users saw no visible confirmation or shareable summary.
+
+Impact: ✅ now posts a thread reply with meeting summary, Fathom link, owned follow-ups, and an explicit “not sent to Page Grader yet” note.
+
+Files: `meeting-follow-up-slack-confirm.service.ts`, tests, changelog.

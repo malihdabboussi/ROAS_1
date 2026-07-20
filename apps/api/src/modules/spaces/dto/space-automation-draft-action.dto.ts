@@ -164,8 +164,6 @@ export const LooseAutomationActionSchema = z.discriminatedUnion('type', [
     type: z.literal('request_slack_follow_up_confirm'),
     dm_email: z.string().optional(),
     confirm_reaction: z.string().optional(),
-    page_grader_client_id: z.string().optional(),
-    page_grader_task_type: z.string().optional(),
     suggestion_ids: z.array(z.string()).optional(),
     continuation: ContinuationSchema,
   }),

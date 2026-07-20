@@ -3,8 +3,6 @@ import { ConfigService } from '@nestjs/config'
 import { ModuleRef } from '@nestjs/core'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SupabaseServiceClient } from '@vibey/api-shared'
-import type { SendPageGraderWorkDto } from '../../integrations/page-grader/dto/page-grader.dto'
-import { PageGraderSendWorkService } from '../../integrations/page-grader/services/page-grader-send-work.service'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
 import { SpacesRepository } from '../repositories/spaces.repository'
 
@@ -21,12 +19,8 @@ export type SlackFollowUpConfirmPayload = {
   confirm_reaction: string
   dm_email: string
   requested_at: string
-  page_grader_client_id?: string
-  page_grader_task_type?: string
   approved_at?: string
   approved_by_slack_user_id?: string
-  page_grader_results?: unknown
-  error?: string
 }
 
 @Injectable()
@@ -71,8 +65,6 @@ export class MeetingFollowUpSlackConfirmService {
     suggestionIds: string[]
     dmEmail?: string
     confirmReaction?: string
-    pageGraderClientId?: string
-    pageGraderTaskType?: string
   }): Promise<Record<string, unknown>> {
     if (!this.slackTools) throw new Error('Slack tools service is not available')
     if (input.suggestionIds.length === 0) {
@@ -154,8 +146,6 @@ export class MeetingFollowUpSlackConfirmService {
       confirm_reaction: confirmReaction,
       dm_email: dmEmail,
       requested_at: new Date().toISOString(),
-      ...(input.pageGraderClientId ? { page_grader_client_id: input.pageGraderClientId } : {}),
-      ...(input.pageGraderTaskType ? { page_grader_task_type: input.pageGraderTaskType } : {}),
     }
 
     await this.repo.updateItem(
@@ -218,41 +208,11 @@ export class MeetingFollowUpSlackConfirmService {
     const { pending, supabase, slackUserId } = input
     const ownerUserId = pending.userId
     const orgId = pending.orgId
-    let pageGraderResults: unknown = null
-    let error: string | undefined
-
-    const clientId = pending.payload.page_grader_client_id?.trim()
-    if (clientId) {
-      try {
-        const sendWork = this.moduleRef.get(PageGraderSendWorkService, { strict: false })
-        const taskType = (pending.payload.page_grader_task_type?.trim() ||
-          'general') as SendPageGraderWorkDto['task_type']
-        pageGraderResults = await sendWork.sendWork(
-          supabase,
-          ownerUserId,
-          {
-            client_id: clientId,
-            space_id: pending.spaceId,
-            space_item_ids: pending.payload.space_item_ids,
-            task_type: taskType,
-            work_kind: 'task_request',
-          },
-          orgId,
-          null,
-        )
-      } catch (err) {
-        error = err instanceof Error ? err.message : String(err)
-        this.logger.error(`Page Grader send after Slack confirm failed: ${error}`)
-      }
-    }
-
     const nextPayload: SlackFollowUpConfirmPayload = {
       ...pending.payload,
-      status: error ? 'failed' : 'approved',
+      status: 'approved',
       approved_at: new Date().toISOString(),
       approved_by_slack_user_id: slackUserId,
-      ...(pageGraderResults ? { page_grader_results: pageGraderResults } : {}),
-      ...(error ? { error } : {}),
     }
 
     await this.repo.updateItem(
@@ -273,8 +233,7 @@ export class MeetingFollowUpSlackConfirmService {
           itemId,
           {
             custom_data: {
-              slack_follow_up_confirm_status: error ? 'failed' : 'approved',
-              ready_for_page_grader: !error,
+              slack_follow_up_confirm_status: 'approved',
             },
           },
           orgId,
@@ -289,25 +248,18 @@ export class MeetingFollowUpSlackConfirmService {
     }
 
     if (this.slackTools) {
-      const followUps = await this.repo.findItemsByIds(
-        supabase,
-        pending.spaceId,
-        pending.payload.space_item_ids,
-      )
-      const lines = followUps.map((item, index) => this.formatFollowUpLine(item, index))
-      const reply = error
-        ? [`Confirmed the list, but Page Grader send failed:`, error, '', ...lines].join('\n')
-        : clientId
-          ? [`Confirmed — sent to Page Grader.`, '', ...lines].join('\n')
-          : [
-              `Confirmed these follow-ups.`,
-              `No Page Grader client was set on this admin test — open Meetings to send when ready.`,
-              '',
-              ...lines,
-            ].join('\n')
+      const [callItem, followUps] = await Promise.all([
+        this.repo.findItemById(supabase, pending.spaceId, pending.callItemId),
+        this.repo.findItemsByIds(supabase, pending.spaceId, pending.payload.space_item_ids),
+      ])
+      const reply = this.buildShareableConfirmReply({
+        callItem: (callItem as Record<string, unknown> | null) ?? null,
+        followUps,
+      })
+      const slackOrgId = await this.resolveSlackSendOrgId(supabase, ownerUserId, orgId)
 
       await this.slackTools
-        .sendMessage(supabase, ownerUserId, orgId, {
+        .sendMessage(supabase, ownerUserId, slackOrgId, {
           channel_id: pending.payload.channel_id,
           text: reply,
           thread_ts: pending.payload.message_ts,
@@ -316,6 +268,52 @@ export class MeetingFollowUpSlackConfirmService {
     }
 
     return true
+  }
+
+  buildShareableConfirmReply(input: {
+    callItem: Record<string, unknown> | null
+    followUps: Array<Record<string, unknown>>
+  }): string {
+    const title = String(input.callItem?.title ?? 'Meeting').trim() || 'Meeting'
+    const summary = this.briefMeetingSummary(input.callItem)
+    const fathomUrl = this.resolveFathomUrl(input.callItem)
+    const lines = input.followUps.map((item, index) => this.formatFollowUpLine(item, index))
+
+    return [
+      `*Confirmed — shareable follow-up*`,
+      `*${title}*`,
+      '',
+      ...(summary ? [`*Summary:*`, summary, ''] : []),
+      ...(fathomUrl ? [`<${fathomUrl}|Open Fathom recording>`, ''] : []),
+      `*Follow-ups*`,
+      ...lines,
+      '',
+      `_Confirmed in ROAS. Not sent to Page Grader yet._`,
+    ].join('\n')
+  }
+
+  /** Call items can be personal (org_id null) while Slack is connected on an org. */
+  private async resolveSlackSendOrgId(
+    supabase: SupabaseClient,
+    userId: string,
+    preferredOrgId: string | null,
+  ): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('agent_channels')
+      .select('org_id')
+      .eq('user_id', userId)
+      .eq('channel_type', 'slack')
+      .eq('is_active', true)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (error) {
+      this.logger.warn(`resolveSlackSendOrgId failed: ${error.message}`)
+      return preferredOrgId
+    }
+    if (typeof data?.org_id === 'string' && data.org_id.trim()) return data.org_id.trim()
+    return preferredOrgId
   }
 
   buildConfirmMessage(input: {
@@ -339,7 +337,7 @@ export class MeetingFollowUpSlackConfirmService {
       `Here's what I pulled from the call:`,
       ...lines,
       '',
-      `React with :${input.confirmReaction}: to confirm these for Page Grader.`,
+      `React with :${input.confirmReaction}: to confirm these follow-ups in ROAS.`,
       `Reply in this thread if anything should change (feedback loop ships next).`,
       `<${input.meetingUrl}|Open in Meetings>`,
     ].join('\n')
@@ -388,15 +386,12 @@ export class MeetingFollowUpSlackConfirmService {
     const raw = fromCustom || fromDescription
     if (!raw) return ''
 
-    const cleaned = raw
+    return raw
       .replace(/^#+\s*/gm, '')
       .replace(/\*\*/g, '')
-      .replace(/\n+/g, ' ')
-      .replace(/\s+/g, ' ')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
       .trim()
-    if (!cleaned) return ''
-    if (cleaned.length <= 320) return cleaned
-    return `${cleaned.slice(0, 317).trimEnd()}...`
   }
 
   resolveFathomUrl(callItem: Record<string, unknown> | null): string | null {
