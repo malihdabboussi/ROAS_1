@@ -15,6 +15,7 @@ import { SlackWebhookController } from './controllers/slack-webhook.controller'
 import { SlackController } from './controllers/slack.controller'
 import { SlackApiIntegration } from './integrations/slack-api.integration'
 import { SlackBrainMappingRepository } from './repositories/slack-brain-mapping.repository'
+import { SlackPeopleBrainRepository } from './repositories/slack-people-brain.repository'
 import { SlackPeopleRepository } from './repositories/slack-people.repository'
 import { SlackRuntimeRepository } from './repositories/slack-runtime.repository'
 import { SlackRepository } from './repositories/slack.repository'
@@ -46,6 +47,7 @@ import { SlackService } from './services/slack.service'
     SlackRuntimeRepository,
     SlackBrainMappingRepository,
     SlackPeopleRepository,
+    SlackPeopleBrainRepository,
     SlackApiIntegration,
   ],
   exports: [

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SlackApiIntegration } from '../integrations/slack-api.integration'
+import { SlackPeopleBrainRepository } from '../repositories/slack-people-brain.repository'
 import { SlackPeopleRepository } from '../repositories/slack-people.repository'
 import type {
   SlackDeliveryMode,
@@ -18,6 +19,7 @@ import { SlackSenderResolverService } from './slack-sender-resolver.service'
 export class SlackPeopleService {
   constructor(
     private readonly peopleRepository: SlackPeopleRepository,
+    private readonly peopleBrainRepository: SlackPeopleBrainRepository,
     private readonly senderResolver: SlackSenderResolverService,
     private readonly slackApi: SlackApiIntegration,
   ) {}
@@ -27,7 +29,7 @@ export class SlackPeopleService {
     const integration = await this.peopleRepository.findOrgSlackIntegration(supabase, orgId)
     if (!integration) return { connected: false, people: [] }
 
-    await this.senderResolver.seedContactIdentifiersFromWorkspace(supabase, {
+    const workspace = await this.senderResolver.seedContactIdentifiersFromWorkspace(supabase, {
       botToken: integration.access_token,
       userId: integration.user_id,
       orgId,
@@ -39,17 +41,34 @@ export class SlackPeopleService {
     const linkedUserIds = [
       ...new Set(people.map((person) => person.vibey_user_id).filter((id): id is string => !!id)),
     ]
-    const brains = await this.peopleRepository.listDefaultUserBrains(supabase, linkedUserIds)
+    const managedBrainIds = people
+      .map((person) => person.person_brain_id)
+      .filter((id): id is string => !!id)
+    const [brains, managedBrains] = await Promise.all([
+      this.peopleBrainRepository.listDefaultUserBrains(supabase, linkedUserIds),
+      this.peopleBrainRepository.listManagedPersonBrains(supabase, managedBrainIds),
+    ])
     const brainByOwnerId = new Map(brains.map((brain) => [brain.owner_id, brain]))
+    const managedBrainById = new Map(managedBrains.map((brain) => [brain.id, brain]))
     return {
       connected: true,
       portal_users: portalUsers,
       people: people.map((person) => {
-        const brain = person.vibey_user_id ? brainByOwnerId.get(person.vibey_user_id) : null
+        const managedBrain = person.person_brain_id
+          ? managedBrainById.get(person.person_brain_id)
+          : null
+        const portalBrain = person.vibey_user_id ? brainByOwnerId.get(person.vibey_user_id) : null
+        const brain = managedBrain ?? portalBrain
         return {
           ...person,
+          slack_channels: workspace.channelNamesByMember.get(person.platform_id) ?? [],
           brain_id: brain?.id ?? null,
           brain_name: brain?.name ?? null,
+          brain_kind: managedBrain
+            ? ('managed_person' as const)
+            : portalBrain
+              ? ('portal_user' as const)
+              : null,
         }
       }),
     }
@@ -69,13 +88,50 @@ export class SlackPeopleService {
       orgId,
       userId,
     })
-    const brains = await this.peopleRepository.listDefaultUserBrains(supabase, [userId])
-    const brain = brains[0]
+    const [brains, managedBrains] = await Promise.all([
+      this.peopleBrainRepository.listDefaultUserBrains(supabase, [userId]),
+      this.peopleBrainRepository.listManagedPersonBrains(
+        supabase,
+        person.person_brain_id ? [person.person_brain_id] : [],
+      ),
+    ])
+    const managedBrain = managedBrains[0]
+    const brain = managedBrain ?? brains[0]
     return {
       person: {
         ...person,
         brain_id: brain?.id ?? null,
         brain_name: brain?.name ?? null,
+        brain_kind: managedBrain
+          ? ('managed_person' as const)
+          : brain
+            ? ('portal_user' as const)
+            : null,
+      },
+    }
+  }
+
+  async createPersonBrain(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null | undefined,
+    personId: string,
+  ) {
+    if (!orgId) throw new BadRequestException('Slack people require organization context')
+    const person = await this.peopleRepository.findPerson(supabase, orgId, personId)
+    if (!person) throw new NotFoundException('Slack person not found')
+    const brain = await this.peopleBrainRepository.createManagedPersonBrain(supabase, {
+      personId,
+      orgId,
+      ownerId: userId,
+    })
+    return {
+      person: {
+        ...person,
+        person_brain_id: brain.id,
+        brain_id: brain.id,
+        brain_name: brain.name,
+        brain_kind: 'managed_person' as const,
       },
     }
   }
@@ -103,16 +159,28 @@ export class SlackPeopleService {
     if (!orgId) throw new BadRequestException('Slack people require organization context')
     const person = await this.peopleRepository.confirmSuggestedIdentity(supabase, orgId, personId)
     if (!person) throw new ConflictException('This identity suggestion is no longer available')
-    const brains = await this.peopleRepository.listDefaultUserBrains(
-      supabase,
-      person.vibey_user_id ? [person.vibey_user_id] : [],
-    )
-    const brain = brains[0]
+    const [brains, managedBrains] = await Promise.all([
+      this.peopleBrainRepository.listDefaultUserBrains(
+        supabase,
+        person.vibey_user_id ? [person.vibey_user_id] : [],
+      ),
+      this.peopleBrainRepository.listManagedPersonBrains(
+        supabase,
+        person.person_brain_id ? [person.person_brain_id] : [],
+      ),
+    ])
+    const managedBrain = managedBrains[0]
+    const brain = managedBrain ?? brains[0]
     return {
       person: {
         ...person,
         brain_id: brain?.id ?? null,
         brain_name: brain?.name ?? null,
+        brain_kind: managedBrain
+          ? ('managed_person' as const)
+          : brain
+            ? ('portal_user' as const)
+            : null,
       },
     }
   }
@@ -133,21 +201,42 @@ export class SlackPeopleService {
     ])
     if (!channelId) throw new ConflictException('Could not open this Slack conversation')
     const history = await this.slackApi.getChannelHistory(integration.access_token, channelId, 100)
+    const threadReplies = await Promise.all(
+      history
+        .filter((message) => Number(message.reply_count ?? 0) > 0 && typeof message.ts === 'string')
+        .map((message) =>
+          this.slackApi
+            .conversationsRepliesAll(integration.access_token, channelId, message.ts as string)
+            .catch(() => []),
+        ),
+    )
+    const historyByTs = new Map(
+      [...history, ...threadReplies.flat()]
+        .filter((message) => typeof message.ts === 'string')
+        .map((message) => [message.ts as string, message]),
+    )
     const botUserId =
       typeof integration.metadata?.bot_user_id === 'string'
         ? integration.metadata.bot_user_id
         : null
-    const messages = history
+    const messages = [...historyByTs.values()]
       .filter((message) => typeof message.ts === 'string' && typeof message.text === 'string')
-      .map((message) => ({
-        ts: message.ts as string,
-        text: message.text as string,
-        direction:
-          message.bot_id || (botUserId && message.user === botUserId)
-            ? ('outbound' as const)
-            : ('inbound' as const),
-      }))
-      .sort((a, b) => Number(b.ts) - Number(a.ts))
+      .map((message) => {
+        const ts = message.ts as string
+        const threadTs = message.thread_ts ?? (Number(message.reply_count ?? 0) > 0 ? ts : null)
+        return {
+          ts,
+          text: message.text as string,
+          direction:
+            message.bot_id || (botUserId && message.user === botUserId)
+              ? ('outbound' as const)
+              : ('inbound' as const),
+          thread_ts: threadTs,
+          is_thread_reply: Boolean(threadTs && threadTs !== ts),
+          reply_count: Number(message.reply_count ?? 0),
+        }
+      })
+      .sort((a, b) => Number(a.ts) - Number(b.ts))
     return { channel_id: channelId, messages, actions }
   }
 

@@ -35,6 +35,7 @@ export function SlackPeopleView() {
     updateRelationshipKind,
     confirmSuggestedIdentity,
     mapIdentity,
+    createPersonBrain,
     loadPersonActivity,
     createProposal,
     reviewAction,
@@ -212,6 +213,14 @@ export function SlackPeopleView() {
                       toast.error(SLACK_PEOPLE_MESSAGES.IDENTITY_MAP_ERROR)
                     }
                   }}
+                  onCreateBrain={async () => {
+                    try {
+                      await createPersonBrain(selectedPerson.id)
+                      toast.success(SLACK_PEOPLE_MESSAGES.BRAIN_CREATED)
+                    } catch {
+                      toast.error(SLACK_PEOPLE_MESSAGES.BRAIN_CREATE_ERROR)
+                    }
+                  }}
                 />
               ) : (
                 <section className="surface-card border-border p-spacing-6 rounded-spacing-4 border">
@@ -258,7 +267,38 @@ export function SlackPeopleView() {
                   onOpen={openShadowInbox}
                 />
 
-                <SlackPeopleRoster people={people} onOpenPerson={openPerson} />
+                <SlackPeopleRoster
+                  people={people}
+                  portalUsers={portalUsers}
+                  onOpenPerson={openPerson}
+                  onUpdateRelationshipKind={(person, kind) => classifyPerson(person.id, kind)}
+                  onUpdateDeliveryMode={(person, mode) => {
+                    void updateDeliveryMode(person.id, mode).catch(() =>
+                      toast.error(SLACK_PEOPLE_MESSAGES.MODE_ERROR),
+                    )
+                  }}
+                  onConfirmIdentity={(person) => {
+                    void confirmSuggestedIdentity(person.id)
+                      .then(() => toast.success(SLACK_PEOPLE_MESSAGES.IDENTITY_CONFIRMED))
+                      .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.IDENTITY_CONFIRM_ERROR))
+                  }}
+                  onMapIdentity={async (person, userId) => {
+                    try {
+                      await mapIdentity(person.id, userId)
+                      toast.success(SLACK_PEOPLE_MESSAGES.IDENTITY_MAPPED)
+                    } catch {
+                      toast.error(SLACK_PEOPLE_MESSAGES.IDENTITY_MAP_ERROR)
+                    }
+                  }}
+                  onCreateBrain={async (person) => {
+                    try {
+                      await createPersonBrain(person.id)
+                      toast.success(SLACK_PEOPLE_MESSAGES.BRAIN_CREATED)
+                    } catch {
+                      toast.error(SLACK_PEOPLE_MESSAGES.BRAIN_CREATE_ERROR)
+                    }
+                  }}
+                />
               </>
             )}
           </>

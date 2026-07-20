@@ -212,6 +212,7 @@ export interface SlackDiscoveredPerson {
   vibey_user_id: string | null
   suggested_vibey_user_id: string | null
   contact_id: string | null
+  person_brain_id: string | null
   relationship_kind: SlackRelationshipKind
   relationship_source: SlackRelationshipSource
   identity_match_method: SlackIdentityMatchMethod
@@ -220,6 +221,8 @@ export interface SlackDiscoveredPerson {
   last_seen_at: string
   brain_id: string | null
   brain_name: string | null
+  brain_kind: 'portal_user' | 'managed_person' | null
+  slack_channels: string[]
 }
 
 export interface SlackPortalUser {
@@ -234,6 +237,9 @@ export interface SlackPersonActivityMessage {
   ts: string
   text: string
   direction: 'inbound' | 'outbound'
+  thread_ts: string | null
+  is_thread_reply: boolean
+  reply_count: number
 }
 
 export interface SlackShadowAction {

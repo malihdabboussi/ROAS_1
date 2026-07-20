@@ -34,6 +34,8 @@ export const SLACK_PEOPLE_MESSAGES = {
   IDENTITY_CONFIRMED: 'Matched. Their portal identity and User Brain are now connected.',
   IDENTITY_MAP_ERROR: "I couldn't map that portal user. Refresh and try again.",
   IDENTITY_MAPPED: 'Portal user mapped. Their available Brain is now connected.',
+  BRAIN_CREATE_ERROR: "I couldn't create that Person Brain. Refresh and try again.",
+  BRAIN_CREATED: 'Person Brain is on. New knowledge can now compound around this identity.',
   ACTIVITY_ERROR:
     "I couldn't open that Slack conversation. Check the Slack connection and try again.",
   DISCONNECTED: 'Connect Slack to discover teammates and external people.',
@@ -43,6 +45,7 @@ export const SLACK_PEOPLE_MESSAGES = {
     'This first release lets you test and control the review flow. Automatic proposal discovery is the next layer — nothing is being generated or sent in the background yet.',
   GHOST_PROFILE_HELP:
     'Internal, External, and Ignored describe your relationship. The portal icon separately shows whether this Slack identity is linked to an actual Vibey user.',
+  CHANNELS_NONE: 'No shared Slack channels are visible to this bot.',
   HOW_IT_WORKS: [
     {
       title: '1. Pick a person',

@@ -74,6 +74,27 @@ describe('SlackApiIntegration', () => {
     }
   })
 
+  it('loads every page of members for a visible Slack channel', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        json: async () => ({
+          ok: true,
+          members: ['U1', 'U2'],
+          response_metadata: { next_cursor: 'next-page' },
+        }),
+      })
+      .mockResolvedValueOnce({
+        json: async () => ({ ok: true, members: ['U3'], response_metadata: {} }),
+      })
+
+    await expect(integration.listConversationMembers('xoxb', 'C1')).resolves.toEqual([
+      'U1',
+      'U2',
+      'U3',
+    ])
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('cursor=next-page')
+  })
+
   it('uploadExternalFileToChannel throws when binary upload is not ok', async () => {
     fetchMock
       .mockResolvedValueOnce({

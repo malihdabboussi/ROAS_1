@@ -46,15 +46,16 @@ function createService(overrides?: {
       identity_match_method: 'confirmed_name',
     }),
     listShadowActions: vi.fn().mockResolvedValue([]),
-    listDefaultUserBrains: vi
-      .fn()
-      .mockResolvedValue([{ id: 'brain-1', owner_id: 'user-1', name: 'Default Brain' }]),
     listPersonShadowActions: vi
       .fn()
       .mockResolvedValue([{ id: 'action-1', target_member_id: 'person-1', status: 'sent' }]),
     findPerson: vi.fn().mockResolvedValue({
       id: 'person-1',
       platform_id: 'U1',
+      display_name: 'Ada Lovelace',
+      email: 'ada@example.com',
+      contact_id: null,
+      vibey_user_id: null,
       delivery_mode: 'shadow',
     }),
     createShadowAction: vi.fn().mockResolvedValue({ id: 'action-1', status: 'proposed' }),
@@ -70,34 +71,79 @@ function createService(overrides?: {
     markShadowActionSent: vi.fn().mockResolvedValue({ id: 'action-1', status: 'sent' }),
     markShadowActionFailed: vi.fn().mockResolvedValue({ id: 'action-1', status: 'failed' }),
   }
+  const brainRepository = {
+    listDefaultUserBrains: vi
+      .fn()
+      .mockResolvedValue([{ id: 'brain-1', owner_id: 'user-1', name: 'Default Brain' }]),
+    listManagedPersonBrains: vi.fn().mockResolvedValue([]),
+    createManagedPersonBrain: vi
+      .fn()
+      .mockResolvedValue({ id: 'person-brain-1', name: 'Ada Lovelace Person Brain' }),
+  }
   const senderResolver = {
-    seedContactIdentifiersFromWorkspace: vi.fn().mockResolvedValue({ seeded: 0, members: [] }),
+    seedContactIdentifiersFromWorkspace: vi.fn().mockResolvedValue({
+      seeded: 0,
+      members: [],
+      channelNamesByMember: new Map<string, string[]>(),
+    }),
   }
   const slackApi = {
     openDmChannel: vi.fn().mockResolvedValue('D1'),
     getChannelHistory: vi.fn().mockResolvedValue([
       { user: 'U1', text: 'I need help with launch reporting.', ts: '123.400' },
-      { bot_id: 'B1', text: 'I can pull that together.', ts: '123.500' },
+      {
+        bot_id: 'B1',
+        text: 'I can pull that together.',
+        ts: '123.500',
+        reply_count: 1,
+      },
+    ]),
+    conversationsRepliesAll: vi.fn().mockResolvedValue([
+      {
+        bot_id: 'B1',
+        text: 'I can pull that together.',
+        ts: '123.500',
+        reply_count: 1,
+      },
+      {
+        user: 'U1',
+        text: 'That works.',
+        ts: '123.600',
+        thread_ts: '123.500',
+      },
     ]),
     postMessage: vi.fn().mockResolvedValue({ ok: true, ts: '123.456' }),
   }
   const service = new SlackPeopleService(
     repository as never,
+    brainRepository as never,
     senderResolver as never,
     slackApi as never,
   )
-  return { service, repository, senderResolver, slackApi }
+  return {
+    service,
+    repository,
+    brainRepository,
+    senderResolver,
+    slackApi,
+  }
 }
 
 describe('SlackPeopleService', () => {
   it('refreshes Slack identities before returning the durable people directory', async () => {
     const person = {
       id: 'person-1',
+      platform_id: 'person-slack-1',
       display_name: 'Ada',
       relationship_kind: 'team_member',
       delivery_mode: 'shadow',
     }
     const { service, repository, senderResolver } = createService({ people: [person] })
+    senderResolver.seedContactIdentifiersFromWorkspace.mockResolvedValue({
+      seeded: 0,
+      members: [],
+      channelNamesByMember: new Map([['person-slack-1', ['client-acme', 'general']]]),
+    })
 
     const result = await service.listPeople({} as never, 'org-1')
 
@@ -117,7 +163,15 @@ describe('SlackPeopleService', () => {
           role: 'admin',
         },
       ],
-      people: [{ ...person, brain_id: null, brain_name: null }],
+      people: [
+        {
+          ...person,
+          slack_channels: ['client-acme', 'general'],
+          brain_id: null,
+          brain_name: null,
+          brain_kind: null,
+        },
+      ],
     })
   })
 
@@ -207,21 +261,57 @@ describe('SlackPeopleService', () => {
     })
   })
 
-  it('returns live Slack DM messages and Shadow actions for one person', async () => {
+  it('creates a durable organization-managed User Brain for a Slack identity', async () => {
+    const { service, brainRepository } = createService()
+
+    await expect(
+      service.createPersonBrain({} as never, 'admin-1', 'org-1', 'person-1'),
+    ).resolves.toEqual({
+      person: expect.objectContaining({
+        id: 'person-1',
+        person_brain_id: 'person-brain-1',
+        brain_id: 'person-brain-1',
+        brain_name: 'Ada Lovelace Person Brain',
+        brain_kind: 'managed_person',
+      }),
+    })
+    expect(brainRepository.createManagedPersonBrain).toHaveBeenCalledWith(expect.anything(), {
+      personId: 'person-1',
+      orgId: 'org-1',
+      ownerId: 'admin-1',
+    })
+  })
+
+  it('returns a chronological Slack DM timeline with thread replies and Shadow actions', async () => {
     const { service, slackApi } = createService()
 
     await expect(service.getPersonActivity({} as never, 'org-1', 'person-1')).resolves.toEqual({
       channel_id: 'D1',
       messages: [
-        expect.objectContaining({ direction: 'outbound', text: 'I can pull that together.' }),
         expect.objectContaining({
           direction: 'inbound',
           text: 'I need help with launch reporting.',
+          thread_ts: null,
+          is_thread_reply: false,
+        }),
+        expect.objectContaining({
+          direction: 'outbound',
+          text: 'I can pull that together.',
+          thread_ts: '123.500',
+          is_thread_reply: false,
+          reply_count: 1,
+        }),
+        expect.objectContaining({
+          direction: 'inbound',
+          text: 'That works.',
+          thread_ts: '123.500',
+          is_thread_reply: true,
         }),
       ],
       actions: [{ id: 'action-1', target_member_id: 'person-1', status: 'sent' }],
     })
     expect(slackApi.getChannelHistory).toHaveBeenCalledWith('xoxb', 'D1', 100)
+    expect(slackApi.conversationsRepliesAll).toHaveBeenCalledWith('xoxb', 'D1', '123.500')
   })
 
   it('creates a harmless test proposal without sending it', async () => {

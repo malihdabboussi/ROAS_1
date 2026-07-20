@@ -82,6 +82,28 @@ export abstract class SlackApiIntegrationCoreBase {
       }))
   }
 
+  async listConversationMembers(botToken: string, channelId: string): Promise<string[]> {
+    const members: string[] = []
+    let cursor: string | undefined
+    do {
+      const params = new URLSearchParams({ channel: channelId, limit: '200' })
+      if (cursor) params.set('cursor', cursor)
+      const res = await fetch(`${SLACK_API_BASE}/conversations.members?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${botToken}` },
+      })
+      const json = (await res.json()) as {
+        ok: boolean
+        error?: string
+        members?: string[]
+        response_metadata?: { next_cursor?: string }
+      }
+      if (!json.ok) throwSlackError(json.error, 'Slack conversations.members failed')
+      members.push(...(json.members ?? []))
+      cursor = json.response_metadata?.next_cursor || undefined
+    } while (cursor)
+    return members
+  }
+
   async postMessage(
     botToken: string,
     channelId: string,
@@ -201,9 +223,7 @@ export abstract class SlackApiIntegrationCoreBase {
     return {
       file_id: getJson.file_id,
       permalink:
-        completedFile &&
-        'permalink' in completedFile &&
-        typeof completedFile.permalink === 'string'
+        completedFile && 'permalink' in completedFile && typeof completedFile.permalink === 'string'
           ? completedFile.permalink
           : null,
     }

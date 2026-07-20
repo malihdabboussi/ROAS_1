@@ -26,6 +26,7 @@ interface SlackPersonScreenProps {
   onUpdateRelationshipKind: (kind: SlackRelationshipKind) => void
   onConfirmIdentity: () => void
   onMapIdentity: (userId: string) => Promise<void>
+  onCreateBrain: () => Promise<void>
 }
 
 export function SlackPersonScreen({
@@ -42,6 +43,7 @@ export function SlackPersonScreen({
   onUpdateRelationshipKind,
   onConfirmIdentity,
   onMapIdentity,
+  onCreateBrain,
 }: SlackPersonScreenProps) {
   return (
     <div className="gap-spacing-3 flex h-full min-h-0 flex-1 flex-col">
@@ -72,6 +74,7 @@ export function SlackPersonScreen({
             onUpdateRelationshipKind={onUpdateRelationshipKind}
             onConfirmIdentity={onConfirmIdentity}
             onMapIdentity={onMapIdentity}
+            onCreateBrain={onCreateBrain}
           />
         </div>
       </div>

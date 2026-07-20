@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { Bot, Send, ShieldCheck } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Bot, Info, MessageSquareReply, Send, ShieldCheck } from 'lucide-react'
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { slackMrkdwnToMarkdown } from '../../lib/slack-message-markdown'
 import type {
   SlackDeliveryMode,
   SlackDiscoveredPerson,
@@ -26,6 +28,23 @@ function modeHelp(mode: SlackDeliveryMode): string {
   return 'Drafts stay here for review and cannot send while this person is in Shadow.'
 }
 
+function formatTimestamp(value: string, slackTimestamp = false): string {
+  const date = slackTimestamp ? new Date(Number(value) * 1000) : new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
+function proposalLabel(action: SlackShadowAction): string {
+  if (action.metadata?.source === 'admin_test') return 'Sample message · never auto-sent'
+  if (action.status === 'sent') return 'Sent to Slack'
+  return 'Shadow proposal · not sent'
+}
+
 export function SlackPersonConversation({
   person,
   messages,
@@ -39,6 +58,26 @@ export function SlackPersonConversation({
   const [submitting, setSubmitting] = useState(false)
   const disabled =
     person.delivery_mode === 'off' || person.relationship_kind === 'ignored' || submitting
+  const timeline = useMemo(() => {
+    const actualMessageTs = new Set(messages.map((message) => message.ts))
+    return [
+      ...messages.map((message) => ({
+        kind: 'message' as const,
+        timestamp: Number(message.ts) * 1000,
+        message,
+      })),
+      ...actions
+        .filter((action) => {
+          const slackTs = action.metadata?.slack_message_ts
+          return typeof slackTs !== 'string' || !actualMessageTs.has(slackTs)
+        })
+        .map((action) => ({
+          kind: 'action' as const,
+          timestamp: new Date(action.created_at).getTime(),
+          action,
+        })),
+    ].sort((a, b) => a.timestamp - b.timestamp)
+  }, [actions, messages])
 
   const submit = async () => {
     const content = draft.trim()
@@ -89,72 +128,117 @@ export function SlackPersonConversation({
           </div>
         ) : (
           <>
-            {[...messages].reverse().map((message) => (
-              <article
-                key={`${message.ts}-${message.direction}`}
-                className={
-                  message.direction === 'outbound'
-                    ? 'surface-card border-primary p-spacing-3 ml-spacing-8 rounded-spacing-3 self-end border'
-                    : 'bg-secondary p-spacing-3 mr-spacing-8 rounded-spacing-3 self-start'
-                }
-              >
-                <p className="body-4 text-muted-foreground">
-                  {message.direction === 'outbound' ? 'Sent by your agent' : person.display_name}
-                </p>
-                <p className="body-3 text-foreground mt-spacing-1 whitespace-pre-wrap">
-                  {message.text}
-                </p>
-              </article>
-            ))}
-            {[...actions].reverse().map((action) => (
-              <article
-                key={action.id}
-                className="border-primary bg-secondary p-spacing-3 ml-spacing-8 rounded-spacing-3 self-end border"
-              >
-                <div className="gap-spacing-3 flex items-center justify-between">
-                  <span className="body-4 text-muted-foreground">Agent proposal</span>
-                  <span className="badge-glass badge-glass-muted body-4 capitalize">
-                    {action.status}
-                  </span>
-                </div>
-                <p className="body-3 text-foreground mt-spacing-2 whitespace-pre-wrap">
-                  {action.proposed_content}
-                </p>
-                {action.status === 'proposed' ? (
-                  <div className="mt-spacing-3 gap-spacing-2 flex">
-                    <button
-                      type="button"
-                      onClick={() => onReview(action.id, 'approved')}
-                      className="button-compact button-glass-primary"
+            {timeline.map((entry) => {
+              if (entry.kind === 'message') {
+                const { message } = entry
+                const agentMessage = message.direction === 'outbound'
+                return (
+                  <article
+                    key={`${message.ts}-${message.direction}`}
+                    className={`${
+                      agentMessage
+                        ? 'surface-card border-primary mr-spacing-8 self-start border'
+                        : 'bg-secondary ml-spacing-8 self-end'
+                    } ${message.is_thread_reply ? 'ml-spacing-6' : ''} p-spacing-3 rounded-spacing-3`}
+                  >
+                    <div className="gap-spacing-2 flex flex-wrap items-center">
+                      <span className="body-4 text-muted-foreground">
+                        {agentMessage ? 'Agent' : person.display_name}
+                      </span>
+                      <span className="badge-glass badge-glass-muted body-4">
+                        Actual Slack message
+                      </span>
+                      <time className="body-4 text-muted-foreground" dateTime={message.ts}>
+                        {formatTimestamp(message.ts, true)}
+                      </time>
+                    </div>
+                    {message.is_thread_reply ? (
+                      <p className="body-4 text-muted-foreground mt-spacing-2 gap-spacing-1 flex items-center">
+                        <MessageSquareReply className="icon-xs" /> Thread reply
+                      </p>
+                    ) : null}
+                    <MarkdownRenderer
+                      compact
+                      className="body-3 text-foreground mt-spacing-2 max-w-none"
                     >
-                      Approve
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onReview(action.id, 'dismissed')}
-                      className="button-compact button-glass-neutral"
-                    >
-                      Dismiss
-                    </button>
+                      {slackMrkdwnToMarkdown(message.text)}
+                    </MarkdownRenderer>
+                  </article>
+                )
+              }
+              const { action } = entry
+              return (
+                <article
+                  key={action.id}
+                  className="border-primary bg-secondary p-spacing-3 mr-spacing-8 rounded-spacing-3 self-start border"
+                >
+                  <div className="gap-spacing-3 flex items-center justify-between">
+                    <div className="gap-spacing-2 flex flex-wrap items-center">
+                      <span className="body-4 text-muted-foreground">Agent</span>
+                      <span className="badge-glass badge-glass-muted body-4">
+                        {proposalLabel(action)}
+                      </span>
+                      <time className="body-4 text-muted-foreground" dateTime={action.created_at}>
+                        {formatTimestamp(action.created_at)}
+                      </time>
+                    </div>
+                    <div className="gap-spacing-2 flex items-center">
+                      {action.rationale ? (
+                        <span
+                          title={action.rationale}
+                          aria-label={`Why the agent drafted this: ${action.rationale}`}
+                          className="text-muted-foreground cursor-help"
+                        >
+                          <Info className="icon-xs" />
+                        </span>
+                      ) : null}
+                      <span className="badge-glass badge-glass-muted body-4 capitalize">
+                        {action.status}
+                      </span>
+                    </div>
                   </div>
-                ) : null}
-                {action.status === 'approved' ? (
-                  person.delivery_mode === 'active' ? (
-                    <button
-                      type="button"
-                      onClick={() => onSend(action.id)}
-                      className="button-compact button-glass-primary mt-spacing-3"
-                    >
-                      Send to Slack DM
-                    </button>
-                  ) : (
-                    <p className="body-4 text-muted-foreground mt-spacing-3">
-                      Switch this person to Active to unlock sending.
-                    </p>
-                  )
-                ) : null}
-              </article>
-            ))}
+                  <MarkdownRenderer
+                    compact
+                    className="body-3 text-foreground mt-spacing-2 max-w-none"
+                  >
+                    {action.proposed_content}
+                  </MarkdownRenderer>
+                  {action.status === 'proposed' ? (
+                    <div className="mt-spacing-3 gap-spacing-2 flex">
+                      <button
+                        type="button"
+                        onClick={() => onReview(action.id, 'approved')}
+                        className="button-compact button-glass-primary"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onReview(action.id, 'dismissed')}
+                        className="button-compact button-glass-neutral"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  ) : null}
+                  {action.status === 'approved' ? (
+                    person.delivery_mode === 'active' ? (
+                      <button
+                        type="button"
+                        onClick={() => onSend(action.id)}
+                        className="button-compact button-glass-primary mt-spacing-3"
+                      >
+                        Send to Slack DM
+                      </button>
+                    ) : (
+                      <p className="body-4 text-muted-foreground mt-spacing-3">
+                        Switch this person to Active to unlock sending.
+                      </p>
+                    )
+                  ) : null}
+                </article>
+              )
+            })}
           </>
         )}
       </div>

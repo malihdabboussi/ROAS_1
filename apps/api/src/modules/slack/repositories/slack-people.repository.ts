@@ -11,7 +11,7 @@ import type {
 } from '../types/slack.types'
 
 const PERSON_SELECT =
-  'id, platform_id, display_name, username, avatar_url, title, timezone, email, is_bot, vibey_user_id, suggested_vibey_user_id, contact_id, relationship_kind, relationship_source, identity_match_method, identity_match_confidence, delivery_mode, last_seen_at'
+  'id, platform_id, display_name, username, avatar_url, title, timezone, email, is_bot, vibey_user_id, suggested_vibey_user_id, contact_id, person_brain_id, relationship_kind, relationship_source, identity_match_method, identity_match_confidence, delivery_mode, last_seen_at'
 
 @Injectable()
 export class SlackPeopleRepository {
@@ -182,22 +182,6 @@ export class SlackPeopleRepository {
       .maybeSingle()
     if (error) throw new Error(`Failed to confirm identity suggestion: ${error.message}`)
     return (data as SlackDiscoveredPerson | null) ?? null
-  }
-
-  async listDefaultUserBrains(
-    supabase: SupabaseClient,
-    userIds: string[],
-  ): Promise<Array<{ id: string; owner_id: string; name: string | null }>> {
-    if (userIds.length === 0) return []
-    const { data, error } = await supabase
-      .from('ns_brains')
-      .select('id, owner_id, name')
-      .in('owner_id', userIds)
-      .eq('scope', 'user')
-      .eq('is_default', true)
-      .is('org_id', null)
-    if (error) throw new Error(`Failed to load linked User Brains: ${error.message}`)
-    return data ?? []
   }
 
   async listShadowActions(

@@ -154,21 +154,55 @@ export class SlackSenderResolverService {
   async seedContactIdentifiersFromWorkspace(
     supabase: SupabaseClient,
     input: { botToken: string; userId: string; orgId?: string | null },
-  ): Promise<{ seeded: number; members: SlackResolvedSender[] }> {
+  ): Promise<{
+    seeded: number
+    members: SlackResolvedSender[]
+    channelNamesByMember: Map<string, string[]>
+  }> {
     const members = (await this.slackApi.listUsers(input.botToken)) as SlackMember[]
     const realMemberIds = members
       .filter(
         (member) => member.id && !member.deleted && !member.is_bot && member.id !== 'USLACKBOT',
       )
       .map((member) => member.id)
-    const resolved = await this.resolveSlackSenders(supabase, {
-      botToken: input.botToken,
-      userId: input.userId,
-      orgId: input.orgId,
-      slackUserIds: realMemberIds,
-    })
+    const [resolved, channelNamesByMember] = await Promise.all([
+      this.resolveSlackSenders(supabase, {
+        botToken: input.botToken,
+        userId: input.userId,
+        orgId: input.orgId,
+        slackUserIds: realMemberIds,
+      }),
+      this.loadChannelNamesByMember(input.botToken, realMemberIds),
+    ])
     const seeded = [...resolved.values()].filter((sender) => sender.contactId).length
-    return { seeded, members: [...resolved.values()] }
+    return { seeded, members: [...resolved.values()], channelNamesByMember }
+  }
+
+  private async loadChannelNamesByMember(
+    botToken: string,
+    slackUserIds: string[],
+  ): Promise<Map<string, string[]>> {
+    const namesByMember = new Map(slackUserIds.map((id) => [id, [] as string[]]))
+    const knownMemberIds = new Set(slackUserIds)
+    const channels = await this.slackApi.listConversations(botToken)
+    const batchSize = 8
+    for (let index = 0; index < channels.length; index += batchSize) {
+      const batch = channels.slice(index, index + batchSize)
+      const memberships = await Promise.all(
+        batch.map(async (channel) => ({
+          channel,
+          memberIds: await this.slackApi.listConversationMembers(botToken, channel.id),
+        })),
+      )
+      for (const { channel, memberIds } of memberships) {
+        for (const memberId of memberIds) {
+          if (!knownMemberIds.has(memberId)) continue
+          namesByMember.get(memberId)?.push(channel.name)
+        }
+      }
+    }
+    for (const names of namesByMember.values()) names.sort((a, b) => a.localeCompare(b))
+    return namesByMember
   }
 
   private async loadSlackUsers(

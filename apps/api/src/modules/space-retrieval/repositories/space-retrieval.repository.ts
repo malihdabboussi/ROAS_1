@@ -121,20 +121,52 @@ export class SpaceRetrievalRepository {
     supabase: SupabaseClient,
     input: { spaceId?: string; campaignId?: string; spaceIds?: string[]; objectIds: string[] },
   ): Promise<any> {
-    let query = supabase
-      .from('space_semantic_edges')
-      .select(
-        'id, from_object_id, to_object_id, edge_type, edge_class, confidence, strength, reason, metadata',
-      )
-      .in('from_object_id', input.objectIds)
-      .is('deleted_at', null)
+    const selectCols =
+      'id, from_object_id, to_object_id, edge_type, edge_class, confidence, strength, reason, metadata'
 
-    // Campaign rollup: `objectIds` already comes from the membership-scoped object
-    // query, so the object set is authoritative — no extra (stale) scope filter.
-    if (input.spaceIds) return query
-    if (input.spaceId) query = query.eq('space_id', input.spaceId)
-    if (input.campaignId) query = query.eq('campaign_id', input.campaignId)
-    return query
+    // Prefer compact space/campaign filters. A single `.in(from_object_id, …)` with
+    // hundreds of UUIDs (Page Grader campaign rollups) overflows PostgREST/URL limits
+    // and makes Campaign Knowledge return an empty graph after the request fails.
+    if (input.spaceIds && input.spaceIds.length > 0) {
+      return supabase
+        .from('space_semantic_edges')
+        .select(selectCols)
+        .in('space_id', input.spaceIds)
+        .is('deleted_at', null)
+    }
+    if (input.spaceId) {
+      return supabase
+        .from('space_semantic_edges')
+        .select(selectCols)
+        .eq('space_id', input.spaceId)
+        .is('deleted_at', null)
+    }
+    if (input.campaignId) {
+      return supabase
+        .from('space_semantic_edges')
+        .select(selectCols)
+        .eq('campaign_id', input.campaignId)
+        .is('deleted_at', null)
+    }
+
+    const objectIds = [...new Set(input.objectIds.filter(Boolean))]
+    if (objectIds.length === 0) {
+      return { data: [], error: null }
+    }
+
+    const chunkSize = 100
+    const rows: Array<Record<string, unknown>> = []
+    for (let i = 0; i < objectIds.length; i += chunkSize) {
+      const chunk = objectIds.slice(i, i + chunkSize)
+      const { data, error } = await supabase
+        .from('space_semantic_edges')
+        .select(selectCols)
+        .in('from_object_id', chunk)
+        .is('deleted_at', null)
+      if (error) return { data: null, error }
+      rows.push(...(((data ?? []) as Array<Record<string, unknown>>) ?? []))
+    }
+    return { data: rows, error: null }
   }
 
   async upsertSemanticObject(

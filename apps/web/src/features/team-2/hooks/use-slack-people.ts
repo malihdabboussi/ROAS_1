@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useOrgStore } from '@/lib/org'
 import {
   confirmSlackPersonIdentity,
+  createSlackPersonBrain,
   createSlackProposal,
   createSlackTestProposal,
   fetchSlackPeople,
@@ -109,6 +110,12 @@ export function useSlackPeople() {
     setPeople((current) => current.map((person) => (person.id === id ? result.person : person)))
   }, [])
 
+  const createPersonBrain = useCallback(async (id: string) => {
+    const result = await createSlackPersonBrain(id)
+    setPeople((current) => current.map((person) => (person.id === id ? result.person : person)))
+    return result.person
+  }, [])
+
   const loadPersonActivity = useCallback((id: string) => fetchSlackPersonActivity(id), [])
 
   const createTestProposal = useCallback(async (personId: string) => {
@@ -148,6 +155,7 @@ export function useSlackPeople() {
     updateRelationshipKind,
     confirmSuggestedIdentity,
     mapIdentity,
+    createPersonBrain,
     loadPersonActivity,
     createTestProposal,
     createProposal,

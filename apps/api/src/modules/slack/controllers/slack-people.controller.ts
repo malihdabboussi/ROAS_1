@@ -105,6 +105,16 @@ export class SlackPeopleController {
     return this.people.confirmSuggestedIdentity(supabase, scope.orgId, params.id)
   }
 
+  @Post(':id/person-brain')
+  async createPersonBrain(
+    @Supabase() supabase: SupabaseClient,
+    @CurrentUser() user: { id: string },
+    @OrgContext() scope: RequestScope,
+    @Param(new ZodValidationPipe(SlackPersonIdParamSchema)) params: SlackPersonIdParam,
+  ) {
+    return this.people.createPersonBrain(supabase, user.id, scope.orgId, params.id)
+  }
+
   @Post(':id/test-proposal')
   async createTestProposal(
     @Supabase() supabase: SupabaseClient,

@@ -1,7 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { Brain, CircleUserRound, Link2, UserRoundCheck } from 'lucide-react'
+import { useState } from 'react'
 import { cn } from '@/lib/utils/cn'
 import type {
   SlackDeliveryMode,
@@ -10,6 +9,8 @@ import type {
   SlackRelationshipKind,
   SlackShadowAction,
 } from '../../services/slack-people.service'
+import { SlackPersonBrainControls } from './SlackPersonBrainControls'
+import { SlackPersonChannelContext } from './SlackPersonChannelContext'
 
 const RELATIONSHIP_LABELS: Record<SlackRelationshipKind, string> = {
   internal: 'Internal',
@@ -32,6 +33,7 @@ interface SlackPersonInfoPanelProps {
   onUpdateRelationshipKind: (kind: SlackRelationshipKind) => void
   onConfirmIdentity: () => void
   onMapIdentity: (userId: string) => Promise<void>
+  onCreateBrain: () => Promise<void>
 }
 
 export function SlackPersonInfoPanel({
@@ -43,25 +45,10 @@ export function SlackPersonInfoPanel({
   onUpdateRelationshipKind,
   onConfirmIdentity,
   onMapIdentity,
+  onCreateBrain,
 }: SlackPersonInfoPanelProps) {
   const [tab, setTab] = useState<'info' | 'brain'>('info')
-  const [selectedUserId, setSelectedUserId] = useState(person.suggested_vibey_user_id ?? '')
-  const [mapping, setMapping] = useState(false)
-  const portalUser = useMemo(
-    () => portalUsers.find((candidate) => candidate.user_id === person.vibey_user_id) ?? null,
-    [person.vibey_user_id, portalUsers],
-  )
   const sentCount = actions.filter((action) => action.status === 'sent').length
-
-  const mapIdentity = async () => {
-    if (!selectedUserId || mapping) return
-    setMapping(true)
-    try {
-      await onMapIdentity(selectedUserId)
-    } finally {
-      setMapping(false)
-    }
-  }
 
   return (
     <aside className="card-glass rounded-spacing-4 flex h-full min-h-0 w-full flex-col overflow-hidden border-0">
@@ -177,93 +164,22 @@ export function SlackPersonInfoPanel({
                 {new Date(person.last_seen_at).toLocaleString()}
               </p>
             </section>
+
+            <section className="bg-secondary p-spacing-3 rounded-spacing-3">
+              <h3 className="body-3 text-foreground font-semibold">Visible Slack channels</h3>
+              <div className="mt-spacing-2">
+                <SlackPersonChannelContext person={person} />
+              </div>
+            </section>
           </div>
         ) : (
-          <div className="gap-spacing-4 flex flex-col">
-            <section className="bg-secondary p-spacing-4 rounded-spacing-3">
-              <div className="gap-spacing-2 flex items-center">
-                <Brain className="icon-sm text-primary" />
-                <h3 className="body-2 text-foreground font-semibold">Person Brain</h3>
-              </div>
-              {person.brain_id ? (
-                <>
-                  <p className="body-3 text-foreground mt-spacing-3">
-                    {person.brain_name || 'User Brain'}
-                  </p>
-                  <p className="body-4 text-muted-foreground mt-spacing-1">
-                    Brain is on for this mapped portal identity. This screen reads its status; it
-                    does not train another member’s private Brain without their access.
-                  </p>
-                  <span className="badge-glass badge-glass-green body-4 mt-spacing-3 inline-flex">
-                    Brain on
-                  </span>
-                </>
-              ) : (
-                <p className="body-4 text-muted-foreground mt-spacing-3">
-                  {person.vibey_user_id
-                    ? 'This portal user has no accessible User Brain yet. They must enable or share it before this workspace can use it.'
-                    : 'Map this Slack identity to a portal user to connect their existing User Brain.'}
-                </p>
-              )}
-            </section>
-
-            <section className="surface-card border-border p-spacing-4 rounded-spacing-3 border">
-              <div className="gap-spacing-2 flex items-center">
-                {person.vibey_user_id ? (
-                  <UserRoundCheck className="icon-sm text-success" />
-                ) : (
-                  <CircleUserRound className="icon-sm text-muted-foreground" />
-                )}
-                <h3 className="body-2 text-foreground font-semibold">Portal identity</h3>
-              </div>
-              {person.vibey_user_id ? (
-                <>
-                  <p className="body-3 text-foreground mt-spacing-3">
-                    {portalUser?.display_name || person.email || 'Mapped portal user'}
-                  </p>
-                  <p className="body-4 text-muted-foreground mt-spacing-1">
-                    Connected by {person.identity_match_method.replaceAll('_', ' ')}.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <label className="body-4 text-muted-foreground mt-spacing-3 block">
-                    Map to active portal user
-                    <select
-                      value={selectedUserId}
-                      onChange={(event) => setSelectedUserId(event.target.value)}
-                      className="input-glass body-3 text-foreground mt-spacing-2 w-full"
-                    >
-                      <option value="">Choose a portal user</option>
-                      {portalUsers.map((candidate) => (
-                        <option key={candidate.user_id} value={candidate.user_id}>
-                          {candidate.display_name}
-                          {candidate.email ? ` · ${candidate.email}` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    type="button"
-                    disabled={!selectedUserId || mapping}
-                    onClick={() => void mapIdentity()}
-                    className="button-compact button-glass-primary mt-spacing-3 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <Link2 className="icon-xs" /> Map user & connect Brain
-                  </button>
-                  {person.suggested_vibey_user_id ? (
-                    <button
-                      type="button"
-                      onClick={onConfirmIdentity}
-                      className="button-compact button-glass-neutral mt-spacing-2"
-                    >
-                      Confirm suggested match
-                    </button>
-                  ) : null}
-                </>
-              )}
-            </section>
-          </div>
+          <SlackPersonBrainControls
+            person={person}
+            portalUsers={portalUsers}
+            onConfirmIdentity={onConfirmIdentity}
+            onMapIdentity={onMapIdentity}
+            onCreateBrain={onCreateBrain}
+          />
         )}
       </div>
     </aside>
