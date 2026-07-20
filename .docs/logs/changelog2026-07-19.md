@@ -1,5 +1,20 @@
 # Changelog - July 19, 2026
 
+
+## [2026-07-19 21:37] - [FIX]
+
+What: Removed invalid `whatsapp` OpenClaw plugin entries from `docker/openclaw.json` so Fly runtime image validation can pass.
+Why: `deploy-fly-runtimes.sh` failed at config validate — plugin not found: whatsapp.
+Impact: Fly `roas-runtimes` deploy can proceed after push.
+Files: `docker/openclaw.json`
+
+## [2026-07-19 21:35] - [FIX]
+
+What: Page Grader Client Intel knowledge→memory drain no longer depends on opening the client page; nightly refresh + new hourly `scheduled-knowledge-brain-drain` import pending source items and push ROAS when content moves.
+Why: Auto-push lived only in `ClientKnowledgeHubTab` mount, so Sakha-scale backlogs (hundreds of Slack/ClickUp entries) sat idle until someone viewed Client Intel — continuous PG→ROAS sync missed that local pipeline.
+Impact: Active clients drain pending imports in background; ROAS package push runs after successful drain batches; UI auto-push remains a convenience path.
+Files: Page Grader `knowledgeBrainDrain.ts`, `scheduled-knowledge-brain-drain`, `scheduled-brain-refresh`, `client-brain` (`limit`), cron migration `20260720040000_register_knowledge_brain_drain_cron.sql`, `ROAS_PLATFORM_BRIDGE_PLAN.md`, `documentation/features/page-grader-campaign-brain-sync.md`
+
 ## [2026-07-19 21:23] - [FIX]
 
 What: Top-bar pencil on workspace restores the last chat when the drawer is closed and starts a fresh chat only when the drawer is already open; sidebar/Chat-menu New still always open a fresh chat; Chat tab restores when closed.
@@ -361,3 +376,10 @@ What: Rebuilt Webinar creative review around inline dependency-scoped previews, 
 Why: Creative gates exposed only links, Task 9 produced the wrong visual-document artifact from generic copy, batches silently capped at ten assets, and Task 14 requested access the assigned managed role already owns.
 Impact: Reviewers can inspect and reference numbered visuals in place, all standard 15 static cuts remain attached to the task and Media view, incomplete image batches fail contract verification, and approved Meta ad assembly proceeds without a redundant access pause.
 Files: `apps/web/src/features/mission-control/components/dialogs/**`, `apps/agent-api/src/modules/artifacts/**`, `apps/agent-api/src/modules/shared/ui-block-extractor*`, `apps/agent-api/src/modules/task-agent/services/task-agent-artifact-outputs*`, `apps/mission-worker/src/modules/missions/**`, `docker/agents/templates/ads_manager/skills/roas-ad-design/SKILL.md`, `supabase/migrations/20260719210000_restore_validate_messaging_renderer.sql`, `documentation/features/missions.md`
+
+## [2026-07-19 21:25] - [FEATURE]
+
+What: Replaced new CEO HQ/Meetings creation with one role-neutral Personal Dashboard, automatically provisioned exactly once for every active organization member. Added owner-only RLS defense, immutable privacy/ownership, blocked Space/view/item/link/email sharing, draft daily/Fathom flows, personal integration setup guidance, and hidden sharing/deletion controls in the updated frontend.
+Why: Organization members needed a preconfigured daily home inside the company account that teammates and administrators cannot inspect or share, while personal OAuth authorization remains controlled by each member.
+Impact: ROAS production now has one live Personal Dashboard for its one active member with five starter items, twelve views, and four disabled draft automations. Future active members receive their own dashboard automatically; unrelated-user read, share, and team-visibility probes are rejected.
+Files: `space-template-catalog-personal-dashboard.ts`, template/Fathom/Space UI and tests, `20260719223000_provision_private_personal_dashboards.sql`, `documentation/features/space-templates.md`, ROAS production database.

@@ -6343,7 +6343,7 @@
   },
   "skills": {},
   "plugins": {
-    "allow": ["vibey-backend", "memory-core", "whatsapp"],
+    "allow": ["vibey-backend", "memory-core"],
     "load": {
       "paths": ["${VIBEY_PLUGIN_PATH}", "${MEMORY_CORE_PLUGIN_PATH}"]
     },
@@ -6358,9 +6358,6 @@
         }
       },
       "memory-core": {
-        "enabled": true
-      },
-      "whatsapp": {
         "enabled": true
       }
     }
