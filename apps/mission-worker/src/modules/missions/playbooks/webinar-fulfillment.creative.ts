@@ -102,16 +102,18 @@ export function addWebinarCreativeProduction(input: {
       id: 'st-funnel-design',
       title: WEBINAR_FLOW_TASKS.funnelDesign,
       assignTo: designer,
-      dependsOn: [afterCopy],
+      dependsOn: [afterCopy, 'st-generate-images'],
       assertionKeys: [],
       scheduledAt: null,
       publishToTaskList: true,
       intent: intent({
         why: 'Build the approved registration experience in the native funnel builder.',
         story: 'Lux turns approved copy into the client funnel without rewriting it.',
-        sensory: 'The Funnels Space view contains the linked responsive funnel with approved copy.',
-        endState: 'A native funnel exists in the Space Funnels view and links to this task.',
-        ecology: `Call list_themes and get_theme for the active campaign Theme; use that theme_id and its logo, colors, fonts, social links, product images, and design settings. Block if no active Theme exists. Load roas-funnel-design. Consume "${WEBINAR_FLOW_DOCS.landingPageCopy}" WITHOUT reshaping the copy. Build a native funnel artifact in the Funnels view and link it to this task. Do not deliver loose HTML or a PDF.`,
+        sensory:
+          'The Funnels Space view contains one responsive funnel using approved copy and real campaign media.',
+        endState:
+          'One native funnel exists with attached logo, people/product imagery, and generated concepts linked to this task.',
+        ecology: `Load funnel-site-design, then funnel-builder. Consume "${WEBINAR_FLOW_DOCS.landingPageCopy}" WITHOUT reshaping the copy. Call list_themes/get_theme and list_campaign_media. Resolve the active Theme logo, headshots, products, and generated concepts to media asset IDs; call attach_funnel_asset before authoring HTML, then reference bundle-relative asset paths. Never use placeholder boxes or labels such as "confirm from Drive". If required named media cannot be resolved, block with the exact missing assets instead of completing. Reuse the funnel already owned by this mission step on retry.`,
       }),
       outputContract: funnelContract(),
     },

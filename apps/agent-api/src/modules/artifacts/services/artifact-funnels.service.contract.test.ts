@@ -334,6 +334,54 @@ describe('ArtifactFunnelsService contract behavior', () => {
     expect(result).toMatchObject({ funnel_type: 'home-page' })
   })
 
+  it('reuses the funnel already created by the same mission subtask', async () => {
+    const existing = {
+      id: 'funnel-existing',
+      name: 'Impact Webinar',
+      status: 'draft',
+      funnel_type: 'webinar',
+      space_id: 'space-1',
+    }
+    const repository = {
+      findMissionSubtaskFunnel: vi.fn(async () => ({ data: existing, error: null })),
+      createFunnel: vi.fn(),
+    }
+    const service = new ArtifactFunnelsService(undefined, repository as any)
+    const target = {
+      resolveUserId: vi.fn(() => 'user-1'),
+      resolveOrgId: vi.fn(() => 'org-1'),
+      getUserClient: vi.fn(async () => ({})),
+      resolveCampaignId: vi.fn(async () => 'campaign-1'),
+      resolveThemeId: vi.fn(async () => 'theme-1'),
+      isMissionSessionKey: vi.fn(() => true),
+      resolveMissionContext: vi.fn(async () => ({
+        missionId: 'mission-1',
+        campaignId: 'campaign-1',
+        orgId: 'org-1',
+      })),
+      parseAgentIdFromSessionKey: vi.fn(() => 'designer'),
+      persistMissionDeliverable: vi.fn(async () => undefined),
+    }
+
+    const result = (await service
+      .getHandlers(target as any)
+      .create_funnel(
+        { name: 'Impact Webinar', space_id: 'space-1', funnel_type: 'webinar' },
+        'agent:user:subtask:11111111-1111-1111-1111-111111111111::mission',
+      )) as Record<string, unknown>
+
+    expect(repository.findMissionSubtaskFunnel).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({
+        userId: 'user-1',
+        missionId: 'mission-1',
+        missionSubtaskId: '11111111-1111-1111-1111-111111111111',
+      }),
+    )
+    expect(repository.createFunnel).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ id: 'funnel-existing', reused: true })
+  })
+
   it('lists campaign funnels with user/org/campaign/type scoping', async () => {
     const service = new ArtifactFunnelsService()
     const supabase = makeCrudSupabaseMock()

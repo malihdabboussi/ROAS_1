@@ -24,11 +24,6 @@
       "limit": 600,
       "lines": 1476
     },
-    "apps/agent-api/src/modules/artifacts/services/artifact-funnels.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 1327
-    },
     "apps/agent-api/src/modules/artifacts/services/artifact-legacy-runtime-core.service.ts": {
       "kind": "service",
       "limit": 600,

@@ -132,7 +132,11 @@ export function funnelContract(): NonNullable<
     artifact_kind: 'funnel_artifact',
     required_action: 'create_funnel',
     required_artifact_type: 'funnel',
-    expected: { consume: 'WEB#5B - Landing Page Copy design-handoff block as-is' },
+    expected: {
+      consume: 'WEB#5B - Landing Page Copy design-handoff block as-is',
+      require_attached_assets: true,
+      forbid_asset_placeholders: true,
+    },
   }
 }
 

@@ -60,6 +60,9 @@ describe('webinar-fulfillment playbook', () => {
     expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.intent.ecology).toMatch(
       /actual failed tool attempt/i,
     )
+    expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.intent.ecology).toMatch(
+      /list_campaign_media.*create_theme or update_theme.*Brand Evidence Ledger/i,
+    )
     expect(plan.subtasks.find((s) => s.id === 'st-launch-brief')?.dependsOn).toEqual([
       'st-market-research',
     ])
@@ -75,6 +78,19 @@ describe('webinar-fulfillment playbook', () => {
       'st-build-checklist',
     ])
     expect(plan.subtasks.find((s) => s.id === 'st-funnel-design')?.assignTo).toBe('designer')
+    expect(plan.subtasks.find((s) => s.id === 'st-funnel-design')?.dependsOn).toEqual([
+      'st-gate-copy',
+      'st-generate-images',
+    ])
+    expect(plan.subtasks.find((s) => s.id === 'st-funnel-design')?.intent.ecology).toMatch(
+      /funnel-site-design.*funnel-builder/i,
+    )
+    expect(plan.subtasks.find((s) => s.id === 'st-funnel-design')?.intent.ecology).toMatch(
+      /attach_funnel_asset/i,
+    )
+    expect(plan.subtasks.find((s) => s.id === 'st-funnel-design')?.intent.ecology).toMatch(
+      /never.*placeholder/i,
+    )
     expect(plan.subtasks.find((s) => s.id === 'st-copy-package')?.outputContract?.expected).toEqual(
       {
         title: 'WEB#5A - Copy Package',
@@ -83,6 +99,13 @@ describe('webinar-fulfillment playbook', () => {
     expect(
       plan.subtasks.find((s) => s.id === 'st-landing-page-copy')?.outputContract?.expected,
     ).toEqual({ title: 'WEB#5B - Landing Page Copy' })
+    expect(
+      plan.subtasks.find((s) => s.id === 'st-funnel-design')?.outputContract?.expected,
+    ).toEqual({
+      consume: 'WEB#5B - Landing Page Copy design-handoff block as-is',
+      require_attached_assets: true,
+      forbid_asset_placeholders: true,
+    })
     expect(plan.subtasks.find((s) => s.id === 'st-landing-page-copy')?.dependsOn).toEqual([
       'st-copy-package',
     ])

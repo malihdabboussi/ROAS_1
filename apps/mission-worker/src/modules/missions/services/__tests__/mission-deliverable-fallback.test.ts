@@ -261,6 +261,111 @@ describe('Mission deliverable repository', () => {
     })
   })
 
+  it('rejects a funnel contract when no campaign media is attached', async () => {
+    const service = createService()
+    const deliverable = {
+      id: 'deliverable-funnel',
+      type: 'funnel',
+      source_action: 'create_funnel',
+      metadata: {
+        source: 'agent_tool',
+        entity_id: 'funnel-entity',
+        source_action: 'create_funnel',
+      },
+    }
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'mission_deliverables') {
+          const query: any = {
+            select: vi.fn(() => query),
+            eq: vi.fn(() => query),
+            contains: vi.fn(() => query),
+            in: vi.fn(() => query),
+            order: vi.fn(async () => ({ data: [deliverable], error: null })),
+          }
+          return query
+        }
+        if (table === 'funnel_assets') {
+          const query: any = {
+            select: vi.fn(() => query),
+            eq: vi.fn(() => query),
+            limit: vi.fn(async () => ({ data: [], error: null })),
+          }
+          return query
+        }
+        throw new Error(`Unexpected table ${table}`)
+      }),
+    } as any
+
+    const result = await service.verifyOutputContract(
+      supabase,
+      'mission-1',
+      {
+        artifact_kind: 'funnel_artifact',
+        required_action: 'create_funnel',
+        required_artifact_type: 'funnel',
+        expected: { require_attached_assets: true },
+      },
+      ['deliverable-funnel'],
+    )
+
+    expect(result).toMatchObject({ ok: false, recovery: 'corrective_run' })
+    expect(result.reason).toMatch(/no attached media assets/i)
+  })
+
+  it('rejects funnel HTML that still contains visual asset placeholders', async () => {
+    const service = createService()
+    const deliverable = {
+      id: 'deliverable-funnel',
+      type: 'funnel',
+      source_action: 'create_funnel',
+      metadata: {
+        source: 'agent_tool',
+        entity_id: 'funnel-entity',
+        source_action: 'create_funnel',
+      },
+    }
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'mission_deliverables') {
+          const query: any = {
+            select: vi.fn(() => query),
+            eq: vi.fn(() => query),
+            contains: vi.fn(() => query),
+            in: vi.fn(() => query),
+            order: vi.fn(async () => ({ data: [deliverable], error: null })),
+          }
+          return query
+        }
+        if (table === 'funnel_files') {
+          const query: any = {
+            select: vi.fn(() => query),
+            eq: vi.fn(async () => ({
+              data: [{ path: 'index.html', content: '[Gavin headshot — confirm from Drive]' }],
+              error: null,
+            })),
+          }
+          return query
+        }
+        throw new Error(`Unexpected table ${table}`)
+      }),
+    } as any
+
+    const result = await service.verifyOutputContract(
+      supabase,
+      'mission-1',
+      {
+        artifact_kind: 'funnel_artifact',
+        required_action: 'create_funnel',
+        required_artifact_type: 'funnel',
+        expected: { forbid_asset_placeholders: true },
+      },
+      ['deliverable-funnel'],
+    )
+
+    expect(result.reason).toMatch(/visual asset placeholder/i)
+  })
+
   it('rejects missing document output contracts with corrective-run recovery', async () => {
     const service = createService()
     const supabase = {

@@ -223,9 +223,9 @@ export function expandWebinarFulfillmentPlaybook(
         why: 'Ground THE PLAN and downstream production in observed market evidence.',
         story: 'Blaze researches the market and buyer language before Reed locks the launch brief.',
         sensory:
-          'The research cites real ads, longevity, hooks, source links, and the integration actions used.',
-        endState: `"${WEBINAR_FLOW_DOCS.marketResearch}" exists with evidence and source links.`,
-        ecology: `Load skill ${SKILLS.research}. Use platform-managed Ads Intelligence first and record the service, integration action, and source links in the document. Only say a provider or search surface is unavailable after an actual failed tool attempt, and record the returned error plus the fallback used. Save exactly "${WEBINAR_FLOW_DOCS.marketResearch}" as a native Doc. Attach raw research data when available. Do not design or render ads.`,
+          'The research cites real ads and sources; the campaign Theme contains verified logo, colors, fonts, people, product, and social assets.',
+        endState: `"${WEBINAR_FLOW_DOCS.marketResearch}" exists and the active campaign Theme is production-ready.`,
+        ecology: `Load skill ${SKILLS.research}. Use Ads Intelligence first; claim a source unavailable only after an actual failed tool attempt, then record the error and fallback. Call list_campaign_media; inspect site, uploads, logos, headshots, products, and generated media. Call list_themes/get_theme, then create_theme or update_theme so verified colors, fonts, logo asset ID, people/product assets, social links, voice, values, and design settings are stored on the active campaign Theme. Add a Brand Evidence Ledger marking confirmed, inferred, or missing fields. Save exactly "${WEBINAR_FLOW_DOCS.marketResearch}" as a native Doc. Do not render ads.`,
       }),
       outputContract: docContract(WEBINAR_FLOW_DOCS.marketResearch),
     },

@@ -5,6 +5,7 @@ import { ArtifactFunnelsRepository } from '../repositories/artifact-funnels.repo
 import {
   buildDeleteConfirmBlock,
   callOrExtracted,
+  parseMissionSubtaskId,
   tryPersistMissionDeliverable,
 } from '../utils/artifact-domain-handler-shared.util'
 import {
@@ -349,8 +350,38 @@ export class ArtifactFunnelsService {
     const normalizedFunnelType = this.normalizeFunnelType(input.funnel_type)
     if (normalizedFunnelType.error) return { success: false, error: normalizedFunnelType.error }
     const rawSlug = (input.slug as string) || this.generateSlugFromName(name)
-    const slug = await this.deduplicateSlug(supabase, rawSlug, userId)
     const spaceId = getActiveSpaceId(input)
+    const missionContext =
+      sessionKey && target.isMissionSessionKey?.(sessionKey)
+        ? await target.resolveMissionContext(sessionKey, userId)
+        : null
+    const missionSubtaskId = sessionKey ? parseMissionSubtaskId(sessionKey) : null
+    const missionIdentity =
+      missionContext?.missionId && missionSubtaskId
+        ? { missionId: String(missionContext.missionId), missionSubtaskId }
+        : null
+
+    if (missionIdentity) {
+      const { data: existing, error: existingError } =
+        await this.funnelsRepository.findMissionSubtaskFunnel(supabase, {
+          userId,
+          ...missionIdentity,
+        })
+      if (existingError) throw existingError
+      if (existing) {
+        await this.persistFunnelDeliverable(target, sessionKey, existing)
+        return this.buildFunnelResult(existing, true)
+      }
+    }
+
+    const slug = await this.deduplicateSlug(supabase, rawSlug, userId)
+    const metadata = missionIdentity
+      ? {
+          mission_id: missionIdentity.missionId,
+          mission_subtask_id: missionIdentity.missionSubtaskId,
+          source_action: 'create_funnel',
+        }
+      : {}
 
     const { data, error } = await this.funnelsRepository.createFunnel(supabase, {
       user_id: userId,
@@ -361,10 +392,23 @@ export class ArtifactFunnelsService {
       slug,
       status: (input.status as string) ?? 'draft',
       theme_id: themeId,
+      metadata,
       ...(spaceId ? { space_id: spaceId } : {}),
     })
     if (error) {
       const code = (error as any).code
+      if (code === '23505' && missionIdentity) {
+        const { data: existing, error: existingError } =
+          await this.funnelsRepository.findMissionSubtaskFunnel(supabase, {
+            userId,
+            ...missionIdentity,
+          })
+        if (existingError) throw existingError
+        if (existing) {
+          await this.persistFunnelDeliverable(target, sessionKey, existing)
+          return this.buildFunnelResult(existing, true)
+        }
+      }
       if (code === '23505' && String(error.message).includes('slug')) {
         return {
           success: false,
@@ -380,25 +424,15 @@ export class ArtifactFunnelsService {
       viewType: data.funnel_type === 'website' ? 'websites' : 'funnels',
       logger: this.logger,
     })
-    // #region debug-log - H1: funnel space scope after insert
-    fetch('http://127.0.0.1:7242/log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        hypothesis: 'H1',
-        location: 'agent-api/artifact-funnels.service.ts:createFunnel',
-        message: 'Funnel created',
-        data: {
-          funnelId: data.id,
-          input_space_id: spaceId,
-          row_space_id: (data as Record<string, unknown>).space_id ?? null,
-          campaignId,
-          funnelType: data.funnel_type,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {})
-    // #endregion
+    await this.persistFunnelDeliverable(target, sessionKey, data)
+    return this.buildFunnelResult(data, false)
+  }
+
+  private async persistFunnelDeliverable(
+    target: Record<string, any>,
+    sessionKey: string | undefined,
+    data: Record<string, any>,
+  ): Promise<void> {
     const deliverableType = data.funnel_type === 'website' ? 'website' : 'funnel'
     await tryPersistMissionDeliverable(target, sessionKey, {
       type: deliverableType,
@@ -407,6 +441,9 @@ export class ArtifactFunnelsService {
       title: data.name ?? 'Untitled Funnel',
       sourceAction: deliverableType === 'website' ? 'create_website' : 'create_funnel',
     })
+  }
+
+  private buildFunnelResult(data: Record<string, any>, reused: boolean) {
     return {
       ui_blocks: [
         {
@@ -416,10 +453,11 @@ export class ArtifactFunnelsService {
           artifactId: data.id,
           name: data.name ?? 'Untitled Funnel',
           status: data.status ?? 'draft',
-          spaceId: spaceId ?? undefined,
+          spaceId: data.space_id ?? undefined,
         },
       ],
       ...data,
+      reused,
     }
   }
 }

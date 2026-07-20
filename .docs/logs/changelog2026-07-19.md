@@ -347,3 +347,10 @@ What: Removed Space work open-item tabs (strip, persistence, sync) while keeping
 Why: Tab strip cluttered the Space column when opening docs/tasks; earlier removal never landed on main.
 Impact: Hard-refresh. Docs/tasks open in normal Space UI only — no top tabs. Collapse still hides the dock without unmounting Space.
 Files: SpaceWorkDock.tsx, use-shell-store.ts (+test), SpaceItemsContainer.tsx; deleted SpaceWorkTabStrip.tsx, space-work-tabs*.ts, use-space-work-tab-sync.ts, space-work-dock.messages.config.ts; globals.css (web + website); documentation/features/claude-chatgpt-shell.md; .docs/plans/right-sidebar-surface-picker.md
+
+## [2026-07-19 19:39] - [FIX]
+
+What: Made Webinar Fulfillment funnel creation idempotent per Mission subtask, restored campaign Theme/media capture during research, ordered funnel production after generated media, routed production through high-fidelity funnel design/build skills, and added media/placeholder output verification.
+Why: Corrective retries created three funnels, while the wireframe-oriented skill and missing media dependency produced placeholder headshots with no attached campaign assets.
+Impact: Future runs reuse one funnel, attach real campaign media, and cannot mark an asset-empty or placeholder-filled funnel complete.
+Files: `apps/agent-api/src/modules/artifacts/**`, `apps/mission-worker/src/modules/missions/**`, `scripts/arch/loc-allowlist.json`, `supabase/migrations/20260719230000_funnel_mission_subtask_idempotency.sql`, `documentation/features/missions.md`

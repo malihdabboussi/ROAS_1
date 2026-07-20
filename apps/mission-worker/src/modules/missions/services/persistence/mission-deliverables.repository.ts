@@ -113,7 +113,7 @@ export class MissionDeliverablesRepository {
       if (rows.length > 0) {
         const failures: MissionContractVerificationResult[] = []
         for (const row of rows) {
-          const result = this.evaluateDeliverableContractRow(row, contract)
+          const result = await this.evaluateAndVerifyDeliverable(supabase, row, contract)
           if (result.ok) return result
           failures.push(result)
         }
@@ -140,7 +140,7 @@ export class MissionDeliverablesRepository {
     if (error) throw error
 
     const latestRow = data as DeliverableContractRow | null
-    const latestResult = this.evaluateDeliverableContractRow(latestRow, contract)
+    const latestResult = await this.evaluateAndVerifyDeliverable(supabase, latestRow, contract)
     if (latestResult.ok || !latestRow?.id) return latestResult
 
     const { data: matchingData, error: matchingError } = await supabase
@@ -155,12 +155,80 @@ export class MissionDeliverablesRepository {
 
     const matchingRows = (matchingData || []) as DeliverableContractRow[]
     for (const row of matchingRows) {
-      const result = this.evaluateDeliverableContractRow(row, contract)
+      const result = await this.evaluateAndVerifyDeliverable(supabase, row, contract)
       if (result.ok) return result
     }
     return matchingRows.length > 0
-      ? this.evaluateDeliverableContractRow(matchingRows[0] || null, contract)
+      ? await this.evaluateAndVerifyDeliverable(supabase, matchingRows[0] || null, contract)
       : latestResult
+  }
+
+  private async evaluateAndVerifyDeliverable(
+    supabase: SupabaseClient,
+    data: DeliverableContractRow | null,
+    contract: MissionOutputContract,
+  ): Promise<MissionContractVerificationResult> {
+    const result = this.evaluateDeliverableContractRow(data, contract)
+    if (!result.ok || contract.artifact_kind !== 'funnel_artifact') return result
+
+    const expected = contract.expected ?? {}
+    const metadata =
+      data?.metadata && typeof data.metadata === 'object' && !Array.isArray(data.metadata)
+        ? data.metadata
+        : {}
+    const funnelId = typeof metadata.entity_id === 'string' ? metadata.entity_id.trim() : ''
+    if (!funnelId) {
+      return this.funnelVerificationFailure(
+        contract,
+        'Funnel deliverable has no linked funnel entity',
+      )
+    }
+
+    if (expected.require_attached_assets === true) {
+      const { data: assets, error } = await supabase
+        .from('funnel_assets')
+        .select('id')
+        .eq('funnel_id', funnelId)
+        .limit(1)
+      if (error) throw error
+      if (!Array.isArray(assets) || assets.length === 0) {
+        return this.funnelVerificationFailure(contract, 'Funnel has no attached media assets')
+      }
+    }
+
+    if (expected.forbid_asset_placeholders === true) {
+      const { data: files, error } = await supabase
+        .from('funnel_files')
+        .select('path, content')
+        .eq('funnel_id', funnelId)
+      if (error) throw error
+      const placeholderPattern =
+        /confirm from drive|drop image here|use [^\n<]{0,80} files|\[[^\]]{0,100}(?:headshot|logo|photo|image|video thumbnail)[^\]]{0,100}\]/i
+      const containsPlaceholder = (files || []).some((file: Record<string, unknown>) =>
+        placeholderPattern.test(String(file.content ?? '')),
+      )
+      if (containsPlaceholder) {
+        return this.funnelVerificationFailure(
+          contract,
+          'Funnel contains a visual asset placeholder instead of attached campaign media',
+        )
+      }
+    }
+
+    return result
+  }
+
+  private funnelVerificationFailure(
+    contract: MissionOutputContract,
+    reason: string,
+  ): MissionContractVerificationResult {
+    return {
+      ok: false,
+      reason,
+      expected_action: contract.required_action,
+      expected_artifact_type: contract.required_artifact_type,
+      recovery: 'corrective_run',
+    }
   }
 
   private evaluateDeliverableContractRow(

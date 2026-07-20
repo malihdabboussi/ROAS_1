@@ -74,7 +74,7 @@ export async function tryPersistMissionDeliverable(
   }
 }
 
-function parseMissionSubtaskId(sessionKey: string): string | null {
+export function parseMissionSubtaskId(sessionKey: string): string | null {
   const base = sessionKey.split('::', 1)[0] ?? ''
   const parts = base.split(':')
   const modeIndex = parts.findIndex((part, index) => index >= 2 && part === 'subtask')

@@ -12,6 +12,7 @@ type FunnelRow = Record<string, unknown> & {
   funnel_type?: string | null
   campaign_id?: string | null
   space_id?: string | null
+  metadata?: Record<string, unknown> | null
 }
 
 @Injectable()
@@ -57,6 +58,22 @@ export class ArtifactFunnelsRepository {
       .eq('slug', input.slug)
       .eq('user_id', input.userId)
       .maybeSingle()) as QueryResult<{ id: string }>
+  }
+
+  async findMissionSubtaskFunnel(
+    supabase: SupabaseClient,
+    input: { userId: string; missionId: string; missionSubtaskId: string },
+  ): Promise<QueryResult<FunnelRow>> {
+    return (await supabase
+      .from('funnels')
+      .select('*')
+      .eq('user_id', input.userId)
+      .contains('metadata', {
+        mission_id: input.missionId,
+        mission_subtask_id: input.missionSubtaskId,
+        source_action: 'create_funnel',
+      })
+      .maybeSingle()) as QueryResult<FunnelRow>
   }
 
   async createFunnel(
