@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 19, 2026 (Page Grader Meta context bridge)
+Last Modified: July 19, 2026 (strict Slack workspace scoping and Shadow access repair)
 
 ## Data Flow
 
@@ -21,6 +21,7 @@ Last Modified: July 19, 2026 (Page Grader Meta context bridge)
 15. Team → People reads those organization-owned records for admins. Unresolved identities remain durable ghost profiles so later platform-user or Customer Brain contact matches do not lose their history.
 16. Proactive Slack messages and discovered workflows use `slack_shadow_actions` as their review ledger. Admins can create a harmless test proposal, approve or dismiss it, and send it only after both approval and an explicit switch of that person to `active`. Creating or reviewing a proposal never sends it.
 17. Page Grader can expose the Meta account, Page, pixel, and campaign identifiers already mapped to a client through a read-only client Meta context endpoint. Vibey uses its stored Page Grader connection to proxy this context for launch preparation; Page Grader credentials and Meta tokens never enter the response.
+18. Native Slack connections resolve only inside the active account scope. A personal Slack row cannot make an organization appear connected, supply its runtime token, or receive organization-scoped metadata/error updates.
 
 ## Code Examples
 
@@ -105,5 +106,6 @@ Reconnect result:
 - Canva documents and presentations use native Design Import rather than flattening the whole artifact into an image. Standard docs become DOCX, visual docs become high-resolution PDF, and presentations become PPTX with editable text, shapes, and embedded images where the source format allows it.
 - A Slack identity is not automatically a platform account. `channel_members` is the durable provider identity; `vibey_user_id` links a managed teammate, `contact_id` links an external person into Customer Brain, and an unmatched row remains a ghost profile.
 - Slack people are organization-owned for admin visibility even though one organization member owns the OAuth connection and sync cursor.
+- Native Slack does not inherit a personal connection inside an organization. Each organization must complete its own OAuth connection so Settings, runtime actions, and Team → People share the same workspace-scoped truth.
 - Shadow Mode is the safe default for proactive outreach. `off` blocks proposal creation, `shadow` permits review without delivery, and `active` permits an admin to explicitly send only an approved ledger record. Sending atomically claims the approved record before Slack delivery so concurrent requests cannot both send it; failed deliveries remain visible as `failed`. Automated observation and proposal generation remain separate follow-up work.
 - Page Grader is discovery context, not a second Meta publisher. Vibey owns Mission approvals, Meta mutations, and audit history. When Page Grader has exactly one active mapped ad account it may recommend that identifier; multiple active accounts require a human selection.
