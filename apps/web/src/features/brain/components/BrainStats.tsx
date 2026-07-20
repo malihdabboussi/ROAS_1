@@ -33,7 +33,7 @@ interface BrainStatsProps {
    * Vocabulary for the bar. Knowledge scopes (space/campaign knowledge) count
    * indexed Objects, not Memories, and have no embedding queue.
    */
-  variant?: 'memories' | 'knowledge'
+  variant?: 'memories' | 'knowledge' | 'company'
 }
 
 // ============================================================================
@@ -48,33 +48,41 @@ export default function BrainStats({
   variant = 'memories',
 }: BrainStatsProps) {
   const isKnowledge = variant === 'knowledge'
+  const isCompany = variant === 'company'
   const stats: Array<{ icon: ReactNode; label: string; value: number | string }> = [
     {
       icon: <Brain className="h-3.5 w-3.5" />,
-      label: isKnowledge ? 'Objects' : 'Memories',
+      label: isKnowledge || isCompany ? 'Objects' : 'Memories',
       value: health.total_memories,
     },
     {
       icon: <Link2 className="h-3.5 w-3.5" />,
-      label: 'Connections',
+      label: isCompany ? 'Relationships' : 'Connections',
       value: health.total_connections,
     },
   ]
-  if (beliefCount !== undefined) {
+  if (isCompany) {
+    stats.push({
+      icon: <Layers className="h-3.5 w-3.5" />,
+      label: 'Signals',
+      value: health.experience_sources ?? 0,
+    })
+  }
+  if (!isCompany && beliefCount !== undefined) {
     stats.push({
       icon: <Lightbulb className="h-3.5 w-3.5" />,
       label: 'Beliefs',
       value: beliefCount,
     })
   }
-  if (perspectiveCount !== undefined) {
+  if (!isCompany && perspectiveCount !== undefined) {
     stats.push({
       icon: <Compass className="h-3.5 w-3.5" />,
       label: 'Perspectives',
       value: perspectiveCount,
     })
   }
-  if (!isKnowledge) {
+  if (!isKnowledge && !isCompany) {
     stats.push({
       icon: <Layers className="h-3.5 w-3.5" />,
       label: 'Queue',
@@ -83,7 +91,7 @@ export default function BrainStats({
   }
   stats.push({
     icon: <Clock className="h-3.5 w-3.5" />,
-    label: 'Last capture',
+    label: isCompany ? 'Last dream' : 'Last capture',
     value: relativeTime(health.last_capture),
   })
 

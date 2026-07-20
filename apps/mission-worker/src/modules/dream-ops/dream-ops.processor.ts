@@ -4,11 +4,7 @@ import type { Job } from 'bullmq'
 import { CompanyDailyDreamRunnerService } from '../brain-ops/company-daily-dream-runner.service'
 import { AgentLearningDreamRunnerService } from './agent-learning-dream-runner.service'
 import { DreamOpsRepository } from './dream-ops.repository'
-import {
-  DREAM_OPS_BULL_QUEUE,
-  type DreamOpsJobData,
-  type DreamOpsJobResult,
-} from './types'
+import { DREAM_OPS_BULL_QUEUE, type DreamOpsJobData, type DreamOpsJobResult } from './types'
 
 function readPositiveInt(value: string | undefined, fallback: number): number {
   const parsed = Number(value)
@@ -37,6 +33,14 @@ export class DreamOpsProcessor extends WorkerHost {
     const data = job.data
     try {
       const output = await this.route(data)
+      if (output.skipped !== true) {
+        await this.repository.markSettingSuccessful({
+          operationType: data.operationType,
+          orgId: data.orgId,
+          subjectKey: data.subjectKey,
+          completedAt: new Date().toISOString(),
+        })
+      }
       await this.repository.markOutboxDone(data.outboxId)
       return {
         success: true,

@@ -74,6 +74,7 @@ describe('CampaignsService', () => {
     mockRepo = {
       findByUserId: vi.fn(),
       findGeneralByUserId: vi.fn(),
+      findPersonalByUserId: vi.fn(),
       findById: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -103,6 +104,11 @@ describe('CampaignsService', () => {
         id: 'general',
         config: { system_kind: 'general', isPinned: true },
       })
+      mockRepo.findPersonalByUserId.mockResolvedValue({
+        id: 'personal',
+        user_id: 'user-1',
+        config: { system_kind: 'personal', isPinned: true },
+      })
       mockRepo.findByUserId.mockResolvedValue(campaigns)
 
       const result = await service.listCampaigns(mockSupabase, 'user-1')
@@ -110,6 +116,7 @@ describe('CampaignsService', () => {
         { id: '1', name: 'Test', user_id: 'user-1', permission: 'owner', owner: null },
       ])
       expect(mockRepo.findGeneralByUserId).toHaveBeenCalledWith(mockSupabase, 'user-1', undefined)
+      expect(mockRepo.findPersonalByUserId).toHaveBeenCalledWith(mockSupabase, 'user-1')
       expect(mockRepo.findByUserId).toHaveBeenCalledWith(mockSupabase, 'user-1', undefined)
     })
   })

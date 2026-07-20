@@ -107,10 +107,17 @@ ${brandSnippets || '(none)'}`
   }
 
   async deleteCampaign(supabase: SupabaseClient, id: string, orgId?: string | null) {
-    const campaign = await this.campaignsRepo.findById(supabase, id, { orgId })
+    let campaign = await this.campaignsRepo.findById(supabase, id, { orgId })
+    if (!campaign && orgId) {
+      campaign = await this.campaignsRepo.findById(supabase, id, { orgId: null })
+    }
     if (!campaign) throw new NotFoundException('Campaign not found')
-    if (this.isGeneralCampaign(campaign)) {
-      throw new ForbiddenException('General campaign cannot be deleted')
+    if (this.isProtectedSystemCampaign(campaign)) {
+      throw new ForbiddenException(
+        this.isPersonalCampaign(campaign)
+          ? 'Personal campaign cannot be deleted'
+          : 'General campaign cannot be deleted',
+      )
     }
     await this.campaignsRepo.delete(supabase, id)
   }
@@ -118,8 +125,12 @@ ${brandSnippets || '(none)'}`
   async restoreCampaign(supabase: SupabaseClient, id: string) {
     const campaign = await this.campaignsRepo.findById(supabase, id, { includeDeleted: true })
     if (!campaign) throw new Error('Campaign not found')
-    if (this.isGeneralCampaign(campaign)) {
-      throw new ForbiddenException('General campaign cannot be restored')
+    if (this.isProtectedSystemCampaign(campaign)) {
+      throw new ForbiddenException(
+        this.isPersonalCampaign(campaign)
+          ? 'Personal campaign cannot be restored'
+          : 'General campaign cannot be restored',
+      )
     }
     if (!campaign.deleted_at) {
       return campaign
@@ -190,6 +201,69 @@ ${brandSnippets || '(none)'}`
         if (fallback) {
           await this.ensureCoreCampaignAgents(supabase, userId, String(fallback.id), orgId)
           await this.ensureCampaignBrain(supabase, userId, String(fallback.id), 'General', orgId)
+          return fallback
+        }
+      }
+      throw err
+    }
+  }
+
+  /**
+   * Ensures the personal-account Personal campaign (org_id IS NULL).
+   * Home always reads this campaign, including while the user is in an org.
+   */
+  async ensurePersonalCampaign(supabase: SupabaseClient, userId: string) {
+    const existing = await this.campaignsRepo.findPersonalByUserId(supabase, userId)
+    if (existing) {
+      const config = (existing.config ?? {}) as Record<string, unknown>
+      const needsRepair =
+        config.system_kind !== CampaignsServiceBase02.PERSONAL_SYSTEM_KIND ||
+        config.isPinned !== true
+      let result = existing
+      if (needsRepair) {
+        result = await this.campaignsRepo.update(supabase, String(existing.id), {
+          config: {
+            ...config,
+            system_kind: CampaignsServiceBase02.PERSONAL_SYSTEM_KIND,
+            isPinned: true,
+            isSystem: true,
+            icon: typeof config.icon === 'string' ? config.icon : 'house',
+          },
+        })
+      }
+      await this.ensureCoreCampaignAgents(supabase, String(result.user_id), String(result.id), null)
+      await this.ensureCampaignBrain(
+        supabase,
+        String(result.user_id),
+        String(result.id),
+        String(result.name ?? 'Personal'),
+        null,
+      )
+      return result
+    }
+
+    try {
+      const created = await this.campaignsRepo.create(supabase, {
+        user_id: userId,
+        name: 'Personal',
+        campaign_type: 'get-more-leads',
+        config: {
+          system_kind: CampaignsServiceBase02.PERSONAL_SYSTEM_KIND,
+          isPinned: true,
+          isSystem: true,
+          icon: 'house',
+        },
+        org_id: null,
+      })
+      await this.ensureCoreCampaignAgents(supabase, userId, String(created.id), null)
+      await this.ensureCampaignBrain(supabase, userId, String(created.id), 'Personal', null)
+      return created
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('idx_campaigns_single_personal_per_user')) {
+        const fallback = await this.campaignsRepo.findPersonalByUserId(supabase, userId)
+        if (fallback) {
+          await this.ensureCoreCampaignAgents(supabase, userId, String(fallback.id), null)
+          await this.ensureCampaignBrain(supabase, userId, String(fallback.id), 'Personal', null)
           return fallback
         }
       }

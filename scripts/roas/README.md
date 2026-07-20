@@ -2,6 +2,29 @@
 
 Agent-facing entry points for ROAS production deploys. Secrets live in gitignored `scripts/roas/roas-secrets.env` (template: `roas-secrets.env.template`).
 
+## ROAS Company Wiki rebuild
+
+`rebuild-company-wiki.py` upgrades the existing ROAS Internal wiki records in place. It uses
+locally maintained, human-authored operating blueprints; private ROAS source content is not sent
+to an external model. Dry-run and audit modes are read-only, and the script refuses any database
+host other than the configured ROAS production project.
+
+```bash
+# Validate every process without writing
+python3 scripts/roas/rebuild-company-wiki.py
+
+# Update one category, then rebuild the six navigation pages
+python3 scripts/roas/rebuild-company-wiki.py --category="PAID MEDIA & ADVERTISING" --apply
+python3 scripts/roas/rebuild-company-wiki.py --navigation --apply
+
+# Verify the complete 84-process / 6-navigation topology and content contract
+python3 scripts/roas/rebuild-company-wiki.py --audit
+```
+
+The process updates existing records only. Every SOP must pass the required-section, ordered
+procedure, evidence, decision-table, QA, troubleshooting, escalation, and minimum-depth checks
+before any write occurs. It does not approve or modify Company Cortex signals.
+
 ## Fly agent runtime (`roas-runtimes`)
 
 **Always use the script — do not run raw `flyctl deploy`.**

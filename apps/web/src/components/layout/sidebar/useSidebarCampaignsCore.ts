@@ -98,6 +98,7 @@ export function useSidebarCampaignsCore({
             icon: String(c.icon ?? 'folder-kanban'),
             isPinned: !!c.isPinned,
             isSystemGeneral: !!c.isSystemGeneral,
+            isSystemPersonal: !!c.isSystemPersonal,
             isFavorite: !!c.isFavorite,
             isHidden: !!c.isHidden,
             config: (c.config as Record<string, unknown>) ?? {},
@@ -129,6 +130,7 @@ export function useSidebarCampaignsCore({
             icon: ((c.config as Record<string, unknown>)?.icon as string) ?? 'folder-kanban',
             isPinned: !!(c.config as Record<string, unknown>)?.isPinned,
             isSystemGeneral: (c.config as Record<string, unknown>)?.system_kind === 'general',
+            isSystemPersonal: (c.config as Record<string, unknown>)?.system_kind === 'personal',
             isFavorite: !!state?.is_favorite,
             isHidden: !!state?.is_hidden,
             config: (c.config as Record<string, unknown>) ?? {},
@@ -183,6 +185,7 @@ export function useSidebarCampaignsCore({
           icon,
           isPinned: false,
           isSystemGeneral: false,
+          isSystemPersonal: false,
           isFavorite: false,
           isHidden: false,
           config: (newCampaign.config as Record<string, unknown>) ?? {},
@@ -197,13 +200,17 @@ export function useSidebarCampaignsCore({
   }, [newCampaignName, newCampaignIcon, setActiveCampaign])
 
   const sortedCampaigns = useMemo(() => {
+    const rank = (c: SidebarCampaignRow) => {
+      if (c.isSystemPersonal) return 0
+      if (c.isSystemGeneral) return 1
+      if (c.isFavorite) return 2
+      return 3
+    }
     return [...campaigns]
       .filter((c) => !c.isHidden)
       .sort((a, b) => {
-        if (a.isSystemGeneral && !b.isSystemGeneral) return -1
-        if (!a.isSystemGeneral && b.isSystemGeneral) return 1
-        if (a.isFavorite && !b.isFavorite) return -1
-        if (!a.isFavorite && b.isFavorite) return 1
+        const rankDiff = rank(a) - rank(b)
+        if (rankDiff !== 0) return rankDiff
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       })
   }, [campaigns])
@@ -212,12 +219,16 @@ export function useSidebarCampaignsCore({
     () => sortedCampaigns.find((campaign) => campaign.isSystemGeneral) ?? null,
     [sortedCampaigns],
   )
+  const personalCampaign = useMemo(
+    () => sortedCampaigns.find((campaign) => campaign.isSystemPersonal) ?? null,
+    [sortedCampaigns],
+  )
   const manageCampaigns = useMemo(() => sortedCampaigns, [sortedCampaigns])
 
   const hiddenCampaigns = useMemo(
     () =>
       [...campaigns]
-        .filter((c) => c.isHidden && !c.isSystemGeneral)
+        .filter((c) => c.isHidden && !c.isSystemGeneral && !c.isSystemPersonal)
         .sort((a, b) => a.name.localeCompare(b.name)),
     [campaigns],
   )
@@ -394,6 +405,7 @@ export function useSidebarCampaignsCore({
               icon,
               isPinned: false,
               isSystemGeneral: false,
+              isSystemPersonal: false,
               isFavorite: false,
               isHidden: false,
               config: (newCampaign.config as Record<string, unknown>) ?? {},
@@ -415,6 +427,7 @@ export function useSidebarCampaignsCore({
     campaignsLoading,
     sortedCampaigns,
     generalCampaign,
+    personalCampaign,
     manageCampaigns,
     hiddenCampaigns,
     isCreatingCampaign,

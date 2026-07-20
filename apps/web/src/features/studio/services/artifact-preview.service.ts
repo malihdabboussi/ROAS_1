@@ -14,7 +14,7 @@ import {
   backendPost,
   backendPut,
 } from '@/lib/api/backend-client'
-import { invalidateFunnelPreviewCache } from '@/lib/artifacts/funnel-preview-api'
+import { invalidatePresentationPreviewCache } from '@/lib/artifacts/artifact-preview-api'
 import type {
   BlogPost,
   ConversationDocument,
@@ -22,8 +22,22 @@ import type {
   FunnelFile,
   FunnelPage,
 } from '@/lib/artifacts/artifact-types'
-import { invalidatePresentationPreviewCache } from '@/lib/artifacts/artifact-preview-api'
+import { invalidateFunnelPreviewCache } from '@/lib/artifacts/funnel-preview-api'
 import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import type {
+  Ad,
+  Avatar,
+  EmailArtifact,
+  Offer,
+  Presentation,
+  PresentationAsset,
+  PresentationComment,
+  PresentationElementTrace,
+  PresentationFile,
+  Sequence,
+  SocialPost,
+} from '../types'
+
 export type {
   BlogPost,
   ConversationDocument,
@@ -49,6 +63,7 @@ export {
 } from '@/lib/artifacts/artifact-preview-api'
 export {
   createAdCampaign,
+  createAdsBulk,
   createAdSet,
   deleteAdCampaign,
   deleteAdSet,
@@ -101,19 +116,6 @@ export type {
   FormSchema,
   FormSettings,
 } from '@/lib/forms/forms-api'
-import type {
-  Ad,
-  Avatar,
-  EmailArtifact,
-  Offer,
-  Presentation,
-  PresentationAsset,
-  PresentationComment,
-  PresentationElementTrace,
-  PresentationFile,
-  Sequence,
-  SocialPost,
-} from '../types'
 
 const BUCKET = 'campaigns'
 
@@ -673,7 +675,7 @@ export async function fetchMetaInstagramAccountsForPage(
 }
 
 // ============================================================================
-// Backend API — Bulk Ad Creation
+// Backend API — Ad generation
 // ============================================================================
 
 export async function generateAdVariations(
@@ -711,21 +713,6 @@ export async function generateAdCopy(
   variations: Array<{ headline: string; primaryText: string; description: string }>
 }> {
   return backendPost(`/api/ad-sets/${adSetId}/ads/generate-copy`, payload)
-}
-
-export async function createAdsBulk(
-  adSetId: string,
-  payload: {
-    creatives: Array<{ imageUrl?: string; imageAssetId?: string }>
-    template?: {
-      headline?: string
-      primaryText?: string
-      destinationUrl?: string
-      ctaType?: string
-    }
-  },
-): Promise<{ ads: Ad[] }> {
-  return backendPost(`/api/ad-sets/${adSetId}/ads/bulk`, payload)
 }
 
 export async function fetchCampaignOffers(campaignId: string, spaceId?: string): Promise<Offer[]> {

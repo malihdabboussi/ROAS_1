@@ -7,6 +7,7 @@ import { VaultService } from '../../vault/services/vault.service'
 import { IntegrationsRepository } from '../repositories/integrations.repository'
 import { IntegrationsComposioHealthService } from './integrations-composio-health.service'
 import { IntegrationsCoreService } from './integrations-core.service'
+import { isPersonalCrossContextProvider } from './personal-cross-context-providers'
 
 /** Canonical DB integration ids use snake_case; agent/tool callers sometimes pass `activecampaign`. */
 const INTEGRATION_ID_ALIASES: Record<string, string> = {
@@ -36,15 +37,6 @@ const INTEGRATION_ID_ALIASES: Record<string, string> = {
 function canonicalizeIntegrationId(id: string): string {
   return INTEGRATION_ID_ALIASES[id] ?? id
 }
-
-/** Personal-only integrations visible in org workspace (see fathom-org-sharing plan). */
-const PERSONAL_CROSS_CONTEXT_PROVIDERS = new Set([
-  'fathom',
-  'fireflies',
-  'page_grader',
-  'openai_codex',
-  'anthropic_claude',
-])
 
 @Injectable()
 export class IntegrationsStatusService {
@@ -85,7 +77,7 @@ export class IntegrationsStatusService {
       return false
     })
 
-    if (scope.orgId && PERSONAL_CROSS_CONTEXT_PROVIDERS.has(integrationId)) {
+    if (scope.orgId && isPersonalCrossContextProvider(integrationId)) {
       const { data: personalRow } = await this.repository
         .table(supabase, 'user_integrations')
         .select('id, user_id, status, connected_at, metadata, scope_mode, is_default')

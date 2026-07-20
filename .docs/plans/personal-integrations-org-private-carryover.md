@@ -1,6 +1,6 @@
 # Personal Integrations In Org (Private To You) — Implementation Plan
 
-**Status:** Ready for implementation  
+**Status:** Implemented 2026-07-20  
 **Created:** 2026-07-19  
 **Owner:** Dylan + agent  
 **Related:** `.docs/plans/fathom-org-sharing.md` (share-with-org is a different model); `documentation/features/integration-connections.md`

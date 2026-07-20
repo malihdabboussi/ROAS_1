@@ -1,6 +1,6 @@
 # Space Templates
 
-**Last Modified:** 2026-07-19
+**Last Modified:** 2026-07-20 (Home personal Meetings surface)
 
 ## Overview
 
@@ -19,9 +19,11 @@ Space Templates are a DB-backed catalog of ready-made spaces. Users pick a templ
 | -------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `personal-dashboard` | Personal Dashboard | One role-neutral, private daily workspace per active organization member. It combines Today, Priorities, Agenda, Drafts, Notes, People, Missions, meeting preparation, Fathom logs, and follow-up actions. Morning/EOD and Fathom automations install disabled and draft-only. The legacy `ceo-hq` and `meetings` templates remain attached to existing Spaces but are no longer offered for new creation. |
 
-Active organization membership automatically provisions exactly one `spaces.space_kind = 'personal_dashboard'` row for that member and organization. It is always `visibility = 'private'`, cannot be converted to team visibility, cannot expose public links, cannot be deleted, and rejects Space, view, item, and email-invite sharing at the database layer. Shared-read RLS policies explicitly exclude it, so organization owners/admins do not receive implicit access.
+Active organization membership automatically provisions exactly one `spaces.space_kind = 'personal_dashboard'` row for that member and organization. It is always `visibility = 'private'`, cannot be converted to team visibility, cannot expose public links, cannot be deleted, and rejects Space, view, and email-invite sharing at the database layer. Item rows are coerced to `is_private = true` (never shareable) on insert/update so prep/agent creates that omit privacy fields still succeed. Shared-read RLS policies explicitly exclude it, so organization owners/admins do not receive implicit access.
 
-The dashboard layout and integration entry points can be preconfigured. OAuth authorization for Gmail, Outlook, Google Calendar, Slack, and Fathom remains owned by the individual user; administrators cannot authorize or reuse another member's personal credentials. A successful or existing Fathom connection reuses the dashboard (with legacy Meetings fallback) or instantiates the new private template.
+The dashboard layout and integration entry points can be preconfigured. OAuth authorization for Gmail, Outlook, Google Calendar, Slack, and Fathom remains owned by the individual user; administrators cannot authorize or reuse another member's personal credentials. A successful or existing Fathom connection always resolves or creates the **personal-account** Meetings / Personal Dashboard (`org_id IS NULL`) under the Personal system campaign when available — never the active org’s Personal Dashboard. Installed automations remain draft and disabled pending human confirmation.
+
+Home Agenda prep, related call enrichment, and default Home feed scope also read that personal-account surface while the user is inside an organization.
 
 ## Backend
 
@@ -38,6 +40,7 @@ The dashboard layout and integration entry points can be preconfigured. OAuth au
 | `supabase/migrations/20260520134332_improve_space_template_docs.sql`                     | Refreshes template guide docs with more complete user-facing instructions                       |
 | `supabase/migrations/20260520134844_remove_template_ad_campaigns_view.sql`               | Removes legacy `ad_campaigns` from the Marketing Campaign template and makes Ads campaign-level |
 | `supabase/migrations/20260719223000_provision_private_personal_dashboards.sql`           | Provisions/backfills owner-only org dashboards and enforces non-shareability                    |
+| `supabase/migrations/20260720163000_coerce_personal_dashboard_item_privacy.sql`          | Coerces Personal Dashboard item privacy instead of failing inserts                              |
 
 ## Frontend
 
@@ -64,6 +67,9 @@ The dashboard layout and integration entry points can be preconfigured. OAuth au
 - **2026-07-18:** The nested Campaign flyout's **New space** action uses the shared Blank / Browse launcher, so templates remain available and inherit the selected Campaign destination.
 - **2026-07-19:** A successful or existing Fathom connection reuses the Personal Dashboard (with legacy Meetings fallback) or creates the private `personal-dashboard` template. Its installed automations remain draft and disabled pending human confirmation.
 - **2026-07-19:** Replaced new `ceo-hq` + `meetings` creation with one role-neutral `personal-dashboard`; active org membership now provisions one owner-only dashboard. Database constraints, immutable identity, share guards, and owner-only RLS protect the Space and its items. Existing legacy Spaces are preserved.
+- **2026-07-20:** Personal Dashboard item privacy is coerced on insert/update (`is_private=true`) instead of raising, so pre-call prep and agent creates that omit privacy fields succeed. Space/view/item share tables still hard-block dashboard sharing.
+- **2026-07-20:** Home + Fathom Meetings resolve the personal-account dashboard only (`org_id IS NULL`), optionally attached to `system_kind=personal` campaign. Org-scoped Personal Dashboards remain separate per-member org workspaces.
+- **2026-07-20:** Home Agenda merges unmatched personal Meetings `entry_type=call` rows (Fathom) into the calendar window as `source: 'fathom'` events; matched calls stay related attachments on calendar rows.
 
 ## Regenerating seed SQL
 

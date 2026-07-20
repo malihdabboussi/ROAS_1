@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { isIntegrationsLibraryComingSoon } from '@/lib/integrations/is-integrations-library-coming-soon'
 import { IntegrationAccountsGroup } from './IntegrationAccountsGroup'
 import { IntegrationCard } from './IntegrationCard'
 import type { Integration, UserIntegration } from './integrations.types'
@@ -90,14 +91,6 @@ export function IntegrationsLibrary({
     return map
   }, [userIntegrations])
 
-  const comingSoonProviders: string[] = ['twitter', 'tiktok']
-  const isComingSoon = (provider: string): boolean => {
-    const p = provider.toLowerCase()
-    if (comingSoonProviders.includes(p)) return true
-    if (p === 'meta' && !metaEligible) return true
-    return false
-  }
-
   const grouped = useMemo(() => {
     const map = new Map<string, Integration[]>()
     for (const integration of availableIntegrations) {
@@ -156,7 +149,9 @@ export function IntegrationsLibrary({
                   variant="list"
                   integration={integration}
                   isConnected={false}
-                  comingSoon={isComingSoon(integration.provider)}
+                  comingSoon={isIntegrationsLibraryComingSoon(integration, {
+                    metaEligible,
+                  })}
                   isComposioMode={isComposioMode}
                   onConnect={onConnect}
                   connecting={connectingProvider === integration.provider.toLowerCase()}

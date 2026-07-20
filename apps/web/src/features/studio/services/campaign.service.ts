@@ -1,9 +1,5 @@
 import type { CampaignContext } from '@/app/(dashboard)/campaigns/[id]/_lib/types'
-import {
-  backendGet,
-  backendPatch,
-  backendPost,
-} from '@/lib/api/backend-client'
+import { backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
 import type { Campaign } from '../types'
 
 export {
@@ -42,6 +38,18 @@ export async function ensureGeneralCampaign(): Promise<Campaign> {
       isPinned: true,
       isSystem: true,
       icon: 'folder-kanban',
+    },
+  })
+}
+
+export async function ensurePersonalCampaign(): Promise<Campaign> {
+  return backendPost<Campaign>('/api/campaigns', {
+    name: 'Personal',
+    config: {
+      system_kind: 'personal',
+      isPinned: true,
+      isSystem: true,
+      icon: 'house',
     },
   })
 }

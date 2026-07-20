@@ -8,6 +8,20 @@ Why: `deploy-fly-runtimes.sh` failed at config validate — plugin not found: wh
 Impact: Fly `roas-runtimes` deploy can proceed after push.
 Files: `docker/openclaw.json`
 
+## [2026-07-19 21:55] - [OPS]
+
+What: Confirmed Page Grader GitHub `main` has Lovable brain-drain commits and pushed remaining Send-to-ROAS webhook wiring (`7efa7c61d`).
+Why: Deploy went through Lovable Cloud first; GitHub sync lagged / local extras were not mirrored until pull + push.
+Impact: `https://github.com/dylanvanas1/page-grader` main includes hourly drain, nightlies, service-role auth, and ROAS webhook notify on package export.
+Files: `page-grader` GitHub `main` (`15f4017`…`7efa7c6`); local working tree synced to origin
+
+## [2026-07-19 21:48] - [FIX]
+
+What: Deployed Client Intel background brain drain via Lovable Cloud (Page Grader project) and fixed `client-brain` service-role auth so scheduled jobs can call `import-from-knowledge-hub`.
+Why: Local `supabase functions deploy` returned 403; production had no brain-refresh cron; drain got 401 because `client-brain` only accepted user JWTs.
+Impact: Crons live (`knowledge-brain-drain-hourly`, `scheduled-brain-refresh-weeknights`); Sakha dry-run showed ~340 pending then live import progressed (e.g. 103 imported / ~210 remaining on a pass).
+Files: Lovable `page-grader` commits `15f4017…` / `a68b2cc…` / `35c8f86…`; local `client-brain` auth bypass; cron SQL
+
 ## [2026-07-19 21:35] - [FIX]
 
 What: Page Grader Client Intel knowledge→memory drain no longer depends on opening the client page; nightly refresh + new hourly `scheduled-knowledge-brain-drain` import pending source items and push ROAS when content moves.

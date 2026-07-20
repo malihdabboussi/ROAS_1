@@ -41,6 +41,18 @@ describe('personal dashboard provisioning migration', () => {
     expect(sql).toMatch(/space_kind <> 'personal_dashboard'/i)
   })
 
+  it('coerces Personal Dashboard item privacy instead of failing inserts', () => {
+    const coercePath = resolve(
+      process.cwd(),
+      '../../supabase/migrations/20260720163000_coerce_personal_dashboard_item_privacy.sql',
+    )
+    const sql = readFileSync(coercePath, 'utf8')
+    expect(sql).toMatch(/NEW\.is_private := true/i)
+    expect(sql).toMatch(/NEW\.share_link_enabled := false/i)
+    expect(sql).toMatch(/NEW\.share_token := NULL/i)
+    expect(sql).not.toMatch(/Personal Dashboard items cannot be shared/i)
+  })
+
   it('retires the two legacy templates without deleting existing spaces', () => {
     const sql = migrationSql()
 

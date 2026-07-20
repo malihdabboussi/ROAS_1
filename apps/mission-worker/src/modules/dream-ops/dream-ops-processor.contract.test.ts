@@ -12,6 +12,7 @@ describe('DreamOpsProcessor', () => {
     const repository = {
       markOutboxDone: vi.fn(async () => undefined),
       markOutboxFailed: vi.fn(async () => undefined),
+      markSettingSuccessful: vi.fn(async () => undefined),
       createRun: vi.fn(async () => ({ id: 'dream-run-1' })),
       completeRun: vi.fn(async () => undefined),
     }
@@ -54,6 +55,12 @@ describe('DreamOpsProcessor', () => {
         output: expect.objectContaining({ company_cortex_dream_run_id: 'run-1' }),
       }),
     )
+    expect(repository.markSettingSuccessful).toHaveBeenCalledWith({
+      operationType: 'company_daily_dream',
+      orgId: 'org-1',
+      subjectKey: 'brain-1',
+      completedAt: expect.any(String),
+    })
     expect(result).toMatchObject({ success: true, operationType: 'company_daily_dream' })
   })
 
@@ -62,6 +69,7 @@ describe('DreamOpsProcessor', () => {
     const repository = {
       markOutboxDone: vi.fn(async () => undefined),
       markOutboxFailed: vi.fn(async () => undefined),
+      markSettingSuccessful: vi.fn(async () => undefined),
     }
     const companyRunner = { runDailyDream: vi.fn() }
     const agentRunner = {
@@ -92,5 +100,11 @@ describe('DreamOpsProcessor', () => {
     expect(agentRunner.runAgentDream).toHaveBeenCalledWith(
       expect.objectContaining({ orgId: 'org-1', agentKey: 'designer' }),
     )
+    expect(repository.markSettingSuccessful).toHaveBeenCalledWith({
+      operationType: 'agent_learning_dream',
+      orgId: 'org-1',
+      subjectKey: 'designer',
+      completedAt: expect.any(String),
+    })
   })
 })

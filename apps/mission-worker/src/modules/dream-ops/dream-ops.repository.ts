@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { DatabaseService } from '../../lib/services/database.service'
-import type { DreamOpsOutboxRow, DreamOpsSettingRow } from './types'
+import type { DreamOpsOperationType, DreamOpsOutboxRow, DreamOpsSettingRow } from './types'
 
 @Injectable()
 export class DreamOpsRepository {
@@ -83,6 +83,32 @@ export class DreamOpsRepository {
       .update({ ...output, completed_at: new Date().toISOString() })
       .eq('id', id)
     if (error) throw new Error(`Failed to complete Dream Ops run: ${error.message}`)
+  }
+
+  async markSettingSuccessful(input: {
+    operationType: DreamOpsOperationType
+    orgId: string
+    subjectKey: string
+    completedAt: string
+  }): Promise<void> {
+    const client = this.database.getClient()
+    const { error } = await client
+      .from('dream_ops_settings')
+      .update({ last_successful_run_at: input.completedAt })
+      .eq('org_id', input.orgId)
+      .eq('operation_type', input.operationType)
+      .eq('subject_key', input.subjectKey)
+    if (error) throw new Error(`Failed to update Dream Ops success timestamp: ${error.message}`)
+
+    if (input.operationType !== 'company_daily_dream') return
+    const { error: companyError } = await client
+      .from('company_cortex_settings')
+      .update({ last_successful_dream_at: input.completedAt })
+      .eq('org_id', input.orgId)
+      .eq('brain_id', input.subjectKey)
+    if (companyError) {
+      throw new Error(`Failed to update Company Cortex dream timestamp: ${companyError.message}`)
+    }
   }
 
   async countRecommendationsForRun(runId: string): Promise<number> {
@@ -192,8 +218,9 @@ export class DreamOpsRepository {
     const failed = attempts >= maxAttempts
     const nextAttemptAt = failed
       ? new Date().toISOString()
-      : new Date(Date.now() + Math.min(60, 2 * Math.pow(2, Math.max(0, attempts - 1))) * 1000)
-          .toISOString()
+      : new Date(
+          Date.now() + Math.min(60, 2 * Math.pow(2, Math.max(0, attempts - 1))) * 1000,
+        ).toISOString()
     const payload = {
       status: failed ? 'failed' : 'pending',
       error: message.slice(0, 1200),

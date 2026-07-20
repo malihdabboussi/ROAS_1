@@ -19,6 +19,7 @@ export function CampaignsFlyoutPortal({
     icon: string
     isPinned: boolean
     isSystemGeneral: boolean
+    isSystemPersonal?: boolean
   }[]
   activeCampaignId: string | null
   onSelect: (c: { id: string; name: string; icon: string }) => void

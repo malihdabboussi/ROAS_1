@@ -12,6 +12,7 @@ import { IntegrationsOrgAccountsService } from './integrations-org-accounts.serv
 import { getRowComposioConnectionId } from './integrations-overview-composio-row'
 import { buildGroupedIntegrations } from './integrations-overview-groups'
 import { syncPersonalComposioOverviewAccounts } from './integrations-overview-personal-composio-sync'
+import { personalCrossContextOverviewIds } from './personal-cross-context-providers'
 
 const INTEGRATION_IDS_FOR_OVERVIEW = [
   'meta',
@@ -89,7 +90,7 @@ export class IntegrationsOverviewService {
     const baseQuery = this.repository
       .table(supabase, 'user_integrations')
       .select(
-        'id, user_id, integration_id, provider, status, agent_enabled, metadata, scope_mode, is_default, connection_label, connected_at, updated_at',
+        'id, user_id, org_id, integration_id, provider, status, agent_enabled, metadata, scope_mode, is_default, connection_label, connected_at, updated_at',
       )
       .in('integration_id', integrationIds)
     const { data: rawData, error } = await this.orgScope.applyScope(baseQuery, scope)
@@ -107,21 +108,13 @@ export class IntegrationsOverviewService {
       return false
     })
 
-    const PERSONAL_CROSS_CONTEXT_PROVIDERS = [
-      'fathom',
-      'fireflies',
-      'slack',
-      'page_grader',
-      'openai_codex',
-      'anthropic_claude',
-    ]
     if (scope.orgId) {
       const { data: personalRows } = await this.repository
         .table(supabase, 'user_integrations')
         .select(
-          'id, user_id, integration_id, provider, status, agent_enabled, metadata, scope_mode, is_default, connection_label, connected_at, updated_at',
+          'id, user_id, org_id, integration_id, provider, status, agent_enabled, metadata, scope_mode, is_default, connection_label, connected_at, updated_at',
         )
-        .in('integration_id', PERSONAL_CROSS_CONTEXT_PROVIDERS)
+        .in('integration_id', personalCrossContextOverviewIds())
         .eq('user_id', user.id)
         .is('org_id', null)
       if (personalRows) {
@@ -350,9 +343,7 @@ export class IntegrationsOverviewService {
       if (
         rowStatus !== 'disconnected' &&
         ((rowConnectionId && activeComposioConnectionIds.has(rowConnectionId)) ||
-          (!rowConnectionId &&
-            !isOrgContext &&
-            activeComposioIntegrationIds.has(integrationId)) ||
+          (!rowConnectionId && !isOrgContext && activeComposioIntegrationIds.has(integrationId)) ||
           (rowId && activatedOrgRowIds.has(rowId)))
       ) {
         return {

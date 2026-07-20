@@ -14,6 +14,7 @@ export abstract class CampaignsServiceSharedBase {
   abstract deleteCampaign(...args: any[]): any
   abstract restoreCampaign(...args: any[]): any
   abstract ensureGeneralCampaign(...args: any[]): any
+  abstract ensurePersonalCampaign(...args: any[]): any
   abstract getCampaignAnalytics(...args: any[]): any
   abstract getCampaignEmailAnalytics(...args: any[]): any
   abstract getCampaignAdAnalytics(...args: any[]): any
@@ -42,6 +43,8 @@ export abstract class CampaignsServiceSharedBase {
   protected abstract splitIntoChunks(...args: any[]): any
   protected abstract isLikelyNoiseChunk(...args: any[]): any
   protected abstract isGeneralCampaign(...args: any[]): any
+  protected abstract isPersonalCampaign(...args: any[]): any
+  protected abstract isProtectedSystemCampaign(...args: any[]): any
   protected abstract isExcludedFromTeamCampaignAssignments(...args: any[]): any
   protected abstract resolveDomain(...args: any[]): any
   protected abstract classifyDomain(...args: any[]): any
@@ -58,6 +61,7 @@ export abstract class CampaignsServiceSharedBase {
   protected static readonly CHUNK_SIZE_CHARS = 1800
   protected static readonly CHUNK_OVERLAP_CHARS = 300
   protected static readonly GENERAL_SYSTEM_KIND = 'general'
+  protected static readonly PERSONAL_SYSTEM_KIND = 'personal'
   /** Always assigned to every campaign when present in `agents_registry` (cannot be unassigned via API). */
   protected static readonly CAMPAIGN_CORE_AGENT_KEYS = ['vibey', 'atlas'] as const
 

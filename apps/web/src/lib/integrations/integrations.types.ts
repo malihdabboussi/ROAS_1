@@ -49,6 +49,8 @@ export interface Integration {
 export interface UserIntegration {
   id: string
   user_id?: string
+  /** Null means personal-account row; set when the connection belongs to an org workspace. */
+  org_id?: string | null
   integration_id: string
   provider: string
   status: 'connected' | 'error' | 'pending' | 'disconnected' | 'needs_reconnect'

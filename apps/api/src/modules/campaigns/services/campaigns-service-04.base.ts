@@ -1,4 +1,3 @@
-import { CampaignsServiceBase03 } from './campaigns-service-03.base'
 import { createHash, randomUUID } from 'node:crypto'
 import {
   ConflictException,
@@ -17,9 +16,9 @@ import type { MeetingTranscriptEntry } from '../../brain/types/brain.types'
 import { FirefliesApiService } from '../../integrations/fireflies/services/fireflies-api.service'
 import { MissionAgentGatewayService } from '../../missions/services/gateways/mission-agent-gateway.service'
 import { CampaignsRepository } from '../repositories/campaigns.repository'
+import { CampaignsServiceBase03 } from './campaigns-service-03.base'
 
 export abstract class CampaignsServiceBase04 extends CampaignsServiceBase03 {
-
   protected extractTitleFromHtml(html: string): string | null {
     const match = html.match(/<title[^>]*>([^<]+)<\/title>/i)
     return match ? this.decodeHtmlEntities(match[1].trim()) : null
@@ -54,7 +53,9 @@ export abstract class CampaignsServiceBase04 extends CampaignsServiceBase03 {
       chunks.push(text.slice(start, end).trim())
       if (end >= text.length) break
       start = Math.max(
-        start + CampaignsServiceBase04.CHUNK_SIZE_CHARS - CampaignsServiceBase04.CHUNK_OVERLAP_CHARS,
+        start +
+          CampaignsServiceBase04.CHUNK_SIZE_CHARS -
+          CampaignsServiceBase04.CHUNK_OVERLAP_CHARS,
         start + 1,
       )
     }
@@ -81,6 +82,15 @@ export abstract class CampaignsServiceBase04 extends CampaignsServiceBase03 {
     return config.system_kind === CampaignsServiceBase04.GENERAL_SYSTEM_KIND
   }
 
+  protected isPersonalCampaign(campaign: Record<string, unknown>) {
+    const config = (campaign.config ?? {}) as Record<string, unknown>
+    return config.system_kind === CampaignsServiceBase04.PERSONAL_SYSTEM_KIND
+  }
+
+  protected isProtectedSystemCampaign(campaign: Record<string, unknown>) {
+    return this.isGeneralCampaign(campaign) || this.isPersonalCampaign(campaign)
+  }
+
   /** Mirrors Team sidebar `nonGeneralCampaigns` exclusion (apps/web useTeamContainerData). */
   protected isExcludedFromTeamCampaignAssignments(campaign: Record<string, unknown>) {
     const config = (campaign.config ?? {}) as Record<string, unknown>
@@ -88,7 +98,13 @@ export abstract class CampaignsServiceBase04 extends CampaignsServiceBase03 {
       typeof config.system_kind === 'string' ? config.system_kind.toLowerCase() : ''
     const isSystem = config.isSystem === true
     const name = typeof campaign.name === 'string' ? campaign.name.trim().toLowerCase() : ''
-    return name === 'general' || systemKind === 'general' || isSystem
+    return (
+      name === 'general' ||
+      name === 'personal' ||
+      systemKind === 'general' ||
+      systemKind === 'personal' ||
+      isSystem
+    )
   }
 
   protected async resolveDomain(

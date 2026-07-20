@@ -44,6 +44,23 @@ export class CampaignsRepository extends CampaignKnowledgeRepository {
     return data
   }
 
+  /** Personal campaign is always personal-account scoped (org_id IS NULL). */
+  async findPersonalByUserId(supabase: SupabaseClient, userId: string) {
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('*')
+      .is('deleted_at', null)
+      .eq('user_id', userId)
+      .is('org_id', null)
+      .contains('config', { system_kind: 'personal' })
+      .neq('status', 'archived')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    if (error) throw new Error(`DB error: ${error.message}`)
+    return data
+  }
+
   async findById(
     supabase: SupabaseClient,
     id: string,

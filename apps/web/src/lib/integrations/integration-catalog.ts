@@ -1,6 +1,11 @@
 import { buildPlatformWebhookUrl } from '@/lib/platform/platform-urls'
 import type { Integration } from './integrations.types'
 
+/**
+ * `is_active` = Library-connectable on ROAS today (native OAuth/API-key path, or
+ * Composio toolkit row with auth_config_id). Inactive rows still appear in Library
+ * as Coming Soon so users are not offered a Connect that fails.
+ */
 const STANDARD_INTEGRATIONS: Integration[] = [
   {
     id: 'linkedin',
@@ -24,7 +29,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     name: 'Facebook',
     description: 'Connect Facebook to manage pages, posts, and audience engagement.',
     category: 'social',
-    is_active: true,
+    is_active: false,
   },
   {
     id: 'youtube',
@@ -56,7 +61,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     name: 'Reddit',
     description: 'Connect Reddit to monitor subreddits, post content, and engage with communities.',
     category: 'social',
-    is_active: true,
+    is_active: false,
   },
   {
     id: 'meta',
@@ -73,7 +78,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     description:
       'Connect Google Ads to manage campaigns, ad groups, keywords, and performance reports.',
     category: 'ads_analytics',
-    is_active: true,
+    is_active: false,
   },
   {
     id: 'google_analytics',
@@ -82,7 +87,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     description:
       'Connect Google Analytics to access website traffic, audience data, and conversion insights.',
     category: 'ads_analytics',
-    is_active: true,
+    is_active: false,
   },
   {
     id: 'google_search_console',
@@ -91,7 +96,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     description:
       'Connect Google Search Console to monitor search performance, indexing, and site health.',
     category: 'ads_analytics',
-    is_active: true,
+    is_active: false,
   },
   {
     id: 'gmail',
@@ -99,7 +104,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     name: 'Gmail',
     description: 'Connect Gmail to manage emails, drafts, and inbox operations.',
     category: 'email_marketing',
-    is_active: true,
+    is_active: false,
   },
   {
     id: 'outlook',
@@ -124,7 +129,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     name: 'Mailchimp',
     description: 'Connect Mailchimp to manage email lists, campaigns, and audience segments.',
     category: 'email_marketing',
-    is_active: true,
+    is_active: false,
   },
   {
     id: 'kit',
@@ -132,7 +137,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     name: 'Kit (ConvertKit)',
     description: 'Connect Kit to manage email subscribers, automations, and broadcasts.',
     category: 'email_marketing',
-    is_active: true,
+    is_active: false,
   },
   {
     id: 'active_campaign',
@@ -199,7 +204,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
         required: true,
       },
     ],
-    is_active: true,
+    is_active: false,
   },
   {
     id: 'fanbasis',
@@ -267,7 +272,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     name: 'Google Docs',
     description: 'Connect Google Docs to create, read, and edit documents.',
     category: 'productivity',
-    is_active: true,
+    is_active: false,
   },
   {
     id: 'google_calendar',
@@ -301,7 +306,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     name: 'ClickUp',
     description: 'Connect ClickUp to manage tasks, projects, and team workflows.',
     category: 'productivity',
-    is_active: true,
+    is_active: false,
   },
   {
     id: 'notion',
@@ -392,6 +397,30 @@ const STANDARD_INTEGRATIONS: Integration[] = [
         name: 'bearer_token',
         label: 'Vercel Access Token',
         placeholder: 'Enter your Vercel access token',
+        required: true,
+      },
+    ],
+    is_active: false,
+  },
+  {
+    id: 'page_grader',
+    provider: 'page_grader',
+    name: 'Page Grader',
+    description:
+      'Connect Page Grader to send Space tasks as client workload (funnel, copy, design).',
+    category: 'productivity',
+    auth_type: 'api_key',
+    connection_fields: [
+      {
+        name: 'full',
+        label: 'API Base URL',
+        placeholder: 'https://mjaxhuehopzbsuhmseeg.supabase.co/functions/v1/roas-api',
+        required: true,
+      },
+      {
+        name: 'generic_api_key',
+        label: 'API Key',
+        placeholder: 'Enter your Page Grader ROAS API key',
         required: true,
       },
     ],

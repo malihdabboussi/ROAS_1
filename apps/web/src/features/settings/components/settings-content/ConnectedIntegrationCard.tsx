@@ -40,6 +40,7 @@ function ScopeDropdown({
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const isOrg = userIntegration.scope_mode === 'org_shared'
+  const isPersonalAccountCarryover = userIntegration.org_id === null
 
   useEffect(() => {
     if (!open) return
@@ -52,10 +53,11 @@ function ScopeDropdown({
   }, [open])
 
   const icon = isOrg ? <Users className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />
+  const personalLabel = isPersonalAccountCarryover ? 'Personal (only you)' : 'Personal'
 
-  if (!canManageOrgShared || !onChangeScope) {
+  if (isPersonalAccountCarryover || !canManageOrgShared || !onChangeScope) {
     return (
-      <Tooltip label={isOrg ? 'Shared with org' : 'Personal'}>
+      <Tooltip label={isOrg ? 'Shared with org' : personalLabel}>
         <span className="text-muted-foreground">{icon}</span>
       </Tooltip>
     )
@@ -63,7 +65,7 @@ function ScopeDropdown({
 
   return (
     <div ref={ref} className="relative">
-      <Tooltip label={isOrg ? 'Shared with org' : 'Personal'}>
+      <Tooltip label={isOrg ? 'Shared with org' : personalLabel}>
         <button
           type="button"
           onClick={(e) => {
@@ -180,8 +182,7 @@ export function ConnectedIntegrationCard({
   )
 
   const isPageGraderConnected =
-    integration.provider.toLowerCase() === 'page_grader' &&
-    userIntegration.status === 'connected'
+    integration.provider.toLowerCase() === 'page_grader' && userIntegration.status === 'connected'
   const pageGraderScopeMap =
     userIntegration.metadata?.client_scope_map &&
     typeof userIntegration.metadata.client_scope_map === 'object' &&
@@ -210,7 +211,8 @@ export function ConnectedIntegrationCard({
       (typeof meta.connection_label === 'string' && meta.connection_label.trim()) ||
       null
     // Codex often stores account UUID as connection_label when email is missing.
-    const opaqueUuid = labeled && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(labeled)
+    const opaqueUuid =
+      labeled && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(labeled)
     if (labeled && !opaqueUuid) return labeled
 
     if (provider === 'slack') {

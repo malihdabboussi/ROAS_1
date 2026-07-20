@@ -1,8 +1,8 @@
 import type { MouseEvent, ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Section } from './SidebarHqSpacesRows'
 import type { SidebarCampaignRow } from './sidebar-types'
+import { Section } from './SidebarHqSpacesRows'
 
 vi.mock('next/link', () => ({
   default: ({
@@ -36,6 +36,7 @@ const campaignRow: SidebarCampaignRow = {
   isFavorite: false,
   isPinned: false,
   isSystemGeneral: false,
+  isSystemPersonal: false,
 }
 
 const baseProps = {

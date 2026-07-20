@@ -29,6 +29,7 @@ export interface SidebarCampaignRow {
   icon: string
   isPinned: boolean
   isSystemGeneral: boolean
+  isSystemPersonal: boolean
   isFavorite: boolean
   isHidden: boolean
   config: Record<string, unknown>

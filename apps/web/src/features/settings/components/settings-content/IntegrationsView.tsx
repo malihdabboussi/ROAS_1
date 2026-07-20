@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, Plus, Search } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/navigation/tabs'
 import { getIntegrationLogoPath } from '@/lib/integrations/integration-logo'
+import { isIntegrationsLibraryComingSoon } from '@/lib/integrations/is-integrations-library-coming-soon'
 import type { Integration, IntegrationsTab, UserIntegration } from './integrations.types'
 import { IntegrationsLibrary } from './IntegrationsLibrary'
 import { IntegrationsManage } from './IntegrationsManage'
@@ -107,14 +108,6 @@ export function IntegrationsView({
     null,
   )
 
-  const comingSoonProviders = ['twitter', 'tiktok']
-  const isComingSoon = (provider: string): boolean => {
-    const p = provider.toLowerCase()
-    if (comingSoonProviders.includes(p)) return true
-    if (p === 'meta' && !metaLibraryEligible) return true
-    return false
-  }
-
   const filteredAvailable = availableIntegrations.filter((i) => matchesSearch(i, searchQuery))
   const filteredUser = userIntegrations.filter((ui) => {
     const integration = availableIntegrations.find((i) => i.id === ui.integration_id)
@@ -186,7 +179,9 @@ export function IntegrationsView({
                       {addMenuIntegrations.length > 0 ? (
                         addMenuIntegrations.map((integration) => {
                           const logo = getIntegrationLogoPath(integration.provider)
-                          const comingSoon = isComingSoon(integration.provider)
+                          const comingSoon = isIntegrationsLibraryComingSoon(integration, {
+                            metaEligible: metaLibraryEligible,
+                          })
                           const isConnecting =
                             connectingProvider === integration.provider.toLowerCase()
                           const alreadyConnected = userIntegrations.some(

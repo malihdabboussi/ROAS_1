@@ -1,6 +1,6 @@
 # Dream Ops
 
-Last Modified: 2026-06-24
+Last Modified: 2026-07-20
 
 ## Overview
 
@@ -23,9 +23,11 @@ Dream Ops only queues work when the operation has evidence in the configured win
 6. `DreamOpsOutboxDispatcherService` claims pending rows and publishes BullMQ jobs.
 7. `DreamOpsProcessor` routes by `operation_type`.
 8. Each run writes shared state to `dream_ops_runs`.
-9. Operation-specific services keep their existing domain storage:
-   - Atlas still writes Company Cortex signals and existing Company Cortex dream run data.
-   - Jaime writes customer-visible proposals and hidden route-outs to `agent_improvement_proposals` through Dream Ops-only tools.
+9. A successful run updates `dream_ops_settings.last_successful_run_at`. Successful Company Cortex dreams also update `company_cortex_settings.last_successful_dream_at`, which powers the Company Cortex status bar.
+10. Operation-specific services keep their existing domain storage:
+
+- Atlas still writes Company Cortex signals and existing Company Cortex dream run data.
+- Jaime writes customer-visible proposals and hidden route-outs to `agent_improvement_proposals` through Dream Ops-only tools.
 
 ## Tables
 
@@ -69,3 +71,5 @@ The final model text is not authoritative. The database rows written by proposal
 2026-06-24: Jaime Agent Learning Dreams moved from strict JSON output to internal Dream Ops tools. Tool-created proposal rows are now the source of truth.
 
 2026-06-24: Jaime proposal storage was renamed from the legacy skill-recommendation table names to `agent_improvement_candidates`, `agent_improvement_jobs`, and `agent_improvement_proposals`.
+
+2026-07-20: Successful Dream Ops runs now persist their completion timestamp. Company Cortex health reports the last successful company dream, and its status bar uses company-specific Objects, Relationships, Signals, and Last dream vocabulary.

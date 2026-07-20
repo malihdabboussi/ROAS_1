@@ -67,6 +67,12 @@ docker/agents/*
 !docker/agents/atlas/**
 !docker/agents/templates/
 !docker/agents/templates/**
+!docker/agents/vibey/
+docker/agents/vibey/*
+!docker/agents/vibey/skills/
+docker/agents/vibey/skills/*
+!docker/agents/vibey/skills/post-call-delivery/
+!docker/agents/vibey/skills/post-call-delivery/SKILL.md
 !apps/api/src/modules/agents/
 !apps/api/src/modules/agents/**
 !apps/openclaw/src/agents/

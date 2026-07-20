@@ -2,13 +2,20 @@ import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SupabaseServiceClient } from '@vibey/api-shared'
 import { AgentPolicyService } from '../../agent-policy/services/agent-policy.service'
-import { ChatContextRepository } from '../repositories/chat-context.repository'
 import {
   canonicalizeIntegrationId,
   toAgentFacingIntegrationId,
 } from '../../shared/utils/integration-id.util'
+import { ChatContextRepository } from '../repositories/chat-context.repository'
 
-const PERSONAL_CROSS_CONTEXT_INTEGRATIONS = ['fathom', 'fireflies', 'slack', 'page_grader'] as const
+const PERSONAL_CROSS_CONTEXT_INTEGRATIONS = [
+  'fathom',
+  'fireflies',
+  'slack',
+  'page_grader',
+  'google_calendar',
+  'outlook',
+] as const
 
 interface ConnectedIntegration {
   integration_id: string

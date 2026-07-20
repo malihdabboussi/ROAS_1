@@ -2,7 +2,15 @@
 
 import { type ChangeEvent, type RefObject } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Calendar, Diamond, GraduationCap, Image as ImageIcon, Layers, Search, X } from 'lucide-react'
+import {
+  Calendar,
+  Diamond,
+  GraduationCap,
+  Image as ImageIcon,
+  Layers,
+  Search,
+  X,
+} from 'lucide-react'
 import { ShareButton } from '@/components/org'
 import { Tooltip } from '@/components/ui/tooltip'
 import type { ReportingDateRangeInput } from '@/lib/reporting'
@@ -12,15 +20,12 @@ import {
 } from '@/lib/ui/toolbar-motion'
 import type { BrainQueueUiJob } from '../hooks/use-brain-queue'
 import type { BrainHealthData, BrainMemory } from '../types'
-import {
-  BrainCreatedAtRangeDropdown,
-  brainDateRangeSummary,
-} from './BrainCreatedAtRangeDropdown'
+import { BrainCreatedAtRangeDropdown, brainDateRangeSummary } from './BrainCreatedAtRangeDropdown'
 import { BrainDockHoverButton } from './BrainDockHoverButton'
 import BrainProcessingQueue from './BrainProcessingQueue'
+import { BrainSearchResultsPanel } from './BrainSearchResultsPanel'
 import BrainStats from './BrainStats'
 import { CortexMaxIcon } from './CortexMaxIcon'
-import { BrainSearchResultsPanel } from './BrainSearchResultsPanel'
 
 const BRAIN_SEARCH_INPUT_WIDTH_PX = 200
 
@@ -360,7 +365,13 @@ export function BrainVisualizationDock({
           queueCount={activeQueueCount}
           beliefCount={beliefCount}
           perspectiveCount={perspectiveCount}
-          variant={selectedScope?.scopeType === 'campaign_knowledge' ? 'knowledge' : 'memories'}
+          variant={
+            selectedScope?.scopeType === 'campaign_knowledge'
+              ? 'knowledge'
+              : selectedScope?.scopeType === 'company'
+                ? 'company'
+                : 'memories'
+          }
         />
       )}
       {!statsHealthForBar && selectedScope?.scopeType === 'agent' && (

@@ -82,8 +82,19 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
   }
   async listCampaigns(supabase: SupabaseClient, userId: string, orgId?: string | null) {
     await this.ensureGeneralCampaign(supabase, userId, orgId)
+    // Home always uses the personal-account Personal campaign — ensure it exists
+    // even when listing org campaigns.
+    await this.ensurePersonalCampaign(supabase, userId)
     const campaigns = await this.campaignsRepo.findByUserId(supabase, userId, orgId)
-    if (campaigns.length === 0) return []
+    const personal =
+      orgId != null && orgId !== ''
+        ? await this.campaignsRepo.findPersonalByUserId(supabase, userId)
+        : null
+    const withPersonal =
+      personal && !campaigns.some((c) => String(c.id) === String(personal.id))
+        ? [personal, ...campaigns]
+        : campaigns
+    if (withPersonal.length === 0) return []
     let permissionByCampaign = new Map<string, 'view' | 'edit'>()
     if (orgId) {
       const membership = await this.campaignAccessRepo.findOrgMembership(supabase, orgId, userId)
@@ -91,7 +102,7 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
         const orgRole = membership.role as string
         const isOrgAdmin = orgRole === 'owner' || orgRole === 'admin'
         if (isOrgAdmin) {
-          for (const c of campaigns) permissionByCampaign.set(String(c.id), 'edit')
+          for (const c of withPersonal) permissionByCampaign.set(String(c.id), 'edit')
         } else {
           const perms = await this.campaignAccessRepo.listOrgCampaignPermissions(
             supabase,
@@ -105,10 +116,11 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
           }
         }
       }
+      if (personal) permissionByCampaign.set(String(personal.id), 'edit')
     }
     const ownerIds = Array.from(
       new Set(
-        campaigns
+        withPersonal
           .map((campaign) => String(campaign.user_id))
           .filter((campaignOwnerId) => campaignOwnerId !== userId),
       ),
@@ -131,7 +143,7 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
       )
     }
 
-    return campaigns.map((campaign) => {
+    return withPersonal.map((campaign) => {
       const ownerId = String(campaign.user_id)
       const isOwner = ownerId === userId
       const memberPermission = permissionByCampaign.get(String(campaign.id))
@@ -349,6 +361,9 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
     if (config.system_kind === CampaignsServiceBase01.GENERAL_SYSTEM_KIND) {
       return this.ensureGeneralCampaign(supabase, userId, orgId)
     }
+    if (config.system_kind === CampaignsServiceBase01.PERSONAL_SYSTEM_KIND) {
+      return this.ensurePersonalCampaign(supabase, userId)
+    }
     const created = await this.campaignsRepo.create(supabase, {
       user_id: userId,
       name: data.name,
@@ -366,15 +381,27 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
     data: Record<string, unknown>,
     orgId?: string | null,
   ) {
-    const campaign = await this.campaignsRepo.findById(supabase, id, { orgId })
+    // Personal campaign is org_id null — look up without org filter when needed.
+    let campaign = await this.campaignsRepo.findById(supabase, id, { orgId })
+    if (!campaign && orgId) {
+      campaign = await this.campaignsRepo.findById(supabase, id, { orgId: null })
+    }
     if (!campaign) throw new NotFoundException('Campaign not found')
-    if (this.isGeneralCampaign(campaign)) {
+    if (this.isProtectedSystemCampaign(campaign)) {
       if (Object.prototype.hasOwnProperty.call(data, 'name')) {
-        throw new ForbiddenException('General campaign name cannot be changed')
+        throw new ForbiddenException(
+          this.isPersonalCampaign(campaign)
+            ? 'Personal campaign name cannot be changed'
+            : 'General campaign name cannot be changed',
+        )
       }
       const nextStatus = typeof data.status === 'string' ? data.status : null
       if (nextStatus === 'archived') {
-        throw new ForbiddenException('General campaign cannot be archived')
+        throw new ForbiddenException(
+          this.isPersonalCampaign(campaign)
+            ? 'Personal campaign cannot be archived'
+            : 'General campaign cannot be archived',
+        )
       }
     }
     return this.campaignsRepo.update(supabase, id, data)

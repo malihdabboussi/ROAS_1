@@ -299,6 +299,7 @@ function makeController(
     initials: 'S',
     sortedCampaigns: [],
     generalCampaign: null,
+    personalCampaign: null,
     manageCampaigns: [],
     hiddenCampaigns: [],
     filteredConversations: [],

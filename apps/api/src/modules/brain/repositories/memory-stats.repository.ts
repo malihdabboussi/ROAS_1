@@ -250,6 +250,7 @@ export class MemoryStatsRepository {
         { count: edges },
         objectCountsByType,
         relationCountsByType,
+        { data: settings, error: settingsError },
       ] = await Promise.all([
         aggClient
           .from('company_cortex_objects')
@@ -267,16 +268,21 @@ export class MemoryStatsRepository {
           .eq('brain_id', brainId),
         aggClient.rpc('company_cortex_object_counts_by_type', { p_brain_id: brainId }),
         aggClient.rpc('company_cortex_relation_counts_by_type', { p_brain_id: brainId }),
+        aggClient
+          .from('company_cortex_settings')
+          .select('last_successful_dream_at')
+          .eq('brain_id', brainId)
+          .maybeSingle(),
       ])
       if (objectCountsByType.error) throw new Error(`DB error: ${objectCountsByType.error.message}`)
       if (relationCountsByType.error)
         throw new Error(`DB error: ${relationCountsByType.error.message}`)
-
+      if (settingsError) throw new Error(`DB error: ${settingsError.message}`)
       return {
         total_memories: objects ?? 0,
         total_connections: edges ?? 0,
         embedding_queue: 0,
-        last_capture: null as string | null,
+        last_capture: (settings?.last_successful_dream_at as string | null | undefined) ?? null,
         connections_by_type: (relationCountsByType.data ?? {}) as Record<string, number>,
         memory_counts_by_type: (objectCountsByType.data ?? {}) as Record<string, number>,
         sk_entries_by_type: {},
