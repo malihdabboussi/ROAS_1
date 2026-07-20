@@ -1,5 +1,12 @@
 # Changelog - July 20, 2026
 
+## [2026-07-20 16:10] - [FIX]
+
+What: Seeded Space chat messages now create and persist the fresh conversation with the explicitly requested agent key, even when the panel was still rendering the previously active agent.
+Why: Run Research requested Blaze through `ads_manager`, but the synchronous seed event sent the first message before React applied the agent switch, so the new conversation was created for Vibey.
+Impact: Run Research and other agent-specific chat launchers send their first message to the requested agent instead of the previously active agent.
+Files: `SpaceVibeyChatPanel.tsx`, `space-vibey-chat-panel.logic.ts`, and focused logic tests.
+
 ## [2026-07-20 15:18] - [FEATURE]
 
 What: Agenda now merges unmatched personal Meetings Fathom `entry_type=call` rows into the calendar window as Fathom-badged rows; opening one opens the existing call item. Agenda enrichment runs even with no calendar connected. Applied Personal campaign uniqueness + rehome migrations on ROAS.
@@ -286,6 +293,16 @@ Impact: A reviewer can now reply with changes such as tone, length, ownership, o
 
 Files: Slack event routing, meeting follow-up confirm/message service and tests, Pixel post-call skill migration/runtime mirror, feature documentation, and follow-up log.
 
+## [2026-07-20 16:23] - [FIX]
+
+What: Added collapse/reopen controls to the People conversation information panel and consolidated Person Brain management into one bottom section. Once a managed Brain exists, its connected state replaces the create action instead of appearing alongside a stale creation button.
+
+Why: The People detail screen lacked the same right-panel control as agent detail, and successful Person Brain creation rendered two conflicting states at once.
+
+Impact: Admins can give the conversation more room, reopen person context, and immediately see that a Slack-only Person Brain is connected without being prompted to create it again.
+
+Files: `SlackPersonScreen.tsx`, `SlackPersonInfoPanel.tsx`, `SlackPersonBrainControls.tsx`, focused component tests, integration documentation, and changelog.
+
 ## [2026-07-20 15:15] - [FEATURE]
 
 What: Index Meta-synced and Studio-created `ad_campaign` / `ad_set` / `ad` rows into Campaign Knowledge (`force: true`), with Space→ad_campaign→ad_set→ad edges (no Space→ad star). Added `scripts/roas/backfill-campaign-ads-knowledge.py` for existing org campaigns.
@@ -315,3 +332,24 @@ Why: Existing Meta rows were never indexed; live Meta sync path needed the new i
 Impact: Sakha Campaign Knowledge now includes Meta ads; future Meta syncs index ads with `force: true`. Multifamily org had 0 ads (no-op).
 
 Files: `scripts/roas/backfill-campaign-ads-knowledge.py` (prod run), operational deploy.
+
+## [2026-07-20 16:20] - [FIX]
+
+What: Fixed Ads Research startup so a seeded run sends through a fresh Blaze conversation, then has Blaze delegate the restricted mission-creation action to globally reachable Vibey with the exact Space, campaign, playbook, and intake payload. Added an actionable mission-policy recovery contract and capability audit.
+
+Why: The seeded message could create its first conversation under the previously active Vibey agent, while Blaze could collect the intake but could not call `create_mission`. The old prompt also described `playbook_id` as a top-level mission field even though the API accepts it inside `input`.
+
+Impact: Run Research remains visibly led by Blaze. After the three answers, Vibey creates the Ads Research mission internally, Blaze resumes the conversation and links it, and the user is no longer sent to Mission Control to finish the workflow manually.
+
+Files: Space chat seed routing, Ads Research intake/rerun prompts and tests, mission capability policy and RBAC coverage, Missions feature documentation, and Ads Research capability audit.
+
+## [2026-07-20 16:26] - [FIX]
+
+What: Added `org_id` to integrations overview response typing in settings + lib hooks so personal/org mapping typechecks.
+
+Why: `roas-web` production build failed on `useIntegrations.ts` after org-scoped integration mapping landed.
+
+Impact: Unblocks `roas-web` deploy on `7b82ed44`. Redeployed Fly `roas-runtimes` via dockerignore-aware script.
+
+Files: `useIntegrations.ts`, `use-integration-overview.ts`.
+
