@@ -33,6 +33,8 @@ type SpaceItemDocRow = {
   doc_body?: string | null
 }
 
+const WEBINAR_LAUNCH_BIBLE_TEMPLATE_DOCUMENT_ID = '1TMDISOURH0yKJQ77fDtF0tamsuWNP9cs6evm8ASX_I4'
+
 @Injectable()
 export class MissionDeliverablesGoogleExportService {
   constructor(
@@ -87,13 +89,25 @@ export class MissionDeliverablesGoogleExportService {
 
     const missionTitle = String(mission?.title ?? '').trim() || 'Mission deliverables'
     const documentTitle = options.title?.trim() || `${missionTitle} — Deliverables`
-    const file = await this.googleDriveApi.createGoogleDocWithTabs(
-      supabase,
-      userId,
-      documentTitle,
-      tabs,
-      orgId,
-    )
+    const isLaunchBible = options.source === 'webinar_launch_bible'
+    const file = isLaunchBible
+      ? await this.googleDriveApi.createGoogleDocFromTemplate(
+          supabase,
+          userId,
+          {
+            templateDocumentId: WEBINAR_LAUNCH_BIBLE_TEMPLATE_DOCUMENT_ID,
+            title: documentTitle,
+            tabs,
+          },
+          orgId,
+        )
+      : await this.googleDriveApi.createGoogleDocWithTabs(
+          supabase,
+          userId,
+          documentTitle,
+          tabs,
+          orgId,
+        )
     const fileUrl = file.webViewLink || `https://docs.google.com/document/d/${file.id}/edit`
     const created = await this.missionsRepository.createDeliverable(supabase, {
       mission_id: missionId,
@@ -112,6 +126,12 @@ export class MissionDeliverablesGoogleExportService {
             : 'export_mission_deliverables_google_doc',
         export_source: options.source || 'mission_deliverables',
         google_file_id: file.id,
+        ...(isLaunchBible
+          ? {
+              template_document_id: WEBINAR_LAUNCH_BIBLE_TEMPLATE_DOCUMENT_ID,
+              template_preserved: true,
+            }
+          : {}),
         tab_count: tabs.length,
       },
     })

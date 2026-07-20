@@ -2540,7 +2540,9 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
     optional: [],
     strict: true,
     types: { mission_id: 'string', title: 'string', tabs: 'object_array' },
-    useWhen: ['Compile the final approved Webinar Fulfillment assets into one tabbed Google Doc.'],
+    useWhen: [
+      'Compile the final approved Webinar Fulfillment assets into a native copy of the styled ROAS Launch Bible template.',
+    ],
     examples: [
       {
         intent: 'compile the final webinar Launch Bible',

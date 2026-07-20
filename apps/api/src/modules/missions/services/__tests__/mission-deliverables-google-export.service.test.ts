@@ -96,7 +96,7 @@ describe('MissionDeliverablesGoogleExportService', () => {
     )
   })
 
-  it('creates a mission Launch Bible from explicit ordered tabs', async () => {
+  it('copies the native Launch Bible template before adding campaign content', async () => {
     const lifecycle = {
       getById: vi.fn().mockResolvedValue({ title: 'Impact Webinar Fulfillment' }),
     }
@@ -105,7 +105,7 @@ describe('MissionDeliverablesGoogleExportService', () => {
       createDeliverable: vi.fn().mockResolvedValue({ id: 'launch-bible-1' }),
     }
     const googleDrive = {
-      createGoogleDocWithTabs: vi.fn().mockResolvedValue({
+      createGoogleDocFromTemplate: vi.fn().mockResolvedValue({
         id: 'google-doc-1',
         name: 'Impact Webinar Launch Bible',
         mimeType: 'application/vnd.google-apps.document',
@@ -136,6 +136,15 @@ describe('MissionDeliverablesGoogleExportService', () => {
       deliverableId: 'launch-bible-1',
     })
 
+    expect(googleDrive.createGoogleDocFromTemplate).toHaveBeenCalledWith(
+      {},
+      'user-1',
+      expect.objectContaining({
+        title: 'Impact Webinar Launch Bible',
+        tabs,
+      }),
+      'org-1',
+    )
     expect(repo.createDeliverable).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
@@ -144,6 +153,8 @@ describe('MissionDeliverablesGoogleExportService', () => {
           source_action: 'compile_webinar_launch_bible',
           export_source: 'webinar_launch_bible',
           google_file_id: 'google-doc-1',
+          template_document_id: expect.any(String),
+          template_preserved: true,
           tab_count: 3,
         }),
       }),

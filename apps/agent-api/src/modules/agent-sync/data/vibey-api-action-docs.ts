@@ -1120,7 +1120,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   compile_webinar_launch_bible: {
     section: 'Missions',
     description:
-      'Creates the final Webinar Launch Bible as one Google Doc with real tabs and registers it as a mission deliverable. Use only after production approval. Read every approved mission deliverable first. The first tab must be 0 - Overview and contain client details, important dates, and direct links to the funnel, presentation preview, images/creative, and other native assets. Use parent_title to nest P1-P4 beneath 3 - Funnel Pages. Preserve approved copy verbatim instead of rewriting it.',
+      'Creates the final Webinar Launch Bible from a native copy of the ROAS master, preserving its styled tables, tab order, emojis, and nested funnel-page tabs, then registers the copy as a mission deliverable. Use only after production approval. Read every approved mission deliverable first. The 0 - Overview content must contain client details, important dates, and direct links to the funnel, presentation preview, images/creative, and other native assets. Use parent_title to map P1-P4 beneath 3 - Funnel Pages. Preserve approved copy verbatim instead of rewriting it.',
     parameters:
       '```json\n{"action":"compile_webinar_launch_bible","label":"Compiling the Webinar Launch Bible","data":{"mission_id":"UUID","title":"Client — Webinar Launch Bible","tabs":[{"title":"0 - Overview","html":"<h1>Overview</h1>"},{"title":"3 - Funnel Pages","html":"<h1>Funnel Pages</h1>"},{"title":"P1 - Opt-in Page","parent_title":"3 - Funnel Pages","html":"<h1>Opt-in Page</h1>"}]}}\n```',
   },

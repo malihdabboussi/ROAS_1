@@ -195,6 +195,25 @@ export class GoogleDriveApiService {
     throw new BadRequestException('Google Drive is not connected')
   }
 
+  async createGoogleDocFromTemplate(
+    supabase: SupabaseClient,
+    userId: string,
+    input: { templateDocumentId: string; title: string; tabs: GoogleDocTabInput[] },
+    orgId?: string | null,
+  ): Promise<GoogleDriveFile> {
+    const mode = await this.getConnectionMode(supabase, userId, orgId)
+    if (mode.kind === 'composio') {
+      return this.multiTabDocs.copyGoogleDocTemplateWithTabs(
+        userId,
+        mode.connectedAccountId,
+        input.templateDocumentId,
+        input.title,
+        input.tabs,
+      )
+    }
+    throw new BadRequestException('Google Drive is not connected')
+  }
+
   async renameFile(
     supabase: SupabaseClient,
     userId: string,

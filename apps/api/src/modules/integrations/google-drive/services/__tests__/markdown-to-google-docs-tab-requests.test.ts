@@ -42,4 +42,21 @@ describe('markdownToGoogleDocsTabRequests', () => {
       ]),
     )
   })
+
+  it('offsets insertion and formatting ranges when appending to a copied template tab', () => {
+    const requests = markdownToGoogleDocsTabRequests('# Campaign Content', 't.abc', 40)
+    expect(requests[0]).toEqual({
+      insertText: {
+        text: 'Campaign Content\n',
+        location: { index: 40, tabId: 't.abc' },
+      },
+    })
+    expect(requests[1]).toEqual(
+      expect.objectContaining({
+        updateParagraphStyle: expect.objectContaining({
+          range: { startIndex: 40, endIndex: 57, tabId: 't.abc' },
+        }),
+      }),
+    )
+  })
 })
