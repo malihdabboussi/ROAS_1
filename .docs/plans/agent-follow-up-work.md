@@ -1,3 +1,27 @@
+## 2026-07-19 - [BUG] Page Grader campaign brain import stuck — Atlas write path broken
+
+Status: Done (2026-07-19) — deterministic dual-write ingest + hybrid continuous sync shipped; stuck Multifamily job marked failed earlier.
+Found while: Verifying Multifamily Strategy Create & import brain after hydration/sync triage
+Files:
+
+- `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts`
+- `documentation/features/page-grader-campaign-brain-sync.md`
+  Evidence (prod web Supabase `lhfgtsjetcardinpgouq`): was Objects: 0 / job stuck processing via Atlas `save_user_memory` WRONG BRAIN.
+  Remaining ops: deploy API, set PG `ROAS_BRAIN_WEBHOOK_*`, force Re-sync Multifamily so memories > 0.
+  Deferred because: Deploy/env + operator Re-sync only.
+
+## 2026-07-19 - [OPS] Page Grader ↔ ROAS webhook secret alignment
+
+Status: Open
+Found while: Implementing continuous PG → ROAS brain sync
+Files:
+
+- Page Grader edge env `ROAS_BRAIN_WEBHOOK_SECRET`
+- ROAS `user_integrations.metadata.webhook_secret` (per connected user)
+  Evidence: PG push uses one env secret; ROAS matches by per-user metadata secret.
+  Needed work: Align env with connected user's secret; later multi-tenant secret store on PG if multiple ROAS users connect.
+  Deferred because: Env/ops configuration outside this code change.
+
 ## 2026-07-19 - [ARCH] Page Grader API/modal LOC split (done in ship branch)
 
 Status: Done
@@ -1277,7 +1301,7 @@ Files:
 - apps/web/src/features/settings/components/settings-content/IntegrationCard.tsx
 - apps/web/src/features/settings/components/settings-content/ConnectedIntegrationCard.tsx
 - apps/web/src/features/settings/components/settings-content/IntegrationsContainer.tsx
-  Evidence: `wc -l` after the scoped reconnect UI change reports `useIntegrations.ts` 1201 LOC, `IntegrationCard.tsx` 849 LOC, `ConnectedIntegrationCard.tsx` 578 LOC, and `IntegrationsContainer.tsx` 511 LOC. Focused ESLint also reports the existing restricted import from `@/features/org/store/use-org-store` in `useIntegrations.ts`.
+  Evidence: `wc -l` after the scoped reconnect UI change reports `useIntegrations.ts` 1201 LOC, `IntegrationCard.tsx` 849 LOC, `ConnectedIntegrationCard.tsx` 578 LOC, and `IntegrationsContainer.tsx` 511 LOC. The 2026-07-19 Fathom Meetings bootstrap addition leaves `IntegrationsContainer.tsx` at 569 LOC; focused lint passes with only the pre-existing max-lines violation disabled. Focused ESLint also reports the existing restricted import from `@/features/org/store/use-org-store` in `useIntegrations.ts`.
   Needed work: Split integration loading/connect orchestration into smaller settings hooks/services, extract connect dialogs and connected-row actions into focused components, and move org-context access behind an approved shared boundary.
   Deferred because: The requested change was the reconnect button/state repair path; decomposing these existing settings surfaces would be a separate behavior-preserving cleanup.
 
@@ -7369,6 +7393,30 @@ Files:
   Evidence: Admin test proposals now support approve/dismiss transitions and atomically claimed explicit sending only after approval plus an `active` recipient. The system still does not observe team activity or create proposals automatically.
   Needed work: Add the proactive observation/classification runner and write its message/workflow proposals through the hard action schema, lifecycle/preflight, structured agent-tool error, and workflow circuit-breaker contracts.
   Deferred because: Autonomous agent-facing proposal generation introduces a new tool and workflow surface; it requires its own schema, preflight, policy, failure-circuit, and drift coverage before it can safely run from Slack activity.
+
+## 2026-07-19 — Strategist skills 2/3 still teach Drive HTML delivery
+
+- Feature/app: strategist skills (auto-skill-2 / auto-skill-3)
+- Files: docker/agents/templates/strategist/skills/auto-skill-2-roas-strategy-adjust/*, auto-skill-3-roas-launch-brief/*
+- Evidence: Still instruct markdown + interactive HTML via Drive/Slack; skill-1 now uses Vibey `save_document` → `generate_visual_html`
+- Needed: Same Vibey routing harden for skill-2/3 (and note visual docs strip custom JS)
+- Why not now: User asked only to harden skill-1 HTML delivery
+
+## 2026-07-19 — Mission review phase exceeds backend service LOC limit
+
+- Feature/app: mission-worker / mission review
+- File: `apps/mission-worker/src/modules/missions/services/phases/mission-review-phase.service.ts`
+- Evidence: Full mission-worker lint reports 1,107 LOC against the enforced 600-line service maximum. The file was not touched by the qualification-safe image-brief change.
+- Needed work: Split review orchestration, evidence/contract validation, and recovery decisions into focused services under characterization coverage.
+- Why not now: The requested change is confined to image-brief and generation instructions; restructuring the unrelated mission review state machine would broaden risk and overlap existing work.
+
+## 2026-07-19 — Slack service files near backend LOC limits
+
+- Feature/app: API / native Slack
+- Files: `apps/api/src/modules/slack/services/slack-service-events.base.ts`, `apps/api/src/modules/slack/repositories/slack.repository.ts`
+- Evidence: Post-fix line counts are 566 LOC for the event service base and 366 LOC for the repository, close to the 600-line service and 400-line repository limits.
+- Needed work: Extract welcome/error messaging from the event base and separate connection persistence from channel/member persistence in the repository before adding more Slack behavior.
+- Why not now: The requested production fix changes three bounded connection/message lines plus one grant; decomposing active Slack event and persistence paths would materially broaden the incident patch.
 
 ## 2026-07-19 — Per-person Slack-to-User-Brain compounding needs consent and routing
 

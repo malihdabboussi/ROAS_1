@@ -2,7 +2,7 @@
 
 import type { ChangeEvent, RefObject } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, Download, ExternalLink, FolderOpen, Upload } from 'lucide-react'
+import { ChevronDown, Download, ExternalLink, FolderOpen, RefreshCw, Upload } from 'lucide-react'
 import { CloudAttachMenuItems } from '@/components/media/CloudAttachMenuItems'
 
 interface CampaignAddInfoImportMenuPosition {
@@ -21,6 +21,8 @@ interface CampaignAddInfoImportMenuProps {
   onOpenFathom: () => void
   onOpenFireflies: () => void
   onOpenMediaLibrary: () => void
+  onResyncPageGrader?: (() => void) | null
+  pageGraderResyncing?: boolean
   onToggleOpen: () => void
   open: boolean
   position: CampaignAddInfoImportMenuPosition
@@ -36,6 +38,8 @@ export function CampaignAddInfoImportMenu({
   onOpenFathom,
   onOpenFireflies,
   onOpenMediaLibrary,
+  onResyncPageGrader,
+  pageGraderResyncing = false,
   onToggleOpen,
   open,
   position,
@@ -46,7 +50,7 @@ export function CampaignAddInfoImportMenu({
         ref={buttonRef}
         type="button"
         onClick={onToggleOpen}
-        className="button-glass-neutral gap-spacing-1 px-spacing-2 body-4 flex h-spacing-9 items-center rounded-lg font-medium"
+        className="button-glass-neutral gap-spacing-1 px-spacing-2 body-4 h-spacing-9 flex items-center rounded-lg font-medium"
       >
         <Download className="icon-xs" />
         Import
@@ -64,6 +68,22 @@ export function CampaignAddInfoImportMenu({
             }}
             data-import-dropdown
           >
+            {onResyncPageGrader ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose()
+                  onResyncPageGrader()
+                }}
+                disabled={pageGraderResyncing}
+                className="gap-spacing-2 px-spacing-2 py-spacing-2 rounded-spacing-1 body-3 hover:bg-hover-subtle text-muted-foreground hover:text-foreground flex w-full items-center text-left disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={`icon-sm flex-shrink-0 ${pageGraderResyncing ? 'animate-spin' : ''}`}
+                />
+                {pageGraderResyncing ? 'Re-syncing…' : 'Re-sync from Page Grader'}
+              </button>
+            ) : null}
             <CloudAttachMenuItems
               onLocalUpload={() => fileInputRef.current?.click()}
               onDrive={onDrive}

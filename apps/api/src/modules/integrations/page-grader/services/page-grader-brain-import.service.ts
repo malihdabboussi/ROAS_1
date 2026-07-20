@@ -46,6 +46,7 @@ export class PageGraderBrainImportService {
       {
         package: pkg,
         dryRun: dto.dryRun,
+        force: dto.force,
         campaignId: dto.campaignId,
         campaignName: dto.campaignName,
         campaignHint: dto.campaignHint,
@@ -73,6 +74,13 @@ export class PageGraderBrainImportService {
       result && typeof result === 'object' && result.space && typeof result.space === 'object'
         ? String((result.space as { title?: unknown }).title ?? '').trim() || null
         : null
+    const brainImport =
+      result &&
+      typeof result === 'object' &&
+      result.brainImport &&
+      typeof result.brainImport === 'object'
+        ? (result.brainImport as Record<string, unknown>)
+        : {}
 
     if (campaignId) {
       await this.api.mergeClientScopeEntry(userId, {
@@ -81,6 +89,14 @@ export class PageGraderBrainImportService {
         campaignName,
         spaceId,
         spaceTitle,
+        contentHash: typeof brainImport.contentHash === 'string' ? brainImport.contentHash : null,
+        lastSyncedAt: new Date().toISOString(),
+        lastSyncStatus:
+          brainImport.skippedUnchanged === true
+            ? 'skipped_unchanged'
+            : typeof brainImport.status === 'string'
+              ? brainImport.status
+              : 'succeeded',
       })
     }
 

@@ -1,4 +1,7 @@
 import { backendGet, backendPost } from '@/lib/api/backend-client'
+import { importPageGraderClientBrain } from '@/lib/integrations/page-grader-brain-api'
+
+export { importPageGraderClientBrain as importPageGraderClientBrainForSettings } from '@/lib/integrations/page-grader-brain-api'
 
 export type PageGraderClient = {
   id: string
@@ -11,6 +14,9 @@ export type PageGraderClientScopeEntry = {
   campaign_name?: string
   space_id?: string | null
   space_title?: string | null
+  content_hash?: string | null
+  last_synced_at?: string | null
+  last_sync_status?: string | null
 }
 
 export type PageGraderClientScopeMap = Record<string, PageGraderClientScopeEntry>
@@ -57,30 +63,8 @@ export async function savePageGraderClientScopeMapForSettings(
     : {}
 }
 
-export async function importPageGraderClientBrainForSettings(input: {
-  clientId: string
-  campaignId?: string
-  campaignName?: string
-  campaignHint?: string
-  spaceId?: string | null
-  spaceTitle?: string | null
-  dryRun?: boolean
-}): Promise<{
-  success: boolean
-  campaign?: { action?: 'create' | 'reuse'; id: string; name?: string | null }
-  space?: { action?: 'create' | 'reuse'; id: string; title?: string | null }
-  brainImport?: { jobId?: string | null; status?: string | null }
-}> {
-  return backendPost('/api/integrations/page-grader/import-client-brain', {
-    client_id: input.clientId,
-    dryRun: input.dryRun ?? false,
-    ...(input.campaignId ? { campaignId: input.campaignId } : {}),
-    ...(input.campaignName ? { campaignName: input.campaignName } : {}),
-    ...(input.campaignHint ? { campaignHint: input.campaignHint } : {}),
-    ...(input.spaceId ? { spaceId: input.spaceId } : {}),
-    ...(input.spaceTitle ? { spaceTitle: input.spaceTitle } : {}),
-  })
-}
+/** @deprecated Prefer importPageGraderClientBrain from @/lib/integrations/page-grader-brain-api */
+void importPageGraderClientBrain
 
 export function suggestCampaignForClient(
   clientName: string,

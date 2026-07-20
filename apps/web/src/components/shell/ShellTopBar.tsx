@@ -28,6 +28,7 @@ import { isFullShellConversation } from './shell-chat-breadcrumb'
 import { isShellWorkspaceRoute } from './shell-route-policy'
 import { ShellOpenInMenu } from './ShellOpenInMenu'
 import { useShellOpenIn } from './ShellOpenInProvider'
+import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
 import { shellSidebarExpanded, useShellStore } from './use-shell-store'
 
 function breadcrumbFromPath(
@@ -57,8 +58,11 @@ export function ShellTopBar() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const sidebarPinned = useShellStore((s) => s.sidebarPinned)
-  const sidebarPeek = useShellStore((s) => s.sidebarPeek)
+  const shellPrefsHydrated = useShellPrefsHydrated()
+  const sidebarPinnedRaw = useShellStore((s) => s.sidebarPinned)
+  const sidebarPeekRaw = useShellStore((s) => s.sidebarPeek)
+  const sidebarPinned = shellPrefsHydrated ? sidebarPinnedRaw : false
+  const sidebarPeek = shellPrefsHydrated ? sidebarPeekRaw : false
   const toggleSidebarPinned = useShellStore((s) => s.toggleSidebarPinned)
   const holdSidebarPeek = useShellStore((s) => s.holdSidebarPeek)
   const scheduleSidebarPeekClose = useShellStore((s) => s.scheduleSidebarPeekClose)

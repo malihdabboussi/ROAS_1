@@ -16,43 +16,75 @@ export function PageGraderClientScopeMapRow({
   campaigns,
   campaignSpaces,
   isImporting,
+  syncStatus,
   onDraftChange,
   onImportBrain,
+  onResyncBrain,
 }: {
   client: PageGraderClient
   row: DraftRow
   campaigns: Campaign[]
   campaignSpaces: SpaceSummary[]
   isImporting: boolean
+  syncStatus?: { lastSyncedAt?: string | null; lastSyncStatus?: string | null } | null
   onDraftChange: (clientId: string, next: DraftRow) => void
   onImportBrain: (client: PageGraderClient) => void
+  onResyncBrain: (client: PageGraderClient) => void
 }) {
   const isMapped = Boolean(row.campaignId)
 
   return (
     <div className="border-border space-y-2 rounded-lg border px-3 py-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="body-3 text-foreground min-w-0 truncate font-medium">{client.name}</p>
-        <button
-          type="button"
-          onClick={() => onImportBrain(client)}
-          disabled={isImporting}
-          className="button-glass-accent inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium disabled:opacity-50"
-          title={
-            isMapped
-              ? "Import this Page Grader client's intelligence into the mapped ROAS campaign"
-              : 'Create a campaign + space named after this client, then import its brain'
-          }
-        >
-          <Brain className="h-3 w-3" />
-          {isImporting
-            ? isMapped
-              ? 'Importing'
-              : 'Creating…'
-            : isMapped
-              ? 'Import brain'
-              : 'Create & import brain'}
-        </button>
+        <div className="min-w-0 flex-1">
+          <p className="body-3 text-foreground truncate font-medium">{client.name}</p>
+          {isMapped && syncStatus?.lastSyncedAt ? (
+            <p className="typo-caption text-muted-foreground truncate">
+              Last sync:{' '}
+              {new Date(syncStatus.lastSyncedAt).toLocaleString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+              })}
+              {syncStatus.lastSyncStatus ? ` · ${syncStatus.lastSyncStatus}` : ''}
+            </p>
+          ) : null}
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          {isMapped ? (
+            <button
+              type="button"
+              onClick={() => onResyncBrain(client)}
+              disabled={isImporting}
+              className="button-glass-neutral inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium disabled:opacity-50"
+              title="Force re-sync Client Intel into this campaign brain"
+            >
+              <Brain className="h-3 w-3" />
+              {isImporting ? 'Syncing…' : 'Re-sync'}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => onImportBrain(client)}
+            disabled={isImporting}
+            className="button-glass-accent inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium disabled:opacity-50"
+            title={
+              isMapped
+                ? "Import this Page Grader client's intelligence into the mapped ROAS campaign"
+                : 'Create a campaign + space named after this client, then import its brain'
+            }
+          >
+            <Brain className="h-3 w-3" />
+            {isImporting
+              ? isMapped
+                ? 'Importing'
+                : 'Creating…'
+              : isMapped
+                ? 'Import brain'
+                : 'Create & import brain'}
+          </button>
+        </div>
       </div>
       <label className="block">
         <span className="typo-caption text-muted-foreground">Campaign</span>

@@ -67,6 +67,9 @@ describe('PageGraderBrainImportService', () => {
       campaignName: 'Multi-Family Strategy',
       spaceId: 'space-1',
       spaceTitle: 'Multi-Family Strategy',
+      contentHash: null,
+      lastSyncStatus: 'queued',
+      lastSyncedAt: expect.any(String),
     })
     expect(result).toMatchObject({
       success: true,

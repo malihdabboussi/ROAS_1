@@ -1,7 +1,8 @@
 import { BullModule } from '@nestjs/bullmq'
-import { Module } from '@nestjs/common'
+import { forwardRef, Module } from '@nestjs/common'
 import { AGENT_RUNTIME_BRAIN_IMPORT_QUEUE } from '../agent-runtime/agent-runtime-queues'
 import { BillingModule } from '../billing/billing.module'
+import { SpaceRetrievalModule } from '../space-retrieval/space-retrieval.module'
 import { BrainCortexMaxController } from './controllers/brain-cortex-max.controller'
 import { BrainCrossSuggestionsController } from './controllers/brain-cross-suggestions.controller'
 import { CompanyCortexController } from './controllers/company-cortex.controller'
@@ -88,6 +89,7 @@ import { GraphRequestService } from './services/graph-request.service'
 import { GraphService } from './services/graph.service'
 import { LinkExtractionService } from './services/link-extraction.service'
 import { MemoriesService } from './services/memories.service'
+import { PageGraderBrainPackageIngestService } from './services/page-grader-brain-package-ingest.service'
 import { PageGraderClientImportService } from './services/page-grader-client-import.service'
 import { PendingCapturesService } from './services/pending-captures.service'
 import { ScholarContextService } from './services/scholar-context.service'
@@ -96,7 +98,11 @@ import { SkService } from './services/sk.service'
 import { SnapshotsService } from './services/snapshots.service'
 
 @Module({
-  imports: [BillingModule, BullModule.registerQueue({ name: AGENT_RUNTIME_BRAIN_IMPORT_QUEUE })],
+  imports: [
+    BillingModule,
+    forwardRef(() => SpaceRetrievalModule),
+    BullModule.registerQueue({ name: AGENT_RUNTIME_BRAIN_IMPORT_QUEUE }),
+  ],
   controllers: [
     SnapshotsController,
     MemoriesController,
@@ -179,6 +185,7 @@ import { SnapshotsService } from './services/snapshots.service'
     MemoryStatsRepository,
     MemoriesRepository,
     MemoriesService,
+    PageGraderBrainPackageIngestService,
     PageGraderClientImportService,
     PendingCapturesRepository,
     PendingCapturesService,
@@ -215,6 +222,7 @@ import { SnapshotsService } from './services/snapshots.service'
     EmotionalTaggingService,
     LinkExtractionService,
     MemoriesService,
+    PageGraderBrainPackageIngestService,
     PageGraderClientImportService,
     ScholarContextService,
     SearchService,

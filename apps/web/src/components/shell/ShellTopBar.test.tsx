@@ -54,6 +54,10 @@ vi.mock('./ShellRightPanelControl', () => ({
   ShellRightPanelControl: () => <button type="button" title="Open panel" />,
 }))
 
+vi.mock('./use-shell-prefs-hydrated', () => ({
+  useShellPrefsHydrated: () => true,
+}))
+
 vi.mock('./use-shell-store', () => ({
   shellSidebarExpanded: (state: { sidebarPinned: boolean; sidebarPeek: boolean }) =>
     state.sidebarPinned || state.sidebarPeek,

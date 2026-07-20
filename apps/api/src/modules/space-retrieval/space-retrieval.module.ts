@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { forwardRef, Module } from '@nestjs/common'
 import { BrainModule } from '../brain/brain.module'
 import { SpaceKnowledgeGraphController } from './controllers/space-knowledge-graph.controller'
 import { SpaceRetrievalRepository } from './repositories/space-retrieval.repository'
@@ -8,7 +8,7 @@ import { SpaceSemanticEdgeWriterService } from './services/space-semantic-edge-w
 import { SpaceStructuralEdgeBuilderService } from './services/space-structural-edge-builder.service'
 
 @Module({
-  imports: [BrainModule],
+  imports: [forwardRef(() => BrainModule)],
   controllers: [SpaceKnowledgeGraphController],
   providers: [
     SpaceRetrievalIndexService,

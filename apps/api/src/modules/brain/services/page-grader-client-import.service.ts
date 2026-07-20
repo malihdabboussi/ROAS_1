@@ -1,31 +1,21 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
-import { BrainImportJobsService } from './brain-import-jobs.service'
-
-type PageGraderRecord = Record<string, unknown>
-
-type PageGraderPackage = {
-  envelope?: PageGraderRecord
-  client?: PageGraderRecord
-  client_campaigns?: PageGraderRecord[]
-  client_offers?: PageGraderRecord[]
-  client_avatars?: PageGraderRecord[]
-  client_strategies?: PageGraderRecord[]
-  onboarding_call_notes?: PageGraderRecord[]
-  source_items?: PageGraderRecord[]
-  source_pointers?: PageGraderRecord
-  social_links?: PageGraderRecord[]
-  intel_summary_hint?: PageGraderRecord | null
-  legacy_local_only?: {
-    intel_notes?: PageGraderRecord[]
-    activity_log?: PageGraderRecord[]
-  }
-}
+import {
+  computePageGraderPackageContentHash,
+  type PageGraderPackage,
+  type PageGraderRecord,
+} from './page-grader-brain-package-build'
+import { PageGraderBrainPackageIngestService } from './page-grader-brain-package-ingest.service'
+import {
+  buildPageGraderGeneralSpaceSchema,
+  PAGE_GRADER_GENERAL_SPACE_TITLE,
+} from './page-grader-general-space-schema'
 
 export type PageGraderClientImportBody = {
   package?: PageGraderPackage
   dryRun?: boolean
+  force?: boolean
   campaignId?: string
   campaignName?: string
   campaignHint?: string
@@ -35,7 +25,7 @@ export type PageGraderClientImportBody = {
 
 @Injectable()
 export class PageGraderClientImportService {
-  constructor(private readonly importJobs: BrainImportJobsService) {}
+  constructor(private readonly packageIngest: PageGraderBrainPackageIngestService) {}
 
   async importPackage(
     supabase: SupabaseClient,
@@ -61,12 +51,15 @@ export class PageGraderClientImportService {
     const campaignName =
       body.campaignName?.trim() ||
       this.resolveCampaignName(pkg, clientName, body.campaignHint ?? 'multi-family strategy')
+    const contentHash = computePageGraderPackageContentHash(pkg)
     const externalSource = {
       page_grader: {
         client_id: pageGraderClientId || null,
         unique_client_id: uniqueClientId || null,
         package_version: stringValue(pkg.envelope?.package_version) || '1',
         last_exported_at: stringValue(pkg.envelope?.exported_at) || null,
+        content_hash: contentHash,
+        last_sync_status: 'pending',
       },
     }
 
@@ -98,7 +91,11 @@ export class PageGraderClientImportService {
           id: String(existingSpace.id),
           title: String(existingSpace.title),
         }
-      : { action: 'create' as const, id: null, title: body.spaceTitle?.trim() || campaignName }
+      : {
+          action: 'create' as const,
+          id: null,
+          title: body.spaceTitle?.trim() || PAGE_GRADER_GENERAL_SPACE_TITLE,
+        }
 
     const content = this.buildCampaignBrainContent(pkg, {
       clientName,
@@ -115,9 +112,10 @@ export class PageGraderClientImportService {
         campaign: campaignPlan,
         space: spacePlan,
         brainImport: {
-          action: 'queue',
+          action: 'deterministic_ingest',
           title: `Page Grader Client Intel - ${clientName}`,
           contentChars: content.length,
+          contentHash,
           sourceItems: pkg.source_items?.length ?? 0,
           legacyIntelNotes: pkg.legacy_local_only?.intel_notes?.length ?? 0,
         },
@@ -145,23 +143,20 @@ export class PageGraderClientImportService {
         userId,
         orgId: scope.orgId ?? null,
         campaignId: String(campaign.id),
-        title: body.spaceTitle?.trim() || String(campaign.name),
+        title: body.spaceTitle?.trim() || PAGE_GRADER_GENERAL_SPACE_TITLE,
         clientName,
         pageGraderClientId,
         uniqueClientId,
       }))
 
-    const queued = await this.importJobs.enqueueCampaignFileImport(
+    const ingested = await this.packageIngest.ingestPackage(supabase, {
       userId,
-      {
-        campaignId: String(campaign.id),
-        title: `Page Grader Client Intel - ${clientName}`,
-        content,
-        sourceType: 'upload',
-        domain: 'strategy',
-      },
-      scope.orgId,
-    )
+      orgId: scope.orgId ?? null,
+      campaignId: String(campaign.id),
+      spaceId: String(space.id),
+      package: pkg,
+      force: body.force === true,
+    })
 
     return {
       success: true,
@@ -177,7 +172,12 @@ export class PageGraderClientImportService {
         id: String(space.id),
         title: String(space.title),
       },
-      brainImport: queued,
+      brainImport: {
+        action: ingested.skippedUnchanged ? 'skipped_unchanged' : 'ingested',
+        title: `Page Grader Client Intel - ${clientName}`,
+        status: 'succeeded',
+        ...ingested,
+      },
     }
   }
 
@@ -282,6 +282,7 @@ export class PageGraderClientImportService {
         org_id: input.orgId,
         campaign_id: input.campaignId,
         name: input.campaignName,
+        scope: 'campaign',
         is_default: false,
         color: '#6366F1',
         icon: 'campaign',
@@ -314,17 +315,41 @@ export class PageGraderClientImportService {
     userId: string,
     orgId?: string | null,
   ) {
-    let query = supabase
+    let generalQuery = supabase
       .from('spaces')
       .select('*')
       .eq('campaign_id', campaignId)
       .eq('is_template', false)
+      .contains('schema', { custom_data: { space_role: 'general' } })
       .order('updated_at', { ascending: false })
       .limit(1)
-    query = orgId ? query.eq('org_id', orgId) : query.eq('user_id', userId).is('org_id', null)
-    const { data, error } = await query.maybeSingle()
-    if (error) throw new BadRequestException(`Could not load campaign space: ${error.message}`)
-    return data
+    generalQuery = orgId
+      ? generalQuery.eq('org_id', orgId)
+      : generalQuery.eq('user_id', userId).is('org_id', null)
+    const { data: generalSpace, error: generalError } = await generalQuery.maybeSingle()
+    if (generalError) {
+      throw new BadRequestException(
+        `Could not load campaign General Space: ${generalError.message}`,
+      )
+    }
+    if (generalSpace) return generalSpace
+
+    let legacyQuery = supabase
+      .from('spaces')
+      .select('*')
+      .eq('campaign_id', campaignId)
+      .eq('is_template', false)
+      .contains('schema', { custom_data: { source: 'page_grader' } })
+      .order('updated_at', { ascending: false })
+      .limit(1)
+    legacyQuery = orgId
+      ? legacyQuery.eq('org_id', orgId)
+      : legacyQuery.eq('user_id', userId).is('org_id', null)
+    const { data: legacySpace, error: legacyError } = await legacyQuery.maybeSingle()
+    if (legacyError) {
+      throw new BadRequestException(`Could not load legacy campaign space: ${legacyError.message}`)
+    }
+    return legacySpace
   }
 
   private async createSpace(
@@ -349,19 +374,10 @@ export class PageGraderClientImportService {
         description: `Client workspace synced from Page Grader for ${input.clientName}.`,
         visibility: input.orgId ? 'team' : 'private',
         is_template: false,
-        schema: {
-          views: [
-            { id: 'campaign-overview', type: 'campaign_overview', name: 'Overview' },
-            { id: 'docs', type: 'docs', name: 'Docs' },
-            { id: 'missions', type: 'missions', name: 'Missions' },
-            { id: 'calendar', type: 'calendar', name: 'Calendar' },
-          ],
-          custom_data: {
-            source: 'page_grader',
-            page_grader_client_id: input.pageGraderClientId || null,
-            unique_client_id: input.uniqueClientId || null,
-          },
-        },
+        schema: buildPageGraderGeneralSpaceSchema({
+          pageGraderClientId: input.pageGraderClientId,
+          uniqueClientId: input.uniqueClientId,
+        }),
       })
       .select()
       .single()
@@ -423,7 +439,7 @@ export class PageGraderClientImportService {
     this.appendRecords(lines, 'Client Strategies', pkg.client_strategies)
     this.appendRecords(lines, 'Offers', pkg.client_offers)
     this.appendRecords(lines, 'Avatars', pkg.client_avatars)
-    this.appendRecords(lines, 'Onboarding Call Notes', pkg.onboarding_call_notes)
+    this.appendRecords(lines, 'Onboarding Call Notes', recordList(pkg.onboarding_call_notes))
     this.appendRecords(lines, 'Social Links', pkg.social_links)
     this.appendRecords(lines, 'Source Items', pkg.source_items, 500)
     this.appendRecords(lines, 'Legacy Local Intel Notes', pkg.legacy_local_only?.intel_notes, 200)
@@ -455,6 +471,13 @@ function stringValue(...values: unknown[]): string {
     if (typeof value === 'number' && Number.isFinite(value)) return String(value)
   }
   return ''
+}
+
+function recordList(
+  value: PageGraderRecord | PageGraderRecord[] | undefined,
+): PageGraderRecord[] | undefined {
+  if (Array.isArray(value)) return value
+  return value ? [value] : undefined
 }
 
 function titleCaseWords(value: string): string {

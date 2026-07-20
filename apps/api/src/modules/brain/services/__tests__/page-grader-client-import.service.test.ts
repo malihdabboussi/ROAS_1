@@ -10,6 +10,7 @@ function createQuery(options: { maybeSingle?: unknown; single?: unknown } = {}) 
     order: vi.fn(() => query),
     limit: vi.fn(() => query),
     insert: vi.fn(() => query),
+    update: vi.fn(() => query),
     maybeSingle: vi.fn(async () => ({ data: options.maybeSingle ?? null, error: null })),
     single: vi.fn(async () => ({ data: options.single ?? null, error: null })),
   }
@@ -38,8 +39,8 @@ const christianPackage = {
 
 describe('PageGraderClientImportService', () => {
   it('plans the Christian Osgood import without writing when dryRun is true', async () => {
-    const importJobs = { enqueueCampaignFileImport: vi.fn() }
-    const service = new PageGraderClientImportService(importJobs as never)
+    const packageIngest = { ingestPackage: vi.fn() }
+    const service = new PageGraderClientImportService(packageIngest as never)
     const campaignQuery = createQuery({ maybeSingle: null })
     const supabase = { from: vi.fn(() => campaignQuery) }
 
@@ -59,13 +60,39 @@ describe('PageGraderClientImportService', () => {
         uniqueClientId: 'christian-osgood',
       },
       campaign: { action: 'create', name: 'Multi-Family Strategy' },
-      space: { action: 'create', title: 'Multi-Family Strategy' },
-      brainImport: { action: 'queue', sourceItems: 1, legacyIntelNotes: 1 },
+      space: { action: 'create', title: 'General' },
+      brainImport: { action: 'deterministic_ingest', sourceItems: 1, legacyIntelNotes: 1 },
     })
-    expect(importJobs.enqueueCampaignFileImport).not.toHaveBeenCalled()
+    expect(packageIngest.ingestPackage).not.toHaveBeenCalled()
   })
 
-  it('creates a campaign and space, then queues one campaign brain import', async () => {
+  it('reuses the campaign General Space when Page Grader is already mapped', async () => {
+    const packageIngest = { ingestPackage: vi.fn() }
+    const service = new PageGraderClientImportService(packageIngest as never)
+    const campaignQuery = createQuery({
+      maybeSingle: { id: 'campaign-1', name: 'Multi-Family Strategy' },
+    })
+    const spaceQuery = createQuery({
+      maybeSingle: { id: 'space-general', title: 'General' },
+    })
+    const supabase = {
+      from: vi.fn((table: string) => (table === 'spaces' ? spaceQuery : campaignQuery)),
+    }
+
+    const result = await service.importPackage(
+      supabase as never,
+      'user-1',
+      { package: christianPackage, dryRun: true },
+      { userId: 'user-1', orgId: 'org-1' } as never,
+    )
+
+    expect(spaceQuery.contains).toHaveBeenCalledWith('schema', {
+      custom_data: { space_role: 'general' },
+    })
+    expect(result.space).toEqual({ action: 'reuse', id: 'space-general', title: 'General' })
+  })
+
+  it('creates a campaign and space, then deterministically ingests the package', async () => {
     const campaignQuery = createQuery({
       maybeSingle: null,
       single: { id: 'campaign-1', name: 'Multi-Family Strategy' },
@@ -85,14 +112,18 @@ describe('PageGraderClientImportService', () => {
         throw new Error(`Unexpected table ${table}`)
       }),
     }
-    const importJobs = {
-      enqueueCampaignFileImport: vi.fn(async () => ({
-        jobId: 'job-1',
-        status: 'queued',
-        deduped: false,
+    const packageIngest = {
+      ingestPackage: vi.fn(async () => ({
+        brainId: 'brain-1',
+        contentHash: 'hash-1',
+        memoriesInserted: 2,
+        memoriesSkipped: 0,
+        evidenceUpserted: 1,
+        knowledgeIndexed: 1,
+        skippedUnchanged: false,
       })),
     }
-    const service = new PageGraderClientImportService(importJobs as never)
+    const service = new PageGraderClientImportService(packageIngest as never)
 
     const result = await service.importPackage(
       supabase as never,
@@ -114,24 +145,39 @@ describe('PageGraderClientImportService', () => {
         user_id: 'user-1',
         org_id: 'org-1',
         campaign_id: 'campaign-1',
-        title: 'Multi-Family Strategy',
+        title: 'General',
+        schema: expect.objectContaining({
+          version: 1,
+          fields: expect.arrayContaining([
+            expect.objectContaining({ id: 'title' }),
+            expect.objectContaining({ id: 'status' }),
+          ]),
+          views: expect.arrayContaining([
+            expect.objectContaining({ id: 'campaign-overview' }),
+            expect.objectContaining({ id: 'missions' }),
+          ]),
+          custom_data: expect.objectContaining({
+            source: 'page_grader',
+            space_role: 'general',
+          }),
+        }),
       }),
     )
-    expect(importJobs.enqueueCampaignFileImport).toHaveBeenCalledWith(
-      'user-1',
+    expect(packageIngest.ingestPackage).toHaveBeenCalledWith(
+      supabase,
       expect.objectContaining({
+        userId: 'user-1',
+        orgId: 'org-1',
         campaignId: 'campaign-1',
-        title: 'Page Grader Client Intel - Christian Osgood',
-        sourceType: 'upload',
-        domain: 'strategy',
+        spaceId: 'space-1',
+        force: false,
       }),
-      'org-1',
     )
     expect(result).toMatchObject({
       success: true,
       campaign: { action: 'create', id: 'campaign-1' },
       space: { action: 'create', id: 'space-1' },
-      brainImport: { jobId: 'job-1', status: 'queued' },
+      brainImport: { action: 'ingested', status: 'succeeded', memoriesInserted: 2 },
     })
   })
 })

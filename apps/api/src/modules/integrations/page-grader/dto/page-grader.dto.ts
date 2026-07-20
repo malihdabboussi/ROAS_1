@@ -86,6 +86,7 @@ export type UpsertPageGraderClientScopeMapDto = z.infer<typeof UpsertPageGraderC
 export const ImportPageGraderClientBrainSchema = z.object({
   client_id: z.string().uuid(),
   dryRun: z.boolean().optional(),
+  force: z.boolean().optional(),
   campaignId: z.string().uuid().optional(),
   campaignName: z.string().min(1).max(500).optional(),
   campaignHint: z.string().min(1).max(200).optional(),
@@ -94,3 +95,12 @@ export const ImportPageGraderClientBrainSchema = z.object({
 })
 
 export type ImportPageGraderClientBrainDto = z.infer<typeof ImportPageGraderClientBrainSchema>
+
+export const PageGraderBrainPackageWebhookSchema = z.object({
+  client_id: z.string().uuid(),
+  content_hash: z.string().min(8).max(128).optional(),
+  exported_at: z.string().optional(),
+  force: z.boolean().optional(),
+})
+
+export type PageGraderBrainPackageWebhookDto = z.infer<typeof PageGraderBrainPackageWebhookSchema>

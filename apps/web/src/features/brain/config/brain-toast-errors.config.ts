@@ -79,6 +79,9 @@ export const BRAIN_TOAST_ERRORS = {
   ACTIVATE_FAILED: {
     userMessage: "Couldn't activate Agent Brain. Try again.",
   },
+  PAGE_GRADER_RESYNC_FAILED: {
+    userMessage: "Couldn't re-sync from Page Grader. Try again.",
+  },
 } as const
 
 /** User-facing toast messages for Brain success */
@@ -94,5 +97,8 @@ export const BRAIN_TOAST_SUCCESS = {
   },
   ACTIVATED: {
     userMessage: 'Agent Brain activated.',
+  },
+  PAGE_GRADER_RESYNCED: {
+    userMessage: 'Re-synced from Page Grader.',
   },
 } as const

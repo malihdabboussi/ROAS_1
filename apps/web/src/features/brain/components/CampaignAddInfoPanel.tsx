@@ -1,27 +1,22 @@
 'use client'
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import {
-  ChevronDown,
-  Loader2,
-  Plus,
-} from 'lucide-react'
+import { ChevronDown, Loader2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { DriveFileBrowserModal } from '@/components/media/DriveFileBrowserModal'
 import { DropboxFileBrowserModal } from '@/components/media/DropboxFileBrowserModal'
 import { MediaPickerModal } from '@/components/media/MediaPickerModal'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/navigation/tabs'
-import {
-  importCampaignKnowledgeUrl,
-  type KnowledgeDomain,
-} from '@/lib/campaigns'
+import { importCampaignKnowledgeUrl, type KnowledgeDomain } from '@/lib/campaigns'
+import { fetchCampaign } from '@/lib/campaigns/campaign-api'
 import { MEDIA_TOAST_ERRORS } from '@/lib/config/media-toast-errors.config'
 import { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
+import { importPageGraderClientBrain } from '@/lib/integrations/page-grader-brain-api'
 import { BRAIN_TOAST_ERRORS, BRAIN_TOAST_SUCCESS } from '../config/brain-toast-errors.config'
 import { detectCampaignInfoLinkType } from './campaign-add-info-helpers'
 import { CampaignAddInfoDomainSelect } from './CampaignAddInfoDomainSelect'
-import { CampaignAddInfoFirefliesDialog } from './CampaignAddInfoFirefliesDialog'
 import { CampaignAddInfoFathomDialog } from './CampaignAddInfoFathomDialog'
+import { CampaignAddInfoFirefliesDialog } from './CampaignAddInfoFirefliesDialog'
 import { CampaignAddInfoImportMenu } from './CampaignAddInfoImportMenu'
 import { CampaignAddInfoTabPanels } from './CampaignAddInfoTabPanels'
 import { useCampaignAddInfoCallImports } from './use-campaign-add-info-call-imports'
@@ -51,6 +46,8 @@ export default function CampaignAddInfoPanel({
   > | null>(null)
   const [importDropdownOpen, setImportDropdownOpen] = useState(false)
   const [importDropdownPos, setImportDropdownPos] = useState({ top: 0, left: 0, width: 0 })
+  const [pageGraderClientId, setPageGraderClientId] = useState<string | null>(null)
+  const [pageGraderResyncing, setPageGraderResyncing] = useState(false)
   const importBtnRef = useRef<HTMLButtonElement>(null)
 
   const {
@@ -144,11 +141,65 @@ export default function CampaignAddInfoPanel({
   }
 
   useEffect(() => {
+    if (!visible || !campaignId) {
+      setPageGraderClientId(null)
+      return
+    }
+    let cancelled = false
+    void fetchCampaign(campaignId)
+      .then((campaign) => {
+        if (cancelled) return
+        const config = campaign.config && typeof campaign.config === 'object' ? campaign.config : {}
+        const external =
+          config.external_sources && typeof config.external_sources === 'object'
+            ? (config.external_sources as Record<string, unknown>)
+            : {}
+        const pageGrader =
+          external.page_grader && typeof external.page_grader === 'object'
+            ? (external.page_grader as Record<string, unknown>)
+            : {}
+        const clientId =
+          typeof pageGrader.client_id === 'string' && pageGrader.client_id.trim()
+            ? pageGrader.client_id.trim()
+            : null
+        setPageGraderClientId(clientId)
+      })
+      .catch(() => {
+        if (!cancelled) setPageGraderClientId(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [visible, campaignId])
+
+  useEffect(() => {
     if (!visible || !campaignId) return
     const handler = () => setOpen(true)
     window.addEventListener('mobile-brain-add-info', handler)
     return () => window.removeEventListener('mobile-brain-add-info', handler)
   }, [visible, campaignId])
+
+  const handleResyncPageGrader = async () => {
+    if (!campaignId || !pageGraderClientId) return
+    setPageGraderResyncing(true)
+    try {
+      await importPageGraderClientBrain({
+        clientId: pageGraderClientId,
+        campaignId,
+        force: true,
+      })
+      await onImported()
+      toast.success(BRAIN_TOAST_SUCCESS.PAGE_GRADER_RESYNCED.userMessage)
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : BRAIN_TOAST_ERRORS.PAGE_GRADER_RESYNC_FAILED.userMessage,
+      )
+    } finally {
+      setPageGraderResyncing(false)
+    }
+  }
 
   if (!visible || !campaignId) return null
 
@@ -222,6 +273,8 @@ export default function CampaignAddInfoPanel({
                   setImportDropdownOpen(false)
                   mediaImports.setMediaLibraryOpen(true)
                 }}
+                onResyncPageGrader={pageGraderClientId ? () => void handleResyncPageGrader() : null}
+                pageGraderResyncing={pageGraderResyncing}
                 onToggleOpen={() => setImportDropdownOpen((p) => !p)}
                 open={importDropdownOpen}
                 position={importDropdownPos}

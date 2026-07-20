@@ -19,8 +19,13 @@ function buildResultSummary(job: BrainQueueUiJob): string {
   const result = (job.result ?? {}) as Record<string, unknown>
   const memories = typeof result.memories_created === 'number' ? result.memories_created : null
   const snapshots = typeof result.snapshots_created === 'number' ? result.snapshots_created : null
-  if (memories != null || snapshots != null) {
-    return `${memories ?? 0} memories, ${snapshots ?? 0} snapshots`
+  const knowledgeIndexed =
+    typeof result.knowledge_indexed === 'number' ? result.knowledge_indexed : null
+  if (memories != null || snapshots != null || knowledgeIndexed != null) {
+    const parts = [`${memories ?? 0} memories`]
+    if (snapshots != null) parts.push(`${snapshots} snapshots`)
+    if (knowledgeIndexed != null) parts.push(`${knowledgeIndexed} knowledge`)
+    return parts.join(', ')
   }
 
   const entriesInserted =

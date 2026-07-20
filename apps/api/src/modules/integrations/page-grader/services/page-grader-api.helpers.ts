@@ -9,6 +9,9 @@ export type PageGraderClientScopeEntry = {
   campaign_name?: string
   space_id?: string | null
   space_title?: string | null
+  content_hash?: string | null
+  last_synced_at?: string | null
+  last_sync_status?: string | null
 }
 
 export type PageGraderSendResult = {
@@ -51,11 +54,32 @@ export function parseClientScopeMap(raw: unknown): Record<string, PageGraderClie
       typeof row.space_title === 'string' && row.space_title.trim()
         ? row.space_title.trim()
         : undefined
+    const contentHash =
+      typeof row.content_hash === 'string' && row.content_hash.trim()
+        ? row.content_hash.trim()
+        : row.content_hash === null
+          ? null
+          : undefined
+    const lastSyncedAt =
+      typeof row.last_synced_at === 'string' && row.last_synced_at.trim()
+        ? row.last_synced_at.trim()
+        : row.last_synced_at === null
+          ? null
+          : undefined
+    const lastSyncStatus =
+      typeof row.last_sync_status === 'string' && row.last_sync_status.trim()
+        ? row.last_sync_status.trim()
+        : row.last_sync_status === null
+          ? null
+          : undefined
     out[clientId] = {
       campaign_id: campaignId,
       ...(campaignName ? { campaign_name: campaignName } : {}),
       ...(spaceId !== undefined ? { space_id: spaceId } : {}),
       ...(spaceTitle ? { space_title: spaceTitle } : {}),
+      ...(contentHash !== undefined ? { content_hash: contentHash } : {}),
+      ...(lastSyncedAt !== undefined ? { last_synced_at: lastSyncedAt } : {}),
+      ...(lastSyncStatus !== undefined ? { last_sync_status: lastSyncStatus } : {}),
     }
   }
   return out

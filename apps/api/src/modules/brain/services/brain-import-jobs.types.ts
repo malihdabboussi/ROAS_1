@@ -9,6 +9,7 @@ export type BrainImportJobType =
   | 'campaign_fathom_import'
   | 'campaign_fireflies_import'
   | 'campaign_url_import'
+  | 'page_grader_brain_sync'
   | 'slack_period_import'
   | 'campaign_slack_import'
 

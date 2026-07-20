@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SupabaseServiceClient } from '@vibey/api-shared'
@@ -78,6 +79,7 @@ export class PageGraderApiService {
       },
     })
 
+    const webhookSecret = `pgwh_${randomBytes(24).toString('hex')}`
     const now = new Date().toISOString()
     await this.connections.upsertConnection(PAGE_GRADER_PROVIDER, userId, {
       user_id: userId,
@@ -89,12 +91,12 @@ export class PageGraderApiService {
       token_expires_at: null,
       connected_at: now,
       error_message: null,
-      metadata: { base_url_host: safeHost(baseUrl) },
+      metadata: { base_url_host: safeHost(baseUrl), webhook_secret: webhookSecret },
       updated_at: now,
       scope_mode: 'personal',
     })
 
-    return { connected: true }
+    return { connected: true, webhook_secret: webhookSecret }
   }
 
   async disconnect(userId: string) {
@@ -136,6 +138,8 @@ export class PageGraderApiService {
       status: (data?.status as string) ?? null,
       connectedAt: (data?.connected_at as string) ?? null,
       baseUrlHost: typeof metadata.base_url_host === 'string' ? metadata.base_url_host : null,
+      webhook_secret: typeof metadata.webhook_secret === 'string' ? metadata.webhook_secret : null,
+      brain_webhook_path: '/api/integrations/page-grader/webhooks/brain-package',
     }
   }
 
@@ -239,10 +243,14 @@ export class PageGraderApiService {
       campaignName?: string | null
       spaceId?: string | null
       spaceTitle?: string | null
+      contentHash?: string | null
+      lastSyncedAt?: string | null
+      lastSyncStatus?: string | null
     },
   ) {
     await this.getCreds(userId)
     const existing = await this.readClientScopeMap(userId)
+    const prev = existing[input.clientId]
     const next: Record<string, PageGraderClientScopeEntry> = {
       ...existing,
       [input.clientId]: {
@@ -250,6 +258,14 @@ export class PageGraderApiService {
         ...(input.campaignName ? { campaign_name: input.campaignName } : {}),
         space_id: input.spaceId ?? null,
         ...(input.spaceTitle ? { space_title: input.spaceTitle } : {}),
+        content_hash:
+          input.contentHash !== undefined ? input.contentHash : (prev?.content_hash ?? null),
+        last_synced_at:
+          input.lastSyncedAt !== undefined ? input.lastSyncedAt : (prev?.last_synced_at ?? null),
+        last_sync_status:
+          input.lastSyncStatus !== undefined
+            ? input.lastSyncStatus
+            : (prev?.last_sync_status ?? null),
       },
     }
     await this.writeClientScopeMap(userId, next)

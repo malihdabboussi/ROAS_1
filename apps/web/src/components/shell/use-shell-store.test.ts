@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
-import { useShellStore } from './use-shell-store'
+import {
+  hydrateShellStoreFromStorage,
+  resetShellStoreHydrationForTests,
+  useShellStore,
+} from './use-shell-store'
+
+const STORAGE_KEY = 'vibey.shell.v1'
 
 const target: ShellArtifactViewerTarget = {
   id: 'doc-1',
@@ -10,6 +16,34 @@ const target: ShellArtifactViewerTarget = {
   entityTable: 'space_items',
   spaceId: 'space-1',
 }
+
+describe('shell persisted prefs hydration', () => {
+  beforeEach(() => {
+    resetShellStoreHydrationForTests()
+    window.localStorage.removeItem(STORAGE_KEY)
+    useShellStore.setState({
+      sidebarPinned: false,
+      menuMode: 'home',
+      spaceWorkOpen: true,
+      rightPanel: { open: false, tab: 'tasks' },
+    })
+  })
+
+  it('restores sidebarPinned from localStorage after hydrateShellStoreFromStorage', () => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ sidebarPinned: true }))
+    hydrateShellStoreFromStorage()
+    expect(useShellStore.getState().sidebarPinned).toBe(true)
+  })
+
+  it('does not re-read localStorage on repeated hydrate calls', () => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ sidebarPinned: true }))
+    hydrateShellStoreFromStorage()
+    useShellStore.setState({ sidebarPinned: false })
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ sidebarPinned: true }))
+    hydrateShellStoreFromStorage()
+    expect(useShellStore.getState().sidebarPinned).toBe(false)
+  })
+})
 
 describe('shell artifact viewer state', () => {
   beforeEach(() => {
@@ -53,36 +87,17 @@ describe('shell artifact viewer state', () => {
   })
 })
 
-describe('shell space work tabs', () => {
+describe('shell space work dock', () => {
   beforeEach(() => {
     useShellStore.setState({
       spaceWorkOpen: false,
-      spaceWorkBySpaceId: {},
     })
   })
 
-  it('opens a tab, expands space work, and closes back to the next tab', () => {
-    useShellStore.getState().openSpaceWorkTab({
-      id: 'doc-1',
-      kind: 'doc',
-      title: 'Brief',
-      spaceId: 'space-1',
-    })
-    useShellStore.getState().openSpaceWorkTab({
-      id: 'task-1',
-      kind: 'task',
-      title: 'Ship',
-      spaceId: 'space-1',
-    })
-
+  it('toggles the Space dock open without item tabs', () => {
+    useShellStore.getState().setSpaceWorkOpen(true)
     expect(useShellStore.getState().spaceWorkOpen).toBe(true)
-    expect(useShellStore.getState().spaceWorkBySpaceId['space-1']?.tabs.map((t) => t.id)).toEqual([
-      'task-1',
-      'doc-1',
-    ])
-    expect(useShellStore.getState().spaceWorkBySpaceId['space-1']?.activeTabId).toBe('task-1')
-
-    useShellStore.getState().closeSpaceWorkTab('space-1', 'task-1')
-    expect(useShellStore.getState().spaceWorkBySpaceId['space-1']?.activeTabId).toBe('doc-1')
+    useShellStore.getState().toggleSpaceWorkOpen()
+    expect(useShellStore.getState().spaceWorkOpen).toBe(false)
   })
 })

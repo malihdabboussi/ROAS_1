@@ -2,6 +2,7 @@
 
 import { usePathname, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useLayoutEffect, useRef } from 'react'
+import { ShellStoreHydrator } from '@/components/shell/ShellStoreHydrator'
 import { TransferDialogProvider } from '@/components/transfer'
 import { PromoRedemptionHandler } from '@/features/billing/components/PromoRedemptionHandler'
 import { PurchaseSuccessHandler } from '@/features/billing/components/PurchaseSuccessHandler'
@@ -211,6 +212,7 @@ export function DashboardProviders({
   return (
     <CampaignModeProvider initialSidebarMode={initialSidebarMode}>
       <TransferDialogProvider>
+        <ShellStoreHydrator />
         {children}
         <ImpersonationBanner />
         <Suspense fallback={null}>

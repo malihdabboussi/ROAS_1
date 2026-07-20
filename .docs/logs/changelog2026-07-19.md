@@ -1,11 +1,46 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 19:20] - [FIX]
+
+What: Forced OpenClaw ensure-ready + skill sync for all newly imported ROAS org agents (and Lux/Mara/Rex merges) on Dylan's active shared runtime; marked `agents_registry.sync_status = ready`.
+Why: Import left agents at `pending`; chatting once was needed to materialize org workspaces — user asked to do that without manual per-agent chats.
+Impact: ROAS Team agents Cole/Ivy/Jett/Jordan/Nico/Niko/Nova/Orion/Pixel/Rio/Wren (+ Lux/Mara/Rex) should open chat without the setup gate.
+Files: prod `agents_registry.sync_status` (ROAS org); runtime sync via profile `agent_runtime_url`
+
+## [2026-07-19 19:09] - [FEATURE]
+
+What: Copied Dylan's personal-account agents + skills/definitions/resources into the ROAS org (`788cfdba…`): imported 11 missing agents (Cole, Ivy, Jett, Jordan, Nico, Niko, Nova, Orion, Pixel, Rio, Wren) and merged personal skill packs into existing Lux/Mara/Rex. Skipped brains/spaces; left org-only skills intact.
+Why: Personal team build-out lived only under `user_id` scope; ROAS org needed the same agents and trained skills without migrating Spaces content.
+Impact: Open ROAS → Team — the personal roster agents should appear with their skills. Chat once with each newly imported agent to trigger org OpenClaw sync (`sync_status` starts as `pending`).
+Files: prod `agents_registry` / `agent_skills` / `agent_skill_resources` / `agent_definitions` (ROAS org)
+
+## [2026-07-19 18:58] - [FIX]
+
+What: Fixed dashboard shell hydration mismatch on the sidebar toggle by deferring persisted shell prefs until after mount (`ShellStoreHydrator`, `useShellPrefsHydrated`) and keeping SSR-safe zustand defaults.
+Why: `sidebarPinned` was read from `localStorage` during client init while the server rendered collapsed defaults, so React reported mismatched `title` / `aria-pressed` / class on `ShellTopBar` when opening a space.
+Impact: Hard-refresh and open Brain/Spaces — the sidebar pin button should no longer log hydration errors; pinned state still restores immediately after mount.
+Files: `use-shell-store.ts`, `ShellStoreHydrator.tsx`, `use-shell-prefs-hydrated.ts`, `ShellTopBar.tsx`, `Sidebar.tsx`, `providers.tsx`, shell unit tests
+
 ## [2026-07-19 18:21] - [FIX]
 
 What: Made image briefs and generated ad assets qualification-safe across campaigns with Audience/Offer Locks, approved-asset readiness, two independent audience cues, factual live-platform treatment, and a two-second who/offer/why-now check.
 Why: The prior schema could faithfully produce polished generic metaphors that preserved brand colors and copy while failing to show who the ad was for or that a webinar was live on a known platform.
 Impact: Future Webinar Fulfillment image briefs block on missing promised identity assets, reject category-ambiguous concepts, use official logos only from approved references, and require the generated asset to qualify a cold viewer without relying on surrounding body copy.
 Files: `webinar-fulfillment.creative.ts`, `webinar-fulfillment.playbook.test.ts`, `roas-image-brief/SKILL.md`, `references/design-prompt-spec.md`, `20260719182102_qualify_image_briefs_before_generation.sql`, `documentation/features/missions.md`
+
+## [2026-07-19 18:05] - [FIX]
+
+What: Org create now inserts the owner membership via the service role, hard-deletes the org if that step fails, and checks slug uniqueness with the service role. Repaired the orphan `ROAS` / `roas` org for dylan@dylanvanas.com (owner membership + core agents + starter credits).
+Why: User-scoped RLS could create the `organizations` row then fail on first `org_members` insert, leaving a slug-blocking orphan that never appeared in the account switcher.
+Impact: Refresh and open the account menu — **ROAS** should appear under organizations. After `roas-api` deploy, failed creates no longer leave stuck slugs.
+Files: `org.service.ts`, `org.repository.ts`, `org.service.test.ts`, ROAS prod `org_members` / `agents_registry` / `org_credit_purchases` repair
+
+## [2026-07-19 17:44] - [FIX]
+
+What: Mission multi-tab Google Doc export no longer double-posts H1 titles; secondary tabs render markdown tables as native Docs `insertTable` grids; blank markdown paragraphs and mashed bold field labels keep more vertical spacing.
+Why: Bulk export prepended the deliverable title even when `doc_body` already had an H1, and secondary-tab table rows were flattened to tab-separated paragraphs that wrapped into unreadable blocks.
+Impact: After `roas-api` deploy, re-run Export to Google Docs — titles should appear once, competitor/scope tables should be real grids on every tab, and labeled sections should breathe more.
+Files: `mission-deliverables-google-export.service.ts`, `markdown-to-google-docs-tab-requests.ts`, `html-to-google-docs-markdown.ts`, related unit tests, `space-items-custom-data-drive.md`
 
 ## [2026-07-19 15:58] - [FIX]
 
@@ -211,13 +246,52 @@ What: Replaced mission execution's incomplete local role-domain lookup with the 
 Why: Lux's managed marketing role already grants `generate_media`, but mission preflight omitted that domain and incorrectly paused generated concept images for human access approval.
 Impact: Creative image subtasks proceed without approval when the assigned role already permits media generation; explicit agent denies still override defaults.
 Files: `mission-action-policy.ts`, `mission-action-policy.test.ts`, `mission-execute-phase.service.ts`, `documentation/features/missions.md`
-
 ## [2026-07-19 17:29] - [FIX]
 
 What: Stopped mission image generation from persisting a mission/subtask UUID as `media_assets.conversation_id`, while preserving normal chat conversation attribution.
 Why: Generated artwork uploaded successfully but its media row failed the conversation foreign key, leaving Task 11 blocked with no image deliverables.
 Impact: Mission-run `generate_image` calls can register images in Space Media and persist native mission image deliverables without requiring a chat-backed session.
 Files: `artifact-legacy-media-generate.service.ts`, `artifact-legacy-media-generate.service.test.ts`, `documentation/features/missions.md`
+
+## [2026-07-19 16:10] - [FIX]
+
+What: Hardened `auto-skill-1-roas-precall-strategy` so every run must `save_document` the strategy map then `generate_visual_html` (one-pager) on that Doc's `item_id`, plus a separate agenda Doc — no Drive/Slack routing.
+Why: Nate only saved Document cards; the skill already required an HTML one-pager, but taught unreachable Drive/Slack delivery instead of the Vibey visual-doc path.
+Impact: Future Nate/precall runs are instructed to emit a Visual HTML one-pager in campaign Docs. Existing Impact docs are unchanged; re-run the skill to generate the HTML.
+Files: docker/agents/templates/strategist/skills/auto-skill-1-roas-precall-strategy/SKILL.md, references/{html-onepager,output-template,team-runbook}.md; skill_library + Nate agent_skills/resources (ROAS prod)
+
+
+## [2026-07-19 17:33] - [FIX]
+What: Prefetch HQ sidebar spaces and harden paginated spaces response parsing so Campaigns flyouts do not show empty "No spaces yet" while data exists.
+Why: Production had Impact spaces in DB and on /campaigns, but the Campaigns hover flyout only fetched spaces after mouseenter and could render an empty list.
+Impact: HQ sidebar warms the spaces cache before Campaigns hover; paginated list parsing tolerates bare arrays.
+Files: apps/web/src/components/layout/sidebar/useSidebarController.ts, apps/web/src/lib/spaces/spaces-api.ts, apps/web/src/lib/spaces/spaces-api.test.ts
+
+## [2026-07-19 17:34] - [FIX]
+What: Updated Vercel roas-api REDIS_URL from redis.railway.internal to the Railway public TCP proxy host and triggered a production redeploy.
+Why: Production API was throwing getaddrinfo ENOTFOUND redis.railway.internal on Vercel (internal Railway DNS is not reachable there).
+Impact: API serverless instances can resolve Redis after the redeploy lands; reduces Redis connection error noise.
+Files: Vercel project env REDIS_URL (roas-api)
+## [2026-07-19 17:38] - [FIX]
+
+What: Space Missions tab now fetches and realtime-filters by `space_id` (not campaign-wide).
+Why: V2 and V3 under the same campaign both showed every campaign mission because `useMissionsViewListState` only passed `campaign_id` to `fetchMissions`.
+Impact: Each Space Missions view lists only that space's missions. Create/playbook paths already set `space_id`.
+Files: apps/web/src/features/spaces/components/useMissionsViewListState.ts, useMissionsViewRealtime.ts, MissionsView.tsx, MissionsView.test.tsx, useMissionsViewRealtime.test.ts
+
+## [2026-07-19 18:33] - [FIX]
+
+What: Scoped native Slack connections strictly to the active personal or organization account, changed the install welcome DM to introduce itself as “your new bot,” and granted authenticated/API access to the Shadow action table.
+Why: A personal Slack connection could appear connected inside a new organization, while Team → People failed because the Shadow ledger migration enabled RLS without granting table privileges.
+Impact: Settings, Slack runtime actions, and Team → People now agree on the selected workspace; the ROAS organization’s 303 synced people can load with an empty Shadow inbox; future installs receive the generic introduction.
+Files: `apps/api/src/modules/slack/repositories/slack.repository.ts`, `apps/api/src/modules/integrations/services/integrations-status.service.ts`, `apps/api/src/modules/slack/services/slack-service-events.base.ts`, focused tests, `supabase/migrations/20260719183347_grant_slack_shadow_actions_access.sql`, `documentation/features/integration-connections.md`
+
+## [2026-07-19 19:04] - [FEATURE]
+
+What: Added Manage People to the Team flyout, moved the Shadow inbox above the Slack roster, revealed it after test-proposal creation, and added an explicit three-step explanation of Ghost, Shadow, approval, activation, and sending.
+Why: Test proposals were created successfully but appeared below hundreds of Slack people, making the result invisible and leaving the current manual review capability unclear.
+Impact: Admins can navigate directly to Manage People, immediately see a created proposal, and understand that this release is a safe manual review/send loop while automatic proposal discovery remains follow-up work.
+Files: `apps/web/src/components/layout/sidebar/SidebarTeam2Flyout.tsx`, `apps/web/src/components/layout/sidebar/SidebarTeamManageLinks.tsx`, focused tests, `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx`, `apps/web/src/features/team-2/config/messages.config.ts`, `documentation/features/integration-connections.md`
 
 ## [2026-07-19 19:45] - [FEATURE]
 
@@ -226,9 +300,30 @@ Why: Admins could create and send a proposal but could not see where it would la
 Impact: Active Slack humans remain the roster source; email matches link automatically, unique exact-name matches require confirmation, manual classifications persist across refreshes, and an admin can inspect the destination conversation before using the existing reviewed-send flow. User Brain attachment is visible without falsely claiming that DM-to-Brain learning is already automatic.
 Files: `supabase/migrations/20260719204000_slack_people_identity_activity.sql`, Slack people DTO/types/controller/repositories/services/tests, Team People service/hook/config/components/tests, `documentation/features/integration-connections.md`
 
+## [2026-07-19 19:50] - [FEATURE]
+
+What: Shipped Page Grader continuous campaign brain sync — deterministic dual-write ingest (ns_memories + Campaign Knowledge), content_hash cursors, PG push webhook + ROAS hourly catch-up, Map clients / Brain canvas Re-sync, and hardened nightly Client Intel refresh with hash push.
+Why: Map clients → Create & import used Atlas campaign_file_import which could not write campaign memories (stuck Processing, Objects: 0); sync was one-shot and PG refresh did not notify ROAS.
+Impact: Mapped clients sync without Atlas LLM; unchanged hashes no-op; manual force Re-sync available; Brain queue shows succeeded page_grader_brain_sync jobs. Requires API deploy + PG ROAS_BRAIN_WEBHOOK_* env + operator Re-sync for Multifamily.
+Files: page-grader-brain-package-{build,ingest}.service.ts, page-grader-client-import.service.ts, page-grader-brain-sync.service.ts, page-grader-webhooks.controller.ts, CampaignAddInfo{Panel,ImportMenu}.tsx, PageGraderClientScopeMap*.tsx, page-grader scheduled-brain-refresh / roasBrain{Package,Push}.ts, documentation/features/page-grader-campaign-brain-sync.md
+
+## [2026-07-19 21:02] - [FIX]
+
+What: Made Page Grader client imports create and deterministically reuse a canonical General Space, normalized incomplete legacy Space schemas in the frontend, added an in-place repair migration for malformed Page Grader Spaces, and made successful Fathom connections reuse or instantiate the existing Meetings template with draft automations.
+Why: Page Grader-created Spaces omitted required schema fields and crashed the Spaces view, while new client connections lacked dependable default General and Meetings destinations.
+Impact: New and repaired client Spaces load safely, Page Grader maps to the intended General Space, and Fathom gets a ready Meetings Space without publishing automations before human confirmation.
+Files: `page-grader-client-import.service.ts`, `page-grader-general-space-schema.ts`, `normalize-space-schema.ts`, `use-space-active-view.ts`, Fathom controller/service/module, integrations callback/messages, focused tests, `20260719210500_repair_page_grader_general_spaces.sql`, and feature documentation.
+
 ## [2026-07-19 21:04] - [FIX]
 
 What: Replaced Task 16's blank Google Doc reconstruction with a native copy of the ROAS Webinar Launch Bible master, then mapped approved campaign content into the copied styled tabs.
 Why: Blank reconstruction flattened the intended launch-bible design and did not preserve the master document's tables, emojis, or native tab hierarchy.
 Impact: Future Webinar Launch Bible compilations retain the master template's 13-tab topology, including nested funnel pages, while ordinary mission-deliverables exports remain unchanged.
 Files: `google-drive-composio-multi-tab-docs.service.ts`, `google-drive-api.service.ts`, `markdown-to-google-docs-tab-requests.ts`, `mission-deliverables-google-export.service.ts`, Task 16 action/playbook guidance, tests, and `documentation/features/missions.md`
+## [2026-07-19 21:19] - [REFACTOR]
+
+What: Removed Space work open-item tabs (strip, persistence, sync) while keeping the Space dock beside chat and collapse/auto-expand.
+Why: Tab strip cluttered the Space column when opening docs/tasks; earlier removal never landed on main.
+Impact: Hard-refresh. Docs/tasks open in normal Space UI only — no top tabs. Collapse still hides the dock without unmounting Space.
+Files: SpaceWorkDock.tsx, use-shell-store.ts (+test), SpaceItemsContainer.tsx; deleted SpaceWorkTabStrip.tsx, space-work-tabs*.ts, use-space-work-tab-sync.ts, space-work-dock.messages.config.ts; globals.css (web + website); documentation/features/claude-chatgpt-shell.md; .docs/plans/right-sidebar-surface-picker.md
+

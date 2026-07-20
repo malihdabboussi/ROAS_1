@@ -3,15 +3,6 @@
 import type { ReactNode } from 'react'
 import { create } from 'zustand'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
-import {
-  activateSpaceWorkTab as activateTabInSession,
-  closeSpaceWorkTab as closeTabInSession,
-  EMPTY_SPACE_WORK_SESSION,
-  normalizeSpaceWorkSession,
-  upsertSpaceWorkTab,
-  type SpaceWorkSession,
-  type SpaceWorkTab,
-} from './space-work-tabs'
 
 const STORAGE_KEY = 'vibey.shell.v1'
 
@@ -43,7 +34,6 @@ type PersistedShell = {
   rightPanelTab?: ShellRightPanelTab
   spaceWorkOpen?: boolean
   artifactViewerWidth?: number
-  spaceWorkBySpaceId?: Record<string, SpaceWorkSession>
 }
 
 function readPersisted(): PersistedShell {
@@ -67,18 +57,6 @@ function writePersisted(partial: PersistedShell) {
   }
 }
 
-function readPersistedSpaceWorkBySpaceId(
-  raw: PersistedShell['spaceWorkBySpaceId'],
-): Record<string, SpaceWorkSession> {
-  if (!raw || typeof raw !== 'object') return {}
-  const next: Record<string, SpaceWorkSession> = {}
-  for (const [spaceId, session] of Object.entries(raw)) {
-    if (!spaceId.trim()) continue
-    next[spaceId] = normalizeSpaceWorkSession(session)
-  }
-  return next
-}
-
 const CHAT_DRAWER_WIDTH_MIN = 240
 const CHAT_DRAWER_WIDTH_MAX = 560
 const ARTIFACT_VIEWER_WIDTH_MIN = 360
@@ -98,7 +76,6 @@ interface ShellStore {
   menuMode: ShellMenuMode
   chatDrawer: ShellChatDrawerState
   spaceWorkOpen: boolean
-  spaceWorkBySpaceId: Record<string, SpaceWorkSession>
   rightPanel: ShellRightPanelState
   artifactViewer: ShellArtifactViewerState
   newChatNonce: number
@@ -121,9 +98,6 @@ interface ShellStore {
   setChatDrawerWidth: (width: number) => void
   setSpaceWorkOpen: (open: boolean) => void
   toggleSpaceWorkOpen: () => void
-  openSpaceWorkTab: (tab: SpaceWorkTab) => void
-  activateSpaceWorkTab: (spaceId: string, tabId: string) => void
-  closeSpaceWorkTab: (spaceId: string, tabId: string) => void
   setRightPanelOpen: (open: boolean) => void
   toggleRightPanel: () => void
   setRightPanelTab: (tab: ShellRightPanelTab) => void
@@ -141,27 +115,25 @@ interface ShellStore {
 const PEEK_CLOSE_DEFAULT_MS = 450
 let peekCloseTimer: ReturnType<typeof setTimeout> | null = null
 
-const persisted = typeof window !== 'undefined' ? readPersisted() : {}
-
+/** SSR-safe defaults — never read localStorage during store init (hydration mismatch). */
 export const useShellStore = create<ShellStore>((set, get) => ({
-  sidebarPinned: persisted.sidebarPinned ?? false,
+  sidebarPinned: false,
   sidebarPeek: false,
-  menuMode: persisted.menuMode ?? 'home',
+  menuMode: 'home',
   chatDrawer: {
     open: false,
     conversationId: null,
-    width: clampChatDrawerWidth(persisted.chatDrawerWidth ?? 280),
+    width: 280,
     minimized: false,
   },
-  spaceWorkOpen: persisted.spaceWorkOpen ?? true,
-  spaceWorkBySpaceId: readPersistedSpaceWorkBySpaceId(persisted.spaceWorkBySpaceId),
+  spaceWorkOpen: true,
   rightPanel: {
-    open: persisted.rightPanelOpen ?? false,
-    tab: persisted.rightPanelTab ?? 'tasks',
+    open: false,
+    tab: 'tasks',
   },
   artifactViewer: {
     target: null,
-    width: clampArtifactViewerWidth(persisted.artifactViewerWidth ?? 480),
+    width: 480,
   },
   newChatNonce: 0,
   sidebarFlyoutCloseEpoch: 0,
@@ -273,39 +245,6 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   toggleSpaceWorkOpen: () => {
     get().setSpaceWorkOpen(!get().spaceWorkOpen)
   },
-  openSpaceWorkTab: (tab) => {
-    const spaceId = tab.spaceId.trim()
-    if (!spaceId || !tab.id.trim()) return
-    set((s) => {
-      const current = s.spaceWorkBySpaceId[spaceId] ?? EMPTY_SPACE_WORK_SESSION
-      const nextSession = upsertSpaceWorkTab(current, { ...tab, spaceId })
-      const spaceWorkBySpaceId = { ...s.spaceWorkBySpaceId, [spaceId]: nextSession }
-      writePersisted({ spaceWorkBySpaceId, spaceWorkOpen: true })
-      return { spaceWorkBySpaceId, spaceWorkOpen: true }
-    })
-  },
-  activateSpaceWorkTab: (spaceId, tabId) => {
-    const key = spaceId.trim()
-    if (!key || !tabId.trim()) return
-    set((s) => {
-      const current = s.spaceWorkBySpaceId[key] ?? EMPTY_SPACE_WORK_SESSION
-      const nextSession = activateTabInSession(current, tabId)
-      const spaceWorkBySpaceId = { ...s.spaceWorkBySpaceId, [key]: nextSession }
-      writePersisted({ spaceWorkBySpaceId })
-      return { spaceWorkBySpaceId }
-    })
-  },
-  closeSpaceWorkTab: (spaceId, tabId) => {
-    const key = spaceId.trim()
-    if (!key || !tabId.trim()) return
-    set((s) => {
-      const current = s.spaceWorkBySpaceId[key] ?? EMPTY_SPACE_WORK_SESSION
-      const nextSession = closeTabInSession(current, tabId)
-      const spaceWorkBySpaceId = { ...s.spaceWorkBySpaceId, [key]: nextSession }
-      writePersisted({ spaceWorkBySpaceId })
-      return { spaceWorkBySpaceId }
-    })
-  },
   setRightPanelOpen: (open) => {
     writePersisted({ rightPanelOpen: open })
     set((s) => ({
@@ -385,17 +324,41 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   },
 }))
 
+let shellStoreHydratedFromStorage = false
+
+/** Test-only: reset hydration guard between vitest cases. */
+export function resetShellStoreHydrationForTests(): void {
+  shellStoreHydratedFromStorage = false
+}
+
+/** Apply localStorage shell prefs after mount — call once from a client provider. */
+export function hydrateShellStoreFromStorage(): void {
+  if (typeof window === 'undefined') return
+  if (shellStoreHydratedFromStorage) return
+  shellStoreHydratedFromStorage = true
+  const persisted = readPersisted()
+  useShellStore.setState({
+    sidebarPinned: persisted.sidebarPinned ?? false,
+    menuMode: persisted.menuMode ?? 'home',
+    chatDrawer: {
+      ...useShellStore.getState().chatDrawer,
+      width: clampChatDrawerWidth(persisted.chatDrawerWidth ?? 280),
+    },
+    spaceWorkOpen: persisted.spaceWorkOpen ?? true,
+    rightPanel: {
+      open: persisted.rightPanelOpen ?? false,
+      tab: persisted.rightPanelTab ?? 'tasks',
+    },
+    artifactViewer: {
+      ...useShellStore.getState().artifactViewer,
+      width: clampArtifactViewerWidth(persisted.artifactViewerWidth ?? 480),
+    },
+  })
+}
+
 export function shellSidebarExpanded(state: {
   sidebarPinned: boolean
   sidebarPeek: boolean
 }): boolean {
   return state.sidebarPinned || state.sidebarPeek
-}
-
-export function selectSpaceWorkSession(
-  state: Pick<ShellStore, 'spaceWorkBySpaceId'>,
-  spaceId: string | null | undefined,
-): SpaceWorkSession {
-  if (!spaceId?.trim()) return EMPTY_SPACE_WORK_SESSION
-  return state.spaceWorkBySpaceId[spaceId] ?? EMPTY_SPACE_WORK_SESSION
 }

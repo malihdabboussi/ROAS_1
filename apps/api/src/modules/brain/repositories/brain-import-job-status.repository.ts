@@ -56,6 +56,7 @@ export class BrainImportJobStatusRepository {
           'campaign_fathom_import',
           'campaign_fireflies_import',
           'campaign_url_import',
+          'page_grader_brain_sync',
         ])
         .eq('payload->>campaignId', scope.campaignId)
     } else if (scope?.targetBrain === 'user') {
@@ -93,7 +94,11 @@ export class BrainImportJobStatusRepository {
       .from('brain_ops_outbox')
       .select('id, event_type, status, error, created_at, processed_at, brain_id, payload')
       .eq('user_id', userId)
-      .in('event_type', ['brain_library_sync', 'brain_pattern_analysis', 'brain_timeline_synthesis'])
+      .in('event_type', [
+        'brain_library_sync',
+        'brain_pattern_analysis',
+        'brain_timeline_synthesis',
+      ])
       .or(
         `status.in.(pending,processing,processed),and(status.eq.failed,created_at.gt.${completedAfter}),and(status.eq.done,processed_at.gt.${completedAfter})`,
       )

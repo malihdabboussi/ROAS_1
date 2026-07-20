@@ -38,6 +38,9 @@ export function PageGraderClientScopeMapModal({
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [spaces, setSpaces] = useState<SpaceSummary[]>([])
   const [draft, setDraft] = useState<Record<string, DraftRow>>({})
+  const [syncByClient, setSyncByClient] = useState<
+    Record<string, { lastSyncedAt?: string | null; lastSyncStatus?: string | null }>
+  >({})
   const [importingClientId, setImportingClientId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
 
@@ -55,12 +58,20 @@ export function PageGraderClientScopeMapModal({
       setSpaces(spacesRes.items)
 
       const next: Record<string, DraftRow> = {}
+      const syncNext: Record<
+        string,
+        { lastSyncedAt?: string | null; lastSyncStatus?: string | null }
+      > = {}
       for (const client of clientRes.clients) {
         const mapped = clientRes.clientScopeMap[client.id]
         if (mapped?.campaign_id) {
           next[client.id] = {
             campaignId: mapped.campaign_id,
             spaceId: mapped.space_id ?? '',
+          }
+          syncNext[client.id] = {
+            lastSyncedAt: mapped.last_synced_at ?? null,
+            lastSyncStatus: mapped.last_sync_status ?? null,
           }
           continue
         }
@@ -70,12 +81,14 @@ export function PageGraderClientScopeMapModal({
         }
       }
       setDraft(next)
+      setSyncByClient(syncNext)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load client mappings')
       setClients([])
       setCampaigns([])
       setSpaces([])
       setDraft({})
+      setSyncByClient({})
     } finally {
       setLoading(false)
     }
@@ -137,7 +150,7 @@ export function PageGraderClientScopeMapModal({
     }
   }
 
-  const handleImportBrain = async (client: PageGraderClient) => {
+  const handleImportBrain = async (client: PageGraderClient, opts?: { force?: boolean }) => {
     const row = draft[client.id]
     const mapped = Boolean(row?.campaignId)
     const campaign = mapped ? campaigns.find((c) => c.id === row?.campaignId) : null
@@ -158,23 +171,35 @@ export function PageGraderClientScopeMapModal({
               campaignHint: campaign?.name ?? client.name,
               spaceId: space?.id ?? null,
               spaceTitle: space?.title ?? null,
+              force: opts?.force === true,
             }
           : {
               clientId: client.id,
               campaignName: client.name,
-              spaceTitle: client.name,
+              spaceTitle: 'General',
+              force: opts?.force === true,
             },
       )
       const campaignId = result.campaign?.id?.trim() ?? ''
       const campaignName = result.campaign?.name?.trim() || campaign?.name || client.name
       const spaceId = result.space?.id?.trim() ?? ''
-      const spaceTitle = result.space?.title?.trim() || client.name
+      const spaceTitle = result.space?.title?.trim() || 'General'
       const createdCampaign = result.campaign?.action === 'create' || !mapped
 
       if (campaignId) {
         setDraft((prev) => ({
           ...prev,
           [client.id]: { campaignId, spaceId },
+        }))
+        setSyncByClient((prev) => ({
+          ...prev,
+          [client.id]: {
+            lastSyncedAt: new Date().toISOString(),
+            lastSyncStatus:
+              typeof result.brainImport?.action === 'string'
+                ? result.brainImport.action
+                : (result.brainImport?.status ?? 'succeeded'),
+          },
         }))
         setCampaigns((prev) => {
           if (prev.some((c) => c.id === campaignId)) return prev
@@ -210,9 +235,11 @@ export function PageGraderClientScopeMapModal({
       }
 
       toast.success(
-        createdCampaign
-          ? `Created ${campaignName} and started brain import`
-          : `Imported ${client.name} into ${campaignName}`,
+        opts?.force
+          ? `Re-synced ${client.name} into ${campaignName}`
+          : createdCampaign
+            ? `Created ${campaignName} and imported brain`
+            : `Imported ${client.name} into ${campaignName}`,
       )
       onSaved()
     } catch (e) {
@@ -297,10 +324,12 @@ export function PageGraderClientScopeMapModal({
                           row.campaignId ? (spacesByCampaign.get(row.campaignId) ?? []) : []
                         }
                         isImporting={importingClientId === client.id}
+                        syncStatus={syncByClient[client.id] ?? null}
                         onDraftChange={(clientId, next) => {
                           setDraft((prev) => ({ ...prev, [clientId]: next }))
                         }}
                         onImportBrain={(c) => void handleImportBrain(c)}
+                        onResyncBrain={(c) => void handleImportBrain(c, { force: true })}
                       />
                     )
                   })}
