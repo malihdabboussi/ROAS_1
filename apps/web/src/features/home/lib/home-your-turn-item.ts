@@ -1,4 +1,4 @@
-import type { YourTurnItem } from '@/features/spaces/services/your-turn.service'
+import type { YourTurnItem } from '@/lib/your-turn/types'
 
 /** Normalize approval/suggestion rows for the home task host. */
 export function normalizeYourTurnItemForHomeOpen(item: YourTurnItem): YourTurnItem {

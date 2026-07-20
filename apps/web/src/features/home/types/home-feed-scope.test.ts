@@ -11,9 +11,9 @@ describe('home feed scope helpers', () => {
     sessionStorage.clear()
   })
 
-  it('falls back to the workspace scope for invalid persisted values', () => {
+  it('falls back to the personal scope for invalid persisted values', () => {
     expect(parseHomeFeedScope({ feedScope: 'invalid', orgId: 123, campaignId: false })).toEqual({
-      feedScope: 'workspace',
+      feedScope: 'personal',
       orgId: null,
       campaignId: null,
     })

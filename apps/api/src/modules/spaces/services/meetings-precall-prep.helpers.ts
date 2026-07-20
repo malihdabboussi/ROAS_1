@@ -144,6 +144,76 @@ export type AgendaRelatedCall = {
 }
 
 const RELATED_CALL_WINDOW_MS = 36 * 60 * 60 * 1000
+export const FATHOM_AGENDA_SOURCE = 'fathom' as const
+export const FATHOM_AGENDA_DURATION_MS = 30 * 60 * 1000
+
+export function callDateInAgendaWindow(
+  callDate: string | null | undefined,
+  startIso: string,
+  endIso: string,
+): boolean {
+  if (!callDate) return false
+  const t = new Date(callDate).getTime()
+  const start = new Date(startIso).getTime()
+  const end = new Date(endIso).getTime()
+  if (!Number.isFinite(t) || !Number.isFinite(start) || !Number.isFinite(end)) return false
+  return t >= start && t <= end
+}
+
+/** Synthetic Agenda row for a Fathom call that did not match a calendar event. */
+export function buildFathomAgendaEvent(input: {
+  spaceId: string
+  callItemId: string
+  title: string
+  callDate: string
+  recordingUrl: string | null
+  followUps?: AgendaRelatedCall['follow_ups']
+}): {
+  id: string
+  title: string
+  start: string
+  end: string
+  all_day: false
+  location: null
+  video_url: string | null
+  video_label: string | null
+  html_link: null
+  color_id: null
+  attendees: []
+  source: typeof FATHOM_AGENDA_SOURCE
+  account_label: 'Fathom'
+  prep: null
+  related: AgendaRelatedCall
+} {
+  const title = input.title.trim().slice(0, 200) || 'Call'
+  const startMs = new Date(input.callDate).getTime()
+  const end = Number.isFinite(startMs)
+    ? new Date(startMs + FATHOM_AGENDA_DURATION_MS).toISOString()
+    : input.callDate
+  return {
+    id: `fathom:${input.callItemId}`,
+    title,
+    start: input.callDate,
+    end,
+    all_day: false,
+    location: null,
+    video_url: input.recordingUrl,
+    video_label: input.recordingUrl ? 'Fathom' : null,
+    html_link: null,
+    color_id: null,
+    attendees: [],
+    source: FATHOM_AGENDA_SOURCE,
+    account_label: 'Fathom',
+    prep: null,
+    related: {
+      space_id: input.spaceId,
+      call_item_id: input.callItemId,
+      title,
+      recording_url: input.recordingUrl,
+      follow_ups: input.followUps ?? [],
+    },
+  }
+}
 
 /** Score how well a Fathom call row matches a calendar event (higher is better). */
 export function scoreRelatedCallMatch(
@@ -186,7 +256,11 @@ export function scoreRelatedCallMatch(
   const callTitle = String(call.title ?? '')
     .trim()
     .toLowerCase()
-  if (eventTitle && callTitle && (eventTitle.includes(callTitle) || callTitle.includes(eventTitle))) {
+  if (
+    eventTitle &&
+    callTitle &&
+    (eventTitle.includes(callTitle) || callTitle.includes(eventTitle))
+  ) {
     score += 5
   }
   return score

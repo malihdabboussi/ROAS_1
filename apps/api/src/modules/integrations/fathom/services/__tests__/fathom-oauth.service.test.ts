@@ -281,8 +281,19 @@ describe('FathomOAuthService', () => {
     expect(spaceTemplates.instantiate).not.toHaveBeenCalled()
   })
 
-  it('instantiates a private Personal Dashboard with draft automations', async () => {
-    const supabase = {} as any
+  it('instantiates a private Personal Dashboard on the personal account', async () => {
+    const supabase = {
+      from: vi.fn(() => {
+        const chain: Record<string, unknown> = {}
+        for (const method of ['select', 'eq', 'is', 'contains', 'neq']) {
+          chain[method] = vi.fn().mockReturnValue(chain)
+        }
+        chain.maybeSingle = vi
+          .fn()
+          .mockResolvedValue({ data: { id: 'personal-campaign' }, error: null })
+        return chain
+      }),
+    } as any
 
     await expect(
       service.ensureMeetingsSpace(supabase, {
@@ -292,18 +303,24 @@ describe('FathomOAuthService', () => {
       } as never),
     ).resolves.toEqual({ id: 'personal-dashboard', action: 'create' })
 
+    expect(meetingsPrecallPrep.resolveMeetingsSpaceId).toHaveBeenCalledWith(
+      supabase,
+      'user_1',
+      null,
+    )
     expect(spaceTemplates.instantiate).toHaveBeenCalledWith(
       supabase,
-      expect.objectContaining({ userId: 'user_1', orgId: 'org_1' }),
+      expect.objectContaining({ userId: 'user_1', orgId: null }),
       'personal-dashboard',
-      {
+      expect.objectContaining({
         title: 'Personal Dashboard',
         visibility: 'private',
         include_tasks: true,
         include_docs: true,
         include_channel: false,
         include_automations: true,
-      },
+        campaign_id: 'personal-campaign',
+      }),
     )
   })
 })

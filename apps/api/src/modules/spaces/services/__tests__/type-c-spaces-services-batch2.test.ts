@@ -79,7 +79,10 @@ describe('Type C Spaces service batch 2 baselines', () => {
       select: () => existingQuery,
       eq: () => existingQuery,
       ilike: () => existingQuery,
-      limit: vi.fn().mockResolvedValue({ data: [{ id: 'saved_1' }], error: null }),
+      limit: vi.fn().mockResolvedValue({
+        data: [{ id: 'saved_1', mission_ids: ['mission_old'] }],
+        error: null,
+      }),
     }
     const savedRow = {
       id: 'saved_1',
@@ -91,6 +94,7 @@ describe('Type C Spaces service batch 2 baselines', () => {
       filters: {},
       results: [],
       result_count: 0,
+      mission_ids: ['mission_old', 'mission_new'],
       next_page_token: null,
       created_at: '2026-01-01T00:00:00.000Z',
       last_run_at: '2026-01-02T00:00:00.000Z',
@@ -120,6 +124,7 @@ describe('Type C Spaces service batch 2 baselines', () => {
       filters: {},
       items: [],
       nextPageToken: null,
+      missionId: 'mission_new',
     })
 
     expect(result).toEqual(savedRow)
@@ -127,6 +132,9 @@ describe('Type C Spaces service batch 2 baselines', () => {
       expect.not.objectContaining({
         title: expect.anything(),
       }),
+    )
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ mission_ids: ['mission_old', 'mission_new'] }),
     )
   })
 

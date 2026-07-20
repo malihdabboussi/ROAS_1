@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { SpaceAutomationService } from '../space-automation.service'
 import { SpacesRepository } from '../../repositories/spaces.repository'
 import { SocialResearchFavoritesService } from '../social-research-favorites.service'
+import { SpaceAutomationService } from '../space-automation.service'
 import { SpacesService } from '../spaces.service'
 import { automationsRepoFromRepo } from './space-automation-test-utils'
 
@@ -397,6 +397,20 @@ describe('Type C Spaces service batch 3 baselines', () => {
       space_automation_runs: [],
     }
     const repo = {
+      findSpaceByIdForAccess: vi.fn().mockResolvedValue({
+        id: 'space_1',
+        schema: {
+          automations: [
+            {
+              id: 'automation_1',
+              name: 'Resume',
+              enabled: true,
+              trigger: { type: 'task_created' },
+              actions: [{ type: 'send_to_agent' }, { type: 'change_status', status: 'done' }],
+            },
+          ],
+        },
+      }),
       findSpaceById: vi.fn().mockResolvedValue({
         schema: {
           automations: [

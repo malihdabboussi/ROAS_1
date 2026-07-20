@@ -463,6 +463,31 @@
       "kind": "web-component",
       "limit": 400,
       "lines": 1453
+    },
+    "apps/api/src/modules/integrations/services/integrations-calendar.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 728
+    },
+    "apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 602
+    },
+    "apps/api/src/modules/spaces/repositories/space-items.repository.ts": {
+      "kind": "repository",
+      "limit": 400,
+      "lines": 418
+    },
+    "apps/agent-api/src/modules/task-agent/services/task-agent.service.ts": {
+      "kind": "service",
+      "limit": 600,
+      "lines": 630
+    },
+    "apps/web/src/features/settings/components/settings-content/ConnectedIntegrationCard.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 641
     }
   },
   "webFeatureImports": {
@@ -1559,12 +1584,6 @@
       "count": 1,
       "imports": {
         "@/features/mission-control/types": 1
-      }
-    },
-    "apps/web/src/features/home/lib/resolve-meetings-space-id.ts": {
-      "count": 1,
-      "imports": {
-        "@/features/spaces/hooks/use-cached-spaces": 1
       }
     }
   },

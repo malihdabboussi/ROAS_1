@@ -11,8 +11,9 @@ export interface HomeFeedScopeState {
   campaignId: string | null
 }
 
+/** Home defaults to personal-account feeds (same surface in every org). */
 export const DEFAULT_HOME_FEED_SCOPE: HomeFeedScopeState = {
-  feedScope: 'workspace',
+  feedScope: 'personal',
   orgId: null,
   campaignId: null,
 }
@@ -27,7 +28,7 @@ export function parseHomeFeedScope(raw: unknown): HomeFeedScopeState {
     feedScope === 'all' ||
     feedScope === 'org'
   return {
-    feedScope: ok ? feedScope : 'workspace',
+    feedScope: ok ? feedScope : 'personal',
     orgId: typeof o.orgId === 'string' ? o.orgId : null,
     campaignId: typeof o.campaignId === 'string' ? o.campaignId : null,
   }

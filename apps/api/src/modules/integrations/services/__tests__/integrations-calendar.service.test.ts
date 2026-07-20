@@ -1,14 +1,22 @@
 import { describe, expect, it, vi } from 'vitest'
 import { IntegrationsCalendarService } from '../integrations-calendar.service'
 
-function makeService() {
+function makeService(options?: {
+  orgRows?: Array<Record<string, unknown>>
+  personalRow?: Record<string, unknown> | null
+}) {
   let integrationId = ''
-  const query = {
+  const query: Record<string, unknown> = {
     select: vi.fn(() => query),
     eq: vi.fn((column: string, value: string) => {
       if (column === 'integration_id') integrationId = value
       return query
     }),
+    is: vi.fn(() => query),
+    maybeSingle: vi.fn(async () => ({
+      data: options?.personalRow === undefined ? null : options.personalRow,
+      error: null,
+    })),
   }
   const repository = {
     table: vi.fn(() => query),
@@ -18,7 +26,7 @@ function makeService() {
   }
   const orgScope = {
     applyScope: vi.fn(async () => ({
-      data: [
+      data: options?.orgRows ?? [
         {
           id: `${integrationId}-row`,
           user_id: 'user-1',
@@ -39,19 +47,14 @@ describe('IntegrationsCalendarService calendar mutations', () => {
   it('maps Google event creates to the create event tool payload', async () => {
     const { service, composio } = makeService()
 
-    await service.createEvent(
-      {} as any,
-      { id: 'user-1' },
-      { orgId: null } as any,
-      {
-        provider: 'google_calendar',
-        title: 'Review launch tasks',
-        start: '2026-06-18T10:00:00.000Z',
-        end: '2026-06-18T10:30:00.000Z',
-        timezone: 'Asia/Nicosia',
-        location: 'Office',
-      },
-    )
+    await service.createEvent({} as any, { id: 'user-1' }, { orgId: null } as any, {
+      provider: 'google_calendar',
+      title: 'Review launch tasks',
+      start: '2026-06-18T10:00:00.000Z',
+      end: '2026-06-18T10:30:00.000Z',
+      timezone: 'Asia/Nicosia',
+      location: 'Office',
+    })
 
     expect(composio.executeTool).toHaveBeenCalledWith(
       'GOOGLECALENDAR_CREATE_EVENT',
@@ -106,6 +109,39 @@ describe('IntegrationsCalendarService calendar mutations', () => {
       'user-1',
       { calendar_id: 'primary', event_id: 'event-123' },
       'google_calendar-conn',
+    )
+  })
+
+  it('uses the caller personal-account Google Calendar when org has no calendar row', async () => {
+    const { service, composio } = makeService({
+      orgRows: [],
+      personalRow: {
+        id: 'personal-cal',
+        user_id: 'user-1',
+        status: 'connected',
+        scope_mode: 'personal',
+        metadata: { composio_connected_account_id: 'personal-ca' },
+      },
+    })
+
+    await service.createEvent(
+      {} as any,
+      { id: 'user-1' },
+      { orgId: 'org-1', userId: 'user-1' } as any,
+      {
+        provider: 'google_calendar',
+        title: 'Org agenda event',
+        start: '2026-06-18T10:00:00.000Z',
+        end: '2026-06-18T10:30:00.000Z',
+        timezone: 'UTC',
+      },
+    )
+
+    expect(composio.executeTool).toHaveBeenCalledWith(
+      'GOOGLECALENDAR_CREATE_EVENT',
+      'user-1',
+      expect.objectContaining({ summary: 'Org agenda event' }),
+      'personal-ca',
     )
   })
 })

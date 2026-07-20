@@ -6,7 +6,9 @@ import type { RequestScope } from '@vibey/api-shared'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import { SpacesRepository } from '../repositories/spaces.repository'
 import {
+  buildFathomAgendaEvent,
   buildPrecallPrompt,
+  callDateInAgendaWindow,
   isEligiblePrecallEvent,
   localDayBounds,
   mapPrepItemToAgendaLink,
@@ -15,6 +17,8 @@ import {
   type AgendaRelatedCall,
   type PrecallAgendaEventLike,
 } from './meetings-precall-prep.helpers'
+
+const RELATED_CALL_MATCH_PAD_MS = 36 * 60 * 60 * 1000
 
 type CalendarAgendaEvent = PrecallAgendaEventLike & {
   html_link?: string | null
@@ -57,16 +61,20 @@ export class MeetingsPrecallPrepService {
     private readonly configService: ConfigService,
   ) {}
 
+  /**
+   * Resolve personal-account Meetings / Personal Dashboard.
+   * Home Agenda prep and related calls always use this space — never the active org dashboard.
+   */
   async resolveMeetingsSpaceId(
     supabase: SupabaseClient,
     userId: string,
-    orgId: string | null,
+    _orgId?: string | null,
   ): Promise<string | null> {
     const spaces = await this.spacesRepo.findAllSpaces(
       supabase,
       userId,
       { limit: 100, paginated: false },
-      orgId,
+      null,
     )
     const meetings = (spaces as Array<Record<string, unknown>>).find((space) => {
       const schema = space.schema as {
@@ -204,10 +212,11 @@ export class MeetingsPrecallPrepService {
   }): Promise<Map<string, AgendaPrepLink>> {
     const ids = [...new Set(input.events.map((e) => e.id).filter(Boolean))]
     if (ids.length === 0) return new Map()
+    // Prep items live on the personal-account Meetings space.
     const rows = await this.spacesRepo.findPrepItemsByCalendarEventIds(
       input.supabase,
       input.userId,
-      input.orgId,
+      null,
       ids,
     )
     const map = new Map<string, AgendaPrepLink>()
@@ -237,20 +246,36 @@ export class MeetingsPrecallPrepService {
     userId: string
     orgId: string | null
     events: PrecallAgendaEventLike[]
-  }): Promise<Map<string, AgendaRelatedCall>> {
-    const map = new Map<string, AgendaRelatedCall>()
-    if (input.events.length === 0) return map
+    start: string
+    end: string
+  }): Promise<{
+    relatedByEventId: Map<string, AgendaRelatedCall>
+    unmatchedFathomEvents: ReturnType<typeof buildFathomAgendaEvent>[]
+  }> {
+    const relatedByEventId = new Map<string, AgendaRelatedCall>()
+    const unmatchedFathomEvents: ReturnType<typeof buildFathomAgendaEvent>[] = []
 
-    const spaceId = await this.resolveMeetingsSpaceId(input.supabase, input.userId, input.orgId)
-    if (!spaceId) return map
+    const spaceId = await this.resolveMeetingsSpaceId(input.supabase, input.userId, null)
+    if (!spaceId) return { relatedByEventId, unmatchedFathomEvents }
+
+    const windowStartMs = new Date(input.start).getTime()
+    const windowEndMs = new Date(input.end).getTime()
+    const matchPadStart = Number.isFinite(windowStartMs)
+      ? new Date(windowStartMs - RELATED_CALL_MATCH_PAD_MS).toISOString()
+      : input.start
+    const matchPadEnd = Number.isFinite(windowEndMs)
+      ? new Date(windowEndMs + RELATED_CALL_MATCH_PAD_MS).toISOString()
+      : input.end
 
     const { data: callRows } = await input.supabase
       .from('space_items')
       .select('id, space_id, title, status, custom_data, created_at')
       .eq('space_id', spaceId)
       .eq('custom_data->>entry_type', 'call')
-      .order('created_at', { ascending: false })
-      .limit(40)
+      .gte('custom_data->>call_date', matchPadStart)
+      .lte('custom_data->>call_date', matchPadEnd)
+      .order('custom_data->>call_date', { ascending: false })
+      .limit(120)
 
     const calls = (callRows ?? []) as Array<{
       id: string
@@ -258,7 +283,7 @@ export class MeetingsPrecallPrepService {
       title?: string | null
       custom_data?: Record<string, unknown> | null
     }>
-    if (calls.length === 0) return map
+    if (calls.length === 0) return { relatedByEventId, unmatchedFathomEvents }
 
     const callIdSet = new Set(calls.map((c) => c.id))
     const { data: followUpRows } = await input.supabase
@@ -290,6 +315,7 @@ export class MeetingsPrecallPrepService {
       followUpsByCall.set(sourceId, list)
     }
 
+    const matchedCallIds = new Set<string>()
     for (const event of input.events) {
       let best: { call: (typeof calls)[number]; score: number } | null = null
       for (const call of calls) {
@@ -303,8 +329,9 @@ export class MeetingsPrecallPrepService {
         if (!best || score > best.score) best = { call, score }
       }
       if (!best || best.score < 10) continue
+      matchedCallIds.add(best.call.id)
       const custom = best.call.custom_data ?? {}
-      map.set(event.id, {
+      relatedByEventId.set(event.id, {
         space_id: String(best.call.space_id),
         call_item_id: best.call.id,
         title: String(best.call.title ?? 'Call').slice(0, 200),
@@ -315,7 +342,29 @@ export class MeetingsPrecallPrepService {
         follow_ups: followUpsByCall.get(best.call.id) ?? [],
       })
     }
-    return map
+
+    for (const call of calls) {
+      if (matchedCallIds.has(call.id)) continue
+      const custom = call.custom_data ?? {}
+      const callDate = typeof custom.call_date === 'string' ? custom.call_date : null
+      if (!callDateInAgendaWindow(callDate, input.start, input.end)) continue
+      unmatchedFathomEvents.push(
+        buildFathomAgendaEvent({
+          spaceId: String(call.space_id),
+          callItemId: call.id,
+          title: String(call.title ?? 'Call'),
+          callDate: callDate!,
+          recordingUrl:
+            typeof custom.recording_url === 'string' && custom.recording_url.trim()
+              ? custom.recording_url.trim()
+              : null,
+          followUps: followUpsByCall.get(call.id) ?? [],
+        }),
+      )
+    }
+
+    unmatchedFathomEvents.sort((a, b) => a.start.localeCompare(b.start))
+    return { relatedByEventId, unmatchedFathomEvents }
   }
 
   private resolveCalendarService(): CalendarServiceLike {
@@ -339,6 +388,13 @@ export class MeetingsPrecallPrepService {
     event: CalendarAgendaEvent
     refresh: boolean
   }): Promise<{ kind: 'created' | 'refreshed' | 'skipped'; itemId: string; title: string }> {
+    const spaceRow = await this.spacesRepo.findSpaceByIdForAccess(input.supabase, input.spaceId)
+    // Write using the space's org (personal Meetings → null), not the request org header.
+    const writeOrgId =
+      spaceRow && typeof (spaceRow as { org_id?: unknown }).org_id === 'string'
+        ? String((spaceRow as { org_id: string }).org_id)
+        : null
+
     const existing = await this.spacesRepo.findItemByCalendarEventId(
       input.supabase,
       input.spaceId,
@@ -396,7 +452,7 @@ export class MeetingsPrecallPrepService {
           source: 'agent',
           custom_data: customData,
         },
-        input.orgId,
+        writeOrgId,
       )
       itemId = String(created.id)
       kind = 'created'
@@ -405,10 +461,11 @@ export class MeetingsPrecallPrepService {
     await this.invokePrepAgent({
       supabase: input.supabase,
       userId: input.userId,
-      orgId: input.orgId,
+      orgId: writeOrgId,
       spaceId: input.spaceId,
       itemId,
       event: input.event,
+      space: spaceRow,
     })
 
     return { kind, itemId, title }
@@ -421,13 +478,10 @@ export class MeetingsPrecallPrepService {
     spaceId: string
     itemId: string
     event: CalendarAgendaEvent
+    space?: Record<string, unknown> | null
   }): Promise<void> {
-    const space = await this.spacesRepo.findSpaceById(
-      input.supabase,
-      input.userId,
-      input.spaceId,
-      input.orgId,
-    )
+    const space =
+      input.space ?? (await this.spacesRepo.findSpaceByIdForAccess(input.supabase, input.spaceId))
     const relatedContext = await this.loadRelatedContext(input.supabase, input.spaceId, input.event)
     const promptBase = buildPrecallPrompt({ event: input.event, relatedContext })
     const prompt = [

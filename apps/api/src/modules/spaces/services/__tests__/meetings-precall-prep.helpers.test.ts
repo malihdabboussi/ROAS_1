@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildFathomAgendaEvent,
+  callDateInAgendaWindow,
   isEligiblePrecallEvent,
   localDayBounds,
   mapPrepItemToAgendaLink,
@@ -106,5 +108,37 @@ describe('meetings-precall-prep.helpers', () => {
         attendees: ['other@example.com'],
       }),
     ).toBe(0)
+  })
+
+  it('builds a Fathom-only agenda row for unmatched calls', () => {
+    const row = buildFathomAgendaEvent({
+      spaceId: 'space-1',
+      callItemId: 'call-1',
+      title: 'Weekly sync',
+      callDate: '2026-07-16T23:00:00.000Z',
+      recordingUrl: 'https://fathom.video/x',
+    })
+    expect(row.source).toBe('fathom')
+    expect(row.id).toBe('fathom:call-1')
+    expect(row.related.call_item_id).toBe('call-1')
+    expect(row.video_label).toBe('Fathom')
+    expect(new Date(row.end).getTime()).toBeGreaterThan(new Date(row.start).getTime())
+  })
+
+  it('filters call dates to the agenda window', () => {
+    expect(
+      callDateInAgendaWindow(
+        '2026-07-16T12:00:00.000Z',
+        '2026-07-16T00:00:00.000Z',
+        '2026-07-17T00:00:00.000Z',
+      ),
+    ).toBe(true)
+    expect(
+      callDateInAgendaWindow(
+        '2026-07-15T12:00:00.000Z',
+        '2026-07-16T00:00:00.000Z',
+        '2026-07-17T00:00:00.000Z',
+      ),
+    ).toBe(false)
   })
 })

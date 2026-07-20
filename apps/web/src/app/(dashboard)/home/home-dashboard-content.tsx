@@ -8,12 +8,15 @@ import { useHomeCardFeedScopes } from '@/features/home/components/cards/HomeCard
 import { HomeCardsGrid } from '@/features/home/components/HomeCardsGrid'
 import { HomeMeetingDetailHost } from '@/features/home/components/HomeMeetingDetailHost'
 import { HomeTaskDetailHost } from '@/features/home/components/HomeTaskDetailHost'
-import { HOME_TOAST_ERRORS, HOME_TOAST_SUCCESS } from '@/features/home/config/home-toast-errors.config'
-import { minimalSpaceYourTurnItem } from '@/features/home/lib/home-your-turn-item'
-import { resolveMeetingsSpaceId } from '@/features/home/lib/resolve-meetings-space-id'
+import {
+  HOME_TOAST_ERRORS,
+  HOME_TOAST_SUCCESS,
+} from '@/features/home/config/home-toast-errors.config'
 import { HomeDashboardVisualProvider } from '@/features/home/context/home-dashboard-visual-context'
 import { useHomeFeedOpen } from '@/features/home/hooks/use-home-feed-open'
 import { prefetchOrgCampaigns } from '@/features/home/lib/home-feed-campaign-cache'
+import { minimalSpaceYourTurnItem } from '@/features/home/lib/home-your-turn-item'
+import { resolveMeetingsSpaceId } from '@/features/home/lib/resolve-meetings-space-id'
 import { MissionDetailModal } from '@/features/mission-control/components/dialogs/MissionDetailModal'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useYourTurnFeed } from '@/features/spaces/hooks/use-your-turn-feed'
@@ -61,7 +64,7 @@ export function HomeDashboardContent() {
 
   const handleStartMeetingPrep = useCallback(async () => {
     if (!activeMeetingEvent) return
-    const spaceId = resolveMeetingsSpaceId()
+    const spaceId = await resolveMeetingsSpaceId()
     if (!spaceId) {
       toast.error(HOME_TOAST_ERRORS.MEETINGS_SPACE_REQUIRED.userMessage)
       return
@@ -76,15 +79,13 @@ export function HomeDashboardContent() {
       })
       toast.success(HOME_TOAST_SUCCESS.PREP_STARTED.userMessage)
       closeMeetingEvent()
-      openYourTurnItem(
-        minimalSpaceYourTurnItem(spaceId, result.space_item_id, result.title, activeOrgId),
-      )
+      openYourTurnItem(minimalSpaceYourTurnItem(spaceId, result.space_item_id, result.title, null))
     } catch (error) {
       toast.error(sanitizeUserError(error, HOME_TOAST_ERRORS.PREP_START_FAILED.userMessage))
     } finally {
       setMeetingPrepBusy(false)
     }
-  }, [activeMeetingEvent, activeOrgId, closeMeetingEvent, openYourTurnItem])
+  }, [activeMeetingEvent, closeMeetingEvent, openYourTurnItem])
 
   return (
     <HomeDashboardVisualProvider variant="v4">
@@ -134,15 +135,13 @@ export function HomeDashboardContent() {
                 prep.space_id,
                 prep.space_item_id,
                 prep.title ?? `Prep — ${activeMeetingEvent.title}`,
-                activeOrgId,
+                null,
               ),
             )
           }}
           onStartPrep={() => void handleStartMeetingPrep()}
           onOpenSpaceItem={(spaceId, itemId, title) => {
-            openYourTurnItemFromMeeting(
-              minimalSpaceYourTurnItem(spaceId, itemId, title, activeOrgId),
-            )
+            openYourTurnItemFromMeeting(minimalSpaceYourTurnItem(spaceId, itemId, title, null))
           }}
         />
       ) : null}

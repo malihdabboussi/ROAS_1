@@ -125,8 +125,7 @@ export function AgendaEventEntry({
   showAccountLabel: boolean
 }) {
   const color = eventColor(ev)
-  const accountLabel =
-    showAccountLabel && ev.account_label ? String(ev.account_label).trim() : ''
+  const accountLabel = showAccountLabel && ev.account_label ? String(ev.account_label).trim() : ''
 
   return (
     <motion.div
@@ -157,6 +156,11 @@ export function AgendaEventEntry({
       {isExpanded ? (
         <motion.div layout="position" transition={ENTRY_TRANSITION}>
           <p className="body-2 text-foreground font-semibold">{ev.title}</p>
+          {ev.source === 'fathom' ? (
+            <span className="badge-glass badge-glass-cyan typo-caption mt-1 inline-flex">
+              Fathom
+            </span>
+          ) : null}
           <p className="typo-caption text-muted-foreground mt-1">
             {formatCountdown(nowTick, ev) ? `${formatCountdown(nowTick, ev)} · ` : ''}
             {formatTimeRange(ev)}
@@ -205,7 +209,7 @@ export function AgendaEventEntry({
                 }}
                 className="button-glass-secondary body-3 flex w-full items-center justify-center gap-2 rounded-lg py-2 font-semibold"
               >
-                Open meeting
+                {ev.source === 'fathom' ? 'Open recording' : 'Open meeting'}
               </button>
             ) : null}
             {onOpenPrep ? (
@@ -217,7 +221,7 @@ export function AgendaEventEntry({
                 }}
                 className="border-border bg-secondary text-foreground hover:bg-hover-subtle body-3 flex w-full items-center justify-center gap-2 rounded-lg border py-2 font-semibold transition-colors"
               >
-                <FileText className="h-4 w-4 text-muted-foreground" aria-hidden />
+                <FileText className="text-muted-foreground h-4 w-4" aria-hidden />
                 {ev.prep ? prepChipLabel(ev.prep.status) : 'Start prep'}
               </button>
             ) : null}
@@ -227,10 +231,10 @@ export function AgendaEventEntry({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="mt-0 flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/15 py-2 text-[13px] font-semibold text-emerald-400 backdrop-blur-sm transition-colors hover:bg-emerald-500/25"
+                className="button-glass-green body-3 mt-0 flex w-full items-center justify-center gap-2 rounded-lg py-2 font-semibold"
               >
                 <Video className="h-4 w-4" />
-                {videoButtonLabel(ev)}
+                {ev.source === 'fathom' ? 'Watch recording' : videoButtonLabel(ev)}
               </a>
             ) : null}
           </div>
@@ -255,6 +259,9 @@ export function AgendaEventEntry({
                 })}
           </span>
           <span className="body-3 min-w-0 flex-1 truncate font-medium">{ev.title}</span>
+          {ev.source === 'fathom' ? (
+            <span className="badge-glass badge-glass-cyan typo-caption shrink-0">Fathom</span>
+          ) : null}
           {ev.prep ? (
             <span
               className={
@@ -279,5 +286,3 @@ export function AgendaEventEntry({
     </motion.div>
   )
 }
-
-

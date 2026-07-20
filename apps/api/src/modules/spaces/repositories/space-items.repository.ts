@@ -267,10 +267,12 @@ export class SpaceItemsRepository {
     dto: CreateSpaceItemDto,
     orgId?: string | null,
   ) {
+    const privacy = await this.personalDashboardItemPrivacy(supabase, spaceId)
     const { data, error } = await supabase
       .from('space_items')
       .insert({
         ...dto,
+        ...privacy,
         space_id: spaceId,
         user_id: userId,
         org_id: resolveScopedOrgId({ orgId: orgId ?? null }),
@@ -282,7 +284,13 @@ export class SpaceItemsRepository {
   }
 
   async createPreparedItem(supabase: SupabaseClient, payload: Record<string, unknown>) {
-    const { data, error } = await supabase.from('space_items').insert(payload).select().single()
+    const spaceId = typeof payload.space_id === 'string' ? payload.space_id : null
+    const privacy = spaceId ? await this.personalDashboardItemPrivacy(supabase, spaceId) : {}
+    const { data, error } = await supabase
+      .from('space_items')
+      .insert({ ...payload, ...privacy })
+      .select()
+      .single()
     if (error) throw new BadRequestException(error.message)
     return data as Record<string, unknown>
   }
@@ -292,8 +300,35 @@ export class SpaceItemsRepository {
     payloads: Record<string, unknown>[],
   ): Promise<void> {
     if (payloads.length === 0) return
-    const { error } = await supabase.from('space_items').insert(payloads)
+    const prepared: Record<string, unknown>[] = []
+    for (const payload of payloads) {
+      const spaceId = typeof payload.space_id === 'string' ? payload.space_id : null
+      const privacy = spaceId ? await this.personalDashboardItemPrivacy(supabase, spaceId) : {}
+      prepared.push({ ...payload, ...privacy })
+    }
+    const { error } = await supabase.from('space_items').insert(prepared)
     if (error) throw new BadRequestException(error.message)
+  }
+
+  /** Personal Dashboard items are always owner-private (DB also coerces). */
+  private async personalDashboardItemPrivacy(
+    supabase: SupabaseClient,
+    spaceId: string,
+  ): Promise<
+    { is_private: true; share_link_enabled: false; share_token: null } | Record<string, never>
+  > {
+    const { data, error } = await supabase
+      .from('spaces')
+      .select('space_kind')
+      .eq('id', spaceId)
+      .maybeSingle()
+    if (error) throw new BadRequestException(error.message)
+    if (
+      String((data as { space_kind?: unknown } | null)?.space_kind ?? '') !== 'personal_dashboard'
+    ) {
+      return {}
+    }
+    return { is_private: true, share_link_enabled: false, share_token: null }
   }
 
   async updateItem(

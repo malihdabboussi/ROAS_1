@@ -3,12 +3,18 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
 import { OrgScopeService } from '@vibey/api-shared'
 import { ComposioService } from '../../composio/services/composio.service'
-import { MeetingsPrecallPrepService } from '../../spaces/services/meetings-precall-prep.service'
 import type {
   AgendaPrepLink,
   AgendaRelatedCall,
 } from '../../spaces/services/meetings-precall-prep.helpers'
+import { MeetingsPrecallPrepService } from '../../spaces/services/meetings-precall-prep.service'
 import { IntegrationsRepository } from '../repositories/integrations.repository'
+import {
+  listConnectedCalendarAccounts,
+  pickBestCalendarConnectionRow,
+  type CalendarConnectionRef,
+} from './integrations-calendar-connections'
+import { fetchGoogleMultiCalendarAgenda } from './integrations-calendar-google-agenda'
 import {
   assertCalendarProvider,
   assertTimedRange,
@@ -21,12 +27,7 @@ import {
   isTimedDateTime,
   normalizeProviderEventId,
 } from './integrations-calendar-mutations'
-import {
-  listConnectedCalendarAccounts,
-  pickBestCalendarConnectionRow,
-  type CalendarConnectionRef,
-} from './integrations-calendar-connections'
-import { fetchGoogleMultiCalendarAgenda } from './integrations-calendar-google-agenda'
+import { isPersonalCrossContextProvider } from './personal-cross-context-providers'
 
 export type CalendarAttendee = {
   name: string | null
@@ -46,14 +47,14 @@ export type CalendarAgendaEvent = {
   html_link: string | null
   color_id: string | null
   attendees: CalendarAttendee[]
-  source: 'google_calendar' | 'outlook'
+  source: 'google_calendar' | 'outlook' | 'fathom'
   account_id?: string | null
   account_label?: string | null
   prep?: AgendaPrepLink | null
   related?: AgendaRelatedCall | null
 }
 
-export type CalendarProvider = CalendarAgendaEvent['source']
+export type CalendarProvider = 'google_calendar' | 'outlook'
 export type CalendarEventAttendeeInput = {
   email: string
   name?: string
@@ -138,21 +139,12 @@ export class IntegrationsCalendarService {
       scope,
       'google_calendar',
     )
-    const outlookAccounts = await this.resolveAllConnections(
-      supabase,
-      user.id,
-      scope,
-      'outlook',
-    )
+    const outlookAccounts = await this.resolveAllConnections(supabase, user.id, scope, 'outlook')
     const accounts = [...googleAccounts, ...outlookAccounts]
 
     const connected = {
       google_calendar: googleAccounts.length > 0,
       outlook: outlookAccounts.length > 0,
-    }
-
-    if (!connected.google_calendar && !connected.outlook) {
-      return { success: true, events: [], connected, accounts }
     }
 
     const events: CalendarAgendaEvent[] = []
@@ -162,8 +154,8 @@ export class IntegrationsCalendarService {
       connected.google_calendar && (!providerFilter || providerFilter === 'google_calendar')
     const wantOutlook = connected.outlook && (!providerFilter || providerFilter === 'outlook')
 
-    const googleJobs =
-      wantGoogle
+    if (wantGoogle || wantOutlook) {
+      const googleJobs = wantGoogle
         ? googleAccounts.map(async (account) => {
             const googleResult = await fetchGoogleMultiCalendarAgenda({
               executeTool: (tool, userId, params, connectionId) =>
@@ -186,8 +178,7 @@ export class IntegrationsCalendarService {
           })
         : []
 
-    const outlookJobs =
-      wantOutlook
+      const outlookJobs = wantOutlook
         ? outlookAccounts.map(async (account) => {
             try {
               const startZ = this.ensureZSuffix(start)
@@ -224,36 +215,45 @@ export class IntegrationsCalendarService {
           })
         : []
 
-    const settled = await Promise.all([...googleJobs, ...outlookJobs])
-    for (const result of settled) {
-      events.push(...result.events)
-      errors.push(...result.errors)
+      const settled = await Promise.all([...googleJobs, ...outlookJobs])
+      for (const result of settled) {
+        events.push(...result.events)
+        errors.push(...result.errors)
+      }
     }
 
     events.sort((a, b) => a.start.localeCompare(b.start))
 
-    if (this.precallPrep && events.length > 0) {
+    if (this.precallPrep) {
       try {
-        const [prepMap, relatedMap] = await Promise.all([
-          this.precallPrep.enrichAgendaEvents({
-            supabase,
-            userId: user.id,
-            orgId: scope.orgId,
-            events,
-          }),
+        const [prepMap, relatedResult] = await Promise.all([
+          events.length > 0
+            ? this.precallPrep.enrichAgendaEvents({
+                supabase,
+                userId: user.id,
+                orgId: null,
+                events,
+              })
+            : Promise.resolve(new Map()),
           this.precallPrep.enrichAgendaRelatedCalls({
             supabase,
             userId: user.id,
-            orgId: scope.orgId,
+            orgId: null,
             events,
+            start,
+            end,
           }),
         ])
         for (const event of events) {
           event.prep = prepMap.get(event.id) ?? null
-          event.related = relatedMap.get(event.id) ?? null
+          event.related = relatedResult.relatedByEventId.get(event.id) ?? null
         }
+        for (const fathomEvent of relatedResult.unmatchedFathomEvents) {
+          events.push(fathomEvent as CalendarAgendaEvent)
+        }
+        events.sort((a, b) => a.start.localeCompare(b.start))
       } catch {
-        // Agenda still works without prep / related enrichment.
+        // Agenda still works without prep / related / Fathom enrichment.
       }
     }
 
@@ -377,10 +377,7 @@ export class IntegrationsCalendarService {
     return connectionId
   }
 
-  private parseMutationEvent(
-    provider: CalendarProvider,
-    raw: unknown,
-  ): CalendarAgendaEvent | null {
+  private parseMutationEvent(provider: CalendarProvider, raw: unknown): CalendarAgendaEvent | null {
     try {
       const payload = this.unwrapComposioPayload(raw)
       const record = this.asRecord(payload)
@@ -406,13 +403,30 @@ export class IntegrationsCalendarService {
       .select('id, user_id, status, metadata, scope_mode, is_default, connection_label')
       .eq('integration_id', integrationId)
     const { data: allRows } = await this.orgScope.applyScope(q, scope)
-    return ((allRows ?? []) as Array<Record<string, unknown>>).filter((row) => {
+    const scopedRows = ((allRows ?? []) as Array<Record<string, unknown>>).filter((row) => {
       if (!scope.orgId) return true
       const scopeMode = String(row.scope_mode ?? '')
       if (scopeMode === 'org_shared') return true
       if (scopeMode === 'personal') return String(row.user_id ?? '') === userId
       return false
     })
+
+    if (scope.orgId && isPersonalCrossContextProvider(integrationId)) {
+      const { data: personalRow } = await this.repository
+        .table(supabase, 'user_integrations')
+        .select('id, user_id, status, metadata, scope_mode, is_default, connection_label')
+        .eq('integration_id', integrationId)
+        .eq('user_id', userId)
+        .is('org_id', null)
+        .maybeSingle()
+      if (personalRow) {
+        const personalId = String((personalRow as Record<string, unknown>).id ?? '')
+        const alreadyIncluded = scopedRows.some((row) => String(row.id ?? '') === personalId)
+        if (!alreadyIncluded) scopedRows.push(personalRow as Record<string, unknown>)
+      }
+    }
+
+    return scopedRows
   }
 
   private async resolveAllConnections(
@@ -421,12 +435,7 @@ export class IntegrationsCalendarService {
     scope: RequestScope,
     integrationId: CalendarProvider,
   ): Promise<CalendarConnectionRef[]> {
-    const scopedRows = await this.listScopedIntegrationRows(
-      supabase,
-      userId,
-      scope,
-      integrationId,
-    )
+    const scopedRows = await this.listScopedIntegrationRows(supabase, userId, scope, integrationId)
     return listConnectedCalendarAccounts(scopedRows, integrationId)
   }
 
@@ -437,12 +446,7 @@ export class IntegrationsCalendarService {
     integrationId: string,
     userIntegrationId?: string,
   ): Promise<string | null> {
-    const scopedRows = await this.listScopedIntegrationRows(
-      supabase,
-      userId,
-      scope,
-      integrationId,
-    )
+    const scopedRows = await this.listScopedIntegrationRows(supabase, userId, scope, integrationId)
     const preferredId = String(userIntegrationId ?? '').trim()
     const preferred = preferredId
       ? scopedRows.find((row) => String(row.id ?? '') === preferredId)

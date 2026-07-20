@@ -41,7 +41,7 @@ export type CalendarAgendaEvent = {
   html_link: string | null
   color_id: string | null
   attendees: CalendarAttendee[]
-  source: CalendarProvider
+  source: CalendarProvider | 'fathom'
   account_id?: string | null
   account_label?: string | null
   prep?: CalendarAgendaPrep | null
@@ -59,10 +59,15 @@ export async function runMeetingsPrecallPrepToday(input: {
   failed: number
   day_key: string
 }> {
-  return backendPost(`/api/spaces/${input.spaceId}/precall-prep/today`, {
-    timezone: input.timezone,
-    refresh: input.refresh !== false,
-  })
+  // Home prep always writes to the personal-account Meetings space.
+  return backendPost(
+    `/api/spaces/${input.spaceId}/precall-prep/today`,
+    {
+      timezone: input.timezone,
+      refresh: input.refresh !== false,
+    },
+    { orgId: null },
+  )
 }
 
 export async function runMeetingsPrecallPrepEvent(input: {
@@ -77,11 +82,16 @@ export async function runMeetingsPrecallPrepEvent(input: {
   status: 'pending' | 'ready' | 'failed'
   kind: 'created' | 'refreshed' | 'skipped'
 }> {
-  return backendPost(`/api/spaces/${input.spaceId}/precall-prep/event`, {
-    calendar_event_id: input.calendarEventId,
-    timezone: input.timezone,
-    refresh: input.refresh !== false,
-  })
+  // Home prep always writes to the personal-account Meetings space.
+  return backendPost(
+    `/api/spaces/${input.spaceId}/precall-prep/event`,
+    {
+      calendar_event_id: input.calendarEventId,
+      timezone: input.timezone,
+      refresh: input.refresh !== false,
+    },
+    { orgId: null },
+  )
 }
 
 export type CalendarAgendaAccount = {

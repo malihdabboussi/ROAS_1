@@ -215,24 +215,50 @@ export class FathomOAuthService {
     if (!this.meetingsPrecallPrep || !this.spaceTemplates) {
       throw new BadRequestException('Personal Dashboard setup is unavailable')
     }
+    // Fathom / Home Meetings always live on the personal account (not the active org).
+    const personalScope: RequestScope = { ...scope, orgId: null, orgRole: null }
     const existingId = await this.meetingsPrecallPrep.resolveMeetingsSpaceId(
       supabase,
       scope.userId,
-      scope.orgId,
+      null,
     )
     if (existingId) return { id: existingId, action: 'reuse' }
 
-    const created = await this.spaceTemplates.instantiate(supabase, scope, 'personal-dashboard', {
-      title: 'Personal Dashboard',
-      visibility: 'private',
-      include_tasks: true,
-      include_docs: true,
-      include_channel: false,
-      include_automations: true,
-    })
+    const personalCampaignId = await this.findPersonalCampaignId(supabase, scope.userId)
+    const created = await this.spaceTemplates.instantiate(
+      supabase,
+      personalScope,
+      'personal-dashboard',
+      {
+        title: 'Personal Dashboard',
+        visibility: 'private',
+        include_tasks: true,
+        include_docs: true,
+        include_channel: false,
+        include_automations: true,
+        ...(personalCampaignId ? { campaign_id: personalCampaignId } : {}),
+      },
+    )
     const id = String((created as { id?: unknown }).id ?? '')
     if (!id) throw new BadRequestException('Personal Dashboard setup did not return a Space')
     return { id, action: 'create' }
+  }
+
+  private async findPersonalCampaignId(
+    supabase: SupabaseClient,
+    userId: string,
+  ): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('id')
+      .eq('user_id', userId)
+      .is('org_id', null)
+      .contains('config', { system_kind: 'personal' })
+      .is('deleted_at', null)
+      .neq('status', 'archived')
+      .maybeSingle()
+    if (error || !data?.id) return null
+    return String(data.id)
   }
 
   async disconnect(supabase: SupabaseClient, userId: string): Promise<void> {

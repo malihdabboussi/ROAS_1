@@ -2,16 +2,19 @@
 
 import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
-import { HOME_TOAST_ERRORS, HOME_TOAST_SUCCESS } from '@/features/home/config/home-toast-errors.config'
+import {
+  HOME_TOAST_ERRORS,
+  HOME_TOAST_SUCCESS,
+} from '@/features/home/config/home-toast-errors.config'
 import { minimalSpaceYourTurnItem } from '@/features/home/lib/home-your-turn-item'
 import { resolveMeetingsSpaceId } from '@/features/home/lib/resolve-meetings-space-id'
-import type { YourTurnItem } from '@/features/spaces/services/your-turn.service'
 import {
   runMeetingsPrecallPrepEvent,
   runMeetingsPrecallPrepToday,
   type CalendarAgendaEvent,
 } from '@/lib/services/calendar-api'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
+import type { YourTurnItem } from '@/lib/your-turn/types'
 
 export function useAgendaPrepActions(input: {
   timezone: string
@@ -19,27 +22,28 @@ export function useAgendaPrepActions(input: {
   onOpenItem?: (item: YourTurnItem) => void | Promise<void>
   reloadAgenda: () => Promise<void>
 }) {
-  const { timezone, activeOrgId, onOpenItem, reloadAgenda } = input
+  const { timezone, onOpenItem, reloadAgenda } = input
   const [prepRunning, setPrepRunning] = useState(false)
 
   const openPrepItem = useCallback(
     (ev: CalendarAgendaEvent) => {
       if (!ev.prep || !onOpenItem) return
+      // Prep items live on the personal-account Meetings space.
       void onOpenItem(
         minimalSpaceYourTurnItem(
           ev.prep.space_id,
           ev.prep.space_item_id,
           ev.prep.title ?? `Prep — ${ev.title}`,
-          activeOrgId,
+          null,
         ),
       )
     },
-    [activeOrgId, onOpenItem],
+    [onOpenItem],
   )
 
   const runPrepForEvent = useCallback(
     async (ev: CalendarAgendaEvent) => {
-      const spaceId = resolveMeetingsSpaceId()
+      const spaceId = await resolveMeetingsSpaceId()
       if (!spaceId) {
         toast.error(HOME_TOAST_ERRORS.MEETINGS_SPACE_REQUIRED.userMessage)
         return
@@ -56,7 +60,7 @@ export function useAgendaPrepActions(input: {
         await reloadAgenda()
         if (onOpenItem) {
           void onOpenItem(
-            minimalSpaceYourTurnItem(spaceId, result.space_item_id, result.title, activeOrgId),
+            minimalSpaceYourTurnItem(spaceId, result.space_item_id, result.title, null),
           )
         }
       } catch (error) {
@@ -65,7 +69,7 @@ export function useAgendaPrepActions(input: {
         setPrepRunning(false)
       }
     },
-    [activeOrgId, onOpenItem, reloadAgenda, timezone],
+    [onOpenItem, reloadAgenda, timezone],
   )
 
   const handlePrepClick = useCallback(
@@ -80,7 +84,7 @@ export function useAgendaPrepActions(input: {
   )
 
   const runPrepToday = useCallback(async () => {
-    const spaceId = resolveMeetingsSpaceId()
+    const spaceId = await resolveMeetingsSpaceId()
     if (!spaceId) {
       toast.error(HOME_TOAST_ERRORS.MEETINGS_SPACE_REQUIRED.userMessage)
       return
