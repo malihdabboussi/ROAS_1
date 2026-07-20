@@ -1,5 +1,4 @@
 import { backendGet, backendPost } from '@/lib/api/backend-client'
-import { importPageGraderClientBrain } from '@/lib/integrations/page-grader-brain-api'
 
 export { importPageGraderClientBrain as importPageGraderClientBrainForSettings } from '@/lib/integrations/page-grader-brain-api'
 
@@ -62,9 +61,6 @@ export async function savePageGraderClientScopeMapForSettings(
     ? res.client_scope_map
     : {}
 }
-
-/** @deprecated Prefer importPageGraderClientBrain from @/lib/integrations/page-grader-brain-api */
-void importPageGraderClientBrain
 
 export function suggestCampaignForClient(
   clientName: string,
