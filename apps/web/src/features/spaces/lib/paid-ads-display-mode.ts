@@ -1,4 +1,4 @@
-import type { PaidAdsHierarchyMode, ViewDef } from '../types/space-schema'
+import type { PaidAdsHierarchyMode, PaidAdsWorkspaceMode, ViewDef } from '../types/space-schema'
 
 export const PAID_ADS_MODE_OPTIONS: { id: PaidAdsHierarchyMode; label: string }[] = [
   { id: 'structure', label: 'Campaigns' },
@@ -10,6 +10,11 @@ export function resolvePaidAdsHierarchyMode(view: ViewDef | null): PaidAdsHierar
   if (view.type === 'ad_campaigns') return 'structure'
   if (view.type === 'ads') return view.ads_config?.paid_ads_mode ?? 'creatives'
   return 'creatives'
+}
+
+export function resolvePaidAdsWorkspaceMode(view: ViewDef | null): PaidAdsWorkspaceMode {
+  if (!view || !isPaidAdsViewType(view.type)) return 'reporting'
+  return view.ads_config?.paid_ads_workspace_mode ?? 'reporting'
 }
 
 export function isPaidAdsViewType(viewType: ViewDef['type'] | undefined): boolean {

@@ -3,11 +3,11 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import '@testing-library/jest-dom/vitest'
 import { createRef } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { SpaceToolbarContext } from '../types'
 import {
   PAID_ADS_OPEN_CANVAS_REQUEST_EVENT,
   PAID_ADS_SELECTION_EVENT,
 } from '../../components/artifacts/paid-ads/use-paid-ads-data'
+import type { SpaceToolbarContext } from '../types'
 import { PaidAdsToolbar } from './PaidAdsToolbar'
 
 const paidAdsApiMocks = vi.hoisted(() => ({
@@ -67,7 +67,11 @@ vi.mock('@/features/spaces/components/artifacts/paid-ads/PaidAdsPublishFlow', ()
 }))
 
 vi.mock('@/features/spaces/components/toolbar', () => ({
-  SpaceCustomizeButton: ({ openCustomizeFromToolbar }: { openCustomizeFromToolbar: () => void }) => (
+  SpaceCustomizeButton: ({
+    openCustomizeFromToolbar,
+  }: {
+    openCustomizeFromToolbar: () => void
+  }) => (
     <button type="button" onClick={openCustomizeFromToolbar} aria-label="Customize view">
       Customize
     </button>
@@ -97,7 +101,7 @@ function makeToolbarContext(
       id: 'ads-view',
       type: 'ads',
       name: 'Ads',
-      ads_config: { paid_ads_mode: 'creatives' },
+      ads_config: { paid_ads_mode: 'creatives', paid_ads_workspace_mode: 'creating' },
     },
     activeSpace: {
       id: 'space-1',
@@ -167,7 +171,7 @@ describe('PaidAdsToolbar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Campaigns, Ad sets, or Ad Creatives' }))
     fireEvent.click(screen.getByRole('button', { name: 'Campaigns' }))
     expect(actions.handleViewPatch).toHaveBeenCalledWith({
-      ads_config: { paid_ads_mode: 'structure' },
+      ads_config: { paid_ads_mode: 'structure', paid_ads_workspace_mode: 'creating' },
     })
 
     fireEvent.click(screen.getByRole('button', { name: 'Include campaign artifacts' }))
@@ -211,6 +215,52 @@ describe('PaidAdsToolbar', () => {
     ).toBe(false)
   })
 
+  it('defaults the unified Paid Ads workspace to Analyze and switches to Launch', () => {
+    const actions = createToolbarActions()
+    const defaultAnalyzeView = {
+      id: 'ads-view',
+      type: 'ads' as const,
+      name: 'Ads',
+      ads_config: { paid_ads_mode: 'creatives' as const },
+    }
+    const { rerender } = render(
+      <PaidAdsToolbar ctx={makeToolbarContext(actions, { activeView: defaultAnalyzeView })} />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Analyze' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Launch' })).toHaveAttribute('aria-pressed', 'false')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Launch' }))
+    expect(actions.handleViewPatch).toHaveBeenCalledWith({
+      ads_config: {
+        paid_ads_mode: 'creatives',
+        paid_ads_workspace_mode: 'creating',
+      },
+    })
+
+    rerender(
+      <PaidAdsToolbar
+        ctx={makeToolbarContext(actions, {
+          activeView: {
+            id: 'ads-view',
+            type: 'ads',
+            name: 'Ads',
+            ads_config: {
+              paid_ads_mode: 'creatives',
+              paid_ads_workspace_mode: 'creating',
+            },
+          },
+        })}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Launch' })).toHaveAttribute('aria-pressed', 'true')
+    expect(
+      screen.getByRole('button', { name: 'Campaigns, Ad sets, or Ad Creatives' }),
+    ).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Ad' })).toBeVisible()
+  })
+
   it('switches structure-mode primary action from publish to open canvas after selection', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const actions = createToolbarActions()
@@ -225,11 +275,14 @@ describe('PaidAdsToolbar', () => {
               id: 'ad-campaigns-view',
               type: 'ad_campaigns',
               name: 'Campaigns',
+              ads_config: { paid_ads_workspace_mode: 'creating' },
             },
           })}
         />,
       )
 
+      expect(screen.getByRole('button', { name: 'Analyze' })).toBeVisible()
+      expect(screen.getByRole('button', { name: 'Launch' })).toBeVisible()
       fireEvent.click(screen.getByRole('button', { name: 'Publish' }))
       expect(screen.getByTestId('paid-ads-publish-flow')).toHaveAttribute(
         'data-review-open',

@@ -2,6 +2,16 @@ import { backendDelete, backendGet, backendPatch, backendPost } from '@/lib/api/
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import type { Ad, AdCampaign, AdSet } from './artifact-types'
 
+export type PaidAdsMetaConnectionStatus = {
+  connected: boolean
+  adAccounts: Array<{ id: string; name: string }> | null
+  pages: Array<{ id: string; name: string }> | null
+}
+
+export async function getPaidAdsMetaConnectionStatus(): Promise<PaidAdsMetaConnectionStatus> {
+  return backendGet<PaidAdsMetaConnectionStatus>('/api/integrations/meta/status')
+}
+
 export async function fetchCampaignAds(campaignId: string, spaceId?: string): Promise<Ad[]> {
   const search = new URLSearchParams()
   if (spaceId) search.set('space_id', spaceId)
@@ -40,6 +50,21 @@ export async function createAdCampaign(
     name: name ?? 'Untitled Campaign',
     ...(spaceId !== undefined ? { space_id: spaceId } : {}),
   })
+}
+
+export async function createAdsBulk(
+  adSetId: string,
+  payload: {
+    creatives: Array<{ imageUrl?: string; imageAssetId?: string }>
+    template?: {
+      headline?: string
+      primaryText?: string
+      destinationUrl?: string
+      ctaType?: string
+    }
+  },
+): Promise<{ ads: Ad[] }> {
+  return backendPost(`/api/ad-sets/${adSetId}/ads/bulk`, payload)
 }
 
 export async function updateAdCampaign(

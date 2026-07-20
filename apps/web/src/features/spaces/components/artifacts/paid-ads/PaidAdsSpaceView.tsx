@@ -1,14 +1,19 @@
 'use client'
 
 import { useCallback } from 'react'
+import { AdsPerformanceView } from '@/components/artifacts/paid-ads/AdsPerformanceViewAdapter'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
-import { resolvePaidAdsHierarchyMode } from '@/features/spaces/lib/paid-ads-display-mode'
+import {
+  resolvePaidAdsHierarchyMode,
+  resolvePaidAdsWorkspaceMode,
+} from '@/features/spaces/lib/paid-ads-display-mode'
 import type { ViewDef } from '@/features/spaces/types/space-schema'
-import { createAdsBulk } from '@/features/studio/services/artifact-preview.service'
+import { createAdsBulk } from '@/lib/artifacts/paid-ads-api'
 import type { ArtifactPreviewSelection } from '../artifact-preview-selection'
 import { useArtifactDetailQuery } from '../use-artifact-detail-query'
 import { PaidAdsAdSetsPane } from './PaidAdsAdSetsPane'
 import { PaidAdsCreativesPane } from './PaidAdsCreativesPane'
+import { PaidAdsMetaSetupBar } from './PaidAdsMetaSetupBar'
 import { PaidAdsStructurePane } from './PaidAdsStructurePane'
 import { usePaidAdsData } from './use-paid-ads-data'
 
@@ -20,17 +25,7 @@ function MissingCampaign() {
   )
 }
 
-export function PaidAdsSpaceView({
-  campaignId,
-  spaceId,
-  activeView,
-  selection,
-  onSelectionChange,
-  onDetailChange,
-  onArtifactDeepMetaChange,
-  artifactDeepToolbarExtras,
-  includeCampaignArtifacts,
-}: {
+interface PaidAdsSpaceViewProps {
   campaignId: string | null
   spaceId: string | null
   activeView: ViewDef
@@ -40,7 +35,36 @@ export function PaidAdsSpaceView({
   onArtifactDeepMetaChange?: (meta: { id: string; title: string } | null) => void
   artifactDeepToolbarExtras?: React.ReactNode
   includeCampaignArtifacts: boolean
+}
+
+function PaidAdsWorkspaceShell({
+  campaignId,
+  spaceId,
+  children,
+}: {
+  campaignId: string
+  spaceId: string | null
+  children: React.ReactNode
 }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <PaidAdsMetaSetupBar campaignId={campaignId} spaceId={spaceId} />
+      <div className="flex min-h-0 flex-1">{children}</div>
+    </div>
+  )
+}
+
+function PaidAdsCreationView({
+  campaignId,
+  spaceId,
+  activeView,
+  selection,
+  onSelectionChange,
+  onDetailChange,
+  onArtifactDeepMetaChange,
+  artifactDeepToolbarExtras,
+  includeCampaignArtifacts,
+}: PaidAdsSpaceViewProps & { campaignId: string }) {
   const { setArtifactQuery } = useArtifactDetailQuery()
   const data = usePaidAdsData(
     campaignId,
@@ -75,8 +99,6 @@ export function PaidAdsSpaceView({
     },
     [data, onSelectionChange, setArtifactQuery],
   )
-
-  if (!campaignId) return <MissingCampaign />
 
   if (hierarchyMode === 'creatives') {
     return (
@@ -128,5 +150,23 @@ export function PaidAdsSpaceView({
       onOpenCanvasForAdSet={openCanvasForAdSet}
       toolbarExtras={artifactDeepToolbarExtras}
     />
+  )
+}
+
+export function PaidAdsSpaceView(props: PaidAdsSpaceViewProps) {
+  const { campaignId, spaceId, activeView } = props
+
+  if (!campaignId) return <MissingCampaign />
+
+  return (
+    <PaidAdsWorkspaceShell campaignId={campaignId} spaceId={spaceId}>
+      {resolvePaidAdsWorkspaceMode(activeView) === 'reporting' ? (
+        <div className="px-spacing-4 py-spacing-3 flex min-h-0 flex-1 overflow-auto">
+          <AdsPerformanceView campaignId={campaignId} embedded />
+        </div>
+      ) : (
+        <PaidAdsCreationView {...props} campaignId={campaignId} />
+      )}
+    </PaidAdsWorkspaceShell>
   )
 }
