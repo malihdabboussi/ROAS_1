@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SlackPeopleView } from './SlackPeopleView'
 
@@ -58,23 +58,36 @@ describe('SlackPeopleView', () => {
     vi.clearAllMocks()
   })
 
-  it('shows resolved teammates and the review-first Shadow inbox', () => {
+  it('shows the Shadow inbox before the Slack roster', () => {
     render(<SlackPeopleView />)
 
     expect(screen.getAllByText('Ada Lovelace')).toHaveLength(2)
     expect(screen.getAllByText(/Platform teammate/)).toHaveLength(2)
-    expect(screen.getByText('Shadow inbox')).toBeInTheDocument()
+    const shadowInbox = screen.getByText('Shadow inbox')
+    const slackPeople = screen.getByText('Slack people')
+    expect(
+      shadowInbox.compareDocumentPosition(slackPeople) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
     expect(screen.getByText(/creating or reviewing a proposal never sends it/i)).toBeInTheDocument()
   })
 
-  it('exposes explicit proposal and review actions', () => {
+  it('brings the Shadow inbox into view after creating a test proposal', async () => {
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
     render(<SlackPeopleView />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Create test proposal for Ada Lovelace' }))
+
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled())
+    expect(hookMocks.createTestProposal).toHaveBeenCalledWith('person-1')
+  })
+
+  it('exposes explicit proposal review actions', () => {
+    render(<SlackPeopleView />)
+
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }))
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
 
-    expect(hookMocks.createTestProposal).toHaveBeenCalledWith('person-1')
     expect(hookMocks.reviewAction).toHaveBeenCalledWith('action-1', 'approved')
     expect(hookMocks.reviewAction).toHaveBeenCalledWith('action-1', 'dismissed')
   })

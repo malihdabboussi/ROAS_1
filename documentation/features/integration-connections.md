@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 19, 2026 (strict Slack workspace scoping and Shadow access repair)
+Last Modified: July 19, 2026 (guided Slack People and Shadow review flow)
 
 ## Data Flow
 
@@ -22,6 +22,7 @@ Last Modified: July 19, 2026 (strict Slack workspace scoping and Shadow access r
 16. Proactive Slack messages and discovered workflows use `slack_shadow_actions` as their review ledger. Admins can create a harmless test proposal, approve or dismiss it, and send it only after both approval and an explicit switch of that person to `active`. Creating or reviewing a proposal never sends it.
 17. Page Grader can expose the Meta account, Page, pixel, and campaign identifiers already mapped to a client through a read-only client Meta context endpoint. Vibey uses its stored Page Grader connection to proxy this context for launch preparation; Page Grader credentials and Meta tokens never enter the response.
 18. Native Slack connections resolve only inside the active account scope. A personal Slack row cannot make an organization appear connected, supply its runtime token, or receive organization-scoped metadata/error updates.
+19. The Team flyout links directly to Manage People. Team → People presents the current manual Shadow workflow before the Slack roster, and creating a test proposal moves the admin to the resulting Shadow inbox entry instead of leaving it below the full people list.
 
 ## Code Examples
 
@@ -108,4 +109,5 @@ Reconnect result:
 - Slack people are organization-owned for admin visibility even though one organization member owns the OAuth connection and sync cursor.
 - Native Slack does not inherit a personal connection inside an organization. Each organization must complete its own OAuth connection so Settings, runtime actions, and Team → People share the same workspace-scoped truth.
 - Shadow Mode is the safe default for proactive outreach. `off` blocks proposal creation, `shadow` permits review without delivery, and `active` permits an admin to explicitly send only an approved ledger record. Sending atomically claims the approved record before Slack delivery so concurrent requests cannot both send it; failed deliveries remain visible as `failed`. Automated observation and proposal generation remain separate follow-up work.
+- Manage People must distinguish the current review-layer capability from future automatic proposal discovery. A test proposal is a sample draft, and `active` only unlocks the explicit Send now action; it does not autonomously send.
 - Page Grader is discovery context, not a second Meta publisher. Vibey owns Mission approvals, Meta mutations, and audit history. When Page Grader has exactly one active mapped ad account it may recommend that identifier; multiple active accounts require a human selection.

@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef } from 'react'
 import { Bot, MessageSquareText, RefreshCw, UsersRound, Workflow } from 'lucide-react'
 import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
@@ -30,6 +31,7 @@ function initials(name: string): string {
 }
 
 export function SlackPeopleView() {
+  const shadowInboxRef = useRef<HTMLElement>(null)
   const {
     connected,
     people,
@@ -45,6 +47,16 @@ export function SlackPeopleView() {
   const peopleById = new Map(people.map((person) => [person.id, person]))
   const teammateCount = people.filter((person) => person.vibey_user_id).length
   const ghostCount = people.filter((person) => !person.vibey_user_id && !person.contact_id).length
+
+  const createAndRevealTestProposal = async (personId: string) => {
+    try {
+      await createTestProposal(personId)
+      toast.success(SLACK_PEOPLE_MESSAGES.TEST_PROPOSAL_CREATED)
+      shadowInboxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } catch {
+      toast.error(SLACK_PEOPLE_MESSAGES.TEST_PROPOSAL_ERROR)
+    }
+  }
 
   if (loading) {
     return (
@@ -111,69 +123,28 @@ export function SlackPeopleView() {
               ))}
             </section>
 
-            <section className="surface-card border-border overflow-hidden rounded-2xl border">
-              <div className="border-border border-b p-4">
-                <h2 className="text-foreground text-sm font-semibold">Slack people</h2>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  Shadow is the default. Proposals need approval, and sending stays locked until you
-                  explicitly set the person to Active.
-                </p>
-              </div>
-              <div className="divide-border divide-y">
-                {people.map((person) => (
-                  <div key={person.id} className="flex flex-wrap items-center gap-3 p-4">
-                    <div className="bg-secondary text-secondary-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
-                      {initials(person.display_name) || '?'}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-foreground truncate text-sm font-medium">
-                        {person.display_name}
-                      </p>
-                      <p className="text-muted-foreground truncate text-xs">
-                        {relationshipLabel(person)}
-                        {person.title ? ` · ${person.title}` : ''}
-                      </p>
-                    </div>
-                    <div className="bg-secondary flex rounded-lg p-1" aria-label="Delivery mode">
-                      {(Object.keys(MODE_LABELS) as SlackDeliveryMode[]).map((mode) => (
-                        <button
-                          key={mode}
-                          type="button"
-                          onClick={() => {
-                            void updateDeliveryMode(person.id, mode).catch(() =>
-                              toast.error(SLACK_PEOPLE_MESSAGES.MODE_ERROR),
-                            )
-                          }}
-                          className={cn(
-                            'rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                            person.delivery_mode === mode
-                              ? 'bg-primary text-primary-foreground'
-                              : 'text-muted-foreground hover:text-foreground',
-                          )}
-                        >
-                          {MODE_LABELS[mode]}
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      disabled={person.delivery_mode === 'off'}
-                      aria-label={`Create test proposal for ${person.display_name}`}
-                      onClick={() => {
-                        void createTestProposal(person.id)
-                          .then(() => toast.success(SLACK_PEOPLE_MESSAGES.TEST_PROPOSAL_CREATED))
-                          .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.TEST_PROPOSAL_ERROR))
-                      }}
-                      className="button-glass-secondary rounded-lg px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Create test proposal
-                    </button>
+            <section className="surface-card border-border rounded-2xl border p-4">
+              <h2 className="text-foreground text-sm font-semibold">How Shadow mode works</h2>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {SLACK_PEOPLE_MESSAGES.CURRENT_CAPABILITY}
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {SLACK_PEOPLE_MESSAGES.HOW_IT_WORKS.map((step) => (
+                  <div key={step.title} className="bg-secondary rounded-xl p-3">
+                    <p className="text-foreground text-xs font-semibold">{step.title}</p>
+                    <p className="text-muted-foreground mt-1 text-xs">{step.body}</p>
                   </div>
                 ))}
               </div>
+              <p className="text-muted-foreground mt-3 text-xs">
+                {SLACK_PEOPLE_MESSAGES.GHOST_PROFILE_HELP}
+              </p>
             </section>
 
-            <section className="surface-card border-border rounded-2xl border">
+            <section
+              ref={shadowInboxRef}
+              className="surface-card border-border scroll-mt-6 rounded-2xl border"
+            >
               <div className="border-border border-b p-4">
                 <div className="flex items-center gap-2">
                   <Workflow className="text-primary h-4 w-4" />
@@ -256,6 +227,66 @@ export function SlackPeopleView() {
                   ))}
                 </div>
               )}
+            </section>
+
+            <section className="surface-card border-border overflow-hidden rounded-2xl border">
+              <div className="border-border border-b p-4">
+                <h2 className="text-foreground text-sm font-semibold">Slack people</h2>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Shadow is the default. Proposals need approval, and sending stays locked until you
+                  explicitly set the person to Active.
+                </p>
+              </div>
+              <div className="divide-border divide-y">
+                {people.map((person) => (
+                  <div key={person.id} className="flex flex-wrap items-center gap-3 p-4">
+                    <div className="bg-secondary text-secondary-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                      {initials(person.display_name) || '?'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground truncate text-sm font-medium">
+                        {person.display_name}
+                      </p>
+                      <p className="text-muted-foreground truncate text-xs">
+                        {relationshipLabel(person)}
+                        {person.title ? ` · ${person.title}` : ''}
+                      </p>
+                    </div>
+                    <div className="bg-secondary flex rounded-lg p-1" aria-label="Delivery mode">
+                      {(Object.keys(MODE_LABELS) as SlackDeliveryMode[]).map((mode) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => {
+                            void updateDeliveryMode(person.id, mode).catch(() =>
+                              toast.error(SLACK_PEOPLE_MESSAGES.MODE_ERROR),
+                            )
+                          }}
+                          className={cn(
+                            'rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                            person.delivery_mode === mode
+                              ? 'bg-primary text-primary-foreground'
+                              : 'text-muted-foreground hover:text-foreground',
+                          )}
+                        >
+                          {MODE_LABELS[mode]}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={person.delivery_mode === 'off'}
+                      aria-label={`Create test proposal for ${person.display_name}`}
+                      onClick={() => {
+                        void createAndRevealTestProposal(person.id)
+                      }}
+                      className="button-glass-secondary rounded-lg px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Create test proposal
+                    </button>
+                  </div>
+                ))}
+              </div>
             </section>
           </>
         )}

@@ -32,6 +32,24 @@ export const SLACK_PEOPLE_MESSAGES = {
   DISCONNECTED: 'Connect Slack to discover teammates and external people.',
   SHADOW_SAFETY:
     'Creating or reviewing a proposal never sends it. Only an approved proposal for an Active person can be sent with Send now.',
+  CURRENT_CAPABILITY:
+    'This first release lets you test and control the review flow. Automatic proposal discovery is the next layer — nothing is being generated or sent in the background yet.',
+  GHOST_PROFILE_HELP:
+    'A Ghost profile is a Slack identity that has not matched a platform teammate or known external contact yet.',
+  HOW_IT_WORKS: [
+    {
+      title: '1. Pick a person',
+      body: 'Leave them in Shadow to preview safely. Off blocks proposals. Active unlocks manual sending after approval.',
+    },
+    {
+      title: '2. Review the draft',
+      body: 'Create test proposal adds a sample message to the Shadow inbox. Approve or dismiss it; neither action sends anything.',
+    },
+    {
+      title: '3. Send when ready',
+      body: 'After approval, set that person to Active and click Send now. Active does not send automatically.',
+    },
+  ],
   EMPTY_ACTIONS:
     'New message and workflow proposals will appear here before anything is delivered.',
   TEST_PROPOSAL_ERROR: "Couldn't create that test proposal. Check the person's mode and try again.",
