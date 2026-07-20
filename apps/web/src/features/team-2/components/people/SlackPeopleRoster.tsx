@@ -1,24 +1,8 @@
 'use client'
 
-import { Brain, CircleUserRound, UserRoundCheck } from 'lucide-react'
-import { cn } from '@/lib/utils/cn'
-import type {
-  SlackDeliveryMode,
-  SlackDiscoveredPerson,
-  SlackRelationshipKind,
-} from '../../services/slack-people.service'
-
-const RELATIONSHIP_LABELS: Record<SlackRelationshipKind, string> = {
-  internal: 'Internal',
-  external: 'External',
-  ignored: 'Ignored',
-}
-
-const MODE_LABELS: Record<SlackDeliveryMode, string> = {
-  off: 'Off',
-  shadow: 'Shadow',
-  active: 'Active',
-}
+import { useMemo, useState } from 'react'
+import { Brain, CircleUserRound, Search, UserRoundCheck } from 'lucide-react'
+import type { SlackDiscoveredPerson } from '../../services/slack-people.service'
 
 function initials(name: string): string {
   return name
@@ -29,122 +13,101 @@ function initials(name: string): string {
     .join('')
 }
 
+function relationshipLabel(person: SlackDiscoveredPerson): string {
+  if (person.relationship_kind === 'internal') return 'Internal'
+  if (person.relationship_kind === 'external') return 'External'
+  return 'Ignored'
+}
+
 interface SlackPeopleRosterProps {
   people: SlackDiscoveredPerson[]
   onOpenPerson: (person: SlackDiscoveredPerson) => void
-  onUpdateDeliveryMode: (id: string, mode: SlackDeliveryMode) => void
-  onUpdateRelationshipKind: (id: string, kind: SlackRelationshipKind) => void
-  onCreateTestProposal: (id: string) => void
 }
 
-export function SlackPeopleRoster({
-  people,
-  onOpenPerson,
-  onUpdateDeliveryMode,
-  onUpdateRelationshipKind,
-  onCreateTestProposal,
-}: SlackPeopleRosterProps) {
+export function SlackPeopleRoster({ people, onOpenPerson }: SlackPeopleRosterProps) {
+  const [search, setSearch] = useState('')
+  const visiblePeople = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return people
+    return people.filter((person) =>
+      [person.display_name, person.email, person.title, person.username]
+        .filter(Boolean)
+        .some((value) => value?.toLowerCase().includes(query)),
+    )
+  }, [people, search])
+
   return (
-    <section className="surface-card border-border rounded-spacing-4 overflow-hidden border">
-      <div className="border-border p-spacing-4 border-b">
-        <h2 className="body-2 text-foreground font-semibold">Slack people</h2>
-        <p className="body-4 text-muted-foreground mt-spacing-1">
-          Person type describes your relationship. Delivery mode controls what the agent may do.
-        </p>
+    <section className="gap-spacing-3 flex min-h-0 flex-1 flex-col">
+      <div className="gap-spacing-3 flex flex-wrap items-center justify-between">
+        <div>
+          <h2 className="body-2 text-foreground font-semibold">People</h2>
+          <p className="body-4 text-muted-foreground mt-spacing-1">
+            Open a person to manage their Shadow conversation, identity and Brain connection.
+          </p>
+        </div>
+        <label className="input-glass gap-spacing-2 flex items-center">
+          <Search className="icon-xs text-muted-foreground" />
+          <span className="sr-only">Search people</span>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search people"
+            className="body-3 text-foreground min-w-0 bg-transparent outline-none"
+          />
+        </label>
       </div>
-      <div className="divide-border divide-y">
-        {people.map((person) => (
-          <div key={person.id} className="gap-spacing-3 p-spacing-4 flex flex-wrap items-center">
+
+      {visiblePeople.length === 0 ? (
+        <p className="body-3 text-muted-foreground p-spacing-6 text-center">
+          No people match this search.
+        </p>
+      ) : (
+        <div className="gap-spacing-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8">
+          {visiblePeople.map((person) => (
             <button
+              key={person.id}
               type="button"
               aria-label={`Open ${person.display_name}`}
               onClick={() => onOpenPerson(person)}
-              className="gap-spacing-3 flex min-w-0 flex-1 items-center text-left"
+              className="border-subtle group/person-card rounded-spacing-3 flex flex-col overflow-hidden text-left transition-opacity hover:opacity-95"
             >
-              <span className="bg-secondary text-secondary-foreground h-spacing-10 w-spacing-10 body-4 flex shrink-0 items-center justify-center rounded-full font-semibold">
-                {initials(person.display_name) || '?'}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="gap-spacing-2 flex items-center">
-                  <span className="body-2 text-foreground truncate font-medium">
-                    {person.display_name}
+              <span className="bg-muted rounded-t-spacing-3 relative aspect-square w-full overflow-hidden">
+                {person.avatar_url ? (
+                  <img src={person.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="title-h4 text-muted-foreground flex h-full items-center justify-center">
+                    {initials(person.display_name) || '?'}
                   </span>
+                )}
+                <span className="surface-card border-subtle gap-spacing-1 p-spacing-1 rounded-spacing-2 absolute right-2 top-2 flex border">
                   {person.vibey_user_id ? (
-                    <UserRoundCheck
-                      className="icon-sm text-success shrink-0"
-                      aria-label="Portal user"
-                    />
+                    <UserRoundCheck className="icon-sm text-success" aria-label="Portal user" />
                   ) : (
                     <CircleUserRound
-                      className="icon-sm text-muted-foreground shrink-0"
+                      className="icon-sm text-muted-foreground"
                       aria-label="Slack-only person"
                     />
                   )}
-                  {person.brain_id ? <Brain className="icon-sm text-primary shrink-0" /> : null}
+                  {person.brain_id ? (
+                    <Brain className="icon-sm text-primary" aria-label="Brain connected" />
+                  ) : null}
                 </span>
-                <span className="body-4 text-muted-foreground block truncate">
-                  {RELATIONSHIP_LABELS[person.relationship_kind]}
-                  {person.vibey_user_id ? ' · Portal user' : ' · Slack-only person'}
-                  {person.title ? ` · ${person.title}` : ''}
+              </span>
+              <span className="gap-spacing-1 p-spacing-2 flex min-h-0 flex-1 flex-col">
+                <span className="body-2 text-foreground truncate font-medium">
+                  {person.display_name}
+                </span>
+                <span className="body-4 text-muted-foreground line-clamp-2">
+                  {person.title || relationshipLabel(person)}
+                </span>
+                <span className="body-4 text-muted-foreground mt-auto capitalize">
+                  {relationshipLabel(person)} · {person.delivery_mode}
                 </span>
               </span>
             </button>
-
-            <div
-              className="bg-secondary p-spacing-1 rounded-spacing-2 flex"
-              aria-label="Person type"
-            >
-              {(Object.keys(RELATIONSHIP_LABELS) as SlackRelationshipKind[]).map((kind) => (
-                <button
-                  key={kind}
-                  type="button"
-                  aria-label={`Mark ${person.display_name} ${kind}`}
-                  onClick={() => onUpdateRelationshipKind(person.id, kind)}
-                  className={cn(
-                    'body-4 px-spacing-2 py-spacing-1 rounded-spacing-1 font-medium transition-colors',
-                    person.relationship_kind === kind
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {RELATIONSHIP_LABELS[kind]}
-                </button>
-              ))}
-            </div>
-
-            <div
-              className="bg-secondary p-spacing-1 rounded-spacing-2 flex"
-              aria-label="Delivery mode"
-            >
-              {(Object.keys(MODE_LABELS) as SlackDeliveryMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => onUpdateDeliveryMode(person.id, mode)}
-                  className={cn(
-                    'body-4 px-spacing-2 py-spacing-1 rounded-spacing-1 font-medium transition-colors',
-                    person.delivery_mode === mode
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {MODE_LABELS[mode]}
-                </button>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              disabled={person.delivery_mode === 'off' || person.relationship_kind === 'ignored'}
-              aria-label={`Create test proposal for ${person.display_name}`}
-              onClick={() => onCreateTestProposal(person.id)}
-              className="button-compact button-glass-neutral disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Test proposal
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   )
 }

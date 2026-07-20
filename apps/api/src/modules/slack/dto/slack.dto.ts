@@ -170,6 +170,16 @@ export const SlackRelationshipKindDtoSchema = z.object({
 })
 export type SlackRelationshipKindDto = z.infer<typeof SlackRelationshipKindDtoSchema>
 
+export const SlackPersonIdentityDtoSchema = z.object({
+  vibey_user_id: z.string().uuid(),
+})
+export type SlackPersonIdentityDto = z.infer<typeof SlackPersonIdentityDtoSchema>
+
+export const SlackShadowProposalDtoSchema = z.object({
+  proposed_content: z.string().trim().min(1).max(4000),
+})
+export type SlackShadowProposalDto = z.infer<typeof SlackShadowProposalDtoSchema>
+
 export const SlackShadowActionsQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(200).optional(),
 })

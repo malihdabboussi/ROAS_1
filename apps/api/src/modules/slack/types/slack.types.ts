@@ -214,6 +214,14 @@ export interface SlackDiscoveredPerson {
   brain_name: string | null
 }
 
+export interface SlackPortalUser {
+  user_id: string
+  display_name: string
+  email: string | null
+  avatar_url: string | null
+  role: string
+}
+
 export interface SlackPersonActivityMessage {
   ts: string
   text: string

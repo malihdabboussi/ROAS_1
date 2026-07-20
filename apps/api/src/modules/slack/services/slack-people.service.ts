@@ -32,7 +32,10 @@ export class SlackPeopleService {
       userId: integration.user_id,
       orgId,
     })
-    const people = await this.peopleRepository.listPeople(supabase, orgId)
+    const [people, portalUsers] = await Promise.all([
+      this.peopleRepository.listPeople(supabase, orgId),
+      this.peopleRepository.listPortalUsers(supabase, orgId),
+    ])
     const linkedUserIds = [
       ...new Set(people.map((person) => person.vibey_user_id).filter((id): id is string => !!id)),
     ]
@@ -40,6 +43,7 @@ export class SlackPeopleService {
     const brainByOwnerId = new Map(brains.map((brain) => [brain.owner_id, brain]))
     return {
       connected: true,
+      portal_users: portalUsers,
       people: people.map((person) => {
         const brain = person.vibey_user_id ? brainByOwnerId.get(person.vibey_user_id) : null
         return {
@@ -48,6 +52,31 @@ export class SlackPeopleService {
           brain_name: brain?.name ?? null,
         }
       }),
+    }
+  }
+
+  async mapIdentity(
+    supabase: SupabaseClient,
+    orgId: string | null | undefined,
+    personId: string,
+    userId: string,
+  ) {
+    if (!orgId) throw new BadRequestException('Slack people require organization context')
+    const isActive = await this.peopleRepository.isActivePortalUser(supabase, orgId, userId)
+    if (!isActive) throw new ConflictException('Select an active member of this organization')
+    const person = await this.peopleRepository.mapIdentity(supabase, {
+      id: personId,
+      orgId,
+      userId,
+    })
+    const brains = await this.peopleRepository.listDefaultUserBrains(supabase, [userId])
+    const brain = brains[0]
+    return {
+      person: {
+        ...person,
+        brain_id: brain?.id ?? null,
+        brain_name: brain?.name ?? null,
+      },
     }
   }
 
@@ -154,6 +183,25 @@ export class SlackPeopleService {
     personId: string,
   ) {
     if (!orgId) throw new BadRequestException('Shadow Mode requires organization context')
+    return this.createProposal(
+      supabase,
+      userId,
+      orgId,
+      personId,
+      'Quick check-in — anything blocking you today?',
+      'admin_test',
+    )
+  }
+
+  async createProposal(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null | undefined,
+    personId: string,
+    proposedContent: string,
+    source = 'admin_shadow_conversation',
+  ) {
+    if (!orgId) throw new BadRequestException('Shadow Mode requires organization context')
     const person = await this.peopleRepository.findPerson(supabase, orgId, personId)
     if (!person) throw new NotFoundException('Slack person not found')
     if (person.relationship_kind === 'ignored') {
@@ -168,9 +216,12 @@ export class SlackPeopleService {
       agentKey: 'vibey',
       targetMemberId: personId,
       actionKind: 'message',
-      proposedContent: 'Quick check-in — anything blocking you today?',
-      rationale: 'Test proposal created by an administrator to verify the Shadow review flow.',
-      metadata: { source: 'admin_test' },
+      proposedContent,
+      rationale:
+        source === 'admin_test'
+          ? 'Test proposal created by an administrator to verify the Shadow review flow.'
+          : 'Drafted in the managed Shadow conversation for administrator review.',
+      metadata: { source },
     })
     return { action }
   }

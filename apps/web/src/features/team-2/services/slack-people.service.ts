@@ -28,6 +28,14 @@ export interface SlackDiscoveredPerson {
   brain_name: string | null
 }
 
+export interface SlackPortalUser {
+  user_id: string
+  display_name: string
+  email: string | null
+  avatar_url: string | null
+  role: string
+}
+
 export interface SlackPersonActivityMessage {
   ts: string
   text: string
@@ -53,8 +61,17 @@ export interface SlackShadowAction {
 }
 
 export function fetchSlackPeople() {
-  return backendGet<{ connected: boolean; people: SlackDiscoveredPerson[] }>(
-    '/api/integrations/slack/people',
+  return backendGet<{
+    connected: boolean
+    people: SlackDiscoveredPerson[]
+    portal_users?: SlackPortalUser[]
+  }>('/api/integrations/slack/people')
+}
+
+export function patchSlackPersonIdentity(id: string, vibeyUserId: string) {
+  return backendPatch<{ person: SlackDiscoveredPerson }>(
+    `/api/integrations/slack/people/${id}/identity`,
+    { vibey_user_id: vibeyUserId },
   )
 }
 
@@ -96,6 +113,13 @@ export function createSlackTestProposal(personId: string) {
   return backendPost<{ action: SlackShadowAction }>(
     `/api/integrations/slack/people/${personId}/test-proposal`,
     {},
+  )
+}
+
+export function createSlackProposal(personId: string, proposedContent: string) {
+  return backendPost<{ action: SlackShadowAction }>(
+    `/api/integrations/slack/people/${personId}/proposals`,
+    { proposed_content: proposedContent },
   )
 }
 

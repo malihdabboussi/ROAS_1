@@ -4,16 +4,19 @@ import { useCallback, useEffect, useState } from 'react'
 import { useOrgStore } from '@/lib/org'
 import {
   confirmSlackPersonIdentity,
+  createSlackProposal,
   createSlackTestProposal,
   fetchSlackPeople,
   fetchSlackPersonActivity,
   fetchSlackShadowActions,
   patchSlackPersonDeliveryMode,
+  patchSlackPersonIdentity,
   patchSlackPersonRelationshipKind,
   reviewSlackShadowAction,
   sendSlackShadowAction,
   type SlackDeliveryMode,
   type SlackDiscoveredPerson,
+  type SlackPortalUser,
   type SlackRelationshipKind,
   type SlackShadowAction,
 } from '../services/slack-people.service'
@@ -22,6 +25,7 @@ export function useSlackPeople() {
   const activeOrgId = useOrgStore((state) => state.activeOrgId)
   const [connected, setConnected] = useState(false)
   const [people, setPeople] = useState<SlackDiscoveredPerson[]>([])
+  const [portalUsers, setPortalUsers] = useState<SlackPortalUser[]>([])
   const [actions, setActions] = useState<SlackShadowAction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -36,6 +40,7 @@ export function useSlackPeople() {
       ])
       setConnected(peopleResult.connected)
       setPeople(peopleResult.people)
+      setPortalUsers(peopleResult.portal_users ?? [])
       setActions(actionsResult.actions)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not load Slack people')
@@ -99,11 +104,23 @@ export function useSlackPeople() {
     setPeople((current) => current.map((person) => (person.id === id ? result.person : person)))
   }, [])
 
+  const mapIdentity = useCallback(async (id: string, userId: string) => {
+    const result = await patchSlackPersonIdentity(id, userId)
+    setPeople((current) => current.map((person) => (person.id === id ? result.person : person)))
+  }, [])
+
   const loadPersonActivity = useCallback((id: string) => fetchSlackPersonActivity(id), [])
 
   const createTestProposal = useCallback(async (personId: string) => {
     const result = await createSlackTestProposal(personId)
     setActions((current) => [result.action, ...current])
+    return result.action
+  }, [])
+
+  const createProposal = useCallback(async (personId: string, proposedContent: string) => {
+    const result = await createSlackProposal(personId, proposedContent)
+    setActions((current) => [result.action, ...current])
+    return result.action
   }, [])
 
   const reviewAction = useCallback(async (actionId: string, status: 'approved' | 'dismissed') => {
@@ -123,14 +140,17 @@ export function useSlackPeople() {
   return {
     connected,
     people,
+    portalUsers,
     actions,
     loading,
     error,
     updateDeliveryMode,
     updateRelationshipKind,
     confirmSuggestedIdentity,
+    mapIdentity,
     loadPersonActivity,
     createTestProposal,
+    createProposal,
     reviewAction,
     sendAction,
     reload,

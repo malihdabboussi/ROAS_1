@@ -18,6 +18,21 @@ function createService(overrides?: {
           : { user_id: 'owner-1', access_token: 'xoxb' },
       ),
     listPeople: vi.fn().mockResolvedValue(people),
+    listPortalUsers: vi.fn().mockResolvedValue([
+      {
+        user_id: 'user-1',
+        display_name: 'Ada Lovelace',
+        email: 'ada@example.com',
+        avatar_url: null,
+        role: 'admin',
+      },
+    ]),
+    isActivePortalUser: vi.fn().mockResolvedValue(true),
+    mapIdentity: vi.fn().mockResolvedValue({
+      id: 'person-1',
+      vibey_user_id: 'user-1',
+      relationship_kind: 'internal',
+    }),
     updateDeliveryMode: vi.fn().mockResolvedValue({ id: 'person-1', delivery_mode: 'active' }),
     updateRelationshipKind: vi.fn().mockResolvedValue({
       id: 'person-1',
@@ -93,6 +108,15 @@ describe('SlackPeopleService', () => {
     expect(repository.listPeople).toHaveBeenCalledWith(expect.anything(), 'org-1')
     expect(result).toEqual({
       connected: true,
+      portal_users: [
+        {
+          user_id: 'user-1',
+          display_name: 'Ada Lovelace',
+          email: 'ada@example.com',
+          avatar_url: null,
+          role: 'admin',
+        },
+      ],
       people: [{ ...person, brain_id: null, brain_name: null }],
     })
   })
@@ -112,6 +136,7 @@ describe('SlackPeopleService', () => {
 
     await expect(service.listPeople({} as never, 'org-1')).resolves.toEqual({
       connected: true,
+      portal_users: [expect.objectContaining({ user_id: 'user-1', display_name: 'Ada Lovelace' })],
       people: [
         expect.objectContaining({
           id: 'person-1',
@@ -164,6 +189,24 @@ describe('SlackPeopleService', () => {
     )
   })
 
+  it('maps an unmapped Slack identity to an active portal user and resolves their Brain', async () => {
+    const { service, repository } = createService()
+
+    await expect(service.mapIdentity({} as never, 'org-1', 'person-1', 'user-1')).resolves.toEqual({
+      person: expect.objectContaining({
+        id: 'person-1',
+        vibey_user_id: 'user-1',
+        brain_id: 'brain-1',
+      }),
+    })
+    expect(repository.isActivePortalUser).toHaveBeenCalledWith(expect.anything(), 'org-1', 'user-1')
+    expect(repository.mapIdentity).toHaveBeenCalledWith(expect.anything(), {
+      id: 'person-1',
+      orgId: 'org-1',
+      userId: 'user-1',
+    })
+  })
+
   it('returns live Slack DM messages and Shadow actions for one person', async () => {
     const { service, slackApi } = createService()
 
@@ -194,6 +237,27 @@ describe('SlackPeopleService', () => {
         userId: 'admin-1',
         targetMemberId: 'person-1',
         actionKind: 'message',
+      }),
+    )
+    expect(slackApi.postMessage).not.toHaveBeenCalled()
+  })
+
+  it('creates a custom Shadow conversation draft without sending it', async () => {
+    const { service, repository, slackApi } = createService()
+
+    await service.createProposal(
+      {} as never,
+      'admin-1',
+      'org-1',
+      'person-1',
+      'I noticed the launch report is blocked. Want help?',
+    )
+
+    expect(repository.createShadowAction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        proposedContent: 'I noticed the launch report is blocked. Want help?',
+        metadata: { source: 'admin_shadow_conversation' },
       }),
     )
     expect(slackApi.postMessage).not.toHaveBeenCalled()

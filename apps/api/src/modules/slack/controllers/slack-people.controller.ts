@@ -14,16 +14,20 @@ import {
 } from '@vibey/api-shared'
 import {
   SlackDeliveryModeDtoSchema,
+  SlackPersonIdentityDtoSchema,
   SlackPersonIdParamSchema,
   SlackRelationshipKindDtoSchema,
   SlackShadowActionIdParamSchema,
   SlackShadowActionsQuerySchema,
+  SlackShadowProposalDtoSchema,
   SlackShadowReviewDtoSchema,
   type SlackDeliveryModeDto,
+  type SlackPersonIdentityDto,
   type SlackPersonIdParam,
   type SlackRelationshipKindDto,
   type SlackShadowActionIdParam,
   type SlackShadowActionsQuery,
+  type SlackShadowProposalDto,
   type SlackShadowReviewDto,
 } from '../dto/slack.dto'
 import { SlackPeopleService } from '../services/slack-people.service'
@@ -64,6 +68,16 @@ export class SlackPeopleController {
     )
   }
 
+  @Patch(':id/identity')
+  async mapIdentity(
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param(new ZodValidationPipe(SlackPersonIdParamSchema)) params: SlackPersonIdParam,
+    @Body(new ZodValidationPipe(SlackPersonIdentityDtoSchema)) body: SlackPersonIdentityDto,
+  ) {
+    return this.people.mapIdentity(supabase, scope.orgId, params.id, body.vibey_user_id)
+  }
+
   @Get('shadow-actions')
   async listShadowActions(
     @Supabase() supabase: SupabaseClient,
@@ -99,6 +113,23 @@ export class SlackPeopleController {
     @Param(new ZodValidationPipe(SlackPersonIdParamSchema)) params: SlackPersonIdParam,
   ) {
     return this.people.createTestProposal(supabase, user.id, scope.orgId, params.id)
+  }
+
+  @Post(':id/proposals')
+  async createProposal(
+    @Supabase() supabase: SupabaseClient,
+    @CurrentUser() user: { id: string },
+    @OrgContext() scope: RequestScope,
+    @Param(new ZodValidationPipe(SlackPersonIdParamSchema)) params: SlackPersonIdParam,
+    @Body(new ZodValidationPipe(SlackShadowProposalDtoSchema)) body: SlackShadowProposalDto,
+  ) {
+    return this.people.createProposal(
+      supabase,
+      user.id,
+      scope.orgId,
+      params.id,
+      body.proposed_content,
+    )
   }
 
   @Patch('shadow-actions/:id/review')

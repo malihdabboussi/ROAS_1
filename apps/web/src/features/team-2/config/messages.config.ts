@@ -32,6 +32,8 @@ export const SLACK_PEOPLE_MESSAGES = {
   CLASSIFICATION_ERROR: "I couldn't save that person type. Try again.",
   IDENTITY_CONFIRM_ERROR: "I couldn't confirm that match. Refresh and try again.",
   IDENTITY_CONFIRMED: 'Matched. Their portal identity and User Brain are now connected.',
+  IDENTITY_MAP_ERROR: "I couldn't map that portal user. Refresh and try again.",
+  IDENTITY_MAPPED: 'Portal user mapped. Their available Brain is now connected.',
   ACTIVITY_ERROR:
     "I couldn't open that Slack conversation. Check the Slack connection and try again.",
   DISCONNECTED: 'Connect Slack to discover teammates and external people.',
@@ -59,6 +61,9 @@ export const SLACK_PEOPLE_MESSAGES = {
     'New message and workflow proposals will appear here before anything is delivered.',
   TEST_PROPOSAL_ERROR: "Couldn't create that test proposal. Check the person's mode and try again.",
   TEST_PROPOSAL_CREATED: 'Test proposal added to the Shadow inbox.',
+  PROPOSAL_ERROR:
+    "Couldn't add that draft to Shadow review. Check the person's mode and try again.",
+  PROPOSAL_CREATED: 'Draft added to this Shadow conversation. Nothing was sent.',
   PERSON_NOT_FOUND: 'That Slack person is no longer available. Refresh People and try again.',
   REVIEW_ERROR: "Couldn't save that review. Refresh and try again.",
   REVIEW_APPROVED: 'Approved. Set this person to Active when you are ready to send.',

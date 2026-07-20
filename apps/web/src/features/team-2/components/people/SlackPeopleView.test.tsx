@@ -4,6 +4,8 @@ import { SlackPeopleView } from './SlackPeopleView'
 
 const hookMocks = vi.hoisted(() => ({
   createTestProposal: vi.fn().mockResolvedValue(undefined),
+  createProposal: vi.fn().mockResolvedValue(undefined),
+  mapIdentity: vi.fn().mockResolvedValue(undefined),
   reviewAction: vi.fn().mockResolvedValue(undefined),
   sendAction: vi.fn().mockResolvedValue(undefined),
   updateRelationshipKind: vi.fn().mockResolvedValue(undefined),
@@ -58,6 +60,15 @@ vi.mock('../../hooks/use-slack-people', () => ({
         last_seen_at: '2026-07-19T00:00:00.000Z',
       },
     ],
+    portalUsers: [
+      {
+        user_id: 'user-1',
+        display_name: 'Ada Lovelace',
+        email: 'ada@example.com',
+        avatar_url: null,
+        role: 'admin',
+      },
+    ],
     actions: [
       {
         id: 'action-1',
@@ -76,8 +87,10 @@ vi.mock('../../hooks/use-slack-people', () => ({
     updateDeliveryMode: vi.fn(),
     updateRelationshipKind: hookMocks.updateRelationshipKind,
     confirmSuggestedIdentity: hookMocks.confirmSuggestedIdentity,
+    mapIdentity: hookMocks.mapIdentity,
     loadPersonActivity: hookMocks.loadPersonActivity,
     createTestProposal: hookMocks.createTestProposal,
+    createProposal: hookMocks.createProposal,
     reviewAction: hookMocks.reviewAction,
     sendAction: hookMocks.sendAction,
     reload: vi.fn(),
@@ -95,15 +108,12 @@ describe('SlackPeopleView', () => {
     render(<SlackPeopleView />)
 
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
-    expect(screen.getByText('Internal')).toBeInTheDocument()
-    expect(screen.getByText(/Internal · Portal user/)).toBeInTheDocument()
+    expect(screen.getByText(/Internal · shadow/i)).toBeInTheDocument()
     const shadowInbox = screen.getByText('Shadow conversations')
-    const slackPeople = screen.getByText('Slack people')
+    const slackPeople = screen.getByRole('heading', { name: 'People' })
     expect(
       shadowInbox.compareDocumentPosition(slackPeople) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
-    expect(screen.getByText('1 Shadow')).toBeInTheDocument()
-    expect(screen.getByText('0 Active')).toBeInTheDocument()
   })
 
   it('navigates to a dedicated person screen instead of opening inline', () => {
@@ -122,29 +132,37 @@ describe('SlackPeopleView', () => {
     render(<SlackPeopleView />)
 
     await waitFor(() => expect(hookMocks.loadPersonActivity).toHaveBeenCalledWith('person-1'))
+    expect(await screen.findByText('I can pull that together.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /brain/i }))
     expect(screen.getByText('Ada Brain')).toBeInTheDocument()
-    expect(screen.getByText('I can pull that together.')).toBeInTheDocument()
-    expect(screen.getByText('Portal user')).toBeInTheDocument()
+    expect(screen.getByText('Portal identity')).toBeInTheDocument()
   })
 
   it('lets an admin classify a person without changing delivery mode', () => {
+    navigationMocks.searchParams = new URLSearchParams('section=people&person=person-1')
     render(<SlackPeopleView />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Mark Ada Lovelace external' }))
+    fireEvent.click(screen.getByRole('button', { name: 'External' }))
 
     expect(hookMocks.updateRelationshipKind).toHaveBeenCalledWith('person-1', 'external')
   })
 
-  it('opens the Shadow conversations screen after creating a test proposal', async () => {
+  it('adds an agent draft to Shadow review without navigating or sending', async () => {
+    navigationMocks.searchParams = new URLSearchParams('section=people&person=person-1')
     render(<SlackPeopleView />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create test proposal for Ada Lovelace' }))
+    fireEvent.change(screen.getByPlaceholderText('Draft what the agent would say...'), {
+      target: { value: 'Anything blocking the launch today?' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add message to Shadow review' }))
 
     await waitFor(() =>
-      expect(navigationMocks.push).toHaveBeenCalledWith('/team?section=people&peopleView=shadow', {
-        scroll: false,
-      }),
+      expect(hookMocks.createProposal).toHaveBeenCalledWith(
+        'person-1',
+        'Anything blocking the launch today?',
+      ),
     )
+    expect(navigationMocks.push).not.toHaveBeenCalled()
   })
 
   it('opens a dedicated Shadow conversations screen with review actions', () => {

@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   SlackDeliveryMode,
   SlackDiscoveredPerson,
+  SlackPortalUser,
   SlackRelationshipKind,
   SlackShadowAction,
   SlackShadowActionDeliveryRecord,
@@ -46,6 +47,67 @@ export class SlackPeopleRepository {
       .order('display_name', { ascending: true })
     if (error) throw new Error(`Failed to list Slack people: ${error.message}`)
     return (data ?? []) as SlackDiscoveredPerson[]
+  }
+
+  async listPortalUsers(supabase: SupabaseClient, orgId: string): Promise<SlackPortalUser[]> {
+    const { data, error } = await supabase
+      .from('org_members')
+      .select(
+        'user_id, role, profiles!org_members_user_id_fk_profiles(full_name, email, avatar_url)',
+      )
+      .eq('org_id', orgId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: true })
+    if (error) throw new Error(`Failed to list portal users: ${error.message}`)
+    return (data ?? []).map((row) => {
+      const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
+      return {
+        user_id: String(row.user_id),
+        display_name: String(profile?.full_name || profile?.email || 'Portal user'),
+        email: profile?.email ? String(profile.email) : null,
+        avatar_url: profile?.avatar_url ? String(profile.avatar_url) : null,
+        role: String(row.role || 'member'),
+      }
+    })
+  }
+
+  async isActivePortalUser(
+    supabase: SupabaseClient,
+    orgId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('org_members')
+      .select('id')
+      .eq('org_id', orgId)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .maybeSingle()
+    if (error) throw new Error(`Failed to verify portal user: ${error.message}`)
+    return Boolean(data?.id)
+  }
+
+  async mapIdentity(
+    supabase: SupabaseClient,
+    input: { id: string; orgId: string; userId: string },
+  ): Promise<SlackDiscoveredPerson> {
+    const { data, error } = await supabase
+      .from('channel_members')
+      .update({
+        vibey_user_id: input.userId,
+        suggested_vibey_user_id: null,
+        identity_match_method: 'confirmed_name',
+        identity_match_confidence: 1,
+        relationship_kind: 'internal',
+        relationship_source: 'manual',
+      })
+      .eq('id', input.id)
+      .eq('org_id', input.orgId)
+      .eq('platform', 'slack')
+      .select(PERSON_SELECT)
+      .single()
+    if (error) throw new Error(`Failed to map Slack identity: ${error.message}`)
+    return data as SlackDiscoveredPerson
   }
 
   async updateDeliveryMode(

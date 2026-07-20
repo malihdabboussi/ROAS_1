@@ -27,20 +27,25 @@ export function SlackPeopleView() {
   const {
     connected,
     people,
+    portalUsers,
     actions,
     loading,
     error,
     updateDeliveryMode,
     updateRelationshipKind,
     confirmSuggestedIdentity,
+    mapIdentity,
     loadPersonActivity,
-    createTestProposal,
+    createProposal,
     reviewAction,
     sendAction,
     reload,
   } = useSlackPeople()
   const peopleById = new Map(people.map((person) => [person.id, person]))
   const selectedPerson = selectedPersonId ? (peopleById.get(selectedPersonId) ?? null) : null
+  const selectedActions = selectedPersonId
+    ? actions.filter((action) => action.target_member_id === selectedPersonId)
+    : []
 
   useEffect(() => {
     if (!selectedPersonId || !selectedPerson) return
@@ -78,16 +83,6 @@ export function SlackPeopleView() {
     )
   }
 
-  const createAndRevealTestProposal = async (personId: string) => {
-    try {
-      await createTestProposal(personId)
-      toast.success(SLACK_PEOPLE_MESSAGES.TEST_PROPOSAL_CREATED)
-      openShadowInbox()
-    } catch {
-      toast.error(SLACK_PEOPLE_MESSAGES.TEST_PROPOSAL_ERROR)
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -109,12 +104,6 @@ export function SlackPeopleView() {
       icon: CircleUserRound,
     },
   ]
-  const deliveryStats = [
-    { label: 'Shadow', value: people.filter((person) => person.delivery_mode === 'shadow').length },
-    { label: 'Active', value: people.filter((person) => person.delivery_mode === 'active').length },
-    { label: 'Off', value: people.filter((person) => person.delivery_mode === 'off').length },
-  ]
-
   const reviewActionWithToast = (id: string, status: 'approved' | 'dismissed') => {
     void reviewAction(id, status)
       .then(() =>
@@ -134,8 +123,20 @@ export function SlackPeopleView() {
   }
 
   return (
-    <div className="p-spacing-6 flex min-h-0 flex-1 flex-col overflow-y-auto">
-      <div className="gap-spacing-6 mx-auto flex w-full max-w-6xl flex-col">
+    <div
+      className={
+        selectedPersonId
+          ? 'p-spacing-3 flex min-h-0 flex-1 flex-col overflow-hidden'
+          : 'p-spacing-6 flex min-h-0 flex-1 flex-col overflow-y-auto'
+      }
+    >
+      <div
+        className={
+          selectedPersonId
+            ? 'flex min-h-0 w-full flex-1 flex-col'
+            : 'gap-spacing-6 mx-auto flex w-full max-w-6xl flex-col'
+        }
+      >
         {!selectedPersonId && !showShadowInbox ? (
           <header className="gap-spacing-4 flex flex-wrap items-start justify-between">
             <div>
@@ -175,13 +176,41 @@ export function SlackPeopleView() {
               selectedPerson ? (
                 <SlackPersonScreen
                   person={selectedPerson}
+                  portalUsers={portalUsers}
                   activity={activity}
+                  actions={selectedActions}
                   loading={activityLoading}
                   onBack={openPeople}
+                  onCreateProposal={async (content) => {
+                    try {
+                      await createProposal(selectedPerson.id, content)
+                      toast.success(SLACK_PEOPLE_MESSAGES.PROPOSAL_CREATED)
+                      return true
+                    } catch {
+                      toast.error(SLACK_PEOPLE_MESSAGES.PROPOSAL_ERROR)
+                      return false
+                    }
+                  }}
+                  onReview={reviewActionWithToast}
+                  onSend={sendActionWithToast}
+                  onUpdateDeliveryMode={(mode) => {
+                    void updateDeliveryMode(selectedPerson.id, mode).catch(() =>
+                      toast.error(SLACK_PEOPLE_MESSAGES.MODE_ERROR),
+                    )
+                  }}
+                  onUpdateRelationshipKind={(kind) => classifyPerson(selectedPerson.id, kind)}
                   onConfirmIdentity={() => {
                     void confirmSuggestedIdentity(selectedPerson.id)
                       .then(() => toast.success(SLACK_PEOPLE_MESSAGES.IDENTITY_CONFIRMED))
                       .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.IDENTITY_CONFIRM_ERROR))
+                  }}
+                  onMapIdentity={async (userId) => {
+                    try {
+                      await mapIdentity(selectedPerson.id, userId)
+                      toast.success(SLACK_PEOPLE_MESSAGES.IDENTITY_MAPPED)
+                    } catch {
+                      toast.error(SLACK_PEOPLE_MESSAGES.IDENTITY_MAP_ERROR)
+                    }
                   }}
                 />
               ) : (
@@ -223,62 +252,13 @@ export function SlackPeopleView() {
                   ))}
                 </section>
 
-                <section className="surface-card border-border p-spacing-4 rounded-spacing-4 border">
-                  <div className="gap-spacing-4 flex flex-wrap items-start justify-between">
-                    <div>
-                      <h2 className="body-2 text-foreground font-semibold">
-                        Current delivery modes
-                      </h2>
-                      <p className="body-4 text-muted-foreground mt-spacing-1">
-                        Shadow is the safe default. Active and Off are explicit exceptions that
-                        remain saved per person.
-                      </p>
-                    </div>
-                    <div className="gap-spacing-2 flex flex-wrap">
-                      {deliveryStats.map((stat) => (
-                        <span key={stat.label} className="badge-glass badge-glass-muted body-4">
-                          {stat.value} {stat.label}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-
-                <section className="surface-card border-border p-spacing-4 rounded-spacing-4 border">
-                  <h2 className="body-2 text-foreground font-semibold">How Shadow mode works</h2>
-                  <p className="body-4 text-muted-foreground mt-spacing-1">
-                    {SLACK_PEOPLE_MESSAGES.CURRENT_CAPABILITY}
-                  </p>
-                  <div className="mt-spacing-4 gap-spacing-3 grid sm:grid-cols-3">
-                    {SLACK_PEOPLE_MESSAGES.HOW_IT_WORKS.map((step) => (
-                      <div key={step.title} className="bg-secondary p-spacing-3 rounded-spacing-3">
-                        <p className="body-4 text-foreground font-semibold">{step.title}</p>
-                        <p className="body-4 text-muted-foreground mt-spacing-1">{step.body}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="body-4 text-muted-foreground mt-spacing-3">
-                    {SLACK_PEOPLE_MESSAGES.GHOST_PROFILE_HELP}
-                  </p>
-                </section>
-
                 <SlackShadowSummary
                   actions={actions}
                   peopleById={peopleById}
                   onOpen={openShadowInbox}
                 />
 
-                <SlackPeopleRoster
-                  people={people}
-                  onOpenPerson={openPerson}
-                  onUpdateDeliveryMode={(id, mode) => {
-                    void updateDeliveryMode(id, mode).catch(() =>
-                      toast.error(SLACK_PEOPLE_MESSAGES.MODE_ERROR),
-                    )
-                  }}
-                  onUpdateRelationshipKind={classifyPerson}
-                  onCreateTestProposal={(id) => void createAndRevealTestProposal(id)}
-                />
+                <SlackPeopleRoster people={people} onOpenPerson={openPerson} />
               </>
             )}
           </>
