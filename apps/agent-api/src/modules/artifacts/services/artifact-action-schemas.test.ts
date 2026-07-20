@@ -2127,6 +2127,21 @@ describe('validateActionData', () => {
           tabs: requiredTabs.map((title) => ({
             title,
             html:
+              title === '7 - SMS & Emails'
+                ? '<h1>SMS & Emails</h1><p>Your competition is not waiting — neither should you.</p>'
+                : `<h1>${title}</h1>`,
+            ...(title.match(/^P[1-4] - /) ? { parent_title: '3 - Funnel Pages' } : {}),
+          })),
+        }),
+      ).resolves.toMatchObject({
+        errorCode: 'WEBINAR_LAUNCH_BIBLE_SUPER_VOICE_INVALID',
+        error: expect.stringContaining('7 - SMS & Emails'),
+      })
+      await expect(
+        validateActionPreflight('compile_webinar_launch_bible', {
+          tabs: requiredTabs.map((title) => ({
+            title,
+            html:
               title === 'P4 - Replay Page'
                 ? '<h1>Replay Page</h1><h2>Email 4 of 6 — Replay + Offer</h2><p>Subject line: Here is the replay.</p>'
                 : `<h1>${title}</h1>`,

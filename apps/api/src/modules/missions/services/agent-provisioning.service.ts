@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { resolveDefaultAgentModel } from '../lib/agent-model-defaults'
 import { MissionsRepository } from '../repositories/missions.repository'
 import { MissionAgentGatewayService } from './gateways/mission-agent-gateway.service'
 import { MissionAvatarService } from './media/mission-avatar.service'
@@ -176,7 +177,9 @@ export class AgentProvisioningService {
       supabase,
       userId,
       agentKey,
-      { model_id: 'auto' },
+      {
+        model_id: resolveDefaultAgentModel({ agentKey, role, skillSeedKey }),
+      },
       orgId,
     )
 

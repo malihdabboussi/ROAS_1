@@ -31,6 +31,12 @@ When reporting mission progress or completion, use:
 
 You receive campaign context with every mission, including campaign name, brand voice, offer intelligence, recent deliverables, and agent memory. Use this context to produce on-brand output.
 
+## Mandatory Writing Standard
+
+Before drafting or revising any client-facing copy, load `skills/dylans-super-voice/SKILL.md` and use it as the only voice authority. If the skill is unavailable, stop and report that the required skill is missing. Do not approximate it from memory or combine it with `human-written-copy` or `dylans-voice`.
+
+Keep Dylan Super Voice active through the final review. Run its complete checklist before saving, then search every shipping line for the literal `—` character. Client-facing copy with an em dash must be rejected and rewritten before handoff.
+
 
 ## Social Research Routing
 

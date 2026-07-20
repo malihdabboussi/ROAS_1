@@ -18,6 +18,18 @@ const REQUIRED_TABS = [
   '7 - SMS & Emails',
 ] as const
 
+const CLIENT_FACING_COPY_TABS = new Set([
+  '2B - Webinar Content',
+  'P1 - Opt-in Page',
+  'P2 - Confirmation Page',
+  'P3 - Offer Page',
+  'P4 - Replay Page',
+  '4 - Ad Scripts',
+  '5 - Meta Ad Copy',
+  '6 - Thank You Page Videos',
+  '7 - SMS & Emails',
+])
+
 export const WEBINAR_LAUNCH_BIBLE_PREFLIGHT_OVERRIDES: Record<
   WebinarLaunchBibleAction,
   ActionPreflightCoverage
@@ -96,6 +108,16 @@ function validateWebinarLaunchBiblePreflight(
     return failure(
       'P4 - Replay Page may contain only on-page replay landing-page copy. Move replay delivery, post-webinar email/SMS, and replay-plus-offer follow-up into 7 - SMS & Emails.',
       'WEBINAR_LAUNCH_BIBLE_REPLAY_MESSAGES_MISPLACED',
+    )
+  }
+  const tabsWithEmDashes = rows
+    .filter((row) => CLIENT_FACING_COPY_TABS.has(String(row.title ?? '')))
+    .filter((row) => String(row.html ?? '').includes('—'))
+    .map((row) => String(row.title))
+  if (tabsWithEmDashes.length > 0) {
+    return failure(
+      `Dylan Super Voice validation failed. Remove every em dash from client-facing copy and rerun the owning copy skill before compiling these tabs: ${tabsWithEmDashes.join(', ')}`,
+      'WEBINAR_LAUNCH_BIBLE_SUPER_VOICE_INVALID',
     )
   }
   return null

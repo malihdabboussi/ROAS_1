@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { resolveDefaultAgentModel } from '../lib/agent-model-defaults'
 import {
   extractFirstName,
   findAgentForWebinarRole,
@@ -134,6 +135,19 @@ export class WebinarFulfillmentTeamService {
     }
 
     const skillSeedKey = String(template.skill_seed_key || roleKey)
+    await this.missionsRepository.updateAgentConfigPatch(
+      supabase,
+      userId,
+      match.agent_key,
+      {
+        model_id: resolveDefaultAgentModel({
+          agentKey: match.agent_key,
+          role: templateRole,
+          skillSeedKey,
+        }),
+      },
+      orgId,
+    )
     await this.missionSkillSeederService
       .seedTemplateSkills(supabase, userId, match.agent_key, skillSeedKey, orgId)
       .catch((e) =>
@@ -141,6 +155,7 @@ export class WebinarFulfillmentTeamService {
           `Template skill seed failed for ${match.agent_key}: ${(e as Error).message}`,
         ),
       )
+    await this.missionSkillSeederService.seedDefaultSkills(supabase, userId, match.agent_key, orgId)
 
     const synced = await this.missionAgentGatewayService
       .triggerAgentSkillsSync(userId, match.agent_key, orgId)

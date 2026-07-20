@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { resolveDefaultAgentModel } from '../lib/agent-model-defaults'
 import { SYSTEM_AGENT_FIXED_KEYS } from '../lib/system-agent-keys'
 import { MissionsRepository } from '../repositories/missions.repository'
 import {
@@ -231,6 +232,11 @@ export class AgentOnboardingService {
       profile.skill_seed_key || agentKey,
       profile.role,
     )
+    const modelId = resolveDefaultAgentModel({
+      agentKey,
+      role: profile.role,
+      skillSeedKey: profile.skill_seed_key,
+    })
 
     const created = await this.missionsRepository.createAgentWithDefinitions(
       serviceSupabase,
@@ -253,7 +259,7 @@ export class AgentOnboardingService {
         serviceSupabase,
         userId,
         agentKey,
-        { model_id: 'auto' },
+        { model_id: modelId },
         orgId,
       )
 
