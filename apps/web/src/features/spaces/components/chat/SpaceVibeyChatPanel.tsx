@@ -140,6 +140,8 @@ import {
   readHomeChatSeedForSpace,
   resolveSpaceChatAutoFocusTarget,
   resolveSpaceChatScope,
+  resolveSpaceChatSeedSendOptions,
+  resolveSpaceChatSendAgentKey,
 } from './space-vibey-chat-panel.logic'
 import {
   resolveSpaceChatEmptyStateAgent,
@@ -967,7 +969,6 @@ export function SpaceVibeyChatPanel({
       selectedConversation?.default_model_id,
     ],
   )
-
   const spaceSend = useCallback(
     async (
       content: string,
@@ -977,9 +978,10 @@ export function SpaceVibeyChatPanel({
       references?: MessageReference[],
       modelSettings?: ChatModelSettings,
       extraSystemContext?: string,
-      options?: { forceNewConversation?: boolean },
+      options?: { forceNewConversation?: boolean; agentKey?: string },
     ) => {
       const forceNew = Boolean(options?.forceNewConversation)
+      const sendAgentKey = resolveSpaceChatSendAgentKey(activeAgentKey, options?.agentKey)
       if (!forceNew && selectedConversationId && isStopping) return
       const systemContext = [buildContextForSend(), extraSystemContext]
         .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
@@ -993,7 +995,7 @@ export function SpaceVibeyChatPanel({
       let conversationId = forceNew ? null : selectedConversationId
       if (!conversationId) {
         const conversation = await createNewConversation({
-          agent_id: activeAgentKey,
+          agent_id: sendAgentKey,
           ...(!isChannelScope && effectiveCampaignId ? { campaign_id: effectiveCampaignId } : {}),
           metadata: isChannelScope
             ? {
@@ -1009,7 +1011,7 @@ export function SpaceVibeyChatPanel({
           ...prev.filter((item) => item.id !== conversation.id),
         ])
         setSelectedConversationId(conversation.id)
-        persistActiveConversationId(chatScopeStorageId, conversation.id, activeAgentKey)
+        persistActiveConversationId(chatScopeStorageId, conversation.id, sendAgentKey)
         useChatStore.getState().setActiveConversationId(conversation.id)
         conversationId = conversation.id
       }
@@ -1033,7 +1035,7 @@ export function SpaceVibeyChatPanel({
         ui_selected_artifact: uiSelectedArtifact ?? undefined,
       })
       setSelectedConversationId(nextConversationId)
-      persistActiveConversationId(chatScopeStorageId, nextConversationId, activeAgentKey)
+      persistActiveConversationId(chatScopeStorageId, nextConversationId, sendAgentKey)
 
       const storeConv = useChatStore
         .getState()
@@ -1103,7 +1105,7 @@ export function SpaceVibeyChatPanel({
       references?: MessageReference[],
       modelSettings?: ChatModelSettings,
       extraSystemContext?: string,
-      options?: { forceNewConversation?: boolean },
+      options?: { forceNewConversation?: boolean; agentKey?: string },
     ) => {
       try {
         await spaceSend(
@@ -1833,8 +1835,6 @@ export function SpaceVibeyChatPanel({
       if (seed.conversationId) {
         useSpacesStore.getState().openConversationInSpaceChat(seed.conversationId)
       } else if (seed.railIntent === 'new') {
-        // railIntent 'new' must force a fresh thread — React state from handleNewConversation
-        // is not updated yet when the sync GLOBAL_CHAT_SEED_EVENT fires.
         handleNewConversation()
       }
       setMode('chat')
@@ -1856,7 +1856,7 @@ export function SpaceVibeyChatPanel({
         seed.references as MessageReference[] | undefined,
         seed.modelSettings as ChatModelSettings | undefined,
         undefined,
-        seed.railIntent === 'new' ? { forceNewConversation: true } : undefined,
+        resolveSpaceChatSeedSendOptions(seed, activeAgentKey),
       )
     },
     [

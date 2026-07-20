@@ -839,6 +839,8 @@ describe('ArtifactsService RBAC', () => {
     )
     expect(cannotCreate.success).toBe(false)
     expect(String(cannotCreate.error)).toContain('not available')
+    expect(String(cannotCreate.error)).toContain('delegate_to_agent')
+    expect(String(cannotCreate.error)).toContain('vibey')
   })
 
   it('c_level domain-scoped can use_integration in their domain', async () => {

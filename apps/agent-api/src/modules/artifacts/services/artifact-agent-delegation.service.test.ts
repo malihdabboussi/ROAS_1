@@ -113,6 +113,34 @@ function makeTarget(input: {
 }
 
 describe('ArtifactAgentDelegationService', () => {
+  it('allows campaign-scoped delegation to Vibey without campaign membership', async () => {
+    const { client, records } = makeQueryClient((record) => {
+      if (record.table === 'agents_registry' && record.filters.agent_key === 'vibey') {
+        return {
+          data: { agent_key: 'vibey', name: 'Vibey', role: 'CEO', image_url: null },
+          error: null,
+        }
+      }
+      if (record.table === 'agents_registry' && record.filters.agent_key === 'caller-agent') {
+        return { data: { image_url: null, role: 'Meta Ads Manager', name: 'Blaze' }, error: null }
+      }
+      return { data: null, error: null }
+    })
+    const serviceClient = makeQueryClient(() => ({ data: null, error: null }))
+    const service = new ArtifactAgentDelegationService()
+    const handlers = service.getHandlers(
+      makeTarget({ userClient: client, serviceClient: serviceClient.client }),
+    )
+
+    const result = await handlers.delegate_to_agent(
+      { target_agent_key: 'vibey', task_description: 'Create the Ads Research mission' },
+      'agent:ads_manager::campaign:campaign-1',
+    )
+
+    expect(result).toMatchObject({ success: false, error: 'Agent gateway not configured' })
+    expect(records.some((record) => record.table === 'campaign_agents')).toBe(false)
+  })
+
   it('asks the caller to assign an existing agent when campaign membership is missing', async () => {
     const { client, records } = makeQueryClient((record) => {
       if (record.table === 'agents_registry' && record.filters.agent_key === 'writer') {

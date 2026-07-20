@@ -12,6 +12,8 @@ import {
   readHomeChatSeedForSpace,
   resolveSpaceChatAutoFocusTarget,
   resolveSpaceChatScope,
+  resolveSpaceChatSeedSendOptions,
+  resolveSpaceChatSendAgentKey,
 } from './space-vibey-chat-panel.logic'
 
 function conversation(overrides: Partial<Conversation>): Conversation {
@@ -188,6 +190,21 @@ describe('space ROAS chat panel logic', () => {
 
     expect(merged.map((item) => item.id)).toEqual(['same', 'older'])
     expect(merged[0]?.title).toBe('Updated')
+  })
+
+  it('uses the requested seed agent for the first message in a fresh chat', () => {
+    expect(resolveSpaceChatSendAgentKey('vibey', 'ads_manager')).toBe('ads_manager')
+    expect(resolveSpaceChatSendAgentKey('vibey', '  blaze  ')).toBe('blaze')
+    expect(resolveSpaceChatSendAgentKey('vibey', undefined)).toBe('vibey')
+    expect(
+      resolveSpaceChatSeedSendOptions({ agentKey: 'ads_manager', railIntent: 'new' }, 'vibey'),
+    ).toEqual({ forceNewConversation: true, agentKey: 'ads_manager' })
+    expect(
+      resolveSpaceChatSeedSendOptions(
+        { agentKey: 'ads_manager', conversationId: 'conversation-1' },
+        'vibey',
+      ),
+    ).toEqual({ forceNewConversation: false, agentKey: 'ads_manager' })
   })
 
   it('builds encoded space and channel conversation URLs', () => {

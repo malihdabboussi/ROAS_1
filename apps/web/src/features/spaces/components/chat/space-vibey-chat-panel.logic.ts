@@ -132,6 +132,26 @@ export function getConversationAgentKey(
   return agentKey && agentKey.length > 0 ? agentKey : DEFAULT_SPACE_CHAT_AGENT_KEY
 }
 
+export function resolveSpaceChatSendAgentKey(
+  activeAgentKey: string,
+  requestedAgentKey?: string,
+): string {
+  const requested = requestedAgentKey?.trim()
+  return requested && requested.length > 0 ? requested : activeAgentKey
+}
+
+export function resolveSpaceChatSeedSendOptions(
+  seed: { agentKey?: string; conversationId?: string; railIntent?: string },
+  activeAgentKey: string,
+): { forceNewConversation: boolean; agentKey?: string } {
+  return {
+    forceNewConversation:
+      seed.railIntent === 'new' ||
+      Boolean(seed.agentKey && seed.agentKey !== activeAgentKey && !seed.conversationId),
+    agentKey: seed.agentKey,
+  }
+}
+
 export function getConversationSpaceId(
   conversation: ConversationScopeLike | null | undefined,
 ): string | null {

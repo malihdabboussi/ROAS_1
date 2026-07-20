@@ -65,7 +65,14 @@ describe('AdsResearchRunsView', () => {
       }),
     )
     expect(mocks.seedComposer.mock.calls[0]?.[0].content).toContain('Standard or deep?')
-    expect(mocks.seedComposer.mock.calls[0]?.[0].content).toContain('playbook_id `ads-research`')
+    expect(mocks.seedComposer.mock.calls[0]?.[0].content).toContain('delegate_to_agent')
+    expect(mocks.seedComposer.mock.calls[0]?.[0].content).toContain('target_agent_key: `vibey`')
+    expect(mocks.seedComposer.mock.calls[0]?.[0].content).toContain(
+      'input.playbook_id: `ads-research`',
+    )
+    expect(mocks.seedComposer.mock.calls[0]?.[0].content).toContain(
+      'Do not send me to Mission Control',
+    )
   })
 
   it('opens Blaze with a grounded replacement-run preflight', async () => {
@@ -93,6 +100,9 @@ describe('AdsResearchRunsView', () => {
     expect(prompt).toContain('Customer Brain')
     expect(prompt).toContain('mounted Meta')
     expect(prompt).toContain('fresh replacement mission')
+    expect(prompt).toContain('delegate_to_agent')
+    expect(prompt).toContain('target_agent_key: `vibey`')
+    expect(prompt).toContain('input.playbook_id: `ads-research`')
     expect(prompt).toContain('Do not reuse')
   })
 })

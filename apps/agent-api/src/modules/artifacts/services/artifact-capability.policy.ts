@@ -1237,6 +1237,14 @@ export function isArtifactActionAllowed(
     }
   }
 
+  if (action === 'create_mission') {
+    return {
+      allowed: false,
+      reason:
+        'Action "create_mission" is not available directly because mission creation is owned by Vibey. Use delegate_to_agent with target_agent_key "vibey" and include the complete create_mission payload in task_description. Continue the current conversation after delegation instead of sending the user to Mission Control.',
+    }
+  }
+
   if (MISSION_MANAGER_ACTIONS.has(action)) {
     return {
       allowed: false,

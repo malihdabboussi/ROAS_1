@@ -99,6 +99,8 @@ Default behavior:
 - Campaign context (`campaign_id`) remains agent/reporting context and is not automatically the sharing boundary.
 - Mission and subtask runtime session keys carry `campaign_id`, `space_id`, and `org_id` scope suffixes so tool-authored artifacts persist back to the same campaign and Space. Mission artifact creation refuses the legacy personal `General` campaign fallback when a mission session has no campaign scope.
 
+Ads Research intake remains visibly owned by Blaze. The seeded Space chat opens a fresh `ads_manager` conversation, Blaze collects the research purpose, depth, and focus, then delegates the restricted `create_mission` action to Vibey with the exact Space, campaign, `input.playbook_id = ads-research`, and structured `playbook_kickoff`. Vibey is globally reachable for this system delegation and does not need a redundant campaign-team assignment. Blaze resumes the same conversation after delegation and links the created mission. Managed agents that attempt `create_mission` directly receive this delegation correction instead of instructions to leave the Space or create the mission manually.
+
 API read paths use `MissionPermissionsService` to filter mission lists and redact sensitive fields for view-only access. Sensitive mission detail endpoints such as logs, plans, subtasks, and deliverables require edit-level access.
 
 ## Mission Runner V2 contracts
@@ -255,6 +257,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-20: Kept Ads Research intake under Blaze while routing the restricted mission-creation action through an internal Vibey delegation, preserving exact Space/campaign/playbook input and preventing Mission Control dead ends.
 - 2026-07-20: Replaced ambiguous video overlay "moments" with exact untimed overlay lines, added no-timecode checks to the video-script skill and copy-package gate, synced platform-managed hired-agent copies, and made Task 16 reject editing timestamps and time ranges in Ad Scripts.
 - 2026-07-20: Pinned copywriter agents to Claude Opus 4.8, moved Dylan Super Voice into the copywriter's always-loaded TOOLS contract, repaired existing Webinar copywriters during team reconciliation, and made Launch Bible compilation reject client-facing em dashes.
 - 2026-07-19: Changed Task 16 from blank multi-tab reconstruction to native Launch Bible template copy-and-fill so final handoffs retain the master document's styling and topology.

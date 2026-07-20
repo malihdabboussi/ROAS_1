@@ -51,7 +51,7 @@ export class ArtifactAgentDelegationContextService {
       }
     }
 
-    if (!campaignId) {
+    if (!campaignId || registryAgent.agent_key === 'vibey') {
       return {
         status: 'available',
         agentKey: registryAgent.agent_key,

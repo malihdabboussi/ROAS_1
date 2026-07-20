@@ -24,7 +24,9 @@ Ask me these three questions together before creating anything:
 2. Standard or deep?
 3. Anything in particular you're looking for?
 
-After I answer, create a mission with playbook_id \`ads-research\` using the current Space and campaign context. Confirm "New mission created" in chat and show or link the mission. Use the mounted Meta connection as the source of truth for current performance. Do not infer that Meta is disconnected from missing documents or prior research.`
+After I answer, stay as Blaze and use \`delegate_to_agent\` with target_agent_key: \`vibey\`. In the task_description, tell Vibey to call \`create_mission\` with the exact current space_id and campaign_id, title \`Ads Research\`, assigned_agent_key \`ads_manager\`, and input.playbook_id: \`ads-research\`. Put my answers into input.playbook_kickoff using prompt, depth, reporting_period, selected_campaigns, competitors, and links. Do not call \`create_mission\` yourself because mission creation is owned by Vibey.
+
+Only after the delegated action succeeds, confirm "New mission created" in chat and show or link the mission. Do not send me to Mission Control or ask me to create the mission manually. Use the mounted Meta connection as the source of truth for current performance. Do not infer that Meta is disconnected from missing documents or prior research.`
 
 function buildResearchRerunPrompt(run: Mission): string {
   return `Rerun Ads Research mission ${run.id} as a fresh replacement mission with Blaze.
@@ -35,7 +37,9 @@ Before creating the replacement, verify the client identity in the current Space
 3. Verify the mounted Meta ad account, Facebook Page, and available campaigns. Treat account and advertiser names as routing evidence, not proof of the business model.
 4. Show me a concise identity summary with the client or brand, business model, offer, audience, sources, and any conflicts. Ask me to confirm or correct it.
 
-After I confirm, create a fresh replacement mission with playbook_id \`ads-research\`, carry forward the prior kickoff where it is still valid, and include my corrections. Do not reuse the prior mission's analysis or deliverables as factual input. Confirm "New mission created" in chat and show or link the replacement mission.`
+After I confirm, stay as Blaze and use \`delegate_to_agent\` with target_agent_key: \`vibey\`. In the task_description, tell Vibey to call \`create_mission\` with the exact current space_id and campaign_id, title \`Ads Research\`, assigned_agent_key \`ads_manager\`, and input.playbook_id: \`ads-research\`. Put the corrected answers into input.playbook_kickoff and include replacement_of_mission_id: \`${run.id}\` in input. Carry forward the prior kickoff only where it is still valid. Do not call \`create_mission\` yourself because mission creation is owned by Vibey.
+
+Do not reuse the prior mission's analysis or deliverables as factual input. Only after the delegated action succeeds, confirm "New mission created" in chat and show or link the replacement mission. Do not send me to Mission Control or ask me to create the mission manually.`
 }
 
 export function AdsResearchRunsView({
