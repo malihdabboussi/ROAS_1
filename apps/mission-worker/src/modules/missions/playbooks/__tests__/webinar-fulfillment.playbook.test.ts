@@ -247,4 +247,20 @@ describe('webinar-fulfillment playbook', () => {
       expect(subtask.intent.ecology).toContain('dylans-voice')
     }
   })
+
+  it('requires qualifying image briefs and generated assets', () => {
+    const plan = expandWebinarFulfillmentPlaybook(base)
+    const briefs = plan.subtasks.find((subtask) => subtask.id === 'st-image-brief')
+    const images = plan.subtasks.find((subtask) => subtask.id === 'st-generate-images')
+
+    expect(briefs?.intent.ecology).toMatch(/Audience Lock/)
+    expect(briefs?.intent.ecology).toMatch(/Offer Lock/)
+    expect(briefs?.intent.ecology).toMatch(/two audience cues/i)
+    expect(briefs?.intent.ecology).toMatch(/Two-Second Test/)
+    expect(briefs?.intent.ecology).toMatch(/Theme lacks them, block/i)
+    expect(images?.intent.ecology).toMatch(/approved asset reference/i)
+    expect(images?.intent.ecology).toMatch(/do not redraw logos/i)
+    expect(images?.intent.ecology).toMatch(/generic business metaphor/i)
+    expect(images?.intent.ecology).toMatch(/Two-Second Test/)
+  })
 })

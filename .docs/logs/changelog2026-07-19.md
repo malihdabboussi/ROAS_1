@@ -1,5 +1,12 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 18:21] - [FIX]
+
+What: Made image briefs and generated ad assets qualification-safe across campaigns with Audience/Offer Locks, approved-asset readiness, two independent audience cues, factual live-platform treatment, and a two-second who/offer/why-now check.
+Why: The prior schema could faithfully produce polished generic metaphors that preserved brand colors and copy while failing to show who the ad was for or that a webinar was live on a known platform.
+Impact: Future Webinar Fulfillment image briefs block on missing promised identity assets, reject category-ambiguous concepts, use official logos only from approved references, and require the generated asset to qualify a cold viewer without relying on surrounding body copy.
+Files: `webinar-fulfillment.creative.ts`, `webinar-fulfillment.playbook.test.ts`, `roas-image-brief/SKILL.md`, `references/design-prompt-spec.md`, `20260719182102_qualify_image_briefs_before_generation.sql`, `documentation/features/missions.md`
+
 ## [2026-07-19 15:58] - [FIX]
 
 What: Fixed Page Grader Map clients modal scroll/search by adding the missing `modal-nested-scroll-body` utility and constraining the card with `max-h-[90vh]` so the header (search) stays visible and the list scrolls inside.

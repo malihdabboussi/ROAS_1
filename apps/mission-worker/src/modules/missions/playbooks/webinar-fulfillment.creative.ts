@@ -65,7 +65,7 @@ export function addWebinarCreativeProduction(input: {
         sensory:
           'Every brief specifies scene, style, lighting, palette, exact text, treatment, ratio, and avoid-list.',
         endState: `"${WEBINAR_FLOW_DOCS.imageBriefs}" exists as a native Doc linked to this task.`,
-        ecology: `Call list_themes and get_theme for the active campaign Theme. Use its logo, palette, fonts, image_style_prompt, product_images, and headshot_images as the visual source of truth; block with exact missing fields when the Theme is absent. Load roas-image-brief. Save exactly "${WEBINAR_FLOW_DOCS.imageBriefs}". Brief only the photographic or illustrative concepts that belong in the image-generation lane. Keep Validate Messaging text statics in roas-ad-design. Never create a PDF.`,
+        ecology: `Call list_themes/get_theme and read THE PLAN plus the Copy Package. If strategy names approved logos, headshots, product, event, or platform assets but the Theme lacks them, block with the missing fields instead of substituting generic imagery. Load roas-image-brief. Every concept needs an Audience Lock (target and exclusions), Offer Lock (offer, funnel stage, delivery format/platform, factual timing), Asset Readiness, two audience cues (one explicit category cue plus one insider visual cue), and a Two-Second Test proving who it is for, what it offers, and why now. For live offers, show LIVE ON [known platform] with a factual live treatment; use official logos only from approved assets. Save exactly "${WEBINAR_FLOW_DOCS.imageBriefs}". Keep text statics in roas-ad-design; no PDF.`,
       }),
       outputContract: docContract(WEBINAR_FLOW_DOCS.imageBriefs),
     },
@@ -89,7 +89,7 @@ export function addWebinarCreativeProduction(input: {
         sensory:
           'Each generated image appears as a timestamped Deliverable linked to this subtask and its source brief.',
         endState: 'Generated concept images exist as native image Deliverables for human review.',
-        ecology: `Call list_themes and get_theme for the active campaign Theme before generation. Load roas-image-brief and read "${WEBINAR_FLOW_DOCS.imageBriefs}". Call generate_image for each photographic or illustrative concept using the Theme palette, image style, logo rule, and approved reference assets. Preserve the exact on-image text and brand constraints from the brief. Register every successful image immediately; do not wait for the whole batch before returning artifact references. Do not generate the Validate Messaging text statics.`,
+        ecology: `Call list_themes/get_theme, load roas-image-brief, and read "${WEBINAR_FLOW_DOCS.imageBriefs}". Generate only concepts whose Audience Lock, Offer Lock, Asset Readiness, two audience cues, and Two-Second Test pass. Pass every approved asset reference and requested aspect ratio to generate_image; do not redraw logos or invent people. Reject a generic business metaphor when the category is not unmistakable without body copy. Preserve locked text, platform/live treatment, and brand constraints. Register each successful image immediately. Do not generate Validate Messaging text statics.`,
       }),
       outputContract: imageContract(),
     },
