@@ -65,10 +65,16 @@ export function briefMeetingSummary(callItem: Record<string, unknown> | null): s
     ['Key Takeaways', 'Takeaways'],
     ['Topics', 'Next Steps', 'Action Items', 'Solutions'],
   )
+  const nextSteps = extractSummarySection(
+    cleaned,
+    ['Next Steps', 'Action Items'],
+    ['Topics', 'Solutions'],
+  )
 
   const parts: string[] = []
   if (purpose) parts.push(`*Purpose*\n${purpose}`)
   if (takeaways) parts.push(`*Key takeaways*\n${takeaways}`)
+  if (nextSteps) parts.push(`*From the call*\n${nextSteps}`)
   const brief = parts.length > 0 ? parts.join('\n\n') : cleaned
   return markdownLinksToSlack(brief)
 }
