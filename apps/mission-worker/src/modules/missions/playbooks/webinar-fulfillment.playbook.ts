@@ -446,7 +446,7 @@ export function expandWebinarFulfillmentPlaybook(
         endState:
           'One linked Google Doc deliverable contains the complete webinar handoff and opens ready for team use.',
         ecology:
-          'Read every approved mission deliverable and preserve approved copy verbatim. compile_webinar_launch_bible copies the styled ROAS master; never create a blank replacement. Call it once with these ordered sections: 0 - Overview; 1 - ICP Sheet; 2A - Webinar Offer; 2B - Webinar Content; 3 - Funnel Pages; P1 - Opt-in Page; P2 - Confirmation Page; P3 - Offer Page; P4 - Replay Page; 4 - Ad Scripts; 5 - Meta Ad Copy; 6 - Thank You Page Videos; 7 - SMS & Emails. Set parent_title="3 - Funnel Pages" on P1-P4. Overview includes client details, dates, notes, and all funnel, presentation, ad, image, creative, and source links. Put image URLs and prompts in their sections. Label genuinely missing assets; never invent copy or links.',
+          'Read every approved deliverable and preserve approved copy verbatim. compile_webinar_launch_bible copies the ROAS master tab tree, then replaces each tab body with campaign-ready HTML; never append beneath prompts or samples. Use clear headings, native lists, and useful tables. Include no AI instructions, example-project copy, empty placeholders, or duplicate compilation blocks. Call once in contract order: 0 - Overview, 1 - ICP Sheet, through 7 - SMS & Emails. Set parent_title="3 - Funnel Pages" on P1-P4. Overview includes client details, dates, notes, and funnel, presentation, ad, image, creative, and source links. Put image URLs and prompts in their sections. Label genuinely missing assets; never invent copy or links.',
       }),
       outputContract: launchBibleContract(),
     },

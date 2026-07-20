@@ -35,6 +35,12 @@ describe('markdownToGoogleDocsTabRequests', () => {
       expect.arrayContaining([
         expect.objectContaining({
           updateParagraphStyle: expect.objectContaining({
+            range: { startIndex: 1, endIndex: 24, tabId: 't.abc' },
+            paragraphStyle: { namedStyleType: 'NORMAL_TEXT' },
+          }),
+        }),
+        expect.objectContaining({
+          updateParagraphStyle: expect.objectContaining({
             paragraphStyle: { namedStyleType: 'HEADING_1' },
           }),
         }),
@@ -86,7 +92,7 @@ describe('markdownToGoogleDocsTabRequests', () => {
     expect(JSON.stringify(requests)).not.toContain('GO! Coaching\texample.com')
   })
 
-  it('offsets insertion and formatting ranges when appending to a copied template tab', () => {
+  it('offsets insertion and formatting ranges for a non-default insertion point', () => {
     const requests = markdownToGoogleDocsTabRequests('# Campaign Content', 't.abc', 40)
     expect(requests[0]).toEqual({
       insertText: {
@@ -95,6 +101,14 @@ describe('markdownToGoogleDocsTabRequests', () => {
       },
     })
     expect(requests[1]).toEqual(
+      expect.objectContaining({
+        updateParagraphStyle: expect.objectContaining({
+          range: { startIndex: 40, endIndex: 57, tabId: 't.abc' },
+          paragraphStyle: { namedStyleType: 'NORMAL_TEXT' },
+        }),
+      }),
+    )
+    expect(requests[2]).toEqual(
       expect.objectContaining({
         updateParagraphStyle: expect.objectContaining({
           range: { startIndex: 40, endIndex: 57, tabId: 't.abc' },

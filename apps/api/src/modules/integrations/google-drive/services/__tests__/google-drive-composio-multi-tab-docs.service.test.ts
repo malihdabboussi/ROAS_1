@@ -3,7 +3,7 @@ import { GoogleDriveComposioMultiTabDocsService } from '../google-drive-composio
 import { GoogleDriveComposioPayloadService } from '../google-drive-composio-payload.service'
 
 describe('GoogleDriveComposioMultiTabDocsService', () => {
-  it('copies a native template and appends campaign content to matching copied tabs', async () => {
+  it('copies a native template and replaces each matching tab body with campaign content', async () => {
     const executeTool = vi
       .fn()
       .mockResolvedValueOnce({ successful: true, data: { document_id: 'copy-1' } })
@@ -63,9 +63,14 @@ describe('GoogleDriveComposioMultiTabDocsService', () => {
       expect.objectContaining({
         document_id: 'copy-1',
         editDocs: expect.arrayContaining([
+          {
+            deleteContentRange: {
+              range: { startIndex: 1, endIndex: 49, tabId: 't.overview' },
+            },
+          },
           expect.objectContaining({
             insertText: expect.objectContaining({
-              location: { index: 49, tabId: 't.overview' },
+              location: { index: 1, tabId: 't.overview' },
             }),
           }),
         ]),
@@ -77,9 +82,14 @@ describe('GoogleDriveComposioMultiTabDocsService', () => {
       'user-1',
       expect.objectContaining({
         editDocs: expect.arrayContaining([
+          {
+            deleteContentRange: {
+              range: { startIndex: 1, endIndex: 99, tabId: 't.optin' },
+            },
+          },
           expect.objectContaining({
             insertText: expect.objectContaining({
-              location: { index: 99, tabId: 't.optin' },
+              location: { index: 1, tabId: 't.optin' },
             }),
           }),
         ]),

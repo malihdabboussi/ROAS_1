@@ -390,3 +390,10 @@ What: Replaced the inline Slack person panel with URL-backed People screens, add
 Why: Opening a person inserted their conversation above the roster and appeared to jump to the top, while admins had no clear navigation surface for reviewing conversations across people or confirming whether everyone was still in Shadow mode.
 Impact: Person and Shadow activity now replace the main People content with predictable Back navigation; the overview clearly shows delivery-mode exceptions before an admin reviews or sends anything.
 Files: `SlackPeopleView.tsx`, `SlackPeopleView.test.tsx`, `SlackPersonDetail.tsx`, `SlackPersonScreen.tsx`, `SlackShadowConversationView.tsx`, `SlackShadowSummary.tsx`, `messages.config.ts`, `documentation/features/integration-connections.md`
+
+## [2026-07-19 21:42] - [FIX]
+
+What: Replaced Task 16's append-only template insertion with full per-tab body replacement and normalized every inserted paragraph to normal body text before applying explicit heading and list styles.
+Why: Appended campaign copy landed inside the template's final prompt/table/footer container, inherited that container's formatting, and left sample prompts plus empty placeholder sections above the real content.
+Impact: Future Webinar Launch Bibles retain the native 13-tab hierarchy while each tab contains only clean campaign-ready content; template samples and AI instructions no longer survive the compilation.
+Files: `google-drive-composio-multi-tab-docs.service.ts`, `markdown-to-google-docs-tab-requests.ts`, Task 16 action/playbook guidance, focused tests, and `documentation/features/missions.md`.

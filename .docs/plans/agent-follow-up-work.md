@@ -7449,3 +7449,11 @@ Files:
 - Evidence: The service remains below the 600-line backend maximum but above the 480-line extraction threshold after routing Validate Messaging rendering into its own 159-line renderer service.
 - Needed work: Extract operation dispatch and native-media registration orchestration before adding another server-rendered media family.
 - Why not now: The requested change already isolates the new renderer; decomposing the established video/audio operation dispatcher would broaden this production fix.
+
+## 2026-07-19 — Split oversized agent action registry data files
+
+- Feature/app: agent-api / action catalog
+- Files: `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`
+- Evidence: The Task 16 guidance update touched files currently at 2,689 and 4,263 lines, above the general backend service-file limit even though both are declarative action registries rather than services.
+- Needed work: Split the registries into domain-scoped modules while preserving the canonical action lookup and drift-test surface.
+- Why not now: The requested fix changes only the existing Task 16 contract text; restructuring the shared action catalog would broaden the change across every agent action.

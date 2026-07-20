@@ -67,11 +67,22 @@ export class GoogleDriveComposioMultiTabDocsService {
           throw new BadRequestException(`Webinar Launch Bible parent tab mismatch: ${tab.title}`)
         }
       }
-      const requests = markdownToGoogleDocsTabRequests(
-        tab.markdown,
-        target.tabId,
-        Math.max(1, target.endIndex - 1),
-      )
+      const requests = [
+        ...(target.endIndex > 2
+          ? [
+              {
+                deleteContentRange: {
+                  range: {
+                    startIndex: 1,
+                    endIndex: target.endIndex - 1,
+                    tabId: target.tabId,
+                  },
+                },
+              },
+            ]
+          : []),
+        ...markdownToGoogleDocsTabRequests(tab.markdown, target.tabId),
+      ]
       await this.updateDocumentBatched(userId, connectedAccountId, fileId, requests)
     }
 

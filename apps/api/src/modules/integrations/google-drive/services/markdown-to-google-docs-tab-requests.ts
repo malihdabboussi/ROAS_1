@@ -232,6 +232,13 @@ function flowBlocksToRequests(
         location: { index: startIndex, tabId },
       },
     },
+    {
+      updateParagraphStyle: {
+        range: { startIndex, endIndex: startIndex + fullText.length, tabId },
+        paragraphStyle: { namedStyleType: 'NORMAL_TEXT' },
+        fields: 'namedStyleType',
+      },
+    },
   ]
 
   for (const style of paragraphStyles) {
