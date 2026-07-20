@@ -54,7 +54,7 @@ The package cannot be saved until all of these are true:
 - Client-facing copy contains zero em dashes. Search for the literal `—` character across titles, subject lines, bodies, SMS, ads, scripts, overlays, and instructions.
 - The Dylan's Super Voice checklist passes across every shipping line, including no triplets, fake-candor openers, question-then-list patterns, staccato fragment drums, or AI word smells.
 - Each Meta variation contains one continuous, unquoted **Ad text** block. Do not expose Hook, Body, or CTA labels. Follow it only with On-image text, Headline, Description when used, Button, and Destination.
-- Each video uses only **Script**, **Shooting instructions**, and **Overlays**, followed by one shared **Post-production** section for all scripts. The spoken script is continuous and unquoted. Do not expose Hook, Body, CTA, Delivery, or Shot + setting labels.
+- Each video uses only **Script**, **Shooting instructions**, and **Overlays**, followed by one shared **Post-production** section for all scripts. The spoken script is continuous and unquoted. Do not expose Hook, Body, CTA, Delivery, or Shot + setting labels. Reject timestamps, editing timecodes, and time ranges such as `0:00-0:05` or `0-3s`; rerun `roas-video-ad-scripts` to return exact overlay lines in spoken order.
 - Landing-page copy is absent. WEB#5B owns it.
 
 ## HARD RULES

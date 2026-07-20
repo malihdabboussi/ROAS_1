@@ -7457,3 +7457,11 @@ Files:
 - Evidence: The Task 16 guidance update touched files currently at 2,689 and 4,263 lines, above the general backend service-file limit even though both are declarative action registries rather than services.
 - Needed work: Split the registries into domain-scoped modules while preserving the canonical action lookup and drift-test surface.
 - Why not now: The requested fix changes only the existing Task 16 contract text; restructuring the shared action catalog would broaden the change across every agent action.
+
+## 2026-07-20 — Webinar fulfillment playbook near backend service limit
+
+- Feature/app: mission-worker / Webinar Fulfillment
+- File: `apps/mission-worker/src/modules/missions/playbooks/webinar-fulfillment.playbook.ts`
+- Evidence: The playbook is 527 LOC, above the 480-line extraction threshold for the 600-line backend service limit.
+- Needed work: Split copy, creative, funnel, and final-handoff task builders into focused playbook modules while preserving deterministic task order and contract tests.
+- Why not now: The requested correction changes one bounded copy-package instruction; restructuring the complete production lifecycle would materially broaden deployment risk.

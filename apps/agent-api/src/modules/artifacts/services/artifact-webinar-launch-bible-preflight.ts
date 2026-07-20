@@ -45,7 +45,7 @@ export const WEBINAR_LAUNCH_BIBLE_PREFLIGHTS = {
   compile_webinar_launch_bible: validateWebinarLaunchBiblePreflight,
 }
 
-function validateWebinarLaunchBiblePreflight(
+export function validateWebinarLaunchBiblePreflight(
   data: Record<string, unknown>,
 ): ActionPreflightFailure | null {
   const rows = Array.isArray(data.tabs)
@@ -120,7 +120,33 @@ function validateWebinarLaunchBiblePreflight(
       'WEBINAR_LAUNCH_BIBLE_SUPER_VOICE_INVALID',
     )
   }
+  const adScripts = rows.find((row) => row.title === '4 - Ad Scripts')
+  const adScriptsText = htmlToText(String(adScripts?.html ?? ''))
+  if (containsEditingTimecode(adScriptsText)) {
+    return failure(
+      'Video script validation failed. Remove timestamps, editing timecodes, and time ranges from scripts, overlays, shooting instructions, and Post-production, then rerun roas-video-ad-scripts before compiling 4 - Ad Scripts.',
+      'WEBINAR_LAUNCH_BIBLE_VIDEO_TIMECODES_INVALID',
+    )
+  }
   return null
+}
+
+function containsEditingTimecode(value: string): boolean {
+  const clockRange = /\b\d{1,2}:\d{2}(?::\d{2})?\s*(?:-|–|—|to)\s*\d{1,2}:\d{2}(?::\d{2})?\b/i
+  const durationRange = /\b\d+\s*(?:-|–|—|to)\s*\d+\s*(?:s|sec|secs|second|seconds)\b/i
+  const bracketedTimecode = /\[\s*\d{1,2}:\d{2}(?::\d{2})?\s*\]/
+  const lineLeadingTimecode = /^\s*\d{1,2}:\d{2}(?::\d{2})?\s*:/m
+  return [clockRange, durationRange, bracketedTimecode, lineLeadingTimecode].some((pattern) =>
+    pattern.test(value),
+  )
+}
+
+function htmlToText(value: string): string {
+  return value
+    .replace(/<\s*br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/\s*(?:p|div|li|h[1-6])\s*>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ')
 }
 
 function failure(error: string, errorCode: string): ActionPreflightFailure {
