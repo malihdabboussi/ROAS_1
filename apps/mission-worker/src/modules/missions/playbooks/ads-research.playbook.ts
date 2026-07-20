@@ -51,10 +51,12 @@ export function expandAdsResearchPlaybook(
       dependsOn: [],
       why: 'Give Blaze one grounded picture of the client before interpreting ads.',
       story:
-        'Atlas gathers the offer, audience, positioning, proof, Theme, and relevant Brain context.',
-      sensory: 'The handoff distinguishes verified facts, supplied inputs, and genuine gaps.',
-      endState: 'Blaze has enough trusted context to evaluate current and competitive ads.',
-      ecology: `Read the campaign, Space, Customer Brain, Company Brain, active Theme, linked files, and kickoff. Preserve source links and do not invent missing client facts. Do not create a PDF. Kickoff: ${scope}`,
+        'Atlas verifies who the client is, what they sell, who they serve, and which sources prove it.',
+      sensory:
+        'The handoff opens with a client identity check and separates verified client facts from agency guidance, account labels, competitors, and genuine gaps.',
+      endState: 'ADS-R#0 - Verified Campaign Research Context exists as a native editable Doc.',
+      ecology: `Start from the exact runtime CAMPAIGN_ID and SPACE_ID. Call get_campaign with CAMPAIGN_ID and get_space with SPACE_ID before broad retrieval. Use the resolved campaign, Space, linked files, active Theme, and kickoff for campaign-specific facts. Search Customer Brain with search_customer_brain for client, offer, audience, and customer evidence. Search Company Brain only for organization-wide strategy and standards; do not treat Company Brain guidance as proof of this client's identity. Meta account, Page, campaign, and advertiser names are routing or evidence labels, not proof of the client's business model. Competitor and ad-library findings are never client truth. Create a first section titled Client identity check with the verified client or brand name, business model, offer, target audience, exact source for each fact, confidence, and conflicts. Keep a source ledger that distinguishes client facts, supplied kickoff details, account metadata, agency guidance, and competitor observations. If the client identity, business model, offer, or audience is missing or sources conflict, do not choose a plausible answer; block the subtask and request correction. Save ADS-R#0 - Verified Campaign Research Context as a native Doc. Do not create a PDF. Kickoff: ${scope}`,
+      outputContract: docContract('ADS-R#0 - Verified Campaign Research Context'),
     }),
     task({
       id: 'st-current-ads-analysis',
@@ -67,7 +69,7 @@ export function expandAdsResearchPlaybook(
       sensory:
         'The analysis shows winners, losers, fatigue, traffic quality, funnel signals, and missing data.',
       endState: 'ADS-R#1 - Current Ads Analysis exists as a native editable Doc.',
-      ecology: `Use get_meta_ads_insights for the mounted Meta account and the requested reporting period. Scope to selected campaign names or IDs when supplied; otherwise review active campaigns. Interpret each campaign by its real objective and result action. Include spend, impressions, clicks, CTR, CPC, CPM, results, cost per result, revenue or ROAS only when applicable, and traffic or funnel concerns. If live data is unavailable, record the exact gap and continue without inventing performance. Save ADS-R#1 - Current Ads Analysis as a native Doc. Never create a PDF. Kickoff: ${scope}`,
+      ecology: `Read ADS-R#0 - Verified Campaign Research Context before interpreting performance. If its Client identity check is missing, unresolved, or conflicting, block this subtask instead of guessing. Treat live Meta tools as the authority for connection and performance. Do not infer that Meta is disconnected from a missing document, empty kickoff field, or incomplete Atlas context. First call check_meta_connection in the current mission context. If account selection needs verification, call list_meta_ad_accounts and compare the mounted account and Page with ADS-R#0. Account and Page names are routing evidence, not a substitute for the verified business model and audience. Then call get_meta_ads_insights with the exact platform CAMPAIGN_ID supplied by the mission runtime and the requested reporting period. Scope to selected Meta campaign names or IDs when supplied; otherwise review active campaigns. Interpret each campaign by its real objective and result action. Include spend, impressions, clicks, CTR, CPC, CPM, results, cost per result, revenue or ROAS only when applicable, and traffic or funnel concerns. A successful connection or insights response is proof that Meta is connected. Only report live data as unavailable after a Meta tool returns a failure, and record its exact structured error, action, and correction without inventing unknowns. Save ADS-R#1 - Current Ads Analysis as a native Doc. Never create a PDF. Kickoff: ${scope}`,
       outputContract: docContract('ADS-R#1 - Current Ads Analysis'),
     }),
     task({
@@ -80,7 +82,7 @@ export function expandAdsResearchPlaybook(
         'Blaze runs the reusable market-research skill and saves each search into Ads Research.',
       sensory: 'The Ads Research Library shows the searches and source ads used by the mission.',
       endState: 'ADS-R#2 - Market and Competitive Research exists with visual saved searches.',
-      ecology: `Load roas-market-research. Prefer search_ads_research_advertisers plus run_ads_research_search so every query and returned snapshot appears in this Space's Ads Research Library. Use Meta first; add TikTok or Google only when relevant. Use save_top_n for the strongest references, pull video transcripts and ad breakdowns, rank observed longevity and variant signals, and preserve source URLs. Standard depth uses 3-5 references; deep uses 8-10. Save ADS-R#2 - Market and Competitive Research as a native Doc. Never create a PDF. Kickoff: ${scope}`,
+      ecology: `Read ADS-R#0 - Verified Campaign Research Context and use its verified offer and audience to define the market. Load roas-market-research. Prefer search_ads_research_advertisers plus run_ads_research_search so every query and returned snapshot appears in this Space's Ads Research Library. Use Meta first; add TikTok or Google only when relevant. Treat advertiser names, claims, audiences, and offers as competitor observations, never client facts. Use save_top_n for the strongest references, pull video transcripts and ad breakdowns, rank observed longevity and variant signals, and preserve source URLs. Standard depth uses 3-5 references; deep uses 8-10. Save ADS-R#2 - Market and Competitive Research as a native Doc. Never create a PDF. Kickoff: ${scope}`,
       outputContract: docContract('ADS-R#2 - Market and Competitive Research'),
     }),
     task({
@@ -94,7 +96,7 @@ export function expandAdsResearchPlaybook(
       sensory:
         'Each recommendation links its evidence, audience, angle, format, hypothesis, and draft copy.',
       endState: 'ADS-R#3 - Recommended Ads and Draft Copy exists as a native editable Doc.',
-      ecology: `Read ADS-R#1 and ADS-R#2. Load roas-ad-concepts and roas-ad-copy. Identify what is working, failing, saturated, and open. Recommend distinct tests with the evidence that supports each one. Include the visual concept, on-image text, paste-ready primary text, headline, description, CTA, destination, and test hypothesis. These are research recommendations, not final production assets. ${WRITING_RULE} Save ADS-R#3 - Recommended Ads and Draft Copy as a native Doc. Never create a PDF.`,
+      ecology: `Read ADS-R#0, ADS-R#1, and ADS-R#2. Use the verified client identity, offer, and audience from ADS-R#0 as the boundary for every recommendation. Load roas-ad-concepts and roas-ad-copy. Identify what is working, failing, saturated, and open. Recommend distinct tests with the evidence that supports each one. Include the visual concept, on-image text, paste-ready primary text, headline, description, CTA, destination, and test hypothesis. These are research recommendations, not final production assets. ${WRITING_RULE} Save ADS-R#3 - Recommended Ads and Draft Copy as a native Doc. Never create a PDF.`,
       outputContract: docContract('ADS-R#3 - Recommended Ads and Draft Copy'),
     }),
     task({

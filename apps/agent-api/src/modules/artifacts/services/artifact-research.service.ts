@@ -92,7 +92,7 @@ export class ArtifactResearchService {
       const items = arrayValue(page.items)
       const nextCursor = stringValue(page.next_cursor)
       const savedSearch = items.length
-        ? resultRecord(
+        ? (resultRecord(
             await target.mainApiCall(
               'POST',
               `/api/spaces/${spaceId}/social-research/topic-searches`,
@@ -106,7 +106,7 @@ export class ArtifactResearchService {
                 next_cursor: nextCursor,
               },
             ),
-          ).search ?? null
+          ).search ?? null)
         : null
       const savedItems =
         saveTopN > 0 && items.length > 0
@@ -173,8 +173,10 @@ export class ArtifactResearchService {
 
     const filters = recordValue(input.filters) ?? {}
     const nextPageToken = stringValue(input.next_page_token)
-    const title = stringValue(input.title) ?? (kind === 'brand' ? stringValue(advertiser?.name) : null) ?? query
+    const title =
+      stringValue(input.title) ?? (kind === 'brand' ? stringValue(advertiser?.name) : null) ?? query
     const saveTopN = saveLimit(input.save_top_n)
+    const missionId = await this.resolveMissionId(target, sessionKey)
 
     try {
       const page = resultRecord(
@@ -194,7 +196,7 @@ export class ArtifactResearchService {
       const items = arrayValue(page.items)
       const nextToken = stringValue(page.next_page_token)
       const savedSearch = items.length
-        ? resultRecord(
+        ? (resultRecord(
             await target.mainApiCall(
               'POST',
               `/api/spaces/${spaceId}/ads-research/searches`,
@@ -208,9 +210,10 @@ export class ArtifactResearchService {
                 filters,
                 items,
                 next_page_token: nextToken,
+                ...(missionId ? { mission_id: missionId } : {}),
               },
             ),
-          ).search ?? null
+          ).search ?? null)
         : null
       const savedItems =
         saveTopN > 0 && items.length > 0
@@ -246,6 +249,22 @@ export class ArtifactResearchService {
       const msg = errorMessage(err)
       target.logger?.error?.(`[run_ads_research_search] ${msg}`)
       return { success: false, error: msg }
+    }
+  }
+
+  private async resolveMissionId(
+    target: Record<string, any>,
+    sessionKey?: string,
+  ): Promise<string | null> {
+    if (!sessionKey?.includes(':mission:') || typeof target.resolveMissionContext !== 'function') {
+      return null
+    }
+    try {
+      const userId = target.resolveUserId(sessionKey)
+      const context = await target.resolveMissionContext(sessionKey, userId)
+      return stringValue(context?.missionId)
+    } catch {
+      return null
     }
   }
 

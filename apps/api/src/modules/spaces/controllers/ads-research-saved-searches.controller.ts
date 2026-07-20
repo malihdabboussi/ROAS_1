@@ -25,7 +25,11 @@ import {
 import { CreditsGuard } from '../../billing/guards/credits.guard'
 import { SpaceIdParamSchema, type SpaceIdParam } from '../dto'
 import { AdsResearchSearchService } from '../services/ads-research-search.service'
-import type { AdAdvertiserRef, AdSearchResultItem, SavedAdSearchFilters } from '../types/ads-research.types'
+import type {
+  AdAdvertiserRef,
+  AdSearchResultItem,
+  SavedAdSearchFilters,
+} from '../types/ads-research.types'
 import { parseAdsResearchKind, parseAdsResearchPlatform } from './ads-research-route-params'
 
 type AdsResearchUpdateBody = {
@@ -77,6 +81,7 @@ export class AdsResearchSavedSearchesController {
       filters?: SavedAdSearchFilters
       items: AdSearchResultItem[]
       next_page_token?: string | null
+      mission_id?: string | null
     },
   ) {
     const spaceId = SpaceIdParamSchema.parse({ id: params.id }).id
@@ -98,6 +103,7 @@ export class AdsResearchSavedSearchesController {
       filters: body.filters ?? {},
       items: body.items,
       nextPageToken: body.next_page_token ?? null,
+      missionId: body.mission_id ?? null,
     })
     return { success: true, search }
   }

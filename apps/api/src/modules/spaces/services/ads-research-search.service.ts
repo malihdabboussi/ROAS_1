@@ -222,6 +222,7 @@ export class AdsResearchSearchService {
     filters: SavedAdSearchFilters
     items: AdSearchResultItem[]
     nextPageToken: string | null
+    missionId?: string | null
   }): Promise<SavedAdSearch> {
     const query = opts.query.trim()
     const title = opts.title.trim() || (opts.kind === 'brand' ? opts.advertiser?.name : query) || ''
@@ -240,6 +241,9 @@ export class AdsResearchSearchService {
 
     const lastRunAt = new Date().toISOString()
     if (existing) {
+      const missionIds = opts.missionId
+        ? [...new Set([...(existing.mission_ids ?? []), opts.missionId])]
+        : (existing.mission_ids ?? [])
       return this.savedSearchesRepo.updateSavedSearchReturning(
         opts.supabase,
         existing.id,
@@ -249,6 +253,7 @@ export class AdsResearchSearchService {
           next_page_token: opts.nextPageToken,
           last_run_at: lastRunAt,
           updated_at: lastRunAt,
+          mission_ids: missionIds,
         },
         'Failed to save ad search',
       )
@@ -267,6 +272,7 @@ export class AdsResearchSearchService {
       results: opts.items,
       result_count: opts.items.length,
       next_page_token: opts.nextPageToken,
+      mission_ids: opts.missionId ? [opts.missionId] : [],
     })
   }
 

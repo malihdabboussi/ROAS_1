@@ -32,8 +32,23 @@ describe('ads-research playbook', () => {
       'st-gate-research-review',
     ])
     expect(plan?.subtasks[0]?.assignTo).toBe('atlas')
+    expect(plan?.subtasks[0]?.outputContract?.expected?.title).toBe(
+      'ADS-R#0 - Verified Campaign Research Context',
+    )
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/get_campaign/)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/get_space/)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/search_customer_brain/)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/Client identity check/)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/competitor.*client truth/i)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/block the subtask/i)
     expect(plan?.subtasks.slice(1, 5).every((item) => item.assignTo === 'blaze')).toBe(true)
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/run_ads_research_search/)
+    expect(plan?.subtasks[1]?.intent.ecology).toMatch(/check_meta_connection/)
+    expect(plan?.subtasks[1]?.intent.ecology).toMatch(/Do not infer/)
+    expect(plan?.subtasks[1]?.intent.ecology).toMatch(
+      /ADS-R#0 - Verified Campaign Research Context/,
+    )
+    expect(plan?.subtasks[2]?.intent.ecology).toMatch(/never client facts/i)
     expect(plan?.subtasks[3]?.intent.ecology).toMatch(/dylans-super-voice/)
     expect(plan?.subtasks[4]?.intent.ecology).toMatch(/roas-video-ad-scripts/)
     expect(plan?.subtasks[5]?.assignTo).toBe('human:user-1')

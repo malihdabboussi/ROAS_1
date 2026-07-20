@@ -155,6 +155,7 @@ export interface SavedAdSearchSummary {
   advertiser: AdAdvertiserRef | null
   filters: SavedAdSearchFilters
   result_count: number
+  mission_ids: string[]
   created_at: string
   last_run_at: string
 }

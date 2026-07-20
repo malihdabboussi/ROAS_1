@@ -61,9 +61,15 @@ The media backend exposes `POST /api/media/cache-social-images` for authenticate
 
 Account add, sync, remove, and Social Research schema saves use the selected `activeSpace.org_id` instead of relying on the browser's global active org. This keeps People-panel mutations scoped to the Space the user is viewing, even when their session org differs.
 
-The Ads Research view opens on **Research Runs**. Its launcher accepts an optional brief, Standard or Deep depth, reporting period, campaign scope, competitors, and reference links. Run cards show mission progress and native deliverables and open the standard mission detail. **Library Search** remains available as the secondary surface for manual Meta, TikTok, and Google ad-library searches. Library-only group, layout, sort, and refresh controls stay hidden while Research Runs is active.
+The Ads Research view opens on **Research Runs**. **Run Research** opens Blaze in the slide-in chat and starts a short intake covering the research purpose, Standard or Deep depth, and any specific focus. Blaze creates the deterministic `ads-research` mission after the user answers and confirms the new mission in chat. Opening a run now shows a visual research report inside Ads Research. The report combines the exact saved ad-library cards used by Blaze with the analysis, recommendations, copy, and script deliverables. **Rerun Research** opens Blaze with a replacement-run preflight that verifies the exact campaign and Space, campaign-specific Customer Brain evidence, and the mounted Meta account before asking the user to confirm the client identity. The replacement run carries forward valid kickoff details but does not treat the old analysis or deliverables as factual input. Mission Details remains a secondary action for operational status, subtasks, activity, and approval. **Library Search** remains available as the secondary surface for manual Meta, TikTok, and Google ad-library searches. Library-only group, layout, sort, and refresh controls stay hidden while Research Runs is active.
 
 The Ads Research mission deliberately stops before final creative production or Meta publishing. Recommended copy and video scripts load `dylans-super-voice` as their only voice authority, use native editable Docs, and reject PDF output. Ad Creation, Ad Launch, and Ad Optimization remain separate future workflows.
+
+Current Ads Analysis verifies the live mounted Meta connection before drawing conclusions. Agent-side Meta requests carry the active organization context through to the API, and Blaze may only report live data as unavailable after a Meta tool returns a concrete failure. Missing documents or incomplete research context are not evidence that Meta is disconnected.
+
+Every mission begins with `ADS-R#0 - Verified Campaign Research Context`. Atlas resolves the runtime campaign and Space first, then records a sourced client identity check covering the business model, offer, and audience. Customer Brain is used for campaign-specific customer evidence, while Company Brain remains organization-level guidance. Meta account labels and competitive ad-library findings are evidence labels only and cannot become client facts. Missing or conflicting identity evidence blocks analysis instead of allowing an inferred vertical.
+
+Every ad-library search launched inside a mission records that mission id on the saved search snapshot. A saved search can belong to multiple research missions when Blaze reuses the same query. This preserves the Space library as one source of truth while allowing each run report to reconstruct its own visual evidence. Runs created before mission linking use a bounded run-time window to recover visual snapshots that were saved during that run.
 
 New Space items store:
 
@@ -88,6 +94,10 @@ YouTube long-form videos use `youtube_video` (16:9 grid cards) and Shorts use `y
 X tweets use `tweet` (square cards) and video tweets use `tweet_video` (16:9). Each can be toggled independently via `media_show_x_tweets` and `media_show_x_videos`.
 
 ## Decision Log
+
+### 2026-07-20 - Verified identity and replacement reruns
+
+Ads Research now requires a sourced client identity handoff before Blaze analyzes current or competitive ads. This prevents agency names, Meta account labels, or competitor observations from being mistaken for the client's business model. A run report can start a fresh replacement mission through Blaze after the user confirms the resolved identity and account mapping.
 
 ### 2026-07-20 - Mission-driven Ads Research workspace
 

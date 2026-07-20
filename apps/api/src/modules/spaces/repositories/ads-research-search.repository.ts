@@ -11,7 +11,7 @@ import type {
 } from '../types/ads-research.types'
 
 const SAVED_SEARCH_SELECT =
-  'id, platform, kind, title, query, advertiser, filters, results, result_count, next_page_token, created_at, last_run_at'
+  'id, platform, kind, title, query, advertiser, filters, results, result_count, next_page_token, mission_ids, created_at, last_run_at'
 
 @Injectable()
 export class AdsResearchSearchRepository {
@@ -22,7 +22,7 @@ export class AdsResearchSearchRepository {
     const { data, error } = await supabase
       .from('space_ad_searches')
       .select(
-        'id, platform, kind, title, query, advertiser, filters, result_count, created_at, last_run_at',
+        'id, platform, kind, title, query, advertiser, filters, result_count, mission_ids, created_at, last_run_at',
       )
       .eq('space_id', spaceId)
       .order('created_at', { ascending: false })
@@ -55,10 +55,10 @@ export class AdsResearchSearchRepository {
       query: string
       advertiser: AdAdvertiserRef | null
     },
-  ): Promise<{ id: string } | null> {
+  ): Promise<{ id: string; mission_ids: string[] } | null> {
     let query = supabase
       .from('space_ad_searches')
-      .select('id')
+      .select('id, mission_ids')
       .eq('space_id', args.spaceId)
       .eq('platform', args.platform)
       .eq('kind', args.kind)
@@ -67,7 +67,7 @@ export class AdsResearchSearchRepository {
         ? query.eq('advertiser->>id', args.advertiser!.id)
         : query.ilike('query', args.query)
     const { data } = await query.limit(1)
-    return (data?.[0] as { id: string } | undefined) ?? null
+    return (data?.[0] as { id: string; mission_ids: string[] } | undefined) ?? null
   }
 
   async updateSavedSearchReturning(
@@ -101,6 +101,7 @@ export class AdsResearchSearchRepository {
       results: AdSearchResultItem[]
       result_count: number
       next_page_token: string | null
+      mission_ids: string[]
     },
   ): Promise<SavedAdSearch> {
     const { data, error } = await supabase

@@ -10,6 +10,8 @@ function makeTarget(responses: unknown[]) {
       return responses.shift()
     }),
     logger: { error: vi.fn() },
+    resolveMissionContext: vi.fn(async () => ({ missionId: 'mission-1' })),
+    resolveUserId: vi.fn(() => 'user-1'),
   }
 }
 
@@ -69,10 +71,12 @@ describe('ArtifactResearchService', () => {
   it('does not create a social saved search when the provider returns no items', async () => {
     const target = makeTarget([{ success: true, items: [], next_cursor: null }])
 
-    const result = await service.getHandlers(target).run_social_research_search(
-      { space_id: 'space-1', platform: 'youtube', query: 'launch strategy' },
-      'session-1',
-    )
+    const result = await service
+      .getHandlers(target)
+      .run_social_research_search(
+        { space_id: 'space-1', platform: 'youtube', query: 'launch strategy' },
+        'session-1',
+      )
 
     expect(result).toMatchObject({
       success: true,
@@ -84,6 +88,7 @@ describe('ArtifactResearchService', () => {
   })
 
   it('runs ads search, saves the search snapshot, and optionally saves top ads', async () => {
+    const missionSession = 'agent:gateway:mission:blaze:user-1:mission-1'
     const target = makeTarget([
       { success: true, items: [{ ad_id: 'a1' }, { ad_id: 'a2' }], next_page_token: 'next-2' },
       { success: true, search: { id: 'ad-search-1', result_count: 2 } },
@@ -98,7 +103,7 @@ describe('ArtifactResearchService', () => {
         query: 'fitness coaching',
         save_top_n: 1,
       },
-      'session-1',
+      missionSession,
     )
 
     expect(result).toMatchObject({
@@ -112,15 +117,16 @@ describe('ArtifactResearchService', () => {
       1,
       'POST',
       '/api/spaces/space-1/ads-research/meta/search',
-      'session-1',
+      missionSession,
       expect.objectContaining({ kind: 'topic', query: 'fitness coaching' }),
     )
     expect(target.mainApiCall).toHaveBeenNthCalledWith(
       2,
       'POST',
       '/api/spaces/space-1/ads-research/searches',
-      'session-1',
+      missionSession,
       expect.objectContaining({
+        mission_id: 'mission-1',
         platform: 'meta',
         kind: 'topic',
         query: 'fitness coaching',
@@ -132,7 +138,7 @@ describe('ArtifactResearchService', () => {
       3,
       'POST',
       '/api/spaces/space-1/ads-research/meta/save',
-      'session-1',
+      missionSession,
       { query: 'fitness coaching', items: [{ ad_id: 'a1' }] },
     )
   })
@@ -141,19 +147,23 @@ describe('ArtifactResearchService', () => {
     const target = makeTarget([])
 
     await expect(
-      service.getHandlers(target).run_ads_research_search(
-        { space_id: 'space-1', platform: 'google', kind: 'topic', query: 'shoes' },
-        'session-1',
-      ),
+      service
+        .getHandlers(target)
+        .run_ads_research_search(
+          { space_id: 'space-1', platform: 'google', kind: 'topic', query: 'shoes' },
+          'session-1',
+        ),
     ).resolves.toMatchObject({
       success: false,
       error: 'Google ads research supports brand searches only',
     })
     await expect(
-      service.getHandlers(target).run_ads_research_search(
-        { space_id: 'space-1', platform: 'meta', kind: 'brand', query: 'Nike' },
-        'session-1',
-      ),
+      service
+        .getHandlers(target)
+        .run_ads_research_search(
+          { space_id: 'space-1', platform: 'meta', kind: 'brand', query: 'Nike' },
+          'session-1',
+        ),
     ).resolves.toMatchObject({
       success: false,
       error: 'Brand searches require an advertiser object',
@@ -164,10 +174,12 @@ describe('ArtifactResearchService', () => {
   it('searches ads advertisers with an encoded query', async () => {
     const target = makeTarget([{ success: true, advertisers: [{ id: 'adv-1', name: 'Nike' }] }])
 
-    const result = await service.getHandlers(target).search_ads_research_advertisers(
-      { space_id: 'space-1', platform: 'google', query: 'Nike Running' },
-      'session-1',
-    )
+    const result = await service
+      .getHandlers(target)
+      .search_ads_research_advertisers(
+        { space_id: 'space-1', platform: 'google', query: 'Nike Running' },
+        'session-1',
+      )
 
     expect(result).toMatchObject({
       success: true,

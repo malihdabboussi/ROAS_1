@@ -1,24 +1,42 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { MissionDetailModal } from '@/components/missions/MissionDetailModalAdapter'
+import { useShellStore } from '@/components/shell/use-shell-store'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
-  createMission,
   fetchDeliverablesForMissions,
   fetchMissions,
   type Mission,
   type MissionDeliverable,
 } from '@/lib/missions'
 import { ADS_RESEARCH_MESSAGES } from '../../config/ads-research-messages.config'
-import {
-  buildAdsResearchMissionPayload,
-  type AdsResearchKickoffFields,
-} from '../playbooks/ads-research'
 import { AdsResearchRunCard } from './AdsResearchRunCard'
-import { AdsResearchRunLauncher } from './AdsResearchRunLauncher'
+import { AdsResearchRunDetailView } from './AdsResearchRunDetailView'
+
+const RESEARCH_INTAKE_PROMPT = `Start an Ads Research intake for this Space with Blaze.
+
+Ask me these three questions together before creating anything:
+1. What is this research for?
+2. Standard or deep?
+3. Anything in particular you're looking for?
+
+After I answer, create a mission with playbook_id \`ads-research\` using the current Space and campaign context. Confirm "New mission created" in chat and show or link the mission. Use the mounted Meta connection as the source of truth for current performance. Do not infer that Meta is disconnected from missing documents or prior research.`
+
+function buildResearchRerunPrompt(run: Mission): string {
+  return `Rerun Ads Research mission ${run.id} as a fresh replacement mission with Blaze.
+
+Before creating the replacement, verify the client identity in the current Space and campaign context:
+1. Resolve the exact campaign and Space from the current work context.
+2. Read the campaign, Space, linked files, active Theme, and relevant Customer Brain evidence. Use Company Brain only for agency standards, not as proof of the client's identity.
+3. Verify the mounted Meta ad account, Facebook Page, and available campaigns. Treat account and advertiser names as routing evidence, not proof of the business model.
+4. Show me a concise identity summary with the client or brand, business model, offer, audience, sources, and any conflicts. Ask me to confirm or correct it.
+
+After I confirm, create a fresh replacement mission with playbook_id \`ads-research\`, carry forward the prior kickoff where it is still valid, and include my corrections. Do not reuse the prior mission's analysis or deliverables as factual input. Confirm "New mission created" in chat and show or link the replacement mission.`
+}
 
 export function AdsResearchRunsView({
   spaceId,
@@ -30,8 +48,10 @@ export function AdsResearchRunsView({
   const [runs, setRuns] = useState<Mission[]>([])
   const [deliverables, setDeliverables] = useState<Record<string, MissionDeliverable[]>>({})
   const [selectedRun, setSelectedRun] = useState<Mission | null>(null)
+  const [missionModalOpen, setMissionModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
+  const seedComposer = useGlobalChatStore((state) => state.seedComposer)
+  const openFreshChatDrawer = useShellStore((state) => state.openFreshChatDrawer)
 
   const loadRuns = useCallback(async () => {
     setLoading(true)
@@ -56,28 +76,32 @@ export function AdsResearchRunsView({
     void loadRuns()
   }, [loadRuns])
 
-  const startResearch = async (fields: AdsResearchKickoffFields) => {
-    if (!campaignId || submitting) {
-      if (!campaignId) toast.error(ADS_RESEARCH_MESSAGES.NO_CAMPAIGN)
+  const startResearch = () => {
+    if (!campaignId) {
+      toast.error(ADS_RESEARCH_MESSAGES.NO_CAMPAIGN)
       return
     }
-    setSubmitting(true)
-    try {
-      const payload = buildAdsResearchMissionPayload(fields)
-      const mission = await createMission({
-        ...payload,
-        campaign_id: campaignId,
-        space_id: spaceId,
-        idempotency_key: `playbook-ads-research-${crypto.randomUUID()}`,
-      })
-      await loadRuns()
-      setSelectedRun(mission)
-      toast.success(ADS_RESEARCH_MESSAGES.STARTED)
-    } catch {
-      toast.error(ADS_RESEARCH_MESSAGES.START_FAILED)
-    } finally {
-      setSubmitting(false)
+    openFreshChatDrawer()
+    seedComposer({
+      content: RESEARCH_INTAKE_PROMPT,
+      agentKey: 'ads_manager',
+      railIntent: 'new',
+      workContext: { surface: 'spaces', spaceId, campaignId },
+    })
+  }
+
+  const rerunResearch = (run: Mission) => {
+    if (!campaignId) {
+      toast.error(ADS_RESEARCH_MESSAGES.NO_CAMPAIGN)
+      return
     }
+    openFreshChatDrawer()
+    seedComposer({
+      content: buildResearchRerunPrompt(run),
+      agentKey: 'ads_manager',
+      railIntent: 'new',
+      workContext: { surface: 'spaces', spaceId, campaignId },
+    })
   }
 
   const runCountLabel = useMemo(
@@ -85,20 +109,45 @@ export function AdsResearchRunsView({
     [runs.length],
   )
 
+  if (selectedRun) {
+    return (
+      <>
+        <AdsResearchRunDetailView
+          run={selectedRun}
+          deliverables={deliverables[selectedRun.id] ?? []}
+          spaceId={spaceId}
+          onBack={() => setSelectedRun(null)}
+          onOpenMission={() => setMissionModalOpen(true)}
+          onRerun={() => rerunResearch(selectedRun)}
+        />
+        {missionModalOpen ? (
+          <MissionDetailModal
+            mission={selectedRun}
+            onClose={() => setMissionModalOpen(false)}
+            onUpdated={() => void loadRuns()}
+          />
+        ) : null}
+      </>
+    )
+  }
+
   return (
     <div className="p-spacing-4 gap-spacing-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
-      <AdsResearchRunLauncher
-        disabled={!campaignId}
-        submitting={submitting}
-        onSubmit={(fields) => void startResearch(fields)}
-      />
-
       <section className="gap-spacing-3 flex flex-col">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="body-2 text-foreground font-semibold">Research runs</h2>
             <p className="body-4 text-muted-foreground">{runCountLabel}</p>
           </div>
+          <button
+            type="button"
+            className="button-glass-primary button-compact gap-spacing-2 inline-flex items-center"
+            disabled={!campaignId}
+            onClick={startResearch}
+          >
+            <Sparkles className="icon-sm" />
+            {ADS_RESEARCH_MESSAGES.RUN_BUTTON}
+          </button>
         </div>
         {loading ? (
           <div className="py-spacing-8 flex justify-center">
@@ -127,14 +176,6 @@ export function AdsResearchRunsView({
           </div>
         )}
       </section>
-
-      {selectedRun ? (
-        <MissionDetailModal
-          mission={selectedRun}
-          onClose={() => setSelectedRun(null)}
-          onUpdated={() => void loadRuns()}
-        />
-      ) : null}
     </div>
   )
 }
