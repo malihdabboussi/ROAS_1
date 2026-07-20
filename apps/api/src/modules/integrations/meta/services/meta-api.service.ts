@@ -22,8 +22,8 @@ import type { InsightsLevel, MetaInsightsRow, MetaInsightsSummary } from './meta
 import { MetaBudgetService } from './meta-api/meta-budget.service'
 import { MetaFetchService } from './meta-api/meta-fetch.service'
 import { MetaInsightsService } from './meta-api/meta-insights.service'
-import { MetaPublishBatchService } from './meta-api/meta-publish-batch.service'
 import { MetaPublishBatchPersistenceService } from './meta-api/meta-publish-batch-persistence.service'
+import { MetaPublishBatchService } from './meta-api/meta-publish-batch.service'
 import { MetaPublishMediaService } from './meta-api/meta-publish-media.service'
 import { MetaPublishSharedService } from './meta-api/meta-publish-shared.service'
 import { MetaPublishSingleService } from './meta-api/meta-publish-single.service'
@@ -69,8 +69,7 @@ export class MetaApiService {
       ? undefined
       : new MetaPublishBatchPersistenceService(batchPublishRepository)
     this.accounts = accounts ?? new MetaAccountsService(meta, oauth)
-    this.insights =
-      insights ?? new MetaInsightsService(meta, oauth, new MetaInsightsRepository())
+    this.insights = insights ?? new MetaInsightsService(meta, oauth, new MetaInsightsRepository())
     this.budget = budget ?? new MetaBudgetService(meta, oauth, new MetaPublishRepository())
     this.publishSingle =
       publishSingle ??
@@ -172,6 +171,7 @@ export class MetaApiService {
     input: {
       campaignId: string
       level: InsightsLevel
+      orgId?: string
       adCampaignId?: string
       adSetId?: string
       startDate?: string

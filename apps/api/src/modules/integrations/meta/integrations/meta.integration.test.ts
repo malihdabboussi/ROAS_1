@@ -1,4 +1,5 @@
 import { createHmac } from 'crypto'
+import { BadRequestException } from '@nestjs/common'
 import { describe, expect, it, vi } from 'vitest'
 import { MetaIntegration } from './meta.integration'
 
@@ -27,7 +28,44 @@ describe('MetaIntegration', () => {
     expect(url.searchParams.get('client_id')).toBe('app-1')
     expect(url.searchParams.get('redirect_uri')).toBe('https://api.test/meta/callback')
     expect(url.searchParams.get('state')).toBe('state-1')
-    expect(url.searchParams.get('scope')).toContain('ads_management')
+    expect(url.searchParams.get('scope')?.split(',').sort()).toEqual(
+      [
+        'ads_management',
+        'ads_read',
+        'business_management',
+        'pages_manage_ads',
+        'pages_read_engagement',
+        'pages_show_list',
+        'public_profile',
+      ].sort(),
+    )
+  })
+
+  it('reads production redirect URI shape from META_OAUTH_REDIRECT_URI', () => {
+    const config = {
+      get: vi.fn((key: string) => {
+        const values: Record<string, string> = {
+          META_APP_ID: 'app-1',
+          META_APP_SECRET: 'secret-1',
+          META_OAUTH_REDIRECT_URI: 'https://api.roas.io/api/integrations/meta/callback',
+        }
+        return values[key]
+      }),
+    }
+    const integration = new MetaIntegration(config as never, {} as never)
+    const url = new URL(integration.buildAuthorizationUrl('state-prod'))
+    expect(url.searchParams.get('redirect_uri')).toBe(
+      'https://api.roas.io/api/integrations/meta/callback',
+    )
+  })
+
+  it('rejects authorize URL build when Meta OAuth is not configured', () => {
+    const config = {
+      get: vi.fn(() => ''),
+    }
+    const integration = new MetaIntegration(config as never, {} as never)
+    expect(integration.isConfigured()).toBe(false)
+    expect(() => integration.buildAuthorizationUrl('state-1')).toThrow(BadRequestException)
   })
 
   it('creates ad sets with the existing safe-targeting payload rules', async () => {

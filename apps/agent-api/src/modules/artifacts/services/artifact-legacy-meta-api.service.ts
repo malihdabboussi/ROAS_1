@@ -28,6 +28,8 @@ export class ArtifactLegacyMetaApiService {
       Authorization: `Bearer ${accessToken}`,
       Accept: 'application/json',
     }
+    const orgId = typeof target.resolveOrgId === 'function' ? target.resolveOrgId(sessionKey) : null
+    if (orgId) headers['x-org-id'] = orgId
 
     if (body) headers['Content-Type'] = 'application/json'
 

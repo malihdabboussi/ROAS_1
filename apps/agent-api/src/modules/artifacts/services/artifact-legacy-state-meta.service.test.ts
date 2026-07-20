@@ -19,7 +19,11 @@ function makeSupabase() {
       return { data: { state_content: 'Existing state', updated_at: 'before' } }
     }
     if (table === 'ads') return { data: { ad_set_id: 'ad-set-1' } }
-    if (table === 'ad_sets' && columns.includes('ad_campaign_id') && !columns.includes('targeting')) {
+    if (
+      table === 'ad_sets' &&
+      columns.includes('ad_campaign_id') &&
+      !columns.includes('targeting')
+    ) {
       return { data: { ad_campaign_id: 'ad-campaign-1' } }
     }
     if (table === 'ad_sets') {
@@ -80,7 +84,11 @@ function makeSupabase() {
         then: (
           resolve: (value: { data: unknown; error: null }) => unknown,
           reject: (reason?: unknown) => unknown,
-        ) => Promise.resolve({ ...resolveResult(table, columns, operation), error: null }).then(resolve, reject),
+        ) =>
+          Promise.resolve({ ...resolveResult(table, columns, operation), error: null }).then(
+            resolve,
+            reject,
+          ),
       }
       return chain
     }),
@@ -102,6 +110,25 @@ function makeTarget(supabase: unknown) {
 }
 
 describe('ArtifactLegacyStateMetaService data access behavior', () => {
+  it('forwards the active organization to Meta API calls', async () => {
+    const { supabase } = makeSupabase()
+    const target = makeTarget(supabase)
+    target.resolveOrgId.mockReturnValue('org-1')
+    global.fetch = vi.fn(
+      async () => new Response(JSON.stringify({ success: true, connected: true }), { status: 200 }),
+    ) as typeof fetch
+    const service = new ArtifactLegacyStateMetaService()
+
+    await service.checkMetaConnection(target, 'session-1')
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://api.test/api/integrations/meta/status',
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'x-org-id': 'org-1' }),
+      }),
+    )
+  })
+
   it('patches existing agent state and persists the updated content', async () => {
     const { supabase, upserts } = makeSupabase()
     const service = new ArtifactLegacyStateMetaService()
@@ -210,20 +237,21 @@ describe('ArtifactLegacyStateMetaService data access behavior', () => {
   it('loads ad set targeting and preferred Meta integration for delivery estimates', async () => {
     const { supabase } = makeSupabase()
     const service = new ArtifactLegacyStateMetaService()
-    global.fetch = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          data: [
-            {
-              estimate_mau_lower_bound: 100,
-              estimate_mau_upper_bound: 200,
-              estimate_dau: 20,
-              estimate_ready: true,
-              daily_outcomes_curve: [{ spend: 10 }],
-            },
-          ],
-        }),
-      ),
+    global.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                estimate_mau_lower_bound: 100,
+                estimate_mau_upper_bound: 200,
+                estimate_dau: 20,
+                estimate_ready: true,
+                daily_outcomes_curve: [{ spend: 10 }],
+              },
+            ],
+          }),
+        ),
     ) as typeof fetch
 
     const result = await service.getDeliveryEstimate(

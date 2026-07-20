@@ -3,9 +3,11 @@
  */
 
 export const META_ERRORS = {
-  // OAuth / config
-  MISSING_OAUTH_CONFIG: 'Missing Meta OAuth configuration',
-  MISSING_APP_SECRET: 'Missing META_APP_SECRET configuration',
+  // OAuth / config — user-facing; never list env var names
+  MISSING_OAUTH_CONFIG:
+    'Meta needs to be configured by the ROAS administrator before you can connect.',
+  MISSING_APP_SECRET:
+    'Meta needs to be configured by the ROAS administrator before you can connect.',
 
   // parseMetaErrorMessage - Meta API code mappings
   BUDGET_TYPE_INTEGER: 'Budget must be a whole number (in cents). Check your budget settings.',

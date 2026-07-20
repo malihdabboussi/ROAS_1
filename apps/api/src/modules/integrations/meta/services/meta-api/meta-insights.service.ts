@@ -35,13 +35,14 @@ export class MetaInsightsService {
     input: {
       campaignId: string
       level: InsightsLevel
+      orgId?: string
       adCampaignId?: string
       adSetId?: string
       startDate?: string
       endDate?: string
     },
   ): Promise<{ level: InsightsLevel; summary: MetaInsightsSummary; rows: MetaInsightsRow[] }> {
-    const accessToken = await this.oauth.getAccessToken(supabase, userId)
+    const accessToken = await this.oauth.getAccessToken(supabase, userId, input.orgId)
     const timeRange =
       input.startDate && input.endDate
         ? { since: input.startDate, until: input.endDate }

@@ -3,6 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { IntegrationConnectionsRepository } from '../../repositories/integration-connections.repository'
+import { META_ERRORS } from '../config/meta-errors.config'
 import { MetaIntegration } from '../integrations/meta.integration'
 import type { MetaTokenResponse, MetaUserIntegration } from '../types/meta.types'
 
@@ -39,9 +40,7 @@ export class MetaOAuthService {
     scopeMode: 'personal' | 'org_shared' = 'personal',
   ): string {
     if (!this.isConfigured()) {
-      throw new BadRequestException(
-        'Meta OAuth is not configured. Set META_APP_ID, META_APP_SECRET, META_OAUTH_REDIRECT_URI, META_OAUTH_STATE_SECRET.',
-      )
+      throw new BadRequestException(META_ERRORS.MISSING_OAUTH_CONFIG)
     }
 
     const finalRedirectTo = this.normalizeRedirectTo(redirectTo)
@@ -56,7 +55,7 @@ export class MetaOAuthService {
   }
 
   async handleCallback(code: string, state: string): Promise<string> {
-    if (!this.isConfigured()) throw new BadRequestException('Meta OAuth is not configured')
+    if (!this.isConfigured()) throw new BadRequestException(META_ERRORS.MISSING_OAUTH_CONFIG)
 
     const parsedState = this.verifyState(state)
     const shortLivedTokens = await this.meta.exchangeCodeForTokens(code)

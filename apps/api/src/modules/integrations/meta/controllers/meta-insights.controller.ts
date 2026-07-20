@@ -1,6 +1,14 @@
 import { Controller, Get, HttpException, HttpStatus, Query, UseGuards } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { AuthGuard, CurrentUser, OrgContextGuard, OrgRoleGuard, Supabase } from '@vibey/api-shared'
+import {
+  AuthGuard,
+  CurrentUser,
+  OrgContext,
+  OrgContextGuard,
+  OrgRoleGuard,
+  Supabase,
+  type RequestScope,
+} from '@vibey/api-shared'
 import { MetaApiService } from '../services/meta-api.service'
 
 @Controller('integrations/meta')
@@ -12,6 +20,7 @@ export class MetaInsightsController {
   async insights(
     @Supabase() supabase: SupabaseClient,
     @CurrentUser() user: { id: string },
+    @OrgContext() scope: RequestScope,
     @Query('campaignId') campaignId?: string,
     @Query('level') level?: 'campaign' | 'adset' | 'ad',
     @Query('adCampaignId') adCampaignId?: string,
@@ -35,6 +44,7 @@ export class MetaInsightsController {
     const data = await this.api.getInsights(supabase, user.id, {
       campaignId,
       level: safeLevel,
+      orgId: scope.orgId ?? undefined,
       adCampaignId,
       adSetId,
       startDate,
