@@ -205,6 +205,9 @@ describe('space ROAS chat panel logic', () => {
         'vibey',
       ),
     ).toEqual({ forceNewConversation: false, agentKey: 'ads_manager' })
+    expect(
+      resolveSpaceChatSeedSendOptions({ agentKey: 'ads_manager', railIntent: null }, 'vibey'),
+    ).toEqual({ forceNewConversation: true, agentKey: 'ads_manager' })
   })
 
   it('builds encoded space and channel conversation URLs', () => {

@@ -141,7 +141,11 @@ export function resolveSpaceChatSendAgentKey(
 }
 
 export function resolveSpaceChatSeedSendOptions(
-  seed: { agentKey?: string; conversationId?: string; railIntent?: string },
+  seed: {
+    agentKey?: string
+    conversationId?: string
+    railIntent?: 'new' | 'list' | 'focus' | null
+  },
   activeAgentKey: string,
 ): { forceNewConversation: boolean; agentKey?: string } {
   return {

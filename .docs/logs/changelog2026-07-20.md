@@ -1,5 +1,12 @@
 # Changelog - July 20, 2026
 
+## [2026-07-20 16:29] - [FIX]
+
+What: Org sidebar spaces cache now also loads personal-account spaces (`orgId: null`) and merges them, so the injected Personal campaign shows Meetings instead of “No spaces yet”. Creating a space under Personal from org context writes to the personal account.
+Why: Campaigns injects personal-account Personal into org lists, but spaces stayed org-scoped — Meetings (`org_id IS NULL`, already on Personal) never appeared.
+Impact: In an org, Campaigns → Personal shows your personal Meetings / task list; new spaces under Personal stay personal-account scoped.
+Files: `use-cached-spaces.ts`, `use-cached-spaces.test.tsx`, `spaces.service.ts` (`createSpace` backend options), `useSidebarController.ts`.
+
 ## [2026-07-20 16:10] - [FIX]
 
 What: Seeded Space chat messages now create and persist the fresh conversation with the explicitly requested agent key, even when the panel was still rendering the previously active agent.
@@ -352,4 +359,15 @@ Why: `roas-web` production build failed on `useIntegrations.ts` after org-scoped
 Impact: Unblocks `roas-web` deploy on `7b82ed44`. Redeployed Fly `roas-runtimes` via dockerignore-aware script.
 
 Files: `useIntegrations.ts`, `use-integration-overview.ts`.
+
+
+## [2026-07-20 16:48] - [FIX]
+
+What: Accept `null` `railIntent` in `resolveSpaceChatSeedSendOptions` so Space chat seed typing matches `GlobalChatRailIntent`.
+
+Why: `roas-web` production TypeScript failed on `SpaceVibeyChatPanel` after Ads Research Blaze intake wiring.
+
+Impact: Unblocks `roas-web` deploy for HEAD Ads Research / Space chat seed flow.
+
+Files: `space-vibey-chat-panel.logic.ts`, test.
 
