@@ -20,6 +20,7 @@ export interface Team2AgentInfoCollapsedRailProps {
   agent: MissionAgent
   activeTab: AgentInfoPanelTab
   showAccessTab: boolean
+  showWorkTab?: boolean
   onExpand: () => void
   onSelectTab: (tab: AgentInfoPanelTab) => void
 }
@@ -29,10 +30,11 @@ export function Team2AgentInfoCollapsedRail({
   agent,
   activeTab,
   showAccessTab,
+  showWorkTab = false,
   onExpand,
   onSelectTab,
 }: Team2AgentInfoCollapsedRailProps) {
-  const tabs = getAgentInfoPanelTabsForDisplay(showAccessTab)
+  const tabs = getAgentInfoPanelTabsForDisplay(showAccessTab, showWorkTab)
 
   const handleSelectTab = (tab: AgentInfoPanelTab) => {
     onSelectTab(tab)
@@ -52,7 +54,7 @@ export function Team2AgentInfoCollapsedRail({
         </button>
       </Tooltip>
 
-      <div className="surface-bg h-spacing-8 w-spacing-8 shrink-0 overflow-hidden rounded-xl border border-border">
+      <div className="surface-bg h-spacing-8 w-spacing-8 border-border shrink-0 overflow-hidden rounded-xl border">
         {agent.image_url ? (
           <img src={agent.image_url} alt="" className="h-full w-full object-cover object-top" />
         ) : (

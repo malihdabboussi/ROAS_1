@@ -34,12 +34,20 @@ import { TaskAgentProgressService } from './task-agent-progress.service'
 import { TaskAgentRequestContextService } from './task-agent-request-context.service'
 import {
   TaskAgentSuggestionsService,
+  type PostCallDraft,
+  type PostCallDraftPayload,
   type SuggestedTask,
   type SuggestMeetingTitlePayload,
   type SuggestTasksPayload,
 } from './task-agent-suggestions.service'
 
-export type { SuggestedTask, SuggestMeetingTitlePayload, SuggestTasksPayload }
+export type {
+  PostCallDraft,
+  PostCallDraftPayload,
+  SuggestedTask,
+  SuggestMeetingTitlePayload,
+  SuggestTasksPayload,
+}
 
 const INVOKE_TIMEOUT_MS = 600_000
 const AGENT_COLLABORATION_NATIVE_ACTIONS = ['ask_agent', 'delegate_to_agent', 'brainstorm_agents']
@@ -75,7 +83,17 @@ export class TaskAgentService {
     this.cancelRegistry = cancelRegistry ?? new TaskAgentCancelRegistry()
     this.suggestions =
       suggestions ??
-      new TaskAgentSuggestionsService(repository, openClaw, agentRuntime, runtimeReadiness)
+      new TaskAgentSuggestionsService(
+        repository,
+        openClaw,
+        agentRuntime,
+        runtimeReadiness,
+        this.inputService,
+      )
+  }
+
+  async draftPostCall(payload: PostCallDraftPayload): Promise<{ draft: PostCallDraft }> {
+    return this.suggestions.draftPostCall(payload)
   }
 
   async suggestTasks(payload: SuggestTasksPayload): Promise<{ tasks: SuggestedTask[] }> {
@@ -363,7 +381,13 @@ export class TaskAgentService {
       activityId,
       controller: abortController,
     })
-    this.taskScopeContext?.setScope({ itemId: item_id, userId: user_id, campaignId, spaceId: space_id, orgId: org_id })
+    this.taskScopeContext?.setScope({
+      itemId: item_id,
+      userId: user_id,
+      campaignId,
+      spaceId: space_id,
+      orgId: org_id,
+    })
     const isUserCancelled = () => this.cancelRegistry.isCancelled(space_id, item_id, activityId)
     const completeCancelled = async () => {
       const finalContent = responseContent || progressTracker.getResponseContent()

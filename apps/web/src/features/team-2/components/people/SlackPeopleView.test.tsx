@@ -245,4 +245,14 @@ describe('SlackPeopleView', () => {
     expect(hookMocks.reviewAction).toHaveBeenCalledWith('action-1', 'approved')
     expect(hookMocks.reviewAction).toHaveBeenCalledWith('action-1', 'dismissed')
   })
+
+  it('exposes the conversation inbox as a top-level People view', () => {
+    render(<SlackPeopleView />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Conversations' }))
+
+    expect(navigationMocks.push).toHaveBeenCalledWith('/team?section=people&peopleView=shadow', {
+      scroll: false,
+    })
+  })
 })

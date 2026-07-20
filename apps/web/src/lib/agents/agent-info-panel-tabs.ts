@@ -1,11 +1,11 @@
-import type { MissionAgent } from './mission-agents-api'
 import { USER_BRAIN_SHARE_EXTENDED_AGENT_KEYS } from './agent-team-display'
+import type { MissionAgent } from './mission-agents-api'
 
-export const AGENT_INFO_PANEL_TABS = ['info', 'skills', 'communication', 'access'] as const
+export const AGENT_INFO_PANEL_TABS = ['info', 'work', 'skills', 'communication', 'access'] as const
 export type AgentInfoPanelTab = (typeof AGENT_INFO_PANEL_TABS)[number]
 
 export function isAgentInfoPanelTab(v: string | null): v is AgentInfoPanelTab {
-  return v === 'info' || v === 'skills' || v === 'communication' || v === 'access'
+  return v === 'info' || v === 'work' || v === 'skills' || v === 'communication' || v === 'access'
 }
 
 export function showsAgentAccessTab(

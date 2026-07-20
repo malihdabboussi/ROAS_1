@@ -1,12 +1,8 @@
 import type React from 'react'
-import type {
-  MissionAgent,
-  MissionAgentSkill,
-  MissionAgentWorkflow,
-} from '@/lib/agents'
+import type { MissionAgent, MissionAgentSkill, MissionAgentWorkflow } from '@/lib/agents'
 import type { Campaign } from '@/lib/campaigns'
-import type { AgentInfoPanelTab } from '../../../lib/agent-info-panel-tabs'
 import type { TeamCommunicationTab } from '../../../containers/TeamCommunicationTab'
+import type { AgentInfoPanelTab } from '../../../lib/agent-info-panel-tabs'
 
 export interface AgentInfoPanelProps {
   selected: MissionAgent | null
@@ -77,4 +73,5 @@ export interface AgentInfoPanelProps {
   onRequestCollapse?: () => void
   infoPanelTab?: AgentInfoPanelTab
   onInfoPanelTabChange?: (tab: AgentInfoPanelTab) => void
+  renderWorkTab?: () => React.ReactNode
 }

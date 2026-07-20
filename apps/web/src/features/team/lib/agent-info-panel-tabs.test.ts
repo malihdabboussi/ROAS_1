@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { MissionAgent } from '@/lib/agents/mission-agents-api'
-import { agentShowsCampaignAssignment, showsAgentAccessTab } from './agent-info-panel-tabs'
+import { getAgentInfoPanelTabsForDisplay } from './agent-info-panel-tab-meta'
+import {
+  agentShowsCampaignAssignment,
+  isAgentInfoPanelTab,
+  showsAgentAccessTab,
+} from './agent-info-panel-tabs'
 
 function agentFixture(overrides: Partial<MissionAgent>): MissionAgent {
   return {
@@ -40,5 +45,17 @@ describe('agent info panel tab helpers', () => {
     expect(agentShowsCampaignAssignment(agentFixture({ level: 'c_level' }), false)).toBe(true)
     expect(agentShowsCampaignAssignment(agentFixture({ level: 'system' }), false)).toBe(false)
     expect(agentShowsCampaignAssignment(agentFixture({ level: 'employee' }), true)).toBe(false)
+  })
+
+  it('supports Work in the detail sidebar without adding it to panels that do not provide work', () => {
+    expect(isAgentInfoPanelTab('work')).toBe(true)
+    expect(getAgentInfoPanelTabsForDisplay(true, true)).toEqual([
+      'info',
+      'work',
+      'skills',
+      'communication',
+      'access',
+    ])
+    expect(getAgentInfoPanelTabsForDisplay(false)).toEqual(['info', 'skills', 'communication'])
   })
 })

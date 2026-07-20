@@ -15,6 +15,7 @@ import { AgentAssignWorkModal } from './AgentAssignWorkModal'
 import { AgentsGrid } from './AgentsGrid'
 import { Team2ManageShell } from './nav/Team2ManageShell'
 import { SlackPeopleView } from './people/SlackPeopleView'
+import { AgentWorkTab } from './tabs/AgentWorkTab'
 import type {
   Team2ManageData,
   Team2ManageDerived,
@@ -271,8 +272,6 @@ export function Team2ManageContent({
           assignedCampaigns={data.assignedCampaigns as Campaign[]}
           nonGeneralCampaigns={data.nonGeneralCampaigns as Campaign[]}
           generalCampaignId={data.generalCampaignId}
-          missions={missions}
-          onAssignWork={() => setAssignAgent(selectedFromUrl)}
           infoPanel={(onRequestCollapse) => (
             <AgentInfoPanel
               {...(agentInfoBaseProps as AgentInfoPanelProps)}
@@ -286,6 +285,13 @@ export function Team2ManageContent({
               canSetAgentTeam={perms.canMoveAgentBetweenTeams()}
               infoPanelTab={infoPanelTab}
               onInfoPanelTabChange={onInfoPanelTabChange}
+              renderWorkTab={() => (
+                <AgentWorkTab
+                  agent={selectedFromUrl}
+                  missions={missions}
+                  onAssignWork={() => setAssignAgent(selectedFromUrl)}
+                />
+              )}
             />
           )}
         />

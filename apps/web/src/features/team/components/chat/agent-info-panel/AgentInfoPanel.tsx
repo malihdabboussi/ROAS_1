@@ -3,9 +3,9 @@
 import { X } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/navigation/tabs'
 import { useUserRole } from '@/hooks/use-user-role'
+import { TeamCommunicationTab } from '../../../containers/TeamCommunicationTab'
 import { AgentInfoPanelTabIcon } from '../../../lib/agent-info-panel-tab-meta'
 import { showsAgentAccessTab, type AgentInfoPanelTab } from '../../../lib/agent-info-panel-tabs'
-import { TeamCommunicationTab } from '../../../containers/TeamCommunicationTab'
 import type { AgentInfoPanelProps } from './agent-info-panel.types'
 import { AgentInfoAccessTab } from './AgentInfoAccessTab'
 import { AgentInfoDetailsTab } from './AgentInfoDetailsTab'
@@ -105,6 +105,12 @@ export function AgentInfoPanel(props: AgentInfoPanelProps) {
                   <AgentInfoPanelTabIcon tab="info" />
                   Info
                 </TabsTrigger>
+                {props.renderWorkTab ? (
+                  <TabsTrigger value="work" className="gap-spacing-2">
+                    <AgentInfoPanelTabIcon tab="work" />
+                    Work
+                  </TabsTrigger>
+                ) : null}
                 <TabsTrigger value="skills" className="gap-spacing-2">
                   <AgentInfoPanelTabIcon tab="skills" />
                   Skills
@@ -163,6 +169,12 @@ export function AgentInfoPanel(props: AgentInfoPanelProps) {
                   managementDisabled={managementDisabled}
                 />
               </TabsContent>
+
+              {props.renderWorkTab ? (
+                <TabsContent value="work" className="mt-0 min-h-0 flex-1 overflow-hidden">
+                  {props.renderWorkTab()}
+                </TabsContent>
+              ) : null}
 
               <TabsContent
                 value="skills"

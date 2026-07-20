@@ -58,6 +58,7 @@ import { SlackService } from './services/slack.service'
     SlackRepository,
     SlackRuntimeRepository,
     SlackBrainMappingRepository,
+    SlackPeopleRepository,
     SlackApiIntegration,
   ],
 })

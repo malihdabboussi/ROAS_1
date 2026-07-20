@@ -3,7 +3,9 @@ import { ConfigService } from '@nestjs/config'
 import { ModuleRef } from '@nestjs/core'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SupabaseServiceClient } from '@vibey/api-shared'
+import { SlackPeopleRepository } from '../../slack/repositories/slack-people.repository'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
+import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import { SpacesRepository } from '../repositories/spaces.repository'
 import {
   briefMeetingSummary,
@@ -30,6 +32,14 @@ export type SlackFollowUpConfirmPayload = {
   requested_at: string
   approved_at?: string
   approved_by_slack_user_id?: string
+  shadow_action_id?: string
+  /** Optional only for pending records created before agent-written drafts were introduced. */
+  draft_message?: string
+  draft_rationale?: string
+  draft_context_sources?: string[]
+  agent_key?: 'vibey'
+  skill_key?: 'post-call-delivery'
+  revision_count?: number
 }
 
 @Injectable()
@@ -41,6 +51,8 @@ export class MeetingFollowUpSlackConfirmService {
     private readonly config: ConfigService,
     private readonly moduleRef: ModuleRef,
     @Optional() private readonly slackTools?: SlackAgentToolsService,
+    @Optional() private readonly userAgentApi?: UserAgentApiService,
+    @Optional() private readonly slackPeopleRepo?: SlackPeopleRepository,
   ) {}
 
   resolveSuggestionIds(
@@ -108,18 +120,25 @@ export class MeetingFollowUpSlackConfirmService {
         unknown
       > | null) ?? null
 
-    const lookup = await this.slackTools.findUserByEmail(
-      input.supabase,
-      input.userId,
-      input.orgId,
-      { email: dmEmail },
-    )
+    const draft = await this.createPostCallDraft({
+      userId: input.userId,
+      orgId: input.orgId,
+      spaceId: input.spaceId,
+      callItem,
+      followUps,
+    })
+
+    const slackOrgId = await this.resolveSlackSendOrgId(input.supabase, input.userId, input.orgId)
+
+    const lookup = await this.slackTools.findUserByEmail(input.supabase, input.userId, slackOrgId, {
+      email: dmEmail,
+    })
     const slackUserId = String((lookup.user as { id?: string } | null | undefined)?.id ?? '').trim()
     if (!slackUserId) {
       throw new Error(`Slack user not found for email ${dmEmail}`)
     }
 
-    const dm = await this.slackTools.openDm(input.supabase, input.userId, input.orgId, {
+    const dm = await this.slackTools.openDm(input.supabase, input.userId, slackOrgId, {
       slack_user_id: slackUserId,
     })
     const channelId = String(dm.channel_id ?? '').trim()
@@ -137,9 +156,37 @@ export class MeetingFollowUpSlackConfirmService {
       followUps,
       confirmReaction,
       meetingUrl,
+      shareableDraft: draft.message,
     })
 
-    const sent = await this.slackTools.sendMessage(input.supabase, input.userId, input.orgId, {
+    let shadowActionId: string | undefined
+    if (slackOrgId && this.slackPeopleRepo) {
+      const target = await this.slackPeopleRepo.findPersonByEmail(
+        input.supabase,
+        slackOrgId,
+        dmEmail,
+      )
+      const action = await this.slackPeopleRepo.createShadowAction(input.supabase, {
+        orgId: slackOrgId,
+        userId: input.userId,
+        agentKey: 'vibey',
+        targetMemberId: target?.id ?? null,
+        actionKind: 'workflow',
+        proposedContent: draft.message,
+        rationale: draft.rationale,
+        metadata: {
+          source: 'meeting_follow_up',
+          target_email: dmEmail,
+          call_item_id: input.callItemId,
+          space_id: input.spaceId,
+          skill_key: 'post-call-delivery',
+          context_sources: draft.context_sources,
+        },
+      })
+      shadowActionId = action.id
+    }
+
+    const sent = await this.slackTools.sendMessage(input.supabase, input.userId, slackOrgId, {
       channel_id: channelId,
       text,
     })
@@ -155,6 +202,12 @@ export class MeetingFollowUpSlackConfirmService {
       confirm_reaction: confirmReaction,
       dm_email: dmEmail,
       requested_at: new Date().toISOString(),
+      ...(shadowActionId ? { shadow_action_id: shadowActionId } : {}),
+      draft_message: draft.message,
+      draft_rationale: draft.rationale,
+      draft_context_sources: draft.context_sources,
+      agent_key: 'vibey',
+      skill_key: 'post-call-delivery',
     }
 
     await this.repo.updateItem(
@@ -201,6 +254,88 @@ export class MeetingFollowUpSlackConfirmService {
       pending,
       slackUserId: input.slackUserId,
     })
+  }
+
+  async handleThreadReply(input: {
+    channelId: string
+    threadTs: string
+    text: string
+    slackUserId: string
+  }): Promise<boolean> {
+    const feedback = input.text.trim()
+    if (!feedback) return false
+    const supabase = this.resolveServiceSupabase()
+    if (!supabase) return false
+    const pending = await this.findPendingByMessage(supabase, input.channelId, input.threadTs)
+    if (!pending || pending.payload.status !== 'pending') return false
+
+    const [callItem, followUps] = await Promise.all([
+      this.repo.findItemById(supabase, pending.spaceId, pending.callItemId),
+      this.repo.findItemsByIds(supabase, pending.spaceId, pending.payload.space_item_ids),
+    ])
+    const draft = await this.createPostCallDraft({
+      userId: pending.userId,
+      orgId: pending.orgId,
+      spaceId: pending.spaceId,
+      callItem: (callItem as Record<string, unknown> | null) ?? null,
+      followUps,
+      currentDraft: pending.payload.draft_message,
+      feedback,
+    })
+    const slackOrgId = await this.resolveSlackSendOrgId(supabase, pending.userId, pending.orgId)
+    let shadowActionId = pending.payload.shadow_action_id
+    if (shadowActionId && slackOrgId && this.slackPeopleRepo) {
+      const previous = await this.slackPeopleRepo.findShadowAction(
+        supabase,
+        slackOrgId,
+        shadowActionId,
+      )
+      const replacement = await this.slackPeopleRepo.createShadowAction(supabase, {
+        orgId: slackOrgId,
+        userId: pending.userId,
+        agentKey: 'vibey',
+        targetMemberId: previous?.target_member_id ?? null,
+        actionKind: 'workflow',
+        proposedContent: draft.message,
+        rationale: draft.rationale,
+        metadata: {
+          ...(previous?.metadata ?? {}),
+          supersedes_shadow_action_id: shadowActionId,
+          revision_feedback: feedback,
+        },
+      })
+      await this.slackPeopleRepo.reviewShadowAction(supabase, {
+        actionId: shadowActionId,
+        orgId: slackOrgId,
+        reviewedBy: pending.userId,
+        status: 'dismissed',
+      })
+      shadowActionId = replacement.id
+    }
+    const nextPayload: SlackFollowUpConfirmPayload = {
+      ...pending.payload,
+      ...(shadowActionId ? { shadow_action_id: shadowActionId } : {}),
+      draft_message: draft.message,
+      draft_rationale: draft.rationale,
+      draft_context_sources: draft.context_sources,
+      revision_count: (pending.payload.revision_count ?? 0) + 1,
+    }
+    await this.repo.updateItem(
+      supabase,
+      pending.userId,
+      pending.spaceId,
+      pending.callItemId,
+      { custom_data: { [SLACK_FOLLOW_UP_CONFIRM_KEY]: nextPayload } },
+      pending.orgId,
+    )
+    if (this.slackTools) {
+      await this.slackTools.sendMessage(supabase, pending.userId, slackOrgId, {
+        channel_id: input.channelId,
+        thread_ts: input.threadTs,
+        text: `*Updated client-facing draft*\n\n${draft.message}\n\n_React :${pending.payload.confirm_reaction}: to the original review message when this is ready._`,
+      })
+    }
+    return true
   }
 
   private async approvePending(input: {
@@ -261,19 +396,59 @@ export class MeetingFollowUpSlackConfirmService {
         this.repo.findItemById(supabase, pending.spaceId, pending.callItemId),
         this.repo.findItemsByIds(supabase, pending.spaceId, pending.payload.space_item_ids),
       ])
-      const reply = buildShareableConfirmReply({
-        callItem: (callItem as Record<string, unknown> | null) ?? null,
-        followUps,
-      })
+      const reply = pending.payload.draft_message?.trim()
+        ? pending.payload.draft_message
+        : buildShareableConfirmReply({
+            callItem: (callItem as Record<string, unknown> | null) ?? null,
+            followUps,
+          })
       const slackOrgId = await this.resolveSlackSendOrgId(supabase, ownerUserId, orgId)
 
-      await this.slackTools
+      let claimedShadowAction: Awaited<
+        ReturnType<SlackPeopleRepository['claimShadowActionForSend']>
+      > = null
+      if (pending.payload.shadow_action_id && slackOrgId && this.slackPeopleRepo) {
+        const reviewed = await this.slackPeopleRepo.reviewShadowAction(supabase, {
+          actionId: pending.payload.shadow_action_id,
+          orgId: slackOrgId,
+          reviewedBy: ownerUserId,
+          status: 'approved',
+        })
+        if (!reviewed) return true
+        claimedShadowAction = await this.slackPeopleRepo.claimShadowActionForSend(
+          supabase,
+          slackOrgId,
+          reviewed.id,
+        )
+        if (!claimedShadowAction) return true
+      }
+
+      const sent = await this.slackTools
         .sendMessage(supabase, ownerUserId, slackOrgId, {
           channel_id: pending.payload.channel_id,
           text: reply,
           thread_ts: pending.payload.message_ts,
         })
-        .catch((err) => this.logger.warn(`Failed to reply after Slack confirm: ${err}`))
+        .catch((err) => {
+          this.logger.warn(`Failed to reply after Slack confirm: ${err}`)
+          return null
+        })
+      if (!sent && claimedShadowAction && slackOrgId && this.slackPeopleRepo) {
+        await this.slackPeopleRepo.markShadowActionFailed(
+          supabase,
+          slackOrgId,
+          claimedShadowAction.id,
+        )
+      }
+      if (sent && claimedShadowAction && slackOrgId && this.slackPeopleRepo) {
+        await this.slackPeopleRepo.markShadowActionSent(supabase, {
+          actionId: claimedShadowAction.id,
+          orgId: slackOrgId,
+          sentBy: ownerUserId,
+          slackTs: String((sent as { ts?: string }).ts ?? '').trim() || null,
+          metadata: claimedShadowAction.metadata,
+        })
+      }
     }
 
     return true
@@ -288,12 +463,65 @@ export class MeetingFollowUpSlackConfirmService {
   markdownLinksToSlack = markdownLinksToSlack
   resolveFathomUrl = resolveFathomUrl
 
+  private async createPostCallDraft(input: {
+    userId: string
+    orgId: string | null
+    spaceId: string
+    callItem: Record<string, unknown> | null
+    followUps: Array<Record<string, unknown>>
+    currentDraft?: string
+    feedback?: string
+  }): Promise<{ message: string; rationale: string; context_sources: string[] }> {
+    if (!this.userAgentApi) throw new Error('User agent API is not available')
+    const internalToken =
+      this.config.get<string>('INTERNAL_API_TOKEN') ?? process.env.INTERNAL_API_TOKEN ?? ''
+    if (!internalToken) throw new Error('INTERNAL_API_TOKEN not configured')
+    const response = await this.userAgentApi.invoke(
+      input.userId,
+      '/api/agents/post-call-draft',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Internal-Token': internalToken },
+        body: JSON.stringify({
+          space_id: input.spaceId,
+          owner_user_id: input.userId,
+          org_id: input.orgId,
+          agent_key: 'vibey',
+          payload: {
+            call: input.callItem,
+            follow_ups: input.followUps,
+            ...(input.currentDraft ? { current_draft: input.currentDraft } : {}),
+            ...(input.feedback ? { revision_feedback: input.feedback } : {}),
+          },
+        }),
+      },
+      { timeoutMs: 180_000, logTag: `meeting_follow_up_draft user=${input.userId}` },
+    )
+    if (!response.ok) throw new Error(`Post-call delivery returned ${response.status}`)
+    const body = (await response.json()) as {
+      draft?: { message?: string; rationale?: string; context_sources?: string[] }
+    }
+    const message = body.draft?.message?.trim() ?? ''
+    const rationale = body.draft?.rationale?.trim() ?? ''
+    if (!message || !rationale) throw new Error('Post-call delivery returned an invalid draft')
+    return {
+      message,
+      rationale,
+      context_sources: Array.isArray(body.draft?.context_sources)
+        ? body.draft.context_sources.filter(
+            (source): source is string => typeof source === 'string',
+          )
+        : [],
+    }
+  }
+
   /** Call items can be personal (org_id null) while Slack is connected on an org. */
   private async resolveSlackSendOrgId(
     supabase: SupabaseClient,
     userId: string,
     preferredOrgId: string | null,
   ): Promise<string | null> {
+    if (preferredOrgId) return preferredOrgId
     const { data, error } = await supabase
       .from('agent_channels')
       .select('org_id')

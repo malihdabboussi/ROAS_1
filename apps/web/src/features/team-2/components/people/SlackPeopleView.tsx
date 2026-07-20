@@ -2,7 +2,13 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { CircleUserRound, RefreshCw, UserRoundCheck, UsersRound } from 'lucide-react'
+import {
+  CircleUserRound,
+  MessageSquareText,
+  RefreshCw,
+  UserRoundCheck,
+  UsersRound,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { SLACK_PEOPLE_MESSAGES } from '../../config/messages.config'
@@ -162,6 +168,38 @@ export function SlackPeopleView() {
           <div className="border-destructive text-destructive p-spacing-4 rounded-spacing-3 body-3 border">
             {SLACK_PEOPLE_MESSAGES.LOAD_ERROR}
           </div>
+        ) : null}
+
+        {!selectedPersonId ? (
+          <nav
+            aria-label="People views"
+            className="surface-card border-border p-spacing-1 rounded-spacing-3 flex w-fit border"
+          >
+            <button
+              type="button"
+              onClick={openPeople}
+              aria-current={!showShadowInbox ? 'page' : undefined}
+              className={
+                !showShadowInbox
+                  ? 'button-compact button-glass-neutral bg-secondary'
+                  : 'button-compact button-glass-neutral'
+              }
+            >
+              <UsersRound className="icon-xs" /> People
+            </button>
+            <button
+              type="button"
+              onClick={openShadowInbox}
+              aria-current={showShadowInbox ? 'page' : undefined}
+              className={
+                showShadowInbox
+                  ? 'button-compact button-glass-neutral bg-secondary'
+                  : 'button-compact button-glass-neutral'
+              }
+            >
+              <MessageSquareText className="icon-xs" /> Conversations
+            </button>
+          </nav>
         ) : null}
 
         {!connected ? (

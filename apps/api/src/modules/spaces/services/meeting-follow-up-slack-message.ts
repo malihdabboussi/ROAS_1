@@ -205,11 +205,13 @@ export function buildConfirmMessage(input: {
   followUps: Array<Record<string, unknown>>
   confirmReaction: string
   meetingUrl: string
+  shareableDraft?: string
 }): string {
   const title = String(input.callTitle || 'Meeting').trim() || 'Meeting'
   const brief = briefMeetingSummary(input.callItem)
   const fathomUrl = resolveFathomUrl(input.callItem)
   const lines = input.followUps.map((item, index) => formatFollowUpLine(item, index))
+  const proposedRecap = input.shareableDraft?.trim()
 
   return [
     `*Meeting follow-ups ready for review*`,
@@ -217,11 +219,12 @@ export function buildConfirmMessage(input: {
     '',
     ...(brief ? [brief, ''] : []),
     ...(fathomUrl ? [`<${fathomUrl}|Open Fathom recording>`, ''] : []),
+    ...(proposedRecap ? [`*Proposed shareable recap*`, proposedRecap, ''] : []),
     `*Proposed action items*`,
     ...lines,
     '',
     `React with :${input.confirmReaction}: to confirm — I'll post a shareable recap in this thread.`,
-    `Reply in this thread if anything should change (feedback loop ships next).`,
+    `Reply in this thread with any changes. I'll return an updated client-facing draft here.`,
     `<${input.meetingUrl}|Open in Meetings>`,
   ].join('\n')
 }

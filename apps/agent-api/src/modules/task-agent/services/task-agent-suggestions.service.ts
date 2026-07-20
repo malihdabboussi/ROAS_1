@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common'
+import { AgentRuntimeReadinessService } from '../../agent-sync/services/agent-runtime-readiness.service'
 import type { OpenClawInputMessage, SendFn } from '../../chat/services/openclaw-proxy.service'
 import { OpenClawProxyService } from '../../chat/services/openclaw-proxy.service'
-import { AgentRuntimeReadinessService } from '../../agent-sync/services/agent-runtime-readiness.service'
 import { AgentRuntimeService } from '../../shared/services/agent-runtime.service'
 import { TaskAgentRepository } from '../repositories/task-agent.repository'
+import { TaskAgentInputService } from './task-agent-input.service'
+
+const POST_CALL_DELIVERY_SKILL_KEY = 'post-call-delivery'
 
 export interface SuggestTasksPayload {
   space_id: string
@@ -31,6 +34,20 @@ export interface SuggestMeetingTitlePayload {
   payload: Record<string, unknown>
 }
 
+export interface PostCallDraftPayload {
+  space_id: string
+  owner_user_id: string
+  org_id: string | null
+  agent_key?: string
+  payload: Record<string, unknown>
+}
+
+export interface PostCallDraft {
+  message: string
+  rationale: string
+  context_sources: string[]
+}
+
 @Injectable()
 export class TaskAgentSuggestionsService {
   constructor(
@@ -38,7 +55,77 @@ export class TaskAgentSuggestionsService {
     private readonly openClaw: OpenClawProxyService,
     private readonly agentRuntime: AgentRuntimeService,
     private readonly runtimeReadiness: AgentRuntimeReadinessService,
+    private readonly inputService?: TaskAgentInputService,
   ) {}
+
+  async draftPostCall(payload: PostCallDraftPayload): Promise<{ draft: PostCallDraft }> {
+    const agentKey = payload.agent_key?.trim() || 'vibey'
+    const runtime = await this.agentRuntime.resolveConversationRuntime(
+      this.repository.client,
+      payload.owner_user_id,
+      agentKey,
+      payload.org_id,
+    )
+    const skills = this.inputService
+      ? await this.inputService.resolveTaskSlashSkills({
+          userId: payload.owner_user_id,
+          agentKey: runtime.agentKey,
+          keys: [POST_CALL_DELIVERY_SKILL_KEY],
+          orgId: payload.org_id,
+        })
+      : []
+    if (skills.length === 0) {
+      throw new Error(`${POST_CALL_DELIVERY_SKILL_KEY} skill is not available`)
+    }
+    const requiredSkillFiles = skills.flatMap((skill) => skill.requiredSkillFiles)
+    await this.runtimeReadiness.ensureRuntimeReady({
+      userId: payload.owner_user_id,
+      orgId: payload.org_id,
+      agentKey: runtime.agentKey,
+      gatewayAgentId: runtime.gatewayAgentId,
+      requiredSkillFiles,
+    })
+    const sessionKey = this.agentRuntime.buildChatSessionKey({
+      gatewayAgentId: runtime.gatewayAgentId,
+      agentKey: runtime.agentKey,
+      userId: payload.owner_user_id,
+      conversationId: `post-call-delivery-${payload.space_id}`,
+      orgId: payload.org_id ?? undefined,
+    })
+    const skillContext = this.inputService?.buildSlashSkillContext(skills) ?? ''
+    const instructions = [
+      skillContext,
+      'Return JSON only. Do not include markdown fences or commentary.',
+      'Use this exact shape: {"message":"Slack-ready recap","rationale":"why this draft matters","context_sources":["source"]}',
+      'The message is a Shadow proposal. Do not claim it was sent.',
+    ]
+      .filter(Boolean)
+      .join('\n\n')
+    let content = ''
+    const send: SendFn = async (type, data) => {
+      if (type === 'content_delta' && typeof data.content === 'string') content += data.content
+    }
+    const result = await this.openClaw.streamCompletion({
+      input: [
+        {
+          type: 'message',
+          role: 'user',
+          content: JSON.stringify({ payload: payload.payload }, null, 2),
+        },
+      ],
+      instructions,
+      send,
+      agentId: runtime.gatewayAgentId,
+      sessionKey,
+      userId: payload.owner_user_id,
+      conversationId: `post-call-delivery-${payload.space_id}`,
+      channel: 'studio',
+      disableResponseFilter: true,
+    })
+    const draft = parsePostCallDraft(content || result.content || '')
+    if (!draft) throw new Error('Post-call delivery returned an invalid draft')
+    return { draft }
+  }
 
   async suggestMeetingTitle(
     payload: SuggestMeetingTitlePayload,
@@ -209,6 +296,35 @@ function parseSuggestedMeetingTitle(raw: string): string | null {
     if (!title || title.length < 4) return null
     if (/^(impromptu|untitled|zoom)/i.test(title)) return null
     return title.slice(0, 120)
+  } catch {
+    return null
+  }
+}
+
+function parsePostCallDraft(raw: string): PostCallDraft | null {
+  const trimmed = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim()
+  const jsonText = trimmed.startsWith('{') ? trimmed : (trimmed.match(/\{[\s\S]*\}/)?.[0] ?? '')
+  if (!jsonText) return null
+  try {
+    const parsed = JSON.parse(jsonText) as Record<string, unknown>
+    const message = typeof parsed.message === 'string' ? parsed.message.trim() : ''
+    const rationale = typeof parsed.rationale === 'string' ? parsed.rationale.trim() : ''
+    const contextSources = Array.isArray(parsed.context_sources)
+      ? parsed.context_sources
+          .filter((source): source is string => typeof source === 'string')
+          .map((source) => source.trim())
+          .filter(Boolean)
+      : []
+    if (!message || !rationale) return null
+    return {
+      message: message.slice(0, 12000),
+      rationale: rationale.slice(0, 1000),
+      context_sources: contextSources.slice(0, 20),
+    }
   } catch {
     return null
   }

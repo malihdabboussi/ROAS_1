@@ -2065,7 +2065,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   run_ads_research_search: {
     section: 'Research',
     description:
-      'Runs the same Ads Research search used by the manual Space view, then saves the returned result snapshot into that Space. Platforms: meta, tiktok, google. kind can be topic or brand; Google supports brand only, and all brand searches require an advertiser object from search_ads_research_advertisers. Optional save_top_n also saves top ads as Space items.',
+      'Runs the same Ads Research search used by the manual Space view, then saves the returned result snapshot into that Space. Mission runs automatically link the visual snapshot to the active mission so it appears in the research report. Platforms: meta, tiktok, google. kind can be topic or brand; Google supports brand only, and all brand searches require an advertiser object from search_ads_research_advertisers. Optional save_top_n also saves top ads as Space items.',
     parameters:
       'Topic search:\n```json\n{"action":"run_ads_research_search","label":"Searching Ads Research","data":{"platform":"meta","kind":"topic","query":"fitness coaching","filters":{"country":"US"},"save_top_n":5}}\n```\nBrand search:\n```json\n{"action":"run_ads_research_search","label":"Searching brand ads","data":{"platform":"google","kind":"brand","query":"Nike","advertiser":{"id":"adv-id","name":"Nike","platform_ref":"advertiser-ref"}}}\n```',
   },

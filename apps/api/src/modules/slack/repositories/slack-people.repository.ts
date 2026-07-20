@@ -217,6 +217,23 @@ export class SlackPeopleRepository {
     return (data as SlackDiscoveredPerson | null) ?? null
   }
 
+  async findPersonByEmail(
+    supabase: SupabaseClient,
+    orgId: string,
+    email: string,
+  ): Promise<SlackDiscoveredPerson | null> {
+    const { data, error } = await supabase
+      .from('channel_members')
+      .select(PERSON_SELECT)
+      .eq('org_id', orgId)
+      .eq('platform', 'slack')
+      .ilike('email', email)
+      .limit(1)
+      .maybeSingle()
+    if (error) throw new Error(`Failed to load Slack person by email: ${error.message}`)
+    return (data as SlackDiscoveredPerson | null) ?? null
+  }
+
   async listPersonShadowActions(
     supabase: SupabaseClient,
     orgId: string,
@@ -241,7 +258,7 @@ export class SlackPeopleRepository {
       orgId: string
       userId: string
       agentKey: string
-      targetMemberId: string
+      targetMemberId: string | null
       actionKind: 'message' | 'workflow'
       proposedContent: string
       rationale: string

@@ -35,6 +35,28 @@ export class SlackService extends SlackEventsBase {
     )
   }
 
+  protected async handleMessageEvent(
+    teamId: string,
+    event: NonNullable<SlackEventEnvelope['event']>,
+  ): Promise<void> {
+    const channelId = String(event.channel ?? '').trim()
+    const threadTs = String(event.thread_ts ?? '').trim()
+    const text = String(event.text ?? '').trim()
+    const slackUserId = String(event.user ?? '').trim()
+    if (channelId && threadTs && text && slackUserId) {
+      const { MeetingFollowUpSlackConfirmService } =
+        await import('../../spaces/services/meeting-follow-up-slack-confirm.service')
+      const confirm = this.moduleRef.get(MeetingFollowUpSlackConfirmService, { strict: false })
+      if (
+        confirm &&
+        (await confirm.handleThreadReply({ channelId, threadTs, text, slackUserId }))
+      ) {
+        return
+      }
+    }
+    await super.handleMessageEvent(teamId, event)
+  }
+
   protected async handleReactionAddedEvent(
     teamId: string,
     event: NonNullable<SlackEventEnvelope['event']>,

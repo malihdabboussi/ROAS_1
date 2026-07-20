@@ -1,7 +1,7 @@
 'use client'
 
 import type { LucideIcon } from 'lucide-react'
-import { CircleUser, Radio, Shield, Wrench } from 'lucide-react'
+import { BriefcaseBusiness, CircleUser, Radio, Shield, Wrench } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { AgentInfoPanelTab } from './agent-info-panel-tabs'
 
@@ -11,6 +11,7 @@ export const AGENT_INFO_PANEL_TAB_META: Record<
   { label: string; menuLabel: string; Icon: LucideIcon }
 > = {
   info: { label: 'Info', menuLabel: 'Edit', Icon: CircleUser },
+  work: { label: 'Work', menuLabel: 'Work', Icon: BriefcaseBusiness },
   skills: { label: 'Skills', menuLabel: 'Skills', Icon: Wrench },
   communication: { label: 'Comms', menuLabel: 'Comms', Icon: Radio },
   access: { label: 'Access', menuLabel: 'Access', Icon: Shield },
@@ -20,8 +21,12 @@ export const AGENT_INFO_PANEL_TAB_ICON_CLASS = 'icon-xs shrink-0'
 
 export const AGENT_INFO_PANEL_TAB_ICON_RAIL_CLASS = 'icon-sm shrink-0'
 
-export function getAgentInfoPanelTabsForDisplay(showAccess: boolean): AgentInfoPanelTab[] {
+export function getAgentInfoPanelTabsForDisplay(
+  showAccess: boolean,
+  showWork = false,
+): AgentInfoPanelTab[] {
   const tabs: AgentInfoPanelTab[] = ['info', 'skills', 'communication']
+  if (showWork) tabs.splice(1, 0, 'work')
   if (showAccess) tabs.push('access')
   return tabs
 }
