@@ -1,10 +1,10 @@
 # Social Research
 
-Last Modified: 2026-06-19
+Last Modified: 2026-07-20
 
 ## Overview
 
-Social Research is the shared Spaces research surface behind the separate IG Research, TikTok Research, YouTube Research, and X Research views. Each view has its own type, tracked accounts, filters, settings, and persisted config, while the implementation uses shared platform-aware services and components.
+Social Research is the shared Spaces research surface behind the separate IG Research, TikTok Research, YouTube Research, and X Research views. Ads Research adds a mission-driven research workspace plus the existing manual ad-library search. Each view has its own type, tracked accounts, filters, settings, and persisted config, while the implementation uses shared platform-aware services and components.
 
 Supported platform view types:
 
@@ -22,6 +22,7 @@ Supported platform view types:
 5. Thumbnails and profile images are cached through the media backend before persistence.
 6. The grid, list, and modal render cached Vibey-hosted URLs instead of temporary platform CDN URLs.
 7. Chat agents can run Social Research and Ads Research searches through agent-api actions. Those actions call the same manual Space search endpoints and persist the same saved-search snapshots used by the Space views.
+8. In Ads Research, the user can start the deterministic `ads-research` mission. Atlas prepares campaign context, Blaze analyzes mounted Meta performance and competitive ads, then produces native Docs for analysis, recommendations, draft copy, and video scripts before a human approval gate.
 
 ## Backend Layer
 
@@ -60,6 +61,10 @@ The media backend exposes `POST /api/media/cache-social-images` for authenticate
 
 Account add, sync, remove, and Social Research schema saves use the selected `activeSpace.org_id` instead of relying on the browser's global active org. This keeps People-panel mutations scoped to the Space the user is viewing, even when their session org differs.
 
+The Ads Research view opens on **Research Runs**. Its launcher accepts an optional brief, Standard or Deep depth, reporting period, campaign scope, competitors, and reference links. Run cards show mission progress and native deliverables and open the standard mission detail. **Library Search** remains available as the secondary surface for manual Meta, TikTok, and Google ad-library searches. Library-only group, layout, sort, and refresh controls stay hidden while Research Runs is active.
+
+The Ads Research mission deliberately stops before final creative production or Meta publishing. Recommended copy and video scripts load `dylans-super-voice` as their only voice authority, use native editable Docs, and reject PDF output. Ad Creation, Ad Launch, and Ad Optimization remain separate future workflows.
+
 New Space items store:
 
 - `thumbnail_url` as the cached display URL.
@@ -83,6 +88,10 @@ YouTube long-form videos use `youtube_video` (16:9 grid cards) and Shorts use `y
 X tweets use `tweet` (square cards) and video tweets use `tweet_video` (16:9). Each can be toggled independently via `media_show_x_tweets` and `media_show_x_videos`.
 
 ## Decision Log
+
+### 2026-07-20 - Mission-driven Ads Research workspace
+
+Ads Research now opens on a visual Research Runs workspace backed by the deterministic `ads-research` mission. The mission connects Brain context, mounted Meta performance, visual ad-library evidence, recommendations, draft copy, and draft video scripts, then pauses for human approval. The original manual ad-library workflow remains intact under Library Search so research evidence can still be found or curated directly.
 
 ### 2026-06-19 - Space-scoped account mutations
 

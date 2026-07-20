@@ -23,6 +23,7 @@ import type { SpaceToolbarContext } from '../types'
 export function AdsResearchToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
   const { activeView, handleViewPatch } = ctx
   const adsBridge = useAdsResearchToolbarBridgeStore((s) => s.bridge)
+  const surface = useAdsResearchToolbarBridgeStore((s) => s.surface)
   const [groupMenuOpen, setGroupMenuOpen] = useState(false)
   const [layoutMenuOpen, setLayoutMenuOpen] = useState(false)
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
@@ -42,7 +43,7 @@ export function AdsResearchToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
     return () => document.removeEventListener('mousedown', handleOutside, true)
   }, [groupMenuOpen, layoutMenuOpen, sortMenuOpen])
 
-  if (!activeView) {
+  if (!activeView || surface === 'runs') {
     return (
       <ToolbarShell ctx={ctx}>
         <div className="flex min-w-0 flex-nowrap items-center gap-1" />

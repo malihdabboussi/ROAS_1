@@ -1,3 +1,4 @@
+import { ADS_RESEARCH_PLAYBOOK_ID, expandAdsResearchPlaybook } from './ads-research.playbook'
 import {
   expandMetaAdsLaunchPlaybook,
   META_ADS_LAUNCH_PLAYBOOK_ID,
@@ -17,5 +18,6 @@ export function expandMissionPlaybook(
   if (input.playbookId === WEBINAR_FULFILLMENT_PLAYBOOK_ID)
     return expandWebinarFulfillmentPlaybook(input)
   if (input.playbookId === META_ADS_LAUNCH_PLAYBOOK_ID) return expandMetaAdsLaunchPlaybook(input)
+  if (input.playbookId === ADS_RESEARCH_PLAYBOOK_ID) return expandAdsResearchPlaybook(input)
   return null
 }

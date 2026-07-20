@@ -140,9 +140,8 @@ const DocsView = dynamic(() => import('../DocsView').then((mod) => mod.DocsView)
 const ListView = dynamic(() => import('../ListView').then((mod) => mod.ListView), {
   loading: SpaceViewLoading,
 })
-// These three carry imperative handles (refresh() from the toolbar). React 19
-// passes `ref` through next/dynamic's props spread to the underlying
-// forwardRef components, so the refs keep working; only the chunk is deferred.
+// These three carry imperative toolbar refresh handles. React 19 passes `ref` through
+// next/dynamic to the underlying forwardRef components while deferring the chunks.
 const ContactsView = dynamic(
   () => import('../contacts/ContactsView').then((mod) => mod.ContactsView),
   { loading: SpaceViewLoading },
@@ -392,7 +391,7 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
           key={activeView!.id}
           view={activeView!}
           items={items}
-          spaceId={activeSpace.id}
+          researchContext={{ spaceId: activeSpace.id, campaignId: activeSpace.campaign_id ?? null }}
         />
       ) : isIgResearchView ||
         isTiktokResearchView ||

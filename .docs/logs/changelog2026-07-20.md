@@ -1,5 +1,12 @@
 # Changelog - July 20, 2026
 
+## [2026-07-20 14:00] - [FEATURE]
+
+What: Rebuilt Ads Research around visual Research Runs while retaining manual Library Search. Added a deterministic Atlas-to-Blaze mission for campaign context, current Meta analysis, competitive research, recommended ads and Dylan Super Voice copy, draft video scripts, and human approval. Updated the market-research skill contract to save native Space searches and use mission-specific document titles.
+Why: Manual one-by-one ad-library search did not connect current account performance, campaign Brain context, competitive evidence, or usable recommendations into one reviewable workflow.
+Impact: A campaign can now launch comprehensive ad research directly from its Ads Research view, inspect mission progress and native deliverables, and approve selected directions for a future Ad Creation mission. Research does not create final visuals, publish ads, or generate PDFs.
+Files: Ads Research mission playbook and tests, Ads Research run workspace and launcher, toolbar surface bridge, mission payload builder, market-research skill migration and contract test, and social research documentation.
+
 ## [2026-07-20 13:34] - [FIX]
 
 What: Renamed the unified Paid Ads workspace modes to Analyze and Launch, placed Analyze first, and made Analyze the default for views without a saved mode.
