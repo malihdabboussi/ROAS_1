@@ -34,6 +34,7 @@ export interface Space {
   campaign_id: string | null
   is_template: boolean
   visibility: 'private' | 'team'
+  space_kind?: 'standard' | 'personal_dashboard'
   share_link_enabled?: boolean
   share_token?: string | null
   share_meta?: {

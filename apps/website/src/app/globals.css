@@ -3788,69 +3788,6 @@ html:not(.dark) .text-color-deep {
   border-left: 1px solid var(--color-shell-border, var(--color-border));
   background: var(--color-background);
 }
-.shell-space-work-tab-strip {
-  display: flex;
-  min-width: 0;
-  flex-shrink: 0;
-  align-items: stretch;
-  gap: 4px;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--color-border);
-  padding: 6px 8px;
-}
-.shell-space-work-tab {
-  display: flex;
-  max-width: 220px;
-  min-width: 0;
-  align-items: center;
-  gap: 2px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-}
-.shell-space-work-tab-active {
-  border-color: var(--color-border);
-  background: var(--color-secondary);
-}
-.shell-space-work-tab-main {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  color: var(--color-foreground);
-  font-size: 12px;
-  line-height: 1.2;
-  text-align: left;
-}
-.shell-space-work-tab-main:hover {
-  background: var(--color-hover-subtle);
-  border-radius: 8px;
-}
-.shell-space-work-tab-close {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  margin-right: 4px;
-  border-radius: 6px;
-  color: var(--color-muted-foreground);
-}
-.shell-space-work-tab-close:hover {
-  background: var(--color-hover-subtle);
-  color: var(--color-foreground);
-}
-.shell-space-work-empty {
-  display: flex;
-  flex-shrink: 0;
-  align-items: flex-start;
-  gap: 10px;
-  border-bottom: 1px solid var(--color-border);
-  padding: 10px 12px;
-  background: var(--color-card);
-}
 .shell-space-work-dock-body {
   display: flex;
   min-width: 0;

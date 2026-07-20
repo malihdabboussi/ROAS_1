@@ -24,9 +24,9 @@ import {
 import { useUserRole } from '@/hooks/use-user-role'
 import { billingApi } from '@/lib/billing/billing-api'
 import { SIDEBAR_TOAST_ERRORS } from '../config/sidebar-toast-errors.config'
-import type { ConversationTypeFilter, SidebarProps } from './sidebar-types'
 import type { HubMenuSectionId } from './sidebar-hq-hub-menu.types'
 import { defaultHubMenuExpandedSections, toggleHubMenuSection } from './sidebar-hq-hub-menu.utils'
+import type { ConversationTypeFilter, SidebarProps } from './sidebar-types'
 import { useSidebarCampaignsCore } from './useSidebarCampaignsCore'
 
 function isAppTeamRoute(pathname: string) {
@@ -167,7 +167,10 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     setAgentsFlyout(false)
   }, [pathname])
 
+  // Prefetch in HQ mode so Campaigns hover flyouts are not empty while the
+  // first spaces page is still in flight after mouseenter.
   const hubSpacesDataEnabled =
+    sidebarMode === 'hq' ||
     activeManagePanel === 'spaces' ||
     (hubMenuOpen && hubMenuExpandedSections.has('spaces'))
   const hubProjectsDataEnabled =

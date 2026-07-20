@@ -56,6 +56,20 @@ export class FathomController {
     return { success: true, ...settings }
   }
 
+  @Post('ensure-meetings-space')
+  @UseGuards(AuthGuard, OrgContextGuard, OrgRoleGuard)
+  async ensureMeetingsSpace(
+    @Supabase() supabase: SupabaseClient,
+    @CurrentUser() user: { id: string },
+    @OrgContext() scope: RequestScope,
+  ) {
+    const result = await this.oauth.ensureMeetingsSpace(supabase, {
+      ...scope,
+      userId: scope.userId ?? user.id,
+    })
+    return { success: true, space: result }
+  }
+
   @Post('connect')
   @UseGuards(AuthGuard, OrgContextGuard, OrgRoleGuard)
   async connect(

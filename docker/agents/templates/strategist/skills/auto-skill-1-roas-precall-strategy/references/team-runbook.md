@@ -11,7 +11,7 @@
 3. Paste the prompt below, fill the brackets, attach/paste everything from step 1.
 4. Read the output. Fix anything you know is wrong. You are the first checkpoint.
 5. Send the map to the strategist (Dylan/Nate/Aaron) for a thumbs-up BEFORE the call.
-6. Save the markdown + HTML to the client's Drive folder, drop the HTML in the internal Slack thread, link the map in the portal Strategist tab, send the agenda to the call runner. Keep the HTML open on the call and tick the verify list live.
+6. In Vibey: confirm three artifacts exist — Strategy Map Doc, Visual HTML one-pager on that Doc (`generate_visual_html`), and Confirm-or-Correct Call Agenda Doc. Open the Visual one-pager on the call and tick the verify list live.
 7. On the call: open with "here's what we think, tell us where we're wrong."
 8. Right after the call: run auto-skill-2-roas-strategy-adjust with the call transcript + your notes. Fact-check its output, get the strategist's approval by EOD, post the strategy message in the client's channel.
 
@@ -33,8 +33,9 @@ PASTED/ATTACHED:
 - Links: [website] [socials] [current funnel if any]
 
 Run the 5-phase research loop and the frameworks, and produce the
-Pre-Call Strategy Map (with suggested offers and suggested avatars),
-the Confirm-or-Correct call agenda, and the portal pre-fill values
+Pre-Call Strategy Map Doc (with suggested offers and suggested avatars),
+the Visual HTML one-pager via generate_visual_html on that Doc,
+the Confirm-or-Correct call agenda Doc, and the portal pre-fill values
 per the skill's templates.
 
 Flag every gap as [MISSING - ask on call]. Do not invent anything

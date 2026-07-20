@@ -7,9 +7,9 @@ description: Builds the pre-call strategy map for a new ROAS client BEFORE the i
 
 **Trigger:** new client submits the onboarding form (status NEW_CLIENT_INTAKE). Run before the internal onboarding call — you have a 1-3 day window.
 **Reads:** onboarding form answers, sales handoff notes, portal AI summary + deep research + business research reports, client website/socials/current funnel.
-**Produces:** Pre-Call Strategy Map (one page, incl. suggested offers + suggested avatars) + Confirm-or-Correct call agenda + portal pre-fill values.
+**Produces:** Pre-Call Strategy Map (markdown Doc) + Visual HTML one-pager of that map + Confirm-or-Correct call agenda + portal pre-fill values.
 **Checkpoint:** strategist (Dylan/Nate/Aaron) reviews the map before the call. The map is internal — the client never sees the raw doc.
-**Posts to:** portal Strategist tab (strategy brief link), client's internal Drive folder. Call agenda goes to whoever runs the call.
+**Posts to:** campaign Docs (markdown) + Visual tab / Visual Doc card (HTML one-pager) in Vibey. Call agenda is a second Doc for whoever runs the call.
 
 The point: the client should feel "these people already understand my business" in the first ten minutes. Our message beats their discovery. The call stops being an interview and becomes a working session where we confirm a map we already drew.
 
@@ -81,14 +81,28 @@ Include: funnel outline (pages needed), whether their own list gets pushed (DBR 
 ### Step 7 — The Confirm-or-Correct list
 The 5-8 highest-leverage assumptions the call must verify, each phrased as a QUESTION or a "we believe X, where are we wrong?" statement with a fallback. Example: "We believe the $1,997 program is the lead offer and the $8K mastermind is backend. If backwards, campaign type flips to VSL call-booking." Never phrase a verify item as a verdict or accusation ("the form contradicts the site") — neutral questions only ("confirm exact event dates and length; all copy depends on it"). This list IS the new call agenda for steps 2-4 of the guided call.
 
-### Step 8 — Output and route
-Build the artifacts per `references/output-template.md`:
-1. **Pre-Call Strategy Map (markdown)** — one page, the sections above compressed, including suggested offers, suggested avatars, and market proof receipts. This is the record copy for Drive.
-2. **HTML one-pager** — the same map rendered as a single self-contained HTML file per `references/html-onepager.md`: headline callout, 3S badges, offer/avatar cards, linked competitor table, timeline chips, and the verify list as clickable checkboxes the AM ticks live on the call. This is the copy humans actually use.
-3. **Call agenda** — mapped to the portal's guided call steps: steps 2-4 become confirm-or-correct (led by the list), step 5 stays logistics/access. The call MUST leave with offer, pricing, campaign type, and budget verified.
-4. **Portal pre-fill values** — ready to paste into the call fields: main offer name/price/LTV estimate, USP, avatar description, primary + secondary campaign type, compliance level.
+### Step 8 — Output and route (Vibey artifacts — required)
+Build the artifacts per `references/output-template.md` and `references/html-onepager.md`. Do **not** stop at markdown Docs. Do **not** invent Drive/Slack/portal uploads — Vibey has no agent action for those.
 
-Save both files to the client's Drive folder, drop the HTML in the internal Slack thread, link the map in the portal Strategist tab, hand the agenda to the call runner.
+**Required save sequence (every run):**
+
+1. **`save_document` — Pre-Call Strategy Map (markdown)**  
+   Title: `[Client] — Pre-Call Strategy Map`.  
+   Body: one page per `references/output-template.md` Artifact 1 (suggested offers, suggested avatars, market proof receipts).  
+   This is the record copy. Capture `space_item_id` (or `document_id` + dual-write id) from the result.
+
+2. **`generate_visual_html` — HTML one-pager (required)**  
+   Call on the map Doc's `item_id` / `space_item_id` immediately after step 1.  
+   Pass `style_hint: "one-pager"` and a prompt that matches `references/html-onepager.md` (dark header, gold headline callout, 3S badges, offer/avatar cards, competitor table with links, timeline chips, INTERNAL ONLY risks, verify checklist as native HTML checkboxes — no scripts).  
+   This is the copy humans open on the call. A markdown-only run is incomplete.
+
+3. **`save_document` — Confirm-or-Correct Call Agenda**  
+   Title: `[Client] — Confirm-or-Correct Call Agenda`.  
+   Body: Artifact 2 from `references/output-template.md`. Guided steps 2–4 = confirm-or-correct; step 5 = logistics/access. Call MUST leave with offer, pricing, campaign type, and budget verified.
+
+4. **Portal pre-fill values** — include as the last section of the Strategy Map Doc (and echoed in the Visual one-pager). Ready to paste: main offer name/price/LTV estimate, USP, avatar description, primary + secondary campaign type, compliance level.
+
+If `save_document` does not return `space_item_id`, call `list_documents` for the campaign/space, find the map Doc, then run `generate_visual_html`. Never claim the HTML exists unless `generate_visual_html` succeeded.
 
 **What happens after the call (not this skill):** `auto-skill-2-roas-strategy-adjust` reruns the map against the call transcript + AM notes, AM fact-checks, strategist approves by EOD of the call day, and the client strategy message goes to their channel. There is no separate strategy session call.
 
@@ -96,6 +110,7 @@ Save both files to the client's Drive folder, drop the HTML in the internal Slac
 
 ## HARD RULES
 
+- **Markdown + Visual HTML, every run.** `save_document` for the map then `generate_visual_html` on its `item_id` is mandatory. Stopping at Document cards is a failed run.
 - **Hypothesis, not script.** Every claim in the map is falsifiable on the call. "Tell us where we're wrong" is the opening frame.
 - **Never invent proof, numbers, or client facts.** Gaps get a clearly-marked [MISSING — ask on call] tag, never a guess.
 - **Internal honesty stays internal.** The client-fit risks section never reaches the client in any form.

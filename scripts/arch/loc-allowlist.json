@@ -1546,6 +1546,12 @@
       "imports": {
         "@/features/mission-control/types": 1
       }
+    },
+    "apps/web/src/features/home/lib/resolve-meetings-space-id.ts": {
+      "count": 1,
+      "imports": {
+        "@/features/spaces/hooks/use-cached-spaces": 1
+      }
     }
   },
   "controllerSupabaseFiles": {}

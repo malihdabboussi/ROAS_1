@@ -69,10 +69,18 @@ export class MeetingsPrecallPrepService {
       orgId,
     )
     const meetings = (spaces as Array<Record<string, unknown>>).find((space) => {
-      const schema = space.schema as { icon?: string; fields?: Array<{ id?: string }> } | null
+      const schema = space.schema as {
+        icon?: string
+        personal_dashboard?: boolean
+        fields?: Array<{ id?: string }>
+      } | null
       const hasEntryType = schema?.fields?.some((f) => f.id === 'entry_type')
       const title = String(space.title ?? '').toLowerCase()
-      return hasEntryType && (schema?.icon === 'video' || title === 'meetings')
+      const isDashboard =
+        space.space_kind === 'personal_dashboard' ||
+        schema?.personal_dashboard === true ||
+        title === 'personal dashboard'
+      return hasEntryType && (isDashboard || schema?.icon === 'video' || title === 'meetings')
     })
     return meetings?.id ? String(meetings.id) : null
   }
@@ -89,12 +97,11 @@ export class MeetingsPrecallPrepService {
     const timezone = input.timezone?.trim() || 'America/Los_Angeles'
     const { startIso, endIso, dayKey } = localDayBounds(new Date(), timezone)
     const calendar = this.resolveCalendarService()
-    const agenda = await calendar.getAgenda(
-      input.supabase,
-      { id: input.userId },
-      input.scope,
-      { start: startIso, end: endIso, timezone },
-    )
+    const agenda = await calendar.getAgenda(input.supabase, { id: input.userId }, input.scope, {
+      start: startIso,
+      end: endIso,
+      timezone,
+    })
 
     const eligible = (agenda.events ?? []).filter(isEligiblePrecallEvent)
     const result: PrecallPrepRunResult = {
@@ -159,12 +166,11 @@ export class MeetingsPrecallPrepService {
     const timezone = input.timezone?.trim() || 'America/Los_Angeles'
     const { startIso, endIso } = localDayBounds(new Date(), timezone)
     const calendar = this.resolveCalendarService()
-    const agenda = await calendar.getAgenda(
-      input.supabase,
-      { id: input.userId },
-      input.scope,
-      { start: startIso, end: endIso, timezone },
-    )
+    const agenda = await calendar.getAgenda(input.supabase, { id: input.userId }, input.scope, {
+      start: startIso,
+      end: endIso,
+      timezone,
+    })
     const event = (agenda.events ?? []).find((row) => row.id === calendarEventId)
     if (!event) {
       throw new BadRequestException('Calendar event not found in today’s agenda')
@@ -315,10 +321,10 @@ export class MeetingsPrecallPrepService {
   private resolveCalendarService(): CalendarServiceLike {
     try {
       // Lazy resolve avoids Nest circular import (IntegrationsModule → SpacesModule).
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { IntegrationsCalendarService } = require('../../integrations/services/integrations-calendar.service') as {
-        IntegrationsCalendarService: new (...args: unknown[]) => CalendarServiceLike
-      }
+      const { IntegrationsCalendarService } =
+        require('../../integrations/services/integrations-calendar.service') as {
+          IntegrationsCalendarService: new (...args: unknown[]) => CalendarServiceLike
+        }
       return this.moduleRef.get(IntegrationsCalendarService, { strict: false })
     } catch {
       throw new BadRequestException('Calendar service unavailable for pre-call prep')
@@ -523,7 +529,13 @@ export class MeetingsPrecallPrepService {
         : ''
       const overlap =
         emails.length === 0 ||
-        emails.some((email) => attendeeBlob.includes(email) || String(row.title ?? '').toLowerCase().includes(email.split('@')[0] ?? ''))
+        emails.some(
+          (email) =>
+            attendeeBlob.includes(email) ||
+            String(row.title ?? '')
+              .toLowerCase()
+              .includes(email.split('@')[0] ?? ''),
+        )
       if (!overlap && emails.length > 0) continue
       snippets.push(
         `- ${row.title ?? 'Untitled call'}${row.notes ? `: ${String(row.notes).slice(0, 280)}` : ''}`,

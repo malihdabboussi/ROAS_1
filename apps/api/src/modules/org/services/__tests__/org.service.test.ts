@@ -38,11 +38,12 @@ function makeServiceClient() {
 }
 
 describe('OrgService.createOrg', () => {
-  it('creates the org, adds the owner, and seeds default agents and starter credits', async () => {
+  it('creates the org, adds the owner via service role, and seeds defaults', async () => {
     const repo = {
       findBySlug: vi.fn().mockResolvedValue(null),
       create: vi.fn().mockResolvedValue({ id: 'org-1', name: 'Acme' }),
       addMember: vi.fn().mockResolvedValue({ id: 'member-1' }),
+      hardDelete: vi.fn(),
     }
     const logger = { logError: vi.fn() }
     const serviceClient = makeServiceClient()
@@ -52,19 +53,53 @@ describe('OrgService.createOrg', () => {
       { client: serviceClient.client } as never,
     )
 
+    const userSupabase = { kind: 'user' } as never
     await expect(
-      service.createOrg({} as never, 'owner-1', { name: 'Acme', slug: 'acme' }),
+      service.createOrg(userSupabase, 'owner-1', { name: 'Acme', slug: 'acme' }),
     ).resolves.toEqual({ id: 'org-1', name: 'Acme' })
 
     await new Promise((resolve) => setTimeout(resolve, 0))
 
-    expect(repo.findBySlug).toHaveBeenCalledWith(expect.anything(), 'acme')
-    expect(repo.create).toHaveBeenCalledWith(expect.anything(), 'owner-1', {
+    expect(repo.findBySlug).toHaveBeenCalledWith(serviceClient.client, 'acme')
+    expect(repo.create).toHaveBeenCalledWith(userSupabase, 'owner-1', {
       name: 'Acme',
       slug: 'acme',
     })
-    expect(repo.addMember).toHaveBeenCalledWith(expect.anything(), 'org-1', 'owner-1', 'owner', null)
+    expect(repo.addMember).toHaveBeenCalledWith(
+      serviceClient.client,
+      'org-1',
+      'owner-1',
+      'owner',
+      null,
+    )
+    expect(repo.hardDelete).not.toHaveBeenCalled()
     expect(serviceClient.client.from).toHaveBeenCalledWith('agents_registry')
     expect(serviceClient.client.from).toHaveBeenCalledWith('org_credit_purchases')
+  })
+
+  it('rolls back the org when owner membership insert fails', async () => {
+    const repo = {
+      findBySlug: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({ id: 'org-orphan', name: 'ROAS' }),
+      addMember: vi.fn().mockRejectedValue(new Error('RLS blocked')),
+      hardDelete: vi.fn().mockResolvedValue(undefined),
+    }
+    const logger = { logError: vi.fn() }
+    const serviceClient = { client: { from: vi.fn() } }
+    const service = new OrgService(repo as never, logger as never, serviceClient as never)
+
+    await expect(
+      service.createOrg({} as never, 'owner-1', { name: 'ROAS', slug: 'roas' }),
+    ).rejects.toThrow('Failed to create organization')
+
+    expect(repo.addMember).toHaveBeenCalledWith(
+      serviceClient.client,
+      'org-orphan',
+      'owner-1',
+      'owner',
+      null,
+    )
+    expect(repo.hardDelete).toHaveBeenCalledWith(serviceClient.client, 'org-orphan')
+    expect(logger.logError).toHaveBeenCalled()
   })
 })

@@ -1,22 +1,22 @@
 # Claude/ChatGPT shell (apps/web)
 
-Last Modified: 2026-07-17
+Last Modified: 2026-07-19
 
 ## Overview
 
-Dashboard chrome inspired by Claude/ChatGPT: top bar, pin/peek sidebar, Home/Chat menus, persistent chat drawer on workspace routes, a Space work dock with open-item tabs, a shared artifact slide-out, and a right summary panel (Tasks / Files / Sources).
+Dashboard chrome inspired by Claude/ChatGPT: top bar, pin/peek sidebar, Home/Chat menus, persistent chat drawer on workspace routes, a Space work dock (no open-item tab strip), a shared artifact slide-out, and a right summary panel (Tasks / Files / Sources).
 
 Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `shell-state.md`).
 
 ## Data Flow
 
-1. `useShellStore` (`components/shell/use-shell-store.ts`) owns pin/peek, menu mode, chat drawer, space work collapse, Space work open-tabs (docs/tasks per space), the shared artifact viewer, right panel, and page breadcrumbs.
-2. `DashboardFrame` renders a full-width `ShellTopBar`, then a row of HQ sidebar + `ShellWorkspace` (T-junction — sidebar under the top bar, never overlaying it). On `/spaces`, `ShellWorkspace` keeps the Space page mounted inside `SpaceWorkDock` (tab strip + body); collapse hides the dock and shows full chat without unmounting Space.
+1. `useShellStore` (`components/shell/use-shell-store.ts`) owns pin/peek, menu mode, chat drawer, space work collapse, the shared artifact viewer, right panel, and page breadcrumbs.
+2. `DashboardFrame` renders a full-width `ShellTopBar`, then a row of HQ sidebar + `ShellWorkspace` (T-junction — sidebar under the top bar, never overlaying it). On `/spaces`, `ShellWorkspace` keeps the Space page mounted inside `SpaceWorkDock`; collapse hides the dock and shows full chat without unmounting Space.
 3. Feature pages publish rich breadcrumbs with `ShellBreadcrumb`; `ShellTopBar` renders them in place of the path-label fallback. Publishers today: Team, Spaces, Flows, Skills.
 4. HQ sidebar expand follows `sidebarPinned` / `sidebarPeek` (top-bar PanelLeft); peek overlays under the top bar (layout stays 72px); pin expands in-flow to 272px. Shared grace timer on peek leave.
    4b. Global Search lives in the top bar (opens `StudioSearchModal`); Chat menu keeps a Search row with the same control. Home menu does not list Search. Search is server-backed through `/api/entity-search`, progressively merges tasks, Space/conversation docs, mission deliverables, conversations, campaigns, and campaign artifacts, and cancels stale terms.
 5. Chat menu opens conversations in the left drawer on workspace routes (`/spaces`, `/campaigns`, `/team`, …) or full conversation on Home (`/home?conv=`). Plain `/home` always shows the dashboard.
-6. Sidebar **New** on workspace routes always docks a fresh chat (`openFreshChatDrawer`). The top-bar pencil stays visible whether the HQ sidebar is expanded or collapsed. On workspace routes: if the chat drawer is already open → fresh new chat; if closed → `restoreChatDrawer()` (reopen last conversation / empty drawer without forcing the new-chat greeting). Home → `/home?chat=new`.
+6. Sidebar **New** and Chat-menu New always start a fresh chat on workspace routes (`openFreshChatDrawer`); Home goes to `/home?chat=new`. Top-bar pencil on workspace: if the drawer is closed → `restoreChatDrawer()` (last chat); if open → fresh chat. Chat tab switches to the chat menu and, when the workspace drawer is closed, also restores it.
 7. Open in ▾ resolves Drive / Google Docs / Canva targets from the focused space `?item=` (and optional media focus). Canva targets are lazy: the shell does not generate or import a design until the user selects Canva.
 8. The right summary action is context-aware. With an active chat it exposes Tasks, Files, and Sources scoped to that conversation: completed agent tool activity, saved conversation artifacts/documents plus message attachments/media, and explicit references/links. Without an active chat, including generic Home, it exposes only the existing personal Tasks queue.
 9. A Space chat header shows the conversation's saved campaign / Space scope. Selecting another Space atomically retargets the conversation and future agent work; selecting **General** clears the Space while leaving the visible workspace open.
@@ -40,7 +40,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 
 ## Decision Log
 
-- Space work collapse (`PanelRight`) hides the Space **dock** beside chat; Space stays mounted so open docs/tasks survive expand. Open docs/tasks are tracked as persisted shell tabs (`spaceWorkBySpaceId`); expanding with no `?item=` restores the last active tab. Entering or switching `?space=` auto-opens the dock so a prior collapse does not stick. Artifact viewer stays a separate dock. List / summary panel is unrelated.
+- Space work collapse (`PanelRight`) hides the Space **dock** beside chat; Space stays mounted so selection/scroll survive expand. Docs/tasks open in normal Space UI — no shell open-item tab strip. Entering or switching `?space=` auto-opens the dock so a prior collapse does not stick. Artifact viewer stays a separate dock. List / summary panel is unrelated.
 - Peek overlays as a fixed solid column under the top bar (does not push main); pin is in-flow 272px. Collapsed rail keeps inset `card-glass`.
 - The right summary panel follows the active conversation instead of the visible Space. Chat Files includes conversation documents/artifacts and message attachments/media; Sources includes explicit message references and links; Tasks includes completed and failed agent actions persisted in the chat history. Generic Home shows Tasks only.
 - Top-bar ⋯ omitted until real section/chat actions are wired.
@@ -49,8 +49,9 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 - Campaigns flyout uses a nested spaces sub-flyout on campaign-row hover (400ms grace); not an inline accordion. No Favourite/Campaigns captions inside the flyout body. Campaign rows share the same `hub-dock-flyout-row` gap as nested space rows.
 - Dock flyouts use a left hover bridge + tight offsets (primary 2px / nested 0) and ignore leave when the pointer moves into another `[data-hub-dock-flyout]`, so parent → nested paths stay reachable. Vertical position is clamped to the viewport after measure.
 - Disabled Brain scopes show muted “Enable in Manage Brains” rows linking to Manage Brains.
-- Top-bar pencil is a permanent action in expanded and collapsed shell states: Home → full new-chat; workspace → open/restore drawer if closed, fresh new chat only if drawer already open.
-- Sidebar New on workspace routes always docks a fresh chat (does not dismiss Space/work content).
+- Top-bar pencil is a permanent action in expanded and collapsed shell states: Home → full new-chat (`/home?chat=new`); workspace → restore drawer if closed, fresh new chat only if drawer already open.
+- Chat tab shows the chat menu. On workspace routes with a closed drawer it also restores the drawer (last conversation / empty) — it does not start a new chat.
+- Sidebar New on workspace routes always docks a fresh chat (does not dismiss Space/work content). Chat-menu New uses the same rule.
 - Chat menu conversation toolbar is plain left-aligned `Search` (no glass container) then all-agents + filter (defaults to current-agent conversations; Search filters the list only). Global Studio search is top-bar / Cmd-K only. Agent picker stays in the main chat header (`ShellNewChatAgentBar`). Chat panel keeps a single collapse control; shell drawer has no separate minimize bar.
 - Global Search uses the shared entity-search boundary. Core entities paint independently from the heavier artifact lane; the retired `/api/studio/search` route must not be reintroduced.
 - Home is dashboard-only (cards). New Chat (`+ New` on the Chat tab / top-bar pencil / `?chat=new`) is the full former Home hero: greeting, composer, templates, recommendations. The sidebar `+ New` control is Chat-tab only (Home already has the pencil when the rail is collapsed).

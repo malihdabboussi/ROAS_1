@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { useAccountContextGate, useOrgStore } from '@/lib/org/org-context-store'
 import { artifactGroupableFields } from '../lib/artifact-view-config'
+import { normalizeSpaceSchema } from '../lib/normalize-space-schema'
 import {
   isEditorGatedViewType,
   mergeViewCustomizationLayers,
@@ -8,7 +9,6 @@ import {
 import type { Space } from '../types'
 import {
   ARTIFACT_VIEW_TYPES,
-  DEFAULT_SPACE_SCHEMA,
   DEFAULT_TASK_VISIBLE_FIELD_IDS,
   isSpaceFieldVisibleInUi,
   type FieldDef,
@@ -53,13 +53,7 @@ export function useSpaceActiveView(opts: {
   const activeSchema = useMemo<SpaceSchema | undefined>(() => {
     const raw = activeSpace?.schema
     if (!raw) return undefined
-    const existingIds = new Set(raw.fields.map((f) => f.id))
-    const missingFields = DEFAULT_SPACE_SCHEMA.fields.filter((f) => !existingIds.has(f.id))
-    if (missingFields.length === 0) return raw
-    return {
-      ...raw,
-      fields: [...raw.fields, ...missingFields],
-    }
+    return normalizeSpaceSchema(raw)
   }, [activeSpace?.schema])
 
   const isTeamSpace = activeSpace?.visibility === 'team' && isOrgContext()

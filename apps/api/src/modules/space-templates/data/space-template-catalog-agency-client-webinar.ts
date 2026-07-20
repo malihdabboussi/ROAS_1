@@ -181,7 +181,7 @@ export const AGENCY_CLIENT_WEBINAR_TEMPLATES: SpaceTemplateSeed[] = [
         status: 'brief',
         description:
           'Open Missions → Playbook (or use Start Webinar Fulfillment on the empty Missions screen) and fill kickoff fields.',
-        sort_order: 9,
+        sort_order: 10,
       },
     ],
     automations: [],

@@ -10,6 +10,8 @@ describe('FathomOAuthService', () => {
   let fathom: AnyObj
   let config: ConfigService
   let repo: AnyObj
+  let meetingsPrecallPrep: AnyObj
+  let spaceTemplates: AnyObj
 
   beforeEach(() => {
     fathom = {
@@ -48,7 +50,23 @@ describe('FathomOAuthService', () => {
       getServiceClient: vi.fn().mockReturnValue({}),
     }
 
-    service = new FathomOAuthService(config, fathom as any, repo as any)
+    meetingsPrecallPrep = {
+      resolveMeetingsSpaceId: vi.fn().mockResolvedValue(null),
+    }
+    spaceTemplates = {
+      instantiate: vi
+        .fn()
+        .mockResolvedValue({ id: 'personal-dashboard', title: 'Personal Dashboard' }),
+    }
+
+    service = new FathomOAuthService(
+      config,
+      fathom as any,
+      repo as any,
+      undefined,
+      meetingsPrecallPrep as any,
+      spaceTemplates as any,
+    )
   })
 
   it('creates webhook on callback and persists webhook metadata', async () => {
@@ -69,11 +87,7 @@ describe('FathomOAuthService', () => {
 
     expect(fathom.createWebhook).toHaveBeenCalledWith('access_1', {
       destinationUrl: 'https://api.vibey.test/api/integrations/fathom/webhook',
-      triggeredFor: [
-        'my_recordings',
-        'shared_team_recordings',
-        'my_shared_with_team_recordings',
-      ],
+      triggeredFor: ['my_recordings', 'shared_team_recordings', 'my_shared_with_team_recordings'],
       includeTranscript: true,
       includeSummary: true,
       includeActionItems: true,
@@ -203,7 +217,10 @@ describe('FathomOAuthService', () => {
       webhook_id: 'wh_abc',
       webhook_secret: 'whsec_abc',
     })
-    repo.findActiveOrgMember.mockResolvedValue({ data: { role: 'editor', status: 'active' }, error: null })
+    repo.findActiveOrgMember.mockResolvedValue({
+      data: { role: 'editor', status: 'active' },
+      error: null,
+    })
     const supabase = {} as any
 
     const result = await service.updateAutoIngest(supabase, 'user_3', true, {
@@ -228,7 +245,10 @@ describe('FathomOAuthService', () => {
   })
 
   it('rejects org auto-ingest billing for viewers', async () => {
-    repo.findActiveOrgMember.mockResolvedValue({ data: { role: 'viewer', status: 'active' }, error: null })
+    repo.findActiveOrgMember.mockResolvedValue({
+      data: { role: 'viewer', status: 'active' },
+      error: null,
+    })
 
     await expect(
       service.updateAutoIngest({} as any, 'user_4', true, {
@@ -243,6 +263,47 @@ describe('FathomOAuthService', () => {
 
     await expect(service.updateAutoIngest({} as any, 'user_4', true)).rejects.toThrow(
       BadRequestException,
+    )
+  })
+
+  it('reuses the existing Meetings space', async () => {
+    meetingsPrecallPrep.resolveMeetingsSpaceId.mockResolvedValue('existing-meetings')
+    const supabase = {} as any
+
+    await expect(
+      service.ensureMeetingsSpace(supabase, {
+        userId: 'user_1',
+        orgId: null,
+        orgRole: null,
+      } as never),
+    ).resolves.toEqual({ id: 'existing-meetings', action: 'reuse' })
+
+    expect(spaceTemplates.instantiate).not.toHaveBeenCalled()
+  })
+
+  it('instantiates a private Personal Dashboard with draft automations', async () => {
+    const supabase = {} as any
+
+    await expect(
+      service.ensureMeetingsSpace(supabase, {
+        userId: 'user_1',
+        orgId: 'org_1',
+        orgRole: 'admin',
+      } as never),
+    ).resolves.toEqual({ id: 'personal-dashboard', action: 'create' })
+
+    expect(spaceTemplates.instantiate).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({ userId: 'user_1', orgId: 'org_1' }),
+      'personal-dashboard',
+      {
+        title: 'Personal Dashboard',
+        visibility: 'private',
+        include_tasks: true,
+        include_docs: true,
+        include_channel: false,
+        include_automations: true,
+      },
     )
   })
 })

@@ -1,6 +1,6 @@
 # Space Items `custom_data` Conventions for Drive Sync
 
-Last updated: 2026-07-16
+Last updated: 2026-07-19
 
 ## Scope
 
@@ -122,6 +122,9 @@ Mission Control can also export many Space-doc deliverables at once into a singl
 native tabs (`POST /api/missions/:id/deliverables/export-google-doc`, backed by
 `POST /api/integrations/google-drive/files/google-doc-tabs`). That bulk export does not write
 `_google_doc_*` metadata onto each Space item; single-doc export from the editor still owns reuse.
+The first tab uses Composio markdown create (headings/lists/tables). Further tabs use Docs
+`batchUpdate` with `tabId`, including native `insertTable` for markdown tables, and skip a
+duplicate H1 when the Space doc body already has one.
 
 ## Hierarchy Rules
 
@@ -139,6 +142,9 @@ Sync diffs should treat this pair as identity for insert/update/delete decisions
 
 ## Decision Log
 
+- 2026-07-19: Bulk multi-tab export formatting: do not prepend deliverable title when `doc_body`
+  already has an H1; secondary tabs render markdown tables via Docs `insertTable` (not TSV
+  paragraphs); preserve blank markdown paragraphs for spacing between labeled fields.
 - 2026-07-19: Added mission bulk export of Space-doc deliverables into one multi-tab Google Doc.
   Single-doc editor export still persists `_google_doc_*` reuse metadata; bulk export does not.
 - 2026-07-16: Added one-time native Space Doc export to editable Google Docs through the existing

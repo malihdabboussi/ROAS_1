@@ -1,18 +1,21 @@
-# Space work dock (collapse / tabs) — plan
+# Space work dock (collapse) — plan
 
-Last updated: 2026-07-17  
-Status: **Implemented (Phase A + B)**
+Last updated: 2026-07-19  
+Status: **Tabs removed; dock + collapse remain**
 
 ## Shipped
 
-- Persisted Space work tabs (`spaceWorkBySpaceId` in `useShellStore`) for docs + tasks
-- `SpaceWorkDock` + `SpaceWorkTabStrip` beside chat on `/spaces`
-- Collapse hides dock; Space stays mounted; expand restores last active tab via `?item=`
-- Empty tip when no tabs yet
+- `SpaceWorkDock` beside chat on `/spaces` (body only — no open-item tab strip)
+- Collapse hides dock; Space stays mounted so selection survives expand
 - Artifact viewer + List panel left alone
 
-## Not in this ship (Phase C)
+## Removed
+
+- Persisted Space work tabs (`spaceWorkBySpaceId`)
+- `SpaceWorkTabStrip` / `space-work-tabs` / `use-space-work-tab-sync`
+- Empty “open a doc or task” tip driven by tab count
+
+## Not in this ship
 
 - Workspace file tree / “Open file” picker
-- Pin/reorder tabs
-- Opening chat attachments into Space tabs (still uses artifact viewer)
+- Opening chat attachments into Space (still uses artifact viewer)

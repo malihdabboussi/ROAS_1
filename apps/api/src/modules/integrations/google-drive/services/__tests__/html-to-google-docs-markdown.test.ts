@@ -58,4 +58,19 @@ describe('htmlToGoogleDocsMarkdown', () => {
       ].join('\n'),
     )
   })
+
+  it('splits mashed bold field labels in a single paragraph into separate lines', () => {
+    const html =
+      '<p>Anchor copy. <strong>Key objection:</strong> Timing concern. <strong>LTV path:</strong> LAB to Elite.</p>'
+
+    expect(htmlToGoogleDocsMarkdown(html)).toBe(
+      [
+        'Anchor copy.',
+        '',
+        '**Key objection:** Timing concern.',
+        '',
+        '**LTV path:** LAB to Elite.',
+      ].join('\n'),
+    )
+  })
 })

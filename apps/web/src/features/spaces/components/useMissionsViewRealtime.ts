@@ -23,16 +23,23 @@ function readStringField(row: RealtimeRecord | null | undefined, field: string):
 function readMissionRealtimeChange(
   payload: MissionRealtimePayload,
   campaignId: string,
+  spaceId?: string | null,
 ): MissionRealtimeChange | null {
   if (payload.eventType === 'DELETE') {
     const missionId = readStringField(payload.old, 'id')
     const deletedCampaignId = readStringField(payload.old, 'campaign_id')
+    const deletedSpaceId = readStringField(payload.old, 'space_id')
     if (!missionId || (deletedCampaignId && deletedCampaignId !== campaignId)) return null
+    if (spaceId && deletedSpaceId && deletedSpaceId !== spaceId) return null
     return { type: 'delete', missionId }
   }
 
   const mission = payload.new as Mission | null
   if (!mission?.id || mission.campaign_id !== campaignId) return null
+  if (spaceId && mission.space_id !== spaceId) {
+    // Mission left this space (or never belonged) — drop it from the local list if present.
+    return { type: 'delete', missionId: mission.id }
+  }
   return { type: 'upsert', mission }
 }
 
@@ -56,6 +63,7 @@ function readSubtaskMissionId(
 
 interface UseMissionsViewRealtimeParams {
   campaignId: string
+  spaceId?: string | null
   subtasksCacheRef: MutableRefObject<Record<string, MissionSubtask[]>>
   missionsByIdRef: MutableRefObject<Map<string, Mission>>
   missionRefreshTimersRef: MutableRefObject<Record<string, ReturnType<typeof setTimeout>>>
@@ -66,6 +74,7 @@ interface UseMissionsViewRealtimeParams {
 
 export function useMissionsViewRealtime({
   campaignId,
+  spaceId = null,
   subtasksCacheRef,
   missionsByIdRef,
   missionRefreshTimersRef,
@@ -75,14 +84,19 @@ export function useMissionsViewRealtime({
 }: UseMissionsViewRealtimeParams) {
   useEffect(() => {
     const supabase = createClient()
+    const channelScope = spaceId ? `${campaignId}-${spaceId}` : campaignId
 
     const missionsCh = supabase
-      .channel(`spaces-missions-${campaignId}`)
+      .channel(`spaces-missions-${channelScope}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'missions', filter: `campaign_id=eq.${campaignId}` },
         (payload) => {
-          const change = readMissionRealtimeChange(payload as MissionRealtimePayload, campaignId)
+          const change = readMissionRealtimeChange(
+            payload as MissionRealtimePayload,
+            campaignId,
+            spaceId,
+          )
           if (!change) return
           if (change.type === 'delete') {
             removeRealtimeMission(change.missionId)
@@ -94,7 +108,7 @@ export function useMissionsViewRealtime({
       .subscribe()
 
     const subtasksCh = supabase
-      .channel(`spaces-mission-subtasks-${campaignId}`)
+      .channel(`spaces-mission-subtasks-${channelScope}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'mission_subtasks' },
@@ -119,6 +133,7 @@ export function useMissionsViewRealtime({
     }
   }, [
     campaignId,
+    spaceId,
     missionsByIdRef,
     missionRefreshTimersRef,
     refreshMissionFromSubtaskChange,

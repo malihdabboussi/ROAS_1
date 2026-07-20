@@ -1,9 +1,9 @@
+import { createRef } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createRef } from 'react'
-import { SpaceMoreMenu, type SpaceMoreMenuProps } from './SpaceMoreMenu'
 import type { Campaign } from '@/lib/campaigns/campaign-api'
 import type { Space } from '../../types'
+import { SpaceMoreMenu, type SpaceMoreMenuProps } from './SpaceMoreMenu'
 
 vi.mock('@/features/org/store/use-org-store', () => ({
   useOrgStore: (selector: (state: { memberships: Array<{ org_id: string }> }) => unknown) =>
@@ -121,5 +121,18 @@ describe('SpaceMoreMenu', () => {
     fireEvent.click(deleteButtons[deleteButtons.length - 1]!)
 
     expect(props.deleteSpace).toHaveBeenCalledWith('space-1')
+  })
+
+  it('does not expose sharing or deletion for a Personal Dashboard', () => {
+    renderMenu({
+      activeSpace: space({
+        title: 'Personal Dashboard',
+        visibility: 'private',
+        space_kind: 'personal_dashboard',
+      }),
+    })
+
+    expect(screen.queryByRole('button', { name: /Sharing & Permissions/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
   })
 })

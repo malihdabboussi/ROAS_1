@@ -45,6 +45,7 @@ export function ShellChatMenu() {
   const pathname = usePathname() ?? '/home'
   const router = useRouter()
   const openChatDrawer = useShellStore((s) => s.openChatDrawer)
+  const openFreshChatDrawer = useShellStore((s) => s.openFreshChatDrawer)
   const restoreChatDrawer = useShellStore((s) => s.restoreChatDrawer)
   const requestNewChat = useShellStore((s) => s.requestNewChat)
   const setMenuMode = useShellStore((s) => s.setMenuMode)
@@ -190,11 +191,15 @@ export function ShellChatMenu() {
   )
 
   const handleNewConversation = useCallback(() => {
+    setActiveConversationId(null)
+    if (isShellWorkspaceRoute(pathname)) {
+      openFreshChatDrawer()
+      return
+    }
     requestNewChat()
     setMenuMode('chat')
-    setActiveConversationId(null)
     router.push('/home?chat=new')
-  }, [requestNewChat, router, setActiveConversationId, setMenuMode])
+  }, [openFreshChatDrawer, pathname, requestNewChat, router, setActiveConversationId, setMenuMode])
 
   const activeConversationId = useChatStore((s) => s.activeConversationId)
   const selectedConversationId = chatDrawer.conversationId ?? activeConversationId ?? null

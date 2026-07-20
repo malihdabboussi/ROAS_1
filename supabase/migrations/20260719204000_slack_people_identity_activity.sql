@@ -6,6 +6,13 @@ ALTER TABLE public.channel_members
   ADD COLUMN IF NOT EXISTS identity_match_method text NOT NULL DEFAULT 'none',
   ADD COLUMN IF NOT EXISTS identity_match_confidence numeric NOT NULL DEFAULT 0;
 
+-- Widen the constraint before converting legacy rows so the migration is valid
+-- in environments whose existing check only accepts team_member/external/unknown.
+ALTER TABLE public.channel_members
+  DROP CONSTRAINT IF EXISTS channel_members_relationship_kind_check,
+  ADD CONSTRAINT channel_members_relationship_kind_check
+    CHECK (relationship_kind IN ('internal', 'external', 'ignored', 'team_member', 'unknown'));
+
 UPDATE public.channel_members
 SET relationship_kind = CASE relationship_kind
       WHEN 'team_member' THEN 'internal'
@@ -16,9 +23,6 @@ SET relationship_kind = CASE relationship_kind
 WHERE platform = 'slack';
 
 ALTER TABLE public.channel_members
-  DROP CONSTRAINT IF EXISTS channel_members_relationship_kind_check,
-  ADD CONSTRAINT channel_members_relationship_kind_check
-    CHECK (relationship_kind IN ('internal', 'external', 'ignored', 'team_member', 'unknown')),
   DROP CONSTRAINT IF EXISTS channel_members_relationship_source_check,
   ADD CONSTRAINT channel_members_relationship_source_check
     CHECK (relationship_source IN ('inferred', 'manual')),

@@ -55,6 +55,12 @@ export class OrgRepository {
     if (error) throw error
   }
 
+  /** Hard-delete for failed create rollback. Cascades org_members and related FK rows. */
+  async hardDelete(supabase: SupabaseClient, orgId: string) {
+    const { error } = await supabase.from('organizations').delete().eq('id', orgId)
+    if (error) throw error
+  }
+
   async restore(supabase: SupabaseClient, orgId: string) {
     const { error } = await supabase
       .from('organizations')

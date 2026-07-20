@@ -54,6 +54,9 @@ export const SETTINGS_TOAST_ERRORS = {
   INTEGRATIONS_LOAD_FAILED: {
     userMessage: 'Failed to load integrations.',
   },
+  FATHOM_MEETINGS_SETUP_FAILED: {
+    userMessage: 'Fathom is connected, but your Personal Dashboard needs another try.',
+  },
 } as const
 
 /** OAuth return success messages by provider (lowercase) */
@@ -85,6 +88,9 @@ export const SETTINGS_TOAST_SUCCESS = {
   },
   META_CONNECTED: {
     userMessage: 'Meta connected.',
+  },
+  FATHOM_MEETINGS_READY: {
+    userMessage: 'Your Personal Dashboard is ready.',
   },
   INTEGRATION_DISCONNECTED: {
     userMessage: 'Integration disconnected.',

@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { SPACE_TEMPLATE_CATALOG } from '../space-template-catalog'
 
 const EXPECTED_TEMPLATE_SLUGS = [
-  'ceo-hq',
-  'meetings',
+  'personal-dashboard',
   'personal-workspace',
   'client-account-workspace',
   'agency-client-webinar',
@@ -21,9 +20,7 @@ const EXPECTED_TEMPLATE_SLUGS = [
 
 describe('SPACE_TEMPLATE_CATALOG', () => {
   it('preserves the seeded template order and unique slug set', () => {
-    expect(SPACE_TEMPLATE_CATALOG.map((template) => template.slug)).toEqual(
-      EXPECTED_TEMPLATE_SLUGS,
-    )
+    expect(SPACE_TEMPLATE_CATALOG.map((template) => template.slug)).toEqual(EXPECTED_TEMPLATE_SLUGS)
     expect(new Set(SPACE_TEMPLATE_CATALOG.map((template) => template.slug)).size).toBe(
       SPACE_TEMPLATE_CATALOG.length,
     )
@@ -52,8 +49,9 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
       ]),
     )
 
-    expect(automationsBySlug['ceo-hq']).toEqual(['Morning CEO Brief', 'End of Day Close'])
-    expect(automationsBySlug['meetings']).toEqual([
+    expect(automationsBySlug['personal-dashboard']).toEqual([
+      'Morning Brief',
+      'End of Day Close',
       'Fathom Meeting Log',
       'Morning Pre-call Prep',
     ])
@@ -64,20 +62,27 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
     expect(automationsBySlug['hiring-pipeline']).toEqual(['Form Submission To Contact'])
   })
 
-  it('keeps CEO HQ draft-only and Meetings Fathom wiring opinionated', () => {
-    const ceoHq = SPACE_TEMPLATE_CATALOG.find((template) => template.slug === 'ceo-hq')
-    const meetings = SPACE_TEMPLATE_CATALOG.find((template) => template.slug === 'meetings')
+  it('combines daily work and meeting operations in one role-neutral personal dashboard', () => {
+    const dashboard = SPACE_TEMPLATE_CATALOG.find(
+      (template) => template.slug === 'personal-dashboard',
+    )
 
-    expect(ceoHq?.schema).toMatchObject({
+    expect(dashboard).toMatchObject({
+      title: 'Personal Dashboard',
+      persona: null,
+      channel_name: null,
+    })
+    expect(dashboard?.schema).toMatchObject({
       views: expect.arrayContaining([
         expect.objectContaining({ id: 'today', type: 'list' }),
         expect.objectContaining({ id: 'priorities', type: 'kanban' }),
         expect.objectContaining({ id: 'drafts', type: 'emails' }),
       ]),
     })
-    expect(JSON.stringify(ceoHq?.automations)).toMatch(/Never send|Always draft/i)
+    expect(JSON.stringify(dashboard?.automations)).toMatch(/Never send|Always draft/i)
+    expect(JSON.stringify(dashboard)).not.toMatch(/CEO|founder/i)
 
-    expect(meetings?.schema).toMatchObject({
+    expect(dashboard?.schema).toMatchObject({
       views: expect.arrayContaining([
         expect.objectContaining({
           id: 'all-meetings',
@@ -104,7 +109,7 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
         expect.objectContaining({ id: 'meeting-logs', type: 'docs' }),
       ]),
     })
-    expect(meetings?.schema.fields).toEqual(
+    expect(dashboard?.schema.fields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'status',
@@ -122,19 +127,19 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
         expect.objectContaining({ id: 'prep_status' }),
       ]),
     )
-    expect(meetings?.automations[0]?.trigger).toMatchObject({
+    expect(dashboard?.automations[2]?.trigger).toMatchObject({
       type: 'external_fathom_recording_ready',
     })
-    expect(meetings?.automations[1]?.trigger).toMatchObject({ type: 'schedule' })
-    expect((meetings?.automations[1]?.actions ?? []).map((a) => a.type)).toContain(
+    expect(dashboard?.automations[3]?.trigger).toMatchObject({ type: 'schedule' })
+    expect((dashboard?.automations[3]?.actions ?? []).map((a) => a.type)).toContain(
       'meetings_precall_prep',
     )
-    const actionTypes = (meetings?.automations[0]?.actions ?? []).map((action) => action.type)
+    const actionTypes = (dashboard?.automations[2]?.actions ?? []).map((action) => action.type)
     expect(actionTypes).not.toContain('create_task')
     expect(actionTypes).toContain('change_status')
     expect(actionTypes).toContain('send_to_agent')
     expect(actionTypes).toContain('agent_suggest_tasks')
-    expect(meetings?.schema.fields).toEqual(
+    expect(dashboard?.schema.fields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'status',
@@ -145,7 +150,7 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
         }),
       ]),
     )
-    expect(meetings?.schema.views).toEqual(
+    expect(dashboard?.schema.views).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'all-meetings',
@@ -166,7 +171,7 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
         }),
       ]),
     )
-    expect(meetings?.schema.fields).toEqual(
+    expect(dashboard?.schema.fields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'call_date', name: 'Call Date' }),
         expect.objectContaining({ id: 'call_kind', name: 'Call Kind' }),

@@ -7,9 +7,12 @@ import { isShellWorkspaceRoute } from './shell-route-policy'
 import { useShellStore, type ShellMenuMode } from './use-shell-store'
 
 export function ShellMenuModeToggle() {
+  const pathname = usePathname() ?? '/home'
   const router = useRouter()
   const menuMode = useShellStore((s) => s.menuMode)
   const setMenuMode = useShellStore((s) => s.setMenuMode)
+  const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
+  const restoreChatDrawer = useShellStore((s) => s.restoreChatDrawer)
 
   const modes: { id: ShellMenuMode; label: string; icon: typeof House }[] = [
     { id: 'home', label: 'Home', icon: House },
@@ -25,7 +28,15 @@ export function ShellMenuModeToggle() {
             type="button"
             onClick={() => {
               setMenuMode(id)
-              if (id === 'home') router.push('/home')
+              if (id === 'home') {
+                router.push('/home')
+                return
+              }
+              // Chat tab: show the chat menu. If the drawer is closed on a
+              // workspace route, pull the chat up (restore last / empty drawer).
+              if (id === 'chat' && isShellWorkspaceRoute(pathname) && !chatDrawerOpen) {
+                restoreChatDrawer()
+              }
             }}
             className={cn('shell-menu-mode-tab', menuMode === id && 'shell-menu-mode-tab-active')}
           >

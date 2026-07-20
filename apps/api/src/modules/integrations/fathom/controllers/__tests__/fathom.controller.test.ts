@@ -46,6 +46,7 @@ describe('FathomController behavior', () => {
     oauth = {
       getStatus: vi.fn(),
       updateAutoIngest: vi.fn(),
+      ensureMeetingsSpace: vi.fn(),
       getAuthorizationUrl: vi.fn(),
       handleCallback: vi.fn(),
       disconnect: vi.fn(),
@@ -80,6 +81,7 @@ describe('FathomController behavior', () => {
         from: (table: string) => adminMock.makeChain(table),
       })),
       getFathomAliases: vi.fn().mockResolvedValue([]),
+      getProfileIdentity: vi.fn().mockResolvedValue(null),
       updateFathomAliases: vi.fn().mockResolvedValue(null),
       enqueueBrainOpsOutboxRows: vi.fn(async (rows: unknown) => {
         adminMock.upserts.push({
@@ -110,6 +112,20 @@ describe('FathomController behavior', () => {
     )
     adminMock.upserts.length = 0
     adminMock.rowsByTable.clear()
+  })
+
+  it('returns the idempotent Meetings Space bootstrap result', async () => {
+    oauth.ensureMeetingsSpace.mockResolvedValue({ id: 'meetings-1', action: 'reuse' })
+
+    await expect(
+      controller.ensureMeetingsSpace({} as never, { id: 'user_1' }, {
+        userId: 'user_1',
+        orgId: null,
+      } as never),
+    ).resolves.toEqual({
+      success: true,
+      space: { id: 'meetings-1', action: 'reuse' },
+    })
   })
 
   it('skips ingestion when auto-ingest is disabled', async () => {

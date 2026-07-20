@@ -21,14 +21,21 @@ export class OrgService {
   ) {}
 
   async createOrg(supabase: SupabaseClient, userId: string, dto: CreateOrgInput) {
-    const existing = await this.repo.findBySlug(supabase, dto.slug)
+    // Slug check must use service role — user RLS only exposes orgs the user owns/belongs to,
+    // so a taken slug owned by someone else would look free and fail later as a generic error.
+    const existing = await this.repo.findBySlug(this.serviceClient.client, dto.slug)
     if (existing) {
       throw new Error('Organization slug already taken')
     }
 
+    let createdOrgId: string | null = null
     try {
+      // Org insert is allowed for the authenticated owner. Owner membership must use the
+      // service role: user-scoped RLS on org_members can fail during first-member insert
+      // (policy recursion / chicken-and-egg), leaving an orphan org that blocks the slug.
       const org = await this.repo.create(supabase, userId, dto)
-      await this.repo.addMember(supabase, org.id, userId, 'owner', null)
+      createdOrgId = org.id
+      await this.repo.addMember(this.serviceClient.client, org.id, userId, 'owner', null)
       this.seedCoreAgents(org.id, userId).catch((e) =>
         this.log.warn(`Core agent seed failed for org ${org.id}: ${(e as Error).message}`),
       )
@@ -37,6 +44,15 @@ export class OrgService {
       )
       return org
     } catch (error) {
+      if (createdOrgId) {
+        try {
+          await this.repo.hardDelete(this.serviceClient.client, createdOrgId)
+        } catch (rollbackError) {
+          this.log.warn(
+            `Failed to roll back orphan org ${createdOrgId}: ${(rollbackError as Error).message}`,
+          )
+        }
+      }
       await this.logger.logError({
         severity: 'error',
         feature: 'org/create',
@@ -123,7 +139,7 @@ export class OrgService {
 
   async updateOrg(supabase: SupabaseClient, orgId: string, dto: UpdateOrgInput) {
     if (dto.slug) {
-      const existing = await this.repo.findBySlug(supabase, dto.slug)
+      const existing = await this.repo.findBySlug(this.serviceClient.client, dto.slug)
       if (existing && existing.id !== orgId) {
         throw new Error('Organization slug already taken')
       }

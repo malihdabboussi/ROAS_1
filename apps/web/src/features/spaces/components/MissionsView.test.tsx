@@ -244,12 +244,14 @@ function renderMissionsView(
   ref = React.createRef<MissionsViewHandle>(),
   view: ViewDef = activeView,
   toolbarSearchQuery?: string,
+  spaceId?: string | null,
 ) {
   const result = render(
     <MissionsView
       ref={ref}
       campaignId="campaign-1"
       campaignName="Launch Campaign"
+      spaceId={spaceId}
       activeView={view}
       onViewPatch={mocks.onViewPatch}
       currentUserId="user-1"
@@ -353,6 +355,16 @@ describe('MissionsView', () => {
     expect(screen.getByText(/Webinar fulfillment is a guided mission/)).toBeInTheDocument()
     expect(consoleErrorSpy.mock.calls.flat().join('\n')).not.toContain('Maximum update depth')
     consoleErrorSpy.mockRestore()
+  })
+
+  it('loads missions filtered by the active space', async () => {
+    renderMissionsView(React.createRef<MissionsViewHandle>(), activeView, undefined, 'space-v3')
+
+    await screen.findByTestId('mission-list')
+    expect(mocks.fetchMissions).toHaveBeenCalledWith({
+      campaign_id: 'campaign-1',
+      space_id: 'space-v3',
+    })
   })
 
   it('keeps grouped mission list rendering stable', async () => {

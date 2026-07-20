@@ -89,6 +89,7 @@ vi.mock('./use-shell-store', () => ({
   useShellStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
       openChatDrawer: vi.fn(),
+      openFreshChatDrawer: vi.fn(),
       restoreChatDrawer: vi.fn(),
       requestNewChat: vi.fn(),
       setMenuMode: vi.fn(),

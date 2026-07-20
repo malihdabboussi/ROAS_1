@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellTopBar } from './ShellTopBar'
 
 const mocks = vi.hoisted(() => ({
@@ -70,13 +70,50 @@ describe('ShellTopBar', () => {
     mocks.pathname = '/home'
     mocks.shellState.sidebarPinned = true
     mocks.shellState.pageBreadcrumb = null
+    mocks.shellState.chatDrawer = { open: false }
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    cleanup()
   })
 
   it('keeps the new-chat action visible when the sidebar is expanded', () => {
     render(<ShellTopBar />)
 
     expect(screen.getByTitle('New chat')).toBeInTheDocument()
+  })
+
+  it('restores the last chat from the pencil when the workspace drawer is closed', () => {
+    mocks.pathname = '/spaces'
+    mocks.shellState.chatDrawer = { open: false }
+
+    render(<ShellTopBar />)
+    fireEvent.click(screen.getByTitle('New chat'))
+
+    expect(mocks.shellState.restoreChatDrawer).toHaveBeenCalledTimes(1)
+    expect(mocks.shellState.openFreshChatDrawer).not.toHaveBeenCalled()
+    expect(mocks.shellState.requestNewChat).not.toHaveBeenCalled()
+  })
+
+  it('opens a fresh docked chat from the pencil when the workspace drawer is already open', () => {
+    mocks.pathname = '/spaces'
+    mocks.shellState.chatDrawer = { open: true }
+
+    render(<ShellTopBar />)
+    fireEvent.click(screen.getByTitle('New chat'))
+
+    expect(mocks.shellState.openFreshChatDrawer).toHaveBeenCalledTimes(1)
+    expect(mocks.shellState.restoreChatDrawer).not.toHaveBeenCalled()
+    expect(mocks.shellState.requestNewChat).not.toHaveBeenCalled()
+  })
+
+  it('opens the full new-chat screen from the pencil on Home', () => {
+    render(<ShellTopBar />)
+    fireEvent.click(screen.getByTitle('New chat'))
+
+    expect(mocks.shellState.requestNewChat).toHaveBeenCalledTimes(1)
+    expect(mocks.shellState.openFreshChatDrawer).not.toHaveBeenCalled()
   })
 
   it('does not show an inert options control beside a registered breadcrumb', () => {

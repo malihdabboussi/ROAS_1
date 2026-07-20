@@ -25,6 +25,7 @@ import { useMissionsViewSubtasks } from './useMissionsViewSubtasks'
 interface UseMissionsViewListStateParams {
   campaignId: string
   campaignName: string
+  spaceId?: string | null
   activeView: ViewDef
   onViewPatch: (patch: Partial<ViewDef>) => Promise<void>
   onAddColumn?: (event: MouseEvent<HTMLButtonElement>) => void
@@ -35,6 +36,7 @@ interface UseMissionsViewListStateParams {
 export function useMissionsViewListState({
   campaignId,
   campaignName,
+  spaceId = null,
   activeView,
   onViewPatch,
   onAddColumn,
@@ -95,7 +97,10 @@ export function useMissionsViewListState({
     setLoading(true)
     try {
       const [m, a] = await Promise.all([
-        fetchMissions({ campaign_id: campaignId }),
+        fetchMissions({
+          campaign_id: campaignId,
+          ...(spaceId ? { space_id: spaceId } : {}),
+        }),
         fetchMissionAgents(),
       ])
       setSubtasksByMissionId((prev) => {
@@ -115,7 +120,7 @@ export function useMissionsViewListState({
     } finally {
       setLoading(false)
     }
-  }, [campaignId])
+  }, [campaignId, spaceId])
 
   const upsertRealtimeMission = useCallback((mission: Mission) => {
     setMissions((prev) => {
@@ -157,14 +162,18 @@ export function useMissionsViewListState({
               : Promise.resolve(null),
           ])
 
-          if (mission?.campaign_id === campaignId) upsertRealtimeMission(mission)
+          if (mission?.campaign_id === campaignId && (!spaceId || mission.space_id === spaceId)) {
+            upsertRealtimeMission(mission)
+          } else if (mission && spaceId && mission.space_id !== spaceId) {
+            removeRealtimeMission(missionId)
+          }
           if (subtasks && missionsByIdRef.current.has(missionId)) {
             setSubtasksByMissionId((prev) => ({ ...prev, [missionId]: subtasks }))
           }
         })()
       }, 150)
     },
-    [campaignId, upsertRealtimeMission],
+    [campaignId, removeRealtimeMission, spaceId, upsertRealtimeMission],
   )
 
   useEffect(() => {
@@ -173,6 +182,7 @@ export function useMissionsViewListState({
 
   useMissionsViewRealtime({
     campaignId,
+    spaceId,
     subtasksCacheRef,
     missionsByIdRef,
     missionRefreshTimersRef,

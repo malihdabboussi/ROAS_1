@@ -1,7 +1,7 @@
 'use client'
 
-import type { RefObject } from 'react'
 import Link from 'next/link'
+import type { RefObject } from 'react'
 import { ChevronDown, FolderKanban, Share2, User, Zap } from 'lucide-react'
 import { ShellBreadcrumb } from '@/components/shell/ShellBreadcrumb'
 import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
@@ -17,7 +17,7 @@ export type SpaceBreadcrumbHeaderProps = {
   switcherTriggerRef: RefObject<HTMLButtonElement | null>
   onToggleSwitcher: () => void
   onOpenAutomations: () => void
-  onOpenShare: () => void
+  onOpenShare?: () => void
 }
 
 export function SpaceBreadcrumbHeader({
@@ -82,14 +82,16 @@ export function SpaceBreadcrumbHeader({
             </button>
           </span>
         </Tooltip>
-        <button
-          type="button"
-          onClick={onOpenShare}
-          className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors"
-        >
-          <Share2 className="h-3.5 w-3.5 shrink-0" />
-          Share
-        </button>
+        {onOpenShare ? (
+          <button
+            type="button"
+            onClick={onOpenShare}
+            className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors"
+          >
+            <Share2 className="h-3.5 w-3.5 shrink-0" />
+            Share
+          </button>
+        ) : null}
       </div>
     </div>
   )

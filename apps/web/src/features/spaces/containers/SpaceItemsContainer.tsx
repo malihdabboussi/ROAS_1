@@ -51,7 +51,6 @@ import { useSpaceToolbarFilters } from '../hooks/use-space-toolbar-filters'
 import { useSpaceToolbarState } from '../hooks/use-space-toolbar-state'
 import { useSpaceUrlViewSync } from '../hooks/use-space-url-view-sync'
 import { useSpaceUserState } from '../hooks/use-space-user-state'
-import { useSpaceWorkTabSync } from '../hooks/use-space-work-tab-sync'
 import { useUpdateItemWithSubtaskCompleteConfirm } from '../hooks/use-update-item-with-subtask-complete-confirm'
 import { useViewPatchFlush } from '../hooks/use-view-patch-flush'
 import { ALL_ARTIFACTS_GROUP_BY_OPTIONS, isArtifactSurfaceViewType } from '../lib/all-artifacts'
@@ -180,7 +179,7 @@ export function SpaceItemsContainer() {
     if (!activeSpace) return
     const pending = useSpacesStore.getState().pendingMenuAction
     if (!pending || pending.spaceId !== activeSpace.id) return
-    if (pending.action === 'share') {
+    if (pending.action === 'share' && activeSpace.space_kind !== 'personal_dashboard') {
       toolbar.setSpaceShareDualNavigator(false)
       toolbar.setSpaceShareOpen(true)
     } else if (pending.action === 'automations') {
@@ -325,12 +324,6 @@ export function SpaceItemsContainer() {
     handleCommunicationLoaded,
     handleContactDetailLayout,
   } = toolbar
-
-  useSpaceWorkTabSync({
-    spaceId: activeSpaceId,
-    docEditorItem,
-    selectedItem,
-  })
 
   const { urlSpaceItemDeepLinkRef } = useSpaceItemNavigationEvents({
     activeSpaceId,
@@ -1145,10 +1138,14 @@ export function SpaceItemsContainer() {
           switcherTriggerRef={switcherTriggerRef}
           onToggleSwitcher={() => setSwitcherOpen((o) => !o)}
           onOpenAutomations={() => setAutomationsOpen(true)}
-          onOpenShare={() => {
-            setSpaceShareDualNavigator(false)
-            setSpaceShareOpen(true)
-          }}
+          onOpenShare={
+            activeSpace.space_kind === 'personal_dashboard'
+              ? undefined
+              : () => {
+                  setSpaceShareDualNavigator(false)
+                  setSpaceShareOpen(true)
+                }
+          }
         />
 
         <SpaceSwitcherDropdown

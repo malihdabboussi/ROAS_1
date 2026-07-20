@@ -42,14 +42,16 @@ export function htmlToGoogleDocsMarkdown(html: string): string {
   text = text.replace(/<(ul|ol)[^>]*>([\s\S]*?)<\/\1>/gi, (_m, tag: string, body: string) => {
     let i = 0
     const ordered = tag.toLowerCase() === 'ol'
-    const items = [...body.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((match) => {
-      i += 1
-      const prefix = ordered ? `${i}. ` : '- '
-      const item = blockContentToMarkdown(match[1] ?? '')
-        .replace(/\n+/g, ' ')
-        .trim()
-      return item ? `${prefix}${item}` : ''
-    }).filter(Boolean)
+    const items = [...body.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
+      .map((match) => {
+        i += 1
+        const prefix = ordered ? `${i}. ` : '- '
+        const item = blockContentToMarkdown(match[1] ?? '')
+          .replace(/\n+/g, ' ')
+          .trim()
+        return item ? `${prefix}${item}` : ''
+      })
+      .filter(Boolean)
     return items.length ? `\n\n${items.join('\n')}\n\n` : ''
   })
 
@@ -58,6 +60,7 @@ export function htmlToGoogleDocsMarkdown(html: string): string {
       .split('\n')
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
+      .flatMap((line) => splitInlineFieldLabels(line))
     if (lines.length === 0) return '\n\n'
     // One Markdown paragraph per visual line so Docs keeps the breaks.
     return `\n\n${lines.join('\n\n')}\n\n`
@@ -78,6 +81,15 @@ function blockContentToMarkdown(html: string): string {
     .split('\n')
     .map((line) => inlineToMarkdown(line))
     .join('\n')
+}
+
+/** Split mashed "**Label:** value **Other:** value" runs into separate paragraphs. */
+function splitInlineFieldLabels(line: string): string[] {
+  const parts = String(line ?? '')
+    .split(/(?=\*\*[^*\n]{1,80}:\*\*)/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0)
+  return parts.length > 0 ? parts : []
 }
 
 function convertTable(tableHtml: string): string {
@@ -109,10 +121,13 @@ function convertTable(tableHtml: string): string {
 
 function inlineToMarkdown(html: string): string {
   let text = String(html ?? '')
-  text = text.replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_m, href, body) => {
-    const label = inlineToMarkdown(body).trim() || String(href)
-    return `[${label}](${href})`
-  })
+  text = text.replace(
+    /<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,
+    (_m, href, body) => {
+      const label = inlineToMarkdown(body).trim() || String(href)
+      return `[${label}](${href})`
+    },
+  )
   text = text.replace(/<(strong|b)[^>]*>([\s\S]*?)<\/\1>/gi, (_m, _t, body) => {
     const inner = inlineToMarkdown(body).trim()
     return inner ? `**${inner}**` : ''
@@ -130,7 +145,9 @@ function inlineToMarkdown(html: string): string {
     return label ? label : ''
   })
   text = stripTags(text)
-  return decodeEntities(text).replace(/[ \t]{2,}/g, ' ').trim()
+  return decodeEntities(text)
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim()
 }
 
 function stripTags(value: string): string {

@@ -93,11 +93,14 @@ Offer · pricing · campaign type we're running for sure · budget
   approval by EOD.)
 ```
 
-## Routing (every run)
+## Routing (every run — Vibey only)
 
-1. Save both artifacts in the client's Drive folder.
-2. Link the map in the portal Strategist tab (strategy brief link field).
-3. Send the agenda to whoever runs the call.
-4. After the call: run auto-skill-2-roas-strategy-adjust (map + transcript + AM notes →
+1. `save_document` — Pre-Call Strategy Map (Artifact 1 markdown). Capture `space_item_id`.
+2. `generate_visual_html` on that `item_id` with `style_hint: "one-pager"` (see `html-onepager.md`). Required.
+3. `save_document` — Confirm-or-Correct Call Agenda (Artifact 2).
+4. Tell the call runner the agenda Doc + Visual one-pager are in the campaign.
+5. After the call: run auto-skill-2-roas-strategy-adjust (map + transcript + AM notes →
    final strategy + client message). Strategist approves by EOD. That approved
    doc is the strategy artifact downstream skills build from.
+
+Do not claim Drive/Slack/portal uploads. Those are out of band for the agent.

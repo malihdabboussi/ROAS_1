@@ -1,5 +1,19 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 21:23] - [FIX]
+
+What: Top-bar pencil on workspace restores the last chat when the drawer is closed and starts a fresh chat only when the drawer is already open; sidebar/Chat-menu New still always open a fresh chat; Chat tab restores when closed.
+Why: Pencil should pull chat back up when collapsed, not force a new thread; new chat is only when chat is already visible.
+Impact: Closed drawer + pencil → last conversation; open drawer + pencil → blank docked chat; + New always blank docked chat on workspace.
+Files: `ShellTopBar.tsx`, `ShellMenuChrome.tsx`, `ShellChatMenu.tsx`, shell unit tests, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-07-19 21:21] - [FIX]
+
+What: Pencil, sidebar New, and Chat-menu New always start a fresh chat on workspace routes (`openFreshChatDrawer`); Chat tab restores the drawer when closed and only switches the chat menu when already open.
+Why: Pencil previously restored the last chat when the drawer was closed, so “new chat” controls did not reliably open a new thread beside Space work.
+Impact: On Spaces/campaigns, pencil/New start a blank docked chat; Chat tab pulls chat up without clearing the thread; Home still uses `/home?chat=new`.
+Files: `ShellTopBar.tsx`, `ShellMenuChrome.tsx`, `ShellChatMenu.tsx`, shell unit tests, `documentation/features/claude-chatgpt-shell.md`
+
 ## [2026-07-19 19:20] - [FIX]
 
 What: Forced OpenClaw ensure-ready + skill sync for all newly imported ROAS org agents (and Lux/Mara/Rex merges) on Dylan's active shared runtime; marked `agents_registry.sync_status = ready`.
@@ -300,6 +314,13 @@ Why: Admins could create and send a proposal but could not see where it would la
 Impact: Active Slack humans remain the roster source; email matches link automatically, unique exact-name matches require confirmation, manual classifications persist across refreshes, and an admin can inspect the destination conversation before using the existing reviewed-send flow. User Brain attachment is visible without falsely claiming that DM-to-Brain learning is already automatic.
 Files: `supabase/migrations/20260719204000_slack_people_identity_activity.sql`, Slack people DTO/types/controller/repositories/services/tests, Team People service/hook/config/components/tests, `documentation/features/integration-connections.md`
 
+## [2026-07-19 21:24] - [FIX]
+
+What: Reordered the Slack People identity migration to widen the legacy relationship constraint before converting Slack rows to `internal`.
+Why: ROAS production correctly rejected `internal` while the old constraint was still active, causing the original transaction to roll back until the same migration intent was applied in the safe order.
+Impact: Fresh environments can apply the committed migration atomically; ROAS production already has the corrected schema and 606 converted Slack people.
+Files: `supabase/migrations/20260719204000_slack_people_identity_activity.sql`
+
 ## [2026-07-19 19:50] - [FEATURE]
 
 What: Shipped Page Grader continuous campaign brain sync — deterministic dual-write ingest (ns_memories + Campaign Knowledge), content_hash cursors, PG push webhook + ROAS hourly catch-up, Map clients / Brain canvas Re-sync, and hardened nightly Client Intel refresh with hash push.
@@ -326,4 +347,3 @@ What: Removed Space work open-item tabs (strip, persistence, sync) while keeping
 Why: Tab strip cluttered the Space column when opening docs/tasks; earlier removal never landed on main.
 Impact: Hard-refresh. Docs/tasks open in normal Space UI only — no top tabs. Collapse still hides the dock without unmounting Space.
 Files: SpaceWorkDock.tsx, use-shell-store.ts (+test), SpaceItemsContainer.tsx; deleted SpaceWorkTabStrip.tsx, space-work-tabs*.ts, use-space-work-tab-sync.ts, space-work-dock.messages.config.ts; globals.css (web + website); documentation/features/claude-chatgpt-shell.md; .docs/plans/right-sidebar-surface-picker.md
-

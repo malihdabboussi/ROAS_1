@@ -91,6 +91,7 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
   } = useMissionsViewListState({
     campaignId,
     campaignName,
+    spaceId,
     activeView,
     onViewPatch,
     onAddColumn,

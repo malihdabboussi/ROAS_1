@@ -166,11 +166,19 @@ export class MissionDeliverablesGoogleExportService {
   }
 }
 
-function buildExportHtml(title: string, docBody: string): string {
+/** Exported for unit tests. Avoids double H1 when doc_body already has a title. */
+export function buildExportHtml(title: string, docBody: string): string {
+  const body = String(docBody ?? '').trim()
+  if (!body) return ''
+  // Space docs usually already store an H1; prepending the deliverable title
+  // double-posts the heading in Google Docs (first tab + every secondary tab).
+  if (/<h1[\s>]/i.test(body)) {
+    return body
+  }
   const escapedTitle = title
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-  return `<h1>${escapedTitle}</h1>${docBody}`
+  return `<h1>${escapedTitle}</h1>${body}`
 }

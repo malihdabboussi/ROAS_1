@@ -129,19 +129,13 @@ export function ShellTopBar() {
   }, [scheduleSidebarPeekClose])
 
   const goNewChat = () => {
-    // Section routes (Spaces, etc.): stay on the page.
-    // Chat already open → start a fresh new chat in the drawer.
-    // Chat closed → just open/restore the drawer (keep last conversation).
+    // Pencil: restore last chat when the drawer is closed; start a fresh
+    // chat when a chat is already open. Home / full chat → /home?chat=new.
     if (isShellWorkspaceRoute(pathname)) {
-      if (chatDrawerOpen) {
-        openFreshChatDrawer()
-      } else {
-        setMenuMode('chat')
-        restoreChatDrawer()
-      }
+      if (chatDrawerOpen) openFreshChatDrawer()
+      else restoreChatDrawer()
       return
     }
-    // Home / chat routes: full new-chat screen.
     requestNewChat()
     setMenuMode('chat')
     router.push('/home?chat=new')

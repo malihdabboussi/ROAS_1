@@ -123,7 +123,10 @@ describe('GoogleDriveComposioMultiTabDocsService', () => {
       'Mission Deliverables',
       [
         { title: 'Email 1', html: '<h1>Email 1</h1><p>Hello</p>' },
-        { title: 'Email 2', html: '<h1>Email 2</h1><p>Reminder</p>' },
+        {
+          title: 'Email 2',
+          html: '<h1>Email 2</h1><p>Reminder</p><table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>',
+        },
       ],
     )
 
@@ -173,6 +176,20 @@ describe('GoogleDriveComposioMultiTabDocsService', () => {
         editDocs: expect.arrayContaining([
           expect.objectContaining({
             insertText: expect.objectContaining({
+              location: expect.objectContaining({ tabId: 't.second' }),
+            }),
+          }),
+        ]),
+      }),
+      'account-1',
+    )
+    expect(executeTool).toHaveBeenCalledWith(
+      'GOOGLEDOCS_UPDATE_EXISTING_DOCUMENT',
+      'user-1',
+      expect.objectContaining({
+        editDocs: expect.arrayContaining([
+          expect.objectContaining({
+            insertTable: expect.objectContaining({
               location: expect.objectContaining({ tabId: 't.second' }),
             }),
           }),

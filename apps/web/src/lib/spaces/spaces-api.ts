@@ -177,11 +177,15 @@ export async function fetchSpacesPage<TSpace = SpaceSummary>(
   opts?: FetchSpacesPageOptions,
   backend?: BackendFetchOptions,
 ): Promise<FetchSpacesPageResult<TSpace>> {
-  const response = await backendGet<{ items: TSpace[]; next_cursor: string | null }>(
+  const response = await backendGet<{ items: TSpace[]; next_cursor: string | null } | TSpace[]>(
     spacesListPath(opts, true),
     backend,
   )
-  return { items: response.items, nextCursor: response.next_cursor }
+  // Defensive: some proxies/legacy paths still return a bare array.
+  if (Array.isArray(response)) {
+    return { items: response, nextCursor: null }
+  }
+  return { items: response.items ?? [], nextCursor: response.next_cursor ?? null }
 }
 
 export type SpaceItemFetchOptions = {

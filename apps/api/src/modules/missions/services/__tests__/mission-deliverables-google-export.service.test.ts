@@ -1,6 +1,9 @@
 import { BadRequestException } from '@nestjs/common'
 import { describe, expect, it, vi } from 'vitest'
-import { MissionDeliverablesGoogleExportService } from '../mission-deliverables-google-export.service'
+import {
+  buildExportHtml,
+  MissionDeliverablesGoogleExportService,
+} from '../mission-deliverables-google-export.service'
 
 describe('MissionDeliverablesGoogleExportService', () => {
   it('exports space-doc deliverables as Google Doc tabs', async () => {
@@ -171,5 +174,22 @@ describe('MissionDeliverablesGoogleExportService', () => {
     await expect(
       service.exportSpaceDocsToGoogleDoc({} as never, 'user-1', 'mission-1', null),
     ).rejects.toBeInstanceOf(BadRequestException)
+  })
+
+  it('does not prepend a title when doc_body already has an H1', () => {
+    const html = buildExportHtml(
+      'Impact Elite — Call Intake & Transcript Status',
+      '<h1>Impact Elite — Call Intake & Transcript Status</h1><p><strong>Mission:</strong> Webinar</p>',
+    )
+    expect(html).toBe(
+      '<h1>Impact Elite — Call Intake & Transcript Status</h1><p><strong>Mission:</strong> Webinar</p>',
+    )
+    expect(html.match(/<h1/gi)?.length).toBe(1)
+  })
+
+  it('prepends a title only when the body has no H1', () => {
+    expect(buildExportHtml('Market Research', '<p>Body only</p>')).toBe(
+      '<h1>Market Research</h1><p>Body only</p>',
+    )
   })
 })

@@ -2,6 +2,9 @@ import { createHmac } from 'crypto'
 import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { RequestScope } from '@vibey/api-shared'
+import { SpaceTemplatesService } from '../../../space-templates/services/space-templates.service'
+import { MeetingsPrecallPrepService } from '../../../spaces/services/meetings-precall-prep.service'
 import { SpaceAutomationService } from '../../../spaces/services/space-automation.service'
 import { FathomIntegration } from '../integrations/fathom.integration'
 import { FathomRepository } from '../repositories/fathom.repository'
@@ -37,6 +40,8 @@ export class FathomOAuthService {
     private readonly fathom: FathomIntegration,
     private readonly repo: FathomRepository,
     @Optional() private readonly spaceAutomation?: SpaceAutomationService,
+    @Optional() private readonly meetingsPrecallPrep?: MeetingsPrecallPrepService,
+    @Optional() private readonly spaceTemplates?: SpaceTemplatesService,
   ) {
     this.stateSecret = this.config.get<string>('FATHOM_OAUTH_STATE_SECRET') || ''
     this.appUrl = this.config.get<string>('APP_URL') || 'http://localhost:3000'
@@ -201,6 +206,33 @@ export class FathomOAuthService {
       auto_ingest_billing_org_id: nextSettings.billingOrgId,
     })
     return nextSettings
+  }
+
+  async ensureMeetingsSpace(
+    supabase: SupabaseClient,
+    scope: RequestScope,
+  ): Promise<{ id: string; action: 'create' | 'reuse' }> {
+    if (!this.meetingsPrecallPrep || !this.spaceTemplates) {
+      throw new BadRequestException('Personal Dashboard setup is unavailable')
+    }
+    const existingId = await this.meetingsPrecallPrep.resolveMeetingsSpaceId(
+      supabase,
+      scope.userId,
+      scope.orgId,
+    )
+    if (existingId) return { id: existingId, action: 'reuse' }
+
+    const created = await this.spaceTemplates.instantiate(supabase, scope, 'personal-dashboard', {
+      title: 'Personal Dashboard',
+      visibility: 'private',
+      include_tasks: true,
+      include_docs: true,
+      include_channel: false,
+      include_automations: true,
+    })
+    const id = String((created as { id?: unknown }).id ?? '')
+    if (!id) throw new BadRequestException('Personal Dashboard setup did not return a Space')
+    return { id, action: 'create' }
   }
 
   async disconnect(supabase: SupabaseClient, userId: string): Promise<void> {

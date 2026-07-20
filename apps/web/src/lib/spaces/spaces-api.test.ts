@@ -3,8 +3,8 @@ import { backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
 import {
   fetchSpaceItem,
   fetchSpaceItemById,
-  fetchSpacesPage,
   fetchSpaces,
+  fetchSpacesPage,
   renameItemCommentAttachment,
   visualizeSpaceDoc,
 } from './spaces-api'
@@ -74,6 +74,15 @@ describe('spaces api', () => {
       '/api/spaces?limit=100&paginated=true&cursor=cursor-1',
       backendOptions,
     )
+  })
+
+  it('normalizes a bare array paginated response', async () => {
+    backendGetMock.mockResolvedValue([{ id: 'space-1', title: 'Space' }])
+
+    await expect(fetchSpacesPage({ limit: 50 })).resolves.toEqual({
+      items: [{ id: 'space-1', title: 'Space' }],
+      nextCursor: null,
+    })
   })
 
   it('fetches a space item by the global item route first', async () => {
@@ -197,9 +206,9 @@ describe('spaces api', () => {
       custom_data: { _doc_visual_html: '<main>Visual</main>' },
     })
 
-    expect(backendPostMock).toHaveBeenCalledWith(
-      '/api/spaces/space-1/items/item-1/visualize-doc',
-      { force: true, prompt: 'make it visual' },
-    )
+    expect(backendPostMock).toHaveBeenCalledWith('/api/spaces/space-1/items/item-1/visualize-doc', {
+      force: true,
+      prompt: 'make it visual',
+    })
   })
 })

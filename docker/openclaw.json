@@ -1,7 +1,7 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.2.16",
-    "lastTouchedAt": "2026-07-18T04:41:35.103Z"
+    "lastTouchedAt": "2026-07-20T00:21:45.224Z"
   },
   "wizard": {
     "lastRunAt": "2026-02-15T14:00:00.000Z",
@@ -6230,6 +6230,50 @@
             "browser"
           ]
         }
+      },
+      {
+        "id": "org-f69bd799-3509-41b4-aaef-98f03c48c295-vibey",
+        "workspace": "${AGENTS_BASE_DIR}/orgs/f69bd799-3509-41b4-aaef-98f03c48c295/vibey",
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        },
+        "skills": [
+          "awareness-evaluator",
+          "dylans-super-voice",
+          "funnel-site-design",
+          "funnel-wireframe",
+          "mission-planner",
+          "mission-quality-evaluator",
+          "mission-reviewer",
+          "mission-worker-executor",
+          "presentation-builder",
+          "seo-research",
+          "vibey-api"
+        ]
       }
     ]
   },
@@ -6299,7 +6343,7 @@
   },
   "skills": {},
   "plugins": {
-    "allow": ["vibey-backend", "memory-core"],
+    "allow": ["vibey-backend", "memory-core", "whatsapp"],
     "load": {
       "paths": ["${VIBEY_PLUGIN_PATH}", "${MEMORY_CORE_PLUGIN_PATH}"]
     },
@@ -6314,6 +6358,9 @@
         }
       },
       "memory-core": {
+        "enabled": true
+      },
+      "whatsapp": {
         "enabled": true
       }
     }

@@ -4,7 +4,7 @@
  */
 
 import { AGENCY_CLIENT_WEBINAR_TEMPLATES } from './space-template-catalog-agency-client-webinar'
-import { CEO_SPACE_TEMPLATES } from './space-template-catalog-ceo'
+import { PERSONAL_DASHBOARD_TEMPLATES } from './space-template-catalog-personal-dashboard'
 import { SPECIALIZED_SPACE_TEMPLATES } from './space-template-catalog-specialized'
 import { UNIVERSAL_SPACE_TEMPLATES } from './space-template-catalog-universal'
 import type { SpaceTemplateSeed } from './space-template-catalog.types'
@@ -26,7 +26,11 @@ function insertAfterSlug(
 }
 
 export const SPACE_TEMPLATE_CATALOG: SpaceTemplateSeed[] = [
-  ...CEO_SPACE_TEMPLATES,
-  ...insertAfterSlug(UNIVERSAL_SPACE_TEMPLATES, 'client-account-workspace', AGENCY_CLIENT_WEBINAR_TEMPLATES),
+  ...PERSONAL_DASHBOARD_TEMPLATES,
+  ...insertAfterSlug(
+    UNIVERSAL_SPACE_TEMPLATES,
+    'client-account-workspace',
+    AGENCY_CLIENT_WEBINAR_TEMPLATES,
+  ),
   ...SPECIALIZED_SPACE_TEMPLATES,
 ]

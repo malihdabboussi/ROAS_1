@@ -20,8 +20,8 @@ import {
   MoveCopySubmenuExclusiveGroup,
   moveCopyTriggerDropdown,
 } from '@/components/menus/MoveCopySubmenu'
-import { getIconColor, IconPicker, LucideIcon, type IconColorId } from '@/components/ui/IconPicker'
 import { ConfirmDialog } from '@/components/ui/dialogs/ConfirmDialog'
+import { getIconColor, IconPicker, LucideIcon, type IconColorId } from '@/components/ui/IconPicker'
 import type { Campaign } from '@/lib/campaigns/campaign-api'
 import { useOrgStore } from '@/lib/org/org-context-store'
 import { openInNewTab as openAppInNewTab } from '@/lib/utils/open-in-new-tab'
@@ -81,6 +81,7 @@ export function SpaceMoreMenu({
 }: SpaceMoreMenuProps) {
   const memberships = useOrgStore((s) => s.memberships)
   const perm = useSpacePermission(activeSpace)
+  const isPersonalDashboard = activeSpace?.space_kind === 'personal_dashboard'
   const [deleteTarget, setDeleteTarget] = useState<Space | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -314,7 +315,7 @@ export function SpaceMoreMenu({
                 </>
               ) : null}
 
-              {perm.canDeleteSpace ? (
+              {perm.canDeleteSpace && !isPersonalDashboard ? (
                 <>
                   <Divider />
                   <button
@@ -332,7 +333,7 @@ export function SpaceMoreMenu({
                 </>
               ) : null}
 
-              {perm.canAdmin ? (
+              {perm.canAdmin && !isPersonalDashboard ? (
                 <>
                   <Divider />
                   <div className="px-spacing-2 pb-spacing-1">
