@@ -19,7 +19,7 @@ interface SlackPersonDetailProps {
   person: SlackDiscoveredPerson
   activity: SlackPersonActivity | null
   loading: boolean
-  onClose: () => void
+  onClose?: () => void
   onConfirmIdentity: () => void
 }
 
@@ -55,9 +55,16 @@ export function SlackPersonDetail({
             {person.email ? ` · ${person.email}` : ''}
           </p>
         </div>
-        <button type="button" className="btn-icon-bare" aria-label="Close person" onClick={onClose}>
-          <X className="icon-xs" />
-        </button>
+        {onClose ? (
+          <button
+            type="button"
+            className="btn-icon-bare"
+            aria-label="Close person"
+            onClick={onClose}
+          >
+            <X className="icon-xs" />
+          </button>
+        ) : null}
       </div>
 
       <div className="p-spacing-4 gap-spacing-4 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">

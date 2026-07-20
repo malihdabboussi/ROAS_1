@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 19, 2026 (Page Grader continuous campaign brain sync)
+Last Modified: July 19, 2026 (dedicated Slack People and Shadow conversation screens)
 
 ## Data Flow
 
@@ -22,10 +22,10 @@ Last Modified: July 19, 2026 (Page Grader continuous campaign brain sync)
 16. Proactive Slack messages and discovered workflows use `slack_shadow_actions` as their review ledger. Admins can create a harmless test proposal, approve or dismiss it, and send it only after both approval and an explicit switch of that person to `active`. Creating or reviewing a proposal never sends it.
 17. Page Grader can expose the Meta account, Page, pixel, and campaign identifiers already mapped to a client through a read-only client Meta context endpoint. Vibey uses its stored Page Grader connection to proxy this context for launch preparation; Page Grader credentials and Meta tokens never enter the response.
 18. Native Slack connections resolve only inside the active account scope. A personal Slack row cannot make an organization appear connected, supply its runtime token, or receive organization-scoped metadata/error updates.
-19. The Team flyout links directly to Manage People. Team → People presents the current manual Shadow workflow before the Slack roster, and creating a test proposal moves the admin to the resulting Shadow inbox entry instead of leaving it below the full people list.
+19. The Team flyout links directly to Manage People. Team → People uses URL-backed screens for the roster, the Shadow conversation inbox, and each person's Slack/Shadow history, so opening a person or proposal replaces the main People content and browser Back returns to the roster.
 20. Slack People automatically links a unique active organization profile when the Slack email matches. A unique exact normalized full-name match is only a suggestion; an admin must confirm it before `vibey_user_id` or the accessible canonical User Brain is attached.
 21. Person relationship (`internal`, `external`, or `ignored`) is independent from delivery mode (`off`, `shadow`, or `active`). Manual relationship choices survive later Slack refreshes.
-22. Opening a person fetches that Slack direct-message history and the person's Shadow ledger so admins can see where approved sends land. A linked Brain means the identity is connected to an accessible User Brain; it does not yet mean DM history is automatically training that Brain.
+22. Opening a person fetches that Slack direct-message history and the person's Shadow ledger so admins can see where approved sends land. The roster shows live counts for `shadow`, `active`, and `off`, rather than implying every discovered person is currently shadowed. A linked Brain means the identity is connected to an accessible User Brain; it does not yet mean DM history is automatically training that Brain.
 23. Page Grader client → campaign mapping supports continuous hybrid sync: deterministic package ingest into campaign `ns_memories` + Campaign Knowledge, push webhook after Client Intel refresh, hourly ROAS catch-up, and manual Re-sync (Map clients + Brain canvas). See `documentation/features/page-grader-campaign-brain-sync.md`.
 
 ## Code Examples
@@ -117,5 +117,6 @@ Reconnect result:
 - Email remains the only automatic Slack-to-portal identity match. Exact unique name matching is a 0.95-confidence review suggestion because a false positive would attach the wrong person's User Brain.
 - Internal/external/ignored classification and off/shadow/active delivery are separate controls. `ignored` blocks new proposals; `shadow` keeps drafts in-platform; `active` permits only explicit delivery of an approved draft.
 - Person activity is a review surface over the actual Slack DM plus Shadow records. Automatic per-person User Brain compounding requires a separate consent, access, ingestion, and retention design.
+- People detail and Shadow review are durable URL-backed screens inside Team, not inline panels. This prevents roster scroll jumps, gives browser navigation predictable behavior, and provides one Shadow conversation hub for all proposal targets.
 - Page Grader is discovery context, not a second Meta publisher. Vibey owns Mission approvals, Meta mutations, and audit history. When Page Grader has exactly one active mapped ad account it may recommend that identifier; multiple active accounts require a human selection.
 - Page Grader Client Intel packages sync into mapped ROAS campaign brains via deterministic dual-write (not Atlas LLM). Continuous sync is hybrid: PG webhook push + ROAS hourly catch-up + manual Re-sync; skip when package `content_hash` is unchanged.

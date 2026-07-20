@@ -383,3 +383,10 @@ What: Replaced new CEO HQ/Meetings creation with one role-neutral Personal Dashb
 Why: Organization members needed a preconfigured daily home inside the company account that teammates and administrators cannot inspect or share, while personal OAuth authorization remains controlled by each member.
 Impact: ROAS production now has one live Personal Dashboard for its one active member with five starter items, twelve views, and four disabled draft automations. Future active members receive their own dashboard automatically; unrelated-user read, share, and team-visibility probes are rejected.
 Files: `space-template-catalog-personal-dashboard.ts`, template/Fathom/Space UI and tests, `20260719223000_provision_private_personal_dashboards.sql`, `documentation/features/space-templates.md`, ROAS production database.
+
+## [2026-07-19 21:49] - [FIX]
+
+What: Replaced the inline Slack person panel with URL-backed People screens, added a dedicated Shadow conversations hub, routed new test proposals into that hub, and exposed live Shadow/Active/Off counts on the People overview.
+Why: Opening a person inserted their conversation above the roster and appeared to jump to the top, while admins had no clear navigation surface for reviewing conversations across people or confirming whether everyone was still in Shadow mode.
+Impact: Person and Shadow activity now replace the main People content with predictable Back navigation; the overview clearly shows delivery-mode exceptions before an admin reviews or sends anything.
+Files: `SlackPeopleView.tsx`, `SlackPeopleView.test.tsx`, `SlackPersonDetail.tsx`, `SlackPersonScreen.tsx`, `SlackShadowConversationView.tsx`, `SlackShadowSummary.tsx`, `messages.config.ts`, `documentation/features/integration-connections.md`

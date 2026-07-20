@@ -59,6 +59,7 @@ export const SLACK_PEOPLE_MESSAGES = {
     'New message and workflow proposals will appear here before anything is delivered.',
   TEST_PROPOSAL_ERROR: "Couldn't create that test proposal. Check the person's mode and try again.",
   TEST_PROPOSAL_CREATED: 'Test proposal added to the Shadow inbox.',
+  PERSON_NOT_FOUND: 'That Slack person is no longer available. Refresh People and try again.',
   REVIEW_ERROR: "Couldn't save that review. Refresh and try again.",
   REVIEW_APPROVED: 'Approved. Set this person to Active when you are ready to send.',
   REVIEW_DISMISSED: 'Dismissed. Nothing was sent.',

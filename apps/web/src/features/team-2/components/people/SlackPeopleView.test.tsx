@@ -21,6 +21,16 @@ const hookMocks = vi.hoisted(() => ({
   }),
 }))
 
+const navigationMocks = vi.hoisted(() => ({
+  push: vi.fn(),
+  searchParams: new URLSearchParams(),
+}))
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: navigationMocks.push }),
+  useSearchParams: () => navigationMocks.searchParams,
+}))
+
 vi.mock('../../hooks/use-slack-people', () => ({
   useSlackPeople: () => ({
     connected: true,
@@ -78,26 +88,38 @@ describe('SlackPeopleView', () => {
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
+    navigationMocks.searchParams = new URLSearchParams()
   })
 
-  it('shows the Shadow inbox before the Slack roster', () => {
+  it('shows the Shadow conversation summary before the Slack roster', () => {
     render(<SlackPeopleView />)
 
-    expect(screen.getAllByText('Ada Lovelace')).toHaveLength(2)
+    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
     expect(screen.getByText('Internal')).toBeInTheDocument()
     expect(screen.getByText(/Internal · Portal user/)).toBeInTheDocument()
-    const shadowInbox = screen.getByText('Shadow inbox')
+    const shadowInbox = screen.getByText('Shadow conversations')
     const slackPeople = screen.getByText('Slack people')
     expect(
       shadowInbox.compareDocumentPosition(slackPeople) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
-    expect(screen.getByText(/creating or reviewing a proposal never sends it/i)).toBeInTheDocument()
+    expect(screen.getByText('1 Shadow')).toBeInTheDocument()
+    expect(screen.getByText('0 Active')).toBeInTheDocument()
   })
 
-  it('opens a person activity view with their User Brain and Slack timeline', async () => {
+  it('navigates to a dedicated person screen instead of opening inline', () => {
     render(<SlackPeopleView />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Ada Lovelace' }))
+
+    expect(navigationMocks.push).toHaveBeenCalledWith('/team?section=people&person=person-1', {
+      scroll: false,
+    })
+    expect(hookMocks.loadPersonActivity).not.toHaveBeenCalled()
+  })
+
+  it('loads the User Brain and Slack timeline on the dedicated person screen', async () => {
+    navigationMocks.searchParams = new URLSearchParams('section=people&person=person-1')
+    render(<SlackPeopleView />)
 
     await waitFor(() => expect(hookMocks.loadPersonActivity).toHaveBeenCalledWith('person-1'))
     expect(screen.getByText('Ada Brain')).toBeInTheDocument()
@@ -113,20 +135,23 @@ describe('SlackPeopleView', () => {
     expect(hookMocks.updateRelationshipKind).toHaveBeenCalledWith('person-1', 'external')
   })
 
-  it('brings the Shadow inbox into view after creating a test proposal', async () => {
-    const scrollIntoView = vi.fn()
-    Element.prototype.scrollIntoView = scrollIntoView
+  it('opens the Shadow conversations screen after creating a test proposal', async () => {
     render(<SlackPeopleView />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Create test proposal for Ada Lovelace' }))
 
-    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled())
-    expect(hookMocks.createTestProposal).toHaveBeenCalledWith('person-1')
+    await waitFor(() =>
+      expect(navigationMocks.push).toHaveBeenCalledWith('/team?section=people&peopleView=shadow', {
+        scroll: false,
+      }),
+    )
   })
 
-  it('exposes explicit proposal review actions', () => {
+  it('opens a dedicated Shadow conversations screen with review actions', () => {
+    navigationMocks.searchParams = new URLSearchParams('section=people&peopleView=shadow')
     render(<SlackPeopleView />)
 
+    expect(screen.getByRole('heading', { name: 'SHADOW CONVERSATIONS' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }))
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
 
