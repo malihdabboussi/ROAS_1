@@ -72,6 +72,21 @@ export class PageGraderClientImportService {
           uniqueClientId,
         })
 
+    if (body.campaignId?.trim() && !existingCampaign) {
+      throw new BadRequestException(
+        `Mapped campaign ${body.campaignId.trim()} was not found or is not accessible`,
+      )
+    }
+
+    // Prefer the campaign's own org scope. Personal Page Grader sync (orgId null) must
+    // still reuse org-mapped campaigns instead of creating personal duplicates.
+    const effectiveOrgId =
+      (typeof existingCampaign?.org_id === 'string' && existingCampaign.org_id.trim()
+        ? existingCampaign.org_id.trim()
+        : null) ??
+      scope.orgId ??
+      null
+
     const campaignPlan = existingCampaign
       ? {
           action: 'reuse' as const,
@@ -81,9 +96,9 @@ export class PageGraderClientImportService {
       : { action: 'create' as const, id: null, name: campaignName }
 
     const existingSpace = body.spaceId
-      ? await this.findSpaceById(supabase, body.spaceId, userId, scope.orgId)
+      ? await this.findSpaceById(supabase, body.spaceId, userId, effectiveOrgId)
       : campaignPlan.id
-        ? await this.findSpaceByCampaign(supabase, campaignPlan.id, userId, scope.orgId)
+        ? await this.findSpaceByCampaign(supabase, campaignPlan.id, userId, effectiveOrgId)
         : null
     const spacePlan = existingSpace
       ? {
@@ -126,13 +141,13 @@ export class PageGraderClientImportService {
       existingCampaign ??
       (await this.createCampaign(supabase, {
         userId,
-        orgId: scope.orgId ?? null,
+        orgId: effectiveOrgId,
         name: campaignName,
         externalSource,
       }))
     await this.ensureCampaignBrain(supabase, {
       userId,
-      orgId: scope.orgId ?? null,
+      orgId: effectiveOrgId,
       campaignId: String(campaign.id),
       campaignName: String(campaign.name),
     })
@@ -141,7 +156,7 @@ export class PageGraderClientImportService {
       existingSpace ??
       (await this.createSpace(supabase, {
         userId,
-        orgId: scope.orgId ?? null,
+        orgId: effectiveOrgId,
         campaignId: String(campaign.id),
         title: body.spaceTitle?.trim() || PAGE_GRADER_GENERAL_SPACE_TITLE,
         clientName,
@@ -151,13 +166,12 @@ export class PageGraderClientImportService {
 
     const ingested = await this.packageIngest.ingestPackage(supabase, {
       userId,
-      orgId: scope.orgId ?? null,
+      orgId: effectiveOrgId,
       campaignId: String(campaign.id),
       spaceId: String(space.id),
       package: pkg,
       force: body.force === true,
     })
-
     return {
       success: true,
       dryRun: false,
@@ -187,11 +201,40 @@ export class PageGraderClientImportService {
     userId: string,
     orgId?: string | null,
   ) {
-    let query = supabase.from('campaigns').select('*').eq('id', campaignId).is('deleted_at', null)
-    query = orgId ? query.eq('org_id', orgId) : query.eq('user_id', userId).is('org_id', null)
-    const { data, error } = await query.maybeSingle()
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('id', campaignId)
+      .is('deleted_at', null)
+      .maybeSingle()
     if (error) throw new BadRequestException(`Could not load campaign: ${error.message}`)
+    if (!data) return null
+    if (!(await this.canAccessCampaign(supabase, data, userId, orgId))) {
+      throw new BadRequestException(`Campaign not accessible: ${campaignId}`)
+    }
     return data
+  }
+
+  private async canAccessCampaign(
+    supabase: SupabaseClient,
+    campaign: { user_id?: unknown; org_id?: unknown },
+    userId: string,
+    orgId?: string | null,
+  ): Promise<boolean> {
+    const ownerId = typeof campaign.user_id === 'string' ? campaign.user_id : ''
+    const campaignOrgId = typeof campaign.org_id === 'string' ? campaign.org_id : null
+    if (ownerId === userId) return true
+    if (orgId && campaignOrgId && campaignOrgId === orgId) return true
+    if (!campaignOrgId) return false
+    const { data, error } = await supabase
+      .from('org_members')
+      .select('id')
+      .eq('org_id', campaignOrgId)
+      .eq('user_id', userId)
+      .limit(1)
+      .maybeSingle()
+    if (error) return false
+    return Boolean(data?.id)
   }
 
   private async findCampaignByPageGraderClient(
@@ -226,6 +269,26 @@ export class PageGraderClientImportService {
       if (error)
         throw new BadRequestException(`Could not look up Page Grader campaign: ${error.message}`)
       if (data) return data
+    }
+
+    // Personal Page Grader sync: prefer an existing org campaign for the same client
+    // instead of minting another personal duplicate.
+    if (!input.orgId) {
+      for (const candidate of candidates) {
+        const { data, error } = await supabase
+          .from('campaigns')
+          .select('*')
+          .contains('config', candidate)
+          .eq('user_id', input.userId)
+          .not('org_id', 'is', null)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+        if (error)
+          throw new BadRequestException(`Could not look up Page Grader campaign: ${error.message}`)
+        if (data) return data
+      }
     }
 
     return null
@@ -302,11 +365,27 @@ export class PageGraderClientImportService {
     userId: string,
     orgId?: string | null,
   ) {
-    let query = supabase.from('spaces').select('*').eq('id', spaceId)
-    query = orgId ? query.eq('org_id', orgId) : query.eq('user_id', userId).is('org_id', null)
-    const { data, error } = await query.maybeSingle()
+    const { data, error } = await supabase
+      .from('spaces')
+      .select('*')
+      .eq('id', spaceId)
+      .maybeSingle()
     if (error) throw new BadRequestException(`Could not load space: ${error.message}`)
-    return data
+    if (!data) return null
+    const spaceUserId = typeof data.user_id === 'string' ? data.user_id : ''
+    const spaceOrgId = typeof data.org_id === 'string' ? data.org_id : null
+    if (spaceUserId === userId) return data
+    if (orgId && spaceOrgId && spaceOrgId === orgId) return data
+    if (spaceOrgId) {
+      const ok = await this.canAccessCampaign(
+        supabase,
+        { user_id: spaceUserId, org_id: spaceOrgId },
+        userId,
+        orgId,
+      )
+      if (ok) return data
+    }
+    throw new BadRequestException(`Space not accessible: ${spaceId}`)
   }
 
   private async findSpaceByCampaign(

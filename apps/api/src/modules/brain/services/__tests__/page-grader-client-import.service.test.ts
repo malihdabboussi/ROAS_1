@@ -180,4 +180,68 @@ describe('PageGraderClientImportService', () => {
       brainImport: { action: 'ingested', status: 'succeeded', memoriesInserted: 2 },
     })
   })
+
+  it('reuses an org-mapped campaign when personal Page Grader sync passes campaignId', async () => {
+    const orgCampaign = {
+      id: 'org-campaign-1',
+      name: 'Multifamily Strategy',
+      user_id: 'user-1',
+      org_id: 'org-1',
+    }
+    const campaignQuery = createQuery({ maybeSingle: orgCampaign })
+    const spaceQuery = createQuery({
+      maybeSingle: { id: 'org-space-1', title: 'General', user_id: 'user-1', org_id: 'org-1' },
+    })
+    const brainQuery = createQuery({ maybeSingle: { id: 'brain-1' } })
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'campaigns') return campaignQuery
+        if (table === 'spaces') return spaceQuery
+        if (table === 'ns_brains') return brainQuery
+        throw new Error(`Unexpected table ${table}`)
+      }),
+    }
+    const packageIngest = {
+      ingestPackage: vi.fn(async () => ({
+        brainId: 'brain-1',
+        contentHash: 'hash-1',
+        memoriesInserted: 0,
+        memoriesSkipped: 1,
+        evidenceUpserted: 0,
+        knowledgeIndexed: 0,
+        skippedUnchanged: true,
+      })),
+    }
+    const service = new PageGraderClientImportService(packageIngest as never)
+
+    const result = await service.importPackage(
+      supabase as never,
+      'user-1',
+      {
+        package: christianPackage,
+        campaignId: 'org-campaign-1',
+        spaceId: 'org-space-1',
+      },
+      // Personal integration sync always passes orgId null.
+      { userId: 'user-1', orgId: null } as never,
+    )
+
+    expect(campaignQuery.eq).toHaveBeenCalledWith('id', 'org-campaign-1')
+    expect(campaignQuery.is).toHaveBeenCalledWith('deleted_at', null)
+    expect(campaignQuery.insert).not.toHaveBeenCalled()
+    expect(packageIngest.ingestPackage).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({
+        userId: 'user-1',
+        orgId: 'org-1',
+        campaignId: 'org-campaign-1',
+        spaceId: 'org-space-1',
+      }),
+    )
+    expect(result).toMatchObject({
+      success: true,
+      campaign: { action: 'reuse', id: 'org-campaign-1' },
+      space: { action: 'reuse', id: 'org-space-1' },
+    })
+  })
 })

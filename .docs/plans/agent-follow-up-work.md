@@ -1,3 +1,14 @@
+## 2026-07-20 - [ARCH] space-automation-service-07 over LOC after resume fix
+
+Status: Open
+Found while: Fixing Fathom follow-ups skipped when agent wait fails
+Files:
+
+- `apps/api/src/modules/spaces/services/space-automation-service-07.base.ts` (685 LOC; was 652; limit 600)
+  Evidence: `wc -l` after resumeAutomation continues remaining steps on `task_failed`.
+  Needed work: Extract `resumeAutomation` (+ helpers) into a dedicated base/partial (e.g. service-07b) without behavior change.
+  Deferred because: In-scope fix was resume behavior; split is pure LOC cleanup.
+
 ## 2026-07-20 - [ARCH] Page Grader memories insert without embeddings
 
 Status: Open (manual org backfill started)
