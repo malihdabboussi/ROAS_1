@@ -21,7 +21,12 @@ import {
   ZodValidationPipe,
   type RequestScope,
 } from '@vibey/api-shared'
-import { MissionIdParamSchema, type MissionIdParam } from '../dto'
+import {
+  ExportMissionGoogleDocSchema,
+  MissionIdParamSchema,
+  type ExportMissionGoogleDocDto,
+  type MissionIdParam,
+} from '../dto'
 import { MissionDeliverablesGoogleExportService } from '../services/mission-deliverables-google-export.service'
 import { MissionsAccessApprovalService } from '../services/missions-access-approval.service'
 import { MissionsExecutionService } from '../services/missions-execution.service'
@@ -129,6 +134,7 @@ export class MissionsQueryController {
     @CurrentUser() user: { id: string },
     @Supabase() supabase: SupabaseClient,
     @Param(new ZodValidationPipe(MissionIdParamSchema)) params: MissionIdParam,
+    @Body(new ZodValidationPipe(ExportMissionGoogleDocSchema)) body: ExportMissionGoogleDocDto,
     @OrgContext() scope: RequestScope,
   ) {
     const result = await this.missionDeliverablesGoogleExportService.exportSpaceDocsToGoogleDoc(
@@ -136,8 +142,23 @@ export class MissionsQueryController {
       user.id,
       params.id,
       scope.orgId,
+      {
+        title: body.title,
+        deliverableTitle: body.deliverable_title,
+        source: body.source,
+        tabs: body.tabs?.map((tab) => ({
+          title: tab.title,
+          html: tab.html,
+          parentTitle: tab.parent_title,
+        })),
+      },
     )
-    return { success: true, file: result.file, tabCount: result.tabCount }
+    return {
+      success: true,
+      file: result.file,
+      tabCount: result.tabCount,
+      deliverable_id: result.deliverableId,
+    }
   }
 
   @Get(':id/logs')

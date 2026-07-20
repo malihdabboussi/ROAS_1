@@ -26,6 +26,7 @@ const HEADING_STYLE: Record<number, string> = {
 export function markdownToGoogleDocsTabRequests(
   markdown: string,
   tabId: string,
+  insertionIndex = 1,
 ): Record<string, unknown>[] {
   const blocks = parseMarkdownBlocks(
     String(markdown ?? '')
@@ -34,7 +35,7 @@ export function markdownToGoogleDocsTabRequests(
   )
   if (blocks.length === 0) return []
 
-  let cursor = 1
+  let cursor = insertionIndex
   let fullText = ''
   const paragraphStyles: Array<{ start: number; end: number; namedStyleType: string }> = []
   const textStyles: Array<{ start: number; end: number; bold?: boolean; italic?: boolean }> = []
@@ -75,7 +76,7 @@ export function markdownToGoogleDocsTabRequests(
     {
       insertText: {
         text: fullText,
-        location: { index: 1, tabId },
+        location: { index: insertionIndex, tabId },
       },
     },
   ]

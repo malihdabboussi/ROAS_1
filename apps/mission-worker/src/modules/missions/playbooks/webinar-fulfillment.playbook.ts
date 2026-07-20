@@ -7,6 +7,7 @@ import { addWebinarCreativeProduction } from './webinar-fulfillment.creative'
 import {
   docContract,
   intent,
+  launchBibleContract,
   pickAgent,
   WEBINAR_FLOW_DOCS,
   WEBINAR_FLOW_GATES,
@@ -138,6 +139,7 @@ export function expandWebinarFulfillmentPlaybook(
   )
   strategyDependency = 'st-precall'
 
+  let launchBibleDependency = 'st-media-plan'
   if (hasHuman) {
     add(
       {
@@ -424,14 +426,40 @@ export function expandWebinarFulfillmentPlaybook(
       'compliance',
       'Human approved the production package before activation.',
     )
+    launchBibleDependency = 'st-gate-production'
   }
+
+  add(
+    {
+      id: 'st-launch-bible',
+      title: WEBINAR_FLOW_TASKS.launchBible,
+      assignTo: atlas,
+      dependsOn: [launchBibleDependency],
+      assertionKeys: [],
+      scheduledAt: null,
+      publishToTaskList: true,
+      intent: intent({
+        why: 'Give the team one final source of truth with every approved asset and preview link.',
+        story: 'Atlas compiles the approved mission outputs into a tabbed Google Doc Launch Bible.',
+        sensory:
+          'The overview links every native asset; copy is complete, approved, and organized into real Google Doc tabs.',
+        endState:
+          'One linked Google Doc deliverable contains the complete webinar handoff and opens ready for team use.',
+        ecology:
+          'Read every approved mission deliverable and preserve approved copy verbatim. compile_webinar_launch_bible copies the styled ROAS master; never create a blank replacement. Call it once with these ordered sections: 0 - Overview; 1 - ICP Sheet; 2A - Webinar Offer; 2B - Webinar Content; 3 - Funnel Pages; P1 - Opt-in Page; P2 - Confirmation Page; P3 - Offer Page; P4 - Replay Page; 4 - Ad Scripts; 5 - Meta Ad Copy; 6 - Thank You Page Videos; 7 - SMS & Emails. Set parent_title="3 - Funnel Pages" on P1-P4. Overview includes client details, dates, notes, and all funnel, presentation, ad, image, creative, and source links. Put image URLs and prompts in their sections. Label genuinely missing assets; never invent copy or links.',
+      }),
+      outputContract: launchBibleContract(),
+    },
+    'handoff',
+    'Atlas created and linked the final tabbed Google Doc Webinar Launch Bible.',
+  )
 
   const assertionKeys = assertions.map((item) => item.assertionKey)
   return {
     kind: 'plan',
     title: 'Webinar Fulfillment',
     summary:
-      'Atlas context → pre-call gate → call intake → post-call strategy → market research → THE PLAN → strategy gate → WEB#5A copy package → WEB#5B landing-page copy → copy gate → Lux creative production (statics, image briefs, generated images, funnel, deck bones) → creative gate → Blaze compiles approved ads → media plan → production gate.',
+      'Atlas context → pre-call gate → call intake → post-call strategy → market research → THE PLAN → strategy gate → WEB#5A copy package → WEB#5B landing-page copy → copy gate → Lux creative production (statics, image briefs, generated images, funnel, deck bones) → creative gate → Blaze compiles approved ads → media plan → production gate → Atlas compiles the final Google Doc Launch Bible.',
     approach: `Follow the complete ${WEBINAR_FULFILLMENT_PLAYBOOK_ID} flow from pre-call preparation. Atlas owns context, Reed owns strategy, Ivy owns copy, Lux owns visual/funnel/deck production, Blaze owns research/ad compilation/media planning, and the creative gate approves Lux's assets before Blaze assembles native ads.`,
     capability_gap: { exists: false, note: '', suggested_hire: '' },
     harness: {

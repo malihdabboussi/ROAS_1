@@ -225,3 +225,10 @@ What: Expanded Manage People with safe exact-name identity suggestions, explicit
 Why: Admins could create and send a proposal but could not see where it would land, distinguish portal users from Slack-only people, classify people independently from delivery mode, or review a likely name match when Slack and portal emails differed.
 Impact: Active Slack humans remain the roster source; email matches link automatically, unique exact-name matches require confirmation, manual classifications persist across refreshes, and an admin can inspect the destination conversation before using the existing reviewed-send flow. User Brain attachment is visible without falsely claiming that DM-to-Brain learning is already automatic.
 Files: `supabase/migrations/20260719204000_slack_people_identity_activity.sql`, Slack people DTO/types/controller/repositories/services/tests, Team People service/hook/config/components/tests, `documentation/features/integration-connections.md`
+
+## [2026-07-19 21:04] - [FIX]
+
+What: Replaced Task 16's blank Google Doc reconstruction with a native copy of the ROAS Webinar Launch Bible master, then mapped approved campaign content into the copied styled tabs.
+Why: Blank reconstruction flattened the intended launch-bible design and did not preserve the master document's tables, emojis, or native tab hierarchy.
+Impact: Future Webinar Launch Bible compilations retain the master template's 13-tab topology, including nested funnel pages, while ordinary mission-deliverables exports remain unchanged.
+Files: `google-drive-composio-multi-tab-docs.service.ts`, `google-drive-api.service.ts`, `markdown-to-google-docs-tab-requests.ts`, `mission-deliverables-google-export.service.ts`, Task 16 action/playbook guidance, tests, and `documentation/features/missions.md`

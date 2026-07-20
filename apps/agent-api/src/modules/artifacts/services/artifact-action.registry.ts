@@ -560,6 +560,7 @@ export const ACTION_METHOD_MAP: Record<ArtifactAction, string> = {
   get_mission_plan: 'getMissionPlan',
   get_mission_logs: 'getMissionLogs',
   get_mission_deliverables: 'getMissionDeliverables',
+  compile_webinar_launch_bible: 'compileWebinarLaunchBible',
   update_mission: 'updateMission',
   add_mission_comment: 'addMissionComment',
   list_mission_subtasks: 'listMissionSubtasks',

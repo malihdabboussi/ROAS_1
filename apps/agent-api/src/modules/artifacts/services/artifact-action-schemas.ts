@@ -2535,6 +2535,33 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
   get_mission_plan: { required: ['mission_id'] },
   get_mission_logs: { required: ['mission_id'] },
   get_mission_deliverables: { required: ['mission_id'] },
+  compile_webinar_launch_bible: {
+    required: ['mission_id', 'title', 'tabs'],
+    optional: [],
+    strict: true,
+    types: { mission_id: 'string', title: 'string', tabs: 'object_array' },
+    useWhen: [
+      'Compile the final approved Webinar Fulfillment assets into a native copy of the styled ROAS Launch Bible template.',
+    ],
+    examples: [
+      {
+        intent: 'compile the final webinar Launch Bible',
+        data: {
+          mission_id: 'UUID',
+          title: 'Impact Elite Coaching — Webinar Launch Bible',
+          tabs: [
+            { title: '0 - Overview', html: '<h1>Overview</h1>' },
+            { title: '3 - Funnel Pages', html: '<h1>Funnel Pages</h1>' },
+            {
+              title: 'P1 - Opt-in Page',
+              parent_title: '3 - Funnel Pages',
+              html: '<h1>Opt-in Page</h1>',
+            },
+          ],
+        },
+      },
+    ],
+  },
   answer_mission_question: { required: ['mission_id'], optional: ['question', 'message'] },
   summarize_mission_state: { required: ['mission_id'] },
   attach_mission_context: { required: ['mission_id'], optional: ['message', 'context'] },

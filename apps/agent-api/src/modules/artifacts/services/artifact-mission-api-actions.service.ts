@@ -37,6 +37,26 @@ export class ArtifactMissionApiActionsService {
     return target.mainApiCall('POST', `/api/missions/${missionId}/comment`, sessionKey, { message })
   }
 
+  async compileWebinarLaunchBible(
+    target: Record<string, any>,
+    input: Record<string, unknown>,
+    sessionKey?: string,
+  ) {
+    const missionId = this.requireMissionId(input)
+    const tabs = Array.isArray(input.tabs) ? input.tabs : []
+    return target.mainApiCall(
+      'POST',
+      `/api/missions/${missionId}/deliverables/export-google-doc`,
+      sessionKey,
+      {
+        title: String(input.title ?? '').trim() || 'Webinar Launch Bible',
+        tabs,
+        deliverable_title: 'Task 16 — Webinar Launch Bible',
+        source: 'webinar_launch_bible',
+      },
+    )
+  }
+
   async getMissionPlan(
     target: Record<string, any>,
     input: Record<string, unknown>,

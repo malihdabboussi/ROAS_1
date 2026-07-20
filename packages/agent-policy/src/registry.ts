@@ -228,6 +228,7 @@ export const ACTION_TO_DOMAIN = {
   get_mission_plan: 'manage_tasks_missions',
   get_mission_logs: 'manage_tasks_missions',
   get_mission_deliverables: 'manage_tasks_missions',
+  compile_webinar_launch_bible: 'manage_tasks_missions',
   update_mission: 'manage_tasks_missions',
   add_mission_comment: 'manage_tasks_missions',
   list_mission_subtasks: 'manage_tasks_missions',

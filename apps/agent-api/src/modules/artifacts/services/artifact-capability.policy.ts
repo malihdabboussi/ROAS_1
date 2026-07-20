@@ -85,6 +85,7 @@ const MISSION_READ_ACTIONS = new Set<string>([
   'list_missions',
   'get_mission',
   'get_mission_deliverables',
+  'compile_webinar_launch_bible',
 ])
 
 const MISSION_MANAGEMENT_ACTIONS = new Set<string>([
@@ -723,6 +724,7 @@ export const BRAIN_SCHOLAR_ALLOWED_ACTIONS = new Set<string>([
   'get_document',
   'read_space_document',
   'update_document',
+  'compile_webinar_launch_bible',
   'search_user_brain',
   'search_brain_context',
   'save_user_memory',

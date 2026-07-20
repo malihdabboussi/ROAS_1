@@ -2060,10 +2060,60 @@ describe('validateActionData', () => {
       })
     })
 
-    it('validates mission and document contracts', () => {
+    it('validates mission and document contracts', async () => {
       expect(validateActionData('create_mission', {})).toMatch(/title.*required/i)
       expect(validateActionData('create_mission', { title: 'Draft the launch brief' })).toBeNull()
       expect(validateActionData('list_missions', { limit: 10 })).toBeNull()
+      expect(
+        validateActionData('compile_webinar_launch_bible', { mission_id: 'mission-1' }),
+      ).toMatch(/tabs.*required/i)
+      expect(
+        validateActionData('compile_webinar_launch_bible', {
+          mission_id: 'mission-1',
+          title: 'Impact Webinar Launch Bible',
+          tabs: [{ title: '0 - Overview', html: '<h1>Overview</h1>' }],
+        }),
+      ).toBeNull()
+      await expect(
+        validateActionPreflight('compile_webinar_launch_bible', {
+          tabs: [{ title: '0 - Overview', html: '<h1>Overview</h1>' }],
+        }),
+      ).resolves.toMatchObject({ errorCode: 'WEBINAR_LAUNCH_BIBLE_TABS_MISSING' })
+      const requiredTabs = [
+        '0 - Overview',
+        '1 - ICP Sheet',
+        '2A - Webinar Offer',
+        '2B - Webinar Content',
+        '3 - Funnel Pages',
+        'P1 - Opt-in Page',
+        'P2 - Confirmation Page',
+        'P3 - Offer Page',
+        'P4 - Replay Page',
+        '4 - Ad Scripts',
+        '5 - Meta Ad Copy',
+        '6 - Thank You Page Videos',
+        '7 - SMS & Emails',
+      ]
+      await expect(
+        validateActionPreflight('compile_webinar_launch_bible', {
+          tabs: requiredTabs.map((title) => ({
+            title,
+            html: `<h1>${title}</h1>`,
+            ...(title.match(/^P[1-4] - /) ? { parent_title: '3 - Funnel Pages' } : {}),
+          })),
+        }),
+      ).resolves.toBeNull()
+      const outOfOrderTabs = requiredTabs.map((title) => ({
+        title,
+        html: `<h1>${title}</h1>`,
+        ...(title.match(/^P[1-4] - /) ? { parent_title: '3 - Funnel Pages' } : {}),
+      }))
+      ;[outOfOrderTabs[0], outOfOrderTabs[1]] = [outOfOrderTabs[1]!, outOfOrderTabs[0]!]
+      await expect(
+        validateActionPreflight('compile_webinar_launch_bible', {
+          tabs: outOfOrderTabs,
+        }),
+      ).resolves.toMatchObject({ errorCode: 'WEBINAR_LAUNCH_BIBLE_TAB_ORDER_INVALID' })
       expect(validateActionData('save_document', { title: 'Brief' })).toMatch(/content.*required/i)
       expect(validateActionData('save_document', { title: 'Brief', content: '# Notes' })).toBeNull()
       expect(
