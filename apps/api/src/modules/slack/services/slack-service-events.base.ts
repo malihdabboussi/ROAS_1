@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { SlackBlock, SlackEventEnvelope } from '../types/slack.types'
+import { SlackConversationBase } from './slack-service-conversation.base'
 import {
   CREDITS_EXHAUSTED_SLACK_MESSAGE,
   GENERIC_SLACK_AGENT_ERROR_MESSAGE,
@@ -8,7 +9,6 @@ import {
   MACHINE_WAKE_START_SLACK_MESSAGE,
   SLACK_AGENT_STREAM_TIMEOUT_MS,
 } from './slack-service.shared'
-import { SlackConversationBase } from './slack-service-conversation.base'
 
 export abstract class SlackEventsBase extends SlackConversationBase {
   protected async processEventAsync(envelope: SlackEventEnvelope): Promise<void> {
@@ -527,7 +527,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: "Hey 👋 it's me, *Vibey*.\n\nI'm live in your Slack now.\n\nI'm not here to spit generic answers.\nI'm here to move work: campaigns, copy, funnels, the stuff that actually ships.",
+          text: "Hey 👋 I'm your new bot.\n\nI'm live in your Slack now.\n\nI'm not here to spit generic answers.\nI'm here to move work: campaigns, copy, funnels, the stuff that actually ships.",
         },
       },
       { type: 'divider' },
@@ -557,10 +557,8 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     ]
 
     const fallback =
-      "Hey, it's Vibey. I'm live in your Slack. I move real work and I have your agents (ask, delegate, brainstorm) like the app. DM me, @ me in a channel, or map a channel. Send one thing to ship this week."
+      "Hey, I'm your new bot. I'm live in your Slack. I move real work and I have your agents (ask, delegate, brainstorm) like the app. DM me, @ me in a channel, or map a channel. Send one thing to ship this week."
 
     await this.slackApi.postBlockMessage(botToken, dmChannelId, fallback, blocks)
   }
-
-
 }

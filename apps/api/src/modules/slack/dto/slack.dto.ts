@@ -164,6 +164,12 @@ export const SlackDeliveryModeDtoSchema = z.object({
 })
 export type SlackDeliveryModeDto = z.infer<typeof SlackDeliveryModeDtoSchema>
 
+export const SlackRelationshipKindSchema = z.enum(['internal', 'external', 'ignored'])
+export const SlackRelationshipKindDtoSchema = z.object({
+  relationship_kind: SlackRelationshipKindSchema,
+})
+export type SlackRelationshipKindDto = z.infer<typeof SlackRelationshipKindDtoSchema>
+
 export const SlackShadowActionsQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(200).optional(),
 })

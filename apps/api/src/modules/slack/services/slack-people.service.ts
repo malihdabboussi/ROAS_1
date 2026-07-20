@@ -7,7 +7,11 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SlackApiIntegration } from '../integrations/slack-api.integration'
 import { SlackPeopleRepository } from '../repositories/slack-people.repository'
-import type { SlackDeliveryMode, SlackShadowActionStatus } from '../types/slack.types'
+import type {
+  SlackDeliveryMode,
+  SlackRelationshipKind,
+  SlackShadowActionStatus,
+} from '../types/slack.types'
 import { SlackSenderResolverService } from './slack-sender-resolver.service'
 
 @Injectable()
@@ -29,7 +33,93 @@ export class SlackPeopleService {
       orgId,
     })
     const people = await this.peopleRepository.listPeople(supabase, orgId)
-    return { connected: true, people }
+    const linkedUserIds = [
+      ...new Set(people.map((person) => person.vibey_user_id).filter((id): id is string => !!id)),
+    ]
+    const brains = await this.peopleRepository.listDefaultUserBrains(supabase, linkedUserIds)
+    const brainByOwnerId = new Map(brains.map((brain) => [brain.owner_id, brain]))
+    return {
+      connected: true,
+      people: people.map((person) => {
+        const brain = person.vibey_user_id ? brainByOwnerId.get(person.vibey_user_id) : null
+        return {
+          ...person,
+          brain_id: brain?.id ?? null,
+          brain_name: brain?.name ?? null,
+        }
+      }),
+    }
+  }
+
+  async updateRelationshipKind(
+    supabase: SupabaseClient,
+    orgId: string | null | undefined,
+    personId: string,
+    relationshipKind: SlackRelationshipKind,
+  ) {
+    if (!orgId) throw new BadRequestException('Slack people require organization context')
+    const person = await this.peopleRepository.updateRelationshipKind(supabase, {
+      id: personId,
+      orgId,
+      relationshipKind,
+    })
+    return { person }
+  }
+
+  async confirmSuggestedIdentity(
+    supabase: SupabaseClient,
+    orgId: string | null | undefined,
+    personId: string,
+  ) {
+    if (!orgId) throw new BadRequestException('Slack people require organization context')
+    const person = await this.peopleRepository.confirmSuggestedIdentity(supabase, orgId, personId)
+    if (!person) throw new ConflictException('This identity suggestion is no longer available')
+    const brains = await this.peopleRepository.listDefaultUserBrains(
+      supabase,
+      person.vibey_user_id ? [person.vibey_user_id] : [],
+    )
+    const brain = brains[0]
+    return {
+      person: {
+        ...person,
+        brain_id: brain?.id ?? null,
+        brain_name: brain?.name ?? null,
+      },
+    }
+  }
+
+  async getPersonActivity(
+    supabase: SupabaseClient,
+    orgId: string | null | undefined,
+    personId: string,
+  ) {
+    if (!orgId) throw new BadRequestException('Slack people require organization context')
+    const person = await this.peopleRepository.findPerson(supabase, orgId, personId)
+    if (!person) throw new NotFoundException('Slack person not found')
+    const integration = await this.peopleRepository.findOrgSlackIntegration(supabase, orgId)
+    if (!integration) throw new ConflictException('Slack is not connected for this organization')
+    const [channelId, actions] = await Promise.all([
+      this.slackApi.openDmChannel(integration.access_token, person.platform_id),
+      this.peopleRepository.listPersonShadowActions(supabase, orgId, personId),
+    ])
+    if (!channelId) throw new ConflictException('Could not open this Slack conversation')
+    const history = await this.slackApi.getChannelHistory(integration.access_token, channelId, 100)
+    const botUserId =
+      typeof integration.metadata?.bot_user_id === 'string'
+        ? integration.metadata.bot_user_id
+        : null
+    const messages = history
+      .filter((message) => typeof message.ts === 'string' && typeof message.text === 'string')
+      .map((message) => ({
+        ts: message.ts as string,
+        text: message.text as string,
+        direction:
+          message.bot_id || (botUserId && message.user === botUserId)
+            ? ('outbound' as const)
+            : ('inbound' as const),
+      }))
+      .sort((a, b) => Number(b.ts) - Number(a.ts))
+    return { channel_id: channelId, messages, actions }
   }
 
   async updateDeliveryMode(
@@ -66,6 +156,9 @@ export class SlackPeopleService {
     if (!orgId) throw new BadRequestException('Shadow Mode requires organization context')
     const person = await this.peopleRepository.findPerson(supabase, orgId, personId)
     if (!person) throw new NotFoundException('Slack person not found')
+    if (person.relationship_kind === 'ignored') {
+      throw new ConflictException('Ignored people cannot receive proposals')
+    }
     if (person.delivery_mode === 'off') {
       throw new ConflictException('Turn on Shadow Mode before creating a proposal')
     }

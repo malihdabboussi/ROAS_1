@@ -15,11 +15,13 @@ import {
 import {
   SlackDeliveryModeDtoSchema,
   SlackPersonIdParamSchema,
+  SlackRelationshipKindDtoSchema,
   SlackShadowActionIdParamSchema,
   SlackShadowActionsQuerySchema,
   SlackShadowReviewDtoSchema,
   type SlackDeliveryModeDto,
   type SlackPersonIdParam,
+  type SlackRelationshipKindDto,
   type SlackShadowActionIdParam,
   type SlackShadowActionsQuery,
   type SlackShadowReviewDto,
@@ -47,6 +49,21 @@ export class SlackPeopleController {
     return this.people.updateDeliveryMode(supabase, scope.orgId, params.id, body.delivery_mode)
   }
 
+  @Patch(':id/relationship-kind')
+  async updateRelationshipKind(
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param(new ZodValidationPipe(SlackPersonIdParamSchema)) params: SlackPersonIdParam,
+    @Body(new ZodValidationPipe(SlackRelationshipKindDtoSchema)) body: SlackRelationshipKindDto,
+  ) {
+    return this.people.updateRelationshipKind(
+      supabase,
+      scope.orgId,
+      params.id,
+      body.relationship_kind,
+    )
+  }
+
   @Get('shadow-actions')
   async listShadowActions(
     @Supabase() supabase: SupabaseClient,
@@ -54,6 +71,24 @@ export class SlackPeopleController {
     @Query(new ZodValidationPipe(SlackShadowActionsQuerySchema)) query: SlackShadowActionsQuery,
   ) {
     return this.people.listShadowActions(supabase, scope.orgId, query.limit)
+  }
+
+  @Get(':id/activity')
+  async getPersonActivity(
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param(new ZodValidationPipe(SlackPersonIdParamSchema)) params: SlackPersonIdParam,
+  ) {
+    return this.people.getPersonActivity(supabase, scope.orgId, params.id)
+  }
+
+  @Post(':id/confirm-identity')
+  async confirmSuggestedIdentity(
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param(new ZodValidationPipe(SlackPersonIdParamSchema)) params: SlackPersonIdParam,
+  ) {
+    return this.people.confirmSuggestedIdentity(supabase, scope.orgId, params.id)
   }
 
   @Post(':id/test-proposal')

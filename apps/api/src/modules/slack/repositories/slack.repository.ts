@@ -238,18 +238,13 @@ export class SlackRepository {
     return data
   }
 
-  /**
-   * Resolve Slack connection for the request scope. When org-scoped lookup misses,
-   * fall back to the user's personal Slack row (same pattern as Fathom/Fireflies).
-   */
+  /** Resolve Slack only for the active request scope. */
   async getIntegration(
     supabase: SupabaseClient,
     userId: string,
     orgId?: string | null,
   ): Promise<{ access_token: string; metadata: Record<string, unknown> } | null> {
-    const scoped = await this.findConnectedIntegration(supabase, userId, orgId)
-    if (scoped || !orgId) return scoped
-    return this.findConnectedIntegration(supabase, userId, null)
+    return this.findConnectedIntegration(supabase, userId, orgId)
   }
 
   async updateIntegrationMetadata(
@@ -258,10 +253,7 @@ export class SlackRepository {
     metadata: Record<string, unknown>,
     orgId?: string | null,
   ): Promise<void> {
-    let existing = await this.findIntegrationRow(supabase, userId, orgId)
-    if (!existing?.id && orgId) {
-      existing = await this.findIntegrationRow(supabase, userId, null)
-    }
+    const existing = await this.findIntegrationRow(supabase, userId, orgId)
     if (!existing?.id) return
 
     const existingMetadata =
@@ -289,10 +281,7 @@ export class SlackRepository {
     errorMessage: string,
     orgId?: string | null,
   ): Promise<void> {
-    let existing = await this.findIntegrationRow(supabase, userId, orgId)
-    if (!existing?.id && orgId) {
-      existing = await this.findIntegrationRow(supabase, userId, null)
-    }
+    const existing = await this.findIntegrationRow(supabase, userId, orgId)
     if (!existing?.id) return
 
     const { error } = await supabase

@@ -1,64 +1,101 @@
 ---
 name: roas-image-brief
-description: Turns approved ad concepts + a campaign theme into paste-ready IMAGE GENERATION design prompts (ChatGPT ImageGen / any image tool) in the ROAS design-prompt spec — one complete paragraph per concept covering scene, style, lighting, palette with the campaign's brand color placed, exact on-image text with accent-word treatment, logo/stamp rule, and avoid-list, tagged 4:5 + 9:16. The isolated design-prompt layer of roas-ad-kit. Load for "image briefs," "design prompts," "ImageGen prompts," "prompts for the ad images," "turn these concepts into image prompts," "creative briefs for the designer," or a concept set + brand/theme handed over for the image layer. Do NOT load to invent the concepts (roas-ad-concepts), write the ad copy (roas-ad-copy), or render text-on-texture creatives (roas-ad-design — route those there instead).
+description: Turns approved ad concepts, audience and offer context, and a campaign theme into qualification-safe image-generation briefs. Use for image briefs, design prompts, ImageGen prompts, ad-image prompts, or designer handoffs. Requires audience and offer locks, unmistakable category cues, approved-asset readiness, live-platform treatment when factual, and a two-second comprehension check. Do not use to invent concepts, write ad copy, render text-on-texture statics, or assemble final ads.
 ---
 
-# ROAS Image Brief — concepts in, paste-ready ImageGen prompts out
+# ROAS Image Brief — qualified concepts in, paste-ready prompts out
 
-The design-prompt layer of `roas-ad-kit`, isolated. Input: approved concepts + the campaign theme. Output: one prompt per concept that a designer or an image tool can execute with zero follow-up questions.
+Turn approved concepts into prompts a designer or image tool can execute without guessing. A visually polished image is not successful if the wrong person can mistake it for their ad. Preserve the approved idea while making the audience, offer, and delivery format unmistakable.
 
-**The spec is bundled and canonical:** read `references/design-prompt-spec.md` before writing. Every prompt carries all seven elements (format tag, scene, style & lighting, palette + brand color placement, on-image text + accent treatment, logo/stamp rule, avoid-list) and matches the worked examples' specificity.
+Read `references/design-prompt-spec.md` before writing. It defines the prompt fields, qualification checks, and examples.
 
-## INPUTS
-1. **The concepts** — from `roas-ad-concepts`, an ad-kit deliverable, or stated in the conversation. Each needs at minimum: the idea, the on-image line, and the visual direction. If concepts don't exist yet, run `roas-ad-concepts` first — this skill literalizes ideas, it doesn't invent them.
-2. **Campaign theme** — brand color(s) with hex, the look (dark premium / bright clean / editorial / gritty), fonts if they matter to the creative. From the client's brand pull, the strategy doc, or the funnel build's mini brand guide. If only a client site is given, `web_fetch` it and extract; flag defaults as defaults.
-3. **Stamp rule** — webinar campaigns usually carry a FREE TRAINING / date stamp; book-a-call and application funnels usually don't. Confirm from the campaign type.
-4. **Locked on-image copy** — if `roas-ad-copy` already locked overlay lines, use them verbatim; the prompt never rewrites copy.
+## Inputs
 
-## THE WORKFLOW
+1. **Approved concepts and locked copy** — preserve the approved idea and on-image words. If concepts do not exist, route to `roas-ad-concepts`; do not invent them here.
+2. **Audience context** — target category, sophistication or qualification threshold, insider language, and explicit exclusions. Pull this from the approved strategy and copy sources.
+3. **Offer context** — offer, funnel stage or traffic temperature, delivery format, platform when known, factual timing, and CTA.
+4. **Campaign Theme** — palette, typography, image style, logos, product images, event photography, and cleared headshots.
+5. **Asset status** — which identity and platform assets are approved and attached. Never infer approval from a filename or mention alone.
 
-### Step 1 — Sort the concepts by creative type
-Per the spec's two types:
-- **Illustrative/photographic** (metaphor object, staged scene, split-frame) → full scene-brief prompt. This skill's main output.
-- **Text-on-texture validate-messaging lines** → do NOT write a full prompt; output the short deferral line "→ render via roas-ad-design" with the line, the accent word, and the stamp rule. That renderer owns those conventions.
+## Workflow
 
-### Step 2 — Write each prompt
-One paragraph per the spec template, formats tagged 4:5 + 9:16 (add 1:1 only if the placement calls for it). Literalize the concept: the exact subject, setting, framing, focal point. Place the brand hex somewhere specific (an underline, a prop, a color block) — never "use brand colors." State the exact on-image words, their placement, and which word gets the marker/bold/block treatment. Close with the avoid-list (stock smiles, clutter, fake logos, thumbnail legibility).
+### 1. Verify asset readiness
 
-### Step 3 — Consistency pass
-Across the set: same palette family, same lighting mood, same text treatment language — the campaign should look like ONE campaign in the feed. Vary the scenes, not the system.
+Compare the strategy's promised assets with the active Theme. If a concept depends on an approved logo, headshot, product image, event photo, or platform mark that is missing from the Theme, stop and name the missing field. Generic imagery is not a substitute for known identity assets because it removes the signals that qualify the viewer.
 
-### Step 4 — Ship
-Deliver per environment: in a platform with native document artifacts (Vibey), register the markdown as a Doc artifact (`document_artifact`) with the title above — do not write to `/mnt/user-data/outputs/` inside the platform. In claude.ai / no native artifacts (fallback), save to `/mnt/user-data/outputs/` and present. Title the Doc exactly `WEB#6 — Image Briefs` (legacy `Image Briefs` still matches). Prompts are the deliverable; do not generate the images unless asked (and if asked, the text-on-texture ones still route to roas-ad-design).
+Use real people's likenesses only when cleared. Use client and third-party logos only from approved asset references; never ask the image model to redraw them. If exact overlay composition is unavailable, flag the overlay handoff instead of fabricating the mark.
 
-## OUTPUT FORMAT
-```
+### 2. Write the campaign locks
+
+Add these at the top of the brief:
+
+- **Audience Lock:** target, qualification threshold, insider language, and excluded audiences.
+- **Offer Lock:** offer, funnel stage, delivery format/platform, factual date or urgency, and CTA.
+- **Asset Readiness:** approved references available, required references missing, and safe fallback boundaries.
+
+For a live offer on a known platform, specify `LIVE ON [PLATFORM]`, a factual live indicator, and the official platform mark from an approved asset. Do not imply a platform when it is unknown.
+
+### 3. Route the creative type
+
+- **Illustrative or photographic:** write the full prompt in this skill.
+- **Text-on-texture validate-messaging:** defer to `roas-ad-design` with the locked line, accent phrase, audience cue, and factual stamp.
+
+### 4. Write each concept
+
+Include the complete scene, style, lighting, palette, text hierarchy, logo/stamp rule, aspect ratios, and avoid-list from the reference spec.
+
+Every concept also needs two independent audience signals:
+
+1. one explicit category cue in the visible copy or factual badge;
+2. one insider visual cue, approved person/asset, product context, or category-specific environment.
+
+A generic business metaphor can remain only when those signals make the category unmistakable. Do not expect primary text outside the image to qualify an ambiguous creative.
+
+### 5. Run the Two-Second Test
+
+For every concept, record the answers a cold viewer should understand within two seconds:
+
+- Who is this for?
+- What is being offered and how is it delivered?
+- Why should they pay attention or act now?
+
+Revise or reject a concept when any answer depends on body copy, prior campaign knowledge, or an unexplained metaphor.
+
+### 6. Keep the set coherent and ship
+
+Use one palette, lighting family, and text-treatment system across the set while varying scenes. Register the brief as a native Doc titled `WEB#7 — Image Briefs` in Webinar Fulfillment missions; use `Image Briefs` elsewhere unless the mission supplies another exact title. Prompts are the deliverable. A separate generation step creates images.
+
+## Output format
+
+```markdown
 # [Client] — Image Briefs ([campaign])
-**Theme:** [look, brand color + hex, source] | **Stamp rule:** [yes: line / no] | **Concepts in:** [N] ([M] photographic, [K] → roas-ad-design)
+**Audience Lock:** [target, qualification, insider language, exclusions]
+**Offer Lock:** [offer, funnel stage, delivery format/platform, timing, CTA]
+**Asset Readiness:** [approved references | missing blockers | safe boundaries]
+**Theme:** [look, palette, typography, source]
 
 ## Concept 1 — [Name]
-**Design prompt** (4:5 + 9:16): [the complete paragraph per the spec]
+**Audience signals:** [explicit category cue] + [insider visual/asset cue]
+**Design prompt** (4:5 + 9:16): [complete prompt]
+**Two-Second Test:** Who: [...] | Offer: [...] | Why now: [...]
 
-## Concept 2 — [Name] (text-on-texture)
-→ render via roas-ad-design: line "[...]", accent "[WORD]", [stamp rule].
-
-[...all concepts...]
-
-## HANDOFF
-[paste order; any concept whose scene needs a real asset (product shot, cleared face) flagged]
+## Handoff
+[generation order, asset references, deterministic overlay handoffs, blockers]
 ```
 
-## HARD RULES
-- **Spec-complete or not done.** A prompt missing the palette, the text placement, or the avoid-list forces the designer to guess — the exact failure this skill exists to kill.
-- **Copy is locked.** On-image words come from the concept/ad-copy verbatim; the prompt never rewrites them.
-- **Brand color is placed, not mentioned.** Name the hex and say where it lands.
-- **Text-on-texture routes to roas-ad-design.** Don't re-spec what the renderer owns.
-- **No real people's likenesses** unless cleared; no regenerated real-brand logos; faces avoided by default in metaphor scenes.
-- **Thumbnail legibility** stated in every prompt.
+## Hard rules
 
-## COMMON PITFALLS
-- Vibes prompts ("premium studio feel, brand colors") — the worked examples in the spec are the bar.
-- Writing full scene briefs for validate-messaging lines that belong to roas-ad-design.
-- Inventing on-image copy the ad-copy skill never wrote.
-- A set with five different moods — one campaign, one look.
-- Generating images when the ask was briefs.
+- Preserve approved copy; return copy problems to the owning copy step.
+- Place the brand color and approved assets precisely; do not merely mention them.
+- Block on missing required identity assets instead of silently creating an anonymous substitute.
+- Never redraw client, platform, or third-party logos with a generative model.
+- Match every requested aspect ratio during generation.
+- Keep text legible at thumbnail size.
+
+## Common failures
+
+- A polished ladder, desk, boardroom, skyline, or handshake that could advertise any business.
+- “Free live training” without the audience, delivery platform when known, or factual timing.
+- A face-free or logo-free fallback even though approved identity assets exist elsewhere but were not attached.
+- Treating brand colors as audience qualification.
+- Passing the Two-Second Test only after reading the Meta primary text.

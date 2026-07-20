@@ -482,6 +482,7 @@ describe('SlackService media helpers', () => {
         listActiveOrgMembersWithProfileEmails: vi
           .fn()
           .mockResolvedValue([{ user_id: 'vibey-user-1', profiles: { email: 'ada@example.com' } }]),
+        listSlackIdentityState: vi.fn().mockResolvedValue([]),
         upsertResolvedSlackPerson: vi.fn(),
       }
       const resolver = new (SlackSenderResolverService as any)(
@@ -512,7 +513,95 @@ describe('SlackService media helpers', () => {
         expect.objectContaining({
           platform_id: 'U1',
           vibey_user_id: 'vibey-user-1',
-          relationship_kind: 'team_member',
+          relationship_kind: 'internal',
+          identity_match_method: 'email',
+        }),
+      )
+    })
+
+    it('suggests one exact name match without silently attaching the portal identity', async () => {
+      const contactIdentifiers = {
+        resolveByKind: vi.fn().mockResolvedValue(null),
+        attachIdentifier: vi.fn(),
+      }
+      const slackApi = {
+        listUsers: vi.fn().mockResolvedValue([
+          {
+            id: 'U1',
+            name: 'ada',
+            profile: { display_name: 'Ada Lovelace' },
+          },
+        ]),
+        getUserInfo: vi.fn(),
+      }
+      const runtimeRepository = {
+        listActiveOrgMembersWithProfileEmails: vi.fn().mockResolvedValue([
+          {
+            user_id: 'vibey-user-1',
+            profiles: { email: 'portal@example.com', full_name: 'Ada Lovelace' },
+          },
+        ]),
+        listSlackIdentityState: vi.fn().mockResolvedValue([]),
+        upsertResolvedSlackPerson: vi.fn(),
+      }
+      const resolver = new (SlackSenderResolverService as any)(
+        contactIdentifiers,
+        slackApi,
+        runtimeRepository,
+      ) as SlackSenderResolverService
+
+      const result = await resolver.resolveSlackSenders({} as never, {
+        botToken: 'xoxb',
+        userId: 'owner-user',
+        orgId: 'org-1',
+        slackUserIds: ['U1'],
+      })
+
+      expect(result.get('U1')?.vibeyUserId).toBeNull()
+      expect(runtimeRepository.upsertResolvedSlackPerson).toHaveBeenCalledWith(
+        {},
+        expect.objectContaining({
+          vibey_user_id: null,
+          suggested_vibey_user_id: 'vibey-user-1',
+          identity_match_method: 'suggested_name',
+          identity_match_confidence: 0.95,
+        }),
+      )
+    })
+
+    it('does not suggest an ambiguous exact name', async () => {
+      const runtimeRepository = {
+        listActiveOrgMembersWithProfileEmails: vi.fn().mockResolvedValue([
+          { user_id: 'user-1', profiles: { full_name: 'Alex Smith' } },
+          { user_id: 'user-2', profiles: { full_name: 'Alex Smith' } },
+        ]),
+        listSlackIdentityState: vi.fn().mockResolvedValue([]),
+        upsertResolvedSlackPerson: vi.fn(),
+      }
+      const resolver = new (SlackSenderResolverService as any)(
+        { resolveByKind: vi.fn().mockResolvedValue(null), attachIdentifier: vi.fn() },
+        {
+          listUsers: vi
+            .fn()
+            .mockResolvedValue([{ id: 'U1', profile: { display_name: 'Alex Smith' } }]),
+          getUserInfo: vi.fn(),
+        },
+        runtimeRepository,
+      ) as SlackSenderResolverService
+
+      await resolver.resolveSlackSenders({} as never, {
+        botToken: 'xoxb',
+        userId: 'owner-user',
+        orgId: 'org-1',
+        slackUserIds: ['U1'],
+      })
+
+      expect(runtimeRepository.upsertResolvedSlackPerson).toHaveBeenCalledWith(
+        {},
+        expect.objectContaining({
+          vibey_user_id: null,
+          suggested_vibey_user_id: null,
+          identity_match_method: 'none',
         }),
       )
     })

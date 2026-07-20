@@ -1,6 +1,8 @@
 import { backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
 
-export type SlackRelationshipKind = 'team_member' | 'external' | 'unknown'
+export type SlackRelationshipKind = 'internal' | 'external' | 'ignored'
+export type SlackRelationshipSource = 'inferred' | 'manual'
+export type SlackIdentityMatchMethod = 'none' | 'email' | 'suggested_name' | 'confirmed_name'
 export type SlackDeliveryMode = 'off' | 'shadow' | 'active'
 
 export interface SlackDiscoveredPerson {
@@ -14,10 +16,28 @@ export interface SlackDiscoveredPerson {
   email: string | null
   is_bot: boolean
   vibey_user_id: string | null
+  suggested_vibey_user_id: string | null
   contact_id: string | null
   relationship_kind: SlackRelationshipKind
+  relationship_source: SlackRelationshipSource
+  identity_match_method: SlackIdentityMatchMethod
+  identity_match_confidence: number
   delivery_mode: SlackDeliveryMode
   last_seen_at: string
+  brain_id: string | null
+  brain_name: string | null
+}
+
+export interface SlackPersonActivityMessage {
+  ts: string
+  text: string
+  direction: 'inbound' | 'outbound'
+}
+
+export interface SlackPersonActivity {
+  channel_id: string
+  messages: SlackPersonActivityMessage[]
+  actions: SlackShadowAction[]
 }
 
 export interface SlackShadowAction {
@@ -49,6 +69,27 @@ export function patchSlackPersonDeliveryMode(id: string, deliveryMode: SlackDeli
     `/api/integrations/slack/people/${id}/delivery-mode`,
     { delivery_mode: deliveryMode },
   )
+}
+
+export function patchSlackPersonRelationshipKind(
+  id: string,
+  relationshipKind: SlackRelationshipKind,
+) {
+  return backendPatch<{ person: SlackDiscoveredPerson }>(
+    `/api/integrations/slack/people/${id}/relationship-kind`,
+    { relationship_kind: relationshipKind },
+  )
+}
+
+export function confirmSlackPersonIdentity(id: string) {
+  return backendPost<{ person: SlackDiscoveredPerson }>(
+    `/api/integrations/slack/people/${id}/confirm-identity`,
+    {},
+  )
+}
+
+export function fetchSlackPersonActivity(id: string) {
+  return backendGet<SlackPersonActivity>(`/api/integrations/slack/people/${id}/activity`)
 }
 
 export function createSlackTestProposal(personId: string) {

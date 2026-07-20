@@ -143,6 +143,8 @@ export interface SlackWorkspaceUser {
   is_bot?: boolean
   tz?: string
   deleted?: boolean
+  is_restricted?: boolean
+  is_ultra_restricted?: boolean
 }
 
 export type SlackBrainTargetKind = 'user' | 'campaign' | 'agent' | 'customer'
@@ -176,7 +178,9 @@ export interface SlackResolvedSender {
   vibeyUserId: string | null
 }
 
-export type SlackRelationshipKind = 'team_member' | 'external' | 'unknown'
+export type SlackRelationshipKind = 'internal' | 'external' | 'ignored'
+export type SlackRelationshipSource = 'inferred' | 'manual'
+export type SlackIdentityMatchMethod = 'none' | 'email' | 'suggested_name' | 'confirmed_name'
 export type SlackDeliveryMode = 'off' | 'shadow' | 'active'
 export type SlackShadowActionKind = 'message' | 'workflow'
 export type SlackShadowActionStatus =
@@ -198,10 +202,22 @@ export interface SlackDiscoveredPerson {
   email: string | null
   is_bot: boolean
   vibey_user_id: string | null
+  suggested_vibey_user_id: string | null
   contact_id: string | null
   relationship_kind: SlackRelationshipKind
+  relationship_source: SlackRelationshipSource
+  identity_match_method: SlackIdentityMatchMethod
+  identity_match_confidence: number
   delivery_mode: SlackDeliveryMode
   last_seen_at: string
+  brain_id: string | null
+  brain_name: string | null
+}
+
+export interface SlackPersonActivityMessage {
+  ts: string
+  text: string
+  direction: 'inbound' | 'outbound'
 }
 
 export interface SlackShadowAction {

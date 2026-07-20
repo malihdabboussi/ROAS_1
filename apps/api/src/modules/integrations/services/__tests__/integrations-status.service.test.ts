@@ -15,6 +15,53 @@ function makeQuery(result: Record<string, unknown>) {
 }
 
 describe('IntegrationsStatusService execution mode', () => {
+  it('does not expose a personal Slack connection as connected in an organization', async () => {
+    let userIntegrationQueries = 0
+    const repository = {
+      table: vi.fn((_client: unknown, table: string) => {
+        if (table === 'project_composio_toolkit_config') {
+          return makeQuery({ data: null, error: null })
+        }
+        userIntegrationQueries += 1
+        return makeQuery({
+          data:
+            userIntegrationQueries === 1
+              ? []
+              : [
+                  {
+                    id: 'personal-slack',
+                    user_id: 'user-1',
+                    status: 'connected',
+                    scope_mode: 'personal',
+                    is_default: true,
+                  },
+                ],
+          error: null,
+        })
+      }),
+      findAdminPersonalOpenAICodexIntegration: vi.fn(async () => null),
+      findAdminPersonalAnthropicClaudeIntegration: vi.fn(async () => null),
+    }
+    const service = new IntegrationsStatusService(
+      repository as never,
+      {} as never,
+      { isOrgContext: vi.fn(() => true) } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    )
+
+    const result = await service.getIntegrationStatus(
+      {} as never,
+      { id: 'user-1' },
+      { userId: 'user-1', orgId: 'org-1' } as never,
+      'slack',
+    )
+
+    expect(result).toMatchObject({ connected: false })
+    expect(userIntegrationQueries).toBe(1)
+  })
+
   it('defaults missing toolkit execution_mode to legacy instead of composio', async () => {
     const listConnectedAccounts = vi.fn(async () => [])
     const repository = {

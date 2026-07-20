@@ -1,5 +1,12 @@
 # Changelog - July 19, 2026
 
+## [2026-07-19 18:21] - [FIX]
+
+What: Made image briefs and generated ad assets qualification-safe across campaigns with Audience/Offer Locks, approved-asset readiness, two independent audience cues, factual live-platform treatment, and a two-second who/offer/why-now check.
+Why: The prior schema could faithfully produce polished generic metaphors that preserved brand colors and copy while failing to show who the ad was for or that a webinar was live on a known platform.
+Impact: Future Webinar Fulfillment image briefs block on missing promised identity assets, reject category-ambiguous concepts, use official logos only from approved references, and require the generated asset to qualify a cold viewer without relying on surrounding body copy.
+Files: `webinar-fulfillment.creative.ts`, `webinar-fulfillment.playbook.test.ts`, `roas-image-brief/SKILL.md`, `references/design-prompt-spec.md`, `20260719182102_qualify_image_briefs_before_generation.sql`, `documentation/features/missions.md`
+
 ## [2026-07-19 15:58] - [FIX]
 
 What: Fixed Page Grader Map clients modal scroll/search by adding the missing `modal-nested-scroll-body` utility and constraining the card with `max-h-[90vh]` so the header (search) stays visible and the list scrolls inside.
@@ -212,9 +219,9 @@ Why: Generated artwork uploaded successfully but its media row failed the conver
 Impact: Mission-run `generate_image` calls can register images in Space Media and persist native mission image deliverables without requiring a chat-backed session.
 Files: `artifact-legacy-media-generate.service.ts`, `artifact-legacy-media-generate.service.test.ts`, `documentation/features/missions.md`
 
-## [2026-07-19 18:57] - [FEATURE]
+## [2026-07-19 19:45] - [FEATURE]
 
-What: Added a final Webinar Fulfillment step that compiles approved mission assets into one registered Google Doc Launch Bible with fixed ordered tabs and nested funnel-page tabs.
-Why: The delivery team needs one complete, navigable handoff containing client details, ICP, offer, funnel copy, scripts, Meta ad copy, follow-up messaging, and direct preview/creative links.
-Impact: Atlas can now publish a verified Task 16 Google Doc deliverable after production approval; strict schema and preflight checks reject missing, duplicate, misordered, or incorrectly nested tabs.
-Files: `webinar-fulfillment.playbook.ts`, `webinar-fulfillment.helpers.ts`, `artifact-webinar-launch-bible-preflight.ts`, `artifact-action-schemas.ts`, `artifact-mission-api-actions.service.ts`, `mission-deliverables-google-export.service.ts`, `google-drive-composio-multi-tab-docs.service.ts`, `documentation/features/missions.md`, and focused tests/policy registries.
+What: Expanded Manage People with safe exact-name identity suggestions, explicit Internal/External/Ignored classification, portal and Brain indicators, and a selected-person view containing the real Slack DM timeline beside its Shadow proposal ledger.
+Why: Admins could create and send a proposal but could not see where it would land, distinguish portal users from Slack-only people, classify people independently from delivery mode, or review a likely name match when Slack and portal emails differed.
+Impact: Active Slack humans remain the roster source; email matches link automatically, unique exact-name matches require confirmation, manual classifications persist across refreshes, and an admin can inspect the destination conversation before using the existing reviewed-send flow. User Brain attachment is visible without falsely claiming that DM-to-Brain learning is already automatic.
+Files: `supabase/migrations/20260719204000_slack_people_identity_activity.sql`, Slack people DTO/types/controller/repositories/services/tests, Team People service/hook/config/components/tests, `documentation/features/integration-connections.md`

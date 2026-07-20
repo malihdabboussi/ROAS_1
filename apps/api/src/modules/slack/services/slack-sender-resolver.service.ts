@@ -20,6 +20,13 @@ type SlackMember = {
   }
   deleted?: boolean
   is_bot?: boolean
+  is_restricted?: boolean
+  is_ultra_restricted?: boolean
+}
+
+type OrgIdentityMaps = {
+  byEmail: Map<string, string>
+  uniqueByName: Map<string, string>
 }
 
 @Injectable()
@@ -41,7 +48,15 @@ export class SlackSenderResolverService {
   ): Promise<Map<string, SlackResolvedSender>> {
     const uniqueIds = [...new Set(input.slackUserIds.filter(Boolean))]
     const users = await this.loadSlackUsers(input.botToken, uniqueIds)
-    const byEmail = await this.loadOrgMembersByEmail(supabase, input.orgId)
+    const orgIdentities = await this.loadOrgMemberIdentities(supabase, input.orgId)
+    const existingIdentityRows = await this.slackRuntimeRepo.listSlackIdentityState(supabase, {
+      userId: input.userId,
+      orgId: input.orgId,
+      platformIds: uniqueIds,
+    })
+    const existingIdentityBySlackId = new Map(
+      existingIdentityRows.map((row) => [row.platform_id, row]),
+    )
     const out = new Map<string, SlackResolvedSender>()
 
     for (const slackUserId of uniqueIds) {
@@ -70,7 +85,34 @@ export class SlackSenderResolverService {
       }
 
       const role = contact?.contact_type ?? null
-      const vibeyUserId = email ? (byEmail.get(email.toLowerCase()) ?? null) : null
+      const existingIdentity = existingIdentityBySlackId.get(slackUserId)
+      const emailMatchedUserId = email
+        ? (orgIdentities.byEmail.get(email.toLowerCase()) ?? null)
+        : null
+      const confirmedNameUserId =
+        existingIdentity?.identity_match_method === 'confirmed_name'
+          ? existingIdentity.vibey_user_id
+          : null
+      const vibeyUserId = emailMatchedUserId ?? confirmedNameUserId
+      const suggestedVibeyUserId = vibeyUserId
+        ? null
+        : (orgIdentities.uniqueByName.get(
+            this.normalizeName(this.displayName(slackUser, slackUserId)),
+          ) ?? null)
+      const identityMatchMethod = emailMatchedUserId
+        ? 'email'
+        : confirmedNameUserId
+          ? 'confirmed_name'
+          : suggestedVibeyUserId
+            ? 'suggested_name'
+            : 'none'
+      const inferredRelationship = vibeyUserId
+        ? 'internal'
+        : contact
+          ? 'external'
+          : slackUser?.is_restricted || slackUser?.is_ultra_restricted
+            ? 'external'
+            : 'internal'
       await this.slackRuntimeRepo.upsertResolvedSlackPerson(supabase, {
         user_id: input.userId,
         org_id: input.orgId ?? null,
@@ -84,8 +126,16 @@ export class SlackSenderResolverService {
         email,
         is_bot: slackUser?.is_bot ?? false,
         vibey_user_id: vibeyUserId,
+        suggested_vibey_user_id: suggestedVibeyUserId,
         contact_id: contact?.id ?? null,
-        relationship_kind: vibeyUserId ? 'team_member' : contact ? 'external' : 'unknown',
+        relationship_kind:
+          existingIdentity?.relationship_source === 'manual'
+            ? existingIdentity.relationship_kind
+            : inferredRelationship,
+        relationship_source:
+          existingIdentity?.relationship_source === 'manual' ? 'manual' : 'inferred',
+        identity_match_method: identityMatchMethod,
+        identity_match_confidence: vibeyUserId ? 1 : suggestedVibeyUserId ? 0.95 : 0,
       })
       out.set(slackUserId, {
         slackUserId,
@@ -138,12 +188,13 @@ export class SlackSenderResolverService {
     return map
   }
 
-  private async loadOrgMembersByEmail(
+  private async loadOrgMemberIdentities(
     supabase: SupabaseClient,
     orgId?: string | null,
-  ): Promise<Map<string, string>> {
-    const map = new Map<string, string>()
-    if (!orgId) return map
+  ): Promise<OrgIdentityMaps> {
+    const byEmail = new Map<string, string>()
+    const nameCandidates = new Map<string, string[]>()
+    if (!orgId) return { byEmail, uniqueByName: new Map() }
     let rows: Awaited<ReturnType<SlackRuntimeRepository['listActiveOrgMembersWithProfileEmails']>>
     try {
       rows = await this.slackRuntimeRepo.listActiveOrgMembersWithProfileEmails(supabase, orgId)
@@ -155,9 +206,17 @@ export class SlackSenderResolverService {
       const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
       const email = profile?.email
       const userId = row.user_id
-      if (email && userId) map.set(email.toLowerCase(), userId)
+      if (email && userId) byEmail.set(email.toLowerCase(), userId)
+      const normalizedName = this.normalizeName(profile?.full_name)
+      if (normalizedName && userId) {
+        nameCandidates.set(normalizedName, [...(nameCandidates.get(normalizedName) ?? []), userId])
+      }
     }
-    return map
+    const uniqueByName = new Map<string, string>()
+    for (const [name, userIds] of nameCandidates.entries()) {
+      if (userIds.length === 1 && userIds[0]) uniqueByName.set(name, userIds[0])
+    }
+    return { byEmail, uniqueByName }
   }
 
   private extractEmail(member: SlackMember | undefined): string | null {
@@ -173,5 +232,12 @@ export class SlackSenderResolverService {
       member?.name ||
       fallback
     )
+  }
+
+  private normalizeName(value: string | null | undefined): string {
+    return (value ?? '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
   }
 }
