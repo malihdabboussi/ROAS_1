@@ -204,3 +204,23 @@ Why: Fathom stores owners as `[Nate:](url)` list items; converting those to Slac
 Impact: From the call reads as Nate / Dylan / Aaron sections with clickable names and normal task bullets underneath.
 
 Files: `meeting-follow-up-slack-message.ts`, tests, changelog.
+
+## [2026-07-20 14:35] - [DOCS]
+
+What: Added feature doc for meeting follow-up Slack confirm covering status, data flow, file map, test IDs, commits, and SlotBot skill plan.
+
+Why: Need a single place that explains the MVP and what was built across this chat.
+
+Impact: `documentation/features/meeting-follow-up-slack.md` is the source of truth; spaces-automation links to it.
+
+Files: `documentation/features/meeting-follow-up-slack.md`, `documentation/features/spaces-automation.md`.
+
+## [2026-07-20 14:36] - [FIX]
+
+What: Removed hyperlinks from “From the call” owner names; they now render as plain `*Nate’s action items*` headers.
+
+Why: Fathom timestamp URLs on names looked like weird linked bullets and weren’t needed — ownership already appears on the action-items list and the recording link is separate.
+
+Impact: From the call sections read as normal owner headers with task bullets.
+
+Files: `meeting-follow-up-slack-message.ts`, tests, `meeting-follow-up-slack.md`.

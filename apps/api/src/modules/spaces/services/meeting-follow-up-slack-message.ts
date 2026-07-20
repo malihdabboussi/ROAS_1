@@ -116,7 +116,7 @@ export function extractSummarySection(
     .trim()
 }
 
-/** Fathom often stores owners as `[Nate:](timestamp-url)` bullets — render as headers, not bullets. */
+/** Fathom often stores owners as `[Nate:](timestamp-url)` bullets — plain headers, no links. */
 export function formatOwnerGroupedNextSteps(raw: string): string {
   if (!raw.trim()) return ''
   const out: string[] = []
@@ -124,8 +124,11 @@ export function formatOwnerGroupedNextSteps(raw: string): string {
     const ownerOnly = line.match(/^[ \t]*[-*][ \t]+\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)\s*$/)
     if (ownerOnly) {
       const name = String(ownerOnly[1]).replace(/:\s*$/, '').trim()
+      if (!name) continue
       if (out.length > 0) out.push('')
-      out.push(`*<${ownerOnly[2]}|${name || 'clip'}>*`)
+      // Drop the Fathom timestamp URL — ownership already shows on action items.
+      const possessive = name.toLowerCase().endsWith('s') ? `${name}'` : `${name}'s`
+      out.push(`*${possessive} action items*`)
       continue
     }
 
