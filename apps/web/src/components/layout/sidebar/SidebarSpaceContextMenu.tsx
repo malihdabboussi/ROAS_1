@@ -22,9 +22,12 @@ import {
 } from '@/components/menus/MoveCopySubmenu'
 import { getIconColor, IconPicker, LucideIcon, type IconColorId } from '@/components/ui/IconPicker'
 import { useOrgStore } from '@/features/org/store/use-org-store'
-import { VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import { useSpacePermission } from '@/features/spaces/hooks/use-space-permission'
 import type { Space } from '@/features/spaces/types'
+import {
+  HUB_DOCK_PORTAL_GUARD,
+  VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD,
+} from '@/lib/ui/floating-control-attrs'
 import { cn } from '@/lib/utils/cn'
 import type { SidebarCampaignRow } from './sidebar-types'
 
@@ -175,6 +178,7 @@ export function SidebarSpaceContextMenu({
     <div
       ref={ref}
       data-sidebar-space-menu
+      {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
       className={cn(
         'z-dropdown rounded-spacing-2 border-border surface-card p-spacing-2 fixed border shadow-lg',
         'gap-spacing-1 flex flex-col',

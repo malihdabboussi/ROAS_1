@@ -14,6 +14,7 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { getIconColor, IconPicker, LucideIcon, type IconColorId } from '@/components/ui/IconPicker'
+import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import { cn } from '@/lib/utils/cn'
 
 export interface ChannelActionsMenuProps {
@@ -148,6 +149,7 @@ export function ChannelActionsMenu({
     <div
       ref={menuRef}
       data-channel-actions-menu
+      {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
       role="menu"
       aria-label={`Actions for ${channelName}`}
       className="z-dropdown rounded-spacing-2 border-border surface-card p-spacing-2 fixed min-w-56 overflow-visible border shadow-lg"

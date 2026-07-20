@@ -5,9 +5,13 @@ import { useCallback, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AlertCircle, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
-import { openInNewTab } from '@/lib/utils/open-in-new-tab'
-import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
+import {
+  AddPeopleToChannelModal,
+  channelMembersToRosterKeys,
+} from '@/components/channels/AddPeopleToChannelModal'
+import { ChannelActionsMenu } from '@/components/channels/ChannelActionsMenu'
+import { ChannelSettingsModal } from '@/components/channels/ChannelSettingsModal'
+import { StartBrainstormModal } from '@/components/channels/StartBrainstormModal'
 import {
   addRosterEntriesToChannel,
   channelsService,
@@ -21,12 +25,11 @@ import {
   type Channel,
 } from '@/lib/channels'
 import {
-  AddPeopleToChannelModal,
-  channelMembersToRosterKeys,
-} from '@/components/channels/AddPeopleToChannelModal'
-import { ChannelActionsMenu } from '@/components/channels/ChannelActionsMenu'
-import { ChannelSettingsModal } from '@/components/channels/ChannelSettingsModal'
-import { StartBrainstormModal } from '@/components/channels/StartBrainstormModal'
+  HUB_DOCK_PORTAL_GUARD,
+  VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD,
+} from '@/lib/ui/floating-control-attrs'
+import { openInNewTab } from '@/lib/utils/open-in-new-tab'
+import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 
 export function channelPageUrl(channelId: string, threadId?: string) {
   const base = `/home/channels/${channelId}`
@@ -48,8 +51,8 @@ function ChannelDeleteConfirmDialog({
   if (!open || typeof document === 'undefined') return null
 
   return createPortal(
-    <div {...{ [VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD]: '' }}>
-      <div className="z-modal-backdrop fixed inset-0 bg-modal-overlay" onClick={onClose} />
+    <div {...{ [VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD]: '', [HUB_DOCK_PORTAL_GUARD]: '' }}>
+      <div className="z-modal-backdrop bg-modal-overlay fixed inset-0" onClick={onClose} />
       <div className="z-modal-content fixed inset-0 flex items-center justify-center overflow-hidden p-2 sm:p-4 md:p-6">
         <div className="surface-card wizard-container-border rounded-spacing-4 relative flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden">
           <button type="button" onClick={onClose} className="btn-icon-bare btn-close-absolute">

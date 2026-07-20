@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import type { BrainScopeMenuContext } from '@/features/brain/hooks/use-brain-scope-menu-actions'
+import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import { BrainImageMenuItem } from './BrainImageMenuItem'
 import { CortexMaxIcon } from './CortexMaxIcon'
 
@@ -117,6 +118,7 @@ export function BrainScopeContextMenu({ position, ctx, onClose }: BrainScopeCont
       <div
         ref={ref}
         data-brain-scope-menu
+        {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
         className="z-dropdown rounded-spacing-2 border-border surface-card p-spacing-2 gap-spacing-1 fixed flex flex-col border shadow-lg"
         style={{ ...placedStyle, width: MENU_WIDTH }}
         role="menu"

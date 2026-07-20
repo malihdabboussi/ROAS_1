@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { BarChart3, LayoutDashboard, Palette, Pencil, Shield, Trash2, UserPlus } from 'lucide-react'
 import { getIconColor, IconPicker, LucideIcon, type IconColorId } from '@/components/ui/IconPicker'
+import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import { cn } from '@/lib/utils/cn'
 
 export interface TeamActionsMenuProps {
@@ -137,6 +138,7 @@ export function TeamActionsMenu({
     <div
       ref={menuRef}
       data-team-actions-menu
+      {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
       role="menu"
       aria-label={`Actions for ${teamName}`}
       className="z-dropdown rounded-spacing-2 border-border surface-card p-spacing-2 fixed min-w-56 overflow-visible border shadow-lg"

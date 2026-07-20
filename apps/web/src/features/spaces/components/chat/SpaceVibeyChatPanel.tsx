@@ -28,6 +28,7 @@ import {
   type GlobalChatSeedDetail,
   type GlobalChatVoiceStartDetail,
 } from '@/components/global-chat/store/use-global-chat-store'
+import { useShellStore } from '@/components/shell/use-shell-store'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
   useBrainLiveSession,
@@ -770,6 +771,14 @@ export function SpaceVibeyChatPanel({
         list.forEach((c) => useChatStore.getState().addConversation(c))
         setConversations(list)
 
+        // Shell pen / green New: do not revive the last stored thread after a fresh-chat request.
+        if (useSpacesStore.getState().chatRailIntent === 'new') {
+          setSelectedConversationId(null)
+          persistActiveConversationId(chatScopeStorageId, null, activeAgentKey)
+          useChatStore.getState().setActiveConversationId(null)
+          return
+        }
+
         const stored = readStoredAgentConversationId(chatScopeStorageId, activeAgentKey)
         const storedValid = Boolean(
           stored &&
@@ -834,6 +843,16 @@ export function SpaceVibeyChatPanel({
     chatScopeStorageId,
     clearPendingOpenConversation,
   ])
+
+  // Keep shell drawer conversation id in sync so pen restore reopens this thread.
+  useEffect(() => {
+    if (!shellSidebarChrome || !selectedConversationId) return
+    if (useSpacesStore.getState().chatRailIntent === 'new') return
+    const drawer = useShellStore.getState().chatDrawer
+    if (!drawer.open) return
+    if (drawer.conversationId === selectedConversationId) return
+    useShellStore.getState().openChatDrawer(selectedConversationId)
+  }, [selectedConversationId, shellSidebarChrome])
 
   useEffect(() => {
     const handleArtifactFocus = (event: Event) => {

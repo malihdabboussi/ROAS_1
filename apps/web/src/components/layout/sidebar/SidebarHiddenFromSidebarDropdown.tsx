@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
 import type { Space } from '@/features/spaces/types'
+import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import type { SidebarCampaignRow } from './sidebar-types'
 
 export type SidebarHiddenFromSidebarDropdownProps = {
@@ -76,6 +77,7 @@ export function SidebarHiddenFromSidebarDropdown({
     <div
       ref={menuRef}
       data-sidebar-hidden-menu
+      {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
       className="dropdown-menu-solid fixed z-[99999] w-[13.5rem] rounded-xl py-2 shadow-lg"
       style={placedStyle}
       role="menu"

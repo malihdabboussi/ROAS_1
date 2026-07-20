@@ -192,7 +192,7 @@
     "apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 2454
+      "lines": 2469
     },
     "apps/web/src/features/spaces/components/contacts/ContactActivityTimeline.tsx": {
       "kind": "web-component",
@@ -334,10 +334,20 @@
       "limit": 400,
       "lines": 708
     },
+    "apps/web/src/features/team/components/AgentActionsMenu.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 642
+    },
     "apps/web/src/features/team/components/AgentChatPanel.tsx": {
       "kind": "web-component",
       "limit": 400,
       "lines": 2741
+    },
+    "apps/web/src/components/menus/MoveCopySubmenu.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 678
     },
     "apps/web/src/features/billing/components/CreditPurchaseDialog.tsx": {
       "kind": "web-component",
@@ -831,6 +841,15 @@
         "@/features/mission-control/types": 1,
         "@/features/studio/components/layout/ResizableDivider": 1,
         "@/features/studio/hooks/usePanelResize": 1
+      }
+    },
+    "apps/web/src/features/team/components/AgentActionsMenu.tsx": {
+      "sourceFeature": "team",
+      "count": 3,
+      "imports": {
+        "@/features/mission-control/types": 1,
+        "@/features/studio/services/campaign.service": 1,
+        "@/features/studio/types": 1
       }
     },
     "apps/web/src/features/team/components/AgentChatPanel.tsx": {

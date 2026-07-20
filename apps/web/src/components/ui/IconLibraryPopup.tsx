@@ -12,6 +12,7 @@ import {
 import { createPortal } from 'react-dom'
 import { Check, Search, X } from 'lucide-react'
 import { searchIcons } from '@/lib/data/icon-library'
+import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import { getIconColor, ICON_COLORS, LucideIcon, type IconColorId } from './icon-picker-shared'
 
 interface IconLibraryPopupProps {
@@ -173,6 +174,7 @@ export function IconLibraryPopup({
     <div
       ref={popupRef}
       data-icon-picker-popup
+      {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
       className={`surface-card fixed ${zIndexClass} flex max-h-[400px] w-[300px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] shadow-2xl`}
       style={{ top: pos.top, left: pos.left }}
       onClick={(e: ReactMouseEvent) => e.stopPropagation()}

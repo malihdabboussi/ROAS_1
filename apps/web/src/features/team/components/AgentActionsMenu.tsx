@@ -27,6 +27,7 @@ import {
   unassignAgentFromCampaign,
 } from '@/features/studio/services/campaign.service'
 import type { Campaign } from '@/features/studio/types'
+import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import { CAMPAIGN_CORE_AGENT_KEYS } from '../constants/team.constants'
 import { agentShowsCampaignAssignment } from '../lib/agent-info-panel-tabs'
 
@@ -333,6 +334,7 @@ export function AgentActionsMenu(props: AgentActionsMenuProps) {
       <div
         ref={menuRef}
         data-agent-actions-menu
+        {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
         role="menu"
         className="z-dropdown rounded-spacing-2 border-border surface-card p-spacing-2 fixed min-w-56 overflow-visible border shadow-lg"
         style={{
@@ -533,6 +535,7 @@ export function AgentActionsMenu(props: AgentActionsMenuProps) {
         <div
           ref={submenuRef}
           role="menu"
+          {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
           className="z-dropdown dropdown-menu-solid fixed max-h-[min(280px,50vh)] overflow-y-auto rounded-xl py-1 shadow-lg"
           style={{
             top: subPos.top,

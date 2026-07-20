@@ -19,11 +19,13 @@ export function ShellChatDrawer() {
 
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
   const openConversationInSpaceChat = useSpacesStore((s) => s.openConversationInSpaceChat)
+  const setChatRailIntent = useSpacesStore((s) => s.setChatRailIntent)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
 
   const [isDragging, setIsDragging] = useState(false)
   const dragStartX = useRef(0)
   const dragStartWidth = useRef(width)
+  const lastHandledNewChatNonceRef = useRef(0)
 
   useEffect(() => {
     if (!open) return
@@ -32,16 +34,23 @@ export function ShellChatDrawer() {
     if (conversationId) {
       openConversationInSpaceChat(conversationId)
       setActiveConversationId(conversationId)
-    } else {
-      // Fresh / empty drawer: normal chat empty state (not Home greeting chrome).
-      setActiveConversationId(null)
+      return
     }
+    // Fresh chat request (pen while open / green New): clear the panel thread.
+    if (newChatNonce > lastHandledNewChatNonceRef.current) {
+      lastHandledNewChatNonceRef.current = newChatNonce
+      setChatRailIntent('new')
+      setActiveConversationId(null)
+      return
+    }
+    // Restore without a shell conversation id: leave panel free to hydrate last chat.
   }, [
     open,
     conversationId,
     newChatNonce,
     openConversationInSpaceChat,
     setActiveConversationId,
+    setChatRailIntent,
     setCollapsed,
   ])
 

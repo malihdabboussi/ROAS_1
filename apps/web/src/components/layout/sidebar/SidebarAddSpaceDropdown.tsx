@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { LayoutGrid, Library } from 'lucide-react'
+import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 
 export interface SidebarAddSpaceDropdownProps {
   open: boolean
@@ -52,6 +53,7 @@ export function SidebarAddSpaceDropdown({
   return createPortal(
     <div
       ref={menuRef}
+      {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
       className="dropdown-menu-solid fixed z-[99999] w-[11.5rem] rounded-xl py-2 shadow-lg"
       style={{ top: pos.top, left: pos.left }}
     >

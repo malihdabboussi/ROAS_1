@@ -1,15 +1,9 @@
 'use client'
 
-import {
-  useCallback,
-  useLayoutEffect,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Search, X } from 'lucide-react'
+import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import { cn } from '@/lib/utils/cn'
 
 /** Primary dock leave grace (trigger ↔ flyout). */
@@ -52,7 +46,14 @@ type HubDockFlyoutProps = {
 }
 
 function isHubDockFlyoutTarget(target: EventTarget | null): boolean {
-  return target instanceof Element && Boolean(target.closest('[data-hub-dock-flyout]'))
+  if (!(target instanceof Element)) return false
+  return Boolean(
+    target.closest('[data-hub-dock-flyout]') ||
+    target.closest(`[${HUB_DOCK_PORTAL_GUARD}]`) ||
+    // Modals / Radix portals hosted from flyout children (Share, settings, delete confirm).
+    target.closest('[data-radix-portal]') ||
+    target.closest('[role="dialog"]'),
+  )
 }
 
 /**
@@ -88,7 +89,9 @@ export function HubDockFlyout({
     const el = rootRef.current
     const height = el?.offsetHeight ?? 0
     const maxTop =
-      height > 0 ? Math.max(8, window.innerHeight - height - 8) : Math.max(8, window.innerHeight - 48)
+      height > 0
+        ? Math.max(8, window.innerHeight - height - 8)
+        : Math.max(8, window.innerHeight - 48)
     const nextTop = Math.min(Math.max(8, anchor.top), maxTop)
     let nextLeft = anchor.right + offsetPx
     const width = el?.offsetWidth ?? 240
@@ -122,7 +125,8 @@ export function HubDockFlyout({
     const onDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null
       if (!target) return
-      if (target.closest('[data-hub-dock-flyout]')) return
+      // Portaled dock menus live under document.body, not inside the flyout node.
+      if (isHubDockFlyoutTarget(target)) return
       onPinnedChange?.(false)
       onClose()
     }

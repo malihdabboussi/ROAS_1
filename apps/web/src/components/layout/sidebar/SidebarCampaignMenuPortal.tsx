@@ -24,6 +24,7 @@ import {
 import { getIconColor, IconPicker, LucideIcon, type IconColorId } from '@/components/ui/IconPicker'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useCampaignPermission } from '@/features/studio/hooks/use-campaign-permission'
+import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 import type { SidebarCampaignRow } from './sidebar-types'
 
@@ -142,6 +143,7 @@ export function SidebarCampaignMenuPortal({
     <div
       ref={ref}
       data-campaign-menu
+      {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
       className="z-dropdown rounded-spacing-2 border-border surface-card p-spacing-2 fixed border shadow-lg"
       style={{ ...placedStyle, width: MENU_WIDTH }}
       role="menu"
@@ -175,7 +177,7 @@ export function SidebarCampaignMenuPortal({
             <span>{campaign.isFavorite ? 'Unfavorite' : 'Favorite'}</span>
           </button>
         )}
-        {!campaign.isSystemGeneral && perm.canEdit && (
+        {!campaign.isSystemGeneral && !campaign.isSystemPersonal && perm.canEdit && (
           <button type="button" onClick={wrap(onEdit)} className={itemCls}>
             <Edit2 className={itemIcon} />
             <span>Rename</span>
@@ -219,48 +221,51 @@ export function SidebarCampaignMenuPortal({
         )}
 
         {/* Movement / team — Move/Copy + Manage team (canAdmin). */}
-        {!campaign.isSystemGeneral && perm.canAdmin && (hasOtherContexts || onManageTeam) && (
-          <>
-            <div className="border-border border-t" />
-            {hasOtherContexts && (
-              <MoveCopySubmenuExclusiveGroup>
-                <MoveCopySubmenu
-                  mode="move"
-                  label="Move to"
-                  icon={<FolderInput className={itemIcon} />}
-                  entityType="campaign"
-                  entityId={campaign.id}
-                  entityName={campaign.name}
-                  sourceOrgId={activeOrgId}
-                  memberships={memberships}
-                  onCloseMenus={onClose}
-                  className={moveCopyTriggerSidebar}
-                />
-                <MoveCopySubmenu
-                  mode="copy"
-                  label="Copy to"
-                  icon={<Copy className={itemIcon} />}
-                  entityType="campaign"
-                  entityId={campaign.id}
-                  entityName={campaign.name}
-                  sourceOrgId={activeOrgId}
-                  memberships={memberships}
-                  onCloseMenus={onClose}
-                  className={moveCopyTriggerSidebar}
-                />
-              </MoveCopySubmenuExclusiveGroup>
-            )}
-            {onManageTeam && (
-              <button type="button" onClick={wrap(onManageTeam)} className={itemCls}>
-                <Users className={itemIcon} />
-                <span>Manage team</span>
-              </button>
-            )}
-          </>
-        )}
+        {!campaign.isSystemGeneral &&
+          !campaign.isSystemPersonal &&
+          perm.canAdmin &&
+          (hasOtherContexts || onManageTeam) && (
+            <>
+              <div className="border-border border-t" />
+              {hasOtherContexts && (
+                <MoveCopySubmenuExclusiveGroup>
+                  <MoveCopySubmenu
+                    mode="move"
+                    label="Move to"
+                    icon={<FolderInput className={itemIcon} />}
+                    entityType="campaign"
+                    entityId={campaign.id}
+                    entityName={campaign.name}
+                    sourceOrgId={activeOrgId}
+                    memberships={memberships}
+                    onCloseMenus={onClose}
+                    className={moveCopyTriggerSidebar}
+                  />
+                  <MoveCopySubmenu
+                    mode="copy"
+                    label="Copy to"
+                    icon={<Copy className={itemIcon} />}
+                    entityType="campaign"
+                    entityId={campaign.id}
+                    entityName={campaign.name}
+                    sourceOrgId={activeOrgId}
+                    memberships={memberships}
+                    onCloseMenus={onClose}
+                    className={moveCopyTriggerSidebar}
+                  />
+                </MoveCopySubmenuExclusiveGroup>
+              )}
+              {onManageTeam && (
+                <button type="button" onClick={wrap(onManageTeam)} className={itemCls}>
+                  <Users className={itemIcon} />
+                  <span>Manage team</span>
+                </button>
+              )}
+            </>
+          )}
 
         {/* Hide from sidebar — personal preference, any role. */}
-        {!campaign.isSystemGeneral && onHide && (
+        {!campaign.isSystemGeneral && !campaign.isSystemPersonal && onHide && (
           <>
             <div className="border-border border-t" />
             <button type="button" onClick={wrap(onHide)} className={itemCls}>
@@ -271,23 +276,25 @@ export function SidebarCampaignMenuPortal({
         )}
 
         {/* Destructive — Archive (canAdmin) + Delete (org admin/owner only). */}
-        {!campaign.isSystemGeneral && (perm.canAdmin || perm.canDeleteCampaign) && (
-          <>
-            <div className="border-border border-t" />
-            {onArchive && perm.canAdmin && (
-              <button type="button" onClick={wrap(onArchive)} className={itemCls}>
-                <Archive className={itemIcon} />
-                <span>Archive</span>
-              </button>
-            )}
-            {perm.canDeleteCampaign && (
-              <button type="button" onClick={wrap(onDeleteRequest)} className={dangerCls}>
-                <Trash2 className={itemIcon} />
-                <span>Delete</span>
-              </button>
-            )}
-          </>
-        )}
+        {!campaign.isSystemGeneral &&
+          !campaign.isSystemPersonal &&
+          (perm.canAdmin || perm.canDeleteCampaign) && (
+            <>
+              <div className="border-border border-t" />
+              {onArchive && perm.canAdmin && (
+                <button type="button" onClick={wrap(onArchive)} className={itemCls}>
+                  <Archive className={itemIcon} />
+                  <span>Archive</span>
+                </button>
+              )}
+              {perm.canDeleteCampaign && (
+                <button type="button" onClick={wrap(onDeleteRequest)} className={dangerCls}>
+                  <Trash2 className={itemIcon} />
+                  <span>Delete</span>
+                </button>
+              )}
+            </>
+          )}
 
         {/* Sharing — last, glass-blue accent (canAdmin). */}
         {isOrgContext() && perm.canAdmin && (

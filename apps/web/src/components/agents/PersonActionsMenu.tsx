@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Building2, Check, ChevronRight, MessageCircle, Shield, UserMinus } from 'lucide-react'
+import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import { cn } from '@/lib/utils/cn'
 
 const MENU_WIDTH = 224
@@ -176,6 +177,7 @@ export function PersonActionsMenu({
       <div
         ref={menuRef}
         data-person-actions-menu
+        {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
         role="menu"
         aria-label={`Actions for ${displayName}`}
         className="z-dropdown rounded-spacing-2 border-border surface-card p-spacing-2 fixed min-w-56 overflow-visible border shadow-lg"
@@ -289,6 +291,7 @@ export function PersonActionsMenu({
         <div
           ref={submenuRef}
           role="menu"
+          {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
           className="z-dropdown dropdown-menu-solid fixed overflow-y-auto rounded-xl py-1 shadow-lg"
           style={{
             top: subPos.top,

@@ -1,5 +1,19 @@
 # Changelog - July 20, 2026
 
+## [2026-07-20 15:15] - [FIX]
+
+What: Ads Research now requires Atlas to produce a sourced client identity check from the exact campaign, Space, linked files, and Customer Brain before Blaze can analyze ads. Company Brain, Meta account labels, and competitor findings are explicitly separated from client facts. The visual report adds Rerun Research, which opens Blaze for a verified replacement run without reusing contaminated deliverables.
+Why: A completed run incorrectly treated the client as a generic media agency, claimed a mounted Meta account was disconnected, and recommended work for an inferred vertical.
+Impact: New runs block on missing or conflicting identity evidence. Existing incorrect reports can be rerun through a context and Meta preflight, then replaced with a fresh mission after human confirmation.
+Files: Ads Research mission playbook and tests, run report and tests, Ads Research messages, and Social Research documentation.
+
+## [2026-07-20 15:13] - [FIX]
+
+What: Hub dock flyouts no longer dismiss on mousedown inside portaled context menus (Brain/Team/Campaigns New tab and actions), and docked chat pen/green New start a fresh thread when open while closed+pen restores the last chat.
+Why: Portaled menus lived outside `[data-hub-dock-flyout]` so outside-click unmounted them before handlers ran; shell fresh-chat only cleared drawer ids while SpaceVibeyChatPanel kept/restored its selection.
+Impact: Brain/Team/Campaigns item menus work from the dock; workspace pen/New match open→fresh and closed→last-chat.
+Files: `HubDockFlyout.tsx`, `floating-control-attrs.ts`, brain/space/campaign/team/channel menus, `IconLibraryPopup.tsx`, `ShellChatDrawer.tsx`, `SpaceVibeyChatPanel.tsx`, tests.
+
 ## [2026-07-20 14:00] - [FEATURE]
 
 What: Rebuilt Ads Research around visual Research Runs while retaining manual Library Search. Added a deterministic Atlas-to-Blaze mission for campaign context, current Meta analysis, competitive research, recommended ads and Dylan Super Voice copy, draft video scripts, and human approval. Updated the market-research skill contract to save native Space searches and use mission-specific document titles.
@@ -224,3 +238,13 @@ Why: Fathom timestamp URLs on names looked like weird linked bullets and weren�
 Impact: From the call sections read as normal owner headers with task bullets.
 
 Files: `meeting-follow-up-slack-message.ts`, tests, `meeting-follow-up-slack.md`.
+
+## [2026-07-20 15:15] - [FEATURE]
+
+What: Index Meta-synced and Studio-created `ad_campaign` / `ad_set` / `ad` rows into Campaign Knowledge (`force: true`), with Space→ad_campaign→ad_set→ad edges (no Space→ad star). Added `scripts/roas/backfill-campaign-ads-knowledge.py` for existing org campaigns.
+
+Why: Campaign Knowledge only had Page Grader memories; agents could not retrieve campaign-attached Meta ads already stored on the campaign.
+
+Impact: Future Meta syncs and ad CRUD write into the knowledge graph; existing Sakha/Multifamily ads can be backfilled. Structural builder skips Space→ad/ad_set edges to keep the graph hierarchical.
+
+Files: `meta-sync.service.ts`, `meta-sync.repository.ts`, `meta.module.ts`, `space-structural-edge-builder.service.ts`, `artifacts-ads.base.ts`, `artifacts-ad-campaigns.base.ts`, `artifacts-ad-sets.base.ts`, `artifacts-content.base.ts`, tests, `scripts/roas/backfill-campaign-ads-knowledge.py`, `documentation/features/page-grader-campaign-brain-sync.md`.

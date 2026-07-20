@@ -19,7 +19,10 @@ import type { Campaign } from '@/lib/campaigns'
 import type { OrgMembership } from '@/lib/org'
 import type { TransferEntityType, TransferMode } from '@/lib/transfer'
 import { canTransferAcrossContext } from '@/lib/transfer'
-import { VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
+import {
+  HUB_DOCK_PORTAL_GUARD,
+  VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD,
+} from '@/lib/ui/floating-control-attrs'
 
 const MENU_WIDTH = 224
 const NESTED_MENU_WIDTH = 240
@@ -389,7 +392,7 @@ export function MoveCopySubmenu({
         ? createPortal(
             <div
               ref={menuRef}
-              {...{ [VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD]: '' }}
+              {...{ [VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD]: '', [HUB_DOCK_PORTAL_GUARD]: '' }}
               className="dropdown-menu-solid fixed flex max-h-[320px] w-[224px] flex-col overflow-y-auto rounded-xl py-1"
               style={{ top: pos.top, left: pos.left, zIndex: 100002 }}
               onMouseEnter={cancelClose}
@@ -494,7 +497,7 @@ export function MoveCopySubmenu({
         ? createPortal(
             <div
               ref={nestedMenuRef}
-              {...{ [VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD]: '' }}
+              {...{ [VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD]: '', [HUB_DOCK_PORTAL_GUARD]: '' }}
               className="dropdown-menu-solid fixed flex max-h-[320px] w-[240px] flex-col overflow-y-auto rounded-xl py-1"
               style={{ top: nestedPos.top, left: nestedPos.left, zIndex: 100003 }}
               onMouseEnter={cancelClose}
@@ -570,7 +573,7 @@ export function MoveCopySubmenu({
             const hasMore = all != null && all.length > PREVIEW_LIMIT
             return createPortal(
               <div
-                {...{ [VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD]: '' }}
+                {...{ [VIBEY_SPACE_CUSTOMIZE_PORTAL_GUARD]: '', [HUB_DOCK_PORTAL_GUARD]: '' }}
                 className="dropdown-menu-solid fixed flex max-h-[320px] w-[240px] flex-col overflow-y-auto rounded-xl py-1"
                 style={{ top: spaceStep.pos.top, left: spaceStep.pos.left, zIndex: 100004 }}
                 onMouseEnter={cancelClose}
