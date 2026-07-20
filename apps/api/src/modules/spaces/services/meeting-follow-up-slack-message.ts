@@ -108,7 +108,11 @@ export function extractSummarySection(
 
   return raw
     .slice(bodyStart, end)
-    .replace(/^\s*[-*]\s+/gm, '• ')
+    .replace(/^[ \t]*[-*][ \t]+/gm, (match) => {
+      const indent = match.match(/^[ \t]*/)?.[0] ?? ''
+      const depth = Math.min(2, Math.floor(indent.length / 2))
+      return `${'  '.repeat(depth)}• `
+    })
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
