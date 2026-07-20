@@ -206,6 +206,76 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
     )
   })
 
+  it('does not persist a mission subtask id as a media conversation id', async () => {
+    const supabase = makeSupabase()
+    const target = makeTarget(supabase)
+    target.geminiApiKey = ''
+    target.openRouterApiKey = 'openrouter-key'
+    target.isMissionSessionKey = vi.fn(() => true)
+    target.resolveMissionContext = vi.fn(async () => ({
+      missionId: 'mission-1',
+      campaignId: 'campaign-1',
+      orgId: null,
+    }))
+    target.persistMissionDeliverable = vi.fn(async () => ({ deliverable_id: 'deliverable-1' }))
+    const service = new ArtifactLegacyMediaGenerateService()
+    const openRouter = vi
+      .spyOn((service as any).mediaProvider, 'generateImageViaOpenRouter')
+      .mockResolvedValue({
+        imageBytesB64: Buffer.from('image').toString('base64'),
+        mimeType: 'image/png',
+        usage: { input: 10, output: 20 },
+      })
+    ;(service as any).uploadService = {
+      uploadMediaFromBytes: vi.fn(async () => ({
+        success: true,
+        url: 'https://cdn.example.com/mission-image.png',
+        asset: { id: 'asset-1', mime_type: 'image/png' },
+      })),
+    }
+
+    const result = await service.generateImage(
+      target,
+      {
+        prompt: 'Create a mission image',
+        title: 'The Ceiling',
+        space_id: 'space-1',
+      },
+      'agent:lux:mission:user-1:subtask-1',
+    )
+
+    expect(openRouter).toHaveBeenCalledWith(
+      target,
+      'Create a mission image',
+      '1:1',
+      'openai/gpt-5.4-image-2',
+      undefined,
+      expect.objectContaining({ conversationId: null }),
+    )
+    expect((service as any).uploadService.uploadMediaFromBytes).toHaveBeenCalledWith(
+      target,
+      expect.any(Buffer),
+      'image/png',
+      'image',
+      'user-1',
+      null,
+      'Create a mission image',
+      'gpt-5.4-image-2',
+      null,
+      'space-1',
+      null,
+    )
+    expect(target.persistMissionDeliverable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        missionId: 'mission-1',
+        type: 'image',
+        title: 'The Ceiling',
+        sourceAction: 'generate_image',
+      }),
+    )
+    expect(result).toEqual({ deliverable_id: 'deliverable-1' })
+  })
+
   it('resolves campaign from ad_id chain and injects campaign theme style', async () => {
     const supabase = makeSupabase()
     const target = makeTarget(supabase)

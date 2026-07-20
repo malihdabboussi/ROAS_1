@@ -117,6 +117,7 @@ The runner uses this as a deterministic gate:
 - **Meta Ads Launch playbook**: Missions can start a dedicated launch flow that reconciles approved Space and external assets, enriches the kickoff with the mapped PageGrader Meta context when available, requires human approval of the exact account and launch settings, then lets Blaze build campaigns, ad sets, and ads in PAUSED state. A second human gate reviews and activates the build manually. PageGrader remains read-only; Vibey owns Meta mutations and native Doc audit history.
 - **Verification before done**: after execution, the worker verifies the required artifact exists. `document_artifact` checks tool-authored mission deliverables by type; `agent_skill` checks `agent_skills` by `agent_key` and `skill_key`. Missing/wrong artifacts keep the subtask out of `done`.
 - **Concurrent verification stays subtask-safe**: when parallel subtasks publish different artifact types, verification first uses the manifest receipt and then searches recent deliverables matching the current contract type/action. A newer deck can no longer make a completed funnel fail verification, or vice versa.
+- **Mission image persistence**: `generate_image` stores Space/campaign ownership without copying the mission/subtask UUID from the runtime session into `media_assets.conversation_id`. Mission images therefore register in Space Media and persist as image deliverables without requiring a chat conversation row.
 - **DOCX deliverables**: Word documents use `create_docx`, persist as `mission_deliverables.type = 'file'`, and carry `mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'`. DOCX-specific contracts use `required_artifact_type = 'file'` with `expected.mime_type` and `expected.source_action = 'create_docx'`.
 - **Correction loop**: missing or wrong artifacts can trigger a clean corrective run with previous output and verifier evidence. Permission/capability failures route to Vibey/manager instead of retrying the same agent. Attempt counters cap repeated loops.
 - **Review guard**: review blocks if any completed subtask has an output contract that is not `verified`; manager quality review cannot approve an unchecked artifact.
@@ -248,6 +249,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-19: Separated mission image persistence from chat conversation identity so generated media can register through Space/campaign/mission ownership without violating the `media_assets.conversation_id` foreign key.
 - 2026-07-19: Added the Meta Ads Launch playbook with PageGrader read-only discovery, Blaze-owned paused builds, native Doc manifests, and human gates before build and live activation.
 - 2026-07-19: Added an authoritative execution timestamp to Mission prompts so relative-date claims do not depend on model knowledge or unrelated document timestamps.
 - 2026-07-17: Split webinar Phase B into WEB#5A Copy Package and WEB#5B Landing Page Copy, made Dylan's Super Voice a verified requirement at every writing owner plus final assembly, and simplified client-facing ad and video-script formatting.

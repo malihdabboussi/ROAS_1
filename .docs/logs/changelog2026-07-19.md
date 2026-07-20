@@ -204,3 +204,10 @@ What: Replaced mission execution's incomplete local role-domain lookup with the 
 Why: Lux's managed marketing role already grants `generate_media`, but mission preflight omitted that domain and incorrectly paused generated concept images for human access approval.
 Impact: Creative image subtasks proceed without approval when the assigned role already permits media generation; explicit agent denies still override defaults.
 Files: `mission-action-policy.ts`, `mission-action-policy.test.ts`, `mission-execute-phase.service.ts`, `documentation/features/missions.md`
+
+## [2026-07-19 17:29] - [FIX]
+
+What: Stopped mission image generation from persisting a mission/subtask UUID as `media_assets.conversation_id`, while preserving normal chat conversation attribution.
+Why: Generated artwork uploaded successfully but its media row failed the conversation foreign key, leaving Task 11 blocked with no image deliverables.
+Impact: Mission-run `generate_image` calls can register images in Space Media and persist native mission image deliverables without requiring a chat-backed session.
+Files: `artifact-legacy-media-generate.service.ts`, `artifact-legacy-media-generate.service.test.ts`, `documentation/features/missions.md`

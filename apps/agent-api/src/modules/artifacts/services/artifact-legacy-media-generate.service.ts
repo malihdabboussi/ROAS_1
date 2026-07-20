@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { ArtifactLegacyMediaGenerateRepository } from '../repositories/artifact-legacy-media-generate.repository'
+import {
+  buildGeneratedImageResult,
+  persistMissionImageResult,
+  updateCanvasWithGeneratedImage,
+} from './artifact-legacy-image-result.service'
 import { ArtifactLegacyMediaJobsService } from './artifact-legacy-media-jobs.service'
 import { ArtifactLegacyMediaProviderService } from './artifact-legacy-media-provider.service'
 import { ArtifactLegacyMediaUploadService } from './artifact-legacy-media-upload.service'
@@ -13,7 +18,6 @@ export class ArtifactLegacyMediaGenerateService {
 
   private readonly jobsService = new ArtifactLegacyMediaJobsService()
   private readonly uploadService = new ArtifactLegacyMediaUploadService()
-
   async generateGoogleImageViaRest(
     target: Record<string, any>,
     model: string,
@@ -29,7 +33,6 @@ export class ArtifactLegacyMediaGenerateService {
       inputImages,
     )
   }
-
   async generateImage(
     target: Record<string, any>,
     input: Record<string, unknown>,
@@ -97,7 +100,6 @@ export class ArtifactLegacyMediaGenerateService {
         // Non-critical — proceed with original prompt if theme lookup fails
       }
     }
-
     const requestedModel = typeof input.model === 'string' ? input.model.trim() : ''
     const aliasResolved =
       this.mediaProvider.MODEL_ALIASES[requestedModel.toLowerCase()] ?? requestedModel
@@ -110,7 +112,6 @@ export class ArtifactLegacyMediaGenerateService {
         : undefined)
     const useOpenRouter = Boolean(openRouterModel)
     const googleAspectRatio = this.mediaProvider.normalizeGoogleImageAspectRatio(aspectRatio)
-
     let imageBytesB64 = ''
     let mimeType = 'image/png'
     let billingProvider: 'google' | 'openai' = 'google'
@@ -122,8 +123,8 @@ export class ArtifactLegacyMediaGenerateService {
       target.logger.log(`[Image] Edit mode: ${inputImages.length} input image(s) provided`)
     }
     const mediaOrgId = target.resolveOrgId?.(sessionKey) as string | null | undefined
-    const conversationId = sessionKey ? target.parseConversationId(sessionKey as string) : null
-
+    const conversationId =
+      !isMissionSession && sessionKey ? target.parseConversationId(sessionKey) : null
     if (useOpenRouter) {
       const orModel = openRouterModel ?? this.mediaProvider.OPENAI_IMAGE_MODEL
       if (!target.openRouterApiKey) {
@@ -190,7 +191,6 @@ export class ArtifactLegacyMediaGenerateService {
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : 'Unknown'
         target.logger.error(`[Image] Google failed: ${errMsg}`)
-
         if (this.mediaProvider.isImageRateLimitError(errMsg) && target.openRouterApiKey) {
           target.logger.warn(
             `[Image] Google rate-limited, routing to OpenRouter (${target.OPENROUTER_IMAGE_MODEL})`,
@@ -248,7 +248,6 @@ export class ArtifactLegacyMediaGenerateService {
       conversationId,
     )
     if (!upload.success) return upload
-
     if (billingProvider === 'openai' && tokenUsage) {
       await target.credits
         .calculateTextCredits(
@@ -318,76 +317,47 @@ export class ArtifactLegacyMediaGenerateService {
     if (avatarUpdate && !avatarUpdate.data)
       return { success: false, error: 'avatar not found or access denied' }
     if (missionContext) {
-      const uploadAsset = assetObj
-      return target.persistMissionDeliverable({
-        missionId: missionContext.missionId,
+      return persistMissionImageResult({
+        target,
+        missionContext,
         userId,
-        campaignId: campaignId ?? missionContext.campaignId,
-        orgId: missionContext.orgId ?? null,
-        agentKey: missionAgentKey,
-        type: 'image',
-        title:
-          typeof input.title === 'string' && input.title.trim().length > 0
-            ? input.title.trim()
-            : 'Generated image',
-        sourceAction: 'generate_image',
-        content: prompt,
-        fileUrl: upload.url ?? null,
-        fileName: (uploadAsset?.original_filename as string | undefined) ?? null,
-        fileSize:
-          typeof uploadAsset?.file_size === 'number' ? (uploadAsset.file_size as number) : null,
-        mimeType: (uploadAsset?.mime_type as string | undefined) ?? null,
-        metadata: {
-          provider: billingProvider,
-          provider_job_id: '',
-          model: billingModel,
-          aspect_ratio: googleAspectRatio ?? aspectRatio,
-          media_asset_id: (uploadAsset?.id as string | undefined) ?? null,
-          media_generation_status: 'succeeded',
-          ...(avatarUpdate?.data ? { avatar_id: avatarId, avatar_image_url: imageUrl } : {}),
-        },
+        campaignId,
+        missionAgentKey,
+        input,
+        prompt,
+        upload,
+        provider: billingProvider,
+        model: billingModel,
+        aspectRatio: googleAspectRatio ?? aspectRatio,
+        avatarId,
+        avatarImageUrl: imageUrl,
+        avatarUpdated: Boolean(avatarUpdate?.data),
       })
     }
-
     const canvasNodeId = typeof input.canvas_node_id === 'string' ? input.canvas_node_id : undefined
     if (canvasNodeId) {
-      const { ArtifactCanvasService } = await import('./artifact-canvas.service')
-      const canvasSvc = new ArtifactCanvasService()
-      await canvasSvc.patchCanvasNodeFromImage(
+      await updateCanvasWithGeneratedImage({
         supabase,
         userId,
         canvasNodeId,
-        {
-          url: imageUrl,
-          image_url: imageUrl,
-          image_asset_id: imageAssetId,
-          asset: upload.asset,
-        },
+        imageUrl,
+        imageAssetId,
+        upload,
         prompt,
-        input.model,
-      )
+        model: input.model,
+      })
     }
-
     const savedSpaceId = spaceIdFromInput ?? spaceIdFromCtx
-    return {
-      success: true,
-      url: imageUrl,
-      asset: upload.asset,
-      asset_ref: upload.asset_ref,
-      image_url: imageUrl,
-      image_asset_id: imageAssetId,
-      space_id: savedSpaceId,
-      campaign_id: campaignId ?? null,
-      media_library:
-        imageAssetId && savedSpaceId
-          ? 'registered_in_space_media'
-          : imageAssetId
-            ? 'registered_in_user_media'
-            : 'url_only_no_asset_row',
-      ...(avatarUpdate?.data ? { avatar_id: avatarId, avatar_image_url: imageUrl } : {}),
-    }
+    return buildGeneratedImageResult({
+      upload,
+      imageUrl,
+      imageAssetId,
+      spaceId: savedSpaceId,
+      campaignId: campaignId ?? null,
+      avatarId,
+      avatarUpdated: Boolean(avatarUpdate?.data),
+    })
   }
-
   async generateVideo(
     target: Record<string, any>,
     input: Record<string, unknown>,
