@@ -4,7 +4,10 @@ import { createResilientFetch } from '@vibey/api-shared'
 
 type OrgMemberProfileRow = {
   user_id?: string
-  profiles?: { email?: string | null } | Array<{ email?: string | null }> | null
+  profiles?:
+    | { email?: string | null; full_name?: string | null }
+    | Array<{ email?: string | null; full_name?: string | null }>
+    | null
 }
 
 @Injectable()
@@ -83,6 +86,33 @@ export class SlackRuntimeRepository {
     })
   }
 
+  async listSlackIdentityState(
+    supabase: SupabaseClient,
+    input: { userId: string; orgId?: string | null; platformIds: string[] },
+  ): Promise<
+    Array<{
+      platform_id: string
+      vibey_user_id: string | null
+      relationship_kind: string
+      relationship_source: string
+      identity_match_method: string
+    }>
+  > {
+    if (input.platformIds.length === 0) return []
+    let query = supabase
+      .from('channel_members')
+      .select(
+        'platform_id, vibey_user_id, relationship_kind, relationship_source, identity_match_method',
+      )
+      .eq('user_id', input.userId)
+      .eq('platform', 'slack')
+      .in('platform_id', input.platformIds)
+    query = input.orgId ? query.eq('org_id', input.orgId) : query.is('org_id', null)
+    const { data, error } = await query
+    if (error) throw error
+    return data ?? []
+  }
+
   async findChannelMemberByPlatform(
     supabase: SupabaseClient,
     userId: string,
@@ -123,7 +153,7 @@ export class SlackRuntimeRepository {
   ): Promise<OrgMemberProfileRow[]> {
     const { data, error } = await supabase
       .from('org_members')
-      .select('user_id, profiles!org_members_user_id_fk_profiles(email)')
+      .select('user_id, profiles!org_members_user_id_fk_profiles(email, full_name)')
       .eq('org_id', orgId)
       .eq('status', 'active')
     if (error) throw error

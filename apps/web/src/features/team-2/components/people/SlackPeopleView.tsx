@@ -1,37 +1,25 @@
 'use client'
 
-import { useRef } from 'react'
-import { Bot, MessageSquareText, RefreshCw, UsersRound, Workflow } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { CircleUserRound, RefreshCw, UserRoundCheck, UsersRound } from 'lucide-react'
 import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
-import { cn } from '@/lib/utils/cn'
 import { SLACK_PEOPLE_MESSAGES } from '../../config/messages.config'
 import { useSlackPeople } from '../../hooks/use-slack-people'
-import type { SlackDeliveryMode, SlackDiscoveredPerson } from '../../services/slack-people.service'
-
-const MODE_LABELS: Record<SlackDeliveryMode, string> = {
-  off: 'Off',
-  shadow: 'Shadow',
-  active: 'Active',
-}
-
-function relationshipLabel(person: SlackDiscoveredPerson): string {
-  if (person.relationship_kind === 'team_member') return 'Platform teammate'
-  if (person.relationship_kind === 'external') return 'External contact'
-  return 'Ghost profile'
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('')
-}
+import type {
+  SlackDiscoveredPerson,
+  SlackPersonActivity,
+  SlackRelationshipKind,
+} from '../../services/slack-people.service'
+import { SlackPeopleRoster } from './SlackPeopleRoster'
+import { SlackPersonDetail } from './SlackPersonDetail'
+import { SlackShadowInbox } from './SlackShadowInbox'
 
 export function SlackPeopleView() {
-  const shadowInboxRef = useRef<HTMLElement>(null)
+  const shadowInboxRef = useRef<HTMLDivElement>(null)
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null)
+  const [activity, setActivity] = useState<SlackPersonActivity | null>(null)
+  const [activityLoading, setActivityLoading] = useState(false)
   const {
     connected,
     people,
@@ -39,14 +27,35 @@ export function SlackPeopleView() {
     loading,
     error,
     updateDeliveryMode,
+    updateRelationshipKind,
+    confirmSuggestedIdentity,
+    loadPersonActivity,
     createTestProposal,
     reviewAction,
     sendAction,
     reload,
   } = useSlackPeople()
   const peopleById = new Map(people.map((person) => [person.id, person]))
-  const teammateCount = people.filter((person) => person.vibey_user_id).length
-  const ghostCount = people.filter((person) => !person.vibey_user_id && !person.contact_id).length
+  const selectedPerson = selectedPersonId ? (peopleById.get(selectedPersonId) ?? null) : null
+
+  const openPerson = async (person: SlackDiscoveredPerson) => {
+    setSelectedPersonId(person.id)
+    setActivity(null)
+    setActivityLoading(true)
+    try {
+      setActivity(await loadPersonActivity(person.id))
+    } catch {
+      toast.error(SLACK_PEOPLE_MESSAGES.ACTIVITY_ERROR)
+    } finally {
+      setActivityLoading(false)
+    }
+  }
+
+  const classifyPerson = (id: string, kind: SlackRelationshipKind) => {
+    void updateRelationshipKind(id, kind).catch(() =>
+      toast.error(SLACK_PEOPLE_MESSAGES.CLASSIFICATION_ERROR),
+    )
+  }
 
   const createAndRevealTestProposal = async (personId: string) => {
     try {
@@ -66,228 +75,137 @@ export function SlackPeopleView() {
     )
   }
 
+  const stats = [
+    { label: 'Active Slack people', value: people.length, icon: UsersRound },
+    {
+      label: 'Portal users',
+      value: people.filter((person) => person.vibey_user_id).length,
+      icon: UserRoundCheck,
+    },
+    {
+      label: 'Slack-only people',
+      value: people.filter((person) => !person.vibey_user_id).length,
+      icon: CircleUserRound,
+    },
+  ]
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-        <header className="flex flex-wrap items-start justify-between gap-4">
+    <div className="p-spacing-6 flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="gap-spacing-6 mx-auto flex w-full max-w-6xl flex-col">
+        <header className="gap-spacing-4 flex flex-wrap items-start justify-between">
           <div>
-            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-              Managed team intelligence
-            </p>
-            <h1 className="text-foreground mt-1 text-2xl font-semibold">PEOPLE & SHADOW MODE</h1>
-            <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-              Slack identities become durable people records, then resolve to teammates or external
-              contacts as Vibey learns who they are.
+            <p className="eyebrow text-muted-foreground">Managed team intelligence</p>
+            <h1 className="title-h4 text-foreground mt-spacing-1">PEOPLE & SHADOW MODE</h1>
+            <p className="body-3 text-muted-foreground mt-spacing-2 max-w-2xl">
+              Classify active Slack people, connect portal identities and User Brains, then review
+              every proposed message before it can reach Slack.
             </p>
           </div>
           <button
             type="button"
             onClick={() => void reload()}
-            className="button-glass-secondary inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
+            className="button-compact button-glass-neutral"
           >
-            <RefreshCw className="h-4 w-4" />
-            Refresh Slack
+            <RefreshCw className="icon-xs" /> Refresh Slack
           </button>
         </header>
 
         {error ? (
-          <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-xl border p-4 text-sm">
+          <div className="border-destructive text-destructive p-spacing-4 rounded-spacing-3 body-3 border">
             {SLACK_PEOPLE_MESSAGES.LOAD_ERROR}
           </div>
         ) : null}
 
         {!connected ? (
-          <div className="surface-card border-border rounded-2xl border p-6">
-            <p className="text-foreground font-medium">Slack is not connected</p>
-            <p className="text-muted-foreground mt-1 text-sm">
+          <div className="surface-card border-border p-spacing-6 rounded-spacing-4 border">
+            <p className="body-2 text-foreground font-medium">Slack is not connected</p>
+            <p className="body-3 text-muted-foreground mt-spacing-1">
               {SLACK_PEOPLE_MESSAGES.DISCONNECTED}
             </p>
           </div>
         ) : (
           <>
-            <section className="grid gap-3 sm:grid-cols-3">
-              {[
-                { label: 'Discovered people', value: people.length, icon: UsersRound },
-                { label: 'Platform teammates', value: teammateCount, icon: Bot },
-                { label: 'Ghost profiles', value: ghostCount, icon: MessageSquareText },
-              ].map(({ label, value, icon: Icon }) => (
-                <div key={label} className="surface-card border-border rounded-xl border p-4">
-                  <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
-                    <Icon className="h-4 w-4" />
-                    {label}
+            <section className="gap-spacing-3 grid sm:grid-cols-3">
+              {stats.map(({ label, value, icon: Icon }) => (
+                <div
+                  key={label}
+                  className="surface-card border-border p-spacing-4 rounded-spacing-3 border"
+                >
+                  <div className="body-4 text-muted-foreground gap-spacing-2 flex items-center font-medium">
+                    <Icon className="icon-sm" /> {label}
                   </div>
-                  <p className="text-foreground mt-3 text-2xl font-semibold tabular-nums">
-                    {value}
-                  </p>
+                  <p className="title-h4 text-foreground mt-spacing-3 tabular-nums">{value}</p>
                 </div>
               ))}
             </section>
 
-            <section className="surface-card border-border rounded-2xl border p-4">
-              <h2 className="text-foreground text-sm font-semibold">How Shadow mode works</h2>
-              <p className="text-muted-foreground mt-1 text-xs">
+            <section className="surface-card border-border p-spacing-4 rounded-spacing-4 border">
+              <h2 className="body-2 text-foreground font-semibold">How Shadow mode works</h2>
+              <p className="body-4 text-muted-foreground mt-spacing-1">
                 {SLACK_PEOPLE_MESSAGES.CURRENT_CAPABILITY}
               </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="mt-spacing-4 gap-spacing-3 grid sm:grid-cols-3">
                 {SLACK_PEOPLE_MESSAGES.HOW_IT_WORKS.map((step) => (
-                  <div key={step.title} className="bg-secondary rounded-xl p-3">
-                    <p className="text-foreground text-xs font-semibold">{step.title}</p>
-                    <p className="text-muted-foreground mt-1 text-xs">{step.body}</p>
+                  <div key={step.title} className="bg-secondary p-spacing-3 rounded-spacing-3">
+                    <p className="body-4 text-foreground font-semibold">{step.title}</p>
+                    <p className="body-4 text-muted-foreground mt-spacing-1">{step.body}</p>
                   </div>
                 ))}
               </div>
-              <p className="text-muted-foreground mt-3 text-xs">
+              <p className="body-4 text-muted-foreground mt-spacing-3">
                 {SLACK_PEOPLE_MESSAGES.GHOST_PROFILE_HELP}
               </p>
             </section>
 
-            <section
-              ref={shadowInboxRef}
-              className="surface-card border-border scroll-mt-6 rounded-2xl border"
-            >
-              <div className="border-border border-b p-4">
-                <div className="flex items-center gap-2">
-                  <Workflow className="text-primary h-4 w-4" />
-                  <h2 className="text-foreground text-sm font-semibold">Shadow inbox</h2>
-                </div>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {SLACK_PEOPLE_MESSAGES.SHADOW_SAFETY}
-                </p>
-              </div>
-              {actions.length === 0 ? (
-                <p className="text-muted-foreground p-6 text-sm">
-                  {SLACK_PEOPLE_MESSAGES.EMPTY_ACTIONS}
-                </p>
-              ) : (
-                <div className="divide-border divide-y">
-                  {actions.map((action) => (
-                    <article key={action.id} className="p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-foreground text-sm font-medium">
-                          {peopleById.get(action.target_member_id ?? '')?.display_name ??
-                            'Unknown person'}
-                        </p>
-                        <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-1 text-xs capitalize">
-                          {action.status}
-                        </span>
-                      </div>
-                      <p className="text-foreground mt-2 whitespace-pre-wrap text-sm">
-                        {action.proposed_content}
-                      </p>
-                      {action.rationale ? (
-                        <p className="text-muted-foreground mt-2 text-xs">{action.rationale}</p>
-                      ) : null}
-                      {action.status === 'proposed' ? (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              void reviewAction(action.id, 'approved')
-                                .then(() => toast.success(SLACK_PEOPLE_MESSAGES.REVIEW_APPROVED))
-                                .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.REVIEW_ERROR))
-                            }}
-                            className="button-glass-primary rounded-lg px-3 py-2 text-xs"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              void reviewAction(action.id, 'dismissed')
-                                .then(() => toast.success(SLACK_PEOPLE_MESSAGES.REVIEW_DISMISSED))
-                                .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.REVIEW_ERROR))
-                            }}
-                            className="button-glass-secondary rounded-lg px-3 py-2 text-xs"
-                          >
-                            Dismiss
-                          </button>
-                        </div>
-                      ) : null}
-                      {action.status === 'approved' ? (
-                        peopleById.get(action.target_member_id ?? '')?.delivery_mode ===
-                        'active' ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              void sendAction(action.id)
-                                .then(() => toast.success(SLACK_PEOPLE_MESSAGES.SEND_SUCCESS))
-                                .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.SEND_ERROR))
-                            }}
-                            className="button-glass-primary mt-3 rounded-lg px-3 py-2 text-xs"
-                          >
-                            Send now
-                          </button>
-                        ) : (
-                          <p className="text-muted-foreground mt-3 text-xs">
-                            {SLACK_PEOPLE_MESSAGES.ACTIVE_REQUIRED}
-                          </p>
-                        )
-                      ) : null}
-                    </article>
-                  ))}
-                </div>
-              )}
-            </section>
+            {selectedPerson ? (
+              <SlackPersonDetail
+                person={selectedPerson}
+                activity={activity}
+                loading={activityLoading}
+                onClose={() => setSelectedPersonId(null)}
+                onConfirmIdentity={() => {
+                  void confirmSuggestedIdentity(selectedPerson.id)
+                    .then(() => toast.success(SLACK_PEOPLE_MESSAGES.IDENTITY_CONFIRMED))
+                    .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.IDENTITY_CONFIRM_ERROR))
+                }}
+              />
+            ) : null}
 
-            <section className="surface-card border-border overflow-hidden rounded-2xl border">
-              <div className="border-border border-b p-4">
-                <h2 className="text-foreground text-sm font-semibold">Slack people</h2>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  Shadow is the default. Proposals need approval, and sending stays locked until you
-                  explicitly set the person to Active.
-                </p>
-              </div>
-              <div className="divide-border divide-y">
-                {people.map((person) => (
-                  <div key={person.id} className="flex flex-wrap items-center gap-3 p-4">
-                    <div className="bg-secondary text-secondary-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
-                      {initials(person.display_name) || '?'}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-foreground truncate text-sm font-medium">
-                        {person.display_name}
-                      </p>
-                      <p className="text-muted-foreground truncate text-xs">
-                        {relationshipLabel(person)}
-                        {person.title ? ` · ${person.title}` : ''}
-                      </p>
-                    </div>
-                    <div className="bg-secondary flex rounded-lg p-1" aria-label="Delivery mode">
-                      {(Object.keys(MODE_LABELS) as SlackDeliveryMode[]).map((mode) => (
-                        <button
-                          key={mode}
-                          type="button"
-                          onClick={() => {
-                            void updateDeliveryMode(person.id, mode).catch(() =>
-                              toast.error(SLACK_PEOPLE_MESSAGES.MODE_ERROR),
-                            )
-                          }}
-                          className={cn(
-                            'rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                            person.delivery_mode === mode
-                              ? 'bg-primary text-primary-foreground'
-                              : 'text-muted-foreground hover:text-foreground',
-                          )}
-                        >
-                          {MODE_LABELS[mode]}
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      disabled={person.delivery_mode === 'off'}
-                      aria-label={`Create test proposal for ${person.display_name}`}
-                      onClick={() => {
-                        void createAndRevealTestProposal(person.id)
-                      }}
-                      className="button-glass-secondary rounded-lg px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Create test proposal
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <div ref={shadowInboxRef}>
+              <SlackShadowInbox
+                actions={actions}
+                peopleById={peopleById}
+                onOpenPerson={(person) => void openPerson(person)}
+                onReview={(id, status) => {
+                  void reviewAction(id, status)
+                    .then(() =>
+                      toast.success(
+                        status === 'approved'
+                          ? SLACK_PEOPLE_MESSAGES.REVIEW_APPROVED
+                          : SLACK_PEOPLE_MESSAGES.REVIEW_DISMISSED,
+                      ),
+                    )
+                    .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.REVIEW_ERROR))
+                }}
+                onSend={(id) => {
+                  void sendAction(id)
+                    .then(() => toast.success(SLACK_PEOPLE_MESSAGES.SEND_SUCCESS))
+                    .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.SEND_ERROR))
+                }}
+              />
+            </div>
+
+            <SlackPeopleRoster
+              people={people}
+              onOpenPerson={(person) => void openPerson(person)}
+              onUpdateDeliveryMode={(id, mode) => {
+                void updateDeliveryMode(id, mode).catch(() =>
+                  toast.error(SLACK_PEOPLE_MESSAGES.MODE_ERROR),
+                )
+              }}
+              onUpdateRelationshipKind={classifyPerson}
+              onCreateTestProposal={(id) => void createAndRevealTestProposal(id)}
+            />
           </>
         )}
       </div>

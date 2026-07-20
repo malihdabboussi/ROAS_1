@@ -3,14 +3,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOrgStore } from '@/lib/org'
 import {
+  confirmSlackPersonIdentity,
   createSlackTestProposal,
   fetchSlackPeople,
+  fetchSlackPersonActivity,
   fetchSlackShadowActions,
   patchSlackPersonDeliveryMode,
+  patchSlackPersonRelationshipKind,
   reviewSlackShadowAction,
   sendSlackShadowAction,
   type SlackDeliveryMode,
   type SlackDiscoveredPerson,
+  type SlackRelationshipKind,
   type SlackShadowAction,
 } from '../services/slack-people.service'
 
@@ -52,7 +56,9 @@ export function useSlackPeople() {
       )
       try {
         const result = await patchSlackPersonDeliveryMode(id, mode)
-        setPeople((current) => current.map((person) => (person.id === id ? result.person : person)))
+        setPeople((current) =>
+          current.map((person) => (person.id === id ? { ...person, ...result.person } : person)),
+        )
       } catch (cause) {
         setPeople(previous)
         throw cause
@@ -60,6 +66,40 @@ export function useSlackPeople() {
     },
     [people],
   )
+
+  const updateRelationshipKind = useCallback(
+    async (id: string, relationshipKind: SlackRelationshipKind) => {
+      const previous = people
+      setPeople((current) =>
+        current.map((person) =>
+          person.id === id
+            ? {
+                ...person,
+                relationship_kind: relationshipKind,
+                relationship_source: 'manual',
+              }
+            : person,
+        ),
+      )
+      try {
+        const result = await patchSlackPersonRelationshipKind(id, relationshipKind)
+        setPeople((current) =>
+          current.map((person) => (person.id === id ? { ...person, ...result.person } : person)),
+        )
+      } catch (cause) {
+        setPeople(previous)
+        throw cause
+      }
+    },
+    [people],
+  )
+
+  const confirmSuggestedIdentity = useCallback(async (id: string) => {
+    const result = await confirmSlackPersonIdentity(id)
+    setPeople((current) => current.map((person) => (person.id === id ? result.person : person)))
+  }, [])
+
+  const loadPersonActivity = useCallback((id: string) => fetchSlackPersonActivity(id), [])
 
   const createTestProposal = useCallback(async (personId: string) => {
     const result = await createSlackTestProposal(personId)
@@ -87,6 +127,9 @@ export function useSlackPeople() {
     loading,
     error,
     updateDeliveryMode,
+    updateRelationshipKind,
+    confirmSuggestedIdentity,
+    loadPersonActivity,
     createTestProposal,
     reviewAction,
     sendAction,

@@ -7369,3 +7369,19 @@ Files:
   Evidence: Admin test proposals now support approve/dismiss transitions and atomically claimed explicit sending only after approval plus an `active` recipient. The system still does not observe team activity or create proposals automatically.
   Needed work: Add the proactive observation/classification runner and write its message/workflow proposals through the hard action schema, lifecycle/preflight, structured agent-tool error, and workflow circuit-breaker contracts.
   Deferred because: Autonomous agent-facing proposal generation introduces a new tool and workflow surface; it requires its own schema, preflight, policy, failure-circuit, and drift coverage before it can safely run from Slack activity.
+
+## 2026-07-19 — Per-person Slack-to-User-Brain compounding needs consent and routing
+
+- Feature/app: Slack People / User Brain
+- Files: `apps/api/src/modules/slack/services/slack-people.service.ts`, existing Slack Brain mapping/import services, `apps/web/src/features/team-2/components/people/SlackPersonDetail.tsx`
+- Evidence: Manage People can now show an accessible canonical User Brain and the live direct-message history for a confirmed portal identity, but no per-person DM ingestion mapping is created. Existing Slack Brain ingestion is channel-oriented and cannot safely assume that an organization admin may train another member's User Brain.
+- Needed work: Define member consent and admin access, message ownership and retention, DM-channel-to-User-Brain routing, incremental cursors, source attribution, deletion behavior, and a visible learning enabled/paused state before scheduling ingestion.
+- Why not now: Attaching a Brain for navigation is read-only identity resolution; training another person's Brain is a materially different data write with privacy and permission consequences.
+
+## 2026-07-19 — Retire legacy Slack relationship constraint values after deployment
+
+- Feature/app: Slack People schema
+- File: `supabase/migrations/20260719204000_slack_people_identity_activity.sql`
+- Evidence: The migration converts existing `team_member`/`unknown` rows but temporarily keeps those legacy values accepted by the constraint so the previous API can continue refreshing Slack people while the new API deploy is rolling out.
+- Needed work: After all production API instances use Internal/External/Ignored, add a cleanup migration that verifies no legacy values remain and tightens the constraint to only the three current values.
+- Why not now: Tightening in the compatibility migration would create a zero-downtime race where the old production API could write a legacy value before the new deployment becomes active.

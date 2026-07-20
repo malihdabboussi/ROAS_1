@@ -19,7 +19,24 @@ function createService(overrides?: {
       ),
     listPeople: vi.fn().mockResolvedValue(people),
     updateDeliveryMode: vi.fn().mockResolvedValue({ id: 'person-1', delivery_mode: 'active' }),
+    updateRelationshipKind: vi.fn().mockResolvedValue({
+      id: 'person-1',
+      relationship_kind: 'internal',
+      relationship_source: 'manual',
+    }),
+    confirmSuggestedIdentity: vi.fn().mockResolvedValue({
+      id: 'person-1',
+      vibey_user_id: 'user-1',
+      suggested_vibey_user_id: null,
+      identity_match_method: 'confirmed_name',
+    }),
     listShadowActions: vi.fn().mockResolvedValue([]),
+    listDefaultUserBrains: vi
+      .fn()
+      .mockResolvedValue([{ id: 'brain-1', owner_id: 'user-1', name: 'Default Brain' }]),
+    listPersonShadowActions: vi
+      .fn()
+      .mockResolvedValue([{ id: 'action-1', target_member_id: 'person-1', status: 'sent' }]),
     findPerson: vi.fn().mockResolvedValue({
       id: 'person-1',
       platform_id: 'U1',
@@ -43,6 +60,10 @@ function createService(overrides?: {
   }
   const slackApi = {
     openDmChannel: vi.fn().mockResolvedValue('D1'),
+    getChannelHistory: vi.fn().mockResolvedValue([
+      { user: 'U1', text: 'I need help with launch reporting.', ts: '123.400' },
+      { bot_id: 'B1', text: 'I can pull that together.', ts: '123.500' },
+    ]),
     postMessage: vi.fn().mockResolvedValue({ ok: true, ts: '123.456' }),
   }
   const service = new SlackPeopleService(
@@ -70,7 +91,35 @@ describe('SlackPeopleService', () => {
       expect.objectContaining({ userId: 'owner-1', orgId: 'org-1' }),
     )
     expect(repository.listPeople).toHaveBeenCalledWith(expect.anything(), 'org-1')
-    expect(result).toEqual({ connected: true, people: [person] })
+    expect(result).toEqual({
+      connected: true,
+      people: [{ ...person, brain_id: null, brain_name: null }],
+    })
+  })
+
+  it('attaches an accessible canonical User Brain to a linked portal person', async () => {
+    const { service } = createService({
+      people: [
+        {
+          id: 'person-1',
+          display_name: 'Ada',
+          vibey_user_id: 'user-1',
+          relationship_kind: 'internal',
+          delivery_mode: 'shadow',
+        },
+      ],
+    })
+
+    await expect(service.listPeople({} as never, 'org-1')).resolves.toEqual({
+      connected: true,
+      people: [
+        expect.objectContaining({
+          id: 'person-1',
+          brain_id: 'brain-1',
+          brain_name: 'Default Brain',
+        }),
+      ],
+    })
   })
 
   it('returns an empty disconnected directory without calling Slack', async () => {
@@ -89,6 +138,47 @@ describe('SlackPeopleService', () => {
     await expect(
       service.updateDeliveryMode({} as never, null, 'person-1', 'active'),
     ).rejects.toBeInstanceOf(BadRequestException)
+  })
+
+  it('lets an admin classify a person as internal, external, or ignored', async () => {
+    const { service, repository } = createService()
+
+    await service.updateRelationshipKind({} as never, 'org-1', 'person-1', 'internal')
+
+    expect(repository.updateRelationshipKind).toHaveBeenCalledWith(expect.anything(), {
+      id: 'person-1',
+      orgId: 'org-1',
+      relationshipKind: 'internal',
+    })
+  })
+
+  it('requires explicit confirmation before applying a name-only identity suggestion', async () => {
+    const { service, repository } = createService()
+
+    await service.confirmSuggestedIdentity({} as never, 'org-1', 'person-1')
+
+    expect(repository.confirmSuggestedIdentity).toHaveBeenCalledWith(
+      expect.anything(),
+      'org-1',
+      'person-1',
+    )
+  })
+
+  it('returns live Slack DM messages and Shadow actions for one person', async () => {
+    const { service, slackApi } = createService()
+
+    await expect(service.getPersonActivity({} as never, 'org-1', 'person-1')).resolves.toEqual({
+      channel_id: 'D1',
+      messages: [
+        expect.objectContaining({ direction: 'outbound', text: 'I can pull that together.' }),
+        expect.objectContaining({
+          direction: 'inbound',
+          text: 'I need help with launch reporting.',
+        }),
+      ],
+      actions: [{ id: 'action-1', target_member_id: 'person-1', status: 'sent' }],
+    })
+    expect(slackApi.getChannelHistory).toHaveBeenCalledWith('xoxb', 'D1', 100)
   })
 
   it('creates a harmless test proposal without sending it', async () => {

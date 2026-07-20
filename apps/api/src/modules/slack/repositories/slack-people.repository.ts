@@ -3,20 +3,28 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   SlackDeliveryMode,
   SlackDiscoveredPerson,
+  SlackRelationshipKind,
   SlackShadowAction,
   SlackShadowActionDeliveryRecord,
   SlackShadowActionStatus,
 } from '../types/slack.types'
+
+const PERSON_SELECT =
+  'id, platform_id, display_name, username, avatar_url, title, timezone, email, is_bot, vibey_user_id, suggested_vibey_user_id, contact_id, relationship_kind, relationship_source, identity_match_method, identity_match_confidence, delivery_mode, last_seen_at'
 
 @Injectable()
 export class SlackPeopleRepository {
   async findOrgSlackIntegration(
     supabase: SupabaseClient,
     orgId: string,
-  ): Promise<{ user_id: string; access_token: string } | null> {
+  ): Promise<{
+    user_id: string
+    access_token: string
+    metadata: Record<string, unknown>
+  } | null> {
     const { data, error } = await supabase
       .from('user_integrations')
-      .select('user_id, access_token')
+      .select('user_id, access_token, metadata')
       .eq('org_id', orgId)
       .eq('integration_id', 'slack')
       .eq('status', 'connected')
@@ -25,15 +33,13 @@ export class SlackPeopleRepository {
       .maybeSingle()
     if (error) throw new Error(`Failed to load organization Slack integration: ${error.message}`)
     if (!data?.user_id || !data.access_token) return null
-    return data as { user_id: string; access_token: string }
+    return data as { user_id: string; access_token: string; metadata: Record<string, unknown> }
   }
 
   async listPeople(supabase: SupabaseClient, orgId: string): Promise<SlackDiscoveredPerson[]> {
     const { data, error } = await supabase
       .from('channel_members')
-      .select(
-        'id, platform_id, display_name, username, avatar_url, title, timezone, email, is_bot, vibey_user_id, contact_id, relationship_kind, delivery_mode, last_seen_at',
-      )
+      .select(PERSON_SELECT)
       .eq('org_id', orgId)
       .eq('platform', 'slack')
       .eq('is_bot', false)
@@ -56,12 +62,80 @@ export class SlackPeopleRepository {
       .eq('id', input.id)
       .eq('org_id', input.orgId)
       .eq('platform', 'slack')
-      .select(
-        'id, platform_id, display_name, username, avatar_url, title, timezone, email, is_bot, vibey_user_id, contact_id, relationship_kind, delivery_mode, last_seen_at',
-      )
+      .select(PERSON_SELECT)
       .single()
     if (error) throw new Error(`Failed to update Slack delivery mode: ${error.message}`)
     return data as SlackDiscoveredPerson
+  }
+
+  async updateRelationshipKind(
+    supabase: SupabaseClient,
+    input: { id: string; orgId: string; relationshipKind: SlackRelationshipKind },
+  ): Promise<SlackDiscoveredPerson> {
+    const { data, error } = await supabase
+      .from('channel_members')
+      .update({
+        relationship_kind: input.relationshipKind,
+        relationship_source: 'manual',
+      })
+      .eq('id', input.id)
+      .eq('org_id', input.orgId)
+      .eq('platform', 'slack')
+      .select(PERSON_SELECT)
+      .single()
+    if (error) throw new Error(`Failed to classify Slack person: ${error.message}`)
+    return data as SlackDiscoveredPerson
+  }
+
+  async confirmSuggestedIdentity(
+    supabase: SupabaseClient,
+    orgId: string,
+    id: string,
+  ): Promise<SlackDiscoveredPerson | null> {
+    const { data: candidate, error: candidateError } = await supabase
+      .from('channel_members')
+      .select('suggested_vibey_user_id')
+      .eq('id', id)
+      .eq('org_id', orgId)
+      .eq('platform', 'slack')
+      .maybeSingle()
+    if (candidateError)
+      throw new Error(`Failed to load identity suggestion: ${candidateError.message}`)
+    if (!candidate?.suggested_vibey_user_id) return null
+    const { data, error } = await supabase
+      .from('channel_members')
+      .update({
+        vibey_user_id: candidate.suggested_vibey_user_id,
+        suggested_vibey_user_id: null,
+        identity_match_method: 'confirmed_name',
+        identity_match_confidence: 1,
+        relationship_kind: 'internal',
+        relationship_source: 'manual',
+      })
+      .eq('id', id)
+      .eq('org_id', orgId)
+      .eq('platform', 'slack')
+      .eq('suggested_vibey_user_id', candidate.suggested_vibey_user_id)
+      .select(PERSON_SELECT)
+      .maybeSingle()
+    if (error) throw new Error(`Failed to confirm identity suggestion: ${error.message}`)
+    return (data as SlackDiscoveredPerson | null) ?? null
+  }
+
+  async listDefaultUserBrains(
+    supabase: SupabaseClient,
+    userIds: string[],
+  ): Promise<Array<{ id: string; owner_id: string; name: string | null }>> {
+    if (userIds.length === 0) return []
+    const { data, error } = await supabase
+      .from('ns_brains')
+      .select('id, owner_id, name')
+      .in('owner_id', userIds)
+      .eq('scope', 'user')
+      .eq('is_default', true)
+      .is('org_id', null)
+    if (error) throw new Error(`Failed to load linked User Brains: ${error.message}`)
+    return data ?? []
   }
 
   async listShadowActions(
@@ -88,15 +162,31 @@ export class SlackPeopleRepository {
   ): Promise<SlackDiscoveredPerson | null> {
     const { data, error } = await supabase
       .from('channel_members')
-      .select(
-        'id, platform_id, display_name, username, avatar_url, title, timezone, email, is_bot, vibey_user_id, contact_id, relationship_kind, delivery_mode, last_seen_at',
-      )
+      .select(PERSON_SELECT)
       .eq('id', id)
       .eq('org_id', orgId)
       .eq('platform', 'slack')
       .maybeSingle()
     if (error) throw new Error(`Failed to load Slack person: ${error.message}`)
     return (data as SlackDiscoveredPerson | null) ?? null
+  }
+
+  async listPersonShadowActions(
+    supabase: SupabaseClient,
+    orgId: string,
+    personId: string,
+  ): Promise<SlackShadowAction[]> {
+    const { data, error } = await supabase
+      .from('slack_shadow_actions')
+      .select(
+        'id, agent_key, target_member_id, action_kind, proposed_content, rationale, status, source_channel_id, source_message_ts, workflow_key, reviewed_by, reviewed_at, sent_at, metadata, created_at, updated_at',
+      )
+      .eq('org_id', orgId)
+      .eq('target_member_id', personId)
+      .order('created_at', { ascending: false })
+      .limit(100)
+    if (error) throw new Error(`Failed to load person Shadow activity: ${error.message}`)
+    return (data ?? []) as SlackShadowAction[]
   }
 
   async createShadowAction(

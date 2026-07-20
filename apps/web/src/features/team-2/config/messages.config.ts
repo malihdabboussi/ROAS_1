@@ -29,17 +29,22 @@ export const TEAM_OPS_DESK_MESSAGES = {
 export const SLACK_PEOPLE_MESSAGES = {
   LOAD_ERROR: 'Could not load your Slack people. Try again.',
   MODE_ERROR: 'Could not save that delivery mode.',
+  CLASSIFICATION_ERROR: "I couldn't save that person type. Try again.",
+  IDENTITY_CONFIRM_ERROR: "I couldn't confirm that match. Refresh and try again.",
+  IDENTITY_CONFIRMED: 'Matched. Their portal identity and User Brain are now connected.',
+  ACTIVITY_ERROR:
+    "I couldn't open that Slack conversation. Check the Slack connection and try again.",
   DISCONNECTED: 'Connect Slack to discover teammates and external people.',
   SHADOW_SAFETY:
     'Creating or reviewing a proposal never sends it. Only an approved proposal for an Active person can be sent with Send now.',
   CURRENT_CAPABILITY:
     'This first release lets you test and control the review flow. Automatic proposal discovery is the next layer — nothing is being generated or sent in the background yet.',
   GHOST_PROFILE_HELP:
-    'A Ghost profile is a Slack identity that has not matched a platform teammate or known external contact yet.',
+    'Internal, External, and Ignored describe your relationship. The portal icon separately shows whether this Slack identity is linked to an actual Vibey user.',
   HOW_IT_WORKS: [
     {
       title: '1. Pick a person',
-      body: 'Leave them in Shadow to preview safely. Off blocks proposals. Active unlocks manual sending after approval.',
+      body: 'Classify them as Internal, External, or Ignored. Leave delivery in Shadow to preview safely.',
     },
     {
       title: '2. Review the draft',
@@ -47,7 +52,7 @@ export const SLACK_PEOPLE_MESSAGES = {
     },
     {
       title: '3. Send when ready',
-      body: 'After approval, set that person to Active and click Send now. Active does not send automatically.',
+      body: 'After approval, set delivery to Active and click Send now. Their timeline shows the proposal and delivered Slack message.',
     },
   ],
   EMPTY_ACTIONS:

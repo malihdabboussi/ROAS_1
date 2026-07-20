@@ -218,3 +218,10 @@ What: Stopped mission image generation from persisting a mission/subtask UUID as
 Why: Generated artwork uploaded successfully but its media row failed the conversation foreign key, leaving Task 11 blocked with no image deliverables.
 Impact: Mission-run `generate_image` calls can register images in Space Media and persist native mission image deliverables without requiring a chat-backed session.
 Files: `artifact-legacy-media-generate.service.ts`, `artifact-legacy-media-generate.service.test.ts`, `documentation/features/missions.md`
+
+## [2026-07-19 19:45] - [FEATURE]
+
+What: Expanded Manage People with safe exact-name identity suggestions, explicit Internal/External/Ignored classification, portal and Brain indicators, and a selected-person view containing the real Slack DM timeline beside its Shadow proposal ledger.
+Why: Admins could create and send a proposal but could not see where it would land, distinguish portal users from Slack-only people, classify people independently from delivery mode, or review a likely name match when Slack and portal emails differed.
+Impact: Active Slack humans remain the roster source; email matches link automatically, unique exact-name matches require confirmation, manual classifications persist across refreshes, and an admin can inspect the destination conversation before using the existing reviewed-send flow. User Brain attachment is visible without falsely claiming that DM-to-Brain learning is already automatic.
+Files: `supabase/migrations/20260719204000_slack_people_identity_activity.sql`, Slack people DTO/types/controller/repositories/services/tests, Team People service/hook/config/components/tests, `documentation/features/integration-connections.md`
