@@ -1,6 +1,7 @@
 import type { MetaCampaignObjective } from '../../types/meta.types'
 
 export type InsightsLevel = 'campaign' | 'adset' | 'ad'
+export type MetaResultType = 'registration' | 'lead' | 'purchase' | 'none'
 
 export type MetaInsightsRow = {
   id: string
@@ -19,6 +20,8 @@ export type MetaInsightsRow = {
   cpm: number
   leads: number
   conversions: number
+  results: number
+  result_type: MetaResultType
   revenue: number
   roas: number
   cost_per_result: number
@@ -33,6 +36,7 @@ export type MetaInsightsSummary = {
   clicks: number
   leads: number
   conversions: number
+  results: number
   revenue: number
   ctr: number
   cpc: number

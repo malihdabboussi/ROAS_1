@@ -13,7 +13,7 @@ export class MetaInsightsRepository {
     const { data, error } = await client
       .from('ad_campaigns')
       .select(
-        'id,name,meta_campaign_id,meta_effective_status,daily_budget,lifetime_budget,metadata',
+        'id,name,meta_campaign_id,meta_ad_account_id,meta_effective_status,daily_budget,lifetime_budget,metadata',
       )
       .eq('user_id', userId)
       .eq('campaign_id', campaignId)

@@ -337,6 +337,60 @@ describe('Type C Meta service behavior', () => {
     })
   })
 
+  it('uses Meta completed registrations as campaign results without losing the ad account', async () => {
+    const { client } = createTableClient({
+      ad_campaigns: [
+        {
+          id: 'campaign_registration',
+          name: 'Webinar Campaign',
+          meta_campaign_id: 'meta_campaign_registration',
+          meta_ad_account_id: '1487555021386771',
+          meta_effective_status: 'ACTIVE',
+          daily_budget: 60000,
+          lifetime_budget: null,
+          metadata: {},
+        },
+      ],
+    })
+    const meta = {
+      getObjectInsights: vi.fn().mockResolvedValue({
+        spend: '2290',
+        impressions: '76214',
+        reach: '60000',
+        clicks: '1985',
+        ctr: '2.60',
+        cpc: '1.15',
+        cpm: '30.05',
+        actions: [
+          { action_type: 'complete_registration', value: '151' },
+          { action_type: 'offsite_conversion.fb_pixel_complete_registration', value: '151' },
+        ],
+        cost_per_action_type: [
+          {
+            action_type: 'offsite_conversion.fb_pixel_complete_registration',
+            value: '15.16',
+          },
+        ],
+      }),
+    } as any
+    const oauth = { getAccessToken: vi.fn().mockResolvedValue('token') } as any
+    const service = new MetaInsightsService(meta, oauth, new MetaInsightsRepository())
+
+    const result = await service.getInsights(client, 'user_1', {
+      campaignId: 'store_campaign_1',
+      level: 'campaign',
+    })
+
+    expect(result.summary).toMatchObject({ leads: 151, results: 151 })
+    expect(result.rows[0]).toMatchObject({
+      ad_account_id: '1487555021386771',
+      leads: 151,
+      results: 151,
+      result_type: 'registration',
+      cost_per_result: 15.16,
+    })
+  })
+
   it('syncs a fetched Meta hierarchy into new local campaign, ad set, and ad rows', async () => {
     const { client, inserts } = createTableClient({})
     const meta = {

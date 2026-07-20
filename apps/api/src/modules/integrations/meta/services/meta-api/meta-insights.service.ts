@@ -3,7 +3,23 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { MetaIntegration } from '../../integrations/meta.integration'
 import { MetaInsightsRepository } from '../../repositories/meta-insights.repository'
 import { MetaOAuthService } from '../meta-oauth.service'
-import type { InsightsLevel, MetaInsightsRow, MetaInsightsSummary } from './meta-api.types'
+import type {
+  InsightsLevel,
+  MetaInsightsRow,
+  MetaInsightsSummary,
+  MetaResultType,
+} from './meta-api.types'
+
+const REGISTRATION_ACTION_TYPES = [
+  'complete_registration',
+  'offsite_conversion.fb_pixel_complete_registration',
+]
+const LEAD_ACTION_TYPES = [
+  'lead',
+  'onsite_conversion.lead_grouped',
+  'offsite_conversion.fb_pixel_lead',
+]
+const PURCHASE_ACTION_TYPES = ['purchase', 'offsite_conversion.fb_pixel_purchase']
 
 @Injectable()
 export class MetaInsightsService {
@@ -60,27 +76,22 @@ export class MetaInsightsService {
           const impressions = this.toInt(insights?.impressions)
           const reach = this.toInt(insights?.reach)
           const clicks = this.toInt(insights?.clicks)
-          const leads = this.getActionValue(insights?.actions, [
-            'lead',
-            'onsite_conversion.lead_grouped',
-            'offsite_conversion.fb_pixel_lead',
-          ])
-          const conversions = this.getActionValue(insights?.actions, [
-            'purchase',
-            'offsite_conversion.fb_pixel_purchase',
-          ])
-          const revenue = this.getActionValue(insights?.action_values, [
-            'purchase',
-            'offsite_conversion.fb_pixel_purchase',
-          ])
+          const registrationCount = this.getActionValue(
+            insights?.actions,
+            REGISTRATION_ACTION_TYPES,
+          )
+          const leadCount = this.getActionValue(insights?.actions, LEAD_ACTION_TYPES)
+          const leads = Math.max(registrationCount, leadCount)
+          const conversions = this.getActionValue(insights?.actions, PURCHASE_ACTION_TYPES)
+          const revenue = this.getActionValue(insights?.action_values, PURCHASE_ACTION_TYPES)
+          const primaryResult = this.primaryResult(registrationCount, leadCount, conversions)
           const ctr = this.toNumber(insights?.ctr)
           const cpc = this.toNumber(insights?.cpc)
           const cpm = this.toNumber(insights?.cpm)
-          const costPerResult = this.getActionMetric(insights?.cost_per_action_type, [
-            'lead',
-            'onsite_conversion.lead_grouped',
-            'offsite_conversion.fb_pixel_lead',
-          ])
+          const costPerResult = this.getActionMetric(
+            insights?.cost_per_action_type,
+            this.actionTypesForResult(primaryResult.type),
+          )
           const roas = spend > 0 ? revenue / spend : 0
           const metadata = (row.metadata as Record<string, unknown> | null) ?? {}
           return {
@@ -89,7 +100,10 @@ export class MetaInsightsService {
             level: 'campaign' as const,
             meta_id: metaId,
             meta_effective_status: (row.meta_effective_status as string | null) ?? null,
-            ad_account_id: (metadata.meta_ad_account_id as string | undefined) ?? null,
+            ad_account_id:
+              (row.meta_ad_account_id as string | null) ??
+              (metadata.meta_ad_account_id as string | undefined) ??
+              null,
             spend,
             impressions,
             reach,
@@ -99,6 +113,8 @@ export class MetaInsightsService {
             cpm,
             leads,
             conversions,
+            results: primaryResult.count,
+            result_type: primaryResult.type,
             revenue,
             roas,
             cost_per_result: costPerResult,
@@ -131,25 +147,23 @@ export class MetaInsightsService {
           const impressions = this.toInt(insights?.impressions)
           const reach = this.toInt(insights?.reach)
           const clicks = this.toInt(insights?.clicks)
-          const conversions = this.getActionValue(insights?.actions, [
-            'purchase',
-            'offsite_conversion.fb_pixel_purchase',
-          ])
-          const revenue = this.getActionValue(insights?.action_values, [
-            'purchase',
-            'offsite_conversion.fb_pixel_purchase',
-          ])
+          const conversions = this.getActionValue(insights?.actions, PURCHASE_ACTION_TYPES)
+          const revenue = this.getActionValue(insights?.action_values, PURCHASE_ACTION_TYPES)
           const ctr = this.toNumber(insights?.ctr)
           const cpc = this.toNumber(insights?.cpc)
           const cpm = this.toNumber(insights?.cpm)
           const leads =
             leadsMap.get(String(row.id)) ??
-            this.getActionValue(insights?.actions, [
-              'lead',
-              'onsite_conversion.lead_grouped',
-              'offsite_conversion.fb_pixel_lead',
-            ])
-          const costPerResult = leads > 0 ? spend / leads : 0
+            Math.max(
+              this.getActionValue(insights?.actions, REGISTRATION_ACTION_TYPES),
+              this.getActionValue(insights?.actions, LEAD_ACTION_TYPES),
+            )
+          const primaryResult = this.primaryResult(
+            this.getActionValue(insights?.actions, REGISTRATION_ACTION_TYPES),
+            leads,
+            conversions,
+          )
+          const costPerResult = primaryResult.count > 0 ? spend / primaryResult.count : 0
           const roas = spend > 0 ? revenue / spend : 0
           const metadata = (row.metadata as Record<string, unknown> | null) ?? {}
           return {
@@ -169,6 +183,8 @@ export class MetaInsightsService {
             cpm,
             leads,
             conversions,
+            results: primaryResult.count,
+            result_type: primaryResult.type,
             revenue,
             roas,
             cost_per_result: costPerResult,
@@ -199,25 +215,23 @@ export class MetaInsightsService {
         const impressions = this.toInt(insights?.impressions)
         const reach = this.toInt(insights?.reach)
         const clicks = this.toInt(insights?.clicks)
-        const conversions = this.getActionValue(insights?.actions, [
-          'purchase',
-          'offsite_conversion.fb_pixel_purchase',
-        ])
-        const revenue = this.getActionValue(insights?.action_values, [
-          'purchase',
-          'offsite_conversion.fb_pixel_purchase',
-        ])
+        const conversions = this.getActionValue(insights?.actions, PURCHASE_ACTION_TYPES)
+        const revenue = this.getActionValue(insights?.action_values, PURCHASE_ACTION_TYPES)
         const ctr = this.toNumber(insights?.ctr)
         const cpc = this.toNumber(insights?.cpc)
         const cpm = this.toNumber(insights?.cpm)
         const leads =
           leadsMap.get(String(row.id)) ??
-          this.getActionValue(insights?.actions, [
-            'lead',
-            'onsite_conversion.lead_grouped',
-            'offsite_conversion.fb_pixel_lead',
-          ])
-        const costPerResult = leads > 0 ? spend / leads : 0
+          Math.max(
+            this.getActionValue(insights?.actions, REGISTRATION_ACTION_TYPES),
+            this.getActionValue(insights?.actions, LEAD_ACTION_TYPES),
+          )
+        const primaryResult = this.primaryResult(
+          this.getActionValue(insights?.actions, REGISTRATION_ACTION_TYPES),
+          leads,
+          conversions,
+        )
+        const costPerResult = primaryResult.count > 0 ? spend / primaryResult.count : 0
         const roas = spend > 0 ? revenue / spend : 0
         const metadata = (row.metadata as Record<string, unknown> | null) ?? {}
         return {
@@ -237,6 +251,8 @@ export class MetaInsightsService {
           cpm,
           leads,
           conversions,
+          results: primaryResult.count,
+          result_type: primaryResult.type,
           revenue,
           roas,
           cost_per_result: costPerResult,
@@ -266,14 +282,32 @@ export class MetaInsightsService {
 
   private getActionValue(list: unknown, actionTypes: string[]): number {
     if (!Array.isArray(list)) return 0
-    let total = 0
+    let highest = 0
     for (const item of list) {
       const row = item as { action_type?: unknown; value?: unknown }
       if (typeof row.action_type !== 'string') continue
       if (!actionTypes.includes(row.action_type)) continue
-      total += this.toNumber(row.value)
+      highest = Math.max(highest, this.toNumber(row.value))
     }
-    return total
+    return highest
+  }
+
+  private primaryResult(
+    registrations: number,
+    leads: number,
+    purchases: number,
+  ): { count: number; type: MetaResultType } {
+    if (registrations > 0) return { count: registrations, type: 'registration' }
+    if (purchases > 0) return { count: purchases, type: 'purchase' }
+    if (leads > 0) return { count: leads, type: 'lead' }
+    return { count: 0, type: 'none' }
+  }
+
+  private actionTypesForResult(type: MetaResultType): string[] {
+    if (type === 'registration') return REGISTRATION_ACTION_TYPES
+    if (type === 'purchase') return PURCHASE_ACTION_TYPES
+    if (type === 'lead') return LEAD_ACTION_TYPES
+    return []
   }
 
   private getActionMetric(list: unknown, actionTypes: string[]): number {
@@ -294,12 +328,13 @@ export class MetaInsightsService {
     const clicks = rows.reduce((sum, row) => sum + row.clicks, 0)
     const leads = rows.reduce((sum, row) => sum + row.leads, 0)
     const conversions = rows.reduce((sum, row) => sum + row.conversions, 0)
+    const results = rows.reduce((sum, row) => sum + row.results, 0)
     const revenue = rows.reduce((sum, row) => sum + row.revenue, 0)
     const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0
     const cpc = clicks > 0 ? spend / clicks : 0
     const cpm = impressions > 0 ? (spend / impressions) * 1000 : 0
     const roas = spend > 0 ? revenue / spend : 0
-    const costPerResult = leads > 0 ? spend / leads : 0
+    const costPerResult = results > 0 ? spend / results : 0
     return {
       spend,
       impressions,
@@ -307,6 +342,7 @@ export class MetaInsightsService {
       clicks,
       leads,
       conversions,
+      results,
       revenue,
       ctr,
       cpc,

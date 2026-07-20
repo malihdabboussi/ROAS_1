@@ -1,12 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
-  BarChart3,
   Brain,
+  Check,
   DollarSign,
   Lightbulb,
-  Loader2,
   MessageSquare,
   Sparkles,
   TrendingDown,
@@ -14,20 +13,27 @@ import {
   Users,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { fetchMetaAdsInsights, type MetaAdsInsightsSummary } from '../../services/analytics.service'
-import { useChatStore } from '../../store/use-chat-store'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import { useShellStore } from '@/components/shell/use-shell-store'
+import { ADS_ANALYSIS_MESSAGES } from '@/features/studio/config/ads-analysis.messages.config'
+import type { MetaAdsInsightsRow } from '../../services/analytics.service'
+import {
+  buildBlazeAnalysisPrompt,
+  type AnalysisId,
+} from './meta-ads-analysis'
 
 interface AdAnalysisPanelProps {
   campaignId: string
   campaignName?: string | null
+  campaignRows: MetaAdsInsightsRow[]
+  timeRangeLabel: string
 }
 
 interface AnalysisPrompt {
-  id: string
+  id: AnalysisId
   label: string
   description: string
-  icon: React.ReactNode
-  buildPrompt: (summary: MetaAdsInsightsSummary, campaignName: string) => string
+  icon: ReactNode
 }
 
 const ANALYSIS_PROMPTS: AnalysisPrompt[] = [
@@ -35,230 +41,199 @@ const ANALYSIS_PROMPTS: AnalysisPrompt[] = [
     id: 'whats-working',
     label: "What's Working?",
     description: 'Identify top-performing ads and winning patterns',
-    icon: <TrendingUp className="h-4 w-4" />,
-    buildPrompt: (s, name) =>
-      `Analyze my Meta ad campaign "${name}" and tell me what's working well.\n\n` +
-      `Here are the current performance metrics:\n` +
-      `- Spend: $${s.spend.toFixed(2)}\n` +
-      `- Impressions: ${s.impressions.toLocaleString()}\n` +
-      `- Reach: ${s.reach.toLocaleString()}\n` +
-      `- Clicks: ${s.clicks.toLocaleString()}\n` +
-      `- CTR: ${s.ctr.toFixed(2)}%\n` +
-      `- CPC: $${s.cpc.toFixed(2)}\n` +
-      `- CPM: $${s.cpm.toFixed(2)}\n` +
-      `- Leads: ${s.leads}\n` +
-      `- ROAS: ${s.roas.toFixed(2)}x\n\n` +
-      `What patterns do you see? What's driving the best results? What should I double down on?`,
+    icon: <TrendingUp className="icon-sm" />,
   },
   {
     id: 'needs-improvement',
     label: 'What Needs Improvement?',
     description: 'Find underperforming ads and get suggestions',
-    icon: <TrendingDown className="h-4 w-4" />,
-    buildPrompt: (s, name) =>
-      `Look at my Meta ad campaign "${name}" and identify what needs improvement.\n\n` +
-      `Current metrics:\n` +
-      `- Spend: $${s.spend.toFixed(2)}\n` +
-      `- CTR: ${s.ctr.toFixed(2)}%\n` +
-      `- CPC: $${s.cpc.toFixed(2)}\n` +
-      `- CPM: $${s.cpm.toFixed(2)}\n` +
-      `- Leads: ${s.leads}\n` +
-      `- ROAS: ${s.roas.toFixed(2)}x\n` +
-      `- Conversions: ${s.conversions}\n\n` +
-      `What's underperforming? What specific changes would you recommend to improve results?`,
+    icon: <TrendingDown className="icon-sm" />,
   },
   {
     id: 'creative-feedback',
     label: 'Creative Feedback',
-    description: 'Get copy, imagery, and CTA suggestions',
-    icon: <Sparkles className="h-4 w-4" />,
-    buildPrompt: (s, name) =>
-      `Review the creative performance for my campaign "${name}" and give me feedback.\n\n` +
-      `Performance context:\n` +
-      `- CTR: ${s.ctr.toFixed(2)}% (${s.ctr >= 1.5 ? 'above' : 'below'} average)\n` +
-      `- CPC: $${s.cpc.toFixed(2)}\n` +
-      `- ${s.clicks.toLocaleString()} clicks from ${s.impressions.toLocaleString()} impressions\n\n` +
-      `Based on these numbers, what creative changes would improve engagement? ` +
-      `Give me specific suggestions for headlines, copy, imagery, and CTAs.`,
+    description: 'Get creative testing recommendations',
+    icon: <Sparkles className="icon-sm" />,
   },
   {
     id: 'audience-insights',
     label: 'Audience Insights',
     description: 'Analyze targeting and suggest new audiences',
-    icon: <Users className="h-4 w-4" />,
-    buildPrompt: (s, name) =>
-      `Analyze the audience performance for my campaign "${name}".\n\n` +
-      `Current performance:\n` +
-      `- Reach: ${s.reach.toLocaleString()}\n` +
-      `- Impressions: ${s.impressions.toLocaleString()} (frequency: ${s.reach > 0 ? (s.impressions / s.reach).toFixed(1) : 'N/A'}x)\n` +
-      `- CTR: ${s.ctr.toFixed(2)}%\n` +
-      `- CPC: $${s.cpc.toFixed(2)}\n` +
-      `- Cost per result: $${s.cost_per_result.toFixed(2)}\n\n` +
-      `What does this tell us about audience fit? Are we reaching the right people? ` +
-      `Suggest audience refinements or new audiences to test.`,
+    icon: <Users className="icon-sm" />,
   },
   {
     id: 'budget-optimization',
     label: 'Budget Optimization',
     description: 'Optimize spend distribution and allocation',
-    icon: <DollarSign className="h-4 w-4" />,
-    buildPrompt: (s, name) =>
-      `Help me optimize the budget for my campaign "${name}".\n\n` +
-      `Current spend breakdown:\n` +
-      `- Total spend: $${s.spend.toFixed(2)}\n` +
-      `- Impressions: ${s.impressions.toLocaleString()}\n` +
-      `- CPM: $${s.cpm.toFixed(2)}\n` +
-      `- CPC: $${s.cpc.toFixed(2)}\n` +
-      `- ROAS: ${s.roas.toFixed(2)}x\n` +
-      `- Revenue: $${s.revenue.toFixed(2)}\n\n` +
-      `Am I spending efficiently? Should I reallocate budget between ad sets? ` +
-      `What's the optimal daily budget to maximize ROAS?`,
+    icon: <DollarSign className="icon-sm" />,
   },
   {
     id: 'generate-variations',
     label: 'Generate Variations',
-    description: 'Create new ad concepts based on winners',
-    icon: <Lightbulb className="h-4 w-4" />,
-    buildPrompt: (s, name) =>
-      `Based on the performance of my campaign "${name}", generate new ad variation ideas.\n\n` +
-      `Performance summary:\n` +
-      `- Best CTR: ${s.ctr.toFixed(2)}%\n` +
-      `- ROAS: ${s.roas.toFixed(2)}x\n` +
-      `- ${s.leads} leads from $${s.spend.toFixed(2)} spend\n\n` +
-      `Create 3-5 new ad concepts that build on what's working. ` +
-      `For each, give me: headline, primary text, description, and CTA. ` +
-      `Make them distinct but inspired by the winning patterns.`,
+    description: 'Plan new ad concepts based on winners',
+    icon: <Lightbulb className="icon-sm" />,
   },
 ]
 
-function MetricCard({
-  label,
-  value,
-  trend,
-}: {
-  label: string
-  value: string
-  trend?: 'up' | 'down' | 'neutral'
-}) {
+function summarizeRows(rows: MetaAdsInsightsRow[]) {
+  const spend = rows.reduce((sum, row) => sum + row.spend, 0)
+  const impressions = rows.reduce((sum, row) => sum + row.impressions, 0)
+  const clicks = rows.reduce((sum, row) => sum + row.clicks, 0)
+  const results = rows.reduce((sum, row) => sum + row.results, 0)
+  const revenue = rows.reduce((sum, row) => sum + row.revenue, 0)
+  return {
+    spend,
+    impressions,
+    clicks,
+    results,
+    ctr: impressions > 0 ? (clicks / impressions) * 100 : 0,
+    roas: spend > 0 ? revenue / spend : 0,
+  }
+}
+
+function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="card-glass rounded-xl p-3">
+    <div className="card-glass rounded-spacing-3 p-spacing-3">
       <p className="typo-caption text-muted-foreground">{label}</p>
-      <div className="flex items-center gap-1">
-        <p className="text-foreground text-lg font-semibold">{value}</p>
-        {trend === 'up' && <TrendingUp className="h-3.5 w-3.5 text-green-400" />}
-        {trend === 'down' && <TrendingDown className="h-3.5 w-3.5 text-red-400" />}
-      </div>
+      <p className="title-h6 text-foreground">{value}</p>
     </div>
   )
 }
 
-function evaluateMetricTrend(
-  ctr: number,
-  roas: number,
-): { ctr: 'up' | 'down' | 'neutral'; roas: 'up' | 'down' | 'neutral' } {
-  return {
-    ctr: ctr >= 1.5 ? 'up' : ctr >= 0.8 ? 'neutral' : 'down',
-    roas: roas >= 2 ? 'up' : roas >= 1 ? 'neutral' : 'down',
-  }
-}
-
-export function AdAnalysisPanel({ campaignId, campaignName }: AdAnalysisPanelProps) {
-  const [summary, setSummary] = useState<MetaAdsInsightsSummary | null>(null)
-  const [loading, setLoading] = useState(true)
-  const setPendingComposerText = useChatStore((s) => s.setPendingComposerText)
+export function AdAnalysisPanel({
+  campaignId,
+  campaignName,
+  campaignRows,
+  timeRangeLabel,
+}: AdAnalysisPanelProps) {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    () => new Set(campaignRows.map((row) => row.id)),
+  )
+  const seedComposer = useGlobalChatStore((state) => state.seedComposer)
+  const openFreshChatDrawer = useShellStore((state) => state.openFreshChatDrawer)
 
   useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    fetchMetaAdsInsights({ campaignId, level: 'campaign' })
-      .then((data) => {
-        if (!cancelled) setSummary(data.summary)
-      })
-      .catch((err) => {
-        console.error('[AdAnalysisPanel] Failed to load insights:', err)
-        if (!cancelled) setSummary(null)
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [campaignId])
+    setSelectedIds(new Set(campaignRows.map((row) => row.id)))
+  }, [campaignRows])
+
+  const selectedRows = useMemo(
+    () => campaignRows.filter((row) => selectedIds.has(row.id)),
+    [campaignRows, selectedIds],
+  )
+  const summary = useMemo(() => summarizeRows(selectedRows), [selectedRows])
+
+  const toggleCampaign = useCallback((rowId: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current)
+      if (next.has(rowId)) next.delete(rowId)
+      else next.add(rowId)
+      return next
+    })
+  }, [])
 
   const handlePromptClick = useCallback(
-    (prompt: AnalysisPrompt) => {
-      if (!summary) {
-        toast.error('No performance data available to analyze.')
+    (analysisId: AnalysisId) => {
+      if (selectedRows.length === 0) {
+        toast.error(ADS_ANALYSIS_MESSAGES.NO_CAMPAIGNS)
         return
       }
-      const text = prompt.buildPrompt(summary, campaignName ?? 'My Campaign')
-      setPendingComposerText(text)
-      toast.success('Analysis prompt loaded — send it in the chat to get insights.')
-    },
-    [summary, campaignName, setPendingComposerText],
+      const content = buildBlazeAnalysisPrompt({
+        analysisId,
+        workspaceName: campaignName ?? 'this workspace',
+        timeRangeLabel,
+        rows: selectedRows,
+      })
+      openFreshChatDrawer()
+      seedComposer({
+        content,
+        agentKey: 'ads_manager',
+        railIntent: 'new',
+        workContext: { surface: 'spaces', campaignId },
+      })
+      toast.success(ADS_ANALYSIS_MESSAGES.STARTED)
+    }, [campaignId, campaignName, openFreshChatDrawer, seedComposer, selectedRows, timeRangeLabel],
   )
 
-  if (loading) {
-    return (
-      <div className="card-glass flex items-center justify-center rounded-2xl p-8">
-        <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
-      </div>
-    )
-  }
-
-  if (!summary || summary.impressions === 0) {
-    return (
-      <div className="card-glass rounded-2xl p-6 text-center">
-        <BarChart3 className="text-muted-foreground/30 mx-auto mb-2 h-8 w-8" />
-        <p className="body-3 text-muted-foreground">No performance data yet</p>
-        <p className="typo-caption text-muted-foreground mt-1">
-          Sync your Meta ads or publish ads to see analytics and get AI analysis.
-        </p>
-      </div>
-    )
-  }
-
-  const trends = evaluateMetricTrend(summary.ctr, summary.roas)
+  if (campaignRows.length === 0) return null
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-        <MetricCard label="Spend" value={`$${summary.spend.toFixed(2)}`} />
-        <MetricCard label="Impressions" value={summary.impressions.toLocaleString()} />
-        <MetricCard label="Reach" value={summary.reach.toLocaleString()} />
-        <MetricCard label="Clicks" value={summary.clicks.toLocaleString()} />
-        <MetricCard label="CTR" value={`${summary.ctr.toFixed(2)}%`} trend={trends.ctr} />
-        <MetricCard label="CPC" value={`$${summary.cpc.toFixed(2)}`} />
-        <MetricCard label="ROAS" value={`${summary.roas.toFixed(2)}x`} trend={trends.roas} />
-        <MetricCard label="Leads" value={summary.leads.toLocaleString()} />
+    <div className="space-y-spacing-4">
+      <div className="card-glass rounded-spacing-3 p-spacing-4">
+        <div className="mb-spacing-3 flex items-center justify-between">
+          <div>
+            <p className="body-2 text-foreground font-medium">CAMPAIGNS TO REVIEW</p>
+            <p className="typo-caption text-muted-foreground">{timeRangeLabel}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              setSelectedIds(
+                selectedIds.size === campaignRows.length
+                  ? new Set()
+                  : new Set(campaignRows.map((row) => row.id)),
+              )
+            }
+            className="button-compact button-glass-neutral"
+          >
+            {selectedIds.size === campaignRows.length ? 'Clear all' : 'Select all'}
+          </button>
+        </div>
+        <div className="gap-spacing-2 flex flex-wrap">
+          {campaignRows.map((row) => {
+            const selected = selectedIds.has(row.id)
+            return (
+              <button
+                key={row.id}
+                type="button"
+                onClick={() => toggleCampaign(row.id)}
+                aria-pressed={selected}
+                className={
+                  selected
+                    ? 'button-compact button-glass-primary gap-spacing-1'
+                    : 'button-compact button-glass-neutral gap-spacing-1'
+                }
+              >
+                {selected ? <Check className="icon-xs" /> : null}
+                <span className="max-w-56 truncate">{row.name}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      <div className="card-glass rounded-2xl p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <Brain className="h-5 w-5 text-green-400" />
-          <p className="body-2 text-foreground font-medium">AI ANALYSIS</p>
+      <div className="grid grid-cols-2 gap-spacing-3 md:grid-cols-3 lg:grid-cols-6">
+        <MetricCard label="Spend" value={`$${summary.spend.toFixed(2)}`} />
+        <MetricCard label="Impressions" value={summary.impressions.toLocaleString()} />
+        <MetricCard label="Clicks" value={summary.clicks.toLocaleString()} />
+        <MetricCard label="Results" value={summary.results.toLocaleString()} />
+        <MetricCard label="CTR" value={`${summary.ctr.toFixed(2)}%`} />
+        <MetricCard label="Purchase ROAS" value={`${summary.roas.toFixed(2)}x`} />
+      </div>
+
+      <div className="card-glass rounded-spacing-3 p-spacing-4">
+        <div className="mb-spacing-2 gap-spacing-2 flex items-center">
+          <Brain className="icon-md text-primary" />
+          <p className="body-2 text-foreground font-medium">AI ANALYSIS WITH BLAZE</p>
         </div>
-        <p className="body-3 text-muted-foreground mb-4">
-          Choose an analysis type below. The prompt will be loaded into your chat — send it to get
-          AI-powered insights on your ad performance.
+        <p className="body-3 text-muted-foreground mb-spacing-4">
+          Choose an analysis. Blaze will open in chat and review only the campaigns selected above.
         </p>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-spacing-2 sm:grid-cols-2 lg:grid-cols-3">
           {ANALYSIS_PROMPTS.map((prompt) => (
             <button
               key={prompt.id}
               type="button"
-              onClick={() => handlePromptClick(prompt)}
-              className="card-glass group flex items-start gap-3 rounded-xl p-3 text-left transition-colors hover:bg-green-500/5"
+              onClick={() => handlePromptClick(prompt.id)}
+              className="surface-card border-border hover:bg-hover-subtle gap-spacing-3 rounded-spacing-3 p-spacing-3 flex items-start border text-left"
             >
-              <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-green-500/10 text-green-400 transition-colors group-hover:bg-green-500/20">
+              <span className="bg-primary/10 text-primary rounded-spacing-2 p-spacing-2">
                 {prompt.icon}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="body-3 text-foreground font-medium">{prompt.label}</p>
-                <p className="typo-caption text-muted-foreground">{prompt.description}</p>
-              </div>
-              <MessageSquare className="text-muted-foreground/40 mt-0.5 h-3.5 w-3.5 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="body-3 text-foreground block font-medium">{prompt.label}</span>
+                <span className="typo-caption text-muted-foreground block">{prompt.description}</span>
+              </span>
+              <MessageSquare className="icon-xs text-muted-foreground shrink-0" />
             </button>
           ))}
         </div>

@@ -34,6 +34,7 @@ import {
 } from '../../services/artifact-preview.service'
 import { fetchCampaign } from '../../services/campaign.service'
 import { AdAnalysisPanel } from './AdAnalysisPanel'
+import { buildAdsManagerUrl } from './meta-ads-analysis'
 import { MetaPublishModal } from './MetaPublishModal'
 
 type TimeRange = '7d' | '30d' | '90d' | 'all'
@@ -103,7 +104,15 @@ interface AdsPerformanceViewProps {
   adCampaignRowIdsFilter?: string[] | undefined
 }
 
-type AdsSortKey = 'spend' | 'impressions' | 'clicks' | 'ctr' | 'cpc' | 'cpm' | 'leads' | 'roas'
+type AdsSortKey =
+  | 'spend'
+  | 'impressions'
+  | 'clicks'
+  | 'ctr'
+  | 'cpc'
+  | 'cpm'
+  | 'results'
+  | 'roas'
 
 function formatBudgetDollars(cents: number | null): string {
   if (!cents || cents <= 0) return ''
@@ -180,6 +189,7 @@ export function AdsPerformanceView({
   const [syncing, setSyncing] = useState(false)
   const [analysisOpen, setAnalysisOpen] = useState(false)
   const [metaConnected, setMetaConnected] = useState<boolean | null>(null)
+  const [metaAdAccountId, setMetaAdAccountId] = useState<string | null>(null)
   const [hasSyncedData, setHasSyncedData] = useState(false)
 
   const resolveAdAccountId = useCallback(async (): Promise<string | null> => {
@@ -212,6 +222,8 @@ export function AdsPerformanceView({
         toast.error('No Meta ad account found. Connect an ad account in Settings first.')
         return
       }
+
+      setMetaAdAccountId(adAccountId)
 
       const result = await syncMetaAdAccount(adAccountId, campaignId)
       const created = result.campaigns_created + result.ad_sets_created + result.ads_created
@@ -368,9 +380,11 @@ export function AdsPerformanceView({
 
   useEffect(() => {
     let cancelled = false
-    getMetaConnectionStatus()
-      .then((status) => {
-        if (!cancelled) setMetaConnected(status.connected)
+    void Promise.all([getMetaConnectionStatus(), resolveAdAccountId()])
+      .then(([status, adAccountId]) => {
+        if (cancelled) return
+        setMetaConnected(status.connected)
+        setMetaAdAccountId(adAccountId)
       })
       .catch(() => {
         if (!cancelled) setMetaConnected(false)
@@ -378,7 +392,7 @@ export function AdsPerformanceView({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [resolveAdAccountId])
 
   useEffect(() => {
     if (adsInsights && adsInsights.rows.length > 0 && adsInsights.summary.impressions > 0) {
@@ -398,12 +412,14 @@ export function AdsPerformanceView({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [timeRangeOpen])
 
-  const sortedAdsRows = [...(adsInsights?.rows ?? [])].sort((a, b) => {
-    const dir = adsSortDir === 'asc' ? 1 : -1
-    const va = Number((a as unknown as Record<string, unknown>)[adsSortKey] ?? 0)
-    const vb = Number((b as unknown as Record<string, unknown>)[adsSortKey] ?? 0)
-    return (va - vb) * dir
-  })
+  const sortedAdsRows = useMemo(() => {
+    return [...(adsInsights?.rows ?? [])].sort((a, b) => {
+      const dir = adsSortDir === 'asc' ? 1 : -1
+      const va = Number((a as unknown as Record<string, unknown>)[adsSortKey] ?? 0)
+      const vb = Number((b as unknown as Record<string, unknown>)[adsSortKey] ?? 0)
+      return (va - vb) * dir
+    })
+  }, [adsInsights?.rows, adsSortDir, adsSortKey])
 
   const topCampaignRows = useMemo(() => {
     const campaigns = sortedAdsRows.filter((r) => r.level === 'campaign')
@@ -411,22 +427,6 @@ export function AdsPerformanceView({
     const allow = new Set(adCampaignRowIdsFilter)
     return campaigns.filter((r) => allow.has(r.id))
   }, [sortedAdsRows, adCampaignRowIdsFilter])
-
-  const openMetaUrl = (row: MetaAdsInsightsRow) => {
-    if (!row.meta_id) return '#'
-    const params = new URLSearchParams()
-    if (row.ad_account_id) params.set('act', row.ad_account_id)
-
-    if (row.level === 'campaign') {
-      params.set('selected_campaign_ids', row.meta_id)
-    } else if (row.level === 'adset') {
-      params.set('selected_adset_ids', row.meta_id)
-    } else {
-      params.set('selected_ad_ids', row.meta_id)
-    }
-
-    return `https://www.facebook.com/adsmanager/manage/campaigns?${params.toString()}`
-  }
 
   const toggleSort = (key: AdsSortKey) => {
     if (adsSortKey === key) {
@@ -635,8 +635,8 @@ export function AdsPerformanceView({
               format: (v: number) => Math.round(v).toLocaleString(),
             },
             {
-              label: 'Leads',
-              value: adsInsights?.summary.leads ?? 0,
+              label: 'Results',
+              value: adsInsights?.summary.results ?? 0,
               format: (v: number) => Math.round(v).toLocaleString(),
             },
             {
@@ -645,7 +645,7 @@ export function AdsPerformanceView({
               format: (v: number) => `${v.toFixed(2)}%`,
             },
             {
-              label: 'ROAS',
+              label: 'Blended Purchase ROAS',
               value: adsInsights?.summary.roas ?? 0,
               format: (v: number) => `${v.toFixed(2)}x`,
             },
@@ -678,7 +678,12 @@ export function AdsPerformanceView({
             </div>
 
             {analysisOpen && (
-              <AdAnalysisPanel campaignId={campaignId} campaignName={campaignName} />
+              <AdAnalysisPanel
+                campaignId={campaignId}
+                campaignName={campaignName}
+                campaignRows={topCampaignRows}
+                timeRangeLabel={TIME_RANGE_LABELS[timeRange]}
+              />
             )}
           </>
         )}
@@ -698,8 +703,8 @@ export function AdsPerformanceView({
                   ['ctr', 'CTR'],
                   ['cpc', 'CPC'],
                   ['cpm', 'CPM'],
-                  ['leads', 'Leads'],
-                  ['roas', 'ROAS'],
+                  ['results', 'Results'],
+                  ['roas', 'Purchase ROAS'],
                 ] as Array<[AdsSortKey, string]>
               ).map(([key, label]) => (
                 <button
@@ -792,7 +797,7 @@ export function AdsPerformanceView({
                     <div className="flex justify-center">
                       {row.meta_id ? (
                         <a
-                          href={openMetaUrl(row)}
+                          href={buildAdsManagerUrl(row, metaAdAccountId)}
                           target="_blank"
                           rel="noreferrer"
                           className="chip-glass-neutral inline-flex h-7 items-center justify-center gap-1 rounded px-2"
@@ -841,10 +846,12 @@ export function AdsPerformanceView({
                       ${row.cpm.toFixed(2)}
                     </p>
                     <p className="body-3 text-muted-foreground text-center">
-                      {row.leads.toLocaleString()}
+                      {row.results.toLocaleString()}
                     </p>
                     <p className="body-3 text-muted-foreground text-center">
-                      {row.roas.toFixed(2)}x
+                      {row.result_type === 'registration' || row.result_type === 'lead'
+                        ? '-'
+                        : `${row.roas.toFixed(2)}x`}
                     </p>
                     <div className="group/budget-cell flex items-center justify-center gap-1">
                       {row.level !== 'ad' && budgetEditId === row.id ? (

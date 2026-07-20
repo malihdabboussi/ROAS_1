@@ -59,6 +59,7 @@ export interface AdCampaignBreakdown {
 }
 
 export type AdsInsightsLevel = 'campaign' | 'adset' | 'ad'
+export type MetaAdsResultType = 'registration' | 'lead' | 'purchase' | 'none'
 
 export interface MetaAdsInsightsRow {
   id: string
@@ -77,6 +78,8 @@ export interface MetaAdsInsightsRow {
   cpm: number
   leads: number
   conversions: number
+  results: number
+  result_type: MetaAdsResultType
   revenue: number
   roas: number
   cost_per_result: number
@@ -91,6 +94,7 @@ export interface MetaAdsInsightsSummary {
   clicks: number
   leads: number
   conversions: number
+  results: number
   revenue: number
   ctr: number
   cpc: number

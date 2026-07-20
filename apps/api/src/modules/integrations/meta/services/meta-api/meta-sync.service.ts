@@ -111,7 +111,11 @@ export class MetaSyncService {
     const dailyBudget = meta.daily_budget ? Number(meta.daily_budget) / 100 : null
     const lifetimeBudget = meta.lifetime_budget ? Number(meta.lifetime_budget) / 100 : null
     const objective = this.publishShared.normalizeObjective(meta.objective)
-    const campaignMetadata = this.campaignMetadataWithRawObjective(meta, existing?.metadata)
+    const campaignMetadata = this.campaignMetadataWithRawObjective(
+      meta,
+      adAccountId,
+      existing?.metadata,
+    )
 
     if (existing) {
       await this.repository.updateCampaign(supabase, String(existing.id), {
@@ -273,13 +277,18 @@ export class MetaSyncService {
 
   private campaignMetadataWithRawObjective(
     meta: MetaFetchedCampaign,
+    adAccountId: string,
     previous: unknown,
   ): Record<string, unknown> {
     const prev =
       previous && typeof previous === 'object' && !Array.isArray(previous)
         ? (previous as Record<string, unknown>)
         : {}
-    return { ...prev, meta_objective_raw: meta.objective ?? null }
+    return {
+      ...prev,
+      meta_ad_account_id: adAccountId,
+      meta_objective_raw: meta.objective ?? null,
+    }
   }
 
   private extractImageUrl(creative?: MetaFetchedAd['creative']): string | null {
