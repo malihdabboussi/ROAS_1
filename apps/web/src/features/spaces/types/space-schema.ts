@@ -380,8 +380,11 @@ export interface OffersConfig extends ArtifactViewBaseConfig {
 
 /** Hierarchy navigator inside the unified Paid Ads space view (not grid/list `display_mode`). */
 export type PaidAdsHierarchyMode = 'structure' | 'ad_sets' | 'creatives'
+export type PaidAdsWorkspaceMode = 'creating' | 'reporting'
 
 export interface AdsConfig extends ArtifactViewBaseConfig {
+  /** Primary workspace surface. Defaults to `creating`. */
+  paid_ads_workspace_mode?: PaidAdsWorkspaceMode
   /** Campaign tree, ad-set list, or creatives grid. Defaults to `creatives`. */
   paid_ads_mode?: PaidAdsHierarchyMode
   platform_filters?: string[]
@@ -1087,6 +1090,15 @@ export type AutomationAction =
       channel_id?: string
       text_template?: string
       thread_ts?: string
+      continuation?: AutomationContinuation
+    }
+  | {
+      type: 'request_slack_follow_up_confirm'
+      dm_email?: string
+      confirm_reaction?: string
+      page_grader_client_id?: string
+      page_grader_task_type?: string
+      suggestion_ids?: string[]
       continuation?: AutomationContinuation
     }
   | {

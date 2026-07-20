@@ -1,3 +1,38 @@
+## 2026-07-20 - [PERF] Page Grader knowledge index no longer capped at 500
+
+Status: Open
+Found while: Fixing Campaign Knowledge Objects: 500 / Conversation doc / Connections: 0
+Files:
+
+- `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts` (`indexKnowledgeObjects`)
+  Evidence: Removed the sync-path `rows.slice(0, 500)` so full packages index; each `indexSource(force: true)` still embeds chunks synchronously.
+  Needed work: Move dual-write indexing/embedding to an async worker (or skip embeddings on force path and backfill) so large Client Intel packages do not block the request.
+  Deferred because: Correctness of types/edges/counts was the user-facing bug; latency hardening is separate.
+
+## 2026-07-20 - [ARCH] ActionBuilder / space-schema over LOC after Slack confirm action
+
+Status: Open
+Found while: Adding request_slack_follow_up_confirm admin MVP
+Files:
+
+- `apps/web/src/features/spaces/components/automations/ActionBuilder.tsx` (~2150 LOC; limit 600)
+- `apps/web/src/features/spaces/types/space-schema.ts` (~1390 LOC)
+- `apps/web/src/features/spaces/components/automations/automation-catalog.ts` (~1300 LOC)
+  Evidence: Pre-existing mega-files; added small action UI/type/catalog arms only.
+  Needed work: Split ActionBuilder by action family; extract AutomationAction union; split catalog defaults.
+  Deferred because: In-scope was DM+emoji MVP wiring, not Flows UI decomposition.
+
+## 2026-07-20 - [FEATURE] Slack thread-reply revise loop still missing
+
+Status: Open
+Found while: Shipping emoji-confirm DM MVP
+Files:
+
+- `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.service.ts`
+  Evidence: DM copy says feedback loop ships next; only reaction_added approve is implemented.
+  Needed work: Ingest Slack thread replies → revise follow-ups → re-ask confirm → then Page Grader.
+  Deferred because: User asked for emoji MVP via DM first while channels are created.
+
 ## 2026-07-20 - [ARCH] space-automation-service-07 over LOC after resume fix
 
 Status: Open
@@ -7488,3 +7523,18 @@ Files:
 - Evidence: The playbook is 527 LOC, above the 480-line extraction threshold for the 600-line backend service limit.
 - Needed work: Split copy, creative, funnel, and final-handoff task builders into focused playbook modules while preserving deterministic task order and contract tests.
 - Why not now: The requested correction changes one bounded copy-package instruction; restructuring the complete production lifecycle would materially broaden deployment risk.
+## 2026-07-20 — Paid Ads reporting needs shared feature ownership
+
+- Feature/app: web / Paid Ads
+- Files: `apps/web/src/features/studio/components/preview/AdsPerformanceView.tsx`, `apps/web/src/components/artifacts/paid-ads/AdsPerformanceViewAdapter.tsx`
+- Evidence: The unified Paid Ads workspace reuses the existing 981-line Studio-owned performance view through the same narrow shared-adapter pattern already used by Paid Ads Meta modals.
+- Needed work: Move reporting data, sync orchestration, and presentation into a shared Paid Ads domain boundary, split the oversized performance component, and let both Studio and Spaces consume that shared surface.
+- Why not now: The requested change unifies the user workflow; relocating and decomposing the complete reporting feature would materially broaden the change beyond the Creating/Reporting toggle.
+
+## 2026-07-20 — Space schema type registry exceeds frontend file limit
+
+- Feature/app: web / Spaces schema
+- File: `apps/web/src/features/spaces/types/space-schema.ts`
+- Evidence: `wc -l` reports 1,399 LOC after adding the two-value Paid Ads workspace-mode field, above the 400-line frontend maximum.
+- Needed work: Split view configs, automation contracts, and core Space schema types into domain-owned modules while preserving the public Spaces type boundary.
+- Why not now: The requested behavior requires one persisted view-config field; restructuring the shared schema registry would overlap unrelated automation edits already present in this worktree.

@@ -333,7 +333,13 @@ export abstract class SpaceAutomationServiceBase07 extends SpaceAutomationServic
         targetCtxForActivity = target.ctx
         targetItemForActivity = target.item
         target.templateCtx = { ...target.templateCtx, run: activeRunContext }
-        const result = await this.executeAction(action, target.ctx, target.item, target.templateCtx, i)
+        const result = await this.executeAction(
+          action,
+          target.ctx,
+          target.item,
+          target.templateCtx,
+          i,
+        )
         if (
           result &&
           typeof result === 'object' &&
@@ -390,7 +396,11 @@ export abstract class SpaceAutomationServiceBase07 extends SpaceAutomationServic
           typeof (result as { loop_jump?: unknown }).loop_jump === 'number'
         ) {
           const jumpIndex = (result as { loop_jump: number }).loop_jump
-          if (Number.isInteger(jumpIndex) && jumpIndex >= 0 && jumpIndex < automation.actions.length) {
+          if (
+            Number.isInteger(jumpIndex) &&
+            jumpIndex >= 0 &&
+            jumpIndex < automation.actions.length
+          ) {
             i = jumpIndex - 1
             continue
           }
@@ -401,7 +411,11 @@ export abstract class SpaceAutomationServiceBase07 extends SpaceAutomationServic
           typeof (result as { branch_jump?: unknown }).branch_jump === 'number'
         ) {
           const jumpIndex = (result as { branch_jump: number }).branch_jump
-          if (Number.isInteger(jumpIndex) && jumpIndex >= 0 && jumpIndex < automation.actions.length) {
+          if (
+            Number.isInteger(jumpIndex) &&
+            jumpIndex >= 0 &&
+            jumpIndex < automation.actions.length
+          ) {
             i = jumpIndex - 1
             continue
           }
@@ -501,11 +515,14 @@ export abstract class SpaceAutomationServiceBase07 extends SpaceAutomationServic
       )) as AutomationRule | null
       if (!automation) continue
 
-      const gateAction = automation.actions[nextActionIndex - 1] as Record<string, unknown> | undefined
+      const gateAction = automation.actions[nextActionIndex - 1] as
+        | Record<string, unknown>
+        | undefined
       if (!gateAction || gateAction.type !== 'human_gate') continue
 
       const resumeOn = String(gateAction.resume_on_status ?? 'done').trim() || 'done'
-      const rejectOn = String(gateAction.reject_on_status ?? 'needs_revision').trim() || 'needs_revision'
+      const rejectOn =
+        String(gateAction.reject_on_status ?? 'needs_revision').trim() || 'needs_revision'
       const isApprove = event.to === resumeOn
       const isReject = event.to === rejectOn
       if (!isApprove && !isReject) continue
@@ -565,9 +582,18 @@ export abstract class SpaceAutomationServiceBase07 extends SpaceAutomationServic
 
     await this.automationRunsRepo.markRunStateResumed(ctx.supabase, runStateId)
 
+    const priorResults = [...((runState.actions_executed ?? []) as Record<string, unknown>[])]
     if (taskStatus === 'failed') {
-      const priorResults = (runState.actions_executed ?? []) as Record<string, unknown>[]
       priorResults.push({ type: 'task_execution_wait', result: 'task_failed' })
+    }
+
+    // Prefer unscoped lookup — resume runs with service role and must not miss
+    // personal spaces when orgId is null or stale on the paused row.
+    const space =
+      (await this.repo.findSpaceByIdForAccess(ctx.supabase, ctx.spaceId)) ??
+      (await this.repo.findSpaceById(ctx.supabase, ctx.userId, ctx.spaceId, ctx.orgId))
+    if (!space) {
+      this.logger.error(`resumeAutomation: space ${ctx.spaceId} not found for run ${runStateId}`)
       const errorCount = priorResults.filter((r) => !!r.error).length
       const successCount = priorResults.filter((r) => !r.error).length
       const status: 'success' | 'partial' | 'failed' =
@@ -583,9 +609,6 @@ export abstract class SpaceAutomationServiceBase07 extends SpaceAutomationServic
       return
     }
 
-    const space = await this.repo.findSpaceById(ctx.supabase, ctx.userId, ctx.spaceId, ctx.orgId)
-    if (!space) return
-
     const automation = (await this.automationsRepo.findById(
       ctx.supabase,
       ctx.spaceId,
@@ -596,27 +619,52 @@ export abstract class SpaceAutomationServiceBase07 extends SpaceAutomationServic
       return
     }
 
+    const startFrom = startFromIndexOverride ?? (runState.next_action_index as number)
+    // Even when the agent wait fails, continue remaining steps (e.g. agent_suggest_tasks)
+    // — those use the Fathom trigger payload, not the agent transcript.
+    if (startFrom >= automation.actions.length) {
+      const errorCount = priorResults.filter((r) => !!r.error).length
+      const successCount = priorResults.filter((r) => !r.error).length
+      const status: 'success' | 'partial' | 'failed' =
+        errorCount === 0 && taskStatus !== 'failed'
+          ? 'success'
+          : successCount > 0
+            ? 'partial'
+            : 'failed'
+      await this.logRun(
+        ctx,
+        runState.automation_id,
+        runState.trigger_event as unknown as TriggerEvent,
+        priorResults,
+        null,
+        status,
+      )
+      return
+    }
+
     // The agent step that paused this run sits at `next_action_index - 1`.
     // Apply its `completed_status` to the source task before continuing so the
     // user sees the task land on the chosen status as part of agent completion.
-    const pausedActionIndex = (runState.next_action_index as number) - 1
-    const pausedAction =
-      pausedActionIndex >= 0 ? (automation.actions[pausedActionIndex] ?? null) : null
-    const completedStatus = String(
-      (pausedAction as Record<string, unknown> | null)?.completed_status ?? '',
-    ).trim()
-    if (completedStatus) {
-      try {
-        await this.repo.updateItem(
-          ctx.supabase,
-          ctx.userId,
-          ctx.spaceId,
-          ctx.itemId,
-          { status: completedStatus as 'todo' | 'in_progress' | 'in_review' | 'done' },
-          ctx.orgId,
-        )
-      } catch (err) {
-        this.logger.error(`Failed to apply completed_status on resume: ${err}`)
+    if (taskStatus === 'done') {
+      const pausedActionIndex = (runState.next_action_index as number) - 1
+      const pausedAction =
+        pausedActionIndex >= 0 ? (automation.actions[pausedActionIndex] ?? null) : null
+      const completedStatus = String(
+        (pausedAction as Record<string, unknown> | null)?.completed_status ?? '',
+      ).trim()
+      if (completedStatus) {
+        try {
+          await this.repo.updateItem(
+            ctx.supabase,
+            ctx.userId,
+            ctx.spaceId,
+            ctx.itemId,
+            { status: completedStatus as 'todo' | 'in_progress' | 'in_review' | 'done' },
+            ctx.orgId,
+          )
+        } catch (err) {
+          this.logger.error(`Failed to apply completed_status on resume: ${err}`)
+        }
       }
     }
 
@@ -625,8 +673,8 @@ export abstract class SpaceAutomationServiceBase07 extends SpaceAutomationServic
       runState.trigger_event as unknown as TriggerEvent,
       ctx,
       space,
-      startFromIndexOverride ?? (runState.next_action_index as number),
-      (runState.actions_executed ?? []) as Record<string, unknown>[],
+      startFrom,
+      priorResults,
       runContextOverride ??
         (runState.run_context && typeof runState.run_context === 'object'
           ? (runState.run_context as Record<string, unknown>)

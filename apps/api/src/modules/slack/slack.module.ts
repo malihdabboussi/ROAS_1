@@ -50,6 +50,7 @@ import { SlackService } from './services/slack.service'
   ],
   exports: [
     SlackService,
+    SlackAgentToolsService,
     SlackBrainMappingService,
     SlackSenderResolverService,
     SlackRepository,

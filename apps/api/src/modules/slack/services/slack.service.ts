@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { ModuleRef } from '@nestjs/core'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { UserSessionMintService } from '@vibey/api-shared'
 import { DocumentExtractionService } from '../../brain/services/document-extraction.service'
@@ -21,6 +22,7 @@ export class SlackService extends SlackEventsBase {
     userSessionMint: UserSessionMintService,
     documentExtraction: DocumentExtractionService,
     userAgentApi: UserAgentApiService,
+    private readonly moduleRef: ModuleRef,
   ) {
     super(
       slackApi,
@@ -31,6 +33,43 @@ export class SlackService extends SlackEventsBase {
       documentExtraction,
       userAgentApi,
     )
+  }
+
+  protected async handleReactionAddedEvent(
+    teamId: string,
+    event: NonNullable<SlackEventEnvelope['event']>,
+  ): Promise<void> {
+    const channelId = String(event.item?.channel ?? event.channel ?? '').trim()
+    const messageTs = String(event.item?.ts ?? '').trim()
+    const reaction = String(event.reaction ?? '').trim()
+    const slackUserId = String(event.user ?? '').trim()
+    if (!channelId || !messageTs || !reaction || !slackUserId) return
+
+    this.logger.log(
+      `[TRACE] handleReactionAddedEvent: team=${teamId} channel=${channelId} ts=${messageTs} reaction=${reaction}`,
+    )
+
+    try {
+      const { MeetingFollowUpSlackConfirmService } =
+        await import('../../spaces/services/meeting-follow-up-slack-confirm.service')
+      const confirm = this.moduleRef.get(MeetingFollowUpSlackConfirmService, { strict: false })
+      if (!confirm) return
+      const handled = await confirm.handleReactionAdded({
+        channelId,
+        messageTs,
+        reaction,
+        slackUserId,
+      })
+      if (handled) {
+        this.logger.log(`[TRACE] handleReactionAddedEvent: meeting follow-up confirm handled`)
+      }
+    } catch (err) {
+      this.logger.warn(
+        `handleReactionAddedEvent confirm lookup failed: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      )
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -495,6 +534,4 @@ export class SlackService extends SlackEventsBase {
 
     return this.processEventAsync(envelope)
   }
-
-
 }

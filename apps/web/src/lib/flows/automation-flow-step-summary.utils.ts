@@ -1,13 +1,13 @@
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
-import {
-  getConnectedAppFlowProviderLabel,
-  getConnectedAppFlowTriggerBySlug,
-} from '@/lib/flows/connected-app-flow-triggers'
 import type {
   AutomationAction,
   AutomationTrigger,
   FieldDef,
 } from '@/features/spaces/types/space-schema'
+import {
+  getConnectedAppFlowProviderLabel,
+  getConnectedAppFlowTriggerBySlug,
+} from '@/lib/flows/connected-app-flow-triggers'
 import { flowBuilderActionIndexToStepNumber } from '@/lib/flows/flow-builder-step-index.utils'
 
 function statusLabel(fields: FieldDef[], id: string): string {
@@ -52,9 +52,7 @@ function humanGateAssigneeLabel(
       ? [{ type: action.assignee_type, id: action.assignee_id }]
       : []
   if (assignees.length === 0) return '…'
-  return assignees
-    .map((assignee) => assigneeLabel(roster, assignee.type, assignee.id))
-    .join(', ')
+  return assignees.map((assignee) => assigneeLabel(roster, assignee.type, assignee.id)).join(', ')
 }
 
 function scopePrefix(scope?: 'tasks' | 'subtasks' | 'all'): string {
@@ -323,7 +321,9 @@ export function summarizeAutomationAction(
         title: 'Human gate',
         detail: [
           `Review · assigned to ${humanGateAssigneeLabel(action, roster)}`,
-          action.waiting_status ? `wait ${statusLabel(fields, action.waiting_status)}` : 'wait in review',
+          action.waiting_status
+            ? `wait ${statusLabel(fields, action.waiting_status)}`
+            : 'wait in review',
           action.resume_on_status
             ? `approve ${statusLabel(fields, action.resume_on_status)}`
             : 'approve done',
@@ -372,6 +372,11 @@ export function summarizeAutomationAction(
       }
     case 'send_slack_message':
       return { title: 'Send Slack message', detail: action.channel_id || '…' }
+    case 'request_slack_follow_up_confirm':
+      return {
+        title: 'DM follow-ups for Slack confirm',
+        detail: action.dm_email || 'admin DM',
+      }
     case 'send_channel_message':
       return { title: 'Send channel message', detail: action.channel_id || '…' }
     case 'choose_action':
@@ -413,9 +418,7 @@ export function getFlowBuilderStepSummary(input: {
       return input.fallback ?? 'Select your trigger'
     }
     if (input.trigger.type === 'status_change') {
-      const from = input.trigger.from
-        ? statusLabel(input.fields, input.trigger.from)
-        : 'any status'
+      const from = input.trigger.from ? statusLabel(input.fields, input.trigger.from) : 'any status'
       const to = statusLabel(input.fields, input.trigger.to)
       return `Changes status from ${from} to ${to}`
     }

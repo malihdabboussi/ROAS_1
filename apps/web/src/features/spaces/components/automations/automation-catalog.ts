@@ -552,6 +552,10 @@ export const ACTION_SECTIONS: AutomationCategorizedSection[] = [
       { value: 'add_comment', label: 'Add comment' },
       { value: 'send_email', label: 'Send email' },
       { value: 'send_slack_message', label: 'Send Slack message' },
+      {
+        value: 'request_slack_follow_up_confirm',
+        label: 'DM follow-ups for Slack confirm',
+      },
       { value: 'send_channel_message', label: 'Send channel message' },
     ],
   },
@@ -1229,6 +1233,12 @@ export function defaultAction(type: string): AutomationAction | null {
       }
     case 'send_slack_message':
       return { type: 'send_slack_message', channel_id: '', text_template: '' }
+    case 'request_slack_follow_up_confirm':
+      return {
+        type: 'request_slack_follow_up_confirm',
+        dm_email: 'dylan@dylanvanas.com',
+        confirm_reaction: 'white_check_mark',
+      }
     case 'send_channel_message':
       return { type: 'send_channel_message', channel_id: '', content_template: '' }
     case 'create_contact':

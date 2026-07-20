@@ -38,9 +38,19 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       await this.handleAppMentionEvent(teamId, event)
     } else if (event.type === 'message') {
       await this.handleMessageEvent(teamId, event)
+    } else if (event.type === 'reaction_added') {
+      await this.handleReactionAddedEvent(teamId, event)
     } else {
       this.logger.warn(`[TRACE] processEventAsync EXIT: unhandled event.type=${event.type}`)
     }
+  }
+
+  /** Override in SlackService to route meeting follow-up confirms (emoji → approve). */
+  protected async handleReactionAddedEvent(
+    _teamId: string,
+    _event: NonNullable<SlackEventEnvelope['event']>,
+  ): Promise<void> {
+    /* default no-op */
   }
 
   protected async handleMessageEvent(
@@ -543,7 +553,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: "*Three ways we work:*\n\n💬 *DM me here,* same as the app. Drop a task, a link, a file, a Loom. The messier the context, the sharper I get.\n\n📣 *@ me in a channel.* I'll jump in with thread context when you need the room, not just your DM.\n\n📌 *Map a channel in Vibey* if you want me on standby without the @ every time.",
+          text: "*Three ways we work:*\n\n💬 *DM me here,* same as the app. Drop a task, a link, a file, a Loom. The messier the context, the sharper I get.\n\n📣 *@ me in a channel.* I'll jump in with thread context when you need the room, not just your DM.\n\n📌 *Map a channel in the ROAS App* if you want me on standby without the @ every time.",
         },
       },
       { type: 'divider' },

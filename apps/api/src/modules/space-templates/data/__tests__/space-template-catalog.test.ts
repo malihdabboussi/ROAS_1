@@ -88,12 +88,14 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
           id: 'all-meetings',
           type: 'list',
           field_value_filters: { entry_type: 'call' },
+          sort: [{ field: 'call_date', dir: 'desc' }],
           visible_fields: expect.arrayContaining(['status', 'attendees', 'recording_url']),
         }),
         expect.objectContaining({
           id: 'prep',
           type: 'list',
           field_value_filters: { entry_type: 'prep' },
+          sort: [{ field: 'call_date', dir: 'desc' }],
         }),
         expect.objectContaining({
           id: 'follow-ups',
@@ -139,6 +141,7 @@ describe('SPACE_TEMPLATE_CATALOG', () => {
     expect(actionTypes).toContain('change_status')
     expect(actionTypes).toContain('send_to_agent')
     expect(actionTypes).toContain('agent_suggest_tasks')
+    expect(actionTypes).toContain('request_slack_follow_up_confirm')
     expect(dashboard?.schema.fields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

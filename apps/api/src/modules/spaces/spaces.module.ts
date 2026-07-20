@@ -28,7 +28,6 @@ import { SpaceAutomationCapabilitiesController } from './controllers/space-autom
 import { SpaceAutomationFlowUpdatesController } from './controllers/space-automation-flow-updates.controller'
 import { SpaceAutomationLifecycleController } from './controllers/space-automation-lifecycle.controller'
 import { SpaceAutomationReadController } from './controllers/space-automation-read.controller'
-import { SpacePrecallPrepController } from './controllers/space-precall-prep.controller'
 import { SpaceAutomationTemplatesController } from './controllers/space-automation-templates.controller'
 import { SpaceAutomationsInternalController } from './controllers/space-automations-internal.controller'
 import { SpaceAutomationsController } from './controllers/space-automations.controller'
@@ -42,6 +41,7 @@ import { SpaceItemAgentActionsController } from './controllers/space-item-agent-
 import { SpaceItemSharingInvitesController } from './controllers/space-item-sharing-invites.controller'
 import { SpaceItemSharingController } from './controllers/space-item-sharing.controller'
 import { SpaceItemsController } from './controllers/space-items.controller'
+import { SpacePrecallPrepController } from './controllers/space-precall-prep.controller'
 import { SpacePublicSharingController } from './controllers/space-public-sharing.controller'
 import { SpaceSharingController } from './controllers/space-sharing.controller'
 import { SpaceUndoController } from './controllers/space-undo.controller'
@@ -79,6 +79,8 @@ import { SpacesUserStateRepository } from './repositories/spaces-user-state.repo
 import { SpacesRepository } from './repositories/spaces.repository'
 import { AdsResearchBreakdownService } from './services/ads-research-breakdown.service'
 import { AdsResearchSearchService } from './services/ads-research-search.service'
+import { MeetingFollowUpSlackConfirmService } from './services/meeting-follow-up-slack-confirm.service'
+import { MeetingsPrecallPrepService } from './services/meetings-precall-prep.service'
 import { OrgAutomationFlowsService } from './services/org-automation-flows.service'
 import { SocialResearchAccountSyncService } from './services/social-research-account-sync.service'
 import { SocialResearchFavoritesService } from './services/social-research-favorites.service'
@@ -95,7 +97,6 @@ import { SpaceAutomationReconcilerService } from './services/space-automation-re
 import { SpaceAutomationRuntimeProcessor } from './services/space-automation-runtime.processor'
 import { SpaceAutomationSchedulerService } from './services/space-automation-scheduler.service'
 import { SpaceAutomationService } from './services/space-automation.service'
-import { MeetingsPrecallPrepService } from './services/meetings-precall-prep.service'
 import { SpaceFlowBuilderAccessService } from './services/space-flow-builder-access.service'
 import { SpaceFlowBuilderContextService } from './services/space-flow-builder-context.service'
 import { SpaceFlowBuilderPlanService } from './services/space-flow-builder-plan.service'
@@ -210,6 +211,7 @@ import { SpacesService } from './services/spaces.service'
     AdsResearchBreakdownService,
     SpaceAutomationService,
     MeetingsPrecallPrepService,
+    MeetingFollowUpSlackConfirmService,
     SpaceAutomationInternalService,
     SpaceAutomationControllerPolicyService,
     SpaceAutomationReconcilerService,
@@ -238,6 +240,7 @@ import { SpacesService } from './services/spaces.service'
     SpaceAutomationReconcilerService,
     SpaceAutomationService,
     MeetingsPrecallPrepService,
+    MeetingFollowUpSlackConfirmService,
     SpaceAutomationSchedulerService,
     SpaceFlowBuilderService,
     SpaceFlowCapabilityService,

@@ -633,6 +633,27 @@ const ACTIONS: FlowCapability[] = [
   ),
   capability(
     'action',
+    'request_slack_follow_up_confirm',
+    'Communication',
+    'Request Slack follow-up confirm',
+    'DMs suggested meeting follow-ups and waits for an emoji confirm before Page Grader send.',
+    [],
+    [
+      'dm_email',
+      'confirm_reaction',
+      'page_grader_client_id',
+      'page_grader_task_type',
+      'suggestion_ids',
+      'continuation',
+    ],
+    {
+      type: 'request_slack_follow_up_confirm',
+      dm_email: 'dylan@dylanvanas.com',
+      confirm_reaction: 'white_check_mark',
+    },
+  ),
+  capability(
+    'action',
     'send_channel_message',
     'Communication',
     'Send channel message',

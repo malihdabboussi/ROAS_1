@@ -171,6 +171,8 @@ export function validateConcreteAction(action: AutomationActionLike): string | n
       if (!action.channel_id?.trim()) return 'Add a Slack channel ID'
       if (!action.text_template?.trim()) return 'Add Slack message text'
       return null
+    case 'request_slack_follow_up_confirm':
+      return null
     case 'send_channel_message':
       if (!action.channel_id?.trim()) return 'Add a ROAS channel ID'
       if (!action.content_template?.trim()) return 'Add channel message text'

@@ -167,6 +167,17 @@ export const AutomationActionSchema = z.discriminatedUnion('type', [
     continuation: ContinuationSchema,
   }),
   z.object({
+    type: z.literal('request_slack_follow_up_confirm'),
+    dm_email: z.string().email().optional(),
+    confirm_reaction: z.string().min(1).max(80).optional(),
+    page_grader_client_id: z.string().uuid().optional(),
+    page_grader_task_type: z
+      .enum(['design', 'copy', 'funnel', 'ghl', 'ad', 'video', 'other', 'general'])
+      .optional(),
+    suggestion_ids: z.array(z.string().uuid()).max(50).optional(),
+    continuation: ContinuationSchema,
+  }),
+  z.object({
     type: z.literal('send_channel_message'),
     channel_id: z.string().min(1),
     content_template: z.string().min(1).max(12000),

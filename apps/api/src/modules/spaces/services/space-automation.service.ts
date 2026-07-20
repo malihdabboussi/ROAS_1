@@ -25,8 +25,9 @@ import { SpaceAutomationRunsRepository } from '../repositories/space-automation-
 import { SpaceAutomationsRepository } from '../repositories/space-automations.repository'
 import { SpacesRepository } from '../repositories/spaces.repository'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
-import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
+import { MeetingFollowUpSlackConfirmService } from './meeting-follow-up-slack-confirm.service'
 import { MeetingsPrecallPrepService } from './meetings-precall-prep.service'
+import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
 import { SpaceAutomationServiceBase19 } from './space-automation-service-19.base'
 import { renderTemplate, type TemplateContext } from './space-automation-template'
 
@@ -298,6 +299,7 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
     @Optional() externalEventsRepo?: SpaceAutomationExternalEventsRepository,
     @Optional() automationRunsRepo?: SpaceAutomationRunsRepository,
     @Optional() private readonly meetingsPrecallPrep?: MeetingsPrecallPrepService,
+    @Optional() private readonly meetingFollowUpSlackConfirm?: MeetingFollowUpSlackConfirmService,
   ) {
     super(
       repo,
@@ -318,6 +320,63 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
       externalEventsRepo,
       automationRunsRepo,
     )
+  }
+
+  protected async executeAction(
+    action: Record<string, unknown>,
+    ctx: {
+      supabase: SupabaseClient
+      userId: string
+      orgId: string | null
+      spaceId: string
+      itemId: string
+      depth: number
+    },
+    item: Record<string, unknown>,
+    templateCtx: TemplateContext,
+    stepIndex = 0,
+  ): Promise<Record<string, unknown> | null> {
+    if (action.type === 'request_slack_follow_up_confirm') {
+      return this.execRequestSlackFollowUpConfirm(action, ctx, item, templateCtx)
+    }
+    return super.executeAction(action, ctx, item, templateCtx, stepIndex)
+  }
+
+  protected async execRequestSlackFollowUpConfirm(
+    action: Record<string, unknown>,
+    ctx: {
+      supabase: SupabaseClient
+      userId: string
+      orgId: string | null
+      spaceId: string
+      itemId: string
+    },
+    item: Record<string, unknown>,
+    templateCtx: TemplateContext,
+  ): Promise<Record<string, unknown>> {
+    if (!this.meetingFollowUpSlackConfirm) {
+      throw new Error('Meeting follow-up Slack confirm service is not available')
+    }
+    const suggestionIds = this.meetingFollowUpSlackConfirm.resolveSuggestionIds(
+      action,
+      templateCtx.steps as Array<Record<string, unknown>> | undefined,
+    )
+    return this.meetingFollowUpSlackConfirm.requestConfirm({
+      supabase: ctx.supabase,
+      userId: ctx.userId,
+      orgId: ctx.orgId,
+      spaceId: ctx.spaceId,
+      callItemId: ctx.itemId,
+      callTitle: String(item.title ?? ''),
+      suggestionIds,
+      dmEmail: typeof action.dm_email === 'string' ? action.dm_email : undefined,
+      confirmReaction:
+        typeof action.confirm_reaction === 'string' ? action.confirm_reaction : undefined,
+      pageGraderClientId:
+        typeof action.page_grader_client_id === 'string' ? action.page_grader_client_id : undefined,
+      pageGraderTaskType:
+        typeof action.page_grader_task_type === 'string' ? action.page_grader_task_type : undefined,
+    })
   }
 
   protected async execMeetingsPrecallPrep(

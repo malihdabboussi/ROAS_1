@@ -22,6 +22,11 @@ import { PageGraderSendWorkService } from './services/page-grader-send-work.serv
     PageGraderBrainSyncService,
     IntegrationConnectionsRepository,
   ],
-  exports: [PageGraderApiService, PageGraderIntegration, PageGraderBrainSyncService],
+  exports: [
+    PageGraderApiService,
+    PageGraderIntegration,
+    PageGraderBrainSyncService,
+    PageGraderSendWorkService,
+  ],
 })
 export class PageGraderModule {}

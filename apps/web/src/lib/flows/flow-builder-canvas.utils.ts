@@ -14,18 +14,21 @@ import {
   Zap,
 } from 'lucide-react'
 import type { FlowBuildPlan, FlowBuildPlanStep } from '@vibey/api-shared/types/flow-builder'
+import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import type {
   AutomationAction,
   AutomationTrigger,
   FieldDef,
 } from '@/features/spaces/types/space-schema'
-import type { TeamRosterEntry } from '@/features/org/services/org.service'
-import { getFlowBuilderStepLabel, getFlowBuilderStepSummary } from '@/lib/flows/automation-flow-step-summary.utils'
+import {
+  getFlowBuilderStepLabel,
+  getFlowBuilderStepSummary,
+} from '@/lib/flows/automation-flow-step-summary.utils'
 import { getActionAgentAvatarSrc } from '@/lib/flows/flow-builder-agent-avatar.utils'
 import { getTriggerIntegrationLogoSrc } from '@/lib/flows/flow-builder-connected-app-trigger.utils'
+import { flowBuilderActionIndexToStepNumber } from '@/lib/flows/flow-builder-step-index.utils'
 import type { FlowBuilderStepConfigurationStatus } from '@/lib/flows/flow-builder-step-phase.utils'
 import { resolveFlowBuilderStepConfigurationStatus } from '@/lib/flows/flow-builder-step-phase.utils'
-import { flowBuilderActionIndexToStepNumber } from '@/lib/flows/flow-builder-step-index.utils'
 import type { FlowBuilderTestSession } from '@/lib/flows/flow-builder-test.utils'
 import { isFlowBuilderStepTested } from '@/lib/flows/flow-builder-test.utils'
 
@@ -107,14 +110,36 @@ function visualFromPlanStep(step: FlowBuildPlanStep): {
   if (actionType.includes('trigger') || actionType.includes('external')) {
     return { typeLabel: 'Integration', badgeVariant: 'blue', icon: Plug }
   }
-  if (actionType.includes('human') || actionType.includes('gate') || actionType.includes('approval')) {
+  if (
+    actionType.includes('human') ||
+    actionType.includes('gate') ||
+    actionType.includes('approval')
+  ) {
     return { typeLabel: 'Human Gate', badgeVariant: 'purple', icon: User, isHumanGate: true }
   }
-  if (actionType.includes('flow_branch') || (actionType.includes('branch') && !actionType.includes('base_branch'))) {
-    return { typeLabel: 'Branch', badgeVariant: 'muted', icon: GitBranch, isCondition: true, isBranchStep: true }
+  if (
+    actionType.includes('flow_branch') ||
+    (actionType.includes('branch') && !actionType.includes('base_branch'))
+  ) {
+    return {
+      typeLabel: 'Branch',
+      badgeVariant: 'muted',
+      icon: GitBranch,
+      isCondition: true,
+      isBranchStep: true,
+    }
   }
-  if (actionType.includes('flow_loop') || (actionType.includes('loop') && !actionType.includes('flow_branch'))) {
-    return { typeLabel: 'Loop', badgeVariant: 'muted', icon: Filter, isCondition: true, isLoopStep: true }
+  if (
+    actionType.includes('flow_loop') ||
+    (actionType.includes('loop') && !actionType.includes('flow_branch'))
+  ) {
+    return {
+      typeLabel: 'Loop',
+      badgeVariant: 'muted',
+      icon: Filter,
+      isCondition: true,
+      isLoopStep: true,
+    }
   }
   if (actionType.includes('brain')) {
     return { typeLabel: 'Brain', badgeVariant: 'purple', icon: Brain }
@@ -136,7 +161,11 @@ function visualFromPlanStep(step: FlowBuildPlanStep): {
     }
     return { typeLabel: 'Space', badgeVariant: 'yellow', icon: Layers }
   }
-  if (actionType.includes('email') || actionType.includes('slack') || actionType.includes('message')) {
+  if (
+    actionType.includes('email') ||
+    actionType.includes('slack') ||
+    actionType.includes('message')
+  ) {
     return { typeLabel: 'Action', badgeVariant: 'yellow', icon: Zap }
   }
   return { typeLabel: 'Action', badgeVariant: 'yellow', icon: Zap }
@@ -218,6 +247,7 @@ function visualFromAction(action: AutomationAction): ReturnType<typeof visualFro
       return { typeLabel: 'Action', badgeVariant: 'muted', icon: Zap }
     case 'send_email':
     case 'send_slack_message':
+    case 'request_slack_follow_up_confirm':
     case 'send_channel_message':
       return { typeLabel: 'Action', badgeVariant: 'orange', icon: Zap }
     case 'create_contact':
@@ -250,7 +280,9 @@ export function buildFlowBuilderCanvasSteps(input: {
     const isTriggerPlaceholder = input.trigger.type === 'choose_action'
     const visual = visualFromTrigger(input.trigger)
     const planPayloadType =
-      planTrigger.payload && typeof planTrigger.payload === 'object' && 'type' in planTrigger.payload
+      planTrigger.payload &&
+      typeof planTrigger.payload === 'object' &&
+      'type' in planTrigger.payload
         ? String(planTrigger.payload.type)
         : null
     const usePlanTitle = planPayloadType === input.trigger.type

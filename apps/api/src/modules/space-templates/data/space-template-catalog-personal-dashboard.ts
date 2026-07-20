@@ -100,6 +100,7 @@ const views = [
     type: 'list',
     name: 'All Meetings',
     field_value_filters: { entry_type: 'call' },
+    sort: [{ field: 'call_date', dir: 'desc' }],
     visible_fields: [
       'status',
       'title',
@@ -125,6 +126,7 @@ const views = [
     type: 'list',
     name: 'Prep',
     field_value_filters: { entry_type: 'prep' },
+    sort: [{ field: 'call_date', dir: 'desc' }],
     visible_fields: ['status', 'title', 'prep_status', 'attendees', 'call_date', 'priority'],
   },
   {
@@ -259,6 +261,11 @@ const fathomMeetingLog: SpaceTemplateAutomationSeed = {
       max_suggestions: 10,
       instructions:
         'Suggest concrete follow-up actions with due date, priority, and owner when known. Draft outreach; never send.',
+    },
+    {
+      type: 'request_slack_follow_up_confirm',
+      dm_email: 'dylan@dylanvanas.com',
+      confirm_reaction: 'white_check_mark',
     },
     { type: 'change_status', status: 'needs_follow_up' },
   ],

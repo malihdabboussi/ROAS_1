@@ -1,5 +1,41 @@
 # Changelog - July 20, 2026
 
+## [2026-07-20 13:14] - [FEATURE]
+
+What: Post-call Slack confirm DM now includes a short meeting summary, Fathom recording link, and per-task owner; reaction confirm handler ships with deploy.
+Why: Admins need call context and ownership when approving follow-ups from Slack.
+Impact: After `roas-api` deploy, Fathom Meeting Log DMs Dylan with richer confirm copy; ✅ marks follow-ups confirmed (PG send only if client id set).
+Files: `meeting-follow-up-slack-confirm.service.ts`, Slack events/service/types, automation DTOs/service/template/Flows UI, `spaces-automation.md`
+
+## [2026-07-20 13:10] - [STYLE]
+
+What: Slack welcome DM copy now says “Map a channel in the ROAS App” instead of “Vibey”.
+Why: Branding — users should see ROAS App, not Vibey.
+Impact: New Slack installs / welcome DMs after `roas-api` deploy. Existing welcome messages in Slack are unchanged.
+Files: `slack-service-events.base.ts`
+
+## [2026-07-20 12:58] - [FEATURE]
+
+What: Unified the Paid Ads workspace with a saved Creating/Reporting toggle. Creating retains campaign, ad set, creative, and publishing controls; Reporting embeds the existing Meta sync and performance view under the same persistent Meta mapping bar.
+Why: Meta mounting and ad creation appeared separate from importing and viewing live account performance, which made one connected workflow look like two unrelated products.
+Impact: A user can map one Meta ad account and Page, then create ads or sync and review spend, leads, CTR, ROAS, and campaign performance from the same Paid Ads tab.
+Files: Paid Ads view schema/mode resolver, toolbar toggle and tests, Paid Ads workspace/reporting adapter and tests, integration connection documentation.
+
+## [2026-07-20 12:51] - [FEATURE]
+
+What: Admin MVP for post-call Slack confirm — after Fathom Meeting Log suggests follow-ups, ROAS DMs Dylan with the task list; react ✅ to confirm (optional Page Grader send when `page_grader_client_id` is set). Wired live Meetings automation `6d05fd66-…`.
+Why: Test the confirm → delegate loop in Slack DMs before Updates channels exist.
+Impact: Needs `roas-api` deploy + Slack Event Subscription `reaction_added`. Next Fathom meeting with follow-ups should DM Dylan; ✅ replies with confirmed list.
+Files: `meeting-follow-up-slack-confirm.service.ts`, Slack events/types, automation DTOs/service/template/Flows UI, `spaces-automation.md`, prod `space_automations` actions
+
+## [2026-07-20 12:50] - [FIX]
+
+What: Campaign Knowledge graph no longer hard-caps UI at 500 fake “Conversation docs”; Page Grader dual-write maps real source types, indexes the Space hub so structural edges exist, and Multifamily/Sakha prod rows were remapped + linked.
+Why: Graph API defaulted to `limit=500` and reported `stats.total_objects = objects.length`; ingest forced every PG memory to `conversation_document` and never created a Space hub object, so edge writes skipped (`from` missing) → Connections: 0.
+Impact: After API+web deploy, Campaign Knowledge shows true object counts (Multifamily ~1037, Sakha ~782), typed legend (channel messages / docs / avatars / offers), and Space→item connections. Prod data already repaired.
+Files: `space-knowledge-graph.dto.ts`, `space-knowledge-graph.service.ts`, `space-retrieval.repository.ts`, `page-grader-brain-package-build.ts`, `page-grader-brain-package-ingest.service.ts`, `knowledge-graph.service.ts`, `knowledge-graph-mappers.ts`, `use-brain-visualization-graph-data.ts`, `scripts/roas/repair-page-grader-campaign-knowledge-graph.py`, docs
+
+
 
 ## [2026-07-20 12:40] - [FIX]
 
@@ -72,3 +108,9 @@ Why: Copywriting tasks used mission-worker `auto`, which resolved to Claude Sonn
 Impact: New and existing copywriters use Opus 4.8, must load Dylan Super Voice before drafting, and cannot compile client-facing Webinar copy with em dashes into the final Launch Bible.
 
 Files: `apps/api/src/modules/missions/lib/agent-model-defaults.ts`, copywriter onboarding/provisioning and Webinar team reconciliation services, `docker/agents/templates/copywriter/TOOLS.md`, Launch Bible action/preflight tests and contracts, `supabase/migrations/20260720080728_copywriter_opus_super_voice_default.sql`, and `documentation/features/missions.md`.
+## [2026-07-20 13:15] - [FIX]
+
+What: Repaired Meta Paid Ads reporting so completed registrations and purchases populate campaign results, Ads Manager links preserve the mapped ad account, and AI Analysis selects campaigns then opens a fresh Blaze chat with the visible reporting period and read-only snapshot.
+Why: Reporting ignored Meta completed-registration actions, read ad-account context from a field the query did not return, and separately refetched all-time metrics before loading a generic publishing-oriented chat.
+Impact: Webinar campaigns now show their real registration results, purchase campaigns retain purchase results, Meta opens the correct account and object, and Blaze analyzes only the campaigns and date range the user selected without requesting publishing setup.
+Files: `meta-insights.repository.ts`, `meta-api.types.ts`, `meta-insights.service.ts`, `meta-sync.service.ts`, `analytics.service.ts`, `AdsPerformanceView.tsx`, `AdAnalysisPanel.tsx`, `meta-ads-analysis.ts`, tests, messages config, and `documentation/features/integration-connections.md`.

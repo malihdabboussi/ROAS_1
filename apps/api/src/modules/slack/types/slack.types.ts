@@ -75,6 +75,14 @@ export interface SlackEvent {
   subtype?: string
   file_id?: string
   files?: SlackFileAttachment[]
+  /** reaction_added / reaction_removed */
+  reaction?: string
+  item?: {
+    type?: string
+    channel?: string
+    ts?: string
+  }
+  item_user?: string
 }
 
 export interface SlackFileAttachment {
