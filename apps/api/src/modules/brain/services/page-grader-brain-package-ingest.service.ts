@@ -83,16 +83,24 @@ export class PageGraderBrainPackageIngestService {
     const { inserted, skipped } = await this.upsertMemories(supabase, brainId, memories)
     const evidenceUpserted = await this.upsertEvidence(supabase, brainId, evidence)
 
+    const spaceId =
+      (typeof input.spaceId === 'string' && input.spaceId.trim()) ||
+      (await this.resolveCampaignSpaceId(supabase, input.campaignId))
+
     let knowledgeIndexed = 0
-    if (input.spaceId) {
+    if (spaceId) {
       knowledgeIndexed = await this.indexKnowledgeObjects(supabase, {
         userId: input.userId,
         orgId: input.orgId ?? null,
-        spaceId: input.spaceId,
+        spaceId,
         campaignId: input.campaignId,
         pageGraderClientId,
-        seeds,
+        rows: [...seeds, ...sources],
       })
+    } else {
+      this.logger.warn(
+        `Page Grader ingest skipped Campaign Knowledge index — no space for campaign ${input.campaignId}`,
+      )
     }
 
     await this.stampCampaignSync(supabase, campaign, {
@@ -253,6 +261,31 @@ export class PageGraderBrainPackageIngestService {
     return upserted
   }
 
+  private async resolveCampaignSpaceId(
+    supabase: SupabaseClient,
+    campaignId: string,
+  ): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('spaces')
+      .select('id, title')
+      .eq('campaign_id', campaignId)
+      .order('created_at', { ascending: true })
+      .limit(20)
+    if (error) {
+      this.logger.warn(`Could not resolve campaign space: ${error.message}`)
+      return null
+    }
+    const rows = data ?? []
+    const general = rows.find(
+      (row) =>
+        String(row.title ?? '')
+          .trim()
+          .toLowerCase() === 'general',
+    )
+    const chosen = general ?? rows[0]
+    return chosen?.id ? String(chosen.id) : null
+  }
+
   private async indexKnowledgeObjects(
     supabase: SupabaseClient,
     input: {
@@ -261,13 +294,14 @@ export class PageGraderBrainPackageIngestService {
       spaceId: string
       campaignId: string
       pageGraderClientId: string
-      seeds: PageGraderMemoryRow[]
+      rows: PageGraderMemoryRow[]
     },
   ): Promise<number> {
     let indexed = 0
-    const overviewSeeds = input.seeds.slice(0, 40)
-    for (const seed of overviewSeeds) {
-      const sourceId = `pg:${input.pageGraderClientId}:${seed.content_hash.slice(0, 24)}`
+    // Cap for sync latency; hourly catch-up / force re-sync continues the rest.
+    const toIndex = input.rows.slice(0, 500)
+    for (const row of toIndex) {
+      const sourceId = `pg:${input.pageGraderClientId}:${row.content_hash.slice(0, 24)}`
       try {
         const result = await this.spaceRetrievalIndex.indexSource(supabase, {
           sourceType: 'conversation_document',
@@ -275,18 +309,20 @@ export class PageGraderBrainPackageIngestService {
           userId: input.userId,
           orgId: input.orgId ?? undefined,
           spaceId: input.spaceId,
+          force: true,
           row: {
             id: sourceId,
-            title: seed.source_title,
-            content: seed.content,
+            title: row.source_title,
+            content: row.content,
             space_id: input.spaceId,
             campaign_id: input.campaignId,
             org_id: input.orgId,
             updated_at: new Date().toISOString(),
             metadata: {
               page_grader_client_id: input.pageGraderClientId,
-              ingest_kind: 'page_grader_seed',
-              content_hash: seed.content_hash,
+              ingest_kind: 'page_grader_memory',
+              content_hash: row.content_hash,
+              memory_source_type: row.source_type,
             },
           },
         })

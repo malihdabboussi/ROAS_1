@@ -1,6 +1,6 @@
 # Page Grader Campaign Brain Sync
 
-Last Modified: July 19, 2026
+Last Modified: July 20, 2026
 
 ## Overview
 
@@ -56,3 +56,5 @@ Page Grader env for push: `ROAS_BRAIN_WEBHOOK_URL`, `ROAS_BRAIN_WEBHOOK_SECRET` 
 - **2026-07-19:** Dual-write Brain memories + Campaign Knowledge; hybrid sync (push + hourly catch-up + manual).
 - **2026-07-19:** Client Intel nightly orchestrator retries partial failures and pushes `content_hash` after successful intelligence generation — not UI-gated.
 - **2026-07-19:** Page Grader mapping provisions/reuses a canonical General Space, legacy malformed schemas are repaired in place, and the frontend safely normalizes incomplete schemas instead of crashing.
+- **2026-07-20:** Client Intel “Uploading to Vibey Brain” was still UI-gated (`ClientKnowledgeHubTab` auto-push). Page Grader now drains `client_knowledge_entries` → `client_memories` in `scheduled-brain-refresh` and hourly `scheduled-knowledge-brain-drain`, then pushes ROAS when imports land.
+- **2026-07-20:** Campaign Knowledge stayed at Objects: 0 after successful `page_grader_brain_sync` because `SpaceRetrievalIndexService.indexSource` no-op’d without `SPACE_SEMANTIC_RETRIEVAL`/`SPACE_ASSET_INDEXING`, and ingest only indexed when `spaceId` was passed. Ingest now resolves the campaign General space, forces knowledge index, and indexes up to 500 seed+source memories. Prod Multifamily/Sakha were backfilled into `space_semantic_objects`.

@@ -53,6 +53,8 @@ type IndexInput = {
   orgId?: string | null
   spaceId?: string | null
   row?: Record<string, unknown>
+  /** When true, index even if SPACE_* env flags are off (Page Grader dual-write). */
+  force?: boolean
 }
 
 @Injectable()
@@ -66,7 +68,11 @@ export class SpaceRetrievalIndexService {
   ) {}
 
   async indexSource(supabase: SupabaseClient, input: IndexInput): Promise<{ indexed: number }> {
-    if (process.env.SPACE_ASSET_INDEXING !== '1' && process.env.SPACE_SEMANTIC_RETRIEVAL !== '1') {
+    if (
+      !input.force &&
+      process.env.SPACE_ASSET_INDEXING !== '1' &&
+      process.env.SPACE_SEMANTIC_RETRIEVAL !== '1'
+    ) {
       return { indexed: 0 }
     }
     const row = input.row ?? (await this.loadRow(supabase, input.sourceType, input.sourceId))
