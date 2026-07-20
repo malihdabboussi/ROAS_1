@@ -20,6 +20,7 @@ type IntegrationsOverviewResponse = {
   integrations: Array<{
     id?: string
     user_id?: string
+    org_id?: string | null
     integration_id: string
     provider: string
     status: string

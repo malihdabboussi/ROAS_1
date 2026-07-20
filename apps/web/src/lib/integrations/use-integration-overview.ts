@@ -1,10 +1,10 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
-import { billingApi } from '@/lib/billing/billing-api'
-import type { BillingStatusResponse } from '@/lib/billing/billing.types'
 import { useUserRole } from '@/hooks/use-user-role'
 import { backendGet, backendPost } from '@/lib/api/backend-client'
+import { billingApi } from '@/lib/billing/billing-api'
+import type { BillingStatusResponse } from '@/lib/billing/billing.types'
 import { invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { useOrgStore } from '@/lib/org/org-context-store'
 import { buildComposioProxyCallbackUrl } from './composio-oauth'
@@ -14,8 +14,8 @@ import {
   normalizeComposioAccountStatus,
   normalizeIntegrationStatus,
 } from './integration-status-utils'
-import { isMetaIntegrationsLibraryEligible } from './meta-integrations-library-eligibility'
 import type { Integration, UserIntegration } from './integrations.types'
+import { isMetaIntegrationsLibraryEligible } from './meta-integrations-library-eligibility'
 
 type IntegrationsOverviewResponse = {
   success: boolean
@@ -24,6 +24,7 @@ type IntegrationsOverviewResponse = {
   integrations: Array<{
     id?: string
     user_id?: string
+    org_id?: string | null
     integration_id: string
     provider: string
     status: string
@@ -112,7 +113,11 @@ export function useIntegrationOverview() {
           .toLowerCase()
         if (metadataMode === 'composio' || metadataMode === 'legacy')
           return metadataMode === 'composio'
-        return String(providerModeLookup[integrationId] ?? '').trim().toLowerCase() === 'composio'
+        return (
+          String(providerModeLookup[integrationId] ?? '')
+            .trim()
+            .toLowerCase() === 'composio'
+        )
       }
 
       if (isOrg) {
