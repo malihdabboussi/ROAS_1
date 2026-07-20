@@ -113,6 +113,12 @@ describe('webinar-fulfillment playbook', () => {
       'st-landing-page-copy',
     ])
     expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.assignTo).toBe('designer')
+    expect(
+      plan.subtasks.find((s) => s.id === 'st-ad-design')?.outputContract?.required_artifact_type,
+    ).toBe('image')
+    expect(plan.subtasks.find((s) => s.id === 'st-ad-design')?.intent.ecology).toMatch(
+      /render_validate_messaging.*registers each PNG/i,
+    )
     expect(plan.subtasks.find((s) => s.id === 'st-media-plan')?.assignTo).toBe('ads_manager')
     expect(plan.subtasks.find((s) => s.id === 'st-launch-bible')).toMatchObject({
       assignTo: 'atlas',

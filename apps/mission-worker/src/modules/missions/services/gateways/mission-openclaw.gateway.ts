@@ -1,6 +1,6 @@
+import { randomUUID } from 'crypto'
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { randomUUID } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   defaultProbeReachable,
@@ -950,7 +950,7 @@ If the team is well-suited, omit capability_gap or set exists:false.
       'Never use praise in memory_update (no "good job", "well written", or generic quality comments).',
       'If there is no durable insight, set memory_update to an empty string.',
       'Respond with ONLY valid JSON (no markdown, no backticks):',
-      '{ "content": "short internal summary of what you did", "summary": "brief summary", "memory_update": "what I learned", "artifact_manifest": [{"deliverable_id":"uuid","action":"save_document|create_pdf|create_docx|generate_image|generate_video|create_offer|create_funnel|create_website|create_presentation|create_sequence|create_blog_post|create_social_post|create_ad|create_avatar","type":"doc|pdf|file|image|video|offer|funnel|website|presentation|sequence|blog_post|social_post|ad|avatar","title":"artifact title","file_url":"optional"}] }',
+      '{ "content": "short internal summary of what you did", "summary": "brief summary", "memory_update": "what I learned", "artifact_manifest": [{"deliverable_id":"uuid","action":"save_document|create_pdf|create_docx|generate_image|generate_video|process_media|create_offer|create_funnel|create_website|create_presentation|create_sequence|create_blog_post|create_social_post|create_ad|create_avatar","type":"doc|pdf|file|image|video|offer|funnel|website|presentation|sequence|blog_post|social_post|ad|avatar","title":"artifact title","file_url":"optional"}] }',
     ].join('\n')
 
     const userComments = await this.stateRepo.getRecentUserComments(
@@ -1996,9 +1996,7 @@ If the team is well-suited, omit capability_gap or set exists:false.
               ...(result !== undefined ? { result } : {}),
               isError: failed,
               ...(errDetail ? { error: errDetail } : {}),
-              ...(normalizedFailure.error_code
-                ? { error_code: normalizedFailure.error_code }
-                : {}),
+              ...(normalizedFailure.error_code ? { error_code: normalizedFailure.error_code } : {}),
               ...(normalizedFailure.error_class
                 ? { error_class: normalizedFailure.error_class }
                 : {}),
@@ -2293,7 +2291,9 @@ If the team is well-suited, omit capability_gap or set exists:false.
   }): void {
     const client = this.databaseService.getClient()
     const table = client.from('request_trace_events') as unknown as {
-      insert?: (payload: Record<string, unknown>) => PromiseLike<{ error?: { message: string } | null }>
+      insert?: (
+        payload: Record<string, unknown>,
+      ) => PromiseLike<{ error?: { message: string } | null }>
     }
     if (typeof table.insert !== 'function') return
     void Promise.resolve(

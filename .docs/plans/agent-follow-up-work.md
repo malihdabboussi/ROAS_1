@@ -7433,3 +7433,19 @@ Files:
 - Evidence: The migration converts existing `team_member`/`unknown` rows but temporarily keeps those legacy values accepted by the constraint so the previous API can continue refreshing Slack people while the new API deploy is rolling out.
 - Needed work: After all production API instances use Internal/External/Ignored, add a cleanup migration that verifies no legacy values remain and tightens the constraint to only the three current values.
 - Why not now: Tightening in the compatibility migration would create a zero-downtime race where the old production API could write a legacy value before the new deployment becomes active.
+
+## 2026-07-19 — Mission creative-review supporting services exceed backend LOC limits
+
+- Feature/app: Agent API and mission-worker / creative deliverables and execution protocol
+- Files: `apps/agent-api/src/modules/shared/ui-block-extractor.ts` (950 LOC), `apps/agent-api/src/modules/artifacts/services/artifact-action-preflight.ts` (942 LOC), `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts` (2,682 LOC), `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts` (2,503 LOC)
+- Evidence: The creative-review fix added one bounded batch-media branch or contract string to each existing aggregation surface; all remain above the 600-line backend limit.
+- Needed work: Extract media UI-block builders, operation-specific preflight validators, action-doc families, and OpenClaw prompt contracts into focused modules with existing characterization tests.
+- Why not now: The requested production fix changes one established chokepoint per surface. Decomposing four unrelated aggregators would materially broaden this mission/runtime change and its deployment risk.
+
+## 2026-07-19 — Media processing service near backend extraction threshold
+
+- Feature/app: Agent API / native media processing
+- File: `apps/agent-api/src/modules/artifacts/services/artifact-media-processing.service.ts` (579 LOC)
+- Evidence: The service remains below the 600-line backend maximum but above the 480-line extraction threshold after routing Validate Messaging rendering into its own 159-line renderer service.
+- Needed work: Extract operation dispatch and native-media registration orchestration before adding another server-rendered media family.
+- Why not now: The requested change already isolates the new renderer; decomposing the established video/audio operation dispatcher would broaden this production fix.

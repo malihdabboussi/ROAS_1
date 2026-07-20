@@ -186,6 +186,57 @@ describe('Mission deliverable repository', () => {
     })
   })
 
+  it('rejects an incomplete preferred media batch when the contract requires several images', async () => {
+    const service = createService()
+    const query: any = {
+      select: vi.fn(() => query),
+      eq: vi.fn(() => query),
+      contains: vi.fn(() => query),
+      in: vi.fn(() => query),
+      order: vi.fn(async () => ({
+        data: [
+          {
+            id: 'image-1',
+            type: 'image',
+            source_action: 'process_media',
+            metadata: { source: 'agent_tool', source_action: 'process_media' },
+          },
+          {
+            id: 'image-2',
+            type: 'image',
+            source_action: 'process_media',
+            metadata: { source: 'agent_tool', source_action: 'process_media' },
+          },
+        ],
+        error: null,
+      })),
+    }
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table !== 'mission_deliverables') throw new Error(`Unexpected table ${table}`)
+        return query
+      }),
+    } as any
+
+    const result = await service.verifyOutputContract(
+      supabase,
+      'mission-1',
+      {
+        artifact_kind: 'media_artifact',
+        required_action: 'process_media',
+        required_artifact_type: 'image',
+        expected: { minimum_count: 3 },
+      },
+      ['image-1', 'image-2'],
+    )
+
+    expect(result).toMatchObject({
+      ok: false,
+      reason: 'Found 2 matching image deliverables, expected at least 3',
+      recovery: 'corrective_run',
+    })
+  })
+
   it('selects the latest matching contract type when concurrent subtasks publish artifacts', async () => {
     const service = createService()
     const preferredQuery: any = {

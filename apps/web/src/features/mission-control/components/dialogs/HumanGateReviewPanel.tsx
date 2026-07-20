@@ -1,5 +1,6 @@
 import { Check, ExternalLink, MessageSquareText, UserRound } from 'lucide-react'
 import type { MissionAgent, MissionDeliverable, MissionSubtask } from '../../types'
+import { HumanGateReviewAssets } from './HumanGateReviewAssets'
 import type { SubtaskResourceLink } from './subtask-detail'
 
 interface HumanGateReviewPanelProps {
@@ -12,9 +13,9 @@ interface HumanGateReviewPanelProps {
   feedback: string
   approving: boolean
   sendingFeedback: boolean
-  onFeedbackChange: (value: string) => void
   onRequestChanges: () => void
   onApprove: () => void
+  onSelectDeliverable: (deliverable: MissionDeliverable) => void
   /** Narrow sidebar layout (desktop right column). */
   compact?: boolean
   /** Inside Activity card — drop outer chrome so it is one panel. */
@@ -31,9 +32,9 @@ export function HumanGateReviewPanel({
   feedback,
   approving,
   sendingFeedback,
-  onFeedbackChange,
   onRequestChanges,
   onApprove,
+  onSelectDeliverable,
   compact = false,
   embedded = false,
 }: HumanGateReviewPanelProps) {
@@ -43,6 +44,12 @@ export function HumanGateReviewPanel({
   const contributorNames = contributorKeys.map(
     (key) => agents.find((agent) => agent.agent_key === key)?.name ?? key,
   )
+  const deliverableUrls = new Set(
+    deliverables
+      .map((deliverable) => deliverable.file_url)
+      .filter((url): url is string => Boolean(url)),
+  )
+  const supplementalResourceLinks = resourceLinks.filter((link) => !deliverableUrls.has(link.url))
 
   return (
     <section
@@ -56,7 +63,9 @@ export function HumanGateReviewPanel({
     >
       <div className="space-y-spacing-2">
         <div className="chip-glass-orange body-3 inline-flex rounded-full">Action required</div>
-        <h3 className={compact ? 'body-1 text-foreground font-semibold' : 'title-h6 text-foreground'}>
+        <h3
+          className={compact ? 'body-1 text-foreground font-semibold' : 'title-h6 text-foreground'}
+        >
           Your approval is needed
         </h3>
         <p className="body-3 text-muted-foreground">
@@ -85,7 +94,7 @@ export function HumanGateReviewPanel({
           </div>
           <p className="body-4 text-muted-foreground">
             {deliverables.length > 0
-              ? `${deliverables.length} review ${deliverables.length === 1 ? 'asset is' : 'assets are'} on the left.`
+              ? `${deliverables.length} review ${deliverables.length === 1 ? 'asset is' : 'assets are'} ready below.`
               : 'No review assets are attached yet.'}
           </p>
         </div>
@@ -113,8 +122,8 @@ export function HumanGateReviewPanel({
               <ExternalLink className="icon-sm text-muted-foreground" />
               <h4 className="body-2 text-foreground font-semibold">Resources & links</h4>
             </div>
-            {resourceLinks.length > 0 ? (
-              resourceLinks.map((link) => (
+            {supplementalResourceLinks.length > 0 ? (
+              supplementalResourceLinks.map((link) => (
                 <a
                   key={link.url}
                   href={link.url}
@@ -137,9 +146,9 @@ export function HumanGateReviewPanel({
               Contributors: {contributorNames.join(', ')}
             </p>
           ) : null}
-          {resourceLinks.length > 0 ? (
+          {supplementalResourceLinks.length > 0 ? (
             <div className="space-y-spacing-1">
-              {resourceLinks.map((link) => (
+              {supplementalResourceLinks.map((link) => (
                 <a
                   key={link.url}
                   href={link.url}
@@ -154,6 +163,11 @@ export function HumanGateReviewPanel({
           ) : null}
         </div>
       )}
+
+      <HumanGateReviewAssets
+        deliverables={deliverables}
+        onSelectDeliverable={onSelectDeliverable}
+      />
 
       <div className="bg-muted-20 rounded-spacing-2 p-spacing-3 space-y-spacing-1">
         <h4 className="body-3 text-foreground font-semibold">What happens next</h4>
@@ -180,13 +194,9 @@ export function HumanGateReviewPanel({
             <MessageSquareText className="icon-sm text-muted-foreground" />
             <h4 className="body-3 text-foreground font-semibold">If changes are needed</h4>
           </div>
-          <textarea
-            value={feedback}
-            onChange={(event) => onFeedbackChange(event.target.value)}
-            placeholder="Describe exactly what should change..."
-            rows={compact ? 2 : 3}
-            className="input-glass body-3 w-full resize-none"
-          />
+          <p className="body-4 text-muted-foreground">
+            If changes are needed, put them in the box below.
+          </p>
           <button
             type="button"
             onClick={onRequestChanges}

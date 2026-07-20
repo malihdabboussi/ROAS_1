@@ -67,7 +67,12 @@ function createRepositoryMock() {
     listRecentSpaceItems: vi.fn(async () => ({
       data: [
         { id: 'task-1', title: 'Current task', status: 'todo', custom_data: {} },
-        { id: 'child-task-1', title: 'Follow-up task', status: 'todo', custom_data: { _view_type: 'task' } },
+        {
+          id: 'child-task-1',
+          title: 'Follow-up task',
+          status: 'todo',
+          custom_data: { _view_type: 'task' },
+        },
       ],
       error: null,
     })),
@@ -139,6 +144,9 @@ describe('TaskAgentArtifactOutputsService', () => {
         spaceId: 'space-1',
         campaignId: 'campaign-1',
       }),
+    )
+    expect(repository.listRecentScopedRows).toHaveBeenCalledWith(
+      expect.objectContaining({ table: 'media_assets', limit: 25 }),
     )
   })
 

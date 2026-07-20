@@ -43,6 +43,25 @@ describe('resolveMissionEffectiveDomains', () => {
     expect(domains.has('edit_campaign')).toBe(true)
   })
 
+  it('classifies Meta Ads Manager as marketing and allows native ad assembly', () => {
+    const domains = resolveMissionEffectiveDomains(
+      {
+        agent_key: 'blaze',
+        role: 'Meta Ads Manager',
+        level: 'employee',
+        config: {
+          capability_profile: 'managed_domain',
+        },
+      },
+      'blaze',
+      [],
+      [],
+      [],
+    )
+
+    expect(domains.has('write_marketing_artifacts')).toBe(true)
+  })
+
   it('lets an explicit agent deny override the role default', () => {
     const domains = resolveMissionEffectiveDomains(
       {

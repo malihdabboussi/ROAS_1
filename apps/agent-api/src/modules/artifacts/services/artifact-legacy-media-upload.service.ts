@@ -115,6 +115,7 @@ export class ArtifactLegacyMediaUploadService {
     orgId?: string | null,
     spaceId?: string | null,
     conversationId?: string | null,
+    assetName?: string,
   ): Promise<{
     success: boolean
     url?: string
@@ -158,7 +159,7 @@ export class ArtifactLegacyMediaUploadService {
       {
         user_id: userId,
         org_id: orgId ?? null,
-        name: prompt.slice(0, 100),
+        name: (assetName ?? prompt).slice(0, 100),
         original_filename: filename,
         file_path: filePath,
         bucket_name: 'media',

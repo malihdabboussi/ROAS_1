@@ -82,9 +82,9 @@ export function MissionDetailDesktopShell({
         feedback={subtaskDetailProps.feedback}
         approving={subtaskDetailProps.approving}
         sendingFeedback={subtaskDetailProps.sendingFeedback}
-        onFeedbackChange={subtaskDetailProps.onFeedbackChange}
         onRequestChanges={subtaskDetailProps.onRequestChanges}
         onApprove={subtaskDetailProps.onApprove}
+        onSelectDeliverable={onSelectDeliverable}
         compact
         embedded
       />

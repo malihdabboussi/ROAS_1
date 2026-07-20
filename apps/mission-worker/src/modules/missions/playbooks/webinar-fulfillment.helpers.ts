@@ -162,14 +162,19 @@ export function adContract(
   }
 }
 
-export function imageContract(): NonNullable<
-  MissionPlaybookPlanResult['subtasks'][number]['outputContract']
-> {
+export function imageContract(options?: {
+  requiredAction?: 'generate_image' | 'process_media'
+  source?: string
+  minimumCount?: number
+}): NonNullable<MissionPlaybookPlanResult['subtasks'][number]['outputContract']> {
   return {
     artifact_kind: 'media_artifact',
-    required_action: 'generate_image',
+    required_action: options?.requiredAction ?? 'generate_image',
     required_artifact_type: 'image',
-    expected: { source: WEBINAR_FLOW_DOCS.imageBriefs },
+    expected: {
+      source: options?.source ?? WEBINAR_FLOW_DOCS.imageBriefs,
+      ...(options?.minimumCount ? { minimum_count: options.minimumCount } : {}),
+    },
   }
 }
 

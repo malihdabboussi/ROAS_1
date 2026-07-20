@@ -1,13 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { TaskAgentRepository } from '../repositories/task-agent.repository'
-import {
-  SCOPED_ARTIFACT_SPECS,
-  type ScopedArtifactSpec,
-} from './task-agent-artifact-output-specs'
+import { SCOPED_ARTIFACT_SPECS, type ScopedArtifactSpec } from './task-agent-artifact-output-specs'
 
 const TASK_DOCUMENT_LOOKBACK_MS = 5_000
 const TASK_DOCUMENT_LIMIT = 10
 const TASK_ARTIFACT_LIMIT = 10
+const TASK_MEDIA_LIMIT = 25
 
 const TASK_OUTPUT_BLOCK_TYPES = new Set([
   'artifact_preview',
@@ -278,7 +276,9 @@ export class TaskAgentArtifactOutputsService {
     if (ids.length === 0) return renderableIds
     const { data, error } = await this.repository.listPresentationFiles(ids, input.orgId)
     if (error) {
-      this.logger.warn(`Task presentation file reconciliation failed for ${input.itemId}: ${error.message}`)
+      this.logger.warn(
+        `Task presentation file reconciliation failed for ${input.itemId}: ${error.message}`,
+      )
       return renderableIds
     }
     for (const file of Array.isArray(data) ? (data as Array<Record<string, unknown>>) : []) {
@@ -302,13 +302,21 @@ export class TaskAgentArtifactOutputsService {
         this.repository.listFunnelFiles(ids, input.orgId),
       ])
     if (pagesError) {
-      this.logger.warn(`Task funnel page reconciliation failed for ${input.itemId}: ${pagesError.message}`)
+      this.logger.warn(
+        `Task funnel page reconciliation failed for ${input.itemId}: ${pagesError.message}`,
+      )
     }
     if (filesError) {
-      this.logger.warn(`Task funnel file reconciliation failed for ${input.itemId}: ${filesError.message}`)
+      this.logger.warn(
+        `Task funnel file reconciliation failed for ${input.itemId}: ${filesError.message}`,
+      )
     }
     for (const page of Array.isArray(pages) ? (pages as Array<Record<string, unknown>>) : []) {
-      if (hasContent(page.generated_html) || hasContent(page.content) || hasContent(page.sections)) {
+      if (
+        hasContent(page.generated_html) ||
+        hasContent(page.content) ||
+        hasContent(page.sections)
+      ) {
         renderableIds.add(trimmedString(page.funnel_id))
       }
     }
@@ -367,7 +375,9 @@ export class TaskAgentArtifactOutputsService {
       return []
     }
     const additions: Array<Record<string, unknown>> = []
-    for (const row of Array.isArray(data) ? (data as unknown as Array<Record<string, unknown>>) : []) {
+    for (const row of Array.isArray(data)
+      ? (data as unknown as Array<Record<string, unknown>>)
+      : []) {
       const artifactId = trimmedString(row.id)
       if (!artifactId) continue
       const block: Record<string, unknown> = {
@@ -408,7 +418,9 @@ export class TaskAgentArtifactOutputsService {
       limit: TASK_ARTIFACT_LIMIT,
     })
     if (error) {
-      this.logger.warn(`Task Space item reconciliation failed for ${input.itemId}: ${error.message}`)
+      this.logger.warn(
+        `Task Space item reconciliation failed for ${input.itemId}: ${error.message}`,
+      )
       return []
     }
     const additions: Array<Record<string, unknown>> = []
@@ -420,7 +432,11 @@ export class TaskAgentArtifactOutputsService {
       const viewType = trimmedString(customData._view_type).replace(/_/g, '-')
       if (viewType === 'doc' && !hasText(customData._doc_visual_html)) continue
       const artifactType =
-        viewType === 'doc' ? 'visual-doc' : !viewType || viewType === 'task' ? 'task' : 'custom-object'
+        viewType === 'doc'
+          ? 'visual-doc'
+          : !viewType || viewType === 'task'
+            ? 'task'
+            : 'custom-object'
       const block: Record<string, unknown> = {
         type: 'artifact_preview',
         id: `artifact-${artifactType}-${artifactId}`,
@@ -459,7 +475,7 @@ export class TaskAgentArtifactOutputsService {
       orgId: input.orgId,
       campaignId: input.campaignId,
       createdAfter,
-      limit: TASK_ARTIFACT_LIMIT,
+      limit: TASK_MEDIA_LIMIT,
     })
     if (error) {
       this.logger.warn(`Task media reconciliation failed for ${input.itemId}: ${error.message}`)

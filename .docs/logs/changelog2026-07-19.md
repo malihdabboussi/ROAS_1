@@ -354,3 +354,10 @@ What: Made Webinar Fulfillment funnel creation idempotent per Mission subtask, r
 Why: Corrective retries created three funnels, while the wireframe-oriented skill and missing media dependency produced placeholder headshots with no attached campaign assets.
 Impact: Future runs reuse one funnel, attach real campaign media, and cannot mark an asset-empty or placeholder-filled funnel complete.
 Files: `apps/agent-api/src/modules/artifacts/**`, `apps/mission-worker/src/modules/missions/**`, `scripts/arch/loc-allowlist.json`, `supabase/migrations/20260719230000_funnel_mission_subtask_idempotency.sql`, `documentation/features/missions.md`
+
+## [2026-07-19 20:24] - [FIX]
+
+What: Rebuilt Webinar creative review around inline dependency-scoped previews, removed the duplicate gate feedback textarea, restored deterministic Validate Messaging PNG rendering and native Space Media registration, preserved every image in batch output/reconciliation, and classified Meta Ads Manager as a managed marketing role.
+Why: Creative gates exposed only links, Task 9 produced the wrong visual-document artifact from generic copy, batches silently capped at ten assets, and Task 14 requested access the assigned managed role already owns.
+Impact: Reviewers can inspect and reference numbered visuals in place, all standard 15 static cuts remain attached to the task and Media view, incomplete image batches fail contract verification, and approved Meta ad assembly proceeds without a redundant access pause.
+Files: `apps/web/src/features/mission-control/components/dialogs/**`, `apps/agent-api/src/modules/artifacts/**`, `apps/agent-api/src/modules/shared/ui-block-extractor*`, `apps/agent-api/src/modules/task-agent/services/task-agent-artifact-outputs*`, `apps/mission-worker/src/modules/missions/**`, `docker/agents/templates/ads_manager/skills/roas-ad-design/SKILL.md`, `supabase/migrations/20260719210000_restore_validate_messaging_renderer.sql`, `documentation/features/missions.md`

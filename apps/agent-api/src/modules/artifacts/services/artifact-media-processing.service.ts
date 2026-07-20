@@ -3,7 +3,11 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Injectable, Logger } from '@nestjs/common'
 import { ArtifactMediaAssetsRepository } from '../repositories/artifact-media-assets.repository'
-import type { ArtifactActionHandler } from './artifact-action.registry'
+import {
+  parseConversationIdFromSessionKey,
+  type ArtifactActionHandler,
+} from './artifact-action.registry'
+import { ArtifactLegacyMediaUploadService } from './artifact-legacy-media-upload.service'
 import {
   ArtifactMediaProcessingAdvancedOperationsService,
   type ArtifactMediaProcessingOperationRuntime,
@@ -13,6 +17,10 @@ import { ArtifactMediaProcessingEditOperationsService } from './artifact-media-p
 import { ArtifactMediaProcessingOperationRuntimeService } from './artifact-media-processing-operation-runtime.service'
 import { ArtifactMediaProcessingPersistenceService } from './artifact-media-processing-persistence.service'
 import { ArtifactMediaProcessingVisualOperationsService } from './artifact-media-processing-visual-operations.service'
+import {
+  ArtifactValidateMessagingRendererService,
+  type ValidateMessagingLine,
+} from './artifact-validate-messaging-renderer.service'
 
 type ProcessOperation =
   | 'trim'
@@ -43,6 +51,7 @@ type ProcessOperation =
   | 'silence_remove'
   | 'frame_extract'
   | 'waveform'
+  | 'render_validate_messaging'
 
 const VALID_OPERATIONS = new Set<ProcessOperation>([
   'trim',
@@ -73,7 +82,10 @@ const VALID_OPERATIONS = new Set<ProcessOperation>([
   'silence_remove',
   'frame_extract',
   'waveform',
+  'render_validate_messaging',
 ])
+
+const MAX_VALIDATE_MESSAGING_LINES = 8
 
 @Injectable()
 export class ArtifactMediaProcessingService {
@@ -81,6 +93,7 @@ export class ArtifactMediaProcessingService {
     private readonly repository: ArtifactMediaAssetsRepository = new ArtifactMediaAssetsRepository(),
   ) {
     this.persistenceService = new ArtifactMediaProcessingPersistenceService(repository)
+    this.mediaUploadService = new ArtifactLegacyMediaUploadService(repository)
   }
 
   private readonly logger = new Logger(ArtifactMediaProcessingService.name)
@@ -89,6 +102,8 @@ export class ArtifactMediaProcessingService {
   private readonly editOperations = new ArtifactMediaProcessingEditOperationsService()
   private readonly operationRuntimeService = new ArtifactMediaProcessingOperationRuntimeService()
   private readonly persistenceService: ArtifactMediaProcessingPersistenceService
+  private readonly mediaUploadService: ArtifactLegacyMediaUploadService
+  private readonly validateMessagingRenderer = new ArtifactValidateMessagingRendererService()
   private readonly visualOperations = new ArtifactMediaProcessingVisualOperationsService()
 
   getHandlers(target: Record<string, any>): Record<string, ArtifactActionHandler> {
@@ -119,6 +134,15 @@ export class ArtifactMediaProcessingService {
     const userId = target.resolveUserId(sessionKey)
     const supabase = await target.getUserClient(userId, sessionKey as string)
     const campaignId = await target.resolveCampaignId(supabase, input, userId, sessionKey)
+
+    if (operation === 'render_validate_messaging') {
+      return this.renderValidateMessaging(target, input, {
+        userId,
+        campaignId,
+        sessionKey,
+        onProgress,
+      })
+    }
 
     const tempRoot = await mkdtemp(join(tmpdir(), 'vibey-process-media-'))
 
@@ -234,6 +258,69 @@ export class ArtifactMediaProcessingService {
   }
 
   // --- Operations ---
+
+  private async renderValidateMessaging(
+    target: Record<string, any>,
+    input: Record<string, unknown>,
+    context: {
+      userId: string
+      campaignId: string | null
+      sessionKey?: string
+      onProgress?: (message: string) => void | Promise<void>
+    },
+  ) {
+    const lines = Array.isArray(input.lines)
+      ? (input.lines.slice(0, MAX_VALIDATE_MESSAGING_LINES) as ValidateMessagingLine[])
+      : []
+    const orgId = target.resolveOrgId?.(context.sessionKey) as string | null | undefined
+    const spaceId = typeof input.space_id === 'string' ? input.space_id.trim() || null : null
+    const conversationId = parseConversationIdFromSessionKey(context.sessionKey)
+    const registered: Array<Record<string, unknown>> = []
+
+    const rendered = await this.validateMessagingRenderer.renderSet({
+      lines,
+      accent: String(input.brand_color),
+      backgroundLight: typeof input.brand_bg_light === 'string' ? input.brand_bg_light : undefined,
+      backgroundDark: typeof input.brand_bg_dark === 'string' ? input.brand_bg_dark : undefined,
+    })
+
+    for (let index = 0; index < rendered.length; index += 1) {
+      const image = rendered[index]!
+      await context.onProgress?.(`Registering image ${index + 1}/${rendered.length}`)
+      const result = await this.mediaUploadService.uploadMediaFromBytes(
+        target,
+        image.buffer,
+        'image/png',
+        'image',
+        context.userId,
+        context.campaignId,
+        image.sourcePrompt,
+        'deterministic-renderer',
+        orgId ?? null,
+        spaceId,
+        conversationId,
+        image.name,
+      )
+      if (!result.success) return result
+      const asset = result.asset as Record<string, unknown> | undefined
+      registered.push({
+        media_asset_id: typeof asset?.id === 'string' ? asset.id : null,
+        name: image.name,
+        url: result.url ?? null,
+        asset_ref: result.asset_ref ?? null,
+        source_prompt: image.sourcePrompt,
+      })
+    }
+
+    return {
+      success: registered.length === rendered.length && registered.length > 0,
+      operation: 'render_validate_messaging',
+      count: registered.length,
+      media_assets: registered,
+      campaign_id: context.campaignId,
+      space_id: spaceId,
+    }
+  }
 
   private async opTrim(
     input: Record<string, unknown>,
@@ -421,12 +508,7 @@ export class ArtifactMediaProcessingService {
     tempRoot: string,
     onProgress?: (message: string) => void | Promise<void>,
   ): Promise<{ outputPath: string; outputFormat: string }> {
-    return this.advancedOperations.opChromaKey(
-      input,
-      tempRoot,
-      onProgress,
-      this.operationRuntime(),
-    )
+    return this.advancedOperations.opChromaKey(input, tempRoot, onProgress, this.operationRuntime())
   }
 
   private async opSplitScreen(
@@ -486,12 +568,7 @@ export class ArtifactMediaProcessingService {
     tempRoot: string,
     onProgress?: (message: string) => void | Promise<void>,
   ): Promise<{ outputPath: string; outputFormat: string }> {
-    return this.advancedOperations.opWaveform(
-      input,
-      tempRoot,
-      onProgress,
-      this.operationRuntime(),
-    )
+    return this.advancedOperations.opWaveform(input, tempRoot, onProgress, this.operationRuntime())
   }
 
   // --- Helpers ---

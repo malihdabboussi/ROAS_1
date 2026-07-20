@@ -128,6 +128,25 @@ describe('PromptMode action schema and preflight coverage', () => {
         duration_seconds: 2,
       }),
     ).resolves.toBeNull()
+    await expect(
+      validateActionPreflight('process_media', {
+        operation: 'render_validate_messaging',
+        brand_color: 'yellow',
+        lines: [{ text: 'Generic headline', highlight: 'headline' }],
+      }),
+    ).resolves.toMatchObject({ error: expect.stringMatching(/brand_color/i) })
+    await expect(
+      validateActionPreflight('process_media', {
+        operation: 'render_validate_messaging',
+        brand_color: '#FFEA00',
+        lines: [
+          {
+            text: 'If you are a top-producing lender, your income should not have a ceiling.',
+            highlight: 'top-producing lender',
+          },
+        ],
+      }),
+    ).resolves.toBeNull()
   })
 
   it('rejects analyze_video source and settings mistakes before runtime work', async () => {

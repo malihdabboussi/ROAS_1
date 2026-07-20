@@ -122,9 +122,9 @@ export function MissionDetailModalView({
         feedback: subtaskCommentText,
         approving: approvingHumanGate,
         sendingFeedback: sendingSubtaskComment,
-        onFeedbackChange: setSubtaskCommentText,
         onRequestChanges: onSendSubtaskComment,
         onApprove: onApproveHumanGate,
+        onSelectDeliverable: setPreviewDeliverable,
         accessApprovalCard: (
           <MissionAccessApprovalCard
             pendingAccessRequests={pendingAccessRequests.filter(

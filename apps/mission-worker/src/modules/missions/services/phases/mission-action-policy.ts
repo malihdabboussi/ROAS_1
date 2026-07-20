@@ -18,7 +18,7 @@ const MANAGED_LEVELS = ['employee', 'manager', 'c_level', 'system'] as const
 
 function inferManagedDomain(agentKey: string, role: unknown): (typeof MANAGED_DOMAINS)[number] {
   const roleText = String(role ?? '').toLowerCase()
-  if (/(copywriter|designer|creative|brand|media|marketing|social)/.test(roleText)) {
+  if (/(copywriter|designer|creative|brand|media|marketing|social|\bads?\b)/.test(roleText)) {
     return 'marketing'
   }
   if (/(analyst|finance|data|performance)/.test(roleText)) return 'analyst'

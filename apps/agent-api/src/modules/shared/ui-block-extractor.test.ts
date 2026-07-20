@@ -278,4 +278,48 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
       }),
     ])
   })
+
+  it('emits every registered image from a batch media result', () => {
+    const firstId = '11111111-1111-4111-8111-111111111111'
+    const secondId = '22222222-2222-4222-8222-222222222222'
+
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'process_media',
+      toolArgs: {
+        data: {
+          operation: 'render_validate_messaging',
+          space_id: '33333333-3333-4333-8333-333333333333',
+          inputs: [
+            { name: 'Static 1 — Light', source_prompt: "If you're ready to scale." },
+            { name: 'Static 1 — Dark', source_prompt: "If you're ready to scale." },
+          ],
+        },
+      },
+      result: {
+        success: true,
+        operation: 'render_validate_messaging',
+        media_assets: [
+          { media_asset_id: firstId, name: 'Static 1 — Light', url: 'https://cdn/light.png' },
+          { media_asset_id: secondId, name: 'Static 1 — Dark', url: 'https://cdn/dark.png' },
+        ],
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      expect.objectContaining({
+        mediaAssetId: firstId,
+        title: 'Static 1 — Light',
+        prompt: "If you're ready to scale.",
+      }),
+      expect.objectContaining({
+        mediaAssetId: secondId,
+        title: 'Static 1 — Dark',
+        prompt: "If you're ready to scale.",
+      }),
+    ])
+  })
 })

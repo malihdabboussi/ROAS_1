@@ -99,6 +99,7 @@ export class MissionDeliverablesRepository {
     }
 
     const preferredIds = [...new Set(preferredDeliverableIds.filter(Boolean))]
+    const minimumCount = this.resolveMinimumCount(contract)
     if (preferredIds.length > 0) {
       const { data, error } = await supabase
         .from('mission_deliverables')
@@ -112,10 +113,15 @@ export class MissionDeliverablesRepository {
       const rows = (data || []) as DeliverableContractRow[]
       if (rows.length > 0) {
         const failures: MissionContractVerificationResult[] = []
+        const successes: MissionContractVerificationResult[] = []
         for (const row of rows) {
           const result = await this.evaluateAndVerifyDeliverable(supabase, row, contract)
-          if (result.ok) return result
-          failures.push(result)
+          if (result.ok) successes.push(result)
+          else failures.push(result)
+        }
+        if (successes.length >= minimumCount) return successes[0]
+        if (successes.length > 0) {
+          return this.minimumCountFailure(contract, successes.length, minimumCount)
         }
         return (
           failures[0] || {
@@ -141,7 +147,7 @@ export class MissionDeliverablesRepository {
 
     const latestRow = data as DeliverableContractRow | null
     const latestResult = await this.evaluateAndVerifyDeliverable(supabase, latestRow, contract)
-    if (latestResult.ok || !latestRow?.id) return latestResult
+    if ((latestResult.ok && minimumCount === 1) || !latestRow?.id) return latestResult
 
     const { data: matchingData, error: matchingError } = await supabase
       .from('mission_deliverables')
@@ -150,17 +156,39 @@ export class MissionDeliverablesRepository {
       .contains('metadata', { source: 'agent_tool' })
       .eq('type', contract.required_artifact_type)
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(Math.max(20, minimumCount))
     if (matchingError) throw matchingError
 
     const matchingRows = (matchingData || []) as DeliverableContractRow[]
+    const successes: MissionContractVerificationResult[] = []
     for (const row of matchingRows) {
       const result = await this.evaluateAndVerifyDeliverable(supabase, row, contract)
-      if (result.ok) return result
+      if (result.ok) successes.push(result)
+    }
+    if (successes.length >= minimumCount) return successes[0]
+    if (successes.length > 0) {
+      return this.minimumCountFailure(contract, successes.length, minimumCount)
     }
     return matchingRows.length > 0
       ? await this.evaluateAndVerifyDeliverable(supabase, matchingRows[0] || null, contract)
       : latestResult
+  }
+  private resolveMinimumCount(contract: MissionOutputContract): number {
+    const value = contract.expected?.minimum_count
+    return typeof value === 'number' && Number.isInteger(value) && value > 1 ? value : 1
+  }
+  private minimumCountFailure(
+    contract: MissionOutputContract,
+    foundCount: number,
+    minimumCount: number,
+  ): MissionContractVerificationResult {
+    return {
+      ok: false,
+      reason: `Found ${foundCount} matching ${contract.required_artifact_type} deliverables, expected at least ${minimumCount}`,
+      expected_action: contract.required_action,
+      expected_artifact_type: contract.required_artifact_type,
+      recovery: 'corrective_run',
+    }
   }
 
   private async evaluateAndVerifyDeliverable(

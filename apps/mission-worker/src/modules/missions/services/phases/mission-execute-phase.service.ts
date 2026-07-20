@@ -1213,7 +1213,7 @@ export class MissionExecutePhaseService {
       '',
       'SUCCESS RESPONSE (when subtask is completed):',
       'Respond with ONLY valid JSON (no markdown, no backticks):',
-      '{ "content": "short internal summary of what you did", "summary": "brief summary", "memory_update": "", "assertion_evidence": [{"assertion_key":"A-001","evidence":"specific proof from the created output","artifact_refs":["deliverable_id or tool action"]}], "artifact_manifest": [{"deliverable_id":"uuid","action":"save_document|create_pdf|create_docx|generate_image|generate_video|create_offer|create_funnel|create_website|create_presentation|create_sequence|create_blog_post|create_social_post|create_ad|create_avatar","type":"doc|pdf|file|image|video|offer|funnel|website|presentation|sequence|blog_post|social_post|ad|avatar","title":"artifact title","file_url":"optional"}] }',
+      '{ "content": "short internal summary of what you did", "summary": "brief summary", "memory_update": "", "assertion_evidence": [{"assertion_key":"A-001","evidence":"specific proof from the created output","artifact_refs":["deliverable_id or tool action"]}], "artifact_manifest": [{"deliverable_id":"uuid","action":"save_document|create_pdf|create_docx|generate_image|generate_video|process_media|create_offer|create_funnel|create_website|create_presentation|create_sequence|create_blog_post|create_social_post|create_ad|create_avatar","type":"doc|pdf|file|image|video|offer|funnel|website|presentation|sequence|blog_post|social_post|ad|avatar","title":"artifact title","file_url":"optional"}] }',
     ].join('\n')
 
     const intentBlock = hasIntent

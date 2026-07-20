@@ -538,6 +538,7 @@ const PROCESS_MEDIA_OPERATIONS = new Set([
   'silence_remove',
   'frame_extract',
   'waveform',
+  'render_validate_messaging',
 ])
 
 const AUDIO_EFFECTS = new Set([
@@ -572,6 +573,36 @@ function validateProcessMediaPreflight(
   }
 
   if (operation === 'probe') return requireString(data, 'url')
+  if (operation === 'render_validate_messaging') {
+    if (!Array.isArray(data.lines) || data.lines.length === 0 || data.lines.length > 8) {
+      return failure('render_validate_messaging requires 1 to 8 lines')
+    }
+    if (!/^#[0-9a-f]{6}$/i.test(stringValue(data.brand_color))) {
+      return failure('brand_color must be a six-digit hex color')
+    }
+    for (const field of ['brand_bg_light', 'brand_bg_dark'] as const) {
+      const value = stringValue(data[field])
+      if (value && !/^#[0-9a-f]{6}$/i.test(value)) {
+        return failure(`${field} must be a six-digit hex color when provided`)
+      }
+    }
+    const invalidIndex = data.lines.findIndex((input) => {
+      if (!input || typeof input !== 'object' || Array.isArray(input)) return true
+      const line = input as Record<string, unknown>
+      const text = stringValue(line.text)
+      const highlight = stringValue(line.highlight)
+      return (
+        !/^if\s+(?:you(?:'ve|'re| are)|your)\b/i.test(text) ||
+        !highlight ||
+        !text.toLowerCase().includes(highlight.toLowerCase())
+      )
+    })
+    return invalidIndex === -1
+      ? null
+      : failure(
+          `lines[${invalidIndex}] must contain identity-callout text and an exact highlight substring`,
+        )
+  }
   if (operation === 'trim')
     return requireString(data, 'url') ?? requirePositiveNumber(data, 'duration_seconds')
   if (operation === 'concat') return requireInputs(data, 2)

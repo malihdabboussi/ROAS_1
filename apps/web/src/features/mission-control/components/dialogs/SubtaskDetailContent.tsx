@@ -23,9 +23,9 @@ interface SubtaskDetailContentProps {
   feedback: string
   approving: boolean
   sendingFeedback: boolean
-  onFeedbackChange: (value: string) => void
   onRequestChanges: () => void
   onApprove: () => void
+  onSelectDeliverable: (deliverable: MissionDeliverable) => void
   accessApprovalCard?: ReactNode
   /** Desktop puts the gate panel in the right sidebar; mobile keeps it inline. */
   showHumanGateInline?: boolean
@@ -41,9 +41,9 @@ export function SubtaskDetailContent({
   feedback,
   approving,
   sendingFeedback,
-  onFeedbackChange,
   onRequestChanges,
   onApprove,
+  onSelectDeliverable,
   accessApprovalCard,
   showHumanGateInline = true,
 }: SubtaskDetailContentProps) {
@@ -101,9 +101,9 @@ export function SubtaskDetailContent({
             feedback={feedback}
             approving={approving}
             sendingFeedback={sendingFeedback}
-            onFeedbackChange={onFeedbackChange}
             onRequestChanges={onRequestChanges}
             onApprove={onApprove}
+            onSelectDeliverable={onSelectDeliverable}
           />
         ) : null}
 

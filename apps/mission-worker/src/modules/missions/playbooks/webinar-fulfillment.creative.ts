@@ -40,14 +40,19 @@ export function addWebinarCreativeProduction(input: {
         why: 'Turn locked Validate Messaging lines into editable static creative.',
         story: 'Lux builds the non-generative text-led creative lane before ad assembly.',
         sensory:
-          'One native visual Doc shows every locked line as editable HTML in the approved brand system.',
-        endState: `"${WEBINAR_FLOW_DOCS.validateMessagingStatics}" exists as an editable native visual Doc linked to this subtask.`,
-        ecology: `Call list_themes, load the active campaign Theme with get_theme, and use its verified logo, colors, fonts, brand identity, and design settings. Block with the exact missing Theme fields if no active Theme exists. Load roas-ad-design. Use the approved Validate Messaging lines verbatim. Save one native Doc titled "${WEBINAR_FLOW_DOCS.validateMessagingStatics}", then call generate_visual_html on that Doc so the light, dark, and bold cuts remain editable in the Space. Do not call create_ad yet. Do not render PNGs, save PDFs, or leave loose files.`,
+          'Every locked identity-callout line appears as three individually reviewable 4:5 images: light, dark, and bold.',
+        endState:
+          'Every Validate Messaging cut exists as a numbered native image Deliverable in Space Media.',
+        ecology: `Load the active Theme with list_themes/get_theme; block if required colors or fonts are absent. Load roas-ad-design. Read only the VALIDATE MESSAGING SET in "${WEBINAR_FLOW_DOCS.copyPackage}"; never substitute headlines, overlays, or proof claims. Each line must start with "If you've", "If you're", "If you are", or "If your"; block on invalid source copy. Call process_media once with operation render_validate_messaging, the verified Theme colors, and every line's exact text, highlight phrase, and optional factual stamp. The server renders light, dark, and bold PNGs and registers each PNG in Space Media. Do not call generate_visual_html, save_document, generate_image, or create_ad.`,
       }),
-      outputContract: docContract(WEBINAR_FLOW_DOCS.validateMessagingStatics),
+      outputContract: imageContract({
+        requiredAction: 'process_media',
+        source: WEBINAR_FLOW_DOCS.copyPackage,
+        minimumCount: 3,
+      }),
     },
     'creative',
-    'Lux created editable Validate Messaging statics in a native visual Doc.',
+    'Lux rendered the Validate Messaging statics as native image Deliverables.',
   )
 
   add(
@@ -164,7 +169,7 @@ export function addWebinarCreativeProduction(input: {
             'Every asset is visible with its source copy or brief, and feedback names the exact asset and change.',
           endState: 'The approved creative set is ready for Blaze to assemble into Meta ads.',
           ecology:
-            'Review the Validate Messaging visual Doc and every generated image Deliverable. Approve the assets to continue, or request revisions by asset name with exact feedback. This gate does not publish or launch ads.',
+            'Review every numbered Validate Messaging static and generated concept image Deliverable inline. Open image briefs or copy documents only when source detail is needed. Approve the assets to continue, or request revisions by numbered asset name with exact feedback. This gate does not publish or launch ads.',
         }),
       },
       'compliance',

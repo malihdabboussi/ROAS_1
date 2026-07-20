@@ -278,10 +278,7 @@ function collectCandidateRecords(result: unknown): Array<Record<string, unknown>
   return records
 }
 
-function firstString(
-  records: Array<Record<string, unknown> | undefined>,
-  keys: string[],
-): string {
+function firstString(records: Array<Record<string, unknown> | undefined>, keys: string[]): string {
   for (const record of records) {
     if (!record) continue
     for (const key of keys) {
@@ -292,13 +289,9 @@ function firstString(
   return ''
 }
 
-const MEDIA_ASSET_UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const MEDIA_ASSET_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-function firstUuid(
-  records: Array<Record<string, unknown> | undefined>,
-  keys: string[],
-): string {
+function firstUuid(records: Array<Record<string, unknown> | undefined>, keys: string[]): string {
   for (const record of records) {
     if (!record) continue
     for (const key of keys) {
@@ -359,8 +352,14 @@ function buildMediaAssetBlock(input: {
   const spaceId = firstUuid(records, ['space_id', 'spaceId'])
   const mimeType = firstString(records, ['mime_type', 'mimeType', 'content_type', 'contentType'])
   const title =
-    firstString(records, ['title', 'name', 'file_name', 'filename', 'original_filename', 'label']) ||
-    input.defaultTitle
+    firstString(records, [
+      'title',
+      'name',
+      'file_name',
+      'filename',
+      'original_filename',
+      'label',
+    ]) || input.defaultTitle
   const fileName = firstString(records, ['file_name', 'filename', 'original_filename'])
   const prompt = firstString(records, ['prompt', 'source_prompt'])
   const kind = inferMediaKind(input.defaultKind, mimeType, url)
@@ -379,6 +378,46 @@ function buildMediaAssetBlock(input: {
       ...(prompt ? { prompt } : {}),
     },
   ]
+}
+
+function buildRegisteredImageBlocks(
+  result: unknown,
+  data: Record<string, unknown>,
+): Array<Record<string, unknown>> {
+  const envelope = parseCampaignToolTextEnvelope(result)
+  const payload = envelope ?? (isRecord(result) ? result : null)
+  if (
+    !payload ||
+    payload.operation !== 'render_validate_messaging' ||
+    !Array.isArray(payload.media_assets)
+  ) {
+    return []
+  }
+  const requestedInputs = Array.isArray(data.inputs) ? data.inputs : []
+  const spaceId = firstString([payload, data], ['space_id', 'spaceId'])
+
+  return payload.media_assets.flatMap((entry, index) => {
+    if (!isRecord(entry)) return []
+    const url = firstString([entry], ['url', 'public_url', 'signed_url'])
+    if (!url) return []
+    const requested = isRecord(requestedInputs[index]) ? requestedInputs[index] : undefined
+    const mediaAssetId = firstUuid([entry], ['media_asset_id', 'mediaAssetId', 'id'])
+    const title =
+      firstString([entry, requested], ['name', 'title']) || `Rendered image ${index + 1}`
+    const prompt = firstString([requested, entry], ['source_prompt', 'prompt'])
+    return [
+      {
+        type: 'media_asset',
+        id: mediaAssetId ? `media-${mediaAssetId}` : `media-process-media-${index}`,
+        url,
+        title,
+        kind: 'image',
+        ...(mediaAssetId ? { mediaAssetId } : {}),
+        ...(spaceId ? { spaceId } : {}),
+        ...(prompt ? { prompt } : {}),
+      },
+    ]
+  })
 }
 
 function buildArtifactPreviewBlock(input: {
@@ -442,6 +481,8 @@ function buildActionOutputBlocks(
   data: Record<string, unknown>,
 ): Array<Record<string, unknown>> {
   if (action === 'process_media') {
+    const registeredImages = buildRegisteredImageBlocks(result, data)
+    if (registeredImages.length > 0) return registeredImages
     return buildMediaAssetBlock({
       action,
       data,

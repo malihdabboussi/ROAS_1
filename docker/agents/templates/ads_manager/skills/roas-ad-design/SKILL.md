@@ -1,64 +1,47 @@
 ---
 name: roas-ad-design
-description: Builds editable Validate Messaging static creatives as native HTML visual Docs. Use for text-led Meta statics built from approved identity-callout lines. Produces light, dark, and bold cuts without generating images or creating native ad records. Do not use for photographic concepts (roas-image-brief plus generate_image), ad copy (roas-ad-copy), or final ad assembly (ad-builder plus create_ad).
+description: Renders the visual half of Validate Messaging ads as deterministic light, dark, and bold PNG cuts. Use after roas-ad-copy has produced approved identity-callout lines. Do not use for photographic concepts, ad copy, or final native ad assembly.
 ---
 
-# ROAS Ad Design — editable Validate Messaging statics
+# ROAS Ad Design — deterministic Validate Messaging statics
 
-Turn locked Validate Messaging lines into an editable native visual Doc. This is the non-generative creative lane: HTML remains reviewable and editable in the Space before a media buyer assembles approved assets into native ads.
+Turn the clearly labeled Validate Messaging lines from `roas-ad-copy` into finished Meta creative. The words are the creative: one identity-callout line, one emphasized phrase, and an optional factual event stamp.
 
-## Inputs
+Use the deterministic `process_media` Validate Messaging renderer. It reproduces the reference system server-side without moving rendered image bytes through the model context. Do not rebuild the look in HTML, a presentation, a visualizer, or an image-generation model. Read `references/design-system.md` before rendering.
 
-1. Approved Validate Messaging lines from the Copy Package. Copy stays verbatim.
-2. The identity phrase to emphasize in each line.
-3. Campaign theme: brand accent color, light surface, dark surface, and typography.
-4. Optional factual event stamp: offer, date, and `LIVE ON ZOOM`.
+## Source lock
 
-Do not ask for or add a client logo. Do not invent dates, claims, or scarcity.
+Read only the clearly labeled `VALIDATE MESSAGING SET` from the approved Copy Package. Do not substitute generic ad headlines, overlay copy, proof claims, or webinar topics.
 
-## Workflow
+Every line must begin with an identity callout such as:
 
-### 1. Plan the set
+- `If you've ...`
+- `If you're ...`
+- `If you are ...`
+- `If your ...`
 
-Produce three cuts per locked line:
+If that section is absent or the lines do not follow the identity-callout structure, stop and identify the missing copy instead of inventing replacements.
 
-- Light: light editorial surface with the campaign accent on the identity phrase.
-- Dark: dark premium surface with the same accent treatment.
-- Bold: neutral, high-contrast typographic cut without campaign color.
+## Rules
 
-Each cut is a 4:5 feed composition. Keep one message, one emphasized phrase, and an optional factual event stamp.
+1. Render three cuts per line: light, dark, and bold.
+2. Light and dark use the verified campaign accent color. Bold stays neutral.
+3. Copy is verbatim. Never rewrite, shorten, add punctuation, or add an em dash.
+4. Use no client logo. The only allowed logo is the official Zoom logo inside a factual live-event stamp.
+5. Use one line, one highlighted identity phrase, and one optional stamp. No photos, app chrome, badges, or decorative clutter.
 
-### 2. Save the native Doc first
+## Render and register in Vibey
 
-Call `save_document` with the exact mission title, normally `WEB#6 — Validate Messaging Statics`. Include:
+In Vibey, the PNGs must become native image Deliverables, not a Doc or Presentation:
 
-- the source line and source section for every creative;
-- a short index of line number × cut;
-- the final locked copy;
-- any factual event stamp;
-- review notes and open flags.
+1. Call `process_media` once with `operation: "render_validate_messaging"`.
+2. Pass the verified Theme `brand_color` and one ordered `lines` item per approved source line.
+3. Each line item contains exact `text`, an exact `highlight` substring, and an optional factual `stamp`.
+4. The server creates `Static 1 — Light`, `Static 1 — Dark`, `Static 1 — Bold`, then continues by line number.
+5. Confirm every expected image appears in Space Media and the mission Deliverables before completing.
 
-Save as soon as the content is ready so work remains visible even if a later visual action fails.
+Do not call `generate_visual_html`, `save_document`, `generate_image`, or `create_ad` in this step. Final ad assembly happens only after the creative gate.
 
-### 3. Generate editable visual HTML
+## Handoff
 
-Call `generate_visual_html` on the saved Doc item. Build every cut in the same visual document. The HTML must:
-
-Each line spec sets `text` (verbatim), `highlight`, optional `stamp` (`"LIVE ON"` gets the Zoom logo), `size`, `brand_color`, optional `brand_bg_light` / `brand_bg_dark`, and `out_prefix`. The engine produces `{prefix}_light.png`, `{prefix}_dark.png`, `{prefix}_bold.png` — light/dark branded, bold neutral. Write outputs to `/mnt/user-data/outputs/`.
-
-### 4. Verify and hand off
-
-Open the Doc and confirm every expected line and cut is visible. Return the Doc as the deliverable and name any missing source fact as an open flag. Do not call `create_ad`; native ad assembly happens only after creative approval.
-
-## Hard rules
-
-- Copy is verbatim. Never rewrite, shorten, or add punctuation.
-- Three cuts per line by default: light, dark, bold.
-- Native Doc plus editable visual HTML only. No PNG renderer, PDF, or loose file export.
-- Register the Doc before the visual pass so partial work is recoverable.
-- Photographic or illustrative concepts go to `roas-image-brief` and `generate_image`.
-- Final copy-and-asset pairing goes to `ad-builder` and `create_ad` after approval.
-
-## Handoff chain
-
-`roas-ad-copy` → `roas-ad-design` editable statics + `roas-image-brief` generated-image lane → human creative approval → `ad-builder` / `create_ad` → media plan.
+`roas-ad-copy` → deterministic PNG cuts → human creative approval → `ad-builder` / `create_ad` → media plan.

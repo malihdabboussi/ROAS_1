@@ -319,7 +319,7 @@ describe('MissionDetailModal', () => {
       />,
     )
 
-    fireEvent.change(screen.getByPlaceholderText('Describe exactly what should change...'), {
+    fireEvent.change(screen.getByPlaceholderText('Message Vibey...'), {
       target: { value: 'Revise the pricing section.' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Request changes' }))
