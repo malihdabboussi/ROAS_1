@@ -410,3 +410,13 @@ Why: The prior production fix widened only one of two duplicated filters, leavin
 Impact: Removes the production build blocker without changing calendar behavior and prevents the two loading paths from drifting again.
 
 Files: `useSpaceCalendarExternalEvents.ts`, focused regression test.
+
+## [2026-07-20 19:35] - [FIX]
+
+What: Fathom webhook ingest no longer silently drops recordings that arrive without a transcript. Missing transcripts are fetched via the Fathom API when possible; Meetings space automation still runs even if transcript remains empty (brain import / customer routing stay transcript-gated).
+
+Why: Shared team recordings (`shared_team_recordings`) often omit transcript in the webhook body. The early return prevented Meetings call rows — and therefore the Slack follow-up agent loop — from ever starting for teammate-hosted calls.
+
+Impact: Team Fathom webhooks can land in All Meetings without waiting on transcript payload. Requires API deploy. Historical missing calls need a separate backfill if Fathom does not re-deliver.
+
+Files: `fathom-webhook.service.ts`, Fathom controller webhook tests, `spaces-automation.md`, `meeting-follow-up-slack.md`.

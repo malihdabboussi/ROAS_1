@@ -1,10 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
-import {
-  buildInteractionDedupeKey,
-  CUSTOMER_INTERACTION_ROUTE_EVENT,
-} from '@vibey/api-shared'
-import { CustomerBrainService } from '../../../brain/services/customer-brain.service'
+import { buildInteractionDedupeKey, CUSTOMER_INTERACTION_ROUTE_EVENT } from '@vibey/api-shared'
 import { BrainImportJobsService } from '../../../brain/services/brain-import-jobs.service'
+import { CustomerBrainService } from '../../../brain/services/customer-brain.service'
 import { SpaceAutomationService } from '../../../spaces/services/space-automation.service'
 import { FathomRepository } from '../repositories/fathom.repository'
 import { FathomApiService } from './fathom-api.service'
@@ -83,24 +80,6 @@ export class FathomWebhookService {
       return
     }
 
-    const transcript = (event as any).transcript as
-      | Array<{
-          speaker?: { display_name?: string; name?: string }
-          text?: string
-          timestamp?: string
-        }>
-      | undefined
-    if (!transcript || !Array.isArray(transcript) || transcript.length === 0) {
-      this.logger.error(
-        `[FATHOM-DEBUG] FAILED: No transcript in payload. transcript field type: ${typeof (event as any).transcript}, value: ${JSON.stringify((event as any).transcript)?.slice(0, 200)}`,
-      )
-      return
-    }
-
-    this.logger.warn(
-      `[FATHOM-DEBUG] Transcript entries: ${transcript.length}, first entry sample: ${JSON.stringify(transcript[0]).slice(0, 200)}`,
-    )
-
     const title = ((event as any).title ||
       (event as any).meeting_title ||
       'Untitled Meeting') as string
@@ -111,27 +90,104 @@ export class FathomWebhookService {
         `fathom-${Date.now()}`,
     )
 
-    this.logger.warn(`[FATHOM-DEBUG] Resolved meetingId=${meetingId}, title=${title}`)
-    this.logger.warn(`[FATHOM-DEBUG] Queueing fathom import for meetingId=${meetingId}`)
-
-    try {
-      const queued = await this.importJobs.enqueueFathomMeetingImport(
-        userId,
-        event,
-        autoIngestSettings.billingScope === 'org' ? autoIngestSettings.billingOrgId : null,
+    const hasTranscript = await this.ensureTranscriptOnEvent(userId, event, meetingId)
+    if (hasTranscript) {
+      const transcript = event.transcript as unknown[]
+      this.logger.warn(
+        `[FATHOM-DEBUG] Transcript entries: ${transcript.length}, first entry sample: ${JSON.stringify(transcript[0]).slice(0, 200)}`,
       )
-      this.logger.warn(`[FATHOM-DEBUG] Queued fathom import job=${queued.jobId}`)
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      const stack = err instanceof Error ? err.stack : ''
-      this.logger.error(`[FATHOM-DEBUG] Queue enqueue THREW: ${msg}`, stack)
+      this.logger.warn(`[FATHOM-DEBUG] Resolved meetingId=${meetingId}, title=${title}`)
+      this.logger.warn(`[FATHOM-DEBUG] Queueing fathom import for meetingId=${meetingId}`)
+      try {
+        const queued = await this.importJobs.enqueueFathomMeetingImport(
+          userId,
+          event,
+          autoIngestSettings.billingScope === 'org' ? autoIngestSettings.billingOrgId : null,
+        )
+        this.logger.warn(`[FATHOM-DEBUG] Queued fathom import job=${queued.jobId}`)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        const stack = err instanceof Error ? err.stack : ''
+        this.logger.error(`[FATHOM-DEBUG] Queue enqueue THREW: ${msg}`, stack)
+      }
+      await this.enqueueCustomerBrainRoute(userId, event, meetingId, autoIngestSettings)
+    } else {
+      this.logger.warn(
+        `[FATHOM-DEBUG] No transcript for meetingId=${meetingId} title=${title}; continuing Meetings space route without brain import`,
+      )
     }
 
     // Only learn owner alternate emails — never absorb teammate recorded_by hosts
     // (shared_team_recordings), or every Team call would be labeled Personal.
     await this.captureFathomAlias(userId, (event as any).recorded_by)
-    await this.enqueueCustomerBrainRoute(userId, event, meetingId, autoIngestSettings)
+    // Meetings call rows must still land for shared_team recordings even when
+    // Fathom omits transcript from the webhook body (Slack follow-up is downstream).
     await this.processSpaceAutomationRoute(userId, event)
+  }
+
+  private readTranscriptEntries(event: Record<string, unknown>): Array<{
+    speaker?: { display_name?: string; name?: string }
+    text?: string
+    timestamp?: string
+  }> | null {
+    const transcript = event.transcript
+    if (!Array.isArray(transcript) || transcript.length === 0) return null
+    return transcript as Array<{
+      speaker?: { display_name?: string; name?: string }
+      text?: string
+      timestamp?: string
+    }>
+  }
+
+  private resolveRecordingId(event: Record<string, unknown>, meetingId: string): string | null {
+    const raw =
+      (event as any).recording_id ?? (event as any).id ?? (event as any).call_id ?? meetingId
+    if (raw == null || raw === '') return null
+    return String(raw)
+  }
+
+  /**
+   * Shared-team webhooks often arrive without `transcript` even when
+   * include_transcript=true. Fetch via API when possible; return whether the
+   * event now has a non-empty transcript array.
+   */
+  private async ensureTranscriptOnEvent(
+    userId: string,
+    event: Record<string, unknown>,
+    meetingId: string,
+  ): Promise<boolean> {
+    if (this.readTranscriptEntries(event)) return true
+
+    const recordingId = this.resolveRecordingId(event, meetingId)
+    if (!recordingId) {
+      this.logger.warn(
+        `[FATHOM-DEBUG] No transcript in payload and no recording id to fetch (meetingId=${meetingId})`,
+      )
+      return false
+    }
+
+    this.logger.warn(
+      `[FATHOM-DEBUG] Payload missing transcript; fetching recording ${recordingId} via Fathom API`,
+    )
+    try {
+      const admin = this.repository.getServiceClient()
+      const result = await this.api.getRecordingTranscript(admin, userId, recordingId)
+      const fetched = Array.isArray(result?.transcript) ? result.transcript : []
+      if (fetched.length === 0) {
+        this.logger.warn(
+          `[FATHOM-DEBUG] Fathom API returned empty transcript for recording ${recordingId}`,
+        )
+        return false
+      }
+      event.transcript = fetched
+      return true
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      this.logger.warn(
+        `[FATHOM-DEBUG] Transcript fetch failed for recording ${recordingId}: ${msg}`,
+      )
+      return false
+    }
   }
 
   private async processSpaceAutomationRoute(

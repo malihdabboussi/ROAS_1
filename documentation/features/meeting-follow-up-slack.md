@@ -28,8 +28,10 @@ First production loop for the always-aware Slack agent: Fathom call lands in Mee
 ## Intended product loop
 
 ```text
-Fathom recording ready
-  → Meetings space item (call)
+Fathom recording ready (my_recordings OR shared_team_recordings)
+  → webhook resolves owner by webhook secret
+  → optional transcript hydrate via Fathom API if payload omitted it
+  → Meetings space item (call)  ← required; Slack loop never starts without this
   → agent_suggest_tasks (follow-ups with suggested owners)
   → Pixel + post-call-delivery skill drafts once
   → store the exact recap in the Shadow ledger
@@ -41,6 +43,8 @@ Fathom recording ready
   → (later) share to channel / attendees
   → (later) optional Page Grader send
 ```
+
+Team meetings (teammate-hosted Fathom recordings shared to your plan) use the same path. Pixel/Slack follow-up is downstream of the Meetings call row — if the webhook never creates that row, no Slack agent work runs.
 
 ## Agent strategy (Pixel / internal `vibey`)
 

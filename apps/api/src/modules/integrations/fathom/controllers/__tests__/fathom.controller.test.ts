@@ -354,6 +354,7 @@ describe('FathomController behavior', () => {
       billingScope: 'org',
       billingOrgId: 'org_1',
     })
+    api.getRecordingTranscript.mockResolvedValue({ transcript: [] })
     customerBrain.listEnabledCustomerBrainsForRouting.mockResolvedValue([
       { id: 'cb-1', owner_id: 'user_org', org_id: 'org_1', cortex_max: true },
     ])
@@ -363,6 +364,78 @@ describe('FathomController behavior', () => {
     await webhookService.processWebhookAsync(JSON.stringify(event), 'whsec_env')
 
     expect(adminMock.upserts.filter((u) => u.table === 'brain_ops_outbox')).toHaveLength(0)
+    expect(importJobs.enqueueFathomMeetingImport).not.toHaveBeenCalled()
+    expect(spaceAutomation.processFathomRecordingEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      'user_org',
+      expect.objectContaining({ id: 'meeting_no_transcript' }),
+    )
+  })
+
+  it('still routes Meetings space automation for shared-team webhooks without transcript', async () => {
+    api.resolveUserByWebhookSecret.mockResolvedValue('user_dylan')
+    api.getAutoIngestSettings.mockResolvedValue({
+      autoIngest: true,
+      billingScope: 'personal',
+      billingOrgId: null,
+    })
+    api.getRecordingTranscript.mockRejectedValue(new Error('transcript not ready'))
+
+    const event = {
+      id: 'rec_team_1',
+      recording_id: 'rec_team_1',
+      title: 'Teammate hosted standup',
+      recorded_by: { email: 'nate@example.com', name: 'Nate' },
+    }
+
+    await webhookService.processWebhookAsync(JSON.stringify(event), 'whsec_team')
+
+    expect(api.getRecordingTranscript).toHaveBeenCalledWith(
+      expect.anything(),
+      'user_dylan',
+      'rec_team_1',
+    )
+    expect(importJobs.enqueueFathomMeetingImport).not.toHaveBeenCalled()
+    expect(spaceAutomation.processFathomRecordingEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      'user_dylan',
+      expect.objectContaining({ id: 'rec_team_1' }),
+    )
+  })
+
+  it('hydrates missing transcript from Fathom API before brain import', async () => {
+    api.resolveUserByWebhookSecret.mockResolvedValue('user_dylan')
+    api.getAutoIngestSettings.mockResolvedValue({
+      autoIngest: true,
+      billingScope: 'personal',
+      billingOrgId: null,
+    })
+    api.getRecordingTranscript.mockResolvedValue({
+      transcript: [{ speaker: { display_name: 'Nate' }, text: 'hello team', timestamp: '1' }],
+    })
+    importJobs.enqueueFathomMeetingImport.mockResolvedValue({
+      jobId: 'job-hydrated',
+      status: 'queued',
+      deduped: false,
+    })
+
+    const event = {
+      id: 'rec_hydrate_1',
+      title: 'Shared team call',
+      recorded_by: { email: 'nate@example.com', name: 'Nate' },
+    }
+
+    await webhookService.processWebhookAsync(JSON.stringify(event), 'whsec_hydrate')
+
+    expect(importJobs.enqueueFathomMeetingImport).toHaveBeenCalledWith(
+      'user_dylan',
+      expect.objectContaining({
+        id: 'rec_hydrate_1',
+        transcript: [expect.objectContaining({ text: 'hello team' })],
+      }),
+      null,
+    )
+    expect(spaceAutomation.processFathomRecordingEvent).toHaveBeenCalled()
   })
 
   it('does not resolve webhook payload to the first connected Fathom account', async () => {
