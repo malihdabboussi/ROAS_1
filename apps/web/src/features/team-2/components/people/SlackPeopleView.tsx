@@ -50,7 +50,7 @@ export function SlackPeopleView() {
     createProposal,
     reviewAction,
     sendAction,
-    reload,
+    refresh,
   } = useSlackPeople()
   const peopleById = new Map(people.map((person) => [person.id, person]))
   const selectedPerson = selectedPersonId ? (peopleById.get(selectedPersonId) ?? null) : null
@@ -167,7 +167,11 @@ export function SlackPeopleView() {
             </div>
             <button
               type="button"
-              onClick={() => void reload()}
+              onClick={() =>
+                void refresh()
+                  .then(() => toast.success(SLACK_PEOPLE_MESSAGES.REFRESH_SUCCESS))
+                  .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.REFRESH_ERROR))
+              }
               className="button-compact button-glass-neutral"
             >
               <RefreshCw className="icon-xs" /> Refresh Slack

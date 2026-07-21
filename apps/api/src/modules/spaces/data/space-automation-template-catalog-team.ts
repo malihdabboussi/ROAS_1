@@ -10,7 +10,7 @@ function teamLoopTemplate(input: {
   key: string
   title: string
   description: string
-  kind: 'brain_compounding' | 'workflow_discovery' | 'unanswered_questions' | 'client_risk'
+  kind: 'all'
   order: number
 }): SpaceAutomationTemplateSeed {
   return {
@@ -23,10 +23,10 @@ function teamLoopTemplate(input: {
     sort_order: input.order,
     title: input.title,
     description: input.description,
-    badge: 'Starts in Shadow',
+    badge: 'Runs in Shadow',
     body: {
       name: input.title,
-      enabled: false,
+      enabled: true,
       trigger: TEAM_SCHEDULE,
       actions: [
         {
@@ -36,7 +36,7 @@ function teamLoopTemplate(input: {
           channel_ids: [],
           person_ids: [],
           lookback_minutes: 30,
-          daily_limit: 10,
+          daily_limit: 40,
           quiet_hours: {
             start: '22:00',
             end: '07:00',
@@ -50,35 +50,11 @@ function teamLoopTemplate(input: {
 
 export const TEAM_AUTOMATION_TEMPLATES: SpaceAutomationTemplateSeed[] = [
   teamLoopTemplate({
-    key: 'slack-person-brain-compounding',
-    title: 'Slack Person Brain Compounding',
+    key: 'slack-team-observation',
+    title: 'Slack Team Intelligence',
     description:
-      'Observes explicit Slack evidence and prepares durable Person Brain memories for the people involved.',
-    kind: 'brain_compounding',
+      'Observes Slack once, then routes Person Brain facts, workflow opportunities, unanswered questions, and client risks into reviewable Shadow proposals.',
+    kind: 'all',
     order: 600,
-  }),
-  teamLoopTemplate({
-    key: 'slack-workflow-discovery',
-    title: 'Slack Workflow Discovery',
-    description:
-      'Finds repeated manual work in Slack and creates reviewable automation opportunities with evidence.',
-    kind: 'workflow_discovery',
-    order: 610,
-  }),
-  teamLoopTemplate({
-    key: 'slack-unanswered-questions',
-    title: 'Slack Unanswered Questions',
-    description:
-      'Finds direct questions that appear unanswered and drafts a safe follow-up for review.',
-    kind: 'unanswered_questions',
-    order: 620,
-  }),
-  teamLoopTemplate({
-    key: 'slack-client-risk',
-    title: 'Slack Stalled Commitments & Client Risk',
-    description:
-      'Surfaces explicit blockers, missed commitments, client dissatisfaction, and delivery risk with source evidence.',
-    kind: 'client_risk',
-    order: 630,
   }),
 ]

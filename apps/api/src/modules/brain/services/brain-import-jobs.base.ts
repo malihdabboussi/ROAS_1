@@ -129,6 +129,11 @@ export abstract class BrainImportJobsBase {
     return this.moduleRef.get(SlackSenderResolverService, { strict: false })
   }
 
+  protected getSlackObservationService() {
+    const { SlackObservationService } = require('../../slack/services/slack-observation.service')
+    return this.moduleRef.get(SlackObservationService, { strict: false })
+  }
+
   protected getCustomerBrainService() {
     const { CustomerBrainService } = require('./customer-brain.service')
     return this.moduleRef.get(CustomerBrainService, { strict: false })

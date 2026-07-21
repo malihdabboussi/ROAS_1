@@ -15,12 +15,15 @@ import { SlackWebhookController } from './controllers/slack-webhook.controller'
 import { SlackController } from './controllers/slack.controller'
 import { SlackApiIntegration } from './integrations/slack-api.integration'
 import { SlackBrainMappingRepository } from './repositories/slack-brain-mapping.repository'
+import { SlackObservationRepository } from './repositories/slack-observation.repository'
 import { SlackPeopleBrainRepository } from './repositories/slack-people-brain.repository'
+import { SlackPeopleIndexRepository } from './repositories/slack-people-index.repository'
 import { SlackPeopleRepository } from './repositories/slack-people.repository'
 import { SlackRuntimeRepository } from './repositories/slack-runtime.repository'
 import { SlackRepository } from './repositories/slack.repository'
 import { SlackAgentToolsService } from './services/slack-agent-tools.service'
 import { SlackBrainMappingService } from './services/slack-brain-mapping.service'
+import { SlackObservationService } from './services/slack-observation.service'
 import { SlackPeopleService } from './services/slack-people.service'
 import { SlackSenderResolverService } from './services/slack-sender-resolver.service'
 import { SlackService } from './services/slack.service'
@@ -41,11 +44,14 @@ import { SlackService } from './services/slack.service'
     SlackService,
     SlackAgentToolsService,
     SlackBrainMappingService,
+    SlackObservationService,
     SlackPeopleService,
     SlackSenderResolverService,
     SlackRepository,
     SlackRuntimeRepository,
     SlackBrainMappingRepository,
+    SlackObservationRepository,
+    SlackPeopleIndexRepository,
     SlackPeopleRepository,
     SlackPeopleBrainRepository,
     SlackApiIntegration,
@@ -54,10 +60,12 @@ import { SlackService } from './services/slack.service'
     SlackService,
     SlackAgentToolsService,
     SlackBrainMappingService,
+    SlackObservationService,
     SlackSenderResolverService,
     SlackRepository,
     SlackRuntimeRepository,
     SlackBrainMappingRepository,
+    SlackObservationRepository,
     SlackPeopleRepository,
     SlackApiIntegration,
   ],

@@ -7686,3 +7686,25 @@ Files:
 - Evidence: External-member counts bring the repository to two lines below the enforced 400-line repository maximum.
 - Needed work: Extract the four team count queries into a focused counts repository before adding another team summary metric.
 - Why not now: The requested membership repair stays within the enforced limit; extracting all established count queries would broaden this database behavior change.
+## 2026-07-21 - [PERF] Batch Slack signal persistence and define ledger retention
+
+Status: Open
+Found while: Replacing duplicate Slack Team scans with the shared observation ledger
+Files:
+
+- `apps/api/src/modules/spaces/repositories/slack-team-loop.repository.ts`
+- `apps/api/src/modules/slack/services/slack-people.service.ts`
+- `public.slack_observation_events`
+
+Evidence: Slack retrieval and model analysis are now shared and incremental, but each accepted signal still performs its own evidence lookup and Person Brain memory dedupe/write. Person/channel detail activity intentionally performs a live Slack read when an administrator opens a conversation. The durable observation ledger does not yet have an explicit retention/archival policy.
+Needed work: Add bulk evidence-fingerprint lookup and bulk memory insert contracts, decide whether opened conversation timelines should read the ledger before live refresh, and establish admin-visible retention/deletion controls for observed Slack evidence.
+Reason not done now: The requested architectural class of repeated Slack downloads/model analysis is removed; these are the next database-write and data-governance optimizations and require their own behavior/retention decision.
+
+## 2026-07-21 - [ARCH] Split Slack service before adding more event workflows
+
+Status: Open
+Found while: Adding one-time Slack observation capture
+File: `apps/api/src/modules/slack/services/slack.service.ts`
+Evidence: The service is 599 LOC after the observation hook, one line below the 600 LOC backend service limit.
+Needed work: Extract OAuth/channel management or meeting follow-up event routing into a focused collaborator before adding another Slack workflow.
+Reason not done now: The requested observation hook is bounded and passes the enforced limit; decomposing established Slack OAuth and event behavior would broaden this production deployment.

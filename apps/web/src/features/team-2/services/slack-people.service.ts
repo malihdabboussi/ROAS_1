@@ -98,6 +98,14 @@ export function fetchSlackPeople() {
   }>('/api/integrations/slack/people')
 }
 
+export function refreshSlackPeople() {
+  return backendPost<{
+    connected: boolean
+    people: SlackDiscoveredPerson[]
+    portal_users?: SlackPortalUser[]
+  }>('/api/integrations/slack/people/refresh', {})
+}
+
 export function fetchSlackChannels() {
   return backendGet<{ connected: boolean; channels: SlackChannelSummary[] }>(
     '/api/integrations/slack/people/channels',

@@ -2,9 +2,9 @@ import { createHash } from 'node:crypto'
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { OpenRouterBillingClientService } from '../../provider-billing/services/openrouter-billing-client.service'
-import { SlackApiIntegration } from '../../slack/integrations/slack-api.integration'
 import { SlackPeopleRepository } from '../../slack/repositories/slack-people.repository'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
+import { SlackObservationService } from '../../slack/services/slack-observation.service'
 import { SlackTeamLoopRepository } from '../repositories/slack-team-loop.repository'
 
 export type SlackTeamLoopKind =
@@ -27,7 +27,14 @@ type SlackTeamSignal = {
   confidence: number
 }
 
-type SlackTeamAnalysis = { signals: SlackTeamSignal[] }
+type SlackTeamAnalysis = {
+  signals: SlackTeamSignal[]
+  modelCalls: number
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  providerCostUsd: number
+}
 
 type SlackPerson = {
   id: string
@@ -64,7 +71,7 @@ export class SlackTeamLoopService {
   constructor(
     private readonly peopleRepo: SlackPeopleRepository,
     private readonly loopRepo: SlackTeamLoopRepository,
-    private readonly slackApi: SlackApiIntegration,
+    private readonly observation: SlackObservationService,
     private readonly slackTools: SlackAgentToolsService,
     private readonly openRouter: OpenRouterBillingClientService,
   ) {}
@@ -88,6 +95,9 @@ export class SlackTeamLoopService {
 
     const integration = await this.peopleRepo.findOrgSlackIntegration(input.supabase, input.orgId)
     if (!integration) return { skipped: true, skipped_reason: 'slack_not_connected' }
+    const slackTeamId =
+      typeof integration.metadata.team_id === 'string' ? integration.metadata.team_id : ''
+    if (!slackTeamId) return { skipped: true, skipped_reason: 'slack_team_id_missing' }
 
     const people = (await this.peopleRepo.listPeople(input.supabase, input.orgId)) as SlackPerson[]
     const selectedPeople = input.personIds.length
@@ -95,39 +105,75 @@ export class SlackTeamLoopService {
       : people.filter((person) => person.relationship_kind !== 'ignored')
     const peopleBySlackId = new Map(selectedPeople.map((person) => [person.platform_id, person]))
 
-    const availableChannels = await this.slackApi.listConversations(integration.access_token)
-    const channels = availableChannels.filter(
-      (channel) =>
-        channel.is_member !== false &&
-        (input.channelIds.length === 0 || input.channelIds.includes(channel.id)),
-    )
-    const oldestTs = String((Date.now() - input.lookbackMinutes * 60_000) / 1000)
-    const observed: Array<{
-      channel_id: string
-      channel_name: string
-      ts: string
-      user: string
-      text: string
-    }> = []
-
-    for (const channel of channels) {
-      const messages = await this.slackApi.getChannelHistorySince(
-        integration.access_token,
-        channel.id,
-        oldestTs,
+    const reconciliation = await this.observation.reconcile({
+      supabase: input.supabase,
+      orgId: input.orgId,
+      slackTeamId,
+      botToken: integration.access_token,
+      channelIds: input.channelIds,
+      initialLookbackMinutes: input.lookbackMinutes,
+    })
+    const scopeFingerprint = createHash('sha256')
+      .update(
+        JSON.stringify({
+          channels: [...input.channelIds].sort(),
+          people: [...input.personIds].sort(),
+        }),
       )
-      for (const message of messages) {
-        const user = typeof message.user === 'string' ? message.user : ''
-        const text = typeof message.text === 'string' ? message.text.trim() : ''
-        const ts = typeof message.ts === 'string' ? message.ts : ''
-        if (!user || !text || !ts || message.bot_id) continue
-        if (input.personIds.length > 0 && !peopleBySlackId.has(user)) continue
-        observed.push({ channel_id: channel.id, channel_name: channel.name, ts, user, text })
-      }
-    }
+      .digest('hex')
+      .slice(0, 16)
+    const consumerKey = `slack_team:${scopeFingerprint}`
+    const pending = await this.observation.loadPendingEvents({
+      supabase: input.supabase,
+      orgId: input.orgId,
+      slackTeamId,
+      consumerKey,
+      initialLookbackMinutes: input.lookbackMinutes,
+      channelIds: input.channelIds,
+      senderSlackUserIds: input.personIds.length > 0 ? [...peopleBySlackId.keys()] : [],
+    })
+    const observed = pending.events
+      .filter(
+        (message) =>
+          Boolean(message.text.trim()) &&
+          (message.is_bot ||
+            input.personIds.length === 0 ||
+            peopleBySlackId.has(String(message.sender_slack_user_id))),
+      )
+      .map((message) => ({
+        channel_id: message.channel_id,
+        channel_name: message.channel_name,
+        ts: message.message_ts,
+        thread_ts: message.thread_ts,
+        user: message.is_bot
+          ? 'PIXEL_BOT'
+          : String(message.sender_slack_user_id ?? 'UNKNOWN_SENDER'),
+        text: message.text.trim(),
+      }))
+    const pendingLastMessageTs = pending.events.reduce(
+      (latest, message) =>
+        Number(message.message_ts) > Number(latest) ? message.message_ts : latest,
+      '',
+    )
 
     if (observed.length === 0) {
-      return { channels_observed: channels.length, messages_observed: 0, proposed: 0 }
+      if (pendingLastMessageTs) {
+        await this.observation.advanceConsumer({
+          supabase: input.supabase,
+          orgId: input.orgId,
+          slackTeamId,
+          consumerKey,
+          lastMessageTs: pendingLastMessageTs,
+        })
+      }
+      return {
+        channels_observed: reconciliation.channelsReconciled,
+        messages_observed: 0,
+        proposed: 0,
+        slack_requests: reconciliation.historyRequests + reconciliation.threadRequests + 1,
+        events_stored: reconciliation.eventsStored,
+        duplicates_skipped: reconciliation.duplicatesSkipped,
+      }
     }
 
     const workflowKey = `slack_team:${input.loopKind}`
@@ -141,7 +187,7 @@ export class SlackTeamLoopService {
     const remaining = Math.max(0, input.dailyLimit - usedToday)
     if (remaining === 0) {
       return {
-        channels_observed: channels.length,
+        channels_observed: reconciliation.channelsReconciled,
         messages_observed: observed.length,
         skipped: true,
         skipped_reason: 'daily_limit',
@@ -276,14 +322,33 @@ export class SlackTeamLoopService {
       }
     }
 
+    if (pendingLastMessageTs) {
+      await this.observation.advanceConsumer({
+        supabase: input.supabase,
+        orgId: input.orgId,
+        slackTeamId,
+        consumerKey,
+        lastMessageTs: pendingLastMessageTs,
+      })
+    }
+
     return {
-      channels_observed: channels.length,
+      channels_observed: reconciliation.channelsReconciled,
       messages_observed: observed.length,
+      messages_analyzed: observed.length,
       signals_detected: analysis.signals.length,
+      model_calls: analysis.modelCalls,
+      model_input_tokens: analysis.inputTokens,
+      model_output_tokens: analysis.outputTokens,
+      model_total_tokens: analysis.totalTokens,
+      provider_cost_usd: analysis.providerCostUsd,
       proposed,
       sent,
       memories_compounded: memoriesCompounded,
       daily_limit: input.dailyLimit,
+      slack_requests: reconciliation.historyRequests + reconciliation.threadRequests + 1,
+      events_stored: reconciliation.eventsStored,
+      duplicates_skipped: reconciliation.duplicatesSkipped,
     }
   }
 
@@ -309,12 +374,56 @@ export class SlackTeamLoopService {
     people: SlackPerson[]
     maxSignals: number
   }): Promise<SlackTeamAnalysis> {
+    const signals: SlackTeamSignal[] = []
+    let modelCalls = 0
+    let inputTokens = 0
+    let outputTokens = 0
+    let totalTokens = 0
+    let providerCostUsd = 0
+    for (let offset = 0; offset < input.messages.length; offset += 250) {
+      const remaining = input.maxSignals - signals.length
+      if (remaining <= 0) break
+      const batch = await this.analyzeBatch({
+        ...input,
+        messages: input.messages.slice(offset, offset + 250),
+        maxSignals: remaining,
+      })
+      signals.push(...batch.signals)
+      modelCalls += 1
+      inputTokens += batch.inputTokens
+      outputTokens += batch.outputTokens
+      totalTokens += batch.totalTokens
+      providerCostUsd += batch.providerCostUsd
+    }
+    return { signals, modelCalls, inputTokens, outputTokens, totalTokens, providerCostUsd }
+  }
+
+  private async analyzeBatch(input: {
+    userId: string
+    orgId: string
+    loopKind: SlackTeamLoopKind
+    instructions?: string
+    messages: Array<{
+      channel_id: string
+      channel_name: string
+      ts: string
+      user: string
+      text: string
+    }>
+    people: SlackPerson[]
+    maxSignals: number
+  }): Promise<{
+    signals: SlackTeamSignal[]
+    inputTokens: number
+    outputTokens: number
+    totalTokens: number
+    providerCostUsd: number
+  }> {
     const people = new Map(input.people.map((person) => [person.platform_id, person.display_name]))
     const transcript = input.messages
-      .slice(0, 300)
       .map(
         (message) =>
-          `[${message.channel_id}|#${message.channel_name}|${message.ts}] ${people.get(message.user) ?? message.user}: ${message.text.slice(0, 1200)}`,
+          `[${message.channel_id}|#${message.channel_name}|${message.ts}] ${message.user === 'PIXEL_BOT' ? 'Pixel (bot)' : (people.get(message.user) ?? message.user)}: ${message.text.slice(0, 1200)}`,
       )
       .join('\n')
     const completion = await this.openRouter.createChatCompletion({
@@ -332,6 +441,7 @@ export class SlackTeamLoopService {
               'Analyze recent Slack messages for a proactive team agent.',
               `Requested loop: ${input.loopKind}. Return at most ${input.maxSignals} high-confidence signals.`,
               'Only use explicit evidence in the messages. Do not infer private facts or invent commitments.',
+              'Pixel (bot) messages are reply context only. Never create a Person Brain fact about Pixel or target PIXEL_BOT.',
               'brain_memory: a durable fact about the named speaker that belongs in their Person Brain.',
               'workflow_discovery: a repeated manual process with a concrete automation proposal.',
               'unanswered_question: a direct question that appears unanswered in the supplied window.',
@@ -407,6 +517,12 @@ export class SlackTeamLoopService {
     ) {
       throw new Error('Slack team observation returned invalid analysis')
     }
-    return parsed as SlackTeamAnalysis
+    return {
+      signals: (parsed as { signals: SlackTeamSignal[] }).signals,
+      inputTokens: completion.usage?.input ?? 0,
+      outputTokens: completion.usage?.output ?? 0,
+      totalTokens: completion.usage?.totalTokens ?? 0,
+      providerCostUsd: completion.providerCostUsd ?? 0,
+    }
   }
 }

@@ -28,6 +28,8 @@ export const TEAM_OPS_DESK_MESSAGES = {
 
 export const SLACK_PEOPLE_MESSAGES = {
   LOAD_ERROR: 'Could not load your Slack people. Try again.',
+  REFRESH_ERROR: 'Could not refresh Slack. Try again.',
+  REFRESH_SUCCESS: 'Slack people and channels refreshed.',
   MODE_ERROR: 'Could not save that delivery mode.',
   CLASSIFICATION_ERROR: "I couldn't save that person type. Try again.",
   IDENTITY_CONFIRM_ERROR: "I couldn't confirm that match. Refresh and try again.",

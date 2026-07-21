@@ -43,6 +43,11 @@ export class SlackPeopleController {
     return this.people.listPeople(supabase, scope.orgId)
   }
 
+  @Post('refresh')
+  async refresh(@Supabase() supabase: SupabaseClient, @OrgContext() scope: RequestScope) {
+    return this.people.refreshPeople(supabase, scope.orgId)
+  }
+
   @Patch(':id/delivery-mode')
   async updateDeliveryMode(
     @Supabase() supabase: SupabaseClient,

@@ -232,18 +232,21 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 
 ### Template / catalog / capabilities
 
-| Path                                                                                     | Role                                       |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------ |
-| `apps/api/src/modules/space-templates/data/space-template-catalog-personal-dashboard.ts` | Fathom Meeting Log includes confirm action |
-| `apps/api/src/modules/space-templates/data/__tests__/space-template-catalog.test.ts`     | Expects action type                        |
-| `packages/api-shared/src/types/flow-capabilities.ts`                                     | Capability surface                         |
-| `apps/web/src/features/spaces/types/space-schema.ts`                                     | Frontend action type                       |
-| `apps/web/src/features/spaces/components/automations/automation-catalog.ts`              | Catalog entry                              |
-| `apps/web/src/lib/flows/flow-builder-canvas.utils.ts`                                    | Flow canvas                                |
-| `apps/web/src/lib/flows/automation-flow-step-summary.utils.ts`                           | Step summary                               |
-| `apps/web/src/lib/flows/automation-publishable.ts`                                       | Publishability                             |
-| `apps/api/src/modules/spaces/data/space-automation-template-catalog-team.ts`             | Four Team-loop templates                   |
-| `supabase/migrations/20260721001000_slack_team_loop_templates.sql`                       | Production template seed                   |
+| Path                                                                                     | Role                                                                |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `apps/api/src/modules/space-templates/data/space-template-catalog-personal-dashboard.ts` | Fathom Meeting Log includes confirm action                          |
+| `apps/api/src/modules/space-templates/data/__tests__/space-template-catalog.test.ts`     | Expects action type                                                 |
+| `packages/api-shared/src/types/flow-capabilities.ts`                                     | Capability surface                                                  |
+| `apps/web/src/features/spaces/types/space-schema.ts`                                     | Frontend action type                                                |
+| `apps/web/src/features/spaces/components/automations/automation-catalog.ts`              | Catalog entry                                                       |
+| `apps/web/src/lib/flows/flow-builder-canvas.utils.ts`                                    | Flow canvas                                                         |
+| `apps/web/src/lib/flows/automation-flow-step-summary.utils.ts`                           | Step summary                                                        |
+| `apps/web/src/lib/flows/automation-publishable.ts`                                       | Publishability                                                      |
+| `apps/api/src/modules/spaces/data/space-automation-template-catalog-team.ts`             | Unified Slack Team Intelligence template                            |
+| `apps/api/src/modules/slack/services/slack-observation.service.ts`                       | Webhook capture, reconciliation, threads, cursors, backfill batches |
+| `apps/api/src/modules/slack/repositories/slack-observation.repository.ts`                | Shared observation ledger persistence                               |
+| `supabase/migrations/20260721100000_slack_observation_ledger.sql`                        | Ledger, channel/member index, and cursors                           |
+| `supabase/migrations/20260721101000_unify_slack_team_observation_loop.sql`               | Consolidates four scanners into one Shadow loop                     |
 
 ### Docs / logs
 

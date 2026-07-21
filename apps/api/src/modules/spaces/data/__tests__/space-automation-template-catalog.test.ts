@@ -154,4 +154,35 @@ describe('SPACE_AUTOMATION_TEMPLATE_CATALOG', () => {
       }
     }
   })
+
+  it('installs one enabled Shadow analyzer for every Slack team signal', () => {
+    const teamLoops = SPACE_AUTOMATION_TEMPLATE_CATALOG.filter((row) =>
+      (row.body as { actions?: Array<{ type?: string }> }).actions?.some(
+        (action) => action.type === 'observe_slack_team',
+      ),
+    )
+
+    expect(teamLoops.map((row) => row.template_key)).toEqual(['slack-team-observation'])
+
+    for (const template of teamLoops) {
+      const parsed = CreatePublishedAutomationSchema.parse(template.body)
+      expect(parsed.enabled).toBe(true)
+      expect(parsed.actions).toEqual([
+        expect.objectContaining({
+          type: 'observe_slack_team',
+          loop_kind: 'all',
+          delivery_mode: 'shadow',
+          channel_ids: [],
+          person_ids: [],
+          lookback_minutes: 30,
+          daily_limit: 40,
+          quiet_hours: {
+            start: '22:00',
+            end: '07:00',
+            timezone: 'America/Los_Angeles',
+          },
+        }),
+      ])
+    }
+  })
 })

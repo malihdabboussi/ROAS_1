@@ -8,15 +8,17 @@ function createService(overrides?: {
 }) {
   const people = overrides?.people ?? []
   const repository = {
-    findOrgSlackIntegration: vi
-      .fn()
-      .mockResolvedValue(
-        overrides && 'integration' in overrides
-          ? overrides.integration
-            ? { user_id: 'owner-1', access_token: overrides.integration.access_token }
-            : null
-          : { user_id: 'owner-1', access_token: 'xoxb' },
-      ),
+    findOrgSlackIntegration: vi.fn().mockResolvedValue(
+      overrides && 'integration' in overrides
+        ? overrides.integration
+          ? {
+              user_id: 'owner-1',
+              access_token: overrides.integration.access_token,
+              metadata: { team_id: 'T1' },
+            }
+          : null
+        : { user_id: 'owner-1', access_token: 'xoxb', metadata: { team_id: 'T1' } },
+    ),
     listPeople: vi.fn().mockResolvedValue(people),
     listPortalUsers: vi.fn().mockResolvedValue([
       {
@@ -119,11 +121,20 @@ function createService(overrides?: {
     ]),
     postMessage: vi.fn().mockResolvedValue({ ok: true, ts: '123.456' }),
   }
+  const peopleIndex = {
+    listChannelNamesByMember: vi.fn().mockResolvedValue(new Map<string, string[]>()),
+    replaceChannelMemberships: vi.fn().mockResolvedValue(undefined),
+    listChannels: vi
+      .fn()
+      .mockResolvedValue([{ channel_id: 'C1', channel_name: 'client-alpha', is_private: false }]),
+    upsertChannels: vi.fn().mockResolvedValue(undefined),
+  }
   const service = new SlackPeopleService(
     repository as never,
     brainRepository as never,
     senderResolver as never,
     slackApi as never,
+    peopleIndex as never,
   )
   return {
     service,
@@ -131,11 +142,12 @@ function createService(overrides?: {
     brainRepository,
     senderResolver,
     slackApi,
+    peopleIndex,
   }
 }
 
 describe('SlackPeopleService', () => {
-  it('refreshes Slack identities before returning the durable people directory', async () => {
+  it('returns the durable people directory without refreshing Slack', async () => {
     const person = {
       id: 'person-1',
       platform_id: 'person-slack-1',
@@ -143,19 +155,14 @@ describe('SlackPeopleService', () => {
       relationship_kind: 'team_member',
       delivery_mode: 'shadow',
     }
-    const { service, repository, senderResolver } = createService({ people: [person] })
-    senderResolver.seedContactIdentifiersFromWorkspace.mockResolvedValue({
-      seeded: 0,
-      members: [],
-      channelNamesByMember: new Map([['person-slack-1', ['client-acme', 'general']]]),
-    })
+    const { service, repository, senderResolver, peopleIndex } = createService({ people: [person] })
+    peopleIndex.listChannelNamesByMember.mockResolvedValue(
+      new Map([['person-slack-1', ['client-acme', 'general']]]),
+    )
 
     const result = await service.listPeople({} as never, 'org-1')
 
-    expect(senderResolver.seedContactIdentifiersFromWorkspace).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ userId: 'owner-1', orgId: 'org-1' }),
-    )
+    expect(senderResolver.seedContactIdentifiersFromWorkspace).not.toHaveBeenCalled()
     expect(repository.listPeople).toHaveBeenCalledWith(expect.anything(), 'org-1')
     expect(result).toEqual({
       connected: true,
@@ -178,6 +185,28 @@ describe('SlackPeopleService', () => {
         },
       ],
     })
+  })
+
+  it('refreshes Slack only through the explicit refresh action', async () => {
+    const { service, senderResolver, peopleIndex } = createService()
+    senderResolver.seedContactIdentifiersFromWorkspace.mockResolvedValue({
+      seeded: 0,
+      members: [],
+      channelNamesByMember: new Map([['U1', ['general']]]),
+    })
+
+    await service.refreshPeople({} as never, 'org-1')
+
+    expect(senderResolver.seedContactIdentifiersFromWorkspace).toHaveBeenCalledTimes(1)
+    expect(peopleIndex.replaceChannelMemberships).toHaveBeenCalledWith(expect.anything(), {
+      orgId: 'org-1',
+      slackTeamId: 'T1',
+      channelNamesByMember: new Map([['U1', ['general']]]),
+    })
+    expect(peopleIndex.upsertChannels).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ orgId: 'org-1', slackTeamId: 'T1' }),
+    )
   })
 
   it('attaches an accessible canonical User Brain to a linked portal person', async () => {
@@ -320,7 +349,7 @@ describe('SlackPeopleService', () => {
   })
 
   it('lists only Slack channels Pixel belongs to and loads their threaded conversation', async () => {
-    const { service, slackApi } = createService({
+    const { service, slackApi, peopleIndex } = createService({
       people: [{ platform_id: 'U1', display_name: 'Ada Lovelace' }],
     })
 
@@ -336,6 +365,7 @@ describe('SlackPeopleService', () => {
       ]),
     })
     expect(slackApi.conversationsRepliesAll).toHaveBeenCalled()
+    expect(peopleIndex.listChannels).toHaveBeenCalledWith(expect.anything(), 'org-1')
   })
 
   it('creates a harmless test proposal without sending it', async () => {

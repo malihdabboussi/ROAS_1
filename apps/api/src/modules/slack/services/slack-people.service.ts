@@ -7,6 +7,7 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SlackApiIntegration } from '../integrations/slack-api.integration'
 import { SlackPeopleBrainRepository } from '../repositories/slack-people-brain.repository'
+import { SlackPeopleIndexRepository } from '../repositories/slack-people-index.repository'
 import { SlackPeopleRepository } from '../repositories/slack-people.repository'
 import type {
   SlackDeliveryMode,
@@ -22,6 +23,7 @@ export class SlackPeopleService {
     private readonly peopleBrainRepository: SlackPeopleBrainRepository,
     private readonly senderResolver: SlackSenderResolverService,
     private readonly slackApi: SlackApiIntegration,
+    private readonly peopleIndex: SlackPeopleIndexRepository,
   ) {}
 
   async listPeople(supabase: SupabaseClient, orgId?: string | null) {
@@ -29,14 +31,14 @@ export class SlackPeopleService {
     const integration = await this.peopleRepository.findOrgSlackIntegration(supabase, orgId)
     if (!integration) return { connected: false, people: [] }
 
-    const workspace = await this.senderResolver.seedContactIdentifiersFromWorkspace(supabase, {
-      botToken: integration.access_token,
-      userId: integration.user_id,
-      orgId,
-    })
-    const [people, portalUsers] = await Promise.all([
+    const slackTeamId =
+      typeof integration.metadata.team_id === 'string' ? integration.metadata.team_id : ''
+    const [people, portalUsers, channelNamesByMember] = await Promise.all([
       this.peopleRepository.listPeople(supabase, orgId),
       this.peopleRepository.listPortalUsers(supabase, orgId),
+      slackTeamId
+        ? this.peopleIndex.listChannelNamesByMember(supabase, { orgId, slackTeamId })
+        : Promise.resolve(new Map<string, string[]>()),
     ])
     const linkedUserIds = [
       ...new Set(people.map((person) => person.vibey_user_id).filter((id): id is string => !!id)),
@@ -61,7 +63,7 @@ export class SlackPeopleService {
         const brain = managedBrain ?? portalBrain
         return {
           ...person,
-          slack_channels: workspace.channelNamesByMember.get(person.platform_id) ?? [],
+          slack_channels: channelNamesByMember.get(person.platform_id) ?? [],
           brain_id: brain?.id ?? null,
           brain_name: brain?.name ?? null,
           brain_kind: managedBrain
@@ -74,21 +76,43 @@ export class SlackPeopleService {
     }
   }
 
+  async refreshPeople(supabase: SupabaseClient, orgId?: string | null) {
+    if (!orgId) throw new BadRequestException('Slack people require organization context')
+    const integration = await this.peopleRepository.findOrgSlackIntegration(supabase, orgId)
+    if (!integration) return { connected: false, people: [] }
+    const slackTeamId =
+      typeof integration.metadata.team_id === 'string' ? integration.metadata.team_id : ''
+    const workspace = await this.senderResolver.seedContactIdentifiersFromWorkspace(supabase, {
+      botToken: integration.access_token,
+      userId: integration.user_id,
+      orgId,
+    })
+    if (slackTeamId) {
+      const channels = await this.slackApi.listConversations(integration.access_token)
+      await Promise.all([
+        this.peopleIndex.replaceChannelMemberships(supabase, {
+          orgId,
+          slackTeamId,
+          channelNamesByMember: workspace.channelNamesByMember,
+        }),
+        this.peopleIndex.upsertChannels(supabase, { orgId, slackTeamId, channels }),
+      ])
+    }
+    return this.listPeople(supabase, orgId)
+  }
+
   async listChannels(supabase: SupabaseClient, orgId?: string | null) {
     if (!orgId) throw new BadRequestException('Slack channels require organization context')
     const integration = await this.peopleRepository.findOrgSlackIntegration(supabase, orgId)
     if (!integration) return { connected: false, channels: [] }
-    const channels = await this.slackApi.listConversations(integration.access_token)
+    const channels = await this.peopleIndex.listChannels(supabase, orgId)
     return {
       connected: true,
-      channels: channels
-        .filter((channel) => channel.is_member !== false && !channel.is_im)
-        .map((channel) => ({
-          id: channel.id,
-          name: channel.name,
-          is_private: channel.is_private === true,
-        }))
-        .sort((left, right) => left.name.localeCompare(right.name)),
+      channels: channels.map((channel) => ({
+        id: String(channel.channel_id),
+        name: String(channel.channel_name),
+        is_private: channel.is_private === true,
+      })),
     }
   }
 

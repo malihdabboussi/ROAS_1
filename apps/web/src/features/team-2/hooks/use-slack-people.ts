@@ -13,6 +13,7 @@ import {
   patchSlackPersonDeliveryMode,
   patchSlackPersonIdentity,
   patchSlackPersonRelationshipKind,
+  refreshSlackPeople,
   reviewSlackShadowAction,
   sendSlackShadowAction,
   type SlackDeliveryMode,
@@ -45,6 +46,24 @@ export function useSlackPeople() {
       setActions(actionsResult.actions)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not load Slack people')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const refresh = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await refreshSlackPeople()
+      setConnected(result.connected)
+      setPeople(result.people)
+      setPortalUsers(result.portal_users ?? [])
+      const actionsResult = await fetchSlackShadowActions()
+      setActions(actionsResult.actions)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not refresh Slack people')
+      throw cause
     } finally {
       setLoading(false)
     }
@@ -162,5 +181,6 @@ export function useSlackPeople() {
     reviewAction,
     sendAction,
     reload,
+    refresh,
   }
 }

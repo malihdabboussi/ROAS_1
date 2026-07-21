@@ -250,12 +250,37 @@ export abstract class BrainImportJobsInputBase extends BrainImportJobsExecutionB
 
     const slackService = this.getSlackService()
     const senderResolver = this.getSlackSenderResolver()
-    const rawMessages = await slackService.pullChannelHistorySince(
-      botToken,
-      channelId,
-      periodStartTs,
-    )
-    const expandedThreads = await slackService.expandThreads(botToken, channelId, rawMessages)
+    let expandedThreads: Array<Array<{ user?: string; text?: string; ts?: string }>>
+    if (job.org_id) {
+      const observation = this.getSlackObservationService()
+      if (!payload.isFork) {
+        await observation.backfillChannelPeriod({
+          supabase: admin,
+          orgId: job.org_id,
+          slackTeamId: teamId,
+          botToken,
+          channelId,
+          channelName,
+          periodStartTs,
+          periodEndTs,
+        })
+      }
+      expandedThreads = await observation.loadPeriodThreads({
+        supabase: admin,
+        orgId: job.org_id,
+        slackTeamId: teamId,
+        channelId,
+        periodStartTs,
+        periodEndTs,
+      })
+    } else {
+      const rawMessages = await slackService.pullChannelHistorySince(
+        botToken,
+        channelId,
+        periodStartTs,
+      )
+      expandedThreads = await slackService.expandThreads(botToken, channelId, rawMessages)
+    }
     const filteredThreads = senderFilterSlackUserId
       ? expandedThreads.filter((thread: Array<{ user?: string; text?: string }>) =>
           thread.some(

@@ -35,6 +35,12 @@ export class SlackService extends SlackEventsBase {
     )
   }
 
+  protected async processEventAsync(envelope: SlackEventEnvelope): Promise<void> {
+    if (envelope.team_id && envelope.event) {
+      await this.captureObservationEvent(envelope.team_id, envelope.event)
+    }
+    await super.processEventAsync(envelope)
+  }
   protected async handleMessageEvent(
     teamId: string,
     event: NonNullable<SlackEventEnvelope['event']>,
@@ -107,6 +113,27 @@ export class SlackService extends SlackEventsBase {
     }
   }
 
+  private async captureObservationEvent(
+    teamId: string,
+    event: NonNullable<SlackEventEnvelope['event']>,
+  ): Promise<void> {
+    try {
+      const { SlackObservationService } = await import('./slack-observation.service')
+      const observation = this.moduleRef.get(SlackObservationService, { strict: false })
+      if (!observation) return
+      await observation.recordWebhookEvent({
+        supabase: this.getServiceRoleClient(),
+        slackTeamId: teamId,
+        event,
+      })
+    } catch (error) {
+      this.logger.warn(
+        `Slack observation capture failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+    }
+  }
   // ---------------------------------------------------------------------------
   // OAuth
   // ---------------------------------------------------------------------------

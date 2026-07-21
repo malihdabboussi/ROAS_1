@@ -24,7 +24,7 @@ describe('SlackTeamLoopService', () => {
       findOrgSlackIntegration: vi.fn().mockResolvedValue({
         user_id: 'owner-1',
         access_token: 'xoxb-test',
-        metadata: {},
+        metadata: { team_id: 'T1' },
       }),
       listPeople: vi.fn().mockResolvedValue([
         {
@@ -41,15 +41,30 @@ describe('SlackTeamLoopService', () => {
       createShadowAction: vi.fn().mockResolvedValue({ id: 'proposal-1' }),
       insertSlackPersonMemory: vi.fn(),
     }
-    const slackApi = {
-      listConversations: vi
-        .fn()
-        .mockResolvedValue([{ id: 'C1', name: 'client-alpha', is_member: true }]),
-      getChannelHistorySince: vi
-        .fn()
-        .mockResolvedValue([
-          { ts: '1721000000.000100', user: 'U1', text: 'Can somebody confirm the launch date?' },
-        ]),
+    const observation = {
+      reconcile: vi.fn().mockResolvedValue({
+        channelsListed: 1,
+        channelsReconciled: 1,
+        historyRequests: 1,
+        threadRequests: 0,
+        eventsStored: 1,
+        duplicatesSkipped: 0,
+      }),
+      loadPendingEvents: vi.fn().mockResolvedValue({
+        cursor: null,
+        events: [
+          {
+            channel_id: 'C1',
+            channel_name: 'client-alpha',
+            message_ts: '1721000000.000100',
+            thread_ts: null,
+            sender_slack_user_id: 'U1',
+            text: 'Can somebody confirm the launch date?',
+            is_bot: false,
+          },
+        ],
+      }),
+      advanceConsumer: vi.fn().mockResolvedValue(undefined),
     }
     const openRouter = {
       createChatCompletion: vi.fn().mockResolvedValue({
@@ -85,7 +100,7 @@ describe('SlackTeamLoopService', () => {
         hasEvidenceFingerprint: slackPeople.hasLoopEvidenceFingerprint,
         insertPersonMemory: slackPeople.insertSlackPersonMemory,
       } as never,
-      slackApi as never,
+      observation as never,
       slackTools as never,
       openRouter as never,
     )
@@ -113,6 +128,7 @@ describe('SlackTeamLoopService', () => {
       }),
     )
     expect(slackTools.sendMessage).not.toHaveBeenCalled()
+    expect(observation.reconcile).toHaveBeenCalledTimes(1)
     expect(result).toMatchObject({ channels_observed: 1, messages_observed: 1, proposed: 1 })
   })
 
@@ -121,7 +137,7 @@ describe('SlackTeamLoopService', () => {
       findOrgSlackIntegration: vi.fn().mockResolvedValue({
         user_id: 'owner-1',
         access_token: 'xoxb-test',
-        metadata: {},
+        metadata: { team_id: 'T1' },
       }),
       listPeople: vi.fn().mockResolvedValue([
         {
@@ -138,13 +154,23 @@ describe('SlackTeamLoopService', () => {
       createShadowAction: vi.fn(),
       insertSlackPersonMemory: vi.fn().mockResolvedValue({ id: 'memory-1', created: true }),
     }
-    const slackApi = {
-      listConversations: vi.fn().mockResolvedValue([{ id: 'C1', name: 'ops', is_member: true }]),
-      getChannelHistorySince: vi
-        .fn()
-        .mockResolvedValue([
-          { ts: '1721000000.000100', user: 'U1', text: 'I own the weekly reporting review.' },
-        ]),
+    const observation = {
+      reconcile: vi.fn().mockResolvedValue({ channelsReconciled: 1 }),
+      loadPendingEvents: vi.fn().mockResolvedValue({
+        cursor: null,
+        events: [
+          {
+            channel_id: 'C1',
+            channel_name: 'ops',
+            message_ts: '1721000000.000100',
+            thread_ts: null,
+            sender_slack_user_id: 'U1',
+            text: 'I own the weekly reporting review.',
+            is_bot: false,
+          },
+        ],
+      }),
+      advanceConsumer: vi.fn().mockResolvedValue(undefined),
     }
     const openRouter = {
       createChatCompletion: vi.fn().mockResolvedValue({
@@ -180,7 +206,7 @@ describe('SlackTeamLoopService', () => {
         hasEvidenceFingerprint: slackPeople.hasLoopEvidenceFingerprint,
         insertPersonMemory: slackPeople.insertSlackPersonMemory,
       } as never,
-      slackApi as never,
+      observation as never,
       slackTools as never,
       openRouter as never,
     )
@@ -210,7 +236,7 @@ describe('SlackTeamLoopService', () => {
       findOrgSlackIntegration: vi.fn().mockResolvedValue({
         user_id: 'owner-1',
         access_token: 'xoxb-test',
-        metadata: {},
+        metadata: { team_id: 'T1' },
       }),
       listPeople: vi.fn().mockResolvedValue([
         {
@@ -234,13 +260,23 @@ describe('SlackTeamLoopService', () => {
       markShadowActionFailed: vi.fn(),
       insertSlackPersonMemory: vi.fn(),
     }
-    const slackApi = {
-      listConversations: vi.fn().mockResolvedValue([{ id: 'C1', name: 'ops', is_member: true }]),
-      getChannelHistorySince: vi
-        .fn()
-        .mockResolvedValue([
-          { ts: '1721000000.000100', user: 'U1', text: 'Can someone confirm the launch date?' },
-        ]),
+    const observation = {
+      reconcile: vi.fn().mockResolvedValue({ channelsReconciled: 1 }),
+      loadPendingEvents: vi.fn().mockResolvedValue({
+        cursor: null,
+        events: [
+          {
+            channel_id: 'C1',
+            channel_name: 'ops',
+            message_ts: '1721000000.000100',
+            thread_ts: null,
+            sender_slack_user_id: 'U1',
+            text: 'Can someone confirm the launch date?',
+            is_bot: false,
+          },
+        ],
+      }),
+      advanceConsumer: vi.fn().mockResolvedValue(undefined),
     }
     const openRouter = {
       createChatCompletion: vi.fn().mockResolvedValue({
@@ -279,7 +315,7 @@ describe('SlackTeamLoopService', () => {
         hasEvidenceFingerprint: slackPeople.hasLoopEvidenceFingerprint,
         insertPersonMemory: slackPeople.insertSlackPersonMemory,
       } as never,
-      slackApi as never,
+      observation as never,
       slackTools as never,
       openRouter as never,
     )
