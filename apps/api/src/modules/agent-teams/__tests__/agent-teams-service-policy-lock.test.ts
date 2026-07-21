@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common'
+import { BadRequestException, ForbiddenException } from '@nestjs/common'
 import { describe, expect, it, vi } from 'vitest'
 import { AgentTeamRuntimeRepository } from '../repositories/agent-team-runtime.repository'
 import { AgentTeamPolicyWorkflowService } from '../services/agent-team-policy-workflow.service'
@@ -291,7 +291,11 @@ describe('AgentTeamsService protected policy locks', () => {
 
   it('invalidates previous and next teams when assigning an agent to a new team', async () => {
     const { service, repo, policy, userAgentApi } = makeService()
-    repo.getTeamById.mockResolvedValue({ id: 'team-next', is_system: false })
+    repo.getTeamById.mockResolvedValue({
+      id: 'team-next',
+      is_system: false,
+      team_kind: 'agent',
+    })
     repo.getAgentTeamId = vi.fn(async () => 'team-prev')
     repo.setAgentTeam = vi.fn(async () => ({ agent_key: 'lux', team_id: 'team-next' }))
     const supabase = {
@@ -389,5 +393,23 @@ describe('AgentTeamsService protected policy locks', () => {
       expect.objectContaining({ method: 'POST' }),
       expect.any(Object),
     )
+  })
+
+  it('rejects assigning an agent to an Internal team', async () => {
+    const { service, repo } = makeService()
+    repo.getTeamById.mockResolvedValue({
+      id: 'team-internal',
+      is_system: false,
+      team_kind: 'internal',
+    })
+
+    await expect(
+      service.setAgentTeam(
+        { rpc: vi.fn() } as any,
+        { userId: 'actor-1', orgId: 'org-1', orgRole: 'admin' } as any,
+        'lux',
+        'team-internal',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException)
   })
 })

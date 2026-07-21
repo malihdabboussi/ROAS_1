@@ -5,14 +5,14 @@ import { useCallback, useEffect, useState } from 'react'
 import type { AgentTeam } from '@/lib/agents'
 import { useOrgStore } from '@/lib/org'
 import { useTeam2Perms } from '../../hooks/use-team2-perms'
+import type { RemoveTeamMemberTarget } from './team-detail-member-types'
+import { isTeamDetailTab, type TeamDetailTab } from './team-detail-view-types'
+import { TeamAccessView } from './TeamAccessView'
+import { TeamAnalyticsView } from './TeamAnalyticsView'
 import { TeamDetailAddPanels } from './TeamDetailAddPanels'
 import { TeamDetailHeader } from './TeamDetailHeader'
 import { TeamDetailMembersSidebar } from './TeamDetailMembersSidebar'
 import { TeamDetailRemoveDialog } from './TeamDetailRemoveDialog'
-import { isTeamDetailTab, type TeamDetailTab } from './team-detail-view-types'
-import type { RemoveTeamMemberTarget } from './team-detail-member-types'
-import { TeamAccessView } from './TeamAccessView'
-import { TeamAnalyticsView } from './TeamAnalyticsView'
 import { TeamDetailToolbar } from './TeamDetailToolbar'
 import { TeamOverviewView } from './TeamOverviewView'
 import { TeamViewTabs } from './TeamViewTabs'
@@ -54,6 +54,8 @@ export function TeamDetailView({ teamId, initialTeam, embedded = false }: TeamDe
   const addPanels = useTeamDetailAddPanels({
     orgMembers: data.orgMembers,
     userMembers: data.userMembers,
+    externalMembers: data.externalMembers,
+    externalPeople: data.externalPeople,
     agents: data.members,
     allAgents: data.allAgents,
   })
@@ -95,7 +97,8 @@ export function TeamDetailView({ teamId, initialTeam, embedded = false }: TeamDe
   const onDelete = async () => {
     if (!data.team || data.team.is_system) return
     if (!canEditTeam) return
-    if (!window.confirm(`Delete team "${data.team.name}"? Agents are reassigned to General.`)) return
+    if (!window.confirm(`Delete team "${data.team.name}"? Agents are reassigned to General.`))
+      return
     await data.deleteCurrentTeam()
     router.push('/team/teams')
   }
@@ -106,6 +109,8 @@ export function TeamDetailView({ teamId, initialTeam, embedded = false }: TeamDe
     try {
       if (removeTarget.type === 'human') {
         await data.deleteMember(removeTarget.id)
+      } else if (removeTarget.type === 'external') {
+        await data.deleteExternalMember(removeTarget.id)
       } else {
         await data.removeAgent(removeTarget.id)
       }
@@ -204,6 +209,7 @@ export function TeamDetailView({ teamId, initialTeam, embedded = false }: TeamDe
           <TeamDetailMembersSidebar
             team={data.team}
             userMembers={data.userMembers}
+            externalMembers={data.externalMembers}
             agents={data.members}
             canEditTeam={canEditTeam}
             addMemberCardRef={addPanels.addMemberCardRef}
@@ -232,8 +238,9 @@ export function TeamDetailView({ teamId, initialTeam, embedded = false }: TeamDe
         orgMembersCount={data.orgMembers.length}
         onAddMember={(userId) => void data.addMember(userId)}
         onAssignAgent={(agentKey) => void data.assignAgent(agentKey)}
+        onAddExternalMember={(personId) => void data.addExternalMember(personId)}
+        teamKind={data.team?.team_kind ?? 'mixed'}
       />
-
     </div>
   )
 }

@@ -10,6 +10,7 @@ export type AgentCapabilityKind =
   | 'action_domain'
 
 export type AgentOverrideMode = 'allow_extra' | 'deny'
+export type AgentTeamKind = 'internal' | 'external' | 'agent' | 'mixed'
 
 export interface AgentTeam {
   id: string
@@ -20,11 +21,13 @@ export interface AgentTeam {
   color: string
   icon: string
   is_system: boolean
+  team_kind?: AgentTeamKind
   created_at: string
   updated_at: string
   member_count?: number
   grant_count?: number
   user_member_count?: number
+  external_member_count?: number
 }
 
 export interface AgentTeamGrant {
@@ -57,6 +60,18 @@ export interface AgentTeamMember {
   full_name?: string | null
   avatar_url?: string | null
   email?: string | null
+}
+
+export interface AgentTeamExternalMember {
+  team_id: string
+  person_id: string
+  added_at: string
+  added_by: string | null
+  display_name: string
+  email: string | null
+  avatar_url: string | null
+  title: string | null
+  relationship_kind: 'external'
 }
 
 export interface ResolvedAgentPolicyJson {

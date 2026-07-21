@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
+import { AgentTeamExternalMembersRepository } from '../repositories/agent-team-external-members.repository'
 import { AgentTeamRuntimeRepository } from '../repositories/agent-team-runtime.repository'
 import { AgentTeamsRepository } from '../repositories/agent-teams.repository'
 import {
@@ -39,6 +40,7 @@ export class AgentTeamsService {
     private readonly policy: AgentPolicyService,
     private readonly policyWorkflow: AgentTeamPolicyWorkflowService,
     private readonly runtimeRepo: AgentTeamRuntimeRepository,
+    private readonly externalMembersRepo: AgentTeamExternalMembersRepository = new AgentTeamExternalMembersRepository(),
   ) {}
 
   async listTeams(supabase: SupabaseClient, scope: RequestScope): Promise<AgentTeamWithCounts[]> {
@@ -53,6 +55,7 @@ export class AgentTeamsService {
       color?: string
       icon?: string
       parent_team_id?: string | null
+      team_kind?: 'internal' | 'external' | 'agent' | 'mixed'
     },
   ): Promise<AgentTeam> {
     const trimmed = payload.name?.trim()
@@ -138,6 +141,28 @@ export class AgentTeamsService {
   ): Promise<{ team_ids: string[] }> {
     const teamIds = await this.repo.listMyTeamMemberships(supabase, scope.userId, toScope(scope))
     return { team_ids: teamIds }
+  }
+
+  listExternalTeamMembers(supabase: SupabaseClient, scope: RequestScope, teamId: string) {
+    return this.externalMembersRepo.list(supabase, teamId, toScope(scope))
+  }
+
+  addExternalTeamMember(
+    supabase: SupabaseClient,
+    scope: RequestScope,
+    teamId: string,
+    personId: string,
+  ) {
+    return this.externalMembersRepo.add(supabase, teamId, personId, scope.userId, toScope(scope))
+  }
+
+  removeExternalTeamMember(
+    supabase: SupabaseClient,
+    scope: RequestScope,
+    teamId: string,
+    personId: string,
+  ) {
+    return this.externalMembersRepo.remove(supabase, teamId, personId, toScope(scope))
   }
 
   async addTeamMember(

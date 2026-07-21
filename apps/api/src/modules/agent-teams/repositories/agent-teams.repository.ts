@@ -55,16 +55,18 @@ export class AgentTeamsRepository {
     if (error) throw new Error(`listTeams: ${error.message}`)
     if (!teams || teams.length === 0) return []
     const teamIds = teams.map((t: AgentTeam) => t.id)
-    const [grantCounts, memberCounts, userMemberCounts] = await Promise.all([
+    const [grantCounts, memberCounts, userMemberCounts, externalMemberCounts] = await Promise.all([
       this.countGrants(supabase, teamIds),
       this.countMembers(supabase, teamIds, scope),
       this.countUserMembers(supabase, teamIds),
+      this.countExternalMembers(supabase, teamIds),
     ])
     return (teams as AgentTeam[]).map((t) => ({
       ...t,
       grant_count: grantCounts.get(t.id) ?? 0,
       member_count: memberCounts.get(t.id) ?? 0,
       user_member_count: userMemberCounts.get(t.id) ?? 0,
+      external_member_count: externalMemberCounts.get(t.id) ?? 0,
     }))
   }
 
@@ -121,6 +123,23 @@ export class AgentTeamsRepository {
     return map
   }
 
+  private async countExternalMembers(
+    supabase: SupabaseClient,
+    teamIds: string[],
+  ): Promise<Map<string, number>> {
+    if (teamIds.length === 0) return new Map()
+    const { data, error } = await supabase
+      .from('agent_team_external_members')
+      .select('team_id')
+      .in('team_id', teamIds)
+    if (error) throw new Error(`countExternalMembers: ${error.message}`)
+    const map = new Map<string, number>()
+    for (const row of (data ?? []) as Array<{ team_id: string }>) {
+      map.set(row.team_id, (map.get(row.team_id) ?? 0) + 1)
+    }
+    return map
+  }
+
   async getTeamById(
     supabase: SupabaseClient,
     teamId: string,
@@ -151,6 +170,7 @@ export class AgentTeamsRepository {
       color?: string
       icon?: string
       parent_team_id?: string | null
+      team_kind?: 'internal' | 'external' | 'agent' | 'mixed'
     },
   ): Promise<AgentTeam> {
     const insertRow: Record<string, unknown> = {
@@ -159,6 +179,7 @@ export class AgentTeamsRepository {
       icon: payload.icon ?? 'users',
       is_system: false,
       parent_team_id: payload.parent_team_id ?? null,
+      team_kind: payload.team_kind ?? 'agent',
       org_id: scope.orgId,
       user_id: scope.orgId ? null : scope.userId,
     }

@@ -2,31 +2,36 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  addTeamExternalMember,
   addTeamMember,
   deleteTeam,
   fetchMissionAgents,
-  type AgentCapabilityKind,
-  type AgentTeam,
-  type AgentTeamGrant,
-  type AgentTeamMember,
-  type MissionAgent,
+  listTeamExternalMembers,
   listTeamGrants,
   listTeamMembers,
   listTeams,
+  removeTeamExternalMember,
   removeTeamMember,
   setAgentTeam,
   setTeamGrants,
   updateTeam,
+  type AgentCapabilityKind,
+  type AgentTeam,
+  type AgentTeamExternalMember,
+  type AgentTeamGrant,
+  type AgentTeamMember,
+  type MissionAgent,
 } from '@/lib/agents'
 import { backendGet } from '@/lib/api/backend-client'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { fetchMissions, type Mission } from '@/lib/missions'
 import type { ReportingDateRangeInput } from '@/lib/reporting'
 import { fetchSpaces } from '@/lib/spaces'
+import { fetchSlackPeople, type SlackDiscoveredPerson } from '../../services/slack-people.service'
+import { emptyTeamAccessGrants, grantsToToggleSet, toggleSetToGrants } from './team-detail-grants'
+import type { TeamDetailOrgMember } from './team-detail-member-types'
 import type { TeamAccessGrants } from './TeamAccessView'
 import type { TeamDetailToolbarSpaceOption } from './TeamDetailToolbar'
-import type { TeamDetailOrgMember } from './team-detail-member-types'
-import { emptyTeamAccessGrants, grantsToToggleSet, toggleSetToGrants } from './team-detail-grants'
 
 type ToggleSet = TeamAccessGrants
 
@@ -54,22 +59,37 @@ export function useTeamDetailData({
   const [spaceFilterIds, setSpaceFilterIds] = useState<string[]>([])
   const [spacePickerOptions, setSpacePickerOptions] = useState<TeamDetailToolbarSpaceOption[]>([])
   const [userMembers, setUserMembers] = useState<AgentTeamMember[]>([])
+  const [externalMembers, setExternalMembers] = useState<AgentTeamExternalMember[]>([])
+  const [externalPeople, setExternalPeople] = useState<SlackDiscoveredPerson[]>([])
   const [orgMembers, setOrgMembers] = useState<TeamDetailOrgMember[]>([])
 
   const loadAll = useCallback(async () => {
     setLoading(true)
     try {
-      const [teams, grantRows, agents, userRows, missionRows, orgMembersRes] = await Promise.all([
+      const [
+        teams,
+        grantRows,
+        agents,
+        userRows,
+        externalRows,
+        missionRows,
+        orgMembersRes,
+        slackPeopleRes,
+      ] = await Promise.all([
         listTeams().catch(() => [] as AgentTeam[]),
         listTeamGrants(teamId).catch(() => [] as AgentTeamGrant[]),
         fetchMissionAgents().catch(() => [] as MissionAgent[]),
         listTeamMembers(teamId).catch(() => [] as AgentTeamMember[]),
+        listTeamExternalMembers(teamId).catch(() => [] as AgentTeamExternalMember[]),
         fetchMissions({ limit: 200 }).catch(() => [] as Mission[]),
         activeOrgId
           ? backendGet<{ success: boolean; members: TeamDetailOrgMember[] }>(
               `/api/org/${activeOrgId}/members`,
             ).catch(() => ({ success: false, members: [] }))
           : Promise.resolve({ success: false, members: [] }),
+        activeOrgId
+          ? fetchSlackPeople().catch(() => ({ connected: false, people: [] }))
+          : Promise.resolve({ connected: false, people: [] }),
       ])
       const fresh = teams.find((row) => row.id === teamId) ?? null
       if (fresh) setTeam(fresh)
@@ -77,6 +97,10 @@ export function useTeamDetailData({
       setAllAgents(agents)
       setMembers(agents.filter((agent) => agent.team_id === teamId))
       setUserMembers(userRows)
+      setExternalMembers(externalRows)
+      setExternalPeople(
+        slackPeopleRes.people.filter((person) => person.relationship_kind === 'external'),
+      )
       setMissions(missionRows)
       setOrgMembers(orgMembersRes.members)
     } finally {
@@ -169,9 +193,7 @@ export function useTeamDetailData({
       if (!agentKey) return
       await setAgentTeam(agentKey, teamId)
       setAllAgents((prev) =>
-        prev.map((agent) =>
-          agent.agent_key === agentKey ? { ...agent, team_id: teamId } : agent,
-        ),
+        prev.map((agent) => (agent.agent_key === agentKey ? { ...agent, team_id: teamId } : agent)),
       )
       setMembers((prev) => {
         const next = prev.slice()
@@ -182,6 +204,15 @@ export function useTeamDetailData({
       })
     },
     [allAgents, teamId],
+  )
+
+  const addExternalMember = useCallback(
+    async (personId: string) => {
+      if (!personId) return
+      await addTeamExternalMember(teamId, personId)
+      setExternalMembers(await listTeamExternalMembers(teamId))
+    },
+    [teamId],
   )
 
   const deleteMember = useCallback(
@@ -195,12 +226,18 @@ export function useTeamDetailData({
   const removeAgent = useCallback(async (agentKey: string) => {
     await setAgentTeam(agentKey, null)
     setAllAgents((prev) =>
-      prev.map((agent) =>
-        agent.agent_key === agentKey ? { ...agent, team_id: null } : agent,
-      ),
+      prev.map((agent) => (agent.agent_key === agentKey ? { ...agent, team_id: null } : agent)),
     )
     setMembers((prev) => prev.filter((agent) => agent.agent_key !== agentKey))
   }, [])
+
+  const deleteExternalMember = useCallback(
+    async (personId: string) => {
+      await removeTeamExternalMember(teamId, personId)
+      setExternalMembers(await listTeamExternalMembers(teamId))
+    },
+    [teamId],
+  )
 
   useEffect(() => {
     void fetchCampaigns()
@@ -276,6 +313,8 @@ export function useTeamDetailData({
     setSpaceFilterIds,
     spacePickerOptions,
     userMembers,
+    externalMembers,
+    externalPeople,
     orgMembers,
     missionCampaignById,
     toggleGrant,
@@ -284,8 +323,10 @@ export function useTeamDetailData({
     updateTeamIcon,
     deleteCurrentTeam,
     addMember,
+    addExternalMember,
     assignAgent,
     deleteMember,
+    deleteExternalMember,
     removeAgent,
   }
 }

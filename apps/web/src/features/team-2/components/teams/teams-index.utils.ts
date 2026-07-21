@@ -15,7 +15,7 @@ export function teamAgentCount(team: AgentTeam): number {
 }
 
 export function teamPeopleCount(team: AgentTeam): number {
-  return team.user_member_count ?? 0
+  return (team.user_member_count ?? 0) + (team.external_member_count ?? 0)
 }
 
 export function teamMatchesSearch(team: AgentTeam, query: string): boolean {
@@ -33,10 +33,22 @@ export function sortTeams(list: AgentTeam[]): AgentTeam[] {
 }
 
 function teamTypeBucket(team: AgentTeam) {
-  if (team.is_system) {
-    return { key: 'system', label: 'System', color: 'muted', icon: 'shield', sortRank: 0 }
+  if (team.team_kind === 'internal') {
+    return { key: 'internal', label: 'Internal teams', color: 'purple', icon: 'users', sortRank: 0 }
   }
-  return { key: 'custom', label: 'Custom', color: 'blue', icon: 'users', sortRank: 1 }
+  if (team.team_kind === 'external') {
+    return {
+      key: 'external',
+      label: 'External teams',
+      color: 'orange',
+      icon: 'contact',
+      sortRank: 1,
+    }
+  }
+  if (team.team_kind === 'agent') {
+    return { key: 'agent', label: 'Agent teams', color: 'blue', icon: 'bot', sortRank: 2 }
+  }
+  return { key: 'mixed', label: 'Mixed teams', color: 'muted', icon: 'users', sortRank: 3 }
 }
 
 function teamRosterBucket(team: AgentTeam) {

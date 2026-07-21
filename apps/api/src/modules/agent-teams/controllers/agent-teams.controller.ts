@@ -29,6 +29,7 @@ interface CreateTeamBody {
   color?: string
   icon?: string
   parent_team_id?: string | null
+  team_kind?: 'internal' | 'external' | 'agent' | 'mixed'
 }
 
 interface UpdateTeamBody {
@@ -75,6 +76,7 @@ export class AgentTeamsController {
       color: body.color,
       icon: body.icon,
       parent_team_id: body.parent_team_id ?? null,
+      team_kind: body.team_kind ?? 'agent',
     })
   }
 

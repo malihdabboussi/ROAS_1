@@ -7,11 +7,12 @@ import {
   useTeam2Perms,
   useTeams,
   type AgentTeam,
+  type AgentTeamKind,
   type MissionAgentSidebar,
 } from '@/lib/agents'
 import { AgentsGroupSectionHeader } from '../AgentsGroupSectionHeader'
-import { TeamIndexCard, TeamListRow, TeamsListHeader } from './TeamsIndexItems'
 import { groupTeams, sortTeams, teamMatchesSearch } from './teams-index.utils'
+import { TeamIndexCard, TeamListRow, TeamsListHeader } from './TeamsIndexItems'
 import {
   TeamsToolbar,
   type TeamsGroupBy,
@@ -47,6 +48,7 @@ export function TeamsIndexView({
   const [draft, setDraft] = useState('')
   const [draftIcon, setDraftIcon] = useState('users')
   const [draftColor, setDraftColor] = useState<IconColorId>('default')
+  const [draftKind, setDraftKind] = useState<Exclude<AgentTeamKind, 'mixed'>>('agent')
   const [view, setView] = useState<TeamsViewMode>('grid')
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -81,10 +83,16 @@ export function TeamsIndexView({
       setCreating(false)
       return
     }
-    const created = await create({ name, icon: draftIcon, color: draftColor })
+    const created = await create({
+      name,
+      icon: draftIcon,
+      color: draftColor,
+      team_kind: draftKind,
+    })
     setDraft('')
     setDraftIcon('users')
     setDraftColor('default')
+    setDraftKind('agent')
     setCreating(false)
     if (embedded && onSelectTeam) onSelectTeam(created.id)
   }
@@ -237,12 +245,30 @@ export function TeamsIndexView({
                   setDraft('')
                   setDraftIcon('users')
                   setDraftColor('default')
+                  setDraftKind('agent')
                   setCreating(false)
                 }
               }}
               placeholder="Team name (e.g. Marketing)"
               className="body-3 text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent outline-none"
             />
+            <div className="gap-spacing-1 flex shrink-0 items-center" aria-label="Team type">
+              {(['internal', 'external', 'agent'] as const).map((kind) => (
+                <button
+                  key={kind}
+                  type="button"
+                  onClick={() => setDraftKind(kind)}
+                  aria-pressed={draftKind === kind}
+                  className={
+                    draftKind === kind
+                      ? 'badge-glass badge-glass-purple rounded-spacing-2 body-4 px-spacing-2 py-spacing-1 font-medium'
+                      : 'button-glass-neutral rounded-spacing-2 body-4 px-spacing-2 py-spacing-1 font-medium'
+                  }
+                >
+                  {{ internal: 'Internal', external: 'External', agent: 'Agents' }[kind]}
+                </button>
+              ))}
+            </div>
             <button
               type="button"
               onClick={() => void submit()}
@@ -286,7 +312,7 @@ export function TeamsIndexView({
 
   return (
     <div className="relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden p-3">
-      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border">
+      <div className="border-border flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border">
         {content}
       </div>
     </div>

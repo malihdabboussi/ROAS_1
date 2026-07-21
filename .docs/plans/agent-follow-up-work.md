@@ -7653,3 +7653,11 @@ Files:
 - Evidence: Team Loops `observe_slack_team` required touching both; ActionBuilder UI extracted to `ObserveSlackTeamActionFields.tsx` but parents remain over web-component limit.
 - Needed: split ActionBuilder by action family; split FlowMap summary/render.
 - Why deferred: in-scope ship was Team Loops deploy; full automation UI decomposition is separate.
+
+## 2026-07-20 - Agent Teams repository has no remaining LOC headroom
+
+- Feature/app: API / Agent Teams
+- File: `apps/api/src/modules/agent-teams/repositories/agent-teams.repository.ts` (398 LOC)
+- Evidence: External-member counts bring the repository to two lines below the enforced 400-line repository maximum.
+- Needed work: Extract the four team count queries into a focused counts repository before adding another team summary metric.
+- Why not now: The requested membership repair stays within the enforced limit; extracting all established count queries would broaden this database behavior change.

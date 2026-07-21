@@ -4,27 +4,27 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { billingApi } from '@/lib/billing/billing-api'
-import { campaignListCacheKey, fetchCampaigns, type Campaign } from '@/lib/campaigns'
-import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
-import { useOrgStore } from '@/lib/org'
 import {
   BRAIN_AGENT_ACTIVATED_EVENT,
   dispatchBrainSetupAgentModal,
   type BrainAgentActivatedDetail,
 } from '@/lib/brain/brain-agent-modal-events'
+import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { campaignListCacheKey, fetchCampaigns, type Campaign } from '@/lib/campaigns'
+import { useOrgStore } from '@/lib/org'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
-import { setAgentTeam } from './agent-teams-api'
-import { SYSTEM_LIKE_AGENT_KEYS } from './agent-team-display'
 import { showsAgentAccessTab, type AgentInfoPanelTab } from './agent-info-panel-tabs'
 import {
   type AgentMenuActions,
   type AgentMenuContext,
   type AgentTeamOption,
 } from './agent-menu-context'
+import { SYSTEM_LIKE_AGENT_KEYS } from './agent-team-display'
+import { setAgentTeam } from './agent-teams-api'
 import { renameAgent, updateAgentActive, type MissionAgent } from './mission-agents-api'
-import { useAgentUserState } from './use-agent-user-state'
 import { useTeam2Perms } from './use-agent-team-permissions'
 import { useTeams } from './use-agent-teams'
+import { useAgentUserState } from './use-agent-user-state'
 import { cachedAgents } from './use-mission-agents'
 
 export type OpenAgentOptions = { infoTab?: AgentInfoPanelTab; fire?: boolean }
@@ -126,7 +126,10 @@ export function useAgentMenuActions() {
   )
 
   const teamOptions: AgentTeamOption[] = useMemo(
-    () => teams.map((t) => ({ id: t.id, name: t.name })),
+    () =>
+      teams
+        .filter((team) => team.team_kind === 'agent' || team.team_kind === 'mixed')
+        .map((team) => ({ id: team.id, name: team.name })),
     [teams],
   )
 

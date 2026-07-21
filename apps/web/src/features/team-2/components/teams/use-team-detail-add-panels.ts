@@ -9,8 +9,9 @@ import {
   useState,
   type RefObject,
 } from 'react'
-import type { AgentTeamMember, MissionAgent } from '@/lib/agents'
+import type { AgentTeamExternalMember, AgentTeamMember, MissionAgent } from '@/lib/agents'
 import { isSystemAgent } from '@/lib/agents/system-agent-contracts'
+import type { SlackDiscoveredPerson } from '../../services/slack-people.service'
 import type { TeamDetailOrgMember } from './team-detail-member-types'
 
 export type TeamDetailAddPanelPosition = {
@@ -76,11 +77,15 @@ export function useTeamDetailAddPanels({
   userMembers,
   agents,
   allAgents,
+  externalMembers = [],
+  externalPeople = [],
 }: {
   orgMembers: TeamDetailOrgMember[]
   userMembers: AgentTeamMember[]
   agents: MissionAgent[]
   allAgents: MissionAgent[]
+  externalMembers?: AgentTeamExternalMember[]
+  externalPeople?: SlackDiscoveredPerson[]
 }) {
   const [addMemberOpen, setAddMemberOpen] = useState(false)
   const [addMemberQuery, setAddMemberQuery] = useState('')
@@ -110,6 +115,36 @@ export function useTeamDetailAddPanels({
   const closeToolbarAdd = useCallback(() => setToolbarAddOpen(false), [])
 
   const memberUserIds = useMemo(() => new Set(userMembers.map((m) => m.user_id)), [userMembers])
+  const externalPersonIds = useMemo(
+    () => new Set(externalMembers.map((member) => member.person_id)),
+    [externalMembers],
+  )
+
+  const filterExternalPeople = useCallback(
+    (queryValue: string) => {
+      const query = queryValue.trim().toLowerCase()
+      return externalPeople
+        .filter((person) => !externalPersonIds.has(person.id))
+        .filter((person) => {
+          if (!query) return true
+          return [person.display_name, person.email, person.title]
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(query))
+        })
+        .sort((a, b) => a.display_name.localeCompare(b.display_name))
+    },
+    [externalPeople, externalPersonIds],
+  )
+
+  const filteredExternalPeople = useMemo(
+    () => filterExternalPeople(addMemberQuery),
+    [addMemberQuery, filterExternalPeople],
+  )
+
+  const filteredToolbarExternalPeople = useMemo(
+    () => filterExternalPeople(toolbarAddQuery),
+    [filterExternalPeople, toolbarAddQuery],
+  )
 
   const filteredOrgMembers = useMemo(() => {
     const query = addMemberQuery.trim().toLowerCase()
@@ -153,7 +188,9 @@ export function useTeamDetailAddPanels({
       .filter((a) => !memberKeys.has(a.agent_key))
       .filter((a) => {
         if (!query) return true
-        return a.name.toLowerCase().includes(query) || (a.agent_key ?? '').toLowerCase().includes(query)
+        return (
+          a.name.toLowerCase().includes(query) || (a.agent_key ?? '').toLowerCase().includes(query)
+        )
       })
       .sort((a, b) => a.name.localeCompare(b.name))
   }, [addAgentQuery, agents, allAgents])
@@ -166,7 +203,9 @@ export function useTeamDetailAddPanels({
       .filter((a) => !memberKeys.has(a.agent_key))
       .filter((a) => {
         if (!query) return true
-        return a.name.toLowerCase().includes(query) || (a.agent_key ?? '').toLowerCase().includes(query)
+        return (
+          a.name.toLowerCase().includes(query) || (a.agent_key ?? '').toLowerCase().includes(query)
+        )
       })
       .sort((a, b) => a.name.localeCompare(b.name))
   }, [agents, allAgents, toolbarAddQuery])
@@ -223,7 +262,11 @@ export function useTeamDetailAddPanels({
     }
     const anchorWidth = toolbarAddAnchorRef.current.getBoundingClientRect().width
     setToolbarAddPos(
-      positionFromAnchor(toolbarAddAnchorRef.current, Math.min(360, Math.max(280, anchorWidth)), 400),
+      positionFromAnchor(
+        toolbarAddAnchorRef.current,
+        Math.min(360, Math.max(280, anchorWidth)),
+        400,
+      ),
     )
   }, [toolbarAddOpen])
 
@@ -257,6 +300,7 @@ export function useTeamDetailAddPanels({
     addMemberInputRef,
     setAddMemberQuery,
     filteredOrgMembers,
+    filteredExternalPeople,
     toggleAddMemberPanel,
     closeAddMember,
     addAgentOpen,
@@ -278,10 +322,12 @@ export function useTeamDetailAddPanels({
     toolbarAddInputRef,
     setToolbarAddQuery,
     filteredToolbarHumans,
+    filteredToolbarExternalPeople,
     filteredToolbarAgents,
     toggleToolbarAddMembers,
     openToolbarAddMembers,
     closeToolbarAdd,
     memberUserIds,
+    externalPersonIds,
   }
 }

@@ -10,7 +10,9 @@ import type {
   AgentOverride,
   AgentOverrideMode,
   AgentTeam,
+  AgentTeamExternalMember,
   AgentTeamGrant,
+  AgentTeamKind,
   AgentTeamMember,
   ResolvedAgentPolicyJson,
 } from './agent-teams.types'
@@ -26,6 +28,7 @@ export async function createTeam(payload: {
   color?: string
   icon?: string
   parent_team_id?: string | null
+  team_kind?: AgentTeamKind
 }): Promise<AgentTeam> {
   return backendPost<AgentTeam>(BASE, payload)
 }
@@ -50,6 +53,26 @@ export async function listMyTeamMemberships(): Promise<{ team_ids: string[] }> {
 
 export async function listTeamMembers(teamId: string): Promise<AgentTeamMember[]> {
   return backendGet<AgentTeamMember[]>(`${BASE}/${teamId}/members`)
+}
+
+export async function listTeamExternalMembers(teamId: string): Promise<AgentTeamExternalMember[]> {
+  return backendGet<AgentTeamExternalMember[]>(`${BASE}/${teamId}/external-members`)
+}
+
+export async function addTeamExternalMember(
+  teamId: string,
+  personId: string,
+): Promise<AgentTeamExternalMember> {
+  return backendPut<AgentTeamExternalMember>(`${BASE}/${teamId}/external-members`, {
+    person_id: personId,
+  })
+}
+
+export async function removeTeamExternalMember(
+  teamId: string,
+  personId: string,
+): Promise<{ deleted: true }> {
+  return backendDelete<{ deleted: true }>(`${BASE}/${teamId}/external-members/${personId}`)
 }
 
 export async function addTeamMember(teamId: string, userId: string): Promise<AgentTeamMember> {

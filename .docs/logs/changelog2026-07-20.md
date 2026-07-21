@@ -391,3 +391,12 @@ Impact: Templates install disabled + delivery_mode=shadow. Channels paginate Sla
 
 Files: slack people/channels, slack-team-loop service, space automation catalog/DTOs, Brain person scope, Flows Team filter, migration `20260721001000_slack_team_loop_templates.sql`.
 
+## [2026-07-20 17:31] - [FEATURE]
+
+What: Added explicit Internal, External, Agent, and Mixed team kinds; created canonical Internal, External, and Agency Agents teams; assigned Vibey, Atlas, Reed, Blaze, Ivy, Lux, and Jaime to Agency Agents; and added external-person membership sourced from classified Slack people.
+
+Why: The global agent directory was being mistaken for actual team membership, so the Team screen could show only three assigned agents even though seven agents existed elsewhere in the organization.
+
+Impact: Team membership now has one durable source of truth. Existing and future organizations receive canonical teams, internal and external membership stays synchronized, agent assignment is restricted to Agent or Mixed teams, and the Team UI displays each membership class separately.
+
+Files: Agent Teams API, repositories, policies, shared web contracts, Team index/detail UI, focused tests, and `20260721010000_team_membership_kinds.sql`.

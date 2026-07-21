@@ -28,6 +28,9 @@ const EXPECTED_AGENT_TEAMS_ROUTES = [
   'PUT agent-teams/agents/:agentKey/overrides -> replaceAgentOverrides',
   'POST agent-teams/agents/:agentKey/skill-overrides/:skillKey -> setSkillOverride',
   'DELETE agent-teams/agents/:agentKey/skill-overrides/:skillKey -> clearSkillOverride',
+  'GET agent-teams/:teamId/external-members -> list',
+  'PUT agent-teams/:teamId/external-members -> add',
+  'DELETE agent-teams/:teamId/external-members/:personId -> remove',
 ]
 
 function asPath(value: unknown): string | null {

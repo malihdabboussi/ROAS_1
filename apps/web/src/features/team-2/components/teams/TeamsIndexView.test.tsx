@@ -29,6 +29,7 @@ function team(overrides: Record<string, unknown> = {}) {
     is_system: false,
     created_at: '2026-06-01T00:00:00.000Z',
     updated_at: '2026-06-23T00:00:00.000Z',
+    team_kind: 'agent',
     member_count: 5,
     user_member_count: 2,
     grant_count: 3,
@@ -135,6 +136,7 @@ describe('TeamsIndexView', () => {
           name: 'Sales Team',
           icon: 'users',
           color: 'default',
+          team_kind: 'agent',
         }),
       )
       expect(onSelectTeam).toHaveBeenCalledWith('team-sales')
@@ -147,5 +149,25 @@ describe('TeamsIndexView', () => {
     } finally {
       consoleError.mockRestore()
     }
+  })
+
+  it('creates internal and external teams with the selected membership kind', async () => {
+    render(<TeamsIndexView embedded />)
+
+    fireEvent.click(screen.getByRole('button', { name: /New Team/i }))
+    fireEvent.change(screen.getByPlaceholderText('Team name (e.g. Marketing)'), {
+      target: { value: 'Client Team' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'External' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+
+    await waitFor(() =>
+      expect(mocks.createTeam).toHaveBeenCalledWith({
+        name: 'Client Team',
+        icon: 'users',
+        color: 'default',
+        team_kind: 'external',
+      }),
+    )
   })
 })

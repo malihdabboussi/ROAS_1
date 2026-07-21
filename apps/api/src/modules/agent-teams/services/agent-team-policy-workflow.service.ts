@@ -80,6 +80,9 @@ export class AgentTeamPolicyWorkflowService {
     if (teamId) {
       const team = await this.repo.getTeamById(supabase, teamId, toScope(scope))
       if (!team) throw new NotFoundException('Team not found')
+      if (team.team_kind !== 'agent' && team.team_kind !== 'mixed') {
+        throw new BadRequestException('Agents can only be assigned to Agent or Mixed teams')
+      }
     }
     const previousTeamId = await this.repo.getAgentTeamId(supabase, agentKey, toScope(scope))
     const result = await this.repo.setAgentTeam(supabase, agentKey, teamId, toScope(scope))

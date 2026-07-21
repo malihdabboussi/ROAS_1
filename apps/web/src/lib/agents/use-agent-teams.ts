@@ -3,7 +3,7 @@
 import { useCallback } from 'react'
 import { createCachedResource } from '@/lib/cache/cached-resource'
 import * as service from './agent-teams-api'
-import type { AgentTeam } from './agent-teams.types'
+import type { AgentTeam, AgentTeamKind } from './agent-teams.types'
 
 const teamsResource = createCachedResource<AgentTeam[]>(service.listTeams, {
   ttlMs: 60_000,
@@ -22,7 +22,12 @@ interface UseTeamsResult {
   loading: boolean
   error: string | null
   reload: () => Promise<void>
-  create: (payload: { name: string; color?: string; icon?: string }) => Promise<AgentTeam>
+  create: (payload: {
+    name: string
+    color?: string
+    icon?: string
+    team_kind?: AgentTeamKind
+  }) => Promise<AgentTeam>
   rename: (teamId: string, name: string) => Promise<AgentTeam>
   recolor: (teamId: string, color: string) => Promise<AgentTeam>
   reicon: (teamId: string, icon: string) => Promise<AgentTeam>
@@ -39,11 +44,14 @@ interface UseMyTeamMembershipsResult {
 export function useTeams(enabled = true): UseTeamsResult {
   const { data, loading, error, reload } = teamsResource.use({ enabled })
 
-  const create = useCallback(async (payload: { name: string; color?: string; icon?: string }) => {
-    const created = await service.createTeam(payload)
-    teamsResource.mutate((prev) => [...(prev ?? []), created])
-    return created
-  }, [])
+  const create = useCallback(
+    async (payload: { name: string; color?: string; icon?: string; team_kind?: AgentTeamKind }) => {
+      const created = await service.createTeam(payload)
+      teamsResource.mutate((prev) => [...(prev ?? []), created])
+      return created
+    },
+    [],
+  )
 
   const rename = useCallback(async (teamId: string, name: string) => {
     const next = await service.updateTeam(teamId, { name })

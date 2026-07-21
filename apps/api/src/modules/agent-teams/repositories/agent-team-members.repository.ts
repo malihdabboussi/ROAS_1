@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AgentTeam, AgentTeamMember } from '../types'
 
@@ -77,6 +77,9 @@ export class AgentTeamMembersRepository {
   ): Promise<AgentTeamMember> {
     const team = await this.getTeamById(supabase, teamId, scope)
     if (!team) throw new NotFoundException('Team not found')
+    if (team.team_kind !== 'internal' && team.team_kind !== 'mixed') {
+      throw new BadRequestException('Only Internal or Mixed teams can contain organization users')
+    }
     const { data, error } = await supabase
       .from('agent_team_members')
       .upsert(

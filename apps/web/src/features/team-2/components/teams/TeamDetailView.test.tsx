@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   listTeamGrants: vi.fn(),
   fetchMissionAgents: vi.fn(),
   listTeamMembers: vi.fn(),
+  listTeamExternalMembers: vi.fn(),
+  fetchSlackPeople: vi.fn(),
   fetchMissions: vi.fn(),
   backendGet: vi.fn(),
   fetchCampaigns: vi.fn(),
@@ -64,6 +66,7 @@ vi.mock('@/lib/agents', async (importOriginal) => {
     deleteTeam: mocks.deleteTeam,
     listTeamGrants: mocks.listTeamGrants,
     listTeamMembers: mocks.listTeamMembers,
+    listTeamExternalMembers: mocks.listTeamExternalMembers,
     listTeams: mocks.listTeams,
     removeTeamMember: mocks.removeTeamMember,
     setAgentTeam: mocks.setAgentTeam,
@@ -84,6 +87,10 @@ vi.mock('@/lib/missions', async (importOriginal) => {
 vi.mock('@/lib/org', () => ({
   useOrgStore: (selector: (state: { activeOrgId: string }) => unknown) =>
     selector({ activeOrgId: 'org-1' }),
+}))
+
+vi.mock('../../services/slack-people.service', () => ({
+  fetchSlackPeople: mocks.fetchSlackPeople,
 }))
 
 vi.mock('@/lib/campaigns', async (importOriginal) => {
@@ -215,6 +222,8 @@ describe('TeamDetailView', () => {
       }),
     ])
     mocks.listTeamMembers.mockResolvedValue([humanMember()])
+    mocks.listTeamExternalMembers.mockResolvedValue([])
+    mocks.fetchSlackPeople.mockResolvedValue({ connected: true, people: [] })
     mocks.fetchMissions.mockResolvedValue([
       {
         id: 'mission-1',
@@ -319,7 +328,7 @@ describe('TeamDetailView', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Add members' }))
       await waitFor(() => expect(screen.getByRole('menu')).toBeTruthy())
-      expect(screen.getByText('Humans')).toBeTruthy()
+      expect(screen.getByText('Internal people')).toBeTruthy()
       expect(screen.getByText('Jamie')).toBeTruthy()
       expect(screen.getByText('Nova')).toBeTruthy()
 

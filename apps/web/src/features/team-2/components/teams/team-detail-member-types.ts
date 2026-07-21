@@ -11,4 +11,5 @@ export type TeamDetailOrgMember = {
 
 export type RemoveTeamMemberTarget =
   | { type: 'human'; id: string; label: string }
+  | { type: 'external'; id: string; label: string }
   | { type: 'agent'; id: string; label: string }
