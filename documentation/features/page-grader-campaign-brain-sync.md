@@ -41,6 +41,12 @@ Envelope fields:
 
 Page Grader env for push: `ROAS_BRAIN_WEBHOOK_URL`, `ROAS_BRAIN_WEBHOOK_SECRET` (must match the connected ROAS user’s webhook secret).
 
+## Post-call work bridge
+
+After a meeting recap is approved, ROAS keeps internal handoffs in its Action Ledger and sends only fulfillment candidates with an unambiguous Page Grader client and assignee. Resolution is per action item: explicit link, unique client-name match, then the meeting Space/campaign mapping as a fallback. The Page Grader work record preserves task type, subtype, source excerpt, meeting links, assignee, and ClickUp IDs.
+
+Page Grader forwards ClickUp status changes to `/api/integrations/page-grader/webhooks/work-status`. It uses `ROAS_WORK_STATUS_WEBHOOK_URL` / `ROAS_WORK_STATUS_WEBHOOK_SECRET` when set, otherwise derives the work-status URL from `ROAS_BRAIN_WEBHOOK_URL` and reuses `ROAS_BRAIN_WEBHOOK_SECRET`. ROAS verifies the connected-client mapping plus the linked `space_item_id`, `client_id`, and `work_id` before updating the Action Ledger.
+
 ## Code map
 
 | Concern              | Location                                                                             |
@@ -65,5 +71,5 @@ Page Grader env for push: `ROAS_BRAIN_WEBHOOK_URL`, `ROAS_BRAIN_WEBHOOK_SECRET` 
 - **2026-07-20:** Campaign Knowledge UI showed Objects: 500 / Connections: 0 / all “Conversation doc” because (1) graph API defaulted to limit 500 and used list length as totals, (2) Page Grader dual-write forced `conversation_document`, (3) Space hub objects were never indexed so structural Space→item edges were skipped. Graph default/max raised (2500/5000) with true stats; ingest maps PG provenance to avatar/offer/channel_message/space_doc/etc, indexes the Space hub first, and drops stale conversation_document duplicates. Prod Multifamily/Sakha remapped + edged via `scripts/roas/repair-page-grader-campaign-knowledge-graph.py`.
 - **2026-07-20:** Campaign-attached Meta ads (`ad_campaign` / `ad_set` / `ad`) now index into Campaign Knowledge on Meta sync and Studio ad CRUD (`force: true`, General space + org scope). Structural edges are Space → ad_campaign → ad_set → ad (no Space → ad star). Existing rows: `scripts/roas/backfill-campaign-ads-knowledge.py`.
 - **2026-07-20:** Active-client bootstrap exposed two import defects: newly created campaigns were pre-stamped with the incoming hash and skipped their first ingest, while hundreds of Campaign Knowledge records were indexed serially and exceeded the API request window. New campaigns now receive the hash only after success, and knowledge indexing runs in bounded batches of six.
-- **2026-07-20:** Existing pre-stamped campaign shells could still remain permanently empty because catch-up trusted the matching hash. Catch-up now verifies indexed Campaign Knowledge before skipping and force-repairs empty mapped campaigns. Graph object/edge reads now page through Supabase's 1,000-row ceiling instead of presenting 1,000 as the brain size.
+- **2026-07-20:** Existing pre-stamped campaign shells could still remain permanently empty because catch-up trusted the matching hash. Catch-up now verifies indexed Campaign Knowledge before skipping and force-repairs empty mapped campaigns even when the client-scope mapping is missing its hash but the campaign shell has one. Graph object/edge reads now page through Supabase's 1,000-row ceiling instead of presenting 1,000 as the brain size. Production recovery verified all 26 mapped brands populated (12,028 semantic objects; 0 empty).
 - **2026-07-20:** High-volume Page Grader imports were charged one minimum internal credit per embedding request even though Gemini's actual cost is token-based. Page Grader keeps the same Gemini calls and six-request concurrency, but settles measured usage in 250-row billing batches so integer rounding applies to aggregate cost.
