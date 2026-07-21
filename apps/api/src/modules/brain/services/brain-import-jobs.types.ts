@@ -73,6 +73,12 @@ export type BrainImportRuntimeClaimResult =
 export type SlackForkTarget =
   | { kind: 'customer'; targetId: string; contactId: string; slackUserId: string }
   | { kind: 'user'; targetId: string; userId: string; brainId: string; slackUserId: string }
+  | {
+      kind: 'managed_person'
+      targetId: string
+      brainId: string
+      slackUserId: string
+    }
 
 export function readPositiveInt(value: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(value ?? '', 10)

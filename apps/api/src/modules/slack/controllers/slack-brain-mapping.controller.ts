@@ -17,11 +17,13 @@ import {
   SlackBrainMappingCreateDtoSchema,
   SlackBrainMappingIdParamSchema,
   SlackBrainMappingUpdateDtoSchema,
+  SlackPersonBrainBackfillDtoSchema,
   type SlackAttachSenderDto,
   type SlackBrainAutoIngestDto,
   type SlackBrainMappingCreateDto,
   type SlackBrainMappingIdParam,
   type SlackBrainMappingUpdateDto,
+  type SlackPersonBrainBackfillDto,
 } from '../dto/slack.dto'
 import { SlackBrainMappingService } from '../services/slack-brain-mapping.service'
 
@@ -83,6 +85,17 @@ export class SlackBrainMappingController {
     params: SlackBrainMappingIdParam,
   ) {
     return this.mappings.syncNow(supabase, user.id, params.id, scope.orgId)
+  }
+
+  @Post('backfill-person-brains')
+  async backfillPersonBrains(
+    @Supabase() supabase: SupabaseClient,
+    @CurrentUser() user: { id: string },
+    @OrgContext() scope: RequestScope,
+    @Body(new ZodValidationPipe(SlackPersonBrainBackfillDtoSchema))
+    body: SlackPersonBrainBackfillDto,
+  ) {
+    return this.mappings.backfillPersonBrains(supabase, user.id, scope.orgId, body.lookback_days)
   }
 
   @Get('sender-resolution')

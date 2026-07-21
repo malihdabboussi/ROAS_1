@@ -380,6 +380,8 @@ export abstract class BrainImportJobsInputBase extends BrainImportJobsExecutionB
         contactRole: string | null
         qualifiesForCustomerBrain: boolean
         vibeyUserId: string | null
+        personBrainId: string | null
+        relationshipKind: 'internal' | 'external' | 'ignored'
       }
     >,
   ): Promise<void> {
@@ -404,7 +406,24 @@ export abstract class BrainImportJobsInputBase extends BrainImportJobsExecutionB
       }
       if (sender.vibeyUserId && sender.vibeyUserId !== mapping.user_id) {
         const brainId = await this.resolveDefaultBrainId(sender.vibeyUserId, mapping.org_id)
-        if (!brainId) continue
+        if (brainId) {
+          await this.enqueueSlackPeriodImport(
+            mapping.user_id,
+            mapping,
+            String(payload.periodStartTs ?? ''),
+            String(payload.periodEndTs ?? new Date().toISOString()),
+            mapping.org_id,
+            {
+              kind: 'user',
+              targetId: sender.vibeyUserId,
+              userId: sender.vibeyUserId,
+              brainId,
+              slackUserId,
+            },
+          )
+        }
+      }
+      if (sender.personBrainId && !sender.vibeyUserId && sender.relationshipKind !== 'ignored') {
         await this.enqueueSlackPeriodImport(
           mapping.user_id,
           mapping,
@@ -412,10 +431,9 @@ export abstract class BrainImportJobsInputBase extends BrainImportJobsExecutionB
           String(payload.periodEndTs ?? new Date().toISOString()),
           mapping.org_id,
           {
-            kind: 'user',
-            targetId: sender.vibeyUserId,
-            userId: sender.vibeyUserId,
-            brainId,
+            kind: 'managed_person',
+            targetId: sender.personBrainId,
+            brainId: sender.personBrainId,
             slackUserId,
           },
         )

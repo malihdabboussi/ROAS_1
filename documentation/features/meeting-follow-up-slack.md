@@ -188,6 +188,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 
 - Managed Person Brains now appear below User Brains in the global Brain menu, with separate portal-account and external-person icons.
 - Active Person Brain loops route explicit Slack facts into the person’s managed Brain and deduplicate by both source message and normalized content.
+- Historical backfill now reuses the retryable Slack Brain import queue for enabled mapped channels. It creates missing managed Person Brains, forks knowledge by Slack sender, skips Ignored people, and intentionally excludes DM history.
 - Broader routing to Customer, Company, Agent, and Campaign Brains still requires per-loop ownership and permission rules.
 - Show what Pixel learned, why it was saved, which conversations/people/campaigns it connects, and allow correction or deletion.
 - Measure accepted proposals, edits before approval, response rate, commitments completed, time saved, and false-positive rate so each loop improves from real team feedback.
@@ -291,6 +292,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-20:** Slack source evidence is mandatory for every detected signal. Workflow-discovery and client-risk signals remain reviewable proposals in Active mode.
 - **2026-07-20:** Per-assignee action-item reminders are Shadow `message` proposals created with the meeting review DM (not auto-sent on ✅). Matching uses Slack person email/display name; ignored and `delivery_mode=off` people are skipped.
 - **2026-07-20:** Shadow ledger `target_member_id` must equal the Slack DM recipient. Ops samples delivered to Dylan cannot stay stamped on Aaron as Sent.
+- **2026-07-20:** Person Brain history backfill is opt-in and bounded to enabled mapped channels; it never imports DMs. Managed Person Brains receive sender-filtered forks through the existing Brain queue, while portal users retain their canonical User Brain.
 
 ## Related
 

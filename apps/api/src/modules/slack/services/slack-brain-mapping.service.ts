@@ -3,6 +3,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { BrainImportJobsService } from '../../brain/services/brain-import-jobs.service'
 import { ContactIdentifierService } from '../../leads/services/contact-identifier.service'
 import { SlackBrainMappingRepository } from '../repositories/slack-brain-mapping.repository'
+import { SlackPeopleBrainRepository } from '../repositories/slack-people-brain.repository'
+import { SlackPeopleRepository } from '../repositories/slack-people.repository'
 import { SlackRepository } from '../repositories/slack.repository'
 import type {
   SlackBrainCadence,
@@ -20,6 +22,8 @@ export class SlackBrainMappingService {
     private readonly senderResolver: SlackSenderResolverService,
     private readonly contactIdentifiers: ContactIdentifierService,
     private readonly brainImportJobs: BrainImportJobsService,
+    private readonly peopleRepo: SlackPeopleRepository,
+    private readonly peopleBrains: SlackPeopleBrainRepository,
   ) {}
 
   async listMappings(
@@ -123,6 +127,72 @@ export class SlackBrainMappingService {
     return result
   }
 
+  async backfillPersonBrains(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string | null | undefined,
+    lookbackDays: number,
+    now = new Date(),
+  ): Promise<{
+    provisioned_person_brains: number
+    mapped_channels: number
+    queued_jobs: number
+    deduped_jobs: number
+    lookback_days: number
+  }> {
+    if (!orgId)
+      throw new BadRequestException('An organization is required for Person Brain backfill')
+    const integration = await this.slackRepo.getIntegration(supabase, userId, orgId)
+    if (!integration?.access_token) throw new BadRequestException('Slack is not connected')
+
+    const people = await this.peopleRepo.listPeople(supabase, orgId)
+    let provisionedPersonBrains = 0
+    for (const person of people) {
+      if (
+        person.relationship_kind === 'ignored' ||
+        person.vibey_user_id ||
+        person.person_brain_id
+      ) {
+        continue
+      }
+      await this.peopleBrains.createManagedPersonBrain(supabase, {
+        personId: person.id,
+        orgId,
+        ownerId: userId,
+      })
+      provisionedPersonBrains += 1
+    }
+
+    const mappings = (await this.mappingsRepo.list(supabase, userId, orgId)).filter(
+      (mapping) => mapping.enabled,
+    )
+    const boundedLookbackDays = Math.min(365, Math.max(1, Math.trunc(lookbackDays)))
+    const periodStart = this.toSlackTimestamp(
+      new Date(now.getTime() - boundedLookbackDays * 24 * 60 * 60 * 1000),
+    )
+    const periodEnd = this.toSlackTimestamp(now)
+    let queuedJobs = 0
+    let dedupedJobs = 0
+    for (const mapping of mappings) {
+      const result = await this.brainImportJobs.enqueueSlackPeriodImport(
+        userId,
+        mapping,
+        periodStart,
+        periodEnd,
+        orgId,
+      )
+      if (result.deduped) dedupedJobs += 1
+      else queuedJobs += 1
+    }
+    return {
+      provisioned_person_brains: provisionedPersonBrains,
+      mapped_channels: mappings.length,
+      queued_jobs: queuedJobs,
+      deduped_jobs: dedupedJobs,
+      lookback_days: boundedLookbackDays,
+    }
+  }
+
   async listSenderResolution(
     supabase: SupabaseClient,
     userId: string,
@@ -188,5 +258,9 @@ export class SlackBrainMappingService {
       count += 1
     }
     return count
+  }
+
+  private toSlackTimestamp(value: Date): string {
+    return `${Math.floor(value.getTime() / 1000)}.000000`
   }
 }

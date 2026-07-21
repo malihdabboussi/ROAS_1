@@ -282,17 +282,22 @@ export abstract class BrainImportJobsEnqueueBase extends BrainImportJobsRuntimeB
     orgId?: string | null,
     fork?: SlackForkTarget,
   ) {
+    const normalizedPeriodStartTs = this.normalizeSlackTimestamp(periodStartTs)
+    const normalizedPeriodEndTs = this.normalizeSlackTimestamp(periodEndTs)
     const payload: Record<string, unknown> = {
       mappingId: mapping.id,
       mappingUserId: mapping.user_id,
       channelId: mapping.slack_channel_id,
       channelName: mapping.slack_channel_name,
       teamId: mapping.slack_team_id,
-      periodStartTs,
-      periodEndTs,
-      targetKind: fork?.kind ?? mapping.target_kind,
+      periodStartTs: normalizedPeriodStartTs,
+      periodEndTs: normalizedPeriodEndTs,
+      targetKind: fork?.kind === 'managed_person' ? 'user' : (fork?.kind ?? mapping.target_kind),
       targetCampaignId: mapping.target_campaign_id,
-      targetBrainId: fork?.kind === 'user' ? fork.brainId : mapping.target_brain_id,
+      targetBrainId:
+        fork?.kind === 'user' || fork?.kind === 'managed_person'
+          ? fork.brainId
+          : mapping.target_brain_id,
       contactId: fork?.kind === 'customer' ? fork.contactId : null,
       senderFilterSlackUserId: fork?.slackUserId ?? null,
       isFork: !!fork,
@@ -303,16 +308,27 @@ export abstract class BrainImportJobsEnqueueBase extends BrainImportJobsRuntimeB
         ? fork.contactId
         : fork?.kind === 'user'
           ? fork.userId
-          : mapping.target_campaign_id || mapping.target_brain_id || mapping.target_kind
+          : fork?.kind === 'managed_person'
+            ? fork.brainId
+            : mapping.target_campaign_id || mapping.target_brain_id || mapping.target_kind
     const dedupeKey = fork
-      ? `slack:${mapping.id}:${periodStartTs}:fork:${fork.kind}:${targetId}`
-      : `slack:${mapping.id}:${periodStartTs}`
-    const effectiveTargetKind = fork?.kind ?? mapping.target_kind
+      ? `slack:${mapping.id}:${normalizedPeriodStartTs}:fork:${fork.kind}:${targetId}`
+      : `slack:${mapping.id}:${normalizedPeriodStartTs}`
+    const effectiveTargetKind =
+      fork?.kind === 'managed_person' ? 'user' : (fork?.kind ?? mapping.target_kind)
     const jobType =
       effectiveTargetKind === 'campaign' ? 'campaign_slack_import' : 'slack_period_import'
     const title = fork
       ? `Slack #${mapping.slack_channel_name} ${fork.kind} fork`
       : `Slack #${mapping.slack_channel_name} ${mapping.cadence}`
     return this.enqueueJob(effectiveUserId, jobType, title, dedupeKey, payload, orgId)
+  }
+
+  private normalizeSlackTimestamp(value: string): string {
+    const trimmed = value.trim()
+    if (/^\d+(\.\d+)?$/.test(trimmed)) return trimmed
+    const millis = Date.parse(trimmed)
+    if (!Number.isFinite(millis)) throw new Error('Slack import period is not a valid timestamp')
+    return `${Math.floor(millis / 1000)}.000000`
   }
 }

@@ -26,6 +26,7 @@ describe('SlackSenderResolverService', () => {
         {
           platform_id: 'U2',
           vibey_user_id: null,
+          person_brain_id: 'brain-client-one',
           relationship_kind: 'external',
           relationship_source: 'manual',
           identity_match_method: 'none',
@@ -48,6 +49,15 @@ describe('SlackSenderResolverService', () => {
 
     expect(result.channelNamesByMember.get('U1')).toEqual(['general'])
     expect(result.channelNamesByMember.get('U2')).toEqual(['client-acme', 'general'])
+    expect(result.members).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          slackUserId: 'U2',
+          personBrainId: 'brain-client-one',
+          relationshipKind: 'external',
+        }),
+      ]),
+    )
     expect(runtime.upsertResolvedSlackPerson).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({

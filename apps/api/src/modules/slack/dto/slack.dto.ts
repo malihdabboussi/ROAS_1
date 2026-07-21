@@ -147,6 +147,11 @@ export const SlackBrainAutoIngestDtoSchema = z.object({
 })
 export type SlackBrainAutoIngestDto = z.infer<typeof SlackBrainAutoIngestDtoSchema>
 
+export const SlackPersonBrainBackfillDtoSchema = z.object({
+  lookback_days: z.coerce.number().int().min(1).max(365).default(90),
+})
+export type SlackPersonBrainBackfillDto = z.infer<typeof SlackPersonBrainBackfillDtoSchema>
+
 export const SlackAttachSenderDtoSchema = z.object({
   slack_user_id: z.string().min(1),
   contact_id: z.string().uuid(),

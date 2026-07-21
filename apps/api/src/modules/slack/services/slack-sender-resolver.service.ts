@@ -145,6 +145,11 @@ export class SlackSenderResolverService {
         contactRole: role,
         qualifiesForCustomerBrain: role ? CUSTOMER_BRAIN_CONTACT_ROLES.has(role) : false,
         vibeyUserId,
+        personBrainId: existingIdentity?.person_brain_id ?? null,
+        relationshipKind: (existingIdentity?.relationship_kind ?? inferredRelationship) as
+          | 'internal'
+          | 'external'
+          | 'ignored',
       })
     }
 

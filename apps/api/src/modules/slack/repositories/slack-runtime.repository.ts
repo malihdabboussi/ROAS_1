@@ -93,6 +93,7 @@ export class SlackRuntimeRepository {
     Array<{
       platform_id: string
       vibey_user_id: string | null
+      person_brain_id: string | null
       relationship_kind: string
       relationship_source: string
       identity_match_method: string
@@ -102,7 +103,7 @@ export class SlackRuntimeRepository {
     let query = supabase
       .from('channel_members')
       .select(
-        'platform_id, vibey_user_id, relationship_kind, relationship_source, identity_match_method',
+        'platform_id, vibey_user_id, person_brain_id, relationship_kind, relationship_source, identity_match_method',
       )
       .eq('user_id', input.userId)
       .eq('platform', 'slack')

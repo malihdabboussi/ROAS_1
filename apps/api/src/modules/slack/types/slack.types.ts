@@ -188,6 +188,8 @@ export interface SlackResolvedSender {
   contactRole: string | null
   qualifiesForCustomerBrain: boolean
   vibeyUserId: string | null
+  personBrainId: string | null
+  relationshipKind: SlackRelationshipKind
 }
 
 export type SlackRelationshipKind = 'internal' | 'external' | 'ignored'

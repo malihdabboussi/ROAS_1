@@ -3323,6 +3323,10 @@ exports[`API route inventory contract > matches the committed method + path inve
     "path": "/api/integrations/slack/brain-mappings/:id/sync-now",
   },
   {
+    "method": "POST",
+    "path": "/api/integrations/slack/brain-mappings/backfill-person-brains",
+  },
+  {
     "method": "GET",
     "path": "/api/integrations/slack/brain-mappings/sender-resolution",
   },
