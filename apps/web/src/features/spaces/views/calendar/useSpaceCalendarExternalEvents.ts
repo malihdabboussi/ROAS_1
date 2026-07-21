@@ -67,7 +67,9 @@ export function useSpaceCalendarExternalEvents({
         timezone,
         provider: providers.length === 1 ? providers[0] : undefined,
       })
-      setEvents(response.events.filter((event) => providers.includes(event.source)))
+      setEvents(
+        response.events.filter((event) => (providers as readonly string[]).includes(event.source)),
+      )
       setConnected(response.connected)
       setError(response.success ? null : response.error || 'Failed to load calendar events')
     } catch (err) {
