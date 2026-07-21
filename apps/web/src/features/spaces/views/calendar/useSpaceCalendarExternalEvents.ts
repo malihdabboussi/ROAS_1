@@ -36,6 +36,13 @@ export function expandCalendarVisibleWindow(
   return { start, end }
 }
 
+export function isCalendarAgendaSourceEnabled(
+  source: CalendarAgendaEvent['source'],
+  providers: readonly CalendarProvider[],
+): boolean {
+  return (providers as readonly string[]).includes(source)
+}
+
 export function useSpaceCalendarExternalEvents({
   visibleWindow,
   providers,
@@ -68,7 +75,7 @@ export function useSpaceCalendarExternalEvents({
         provider: providers.length === 1 ? providers[0] : undefined,
       })
       setEvents(
-        response.events.filter((event) => (providers as readonly string[]).includes(event.source)),
+        response.events.filter((event) => isCalendarAgendaSourceEnabled(event.source, providers)),
       )
       setConnected(response.connected)
       setError(response.success ? null : response.error || 'Failed to load calendar events')
@@ -104,7 +111,9 @@ export function useSpaceCalendarExternalEvents({
           provider: providers.length === 1 ? providers[0] : undefined,
         })
         if (cancelled) return
-        setEvents(response.events.filter((event) => providers.includes(event.source)))
+        setEvents(
+          response.events.filter((event) => isCalendarAgendaSourceEnabled(event.source, providers)),
+        )
         setConnected(response.connected)
         setError(response.success ? null : response.error || 'Failed to load calendar events')
       } catch (err) {

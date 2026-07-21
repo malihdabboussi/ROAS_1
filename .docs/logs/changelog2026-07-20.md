@@ -400,3 +400,13 @@ Why: The global agent directory was being mistaken for actual team membership, s
 Impact: Team membership now has one durable source of truth. Existing and future organizations receive canonical teams, internal and external membership stays synchronized, agent assignment is restricted to Agent or Mixed teams, and the Team UI displays each membership class separately.
 
 Files: Agent Teams API, repositories, policies, shared web contracts, Team index/detail UI, focused tests, and `20260721010000_team_membership_kinds.sql`.
+
+## [2026-07-20 18:55] - [FIX]
+
+What: Centralized Space calendar provider filtering so Google and Outlook views safely exclude Fathom events in both initial loading and manual reload paths.
+
+Why: The prior production fix widened only one of two duplicated filters, leaving the second filter typed as CalendarProvider-only and blocking the ROAS web deployment during TypeScript validation.
+
+Impact: Removes the production build blocker without changing calendar behavior and prevents the two loading paths from drifting again.
+
+Files: `useSpaceCalendarExternalEvents.ts`, focused regression test.

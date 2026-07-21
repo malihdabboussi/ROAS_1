@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { expandCalendarVisibleWindow } from './useSpaceCalendarExternalEvents'
+import {
+  expandCalendarVisibleWindow,
+  isCalendarAgendaSourceEnabled,
+} from './useSpaceCalendarExternalEvents'
 
 describe('useSpaceCalendarExternalEvents', () => {
   it('expands visible calendar windows for adjacent week provider events', () => {
@@ -12,5 +15,11 @@ describe('useSpaceCalendarExternalEvents', () => {
 
     expect(expanded.start.toISOString()).toBe('2026-06-08T00:00:00.000Z')
     expect(expanded.end.toISOString()).toBe('2026-06-28T23:59:59.999Z')
+  })
+
+  it('excludes Fathom events from Google and Outlook provider filters', () => {
+    expect(isCalendarAgendaSourceEnabled('google_calendar', ['google_calendar'])).toBe(true)
+    expect(isCalendarAgendaSourceEnabled('outlook', ['google_calendar'])).toBe(false)
+    expect(isCalendarAgendaSourceEnabled('fathom', ['google_calendar', 'outlook'])).toBe(false)
   })
 })
