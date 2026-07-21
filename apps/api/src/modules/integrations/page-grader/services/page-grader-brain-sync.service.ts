@@ -2,7 +2,10 @@ import { createHash, randomBytes } from 'node:crypto'
 import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common'
 import { SupabaseServiceClient } from '@vibey/api-shared'
 import { VaultService } from '../../../vault/services/vault.service'
-import type { PageGraderBrainPackageWebhookDto } from '../dto/page-grader.dto'
+import {
+  PageGraderWorkStatusWebhookSchema,
+  type PageGraderBrainPackageWebhookDto,
+} from '../dto/page-grader.dto'
 import { PageGraderIntegration } from '../integrations/page-grader.integration'
 import { PageGraderBrainSyncRepository } from '../repositories/page-grader-brain-sync.repository'
 import {
@@ -90,6 +93,97 @@ export class PageGraderBrainSyncService {
       )
     }
     return { success: true, results }
+  }
+
+  async processWorkStatusWebhook(rawBody: string, signature: string) {
+    const secret = signature.trim()
+    if (!secret) throw new UnauthorizedException('Missing webhook signature')
+
+    let raw: unknown
+    try {
+      raw = JSON.parse(rawBody)
+    } catch {
+      throw new BadRequestException('Invalid JSON body')
+    }
+    const parsed = PageGraderWorkStatusWebhookSchema.safeParse(raw)
+    if (!parsed.success) throw new BadRequestException('Invalid work-status payload')
+    const payload = parsed.data
+
+    const mapped = await this.findMappedClientsByWebhookSecret(secret, payload.client_id)
+    if (mapped.length === 0) {
+      throw new UnauthorizedException('Unknown webhook secret or unmapped client')
+    }
+
+    const { data: item, error } = await this.svc.client
+      .from('space_items')
+      .select('id, custom_data')
+      .eq('id', payload.space_item_id)
+      .maybeSingle()
+    if (error) throw new BadRequestException(error.message)
+    if (!item) throw new BadRequestException('ROAS action item was not found')
+
+    const customData = asRecord(item.custom_data)
+    const pageGrader = asRecord(customData.page_grader)
+    if (
+      String(pageGrader.client_id ?? '') !== payload.client_id ||
+      String(pageGrader.work_id ?? '') !== payload.work_id
+    ) {
+      throw new UnauthorizedException('Work-status payload does not match the linked ROAS item')
+    }
+
+    const actionLedger = asRecord(customData.action_ledger)
+    const ledgerPageGrader = asRecord(actionLedger.page_grader)
+    const normalizedStatus = String(payload.status ?? '')
+      .trim()
+      .toLowerCase()
+    const completed = new Set(['complete', 'completed', 'closed', 'done', 'shipped']).has(
+      normalizedStatus,
+    )
+    const dismissed = new Set(['cancelled', 'canceled', 'deleted']).has(normalizedStatus)
+    const now = payload.updated_at ?? new Date().toISOString()
+
+    const { error: updateError } = await this.svc.client
+      .from('space_items')
+      .update({
+        custom_data: {
+          ...customData,
+          page_grader: {
+            ...pageGrader,
+            clickup_task_id: payload.clickup_task_id ?? pageGrader.clickup_task_id ?? null,
+            clickup_task_url: payload.clickup_task_url ?? pageGrader.clickup_task_url ?? null,
+            clickup_status: payload.status ?? null,
+            clickup_status_color: payload.status_color ?? null,
+            status_synced_at: now,
+          },
+          action_ledger: {
+            ...actionLedger,
+            status: completed ? 'done' : dismissed ? 'dismissed' : 'delegated',
+            page_grader: {
+              ...ledgerPageGrader,
+              delegation_status: dismissed ? 'failed' : 'delegated',
+              work_id: payload.work_id,
+              clickup_task_id: payload.clickup_task_id ?? ledgerPageGrader.clickup_task_id ?? null,
+              clickup_task_url:
+                payload.clickup_task_url ?? ledgerPageGrader.clickup_task_url ?? null,
+              clickup_status: payload.status ?? null,
+              clickup_status_color: payload.status_color ?? null,
+              completed_at: completed ? now : (ledgerPageGrader.completed_at ?? null),
+              status_synced_at: now,
+            },
+            updated_at: now,
+          },
+        },
+        updated_at: now,
+      })
+      .eq('id', payload.space_item_id)
+    if (updateError) throw new BadRequestException(updateError.message)
+
+    return {
+      success: true,
+      space_item_id: payload.space_item_id,
+      work_id: payload.work_id,
+      status: completed ? 'done' : dismissed ? 'dismissed' : 'delegated',
+    }
   }
 
   async catchUpMappedClients(limit = 50): Promise<{
@@ -232,4 +326,10 @@ export class PageGraderBrainSyncService {
     const all = await this.listAllMappedClients()
     return all.filter((row) => row.webhookSecret === secret && row.clientId === clientId)
   }
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
 }

@@ -12,7 +12,6 @@ import type {
 
 const PERSON_SELECT =
   'id, platform_id, display_name, username, avatar_url, title, timezone, email, is_bot, vibey_user_id, suggested_vibey_user_id, contact_id, person_brain_id, relationship_kind, relationship_source, identity_match_method, identity_match_confidence, delivery_mode, last_seen_at'
-
 @Injectable()
 export class SlackPeopleRepository {
   async findOrgSlackIntegration(
@@ -338,6 +337,7 @@ export class SlackPeopleRepository {
       orgId: string
       sentBy: string
       slackTs: string | null
+      slackChannelId?: string | null
       metadata: Record<string, unknown>
     },
   ): Promise<SlackShadowAction | null> {
@@ -349,6 +349,7 @@ export class SlackPeopleRepository {
         metadata: {
           ...input.metadata,
           slack_message_ts: input.slackTs,
+          ...(input.slackChannelId ? { slack_channel_id: input.slackChannelId } : {}),
           sent_by: input.sentBy,
         },
       })

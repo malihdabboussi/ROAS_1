@@ -49,6 +49,9 @@ export const SendPageGraderWorkSchema = z.object({
   space_item_ids: z.array(z.string().uuid()).min(1).max(50),
   work_kind: PageGraderWorkKindSchema.optional().default('task_request'),
   task_type: PageGraderTaskTypeIdSchema,
+  task_subtype: z.string().min(1).max(160).optional(),
+  source_excerpt: z.string().max(4000).optional(),
+  open_questions: z.array(z.string().min(1).max(500)).max(20).optional(),
   client_tag_id: z.string().min(1).max(120).optional(),
   client_tag_label: z.string().min(1).max(120).optional(),
   assignee: z
@@ -104,3 +107,16 @@ export const PageGraderBrainPackageWebhookSchema = z.object({
 })
 
 export type PageGraderBrainPackageWebhookDto = z.infer<typeof PageGraderBrainPackageWebhookSchema>
+
+export const PageGraderWorkStatusWebhookSchema = z.object({
+  client_id: z.string().uuid(),
+  space_item_id: z.string().uuid(),
+  work_id: z.string().uuid(),
+  clickup_task_id: z.string().min(1).max(120).nullable().optional(),
+  clickup_task_url: z.string().url().nullable().optional(),
+  status: z.string().min(1).max(120).nullable().optional(),
+  status_color: z.string().max(40).nullable().optional(),
+  updated_at: z.string().datetime().optional(),
+})
+
+export type PageGraderWorkStatusWebhookDto = z.infer<typeof PageGraderWorkStatusWebhookSchema>

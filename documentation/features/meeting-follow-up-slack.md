@@ -2,28 +2,28 @@
 
 **Last Modified:** 2026-07-20
 
-First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill → the exact draft is stored in Shadow → Slack DM asks for review → ✅ confirms in ROAS → that exact approved recap is posted in the thread. Page Grader send is **not** part of this path.
+First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact draft is stored in Shadow → Slack DM asks for review (separate threaded proposed recap) → ✅ confirms in ROAS → that exact approved recap is posted in the thread. Per-assignee reminders stay in People until Approve & Send. Confirmed fulfillment action items are independently resolved to a Page Grader client and assignee, delegated, and linked back to the ROAS Action Ledger; internal handoffs and ambiguous items stay in ROAS.
 
 ## Status (2026-07-20)
 
-| Area                                                   | State                                      |
-| ------------------------------------------------------ | ------------------------------------------ |
-| DM with purpose / takeaways / owners / Fathom link     | Working                                    |
-| ✅ `white_check_mark` → stamp follow-ups in ROAS       | Working                                    |
-| Shareable thread recap after ✅                        | Pixel-written, exact approved draft reused |
-| Database-backed `post-call-delivery` skill             | Implemented; migration required            |
-| Shadow proposal in Team → People → Conversations       | Implemented                                |
-| Slack org token resolution (personal call + org Slack) | Fixed                                      |
-| Topics truncation mid-word                             | Fixed (brief skips Topics dump)            |
-| Fathom markdown links → Slack mrkdwn                   | Fixed                                      |
-| Owner names as linked bullets                          | Fixed (headers + nested tasks)             |
-| Friendly human recap voice                             | Implemented through the post-call skill    |
-| Thread-reply revise loop                               | Implemented for pending post-call drafts   |
-| Pixel channel directory + channel/thread timelines     | Implemented; app deployment required       |
-| Person Brains in global Brain navigation               | Implemented; app deployment required       |
-| Scheduled proactive Team loops                         | Implemented; template migration required   |
-| Auto-post to a channel                                 | Not yet                                    |
-| Page Grader dispatch on confirm                        | Explicitly removed / deferred              |
+| Area                                                   | State                                                                                                      |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| DM with purpose / takeaways / owners / Fathom link     | Working                                                                                                    |
+| ✅ `white_check_mark` → stamp follow-ups in ROAS       | Working                                                                                                    |
+| Shareable thread recap after ✅                        | Pixel-written, exact approved draft reused                                                                 |
+| Database-backed `post-call-delivery` skill             | Implemented; migration required                                                                            |
+| Shadow proposal in Team → People → Conversations       | Implemented                                                                                                |
+| Slack org token resolution (personal call + org Slack) | Fixed                                                                                                      |
+| Topics truncation mid-word                             | Fixed (brief skips Topics dump)                                                                            |
+| Fathom markdown links → Slack mrkdwn                   | Fixed                                                                                                      |
+| Owner names as linked bullets                          | Fixed (headers + nested tasks)                                                                             |
+| Friendly human recap voice                             | Implemented through the post-call skill                                                                    |
+| Thread-reply revise loop                               | Implemented for pending post-call drafts                                                                   |
+| Pixel channel directory + channel/thread timelines     | Implemented; app deployment required                                                                       |
+| Person Brains in global Brain navigation               | Implemented; app deployment required                                                                       |
+| Scheduled proactive Team loops                         | Installed in Shadow; live history polling is rate-limited and requires the shared observation stream below |
+| Auto-post to a channel                                 | Not yet                                                                                                    |
+| Page Grader dispatch on confirm                        | Fulfillment candidates only; conservative client/assignee resolution                                       |
 
 ## Intended product loop
 
@@ -41,7 +41,7 @@ Fathom recording ready (my_recordings OR shared_team_recordings)
   → stamp follow-ups confirmed in ROAS
   → reply in Slack thread with the exact approved recap
   → (later) share to channel / attendees
-  → (later) optional Page Grader send
+  → confirmed fulfillment item → Page Grader + ClickUp → status back to Action Ledger
 ```
 
 Team meetings (teammate-hosted Fathom recordings shared to your plan) use the same path. Pixel/Slack follow-up is downstream of the Meetings call row — if the webhook never creates that row, no Slack agent work runs.
@@ -70,49 +70,91 @@ The skill is database-first in `agent_skills` and mirrored under `docker/agents/
 2. Service resolves suggestion IDs from the action or the latest `agent_suggest_tasks` step.
 3. Calls Agent API `/api/agents/post-call-draft`, explicitly loading `post-call-delivery`, and receives `{ message, rationale, context_sources }`.
 4. Writes that draft to `slack_shadow_actions` as a `workflow` proposal, linked to the admin's Slack person record when an email match exists.
-5. Opens Slack DM via the bot token and posts a review message containing the proposed recap.
-6. Stores pending payload on the **call** item:
+5. Opens Slack DM via the bot token and posts a review message; posts the proposed shareable recap as a **threaded** second message.
+6. Creates one Shadow `message` proposal per follow-up assignee matched to a Slack person (grouped tasks, friendly reminder tone). Skips unmatched / ignored / `delivery_mode=off`. Ids stored on `assignee_shadow_action_ids`.
+7. Stores pending payload on the **call** item:
 
-   `custom_data.slack_follow_up_confirm = { status, channel_id, message_ts, space_item_ids, confirm_reaction, ... }`
+   `custom_data.slack_follow_up_confirm = { status, channel_id, message_ts, space_item_ids, confirm_reaction, assignee_shadow_action_ids?, ... }`
 
-7. Slack Events API `reaction_added` → `SlackService.handleReactionAddedEvent` → `MeetingFollowUpSlackConfirmService.handleReactionAdded`.
-8. On match (pending + correct reaction + channel/ts):
+8. Slack Events API `reaction_added` → `SlackService.handleReactionAddedEvent` → `MeetingFollowUpSlackConfirmService.handleReactionAdded`.
+9. On match (pending + correct reaction + channel/ts):
    - Call payload → `status: approved`
    - Each follow-up gets `custom_data.slack_follow_up_confirm_status: approved`
    - Thread reply uses `draft_message` byte-for-byte; the legacy template builder is used only for pending records created before this change
    - Matching Shadow action advances through approved → sending → sent
-9. Slack send org is the call's organization when present; personal call items resolve the user’s active Slack `agent_channels` organization.
+10. Slack send org is the call's organization when present; personal call items resolve the user’s active Slack `agent_channels` organization.
 
 Before approval, a human reply in the review thread is treated as revision feedback. Pixel receives the current client-facing draft plus the feedback, creates a complete replacement draft, stores it as a new Shadow action that supersedes the prior proposal, and posts the updated draft in the thread. The original proposal is dismissed so an older version cannot inherit approval.
 
 ## Message shape
 
-**Review DM**
+**Review DM (message 1)**
 
+- Short `Call report` Fathom link at the top (no bottom “Open Fathom recording”)
 - Title + purpose + key takeaways
-- Optional “From the call” (Next Steps): owner names as bold Fathom jump-links, tasks as bullets
+- Timestamp jump links use a leading clock label (`31:12` …) then plain takeaway text
 - Proposed action items with `_owner: Name_`
-- Fathom recording link + Meetings link
-- CTA: react ✅ for shareable recap
+- Meetings link + ✅ CTA
+- Does **not** embed the client-facing draft (keeps under Slack’s ~4k limit)
 
-**Confirm reply (shareable)**
+**Proposed shareable recap (message 2, threaded under review)**
 
-- Exact `draft_message` shown during review
-- Human opening, concise decisions/takeaways, owned action items, and recording link as applicable
+- `Call report` link at the top when available
+- Exact Pixel `draft_message` (trailing “Open the call recording” footers stripped)
+- Link unfurls disabled so Fathom URLs stay compact
+
+**Per-assignee Shadow reminders (People)**
+
+- One `action_kind: message` proposal per person who owns ≥1 follow-up
+- Friendly nudge listing only that person’s tasks with an inline `linked here` call link
+- Closes with “Feel free to message me if you have questions.”
+- Review/approve in Team → People; send only when the person is Active (existing Shadow send path)
+- Does **not** auto-send when you ✅ the meeting review
+- On Approve & Send, Shadow is stamped `sent` with `metadata.slack_message_ts` + `metadata.slack_channel_id` so Conversations can track the DM
+- Ops/`chat.postMessage` samples are **not** tracked unless they go through `sendShadowAction` (or mark the matching Shadow sent after post)
+- If an ops sample is DMed to a different person than the ledger target (e.g. Aaron reminder content posted to Dylan’s Pixel DM), retarget `target_member_id` to the real recipient and keep `metadata.ops_manual` / `original_target_member_id` for audit — do not leave “Sent” under the wrong person
+
+**Name knowledge at draft time**
+
+- Before Pixel drafts the recap, the API loads canonical names from org campaigns, Page Grader clients / scope map, and Slack People
+- Payload includes `known_names` so the skill prefers those spellings (no seeded alias map)
+- Assignee reminder titles get a deterministic rewrite only when a catalog phrase already matches
+
+**Thread replies**
+
+- Pending **review** thread → revise client-facing draft (existing)
+- Ops sample / no pending confirm → normal Pixel path: eyes reaction + agent reply
+- Sent **assignee-reminder** thread → same Pixel path, with a bounded call brief (purpose + takeaways from the Meetings call item summary/description) plus that person's action items prepended from the Shadow ledger (`call_item_id` + `follow_up_ids`)
+
+**Confirm reply (after ✅)**
+
+- Exact `draft_message` shown during review, posted in the review thread
 - No regeneration after approval
+- Meeting ✅ still does **not** auto-send assignee reminders
 
 ## Slack agent roadmap toward the Viktor-style experience
 
 All phases use one agent (`vibey`, currently displayed as Pixel), multiple narrow skills, durable conversation records, and the same safety progression: observe → contextualize → draft → Shadow review → approve → act → learn.
 
+### Phase 0 — Production stabilization and preload (current)
+
+- Deploy the ROAS Page Grader first-ingest and bounded Campaign Knowledge indexing fixes, then force-sync every mapped active client and verify Brain memories, evidence, and semantic objects—not only campaign shells.
+- Deploy Page Grader's background queue identity fix, drain the active-client backlog without opening Client Intel, and verify its hourly and weeknight schedules from run history.
+- Replace four independent Slack history scans with one durable Slack Events observation stream. Joined-channel messages are captured once with team/channel/thread/timestamp evidence; every Shadow detector reads the same stored window.
+- Keep the four proactive loops in Shadow. Do not enable Active delivery until observation runs succeed without Slack rate limits and proposals carry valid source evidence.
+- Production finding on 2026-07-20: all four installed loops were enabled and scheduled, but all 21 recorded runs failed with Slack `ratelimited`; 23 of 26 Page Grader campaign scopes were still pending their first complete Brain sync.
+
 ### Phase 1 — Post-call delivery loop (current)
 
 - Fathom/Meetings trigger, agent-written recap, owned follow-ups, Shadow ledger, ✅ approval, exact-draft delivery.
+- Per-assignee Shadow message proposals (grouped action-item reminders) created with the review DM for People review.
 - Team → People exposes both the person directory and Conversations; a person opens their combined real Slack + Shadow timeline.
 
 ### Phase 2 — Conversation command center (implemented foundation)
 
-- Team → People now has People, Conversations, and Channels. Channels lists every non-DM Slack channel Pixel belongs to after following Slack cursor pagination, and opens real messages plus thread replies.
+- Team → People now has People, Conversations, and Channels. Channels uses a Slack-style split: left rail of Pixel’s channels (public `#` / private lock), right pane for the selected channel’s conversation and threads (`peopleView=channels&slackChannel=`).
+- Conversations uses a mail/chat layout: left list of people with Shadow activity, right pane for the selected person’s real Slack DM merged with the Shadow ledger. Message bodies render Slack mrkdwn as readable bold/links/lists; opening a thread scrolls to the latest message. The Conversations tab and chat rows badge `proposed` Shadow actions as “to review”.
+- Product rule: Shadow `target_member_id` must match the real Slack delivery recipient. UI labels say “Sent to this person’s Slack” (or “Ops sample · sent to this Slack DM”) — never imply someone else received the DM.
 - Person conversations and channel timelines show timestamps and distinguish Pixel messages from human messages.
 - Group-DM conversations, richer thread grouping, participants, and inline “why Pixel drafted this” evidence remain follow-up work.
 - Join action items and unresolved commitments to the conversation that created them.
@@ -121,12 +163,15 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 ### Phase 3 — Reply and revision loop (post-call foundation implemented)
 
 - Post-call review-thread replies now revise the active client-facing proposal and create a versioned replacement Shadow action.
+- Assignee-reminder DM threads (after send) prepend that person’s action items so Pixel can answer questions with eyes + reply.
+- Empty bot-token mapped channels fall back to org Slack routing so IM replies are not silently dropped.
 - Extend the same revision contract beyond post-call recaps to other proactive proposals.
 - Add richer approve/edit/dismiss controls in ROAS while preserving the rule that a changed draft cannot inherit an older approval.
 
 ### Phase 4 — Proactive team support in Shadow (implemented MVP)
 
 - Four scheduled Team-loop templates observe Person Brain facts, repeated manual work, unanswered questions, and stalled commitments/client risk.
+- The initial implementation polls Slack history independently per loop. Production proved this cannot operate across the full workspace without rate limiting; Phase 0's shared event stream is required before this phase is operational.
 - Every detected signal includes its source channel, Slack timestamp, explanation, confidence, and a deduplication fingerprint.
 - Shadow creates reviewable proposals only. Runs are visible in the existing Flow run history and each installed loop can be disabled as its kill switch.
 
@@ -151,32 +196,38 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 
 ### Core API
 
-| Path                                                                                             | Role                                                                 |
-| ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
-| `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.service.ts`                | Request confirm, handle ✅, stamp ROAS, resolve Slack org            |
-| `apps/api/src/modules/spaces/services/meeting-follow-up-slack-message.ts`                        | Pure message builders (brief, links, owner headers, shareable recap) |
-| `apps/agent-api/src/modules/task-agent/services/task-agent-suggestions.service.ts`               | Synchronous Pixel post-call draft using the required skill           |
-| `docker/agents/vibey/skills/post-call-delivery/SKILL.md`                                         | Runtime/bootstrap copy of the post-call skill                        |
-| `supabase/migrations/20260720234500_vibey_post_call_delivery_skill.sql`                          | Database-backed system skill                                         |
-| `apps/api/src/modules/slack/repositories/slack-people.repository.ts`                             | Persists/advances the Shadow proposal ledger                         |
-| `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx`                             | People / Conversations entry points                                  |
-| `apps/api/src/modules/spaces/services/__tests__/meeting-follow-up-slack-confirm.service.test.ts` | Unit tests                                                           |
-| `apps/api/src/modules/spaces/services/space-automation.service.ts`                               | Executes `request_slack_follow_up_confirm`                           |
-| `apps/api/src/modules/spaces/services/slack-team-loop.service.ts`                                | Observes Slack, analyzes signals, writes proposals/memories/sends    |
-| `apps/api/src/modules/slack/integrations/slack-api-integration-core.base.ts`                     | Paginates the complete Slack channel directory                       |
-| `apps/api/src/modules/slack/services/slack-people.service.ts`                                    | Pixel channel and threaded activity APIs                             |
-| `apps/web/src/features/team-2/components/people/SlackChannelsView.tsx`                           | Slack channel directory and conversation timeline                    |
-| `apps/web/src/components/layout/sidebar/SidebarBrainFlyout.tsx`                                  | Global Person Brain navigation                                       |
-| `apps/api/src/modules/spaces/dto/space-automation-action.dto.ts`                                 | Action schema                                                        |
-| `apps/api/src/modules/spaces/dto/space-automation-draft-action.dto.ts`                           | Draft/loose schema                                                   |
-| `apps/api/src/modules/spaces/spaces.module.ts`                                                   | Registers the confirm service                                        |
+| Path                                                                                             | Role                                                                        |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `apps/api/src/modules/spaces/services/meeting-follow-up-slack-confirm.service.ts`                | Request confirm, handle ✅, stamp ROAS, resolve Slack org, assignee Shadows |
+| `apps/api/src/modules/spaces/services/meeting-follow-up-action-ledger.ts`                        | Classifies internal, clarification, and fulfillment action items            |
+| `apps/api/src/modules/spaces/services/meeting-follow-up-page-grader-routing.ts`                  | Resolves each action item to an unambiguous client and assignee             |
+| `apps/api/src/modules/spaces/services/meeting-follow-up-slack-message.ts`                        | Pure message builders (brief, links, owner headers, shareable recap)        |
+| `apps/api/src/modules/spaces/services/meeting-follow-up-assignee-reminders.ts`                   | Group follow-ups by assignee + reminder DM text + Shadow creates            |
+| `apps/api/src/modules/spaces/services/meeting-follow-up-name-knowledge.ts`                       | Match/rewrite helpers against campaign / PG / People catalogs               |
+| `apps/api/src/modules/spaces/services/meeting-follow-up-name-knowledge.loader.ts`                | Loads name catalogs for post-call draft payload                             |
+| `apps/agent-api/src/modules/task-agent/services/task-agent-suggestions.service.ts`               | Synchronous Pixel post-call draft using the required skill                  |
+| `docker/agents/vibey/skills/post-call-delivery/SKILL.md`                                         | Runtime/bootstrap copy of the post-call skill                               |
+| `supabase/migrations/20260720234500_vibey_post_call_delivery_skill.sql`                          | Database-backed system skill                                                |
+| `apps/api/src/modules/slack/repositories/slack-people.repository.ts`                             | Persists/advances the Shadow proposal ledger                                |
+| `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx`                             | People / Conversations / Channels entry points                              |
+| `apps/web/src/features/team-2/components/people/SlackPeopleViewsNav.tsx`                         | People views tab strip + Conversations to-review badge                      |
+| `apps/api/src/modules/spaces/services/__tests__/meeting-follow-up-slack-confirm.service.test.ts` | Unit tests                                                                  |
+| `apps/api/src/modules/spaces/services/space-automation.service.ts`                               | Executes `request_slack_follow_up_confirm`                                  |
+| `apps/api/src/modules/spaces/services/slack-team-loop.service.ts`                                | Observes Slack, analyzes signals, writes proposals/memories/sends           |
+| `apps/api/src/modules/slack/integrations/slack-api-integration-core.base.ts`                     | Paginates the complete Slack channel directory                              |
+| `apps/api/src/modules/slack/services/slack-people.service.ts`                                    | Pixel channel and threaded activity APIs                                    |
+| `apps/web/src/features/team-2/components/people/SlackChannelsView.tsx`                           | Left-rail channel directory + right-pane conversation timeline              |
+| `apps/web/src/components/layout/sidebar/SidebarBrainFlyout.tsx`                                  | Global Person Brain navigation                                              |
+| `apps/api/src/modules/spaces/dto/space-automation-action.dto.ts`                                 | Action schema                                                               |
+| `apps/api/src/modules/spaces/dto/space-automation-draft-action.dto.ts`                           | Draft/loose schema                                                          |
+| `apps/api/src/modules/spaces/spaces.module.ts`                                                   | Registers the confirm service                                               |
 
 ### Slack webhook path
 
-| Path                                                               | Role                                         |
-| ------------------------------------------------------------------ | -------------------------------------------- |
-| `apps/api/src/modules/slack/services/slack.service.ts`             | `handleReactionAddedEvent` → confirm service |
-| `apps/api/src/modules/slack/services/slack-service-events.base.ts` | Routes `reaction_added`                      |
+| Path                                                               | Role                                                        |
+| ------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `apps/api/src/modules/slack/services/slack.service.ts`             | Reactions + review revise + assignee-thread context prepend |
+| `apps/api/src/modules/slack/services/slack-service-events.base.ts` | Message routing; empty-token fallback for DMs               |
 
 ### Template / catalog / capabilities
 
@@ -226,7 +277,9 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 
 ## Decision log
 
-- **2026-07-20:** Confirm is ROAS-owned; Page Grader dispatch removed from this path.
+- **2026-07-20:** Confirm is ROAS-owned. Internal handoffs remain in ROAS; only confirmed fulfillment candidates with unambiguous client and assignee mappings dispatch to Page Grader.
+- **2026-07-20:** Client calls usually inherit their mapped Space client, but internal multi-client calls resolve the client independently from each action item before using Space/campaign mapping as a fallback.
+- **2026-07-20:** Page Grader ClickUp status webhooks return completion, cancellation, and active status to the linked ROAS Action Ledger.
 - **2026-07-20:** Slack brief uses Purpose + Key takeaways + Next Steps only — not full Topics (hits Slack length limits).
 - **2026-07-20:** Fathom `[Name:](timestamp-url)` becomes plain `*Name's action items*` headers with task bullets under them (not hyperlinked names). Recording jump stays on the shared Fathom link.
 - **2026-07-20:** Pixel is the current Slack display name; `vibey` remains the internal runtime key. Naming does not define the architecture.
@@ -236,6 +289,8 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-20:** Team support is consolidated in the existing Loops product through a Team filter; it is not a second automation system.
 - **2026-07-20:** Off is the disabled Flow state. Shadow runs and proposes. Active may compound a Person Brain or answer an unanswered question only within admin scope, limits, quiet hours, and the person-level Active gate.
 - **2026-07-20:** Slack source evidence is mandatory for every detected signal. Workflow-discovery and client-risk signals remain reviewable proposals in Active mode.
+- **2026-07-20:** Per-assignee action-item reminders are Shadow `message` proposals created with the meeting review DM (not auto-sent on ✅). Matching uses Slack person email/display name; ignored and `delivery_mode=off` people are skipped.
+- **2026-07-20:** Shadow ledger `target_member_id` must equal the Slack DM recipient. Ops samples delivered to Dylan cannot stay stamped on Aaron as Sent.
 
 ## Related
 

@@ -37,7 +37,10 @@ export function resolveFollowUpOwner(item: Record<string, unknown>): string | nu
  * that hit Slack's ~4k char limit mid-word). Converts markdown timestamp links
  * to Slack mrkdwn so Fathom jump-links actually work.
  */
-export function briefMeetingSummary(callItem: Record<string, unknown> | null): string {
+export function briefMeetingSummary(
+  callItem: Record<string, unknown> | null,
+  options?: { includeNextSteps?: boolean },
+): string {
   if (!callItem) return ''
   const customData =
     callItem.custom_data && typeof callItem.custom_data === 'object'
@@ -71,9 +74,12 @@ export function briefMeetingSummary(callItem: Record<string, unknown> | null): s
       ['Topics', 'Next Steps', 'Action Items', 'Solutions'],
     ),
   )
-  const nextSteps = formatOwnerGroupedNextSteps(
-    extractSummarySection(cleaned, ['Next Steps', 'Action Items'], ['Topics', 'Solutions']),
-  )
+  const includeNextSteps = options?.includeNextSteps !== false
+  const nextSteps = includeNextSteps
+    ? formatOwnerGroupedNextSteps(
+        extractSummarySection(cleaned, ['Next Steps', 'Action Items'], ['Topics', 'Solutions']),
+      )
+    : ''
 
   const parts: string[] = []
   if (purpose) parts.push(`*Purpose*\n${purpose}`)
@@ -154,14 +160,43 @@ export function formatSectionBullets(raw: string): string {
   )
 }
 
+/** Format Fathom `timestamp=` seconds as M:SS or H:MM:SS for a visible jump cue. */
+export function formatFathomTimestampLabel(seconds: number): string {
+  const total = Math.max(0, Math.floor(Number.isFinite(seconds) ? seconds : 0))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
+/**
+ * Convert markdown links to Slack mrkdwn.
+ * Fathom timestamp jump links become `<url|M:SS> label` so the clickable cue is first.
+ */
 export function markdownLinksToSlack(text: string): string {
   return text.replace(
     /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
     (_match, label: string, url: string) => {
       const clean = String(label).replace(/:\s*$/, '').trim()
+      const tsMatch = String(url).match(/[?&]timestamp=(\d+(?:\.\d+)?)/i)
+      if (tsMatch) {
+        const stamp = formatFathomTimestampLabel(Number(tsMatch[1]))
+        return clean ? `<${url}|${stamp}> ${clean}` : `<${url}|${stamp}>`
+      }
       return `<${url}|${clean || 'link'}>`
     },
   )
+}
+
+/** Strip trailing “Open … recording” footers from agent drafts (recording lives at the top). */
+export function stripTrailingRecordingFooter(text: string): string {
+  return text
+    .replace(
+      /\n*(?:<[^|>]+\|\s*(?:Open (?:the )?call recording|Open Fathom recording)\s*>|(?:Open (?:the )?call recording|Open Fathom recording))\s*$/i,
+      '',
+    )
+    .trim()
 }
 
 export function resolveFathomUrl(callItem: Record<string, unknown> | null): string | null {
@@ -189,12 +224,11 @@ export function buildShareableConfirmReply(input: {
 
   return [
     `*Meeting recap: ${title}*`,
-    '',
+    ...(fathomUrl ? [`<${fathomUrl}|Call report>`, ''] : ['']),
     ...(brief ? [brief, ''] : []),
     `*Action items*`,
     ...lines,
     '',
-    ...(fathomUrl ? [`<${fathomUrl}|Open Fathom recording>`, ''] : []),
     `_Copy/forward this recap to a channel or the other attendees. Confirmed in ROAS — not sent to Page Grader yet._`,
   ].join('\n')
 }
@@ -205,26 +239,41 @@ export function buildConfirmMessage(input: {
   followUps: Array<Record<string, unknown>>
   confirmReaction: string
   meetingUrl: string
-  shareableDraft?: string
 }): string {
   const title = String(input.callTitle || 'Meeting').trim() || 'Meeting'
-  const brief = briefMeetingSummary(input.callItem)
+  // Keep the review DM under Slack's ~4k limit: purpose + takeaways + action items only.
+  // The shareable recap is a separate threaded message (see buildProposedShareableRecapMessage).
+  const brief = briefMeetingSummary(input.callItem, { includeNextSteps: false })
   const fathomUrl = resolveFathomUrl(input.callItem)
   const lines = input.followUps.map((item, index) => formatFollowUpLine(item, index))
-  const proposedRecap = input.shareableDraft?.trim()
 
   return [
     `*Meeting follow-ups ready for review*`,
-    `*${title}*`,
+    // Recording at top as a short call-report link (saves a bottom “Open Fathom” line).
+    ...(fathomUrl ? [`<${fathomUrl}|Call report>`, `*${title}*`] : [`*${title}*`]),
     '',
     ...(brief ? [brief, ''] : []),
-    ...(fathomUrl ? [`<${fathomUrl}|Open Fathom recording>`, ''] : []),
-    ...(proposedRecap ? [`*Proposed shareable recap*`, proposedRecap, ''] : []),
     `*Proposed action items*`,
     ...lines,
     '',
     `React with :${input.confirmReaction}: to confirm — I'll post a shareable recap in this thread.`,
     `Reply in this thread with any changes. I'll return an updated client-facing draft here.`,
     `<${input.meetingUrl}|Open in Meetings>`,
+  ].join('\n')
+}
+
+/** Client-facing draft as its own Slack message (threaded under the review DM). */
+export function buildProposedShareableRecapMessage(input: {
+  shareableDraft: string
+  fathomUrl?: string | null
+}): string {
+  const draft = stripTrailingRecordingFooter(markdownLinksToSlack(input.shareableDraft.trim()))
+  if (!draft) return ''
+  const fathomUrl = String(input.fathomUrl ?? '').trim()
+  return [
+    '*Proposed shareable recap*',
+    '',
+    ...(fathomUrl ? [`<${fathomUrl}|Call report>`, ''] : []),
+    draft,
   ].join('\n')
 }

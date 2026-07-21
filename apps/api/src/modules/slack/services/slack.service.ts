@@ -43,6 +43,7 @@ export class SlackService extends SlackEventsBase {
     const threadTs = String(event.thread_ts ?? '').trim()
     const text = String(event.text ?? '').trim()
     const slackUserId = String(event.user ?? '').trim()
+    let nextEvent = event
     if (channelId && threadTs && text && slackUserId) {
       const { MeetingFollowUpSlackConfirmService } =
         await import('../../spaces/services/meeting-follow-up-slack-confirm.service')
@@ -53,8 +54,20 @@ export class SlackService extends SlackEventsBase {
       ) {
         return
       }
+      if (confirm) {
+        const prefix = await confirm.resolveAssigneeReminderThreadPrefix({
+          channelId,
+          threadTs,
+        })
+        if (prefix) {
+          nextEvent = {
+            ...event,
+            text: `${prefix}\n\n${text}`,
+          }
+        }
+      }
     }
-    await super.handleMessageEvent(teamId, event)
+    await super.handleMessageEvent(teamId, nextEvent)
   }
 
   protected async handleReactionAddedEvent(

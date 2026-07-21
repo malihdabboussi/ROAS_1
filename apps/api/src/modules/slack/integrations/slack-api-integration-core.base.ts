@@ -118,13 +118,14 @@ export abstract class SlackApiIntegrationCoreBase {
     channelId: string,
     text: string,
     threadTs?: string,
+    options?: { unfurlLinks?: boolean; unfurlMedia?: boolean },
   ): Promise<SlackApiPostMessageResponse> {
     const body: Record<string, unknown> = {
       channel: channelId,
       text,
       mrkdwn: true,
-      unfurl_links: true,
-      unfurl_media: true,
+      unfurl_links: options?.unfurlLinks ?? true,
+      unfurl_media: options?.unfurlMedia ?? true,
     }
     if (threadTs) body.thread_ts = threadTs
 

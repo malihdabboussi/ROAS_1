@@ -283,13 +283,22 @@ export class SlackAgentToolsService {
     supabase: SupabaseClient,
     userId: string,
     orgId: string | null | undefined,
-    params: { channel_id: string; text: string; thread_ts?: string },
+    params: {
+      channel_id: string
+      text: string
+      thread_ts?: string
+      unfurl_links?: boolean
+      unfurl_media?: boolean
+    },
   ) {
     if (!params.channel_id?.trim()) throw new BadRequestException('channel_id is required')
     if (!params.text?.trim()) throw new BadRequestException('text is required')
     const botToken = await this.resolveBotToken(supabase, userId, orgId)
     const result = await this.runWithSlackAuthMapping(supabase, userId, orgId, () =>
-      this.slackApi.postMessage(botToken, params.channel_id, params.text, params.thread_ts),
+      this.slackApi.postMessage(botToken, params.channel_id, params.text, params.thread_ts, {
+        unfurlLinks: params.unfurl_links,
+        unfurlMedia: params.unfurl_media,
+      }),
     )
     return { success: true, ...result }
   }

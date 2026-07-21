@@ -75,8 +75,11 @@ export class PageGraderSendWorkService {
               work: {
                 kind: workKind,
                 task_type: taskType,
+                task_subtype: dto.task_subtype,
                 title: String(item.title ?? '').trim() || 'Untitled task',
                 description: '',
+                source_excerpt: dto.source_excerpt,
+                open_questions: dto.open_questions,
                 priority: mapRoasPriority(item.priority),
                 due_at:
                   typeof dto.due_date === 'string' && dto.due_date.trim()
@@ -86,7 +89,11 @@ export class PageGraderSendWorkService {
                       : null,
               },
             })
-            if (work.url && work.url !== existingPg.work_url) {
+            if (
+              (work.url && work.url !== existingPg.work_url) ||
+              work.clickup_task_id !== existingPg.clickup_task_id ||
+              work.clickup_task_url !== existingPg.clickup_task_url
+            ) {
               await this.spaces.updateItem(
                 supabase,
                 userId,
@@ -98,6 +105,8 @@ export class PageGraderSendWorkService {
                       ...existingPg,
                       work_id: work.id,
                       work_url: work.url,
+                      clickup_task_id: work.clickup_task_id ?? null,
+                      clickup_task_url: work.clickup_task_url ?? null,
                     },
                   },
                 },
@@ -110,6 +119,9 @@ export class PageGraderSendWorkService {
               status: 'skipped_already_sent',
               work_id: work.id,
               work_url: work.url,
+              clickup_task_id: work.clickup_task_id,
+              clickup_task_url: work.clickup_task_url,
+              assignee_resolution: work.assignee_resolution,
             })
           } catch (err) {
             results.push({
@@ -175,8 +187,11 @@ export class PageGraderSendWorkService {
           work: {
             kind: workKind,
             task_type: taskType,
+            task_subtype: dto.task_subtype,
             title,
             description,
+            source_excerpt: dto.source_excerpt,
+            open_questions: dto.open_questions,
             priority: mapRoasPriority(item.priority),
             due_at: dueAt,
             tags: nextTags,
@@ -199,7 +214,10 @@ export class PageGraderSendWorkService {
               work_id: work.id,
               work_kind: work.kind,
               task_type: taskType,
+              task_subtype: dto.task_subtype ?? null,
               work_url: work.url,
+              clickup_task_id: work.clickup_task_id ?? null,
+              clickup_task_url: work.clickup_task_url ?? null,
               sent_at: new Date().toISOString(),
               sent_by_user_id: userId,
               client_tag_id: dto.client_tag_id ?? null,
@@ -234,6 +252,9 @@ export class PageGraderSendWorkService {
           status: status === 200 ? 'skipped_already_sent' : 'created',
           work_id: work.id,
           work_url: work.url,
+          clickup_task_id: work.clickup_task_id,
+          clickup_task_url: work.clickup_task_url,
+          assignee_resolution: work.assignee_resolution,
         })
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)

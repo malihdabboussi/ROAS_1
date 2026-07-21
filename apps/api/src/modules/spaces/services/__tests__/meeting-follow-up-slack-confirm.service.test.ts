@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { SupabaseServiceClient } from '@vibey/api-shared'
+import { PageGraderApiService } from '../../../integrations/page-grader/services/page-grader-api.service'
 import {
   DEFAULT_ADMIN_DM_EMAIL,
   MeetingFollowUpSlackConfirmService,
@@ -8,6 +10,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
   const repo = {
     findItemsByIds: vi.fn(),
     findItemById: vi.fn(),
+    findSpaceByIdForAccess: vi.fn(),
     updateItem: vi.fn(),
   }
   const config = {
@@ -39,18 +42,22 @@ describe('MeetingFollowUpSlackConfirmService', () => {
   }
   const slackPeopleRepo = {
     findPersonByEmail: vi.fn().mockResolvedValue({ id: 'person-dylan' }),
+    findPersonByDisplayName: vi.fn().mockResolvedValue(null),
     findShadowAction: vi.fn(),
     createShadowAction: vi.fn().mockResolvedValue({ id: 'shadow-1' }),
     reviewShadowAction: vi.fn(),
     claimShadowActionForSend: vi.fn(),
     markShadowActionSent: vi.fn(),
     markShadowActionFailed: vi.fn(),
+    listPeople: vi.fn().mockResolvedValue([]),
+    findAssigneeReminderBySlackMessage: vi.fn().mockResolvedValue(null),
   }
 
   let service: MeetingFollowUpSlackConfirmService
 
   beforeEach(() => {
     vi.clearAllMocks()
+    moduleRef.get.mockReturnValue(undefined)
     service = new MeetingFollowUpSlackConfirmService(
       repo as never,
       config as never,
@@ -94,7 +101,9 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     })
     slackTools.findUserByEmail.mockResolvedValue({ success: true, user: { id: 'U_DYLAN' } })
     slackTools.openDm.mockResolvedValue({ success: true, channel_id: 'D123' })
-    slackTools.sendMessage.mockResolvedValue({ success: true, ts: '1710000000.000100' })
+    slackTools.sendMessage
+      .mockResolvedValueOnce({ success: true, ts: '1710000000.000100' })
+      .mockResolvedValueOnce({ success: true, ts: '1710000000.000200' })
     repo.updateItem.mockResolvedValue({})
 
     const result = await service.requestConfirm({
@@ -107,20 +116,50 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       suggestionIds: ['fu-1', 'fu-2'],
     })
 
+    expect(userAgentApi.invoke).toHaveBeenCalledWith(
+      'user-1',
+      '/api/agents/post-call-draft',
+      expect.objectContaining({
+        body: expect.stringMatching(/"known_names"/),
+      }),
+      expect.anything(),
+    )
     expect(slackTools.findUserByEmail).toHaveBeenCalledWith(expect.anything(), 'user-1', 'org-1', {
       email: DEFAULT_ADMIN_DM_EMAIL,
     })
-    expect(slackTools.sendMessage).toHaveBeenCalledWith(
+    expect(slackTools.sendMessage).toHaveBeenNthCalledWith(
+      1,
       expect.anything(),
       'user-1',
       'org-1',
       expect.objectContaining({
         channel_id: 'D123',
+        unfurl_links: false,
         text: expect.stringMatching(
-          /Purpose[\s\S]*Align on urgent[\s\S]*Key takeaways[\s\S]*Operational bandwidth[\s\S]*Open Fathom recording[\s\S]*Proposed action items[\s\S]*Ship AM loop — _owner: Dylan_[\s\S]*Fix reporting SoT — _owner: Nate_/,
+          /Call report[\s\S]*Purpose[\s\S]*Align on urgent[\s\S]*Key takeaways[\s\S]*Operational bandwidth[\s\S]*Proposed action items[\s\S]*Ship AM loop — _owner: Dylan_[\s\S]*Fix reporting SoT — _owner: Nate_/,
         ),
       }),
     )
+    expect(slackTools.sendMessage.mock.calls[0][3].text).toContain(
+      '<https://fathom.video/calls/753783387|Call report>',
+    )
+    expect(slackTools.sendMessage.mock.calls[0][3].text).not.toContain('Open Fathom recording')
+    expect(slackTools.sendMessage).toHaveBeenNthCalledWith(
+      2,
+      expect.anything(),
+      'user-1',
+      'org-1',
+      expect.objectContaining({
+        channel_id: 'D123',
+        thread_ts: '1710000000.000100',
+        unfurl_links: false,
+        text: expect.stringMatching(
+          /Proposed shareable recap[\s\S]*Call report[\s\S]*Good connecting today[\s\S]*ship the AM loop/,
+        ),
+      }),
+    )
+    expect(slackTools.sendMessage.mock.calls[0][3].text).not.toContain('Proposed shareable recap')
+    expect(slackTools.sendMessage.mock.calls[1][3].text).not.toContain('Open the call recording')
     expect(repo.updateItem).toHaveBeenCalledWith(
       expect.anything(),
       'user-1',
@@ -132,6 +171,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
             status: 'pending',
             channel_id: 'D123',
             message_ts: '1710000000.000100',
+            draft_message_ts: '1710000000.000200',
             space_item_ids: ['fu-1', 'fu-2'],
             confirm_reaction: 'white_check_mark',
             dm_email: DEFAULT_ADMIN_DM_EMAIL,
@@ -144,6 +184,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       expect.anything(),
       expect.objectContaining({
         targetMemberId: 'person-dylan',
+        actionKind: 'workflow',
         proposedContent: 'Good connecting today.\n\n*Next steps*\n• *Dylan* — ship the AM loop',
       }),
     )
@@ -159,7 +200,169 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       channel_id: 'D123',
       message_ts: '1710000000.000100',
       suggestion_count: 2,
+      assignee_shadow_count: 0,
     })
+  })
+
+  it('creates one Shadow message proposal per matched assignee', async () => {
+    repo.findItemsByIds.mockResolvedValue([
+      {
+        id: 'fu-1',
+        title: 'Ship AM loop',
+        custom_data: { suggested_assignee_name: 'Dylan' },
+      },
+      {
+        id: 'fu-2',
+        title: 'Train Betty',
+        custom_data: { suggested_assignee_name: 'Nate' },
+      },
+      {
+        id: 'fu-3',
+        title: 'Fix reporting SoT',
+        custom_data: { suggested_assignee_name: 'Nate' },
+      },
+    ])
+    repo.findItemById = vi.fn().mockResolvedValue({
+      id: 'call-1',
+      title: 'Nate and Dylan ops',
+      custom_data: { fathom_url: 'https://fathom.video/calls/753783387' },
+    })
+    slackTools.findUserByEmail.mockResolvedValue({ success: true, user: { id: 'U_DYLAN' } })
+    slackTools.openDm.mockResolvedValue({ success: true, channel_id: 'D123' })
+    slackTools.sendMessage
+      .mockResolvedValueOnce({ success: true, ts: '1710000000.000100' })
+      .mockResolvedValueOnce({ success: true, ts: '1710000000.000200' })
+    repo.updateItem.mockResolvedValue({})
+
+    slackPeopleRepo.findPersonByEmail.mockImplementation(
+      async (_sb: unknown, _org: string, email: string) => {
+        if (email === DEFAULT_ADMIN_DM_EMAIL) return { id: 'person-dylan-admin' }
+        return null
+      },
+    )
+    slackPeopleRepo.findPersonByDisplayName.mockImplementation(
+      async (_sb: unknown, _org: string, name: string) => {
+        if (name === 'Dylan') {
+          return { id: 'person-dylan', relationship_kind: 'team', delivery_mode: 'shadow' }
+        }
+        if (name === 'Nate') {
+          return { id: 'person-nate', relationship_kind: 'team', delivery_mode: 'shadow' }
+        }
+        return null
+      },
+    )
+    slackPeopleRepo.createShadowAction
+      .mockResolvedValueOnce({ id: 'shadow-admin' })
+      .mockResolvedValueOnce({ id: 'shadow-dylan' })
+      .mockResolvedValueOnce({ id: 'shadow-nate' })
+
+    const result = await service.requestConfirm({
+      supabase: {} as never,
+      userId: 'user-1',
+      orgId: 'org-1',
+      spaceId: 'space-1',
+      callItemId: 'call-1',
+      callTitle: 'Nate and Dylan ops',
+      suggestionIds: ['fu-1', 'fu-2', 'fu-3'],
+    })
+
+    expect(result).toMatchObject({
+      assignee_shadow_count: 2,
+      assignee_shadow_action_ids: ['shadow-dylan', 'shadow-nate'],
+    })
+    expect(slackPeopleRepo.createShadowAction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        actionKind: 'message',
+        targetMemberId: 'person-dylan',
+        proposedContent: expect.stringMatching(
+          /Hey — just a follow-up[\s\S]*linked here[\s\S]*Ship AM loop[\s\S]*Feel free to message me/,
+        ),
+        metadata: expect.objectContaining({
+          source: 'meeting_follow_up_assignee_reminder',
+          follow_up_ids: ['fu-1'],
+          call_title: 'Nate and Dylan ops',
+        }),
+      }),
+    )
+    expect(slackPeopleRepo.createShadowAction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        actionKind: 'message',
+        targetMemberId: 'person-nate',
+        proposedContent: expect.stringMatching(/Train Betty[\s\S]*Fix reporting SoT/),
+        metadata: expect.objectContaining({
+          follow_up_ids: ['fu-2', 'fu-3'],
+        }),
+      }),
+    )
+    expect(repo.updateItem).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      'space-1',
+      'call-1',
+      expect.objectContaining({
+        custom_data: expect.objectContaining({
+          slack_follow_up_confirm: expect.objectContaining({
+            assignee_shadow_action_ids: ['shadow-dylan', 'shadow-nate'],
+          }),
+        }),
+      }),
+      'org-1',
+    )
+  })
+
+  it('skips unmatched assignees and delivery_mode off without failing the review DM', async () => {
+    repo.findItemsByIds.mockResolvedValue([
+      {
+        id: 'fu-1',
+        title: 'Ghost task',
+        custom_data: { suggested_assignee_name: 'Nobody' },
+      },
+      {
+        id: 'fu-2',
+        title: 'Off task',
+        custom_data: { suggested_assignee_name: 'Camilla' },
+      },
+    ])
+    repo.findItemById = vi.fn().mockResolvedValue({
+      id: 'call-1',
+      title: 'Ops',
+      custom_data: {},
+    })
+    slackTools.findUserByEmail.mockResolvedValue({ success: true, user: { id: 'U_DYLAN' } })
+    slackTools.openDm.mockResolvedValue({ success: true, channel_id: 'D123' })
+    slackTools.sendMessage
+      .mockResolvedValueOnce({ success: true, ts: '1710000000.000100' })
+      .mockResolvedValueOnce({ success: true, ts: '1710000000.000200' })
+    repo.updateItem.mockResolvedValue({})
+    slackPeopleRepo.findPersonByEmail.mockResolvedValue({ id: 'person-admin' })
+    slackPeopleRepo.findPersonByDisplayName.mockImplementation(
+      async (_sb: unknown, _org: string, name: string) => {
+        if (name === 'Camilla') {
+          return { id: 'person-camilla', relationship_kind: 'team', delivery_mode: 'off' }
+        }
+        return null
+      },
+    )
+    slackPeopleRepo.createShadowAction.mockResolvedValue({ id: 'shadow-admin' })
+
+    const result = await service.requestConfirm({
+      supabase: {} as never,
+      userId: 'user-1',
+      orgId: 'org-1',
+      spaceId: 'space-1',
+      callItemId: 'call-1',
+      callTitle: 'Ops',
+      suggestionIds: ['fu-1', 'fu-2'],
+    })
+
+    expect(result.assignee_shadow_count).toBe(0)
+    expect(slackPeopleRepo.createShadowAction).toHaveBeenCalledTimes(1)
+    expect(slackPeopleRepo.createShadowAction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ actionKind: 'workflow' }),
+    )
   })
 
   it('skips when there are no suggestion ids', async () => {
@@ -366,8 +569,181 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     )
     expect(slackPeopleRepo.markShadowActionSent).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ actionId: 'shadow-1', slackTs: '1710000001.000100' }),
+      expect.objectContaining({
+        actionId: 'shadow-1',
+        slackTs: '1710000001.000100',
+        slackChannelId: 'D123',
+      }),
     )
+  })
+
+  it('delegates a confirmed fulfillment item to its independently resolved Page Grader client', async () => {
+    const query: Record<string, ReturnType<typeof vi.fn>> = {}
+    query.select = vi.fn(() => query)
+    query.eq = vi.fn(() => query)
+    query.limit = vi.fn(() => query)
+    query.maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        id: 'call-1',
+        space_id: 'space-1',
+        user_id: 'user-1',
+        org_id: 'org-1',
+        custom_data: {
+          slack_follow_up_confirm: {
+            status: 'pending',
+            channel_id: 'D123',
+            message_ts: '1710000000.000100',
+            space_id: 'space-1',
+            space_item_ids: ['fu-1'],
+            confirm_reaction: 'white_check_mark',
+            dm_email: DEFAULT_ADMIN_DM_EMAIL,
+            requested_at: '2026-07-20T00:00:00.000Z',
+            draft_message: 'Approved recap',
+          },
+        },
+      },
+      error: null,
+    })
+    const serviceSupabase = { from: vi.fn(() => query) }
+    const pageGrader = {
+      listClients: vi.fn().mockResolvedValue({
+        clients: [
+          { id: 'pg-christian', name: 'Multifamily Strategy - Christian Osgood', status: 'active' },
+          { id: 'pg-adam', name: 'Adam Lamb', status: 'active' },
+        ],
+        client_scope_map: {
+          'pg-adam': { campaign_id: 'campaign-adam', space_id: 'space-1' },
+        },
+      }),
+      listAssignees: vi.fn().mockResolvedValue({
+        assignees: [{ id: 'pg-nefi', name: 'Nefi Blanco', email: 'nefi@example.com' }],
+      }),
+      sendWork: vi.fn().mockResolvedValue({
+        success: true,
+        results: [
+          {
+            space_item_id: 'fu-1',
+            status: 'created',
+            work_id: 'work-1',
+            work_url: 'https://portal.roas.io/launcher?task=work-1',
+            clickup_task_id: 'cu-1',
+            clickup_task_url: 'https://app.clickup.com/t/cu-1',
+          },
+        ],
+      }),
+    }
+    moduleRef.get.mockImplementation((token: unknown) => {
+      if (token === SupabaseServiceClient) return { client: serviceSupabase }
+      if (token === PageGraderApiService) return pageGrader
+      return undefined
+    })
+    repo.findSpaceByIdForAccess.mockResolvedValue({ id: 'space-1', campaign_id: 'campaign-adam' })
+    repo.findItemById.mockResolvedValue({ id: 'call-1', title: 'Internal account review' })
+    repo.findItemsByIds.mockResolvedValue([
+      {
+        id: 'fu-1',
+        title: 'Reformat Christian webinar page and move timer down',
+        custom_data: { suggested_assignee_name: 'Nefi Blanco' },
+      },
+    ])
+    repo.updateItem.mockResolvedValue({})
+    slackTools.sendMessage.mockResolvedValue({ success: true, ts: '1710000001.000100' })
+
+    await expect(
+      service.handleReactionAdded({
+        channelId: 'D123',
+        messageTs: '1710000000.000100',
+        reaction: 'white_check_mark',
+        slackUserId: 'U_DYLAN',
+      }),
+    ).resolves.toBe(true)
+
+    expect(pageGrader.sendWork).toHaveBeenCalledWith(
+      serviceSupabase,
+      'user-1',
+      expect.objectContaining({
+        client_id: 'pg-christian',
+        space_item_ids: ['fu-1'],
+        task_type: 'funnel',
+        task_subtype: 'Webinar Registration Funnel',
+        assignee: expect.objectContaining({ page_grader_user_id: 'pg-nefi' }),
+      }),
+      'org-1',
+    )
+    expect(repo.updateItem).toHaveBeenCalledWith(
+      serviceSupabase,
+      'user-1',
+      'space-1',
+      'fu-1',
+      expect.objectContaining({
+        custom_data: expect.objectContaining({
+          action_ledger: expect.objectContaining({
+            status: 'delegated',
+            page_grader: expect.objectContaining({
+              client_id: 'pg-christian',
+              work_id: 'work-1',
+              clickup_task_id: 'cu-1',
+            }),
+          }),
+        }),
+      }),
+      'org-1',
+    )
+  })
+
+  it('builds assignee-reminder thread context from a sent Shadow', async () => {
+    slackPeopleRepo.findAssigneeReminderBySlackMessage.mockResolvedValue({
+      id: 'shadow-aaron',
+      metadata: {
+        source: 'meeting_follow_up_assignee_reminder',
+        space_id: 'space-1',
+        call_item_id: 'call-1',
+        follow_up_ids: ['fu-1', 'fu-2'],
+        assignee_name: 'Aaron',
+        call_title: 'Review client accounts',
+      },
+    })
+    repo.findItemById.mockResolvedValue({
+      id: 'call-1',
+      title: 'Review client accounts',
+      custom_data: {
+        summary: [
+          'Meeting Purpose',
+          '',
+          'Align on Adam Lamb webinar campaign.',
+          '',
+          'Key Takeaways',
+          '',
+          '- Adam asked for webinar creative support',
+          '',
+          'Topics',
+          '',
+          'Long topic dump that should not appear',
+        ].join('\n'),
+      },
+    })
+    repo.findItemsByIds.mockResolvedValue([
+      { id: 'fu-1', title: 'Check Adam Lamb prior video ads' },
+      { id: 'fu-2', title: 'Confirm Adam Lamb booking calendar' },
+    ])
+    moduleRef.get.mockReturnValue({ client: {} })
+
+    const prefix = await service.resolveAssigneeReminderThreadPrefix({
+      channelId: 'D999',
+      threadTs: '1710000099.000100',
+    })
+
+    expect(slackPeopleRepo.findAssigneeReminderBySlackMessage).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ channelId: 'D999', messageTs: '1710000099.000100' }),
+    )
+    expect(repo.findItemById).toHaveBeenCalledWith(expect.anything(), 'space-1', 'call-1')
+    expect(prefix).toContain('Assignee: Aaron')
+    expect(prefix).toContain('Call brief:')
+    expect(prefix).toContain('Align on Adam Lamb webinar campaign.')
+    expect(prefix).toContain('Adam asked for webinar creative support')
+    expect(prefix).not.toContain('Long topic dump that should not appear')
+    expect(prefix).toContain('Check Adam Lamb prior video ads')
   })
 
   it('builds a shareable purpose + takeaways brief and converts Fathom markdown links', () => {
@@ -437,11 +813,18 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     )
   })
 
-  it('converts markdown timestamp links to Slack mrkdwn', () => {
+  it('converts markdown timestamp links to a leading clickable timestamp', () => {
     expect(
       service.markdownLinksToSlack(
         '- [Workflow:](https://fathom.video/share/x?timestamp=932.0) Ship it',
       ),
-    ).toBe('- <https://fathom.video/share/x?timestamp=932.0|Workflow> Ship it')
+    ).toBe('- <https://fathom.video/share/x?timestamp=932.0|15:32> Workflow Ship it')
+    expect(
+      service.markdownLinksToSlack(
+        '• [Webinar Funnel Overhaul: redesign](https://fathom.video/share/x?timestamp=1872.0)',
+      ),
+    ).toBe(
+      '• <https://fathom.video/share/x?timestamp=1872.0|31:12> Webinar Funnel Overhaul: redesign',
+    )
   })
 })

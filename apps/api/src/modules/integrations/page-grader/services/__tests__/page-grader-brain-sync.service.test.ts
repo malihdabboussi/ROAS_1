@@ -24,6 +24,93 @@ describe('PageGraderBrainSyncService', () => {
     await expect(service.processWebhook('not-json', 'secret')).rejects.toThrow(/Invalid JSON/i)
   })
 
+  it('writes a completed Page Grader work status back to the ROAS action ledger', async () => {
+    const updateEq = vi.fn().mockResolvedValue({ error: null })
+    const update = vi.fn(() => ({ eq: updateEq }))
+    const integrationRows = [
+      {
+        user_id: 'user-1',
+        org_id: null,
+        metadata: {
+          webhook_secret: 'whsec',
+          client_scope_map: {
+            '11111111-1111-1111-1111-111111111111': { campaign_id: 'campaign-1' },
+          },
+        },
+      },
+    ]
+    const from = vi.fn((table: string) => {
+      if (table === 'user_integrations') {
+        const query: Record<string, ReturnType<typeof vi.fn>> = {}
+        query.select = vi.fn(() => query)
+        query.eq = vi.fn(() => query)
+        query.eq
+          .mockReturnValueOnce(query)
+          .mockResolvedValueOnce({ data: integrationRows, error: null })
+        return query
+      }
+      if (table === 'space_items') {
+        const query: Record<string, ReturnType<typeof vi.fn>> = {}
+        query.select = vi.fn(() => query)
+        query.eq = vi.fn(() => query)
+        query.maybeSingle = vi.fn().mockResolvedValue({
+          data: {
+            id: '22222222-2222-2222-2222-222222222222',
+            custom_data: {
+              page_grader: {
+                client_id: '11111111-1111-1111-1111-111111111111',
+                work_id: '33333333-3333-3333-3333-333333333333',
+              },
+              action_ledger: {
+                status: 'delegated',
+                page_grader: { delegation_status: 'delegated' },
+              },
+            },
+          },
+          error: null,
+        })
+        query.update = update
+        return query
+      }
+      throw new Error(`Unexpected table ${table}`)
+    })
+    const service = new PageGraderBrainSyncService(
+      { client: { from } } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    )
+
+    const result = await service.processWorkStatusWebhook(
+      JSON.stringify({
+        client_id: '11111111-1111-1111-1111-111111111111',
+        space_item_id: '22222222-2222-2222-2222-222222222222',
+        work_id: '33333333-3333-3333-3333-333333333333',
+        clickup_task_id: 'cu-1',
+        clickup_task_url: 'https://app.clickup.com/t/cu-1',
+        status: 'complete',
+        updated_at: '2026-07-21T06:00:00.000Z',
+      }),
+      'whsec',
+    )
+
+    expect(result).toMatchObject({ status: 'done' })
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        custom_data: expect.objectContaining({
+          action_ledger: expect.objectContaining({
+            status: 'done',
+            page_grader: expect.objectContaining({
+              clickup_status: 'complete',
+              completed_at: '2026-07-21T06:00:00.000Z',
+            }),
+          }),
+        }),
+      }),
+    )
+  })
+
   it('skips catch-up when stored content_hash matches package hash', async () => {
     const brainImport = {
       importClientBrain: vi.fn(),

@@ -11,6 +11,8 @@ export type PageGraderWorkResult = {
   kind: string
   client_id: string
   url: string
+  clickup_task_id?: string | null
+  clickup_task_url?: string | null
   assignee_resolution: Array<{
     email: string
     status: 'mapped' | 'unmapped'

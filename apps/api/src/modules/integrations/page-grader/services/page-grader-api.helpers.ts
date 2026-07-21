@@ -19,6 +19,13 @@ export type PageGraderSendResult = {
   status: 'created' | 'skipped_already_sent' | 'failed'
   work_id?: string
   work_url?: string
+  clickup_task_id?: string | null
+  clickup_task_url?: string | null
+  assignee_resolution?: Array<{
+    email: string
+    status: 'mapped' | 'unmapped'
+    page_grader_user_id?: string
+  }>
   error?: string
 }
 
