@@ -74,7 +74,8 @@ export class GoogleWorkspaceApiService {
       PROVIDER,
       VAULT_LABEL,
       JSON.stringify(serviceAccount),
-      'service_account',
+      // vault_secrets_secret_type_check allows api_key|token|password|oauth_token|custom only
+      'custom',
       { org_id: orgId, client_email: serviceAccount.client_email },
     )
 

@@ -1,5 +1,12 @@
 # Changelog - July 20, 2026
 
+## [2026-07-20 22:36] - [FIX]
+
+What: Google Workspace vault store uses `secret_type=custom` instead of `service_account`.
+Why: `vault_secrets_secret_type_check` only allows api_key|token|password|oauth_token|custom — connect failed after Google auth succeeded.
+Impact: Workspace Connect can persist the service account JSON; label stays `service_account`.
+Files: `google-workspace-api.service.ts`.
+
 ## [2026-07-20 21:35] - [FEATURE]
 
 What: Org Google Workspace calendars → phantom people: `org_person_calendar_identities` email graph with admin confirm/reject; org-shared Workspace connect (DWD service account JSON + admin email in Integrations Library); Directory sync; admin/agent agenda-by-person + org-upcoming APIs; compound `get_person_briefing`. Agent actions `get_person_agenda`, `list_org_upcoming`, `get_person_briefing`. Split `IntegrationCard` connect dialogs/actions under the 400 LOC component limit so the Library multiline JSON field can ship. Home Agenda stays caller-scoped.
