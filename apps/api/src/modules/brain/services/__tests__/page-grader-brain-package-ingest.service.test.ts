@@ -29,7 +29,15 @@ describe('PageGraderBrainPackageIngestService', () => {
         return { indexed: 1 }
       }),
     }
-    const service = new PageGraderBrainPackageIngestService(spaceRetrievalIndex as never)
+    const billingBatch = { totalTokens: 0 }
+    const embedding = {
+      createEmbeddingBillingBatch: vi.fn(() => billingBatch),
+      settleEmbeddingBillingBatch: vi.fn(async () => undefined),
+    }
+    const service = new PageGraderBrainPackageIngestService(
+      spaceRetrievalIndex as never,
+      embedding as never,
+    )
     const indexKnowledgeObjects = (
       service as unknown as { indexKnowledgeObjects: IndexKnowledgeObjects }
     ).indexKnowledgeObjects.bind(service)
@@ -57,6 +65,15 @@ describe('PageGraderBrainPackageIngestService', () => {
 
     expect(indexed).toBe(13)
     expect(spaceRetrievalIndex.indexSource).toHaveBeenCalledTimes(13)
+    expect(spaceRetrievalIndex.indexSource).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ billingBatch }),
+    )
+    expect(embedding.createEmbeddingBillingBatch).toHaveBeenCalledWith({
+      userId: 'user-1',
+      orgId: 'org-1',
+    })
+    expect(embedding.settleEmbeddingBillingBatch).toHaveBeenCalledTimes(1)
     expect(maxInFlight).toBeGreaterThan(1)
     expect(maxInFlight).toBeLessThanOrEqual(6)
   })

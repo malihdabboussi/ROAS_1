@@ -1,6 +1,58 @@
 import { describe, expect, it, vi } from 'vitest'
 import { SpaceRetrievalRepository } from './space-retrieval.repository'
 
+class PagedQuery {
+  private from = 0
+  private to = Number.MAX_SAFE_INTEGER
+  private filters: Array<(row: Record<string, unknown>) => boolean> = []
+
+  constructor(private readonly rows: Array<Record<string, unknown>>) {}
+
+  select() {
+    return this
+  }
+
+  order() {
+    return this
+  }
+
+  limit() {
+    return this
+  }
+
+  in(column: string, values: unknown[]) {
+    this.filters.push((row) => values.includes(row[column]))
+    return this
+  }
+
+  eq(column: string, value: unknown) {
+    this.filters.push((row) => row[column] === value)
+    return this
+  }
+
+  is(column: string, value: unknown) {
+    this.filters.push((row) => row[column] === value || (value === null && row[column] == null))
+    return this
+  }
+
+  or() {
+    return this
+  }
+
+  range(from: number, to: number) {
+    this.from = from
+    this.to = to
+    return this
+  }
+
+  then(resolve: (value: { data: unknown[]; error: null }) => void) {
+    const filtered = this.rows.filter((row) => this.filters.every((filter) => filter(row)))
+    return Promise.resolve({ data: filtered.slice(this.from, this.to + 1), error: null }).then(
+      resolve,
+    )
+  }
+}
+
 describe('SpaceRetrievalRepository.listGraphEdges', () => {
   it('loads campaign rollup edges by space_id instead of a huge from_object_id IN list', async () => {
     const inCalls: Array<[string, unknown[]]> = []
@@ -16,6 +68,8 @@ describe('SpaceRetrievalRepository.listGraphEdges', () => {
         return query
       }),
       is: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      range: vi.fn().mockResolvedValue({ data: [], error: null }),
     }
     const supabase = {
       from: vi.fn(() => query),
@@ -32,6 +86,47 @@ describe('SpaceRetrievalRepository.listGraphEdges', () => {
     expect(inCalls).toEqual([['space_id', ['space-1']]])
     expect(inCalls.some(([column]) => column === 'from_object_id')).toBe(false)
     expect(eqCalls).toEqual([])
+  })
+
+  it('paginates graph objects past the Supabase 1,000-row response ceiling', async () => {
+    const rows = Array.from({ length: 1_709 }, (_, index) => ({
+      id: `object-${index}`,
+      space_id: 'space-1',
+      updated_at: `2026-07-20T00:${String(index % 60).padStart(2, '0')}:00.000Z`,
+    }))
+    const supabase = {
+      from: vi.fn(() => new PagedQuery(rows)),
+    }
+
+    const result = await new SpaceRetrievalRepository().listGraphObjects(supabase as never, {
+      spaceId: 'space-1',
+      limit: 5_000,
+    })
+
+    expect(result.error).toBeNull()
+    expect(result.data).toHaveLength(1_709)
+    expect(supabase.from).toHaveBeenCalledTimes(2)
+  })
+
+  it('paginates scoped graph edges past the Supabase 1,000-row response ceiling', async () => {
+    const rows = Array.from({ length: 1_320 }, (_, index) => ({
+      id: `edge-${index}`,
+      space_id: 'space-1',
+      deleted_at: null,
+    }))
+    const supabase = {
+      from: vi.fn(() => new PagedQuery(rows)),
+    }
+
+    const result = await new SpaceRetrievalRepository().listGraphEdges(supabase as never, {
+      spaceIds: ['space-1'],
+      objectIds: rows.map((row) => row.id),
+      limit: 5_000,
+    })
+
+    expect(result.error).toBeNull()
+    expect(result.data).toHaveLength(1_320)
+    expect(supabase.from).toHaveBeenCalledTimes(2)
   })
 
   it('chunks from_object_id lookups when no space/campaign scope is available', async () => {

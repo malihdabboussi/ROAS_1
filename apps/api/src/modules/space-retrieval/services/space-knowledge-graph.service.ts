@@ -91,7 +91,11 @@ export class SpaceKnowledgeGraphService {
       this.loadScopeStatsMap(supabase, 'space_id', [spaceId]),
     ])
     const objects = this.mergePreferHubs(hubs, listed, limit)
-    const edges = await this.listEdges(supabase, { spaceId, objectIds: objects.map((o) => o.id) })
+    const edges = await this.listEdges(supabase, {
+      spaceId,
+      objectIds: objects.map((o) => o.id),
+      limit,
+    })
     return this.response('space', objects, edges, { space_id: spaceId }, statsMap[spaceId])
   }
 
@@ -113,6 +117,7 @@ export class SpaceKnowledgeGraphService {
     const edges = await this.listEdges(supabase, {
       spaceIds,
       objectIds: objects.map((o) => o.id),
+      limit,
     })
     return this.response(
       'campaign',
@@ -363,7 +368,13 @@ export class SpaceKnowledgeGraphService {
 
   private async listEdges(
     supabase: SupabaseClient,
-    input: { spaceId?: string; campaignId?: string; spaceIds?: string[]; objectIds: string[] },
+    input: {
+      spaceId?: string
+      campaignId?: string
+      spaceIds?: string[]
+      objectIds: string[]
+      limit: number
+    },
   ): Promise<SpaceKnowledgeGraphEdge[]> {
     const objectIds = [...new Set(input.objectIds.filter(Boolean))]
     if (objectIds.length === 0) return []

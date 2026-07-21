@@ -57,6 +57,8 @@ class Query {
   eqCalls: Array<[string, unknown]> = []
   orCalls: string[] = []
   limitCalls: unknown[] = []
+  private rangeFrom = 0
+  private rangeTo = Number.MAX_SAFE_INTEGER
 
   select() {
     return this
@@ -94,13 +96,20 @@ class Query {
     return this
   }
 
+  range(from: number, to: number) {
+    this.rangeFrom = from
+    this.rangeTo = to
+    return this
+  }
+
   private filters: Array<(row: Record<string, unknown>) => boolean> = []
 
   constructor(private readonly rows: Array<Record<string, unknown>>) {}
 
   then(resolve: (value: unknown) => void) {
+    const filtered = this.rows.filter((row) => this.filters.every((filter) => filter(row)))
     return Promise.resolve({
-      data: this.rows.filter((row) => this.filters.every((filter) => filter(row))),
+      data: filtered.slice(this.rangeFrom, this.rangeTo + 1),
       error: null,
     }).then(resolve)
   }

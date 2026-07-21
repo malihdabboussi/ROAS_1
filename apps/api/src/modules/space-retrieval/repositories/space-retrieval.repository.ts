@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { SpaceSemanticEdgeInput } from '../space-semantic-edge.types'
 
+const GRAPH_PAGE_SIZE = 1_000
+const GRAPH_DEFAULT_LIMIT = 5_000
+
 @Injectable()
 export class SpaceRetrievalRepository {
   /**
@@ -81,30 +84,40 @@ export class SpaceRetrievalRepository {
     supabase: SupabaseClient,
     input: { spaceId?: string; campaignId?: string; spaceIds?: string[]; limit: number },
   ): Promise<any> {
-    let query = supabase
-      .from('space_semantic_objects')
-      .select(
-        'id, source_type, source_id, title, summary, user_id, org_id, space_id, campaign_id, parent_type, parent_id, metadata, source_updated_at, indexed_at, content_hash, created_at, updated_at, space_semantic_chunks(id)',
-      )
-      .order('updated_at', { ascending: false })
-      .limit(input.limit)
+    const rows: Array<Record<string, unknown>> = []
+    while (rows.length < input.limit) {
+      const pageSize = Math.min(GRAPH_PAGE_SIZE, input.limit - rows.length)
+      let query = supabase
+        .from('space_semantic_objects')
+        .select(
+          'id, source_type, source_id, title, summary, user_id, org_id, space_id, campaign_id, parent_type, parent_id, metadata, source_updated_at, indexed_at, content_hash, created_at, updated_at, space_semantic_chunks(id)',
+        )
+        .order('updated_at', { ascending: false })
+        .order('id', { ascending: true })
 
-    if (input.spaceIds) {
-      // Campaign rollup by live space membership, plus campaign-level objects
-      // that have no space (e.g. campaign-scoped contacts/snapshots).
-      const list = input.spaceIds.map((id) => `"${id}"`).join(',')
-      query =
-        input.campaignId && list
-          ? query.or(
-              `space_id.in.(${list}),and(space_id.is.null,campaign_id.eq.${input.campaignId})`,
-            )
-          : query.in('space_id', input.spaceIds)
-    } else if (input.spaceId) {
-      query = query.eq('space_id', input.spaceId)
-    } else if (input.campaignId) {
-      query = query.eq('campaign_id', input.campaignId)
+      if (input.spaceIds) {
+        // Campaign rollup by live space membership, plus campaign-level objects
+        // that have no space (e.g. campaign-scoped contacts/snapshots).
+        const list = input.spaceIds.map((id) => `"${id}"`).join(',')
+        query =
+          input.campaignId && list
+            ? query.or(
+                `space_id.in.(${list}),and(space_id.is.null,campaign_id.eq.${input.campaignId})`,
+              )
+            : query.in('space_id', input.spaceIds)
+      } else if (input.spaceId) {
+        query = query.eq('space_id', input.spaceId)
+      } else if (input.campaignId) {
+        query = query.eq('campaign_id', input.campaignId)
+      }
+
+      const { data, error } = await query.range(rows.length, rows.length + pageSize - 1)
+      if (error) return { data: null, error }
+      const page = (data ?? []) as unknown as Array<Record<string, unknown>>
+      rows.push(...page)
+      if (page.length < pageSize) break
     }
-    return query
+    return { data: rows, error: null }
   }
 
   async listGraphHubObjects(supabase: SupabaseClient, spaceIds: string[]): Promise<any> {
@@ -119,7 +132,13 @@ export class SpaceRetrievalRepository {
 
   async listGraphEdges(
     supabase: SupabaseClient,
-    input: { spaceId?: string; campaignId?: string; spaceIds?: string[]; objectIds: string[] },
+    input: {
+      spaceId?: string
+      campaignId?: string
+      spaceIds?: string[]
+      objectIds: string[]
+      limit?: number
+    },
   ): Promise<any> {
     const selectCols =
       'id, from_object_id, to_object_id, edge_type, edge_class, confidence, strength, reason, metadata'
@@ -128,25 +147,13 @@ export class SpaceRetrievalRepository {
     // hundreds of UUIDs (Page Grader campaign rollups) overflows PostgREST/URL limits
     // and makes Campaign Knowledge return an empty graph after the request fails.
     if (input.spaceIds && input.spaceIds.length > 0) {
-      return supabase
-        .from('space_semantic_edges')
-        .select(selectCols)
-        .in('space_id', input.spaceIds)
-        .is('deleted_at', null)
+      return this.listScopedGraphEdges(supabase, selectCols, input)
     }
     if (input.spaceId) {
-      return supabase
-        .from('space_semantic_edges')
-        .select(selectCols)
-        .eq('space_id', input.spaceId)
-        .is('deleted_at', null)
+      return this.listScopedGraphEdges(supabase, selectCols, input)
     }
     if (input.campaignId) {
-      return supabase
-        .from('space_semantic_edges')
-        .select(selectCols)
-        .eq('campaign_id', input.campaignId)
-        .is('deleted_at', null)
+      return this.listScopedGraphEdges(supabase, selectCols, input)
     }
 
     const objectIds = [...new Set(input.objectIds.filter(Boolean))]
@@ -164,7 +171,43 @@ export class SpaceRetrievalRepository {
         .in('from_object_id', chunk)
         .is('deleted_at', null)
       if (error) return { data: null, error }
-      rows.push(...(((data ?? []) as Array<Record<string, unknown>>) ?? []))
+      rows.push(...((data ?? []) as unknown as Array<Record<string, unknown>>))
+    }
+    return { data: rows, error: null }
+  }
+
+  private async listScopedGraphEdges(
+    supabase: SupabaseClient,
+    selectCols: string,
+    input: {
+      spaceId?: string
+      campaignId?: string
+      spaceIds?: string[]
+      limit?: number
+    },
+  ): Promise<any> {
+    const limit = Math.max(1, input.limit ?? GRAPH_DEFAULT_LIMIT)
+    const rows: Array<Record<string, unknown>> = []
+    while (rows.length < limit) {
+      const pageSize = Math.min(GRAPH_PAGE_SIZE, limit - rows.length)
+      let query = supabase
+        .from('space_semantic_edges')
+        .select(selectCols)
+        .is('deleted_at', null)
+        .order('id', { ascending: true })
+      if (input.spaceIds && input.spaceIds.length > 0) {
+        query = query.in('space_id', input.spaceIds)
+      } else if (input.spaceId) {
+        query = query.eq('space_id', input.spaceId)
+      } else if (input.campaignId) {
+        query = query.eq('campaign_id', input.campaignId)
+      }
+
+      const { data, error } = await query.range(rows.length, rows.length + pageSize - 1)
+      if (error) return { data: null, error }
+      const page = (data ?? []) as unknown as Array<Record<string, unknown>>
+      rows.push(...page)
+      if (page.length < pageSize) break
     }
     return { data: rows, error: null }
   }

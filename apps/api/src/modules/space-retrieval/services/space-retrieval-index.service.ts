@@ -1,7 +1,10 @@
 import { createHash } from 'crypto'
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { EmbeddingService } from '../../brain/services/embedding.service'
+import {
+  EmbeddingService,
+  type BrainEmbeddingBillingBatch,
+} from '../../brain/services/embedding.service'
 import { SpaceRetrievalRepository } from '../repositories/space-retrieval.repository'
 import { SpaceStructuralEdgeBuilderService } from './space-structural-edge-builder.service'
 
@@ -55,6 +58,8 @@ type IndexInput = {
   row?: Record<string, unknown>
   /** When true, index even if SPACE_* env flags are off (Page Grader dual-write). */
   force?: boolean
+  /** Aggregate high-volume embedding usage before applying integer credit rounding. */
+  billingBatch?: BrainEmbeddingBillingBatch
 }
 
 @Injectable()
@@ -118,7 +123,8 @@ export class SpaceRetrievalIndexService {
       const embeddedText = `${contextualPrefix}\n\n${chunk}`
       const vector = await this.embedding.getEmbedding(embeddedText, {
         taskType: 'RETRIEVAL_DOCUMENT',
-        billing: { userId: input.userId, orgId: asset.orgId },
+        billing: input.billingBatch ? undefined : { userId: input.userId, orgId: asset.orgId },
+        billingBatch: input.billingBatch,
       })
       const contentHash = this.hash(embeddedText)
       const metadata = {

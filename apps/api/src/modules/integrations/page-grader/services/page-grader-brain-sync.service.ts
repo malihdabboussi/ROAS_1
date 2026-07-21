@@ -4,6 +4,7 @@ import { SupabaseServiceClient } from '@vibey/api-shared'
 import { VaultService } from '../../../vault/services/vault.service'
 import type { PageGraderBrainPackageWebhookDto } from '../dto/page-grader.dto'
 import { PageGraderIntegration } from '../integrations/page-grader.integration'
+import { PageGraderBrainSyncRepository } from '../repositories/page-grader-brain-sync.repository'
 import {
   PAGE_GRADER_LABEL_API_KEY,
   PAGE_GRADER_LABEL_BASE_URL,
@@ -31,6 +32,7 @@ export class PageGraderBrainSyncService {
     private readonly vault: VaultService,
     private readonly pageGrader: PageGraderIntegration,
     private readonly brainImport: PageGraderBrainImportService,
+    private readonly repository: PageGraderBrainSyncRepository,
   ) {}
 
   async ensureWebhookSecret(userId: string): Promise<string> {
@@ -142,12 +144,16 @@ export class PageGraderBrainSyncService {
         ? String((pkg as { envelope: { content_hash: string } }).envelope.content_hash)
         : createHash('sha256').update(JSON.stringify(pkg)).digest('hex')
 
-    if (
-      !opts.force &&
-      row.entry.content_hash &&
+    const hashMatches =
+      Boolean(row.entry.content_hash) &&
       (row.entry.content_hash === packageHash ||
-        (opts.expectedHash && row.entry.content_hash === opts.expectedHash))
-    ) {
+        Boolean(opts.expectedHash && row.entry.content_hash === opts.expectedHash))
+    const repairEmptyImport =
+      !opts.force &&
+      hashMatches &&
+      !(await this.repository.hasCampaignKnowledge(this.svc.client, row.entry.campaign_id))
+
+    if (!opts.force && hashMatches && !repairEmptyImport) {
       return {
         client_id: row.clientId,
         status: 'skipped_unchanged' as const,
@@ -160,7 +166,7 @@ export class PageGraderBrainSyncService {
       row.userId,
       {
         client_id: row.clientId,
-        force: opts.force,
+        force: opts.force || repairEmptyImport,
         campaignId: row.entry.campaign_id,
         campaignName: row.entry.campaign_name,
         spaceId: row.entry.space_id ?? undefined,

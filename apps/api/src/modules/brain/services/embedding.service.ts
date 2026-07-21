@@ -35,6 +35,17 @@ export interface GeminiEmbeddingOptions {
   outputDimensionality?: number
   model?: string
   billing?: BrainGeminiBillingContext
+  billingBatch?: BrainEmbeddingBillingBatch
+}
+
+export type BrainEmbeddingBillingBatch = {
+  billing: BrainGeminiBillingContext
+  modelName: string
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  requestCount: number
+  costSource: 'runtime_tokens' | 'char_estimate'
 }
 
 /**
@@ -52,6 +63,44 @@ export class EmbeddingService {
     private readonly config: ConfigService,
     @Optional() @Inject(CreditsService) private readonly creditsService: CreditsService | null,
   ) {}
+
+  createEmbeddingBillingBatch(billing: BrainGeminiBillingContext): BrainEmbeddingBillingBatch {
+    return {
+      billing,
+      modelName: this.config.get<string>('EMBEDDING_MODEL') || DEFAULT_EMBEDDING_MODEL,
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      requestCount: 0,
+      costSource: 'runtime_tokens',
+    }
+  }
+
+  async settleEmbeddingBillingBatch(batch: BrainEmbeddingBillingBatch): Promise<void> {
+    if (batch.totalTokens <= 0) return
+    const usage = {
+      inputTokens: batch.inputTokens,
+      outputTokens: batch.outputTokens,
+      totalTokens: batch.totalTokens,
+    }
+    try {
+      await this.chargeBrainUsage(
+        batch.billing,
+        batch.modelName,
+        usage,
+        'embedding',
+        batch.costSource,
+      )
+      batch.inputTokens = 0
+      batch.outputTokens = 0
+      batch.totalTokens = 0
+      batch.requestCount = 0
+    } catch (err) {
+      this.logger.error(
+        `Brain Gemini embedding batch credit tracking failed after provider usage was incurred: ${err instanceof Error ? err.message : 'Unknown'}`,
+      )
+    }
+  }
 
   // ── Embedding generation ──────────────────────────────────────────────
 
@@ -146,15 +195,25 @@ export class EmbeddingService {
             totalTokens: Math.ceil(JSON.stringify(parts).length / 4),
           }
         }
-        chargingProviderUsage = true
-        try {
-          await this.chargeBrainUsage(options.billing, model, chargeUsage, 'embedding', costSource)
-        } catch (err) {
-          this.logger.error(
-            `Brain Gemini embedding credit tracking failed after provider usage was incurred: ${err instanceof Error ? err.message : 'Unknown'}`,
-          )
-        } finally {
-          chargingProviderUsage = false
+        if (options.billingBatch) {
+          this.accumulateEmbeddingBillingBatch(options.billingBatch, model, chargeUsage, costSource)
+        } else {
+          chargingProviderUsage = true
+          try {
+            await this.chargeBrainUsage(
+              options.billing,
+              model,
+              chargeUsage,
+              'embedding',
+              costSource,
+            )
+          } catch (err) {
+            this.logger.error(
+              `Brain Gemini embedding credit tracking failed after provider usage was incurred: ${err instanceof Error ? err.message : 'Unknown'}`,
+            )
+          } finally {
+            chargingProviderUsage = false
+          }
         }
 
         return { embedding, usage }
@@ -327,6 +386,24 @@ export class EmbeddingService {
       },
       costSource,
     })
+  }
+
+  private accumulateEmbeddingBillingBatch(
+    batch: BrainEmbeddingBillingBatch,
+    modelName: string,
+    usage: GeminiTokenUsage,
+    costSource: 'runtime_tokens' | 'char_estimate',
+  ): void {
+    if (batch.modelName !== modelName) {
+      throw new Error(
+        `Embedding billing batch model mismatch: expected ${batch.modelName}, received ${modelName}`,
+      )
+    }
+    batch.inputTokens += usage.inputTokens
+    batch.outputTokens += usage.outputTokens
+    batch.totalTokens += usage.totalTokens
+    batch.requestCount += 1
+    if (costSource === 'char_estimate') batch.costSource = 'char_estimate'
   }
 
   private parseUsageFromGeminiResponse(data: any): GeminiTokenUsage {
