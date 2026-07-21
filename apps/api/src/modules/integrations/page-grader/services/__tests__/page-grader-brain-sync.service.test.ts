@@ -137,4 +137,62 @@ describe('PageGraderBrainSyncService', () => {
       null,
     )
   })
+
+  it('force-repairs an empty campaign when the mapping hash is missing', async () => {
+    const brainImport = {
+      importClientBrain: vi.fn().mockResolvedValue({
+        brainImport: { status: 'succeeded', contentHash: 'abc123hashvalue' },
+      }),
+    }
+    const pageGrader = {
+      getClientBrainPackage: vi.fn().mockResolvedValue({
+        envelope: { content_hash: 'abc123hashvalue' },
+      }),
+    }
+    const vault = { getSecret: vi.fn().mockResolvedValue('value') }
+    const svc = {
+      client: {
+        from: vi.fn(() => ({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              eq: vi.fn(async () => ({
+                data: [
+                  {
+                    user_id: 'user-1',
+                    org_id: null,
+                    metadata: {
+                      client_scope_map: {
+                        'client-1': {
+                          campaign_id: 'campaign-1',
+                        },
+                      },
+                    },
+                  },
+                ],
+                error: null,
+              })),
+            })),
+          })),
+        })),
+      },
+    }
+    const campaignKnowledge = { hasCampaignKnowledge: vi.fn().mockResolvedValue(false) }
+    const service = new PageGraderBrainSyncService(
+      svc as never,
+      vault as never,
+      pageGrader as never,
+      brainImport as never,
+      campaignKnowledge as never,
+    )
+
+    const result = await service.catchUpMappedClients(10)
+
+    expect(result).toMatchObject({ success: true, scanned: 1, skipped: 0, synced: 1 })
+    expect(brainImport.importClientBrain).toHaveBeenCalledWith(
+      svc.client,
+      'user-1',
+      expect.objectContaining({ campaignId: 'campaign-1', force: true }),
+      null,
+    )
+  })
 })

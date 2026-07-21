@@ -150,7 +150,6 @@ export class PageGraderBrainSyncService {
         Boolean(opts.expectedHash && row.entry.content_hash === opts.expectedHash))
     const repairEmptyImport =
       !opts.force &&
-      hashMatches &&
       !(await this.repository.hasCampaignKnowledge(this.svc.client, row.entry.campaign_id))
 
     if (!opts.force && hashMatches && !repairEmptyImport) {
