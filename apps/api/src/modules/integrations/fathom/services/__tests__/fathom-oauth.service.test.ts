@@ -110,6 +110,45 @@ describe('FathomOAuthService', () => {
     expect(redirect).toContain('fathom_connected=1')
   })
 
+  it('reactivates only Fathom routes disabled by a prior disconnect after reconnect', async () => {
+    fathom.exchangeCodeForTokens.mockResolvedValue({
+      access_token: 'access_reconnected',
+      refresh_token: 'refresh_reconnected',
+    })
+    fathom.createWebhook.mockResolvedValue({ id: 'wh_reconnected', secret: 'whsec_reconnected' })
+    repo.getLatestIntegrationId.mockResolvedValue('integration_1')
+    const admin = { admin: true }
+    repo.getServiceClient.mockReturnValue(admin)
+    const spaceAutomation = {
+      restoreFathomDependentRules: vi.fn().mockResolvedValue({
+        restored_automation_ids: ['automation_1'],
+      }),
+    }
+    const reconnectingService = new FathomOAuthService(
+      config,
+      fathom as any,
+      repo as any,
+      spaceAutomation as any,
+      meetingsPrecallPrep as any,
+      spaceTemplates as any,
+    )
+    const state = (reconnectingService as any).signState({
+      userId: 'user_1',
+      redirectTo: 'https://app.vibey.test/settings',
+      ts: Date.now(),
+    })
+
+    await reconnectingService.handleCallback('code_reconnected', state)
+
+    expect(repo.upsertConnection).toHaveBeenCalled()
+    expect(repo.getLatestIntegrationId).toHaveBeenCalledWith(admin, 'user_1')
+    expect(spaceAutomation.restoreFathomDependentRules).toHaveBeenCalledWith(admin, {
+      fathomOwnerUserId: 'user_1',
+      userIntegrationId: 'integration_1',
+      disabledReason: 'The Fathom account that fed this automation was disconnected.',
+    })
+  })
+
   it('saves with scope_mode=org_shared and org_id when state carries org context', async () => {
     fathom.exchangeCodeForTokens.mockResolvedValue({
       access_token: 'access_org',

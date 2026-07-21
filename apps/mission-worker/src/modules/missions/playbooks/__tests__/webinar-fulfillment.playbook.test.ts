@@ -53,6 +53,15 @@ describe('webinar-fulfillment playbook', () => {
     expect(plan.subtasks.find((s) => s.id === 'st-gate-precall')?.assignTo).toBe(
       `human:${base.mission.user_id}`,
     )
+    expect(plan.subtasks.find((s) => s.id === 'st-gate-precall')?.intent.ecology).not.toMatch(
+      /selected Fathom meeting|recording ID|Do not approve without a call source/i,
+    )
+    expect(plan.subtasks.find((s) => s.id === 'st-atlas-transcript')?.intent.ecology).toMatch(
+      /calendar invitee.*email.*domain.*title.*time/i,
+    )
+    expect(plan.subtasks.find((s) => s.id === 'st-atlas-transcript')?.intent.ecology).toMatch(
+      /highest-confidence match/i,
+    )
     expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.assignTo).toBe('ads_manager')
     expect(plan.subtasks.find((s) => s.id === 'st-market-research')?.dependsOn).toEqual([
       'st-strategy-v2',

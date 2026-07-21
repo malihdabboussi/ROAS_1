@@ -7708,3 +7708,11 @@ File: `apps/api/src/modules/slack/services/slack.service.ts`
 Evidence: The service is 599 LOC after the observation hook, one line below the 600 LOC backend service limit.
 Needed work: Extract OAuth/channel management or meeting follow-up event routing into a focused collaborator before adding another Slack workflow.
 Reason not done now: The requested observation hook is bounded and passes the enforced limit; decomposing established Slack OAuth and event behavior would broaden this production deployment.
+
+## 2026-07-21 — API typecheck blocked by pre-existing Slack People contract drift
+
+- Feature/app: API / Slack People
+- File: `apps/api/src/modules/slack/controllers/slack-people.controller.ts`
+- Evidence: Full API typecheck reports `TS2339` at line 48 because `SlackPeopleService.refreshPeople` is absent. Focused Fathom reconnect tests pass, and the failing Slack controller is unchanged by this work.
+- Needed work: Reconcile the Slack People controller and service contract, then rerun the full API typecheck.
+- Why not now: Slack People is unrelated to Fathom reconnect and Webinar call matching and is under concurrent development.

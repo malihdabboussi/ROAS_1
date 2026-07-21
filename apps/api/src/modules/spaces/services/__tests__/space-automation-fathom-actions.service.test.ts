@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { SpaceAutomationService } from '../space-automation.service'
-import { automationsRepoFromRepo, emptyAutomationsRepo } from './space-automation-test-utils'
 import { chain } from './space-automation-fathom-test-helpers'
+import { automationsRepoFromRepo, emptyAutomationsRepo } from './space-automation-test-utils'
 
 describe('SpaceAutomationService Fathom actions and revocation', () => {
   it('runs agent_suggest_tasks and writes suggestions for the Fathom owner', async () => {
@@ -131,7 +131,7 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
             ],
           },
         }),
-      updateSpace: vi.fn().mockResolvedValue({}),
+        updateSpace: vi.fn().mockResolvedValue({}),
       }) as never,
       { get: () => 'internal-token' } as never,
       {} as never,
@@ -315,6 +315,61 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
         }),
       ]),
     )
+  })
+
+  it('restoreFathomDependentRules re-enables only rules disabled by the matching disconnect', async () => {
+    const disabledReason = 'The Fathom account that fed this automation was disconnected.'
+    const rows = [
+      {
+        id: 'route_self',
+        automation_id: 'automation_self',
+        source: { mode: 'self' },
+      },
+      {
+        id: 'route_user',
+        automation_id: 'automation_user',
+        source: { mode: 'user', user_integration_id: 'integration_1' },
+      },
+    ]
+    const triggerUpdate = vi.fn().mockReturnValue({
+      in: vi.fn().mockResolvedValue({ error: null }),
+    })
+    const automationUpdate = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    })
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'space_external_automation_triggers') {
+          const builder: Record<string, unknown> = {}
+          builder.select = () => builder
+          builder.eq = () => builder
+          builder.or = () => builder
+          builder.then = (resolve: (value: unknown) => unknown) =>
+            resolve({ data: rows, error: null })
+          return Object.assign(builder, { update: triggerUpdate })
+        }
+        if (table === 'space_automations') return { update: automationUpdate }
+        return {}
+      }),
+    }
+    const service = new SpaceAutomationService(
+      {} as never,
+      emptyAutomationsRepo() as never,
+      {} as never,
+      {} as never,
+    )
+
+    const result = await service.restoreFathomDependentRules(supabase as never, {
+      fathomOwnerUserId: 'user_1',
+      userIntegrationId: 'integration_1',
+      disabledReason,
+    })
+
+    expect(result.restored_automation_ids.sort()).toEqual(['automation_self', 'automation_user'])
+    expect(triggerUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'active', last_error: null }),
+    )
+    expect(automationUpdate).toHaveBeenCalledTimes(2)
   })
 
   it('dedupes repeated Fathom recording webhook events', async () => {

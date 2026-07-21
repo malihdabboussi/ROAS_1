@@ -289,6 +289,7 @@ export abstract class SpaceAutomationServiceBase01 {
   protected abstract contactEventTitle(...args: any[]): any
   protected abstract syncFathomTriggerRoute(...args: any[]): any
   abstract revokeFathomDependentRules(...args: any[]): any
+  abstract restoreFathomDependentRules(...args: any[]): any
   protected abstract normalizeFathomSource(...args: any[]): any
   abstract disableExternalTriggerForAutomation(...args: any[]): any
   abstract processComposioExternalEmailEvent(...args: any[]): any

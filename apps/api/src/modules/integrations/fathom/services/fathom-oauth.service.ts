@@ -27,6 +27,7 @@ export type FathomAutoIngestSettings = {
 }
 
 const FATHOM_ORG_BILLING_ROLES = ['owner', 'admin', 'creator', 'editor'] as const
+const FATHOM_DISCONNECT_REASON = 'The Fathom account that fed this automation was disconnected.'
 
 @Injectable()
 export class FathomOAuthService {
@@ -131,6 +132,23 @@ export class FathomOAuthService {
       scopeMode: parsedState.scopeMode ?? 'personal',
       orgId: parsedState.orgId ?? null,
     })
+
+    if (this.spaceAutomation) {
+      const admin = this.getAdminClient()
+      try {
+        const integrationRowId = await this.repo.getLatestIntegrationId(admin, parsedState.userId)
+        if (integrationRowId) {
+          await this.spaceAutomation.restoreFathomDependentRules(admin, {
+            fathomOwnerUserId: parsedState.userId,
+            userIntegrationId: String(integrationRowId),
+            disabledReason: FATHOM_DISCONNECT_REASON,
+          })
+        }
+      } catch (restoreErr) {
+        const message = restoreErr instanceof Error ? restoreErr.message : String(restoreErr)
+        this.logger.warn(`Fathom reconnect route restoration failed: ${message}`)
+      }
+    }
 
     const url = new URL(parsedState.redirectTo)
     url.searchParams.set('fathom_connected', '1')
@@ -278,7 +296,7 @@ export class FathomOAuthService {
           fathomOwnerUserId: userId,
           userIntegrationId: String(integrationRowId),
           mode: 'disconnect',
-          reason: 'The Fathom account that fed this automation was disconnected.',
+          reason: FATHOM_DISCONNECT_REASON,
         })
       } catch (revokeErr) {
         const message = revokeErr instanceof Error ? revokeErr.message : String(revokeErr)

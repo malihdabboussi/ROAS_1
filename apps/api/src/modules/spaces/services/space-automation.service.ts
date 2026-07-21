@@ -325,6 +325,49 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
     )
   }
 
+  /** Restore only rules disabled by the matching Fathom disconnect. */
+  async restoreFathomDependentRules(
+    supabase: SupabaseClient,
+    args: {
+      fathomOwnerUserId: string
+      userIntegrationId: string
+      disabledReason: string
+    },
+  ): Promise<{ restored_automation_ids: string[] }> {
+    const collected = new Map<string, Record<string, unknown>>()
+    const userRows = await this.externalEventsRepo.listDisconnectedFathomUserRoutes(
+      supabase,
+      args.userIntegrationId,
+      args.disabledReason,
+    )
+    for (const row of userRows) collected.set(String(row.id), row)
+
+    const selfRows = await this.externalEventsRepo.listDisconnectedFathomSelfRoutes(
+      supabase,
+      args.fathomOwnerUserId,
+      args.disabledReason,
+    )
+    for (const row of selfRows) {
+      const mode = String(this.objectRecord(row.source).mode ?? 'self')
+      if (mode === 'self') collected.set(String(row.id), row)
+    }
+    if (collected.size === 0) return { restored_automation_ids: [] }
+
+    const nowIso = new Date().toISOString()
+    const automationIds = [
+      ...new Set([...collected.values()].map((row) => String(row.automation_id))),
+    ]
+    await this.externalEventsRepo.restoreExternalTriggersByIds(
+      supabase,
+      [...collected.keys()],
+      nowIso,
+    )
+    for (const automationId of automationIds) {
+      await this.externalEventsRepo.enableAutomationRule(supabase, automationId, nowIso)
+    }
+    return { restored_automation_ids: automationIds }
+  }
+
   protected async executeAction(
     action: Record<string, unknown>,
     ctx: {

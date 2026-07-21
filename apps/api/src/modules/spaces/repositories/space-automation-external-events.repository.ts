@@ -79,6 +79,38 @@ export class SpaceAutomationExternalEventsRepository {
     return (data ?? []) as Array<Record<string, unknown>>
   }
 
+  async listDisconnectedFathomUserRoutes(
+    supabase: SupabaseClient,
+    userIntegrationId: string,
+    disabledReason: string,
+  ) {
+    const { data, error } = await supabase
+      .from('space_external_automation_triggers')
+      .select('id, automation_id, source')
+      .eq('provider', 'fathom')
+      .eq('status', 'disabled')
+      .eq('last_error', disabledReason)
+      .eq('source->>user_integration_id', userIntegrationId)
+    if (error) throw new Error(error.message)
+    return (data ?? []) as Array<Record<string, unknown>>
+  }
+
+  async listDisconnectedFathomSelfRoutes(
+    supabase: SupabaseClient,
+    fathomOwnerUserId: string,
+    disabledReason: string,
+  ) {
+    const { data, error } = await supabase
+      .from('space_external_automation_triggers')
+      .select('id, automation_id, source')
+      .eq('provider', 'fathom')
+      .eq('status', 'disabled')
+      .eq('last_error', disabledReason)
+      .eq('user_id', fathomOwnerUserId)
+    if (error) throw new Error(error.message)
+    return (data ?? []) as Array<Record<string, unknown>>
+  }
+
   async disableExternalTriggersByIds(
     supabase: SupabaseClient,
     rowIds: string[],
@@ -97,6 +129,22 @@ export class SpaceAutomationExternalEventsRepository {
       .from('space_automations')
       .update({ enabled: false, updated_at: nowIso })
       .eq('id', automationId)
+  }
+
+  async restoreExternalTriggersByIds(supabase: SupabaseClient, rowIds: string[], nowIso: string) {
+    const { error } = await supabase
+      .from('space_external_automation_triggers')
+      .update({ status: 'active', last_error: null, updated_at: nowIso })
+      .in('id', rowIds)
+    if (error) throw new Error(error.message)
+  }
+
+  async enableAutomationRule(supabase: SupabaseClient, automationId: string, nowIso: string) {
+    const { error } = await supabase
+      .from('space_automations')
+      .update({ enabled: true, updated_at: nowIso })
+      .eq('id', automationId)
+    if (error) throw new Error(error.message)
   }
 
   async listAutomationDetails(supabase: SupabaseClient, automationIds: string[]) {

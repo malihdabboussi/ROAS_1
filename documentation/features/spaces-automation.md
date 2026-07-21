@@ -121,6 +121,7 @@ Spaces automations run rules from the `space_automations` table through the sing
 
 ## Decision Log
 
+- 2026-07-21: Successful Fathom OAuth reconnect restores the matching user's Fathom routes and automation rules only when they were disabled with the canonical disconnect reason. Manual disables and unrelated failures remain untouched.
 - 2026-06-29: Automation run history now listens to `space_automation_runs` changes and reloads the current scoped history for Space and Flow history panels without a manual refresh.
 - 2026-06-25: Added first-party inbound Space webhooks for Flows. Endpoints are managed from `/flows` Webhooks, use required HMAC over the raw JSON body with the signing secret stored in Vault, keep endpoint-level JSON Pointer field mappings, and fan out one received event to every enabled published Flow in the same Space using `trigger.webhook_received`.
 - 2026-06-25: Task-agent completion now reconciles scoped persisted outputs after the stream merge, covering Space Docs, created Space items/tasks, offers, avatars, sequences, renderable presentations, renderable funnels/websites, social posts, ads/ad sets/ad campaigns, forms, flows, task-linked emails, and media assets. Empty funnel shells without pages/files are not added as completed preview deliverables by the readback path.

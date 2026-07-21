@@ -150,17 +150,17 @@ export function expandWebinarFulfillmentPlaybook(
         assertionKeys: [],
         scheduledAt: null,
         intent: intent({
-          why: 'The human must review the pre-call map and supply the completed call before post-call work.',
-          story: 'Review the map, conduct the call, then attach or identify the call for Atlas.',
-          sensory:
-            'The gate comment contains a Fathom call, transcript, recording link, upload, or notes.',
-          endState: 'A usable call source is available and Atlas can begin transcript intake.',
+          why: 'The human reviews the pre-call map and confirms the client call happened.',
+          story:
+            'Review the map, conduct the call, then approve so Atlas can locate it automatically.',
+          sensory: 'The gate records that the pre-call map was reviewed and the call is complete.',
+          endState: 'Atlas can begin automatic Fathom call matching and transcript intake.',
           ecology:
-            'Review the pre-call map. Then provide one of: a selected Fathom meeting, Fathom URL or recording ID, pasted/uploaded transcript, recording link, or detailed call notes. Do not approve without a call source.',
+            'Review the pre-call map, conduct the client call, and approve this gate. You do not need to choose a Fathom recording. Add a transcript or recording link only when the call happened outside the connected Fathom account.',
         }),
       },
       'compliance',
-      'Human reviewed the pre-call map and provided the call source.',
+      'Human reviewed the pre-call map and confirmed the client call is complete.',
     )
     strategyDependency = 'st-gate-precall'
   }
@@ -180,7 +180,7 @@ export function expandWebinarFulfillmentPlaybook(
         sensory:
           'The call context retains source links, speaker meaning, decisions, objections, and proof.',
         endState: 'Reed has a grounded call summary and transcript source for post-call strategy.',
-        ecology: `If Fathom is connected, list recent meetings, resolve the supplied meeting, retrieve its transcript, and ingest the useful context. Otherwise use the pasted/uploaded transcript, recording, or notes. Preserve the source. Never invent missing call content. Kickoff:\n${kickoffBits || '(gate supplies the call source)'}`,
+        ecology: `If Fathom is connected, list recent meetings and select the highest-confidence match without a picker. Rank calendar invitee email and client email domain first, then invitee names, title/topic, and scheduled or recording time relative to this mission and gate. Confirm with transcript mentions of the client, offer, or speakers. Prefer multiple agreeing signals; reject internal-only or unrelated calls. Retrieve the winning transcript and preserve its meeting ID and source URL. If two calls remain tied after transcript verification, ask for one distinguishing detail or link. If Fathom is unavailable, use a pasted transcript, recording, or notes. Never invent call content. Kickoff:\n${kickoffBits || '(Atlas discovers the connected Fathom call automatically)'}`,
       }),
     },
     'context',

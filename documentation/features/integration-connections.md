@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 21, 2026 (Org Google Workspace calendars)
+Last Modified: July 21, 2026 (Fathom reconnect recovery)
 
 ## Data Flow
 
@@ -36,6 +36,7 @@ Last Modified: July 21, 2026 (Org Google Workspace calendars)
 30. Each People refresh reads membership for Slack channels visible to the connected bot and attaches the sorted channel names to the matching people response. Cards, list rows, search, and the person detail panel use that context to identify unfamiliar people without persisting or changing relationship classifications.
 31. Team → People exposes People and Conversations as peer views. Post-call delivery drafts are stored in the same `slack_shadow_actions` ledger as manual Shadow proposals, so admins can reach the proposal globally or through the matched person and see the exact text that approval will deliver.
 32. Org Google Workspace is a separate org-shared integration (`google_workspace`) from personal Composio Google Calendar. Admins connect a domain-wide-delegation service account; Directory sync and Slack/portal seeding write `org_person_calendar_identities` keyed by normalized work email. Exact email matches are suggestions until an admin confirms. Agents use `get_person_agenda`, `list_org_upcoming`, and `get_person_briefing`; member Home Agenda stays caller-scoped.
+33. A successful Fathom reconnect restores only automation routes that the matching Fathom disconnect disabled. Routes disabled manually or for another error remain disabled.
 
 ## Code Examples
 
@@ -104,6 +105,7 @@ Reconnect result:
 
 ## Decision Log
 
+- Fathom reconnect is responsible for reversing its own disconnect side effects. Reactivation is restricted to routes whose stored disable reason exactly matches the Fathom disconnect reason, so reconnect cannot silently enable intentionally disabled automations.
 - A generic `connected` badge is not enough. The product must answer whether this agent can use this integration right now.
 - Personal and org-shared connections are separate scopes. A personal fallback requires explicit user approval for the current task.
 - Personal-account Google Calendar and Outlook follow the same private cross-context pattern as Fathom/Page Grader: usable by you inside an org, never visible to teammates, never auto-shared. Shared allowlist lives in `personal-cross-context-providers.ts` (status + calendar + overview; Slack remains overview-only projection).
