@@ -51,6 +51,14 @@ export type AutomationActionLike = {
   enrichments?: unknown[]
   brain_id?: string
   channel_urls?: string[]
+  loop_kind?: string
+  delivery_mode?: string
+  channel_ids?: string[]
+  person_ids?: string[]
+  lookback_minutes?: number
+  daily_limit?: number
+  quiet_hours?: { start?: string; end?: string; timezone?: string }
+  instructions?: string
 }
 
 export type AutomationTriggerLike = {
@@ -80,6 +88,7 @@ const ITEMLESS_ALLOWED_ACTION_TYPES = new Set<string>([
   'agent_suggest_tasks',
   'send_email',
   'send_slack_message',
+  'observe_slack_team',
   'send_channel_message',
   'create_artifact',
   'publish_artifact',
@@ -172,6 +181,12 @@ export function validateConcreteAction(action: AutomationActionLike): string | n
       if (!action.text_template?.trim()) return 'Add Slack message text'
       return null
     case 'request_slack_follow_up_confirm':
+      return null
+    case 'observe_slack_team':
+      if (!action.loop_kind?.trim()) return 'Choose what the Slack loop should detect'
+      if (!['shadow', 'active'].includes(action.delivery_mode ?? '')) {
+        return 'Choose Shadow or Active delivery'
+      }
       return null
     case 'send_channel_message':
       if (!action.channel_id?.trim()) return 'Add a ROAS channel ID'

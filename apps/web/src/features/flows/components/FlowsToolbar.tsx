@@ -10,14 +10,15 @@ import {
   List,
   Power,
   Search,
+  Users,
   Waypoints,
 } from 'lucide-react'
 import { Team2FilterDropdown } from '@/components/filters/Team2FilterDropdown'
-import { Tooltip } from '@/components/ui/tooltip'
 import {
   AutomationSolidSelect,
   type AutomationSolidOption,
 } from '@/components/ui/forms/AutomationSolidSelect'
+import { Tooltip } from '@/components/ui/tooltip'
 import { FLOWS_UI } from '@/lib/flows/flows-ui-labels'
 import type {
   FlowsDraftFilter,
@@ -25,6 +26,7 @@ import type {
   FlowsGroupBy,
   FlowsGroupSort,
   FlowsSort,
+  FlowsSurfaceFilter,
   FlowsViewMode,
 } from '../types/flows-page.types'
 import { FlowsGroupByButton } from './FlowsGroupByButton'
@@ -56,6 +58,11 @@ const ENABLED_OPTIONS: AutomationSolidOption[] = [
   { value: 'off', label: 'Off' },
 ]
 
+const SURFACE_OPTIONS: AutomationSolidOption[] = [
+  { value: 'all', label: 'All loops' },
+  { value: 'team', label: 'Team loops' },
+]
+
 interface FlowsToolbarProps {
   view: FlowsViewMode
   onViewChange: (next: FlowsViewMode) => void
@@ -70,6 +77,8 @@ interface FlowsToolbarProps {
   triggerFilter: string
   onTriggerFilterChange: (next: string) => void
   triggerFilterOptions: AutomationSolidOption[]
+  surfaceFilter: FlowsSurfaceFilter
+  onSurfaceFilterChange: (next: FlowsSurfaceFilter) => void
   incompleteOnly: boolean
   onIncompleteOnlyChange: (next: boolean) => void
   sort: FlowsSort
@@ -94,6 +103,8 @@ export function FlowsToolbar({
   triggerFilter,
   onTriggerFilterChange,
   triggerFilterOptions,
+  surfaceFilter,
+  onSurfaceFilterChange,
   incompleteOnly,
   onIncompleteOnlyChange,
   sort,
@@ -217,6 +228,19 @@ export function FlowsToolbar({
           </AnimatePresence>
         </div>
 
+        <AutomationSolidSelect
+          variant="icon"
+          triggerIcon={<Users className="icon-sm shrink-0" />}
+          tooltip="Loop area"
+          tooltipSide="top"
+          active={surfaceFilter !== 'all'}
+          menuWidth="min200"
+          options={SURFACE_OPTIONS}
+          value={surfaceFilter}
+          onChange={(value) => onSurfaceFilterChange(value as FlowsSurfaceFilter)}
+          placeholder="Area"
+          ariaLabel="Filter by loop area"
+        />
         <AutomationSolidSelect
           variant="icon"
           triggerIcon={<FilePenLine className="icon-sm shrink-0" />}

@@ -34,6 +34,7 @@ function scopeOptionIcon(option: BrainScopeNavOption): ReactNode {
   }
   switch (option.scopeType) {
     case 'user':
+    case 'person':
       return <User className="icon-xs text-muted-foreground shrink-0" />
     case 'shared':
       return <Share2 className="icon-xs text-muted-foreground shrink-0" />

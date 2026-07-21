@@ -329,7 +329,9 @@ export default function BrainHome() {
           brainId={modalOption.brainId}
           memoryCount={healthByBrainId.get(modalOption.brainId)?.total_memories ?? 0}
           scopeType={
-            modalOption.scopeType === 'campaign_knowledge' ? 'user' : modalOption.scopeType
+            modalOption.scopeType === 'campaign_knowledge' || modalOption.scopeType === 'person'
+              ? 'user'
+              : modalOption.scopeType
           }
         />
       ) : null}

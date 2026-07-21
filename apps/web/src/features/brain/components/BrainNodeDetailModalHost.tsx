@@ -5,10 +5,6 @@ import type { BrainScopeNavOption } from '../hooks/use-brain-scope-nav-options'
 import type { BrainMemory } from '../types'
 import NodeDetailModal from './NodeDetailModal'
 
-type NodeDetailTransferScopeOption = BrainScopeNavOption & {
-  scopeType: 'user' | 'agent' | 'campaign'
-}
-
 type BrainNodeDetailModalHostProps = {
   connectedNodes: BrainMemory[]
   isCampaignScope: boolean
@@ -23,9 +19,13 @@ type BrainNodeDetailModalHostProps = {
   selectNode: (node: BrainMemory | null) => void
 }
 
+type NodeDetailTransferSourceOption = BrainScopeNavOption & {
+  scopeType: 'user' | 'person' | 'agent' | 'campaign'
+}
+
 function isTransferScopeOption(
   option: BrainScopeNavOption,
-): option is NodeDetailTransferScopeOption {
+): option is NodeDetailTransferSourceOption {
   return (
     option.scopeType !== 'customer' &&
     option.scopeType !== 'company' &&
@@ -52,7 +52,7 @@ export function BrainNodeDetailModalHost({
       scopeOptions.filter(isTransferScopeOption).map((option) => ({
         id: option.id,
         label: option.label,
-        scopeType: option.scopeType,
+        scopeType: option.scopeType === 'person' ? ('user' as const) : option.scopeType,
         agentId: option.agentId,
         campaignId: option.campaignId,
       })),
@@ -87,7 +87,7 @@ export function BrainNodeDetailModalHost({
   return (
     <NodeDetailModal
       node={selectedNode}
-      scopeType={selectedScope?.scopeType}
+      scopeType={selectedScope?.scopeType === 'person' ? 'user' : selectedScope?.scopeType}
       campaignId={selectedScope?.campaignId ?? null}
       agentId={selectedScope?.agentId ?? null}
       currentScopeId={selectedScope?.id ?? null}

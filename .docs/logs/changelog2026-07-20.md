@@ -371,3 +371,23 @@ Impact: Unblocks `roas-web` deploy for HEAD Ads Research / Space chat seed flow.
 
 Files: `space-vibey-chat-panel.logic.ts`, test.
 
+## [2026-07-20 17:04] - [FEATURE]
+
+What: Added Pixel's complete Slack channel directory and threaded channel timelines, global Person Brain navigation, and four scheduled Team loops for Person Brain compounding, workflow discovery, unanswered questions, and stalled commitments/client risk. Added Team filtering in Loops plus Shadow/Active mode, people/channel scope, lookback, daily limits, quiet hours, source evidence, run history, and disabled-state kill switches.
+
+Why: Pixel belonged to many Slack channels but only read Slack's first paginated result page, and proactive support existed only as a roadmap. Admins needed one consolidated, reviewable place to observe conversations, grow managed Person Brains, and activate proven behaviors safely.
+
+Impact: Pixel now discovers every channel it belongs to, exposes real channel messages and threads under Team → People → Channels, and can run disabled-by-default proactive loops through the existing Flows engine. Shadow never sends. Active Person Brain writes deduplicate by source and content; unanswered-question delivery additionally requires the target person to be Active and records approved → sending → sent/failed audit state. Workflow and risk findings remain proposals.
+
+Files: Slack pagination/integration tests, Slack People channel APIs and Channels UI, Person Brain global navigation, `observe_slack_team` schemas/runtime/tests, Team Flow templates/filter/controls, shared capability contracts, production template migration, feature documentation, and changelog.
+
+## [2026-07-20 17:17] - [FEATURE]
+
+What: Shipped Pixel Slack Team Loops (four Shadow templates), Channels tab, Person Brains nav, and observe_slack_team automation action.
+
+Why: Team ops needs reviewable Slack observation loops without auto-activation.
+
+Impact: Templates install disabled + delivery_mode=shadow. Channels paginate Slack membership. Person Brains appear in Brain menu. Loops filter includes Team.
+
+Files: slack people/channels, slack-team-loop service, space automation catalog/DTOs, Brain person scope, Flows Team filter, migration `20260721001000_slack_team_loop_templates.sql`.
+

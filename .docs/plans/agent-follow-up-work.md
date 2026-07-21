@@ -7646,3 +7646,10 @@ Files:
 - Evidence: Full web typecheck stops on six parser errors around lines 577-620 (`TS1005`, `TS1381`, and `TS1382`). Focused Ads Research lint and tests pass, and none of the failing lines are in the Ads Research change.
 - Needed work: Repair the malformed JSX in both affected AgendaCard branches, then rerun the full web typecheck.
 - Why not now: AgendaCard is outside the Ads Research identity and rerun fix and is already part of unrelated concurrent worktree changes.
+
+## 2026-07-20 — spaces automations LOC debt (Team Loops ship)
+- File: `apps/web/src/features/spaces/components/automations/ActionBuilder.tsx` (2122 LOC allowlisted)
+- File: `apps/web/src/features/spaces/components/automations/AutomationFlowMap.tsx` (783 LOC allowlisted)
+- Evidence: Team Loops `observe_slack_team` required touching both; ActionBuilder UI extracted to `ObserveSlackTeamActionFields.tsx` but parents remain over web-component limit.
+- Needed: split ActionBuilder by action family; split FlowMap summary/render.
+- Why deferred: in-scope ship was Team Loops deploy; full automation UI decomposition is separate.

@@ -62,6 +62,7 @@ function createService(overrides?: {
     findShadowAction: vi.fn().mockResolvedValue({
       id: 'action-1',
       status: 'approved',
+      action_kind: 'message',
       proposed_content: 'Quick check-in — anything blocking you today?',
       target_member_id: 'person-1',
       target: { platform_id: 'U1', delivery_mode: 'active' },
@@ -88,6 +89,10 @@ function createService(overrides?: {
     }),
   }
   const slackApi = {
+    listConversations: vi.fn().mockResolvedValue([
+      { id: 'C1', name: 'client-alpha', is_member: true },
+      { id: 'C2', name: 'public-not-joined', is_member: false },
+    ]),
     openDmChannel: vi.fn().mockResolvedValue('D1'),
     getChannelHistory: vi.fn().mockResolvedValue([
       { user: 'U1', text: 'I need help with launch reporting.', ts: '123.400' },
@@ -314,6 +319,25 @@ describe('SlackPeopleService', () => {
     expect(slackApi.conversationsRepliesAll).toHaveBeenCalledWith('xoxb', 'D1', '123.500')
   })
 
+  it('lists only Slack channels Pixel belongs to and loads their threaded conversation', async () => {
+    const { service, slackApi } = createService({
+      people: [{ platform_id: 'U1', display_name: 'Ada Lovelace' }],
+    })
+
+    await expect(service.listChannels({} as never, 'org-1')).resolves.toEqual({
+      connected: true,
+      channels: [{ id: 'C1', name: 'client-alpha', is_private: false }],
+    })
+    await expect(service.getChannelActivity({} as never, 'org-1', 'C1')).resolves.toEqual({
+      channel: { id: 'C1', name: 'client-alpha' },
+      messages: expect.arrayContaining([
+        expect.objectContaining({ sender_name: 'Ada Lovelace', direction: 'inbound' }),
+        expect.objectContaining({ sender_name: 'Pixel', direction: 'outbound' }),
+      ]),
+    })
+    expect(slackApi.conversationsRepliesAll).toHaveBeenCalled()
+  })
+
   it('creates a harmless test proposal without sending it', async () => {
     const { service, repository, slackApi } = createService()
 
@@ -408,6 +432,22 @@ describe('SlackPeopleService', () => {
       status: 'approved',
       proposed_content: 'Hello',
       target: { platform_id: 'U1', delivery_mode: 'shadow' },
+    })
+
+    await expect(
+      service.sendShadowAction({} as never, 'admin-1', 'org-1', 'action-1'),
+    ).rejects.toBeInstanceOf(ConflictException)
+    expect(slackApi.postMessage).not.toHaveBeenCalled()
+  })
+
+  it('does not send a workflow or Brain proposal as if it were a Slack message', async () => {
+    const { service, repository, slackApi } = createService()
+    repository.findShadowAction.mockResolvedValue({
+      id: 'action-1',
+      status: 'approved',
+      action_kind: 'workflow',
+      proposed_content: 'Avery owns weekly reporting.',
+      target: { platform_id: 'U1', delivery_mode: 'active' },
     })
 
     await expect(

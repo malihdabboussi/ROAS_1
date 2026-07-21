@@ -27,6 +27,7 @@ export type BrainScopeNavOption = {
   brainId: string | null
   scopeType:
     | 'user'
+    | 'person'
     | 'shared'
     | 'agent'
     | 'campaign'
@@ -39,6 +40,20 @@ export type BrainScopeNavOption = {
   campaignIconColor?: string | null
   spaceId?: string
   shareLevel?: 'view' | 'query' | 'train'
+  personIdentityKind?: 'portal' | 'external'
+}
+
+type ManagedPersonBrainMemberRow = {
+  display_name: string | null
+  avatar_url: string | null
+  vibey_user_id: string | null
+  person_brain_id: string | null
+}
+
+type ManagedPersonBrainRow = {
+  id: string
+  name: string | null
+  image_url: string | null
 }
 
 type SharedBrainShareRow = {
@@ -183,6 +198,62 @@ async function loadSharedBrainScopeOptions(
     })
 }
 
+export function buildManagedPersonBrainScopeOptions(
+  members: ManagedPersonBrainMemberRow[],
+  brains: ManagedPersonBrainRow[],
+): BrainScopeNavOption[] {
+  const brainById = new Map(brains.map((brain) => [brain.id, brain]))
+  return members
+    .flatMap((member) => {
+      if (!member.person_brain_id) return []
+      const brain = brainById.get(member.person_brain_id)
+      if (!brain) return []
+      return [
+        {
+          id: `person:${brain.id}`,
+          label:
+            brain.name?.trim() || `${member.display_name?.trim() || 'Slack person'} Person Brain`,
+          agentId: null,
+          brainId: brain.id,
+          scopeType: 'person' as const,
+          imageUrl: brain.image_url?.trim() || member.avatar_url?.trim() || null,
+          personIdentityKind: member.vibey_user_id ? ('portal' as const) : ('external' as const),
+        },
+      ]
+    })
+    .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }))
+}
+
+async function loadManagedPersonBrainScopeOptions(
+  supabase: ReturnType<typeof createClient>,
+  activeOrgId: string,
+): Promise<BrainScopeNavOption[]> {
+  // eslint-disable-next-line no-restricted-syntax -- org-managed Person Brain navigation source
+  const { data: members, error: membersError } = await supabase
+    .from('channel_members')
+    .select('display_name, avatar_url, vibey_user_id, person_brain_id')
+    .eq('org_id', activeOrgId)
+    .eq('platform', 'slack')
+    .eq('is_bot', false)
+    .not('person_brain_id', 'is', null)
+  if (membersError || !members?.length) return []
+
+  const brainIds = members
+    .map((member) => member.person_brain_id)
+    .filter((id): id is string => Boolean(id))
+  // eslint-disable-next-line no-restricted-syntax -- explicit Person Brain rows discovered above
+  const { data: brains, error: brainsError } = await supabase
+    .from('ns_brains')
+    .select('id, name, image_url')
+    .in('id', brainIds)
+    .eq('scope', 'user')
+  if (brainsError) return []
+  return buildManagedPersonBrainScopeOptions(
+    members as ManagedPersonBrainMemberRow[],
+    (brains ?? []) as ManagedPersonBrainRow[],
+  )
+}
+
 export type BrainScopeNavPayload = {
   scopeOptions: BrainScopeNavOption[]
   agentsWithoutBrain: MissionAgent[]
@@ -235,6 +306,7 @@ async function loadBrainScopeNavImpl(activeOrgId: string | null): Promise<BrainS
     companyCortexRes,
     profileRes,
     sharedBrainRes,
+    managedPersonBrainRes,
     campaignsRes,
   ] = await Promise.all([
     fetchMissionAgents(),
@@ -257,6 +329,9 @@ async function loadBrainScopeNavImpl(activeOrgId: string | null): Promise<BrainS
       : Promise.resolve({ data: null, error: null }),
     isOrg && user?.id && activeOrgId
       ? loadSharedBrainScopeOptions(supabase, activeOrgId, user.id)
+      : Promise.resolve([] as BrainScopeNavOption[]),
+    isOrg && activeOrgId
+      ? loadManagedPersonBrainScopeOptions(supabase, activeOrgId)
       : Promise.resolve([] as BrainScopeNavOption[]),
     fetchCampaigns().catch(() => []),
   ])
@@ -350,29 +425,29 @@ async function loadBrainScopeNavImpl(activeOrgId: string | null): Promise<BrainS
   }
 
   const campaignKnowledgeOptions: BrainScopeNavOption[] = trainableCampaigns.map((campaign) => {
-      const config = (campaign.config ?? {}) as Record<string, unknown>
-      const iconImageUrl =
-        typeof config.icon_image_url === 'string' && config.icon_image_url.trim()
-          ? config.icon_image_url.trim()
-          : null
-      const icon = typeof config.icon === 'string' && config.icon.trim() ? config.icon : 'brain'
-      const iconColor =
-        typeof config.icon_color === 'string' && config.icon_color.trim()
-          ? config.icon_color
-          : 'purple'
-      const campaignBrain = campaignBrainByCampaignId.get(campaign.id)
-      return {
-        id: `campaign:${campaign.id}`,
-        label: `${campaign.name ?? 'Campaign'} Knowledge`,
-        agentId: null,
-        brainId: campaignBrain?.id ?? null,
-        scopeType: 'campaign_knowledge' as const,
-        campaignId: campaign.id,
-        imageUrl: iconImageUrl ?? campaignBrain?.imageUrl ?? null,
-        campaignIcon: icon,
-        campaignIconColor: iconColor,
-      }
-    })
+    const config = (campaign.config ?? {}) as Record<string, unknown>
+    const iconImageUrl =
+      typeof config.icon_image_url === 'string' && config.icon_image_url.trim()
+        ? config.icon_image_url.trim()
+        : null
+    const icon = typeof config.icon === 'string' && config.icon.trim() ? config.icon : 'brain'
+    const iconColor =
+      typeof config.icon_color === 'string' && config.icon_color.trim()
+        ? config.icon_color
+        : 'purple'
+    const campaignBrain = campaignBrainByCampaignId.get(campaign.id)
+    return {
+      id: `campaign:${campaign.id}`,
+      label: `${campaign.name ?? 'Campaign'} Knowledge`,
+      agentId: null,
+      brainId: campaignBrain?.id ?? null,
+      scopeType: 'campaign_knowledge' as const,
+      campaignId: campaign.id,
+      imageUrl: iconImageUrl ?? campaignBrain?.imageUrl ?? null,
+      campaignIcon: icon,
+      campaignIconColor: iconColor,
+    }
+  })
 
   const scopeOptions: BrainScopeNavOption[] = [
     {
@@ -383,6 +458,7 @@ async function loadBrainScopeNavImpl(activeOrgId: string | null): Promise<BrainS
       scopeType: 'user',
       imageUrl: userAvatarUrl,
     },
+    ...managedPersonBrainRes,
     ...sharedBrainRes,
     ...(isOrg
       ? [

@@ -9,12 +9,13 @@ import { useOrgStore } from '@/lib/org'
 
 const SCOPE_ORDER: Record<BrainScopeNavOption['scopeType'], number> = {
   user: 0,
-  shared: 1,
-  company: 2,
-  customer: 3,
-  agent: 4,
-  campaign: 5,
-  campaign_knowledge: 6,
+  person: 1,
+  shared: 2,
+  company: 3,
+  customer: 4,
+  agent: 5,
+  campaign: 6,
+  campaign_knowledge: 7,
 }
 
 export type TrainableBrainTarget = {

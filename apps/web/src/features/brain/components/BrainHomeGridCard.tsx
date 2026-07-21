@@ -1,21 +1,13 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
-import {
-  Bot,
-  Brain,
-  Building2,
-  GraduationCap,
-  MoreHorizontal,
-  Share2,
-  Users,
-} from 'lucide-react'
+import { Bot, Brain, Building2, GraduationCap, MoreHorizontal, Share2, Users } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import type { BrainScopeMenuContext } from '@/features/brain/hooks/use-brain-scope-menu-actions'
 import type { BrainScopeNavOption } from '@/features/brain/hooks/use-brain-scope-nav-options'
 import type { BrainHealthData } from '@/features/brain/types'
-import { CampaignBrainIconDisplay } from './CampaignBrainIconPicker'
 import { BRAIN_CARD_MENU_WIDTH, BrainHomeGridCardMenu } from './BrainHomeGridCardMenu'
+import { CampaignBrainIconDisplay } from './CampaignBrainIconPicker'
 import { CortexMaxIcon } from './CortexMaxIcon'
 
 function relativeTime(iso: string | null | undefined): string {
@@ -36,6 +28,7 @@ function scopeHeroFallback(scopeType: BrainScopeNavOption['scopeType'], label: s
   const iconCls = 'h-14 w-14 text-muted-foreground'
   switch (scopeType) {
     case 'user':
+    case 'person':
       return (
         <span className="title-h4 text-muted-foreground">{label.slice(0, 1).toUpperCase()}</span>
       )

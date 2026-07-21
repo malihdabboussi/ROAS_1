@@ -38,7 +38,7 @@ export function BrainVisualizationModalLayer({
         brainId={selectedScope?.brainId ?? null}
         memoryCount={memoryCount}
         scopeType={
-          selectedScope?.scopeType === 'campaign_knowledge'
+          selectedScope?.scopeType === 'campaign_knowledge' || selectedScope?.scopeType === 'person'
             ? 'user'
             : (selectedScope?.scopeType ?? 'user')
         }

@@ -63,6 +63,7 @@ const SCHEDULE_ALLOWED_ACTION_TYPES = new Set<string>([
   'agent_suggest_tasks',
   'send_email',
   'send_slack_message',
+  'observe_slack_team',
   'send_channel_message',
   'create_artifact',
   'publish_artifact',

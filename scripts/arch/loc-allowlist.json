@@ -69,11 +69,6 @@
       "limit": 400,
       "lines": 544
     },
-    "apps/web/src/components/layout/sidebar/SidebarBrainFlyout.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 438
-    },
     "apps/web/src/components/layout/sidebar/SidebarHqSection.tsx": {
       "kind": "web-component",
       "limit": 400,
@@ -122,7 +117,7 @@
     "apps/web/src/features/spaces/components/automations/ActionBuilder.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 2105
+      "lines": 2122
     },
     "apps/web/src/features/spaces/components/automations/PromptTemplateEditor.tsx": {
       "kind": "web-component",
@@ -488,6 +483,11 @@
       "kind": "web-component",
       "limit": 400,
       "lines": 641
+    },
+    "apps/web/src/features/spaces/components/automations/AutomationFlowMap.tsx": {
+      "kind": "web-component",
+      "limit": 400,
+      "lines": 783
     }
   },
   "webFeatureImports": {
@@ -1152,13 +1152,6 @@
         "@/features/spaces/components/automations/automation-catalog": 1,
         "@/features/spaces/components/automations/AutomationCategorizedSelect": 1,
         "@/features/spaces/types/space-schema": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/automations/ActionBuilder.tsx": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/org/services/org.service": 1
       }
     },
     "apps/web/src/features/spaces/components/automations/PromptTemplateEditor.tsx": {

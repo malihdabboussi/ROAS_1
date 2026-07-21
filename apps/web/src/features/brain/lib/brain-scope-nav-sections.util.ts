@@ -8,7 +8,7 @@ export type BrainScopeNavSection = {
 }
 
 export const BRAIN_SCOPE_NAV_SECTIONS: BrainScopeNavSection[] = [
-  { id: 'user', title: 'User brains', scopeTypes: ['user', 'shared'] },
+  { id: 'user', title: 'User brains', scopeTypes: ['user', 'person', 'shared'] },
   { id: 'company', title: 'Company brains', scopeTypes: ['company'], orgOnly: true },
   { id: 'customer', title: 'Customer brains', scopeTypes: ['customer'] },
   { id: 'agent', title: 'Agent brains', scopeTypes: ['agent'] },

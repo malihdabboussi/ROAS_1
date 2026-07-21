@@ -10,6 +10,7 @@ function scopeIcon(scopeType: BrainScopeNavOption['scopeType']) {
   const cls = 'h-3 w-3 shrink-0 text-muted-foreground'
   switch (scopeType) {
     case 'user':
+    case 'person':
       return <User className={cls} />
     case 'company':
       return <Building2 className={cls} />

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import {
   CircleUserRound,
   MessageSquareText,
+  MessagesSquare,
   RefreshCw,
   UserRoundCheck,
   UsersRound,
@@ -18,6 +19,7 @@ import type {
   SlackPersonActivity,
   SlackRelationshipKind,
 } from '../../services/slack-people.service'
+import { SlackChannelsView } from './SlackChannelsView'
 import { SlackPeopleRoster } from './SlackPeopleRoster'
 import { SlackPersonScreen } from './SlackPersonScreen'
 import { SlackShadowConversationView } from './SlackShadowConversationView'
@@ -28,6 +30,8 @@ export function SlackPeopleView() {
   const searchParams = useSearchParams()
   const selectedPersonId = searchParams.get('person')
   const showShadowInbox = searchParams.get('peopleView') === 'shadow'
+  const showChannels = searchParams.get('peopleView') === 'channels'
+  const selectedChannelId = searchParams.get('slackChannel')
   const [activity, setActivity] = useState<SlackPersonActivity | null>(null)
   const [activityLoading, setActivityLoading] = useState(false)
   const {
@@ -83,6 +87,13 @@ export function SlackPeopleView() {
   const openPeople = () => router.push('/team?section=people', { scroll: false })
   const openShadowInbox = () =>
     router.push('/team?section=people&peopleView=shadow', { scroll: false })
+  const openChannels = () =>
+    router.push('/team?section=people&peopleView=channels', { scroll: false })
+  const openChannel = (channelId: string) =>
+    router.push(
+      `/team?section=people&peopleView=channels&slackChannel=${encodeURIComponent(channelId)}`,
+      { scroll: false },
+    )
 
   const classifyPerson = (id: string, kind: SlackRelationshipKind) => {
     void updateRelationshipKind(id, kind).catch(() =>
@@ -144,7 +155,7 @@ export function SlackPeopleView() {
             : 'gap-spacing-6 mx-auto flex w-full max-w-6xl flex-col'
         }
       >
-        {!selectedPersonId && !showShadowInbox ? (
+        {!selectedPersonId && !showShadowInbox && !showChannels ? (
           <header className="gap-spacing-4 flex flex-wrap items-start justify-between">
             <div>
               <p className="eyebrow text-muted-foreground">Managed team intelligence</p>
@@ -178,9 +189,9 @@ export function SlackPeopleView() {
             <button
               type="button"
               onClick={openPeople}
-              aria-current={!showShadowInbox ? 'page' : undefined}
+              aria-current={!showShadowInbox && !showChannels ? 'page' : undefined}
               className={
-                !showShadowInbox
+                !showShadowInbox && !showChannels
                   ? 'button-compact button-glass-neutral bg-secondary'
                   : 'button-compact button-glass-neutral'
               }
@@ -198,6 +209,18 @@ export function SlackPeopleView() {
               }
             >
               <MessageSquareText className="icon-xs" /> Conversations
+            </button>
+            <button
+              type="button"
+              onClick={openChannels}
+              aria-current={showChannels ? 'page' : undefined}
+              className={
+                showChannels
+                  ? 'button-compact button-glass-neutral bg-secondary'
+                  : 'button-compact button-glass-neutral'
+              }
+            >
+              <MessagesSquare className="icon-xs" /> Channels
             </button>
           </nav>
         ) : null}
@@ -274,6 +297,12 @@ export function SlackPeopleView() {
                   </button>
                 </section>
               )
+            ) : showChannels ? (
+              <SlackChannelsView
+                selectedChannelId={selectedChannelId}
+                onSelectChannel={openChannel}
+                onBack={openChannels}
+              />
             ) : showShadowInbox ? (
               <SlackShadowConversationView
                 actions={actions}

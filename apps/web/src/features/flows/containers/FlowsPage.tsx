@@ -114,6 +114,7 @@ import type {
   FlowsGroupSort,
   FlowsPanelTab,
   FlowsSort,
+  FlowsSurfaceFilter,
   FlowsViewMode,
 } from '../types/flows-page.types'
 
@@ -190,6 +191,7 @@ export function FlowsPage() {
   const [draftFilter, setDraftFilter] = useState<FlowsDraftFilter>('all')
   const [enabledFilter, setEnabledFilter] = useState<FlowsEnabledFilter>('all')
   const [triggerFilter, setTriggerFilter] = useState<string>('all')
+  const [surfaceFilter, setSurfaceFilter] = useState<FlowsSurfaceFilter>('all')
   const [incompleteOnly, setIncompleteOnly] = useState(false)
   const [sort, setSort] = useState<FlowsSort>('recent')
   const [groupBy, setGroupBy] = useState<FlowsGroupBy>('status')
@@ -818,9 +820,10 @@ export function FlowsPage() {
         draftFilter,
         enabledFilter,
         triggerFilter,
+        surfaceFilter,
         incompleteOnly,
       }),
-    [draftFilter, enabledFilter, flows, incompleteOnly, search, sort, triggerFilter],
+    [draftFilter, enabledFilter, flows, incompleteOnly, search, sort, surfaceFilter, triggerFilter],
   )
 
   const manageFilteredFlows = useMemo(
@@ -2039,6 +2042,8 @@ export function FlowsPage() {
                   triggerFilter={triggerFilter}
                   onTriggerFilterChange={setTriggerFilter}
                   triggerFilterOptions={triggerFilterOptions}
+                  surfaceFilter={surfaceFilter}
+                  onSurfaceFilterChange={setSurfaceFilter}
                   incompleteOnly={incompleteOnly}
                   onIncompleteOnlyChange={setIncompleteOnly}
                   sort={sort}

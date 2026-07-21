@@ -556,6 +556,7 @@ export const ACTION_SECTIONS: AutomationCategorizedSection[] = [
         value: 'request_slack_follow_up_confirm',
         label: 'DM follow-ups for Slack confirm',
       },
+      { value: 'observe_slack_team', label: 'Observe Slack team' },
       { value: 'send_channel_message', label: 'Send channel message' },
     ],
   },
@@ -1238,6 +1239,16 @@ export function defaultAction(type: string): AutomationAction | null {
         type: 'request_slack_follow_up_confirm',
         dm_email: 'dylan@dylanvanas.com',
         confirm_reaction: 'white_check_mark',
+      }
+    case 'observe_slack_team':
+      return {
+        type: 'observe_slack_team',
+        loop_kind: 'all',
+        delivery_mode: 'shadow',
+        channel_ids: [],
+        person_ids: [],
+        lookback_minutes: 60,
+        daily_limit: 10,
       }
     case 'send_channel_message':
       return { type: 'send_channel_message', channel_id: '', content_template: '' }

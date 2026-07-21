@@ -74,6 +74,39 @@ describe('SlackApiIntegration', () => {
     }
   })
 
+  it('loads every conversations.list page even when Slack returns an empty page', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        json: async () => ({
+          ok: true,
+          channels: [],
+          response_metadata: { next_cursor: 'second-page' },
+        }),
+      })
+      .mockResolvedValueOnce({
+        json: async () => ({
+          ok: true,
+          channels: [{ id: 'C1', name: 'client-unit-bravo' }],
+          response_metadata: { next_cursor: 'third-page' },
+        }),
+      })
+      .mockResolvedValueOnce({
+        json: async () => ({
+          ok: true,
+          channels: [{ id: 'C2', name: 'general' }],
+          response_metadata: {},
+        }),
+      })
+
+    await expect(integration.listConversations('xoxb')).resolves.toEqual([
+      { id: 'C1', name: 'client-unit-bravo' },
+      { id: 'C2', name: 'general' },
+    ])
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('cursor=second-page')
+    expect(String(fetchMock.mock.calls[2]?.[0])).toContain('cursor=third-page')
+  })
+
   it('loads every page of members for a visible Slack channel', async () => {
     fetchMock
       .mockResolvedValueOnce({

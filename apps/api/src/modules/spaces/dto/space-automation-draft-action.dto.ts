@@ -168,6 +168,32 @@ export const LooseAutomationActionSchema = z.discriminatedUnion('type', [
     continuation: ContinuationSchema,
   }),
   z.object({
+    type: z.literal('observe_slack_team'),
+    loop_kind: z
+      .enum([
+        'brain_compounding',
+        'workflow_discovery',
+        'unanswered_questions',
+        'client_risk',
+        'all',
+      ])
+      .optional(),
+    delivery_mode: z.enum(['shadow', 'active']).optional(),
+    channel_ids: z.array(z.string()).max(200).optional(),
+    person_ids: z.array(z.string()).max(500).optional(),
+    lookback_minutes: z.number().int().min(5).max(1440).optional(),
+    daily_limit: z.number().int().min(1).max(100).optional(),
+    quiet_hours: z
+      .object({
+        start: z.string().optional(),
+        end: z.string().optional(),
+        timezone: z.string().optional(),
+      })
+      .optional(),
+    instructions: z.string().optional(),
+    continuation: ContinuationSchema,
+  }),
+  z.object({
     type: z.literal('send_channel_message'),
     channel_id: z.string().optional(),
     content_template: z.string().optional(),

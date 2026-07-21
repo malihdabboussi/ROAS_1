@@ -87,6 +87,20 @@ export class SlackPeopleController {
     return this.people.listShadowActions(supabase, scope.orgId, query.limit)
   }
 
+  @Get('channels')
+  async listChannels(@Supabase() supabase: SupabaseClient, @OrgContext() scope: RequestScope) {
+    return this.people.listChannels(supabase, scope.orgId)
+  }
+
+  @Get('channels/:channelId/activity')
+  async getChannelActivity(
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param('channelId') channelId: string,
+  ) {
+    return this.people.getChannelActivity(supabase, scope.orgId, channelId)
+  }
+
   @Get(':id/activity')
   async getPersonActivity(
     @Supabase() supabase: SupabaseClient,

@@ -263,6 +263,9 @@ export class SlackPeopleRepository {
       proposedContent: string
       rationale: string
       metadata?: Record<string, unknown>
+      sourceChannelId?: string | null
+      sourceMessageTs?: string | null
+      workflowKey?: string | null
     },
   ): Promise<SlackShadowAction> {
     const { data, error } = await supabase
@@ -275,6 +278,9 @@ export class SlackPeopleRepository {
         action_kind: input.actionKind,
         proposed_content: input.proposedContent,
         rationale: input.rationale,
+        source_channel_id: input.sourceChannelId ?? null,
+        source_message_ts: input.sourceMessageTs ?? null,
+        workflow_key: input.workflowKey ?? null,
         metadata: input.metadata ?? {},
       })
       .select('*')

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { RxDoubleArrowRight } from 'react-icons/rx'
 import { cn } from '@/lib/utils/cn'
 import type {
   SlackDeliveryMode,
@@ -34,6 +35,7 @@ interface SlackPersonInfoPanelProps {
   onConfirmIdentity: () => void
   onMapIdentity: (userId: string) => Promise<void>
   onCreateBrain: () => Promise<void>
+  onRequestCollapse: () => void
 }
 
 export function SlackPersonInfoPanel({
@@ -46,12 +48,22 @@ export function SlackPersonInfoPanel({
   onConfirmIdentity,
   onMapIdentity,
   onCreateBrain,
+  onRequestCollapse,
 }: SlackPersonInfoPanelProps) {
   const [tab, setTab] = useState<'info' | 'brain'>('info')
   const sentCount = actions.filter((action) => action.status === 'sent').length
 
   return (
-    <aside className="card-glass rounded-spacing-4 flex h-full min-h-0 w-full flex-col overflow-hidden border-0">
+    <aside className="card-glass rounded-spacing-4 relative flex h-full min-h-0 w-full flex-col overflow-hidden border-0">
+      <button
+        type="button"
+        onClick={onRequestCollapse}
+        className="btn-icon-glass absolute right-3 top-3"
+        aria-label="Collapse person info"
+        title="Collapse person info"
+      >
+        <RxDoubleArrowRight className="icon-sm" aria-hidden />
+      </button>
       <div className="p-spacing-4 border-border shrink-0 border-b text-center">
         <div className="bg-secondary h-spacing-16 w-spacing-16 mx-auto flex items-center justify-center overflow-hidden rounded-full">
           {person.avatar_url ? (

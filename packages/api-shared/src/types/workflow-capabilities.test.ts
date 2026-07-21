@@ -89,6 +89,13 @@ describe('workflow capabilities catalog', () => {
     })
   })
 
+  it('classifies Slack team loops as external communication because Active mode can send', () => {
+    expect(getWorkflowCapability('action.observe_slack_team')).toMatchObject({
+      side_effect: 'external_communication',
+      approval_policy: 'user_review',
+    })
+  })
+
   it('filters by query, kind, and category', () => {
     const result = searchWorkflowCapabilities({
       query: 'status',

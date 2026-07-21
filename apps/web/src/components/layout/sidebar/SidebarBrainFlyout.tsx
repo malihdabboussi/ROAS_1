@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useMemo, useState, type ReactNode } from 'react'
 import {
+  BadgeCheck,
   Bot,
   Brain,
   Building2,
@@ -13,6 +14,7 @@ import {
   Plus,
   Share2,
   User,
+  UserRound,
   Users,
 } from 'lucide-react'
 import { ShareModal } from '@/components/org'
@@ -100,6 +102,16 @@ function BrainScopeRow({
           {icon}
         </span>
         <span className="min-w-0 flex-1 truncate">{option.label}</span>
+        {option.scopeType === 'person' ? (
+          option.personIdentityKind === 'portal' ? (
+            <BadgeCheck className="text-primary h-3.5 w-3.5 shrink-0" aria-label="Portal account" />
+          ) : (
+            <UserRound
+              className="text-muted-foreground h-3.5 w-3.5 shrink-0"
+              aria-label="External person"
+            />
+          )
+        ) : null}
       </Link>
       <div className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center">
         <button
@@ -131,30 +143,39 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
   } | null>(null)
   const [campaignKnowledgeExpanded, setCampaignKnowledgeExpanded] = useState(false)
 
-  const { userBrain, sharedBrains, companyBrain, customerBrain, agentBrains, campaignKnowledge } =
-    useMemo(() => {
-      const user =
-        scopeOptions.find((o) => o.scopeType === 'user') ??
-        scopeOptions.find((o) => o.id === 'user') ??
-        null
-      const customer = scopeOptions.find((o) => o.scopeType === 'customer') ?? null
-      const company = scopeOptions.find((o) => o.scopeType === 'company') ?? null
-      const cmp = (a: BrainScopeNavOption, b: BrainScopeNavOption) =>
-        a.label.localeCompare(b.label, undefined, { sensitivity: 'base' })
-      const sharedBrains = scopeOptions.filter((o) => o.scopeType === 'shared').sort(cmp)
-      const agentBrains = scopeOptions.filter((o) => o.scopeType === 'agent').sort(cmp)
-      const campaignKnowledge = scopeOptions
-        .filter((o) => o.scopeType === 'campaign_knowledge')
-        .sort(cmp)
-      return {
-        userBrain: user,
-        sharedBrains,
-        companyBrain: company,
-        customerBrain: customer,
-        agentBrains,
-        campaignKnowledge,
-      }
-    }, [scopeOptions])
+  const {
+    userBrain,
+    personBrains,
+    sharedBrains,
+    companyBrain,
+    customerBrain,
+    agentBrains,
+    campaignKnowledge,
+  } = useMemo(() => {
+    const user =
+      scopeOptions.find((o) => o.scopeType === 'user') ??
+      scopeOptions.find((o) => o.id === 'user') ??
+      null
+    const customer = scopeOptions.find((o) => o.scopeType === 'customer') ?? null
+    const company = scopeOptions.find((o) => o.scopeType === 'company') ?? null
+    const cmp = (a: BrainScopeNavOption, b: BrainScopeNavOption) =>
+      a.label.localeCompare(b.label, undefined, { sensitivity: 'base' })
+    const sharedBrains = scopeOptions.filter((o) => o.scopeType === 'shared').sort(cmp)
+    const personBrains = scopeOptions.filter((o) => o.scopeType === 'person').sort(cmp)
+    const agentBrains = scopeOptions.filter((o) => o.scopeType === 'agent').sort(cmp)
+    const campaignKnowledge = scopeOptions
+      .filter((o) => o.scopeType === 'campaign_knowledge')
+      .sort(cmp)
+    return {
+      userBrain: user,
+      personBrains,
+      sharedBrains,
+      companyBrain: company,
+      customerBrain: customer,
+      agentBrains,
+      campaignKnowledge,
+    }
+  }, [scopeOptions])
 
   const openMenu = (option: BrainScopeNavOption, clientX: number, clientY: number) => {
     setMenuState({ option, position: { x: clientX, y: clientY } })
@@ -211,6 +232,18 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
             ) : (
               <EnableBrainRow onNavigate={onNavigate} />
             )}
+            {personBrains.map((option) => (
+              <BrainScopeRow
+                key={option.id}
+                option={option}
+                pathname={pathname}
+                currentScope={currentScope}
+                onNavigate={onNavigate}
+                icon={scopeRowIcon(option, <UserRound className="h-4 w-4 shrink-0" />)}
+                menuOpen={isMenuOpenFor(option.id)}
+                onOpenMenu={openMenu}
+              />
+            ))}
             {sharedBrains.map((option) => (
               <BrainScopeRow
                 key={option.id}

@@ -23,6 +23,7 @@ export type BrainScopeRuntimeState = {
 }
 
 const BRAIN_ID_REQUIRED_SCOPE_TYPES = new Set<BrainScopeNavOption['scopeType']>([
+  'person',
   'shared',
   'agent',
   'customer',
@@ -74,7 +75,8 @@ export function resolveBrainScopeRuntimeState(input: RuntimeScopeInput): BrainSc
     }
   }
 
-  const isUserScope = input.selectedScope?.scopeType === 'user'
+  const isUserScope =
+    input.selectedScope?.scopeType === 'user' || input.selectedScope?.scopeType === 'person'
   const isCampaignScope = input.selectedScope?.scopeType === 'campaign'
   const isCampaignKnowledgeScope = input.selectedScope?.scopeType === 'campaign_knowledge'
   const isCampaignLikeScope = isCampaignScope || isCampaignKnowledgeScope

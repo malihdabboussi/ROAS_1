@@ -62,23 +62,32 @@ export abstract class SlackApiIntegrationCoreBase {
   }
 
   async listConversations(botToken: string): Promise<SlackWorkspaceChannel[]> {
-    const params = new URLSearchParams({
-      types: 'public_channel,private_channel,mpim,im',
-      exclude_archived: 'true',
-      limit: '1000',
-    })
-    const res = await fetch(`${SLACK_API_BASE}/conversations.list?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${botToken}` },
-    })
-    const json = (await res.json()) as SlackApiListConversationsResponse
-    if (!json.ok) throwSlackError(json.error, 'Slack conversations.list failed')
+    const channels: NonNullable<SlackApiListConversationsResponse['channels']> = []
+    let cursor: string | undefined
+    do {
+      const params = new URLSearchParams({
+        types: 'public_channel,private_channel,mpim,im',
+        exclude_archived: 'true',
+        limit: '1000',
+      })
+      if (cursor) params.set('cursor', cursor)
+      const res = await fetch(`${SLACK_API_BASE}/conversations.list?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${botToken}` },
+      })
+      const json = (await res.json()) as SlackApiListConversationsResponse
+      if (!json.ok) throwSlackError(json.error, 'Slack conversations.list failed')
+      channels.push(...(json.channels ?? []))
+      cursor = json.response_metadata?.next_cursor || undefined
+    } while (cursor)
 
-    const channels = json.channels ?? []
     return channels
       .filter((channel) => !!channel.id && !!channel.name)
       .map((channel) => ({
         id: channel.id,
         name: channel.name,
+        is_member: channel.is_member,
+        is_private: channel.is_private,
+        is_im: channel.is_im,
       }))
   }
 

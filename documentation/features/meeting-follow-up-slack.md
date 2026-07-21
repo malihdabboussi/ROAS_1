@@ -19,6 +19,9 @@ First production loop for the always-aware Slack agent: Fathom call lands in Mee
 | Owner names as linked bullets                          | Fixed (headers + nested tasks)             |
 | Friendly human recap voice                             | Implemented through the post-call skill    |
 | Thread-reply revise loop                               | Implemented for pending post-call drafts   |
+| Pixel channel directory + channel/thread timelines     | Implemented; app deployment required       |
+| Person Brains in global Brain navigation               | Implemented; app deployment required       |
+| Scheduled proactive Team loops                         | Implemented; template migration required   |
 | Auto-post to a channel                                 | Not yet                                    |
 | Page Grader dispatch on confirm                        | Explicitly removed / deferred              |
 
@@ -103,9 +106,11 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - Fathom/Meetings trigger, agent-written recap, owned follow-ups, Shadow ledger, ✅ approval, exact-draft delivery.
 - Team → People exposes both the person directory and Conversations; a person opens their combined real Slack + Shadow timeline.
 
-### Phase 2 — Conversation command center
+### Phase 2 — Conversation command center (implemented foundation)
 
-- Add channel and group-DM conversations beside person DMs, with thread grouping, participants, source channel, timestamps, delivery state, and “why Pixel drafted this” evidence.
+- Team → People now has People, Conversations, and Channels. Channels lists every non-DM Slack channel Pixel belongs to after following Slack cursor pagination, and opens real messages plus thread replies.
+- Person conversations and channel timelines show timestamps and distinguish Pixel messages from human messages.
+- Group-DM conversations, richer thread grouping, participants, and inline “why Pixel drafted this” evidence remain follow-up work.
 - Join action items and unresolved commitments to the conversation that created them.
 - Add review filters: proposed, approved, sent, failed, needs response, and waiting on human.
 
@@ -115,21 +120,26 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - Extend the same revision contract beyond post-call recaps to other proactive proposals.
 - Add richer approve/edit/dismiss controls in ROAS while preserving the rule that a changed draft cannot inherit an older approval.
 
-### Phase 4 — Proactive team support in Shadow
+### Phase 4 — Proactive team support in Shadow (implemented MVP)
 
-- Observe unanswered questions, stalled commitments, new teammates, repeated manual work, and client risk signals.
-- Create proposals only; no autonomous outbound sends.
-- Surface workflow-discovery suggestions with evidence, expected impact, and a per-loop activation control.
+- Four scheduled Team-loop templates observe Person Brain facts, repeated manual work, unanswered questions, and stalled commitments/client risk.
+- Every detected signal includes its source channel, Slack timestamp, explanation, confidence, and a deduplication fingerprint.
+- Shadow creates reviewable proposals only. Runs are visible in the existing Flow run history and each installed loop can be disabled as its kill switch.
 
-### Phase 5 — Approved active loops
+### Phase 5 — Approved active loops (first bounded behavior implemented)
 
-- Let admins activate one proven loop at a time for selected internal people, external people, channels, or campaigns.
-- Add frequency limits, quiet hours, escalation owners, stop conditions, audit history, and a kill switch.
+- Admins can activate one installed loop at a time and scope it to Slack channel IDs and/or managed-person record IDs. Empty scope means every visible Pixel channel and every person except Ignored.
+- Controls include Shadow/Active, schedule, lookback window, daily limit, quiet hours, instructions, Flow run history, and enabled/disabled kill switch.
+- Active Person Brain compounding writes durable, source-attributed memories. Active unanswered-question delivery is permitted only when both the loop and the target person are Active; the audit row advances through approved → sending → sent/failed.
+- Workflow-discovery and client-risk findings remain proposals even when the loop is Active.
+- Friendly channel/person pickers, escalation owners, and campaign-scoped routing remain follow-up work.
 - Keep new or materially changed behavior in Shadow until separately approved.
 
-### Phase 6 — Compounding intelligence
+### Phase 6 — Compounding intelligence (Person Brain foundation implemented)
 
-- Route durable learning to the correct User, Person, Customer, Company, Agent, or Campaign Brain with source attribution and permissions.
+- Managed Person Brains now appear below User Brains in the global Brain menu, with separate portal-account and external-person icons.
+- Active Person Brain loops route explicit Slack facts into the person’s managed Brain and deduplicate by both source message and normalized content.
+- Broader routing to Customer, Company, Agent, and Campaign Brains still requires per-loop ownership and permission rules.
 - Show what Pixel learned, why it was saved, which conversations/people/campaigns it connects, and allow correction or deletion.
 - Measure accepted proposals, edits before approval, response rate, commitments completed, time saved, and false-positive rate so each loop improves from real team feedback.
 
@@ -148,6 +158,11 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 | `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx`                             | People / Conversations entry points                                  |
 | `apps/api/src/modules/spaces/services/__tests__/meeting-follow-up-slack-confirm.service.test.ts` | Unit tests                                                           |
 | `apps/api/src/modules/spaces/services/space-automation.service.ts`                               | Executes `request_slack_follow_up_confirm`                           |
+| `apps/api/src/modules/spaces/services/slack-team-loop.service.ts`                                | Observes Slack, analyzes signals, writes proposals/memories/sends    |
+| `apps/api/src/modules/slack/integrations/slack-api-integration-core.base.ts`                     | Paginates the complete Slack channel directory                       |
+| `apps/api/src/modules/slack/services/slack-people.service.ts`                                    | Pixel channel and threaded activity APIs                             |
+| `apps/web/src/features/team-2/components/people/SlackChannelsView.tsx`                           | Slack channel directory and conversation timeline                    |
+| `apps/web/src/components/layout/sidebar/SidebarBrainFlyout.tsx`                                  | Global Person Brain navigation                                       |
 | `apps/api/src/modules/spaces/dto/space-automation-action.dto.ts`                                 | Action schema                                                        |
 | `apps/api/src/modules/spaces/dto/space-automation-draft-action.dto.ts`                           | Draft/loose schema                                                   |
 | `apps/api/src/modules/spaces/spaces.module.ts`                                                   | Registers the confirm service                                        |
@@ -171,6 +186,8 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 | `apps/web/src/lib/flows/flow-builder-canvas.utils.ts`                                    | Flow canvas                                |
 | `apps/web/src/lib/flows/automation-flow-step-summary.utils.ts`                           | Step summary                               |
 | `apps/web/src/lib/flows/automation-publishable.ts`                                       | Publishability                             |
+| `apps/api/src/modules/spaces/data/space-automation-template-catalog-team.ts`             | Four Team-loop templates                   |
+| `supabase/migrations/20260721001000_slack_team_loop_templates.sql`                       | Production template seed                   |
 
 ### Docs / logs
 
@@ -212,6 +229,9 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-20:** One database-backed `post-call-delivery` skill owns meeting recap voice; no new specialist agent.
 - **2026-07-20:** Approval applies to an immutable stored draft. The post-approval send does not ask the model to write again.
 - **2026-07-20:** The first Slack message is an internal review brief. Thread replies revise the separate client-facing draft; ✅ on the original review message delivers the latest stored version.
+- **2026-07-20:** Team support is consolidated in the existing Loops product through a Team filter; it is not a second automation system.
+- **2026-07-20:** Off is the disabled Flow state. Shadow runs and proposes. Active may compound a Person Brain or answer an unanswered question only within admin scope, limits, quiet hours, and the person-level Active gate.
+- **2026-07-20:** Slack source evidence is mandatory for every detected signal. Workflow-discovery and client-risk signals remain reviewable proposals in Active mode.
 
 ## Related
 

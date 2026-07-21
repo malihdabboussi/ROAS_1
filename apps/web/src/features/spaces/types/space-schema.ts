@@ -1102,6 +1102,23 @@ export type AutomationAction =
       continuation?: AutomationContinuation
     }
   | {
+      type: 'observe_slack_team'
+      loop_kind:
+        | 'brain_compounding'
+        | 'workflow_discovery'
+        | 'unanswered_questions'
+        | 'client_risk'
+        | 'all'
+      delivery_mode: 'shadow' | 'active'
+      channel_ids?: string[]
+      person_ids?: string[]
+      lookback_minutes?: number
+      daily_limit?: number
+      quiet_hours?: { start: string; end: string; timezone: string }
+      instructions?: string
+      continuation?: AutomationContinuation
+    }
+  | {
       type: 'send_channel_message'
       channel_id?: string
       content_template?: string

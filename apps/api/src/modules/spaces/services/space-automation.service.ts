@@ -27,6 +27,7 @@ import { SpacesRepository } from '../repositories/spaces.repository'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
 import { MeetingFollowUpSlackConfirmService } from './meeting-follow-up-slack-confirm.service'
 import { MeetingsPrecallPrepService } from './meetings-precall-prep.service'
+import { SlackTeamLoopService, type SlackTeamLoopKind } from './slack-team-loop.service'
 import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
 import { SpaceAutomationServiceBase19 } from './space-automation-service-19.base'
 import { renderTemplate, type TemplateContext } from './space-automation-template'
@@ -66,6 +67,7 @@ const SCHEDULE_ALLOWED_ACTION_TYPES = new Set<string>([
   'agent_suggest_tasks',
   'send_email',
   'send_slack_message',
+  'observe_slack_team',
   'send_channel_message',
   'create_artifact',
   'publish_artifact',
@@ -300,6 +302,7 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
     @Optional() automationRunsRepo?: SpaceAutomationRunsRepository,
     @Optional() private readonly meetingsPrecallPrep?: MeetingsPrecallPrepService,
     @Optional() private readonly meetingFollowUpSlackConfirm?: MeetingFollowUpSlackConfirmService,
+    @Optional() private readonly slackTeamLoop?: SlackTeamLoopService,
   ) {
     super(
       repo,
@@ -339,7 +342,43 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
     if (action.type === 'request_slack_follow_up_confirm') {
       return this.execRequestSlackFollowUpConfirm(action, ctx, item, templateCtx)
     }
+    if (action.type === 'observe_slack_team') {
+      return this.execObserveSlackTeam(action, ctx)
+    }
     return super.executeAction(action, ctx, item, templateCtx, stepIndex)
+  }
+
+  protected async execObserveSlackTeam(
+    action: Record<string, unknown>,
+    ctx: {
+      supabase: SupabaseClient
+      userId: string
+      orgId: string | null
+    },
+  ): Promise<Record<string, unknown>> {
+    if (!ctx.orgId) throw new Error('Slack team observation requires an organization')
+    if (!this.slackTeamLoop) throw new Error('Slack team observation service is unavailable')
+    const quietHours =
+      action.quiet_hours && typeof action.quiet_hours === 'object'
+        ? (action.quiet_hours as { start: string; end: string; timezone: string })
+        : undefined
+    return this.slackTeamLoop.run({
+      supabase: ctx.supabase,
+      userId: ctx.userId,
+      orgId: ctx.orgId,
+      loopKind: String(action.loop_kind ?? 'all') as SlackTeamLoopKind,
+      deliveryMode: action.delivery_mode === 'active' ? 'active' : 'shadow',
+      channelIds: Array.isArray(action.channel_ids)
+        ? action.channel_ids.filter((value): value is string => typeof value === 'string')
+        : [],
+      personIds: Array.isArray(action.person_ids)
+        ? action.person_ids.filter((value): value is string => typeof value === 'string')
+        : [],
+      lookbackMinutes: Number(action.lookback_minutes ?? 60),
+      dailyLimit: Number(action.daily_limit ?? 10),
+      quietHours,
+      instructions: typeof action.instructions === 'string' ? action.instructions : undefined,
+    })
   }
 
   protected async execRequestSlackFollowUpConfirm(

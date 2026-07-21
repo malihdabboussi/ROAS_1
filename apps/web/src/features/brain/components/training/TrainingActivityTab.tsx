@@ -29,6 +29,7 @@ function listAvatarFallback(scopeType: BrainScopeNavOption['scopeType'], label: 
   const iconCls = 'h-3.5 w-3.5 text-muted-foreground'
   switch (scopeType) {
     case 'user':
+    case 'person':
     case 'shared':
       return (
         <span className="typo-caption text-muted-foreground font-semibold">
@@ -131,7 +132,8 @@ export function TrainingActivityTab({ open }: { open: boolean }) {
   const sortedJobs = useMemo(
     () =>
       [...jobs].sort(
-        (a, b) => new Date(jobLastActivityIso(b)).getTime() - new Date(jobLastActivityIso(a)).getTime(),
+        (a, b) =>
+          new Date(jobLastActivityIso(b)).getTime() - new Date(jobLastActivityIso(a)).getTime(),
       ),
     [jobs],
   )
@@ -154,7 +156,9 @@ export function TrainingActivityTab({ open }: { open: boolean }) {
               <span className="body-4">Loading activity…</span>
             </div>
           ) : sortedJobs.length === 0 ? (
-            <p className="body-4 text-muted-foreground p-spacing-4 text-center">No training activity yet.</p>
+            <p className="body-4 text-muted-foreground p-spacing-4 text-center">
+              No training activity yet.
+            </p>
           ) : (
             sortedJobs.map((job) => {
               const brain = resolveBrainForJob(job, brainById, userScope)

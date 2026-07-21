@@ -39,6 +39,8 @@ function scopeTypeLabel(scopeType: BrainScopeNavOption['scopeType']): string {
   switch (scopeType) {
     case 'user':
       return 'User'
+    case 'person':
+      return 'Person'
     case 'shared':
       return 'Shared'
     case 'company':
@@ -57,6 +59,7 @@ function listAvatarFallback(scopeType: BrainScopeNavOption['scopeType'], label: 
   const iconCls = 'h-3.5 w-3.5 text-muted-foreground'
   switch (scopeType) {
     case 'user':
+    case 'person':
     case 'shared':
       return (
         <span className="typo-caption text-muted-foreground font-semibold">
@@ -86,7 +89,7 @@ function BrainListSectionHeader({ section }: { section: BrainListSection }) {
       >
         {section.title}
       </span>
-      <span className="text-xs text-muted-foreground">{count}</span>
+      <span className="text-muted-foreground text-xs">{count}</span>
     </div>
   )
 }

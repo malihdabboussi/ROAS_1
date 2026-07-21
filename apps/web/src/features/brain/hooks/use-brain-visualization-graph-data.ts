@@ -130,6 +130,7 @@ export function useBrainVisualizationGraphData({
       loadHealth(selectedAgentId, graphBrainId)
       if (
         selectedScope?.scopeType === 'user' ||
+        selectedScope?.scopeType === 'person' ||
         selectedScope?.scopeType === 'shared' ||
         selectedScope?.scopeType === 'agent' ||
         isCompanyScope ||

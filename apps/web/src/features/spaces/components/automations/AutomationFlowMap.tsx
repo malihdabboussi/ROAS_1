@@ -16,11 +16,11 @@ import {
   UserPlus,
   Zap,
 } from 'lucide-react'
-import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import {
   getConnectedAppFlowProviderLabel,
   getConnectedAppFlowTriggerBySlug,
 } from '@/lib/flows/connected-app-flow-triggers'
+import type { TeamRosterEntry } from '@/lib/team'
 import { cn } from '@/lib/utils/cn'
 import type { AutomationAction, AutomationTrigger, FieldDef } from '../../types/space-schema'
 
@@ -370,6 +370,12 @@ function actionSummary(
         icon: MessageSquare,
         title: `Step ${index + 1}: Slack`,
         detail: action.channel_id || '…',
+      }
+    case 'observe_slack_team':
+      return {
+        icon: MessageSquare,
+        title: `Step ${index + 1}: Slack team loop`,
+        detail: `${action.loop_kind?.replace(/_/g, ' ') ?? 'all signals'} · ${action.delivery_mode ?? 'shadow'}`,
       }
     case 'send_channel_message':
       return {

@@ -42,10 +42,12 @@ export const SLACK_PEOPLE_MESSAGES = {
   SHADOW_SAFETY:
     'Creating or reviewing a proposal never sends it. Only an approved proposal for an Active person can be sent with Send now.',
   CURRENT_CAPABILITY:
-    'This first release lets you test and control the review flow. Automatic proposal discovery is the next layer — nothing is being generated or sent in the background yet.',
+    'Team loops run on a schedule from Loops. Shadow creates reviewable proposals; Active performs only the behavior enabled by an administrator.',
   GHOST_PROFILE_HELP:
     'Internal, External, and Ignored describe your relationship. The portal icon separately shows whether this Slack identity is linked to an actual Vibey user.',
   CHANNELS_NONE: 'No shared Slack channels are visible to this bot.',
+  CHANNELS_LOAD_ERROR: "I couldn't load Pixel's Slack channels. Refresh and try again.",
+  CHANNEL_ACTIVITY_ERROR: "I couldn't load that Slack channel conversation. Try again.",
   HOW_IT_WORKS: [
     {
       title: '1. Pick a person',

@@ -242,9 +242,14 @@ export default function BrainVisualization() {
     topRightScopeReady,
   ])
 
-  const dockShowsCognitionStats = ['user', 'shared', 'agent', 'customer', 'company'].includes(
-    selectedScope?.scopeType ?? '',
-  )
+  const dockShowsCognitionStats = [
+    'user',
+    'person',
+    'shared',
+    'agent',
+    'customer',
+    'company',
+  ].includes(selectedScope?.scopeType ?? '')
 
   return (
     <div className="bg-background border-border relative h-full min-h-0 w-full min-w-0 flex-1 overflow-hidden rounded-2xl border p-3">
@@ -298,7 +303,8 @@ export default function BrainVisualization() {
           domainCounts,
           sourceCounts,
           connections: filteredConnections,
-          scopeType: selectedScope?.scopeType ?? 'user',
+          scopeType:
+            selectedScope?.scopeType === 'person' ? 'user' : (selectedScope?.scopeType ?? 'user'),
           isAgentBrain: !!selectedScope?.agentId,
           brainId: selectedScope?.brainId,
           showCognitionCounts: !isKnowledgeScope && dockShowsCognitionStats,

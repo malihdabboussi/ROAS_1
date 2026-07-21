@@ -13,6 +13,7 @@ export function buildBrainScopeBreadcrumbs(
 
   switch (scope.scopeType) {
     case 'user':
+    case 'person':
     case 'shared':
       return [root, { label: scope.label, isCurrent: true }]
     case 'customer':

@@ -1,7 +1,11 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useBrainScopeMenuActions } from './use-brain-scope-menu-actions'
-import { cachedBrainScopeNav, useBrainScopeNavOptions } from './use-brain-scope-nav-options'
+import {
+  buildManagedPersonBrainScopeOptions,
+  cachedBrainScopeNav,
+  useBrainScopeNavOptions,
+} from './use-brain-scope-nav-options'
 import { useTrainableBrains } from './use-trainable-brains'
 
 const mocks = vi.hoisted(() => {
@@ -243,12 +247,48 @@ describe('Brain scope shared boundaries', () => {
       expect(screen.getByTestId('brain-scope-hook-harness').dataset.canManageAgent).toBe('true')
     })
 
-    expect(screen.getByTestId('brain-scope-hook-harness').dataset.trainableLabels).toContain(
-      'Maya',
-    )
+    expect(screen.getByTestId('brain-scope-hook-harness').dataset.trainableLabels).toContain('Maya')
     expect(mocks.getAgentBrainStatusBatch).toHaveBeenCalledWith(['maya'])
 
     screen.getByText('Open agent chat').click()
     expect(mocks.routerPush).toHaveBeenCalledWith('/team?agent=maya&tab=chat')
+  })
+})
+
+describe('managed Person Brain navigation options', () => {
+  it('places Person Brains in User brains and marks portal versus external identities', () => {
+    const options = buildManagedPersonBrainScopeOptions(
+      [
+        {
+          display_name: 'Bryce',
+          avatar_url: null,
+          vibey_user_id: null,
+          person_brain_id: 'brain-bryce',
+        },
+        {
+          display_name: 'Dylan',
+          avatar_url: 'https://example.com/dylan.png',
+          vibey_user_id: 'user-dylan',
+          person_brain_id: 'brain-dylan',
+        },
+      ],
+      [
+        { id: 'brain-bryce', name: 'Bryce Person Brain', image_url: null },
+        { id: 'brain-dylan', name: 'Dylan Person Brain', image_url: null },
+      ],
+    )
+
+    expect(options).toEqual([
+      expect.objectContaining({
+        id: 'person:brain-bryce',
+        scopeType: 'person',
+        personIdentityKind: 'external',
+      }),
+      expect.objectContaining({
+        id: 'person:brain-dylan',
+        scopeType: 'person',
+        personIdentityKind: 'portal',
+      }),
+    ])
   })
 })

@@ -53,6 +53,7 @@ import { SpacesSharedListController } from './controllers/spaces-shared-list.con
 import { SpacesStateController } from './controllers/spaces-state.controller'
 import { SpacesController } from './controllers/spaces.controller'
 import { AdsResearchSearchRepository } from './repositories/ads-research-search.repository'
+import { SlackTeamLoopRepository } from './repositories/slack-team-loop.repository'
 import { SocialResearchFavoritesRepository } from './repositories/social-research-favorites.repository'
 import { SocialResearchTopicSearchRepository } from './repositories/social-research-topic-search.repository'
 import { SpaceAutomationActionsRepository } from './repositories/space-automation-actions.repository'
@@ -82,6 +83,7 @@ import { AdsResearchSearchService } from './services/ads-research-search.service
 import { MeetingFollowUpSlackConfirmService } from './services/meeting-follow-up-slack-confirm.service'
 import { MeetingsPrecallPrepService } from './services/meetings-precall-prep.service'
 import { OrgAutomationFlowsService } from './services/org-automation-flows.service'
+import { SlackTeamLoopService } from './services/slack-team-loop.service'
 import { SocialResearchAccountSyncService } from './services/social-research-account-sync.service'
 import { SocialResearchFavoritesService } from './services/social-research-favorites.service'
 import { SocialResearchOrchestrationService } from './services/social-research-orchestration.service'
@@ -172,6 +174,7 @@ import { SpacesService } from './services/spaces.service'
     SpacesService,
     SpacesRepository,
     SpaceItemsRepository,
+    SlackTeamLoopRepository,
     SpaceItemActivityRepository,
     SpaceViewOverridesRepository,
     SpaceShareManagementRepository,
@@ -210,6 +213,7 @@ import { SpacesService } from './services/spaces.service'
     AdsResearchSearchService,
     AdsResearchBreakdownService,
     SpaceAutomationService,
+    SlackTeamLoopService,
     MeetingsPrecallPrepService,
     MeetingFollowUpSlackConfirmService,
     SpaceAutomationInternalService,

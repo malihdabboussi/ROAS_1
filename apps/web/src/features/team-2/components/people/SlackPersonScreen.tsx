@@ -1,6 +1,9 @@
 'use client'
 
+import { useState } from 'react'
+import { RxDoubleArrowLeft } from 'react-icons/rx'
 import { ArrowLeft } from 'lucide-react'
+import { cn } from '@/lib/utils/cn'
 import type {
   SlackDeliveryMode,
   SlackDiscoveredPerson,
@@ -45,6 +48,8 @@ export function SlackPersonScreen({
   onMapIdentity,
   onCreateBrain,
 }: SlackPersonScreenProps) {
+  const [infoPanelCollapsed, setInfoPanelCollapsed] = useState(false)
+
   return (
     <div className="gap-spacing-3 flex h-full min-h-0 flex-1 flex-col">
       <button
@@ -64,18 +69,38 @@ export function SlackPersonScreen({
           onReview={onReview}
           onSend={onSend}
         />
-        <div className="hidden min-h-0 w-96 shrink-0 md:block">
-          <SlackPersonInfoPanel
-            person={person}
-            portalUsers={portalUsers}
-            messageCount={activity?.messages.length ?? 0}
-            actions={actions}
-            onUpdateDeliveryMode={onUpdateDeliveryMode}
-            onUpdateRelationshipKind={onUpdateRelationshipKind}
-            onConfirmIdentity={onConfirmIdentity}
-            onMapIdentity={onMapIdentity}
-            onCreateBrain={onCreateBrain}
-          />
+        <div
+          className={cn(
+            'hidden min-h-0 shrink-0 md:block',
+            infoPanelCollapsed ? 'w-spacing-14' : 'w-96',
+          )}
+        >
+          {infoPanelCollapsed ? (
+            <aside className="card-glass rounded-spacing-4 p-spacing-3 flex h-full flex-col items-center border-0">
+              <button
+                type="button"
+                onClick={() => setInfoPanelCollapsed(false)}
+                className="btn-icon-glass"
+                aria-label="Expand person info"
+                title="Expand person info"
+              >
+                <RxDoubleArrowLeft className="icon-sm" aria-hidden />
+              </button>
+            </aside>
+          ) : (
+            <SlackPersonInfoPanel
+              person={person}
+              portalUsers={portalUsers}
+              messageCount={activity?.messages.length ?? 0}
+              actions={actions}
+              onUpdateDeliveryMode={onUpdateDeliveryMode}
+              onUpdateRelationshipKind={onUpdateRelationshipKind}
+              onConfirmIdentity={onConfirmIdentity}
+              onMapIdentity={onMapIdentity}
+              onCreateBrain={onCreateBrain}
+              onRequestCollapse={() => setInfoPanelCollapsed(true)}
+            />
+          )}
         </div>
       </div>
     </div>

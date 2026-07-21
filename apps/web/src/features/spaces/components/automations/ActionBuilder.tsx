@@ -7,11 +7,11 @@ import {
   type AutomationSolidOption,
 } from '@/components/ui/forms/AutomationSolidSelect'
 import { Tooltip } from '@/components/ui/tooltip'
-import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import {
   buildFlowBuilderActionStepOptions,
   buildFlowBuilderPriorActionStepOptions,
 } from '@/lib/flows/flow-builder-step-index.utils'
+import type { TeamRosterEntry } from '@/lib/team'
 import {
   searchAutomationArtifacts,
   searchAutomationChannels,
@@ -46,6 +46,7 @@ import { AutomationContactFieldsEditor } from './AutomationContactFieldsEditor'
 import { AutomationLazySelect } from './AutomationLazySelect'
 import { AutomationRosterSelect } from './AutomationRosterSelect'
 import { AutomationTaskFieldsEditor } from './AutomationTaskFieldsEditor'
+import { ObserveSlackTeamActionFields } from './ObserveSlackTeamActionFields'
 import { PromptTemplateEditor } from './PromptTemplateEditor'
 
 interface ActionBuilderProps {
@@ -1511,6 +1512,13 @@ export function ActionBuilder({
                     />
                   </AutomationFieldGroup>
                 </div>
+              )}
+
+              {action.type === 'observe_slack_team' && (
+                <ObserveSlackTeamActionFields
+                  action={action}
+                  onChange={(patch) => updateAction(idx, patch)}
+                />
               )}
 
               {action.type === 'send_channel_message' && (

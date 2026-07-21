@@ -38,34 +38,6 @@ export function SlackPersonBrainControls({
 
   return (
     <div className="gap-spacing-4 flex flex-col">
-      <section className="bg-secondary p-spacing-4 rounded-spacing-3">
-        <div className="gap-spacing-2 flex items-center">
-          <Brain className="icon-sm text-primary" />
-          <h3 className="body-2 text-foreground font-semibold">Person Brain</h3>
-        </div>
-        {person.brain_id ? (
-          <>
-            <p className="body-3 text-foreground mt-spacing-3">
-              {person.brain_name || 'Person Brain'}
-            </p>
-            <p className="body-4 text-muted-foreground mt-spacing-1">
-              {person.brain_kind === 'managed_person'
-                ? 'Organization-managed User Brain for this person. Customer and campaign context can link here without redefining who they are.'
-                : 'Connected to this portal teammate’s canonical User Brain.'}
-            </p>
-            <span className="badge-glass badge-glass-green body-4 mt-spacing-3 inline-flex">
-              Brain on
-            </span>
-          </>
-        ) : (
-          <p className="body-4 text-muted-foreground mt-spacing-3">
-            {person.vibey_user_id
-              ? 'This portal teammate has no accessible User Brain yet.'
-              : 'Map this person to a portal teammate or create a new Person Brain for their Slack identity.'}
-          </p>
-        )}
-      </section>
-
       <section className="surface-card border-border p-spacing-4 rounded-spacing-3 border">
         <div className="gap-spacing-2 flex items-center">
           {person.vibey_user_id ? (
@@ -119,18 +91,46 @@ export function SlackPersonBrainControls({
                 Confirm suggested match
               </button>
             ) : null}
-            <div className="border-border mt-spacing-4 border-t" />
-            <p className="body-4 text-muted-foreground mt-spacing-3">
-              Not a portal teammate? Create a Person Brain for this Slack identity instead.
+          </>
+        )}
+      </section>
+
+      <section className="bg-secondary p-spacing-4 rounded-spacing-3">
+        <div className="gap-spacing-2 flex items-center">
+          <Brain className="icon-sm text-primary" />
+          <h3 className="body-2 text-foreground font-semibold">Person Brain</h3>
+        </div>
+        {person.brain_id ? (
+          <>
+            <p className="body-3 text-foreground mt-spacing-3">
+              {person.brain_name || 'Person Brain'}
             </p>
-            <button
-              type="button"
-              disabled={working !== null}
-              onClick={() => void run('brain', onCreateBrain)}
-              className="button-compact button-glass-neutral mt-spacing-3 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Brain className="icon-xs" /> Create new Person Brain
-            </button>
+            <p className="body-4 text-muted-foreground mt-spacing-1">
+              {person.brain_kind === 'managed_person'
+                ? 'Organization-managed User Brain for this person. Customer and campaign context can link here without redefining who they are.'
+                : 'Connected to this portal teammate’s canonical User Brain.'}
+            </p>
+            <span className="badge-glass badge-glass-green body-4 mt-spacing-3 inline-flex">
+              Brain on
+            </span>
+          </>
+        ) : (
+          <>
+            <p className="body-4 text-muted-foreground mt-spacing-3">
+              {person.vibey_user_id
+                ? 'This portal teammate has no accessible User Brain yet.'
+                : 'Create a Person Brain for this Slack identity without mapping them to a portal account.'}
+            </p>
+            {!person.vibey_user_id ? (
+              <button
+                type="button"
+                disabled={working !== null}
+                onClick={() => void run('brain', onCreateBrain)}
+                className="button-compact button-glass-neutral mt-spacing-3 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Brain className="icon-xs" /> Create new Person Brain
+              </button>
+            ) : null}
           </>
         )}
       </section>

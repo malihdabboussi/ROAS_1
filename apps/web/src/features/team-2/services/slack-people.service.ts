@@ -54,6 +54,26 @@ export interface SlackPersonActivity {
   actions: SlackShadowAction[]
 }
 
+export interface SlackChannelSummary {
+  id: string
+  name: string
+  is_private: boolean
+}
+
+export interface SlackChannelActivityMessage {
+  ts: string
+  text: string
+  sender_name: string
+  direction: 'inbound' | 'outbound'
+  thread_ts: string | null
+  is_thread_reply: boolean
+}
+
+export interface SlackChannelActivity {
+  channel: { id: string; name: string }
+  messages: SlackChannelActivityMessage[]
+}
+
 export interface SlackShadowAction {
   id: string
   agent_key: string
@@ -76,6 +96,18 @@ export function fetchSlackPeople() {
     people: SlackDiscoveredPerson[]
     portal_users?: SlackPortalUser[]
   }>('/api/integrations/slack/people')
+}
+
+export function fetchSlackChannels() {
+  return backendGet<{ connected: boolean; channels: SlackChannelSummary[] }>(
+    '/api/integrations/slack/people/channels',
+  )
+}
+
+export function fetchSlackChannelActivity(channelId: string) {
+  return backendGet<SlackChannelActivity>(
+    `/api/integrations/slack/people/channels/${encodeURIComponent(channelId)}/activity`,
+  )
 }
 
 export function patchSlackPersonIdentity(id: string, vibeyUserId: string) {

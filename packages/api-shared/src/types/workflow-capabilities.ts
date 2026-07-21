@@ -254,7 +254,11 @@ function resolveWorkflowUiControl(field: string): WorkflowCapabilityUiControl {
 function resolveWorkflowSideEffect(capability: FlowCapability): WorkflowCapabilitySideEffect {
   if (capability.kind === 'trigger') return 'event_source'
 
-  if (['send_email', 'send_slack_message', 'send_channel_message'].includes(capability.type)) {
+  if (
+    ['send_email', 'send_slack_message', 'send_channel_message', 'observe_slack_team'].includes(
+      capability.type,
+    )
+  ) {
     return 'external_communication'
   }
 

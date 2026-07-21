@@ -15,6 +15,7 @@ import type {
   FlowsGroupSort,
   FlowsListGroup,
   FlowsSort,
+  FlowsSurfaceFilter,
   FlowsViewMode,
 } from '../types/flows-page.types'
 import { FlowEmptyState, FlowManageFlowsMockup } from './FlowEmptyMockups'
@@ -36,6 +37,8 @@ interface FlowsManagePanelProps {
   triggerFilter: string
   onTriggerFilterChange: (next: string) => void
   triggerFilterOptions: Array<{ value: string; label: string }>
+  surfaceFilter: FlowsSurfaceFilter
+  onSurfaceFilterChange: (next: FlowsSurfaceFilter) => void
   incompleteOnly: boolean
   onIncompleteOnlyChange: (next: boolean) => void
   sort: FlowsSort
@@ -80,6 +83,8 @@ export function FlowsManagePanel({
   triggerFilter,
   onTriggerFilterChange,
   triggerFilterOptions,
+  surfaceFilter,
+  onSurfaceFilterChange,
   incompleteOnly,
   onIncompleteOnlyChange,
   sort,
@@ -131,6 +136,8 @@ export function FlowsManagePanel({
           triggerFilter={triggerFilter}
           onTriggerFilterChange={onTriggerFilterChange}
           triggerFilterOptions={triggerFilterOptions}
+          surfaceFilter={surfaceFilter}
+          onSurfaceFilterChange={onSurfaceFilterChange}
           incompleteOnly={incompleteOnly}
           onIncompleteOnlyChange={onIncompleteOnlyChange}
           sort={sort}

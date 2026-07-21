@@ -74,6 +74,89 @@ export class SlackPeopleService {
     }
   }
 
+  async listChannels(supabase: SupabaseClient, orgId?: string | null) {
+    if (!orgId) throw new BadRequestException('Slack channels require organization context')
+    const integration = await this.peopleRepository.findOrgSlackIntegration(supabase, orgId)
+    if (!integration) return { connected: false, channels: [] }
+    const channels = await this.slackApi.listConversations(integration.access_token)
+    return {
+      connected: true,
+      channels: channels
+        .filter((channel) => channel.is_member !== false && !channel.is_im)
+        .map((channel) => ({
+          id: channel.id,
+          name: channel.name,
+          is_private: channel.is_private === true,
+        }))
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    }
+  }
+
+  async getChannelActivity(
+    supabase: SupabaseClient,
+    orgId: string | null | undefined,
+    channelId: string,
+  ) {
+    if (!orgId) throw new BadRequestException('Slack channels require organization context')
+    const integration = await this.peopleRepository.findOrgSlackIntegration(supabase, orgId)
+    if (!integration) throw new ConflictException('Slack is not connected for this organization')
+    const channels = await this.slackApi.listConversations(integration.access_token)
+    const channel = channels.find(
+      (candidate) =>
+        candidate.id === channelId && candidate.is_member !== false && !candidate.is_im,
+    )
+    if (!channel) throw new NotFoundException('Slack channel is not visible to Pixel')
+
+    const [history, people] = await Promise.all([
+      this.slackApi.getChannelHistory(integration.access_token, channelId, 100),
+      this.peopleRepository.listPeople(supabase, orgId),
+    ])
+    const replies = await Promise.all(
+      history
+        .filter((message) => Number(message.reply_count ?? 0) > 0 && typeof message.ts === 'string')
+        .map((message) =>
+          this.slackApi
+            .conversationsRepliesAll(integration.access_token, channelId, message.ts as string)
+            .catch(() => []),
+        ),
+    )
+    const namesBySlackId = new Map(
+      people.map((person) => [person.platform_id, person.display_name]),
+    )
+    const messagesByTs = new Map(
+      [...history, ...replies.flat()]
+        .filter((message) => typeof message.ts === 'string')
+        .map((message) => [message.ts as string, message]),
+    )
+    const botUserId =
+      typeof integration.metadata?.bot_user_id === 'string'
+        ? integration.metadata.bot_user_id
+        : null
+    const messages = [...messagesByTs.values()]
+      .filter((message) => typeof message.ts === 'string' && typeof message.text === 'string')
+      .map((message) => ({
+        ts: message.ts as string,
+        text: message.text as string,
+        sender_name:
+          message.bot_id || (botUserId && message.user === botUserId)
+            ? 'Pixel'
+            : (namesBySlackId.get(String(message.user ?? '')) ?? 'Slack member'),
+        direction:
+          message.bot_id || (botUserId && message.user === botUserId)
+            ? ('outbound' as const)
+            : ('inbound' as const),
+        thread_ts:
+          typeof message.thread_ts === 'string'
+            ? message.thread_ts
+            : Number(message.reply_count ?? 0) > 0
+              ? (message.ts as string)
+              : null,
+        is_thread_reply: Boolean(message.thread_ts && message.thread_ts !== message.ts),
+      }))
+      .sort((left, right) => Number(left.ts) - Number(right.ts))
+    return { channel: { id: channel.id, name: channel.name }, messages }
+  }
+
   async mapIdentity(
     supabase: SupabaseClient,
     orgId: string | null | undefined,
@@ -344,6 +427,9 @@ export class SlackPeopleService {
     if (!action) throw new NotFoundException('Shadow proposal not found')
     if (action.status !== 'approved') {
       throw new ConflictException('Approve this proposal before sending it')
+    }
+    if (action.action_kind !== 'message') {
+      throw new ConflictException('This proposal is for review and cannot be sent to Slack')
     }
     if (!action.target || action.target.delivery_mode !== 'active') {
       throw new ConflictException('Set this person to Active before sending')

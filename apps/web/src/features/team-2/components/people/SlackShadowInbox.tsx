@@ -81,7 +81,7 @@ export function SlackShadowInbox({
                     </button>
                   </div>
                 ) : null}
-                {action.status === 'approved' ? (
+                {action.status === 'approved' && action.action_kind === 'message' ? (
                   person?.delivery_mode === 'active' ? (
                     <button
                       type="button"

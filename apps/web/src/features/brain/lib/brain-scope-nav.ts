@@ -3,7 +3,7 @@ import type { BrainLiveScope } from '@/features/brain/hooks/use-brain-live-sessi
 export type BrainScopeToolbarAction = 'train' | 'crystallize' | 'cortex-max' | 'voice' | 'add-info'
 
 export type BrainScopeLiveInput = {
-  scopeType: BrainLiveScope['type'] | 'shared'
+  scopeType: BrainLiveScope['type'] | 'person' | 'shared'
   id: string
   agentId: string | null
   campaignId?: string
@@ -13,8 +13,15 @@ export type BrainScopeLiveInput = {
 
 /** Maps a sidebar / page brain scope to the Atlas live-session payload. */
 export function brainScopeToLiveScope(input: BrainScopeLiveInput): BrainLiveScope | undefined {
-  if (input.scopeType !== 'user' && input.scopeType !== 'shared' && !input.brainId) return undefined
-  const type = input.scopeType === 'shared' ? 'user' : input.scopeType
+  if (
+    input.scopeType !== 'user' &&
+    input.scopeType !== 'person' &&
+    input.scopeType !== 'shared' &&
+    !input.brainId
+  )
+    return undefined
+  const type =
+    input.scopeType === 'shared' || input.scopeType === 'person' ? 'user' : input.scopeType
   return {
     type,
     agentId: input.agentId,

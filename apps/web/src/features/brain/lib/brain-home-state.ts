@@ -40,7 +40,7 @@ export const SCOPE_SECTIONS: Array<{
   color: string
   emptyText?: string
 }> = [
-  { id: 'user', scopeTypes: ['user', 'shared'], title: 'User brains', color: 'blue' },
+  { id: 'user', scopeTypes: ['user', 'person', 'shared'], title: 'User brains', color: 'blue' },
   { id: 'company', scopeTypes: ['company'], title: 'Company brains', color: 'violet' },
   {
     id: 'customer',

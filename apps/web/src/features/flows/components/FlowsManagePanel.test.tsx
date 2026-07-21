@@ -21,6 +21,8 @@ const baseProps = {
   triggerFilter: 'all',
   onTriggerFilterChange: vi.fn(),
   triggerFilterOptions: [],
+  surfaceFilter: 'all' as const,
+  onSurfaceFilterChange: vi.fn(),
   incompleteOnly: false,
   onIncompleteOnlyChange: vi.fn(),
   sort: 'recent' as const,

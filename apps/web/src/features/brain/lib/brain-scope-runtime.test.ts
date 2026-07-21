@@ -86,6 +86,29 @@ describe('brain scope runtime readiness', () => {
     expect(state.healthRealtimeEnabled).toBe(true)
   })
 
+  it('requires and uses the explicit brain id for a managed Person Brain', () => {
+    const person = scope({
+      id: 'person:brain-bryce',
+      label: 'Bryce Person Brain',
+      scopeType: 'person',
+      brainId: 'brain-bryce',
+    })
+
+    const state = resolveBrainScopeRuntimeState({
+      scopeOptions: [person],
+      selectedScopeId: person.id,
+      selectedScope: person,
+      scopeOptionsResolved: true,
+      scopesLoading: false,
+    })
+
+    expect(state.ready).toBe(true)
+    expect(state.requiresBrainId).toBe(true)
+    expect(state.graphBrainId).toBe('brain-bryce')
+    expect(state.queueBrainId).toBe('brain-bryce')
+    expect(state.queueTargetBrain).toBeUndefined()
+  })
+
   it('keeps user scope usable after scope nav resolves even without a browser-resolved brain id', () => {
     const user = scope({ id: 'user', scopeType: 'user', brainId: null })
 

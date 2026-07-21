@@ -21,6 +21,7 @@ export interface SlackOAuthAccessResponse {
 export interface SlackApiListConversationsResponse {
   ok: boolean
   error?: string
+  response_metadata?: { next_cursor?: string }
   channels?: Array<{
     id: string
     name: string
@@ -133,6 +134,9 @@ export interface AgentChannel {
 export interface SlackWorkspaceChannel {
   id: string
   name: string
+  is_member?: boolean
+  is_private?: boolean
+  is_im?: boolean
 }
 
 export interface SlackUserProfile {

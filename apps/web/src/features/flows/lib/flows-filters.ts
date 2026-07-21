@@ -1,6 +1,11 @@
 import { canEnableAutomation } from '@/lib/flows/automation-publishable'
 import type { PublishableAutomationLike } from '@/lib/flows/automation-publishable'
-import type { FlowsDraftFilter, FlowsEnabledFilter, FlowsSort } from '../types/flows-page.types'
+import type {
+  FlowsDraftFilter,
+  FlowsEnabledFilter,
+  FlowsSort,
+  FlowsSurfaceFilter,
+} from '../types/flows-page.types'
 import { describeFlowTrigger } from './describe-flow-trigger'
 
 type FlowAutomationRecord = PublishableAutomationLike & {
@@ -47,6 +52,7 @@ export function filterFlows<T extends FlowAutomationRecord>(
     draftFilter: FlowsDraftFilter
     enabledFilter: FlowsEnabledFilter
     triggerFilter: string
+    surfaceFilter: FlowsSurfaceFilter
     incompleteOnly: boolean
   },
 ): T[] {
@@ -57,6 +63,12 @@ export function filterFlows<T extends FlowAutomationRecord>(
     if (input.enabledFilter === 'on' && !flow.enabled) return false
     if (input.enabledFilter === 'off' && flow.enabled) return false
     if (input.triggerFilter !== 'all' && flow.trigger.type !== input.triggerFilter) return false
+    if (
+      input.surfaceFilter === 'team' &&
+      !flow.actions.some((action) => action.type === 'observe_slack_team')
+    ) {
+      return false
+    }
     if (input.incompleteOnly && canEnableAutomation(flow).ok) return false
     if (q.length > 0) {
       const installationHay = (flow.installations ?? [])

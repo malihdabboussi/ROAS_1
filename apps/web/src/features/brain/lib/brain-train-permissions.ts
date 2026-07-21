@@ -24,6 +24,8 @@ export function canTrainBrainScope(
   switch (option.scopeType) {
     case 'user':
       return canTrainUser
+    case 'person':
+      return ctx.isOrg && ctx.isAdmin
     case 'shared':
       return option.shareLevel === 'train'
     case 'company':
