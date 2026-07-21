@@ -76,7 +76,7 @@ WHERE NOT EXISTS (
   );
 
 INSERT INTO public.agent_teams (org_id, user_id, name, color, icon, is_system, team_kind)
-SELECT DISTINCT NULL, registry.user_id, 'Agency Agents', 'blue', 'bot', true, 'agent'
+SELECT DISTINCT NULL::uuid, registry.user_id, 'Agency Agents', 'blue', 'bot', true, 'agent'
 FROM public.agents_registry registry
 WHERE registry.org_id IS NULL AND registry.user_id IS NOT NULL
   AND NOT EXISTS (
