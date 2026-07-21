@@ -58,7 +58,9 @@ export class PageGraderClientImportService {
         unique_client_id: uniqueClientId || null,
         package_version: stringValue(pkg.envelope?.package_version) || '1',
         last_exported_at: stringValue(pkg.envelope?.exported_at) || null,
-        content_hash: contentHash,
+        // The successful ingest stamps the content hash. Pre-stamping a new campaign
+        // makes the first package look unchanged before any memories are written.
+        content_hash: null,
         last_sync_status: 'pending',
       },
     }

@@ -138,6 +138,14 @@ describe('PageGraderClientImportService', () => {
         org_id: 'org-1',
         name: 'Multi-Family Strategy',
         campaign_type: 'get-more-leads',
+        config: expect.objectContaining({
+          external_sources: {
+            page_grader: expect.objectContaining({
+              content_hash: null,
+              last_sync_status: 'pending',
+            }),
+          },
+        }),
       }),
     )
     expect(spaceQuery.insert).toHaveBeenCalledWith(

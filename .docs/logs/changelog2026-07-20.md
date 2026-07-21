@@ -420,3 +420,13 @@ Why: Shared team recordings (`shared_team_recordings`) often omit transcript in 
 Impact: Team Fathom webhooks can land in All Meetings without waiting on transcript payload. Requires API deploy. Historical missing calls need a separate backfill if Fathom does not re-deliver.
 
 Files: `fathom-webhook.service.ts`, Fathom controller webhook tests, `spaces-automation.md`, `meeting-follow-up-slack.md`.
+
+## [2026-07-20 20:22] - [FIX]
+
+What: Fixed Page Grader client bootstrap so a newly created campaign is not marked with the incoming content hash before its first deterministic Brain ingest. Changed Campaign Knowledge indexing from a serial record loop to bounded batches of six and added regression coverage for both behaviors.
+
+Why: The active-client preload created campaign shells that immediately reported `skipped_unchanged`, and forced imports with hundreds of knowledge records exceeded the production API request window.
+
+Impact: New active clients perform their first Brain ingest correctly, while large packages index fast enough to complete without unbounded embedding concurrency. Existing partially imported clients can be safely force-synced because memory and evidence writes remain content-hash deduplicated.
+
+Files: `page-grader-client-import.service.ts`, `page-grader-brain-package-ingest.service.ts`, focused service tests, `documentation/features/page-grader-campaign-brain-sync.md`.

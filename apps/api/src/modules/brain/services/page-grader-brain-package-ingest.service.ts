@@ -24,6 +24,8 @@ export type PageGraderPackageIngestResult = {
   skippedUnchanged: boolean
 }
 
+const PAGE_GRADER_KNOWLEDGE_INDEX_CONCURRENCY = 6
+
 @Injectable()
 export class PageGraderBrainPackageIngestService {
   private readonly logger = new Logger(PageGraderBrainPackageIngestService.name)
@@ -326,47 +328,64 @@ export class PageGraderBrainPackageIngestService {
     },
   ): Promise<number> {
     let indexed = 0
-    for (const row of input.rows) {
-      const sourceType = resolvePageGraderKnowledgeSourceType({
-        memorySourceType: row.source_type,
-        sourceTitle: row.source_title,
-      })
-      const sourceId = `pg:${input.pageGraderClientId}:${row.content_hash.slice(0, 24)}`
-      try {
-        // Prior dual-write used conversation_document for every row; drop the stale kind.
-        if (sourceType !== 'conversation_document') {
-          await this.spaceRetrievalIndex.deleteSource(supabase, 'conversation_document', sourceId)
-        }
-        const result = await this.spaceRetrievalIndex.indexSource(supabase, {
-          sourceType,
-          sourceId,
-          userId: input.userId,
-          orgId: input.orgId ?? undefined,
-          spaceId: input.spaceId,
-          force: true,
-          row: {
-            id: sourceId,
-            title: row.source_title,
-            content: row.content,
-            space_id: input.spaceId,
-            campaign_id: input.campaignId,
-            org_id: input.orgId,
-            updated_at: new Date().toISOString(),
-            metadata: {
-              page_grader_client_id: input.pageGraderClientId,
-              ingest_kind: 'page_grader_memory',
-              content_hash: row.content_hash,
-              memory_source_type: row.source_type,
-            },
-          },
-        })
-        indexed += result.indexed
-      } catch (error) {
-        this.logger.warn(
-          `Page Grader knowledge index failed for ${sourceId}: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-        )
+    for (
+      let offset = 0;
+      offset < input.rows.length;
+      offset += PAGE_GRADER_KNOWLEDGE_INDEX_CONCURRENCY
+    ) {
+      const batch = input.rows.slice(offset, offset + PAGE_GRADER_KNOWLEDGE_INDEX_CONCURRENCY)
+      const batchCounts = await Promise.all(
+        batch.map(async (row) => {
+          const sourceType = resolvePageGraderKnowledgeSourceType({
+            memorySourceType: row.source_type,
+            sourceTitle: row.source_title,
+          })
+          const sourceId = `pg:${input.pageGraderClientId}:${row.content_hash.slice(0, 24)}`
+          try {
+            // Prior dual-write used conversation_document for every row; drop the stale kind.
+            if (sourceType !== 'conversation_document') {
+              await this.spaceRetrievalIndex.deleteSource(
+                supabase,
+                'conversation_document',
+                sourceId,
+              )
+            }
+            const result = await this.spaceRetrievalIndex.indexSource(supabase, {
+              sourceType,
+              sourceId,
+              userId: input.userId,
+              orgId: input.orgId ?? undefined,
+              spaceId: input.spaceId,
+              force: true,
+              row: {
+                id: sourceId,
+                title: row.source_title,
+                content: row.content,
+                space_id: input.spaceId,
+                campaign_id: input.campaignId,
+                org_id: input.orgId,
+                updated_at: new Date().toISOString(),
+                metadata: {
+                  page_grader_client_id: input.pageGraderClientId,
+                  ingest_kind: 'page_grader_memory',
+                  content_hash: row.content_hash,
+                  memory_source_type: row.source_type,
+                },
+              },
+            })
+            return result.indexed
+          } catch (error) {
+            this.logger.warn(
+              `Page Grader knowledge index failed for ${sourceId}: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            )
+            return 0
+          }
+        }),
+      )
+      for (const count of batchCounts) {
+        indexed += count
       }
     }
     return indexed
