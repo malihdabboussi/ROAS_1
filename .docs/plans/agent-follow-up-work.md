@@ -1,5 +1,30 @@
 ## 2026-07-20 - [PERF] Meta sync indexes ads synchronously with embeddings
 
+## 2026-07-20 — IntegrationCard LOC (resolved in Workspace ship)
+
+- Feature/App: settings / integrations library
+- File: `apps/web/src/features/settings/components/settings-content/IntegrationCard.tsx`
+- Evidence: Split into `IntegrationCardActions`, `IntegrationCardDialogs`, and per-connect dialogs; card now ~346 LOC (under 400). `useIntegrations.ts` remains over limit (pre-existing).
+- Needed work: Still split `useIntegrations.ts` when next touching connect flows.
+- Why not now: Out of scope beyond unblocking the Workspace Library connect UI commit.
+
+## 2026-07-20 - [FEATURE] Google Workspace identity UI polish
+
+Status: Open
+Found while: Shipping org Workspace calendars → phantom people (phases A–D)
+Files:
+
+- `apps/web/src/features/settings/components/settings-content/IntegrationCard.tsx`
+  Evidence: Service account JSON uses multiline `connection_fields` textarea after this ship.
+  Needed work: Optional dedicated Workspace connect dialog / name enrichment in identities panel.
+  Deferred because: Connect path works; further UX polish is out of scope.
+
+- `apps/web/src/features/settings/components/settings-content/GoogleWorkspaceIdentitiesPanel.tsx` (205 LOC)
+  Evidence: Admin confirm UI lists identity rows without Slack/portal name enrichment beside suggestions.
+  Needed work: Join suggested channel_member / portal profile labels in the list for faster review.
+  Deferred because: Confirm/reject by email is enough for v1; enrichment is UX polish.
+
+
 Status: Open
 Found while: Wiring Meta ads into Campaign Knowledge
 Files:

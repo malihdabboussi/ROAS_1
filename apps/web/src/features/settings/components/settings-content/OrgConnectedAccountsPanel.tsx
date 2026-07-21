@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Loader2, ShieldCheck, User, Users } from 'lucide-react'
 import { backendGet } from '@/lib/api/backend-client'
 import { getIntegrationLogoPath } from '@/lib/integrations/integration-logo'
+import { GoogleWorkspaceIdentitiesPanel } from './GoogleWorkspaceIdentitiesPanel'
 
 interface OrgConnectedAccount {
   id: string
@@ -105,91 +106,105 @@ export function OrgConnectedAccountsPanel() {
 
   if (loading) {
     return (
-      <div className="surface-card rounded-spacing-3 p-spacing-6 gap-spacing-2 flex items-center">
-        <Loader2 className="icon-sm text-muted-foreground animate-spin" />
-        <span className="body-3 text-muted-foreground">Loading org connected accounts…</span>
+      <div className="space-y-spacing-4">
+        <div className="surface-card rounded-spacing-3 p-spacing-6 gap-spacing-2 flex items-center">
+          <Loader2 className="icon-sm text-muted-foreground animate-spin" />
+          <span className="body-3 text-muted-foreground">Loading org connected accounts…</span>
+        </div>
+        <GoogleWorkspaceIdentitiesPanel />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="surface-card rounded-spacing-3 p-spacing-6 border-destructive/20 bg-destructive/5">
-        <p className="body-3 text-destructive">{error}</p>
+      <div className="space-y-spacing-4">
+        <div className="surface-card rounded-spacing-3 p-spacing-6 border-destructive/20 bg-destructive/5">
+          <p className="body-3 text-destructive">{error}</p>
+        </div>
+        <GoogleWorkspaceIdentitiesPanel />
       </div>
     )
   }
 
   if (data.length === 0) {
     return (
-      <div className="surface-card rounded-spacing-3 p-spacing-6 gap-spacing-2 flex items-center">
-        <ShieldCheck className="icon-sm text-muted-foreground" />
-        <span className="body-3 text-muted-foreground">
-          No org-scoped or org-shared connections yet. Members who share an integration with the org
-          will appear here.
-        </span>
+      <div className="space-y-spacing-4">
+        <div className="surface-card rounded-spacing-3 p-spacing-6 gap-spacing-2 flex items-center">
+          <ShieldCheck className="icon-sm text-muted-foreground" />
+          <span className="body-3 text-muted-foreground">
+            No org-scoped or org-shared connections yet. Members who share an integration with the
+            org will appear here.
+          </span>
+        </div>
+        <GoogleWorkspaceIdentitiesPanel />
       </div>
     )
   }
 
   return (
-    <div className="surface-card rounded-spacing-3 overflow-hidden">
-      <table className="w-full">
-        <thead>
-          <tr className="bg-muted/40 typo-caption text-muted-foreground text-left">
-            <th className="px-spacing-4 py-spacing-2 font-medium">Person</th>
-            <th className="px-spacing-4 py-spacing-2 font-medium">Integration</th>
-            <th className="px-spacing-4 py-spacing-2 font-medium">Scope</th>
-            <th className="px-spacing-4 py-spacing-2 font-medium">Status</th>
-            <th className="px-spacing-4 py-spacing-2 font-medium">Connected</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row) => {
-            const logo = getIntegrationLogoPath(row.provider)
-            const personLabel =
-              row.person?.name?.trim() || row.person?.email?.trim() || row.user_id.slice(0, 8)
-            return (
-              <tr key={row.id} className="border-border border-t">
-                <td className="px-spacing-4 py-spacing-2 body-3 text-foreground">
-                  <div className="flex flex-col">
-                    <span className="font-medium">{personLabel}</span>
-                    {row.person?.email && row.person.email !== personLabel ? (
-                      <span className="typo-caption text-muted-foreground">{row.person.email}</span>
-                    ) : null}
-                  </div>
-                </td>
-                <td className="px-spacing-4 py-spacing-2 body-3 text-foreground">
-                  <div className="gap-spacing-2 flex items-center">
-                    {logo ? (
-                      <img
-                        src={logo}
-                        alt={row.provider}
-                        className="h-5 w-5 shrink-0 object-contain"
-                      />
-                    ) : null}
-                    <span>{row.integration_id}</span>
-                    {row.connection_label ? (
-                      <span className="typo-caption text-muted-foreground">
-                        ({row.connection_label})
-                      </span>
-                    ) : null}
-                  </div>
-                </td>
-                <td className="px-spacing-4 py-spacing-2">
-                  <ScopePill scope={row.scope_mode} isDefault={row.is_default} />
-                </td>
-                <td className="px-spacing-4 py-spacing-2">
-                  <StatusPill status={row.status} />
-                </td>
-                <td className="px-spacing-4 py-spacing-2 body-3 text-muted-foreground">
-                  {formatDate(row.connected_at ?? row.updated_at)}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+    <div className="space-y-spacing-4">
+      <div className="surface-card rounded-spacing-3 overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-muted/40 typo-caption text-muted-foreground text-left">
+              <th className="px-spacing-4 py-spacing-2 font-medium">Person</th>
+              <th className="px-spacing-4 py-spacing-2 font-medium">Integration</th>
+              <th className="px-spacing-4 py-spacing-2 font-medium">Scope</th>
+              <th className="px-spacing-4 py-spacing-2 font-medium">Status</th>
+              <th className="px-spacing-4 py-spacing-2 font-medium">Connected</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row) => {
+              const logo = getIntegrationLogoPath(row.provider)
+              const personLabel =
+                row.person?.name?.trim() || row.person?.email?.trim() || row.user_id.slice(0, 8)
+              return (
+                <tr key={row.id} className="border-border border-t">
+                  <td className="px-spacing-4 py-spacing-2 body-3 text-foreground">
+                    <div className="flex flex-col">
+                      <span className="font-medium">{personLabel}</span>
+                      {row.person?.email && row.person.email !== personLabel ? (
+                        <span className="typo-caption text-muted-foreground">
+                          {row.person.email}
+                        </span>
+                      ) : null}
+                    </div>
+                  </td>
+                  <td className="px-spacing-4 py-spacing-2 body-3 text-foreground">
+                    <div className="gap-spacing-2 flex items-center">
+                      {logo ? (
+                        <img
+                          src={logo}
+                          alt={row.provider}
+                          className="h-5 w-5 shrink-0 object-contain"
+                        />
+                      ) : null}
+                      <span>{row.integration_id}</span>
+                      {row.connection_label ? (
+                        <span className="typo-caption text-muted-foreground">
+                          ({row.connection_label})
+                        </span>
+                      ) : null}
+                    </div>
+                  </td>
+                  <td className="px-spacing-4 py-spacing-2">
+                    <ScopePill scope={row.scope_mode} isDefault={row.is_default} />
+                  </td>
+                  <td className="px-spacing-4 py-spacing-2">
+                    <StatusPill status={row.status} />
+                  </td>
+                  <td className="px-spacing-4 py-spacing-2 body-3 text-muted-foreground">
+                    {formatDate(row.connected_at ?? row.updated_at)}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      <GoogleWorkspaceIdentitiesPanel />
     </div>
   )
 }

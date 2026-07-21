@@ -3849,6 +3849,80 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       },
     ],
   },
+  get_person_agenda: {
+    required: ['start', 'end'],
+    optional: ['email', 'person_id', 'vibey_user_id', 'person_brain_id', 'timezone'],
+    types: {
+      start: 'iso_date',
+      end: 'iso_date',
+      timezone: 'string',
+      email: 'string',
+      person_id: 'string',
+      vibey_user_id: 'string',
+      person_brain_id: 'string',
+    },
+    useWhen: [
+      'Read one teammate calendar via org Google Workspace impersonation (admin/agent only).',
+      'Resolve by work email, Slack person id, portal user id, or Person Brain id.',
+    ],
+    examples: [
+      {
+        intent: 'get alex agenda tomorrow',
+        data: {
+          email: 'alex@company.com',
+          start: '2026-06-18T00:00:00.000Z',
+          end: '2026-06-19T00:00:00.000Z',
+        },
+      },
+    ],
+  },
+  list_org_upcoming: {
+    required: ['start', 'end'],
+    optional: ['timezone', 'limit_people'],
+    types: {
+      start: 'iso_date',
+      end: 'iso_date',
+      timezone: 'string',
+      limit_people: 'number',
+    },
+    useWhen: ['List upcoming Workspace calendars for mapped org people (admin/agent only).'],
+    examples: [
+      {
+        intent: 'scan team calendars this morning',
+        data: {
+          start: '2026-06-18T00:00:00.000Z',
+          end: '2026-06-18T12:00:00.000Z',
+          limit_people: 20,
+        },
+      },
+    ],
+  },
+  get_person_briefing: {
+    required: ['start', 'end'],
+    optional: ['email', 'person_id', 'vibey_user_id', 'person_brain_id', 'timezone'],
+    types: {
+      start: 'iso_date',
+      end: 'iso_date',
+      timezone: 'string',
+      email: 'string',
+      person_id: 'string',
+      vibey_user_id: 'string',
+      person_brain_id: 'string',
+    },
+    useWhen: [
+      'Compound prep for a person: Workspace calendar + meetings + Slack People + Person Brain + Page Grader clients on the same email key.',
+    ],
+    examples: [
+      {
+        intent: 'brief me on alex before the call',
+        data: {
+          email: 'alex@company.com',
+          start: '2026-06-18T00:00:00.000Z',
+          end: '2026-06-19T00:00:00.000Z',
+        },
+      },
+    ],
+  },
   create_calendar_event: {
     required: ['provider', 'title', 'start', 'end'],
     allowedValues: { provider: ['google_calendar', 'outlook'] },

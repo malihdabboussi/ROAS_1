@@ -30,6 +30,8 @@ export interface Integration {
     label: string
     placeholder?: string
     required?: boolean
+    /** Use a multi-line textarea (e.g. service account JSON). */
+    multiline?: boolean
     helpTitle?: string
     helpText?: string
     helpCommand?: string

@@ -571,6 +571,9 @@ const EXPLICIT_ACTION_CONTRACTS = {
   evaluate_flow_plan: flowContract('evaluate_flow_plan', 'execute'),
 
   list_calendar_events: calendarContract('list_calendar_events', 'read'),
+  get_person_agenda: calendarContract('get_person_agenda', 'read'),
+  list_org_upcoming: calendarContract('list_org_upcoming', 'read'),
+  get_person_briefing: calendarContract('get_person_briefing', 'read'),
   create_calendar_event: calendarContract('create_calendar_event', 'create'),
   update_calendar_event: calendarContract('update_calendar_event', 'update'),
   delete_calendar_event: calendarContract('delete_calendar_event', 'delete'),

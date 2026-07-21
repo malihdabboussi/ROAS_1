@@ -1,5 +1,12 @@
 # Changelog - July 20, 2026
 
+## [2026-07-20 21:35] - [FEATURE]
+
+What: Org Google Workspace calendars → phantom people: `org_person_calendar_identities` email graph with admin confirm/reject; org-shared Workspace connect (DWD service account JSON + admin email in Integrations Library); Directory sync; admin/agent agenda-by-person + org-upcoming APIs; compound `get_person_briefing`. Agent actions `get_person_agenda`, `list_org_upcoming`, `get_person_briefing`. Split `IntegrationCard` connect dialogs/actions under the 400 LOC component limit so the Library multiline JSON field can ship. Home Agenda stays caller-scoped.
+Why: Org admins and agents need teammate calendars mapped to Slack People / portal / Person Brains without putting everyone's calendars on every member's Home Agenda; personal Composio Google Calendar cannot impersonate the domain.
+Impact: Workspace Settings → Integrations → Library can connect Google Workspace with service account JSON + admin email; Org tab manages identity links; agents resolve person agendas via Workspace DWD when connected.
+Files: migration `20260721040000_org_person_calendar_identities.sql`, `apps/api/.../google-workspace/**`, Integrations catalog/UI (`IntegrationCard*` split), agent-api calendar actions + policy, `documentation/features/integration-connections.md`.
+
 ## [2026-07-20 16:29] - [FIX]
 
 What: Org sidebar spaces cache now also loads personal-account spaces (`orgId: null`) and merges them, so the injected Personal campaign shows Meetings instead of “No spaces yet”. Creating a space under Personal from org context writes to the personal account.

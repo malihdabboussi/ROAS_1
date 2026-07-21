@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 20, 2026 (Slack People channel context)
+Last Modified: July 21, 2026 (Org Google Workspace calendars)
 
 ## Data Flow
 
@@ -35,6 +35,7 @@ Last Modified: July 20, 2026 (Slack People channel context)
 29. Analyze uses Meta's campaign result actions, including completed registrations and purchases, instead of treating every campaign as a lead or purchase campaign. AI Analysis uses the exact visible reporting period, lets the user select campaigns, and opens a fresh Blaze chat with a read-only performance snapshot. Ads Manager links include both the selected object and mapped ad account.
 30. Each People refresh reads membership for Slack channels visible to the connected bot and attaches the sorted channel names to the matching people response. Cards, list rows, search, and the person detail panel use that context to identify unfamiliar people without persisting or changing relationship classifications.
 31. Team → People exposes People and Conversations as peer views. Post-call delivery drafts are stored in the same `slack_shadow_actions` ledger as manual Shadow proposals, so admins can reach the proposal globally or through the matched person and see the exact text that approval will deliver.
+32. Org Google Workspace is a separate org-shared integration (`google_workspace`) from personal Composio Google Calendar. Admins connect a domain-wide-delegation service account; Directory sync and Slack/portal seeding write `org_person_calendar_identities` keyed by normalized work email. Exact email matches are suggestions until an admin confirms. Agents use `get_person_agenda`, `list_org_upcoming`, and `get_person_briefing`; member Home Agenda stays caller-scoped.
 
 ## Code Examples
 
@@ -106,6 +107,8 @@ Reconnect result:
 - A generic `connected` badge is not enough. The product must answer whether this agent can use this integration right now.
 - Personal and org-shared connections are separate scopes. A personal fallback requires explicit user approval for the current task.
 - Personal-account Google Calendar and Outlook follow the same private cross-context pattern as Fathom/Page Grader: usable by you inside an org, never visible to teammates, never auto-shared. Shared allowlist lives in `personal-cross-context-providers.ts` (status + calendar + overview; Slack remains overview-only projection).
+- Org Google Workspace (`google_workspace`) is not personal OAuth and is not `org_shared` on a member's Google Calendar. It uses a vaulted service account with Domain-Wide Delegation (readonly Directory + Calendar). Person agendas resolve through `org_person_calendar_identities` for admins and agents only; Home Agenda remains caller-scoped Composio calendars.
+- Exact email is the only automatic person↔calendar match. Fuzzy matches are never silent — admins confirm or reject suggestions (same pattern as Slack identity suggestions).
 - Multiple personal connections per integration are allowed; reuse is skipped when `force_new` is set.
 - Overview must sync personal Composio accounts by `composio_connected_account_id`, not by collapsing to one account per `integration_id` (that stamped the newest account onto the wrong row and showed duplicate emails).
 - Home Agenda merges events from every connected Google Calendar / Outlook account (not only the first). Events carry `account_label`; sending/invites use the personal or org `is_default` connection (star in Integrations).

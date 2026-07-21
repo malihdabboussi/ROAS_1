@@ -40,6 +40,7 @@ const INTEGRATION_IDS_FOR_OVERVIEW = [
   'slack',
   'google_analytics',
   'google_calendar',
+  'google_workspace',
   'outlook',
   'gmail',
   'clickup',
@@ -474,6 +475,34 @@ export class IntegrationsOverviewService {
 
       if (!fanbasisSecret) {
         connectedSet.delete('fanbasis')
+      }
+    }
+    if (connectedSet.has('google_workspace') && scope.orgId) {
+      const { data: workspaceRow } = await this.repository
+        .table(supabase, 'user_integrations')
+        .select('user_id, metadata')
+        .eq('org_id', scope.orgId)
+        .eq('integration_id', 'google_workspace')
+        .eq('status', 'connected')
+        .eq('scope_mode', 'org_shared')
+        .limit(1)
+        .maybeSingle()
+      const vaultUserId = String(
+        (workspaceRow?.metadata as Record<string, unknown> | null | undefined)?.vault_user_id ??
+          workspaceRow?.user_id ??
+          '',
+      )
+      if (!vaultUserId) {
+        connectedSet.delete('google_workspace')
+      } else {
+        const { data: workspaceSecret } = await this.repository
+          .table(supabase, 'vault_secrets')
+          .select('id')
+          .eq('user_id', vaultUserId)
+          .eq('provider', 'google_workspace')
+          .eq('label', 'service_account')
+          .maybeSingle()
+        if (!workspaceSecret) connectedSet.delete('google_workspace')
       }
     }
     for (const item of [

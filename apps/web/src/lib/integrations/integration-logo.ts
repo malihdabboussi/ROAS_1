@@ -50,6 +50,8 @@ export function getIntegrationLogoPath(provider: string): string | null {
       return '/Integrations/GoogleAnalytics.png'
     case 'google_calendar':
       return '/Integrations/GoogleCalendar.png'
+    case 'google_workspace':
+      return '/Integrations/GoogleCalendar.png'
     case 'gmail':
       return '/Integrations/Gmail.png'
     case 'outlook':

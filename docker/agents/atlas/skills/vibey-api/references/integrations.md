@@ -83,7 +83,7 @@ Generates connect URL for an integration. **integration_id is REQUIRED**.
 
 **Use when:** Read connected Google Calendar and Outlook events for a visible time window.
 
-Lists normalized Google Calendar and Outlook events for a time window. Optional provider is "google_calendar" or "outlook".
+Lists normalized Google Calendar and Outlook events for a time window. Optional provider is "google_calendar" or "outlook". Caller-scoped Home Agenda only.
 
 ```json
 {"action":"list_calendar_events","label":"Checking calendar","data":{"start":"2026-06-18T00:00:00.000Z","end":"2026-06-19T00:00:00.000Z","timezone":"Asia/Nicosia"}}
@@ -92,6 +92,39 @@ Lists normalized Google Calendar and Outlook events for a time window. Optional 
 Contract example: list tomorrow calendar events
 ```json
 {"action":"list_calendar_events","label":"list tomorrow calendar events","data":{"start":"2026-06-18T00:00:00.000Z","end":"2026-06-19T00:00:00.000Z","timezone":"Asia/Nicosia"}}
+```
+
+## get_person_agenda
+**Required keys:** `start`, `end`
+
+**Optional keys:** `email`, `person_id`, `vibey_user_id`, `person_brain_id`, `timezone`
+
+**Use when:** Read one teammate calendar via org Google Workspace impersonation (admin/agent only).
+
+```json
+{"action":"get_person_agenda","label":"Checking teammate calendar","data":{"email":"alex@company.com","start":"2026-06-18T00:00:00.000Z","end":"2026-06-19T00:00:00.000Z"}}
+```
+
+## list_org_upcoming
+**Required keys:** `start`, `end`
+
+**Optional keys:** `timezone`, `limit_people`
+
+**Use when:** List upcoming Workspace calendars for mapped org people (admin/agent only).
+
+```json
+{"action":"list_org_upcoming","label":"Scanning team calendars","data":{"start":"2026-06-18T00:00:00.000Z","end":"2026-06-18T12:00:00.000Z","limit_people":20}}
+```
+
+## get_person_briefing
+**Required keys:** `start`, `end`
+
+**Optional keys:** `email`, `person_id`, `vibey_user_id`, `person_brain_id`, `timezone`
+
+**Use when:** Compound prep for a person on one email key (calendar + meetings + Slack People + Person Brain + Page Grader).
+
+```json
+{"action":"get_person_briefing","label":"Preparing person briefing","data":{"email":"alex@company.com","start":"2026-06-18T00:00:00.000Z","end":"2026-06-19T00:00:00.000Z"}}
 ```
 
 ## search_available_integrations

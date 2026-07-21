@@ -874,9 +874,30 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   list_calendar_events: {
     section: 'Integrations',
     description:
-      'Lists normalized Google Calendar and Outlook events for a time window. Optional provider is "google_calendar" or "outlook".',
+      'Lists normalized Google Calendar and Outlook events for a time window. Optional provider is "google_calendar" or "outlook". Caller-scoped Home Agenda only — not org-wide Workspace calendars.',
     parameters:
       '```json\n{"action":"list_calendar_events","label":"Checking calendar","data":{"start":"2026-06-18T00:00:00.000Z","end":"2026-06-19T00:00:00.000Z","timezone":"Asia/Nicosia"}}\n```',
+  },
+  get_person_agenda: {
+    section: 'Integrations',
+    description:
+      'Reads one person calendar via org Google Workspace domain-wide delegation. Resolve by email, Slack person_id, vibey_user_id, or person_brain_id. Admin/agent only — never use for member Home Agenda.',
+    parameters:
+      '```json\n{"action":"get_person_agenda","label":"Checking teammate calendar","data":{"email":"alex@company.com","start":"2026-06-18T00:00:00.000Z","end":"2026-06-19T00:00:00.000Z"}}\n```',
+  },
+  list_org_upcoming: {
+    section: 'Integrations',
+    description:
+      'Lists upcoming Workspace calendars for mapped org people (confirmed or directory-synced). Admin/agent only.',
+    parameters:
+      '```json\n{"action":"list_org_upcoming","label":"Scanning team calendars","data":{"start":"2026-06-18T00:00:00.000Z","end":"2026-06-18T12:00:00.000Z","limit_people":20}}\n```',
+  },
+  get_person_briefing: {
+    section: 'Integrations',
+    description:
+      'Compound person briefing on one email key: Workspace calendar + meeting/Fathom space items + Slack People + Person Brain memories + Page Grader clients. Admin/agent only.',
+    parameters:
+      '```json\n{"action":"get_person_briefing","label":"Preparing person briefing","data":{"email":"alex@company.com","start":"2026-06-18T00:00:00.000Z","end":"2026-06-19T00:00:00.000Z"}}\n```',
   },
   create_calendar_event: {
     section: 'Integrations',

@@ -539,6 +539,18 @@ export function useIntegrations() {
         await backendPost('/api/integrations/fanbasis/connect', { apiKey })
         await loadData()
         return { completedSynchronously: true }
+      } else if (provider === 'google_workspace') {
+        const serviceAccountJson = connectionData?.service_account_json?.trim()
+        const workspaceAdminEmail = connectionData?.workspace_admin_email?.trim()
+        if (!serviceAccountJson || !workspaceAdminEmail) {
+          throw new Error('Service account JSON and Workspace admin email are required')
+        }
+        await backendPost('/api/integrations/google-workspace/connect', {
+          service_account_json: serviceAccountJson,
+          workspace_admin_email: workspaceAdminEmail,
+        })
+        await loadData()
+        return { completedSynchronously: true }
       } else if (provider === 'supabase') {
         const res = await backendPost<{ success: boolean; authorizeUrl: string }>(
           '/api/integrations/supabase/connect',
@@ -635,6 +647,8 @@ export function useIntegrations() {
         })
       } else if (provider === 'fanbasis') {
         await backendPost('/api/integrations/fanbasis/disconnect', {})
+      } else if (provider === 'google_workspace') {
+        await backendPost('/api/integrations/google-workspace/disconnect', {})
       } else if (provider === 'supabase') {
         await backendPost('/api/integrations/supabase/disconnect', {})
       }

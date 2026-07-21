@@ -17,12 +17,13 @@ import { DropboxModule } from './dropbox/dropbox.module'
 import { FanbasisModule } from './fanbasis/fanbasis.module'
 import { FathomModule } from './fathom/fathom.module'
 import { FirefliesModule } from './fireflies/fireflies.module'
-import { PageGraderModule } from './page-grader/page-grader.module'
 import { GitHubModule } from './github/github.module'
 import { GoHighLevelModule } from './gohighlevel/gohighlevel.module'
 import { GoogleDriveModule } from './google-drive/google-drive.module'
+import { GoogleWorkspaceModule } from './google-workspace/google-workspace.module'
 import { MetaModule } from './meta/meta.module'
 import { OpenAICodexModule } from './openai-codex/openai-codex.module'
+import { PageGraderModule } from './page-grader/page-grader.module'
 import { PaypalModule } from './paypal/paypal.module'
 import { IntegrationsRepository } from './repositories/integrations.repository'
 import { ScrapeCreatorsModule } from './scrapecreators/scrapecreators.module'
@@ -59,6 +60,7 @@ import { WordpressModule } from './wordpress/wordpress.module'
     PaypalModule,
     CalendlyModule,
     GoogleDriveModule,
+    GoogleWorkspaceModule,
     DropboxModule,
     FathomModule,
     FanbasisModule,

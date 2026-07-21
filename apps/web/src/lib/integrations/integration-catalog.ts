@@ -283,6 +283,42 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     is_active: true,
   },
   {
+    id: 'google_workspace',
+    provider: 'google_workspace',
+    name: 'Google Workspace',
+    description:
+      'Connect your Google Workspace (admin) so Vibey can map work emails to teammates and agents can read calendars by person — not on every member Home Agenda.',
+    category: 'productivity',
+    auth_type: 'api_key',
+    is_active: true,
+    connection_fields: [
+      {
+        name: 'service_account_json',
+        label: 'Service account JSON',
+        placeholder: 'Paste the full service account key JSON',
+        required: true,
+        multiline: true,
+        helpTitle: 'Domain-wide delegation',
+        helpText:
+          'Create a Google Cloud service account, enable Admin SDK + Calendar APIs, then authorize the client ID in Google Admin → Security → API controls → Domain-wide delegation with readonly Directory and Calendar scopes.',
+        helpSteps: [
+          'Google Admin Console → Security → Access and data control → API controls → Domain-wide delegation',
+          'Add the service account client ID',
+          'Scopes: https://www.googleapis.com/auth/admin.directory.user.readonly, https://www.googleapis.com/auth/calendar.readonly',
+          'Paste the service account JSON key here and the Workspace admin email used for Directory impersonation',
+        ],
+      },
+      {
+        name: 'workspace_admin_email',
+        label: 'Workspace admin email',
+        placeholder: 'admin@yourdomain.com',
+        required: true,
+        helpText:
+          'A Super Admin email in your Workspace that the service account can impersonate for Directory sync.',
+      },
+    ],
+  },
+  {
     id: 'wordpress',
     provider: 'wordpress',
     name: 'WordPress',

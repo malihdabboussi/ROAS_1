@@ -114,6 +114,9 @@ describe('@vibey/agent-policy registry', () => {
       create_docx: 'manage_content',
       use_integration: 'use_integrations',
       list_calendar_events: 'use_integrations',
+      get_person_agenda: 'use_integrations',
+      list_org_upcoming: 'use_integrations',
+      get_person_briefing: 'use_integrations',
       create_calendar_event: 'use_integrations',
       update_calendar_event: 'use_integrations',
       delete_calendar_event: 'use_integrations',
@@ -450,6 +453,9 @@ describe('@vibey/agent-policy action contracts', () => {
 
     for (const [action, operation] of [
       ['list_calendar_events', 'read'],
+      ['get_person_agenda', 'read'],
+      ['list_org_upcoming', 'read'],
+      ['get_person_briefing', 'read'],
       ['create_calendar_event', 'create'],
       ['update_calendar_event', 'update'],
       ['delete_calendar_event', 'delete'],

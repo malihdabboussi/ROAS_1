@@ -8,6 +8,9 @@ export class ArtifactCalendarService {
   getHandlers(target: Record<string, any>): Record<string, ArtifactActionHandler> {
     return {
       list_calendar_events: (data, sessionKey) => this.listEvents(target, data, sessionKey),
+      get_person_agenda: (data, sessionKey) => this.getPersonAgenda(target, data, sessionKey),
+      list_org_upcoming: (data, sessionKey) => this.listOrgUpcoming(target, data, sessionKey),
+      get_person_briefing: (data, sessionKey) => this.getPersonBriefing(target, data, sessionKey),
       create_calendar_event: (data, sessionKey) => this.createEvent(target, data, sessionKey),
       update_calendar_event: (data, sessionKey) => this.updateEvent(target, data, sessionKey),
       delete_calendar_event: (data, sessionKey) => this.deleteEvent(target, data, sessionKey),
@@ -84,6 +87,89 @@ export class ArtifactCalendarService {
     return target.mainApiCall(
       'GET',
       `/api/integrations/calendar/agenda?${params.toString()}`,
+      sessionKey,
+    )
+  }
+
+  private personQuery(data: Record<string, unknown>) {
+    const start = this.requiredString(data, 'start')
+    const end = this.requiredString(data, 'end')
+    if (!start) return { error: 'start is required' as const }
+    if (!end) return { error: 'end is required' as const }
+    const params = new URLSearchParams({ start, end })
+    const timezone = this.optionalString(data, 'timezone')
+    if (timezone) params.set('timezone', timezone)
+    for (const key of ['email', 'person_id', 'vibey_user_id', 'person_brain_id'] as const) {
+      const value = this.optionalString(data, key)
+      if (value) params.set(key, value)
+    }
+    const limitPeople = data.limit_people
+    if (typeof limitPeople === 'number' && Number.isFinite(limitPeople)) {
+      params.set('limit_people', String(Math.trunc(limitPeople)))
+    }
+    return { params }
+  }
+
+  private async getPersonAgenda(
+    target: Record<string, any>,
+    data: Record<string, unknown>,
+    sessionKey?: string,
+  ) {
+    const built = this.personQuery(data)
+    if ('error' in built) return { success: false, error: built.error }
+    if (
+      !this.optionalString(data, 'email') &&
+      !this.optionalString(data, 'person_id') &&
+      !this.optionalString(data, 'vibey_user_id') &&
+      !this.optionalString(data, 'person_brain_id')
+    ) {
+      return {
+        success: false,
+        error: 'email, person_id, vibey_user_id, or person_brain_id is required',
+      }
+    }
+    return target.mainApiCall(
+      'GET',
+      `/api/integrations/google-workspace/agenda?${built.params.toString()}`,
+      sessionKey,
+    )
+  }
+
+  private async listOrgUpcoming(
+    target: Record<string, any>,
+    data: Record<string, unknown>,
+    sessionKey?: string,
+  ) {
+    const built = this.personQuery(data)
+    if ('error' in built) return { success: false, error: built.error }
+    return target.mainApiCall(
+      'GET',
+      `/api/integrations/google-workspace/org-upcoming?${built.params.toString()}`,
+      sessionKey,
+    )
+  }
+
+  private async getPersonBriefing(
+    target: Record<string, any>,
+    data: Record<string, unknown>,
+    sessionKey?: string,
+  ) {
+    const built = this.personQuery(data)
+    if ('error' in built) return { success: false, error: built.error }
+    if (
+      !this.optionalString(data, 'email') &&
+      !this.optionalString(data, 'person_id') &&
+      !this.optionalString(data, 'vibey_user_id') &&
+      !this.optionalString(data, 'person_brain_id')
+    ) {
+      return {
+        success: false,
+        error: 'email, person_id, vibey_user_id, or person_brain_id is required',
+      }
+    }
+    return target.mainApiCall(
+      'GET',
+      `/api/integrations/google-workspace/person-briefing?${built.params.toString()}`,
       sessionKey,
     )
   }
