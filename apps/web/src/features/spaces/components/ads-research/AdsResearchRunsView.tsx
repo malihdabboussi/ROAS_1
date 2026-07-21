@@ -14,6 +14,7 @@ import {
   type MissionDeliverable,
 } from '@/lib/missions'
 import { ADS_RESEARCH_MESSAGES } from '../../config/ads-research-messages.config'
+import { ensureAdsResearchAgencyTeam } from '../../services/ads-research.service'
 import { AdsResearchRunCard } from './AdsResearchRunCard'
 import { AdsResearchRunDetailView } from './AdsResearchRunDetailView'
 
@@ -54,6 +55,7 @@ export function AdsResearchRunsView({
   const [selectedRun, setSelectedRun] = useState<Mission | null>(null)
   const [missionModalOpen, setMissionModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [preparingTeam, setPreparingTeam] = useState(false)
   const seedComposer = useGlobalChatStore((state) => state.seedComposer)
   const openFreshChatDrawer = useShellStore((state) => state.openFreshChatDrawer)
 
@@ -80,32 +82,36 @@ export function AdsResearchRunsView({
     void loadRuns()
   }, [loadRuns])
 
-  const startResearch = () => {
+  const openBlazeChat = async (content: string) => {
     if (!campaignId) {
       toast.error(ADS_RESEARCH_MESSAGES.NO_CAMPAIGN)
       return
     }
-    openFreshChatDrawer()
-    seedComposer({
-      content: RESEARCH_INTAKE_PROMPT,
-      agentKey: 'ads_manager',
-      railIntent: 'new',
-      workContext: { surface: 'spaces', spaceId, campaignId },
-    })
+    setPreparingTeam(true)
+    try {
+      await ensureAdsResearchAgencyTeam(campaignId)
+      openFreshChatDrawer()
+      seedComposer({
+        content,
+        agentKey: 'ads_manager',
+        railIntent: 'new',
+        workContext: { surface: 'spaces', spaceId, campaignId },
+      })
+    } catch {
+      toast.error(ADS_RESEARCH_MESSAGES.TEAM_SETUP_FAILED)
+    } finally {
+      setPreparingTeam(false)
+    }
   }
+
+  const startResearch = () => void openBlazeChat(RESEARCH_INTAKE_PROMPT)
 
   const rerunResearch = (run: Mission) => {
     if (!campaignId) {
       toast.error(ADS_RESEARCH_MESSAGES.NO_CAMPAIGN)
       return
     }
-    openFreshChatDrawer()
-    seedComposer({
-      content: buildResearchRerunPrompt(run),
-      agentKey: 'ads_manager',
-      railIntent: 'new',
-      workContext: { surface: 'spaces', spaceId, campaignId },
-    })
+    void openBlazeChat(buildResearchRerunPrompt(run))
   }
 
   const runCountLabel = useMemo(
@@ -146,11 +152,13 @@ export function AdsResearchRunsView({
           <button
             type="button"
             className="button-glass-primary button-compact gap-spacing-2 inline-flex items-center"
-            disabled={!campaignId}
+            disabled={!campaignId || preparingTeam}
             onClick={startResearch}
           >
             <Sparkles className="icon-sm" />
-            {ADS_RESEARCH_MESSAGES.RUN_BUTTON}
+            {preparingTeam
+              ? ADS_RESEARCH_MESSAGES.PREPARING_TEAM
+              : ADS_RESEARCH_MESSAGES.RUN_BUTTON}
           </button>
         </div>
         {loading ? (

@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common'
 import { MissionsModule } from '../missions/missions.module'
-import { AgentConfigController } from './controllers/agent-config.controller'
+import { AgencyTeamController } from './controllers/agency-team.controller'
 import { AgentCheckpointsController } from './controllers/agent-checkpoints.controller'
+import { AgentConfigController } from './controllers/agent-config.controller'
 import { AgentSkillsController } from './controllers/agent-skills.controller'
 import { AgentWidgetController } from './controllers/agent-widget.controller'
 import { AgentWorkflowsController } from './controllers/agent-workflows.controller'
@@ -13,6 +14,7 @@ import { AgentsService } from './services/agents.service'
 @Module({
   imports: [MissionsModule],
   controllers: [
+    AgencyTeamController,
     SkillCatalogController,
     AgentsController,
     AgentConfigController,

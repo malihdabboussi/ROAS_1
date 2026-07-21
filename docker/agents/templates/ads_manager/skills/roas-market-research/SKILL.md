@@ -64,7 +64,7 @@ Pull from the conversation/brief first; only ask if genuinely missing.
 3. **Named competitors** — names, page URLs, or page IDs. Zero is fine; the keyword sweep will surface them.
 4. **Geo** — default US.
 5. **Platform scope** — Meta always. Add Google/TikTok only if the ICP warrants it or the user asks.
-6. **Depth** — default: standard brief (3-5 references). "Deep" on request: 8-10 references + organic layer.
+6. **Depth** — default outside a mission: standard brief (3-5 references). "Deep" on request: 8-10 references + organic layer. An Ads Research mission overrides this with at least 12 visual references across at least 3 saved searches or advertisers.
 
 ---
 
@@ -116,6 +116,15 @@ For each of the 3-5 (or 8-10 deep) references:
 - **Borrow vs counter** — one line.
 
 Plus one **saturation note** across the set.
+
+### Ads Research mission completion contract
+
+When the active mission uses `playbook_id: ads-research`:
+
+1. Run at least 3 distinct topic or advertiser searches with `run_ads_research_search`.
+2. Save at least 12 usable visual references total and confirm every response reports `saved_search_created: true`.
+3. Keep every saved search linked to the current mission. Preserve the thumbnail or creative snapshot, advertiser, format, angle, source URL, relevance, and extracted pattern for every reference.
+4. Do not complete the market-research subtask with only a document. If the quota cannot be saved, block with the exact provider or data limitation.
 
 ---
 

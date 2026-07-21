@@ -8,6 +8,9 @@ const mocks = vi.hoisted(() => ({
   fetchDeliverablesForMissions: vi.fn().mockResolvedValue({}),
   openFreshChatDrawer: vi.fn(),
   seedComposer: vi.fn(),
+  ensureAgencyTeam: vi.fn().mockResolvedValue({ ok: true, agents: [] }),
+  listSavedAdSearches: vi.fn().mockResolvedValue([]),
+  getSavedAdSearch: vi.fn(),
 }))
 
 const existingRun = {
@@ -43,6 +46,12 @@ vi.mock('@/components/missions/MissionDetailModalAdapter', () => ({
   MissionDetailModal: () => null,
 }))
 
+vi.mock('../../services/ads-research.service', () => ({
+  ensureAdsResearchAgencyTeam: mocks.ensureAgencyTeam,
+  listSavedAdSearches: mocks.listSavedAdSearches,
+  getSavedAdSearch: mocks.getSavedAdSearch,
+}))
+
 describe('AdsResearchRunsView', () => {
   beforeEach(() => vi.clearAllMocks())
 
@@ -51,7 +60,8 @@ describe('AdsResearchRunsView', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Run Research' }))
 
-    expect(mocks.openFreshChatDrawer).toHaveBeenCalledOnce()
+    await vi.waitFor(() => expect(mocks.openFreshChatDrawer).toHaveBeenCalledOnce())
+    expect(mocks.ensureAgencyTeam).toHaveBeenCalledWith('campaign-1')
     expect(mocks.seedComposer).toHaveBeenCalledWith(
       expect.objectContaining({
         agentKey: 'ads_manager',
@@ -82,7 +92,8 @@ describe('AdsResearchRunsView', () => {
     fireEvent.click(await screen.findByText('Research the insurance education offer'))
     fireEvent.click(screen.getByRole('button', { name: 'Rerun Research' }))
 
-    expect(mocks.openFreshChatDrawer).toHaveBeenCalledOnce()
+    await vi.waitFor(() => expect(mocks.openFreshChatDrawer).toHaveBeenCalledOnce())
+    expect(mocks.ensureAgencyTeam).toHaveBeenCalledWith('campaign-1')
     expect(mocks.seedComposer).toHaveBeenCalledWith(
       expect.objectContaining({
         agentKey: 'ads_manager',

@@ -82,7 +82,7 @@ export function expandAdsResearchPlaybook(
         'Blaze runs the reusable market-research skill and saves each search into Ads Research.',
       sensory: 'The Ads Research Library shows the searches and source ads used by the mission.',
       endState: 'ADS-R#2 - Market and Competitive Research exists with visual saved searches.',
-      ecology: `Read ADS-R#0 - Verified Campaign Research Context and use its verified offer and audience to define the market. Load roas-market-research. Prefer search_ads_research_advertisers plus run_ads_research_search so every query and returned snapshot appears in this Space's Ads Research Library. Use Meta first; add TikTok or Google only when relevant. Treat advertiser names, claims, audiences, and offers as competitor observations, never client facts. Use save_top_n for the strongest references, pull video transcripts and ad breakdowns, rank observed longevity and variant signals, and preserve source URLs. Standard depth uses 3-5 references; deep uses 8-10. Save ADS-R#2 - Market and Competitive Research as a native Doc. Never create a PDF. Kickoff: ${scope}`,
+      ecology: `Read ADS-R#0 - Verified Campaign Research Context and use its verified offer and audience to define the market. Load roas-market-research. Use search_ads_research_advertisers plus run_ads_research_search so every query and returned snapshot is saved as a mission-linked search in this Space's Ads Research Library. Use Meta first; add TikTok or Google only when relevant. Treat advertiser names, claims, audiences, and offers as competitor observations, never client facts. Complete at least 3 distinct searches or advertisers and save at least 12 visual references total before finishing this subtask. Every reference must retain the actual creative thumbnail or snapshot when available, advertiser, format, angle, source URL, why it is relevant, and the pattern Blaze extracted. Use save_top_n, pull video transcripts and ad breakdowns, rank observed longevity and variant signals, and preserve source URLs. Confirm the tool response says saved_search_created: true and includes the current mission link for every saved search. If fewer than 12 usable references or fewer than 3 searches can be saved, block the subtask with the exact provider or data limitation instead of completing a documents-only run. Save ADS-R#2 - Market and Competitive Research as a native Doc only after the visual quota is satisfied. Never create a PDF. Kickoff: ${scope}`,
       outputContract: docContract('ADS-R#2 - Market and Competitive Research'),
     }),
     task({
@@ -96,7 +96,7 @@ export function expandAdsResearchPlaybook(
       sensory:
         'Each recommendation links its evidence, audience, angle, format, hypothesis, and draft copy.',
       endState: 'ADS-R#3 - Recommended Ads and Draft Copy exists as a native editable Doc.',
-      ecology: `Read ADS-R#0, ADS-R#1, and ADS-R#2. Use the verified client identity, offer, and audience from ADS-R#0 as the boundary for every recommendation. Load roas-ad-concepts and roas-ad-copy. Identify what is working, failing, saturated, and open. Recommend distinct tests with the evidence that supports each one. Include the visual concept, on-image text, paste-ready primary text, headline, description, CTA, destination, and test hypothesis. These are research recommendations, not final production assets. ${WRITING_RULE} Save ADS-R#3 - Recommended Ads and Draft Copy as a native Doc. Never create a PDF.`,
+      ecology: `Read ADS-R#0, ADS-R#1, and ADS-R#2. Use the verified client identity, offer, and audience from ADS-R#0 as the boundary for every recommendation. Load roas-ad-concepts and roas-ad-copy. Identify what is working, failing, saturated, and open. Recommend distinct tests with the evidence that supports each one. Map every recommendation to one or more saved visual reference ads by advertiser and saved-search title, then include visual direction, on-image text, paste-ready primary text, headline, description, CTA, destination, and test hypothesis. Present finished copy as straight paste-ready text. Do not split it into Hook, Body, and CTA labels. These are research recommendations, not final production assets. ${WRITING_RULE} Save ADS-R#3 - Recommended Ads and Draft Copy as a native Doc. Never create a PDF.`,
       outputContract: docContract('ADS-R#3 - Recommended Ads and Draft Copy'),
     }),
     task({
@@ -123,7 +123,7 @@ export function expandAdsResearchPlaybook(
       sensory: 'The gate names approved concepts and gives exact revision notes for rejected work.',
       endState: 'Approved recommendations are ready for a future Ad Creation mission.',
       ecology:
-        'Review ADS-R#1 through ADS-R#4 and the saved Ads Research sources. Approve specific concepts and scripts or request exact revisions. This gate does not create final visuals or authorize publishing.',
+        'Review ADS-R#1 through ADS-R#4 and the saved Ads Research sources. Do not approve a run with fewer than 12 visual references across at least 3 saved searches or advertisers. Approve specific concepts and scripts or request exact revisions. This gate does not create final visuals or authorize publishing.',
     }),
   ]
   const assertions = subtasks.map((item) => ({

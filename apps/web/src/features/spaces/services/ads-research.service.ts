@@ -12,6 +12,12 @@ export type AdsResearchPlatform = 'meta' | 'tiktok' | 'google'
 /** 'topic' = keyword search; 'brand' = one advertiser. Google is brand-only. */
 export type AdSearchKind = 'topic' | 'brand'
 
+export async function ensureAdsResearchAgencyTeam(
+  campaignId: string,
+): Promise<{ ok: true; agents: Array<{ agent_key: string }> }> {
+  return backendPost('/api/agents/ensure-agency-team', { campaign_id: campaignId })
+}
+
 export const ADS_RESEARCH_PLATFORMS: readonly AdsResearchPlatform[] = [
   'meta',
   'tiktok',

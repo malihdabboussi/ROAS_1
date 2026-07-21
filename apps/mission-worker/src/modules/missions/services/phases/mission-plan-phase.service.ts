@@ -67,7 +67,10 @@ export class MissionPlanPhaseService {
           ? missionInputEarly.playbook_id.trim()
           : ''
 
-      if (playbookIdEarly === 'webinar-fulfillment' && mission.campaign_id) {
+      if (
+        (playbookIdEarly === 'webinar-fulfillment' || playbookIdEarly === 'ads-research') &&
+        mission.campaign_id
+      ) {
         await this.ensureWebinarFulfillmentTeam(mission, playbookIdEarly)
       }
 
@@ -378,7 +381,7 @@ export class MissionPlanPhaseService {
     })
     if (!res.ok) {
       const text = await res.text().catch(() => '')
-      throw new Error(`Webinar team ensure failed (${res.status}): ${text}`)
+      throw new Error(`Agency team ensure failed (${res.status}): ${text}`)
     }
     const body = (await res.json().catch(() => null)) as {
       agents?: Array<{ agent_key?: string; role_key?: string; created?: boolean }>
@@ -388,7 +391,7 @@ export class MissionPlanPhaseService {
       .map((a) => a.agent_key || a.role_key)
       .filter(Boolean)
     this.logger.log(
-      `Webinar fulfillment team ensured for campaign ${mission.campaign_id}` +
+      `Agency team ensured for campaign ${mission.campaign_id}` +
         (hired.length ? ` (hired: ${hired.join(', ')})` : ' (already present)'),
     )
   }

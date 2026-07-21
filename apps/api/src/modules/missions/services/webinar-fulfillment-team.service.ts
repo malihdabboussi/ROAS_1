@@ -44,7 +44,9 @@ export class WebinarFulfillmentTeamService {
   ) {}
 
   supportsPlaybook(playbookId: string | null | undefined): boolean {
-    return String(playbookId || '').trim() === WEBINAR_FULFILLMENT_PLAYBOOK_ID
+    return [WEBINAR_FULFILLMENT_PLAYBOOK_ID, 'ads-research'].includes(
+      String(playbookId || '').trim(),
+    )
   }
 
   async ensureTeam(
