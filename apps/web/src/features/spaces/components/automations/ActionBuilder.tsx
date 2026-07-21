@@ -1517,7 +1517,7 @@ export function ActionBuilder({
               {action.type === 'observe_slack_team' && (
                 <ObserveSlackTeamActionFields
                   action={action}
-                  onChange={(patch) => updateAction(idx, patch)}
+                  onChange={(patch) => updateAction(idx, patch as Partial<AutomationAction>)}
                 />
               )}
 

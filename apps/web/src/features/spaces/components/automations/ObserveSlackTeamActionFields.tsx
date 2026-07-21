@@ -7,6 +7,8 @@ import {
 } from '@/components/ui/forms/AutomationSolidSelect'
 import type { AutomationAction } from '../../types/space-schema'
 
+export type ObserveSlackTeamAction = Extract<AutomationAction, { type: 'observe_slack_team' }>
+
 const SLACK_TEAM_LOOP_KIND_OPTIONS: AutomationSolidOption[] = [
   { value: 'all', label: 'All proactive signals' },
   { value: 'brain_compounding', label: 'Person Brain compounding' },
@@ -33,8 +35,8 @@ export function ObserveSlackTeamActionFields({
   action,
   onChange,
 }: {
-  action: AutomationAction
-  onChange: (patch: Partial<AutomationAction>) => void
+  action: ObserveSlackTeamAction
+  onChange: (patch: Partial<ObserveSlackTeamAction>) => void
 }) {
   return (
     <div className="space-y-spacing-3">
@@ -42,7 +44,7 @@ export function ObserveSlackTeamActionFields({
         <AutomationSolidSelect
           options={SLACK_TEAM_LOOP_KIND_OPTIONS}
           value={action.loop_kind}
-          onChange={(loop_kind) => onChange({ loop_kind } as Partial<AutomationAction>)}
+          onChange={(loop_kind) => onChange({ loop_kind } as Partial<ObserveSlackTeamAction>)}
           placeholder="Choose a loop"
         />
       </FieldGroup>
@@ -50,7 +52,9 @@ export function ObserveSlackTeamActionFields({
         <AutomationSolidSelect
           options={SLACK_TEAM_DELIVERY_OPTIONS}
           value={action.delivery_mode}
-          onChange={(delivery_mode) => onChange({ delivery_mode } as Partial<AutomationAction>)}
+          onChange={(delivery_mode) =>
+            onChange({ delivery_mode } as Partial<ObserveSlackTeamAction>)
+          }
           placeholder="Choose a mode"
         />
       </FieldGroup>
@@ -67,7 +71,7 @@ export function ObserveSlackTeamActionFields({
                 .split(/[\n,]/)
                 .map((value) => value.trim())
                 .filter(Boolean),
-            } as Partial<AutomationAction>)
+            } as Partial<ObserveSlackTeamAction>)
           }
           placeholder="One Slack channel ID per line. Leave empty for every channel Pixel can see."
           className="body-3 h-spacing-20 rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 text-foreground placeholder:text-muted-foreground w-full resize-none border outline-none"
@@ -82,7 +86,7 @@ export function ObserveSlackTeamActionFields({
                 .split(/[\n,]/)
                 .map((value) => value.trim())
                 .filter(Boolean),
-            } as Partial<AutomationAction>)
+            } as Partial<ObserveSlackTeamAction>)
           }
           placeholder="One Manage People record ID per line. Leave empty for everyone except Ignored."
           className="body-3 h-spacing-20 rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 text-foreground placeholder:text-muted-foreground w-full resize-none border outline-none"
@@ -98,7 +102,7 @@ export function ObserveSlackTeamActionFields({
             onChange={(event) =>
               onChange({
                 lookback_minutes: Number(event.target.value || 60),
-              } as Partial<AutomationAction>)
+              } as Partial<ObserveSlackTeamAction>)
             }
             className="body-3 h-spacing-10 rounded-spacing-2 border-border bg-background px-spacing-3 text-foreground w-full border outline-none"
           />
@@ -112,7 +116,7 @@ export function ObserveSlackTeamActionFields({
             onChange={(event) =>
               onChange({
                 daily_limit: Number(event.target.value || 10),
-              } as Partial<AutomationAction>)
+              } as Partial<ObserveSlackTeamAction>)
             }
             className="body-3 h-spacing-10 rounded-spacing-2 border-border bg-background px-spacing-3 text-foreground w-full border outline-none"
           />
@@ -128,7 +132,7 @@ export function ObserveSlackTeamActionFields({
               quiet_hours: event.target.checked
                 ? { start: '22:00', end: '07:00', timezone: 'America/Los_Angeles' }
                 : undefined,
-            } as Partial<AutomationAction>)
+            } as Partial<ObserveSlackTeamAction>)
           }
         />
       </div>
@@ -141,7 +145,7 @@ export function ObserveSlackTeamActionFields({
               onChange={(event) =>
                 onChange({
                   quiet_hours: { ...action.quiet_hours!, start: event.target.value },
-                } as Partial<AutomationAction>)
+                } as Partial<ObserveSlackTeamAction>)
               }
               className="body-3 h-spacing-10 rounded-spacing-2 border-border bg-background px-spacing-3 text-foreground w-full border outline-none"
             />
@@ -153,7 +157,7 @@ export function ObserveSlackTeamActionFields({
               onChange={(event) =>
                 onChange({
                   quiet_hours: { ...action.quiet_hours!, end: event.target.value },
-                } as Partial<AutomationAction>)
+                } as Partial<ObserveSlackTeamAction>)
               }
               className="body-3 h-spacing-10 rounded-spacing-2 border-border bg-background px-spacing-3 text-foreground w-full border outline-none"
             />
@@ -167,7 +171,7 @@ export function ObserveSlackTeamActionFields({
                     ...action.quiet_hours!,
                     timezone: event.target.value,
                   },
-                } as Partial<AutomationAction>)
+                } as Partial<ObserveSlackTeamAction>)
               }
               className="body-3 h-spacing-10 rounded-spacing-2 border-border bg-background px-spacing-3 text-foreground w-full border outline-none"
             />
@@ -180,7 +184,7 @@ export function ObserveSlackTeamActionFields({
           onChange={(event) =>
             onChange({
               instructions: event.target.value,
-            } as Partial<AutomationAction>)
+            } as Partial<ObserveSlackTeamAction>)
           }
           placeholder="Optional detection or routing instructions..."
           className="body-3 h-spacing-20 rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 text-foreground placeholder:text-muted-foreground w-full resize-none border outline-none"
