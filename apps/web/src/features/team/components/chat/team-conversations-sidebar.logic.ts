@@ -1,6 +1,4 @@
-import type {
-  SidebarCampaignRow,
-} from '@/components/layout/sidebar/sidebar-types'
+import type { SidebarCampaignRow } from '@/components/layout/sidebar/sidebar-types'
 import type { Campaign } from '@/lib/campaigns'
 import type { Conversation } from '@/lib/conversations'
 
@@ -50,6 +48,7 @@ export function campaignToSidebarRow(campaign: Campaign): SidebarCampaignRow {
   const normalizedName = campaign.name.trim().toLowerCase()
   const isSystemGeneral =
     normalizedName === 'general' || systemKind === 'general' || config.isSystem === true
+  const isSystemPersonal = systemKind === 'personal'
 
   return {
     id: campaign.id,
@@ -57,6 +56,7 @@ export function campaignToSidebarRow(campaign: Campaign): SidebarCampaignRow {
     icon: (typeof config.icon === 'string' ? config.icon : null) ?? 'folder-kanban',
     isPinned: !!config.isPinned,
     isSystemGeneral,
+    isSystemPersonal,
     isFavorite: !!config.isFavorite,
     isHidden: !!config.isHidden,
     config,
@@ -142,9 +142,7 @@ export function buildTeamConversationSidebarModel({
       key: TEAM_CONVERSATIONS_GENERAL_KEY,
       label: 'General',
       icon: null,
-      conversations: [...(buckets.get(TEAM_CONVERSATIONS_GENERAL_KEY) ?? [])].sort(
-        sortByUpdatedAt,
-      ),
+      conversations: [...(buckets.get(TEAM_CONVERSATIONS_GENERAL_KEY) ?? [])].sort(sortByUpdatedAt),
     },
   ]
 
@@ -182,17 +180,13 @@ export function getCampaignConversationDisplayState({
   selectedSessionId: string | null
   campaignConversationLimitByKey: Record<string, number>
 }) {
-  const userCap =
-    campaignConversationLimitByKey[group.key] ?? CAMPAIGN_CONVERSATIONS_INITIAL
+  const userCap = campaignConversationLimitByKey[group.key] ?? CAMPAIGN_CONVERSATIONS_INITIAL
   const selectedIdx =
     selectedSessionId != null
       ? group.conversations.findIndex((session) => session.id === selectedSessionId)
       : -1
   const selectionCap = selectedIdx >= 0 ? selectedIdx + 1 : 0
-  const displayCap = Math.min(
-    Math.max(userCap, selectionCap),
-    group.conversations.length,
-  )
+  const displayCap = Math.min(Math.max(userCap, selectionCap), group.conversations.length)
   const visibleConversations = group.conversations.slice(0, displayCap)
 
   return {
