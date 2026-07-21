@@ -129,6 +129,13 @@ describe('SlackTeamLoopService', () => {
     )
     expect(slackTools.sendMessage).not.toHaveBeenCalled()
     expect(observation.reconcile).toHaveBeenCalledTimes(1)
+    expect(observation.loadPendingEvents).toHaveBeenCalledWith(
+      expect.objectContaining({ limit: 250 }),
+    )
+    const completionInput = openRouter.createChatCompletion.mock.calls[0]?.[0]
+    const signalsSchema = completionInput?.body?.response_format?.json_schema?.schema?.properties
+      ?.signals as Record<string, unknown> | undefined
+    expect(signalsSchema).not.toHaveProperty('maxItems')
     expect(result).toMatchObject({ channels_observed: 1, messages_observed: 1, proposed: 1 })
   })
 

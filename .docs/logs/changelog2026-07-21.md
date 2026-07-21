@@ -19,3 +19,13 @@ Why: Disconnect disabled the Fathom automation route, but reconnect did not reve
 Impact: Reconnecting Fathom now restores only routes disabled by that disconnect, manually disabled routes remain untouched, and Webinar missions no longer require a recording picker unless candidates remain genuinely tied. Production's affected route was restored and five missed recent calls were backfilled idempotently.
 
 Files: `apps/api/src/modules/integrations/fathom/services/fathom-oauth.service.ts`, `apps/api/src/modules/spaces/repositories/space-automation-external-events.repository.ts`, `apps/api/src/modules/spaces/services/space-automation-service-01.base.ts`, `apps/api/src/modules/spaces/services/space-automation.service.ts`, `apps/mission-worker/src/modules/missions/playbooks/webinar-fulfillment.playbook.ts`, focused tests, and feature documentation.
+
+## [2026-07-21 14:00] - [FIX]
+
+What: Removed an OpenRouter-incompatible `maxItems` keyword from the Slack Team Intelligence response schema and capped each scheduled run to one 250-message analysis batch.
+
+Why: Azure-backed Claude requests rejected the schema before analysis, while the previous pending-event limit allowed up to eight model calls in one scheduled run.
+
+Impact: Slack Team Intelligence can analyze successfully again, makes at most one model call per scheduled run, preserves remaining messages in the observation ledger for later runs, and continues advancing its exact cursor only after success.
+
+Files: `apps/api/src/modules/spaces/services/slack-team-loop.service.ts`, `apps/api/src/modules/spaces/services/__tests__/slack-team-loop.service.test.ts`, `documentation/features/spaces-automation.md`

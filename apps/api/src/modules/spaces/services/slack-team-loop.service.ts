@@ -131,6 +131,7 @@ export class SlackTeamLoopService {
       initialLookbackMinutes: input.lookbackMinutes,
       channelIds: input.channelIds,
       senderSlackUserIds: input.personIds.length > 0 ? [...peopleBySlackId.keys()] : [],
+      limit: 250,
     })
     const observed = pending.events
       .filter(
@@ -466,7 +467,6 @@ export class SlackTeamLoopService {
               properties: {
                 signals: {
                   type: 'array',
-                  maxItems: input.maxSignals,
                   items: {
                     type: 'object',
                     additionalProperties: false,
