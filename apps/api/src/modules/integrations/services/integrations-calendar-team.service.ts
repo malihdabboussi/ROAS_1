@@ -193,9 +193,15 @@ export class IntegrationsCalendarTeamService {
     supabase: Parameters<IntegrationsCalendarTeamService['getTeamAgenda']>[0],
     user: Parameters<IntegrationsCalendarTeamService['getTeamAgenda']>[1],
     scope: Parameters<IntegrationsCalendarTeamService['getTeamAgenda']>[2],
-    query: Parameters<IntegrationsCalendarTeamService['getTeamAgenda']>[3],
+    query: Parameters<IntegrationsCalendarTeamService['getTeamAgenda']>[3] & {
+      scope?: 'personal' | 'team'
+      provider?: string
+    },
     loadPersonal: (
-      query: Parameters<IntegrationsCalendarTeamService['getTeamAgenda']>[3],
+      query: Parameters<IntegrationsCalendarTeamService['getTeamAgenda']>[3] & {
+        scope?: 'personal' | 'team'
+        provider?: string
+      },
     ) => ReturnType<IntegrationsCalendarTeamService['getTeamAgenda']>,
   ) {
     const team = await this.getTeamAgenda(supabase, user, scope, query)
