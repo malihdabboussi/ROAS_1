@@ -486,10 +486,15 @@ export class SlackTeamLoopService {
     ]
       .filter(Boolean)
       .join('\n')
-    const completion = await this.gemini.callGeminiWithUsage(prompt, undefined, {
-      userId: input.userId,
-      orgId: input.orgId,
-    })
+    const completion = await this.gemini.callGeminiWithUsage(
+      prompt,
+      undefined,
+      {
+        userId: input.userId,
+        orgId: input.orgId,
+      },
+      { maxOutputTokens: 8192 },
+    )
     const parsed = JSON.parse(completion.text)
     if (
       !parsed ||

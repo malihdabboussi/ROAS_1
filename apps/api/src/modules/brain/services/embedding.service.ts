@@ -23,6 +23,10 @@ export type GeminiTextResult = {
   providerCostUsd: number
 }
 
+export type GeminiTextOptions = {
+  maxOutputTokens?: number
+}
+
 export type BrainGeminiBillingContext = { userId: string; orgId?: string | null }
 
 export type GeminiEmbeddingTaskType =
@@ -284,6 +288,7 @@ export class EmbeddingService {
     prompt: string,
     systemPrompt?: string,
     billing?: BrainGeminiBillingContext,
+    options: GeminiTextOptions = {},
   ): Promise<GeminiTextResult> {
     const apiKeys = resolveGeminiApiKeys((key) => this.config.get<string>(key))
     if (!apiKeys.length) {
@@ -294,7 +299,7 @@ export class EmbeddingService {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.2,
-        maxOutputTokens: 2048,
+        maxOutputTokens: options.maxOutputTokens ?? 2048,
         responseMimeType: 'application/json',
       },
     }
