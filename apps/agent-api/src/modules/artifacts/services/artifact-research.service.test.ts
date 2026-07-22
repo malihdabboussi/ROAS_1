@@ -143,6 +143,33 @@ describe('ArtifactResearchService', () => {
     )
   })
 
+  it('links ads research snapshots when the action runs from a mission subtask session', async () => {
+    const subtaskSession = 'agent:gateway:subtask:blaze:user-1:11111111-1111-1111-1111-111111111111'
+    const target = makeTarget([
+      { success: true, items: [{ ad_id: 'a1' }], next_page_token: null },
+      { success: true, search: { id: 'ad-search-1', result_count: 1 } },
+    ])
+
+    await service.getHandlers(target).run_ads_research_search(
+      {
+        space_id: 'space-1',
+        platform: 'meta',
+        kind: 'topic',
+        query: 'insurance coaching',
+      },
+      subtaskSession,
+    )
+
+    expect(target.resolveMissionContext).toHaveBeenCalledWith(subtaskSession, 'user-1')
+    expect(target.mainApiCall).toHaveBeenNthCalledWith(
+      2,
+      'POST',
+      '/api/spaces/space-1/ads-research/searches',
+      subtaskSession,
+      expect.objectContaining({ mission_id: 'mission-1' }),
+    )
+  })
+
   it('rejects unsupported ads search combinations before calling the API', async () => {
     const target = makeTarget([])
 

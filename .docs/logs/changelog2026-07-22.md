@@ -20,3 +20,10 @@ What: Added a dedicated Meta Ads Audit & Optimization playbook and Blaze skill, 
 Why: Ads Research could mislabel a Composio-connected account as disconnected, count duplicated search hits as visual proof, and leave a partial research Doc after a rewrite loop. The ads lifecycle also lacked a first-class human-gated optimization cycle.
 Impact: Blaze can audit real objective-specific Meta evidence, recommend bounded actions, apply only explicitly approved changes, verify the next measurement window, and hand approved research into a safe paused-build launch workflow without enabling spend.
 Files: `apps/mission-worker/src/modules/missions/playbooks/ads-research.playbook.ts`, `apps/mission-worker/src/modules/missions/playbooks/meta-ads-audit.playbook.ts`, `apps/mission-worker/src/modules/missions/playbooks/meta-ads-launch.playbook.ts`, `apps/api/src/modules/missions/services/webinar-fulfillment-team.service.ts`, `apps/web/src/features/spaces/components/StartPlaybookModal.tsx`, `apps/web/src/features/spaces/components/MissionsView.tsx`, `apps/web/src/features/spaces/components/playbooks/meta-ads-audit.ts`, `supabase/migrations/20260722011000_meta_ads_audit_skill.sql`, `documentation/features/missions.md`, and focused tests
+
+## [2026-07-22 01:41] - [FIX]
+
+What: Linked Ads Research snapshots created from mission subtask sessions to their parent mission.
+Why: The research action only resolved mission context for mission session keys, while Blaze executes visual searches from subtask session keys, leaving every saved search with an empty `mission_ids` array and the visual report at zero.
+Impact: New research runs retain their actual ad-library snapshots in the mission report so humans can verify the visual evidence Blaze used.
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-research.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-research.service.test.ts`
