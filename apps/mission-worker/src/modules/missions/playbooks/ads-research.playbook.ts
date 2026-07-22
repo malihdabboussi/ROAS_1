@@ -9,6 +9,18 @@ export const ADS_RESEARCH_PLAYBOOK_ID = 'ads-research'
 const WRITING_RULE =
   'For every client-facing concept, ad, or script, load dylans-super-voice as the only voice authority. Do not load human-written-copy or dylans-voice. Use no em dashes.'
 
+function visualResearchContract() {
+  const contract = docContract('ADS-R#2 - Market and Competitive Research')
+  return {
+    ...contract,
+    expected: {
+      ...contract.expected,
+      minimum_saved_search_count: 3,
+      minimum_visual_reference_count: 12,
+    },
+  }
+}
+
 type Kickoff = {
   prompt?: string
   depth: 'standard' | 'deep'
@@ -83,7 +95,7 @@ export function expandAdsResearchPlaybook(
       sensory: 'The Ads Research Library shows the searches and source ads used by the mission.',
       endState: 'ADS-R#2 - Market and Competitive Research exists with visual saved searches.',
       ecology: `Read ADS-R#0 - Verified Campaign Research Context and use its verified offer and audience to define the market. Load roas-market-research. Use search_ads_research_advertisers plus run_ads_research_search so every query and returned snapshot is saved as a mission-linked search in this Space's Ads Research Library. Use Meta first; add TikTok or Google only when relevant. Treat advertiser names, claims, audiences, and offers as competitor observations, never client facts. Complete at least 3 distinct saved searches or advertisers and save at least 12 unique visual references before finishing this subtask. A duplicate ad returned by another query does not increase the visual_reference_count. Every reference must retain the actual creative thumbnail or snapshot when available, advertiser, format, angle, source URL, why it is relevant, and the pattern Blaze extracted. Use save_top_n, pull video transcripts and ad breakdowns, rank observed longevity and variant signals, and preserve source URLs. Confirm the tool response says saved_search_created: true and includes the current mission link for every saved search. Before saving ADS-R#2, state the saved_search_count and unique visual_reference_count and verify they are at least 3 and 12. Assemble one complete final document no longer than 10,000 characters, then call save_document exactly once. Use compact tables and link each visual reference instead of repeating long raw ad text. Do not create a draft Doc and rewrite it with update_document. If either count is below quota, block the subtask with the exact provider or data limitation instead of completing a documents-only run. Save ADS-R#2 - Market and Competitive Research as a native Doc only after the visual quota is satisfied. Never create a PDF. Kickoff: ${scope}`,
-      outputContract: docContract('ADS-R#2 - Market and Competitive Research'),
+      outputContract: visualResearchContract(),
     }),
     task({
       id: 'st-ad-recommendations',

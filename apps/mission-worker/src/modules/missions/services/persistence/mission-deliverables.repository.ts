@@ -1,28 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-
-export type MissionOutputContract = {
-  artifact_kind:
-    | 'agent_skill'
-    | 'document_artifact'
-    | 'presentation_artifact'
-    | 'brain_ingestion'
-    | 'ad_artifact'
-    | 'funnel_artifact'
-    | 'media_artifact'
-  required_action: string
-  required_artifact_type: string
-  expected?: Record<string, unknown>
-}
-
-export type MissionContractVerificationResult = {
-  ok: boolean
-  reason?: string
-  expected_action: string
-  expected_artifact_type: string
-  found_artifact_id?: string
-  recovery: 'corrective_run' | 'vibey_replan' | 'block_user'
-}
+import type {
+  MissionContractVerificationResult,
+  MissionOutputContract,
+} from './mission-output-contract.types'
+import { verifyMissionVisualEvidence } from './mission-visual-evidence-verifier'
 
 type DeliverableContractRow = {
   id?: string | null
@@ -97,6 +79,14 @@ export class MissionDeliverablesRepository {
     if (contract.artifact_kind === 'agent_skill') {
       return this.verifyAgentSkillContract(supabase, contract)
     }
+
+    const evidenceResult = await verifyMissionVisualEvidence(supabase, missionId, contract, {
+      ok: true,
+      expected_action: contract.required_action,
+      expected_artifact_type: contract.required_artifact_type,
+      recovery: 'corrective_run',
+    })
+    if (!evidenceResult.ok) return evidenceResult
 
     const preferredIds = [...new Set(preferredDeliverableIds.filter(Boolean))]
     const minimumCount = this.resolveMinimumCount(contract)

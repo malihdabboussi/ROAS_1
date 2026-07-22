@@ -41,3 +41,10 @@ What: Made Meta insight reporting periods and hierarchy IDs explicit across the 
 Why: The live proof run successfully read campaign results but then reused Meta's numeric campaign ID as the ROAS `campaign_id`, triggering scope mismatches; `date_preset` was also accepted by the agent but ignored by the runtime.
 Impact: Blaze now keeps workspace scope fixed, drills down with returned local row IDs, receives corrective preflight guidance for mixed IDs, and audits exact inclusive date ranges.
 Files: `apps/agent-api/src/modules/artifacts/services/artifact-legacy-meta-api.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-meta-schemas.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-preflight.ts`, generated Vibey API guidance and tests, Ads Research and Meta Ads Audit playbooks and tests, `supabase/migrations/20260722093500_meta_insights_id_contract.sql`, `documentation/features/missions.md`
+
+## [2026-07-22 03:25] - [FIX]
+
+What: Added a deterministic Ads Research output verifier that requires at least three mission-linked saved searches and 12 unique visual ad references before accepting the competitive-research document.
+Why: A research subtask could find ads through an unsaved fallback integration and complete with a document even though the visual Ads Research report had no durable evidence to render.
+Impact: Documents-only research runs now enter corrective execution with the exact missing-search or missing-visual count; successful runs are guaranteed to have renderable mission-linked evidence.
+Files: `apps/mission-worker/src/modules/missions/playbooks/ads-research.playbook.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-visual-evidence-verifier.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-output-contract.types.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverables.repository.ts`, focused tests, `documentation/features/missions.md`

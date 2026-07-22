@@ -23,11 +23,11 @@ import {
 import { MissionOpenclawGateway } from '../gateways/mission-openclaw.gateway'
 import { MissionExecBroadcastService } from '../mission-exec-broadcast.service'
 import { shouldWriteMissionExecutionLease } from '../mission-execution-lease'
-import {
-  MissionDeliverablesRepository,
-  type MissionContractVerificationResult,
-  type MissionOutputContract,
-} from '../persistence/mission-deliverables.repository'
+import { MissionDeliverablesRepository } from '../persistence/mission-deliverables.repository'
+import type {
+  MissionContractVerificationResult,
+  MissionOutputContract,
+} from '../persistence/mission-output-contract.types'
 import { MissionStateRepository } from '../persistence/mission-state.repository'
 import { SubtaskAbortRegistry } from '../subtask-abort-registry.service'
 import { MissionJsonService } from '../utils/mission-json.service'

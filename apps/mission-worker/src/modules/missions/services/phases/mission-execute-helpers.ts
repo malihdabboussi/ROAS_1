@@ -1,6 +1,6 @@
 import { ACTION_TO_DOMAIN, type Domain } from '@vibey/agent-policy'
 import type { MissionStatus } from '../../types'
-import type { MissionOutputContract } from '../persistence/mission-deliverables.repository'
+import type { MissionOutputContract } from '../persistence/mission-output-contract.types'
 
 export type MissionPreflightDomain = Domain
 
