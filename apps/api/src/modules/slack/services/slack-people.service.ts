@@ -461,6 +461,25 @@ export class SlackPeopleService {
     if (!action.target || action.target.delivery_mode !== 'active') {
       throw new ConflictException('Set this person to Active before sending')
     }
+    const additionalIds = Array.isArray(action.metadata?.additional_recipient_member_ids)
+      ? action.metadata.additional_recipient_member_ids.filter(
+          (value): value is string => typeof value === 'string',
+        )
+      : []
+    const allPeople = additionalIds.length
+      ? await this.peopleRepository.listPeople(supabase, orgId)
+      : []
+    const additionalRecipients = additionalIds.map((id) =>
+      allPeople.find((person) => person.id === id),
+    )
+    if (
+      additionalRecipients.some(
+        (person) =>
+          !person || person.relationship_kind !== 'internal' || person.delivery_mode !== 'active',
+      )
+    ) {
+      throw new ConflictException('Every group recipient must be Internal and Active')
+    }
     const integration = await this.peopleRepository.findOrgSlackIntegration(supabase, orgId)
     if (!integration) throw new ConflictException('Slack is not connected for this organization')
     const claimed = await this.peopleRepository.claimShadowActionForSend(supabase, orgId, actionId)
@@ -470,7 +489,10 @@ export class SlackPeopleService {
     try {
       channelId = await this.slackApi.openDmChannel(
         integration.access_token,
-        action.target.platform_id,
+        [
+          action.target.platform_id,
+          ...additionalRecipients.map((person) => person?.platform_id).filter(Boolean),
+        ].join(','),
       )
       if (!channelId) throw new ConflictException('Could not open a Slack conversation')
       result = await this.slackApi.postMessage(

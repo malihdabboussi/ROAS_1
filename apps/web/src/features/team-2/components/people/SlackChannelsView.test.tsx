@@ -1,11 +1,18 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchSlackChannelActivity, fetchSlackChannels } from '../../services/slack-people.service'
+import {
+  fetchSlackChannelActivity,
+  fetchSlackChannelCoverage,
+  fetchSlackChannels,
+  patchSlackChannelExclusion,
+} from '../../services/slack-people.service'
 import { SlackChannelsView } from './SlackChannelsView'
 
 vi.mock('../../services/slack-people.service', () => ({
   fetchSlackChannels: vi.fn(),
   fetchSlackChannelActivity: vi.fn(),
+  fetchSlackChannelCoverage: vi.fn(),
+  patchSlackChannelExclusion: vi.fn(),
 }))
 
 describe('SlackChannelsView', () => {
@@ -15,6 +22,21 @@ describe('SlackChannelsView', () => {
     vi.mocked(fetchSlackChannels).mockResolvedValue({
       connected: true,
       channels: [{ id: 'C1', name: 'client-alpha', is_private: false }],
+    })
+    vi.mocked(fetchSlackChannelCoverage).mockResolvedValue({
+      summary: { discovered: 1, joined: 1, observed: 1, excluded: 0, inaccessible: 0 },
+      channels: [
+        {
+          channel_id: 'C1',
+          channel_name: 'client-alpha',
+          is_private: false,
+          is_member: true,
+          is_excluded: false,
+          join_status: 'observed',
+          join_error: null,
+          last_reconciled_at: '2026-07-22T12:00:00.000Z',
+        },
+      ],
     })
     const onSelectChannel = vi.fn()
 
@@ -28,6 +50,7 @@ describe('SlackChannelsView', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: /client-alpha/i }))
     expect(onSelectChannel).toHaveBeenCalledWith('C1')
+    expect(screen.getByText('1 observed')).toBeVisible()
   })
 
   it('renders Pixel on the left and human replies on the right with thread evidence', async () => {

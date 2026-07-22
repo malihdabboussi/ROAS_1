@@ -74,6 +74,25 @@ export interface SlackChannelActivity {
   messages: SlackChannelActivityMessage[]
 }
 
+export interface SlackChannelCoverageSummary {
+  discovered: number
+  joined: number
+  observed: number
+  excluded: number
+  inaccessible: number
+}
+
+export interface SlackChannelCoverageRow {
+  channel_id: string
+  channel_name: string
+  is_private: boolean
+  is_member: boolean
+  is_excluded: boolean
+  join_status: 'discovered' | 'joined' | 'observed' | 'excluded' | 'inaccessible'
+  join_error: string | null
+  last_reconciled_at: string | null
+}
+
 export interface SlackShadowAction {
   id: string
   agent_key: string
@@ -116,6 +135,22 @@ export function fetchSlackChannelActivity(channelId: string) {
   return backendGet<SlackChannelActivity>(
     `/api/integrations/slack/people/channels/${encodeURIComponent(channelId)}/activity`,
   )
+}
+
+export function fetchSlackChannelCoverage() {
+  return backendGet<{
+    summary: SlackChannelCoverageSummary
+    channels: SlackChannelCoverageRow[]
+  }>('/api/integrations/slack/intelligence/channels/coverage')
+}
+
+export function patchSlackChannelExclusion(channelId: string, excluded: boolean) {
+  return backendPatch<{
+    summary: SlackChannelCoverageSummary
+    channels: SlackChannelCoverageRow[]
+  }>(`/api/integrations/slack/intelligence/channels/${encodeURIComponent(channelId)}/exclusion`, {
+    excluded,
+  })
 }
 
 export function patchSlackPersonIdentity(id: string, vibeyUserId: string) {
@@ -194,5 +229,12 @@ export function sendSlackShadowAction(actionId: string) {
   return backendPost<{ action: SlackShadowAction }>(
     `/api/integrations/slack/people/shadow-actions/${actionId}/send`,
     {},
+  )
+}
+
+export function trainSlackSignal(signalId: string, instruction: string, saveAsRule: boolean) {
+  return backendPost<{ actions: SlackShadowAction[]; rule: { id: string } | null }>(
+    `/api/integrations/slack/intelligence/signals/${signalId}/train`,
+    { instruction, save_as_rule: saveAsRule },
   )
 }

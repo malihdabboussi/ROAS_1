@@ -50,6 +50,9 @@ export class SlackObservationService {
     initialLookbackMinutes: number
   }): Promise<{
     channelsListed: number
+    channelsJoined: number
+    channelsExcluded: number
+    channelsInaccessible: number
     channelsReconciled: number
     historyRequests: number
     threadRequests: number
@@ -57,11 +60,6 @@ export class SlackObservationService {
     duplicatesSkipped: number
   }> {
     const available = await this.slackApi.listConversations(input.botToken)
-    const selectedChannels = available.filter(
-      (channel) =>
-        channel.is_member !== false &&
-        (input.channelIds.length === 0 || input.channelIds.includes(channel.id)),
-    )
     await this.repository.upsertChannels(
       input.supabase,
       available.map((channel) => ({
@@ -72,6 +70,60 @@ export class SlackObservationService {
         isPrivate: Boolean(channel.is_private),
         isMember: channel.is_member !== false,
       })),
+    )
+    const settings = await this.repository.listChannelSettings(input.supabase, {
+      orgId: input.orgId,
+      slackTeamId: input.slackTeamId,
+    })
+    const settingsByChannel = new Map(settings.map((setting) => [setting.channel_id, setting]))
+    let channelsJoined = 0
+    let channelsInaccessible = 0
+    for (const channel of available) {
+      const setting = settingsByChannel.get(channel.id)
+      if (
+        setting?.is_excluded ||
+        channel.is_im ||
+        channel.is_member !== false
+      ) {
+        continue
+      }
+      if (channel.is_private) {
+        channelsInaccessible += 1
+        await this.repository.recordChannelJoinOutcome(input.supabase, {
+          orgId: input.orgId,
+          slackTeamId: input.slackTeamId,
+          channelId: channel.id,
+          joined: false,
+          error: 'Private channels require an invitation in Slack',
+        })
+        continue
+      }
+      try {
+        await this.slackApi.joinConversation(input.botToken, channel.id)
+        channel.is_member = true
+        channelsJoined += 1
+        await this.repository.recordChannelJoinOutcome(input.supabase, {
+          orgId: input.orgId,
+          slackTeamId: input.slackTeamId,
+          channelId: channel.id,
+          joined: true,
+        })
+      } catch (cause) {
+        channelsInaccessible += 1
+        await this.repository.recordChannelJoinOutcome(input.supabase, {
+          orgId: input.orgId,
+          slackTeamId: input.slackTeamId,
+          channelId: channel.id,
+          joined: false,
+          error: cause instanceof Error ? cause.message : 'Slack channel could not be joined',
+        })
+      }
+    }
+    const selectedChannels = available.filter(
+      (channel) =>
+        channel.is_member !== false &&
+        !settingsByChannel.get(channel.id)?.is_excluded &&
+        (input.channelIds.length === 0 || input.channelIds.includes(channel.id)),
     )
     const cursorRows = await this.repository.listChannelCursors(input.supabase, {
       orgId: input.orgId,
@@ -147,6 +199,9 @@ export class SlackObservationService {
 
     return {
       channelsListed: available.length,
+      channelsJoined,
+      channelsExcluded: settings.filter((setting) => setting.is_excluded).length,
+      channelsInaccessible,
       channelsReconciled: channels.length,
       historyRequests,
       threadRequests,

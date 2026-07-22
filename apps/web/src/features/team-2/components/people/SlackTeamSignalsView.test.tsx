@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SlackTeamSignalsView } from './SlackTeamSignalsView'
 
 describe('SlackTeamSignalsView', () => {
+  afterEach(cleanup)
   it('shows readable source evidence for a selected signal', () => {
     render(
       <SlackTeamSignalsView
@@ -33,6 +34,8 @@ describe('SlackTeamSignalsView', () => {
         onBack={vi.fn()}
         onSelectSignal={vi.fn()}
         onReview={vi.fn()}
+        onTrain={vi.fn()}
+        onSend={vi.fn()}
       />,
     )
 
@@ -45,6 +48,49 @@ describe('SlackTeamSignalsView', () => {
     expect(screen.getByRole('link', { name: 'Open source message in Slack' })).toHaveAttribute(
       'href',
       'https://slack.com/archives/C123/p1721000000000100',
+    )
+  })
+
+  it('turns an admin instruction into a reusable internal Shadow action plan', () => {
+    const onTrain = vi.fn()
+    render(
+      <SlackTeamSignalsView
+        actions={[
+          {
+            id: 'signal-1',
+            agent_key: 'pixel',
+            target_member_id: null,
+            action_kind: 'workflow',
+            proposed_content: 'A client asked for three missing resources.',
+            rationale: 'The questions have no reply.',
+            status: 'proposed',
+            workflow_key: 'slack_team:all',
+            source_channel_id: 'C123',
+            source_message_ts: '1721000000.000100',
+            sent_at: null,
+            metadata: {},
+            created_at: '2026-07-22T09:00:00.000Z',
+          },
+        ]}
+        selectedSignalId="signal-1"
+        onBack={vi.fn()}
+        onSelectSignal={vi.fn()}
+        onReview={vi.fn()}
+        onTrain={onTrain}
+        onSend={vi.fn()}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Tell Pixel how to handle this signal'), {
+      target: { value: 'Ask Janine for the payment link and ask Nefi and Betty for the replay.' },
+    })
+    fireEvent.click(screen.getByLabelText('Save as a reusable Pixel rule'))
+    fireEvent.click(screen.getByRole('button', { name: 'Create Shadow action plan' }))
+
+    expect(onTrain).toHaveBeenCalledWith(
+      'signal-1',
+      'Ask Janine for the payment link and ask Nefi and Betty for the replay.',
+      true,
     )
   })
 })

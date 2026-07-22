@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto'
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { EmbeddingService } from '../../brain/services/embedding.service'
 import { SlackPeopleRepository } from '../../slack/repositories/slack-people.repository'
+import { SlackSignalTrainingRepository } from '../../slack/repositories/slack-signal-training.repository'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
 import { SlackObservationService } from '../../slack/services/slack-observation.service'
 import { SlackSenderResolverService } from '../../slack/services/slack-sender-resolver.service'
@@ -118,6 +119,7 @@ export class SlackTeamLoopService {
     private readonly slackTools: SlackAgentToolsService,
     private readonly gemini: EmbeddingService,
     private readonly senderResolver: SlackSenderResolverService,
+    @Optional() private readonly trainingRules?: SlackSignalTrainingRepository,
   ) {}
 
   async run(input: {
@@ -270,11 +272,21 @@ export class SlackTeamLoopService {
       }
     }
 
+    const savedRules = this.trainingRules
+      ? await this.trainingRules.listEnabledRules(input.supabase, input.orgId)
+      : []
     const analysis = await this.analyze({
       userId: input.userId,
       orgId: input.orgId,
       loopKind: input.loopKind,
-      instructions: input.instructions,
+      instructions: [
+        input.instructions,
+        savedRules.length
+          ? `Learned admin playbook:\n${savedRules.map((rule) => `- ${rule.instruction}`).join('\n')}`
+          : undefined,
+      ]
+        .filter(Boolean)
+        .join('\n'),
       messages: observed,
       people: selectedPeople,
       maxSignals: remaining,

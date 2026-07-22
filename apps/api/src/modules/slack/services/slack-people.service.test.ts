@@ -444,6 +444,31 @@ describe('SlackPeopleService', () => {
     expect(result).toEqual({ action: { id: 'action-1', status: 'sent' } })
   })
 
+  it('opens an internal group DM for an approved multi-recipient Shadow plan', async () => {
+    const { service, repository, slackApi } = createService({
+      people: [
+        {
+          id: 'betty-id',
+          platform_id: 'U2',
+          relationship_kind: 'internal',
+          delivery_mode: 'active',
+        },
+      ],
+    })
+    repository.findShadowAction.mockResolvedValue({
+      id: 'action-1',
+      status: 'approved',
+      action_kind: 'message',
+      proposed_content: 'Can you two find the replay?',
+      metadata: { additional_recipient_member_ids: ['betty-id'] },
+      target: { platform_id: 'U1', delivery_mode: 'active', relationship_kind: 'internal' },
+    })
+
+    await service.sendShadowAction({} as never, 'admin-1', 'org-1', 'action-1')
+
+    expect(slackApi.openDmChannel).toHaveBeenCalledWith('xoxb', 'U1,U2')
+  })
+
   it('records the administrator who approves a proposed action', async () => {
     const { service, repository } = createService()
 

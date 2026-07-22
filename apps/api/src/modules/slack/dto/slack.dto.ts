@@ -199,3 +199,15 @@ export const SlackShadowReviewDtoSchema = z.object({
   status: z.enum(['approved', 'dismissed']),
 })
 export type SlackShadowReviewDto = z.infer<typeof SlackShadowReviewDtoSchema>
+
+export const SlackChannelExclusionDtoSchema = z.object({
+  excluded: z.boolean(),
+  reason: z.string().trim().max(500).nullable().optional(),
+})
+export type SlackChannelExclusionDto = z.infer<typeof SlackChannelExclusionDtoSchema>
+
+export const SlackSignalTrainingDtoSchema = z.object({
+  instruction: z.string().trim().min(3).max(4000),
+  save_as_rule: z.boolean().default(false),
+})
+export type SlackSignalTrainingDto = z.infer<typeof SlackSignalTrainingDtoSchema>

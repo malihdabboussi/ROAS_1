@@ -40,6 +40,12 @@ export interface SlackApiPostMessageResponse {
   message?: Record<string, unknown>
 }
 
+export interface SlackApiJoinConversationResponse {
+  ok: boolean
+  error?: string
+  channel?: { id?: string; name?: string; is_member?: boolean }
+}
+
 export interface SlackGetUploadUrlExternalResponse {
   ok: boolean
   error?: string

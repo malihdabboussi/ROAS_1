@@ -6,8 +6,12 @@ import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { SLACK_PEOPLE_MESSAGES } from '../../config/messages.config'
 import {
   fetchSlackChannelActivity,
+  fetchSlackChannelCoverage,
   fetchSlackChannels,
+  patchSlackChannelExclusion,
   type SlackChannelActivity,
+  type SlackChannelCoverageRow,
+  type SlackChannelCoverageSummary,
   type SlackChannelSummary,
 } from '../../services/slack-people.service'
 
@@ -33,6 +37,8 @@ export function SlackChannelsView({
   onBack: () => void
 }) {
   const [channels, setChannels] = useState<SlackChannelSummary[]>([])
+  const [coverage, setCoverage] = useState<SlackChannelCoverageRow[]>([])
+  const [summary, setSummary] = useState<SlackChannelCoverageSummary | null>(null)
   const [activity, setActivity] = useState<SlackChannelActivity | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -45,9 +51,14 @@ export function SlackChannelsView({
       ? fetchSlackChannelActivity(selectedChannelId).then((result) => {
           if (!cancelled) setActivity(result)
         })
-      : fetchSlackChannels().then((result) => {
-          if (!cancelled) setChannels(result.channels)
-        })
+      : Promise.all([fetchSlackChannels(), fetchSlackChannelCoverage()]).then(
+          ([channelResult, coverageResult]) => {
+            if (cancelled) return
+            setChannels(channelResult.channels)
+            setCoverage(coverageResult.channels)
+            setSummary(coverageResult.summary)
+          },
+        )
     void request
       .catch(() => {
         if (!cancelled) {
@@ -83,35 +94,87 @@ export function SlackChannelsView({
   }
 
   if (!selectedChannelId) {
+    const joinedById = new Map(channels.map((channel) => [channel.id, channel]))
+    const rows = coverage.length
+      ? coverage
+      : channels.map((channel) => ({
+          channel_id: channel.id,
+          channel_name: channel.name,
+          is_private: channel.is_private,
+          is_member: true,
+          is_excluded: false,
+          join_status: 'joined' as const,
+          join_error: null,
+          last_reconciled_at: null,
+        }))
     return (
       <section className="surface-card border-border rounded-spacing-4 overflow-hidden border">
         <header className="border-border p-spacing-4 border-b">
           <h2 className="body-2 text-foreground font-semibold">PIXEL&apos;S SLACK CHANNELS</h2>
           <p className="body-4 text-muted-foreground mt-spacing-1">
-            These are the channels Pixel belongs to and can observe. Open one to review its
-            conversation and threads.
+            Pixel automatically joins visible public channels. Exclude channels that should stay
+            outside observation; private channels still require an invitation in Slack.
           </p>
+          {summary ? (
+            <div className="gap-spacing-2 mt-spacing-3 flex flex-wrap">
+              <span className="badge-glass badge-glass-muted body-4">
+                {summary.discovered} discovered
+              </span>
+              <span className="badge-glass badge-glass-muted body-4">{summary.joined} joined</span>
+              <span className="badge-glass badge-glass-muted body-4">
+                {summary.observed} observed
+              </span>
+              <span className="badge-glass badge-glass-muted body-4">
+                {summary.excluded} excluded
+              </span>
+              <span className="badge-glass badge-glass-muted body-4">
+                {summary.inaccessible} inaccessible
+              </span>
+            </div>
+          ) : null}
         </header>
-        {channels.length === 0 ? (
+        {rows.length === 0 ? (
           <p className="body-3 text-muted-foreground p-spacing-4">
             {SLACK_PEOPLE_MESSAGES.CHANNELS_NONE}
           </p>
         ) : (
           <div className="divide-border divide-y">
-            {channels.map((channel) => (
-              <button
-                key={channel.id}
-                type="button"
-                onClick={() => onSelectChannel(channel.id)}
-                className="hover:bg-hover-subtle p-spacing-4 gap-spacing-3 flex w-full items-center text-left transition-colors"
+            {rows.map((channel) => (
+              <div
+                key={channel.channel_id}
+                className="p-spacing-4 gap-spacing-3 flex w-full items-center"
               >
                 {channel.is_private ? (
                   <LockKeyhole className="icon-sm text-muted-foreground" />
                 ) : (
                   <Hash className="icon-sm text-muted-foreground" />
                 )}
-                <span className="body-3 text-foreground font-medium">{channel.name}</span>
-              </button>
+                <button
+                  type="button"
+                  disabled={channel.is_excluded || !joinedById.has(channel.channel_id)}
+                  onClick={() => onSelectChannel(channel.channel_id)}
+                  className="hover:text-foreground min-w-0 flex-1 text-left disabled:cursor-not-allowed"
+                >
+                  <span className="body-3 text-foreground font-medium">{channel.channel_name}</span>
+                  <span className="body-4 text-muted-foreground ml-spacing-2 capitalize">
+                    {channel.join_status}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="button-compact button-glass-neutral"
+                  onClick={() => {
+                    void patchSlackChannelExclusion(channel.channel_id, !channel.is_excluded)
+                      .then((result) => {
+                        setCoverage(result.channels)
+                        setSummary(result.summary)
+                      })
+                      .catch(() => setError(SLACK_PEOPLE_MESSAGES.CHANNEL_EXCLUSION_ERROR))
+                  }}
+                >
+                  {channel.is_excluded ? 'Observe' : 'Exclude'}
+                </button>
+              </div>
             ))}
           </div>
         )}

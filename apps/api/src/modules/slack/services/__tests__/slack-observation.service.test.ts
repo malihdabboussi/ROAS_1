@@ -26,12 +26,14 @@ describe('SlackObservationService', () => {
   })
   it('fetches each selected channel once, expands threads, and advances exact cursors', async () => {
     const repository = {
+      listChannelSettings: vi.fn().mockResolvedValue([]),
       listChannelCursors: vi
         .fn()
         .mockResolvedValue([{ channel_id: 'C1', last_message_ts: '100.000001' }]),
       upsertChannels: vi.fn().mockResolvedValue(undefined),
       upsertEvents: vi.fn().mockResolvedValue({ inserted: 3, duplicates: 0 }),
       advanceChannelCursor: vi.fn().mockResolvedValue(undefined),
+      recordChannelJoinOutcome: vi.fn().mockResolvedValue(undefined),
     }
     const slackApi = {
       listConversations: vi.fn().mockResolvedValue([
@@ -127,6 +129,7 @@ describe('SlackObservationService', () => {
 
   it('uses webhooks as the primary path and skips channels reconciled within the last hour', async () => {
     const repository = {
+      listChannelSettings: vi.fn().mockResolvedValue([]),
       listChannelCursors: vi.fn().mockResolvedValue([
         {
           channel_id: 'C1',
@@ -135,6 +138,7 @@ describe('SlackObservationService', () => {
         },
       ]),
       upsertChannels: vi.fn(),
+      recordChannelJoinOutcome: vi.fn(),
     }
     const slackApi = {
       listConversations: vi
@@ -155,5 +159,55 @@ describe('SlackObservationService', () => {
 
     expect(slackApi.getChannelHistorySince).not.toHaveBeenCalled()
     expect(result).toMatchObject({ channelsListed: 1, channelsReconciled: 0, historyRequests: 0 })
+  })
+
+  it('joins public channels, excludes configured channels, and reconciles joined history', async () => {
+    const repository = {
+      upsertChannels: vi.fn().mockResolvedValue(undefined),
+      listChannelSettings: vi
+        .fn()
+        .mockResolvedValue([{ channel_id: 'C2', is_excluded: true, last_reconciled_at: null }]),
+      listChannelCursors: vi.fn().mockResolvedValue([]),
+      recordChannelJoinOutcome: vi.fn().mockResolvedValue(undefined),
+      upsertEvents: vi.fn().mockResolvedValue({ inserted: 1, duplicates: 0 }),
+      advanceChannelCursor: vi.fn().mockResolvedValue(undefined),
+      markChannelReconciled: vi.fn().mockResolvedValue(undefined),
+    }
+    const slackApi = {
+      listConversations: vi.fn().mockResolvedValue([
+        { id: 'C1', name: 'client-alpha', is_member: false, is_private: false },
+        { id: 'C2', name: 'ignore-me', is_member: false, is_private: false },
+        { id: 'C3', name: 'private-client', is_member: false, is_private: true },
+      ]),
+      joinConversation: vi.fn().mockResolvedValue(undefined),
+      getChannelHistorySince: vi
+        .fn()
+        .mockResolvedValue([{ ts: '200.000001', user: 'U1', text: 'Historical context' }]),
+      conversationsRepliesAll: vi.fn(),
+    }
+    const service = new SlackObservationService(repository as never, slackApi as never)
+
+    const result = await service.reconcile({
+      supabase: {} as never,
+      orgId: 'org-1',
+      slackTeamId: 'T1',
+      botToken: 'xoxb-test',
+      channelIds: [],
+      initialLookbackMinutes: 30,
+    })
+
+    expect(slackApi.joinConversation).toHaveBeenCalledTimes(1)
+    expect(slackApi.joinConversation).toHaveBeenCalledWith('xoxb-test', 'C1')
+    expect(slackApi.getChannelHistorySince).toHaveBeenCalledWith(
+      'xoxb-test',
+      'C1',
+      expect.any(String),
+    )
+    expect(result).toMatchObject({
+      channelsJoined: 1,
+      channelsExcluded: 1,
+      channelsInaccessible: 1,
+      channelsReconciled: 1,
+    })
   })
 })

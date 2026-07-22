@@ -2,14 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import {
-  CircleUserRound,
-  MessageSquareText,
-  MessagesSquare,
-  RefreshCw,
-  UserRoundCheck,
-  UsersRound,
-} from 'lucide-react'
+import { CircleUserRound, RefreshCw, UserRoundCheck, UsersRound } from 'lucide-react'
 import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { SLACK_PEOPLE_MESSAGES } from '../../config/messages.config'
@@ -21,9 +14,11 @@ import type {
 } from '../../services/slack-people.service'
 import { SlackChannelsView } from './SlackChannelsView'
 import { SlackPeopleRoster } from './SlackPeopleRoster'
+import { SlackPeopleViewsNav, type SlackPeopleViewKey } from './SlackPeopleViewsNav'
 import { SlackPersonScreen } from './SlackPersonScreen'
 import { SlackShadowConversationView } from './SlackShadowConversationView'
 import { SlackShadowSummary } from './SlackShadowSummary'
+import { SlackTeamSignalsView } from './SlackTeamSignalsView'
 
 export function SlackPeopleView() {
   const router = useRouter()
@@ -31,6 +26,8 @@ export function SlackPeopleView() {
   const selectedPersonId = searchParams.get('person')
   const showShadowInbox = searchParams.get('peopleView') === 'shadow'
   const showChannels = searchParams.get('peopleView') === 'channels'
+  const showSignals = searchParams.get('peopleView') === 'signals'
+  const selectedSignalId = searchParams.get('signal')
   const selectedChannelId = searchParams.get('slackChannel')
   const [activity, setActivity] = useState<SlackPersonActivity | null>(null)
   const [activityLoading, setActivityLoading] = useState(false)
@@ -50,6 +47,7 @@ export function SlackPeopleView() {
     createProposal,
     reviewAction,
     sendAction,
+    trainSignal,
     refresh,
   } = useSlackPeople()
   const peopleById = new Map(people.map((person) => [person.id, person]))
@@ -94,6 +92,25 @@ export function SlackPeopleView() {
       `/team?section=people&peopleView=channels&slackChannel=${encodeURIComponent(channelId)}`,
       { scroll: false },
     )
+  const openSignals = () =>
+    router.push('/team?section=people&peopleView=signals', { scroll: false })
+  const openSignal = (signalId: string) =>
+    router.push(`/team?section=people&peopleView=signals&signal=${encodeURIComponent(signalId)}`, {
+      scroll: false,
+    })
+  const activeView: SlackPeopleViewKey = showChannels
+    ? 'channels'
+    : showSignals
+      ? 'signals'
+      : showShadowInbox
+        ? 'shadow'
+        : 'people'
+  const openView = (view: SlackPeopleViewKey) => {
+    if (view === 'channels') openChannels()
+    else if (view === 'signals') openSignals()
+    else if (view === 'shadow') openShadowInbox()
+    else openPeople()
+  }
 
   const classifyPerson = (id: string, kind: SlackRelationshipKind) => {
     void updateRelationshipKind(id, kind).catch(() =>
@@ -155,7 +172,7 @@ export function SlackPeopleView() {
             : 'gap-spacing-6 mx-auto flex w-full max-w-6xl flex-col'
         }
       >
-        {!selectedPersonId && !showShadowInbox && !showChannels ? (
+        {!selectedPersonId && !showShadowInbox && !showChannels && !showSignals ? (
           <header className="gap-spacing-4 flex flex-wrap items-start justify-between">
             <div>
               <p className="eyebrow text-muted-foreground">Managed team intelligence</p>
@@ -185,49 +202,7 @@ export function SlackPeopleView() {
           </div>
         ) : null}
 
-        {!selectedPersonId ? (
-          <nav
-            aria-label="People views"
-            className="surface-card border-border p-spacing-1 rounded-spacing-3 flex w-fit border"
-          >
-            <button
-              type="button"
-              onClick={openPeople}
-              aria-current={!showShadowInbox && !showChannels ? 'page' : undefined}
-              className={
-                !showShadowInbox && !showChannels
-                  ? 'button-compact button-glass-neutral bg-secondary'
-                  : 'button-compact button-glass-neutral'
-              }
-            >
-              <UsersRound className="icon-xs" /> People
-            </button>
-            <button
-              type="button"
-              onClick={openShadowInbox}
-              aria-current={showShadowInbox ? 'page' : undefined}
-              className={
-                showShadowInbox
-                  ? 'button-compact button-glass-neutral bg-secondary'
-                  : 'button-compact button-glass-neutral'
-              }
-            >
-              <MessageSquareText className="icon-xs" /> Conversations
-            </button>
-            <button
-              type="button"
-              onClick={openChannels}
-              aria-current={showChannels ? 'page' : undefined}
-              className={
-                showChannels
-                  ? 'button-compact button-glass-neutral bg-secondary'
-                  : 'button-compact button-glass-neutral'
-              }
-            >
-              <MessagesSquare className="icon-xs" /> Channels
-            </button>
-          </nav>
-        ) : null}
+        {!selectedPersonId ? <SlackPeopleViewsNav active={activeView} onChange={openView} /> : null}
 
         {!connected ? (
           <div className="surface-card border-border p-spacing-6 rounded-spacing-4 border">
@@ -306,6 +281,20 @@ export function SlackPeopleView() {
                 selectedChannelId={selectedChannelId}
                 onSelectChannel={openChannel}
                 onBack={openChannels}
+              />
+            ) : showSignals ? (
+              <SlackTeamSignalsView
+                actions={actions}
+                selectedSignalId={selectedSignalId}
+                onBack={openPeople}
+                onSelectSignal={openSignal}
+                onReview={reviewActionWithToast}
+                onSend={sendActionWithToast}
+                onTrain={(signalId, instruction, saveAsRule) => {
+                  void trainSignal(signalId, instruction, saveAsRule)
+                    .then(() => toast.success(SLACK_PEOPLE_MESSAGES.SIGNAL_TRAIN_SUCCESS))
+                    .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.SIGNAL_TRAIN_ERROR))
+                }}
               />
             ) : showShadowInbox ? (
               <SlackShadowConversationView

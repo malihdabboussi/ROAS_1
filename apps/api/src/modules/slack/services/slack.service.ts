@@ -190,6 +190,7 @@ export class SlackService extends SlackEventsBase {
       'bookmarks:read',
       'bookmarks:write',
       'channels:history',
+      'channels:join',
       'channels:read',
       'chat:write',
       'chat:write.public',

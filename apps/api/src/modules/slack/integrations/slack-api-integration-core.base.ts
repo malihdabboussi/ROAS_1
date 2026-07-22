@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'crypto'
 import { Logger } from '@nestjs/common'
 import type {
+  SlackApiJoinConversationResponse,
   SlackApiListConversationsResponse,
   SlackApiPostMessageResponse,
   SlackBlock,
@@ -111,6 +112,19 @@ export abstract class SlackApiIntegrationCoreBase {
       cursor = json.response_metadata?.next_cursor || undefined
     } while (cursor)
     return members
+  }
+
+  async joinConversation(botToken: string, channelId: string): Promise<void> {
+    const res = await fetch(`${SLACK_API_BASE}/conversations.join`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${botToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ channel: channelId }),
+    })
+    const json = (await res.json()) as SlackApiJoinConversationResponse
+    if (!json.ok) throwSlackError(json.error, 'Slack conversations.join failed')
   }
 
   async postMessage(

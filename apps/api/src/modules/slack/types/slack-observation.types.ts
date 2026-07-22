@@ -30,3 +30,13 @@ export type SlackObservationCursor = {
   last_message_ts: string | null
   last_reconciled_at: string | null
 }
+
+export type SlackObservationChannelSetting = SlackObservationCursor & {
+  channel_name: string
+  is_private: boolean
+  is_member: boolean
+  is_excluded: boolean
+  exclusion_reason: string | null
+  join_status: 'discovered' | 'joined' | 'observed' | 'excluded' | 'inaccessible'
+  join_error: string | null
+}

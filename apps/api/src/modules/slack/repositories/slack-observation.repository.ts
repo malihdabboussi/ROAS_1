@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
+  SlackObservationChannelSetting,
   SlackObservationCursor,
   SlackObservationEventInput,
   SlackObservationMessage,
@@ -8,6 +9,22 @@ import type {
 
 @Injectable()
 export class SlackObservationRepository {
+  async listChannelSettings(
+    supabase: SupabaseClient,
+    input: { orgId: string; slackTeamId: string },
+  ): Promise<SlackObservationChannelSetting[]> {
+    const { data, error } = await supabase
+      .from('slack_observation_channels')
+      .select(
+        'channel_id, channel_name, is_private, is_member, is_excluded, exclusion_reason, join_status, join_error, last_message_ts, last_reconciled_at',
+      )
+      .eq('org_id', input.orgId)
+      .eq('slack_team_id', input.slackTeamId)
+      .order('channel_name', { ascending: true })
+    if (error) throw new Error(`Failed to list Slack channel settings: ${error.message}`)
+    return (data ?? []) as SlackObservationChannelSetting[]
+  }
+
   async findWorkspaceBySlackTeamId(
     supabase: SupabaseClient,
     slackTeamId: string,
@@ -122,11 +139,52 @@ export class SlackObservationRepository {
   ): Promise<void> {
     const { error } = await supabase
       .from('slack_observation_channels')
-      .update({ last_reconciled_at: new Date().toISOString() })
+      .update({ last_reconciled_at: new Date().toISOString(), join_status: 'observed' })
       .eq('org_id', input.orgId)
       .eq('slack_team_id', input.slackTeamId)
       .eq('channel_id', input.channelId)
     if (error) throw new Error(`Failed to mark Slack channel reconciled: ${error.message}`)
+  }
+
+  async updateChannelExclusion(
+    supabase: SupabaseClient,
+    input: { orgId: string; channelId: string; excluded: boolean; reason?: string | null },
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('slack_observation_channels')
+      .update({
+        is_excluded: input.excluded,
+        exclusion_reason: input.excluded ? (input.reason ?? 'Excluded by an administrator') : null,
+        join_status: input.excluded ? 'excluded' : 'discovered',
+        join_error: null,
+      })
+      .eq('org_id', input.orgId)
+      .eq('channel_id', input.channelId)
+    if (error) throw new Error(`Failed to update Slack channel exclusion: ${error.message}`)
+  }
+
+  async recordChannelJoinOutcome(
+    supabase: SupabaseClient,
+    input: {
+      orgId: string
+      slackTeamId: string
+      channelId: string
+      joined: boolean
+      error?: string | null
+    },
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('slack_observation_channels')
+      .update({
+        is_member: input.joined,
+        join_status: input.joined ? 'joined' : 'inaccessible',
+        join_error: input.error ?? null,
+        last_join_attempt_at: new Date().toISOString(),
+      })
+      .eq('org_id', input.orgId)
+      .eq('slack_team_id', input.slackTeamId)
+      .eq('channel_id', input.channelId)
+    if (error) throw new Error(`Failed to store Slack join outcome: ${error.message}`)
   }
 
   async listEventsSince(

@@ -9,6 +9,7 @@ import {
   SlackBrainMappingController,
   SlackBrainSettingsController,
 } from './controllers/slack-brain-mapping.controller'
+import { SlackIntelligenceAdminController } from './controllers/slack-intelligence-admin.controller'
 import { SlackOAuthController } from './controllers/slack-oauth.controller'
 import { SlackPeopleController } from './controllers/slack-people.controller'
 import { SlackWebhookController } from './controllers/slack-webhook.controller'
@@ -20,12 +21,15 @@ import { SlackPeopleBrainRepository } from './repositories/slack-people-brain.re
 import { SlackPeopleIndexRepository } from './repositories/slack-people-index.repository'
 import { SlackPeopleRepository } from './repositories/slack-people.repository'
 import { SlackRuntimeRepository } from './repositories/slack-runtime.repository'
+import { SlackSignalTrainingRepository } from './repositories/slack-signal-training.repository'
 import { SlackRepository } from './repositories/slack.repository'
 import { SlackAgentToolsService } from './services/slack-agent-tools.service'
 import { SlackBrainMappingService } from './services/slack-brain-mapping.service'
+import { SlackChannelCoverageService } from './services/slack-channel-coverage.service'
 import { SlackObservationService } from './services/slack-observation.service'
 import { SlackPeopleService } from './services/slack-people.service'
 import { SlackSenderResolverService } from './services/slack-sender-resolver.service'
+import { SlackSignalTrainingService } from './services/slack-signal-training.service'
 import { SlackService } from './services/slack.service'
 
 @Module({
@@ -39,6 +43,7 @@ import { SlackService } from './services/slack.service'
     SlackBrainMappingController,
     SlackBrainSettingsController,
     SlackPeopleController,
+    SlackIntelligenceAdminController,
   ],
   providers: [
     SlackService,
@@ -46,6 +51,8 @@ import { SlackService } from './services/slack.service'
     SlackBrainMappingService,
     SlackObservationService,
     SlackPeopleService,
+    SlackChannelCoverageService,
+    SlackSignalTrainingService,
     SlackSenderResolverService,
     SlackRepository,
     SlackRuntimeRepository,
@@ -54,6 +61,7 @@ import { SlackService } from './services/slack.service'
     SlackPeopleIndexRepository,
     SlackPeopleRepository,
     SlackPeopleBrainRepository,
+    SlackSignalTrainingRepository,
     SlackApiIntegration,
   ],
   exports: [
@@ -67,6 +75,7 @@ import { SlackService } from './services/slack.service'
     SlackBrainMappingRepository,
     SlackObservationRepository,
     SlackPeopleRepository,
+    SlackSignalTrainingRepository,
     SlackApiIntegration,
   ],
 })

@@ -16,6 +16,7 @@ import {
   refreshSlackPeople,
   reviewSlackShadowAction,
   sendSlackShadowAction,
+  trainSlackSignal,
   type SlackDeliveryMode,
   type SlackDiscoveredPerson,
   type SlackPortalUser,
@@ -163,6 +164,20 @@ export function useSlackPeople() {
     )
   }, [])
 
+  const trainSignal = useCallback(
+    async (signalId: string, instruction: string, saveAsRule: boolean) => {
+      const result = await trainSlackSignal(signalId, instruction, saveAsRule)
+      setActions((current) => [
+        ...result.actions,
+        ...current.map((action) =>
+          action.id === signalId ? { ...action, status: 'approved' as const } : action,
+        ),
+      ])
+      return result
+    },
+    [],
+  )
+
   return {
     connected,
     people,
@@ -180,6 +195,7 @@ export function useSlackPeople() {
     createProposal,
     reviewAction,
     sendAction,
+    trainSignal,
     reload,
     refresh,
   }

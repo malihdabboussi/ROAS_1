@@ -15,3 +15,11 @@ export function slackMrkdwnToMarkdown(value: string): string {
     .replace(/(^|\s)\*([^*\n]+)\*(?=\s|$|[.,!?;:])/g, '$1**$2**')
     .replace(/:([a-z0-9_+-]+):/g, (match, name: string) => SLACK_EMOJI[name] ?? match)
 }
+
+export function slackMrkdwnToPlainPreview(value: string): string {
+  return slackMrkdwnToMarkdown(value)
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[*_~`>#]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}

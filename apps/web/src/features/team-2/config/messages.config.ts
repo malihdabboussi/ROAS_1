@@ -54,6 +54,10 @@ export const SLACK_PEOPLE_MESSAGES = {
   SIGNAL_EVIDENCE_HIDE: 'Hide source evidence',
   SIGNAL_EVIDENCE_OLDER: 'The source text was not saved with this older signal.',
   SIGNAL_EVIDENCE_OPEN_SLACK: 'Open source message in Slack',
+  SIGNAL_TRAIN_SUCCESS: 'Shadow action plan created. Nothing was sent.',
+  SIGNAL_TRAIN_ERROR: "Pixel couldn't turn that instruction into an internal action plan.",
+  CHANNEL_EXCLUSION_SUCCESS: 'Slack channel coverage updated.',
+  CHANNEL_EXCLUSION_ERROR: "Pixel couldn't update that channel setting.",
   HOW_IT_WORKS: [
     {
       title: '1. Pick a person',

@@ -13,6 +13,8 @@ interface SlackTeamSignalsViewProps {
   onBack: () => void
   onSelectSignal: (signalId: string) => void
   onReview: (id: string, status: 'approved' | 'dismissed') => void
+  onTrain: (signalId: string, instruction: string, saveAsRule: boolean) => void
+  onSend: (id: string) => void
 }
 
 function formatListTime(timestamp: string): string {
@@ -38,11 +40,18 @@ export function SlackTeamSignalsView({
   onBack,
   onSelectSignal,
   onReview,
+  onTrain,
+  onSend,
 }: SlackTeamSignalsViewProps) {
   const signals = useMemo(() => filterTeamSignals(actions), [actions])
   const selected = signals.find((signal) => signal.id === selectedSignalId) ?? null
   const evidence = selected ? slackSignalEvidence(selected) : null
   const [expandedEvidence, setExpandedEvidence] = useState(false)
+  const [instruction, setInstruction] = useState('')
+  const [saveAsRule, setSaveAsRule] = useState(false)
+  const actionPlan = selected
+    ? actions.filter((action) => action.metadata?.parent_signal_id === selected.id)
+    : []
 
   return (
     <div className="gap-spacing-3 flex min-h-0 flex-1 flex-col">
@@ -59,8 +68,8 @@ export function SlackTeamSignalsView({
             <p className="eyebrow text-muted-foreground">Channel-level findings</p>
             <h1 className="title-h4 text-foreground mt-spacing-1">SIGNALS</h1>
             <p className="body-3 text-muted-foreground mt-spacing-2 max-w-2xl">
-              Workflow and risk findings that are not assigned to one person. Select a signal to
-              review, then approve or dismiss.
+              Review Pixel&apos;s evidence, teach it how your team should respond, and create an
+              internal Shadow action plan. Training never sends a message.
             </p>
           </header>
         </div>
@@ -217,29 +226,102 @@ export function SlackTeamSignalsView({
                   </div>
                 ) : null}
               </div>
+              <section className="surface-card border-border p-spacing-3 rounded-spacing-3 border">
+                <label
+                  htmlFor="slack-signal-instruction"
+                  className="body-3 text-foreground font-medium"
+                >
+                  Tell Pixel how to handle this signal
+                </label>
+                <textarea
+                  id="slack-signal-instruction"
+                  value={instruction}
+                  rows={4}
+                  onChange={(event) => setInstruction(event.target.value)}
+                  placeholder="Example: Ask Janine for payment details, Nefi and Betty for the replay, and Nate for the book context."
+                  className="input-glass body-3 mt-spacing-2 w-full"
+                />
+                <label className="body-4 text-muted-foreground gap-spacing-2 mt-spacing-2 flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={saveAsRule}
+                    onChange={(event) => setSaveAsRule(event.target.checked)}
+                  />
+                  Save as a reusable Pixel rule
+                </label>
+                <button
+                  type="button"
+                  disabled={instruction.trim().length < 3}
+                  onClick={() => onTrain(selected.id, instruction.trim(), saveAsRule)}
+                  className="button-compact button-glass-accent mt-spacing-3"
+                >
+                  Create Shadow action plan
+                </button>
+              </section>
+              {actionPlan.length > 0 ? (
+                <section className="gap-spacing-2 flex flex-col">
+                  <h4 className="body-2 text-foreground font-semibold">Internal Shadow plan</h4>
+                  {actionPlan.map((action) => {
+                    const recipients = Array.isArray(action.metadata?.recipient_names)
+                      ? action.metadata.recipient_names.filter(
+                          (name): name is string => typeof name === 'string',
+                        )
+                      : []
+                    return (
+                      <article
+                        key={action.id}
+                        className="surface-card border-border p-spacing-3 rounded-spacing-3 border"
+                      >
+                        <p className="body-4 text-muted-foreground">
+                          To {recipients.join(', ') || 'internal teammate'} · {action.status}
+                        </p>
+                        <p className="body-3 text-foreground mt-spacing-1 whitespace-pre-wrap">
+                          {action.proposed_content}
+                        </p>
+                        {action.status === 'proposed' ? (
+                          <div className="gap-spacing-2 mt-spacing-2 flex">
+                            <button
+                              type="button"
+                              className="button-compact button-glass-accent"
+                              onClick={() => onReview(action.id, 'approved')}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              className="button-compact button-glass-neutral"
+                              onClick={() => onReview(action.id, 'dismissed')}
+                            >
+                              Dismiss
+                            </button>
+                          </div>
+                        ) : action.status === 'approved' ? (
+                          <button
+                            type="button"
+                            className="button-compact button-glass-accent mt-spacing-2"
+                            onClick={() => onSend(action.id)}
+                          >
+                            Send now
+                          </button>
+                        ) : null}
+                      </article>
+                    )
+                  })}
+                </section>
+              ) : null}
               <div className="gap-spacing-2 mt-auto flex flex-wrap items-center">
                 <span className="badge-glass badge-glass-muted body-4 capitalize">
                   {selected.status}
                 </span>
                 {selected.status === 'proposed' ? (
-                  <>
-                    <button
-                      type="button"
-                      aria-label="Approve team signal"
-                      className="button-compact button-glass-accent"
-                      onClick={() => onReview(selected.id, 'approved')}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Dismiss team signal"
-                      className="button-compact button-glass-neutral"
-                      onClick={() => onReview(selected.id, 'dismissed')}
-                    >
-                      Dismiss
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    aria-label="Dismiss team signal"
+                    className="button-compact button-glass-neutral"
+                    onClick={() => onReview(selected.id, 'dismissed')}
+                  >
+                    Dismiss
+                  </button>
                 ) : null}
               </div>
             </div>
