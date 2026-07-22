@@ -175,3 +175,10 @@ What: Landed Team Agenda (`scope=team`) onto the same branch as the Fathom share
 Why: Clean `main` lacked Team Agenda (archive/CLI only); deploying Fathom alone would wipe Agenda Team on `api.roas.io`.
 Impact: One production deploy restores both Home Team Agenda and Personal Meetings auto-ingest for shared-team recordings.
 Files: `integrations-calendar-team.service.ts`, calendar DTO/service/module, AgendaCard*, `fathom-webhook.service.ts`
+
+## [2026-07-22 13:36] - [OPS]
+
+What: Deployed combined Fathom shared-team ingest + Team Agenda to production `roas-api` (`dpl_Gfx52gqMb4ZWqp3SVLG17VNrnbSj` → api.roas.io) from clean `03cbe1ea`. `roas-web` already READY on the Team Agenda UI commit.
+Why: GitHub gitSource deploys for roas-api were being canceled; clean CLI archive deploy was required after fixing the Team Agenda TS2353 build break.
+Impact: Hard-refresh Home Agenda Team + next Nate/Nefi-hosted Fathom call should auto-land in Personal Meetings.
+Files: Vercel Production `roas-api` / `roas-web`
