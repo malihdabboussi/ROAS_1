@@ -264,6 +264,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-22: Made corrective execution remove only the failed contract action and stale partial output from its checkpoint so agents can replace rejected artifacts without repeating valid reads or research.
 - 2026-07-22: Added a dedicated Meta Ads Audit & Optimization playbook, native-to-Composio Meta routing, explicit human-gated mutations, post-change verification, and strict unique visual evidence plus single-save assembly for Ads Research.
 - 2026-07-22: Made background mission and subtask execution mint a short-lived user session for native Meta calls so connected accounts work outside interactive chat.
 - 2026-07-22: Clarified and preflighted Meta insight hierarchy IDs and made reporting-period presets resolve to exact dates.

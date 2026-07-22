@@ -38,6 +38,7 @@ import {
   evaluateSubtaskOutputAlignment,
   extractToolDeliverableReceipt,
   normalizeOutputContract,
+  prepareExecutionStateForContractCorrection,
   resolveMissionStatusWhileSubtaskRuns,
   type MissionPreflightDomain,
 } from './mission-execute-helpers'
@@ -653,6 +654,7 @@ export class MissionExecutePhaseService {
             assignedAgent,
             parsedOutput,
             contractVerification,
+            baseState,
           )
         }
         parsedOutput = {
@@ -2093,6 +2095,7 @@ export class MissionExecutePhaseService {
     assignedAgent: AgentKey,
     parsedOutput: Record<string, unknown>,
     contractVerification: MissionContractVerificationResult,
+    executionState: Record<string, unknown>,
   ): Promise<MissionJobResult> {
     const correctionAttempts = Number(subtask.correction_attempts ?? 0)
     const canCorrect =
@@ -2102,6 +2105,15 @@ export class MissionExecutePhaseService {
     const feedback = `Contract verification failed: ${
       contractVerification.reason ?? 'required output was not created'
     }`
+    const outputContract = normalizeOutputContract(subtask.output_contract)
+    const correctedExecutionState =
+      canCorrect && outputContract
+        ? prepareExecutionStateForContractCorrection(
+            executionState,
+            outputContract.required_action,
+            contractVerification,
+          )
+        : executionState
 
     await supabase
       .from('mission_subtasks')
@@ -2115,6 +2127,7 @@ export class MissionExecutePhaseService {
         contract_status: 'failed',
         contract_verification: contractVerification,
         correction_attempts: correctionAttempts + 1,
+        execution_state: correctedExecutionState,
         updated_at: new Date().toISOString(),
       })
       .eq('id', subtaskId)

@@ -1,6 +1,9 @@
 import { ACTION_TO_DOMAIN, type Domain } from '@vibey/agent-policy'
 import type { MissionStatus } from '../../types'
-import type { MissionOutputContract } from '../persistence/mission-output-contract.types'
+import type {
+  MissionContractVerificationResult,
+  MissionOutputContract,
+} from '../persistence/mission-output-contract.types'
 
 export type MissionPreflightDomain = Domain
 
@@ -99,6 +102,36 @@ export function normalizeOutputContract(value: unknown): MissionOutputContract |
       record.expected && typeof record.expected === 'object' && !Array.isArray(record.expected)
         ? (record.expected as Record<string, unknown>)
         : undefined,
+  }
+}
+
+export function prepareExecutionStateForContractCorrection(
+  executionState: unknown,
+  requiredAction: string,
+  verification: MissionContractVerificationResult,
+): Record<string, unknown> {
+  const state =
+    executionState && typeof executionState === 'object' && !Array.isArray(executionState)
+      ? (executionState as Record<string, unknown>)
+      : {}
+  const completedActions = Array.isArray(state.completed_actions)
+    ? (state.completed_actions as Array<Record<string, unknown>>)
+    : []
+  const retainedActions = completedActions.filter((entry) => {
+    const action = typeof entry.action === 'string' ? entry.action : ''
+    const toolAction = typeof entry.toolAction === 'string' ? entry.toolAction : ''
+    return action !== requiredAction && toolAction !== requiredAction
+  })
+  const { partial_output: _partialOutput, current_tool: _currentTool, ...rest } = state
+
+  return {
+    ...rest,
+    completed_actions: retainedActions,
+    execution_status: 'pending_correction',
+    contract_correction: {
+      required_action: requiredAction,
+      reason: verification.reason,
+    },
   }
 }
 

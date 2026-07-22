@@ -62,3 +62,10 @@ What: Added a deterministic finished-document check that rejects Ads Research re
 Why: The live production run loaded Dylan Super Voice and claimed compliance, but the recommendation Doc still contained 95 em dashes and the script Doc contained 44.
 Impact: Client-facing Ads Research copy now remains in corrective execution until its final native Doc contains zero em dashes.
 Files: `apps/mission-worker/src/modules/missions/playbooks/ads-research.playbook.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-document-content-verifier.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverables.repository.ts`, focused tests, `documentation/features/missions.md`
+
+## [2026-07-22 04:06] - [FIX]
+
+What: Removed the failed contract action and stale partial output from a subtask checkpoint before its corrective execution while retaining completed research and read actions.
+Why: A rejected Ads Research Doc was correctly detected, but the retry prompt still classified the invalid `save_document` call as completed and instructed Blaze not to replace it.
+Impact: Contract corrections can now rewrite the rejected artifact and preserve valid upstream work instead of looping on an invalid deliverable.
+Files: `apps/mission-worker/src/modules/missions/services/phases/mission-execute-helpers.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`, focused tests, `documentation/features/missions.md`
