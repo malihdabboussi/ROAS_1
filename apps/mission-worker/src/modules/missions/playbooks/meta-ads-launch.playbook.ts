@@ -8,6 +8,14 @@ export const META_ADS_LAUNCH_PLAYBOOK_ID = 'meta-ads-launch'
 const WRITING =
   'CLIENT WRITING RULE: Load dylans-super-voice as the only voice authority. Do not load human-written-copy or dylans-voice. Use no em dashes.'
 
+function dylanDocContract(title: string) {
+  const contract = docContract(title)
+  return {
+    ...contract,
+    expected: { ...contract.expected, forbid_em_dash: true },
+  }
+}
+
 export function expandMetaAdsLaunchPlaybook(
   input: MissionPlaybookExpandInput,
 ): MissionPlaybookPlanResult {
@@ -30,7 +38,7 @@ export function expandMetaAdsLaunchPlaybook(
       sensory: 'Every ad maps copy, creative, destination, audience, budget, and source.',
       endState: 'ADS#1 - Meta Launch Manifest exists as a native editable Doc.',
       ecology: `Load roas-meta-ads-launch. Review Meta Ads, Media Plan, Docs, Funnels, and supplied assets. PageGrader context is read-only discovery data, never a credential. Do not write copy or design creative. Assign missing copy to Ivy and missing design to Lux. Save ADS#1 - Meta Launch Manifest as a native Doc. Never create a PDF. Kickoff: ${raw}. ${WRITING}`,
-      outputContract: docContract('ADS#1 - Meta Launch Manifest'),
+      outputContract: dylanDocContract('ADS#1 - Meta Launch Manifest'),
     }),
     task({
       id: 'st-gate-launch-approval',
@@ -55,7 +63,7 @@ export function expandMetaAdsLaunchPlaybook(
       sensory: 'The report maps each asset to returned Meta IDs and PAUSED status.',
       endState: 'ADS#2 - Paused Meta Build Report exists as a native editable Doc.',
       ecology: `Load roas-meta-ads-launch. Use only Gate 1 approved settings. Call check_meta_connection. For native Meta, create campaigns, ad sets, and ads through Vibey in PAUSED state. If native Meta reports a missing token, call get_integration for Meta. When it confirms connected Composio Meta, use only the exact campaign, ad-set, creative, and ad creation action slugs returned by get_integration through use_integration, with PAUSED status in every supported object. If neither route can prove PAUSED creation, block without creating partial live objects. Never activate delivery. Verify returned IDs and re-read statuses. Save ADS#2 - Paused Meta Build Report with review links. Never create a PDF. ${WRITING}`,
-      outputContract: docContract('ADS#2 - Paused Meta Build Report'),
+      outputContract: dylanDocContract('ADS#2 - Paused Meta Build Report'),
     }),
     task({
       id: 'st-gate-activation',

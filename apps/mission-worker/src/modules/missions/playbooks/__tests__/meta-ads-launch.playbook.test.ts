@@ -32,6 +32,8 @@ describe('meta-ads-launch playbook', () => {
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/get_integration/)
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/Composio/)
     expect(plan?.subtasks[3]?.intent.ecology).toMatch(/Activate manually/i)
+    expect(plan?.subtasks[0]?.outputContract?.expected?.forbid_em_dash).toBe(true)
+    expect(plan?.subtasks[2]?.outputContract?.expected?.forbid_em_dash).toBe(true)
     expect(plan?.outOfScope).toContain('Creative design or copywriting')
     expect(plan?.outOfScope).toContain('PDF deliverables')
   })

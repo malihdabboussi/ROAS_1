@@ -69,3 +69,10 @@ What: Removed the failed contract action and stale partial output from a subtask
 Why: A rejected Ads Research Doc was correctly detected, but the retry prompt still classified the invalid `save_document` call as completed and instructed Blaze not to replace it.
 Impact: Contract corrections can now rewrite the rejected artifact and preserve valid upstream work instead of looping on an invalid deliverable.
 Files: `apps/mission-worker/src/modules/missions/services/phases/mission-execute-helpers.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`, focused tests, `documentation/features/missions.md`
+
+## [2026-07-22 04:20] - [FIX]
+
+What: Added hard no-em-dash output contracts to every Meta Ads Audit and Meta Ads Launch document and repeated the Dylan Super Voice requirement in each writing task.
+Why: The live audit used correct Meta evidence but still saved client-facing reports with em dashes even though its skill claimed Dylan Super Voice compliance.
+Impact: Audit context, account analysis, recommendations, optimization logs, closeouts, launch manifests, and paused-build reports now remain in corrective execution until they contain zero em dashes.
+Files: `apps/mission-worker/src/modules/missions/playbooks/meta-ads-audit.playbook.ts`, `apps/mission-worker/src/modules/missions/playbooks/meta-ads-launch.playbook.ts`, focused playbook tests, `documentation/features/missions.md`

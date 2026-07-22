@@ -47,6 +47,11 @@ describe('meta-ads-audit playbook', () => {
     expect(plan?.subtasks[4]?.intent.ecology).toMatch(/update_ad_campaign|update_ad_set/)
     expect(plan?.subtasks[4]?.intent.ecology).toMatch(/Never activate/i)
     expect(plan?.subtasks[5]?.intent.ecology).toMatch(/post-change/i)
+    expect(
+      plan?.subtasks
+        .filter((item) => item.outputContract?.required_action === 'save_document')
+        .every((item) => item.outputContract?.expected?.forbid_em_dash === true),
+    ).toBe(true)
     expect(plan?.outOfScope).toContain('Ungated Meta mutations')
     expect(plan?.assignTo).toBe('blaze')
   })

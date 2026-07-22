@@ -5,6 +5,16 @@ import type {
 import { docContract, intent, pickAgent } from './webinar-fulfillment.helpers'
 
 export const META_ADS_AUDIT_PLAYBOOK_ID = 'meta-ads-audit'
+const WRITING =
+  'CLIENT WRITING RULE: Load dylans-super-voice as the only voice authority. Do not load human-written-copy or dylans-voice. Use no em dashes.'
+
+function dylanDocContract(title: string) {
+  const contract = docContract(title)
+  return {
+    ...contract,
+    expected: { ...contract.expected, forbid_em_dash: true },
+  }
+}
 
 type AuditKickoff = {
   reporting_period: string
@@ -48,8 +58,8 @@ export function expandMetaAdsAuditPlaybook(
       sensory:
         'The audit brief distinguishes client truth, account labels, tracking assumptions, and unresolved gaps.',
       endState: 'ADS-A#0 - Verified Audit Context exists as a native editable Doc.',
-      ecology: `Start from the runtime CAMPAIGN_ID and SPACE_ID. Call get_campaign and get_space, then read the active Brain and approved campaign documents. Verify the client identity, offer, audience, funnel, destination, primary Meta objective, and the exact result event that represents success. Account, Page, and campaign names are routing labels, not proof of the business model. Record sources and conflicts. If the client identity or primary result event cannot be verified, block instead of guessing. Save ADS-A#0 - Verified Audit Context as a native Doc. Never create a PDF. Kickoff: ${scope}`,
-      outputContract: docContract('ADS-A#0 - Verified Audit Context'),
+      ecology: `Start from the runtime CAMPAIGN_ID and SPACE_ID. Call get_campaign and get_space, then read the active Brain and approved campaign documents. Verify the client identity, offer, audience, funnel, destination, primary Meta objective, and the exact result event that represents success. Account, Page, and campaign names are routing labels, not proof of the business model. Record sources and conflicts. If the client identity or primary result event cannot be verified, block instead of guessing. Save ADS-A#0 - Verified Audit Context as a native Doc. Never create a PDF. Kickoff: ${scope}. ${WRITING}`,
+      outputContract: dylanDocContract('ADS-A#0 - Verified Audit Context'),
     }),
     task({
       id: 'st-live-account-audit',
@@ -61,8 +71,8 @@ export function expandMetaAdsAuditPlaybook(
       sensory:
         'The audit shows real results, costs, trends, delivery, fatigue, and data-quality warnings.',
       endState: 'ADS-A#1 - Live Meta Account Audit exists as a native editable Doc.',
-      ecology: `Load roas-meta-ads-audit and read ADS-A#0. Call check_meta_connection. If the native action reports a missing token, call get_integration for Meta before declaring the account disconnected. When get_integration reports a connected Composio account, use the exact read-only account, campaign, and insights action slugs it returns through use_integration. Verify the mounted account. For native Meta, call get_meta_ads_insights with campaign_id set to the exact platform CAMPAIGN_ID, level campaign, and date_preset ${kickoff.reporting_period}; repeat for ${kickoff.comparison_period}. For ad-set detail, pass the selected campaign response row.id as ad_campaign_id. For ad detail, pass the selected ad-set response row.id as ad_set_id. Never put row.meta_id or any Meta numeric ID in campaign_id; campaign_id remains the platform CAMPAIGN_ID at every level. Use the discovered Composio insights action only when native Meta is unavailable. Scope to selected campaigns when supplied. Interpret every campaign by its real objective and actual result action. Include spend, delivery, frequency, impressions, clicks, CTR, CPC, CPM, actual results, cost per result, and revenue or ROAS only when that objective and tracking make them valid. Reconcile missing or zero results against the returned action breakdown before diagnosing the funnel. A successful native or Composio insights response proves Meta access. Only call Meta unavailable after both applicable routes fail with structured errors. Separate observed facts from inferences. Save ADS-A#1 - Live Meta Account Audit as a native Doc. Never create a PDF. Kickoff: ${scope}`,
-      outputContract: docContract('ADS-A#1 - Live Meta Account Audit'),
+      ecology: `Load roas-meta-ads-audit and read ADS-A#0. Call check_meta_connection. If the native action reports a missing token, call get_integration for Meta before declaring the account disconnected. When get_integration reports a connected Composio account, use the exact read-only account, campaign, and insights action slugs it returns through use_integration. Verify the mounted account. For native Meta, call get_meta_ads_insights with campaign_id set to the exact platform CAMPAIGN_ID, level campaign, and date_preset ${kickoff.reporting_period}; repeat for ${kickoff.comparison_period}. For ad-set detail, pass the selected campaign response row.id as ad_campaign_id. For ad detail, pass the selected ad-set response row.id as ad_set_id. Never put row.meta_id or any Meta numeric ID in campaign_id; campaign_id remains the platform CAMPAIGN_ID at every level. Use the discovered Composio insights action only when native Meta is unavailable. Scope to selected campaigns when supplied. Interpret every campaign by its real objective and actual result action. Include spend, delivery, frequency, impressions, clicks, CTR, CPC, CPM, actual results, cost per result, and revenue or ROAS only when that objective and tracking make them valid. Reconcile missing or zero results against the returned action breakdown before diagnosing the funnel. A successful native or Composio insights response proves Meta access. Only call Meta unavailable after both applicable routes fail with structured errors. Separate observed facts from inferences. Save ADS-A#1 - Live Meta Account Audit as a native Doc. Never create a PDF. Kickoff: ${scope}. ${WRITING}`,
+      outputContract: dylanDocContract('ADS-A#1 - Live Meta Account Audit'),
     }),
     task({
       id: 'st-optimization-recommendations',
@@ -74,8 +84,8 @@ export function expandMetaAdsAuditPlaybook(
       sensory:
         'Each recommendation names the object, exact action, evidence, confidence, guardrail, and review window.',
       endState: 'ADS-A#2 - Optimization Recommendations exists as a native editable Doc.',
-      ecology: `Load roas-meta-ads-audit and read ADS-A#0 and ADS-A#1. Produce prioritized recommendations only where the evidence supports a specific action. For each one include Meta object name and ID, observed evidence, diagnosis, exact action, expected effect, confidence, risk, budget or status guardrail, and when to reassess. Distinguish tracking fixes, funnel fixes, creative tests, audience changes, budget changes, and pause decisions. Do not recommend scaling from a blended metric that conflicts with the campaign's actual result event. Include a recommendation-only option for every mutation. Save ADS-A#2 - Optimization Recommendations as a native Doc. Never create a PDF.`,
-      outputContract: docContract('ADS-A#2 - Optimization Recommendations'),
+      ecology: `Load roas-meta-ads-audit and read ADS-A#0 and ADS-A#1. Produce prioritized recommendations only where the evidence supports a specific action. For each one include Meta object name and ID, observed evidence, diagnosis, exact action, expected effect, confidence, risk, budget or status guardrail, and when to reassess. Distinguish tracking fixes, funnel fixes, creative tests, audience changes, budget changes, and pause decisions. Do not recommend scaling from a blended metric that conflicts with the campaign's actual result event. Include a recommendation-only option for every mutation. Save ADS-A#2 - Optimization Recommendations as a native Doc. Never create a PDF. ${WRITING}`,
+      outputContract: dylanDocContract('ADS-A#2 - Optimization Recommendations'),
     }),
     task({
       id: 'st-gate-optimization-approval',
@@ -103,9 +113,8 @@ export function expandMetaAdsAuditPlaybook(
       sensory:
         'The change log shows before, approved action, returned status, and direct review link.',
       endState: 'ADS-A#3 - Applied Optimization Log exists as a native editable Doc.',
-      ecology:
-        'Load roas-meta-ads-audit. If Gate 1 selected recommendation-only, record that decision and make no Meta calls. Otherwise use update_ad_campaign and update_ad_set for native Meta. If native Meta reports a missing token but get_integration confirms connected Composio Meta, use only the exact update action slugs returned by get_integration through use_integration. Apply only the exact approved IDs and values. Never activate a paused campaign, ad set, or ad. Never exceed the approved budget cap or modify unapproved targeting, schedule, creative, copy, or destination. Record each before value, requested change, returned status, Meta ID, and error. Save ADS-A#3 - Applied Optimization Log as a native Doc. Never create a PDF.',
-      outputContract: docContract('ADS-A#3 - Applied Optimization Log'),
+      ecology: `Load roas-meta-ads-audit. If Gate 1 selected recommendation-only, record that decision and make no Meta calls. Otherwise use update_ad_campaign and update_ad_set for native Meta. If native Meta reports a missing token but get_integration confirms connected Composio Meta, use only the exact update action slugs returned by get_integration through use_integration. Apply only the exact approved IDs and values. Never activate a paused campaign, ad set, or ad. Never exceed the approved budget cap or modify unapproved targeting, schedule, creative, copy, or destination. Record each before value, requested change, returned status, Meta ID, and error. Save ADS-A#3 - Applied Optimization Log as a native Doc. Never create a PDF. ${WRITING}`,
+      outputContract: dylanDocContract('ADS-A#3 - Applied Optimization Log'),
     }),
     task({
       id: 'st-verify-optimization-cycle',
@@ -118,9 +127,8 @@ export function expandMetaAdsAuditPlaybook(
       sensory:
         'The closeout shows verified statuses, unchanged controls, measurement window, and next audit date.',
       endState: 'ADS-A#4 - Optimization Cycle Closeout exists as a native editable Doc.',
-      ecology:
-        'Read ADS-A#3. Re-read the affected Meta objects and confirm the post-change values match Gate 1 exactly. Verify unrelated controls were not changed. Define the next measurement window, decision thresholds, and next audit date based on spend and conversion volume. If no changes were approved, preserve the recommendation-only outcome and still define what evidence should trigger the next audit. Save ADS-A#4 - Optimization Cycle Closeout as a native Doc. Never create a PDF.',
-      outputContract: docContract('ADS-A#4 - Optimization Cycle Closeout'),
+      ecology: `Read ADS-A#3. Re-read the affected Meta objects and confirm the post-change values match Gate 1 exactly. Verify unrelated controls were not changed. Define the next measurement window, decision thresholds, and next audit date based on spend and conversion volume. If no changes were approved, preserve the recommendation-only outcome and still define what evidence should trigger the next audit. Save ADS-A#4 - Optimization Cycle Closeout as a native Doc. Never create a PDF. ${WRITING}`,
+      outputContract: dylanDocContract('ADS-A#4 - Optimization Cycle Closeout'),
     }),
   ]
   const assertions = subtasks.map((item) => ({
