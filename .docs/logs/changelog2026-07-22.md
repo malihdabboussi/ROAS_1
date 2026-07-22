@@ -82,3 +82,9 @@ What: Made contract-correction prompts explicitly reject the previously failed a
 Why: A live Meta audit correction reused its old document after the verifier rejected that document for em dashes.
 Impact: Corrective mission runs now replace invalid output instead of citing it as completed work.
 Files: `apps/mission-worker/src/modules/missions/services/phases/mission-execute-helpers.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-execute-helpers.test.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`, `documentation/features/missions.md`
+## [2026-07-22 04:53] - [FIX]
+
+What: Bound mission document verification to the contracted title and mapped Space document IDs to their mission-deliverable wrappers while verifying the current Space document body.
+Why: A live Meta audit recommendation task could pass against a different audit Doc while its mission-deliverable copy was stale.
+Impact: Mission contracts now verify the exact user-visible document created for the current subtask.
+Files: `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverables.repository.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverable-contract-evaluator.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-document-content-verifier.ts`, focused tests, `documentation/features/missions.md`

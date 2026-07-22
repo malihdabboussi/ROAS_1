@@ -5,16 +5,11 @@ import type {
   MissionContractVerificationResult,
   MissionOutputContract,
 } from './mission-output-contract.types'
+import {
+  evaluateDeliverableContractRow,
+  type DeliverableContractRow,
+} from './mission-deliverable-contract-evaluator'
 import { verifyMissionVisualEvidence } from './mission-visual-evidence-verifier'
-
-type DeliverableContractRow = {
-  id?: string | null
-  type?: string | null
-  title?: string | null
-  metadata?: Record<string, unknown> | null
-  mime_type?: string | null
-  source_action?: string | null
-}
 
 @Injectable()
 export class MissionDeliverablesRepository {
@@ -94,14 +89,24 @@ export class MissionDeliverablesRepository {
     if (preferredIds.length > 0) {
       const { data, error } = await supabase
         .from('mission_deliverables')
-        .select('id, type, title, metadata, mime_type, source_action')
+        .select('id, type, title, metadata, mime_type, source_action, entity_id, entity_table')
         .eq('mission_id', missionId)
         .contains('metadata', { source: 'agent_tool' })
-        .in('id', preferredIds)
         .order('created_at', { ascending: false })
       if (error) throw error
 
-      const rows = (data || []) as DeliverableContractRow[]
+      const preferredIdSet = new Set(preferredIds)
+      const rows = ((data || []) as DeliverableContractRow[]).filter((row) => {
+        const metadataEntityId =
+          row.metadata && typeof row.metadata.entity_id === 'string'
+            ? row.metadata.entity_id
+            : ''
+        return (
+          preferredIdSet.has(String(row.id || '')) ||
+          preferredIdSet.has(String(row.entity_id || '')) ||
+          preferredIdSet.has(metadataEntityId)
+        )
+      })
       if (rows.length > 0) {
         const failures: MissionContractVerificationResult[] = []
         const successes: MissionContractVerificationResult[] = []
@@ -128,7 +133,7 @@ export class MissionDeliverablesRepository {
 
     const { data, error } = await supabase
       .from('mission_deliverables')
-      .select('id, type, title, metadata, mime_type, source_action')
+      .select('id, type, title, metadata, mime_type, source_action, entity_id, entity_table')
       .eq('mission_id', missionId)
       .contains('metadata', { source: 'agent_tool' })
       .order('created_at', { ascending: false })
@@ -142,7 +147,7 @@ export class MissionDeliverablesRepository {
 
     const { data: matchingData, error: matchingError } = await supabase
       .from('mission_deliverables')
-      .select('id, type, title, metadata, mime_type, source_action')
+      .select('id, type, title, metadata, mime_type, source_action, entity_id, entity_table')
       .eq('mission_id', missionId)
       .contains('metadata', { source: 'agent_tool' })
       .eq('type', contract.required_artifact_type)
@@ -187,10 +192,27 @@ export class MissionDeliverablesRepository {
     data: DeliverableContractRow | null,
     contract: MissionOutputContract,
   ): Promise<MissionContractVerificationResult> {
-    const result = this.evaluateDeliverableContractRow(data, contract)
+    const result = evaluateDeliverableContractRow(data, contract)
     if (!result.ok) return result
     if (contract.artifact_kind === 'document_artifact' && data?.id) {
-      return verifyMissionDocumentContent(supabase, String(data.id), contract, result)
+      const metadata =
+        data.metadata && typeof data.metadata === 'object' && !Array.isArray(data.metadata)
+          ? data.metadata
+          : {}
+      return verifyMissionDocumentContent(supabase, String(data.id), contract, result, {
+        entityId:
+          typeof data.entity_id === 'string'
+            ? data.entity_id
+            : typeof metadata.entity_id === 'string'
+              ? metadata.entity_id
+              : null,
+        entityTable:
+          typeof data.entity_table === 'string'
+            ? data.entity_table
+            : typeof metadata.entity_table === 'string'
+              ? metadata.entity_table
+              : null,
+      })
     }
     if (contract.artifact_kind !== 'funnel_artifact') return result
 
@@ -248,73 +270,6 @@ export class MissionDeliverablesRepository {
     return {
       ok: false,
       reason,
-      expected_action: contract.required_action,
-      expected_artifact_type: contract.required_artifact_type,
-      recovery: 'corrective_run',
-    }
-  }
-
-  private evaluateDeliverableContractRow(
-    data: DeliverableContractRow | null,
-    contract: MissionOutputContract,
-  ): MissionContractVerificationResult {
-    const foundType = data?.type ? String(data.type) : ''
-    if (data?.id && foundType === contract.required_artifact_type) {
-      const expectedMime =
-        typeof contract.expected?.mime_type === 'string' ? contract.expected.mime_type.trim() : ''
-      const actualMime = typeof data.mime_type === 'string' ? data.mime_type.trim() : ''
-      if (expectedMime && actualMime !== expectedMime) {
-        return {
-          ok: false,
-          reason: `Found ${foundType} deliverable with mime_type ${actualMime || 'none'}, expected ${expectedMime}`,
-          expected_action: contract.required_action,
-          expected_artifact_type: contract.required_artifact_type,
-          recovery: 'corrective_run',
-        }
-      }
-      const metadata =
-        data.metadata && typeof data.metadata === 'object' && !Array.isArray(data.metadata)
-          ? data.metadata
-          : {}
-      const expectedSourceAction =
-        typeof contract.expected?.source_action === 'string' &&
-        contract.expected.source_action.trim()
-          ? contract.expected.source_action.trim()
-          : contract.required_action
-      const actualSourceAction =
-        typeof metadata.source_action === 'string'
-          ? metadata.source_action.trim()
-          : typeof data.source_action === 'string'
-            ? data.source_action.trim()
-            : ''
-      if (
-        expectedSourceAction &&
-        actualSourceAction &&
-        actualSourceAction !== expectedSourceAction
-      ) {
-        return {
-          ok: false,
-          reason: `Found ${foundType} deliverable from ${actualSourceAction || 'unknown action'}, expected ${expectedSourceAction}`,
-          expected_action: contract.required_action,
-          expected_artifact_type: contract.required_artifact_type,
-          recovery: 'corrective_run',
-        }
-      }
-      return {
-        ok: true,
-        expected_action: contract.required_action,
-        expected_artifact_type: contract.required_artifact_type,
-        found_artifact_id: String(data.id),
-        recovery: 'corrective_run',
-      }
-    }
-    const typeReason =
-      data?.id && foundType
-        ? `Found ${foundType} deliverable, expected ${contract.required_artifact_type}`
-        : `Missing required ${contract.required_artifact_type} deliverable`
-    return {
-      ok: false,
-      reason: typeReason,
       expected_action: contract.required_action,
       expected_artifact_type: contract.required_artifact_type,
       recovery: 'corrective_run',

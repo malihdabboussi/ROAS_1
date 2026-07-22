@@ -52,4 +52,33 @@ describe('mission document content verifier', () => {
 
     expect(result).toEqual(baseResult)
   })
+
+  it('verifies the current linked Space document instead of a stale mission copy', async () => {
+    const supabase = {
+      from: vi.fn((table: string) => ({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn(async () => ({
+              data:
+                table === 'space_items'
+                  ? { doc_body: 'Fresh copy with no forbidden punctuation.' }
+                  : { content: 'Stale copy — with an em dash.' },
+              error: null,
+            })),
+          })),
+        })),
+      })),
+    } as any
+
+    const result = await verifyMissionDocumentContent(
+      supabase,
+      'deliverable-1',
+      contract,
+      baseResult,
+      { entityId: 'space-doc-1', entityTable: 'space_items' },
+    )
+
+    expect(result).toEqual(baseResult)
+    expect(supabase.from).toHaveBeenCalledWith('space_items')
+  })
 })

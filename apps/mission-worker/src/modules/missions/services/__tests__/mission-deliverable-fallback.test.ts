@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { evaluateDeliverableContractRow } from '../persistence/mission-deliverable-contract-evaluator'
 import { MissionDeliverablesRepository } from '../persistence/mission-deliverables.repository'
 
 function createService() {
@@ -96,6 +97,28 @@ describe('Mission deliverable repository', () => {
     })
   })
 
+  it('rejects a document with the wrong contracted title', async () => {
+    const result = evaluateDeliverableContractRow(
+      {
+        id: 'deliverable-audit',
+        type: 'doc',
+        title: 'ADS-A#1 - Live Meta Account Audit',
+        metadata: { source_action: 'save_document' },
+      },
+      {
+        artifact_kind: 'document_artifact',
+        required_action: 'save_document',
+        required_artifact_type: 'doc',
+        expected: { title: 'ADS-A#2 - Optimization Recommendations' },
+      },
+    )
+
+    expect(result).toMatchObject({
+      ok: false,
+      reason: expect.stringContaining('expected title ADS-A#2 - Optimization Recommendations'),
+    })
+  })
+
   it('verifies preferred artifact-manifest deliverable ids before mission-wide latest fallback', async () => {
     const service = createService()
     const query: any = {
@@ -134,10 +157,54 @@ describe('Mission deliverable repository', () => {
       ['deliverable-current'],
     )
 
-    expect(query.in).toHaveBeenCalledWith('id', ['deliverable-current'])
     expect(result).toMatchObject({
       ok: true,
       found_artifact_id: 'deliverable-current',
+    })
+  })
+
+  it('maps a Space document manifest id to its mission deliverable wrapper', async () => {
+    const service = createService()
+    const query: any = {
+      select: vi.fn(() => query),
+      eq: vi.fn(() => query),
+      contains: vi.fn(() => query),
+      order: vi.fn(async () => ({
+        data: [
+          {
+            id: 'mission-deliverable-1',
+            entity_id: 'space-doc-1',
+            entity_table: 'space_items',
+            type: 'doc',
+            title: 'ADS-A#2 - Optimization Recommendations',
+            metadata: { source: 'agent_tool', source_action: 'save_document' },
+          },
+        ],
+        error: null,
+      })),
+    }
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table !== 'mission_deliverables') throw new Error(`Unexpected table ${table}`)
+        return query
+      }),
+    } as any
+
+    const result = await service.verifyOutputContract(
+      supabase,
+      'mission-1',
+      {
+        artifact_kind: 'document_artifact',
+        required_action: 'save_document',
+        required_artifact_type: 'doc',
+        expected: { title: 'ADS-A#2 - Optimization Recommendations' },
+      },
+      ['space-doc-1'],
+    )
+
+    expect(result).toMatchObject({
+      ok: true,
+      found_artifact_id: 'mission-deliverable-1',
     })
   })
 
