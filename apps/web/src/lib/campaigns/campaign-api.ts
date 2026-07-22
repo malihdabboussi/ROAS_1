@@ -10,6 +10,8 @@ import { getActiveOrgIdFromStorage } from '@/lib/utils/org-storage'
 export interface Campaign {
   id: string
   user_id: string
+  org_id?: string | null
+  program_id?: string | null
   name: string
   campaign_type: string
   status: string
@@ -36,11 +38,21 @@ export async function fetchCampaign(id: string): Promise<Campaign> {
   return backendGet<Campaign>(`/api/campaigns/${id}`)
 }
 
-export async function createCampaign(name: string, icon?: string): Promise<Campaign> {
-  return backendPost<Campaign>('/api/campaigns', {
+export async function createCampaign(
+  name: string,
+  icon?: string,
+  options?: { programId?: string | null },
+): Promise<Campaign> {
+  const created = await backendPost<Campaign>('/api/campaigns', {
     name,
     config: icon ? { icon } : {},
   })
+  if (!options?.programId) return created
+  try {
+    return await updateCampaign(created.id, { program_id: options.programId })
+  } catch {
+    return created
+  }
 }
 
 export async function updateCampaign(id: string, data: Record<string, unknown>): Promise<Campaign> {

@@ -7,4 +7,9 @@ describe('shell route policy', () => {
     expect(isShellWorkspaceRoute('/artifacts/anything')).toBe(true)
     expect(isShellHomeRoute('/artifacts')).toBe(false)
   })
+
+  it('treats all-tasks as a shell workspace route', () => {
+    expect(isShellWorkspaceRoute('/all-tasks')).toBe(true)
+    expect(isShellHomeRoute('/all-tasks')).toBe(false)
+  })
 })

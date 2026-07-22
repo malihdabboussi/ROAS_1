@@ -1,19 +1,16 @@
 'use client'
 
-import Link from 'next/link'
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type Dispatch,
   type MouseEvent,
   type SetStateAction,
 } from 'react'
-import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
-import { LucideIcon, getIconColor } from '@/components/ui/IconPicker'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { cachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
 import {
@@ -23,26 +20,18 @@ import {
 import { updateSpace as updateSpaceRequest } from '@/features/spaces/services/spaces.service'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space } from '@/features/spaces/types'
-import { SIDEBAR_MESSAGES } from '../config/sidebar-messages.config'
-import {
-  HubDockFlyout,
-  HUB_DOCK_SUB_FLYOUT_LEAVE_MS,
-  HUB_DOCK_SUB_FLYOUT_OFFSET_PX,
-} from './HubDockFlyout'
+import { fetchPrograms, type Program } from '@/lib/programs'
+import { groupSidebarCampaignsByProgram } from './group-sidebar-campaigns-by-program'
+import { HUB_DOCK_SUB_FLYOUT_LEAVE_MS } from './HubDockFlyout'
 import type { SidebarCampaignRow } from './sidebar-types'
-import { SidebarAddSpaceDropdown } from './SidebarAddSpaceDropdown'
-import {
-  SidebarHqCampaignMenuLayer,
-  SidebarHqSpaceMenuLayer,
-  type SidebarHqCampaignMenuState,
-  type SidebarHqSpaceMenuState,
+import { SidebarHqSpacesBucketList } from './SidebarHqSpacesBucketList'
+import { SidebarHqSpacesListOverlays } from './SidebarHqSpacesListOverlays'
+import type {
+  SidebarHqCampaignMenuState,
+  SidebarHqSpaceMenuState,
 } from './SidebarHqSpacesMenuLayers'
-import {
-  Section,
-  SpaceRow,
-  type SectionMenuAnchorRect,
-  type SpaceRowSharedProps,
-} from './SidebarHqSpacesRows'
+import { SidebarHqSpacesNestedFlyout } from './SidebarHqSpacesNestedFlyout'
+import { type SectionMenuAnchorRect, type SpaceRowSharedProps } from './SidebarHqSpacesRows'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 const SPACES_ROSTER_REFRESH_INTERVAL_MS = 60_000
@@ -114,6 +103,13 @@ export function SidebarHqSpacesGroupedList({
   const [subAnchor, setSubAnchor] = useState<DOMRect | null>(null)
   const subLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isOrgContext = useOrgStore((s) => s.activeOrgId !== null)
+  const [programs, setPrograms] = useState<Program[]>([])
+
+  useEffect(() => {
+    void fetchPrograms()
+      .then(setPrograms)
+      .catch(() => setPrograms([]))
+  }, [isOrgContext])
 
   const clearSubLeave = useCallback(() => {
     if (subLeaveTimer.current) {
@@ -252,10 +248,20 @@ export function SidebarHqSpacesGroupedList({
     .filter((b) => (searchActive ? b._labelMatch || b.sectionSpaces.length > 0 : true))
   const favoriteBuckets = campaignBuckets.filter((b) => b.campaignRow.isFavorite)
   const otherBuckets = campaignBuckets.filter((b) => !b.campaignRow.isFavorite)
+  const otherProgramGroups = useMemo(() => {
+    const rows = otherBuckets.map((b) => b.campaignRow)
+    const groups = groupSidebarCampaignsByProgram(rows, programs)
+    return groups
+      .map((group) => ({
+        ...group,
+        buckets: group.campaigns
+          .map((campaign) => otherBuckets.find((b) => b.bucket === campaign.id))
+          .filter((b): b is (typeof otherBuckets)[number] => !!b),
+      }))
+      .filter((g) => g.buckets.length > 0 || (!searchActive && g.program != null))
+  }, [otherBuckets, programs, searchActive])
   const subBucketData =
-    flyoutMode && subBucket
-      ? campaignBuckets.find((b) => b.bucket === subBucket) ?? null
-      : null
+    flyoutMode && subBucket ? (campaignBuckets.find((b) => b.bucket === subBucket) ?? null) : null
   const noResults =
     searchActive &&
     favoriteBuckets.length === 0 &&
@@ -299,109 +305,61 @@ export function SidebarHqSpacesGroupedList({
 
   return (
     <div className="space-y-0.5">
-      {noResults ? (
-        <p className="body-3 px-3 py-6 text-center text-[var(--color-muted-foreground)]">
-          No spaces match “{searchQuery}”
-        </p>
-      ) : null}
-      {favoriteBuckets.length > 0 ? (
-        <div className={flyoutMode ? 'mb-1 space-y-0.5' : 'mb-3 space-y-0.5'}>
-          {!flyoutMode ? <p className={groupHeaderCls}>Favourite</p> : null}
-          {favoriteBuckets.map((b) => (
-            <Section
-              key={b.bucket}
-              {...b}
-              {...sectionSharedProps}
-              isExpanded={searchActive || expandedIds.has(b.bucket)}
-              isCreating={creatingInBucket === b.bucket}
-            />
-          ))}
-        </div>
-      ) : null}
-      {otherBuckets.length > 0 && !flyoutMode ? <p className={groupHeaderCls}>Campaigns</p> : null}
-      {otherBuckets.map((b) => (
-        <Section
-          key={b.bucket}
-          {...b}
-          {...sectionSharedProps}
-          isExpanded={searchActive || expandedIds.has(b.bucket)}
-          isCreating={creatingInBucket === b.bucket}
-        />
-      ))}
-      {!searchActive && !flyoutMode ? (
-        <button
-          type="button"
-          onClick={() => controller.setShowNewCampaignModal(true)}
-          className="rounded-spacing-2 hover:bg-hover-subtle flex w-full items-center gap-0.5 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
-          aria-label="New campaign"
-        >
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center">
-            <Plus className="h-4 w-4 shrink-0" aria-hidden />
-          </span>
-          <span className="body-3 min-w-0 flex-1 truncate text-left font-medium">New campaign</span>
-        </button>
-      ) : null}
-      {sharedSpaces.length > 0 ? (
-        <div className="mt-3 space-y-0.5">
-          <p className={groupHeaderCls}>Shared with me</p>
-          {sharedSpaces.map((s) => (
-            <SpaceRow key={s.id} space={s} favorited={favoriteIds.has(s.id)} {...spaceRowProps} />
-          ))}
-        </div>
-      ) : null}
-      {!searchActive && hasMore ? (
-        <button
-          type="button"
-          onClick={onLoadMore}
-          disabled={loadingMore}
-          className="rounded-spacing-2 hover:bg-hover-subtle mt-3 flex w-full items-center justify-center px-3 py-2 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)] disabled:opacity-60"
-        >
-          <span className="body-3 font-medium">
-            {loadingMore
-              ? SIDEBAR_MESSAGES.LOADING_MORE_SPACES.message
-              : SIDEBAR_MESSAGES.LOAD_MORE_SPACES.message}
-          </span>
-        </button>
-      ) : null}
+      <SidebarHqSpacesBucketList
+        noResults={noResults}
+        searchQuery={searchQuery}
+        searchActive={searchActive}
+        flyoutMode={flyoutMode}
+        favoriteBuckets={favoriteBuckets}
+        otherProgramGroups={otherProgramGroups}
+        programs={programs}
+        expandedIds={expandedIds}
+        creatingInBucket={creatingInBucket}
+        sectionSharedProps={sectionSharedProps}
+        controller={controller}
+        sharedSpaces={sharedSpaces}
+        favoriteIds={favoriteIds}
+        spaceRowProps={spaceRowProps}
+        hasMore={hasMore}
+        loadingMore={loadingMore}
+        onLoadMore={onLoadMore}
+        groupHeaderCls={groupHeaderCls}
+      />
 
-      <SidebarHqCampaignMenuLayer
+      <SidebarHqSpacesListOverlays
         campaignMenuFor={campaignMenuFor}
         setCampaignMenuFor={setCampaignMenuFor}
-        controller={controller}
-        startCreating={startCreating}
-      />
-      <SidebarHqSpaceMenuLayer
         menuFor={menuFor}
         setMenuFor={setMenuFor}
+        controller={controller}
+        startCreating={startCreating}
         campaigns={campaigns}
         activeSpaceId={activeSpaceId}
         isFavorite={isFavorite}
         toggleFavorite={toggleFavorite}
         toggleHidden={toggleHidden}
         startRenameSpace={startRenameSpace}
-      />
-
-      <SidebarAddSpaceDropdown
-        open={addDropdownAnchor !== null}
-        anchorRect={addDropdownAnchor}
-        onClose={() => {
-          setAddDropdownAnchor(null)
-          setAddDropdownBucket(null)
-        }}
-        onBlank={() => startCreating(addDropdownBucket ?? '')}
-        onBrowse={() => {
-          onOpenBrowseTemplates(addDropdownBucket ?? '')
-          setAddDropdownAnchor(null)
-          setAddDropdownBucket(null)
-        }}
+        addDropdownAnchor={addDropdownAnchor}
+        addDropdownBucket={addDropdownBucket}
+        setAddDropdownAnchor={setAddDropdownAnchor}
+        setAddDropdownBucket={setAddDropdownBucket}
+        onOpenBrowseTemplates={onOpenBrowseTemplates}
       />
 
       {flyoutMode && subBucketData && subAnchor ? (
-        <HubDockFlyout
+        <SidebarHqSpacesNestedFlyout
           anchor={subAnchor}
-          title={subBucketData.label}
-          nested
-          offsetPx={HUB_DOCK_SUB_FLYOUT_OFFSET_PX}
+          label={subBucketData.label}
+          campaignId={subBucketData.campaignId}
+          bucket={subBucketData.bucket}
+          sectionSpaces={subBucketData.sectionSpaces}
+          creatingInBucket={creatingInBucket}
+          creatingName={creatingName}
+          setCreatingName={setCreatingName}
+          isSubmitting={isSubmitting}
+          onSubmitCreate={handleSubmit}
+          onCancelCreate={cancelCreating}
+          onOpenAddDropdown={openAddDropdown}
           onEnter={() => {
             clearSubLeave()
             onHoldParentFlyout?.()
@@ -411,62 +369,9 @@ export function SidebarHqSpacesGroupedList({
             closeSubFlyout()
             onCloseParentFlyout?.()
           }}
-          headerActions={[
-            {
-              kind: 'plus',
-              title: 'New space',
-              onClick: (event) => openAddDropdown(event, subBucketData.campaignId),
-            },
-          ]}
-        >
-          {creatingInBucket === subBucketData.bucket ? (
-            <div className="flex items-center gap-1.5 px-2 py-1" data-hub-dock-keep-open>
-              <input
-                value={creatingName}
-                onChange={(e) => setCreatingName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSubmit(subBucketData.campaignId)
-                  if (e.key === 'Escape') cancelCreating()
-                }}
-                onBlur={() => {
-                  if (!creatingName.trim()) cancelCreating()
-                }}
-                disabled={isSubmitting}
-                autoFocus
-                placeholder={isSubmitting ? 'Creating…' : 'Space name'}
-                className="body-3 text-foreground placeholder:text-muted-foreground h-7 flex-1 rounded-md bg-transparent px-2 focus:outline-none disabled:opacity-50"
-              />
-            </div>
-          ) : null}
-          {subBucketData.sectionSpaces.length === 0 && creatingInBucket !== subBucketData.bucket ? (
-            <p className="hub-dock-flyout-row-muted px-2.5 py-1.5 text-[13px]">No spaces yet</p>
-          ) : (
-            subBucketData.sectionSpaces.map((s) => {
-              const spaceIcon =
-                typeof s.schema?.icon === 'string' && s.schema.icon.length > 0
-                  ? s.schema.icon
-                  : 'layout-grid'
-              const spaceColor = getIconColor(s.schema?.icon_color).textColor
-              return (
-                <Link
-                  key={s.id}
-                  href="/spaces"
-                  data-hub-dock-navigate
-                  onClick={() => {
-                    useSpacesStore.getState().setActiveSpace(s.id)
-                    useGlobalChatStore.getState().setCollapsed(true)
-                    closeSubFlyout()
-                    onCloseParentFlyout?.()
-                  }}
-                  className="hub-dock-flyout-row"
-                >
-                  <LucideIcon name={spaceIcon} className={`hub-dock-flyout-row-icon ${spaceColor}`} />
-                  <span className="min-w-0 flex-1 truncate">{s.title}</span>
-                </Link>
-              )
-            })
-          )}
-        </HubDockFlyout>
+          onCloseParentFlyout={onCloseParentFlyout}
+          closeSubFlyout={closeSubFlyout}
+        />
       ) : null}
     </div>
   )

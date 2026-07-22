@@ -2,6 +2,7 @@
 
 import {
   ChevronRight,
+  FolderInput,
   LayoutDashboard,
   MoreHorizontal,
   Plus,
@@ -11,6 +12,7 @@ import {
 import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
 import type { Space } from '@/features/spaces/types'
 import type { Campaign } from '@/lib/campaigns'
+import type { Program } from '@/lib/programs'
 import { cn } from '@/lib/utils/cn'
 
 function campaignIconName(campaign: Campaign): string {
@@ -34,6 +36,7 @@ export function CampaignsHubCampaignCard({
   menuOpen,
   creatingSpace,
   showShare,
+  programs = [],
   onToggleExpanded,
   onOpenOverview,
   onOpenWork,
@@ -42,6 +45,7 @@ export function CampaignsHubCampaignCard({
   onMenuOpenChange,
   onShare,
   onDelete,
+  onMoveToProgram,
 }: {
   campaign: Campaign
   spaces: Space[]
@@ -49,6 +53,7 @@ export function CampaignsHubCampaignCard({
   menuOpen: boolean
   creatingSpace: boolean
   showShare: boolean
+  programs?: Program[]
   onToggleExpanded: () => void
   onOpenOverview: () => void
   onOpenWork: () => void
@@ -57,16 +62,18 @@ export function CampaignsHubCampaignCard({
   onMenuOpenChange: (open: boolean) => void
   onShare: () => void
   onDelete: () => void
+  onMoveToProgram?: (programId: string | null) => void
 }) {
   const icon = campaignIconName(campaign)
   const iconColor = getIconColor(
     (campaign.config as Record<string, unknown>)?.icon_color as string | undefined,
   ).textColor
   const general = isGeneralCampaign(campaign)
+  const moveTargets = programs.filter((p) => p.id !== campaign.program_id)
 
   return (
     <li className="surface-card border-border rounded-spacing-3 overflow-hidden border">
-      <div className="gap-spacing-2 flex items-center px-spacing-3 py-spacing-3">
+      <div className="gap-spacing-2 px-spacing-3 py-spacing-3 flex items-center">
         <button
           type="button"
           onClick={onToggleExpanded}
@@ -184,6 +191,38 @@ export function CampaignsHubCampaignCard({
                     Sharing
                   </button>
                 ) : null}
+                {onMoveToProgram && moveTargets.length > 0 ? (
+                  <>
+                    <p className="body-4 text-muted-foreground px-3 pb-1 pt-2">Move to program</p>
+                    {moveTargets.map((program) => (
+                      <button
+                        key={program.id}
+                        type="button"
+                        onClick={() => {
+                          onMenuOpenChange(false)
+                          onMoveToProgram(program.id)
+                        }}
+                        className="body-3 text-foreground hover:bg-hover-subtle flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left"
+                      >
+                        <FolderInput className="h-4 w-4" />
+                        {program.name}
+                      </button>
+                    ))}
+                    {campaign.program_id ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onMenuOpenChange(false)
+                          onMoveToProgram(null)
+                        }}
+                        className="body-3 text-foreground hover:bg-hover-subtle flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left"
+                      >
+                        <FolderInput className="h-4 w-4" />
+                        Ungrouped
+                      </button>
+                    ) : null}
+                  </>
+                ) : null}
                 {!general ? (
                   <button
                     type="button"
@@ -204,7 +243,7 @@ export function CampaignsHubCampaignCard({
       </div>
 
       {expanded ? (
-        <div className="border-border border-t px-spacing-3 py-spacing-2">
+        <div className="border-border px-spacing-3 py-spacing-2 border-t">
           {spaces.length === 0 ? (
             <div className="px-spacing-2 py-spacing-3">
               <p className="body-3 text-muted-foreground">

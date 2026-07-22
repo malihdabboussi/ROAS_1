@@ -63,20 +63,20 @@ Page Grader upserts on the Fathom meeting ID plus client ID, so webhook retries 
 
 ## Code map
 
-| Concern | Location |
+| Concern              | Location                                                                                   |
 | -------------------- | ------------------------------------------------------------------------------------------ |
-| Deterministic ingest | `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts` |
-| Create/import entry | `page-grader-client-import.service.ts` → `page-grader-brain-import.service.ts` |
-| Campaign Spaces | `page-grader-campaign-space-schema.ts` → `page-grader-client-import.service.ts` |
-| Webhook + catch-up | `page-grader-brain-sync.service.ts`, `page-grader-webhooks.controller.ts` |
-| Map clients UI | `PageGraderClientScopeMapModal.tsx` / `PageGraderClientScopeMapRow.tsx` |
-| Brain canvas Re-sync | `CampaignAddInfoImportMenu.tsx` / `CampaignAddInfoPanel.tsx` |
-| PG package + push | `page-grader/.../roasBrainPackage.ts`, `roasBrainPush.ts`, `scheduled-brain-refresh` |
-| Fathom meetings | `page-grader-meeting-sync.service.ts`, `fathom-webhook.service.ts`, Page Grader `roas-api` |
-
+| Deterministic ingest | `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts`          |
+| Create/import entry  | `page-grader-client-import.service.ts` → `page-grader-brain-import.service.ts`             |
+| Campaign Spaces      | `page-grader-campaign-space-schema.ts` → `page-grader-client-import.service.ts`            |
+| Webhook + catch-up   | `page-grader-brain-sync.service.ts`, `page-grader-webhooks.controller.ts`                  |
+| Map clients UI       | `PageGraderClientScopeMapModal.tsx` / `PageGraderClientScopeMapRow.tsx`                    |
+| Brain canvas Re-sync | `CampaignAddInfoImportMenu.tsx` / `CampaignAddInfoPanel.tsx`                               |
+| PG package + push    | `page-grader/.../roasBrainPackage.ts`, `roasBrainPush.ts`, `scheduled-brain-refresh`       |
+| Fathom meetings      | `page-grader-meeting-sync.service.ts`, `fathom-webhook.service.ts`, Page Grader `roas-api` |
 
 ## Decision Log
 
+- **2026-07-22:** Programs sit above Campaigns as a ClickUp Space shell (Clients / ROAS Ops). Page Grader still maps **client → campaign**; campaigns with `config.source = 'page_grader'` backfill into the Clients program. See `documentation/features/programs.md`.
 - **2026-07-19:** Replaced Atlas `campaign_file_import` + `save_user_memory` for Page Grader packages. Atlas campaign write tools reject campaign targets, leaving jobs stuck at Processing with 0 objects.
 - **2026-07-19:** Dual-write Brain memories + Campaign Knowledge; hybrid sync (push + hourly catch-up + manual).
 - **2026-07-19:** Client Intel nightly orchestrator retries partial failures and pushes `content_hash` after successful intelligence generation — not UI-gated.
@@ -97,4 +97,3 @@ Page Grader upserts on the Fathom meeting ID plus client ID, so webhook retries 
 ## Rollout
 
 Pilot reconciliation should cover five multi-campaign clients first: Andy Elliott, Multifamily Strategy, Standard Plumbing Supply, The One Percent Life, and Sakha Media Group. Review Space names and Meta links in ROAS, correct any source records in Page Grader, then run the same idempotent catch-up across the remaining mapped clients. The active-client workbook is an audit aid for missing campaigns; it is not the source of truth.
-

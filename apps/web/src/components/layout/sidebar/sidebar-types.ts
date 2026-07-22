@@ -32,6 +32,7 @@ export interface SidebarCampaignRow {
   isSystemPersonal: boolean
   isFavorite: boolean
   isHidden: boolean
+  program_id: string | null
   config: Record<string, unknown>
   created_at: string
 }

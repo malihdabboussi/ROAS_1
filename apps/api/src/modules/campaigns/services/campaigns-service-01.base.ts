@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { CampaignsServiceSharedBase } from './campaigns-service-shared.base'
 
@@ -402,6 +402,27 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
             ? 'Personal campaign cannot be archived'
             : 'General campaign cannot be archived',
         )
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(data, 'program_id')) {
+      const programId = data.program_id
+      if (programId !== null && programId !== undefined) {
+        if (typeof programId !== 'string') {
+          throw new BadRequestException('program_id must be a uuid or null')
+        }
+        const campaignOrgId =
+          campaign.org_id === undefined || campaign.org_id === null ? null : String(campaign.org_id)
+        let programQuery = supabase
+          .from('programs')
+          .select('id')
+          .eq('id', programId)
+          .is('deleted_at', null)
+        programQuery = campaignOrgId
+          ? programQuery.eq('org_id', campaignOrgId)
+          : programQuery.is('org_id', null)
+        const { data: program, error: programError } = await programQuery.maybeSingle()
+        if (programError) throw new Error(`DB error: ${programError.message}`)
+        if (!program) throw new BadRequestException('Program not found in this workspace')
       }
     }
     return this.campaignsRepo.update(supabase, id, data)

@@ -8,12 +8,12 @@ import { SharedModule } from '@vibey/api-shared'
 import { CronService } from './cron.service'
 import { HealthController } from './health.controller'
 import { AdminModule } from './modules/admin/admin.module'
+import { AgentFeedbackModule } from './modules/agent-feedback/agent-feedback.module'
 import {
   getAgentRuntimeRedisConnection,
   getAgentRuntimeRedisPrefix,
 } from './modules/agent-runtime/agent-runtime-queues'
 import { AgentTeamsModule } from './modules/agent-teams/agent-teams.module'
-import { AgentFeedbackModule } from './modules/agent-feedback/agent-feedback.module'
 import { AgentsModule } from './modules/agents/agents.module'
 import { ArtifactsModule } from './modules/artifacts/artifacts.module'
 import { AuthModule } from './modules/auth/auth.module'
@@ -48,6 +48,7 @@ import { MissionsModule } from './modules/missions/missions.module'
 import { ModelsModule } from './modules/models/models.module'
 import { OnboardingModule } from './modules/onboarding/onboarding.module'
 import { OrgModule } from './modules/org/org.module'
+import { ProgramsModule } from './modules/programs/programs.module'
 import { ProjectsModule } from './modules/projects/projects.module'
 import { ProviderBillingModule } from './modules/provider-billing/provider-billing.module'
 import { SandboxesModule } from './modules/sandboxes/sandboxes.module'
@@ -121,6 +122,7 @@ import { YourTurnModule } from './modules/your-turn/your-turn.module'
     ModelsModule,
     OnboardingModule,
     ProjectsModule,
+    ProgramsModule,
     ProviderBillingModule,
     SandboxesModule,
     SidebarModule,

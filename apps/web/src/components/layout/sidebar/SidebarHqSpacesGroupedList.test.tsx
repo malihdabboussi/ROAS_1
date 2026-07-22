@@ -54,6 +54,10 @@ vi.mock('@/features/spaces/store/use-spaces-store', () => {
   return { useSpacesStore }
 })
 
+vi.mock('@/lib/programs', () => ({
+  fetchPrograms: vi.fn(async () => []),
+}))
+
 vi.mock('./SidebarHqSpacesMenuLayers', () => ({
   SidebarHqCampaignMenuLayer: () => null,
   SidebarHqSpaceMenuLayer: () => null,
@@ -65,6 +69,7 @@ const campaign = {
   icon: 'folder',
   config: {},
   isFavorite: false,
+  program_id: null,
 } as SidebarCampaignRow
 
 describe('SidebarHqSpacesGroupedList', () => {

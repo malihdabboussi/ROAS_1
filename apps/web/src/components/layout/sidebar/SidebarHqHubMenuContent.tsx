@@ -10,7 +10,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react'
-import { Brain, ChevronDown, House, ListChecks, Users } from 'lucide-react'
+import { Brain, ChevronDown, House, ListChecks, ListTodo, Users } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
@@ -153,6 +153,18 @@ export function SidebarHqHubMenuContent({
           onNavigate={() => {
             setMenuMode('home')
             setWorkContext({ surface: 'general' })
+            handleNavigate()
+          }}
+          onHover={() => scheduleClose()}
+        />
+
+        <SidebarHqHubMenuNavRow
+          href="/all-tasks"
+          active={c.pathname.startsWith('/all-tasks')}
+          icon={<ListTodo />}
+          label="All Tasks"
+          onNavigate={() => {
+            setWorkContext({ surface: 'spaces' })
             handleNavigate()
           }}
           onHover={() => scheduleClose()}

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRight, FolderKanban, Plus, Search } from 'lucide-react'
@@ -8,18 +9,24 @@ import { ShareModal } from '@/components/org'
 import { ConfirmDialog } from '@/components/ui/dialogs/ConfirmDialog'
 import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
-import { createSpace, fetchSpaces } from '@/features/spaces/services/spaces.service'
+import { createSpace } from '@/features/spaces/services/spaces.service'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space } from '@/features/spaces/types'
 import { useCampaignMode } from '@/features/studio/contexts/CampaignModeContext'
-import { createCampaign, deleteCampaign, fetchCampaigns, type Campaign } from '@/lib/campaigns'
-import { useOrgStore } from '@/lib/org'
-import { cn } from '@/lib/utils/cn'
 import {
-  CampaignsHubCampaignCard,
-  isGeneralCampaign,
-  spaceIconName,
-} from './CampaignsHubCampaignCard'
+  createCampaign,
+  deleteCampaign,
+  fetchCampaigns,
+  updateCampaign,
+  type Campaign,
+} from '@/lib/campaigns'
+import { useOrgStore } from '@/lib/org'
+import { fetchPrograms, type Program } from '@/lib/programs'
+import { cn } from '@/lib/utils/cn'
+import { fetchAllCampaignSpaces } from '../_lib/fetch-all-campaign-spaces'
+import { defaultOrgProgramId, groupCampaignsByProgram } from '../_lib/group-campaigns-by-program'
+import { spaceIconName } from './CampaignsHubCampaignCard'
+import { CampaignsHubProgramSection } from './CampaignsHubProgramSection'
 
 function campaignIconName(campaign: Campaign): string {
   return ((campaign.config as Record<string, unknown>)?.icon as string) ?? 'folder-kanban'
@@ -32,11 +39,14 @@ export function CampaignsHub() {
   const { isOrgContext } = useOrgStore()
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [programs, setPrograms] = useState<Program[]>([])
   const [spaces, setSpaces] = useState<Space[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set())
+  const [expandedProgramIds, setExpandedProgramIds] = useState<Set<string>>(() => new Set())
   const [creatingCampaign, setCreatingCampaign] = useState(false)
+  const [creatingInProgram, setCreatingInProgram] = useState<string | null>(null)
   const [newCampaignName, setNewCampaignName] = useState('')
   const [creatingSpaceFor, setCreatingSpaceFor] = useState<string | null>(null)
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
@@ -48,13 +58,21 @@ export function CampaignsHub() {
   const reload = useCallback(async () => {
     setLoading(true)
     try {
-      const [campaignRows, spaceRows] = await Promise.all([
+      const [campaignRows, spaceRows, programRows] = await Promise.all([
         fetchCampaigns(),
-        fetchSpaces({ limit: 200 }),
+        fetchAllCampaignSpaces(),
+        fetchPrograms().catch(() => [] as Program[]),
       ])
       setCampaigns(campaignRows)
       setSpaces(spaceRows)
+      setPrograms(programRows)
       setExpandedIds(new Set(campaignRows.map((c) => c.id)))
+      setExpandedProgramIds(
+        new Set([
+          ...programRows.map((p) => p.id),
+          ...(campaignRows.some((c) => !c.program_id) ? ['__ungrouped__'] : []),
+        ]),
+      )
     } catch {
       toast.error('Could not load campaigns')
     } finally {
@@ -86,27 +104,35 @@ export function CampaignsHub() {
     [spaces],
   )
 
-  const filteredCampaigns = useMemo(() => {
+  const programGroups = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const sorted = [...campaigns].sort((a, b) => {
-      if (isGeneralCampaign(a) && !isGeneralCampaign(b)) return -1
-      if (!isGeneralCampaign(a) && isGeneralCampaign(b)) return 1
-      return (a.name ?? '').localeCompare(b.name ?? '')
-    })
-    if (!q) return sorted
-    return sorted.filter((campaign) => {
-      const name = (campaign.name ?? '').toLowerCase()
-      if (name.includes(q)) return true
-      const campaignSpaces = spacesByCampaignId.get(campaign.id) ?? []
-      return campaignSpaces.some((space) => space.title.toLowerCase().includes(q))
-    })
-  }, [campaigns, query, spacesByCampaignId])
+    const filtered = !q
+      ? campaigns
+      : campaigns.filter((campaign) => {
+          const name = (campaign.name ?? '').toLowerCase()
+          if (name.includes(q)) return true
+          const campaignSpaces = spacesByCampaignId.get(campaign.id) ?? []
+          return campaignSpaces.some((space) => space.title.toLowerCase().includes(q))
+        })
+    const groups = groupCampaignsByProgram(filtered, programs)
+    if (!q) return groups
+    return groups.filter((g) => g.campaigns.length > 0 || g.program == null)
+  }, [campaigns, programs, query, spacesByCampaignId])
 
   const toggleExpanded = useCallback((campaignId: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev)
       if (next.has(campaignId)) next.delete(campaignId)
       else next.add(campaignId)
+      return next
+    })
+  }, [])
+
+  const toggleProgram = useCallback((programKey: string) => {
+    setExpandedProgramIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(programKey)) next.delete(programKey)
+      else next.add(programKey)
       return next
     })
   }, [])
@@ -132,23 +158,40 @@ export function CampaignsHub() {
     [router, setActiveSpace],
   )
 
-  const handleCreateCampaign = useCallback(async () => {
-    const name = newCampaignName.trim()
-    if (!name) return
-    setCreatingCampaign(true)
-    try {
-      const created = await createCampaign(name)
-      setCampaigns((prev) => [created, ...prev])
-      setExpandedIds((prev) => new Set(prev).add(created.id))
-      setNewCampaignName('')
-      toast.success('Campaign created')
-      openCampaign(created)
-    } catch {
-      toast.error('Could not create campaign')
-    } finally {
-      setCreatingCampaign(false)
-    }
-  }, [newCampaignName, openCampaign])
+  const handleCreateCampaign = useCallback(
+    async (programId?: string | null) => {
+      const name = newCampaignName.trim()
+      if (!name) return
+      setCreatingCampaign(true)
+      try {
+        const resolvedProgramId =
+          programId === undefined
+            ? isOrgContext()
+              ? defaultOrgProgramId(programs)
+              : null
+            : programId
+        const created = await createCampaign(
+          name,
+          undefined,
+          resolvedProgramId ? { programId: resolvedProgramId } : undefined,
+        )
+        setCampaigns((prev) => [created, ...prev])
+        setExpandedIds((prev) => new Set(prev).add(created.id))
+        if (created.program_id) {
+          setExpandedProgramIds((prev) => new Set(prev).add(created.program_id as string))
+        }
+        setNewCampaignName('')
+        setCreatingInProgram(null)
+        toast.success('Campaign created')
+        openCampaign(created)
+      } catch {
+        toast.error('Could not create campaign')
+      } finally {
+        setCreatingCampaign(false)
+      }
+    },
+    [isOrgContext, newCampaignName, openCampaign, programs],
+  )
 
   const handleCreateSpace = useCallback(
     async (campaignId: string) => {
@@ -166,6 +209,16 @@ export function CampaignsHub() {
     },
     [openSpace],
   )
+
+  const handleMoveToProgram = useCallback(async (campaign: Campaign, programId: string | null) => {
+    try {
+      const updated = await updateCampaign(campaign.id, { program_id: programId })
+      setCampaigns((prev) => prev.map((c) => (c.id === campaign.id ? updated : c)))
+      toast.success(programId ? 'Moved to program' : 'Moved to Ungrouped')
+    } catch {
+      toast.error('Could not move campaign')
+    }
+  }, [])
 
   const handleDeleteCampaign = useCallback(async () => {
     if (!deleteTarget) return
@@ -191,6 +244,8 @@ export function CampaignsHub() {
     )
   }
 
+  const empty = programGroups.every((g) => g.campaigns.length === 0) && personalSpaces.length === 0
+
   return (
     <div className="h-full min-h-0 overflow-y-auto">
       <div className="p-spacing-4 md:p-spacing-6 mx-auto w-full max-w-3xl">
@@ -198,20 +253,29 @@ export function CampaignsHub() {
           <div className="min-w-0">
             <h1 className="title-h3 text-foreground">CAMPAIGNS</h1>
             <p className="body-3 text-muted-foreground mt-spacing-1">
-              Open a campaign, jump into its spaces, or start a new one.
+              Programs group campaigns. Create a campaign inside a program to land it there.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setNewCampaignName('')
-              newNameRef.current?.focus()
-            }}
-            className="button-glass-primary body-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-medium"
-          >
-            <Plus className="h-4 w-4" />
-            New campaign
-          </button>
+          <div className="gap-spacing-2 flex flex-wrap items-center">
+            <Link
+              href="/all-tasks"
+              className="button-glass-neutral body-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-medium"
+            >
+              All Tasks
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setCreatingInProgram(null)
+                setNewCampaignName('')
+                newNameRef.current?.focus()
+              }}
+              className="button-glass-primary body-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-medium"
+            >
+              <Plus className="h-4 w-4" />
+              New campaign
+            </button>
+          </div>
         </div>
 
         <div className="mb-spacing-4 gap-spacing-2 flex flex-col sm:flex-row">
@@ -228,17 +292,21 @@ export function CampaignsHub() {
           <div className="gap-spacing-2 flex min-w-0 flex-1 sm:max-w-xs">
             <input
               ref={newNameRef}
-              value={newCampaignName}
-              onChange={(e) => setNewCampaignName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void handleCreateCampaign()
+              value={creatingInProgram ? '' : newCampaignName}
+              onChange={(e) => {
+                setCreatingInProgram(null)
+                setNewCampaignName(e.target.value)
               }}
-              placeholder="Campaign name"
-              className="input-glass body-3 text-foreground placeholder:text-muted-foreground min-w-0 flex-1 rounded-lg px-3 py-2 outline-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !creatingInProgram) void handleCreateCampaign()
+              }}
+              placeholder={creatingInProgram ? 'Creating in a program…' : 'Campaign name'}
+              disabled={!!creatingInProgram}
+              className="input-glass body-3 text-foreground placeholder:text-muted-foreground min-w-0 flex-1 rounded-lg px-3 py-2 outline-none disabled:opacity-50"
             />
             <button
               type="button"
-              disabled={creatingCampaign || !newCampaignName.trim()}
+              disabled={creatingCampaign || !newCampaignName.trim() || !!creatingInProgram}
               onClick={() => void handleCreateCampaign()}
               className="button-glass-accent body-3 shrink-0 rounded-lg px-3 py-2 font-medium disabled:opacity-50"
             >
@@ -247,7 +315,7 @@ export function CampaignsHub() {
           </div>
         </div>
 
-        {filteredCampaigns.length === 0 && personalSpaces.length === 0 ? (
+        {empty ? (
           <div className="surface-card border-border rounded-spacing-3 p-spacing-6 border text-center">
             <FolderKanban className="text-muted-foreground mb-spacing-2 mx-auto h-8 w-8" />
             <p className="body-2 text-foreground font-medium">No campaigns yet</p>
@@ -256,29 +324,43 @@ export function CampaignsHub() {
             </p>
           </div>
         ) : (
-          <ul className="gap-spacing-3 pb-spacing-6 flex flex-col">
-            {filteredCampaigns.map((campaign) => (
-              <CampaignsHubCampaignCard
-                key={campaign.id}
-                campaign={campaign}
-                spaces={spacesByCampaignId.get(campaign.id) ?? []}
-                expanded={expandedIds.has(campaign.id)}
-                menuOpen={menuOpenId === campaign.id}
-                creatingSpace={creatingSpaceFor === campaign.id}
+          <ul className="gap-spacing-4 pb-spacing-6 flex flex-col">
+            {programGroups.map((group) => (
+              <CampaignsHubProgramSection
+                key={group.key}
+                group={group}
+                spacesByCampaignId={spacesByCampaignId}
+                expandedIds={expandedIds}
+                programExpanded={expandedProgramIds.has(group.key)}
+                menuOpenId={menuOpenId}
+                creatingSpaceFor={creatingSpaceFor}
+                creatingInProgram={creatingInProgram}
+                newCampaignName={creatingInProgram === group.key ? newCampaignName : ''}
                 showShare={isOrgContext()}
-                onToggleExpanded={() => toggleExpanded(campaign.id)}
-                onOpenOverview={() => openCampaign(campaign)}
-                onOpenWork={() => openCampaign(campaign, 'dashboard')}
-                onCreateSpace={() => void handleCreateSpace(campaign.id)}
+                programs={programs}
+                onToggleProgram={() => toggleProgram(group.key)}
+                onToggleCampaign={toggleExpanded}
+                onOpenOverview={(campaign) => openCampaign(campaign)}
+                onOpenWork={(campaign) => openCampaign(campaign, 'dashboard')}
+                onCreateSpace={(campaignId) => void handleCreateSpace(campaignId)}
                 onOpenSpace={openSpace}
-                onMenuOpenChange={(open) => setMenuOpenId(open ? campaign.id : null)}
-                onShare={() =>
+                onMenuOpenChange={setMenuOpenId}
+                onShare={(campaign) =>
                   setShareCampaign({
                     id: campaign.id,
                     name: campaign.name ?? 'Untitled campaign',
                   })
                 }
-                onDelete={() => setDeleteTarget(campaign)}
+                onDelete={setDeleteTarget}
+                onMoveToProgram={(campaign, programId) =>
+                  void handleMoveToProgram(campaign, programId)
+                }
+                onStartCreateInProgram={() => {
+                  setCreatingInProgram(group.key)
+                  setNewCampaignName('')
+                }}
+                onChangeNewName={setNewCampaignName}
+                onSubmitCreate={() => void handleCreateCampaign(group.program?.id ?? null)}
               />
             ))}
 

@@ -9,6 +9,15 @@ Files:
   Needed work: Keep Team Agenda on origin/main; add smoke (`scope=team` → `team_available`) before promote; consider ignore-build-step only with operator approval.
   Deferred because: This ship lands both fixes together on the deploy branch.
 
+## 2026-07-22 - [ARCH] Programs shell left SidebarHqSpacesGroupedList over LOC
+
+Feature/App: Programs / sidebar HQ spaces
+Files:
+- `apps/web/src/components/layout/sidebar/SidebarHqSpacesGroupedList.tsx` (split; now ~380 LOC)
+Evidence: Program header grouping pushed file over web-component 400 LOC; pre-commit gate failed.
+Needed work: Done in commit — extracted `SidebarHqSpacesBucketList`, `SidebarHqSpacesNestedFlyout`, `SidebarHqSpacesListOverlays`.
+Deferred because: N/A (fixed for commit).
+
 ## 2026-07-22 - [ARCH] Team Agenda local-main land left teammates UI WIP
 
 Feature/App: Home Agenda / Integrations calendar
