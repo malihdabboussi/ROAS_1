@@ -27,3 +27,10 @@ What: Linked Ads Research snapshots created from mission subtask sessions to the
 Why: The research action only resolved mission context for mission session keys, while Blaze executes visual searches from subtask session keys, leaving every saved search with an empty `mission_ids` array and the visual report at zero.
 Impact: New research runs retain their actual ad-library snapshots in the mission report so humans can verify the visual evidence Blaze used.
 Files: `apps/agent-api/src/modules/artifacts/services/artifact-research.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-research.service.test.ts`
+
+## [2026-07-22 02:14] - [FIX]
+
+What: Minted a short-lived user session for mission and subtask runtime calls into native Meta actions.
+Why: Background Blaze tasks have no interactive chat token, so `check_meta_connection` failed before reaching the connected organization-level Meta integration even though valid server-side OAuth credentials existed.
+Impact: Ads Research, Meta Ads Audit, and Meta Ads Launch can use the client's connected Meta account during mission execution without exposing or copying OAuth tokens.
+Files: `apps/agent-api/src/modules/artifacts/legacy/artifacts-legacy.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-session-campaign.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-session-campaign.service.test.ts`, `scripts/arch/loc-allowlist.json`, `documentation/features/missions.md`

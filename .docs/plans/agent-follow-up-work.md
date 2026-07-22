@@ -7709,6 +7709,15 @@ Evidence: The service is 599 LOC after the observation hook, one line below the 
 Needed work: Extract OAuth/channel management or meeting follow-up event routing into a focused collaborator before adding another Slack workflow.
 Reason not done now: The requested observation hook is bounded and passes the enforced limit; decomposing established Slack OAuth and event behavior would broaden this production deployment.
 
+## 2026-07-22 - [ARCH] Split legacy artifacts facade before adding another dependency
+
+Status: Open
+Found while: Restoring native Meta authentication for background mission execution
+File: `apps/agent-api/src/modules/artifacts/legacy/artifacts-legacy.service.ts`
+Evidence: The service is 597 LOC after wiring the existing `UserSessionMintService`, three lines below the 600 LOC backend service limit.
+Needed work: Extract the legacy facade's collaborator construction into a focused factory before adding another runtime dependency.
+Reason not done now: The requested fix adds one existing authentication collaborator and stays within the enforced limit; restructuring the entire legacy facade would broaden a production authentication repair.
+
 ## 2026-07-21 — API typecheck blocked by pre-existing Slack People contract drift
 
 - Feature/app: API / Slack People

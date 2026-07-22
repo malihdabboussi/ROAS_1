@@ -7,6 +7,7 @@ import {
   LoggerService,
   SupabaseClientFactory,
   SupabaseServiceClient,
+  UserSessionMintService,
 } from '@vibey/api-shared'
 import { CreditsService } from '../../billing/services/credits.service'
 import { MemoriesRepository } from '../../brain/repositories/memories.repository'
@@ -52,6 +53,7 @@ export class ArtifactsService {
   private readonly mediaStatusService = new ArtifactLegacyMediaStatusService()
   private readonly runtimeCoreService = new ArtifactLegacyRuntimeCoreService()
   private readonly sessionCampaignService = new ArtifactLegacySessionCampaignService()
+  private readonly userSessionMint: UserSessionMintService
   private readonly stateMetaService = new ArtifactLegacyStateMetaService()
   private readonly integrationsService = new ArtifactLegacyIntegrationsService()
   private readonly teamBrainService = new ArtifactLegacyTeamBrainService()
@@ -80,6 +82,7 @@ export class ArtifactsService {
     this.geminiApiKey =
       this.config.get<string>('GEMINI_API_KEY', '') || this.config.get<string>('GOOGLE_API_KEY', '')
     this.openRouterApiKey = this.config.get<string>('OPENROUTER_API_KEY', '')
+    this.userSessionMint = new UserSessionMintService(this.svc)
     this.openClawCostService = new ArtifactsLegacyOpenClawCostService(
       this.credits,
       this.legacyRepository,
