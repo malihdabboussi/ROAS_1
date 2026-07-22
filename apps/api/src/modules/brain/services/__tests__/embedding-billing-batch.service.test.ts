@@ -86,7 +86,15 @@ describe('EmbeddingService billing batches', () => {
         userId: 'user-1',
         orgId: 'org-1',
       },
-      { maxOutputTokens: 8192 },
+      {
+        maxOutputTokens: 8192,
+        responseSchema: {
+          type: 'object',
+          properties: { signals: { type: 'array', items: { type: 'string' } } },
+          required: ['signals'],
+        },
+        thinkingLevel: 'low',
+      },
     )
 
     expect(result).toEqual({
@@ -95,7 +103,15 @@ describe('EmbeddingService billing batches', () => {
       providerCostUsd: 0.004,
     })
     expect(JSON.parse(fetchMock.mock.calls[0]![1].body)).toMatchObject({
-      generationConfig: { maxOutputTokens: 8192 },
+      generationConfig: {
+        maxOutputTokens: 8192,
+        responseSchema: {
+          type: 'object',
+          properties: { signals: { type: 'array', items: { type: 'string' } } },
+          required: ['signals'],
+        },
+        thinkingConfig: { thinkingLevel: 'low' },
+      },
     })
   })
 })

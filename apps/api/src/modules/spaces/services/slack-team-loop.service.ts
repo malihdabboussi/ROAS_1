@@ -45,6 +45,42 @@ type SlackPerson = {
   person_brain_id: string | null
 }
 
+const SLACK_TEAM_ANALYSIS_SCHEMA = {
+  type: 'object',
+  properties: {
+    signals: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          kind: {
+            type: 'string',
+            enum: ['brain_memory', 'workflow_discovery', 'unanswered_question', 'client_risk'],
+          },
+          target_slack_user_id: { type: 'string', nullable: true },
+          target_channel_id: { type: 'string' },
+          source_message_ts: { type: 'string' },
+          proposed_content: { type: 'string' },
+          rationale: { type: 'string' },
+          brain_memory: { type: 'string', nullable: true },
+          confidence: { type: 'number', minimum: 0, maximum: 1 },
+        },
+        required: [
+          'kind',
+          'target_slack_user_id',
+          'target_channel_id',
+          'source_message_ts',
+          'proposed_content',
+          'rationale',
+          'brain_memory',
+          'confidence',
+        ],
+      },
+    },
+  },
+  required: ['signals'],
+}
+
 export function isWithinSlackTeamLoopQuietHours(now: Date, quietHours?: QuietHours): boolean {
   if (!quietHours) return false
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -493,7 +529,11 @@ export class SlackTeamLoopService {
         userId: input.userId,
         orgId: input.orgId,
       },
-      { maxOutputTokens: 8192 },
+      {
+        maxOutputTokens: 8192,
+        responseSchema: SLACK_TEAM_ANALYSIS_SCHEMA,
+        thinkingLevel: 'low',
+      },
     )
     const parsed = JSON.parse(completion.text)
     if (

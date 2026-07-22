@@ -25,6 +25,8 @@ export type GeminiTextResult = {
 
 export type GeminiTextOptions = {
   maxOutputTokens?: number
+  responseSchema?: Record<string, unknown>
+  thinkingLevel?: 'minimal' | 'low' | 'medium' | 'high'
 }
 
 export type BrainGeminiBillingContext = { userId: string; orgId?: string | null }
@@ -295,13 +297,18 @@ export class EmbeddingService {
       throw new Error('GEMINI_API_KEY not configured')
     }
 
+    const generationConfig: Record<string, unknown> = {
+      temperature: 0.2,
+      maxOutputTokens: options.maxOutputTokens ?? 2048,
+      responseMimeType: 'application/json',
+    }
+    if (options.responseSchema) generationConfig.responseSchema = options.responseSchema
+    if (options.thinkingLevel) {
+      generationConfig.thinkingConfig = { thinkingLevel: options.thinkingLevel }
+    }
     const body: Record<string, unknown> = {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: options.maxOutputTokens ?? 2048,
-        responseMimeType: 'application/json',
-      },
+      generationConfig,
     }
 
     if (systemPrompt) {
