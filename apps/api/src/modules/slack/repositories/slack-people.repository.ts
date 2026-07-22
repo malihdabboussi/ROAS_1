@@ -296,7 +296,7 @@ export class SlackPeopleRepository {
     const { data, error } = await supabase
       .from('slack_shadow_actions')
       .select(
-        '*, target:channel_members!slack_shadow_actions_target_member_id_fkey(platform_id, delivery_mode)',
+        '*, target:channel_members!slack_shadow_actions_target_member_id_fkey(platform_id, delivery_mode, relationship_kind)',
       )
       .eq('id', actionId)
       .eq('org_id', orgId)

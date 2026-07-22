@@ -296,6 +296,7 @@ export class SlackTeamLoopService {
       const target = signal.target_slack_user_id
         ? peopleBySlackId.get(signal.target_slack_user_id)
         : undefined
+      const internalRecipient = target?.relationship_kind === 'internal' ? target : undefined
       const evidenceFingerprint = createHash('sha256')
         .update(
           [
@@ -338,8 +339,9 @@ export class SlackTeamLoopService {
         orgId: input.orgId,
         userId: input.userId,
         agentKey: 'pixel',
-        targetMemberId: target?.id ?? null,
-        actionKind: signal.kind === 'unanswered_question' ? 'message' : 'workflow',
+        targetMemberId: internalRecipient?.id ?? null,
+        actionKind:
+          signal.kind === 'unanswered_question' && internalRecipient ? 'message' : 'workflow',
         proposedContent: signal.proposed_content,
         rationale: signal.rationale,
         sourceChannelId: signal.target_channel_id,
@@ -351,6 +353,14 @@ export class SlackTeamLoopService {
           confidence: signal.confidence,
           evidence_fingerprint: evidenceFingerprint,
           delivery_mode: input.deliveryMode,
+          ...(target && !internalRecipient
+            ? {
+                internal_only: true,
+                subject_member_id: target.id,
+                subject_display_name: target.display_name,
+                subject_relationship_kind: target.relationship_kind,
+              }
+            : {}),
         },
       })
       proposed += 1
@@ -358,7 +368,7 @@ export class SlackTeamLoopService {
       if (
         input.deliveryMode === 'active' &&
         signal.kind === 'unanswered_question' &&
-        target?.delivery_mode === 'active'
+        internalRecipient?.delivery_mode === 'active'
       ) {
         const approved = await this.peopleRepo.reviewShadowAction(input.supabase, {
           actionId: action.id,
@@ -375,7 +385,7 @@ export class SlackTeamLoopService {
         if (!claimed) throw new Error('Active Slack loop proposal could not be claimed')
         try {
           const dm = await this.slackTools.openDm(input.supabase, input.userId, input.orgId, {
-            slack_user_id: target.platform_id,
+            slack_user_id: internalRecipient.platform_id,
           })
           const delivery = await this.slackTools.sendMessage(
             input.supabase,
@@ -528,11 +538,11 @@ export class SlackTeamLoopService {
     totalTokens: number
     providerCostUsd: number
   }> {
-    const people = new Map(input.people.map((person) => [person.platform_id, person.display_name]))
+    const people = new Map(input.people.map((person) => [person.platform_id, person]))
     const transcript = input.messages
       .map(
         (message) =>
-          `[${message.channel_id}|#${message.channel_name}|${message.ts}|thread=${message.thread_ts || message.ts}] ${message.user === 'PIXEL_BOT' ? 'Pixel (bot)' : (people.get(message.user) ?? message.user)}: ${message.text.slice(0, 1200)}`,
+          `[${message.channel_id}|#${message.channel_name}|${message.ts}|thread=${message.thread_ts || message.ts}] ${message.user === 'PIXEL_BOT' ? 'Pixel (bot)' : people.has(message.user) ? `${people.get(message.user)?.display_name} (${people.get(message.user)?.relationship_kind})` : message.user}: ${message.text.slice(0, 1200)}`,
       )
       .join('\n')
     const prompt = [
@@ -545,6 +555,7 @@ export class SlackTeamLoopService {
       'unanswered_question: a direct question that appears unanswered in the supplied window.',
       'Messages with the same thread value are one Slack thread. A question is answered when a later human reply in that thread addresses it; never flag that as unanswered.',
       'client_risk: an explicit blocker, missed commitment, dissatisfaction, or delivery risk.',
+      'Never propose messaging an external or ignored person. For a signal about them, write an internal finding for the team to review.',
       'For every signal, copy the exact channel id and source timestamp from its bracket.',
       'Return only JSON: {"signals":[{"kind":"brain_memory|workflow_discovery|unanswered_question|client_risk","target_slack_user_id":"string or null","target_channel_id":"string","source_message_ts":"string","proposed_content":"string","rationale":"string","brain_memory":"string or null","confidence":0.0}]}',
       input.instructions ? `Additional admin instructions: ${input.instructions}` : '',

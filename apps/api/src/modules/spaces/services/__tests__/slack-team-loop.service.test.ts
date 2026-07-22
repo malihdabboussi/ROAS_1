@@ -325,7 +325,7 @@ describe('SlackTeamLoopService', () => {
     expect(result).toMatchObject({ channels_observed: 1, messages_observed: 1, proposed: 1 })
   })
 
-  it('registers an unseen Slack sender before attaching their Shadow proposal', async () => {
+  it('routes an external sender finding to internal Signals instead of their conversation', async () => {
     const discovered = {
       id: 'member-3',
       platform_id: 'U3',
@@ -414,7 +414,16 @@ describe('SlackTeamLoopService', () => {
     )
     expect(peopleRepo.createShadowAction).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ targetMemberId: 'member-3' }),
+      expect.objectContaining({
+        targetMemberId: null,
+        actionKind: 'workflow',
+        metadata: expect.objectContaining({
+          internal_only: true,
+          subject_member_id: 'member-3',
+          subject_display_name: 'Casey Client',
+          subject_relationship_kind: 'external',
+        }),
+      }),
     )
     expect(result).toMatchObject({ people_discovered: 1, proposed: 1 })
   })

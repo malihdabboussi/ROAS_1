@@ -455,6 +455,9 @@ export class SlackPeopleService {
     if (action.action_kind !== 'message') {
       throw new ConflictException('This proposal is for review and cannot be sent to Slack')
     }
+    if (!action.target || action.target.relationship_kind !== 'internal') {
+      throw new ConflictException('Pixel only sends proactive messages to internal people')
+    }
     if (!action.target || action.target.delivery_mode !== 'active') {
       throw new ConflictException('Set this person to Active before sending')
     }

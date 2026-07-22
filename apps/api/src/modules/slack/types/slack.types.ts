@@ -271,6 +271,7 @@ export interface SlackShadowActionDeliveryRecord extends SlackShadowAction {
   target: {
     platform_id: string
     delivery_mode: SlackDeliveryMode
+    relationship_kind: SlackRelationshipKind
   } | null
 }
 

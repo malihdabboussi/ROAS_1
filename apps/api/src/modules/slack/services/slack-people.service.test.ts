@@ -67,7 +67,7 @@ function createService(overrides?: {
       action_kind: 'message',
       proposed_content: 'Quick check-in — anything blocking you today?',
       target_member_id: 'person-1',
-      target: { platform_id: 'U1', delivery_mode: 'active' },
+      target: { platform_id: 'U1', delivery_mode: 'active', relationship_kind: 'internal' },
     }),
     reviewShadowAction: vi.fn().mockResolvedValue({ id: 'action-1', status: 'approved' }),
     claimShadowActionForSend: vi.fn().mockResolvedValue({ id: 'action-1', status: 'sending' }),
@@ -467,7 +467,7 @@ describe('SlackPeopleService', () => {
       id: 'action-1',
       status: 'approved',
       proposed_content: 'Hello',
-      target: { platform_id: 'U1', delivery_mode: 'shadow' },
+      target: { platform_id: 'U1', delivery_mode: 'shadow', relationship_kind: 'internal' },
     })
 
     await expect(
@@ -483,12 +483,34 @@ describe('SlackPeopleService', () => {
       status: 'approved',
       action_kind: 'workflow',
       proposed_content: 'Avery owns weekly reporting.',
-      target: { platform_id: 'U1', delivery_mode: 'active' },
+      target: { platform_id: 'U1', delivery_mode: 'active', relationship_kind: 'internal' },
     })
 
     await expect(
       service.sendShadowAction({} as never, 'admin-1', 'org-1', 'action-1'),
     ).rejects.toBeInstanceOf(ConflictException)
+    expect(slackApi.postMessage).not.toHaveBeenCalled()
+  })
+
+  it('never sends a Shadow action to an external person', async () => {
+    const { service, repository, slackApi } = createService()
+    repository.findShadowAction.mockResolvedValue({
+      id: 'action-1',
+      status: 'approved',
+      action_kind: 'message',
+      proposed_content: 'Can I help with this?',
+      target: {
+        platform_id: 'U1',
+        delivery_mode: 'active',
+        relationship_kind: 'external',
+      },
+    })
+
+    await expect(
+      service.sendShadowAction({} as never, 'admin-1', 'org-1', 'action-1'),
+    ).rejects.toBeInstanceOf(ConflictException)
+    expect(repository.claimShadowActionForSend).not.toHaveBeenCalled()
+    expect(slackApi.openDmChannel).not.toHaveBeenCalled()
     expect(slackApi.postMessage).not.toHaveBeenCalled()
   })
 
