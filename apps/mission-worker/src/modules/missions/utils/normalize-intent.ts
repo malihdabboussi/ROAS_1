@@ -1,9 +1,11 @@
 const MAX_FIELD_LEN = 1000
+const MAX_ECOLOGY_LEN = 4000
 
 function coerceField(
   o: Record<string, unknown>,
   camel: string,
   snake?: string,
+  maxLength = MAX_FIELD_LEN,
 ): string | undefined {
   const raw =
     typeof o[camel] === 'string'
@@ -11,7 +13,7 @@ function coerceField(
       : snake && typeof o[snake] === 'string'
         ? (o[snake] as string).trim()
         : undefined
-  return raw ? raw.slice(0, MAX_FIELD_LEN) : undefined
+  return raw ? raw.slice(0, maxLength) : undefined
 }
 
 /**
@@ -32,7 +34,7 @@ export function normalizeIntentPartial(raw: unknown): Record<string, string> | u
   if (sensory) result.sensory = sensory
   const endState = coerceField(o, 'endState', 'end_state')
   if (endState) result.endState = endState
-  const ecology = coerceField(o, 'ecology')
+  const ecology = coerceField(o, 'ecology', undefined, MAX_ECOLOGY_LEN)
   if (ecology) result.ecology = ecology
 
   return Object.keys(result).length > 0 ? result : undefined
@@ -58,7 +60,7 @@ export function normalizeIntentFull(raw: unknown, fallbackText: string): Record<
     story: coerceField(o, 'story') || d.story,
     sensory: coerceField(o, 'sensory') || d.sensory,
     endState: coerceField(o, 'endState', 'end_state') || d.endState,
-    ecology: coerceField(o, 'ecology') || d.ecology,
+    ecology: coerceField(o, 'ecology', undefined, MAX_ECOLOGY_LEN) || d.ecology,
   }
 }
 

@@ -1,12 +1,15 @@
 import { z } from 'zod'
 import { AgentKeySchema, OrgIdSchema } from './mission-core.dto'
 
+const INTENT_FIELD_MAX_LENGTH = 1000
+const INTENT_ECOLOGY_MAX_LENGTH = 4000
+
 export const IntentPacketSchema = z.object({
-  why: z.string().min(1).max(1000),
-  story: z.string().min(1).max(1000),
-  sensory: z.string().min(1).max(1000),
-  endState: z.string().min(1).max(1000),
-  ecology: z.string().min(1).max(1000),
+  why: z.string().min(1).max(INTENT_FIELD_MAX_LENGTH),
+  story: z.string().min(1).max(INTENT_FIELD_MAX_LENGTH),
+  sensory: z.string().min(1).max(INTENT_FIELD_MAX_LENGTH),
+  endState: z.string().min(1).max(INTENT_FIELD_MAX_LENGTH),
+  ecology: z.string().min(1).max(INTENT_ECOLOGY_MAX_LENGTH),
 })
 
 export const MissionOutputContractSchema = z.object({
