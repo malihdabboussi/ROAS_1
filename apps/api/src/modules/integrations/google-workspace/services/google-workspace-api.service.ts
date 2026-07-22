@@ -41,8 +41,12 @@ export class GoogleWorkspaceApiService {
     if (!connection) return { connected: false, status: null }
     const vaultUserId = String(connection.metadata?.vault_user_id ?? connection.user_id)
     const hasSecret = await this.vault.hasSecret(vaultUserId, PROVIDER, VAULT_LABEL)
+    const rowConnected = connection.status === 'connected'
     return {
-      connected: hasSecret && connection.status === 'connected',
+      // Row status drives "connected" in product UI. Missing vault credentials
+      // are exposed separately so Team Agenda does not look uninstalled.
+      connected: rowConnected,
+      credentialsReady: hasSecret && rowConnected,
       status: connection.status,
       connectedAt: connection.connected_at,
       connectionLabel: connection.connection_label,
@@ -74,7 +78,6 @@ export class GoogleWorkspaceApiService {
       PROVIDER,
       VAULT_LABEL,
       JSON.stringify(serviceAccount),
-      // vault_secrets_secret_type_check allows api_key|token|password|oauth_token|custom only
       'custom',
       { org_id: orgId, client_email: serviceAccount.client_email },
     )
@@ -169,6 +172,7 @@ export class GoogleWorkspaceApiService {
     const users = await this.client.listDirectoryUsers(serviceAccount, adminEmail)
     const now = new Date().toISOString()
     let upserted = 0
+    let matched = 0
     for (const user of users) {
       if (user.suspended) continue
       const existing = await this.identitiesRepo.findByEmail(supabase, orgId, user.primaryEmail)
@@ -181,12 +185,12 @@ export class GoogleWorkspaceApiService {
         lastSyncedAt: now,
         matchStatus: existing?.match_status === 'confirmed' ? 'confirmed' : existing?.match_status,
       })
-      if (!existing || existing.match_status !== 'confirmed') {
-        await this.identities.refreshSuggestions(
-          supabase,
-          orgId,
-          (await this.identitiesRepo.findByEmail(supabase, orgId, user.primaryEmail))!,
-        )
+      const row = await this.identitiesRepo.findByEmail(supabase, orgId, user.primaryEmail)
+      if (row && row.match_status !== 'confirmed' && row.match_status !== 'rejected') {
+        const linked = await this.identities.refreshSuggestions(supabase, orgId, row)
+        if (linked.match_status === 'confirmed') matched += 1
+      } else if (row?.match_status === 'confirmed') {
+        matched += 1
       }
       upserted += 1
     }
@@ -198,12 +202,23 @@ export class GoogleWorkspaceApiService {
           ...(connection.metadata ?? {}),
           last_directory_sync_at: now,
           last_directory_user_count: upserted,
+          last_directory_matched_count: matched,
         },
         updated_at: now,
       },
       'Failed to update directory sync metadata',
     )
 
-    return { success: true, upserted, total_directory_users: users.length }
+    // Re-link Slack/portal onto Directory emails only; drops external Slack-only rows.
+    const linked = await this.identities.seedFromOrgSurfaces(supabase, orgId)
+
+    return {
+      success: true,
+      upserted,
+      matched,
+      pruned: linked.pruned ?? 0,
+      linked: linked.linked ?? 0,
+      total_directory_users: users.length,
+    }
   }
 }

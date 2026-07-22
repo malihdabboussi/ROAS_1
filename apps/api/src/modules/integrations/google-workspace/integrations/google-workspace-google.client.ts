@@ -210,6 +210,7 @@ export class GoogleWorkspaceGoogleClient {
       location: item.location ? String(item.location) : null,
       video_url: videoEntry?.uri ? String(videoEntry.uri) : null,
       html_link: item.htmlLink ? String(item.htmlLink) : null,
+      ical_uid: item.iCalUID ? String(item.iCalUID) : null,
       attendees,
       source: 'google_workspace',
       calendar_email: calendarEmail,

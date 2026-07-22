@@ -6,12 +6,15 @@ import type { RequestScope } from '@vibey/api-shared'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import { SpacesRepository } from '../repositories/spaces.repository'
 import {
+  assignRelatedCallsExclusive,
+  assignSoleNearStartRelatedCalls,
   buildFathomAgendaEvent,
   buildPrecallPrompt,
   callDateInAgendaWindow,
   isEligiblePrecallEvent,
   localDayBounds,
   mapPrepItemToAgendaLink,
+  pickMeetingsSpaceId,
   scoreRelatedCallMatch,
   type AgendaPrepLink,
   type AgendaRelatedCall,
@@ -73,24 +76,10 @@ export class MeetingsPrecallPrepService {
     const spaces = await this.spacesRepo.findAllSpaces(
       supabase,
       userId,
-      { limit: 100, paginated: false },
+      { limit: 200, paginated: false },
       null,
     )
-    const meetings = (spaces as Array<Record<string, unknown>>).find((space) => {
-      const schema = space.schema as {
-        icon?: string
-        personal_dashboard?: boolean
-        fields?: Array<{ id?: string }>
-      } | null
-      const hasEntryType = schema?.fields?.some((f) => f.id === 'entry_type')
-      const title = String(space.title ?? '').toLowerCase()
-      const isDashboard =
-        space.space_kind === 'personal_dashboard' ||
-        schema?.personal_dashboard === true ||
-        title === 'personal dashboard'
-      return hasEntryType && (isDashboard || schema?.icon === 'video' || title === 'meetings')
-    })
-    return meetings?.id ? String(meetings.id) : null
+    return pickMeetingsSpaceId(spaces as Array<Record<string, unknown>>)
   }
 
   async runForToday(input: {
@@ -314,10 +303,9 @@ export class MeetingsPrecallPrepService {
       })
       followUpsByCall.set(sourceId, list)
     }
-
-    const matchedCallIds = new Set<string>()
+    const callsById = new Map(calls.map((call) => [call.id, call]))
+    const candidates: Array<{ eventId: string; callId: string; score: number }> = []
     for (const event of input.events) {
-      let best: { call: (typeof calls)[number]; score: number } | null = null
       for (const call of calls) {
         const custom = call.custom_data ?? {}
         const score = scoreRelatedCallMatch(event, {
@@ -326,20 +314,34 @@ export class MeetingsPrecallPrepService {
           attendees: custom.attendees,
         })
         if (score <= 0) continue
-        if (!best || score > best.score) best = { call, score }
+        candidates.push({ eventId: event.id, callId: call.id, score })
       }
-      if (!best || best.score < 10) continue
-      matchedCallIds.add(best.call.id)
-      const custom = best.call.custom_data ?? {}
-      relatedByEventId.set(event.id, {
-        space_id: String(best.call.space_id),
-        call_item_id: best.call.id,
-        title: String(best.call.title ?? 'Call').slice(0, 200),
+    }
+    const scoredAssigned = assignRelatedCallsExclusive(candidates)
+    const assigned = assignSoleNearStartRelatedCalls({
+      events: input.events,
+      calls: calls.map((call) => ({
+        id: call.id,
+        call_date:
+          typeof call.custom_data?.call_date === 'string' ? call.custom_data.call_date : null,
+      })),
+      alreadyAssigned: scoredAssigned,
+    })
+    const matchedCallIds = new Set<string>()
+    for (const [eventId, callId] of assigned) {
+      const call = callsById.get(callId)
+      if (!call) continue
+      matchedCallIds.add(call.id)
+      const custom = call.custom_data ?? {}
+      relatedByEventId.set(eventId, {
+        space_id: String(call.space_id),
+        call_item_id: call.id,
+        title: String(call.title ?? 'Call').slice(0, 200),
         recording_url:
           typeof custom.recording_url === 'string' && custom.recording_url.trim()
             ? custom.recording_url.trim()
             : null,
-        follow_ups: followUpsByCall.get(best.call.id) ?? [],
+        follow_ups: followUpsByCall.get(call.id) ?? [],
       })
     }
 

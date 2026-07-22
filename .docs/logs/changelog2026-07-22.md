@@ -168,3 +168,10 @@ Why: Prod was dropping Nate/Nefi-hosted webhooks (`refusing fallback`) because u
 Impact: Shared-team Fathom calls auto-ingest into Dylan’s Meetings again; multi-subscriber unsigned events still require invitee match or a signature.
 
 Files: `fathom-webhook.service.ts`, fathom controller tests, changelog.
+
+## [2026-07-22 13:20] - [FIX]
+
+What: Landed Team Agenda (`scope=team`) onto the same branch as the Fathom shared-team ingest fix so a production `roas-api` deploy keeps teammate calendars and auto-ingests Nate/Nefi-hosted Fathom calls.
+Why: Clean `main` lacked Team Agenda (archive/CLI only); deploying Fathom alone would wipe Agenda Team on `api.roas.io`.
+Impact: One production deploy restores both Home Team Agenda and Personal Meetings auto-ingest for shared-team recordings.
+Files: `integrations-calendar-team.service.ts`, calendar DTO/service/module, AgendaCard*, `fathom-webhook.service.ts`

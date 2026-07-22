@@ -42,6 +42,7 @@ export type CalendarAgendaEvent = {
   color_id: string | null
   attendees: CalendarAttendee[]
   source: CalendarProvider | 'fathom'
+  ical_uid?: string | null
   account_id?: string | null
   account_label?: string | null
   prep?: CalendarAgendaPrep | null
@@ -107,6 +108,7 @@ export type CalendarAgendaResponse = {
   events: CalendarAgendaEvent[]
   connected: { google_calendar: boolean; outlook: boolean }
   accounts?: CalendarAgendaAccount[]
+  team_available?: boolean
   error?: string
 }
 
@@ -115,6 +117,9 @@ export async function fetchCalendarAgenda(params: {
   end: string
   timezone: string
   provider?: CalendarProvider
+  scope?: 'personal' | 'team'
+  /** Explicit org for Team Agenda / team_available; defaults to active org session. */
+  orgId?: string | null
 }): Promise<CalendarAgendaResponse> {
   const sp = new URLSearchParams({
     start: params.start,
@@ -122,7 +127,20 @@ export async function fetchCalendarAgenda(params: {
     timezone: params.timezone,
   })
   if (params.provider) sp.set('provider', params.provider)
-  return backendGet<CalendarAgendaResponse>(`/api/integrations/calendar/agenda?${sp.toString()}`)
+  if (params.scope) sp.set('scope', params.scope)
+  const hasOrgOverride = Object.prototype.hasOwnProperty.call(params, 'orgId')
+  return backendGet<CalendarAgendaResponse>(`/api/integrations/calendar/agenda?${sp.toString()}`, {
+    ...(hasOrgOverride ? { orgId: params.orgId ?? null } : {}),
+  })
+}
+
+export async function fetchGoogleWorkspaceStatus(orgId: string | null): Promise<{
+  success: boolean
+  connected: boolean
+  status?: string | null
+  clientEmail?: string | null
+}> {
+  return backendGet('/api/integrations/google-workspace/status', { orgId })
 }
 
 export type CalendarEventAttendeeInput = {

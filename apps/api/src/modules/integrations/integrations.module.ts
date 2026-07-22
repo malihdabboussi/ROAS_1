@@ -28,6 +28,7 @@ import { PaypalModule } from './paypal/paypal.module'
 import { IntegrationsRepository } from './repositories/integrations.repository'
 import { ScrapeCreatorsModule } from './scrapecreators/scrapecreators.module'
 import { SearchApiModule } from './searchapi/searchapi.module'
+import { IntegrationsCalendarTeamService } from './services/integrations-calendar-team.service'
 import { IntegrationsCalendarService } from './services/integrations-calendar.service'
 import { IntegrationsComposioCampaignService } from './services/integrations-composio-campaign.service'
 import { IntegrationsComposioHealthService } from './services/integrations-composio-health.service'
@@ -91,6 +92,7 @@ import { WordpressModule } from './wordpress/wordpress.module'
     IntegrationsComposioWebhookService,
     IntegrationsComposioService,
     IntegrationsCalendarService,
+    IntegrationsCalendarTeamService,
     IntegrationsLinkedInService,
     IntegrationsFacebookService,
     IntegrationsYoutubeService,

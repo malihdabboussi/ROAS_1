@@ -206,6 +206,22 @@ export class OrgPersonCalendarIdentitiesRepository {
     return data as OrgPersonCalendarIdentity
   }
 
+  /**
+   * Drop Slack / portal / personal / manual rows that are not Workspace Directory users.
+   * Team Agenda + Calendars UI must never treat these as candidates.
+   */
+  async deleteNonDirectorySources(supabase: SupabaseClient, orgId: string): Promise<number> {
+    const { data, error } = await supabase
+      .from('org_person_calendar_identities')
+      .delete()
+      .eq('org_id', orgId)
+      .neq('source', 'directory_sync')
+      .is('google_workspace_user_id', null)
+      .select('id')
+    if (error) throw new Error(`Failed to prune external calendar identities: ${error.message}`)
+    return (data ?? []).length
+  }
+
   /** Service-role path for agent tool calls that may not hold admin RLS. */
   serviceList(orgId: string): Promise<OrgPersonCalendarIdentity[]> {
     return this.list(this.serviceClient.client, orgId)

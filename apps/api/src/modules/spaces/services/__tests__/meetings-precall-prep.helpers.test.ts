@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  assignRelatedCallsExclusive,
+  assignSoleNearStartRelatedCalls,
   buildFathomAgendaEvent,
   callDateInAgendaWindow,
+  emailFromAttendeeSlug,
   isEligiblePrecallEvent,
   localDayBounds,
   mapPrepItemToAgendaLink,
@@ -84,7 +87,7 @@ describe('meetings-precall-prep.helpers', () => {
     expect(new Date(startIso).getTime()).toBeLessThan(new Date(endIso).getTime())
   })
 
-  it('scores related call matches by attendee overlap', () => {
+  it('scores related call matches by attendee overlap and time', () => {
     const event = {
       id: 'google:1',
       title: 'Nate Tilley & Dylan — Weekly Check-In',
@@ -92,15 +95,18 @@ describe('meetings-precall-prep.helpers', () => {
       end: '2026-07-16T23:45:00.000Z',
       all_day: false,
       video_url: 'https://meet.google.com/x',
-      attendees: [{ email: 'nate@example.com', name: 'Nate' }],
+      attendees: [
+        { email: 'nate@example.com', name: 'Nate' },
+        { email: 'dylan@dylanvanas.com', name: 'Dylan' },
+      ],
     }
     expect(
       scoreRelatedCallMatch(event, {
         title: 'Nate Tilley weekly',
         call_date: '2026-07-16T23:05:00.000Z',
-        attendees: ['Nate Tilley', 'nate@example.com'],
+        attendees: ['Nate Tilley <nate@example.com>', 'dylan@dylanvanas.com'],
       }),
-    ).toBeGreaterThanOrEqual(10)
+    ).toBeGreaterThanOrEqual(20)
     expect(
       scoreRelatedCallMatch(event, {
         title: 'Unrelated',
@@ -108,6 +114,119 @@ describe('meetings-precall-prep.helpers', () => {
         attendees: ['other@example.com'],
       }),
     ).toBe(0)
+  })
+
+  it('does not match when only a shared attendee overlaps', () => {
+    const rajEvent = {
+      id: 'google:raj',
+      title: 'Dylan Vanas and Raj | Zoom Call',
+      start: '2026-07-21T18:00:00.000Z',
+      end: '2026-07-21T18:30:00.000Z',
+      all_day: false,
+      video_url: 'https://www.dylanvanas.com/zoom',
+      attendees: [
+        { email: 'rajivsankarlall@gmail.com', name: null },
+        { email: 'dylan@dylanvanas.com', name: null },
+      ],
+    }
+    expect(
+      scoreRelatedCallMatch(rajEvent, {
+        title: 'Nate and Dylan ops priorities and AM support workflow',
+        call_date: '2026-07-21T18:05:00.000Z',
+        attendees: ['nate@example.com', 'dylan@dylanvanas.com'],
+      }),
+    ).toBe(0)
+  })
+
+  it('does not match on wrong title with weak attendee overlap', () => {
+    const event = {
+      id: 'google:2',
+      title: 'Dylan Vanas and Raj | Zoom Call',
+      start: '2026-07-21T18:00:00.000Z',
+      end: '2026-07-21T18:30:00.000Z',
+      all_day: false,
+      video_url: null,
+      attendees: [
+        { email: 'rajivsankarlall@gmail.com', name: null },
+        { email: 'dylan@dylanvanas.com', name: null },
+      ],
+    }
+    expect(
+      scoreRelatedCallMatch(event, {
+        title: 'Completely different ops priorities meeting',
+        call_date: '2026-07-21T18:10:00.000Z',
+        attendees: ['dylan@dylanvanas.com'],
+      }),
+    ).toBe(0)
+  })
+
+  it('rejects calls outside the event time window', () => {
+    const event = {
+      id: 'google:3',
+      title: 'Nate Tilley & Dylan — Weekly Check-In',
+      start: '2026-07-21T18:00:00.000Z',
+      end: '2026-07-21T18:30:00.000Z',
+      all_day: false,
+      video_url: null,
+      attendees: [
+        { email: 'nate@example.com', name: 'Nate' },
+        { email: 'dylan@dylanvanas.com', name: 'Dylan' },
+      ],
+    }
+    expect(
+      scoreRelatedCallMatch(event, {
+        title: 'Nate Tilley & Dylan — Weekly Check-In',
+        call_date: '2026-07-21T12:00:00.000Z',
+        attendees: ['nate@example.com', 'dylan@dylanvanas.com'],
+      }),
+    ).toBe(0)
+  })
+
+  it('assigns each Fathom call to at most one calendar event', () => {
+    const assigned = assignRelatedCallsExclusive([
+      { eventId: 'raj', callId: 'nate-call', score: 25 },
+      { eventId: 'nate', callId: 'nate-call', score: 55 },
+      { eventId: 'other', callId: 'other-call', score: 40 },
+    ])
+    expect(assigned.get('nate')).toBe('nate-call')
+    expect(assigned.has('raj')).toBe(false)
+    expect(assigned.get('other')).toBe('other-call')
+  })
+
+  it('parses Fathom attendee slugs into emails', () => {
+    expect(emailFromAttendeeSlug('att_dylan_dylanvanas_com')).toBe('dylan@dylanvanas.com')
+    expect(emailFromAttendeeSlug('att_speaker_1')).toBeNull()
+  })
+
+  it('attaches unmatched AI-titled Fathom calls to the sole near-start invite', () => {
+    const assigned = assignSoleNearStartRelatedCalls({
+      events: [
+        {
+          id: 'google:joey',
+          start: '2026-07-21T23:30:00.000Z',
+        },
+      ],
+      calls: [
+        {
+          id: 'mortgage',
+          call_date: '2026-07-21T23:33:11.000Z',
+        },
+      ],
+      alreadyAssigned: new Map(),
+    })
+    expect(assigned.get('google:joey')).toBe('mortgage')
+  })
+
+  it('does not sole-near-start attach when two invites compete', () => {
+    const assigned = assignSoleNearStartRelatedCalls({
+      events: [
+        { id: 'raj', start: '2026-07-21T18:00:00.000Z' },
+        { id: 'nate', start: '2026-07-21T18:05:00.000Z' },
+      ],
+      calls: [{ id: 'nate-call', call_date: '2026-07-21T18:03:00.000Z' }],
+      alreadyAssigned: new Map(),
+    })
+    expect(assigned.size).toBe(0)
   })
 
   it('builds a Fathom-only agenda row for unmatched calls', () => {

@@ -1,3 +1,167 @@
+## 2026-07-22 - [ARCH] Protect api.roas.io from Team Agenda wipe
+
+Status: Open
+Found while: Combining Fathom shared-team ingest deploy with Team Agenda land
+Files:
+
+- Vercel project `roas-api` (`prj_YwUti53Q9vB6rMKPB5cpW8w7h0qL`) Production alias `api.roas.io`
+  Evidence: Clean main lacked Team Agenda; CLI/archive deploys held it. A main-only Fathom deploy would wipe `scope=team`.
+  Needed work: Keep Team Agenda on origin/main; add smoke (`scope=team` → `team_available`) before promote; consider ignore-build-step only with operator approval.
+  Deferred because: This ship lands both fixes together on the deploy branch.
+
+## 2026-07-22 - [ARCH] Team Agenda local-main land left teammates UI WIP
+
+Feature/App: Home Agenda / Integrations calendar
+Files:
+- `apps/web/src/features/team-2/components/people/PeopleTeamCalendarsView.tsx` (+ related Person* / teammates move)
+Evidence: Staged then unstaged to pass arch cross-feature import gate (`@/features/org` from team-2).
+Needed work: Move teammates calendar Directory UI onto main with shared org imports via `@/lib/org` (or allowlist shrink path), then remove duplicate settings/team copies.
+Deferred because: In-scope was landing scope=team API + Agenda UI on local main behind the arch gate.
+
+## 2026-07-22 - [ARCH] Team Agenda merge helpers over utility LOC
+
+Status: Open
+Found while: Fixing Team Agenda Fathom duplicates + Mine labels
+Files:
+
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.helpers.ts` (436 LOC)
+  Evidence: Utility limit 300; grew with sole near-start assign + attendee slug parsing.
+  Needed work: Split related-call matching helpers into `meetings-related-call-match.ts`.
+  Deferred because: In-scope fix required the matching rules; file split is cleanup.
+
+- `apps/api/src/modules/integrations/services/integrations-calendar-dedupe.ts` (350 LOC)
+  Evidence: Utility limit 300; Fathom near-start merge + team label resolver.
+  Needed work: Extract `mergeFathomIntoNearStartCalendars` / label resolver to sibling module if it grows further.
+  Deferred because: Still a single cohesive dedupe module; behavior ship first.
+
+- `apps/api/src/modules/integrations/services/integrations-calendar.service.ts` (811 LOC)
+  Evidence: Pre-existing over 600 service limit; only Mine/Fathom label merge touched.
+  Needed work: Continue extracting parse/mutation helpers (already partially split).
+  Deferred because: Out of scope for duplicate/label fix.
+
+## 2026-07-21 - [FIX] Personal Meetings org-context follow-ups
+
+Feature/App: campaigns / home / meetings
+Found while: Fixing empty org “meeting space” vs full personal-account Meetings
+
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts` (621 LOC; service limit 600)
+  Evidence: `wc -l` after ranking tweak in `resolveMeetingsSpaceId`.
+  Needed work: Extract meetings-space resolution helper shared with Fathom/Home.
+  Deferred because: In-scope was prefer-Meetings ranking + Campaigns hub merge, not service split.
+
+- `apps/web/src/app/(dashboard)/campaigns/_components/CampaignsHub.tsx` (410 LOC; component limit 400)
+  Evidence: `wc -l` after personal-space merge + org dashboard section.
+  Needed work: Extract list sections / reload into a small hook or child components.
+  Deferred because: In-scope was wiring personal Meetings correctly in org context.
+
+- Org Personal Dashboard still exists as a separate empty-ish surface (`space_kind=personal_dashboard`, `org_id` set).
+  Needed work: Decide whether to hide from Spaces switcher, attach to General, or retire for ROAS.
+  Deferred because: Product still allows a per-org private dashboard; this fix only stops mislabeling it as personal Meetings.
+
+## 2026-07-21 - [FEATURE] Team Agenda Mine+UX follow-ups
+
+Feature/App: home / Agenda + integrations calendar
+Found while: Team Agenda Mine merge + list UX (attendees, past scroll, day prep, dismiss confirm, open any)
+
+- `apps/web/src/features/home/components/AgendaCard.tsx` (512 LOC; component limit 400)
+  Evidence: `wc -l` after dismiss ConfirmDialog + today-scoped nextEvent.
+  Needed work: Extract `useAgendaCardLoad` / dismiss state into a hook.
+  Deferred because: In-scope was Team+Mine merge and list UX; full split still deferred.
+
+- `apps/api/src/modules/integrations/services/integrations-calendar.service.ts` (809 LOC; service limit 600)
+  Evidence: Grew with `mergeTeamAgendaWithPersonal`; parse/mutation still colocated.
+  Needed work: Extract merge + personal load into sibling module under 600 LOC.
+  Deferred because: In-scope was Team+Mine product rule; full split out of scope.
+
+## 2026-07-21 - [ARCH] AgendaCard still over component LOC after Team Agenda
+
+Feature/App: home / Agenda
+Found while: Workspace Directory-only Team Agenda scoping + deploy
+
+- `apps/web/src/features/home/components/AgendaCard.tsx` (491 LOC; component limit 400)
+
+Evidence: `wc -l` after Team scope/cache + Directory-only work.
+Needed work: Split list/board orchestration or remaining chrome into existing `AgendaCardChrome` / hooks.
+Deferred because: In-scope was Directory-only listing/fetch + production deploy, not AgendaCard split.
+
+## 2026-07-21 - [FIX] Team Agenda Workspace connected follow-ups
+
+Status: Open
+Found while: Fixing Team Agenda false “not connected” despite Google Workspace connected
+Files:
+
+- `apps/web/src/features/home/components/AgendaCard.tsx` (491 LOC)
+  Evidence: Component over 400 LOC after workspace status probe + org-scoped fetch + Team clear-on-scope.
+  Needed work: Extract agenda load hook / scope chrome.
+  Deferred because: In-scope fix was Team connected detection; full split out of scope.
+
+## 2026-07-21 - [FIX] Agenda multi-calendar dedupe follow-ups
+
+Status: Open
+Found while: Fixing duplicated 1DS/ROAS weekly rows on Home Agenda
+Files:
+
+- `apps/api/src/modules/integrations/services/integrations-calendar.service.ts` (750 LOC)
+  Evidence: Pre-existing over-limit service; parse Google/Outlook + mutations live in one file.
+  Needed work: Extract parse/mutation helpers into sibling modules under the 600 LOC service cap.
+  Deferred because: In-scope fix was dedupe + ical_uid wiring; full split was out of scope.
+
+## 2026-07-21 - [FEATURE] People owns teammates/calendars follow-ups
+
+Status: Open
+Found while: Moving Org Settings Team + Workspace identity review into People
+Files:
+
+- `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx` (391 LOC)
+  Evidence: Route switcher grew with Teammates/Calendars branches; still under 600 but fat.
+  Needed work: Extract peopleView router hook or dedicated view shells if another tab lands.
+  Deferred because: In-scope move shipped; further split was not required for the UX change.
+
+- `apps/web/src/features/settings/components/settings-content/OrgSettingsContent.tsx` (609 LOC)
+  Evidence: Pre-existing over-limit settings file; Team tab now a deep-link only.
+  Needed work: Split General/Members into sibling panels.
+  Deferred because: Out of scope for People consolidation.
+
+## 2026-07-20 - [FEATURE] People Conversations/Channels polish follow-ups
+
+Status: Open
+Found while: Conversations formatting/badges/scroll + Channels split pane
+Files:
+
+- `apps/web/src/features/team-2/components/people/SlackChannelsView.tsx` (256 LOC)
+  Evidence: Channel messages are a flat chronological list; thread replies are labeled but not grouped under parents like Slack threads.
+  Needed work: Group thread replies under parent messages with expand/collapse.
+  Deferred because: In-scope ask was left/right navigation parity with Conversations; thread grouping is Phase 2 follow-up already noted in feature docs.
+
+- `apps/web/src/features/team-2/hooks/use-chat-pane-scroll-to-bottom.ts`
+  Evidence: Shared scroll helper is feature-local; HumanDM/ChannelChat still have near-duplicates.
+  Needed work: Consider promoting to `@/lib/chat` only if a third consumer needs the same API.
+  Deferred because: Avoided new shared-surface promotion per frontend-shared-surfaces rules.
+
+## 2026-07-20 - [FIX] People Conversations split near LOC limit
+
+Status: Open
+Found while: Conversations mail/chat layout + Sent attribution fix
+Files:
+
+- `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx` (now ~360 LOC after nav extract)
+  Evidence: Was near 400 LOC; extracted `SlackPeopleViewsNav` during badge work. Still a fat route switcher.
+  Needed work: Extract People/Conversations/Channels route branches into small view routers or hooks if it grows again.
+  Deferred because: Current ship stayed under limit after extract.
+
+## 2026-07-20 - [ARCH] Split integrations-calendar.service.ts
+
+Status: Open
+Found while: Adding Home Agenda Mine | Team (Workspace team calendars + enrichment)
+Files:
+
+- `apps/api/src/modules/integrations/services/integrations-calendar.service.ts` (725 LOC)
+  Evidence: Already over 600 LOC service limit before Team scope; Team path extracted to `integrations-calendar-team.service.ts` but personal getAgenda + mutations remain oversized.
+  Needed work: Split personal Google/Outlook fetch + parse helpers into sibling modules so the service stays under limit.
+  Deferred because: Team feature shipped via new service; full calendar-service split is adjacent cleanup.
+
+## 2026-07-20 - [FEATURE] Google Workspace identity UI polish
+
 ## 2026-07-20 - [PERF] Meta sync indexes ads synchronously with embeddings
 
 ## 2026-07-20 — IntegrationCard LOC (resolved in Workspace ship)
@@ -7738,3 +7902,30 @@ Reason not done now: The current production correction must keep schema, preflig
 - Evidence: Full API typecheck reports `TS2339` at line 48 because `SlackPeopleService.refreshPeople` is absent. Focused Fathom reconnect tests pass, and the failing Slack controller is unchanged by this work.
 - Needed work: Reconcile the Slack People controller and service contract, then rerun the full API typecheck.
 - Why not now: Slack People is unrelated to Fathom reconnect and Webinar call matching and is under concurrent development.
+
+## 2026-07-22 — Architecture scan blocked by stale OpenClaw working-tree entry
+
+- Feature/app: repository architecture gate
+- File: `apps/openclaw/src/canvas-host/a2ui/test-link-1782116645255-348bba5dc9fbd.txt`
+- Evidence: `pnpm architecture:check` exits with `ENOENT` while scanning this missing path before it evaluates the changed Ads Research files. Focused lint, tests, manual LOC checks, and web typecheck pass.
+- Needed work: Remove the stale tracked/working-tree reference or restore the intended test fixture, then rerun the repository-wide architecture scan.
+- Why not now: The missing OpenClaw test-link file is unrelated to the Ads Research agent-key correction and belongs to concurrent work in the shared workspace.
+
+## 2026-07-22 — Slack intelligence service and run-history UI near LOC thresholds
+
+- Feature/app: API Slack Team Intelligence; web Flow History
+- Files: `apps/api/src/modules/spaces/services/slack-team-loop.service.ts` (510 LOC), `apps/web/src/components/flows/AutomationRunsLog.tsx` (375 LOC)
+- Evidence: The service passed the 480-line proactive split threshold; the component passed the 320-line 80% threshold for a 400-line component. Focused tests pass and the web typecheck is green.
+- Needed work: Extract the Gemini signal analyzer/schema from the Slack orchestration service and extract the run-row/outcome rendering from Flow History before either surface gains another feature.
+- Why not now: The current work repaired production behavior and visibility without changing those public boundaries; a behavior-neutral decomposition should be its own follow-up.
+
+## 2026-07-22 - [ARCH] SlackPeopleView near component LOC limit
+
+Status: Open
+Found while: Moving Team signals into a Signals tab
+Files:
+
+- `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx` (396 LOC; component limit 400)
+  Evidence: `wc -l` after Signals wiring + home extraction.
+  Needed work: Extract URL/nav helpers or loading/error shell if the orchestrator grows further.
+  Deferred because: Home roster already extracted to `SlackPeopleHome.tsx`; current change stays under limit.

@@ -1,5 +1,26 @@
 # Changelog - July 20, 2026
 
+## [2026-07-20 22:52] - [FEATURE]
+
+What: Directory Sync / Slack seed auto-confirms exact email matches (Google ↔ Slack/portal). Team Agenda dedupes the same meeting across multiple teammate calendars via `iCalUID` (fallback: start/end/title/video) and merges attendee + “who has it” labels.
+Why: Admins wanted matching Google and Slack users, then seeing calls once on Team Agenda instead of one row per person on the same invite.
+Impact: Re-run Sync Directory (or Seed from Slack/portal) to auto-confirm email matches; Team Agenda shows each shared call once with combined teammate labels.
+Files: `org-person-calendar-identities.service.ts`, `google-workspace-api.service.ts`, `google-workspace-google.client.ts`, `integrations-calendar-team-dedupe.ts`, team agenda service, panel copy, tests.
+
+## [2026-07-20 22:47] - [FIX]
+
+What: Directory Sync identities with `unmatched` (or `rejected`) now show Approve/Reject actions, not only `suggested` rows. Team agenda only includes `confirmed` identities.
+Why: Unmatched Directory people (name from Google, no Slack/portal email match) had no Confirm button, so admins could not approve them for Team Agenda.
+Impact: Nate-style unmatched rows can be approved for team calendars; suggested rows still Confirm match; unconfirmed Directory users no longer appear on Team Agenda.
+Files: `GoogleWorkspaceIdentitiesPanel.tsx`, `org-person-calendar-identities.service.ts`, `google-workspace-calendar.service.ts`.
+
+## [2026-07-20 22:43] - [FEATURE]
+
+What: Home Agenda Mine | Team toggle for org admins. Team scope loads Google Workspace mapped-people calendars through `GET /api/integrations/calendar/agenda?scope=team` and runs the same personal Meetings enrichment (prep chips, related Fathom/calls, unmatched Fathom rows). Account labels show teammate names.
+Why: After Workspace connect, admins need one Agenda surface that switches between personal calendar and team calendars without losing Fathom/notes/brain-linked call context.
+Impact: Admins see Mine/Team pills on Agenda; Team uses DWD Workspace calendars + existing prep/related pipeline. Members without admin stay on Mine only.
+Files: `integrations-calendar-team.service.ts`, `integrations-calendar.service.ts`, calendar DTO/API client, `AgendaCard.tsx`, `AgendaCardChrome.tsx`, docs, tests.
+
 ## [2026-07-20 22:36] - [FIX]
 
 What: Google Workspace vault store uses `secret_type=custom` instead of `service_account`.
@@ -7,12 +28,41 @@ Why: `vault_secrets_secret_type_check` only allows api_key|token|password|oauth_
 Impact: Workspace Connect can persist the service account JSON; label stays `service_account`.
 Files: `google-workspace-api.service.ts`.
 
+
+## [2026-07-20 22:11] - [DOCS]
+
+What: Shipped People → Conversations two-pane UI to production `roas-web` (`dpl_5QdZh7RKo2dULm979LLaYJkzS4mF` → https://app.roas.io) via CLI archive deploy from a clean HEAD worktree plus local Conversations files (not waiting on unrelated main commits).
+Why: Two-pane Conversations + honest Sent labels existed locally but were not on production web.
+Impact: Hard-refresh app.roas.io → People → Conversations to verify split pane; Aaron should no longer show the false Sent ops sample.
+Files: Vercel Production `roas-web` `dpl_5QdZh7RKo2dULm979LLaYJkzS4mF` (aliases `app.roas.io`).
+
+## [2026-07-20 22:07] - [FEATURE]
+
+What: People → Conversations + Channels polish: Slack-like mrkdwn rendering (bold/links/lists/italic) while keeping full review cards; Conversations tab + chat rows badge `proposed` Shadow actions as to-review; auto-scroll timeline to latest on open/append; Channels is now a left-rail + right-pane split (same URL `peopleView=channels&slackChannel=`).
+Why: Reviewers wanted Slack-readable message bodies without losing ledger visibility, a clear new/to-review signal, latest messages visible without manual scroll, and Channels to match Conversations’ Slack-style navigation.
+Impact: Conversations and Channels feel closer to Slack while staying review-first; unread signal = count of Shadow `status=proposed`.
+Files: `SlackPersonConversation.tsx`, `SlackShadowConversationList.tsx`, `SlackPeopleView.tsx`, `SlackPeopleViewsNav.tsx`, `SlackChannelsView.tsx`, `use-chat-pane-scroll-to-bottom.ts`, `slack-message-markdown.ts`, tests, `meeting-follow-up-slack.md`.
+
+## [2026-07-20 21:46] - [FIX]
+
+What: Team → People → Conversations is now a mail/chat split (left chat list, right selected Slack+Shadow thread). Honest Sent labels (“Sent to this person’s Slack” / “Ops sample · sent to this Slack DM”). Retargeted ops sample Shadow `3ea29ced-…` from Aaron → Dylan to match the real Pixel DM recipient; removed stacked Shadow inbox feed.
+Why: Ops sample DM to Dylan was stamped on Aaron as Sent, and Conversations dumped every proposal in one segmented feed instead of a classic thread picker.
+Impact: Conversations opens left/right; Aaron no longer shows that mis-attributed Sent row; Dylan’s conversation owns it with ops-sample labeling.
+Files: `SlackShadowConversationView.tsx`, `SlackShadowConversationList.tsx`, `SlackPeopleView.tsx`, `SlackPersonConversation.tsx`, `slack-shadow-delivery-label.ts`, deleted `SlackShadowInbox.tsx`, tests, `meeting-follow-up-slack.md`, ROAS prod `slack_shadow_actions` row.
+
 ## [2026-07-20 21:35] - [FEATURE]
 
 What: Org Google Workspace calendars → phantom people: `org_person_calendar_identities` email graph with admin confirm/reject; org-shared Workspace connect (DWD service account JSON + admin email in Integrations Library); Directory sync; admin/agent agenda-by-person + org-upcoming APIs; compound `get_person_briefing`. Agent actions `get_person_agenda`, `list_org_upcoming`, `get_person_briefing`. Split `IntegrationCard` connect dialogs/actions under the 400 LOC component limit so the Library multiline JSON field can ship. Home Agenda stays caller-scoped.
 Why: Org admins and agents need teammate calendars mapped to Slack People / portal / Person Brains without putting everyone's calendars on every member's Home Agenda; personal Composio Google Calendar cannot impersonate the domain.
 Impact: Workspace Settings → Integrations → Library can connect Google Workspace with service account JSON + admin email; Org tab manages identity links; agents resolve person agendas via Workspace DWD when connected.
 Files: migration `20260721040000_org_person_calendar_identities.sql`, `apps/api/.../google-workspace/**`, Integrations catalog/UI (`IntegrationCard*` split), agent-api calendar actions + policy, `documentation/features/integration-connections.md`.
+
+## [2026-07-20 18:29] - [FIX]
+
+What: Agenda keeps earlier-today meetings above the next hero so you can scroll up to them, and each row has a dismiss (X) that soft-hides that occurrence from Home Agenda.
+Why: When viewing today, past events were filtered out and today’s non-next rows were omitted from the list — so previous calls and junk invites like “hi hi” could not be reached or cleared.
+Impact: Scroll up from the next meeting to see earlier today; dismiss hides a meeting from Agenda (local) without deleting the calendar invite.
+Files: `AgendaCard.tsx`, `AgendaCardListBody.tsx`, `AgendaCardEventEntry.tsx`, `agenda-list-view.ts`, `agenda-dismiss.ts`, tests.
 
 ## [2026-07-20 16:29] - [FIX]
 
@@ -425,6 +475,36 @@ Impact: Removes the production build blocker without changing calendar behavior 
 
 Files: `useSpaceCalendarExternalEvents.ts`, focused regression test.
 
+## [2026-07-20 19:26] - [FIX]
+
+What: Changed the four Pixel Slack Team templates to install as complete, enabled Shadow automations and added a forward migration that updates the production template catalog.
+
+Why: The templates already carried the correct detector, schedule, scope, limits, and quiet hours, but `enabled: false` still forced an unnecessary activation step and made the UI look like the admin had to finish building each loop.
+
+Impact: Installing Person Brain Compounding, Workflow Discovery, Unanswered Questions, or Stalled Commitments & Client Risk now starts its safe Shadow observation immediately. No template installs in Active delivery mode.
+
+Files: Slack Team automation template catalog, catalog regression test, migration `20260721013000_enable_slack_team_loop_templates.sql`, and Spaces automation documentation.
+
+## [2026-07-20 19:27] - [ARCH]
+
+What: Added AGENTS.md §9.5 production ship gates — local `@vibey/web` typecheck must be green before push/deploy; clarified typecheck is not a forbidden production build; Vercel hung-TS cancel guidance (~5 min).
+
+Why: Serial remote TypeScript failures and long hung "Running TypeScript" waits made the Pixel Team Loops ship slow; catching the same failure class locally is the highest-leverage gate.
+
+Impact: Agents must run `pnpm --filter @vibey/web typecheck` before shipping web changes; checklist updated.
+
+Files: `AGENTS.md`.
+
+## [2026-07-20 19:30] - [ARCH]
+
+What: Applied only `20260721013000_enable_slack_team_loop_templates.sql` to ROAS production (`lhfgtsjetcardinpgouq`); aligned schema_migrations version to filename.
+
+Why: Enable the four Slack Team Loop templates in shadow mode for production use.
+
+Impact: All four templates now `enabled=true`, `delivery_mode=shadow`, badge `Runs in Shadow`. No app deploy.
+
+Files: ROAS prod DB only (migration applied via Management API).
+
 ## [2026-07-20 19:35] - [FIX]
 
 What: Fathom webhook ingest no longer silently drops recordings that arrive without a transcript. Missing transcripts are fetched via the Fathom API when possible; Meetings space automation still runs even if transcript remains empty (brain import / customer routing stay transcript-gated).
@@ -435,7 +515,51 @@ Impact: Team Fathom webhooks can land in All Meetings without waiting on transcr
 
 Files: `fathom-webhook.service.ts`, Fathom controller webhook tests, `spaces-automation.md`, `meeting-follow-up-slack.md`.
 
-## [2026-07-20 20:22] - [FIX]
+## [2026-07-20 19:45] - [FIX]
+
+What: Backfilled last-7-day Fathom recordings into Dylan's personal Meetings space (11 missing calls: 10 teammate-hosted Team + 1 Dylan personal). Added `scripts/roas/backfill-fathom-meetings.py` for repeatable catch-up.
+
+Why: Shared-team webhooks never created Meetings rows historically; Fathom list API still had the recordings. All Meetings was missing today's team volume.
+
+Impact: Refresh Personal → Meetings → All Meetings to see Aaron/Nefi/Bryce/Nate-hosted calls. Slack follow-up automations were not re-run for backfilled rows (rows only). Future ingest still needs `roas-api` deploy of the transcript no-drop fix.
+
+Files: `scripts/roas/backfill-fathom-meetings.py`, `scripts/roas/README.md`, ROAS `space_items` + `space_external_automation_events`.
+
+## [2026-07-20 20:05] - [FIX]
+
+What: Fixed Aaron's backfilled Team call attendees to use transcript speakers (Aaron, Nefi, Nate, Bryce, The Shift Social) instead of host-only calendar invitees. Enrich script now mirrors product ingest: host-only invites → speaker labels.
+
+Why: Fathom often returns only the recorder on `calendar_invitees` for team Zoom calls; the people actually speaking are on the transcript. Using invitees alone made multi-person calls look like 1 attendee.
+
+Impact: Refresh All Meetings — Aaron's Jul 20 call should show the real speakers. Reconnect Fathom OAuth still needed to hydrate other host-only / empty-summary calls the same way.
+
+Files: ROAS Meetings item `ed5f515b-…`, `scripts/roas/enrich-fathom-backfill.py`, transcript cache under `scripts/roas/.cache/transcripts/`.
+
+## [2026-07-20 20:09] - [FIX]
+
+What: Confirmed Dylan's Fathom OAuth reconnect (personal, auto_ingest, shared_team scopes). Rehydrated all 11 backfilled Meetings with transcript speakers where invitees were host-only and replaced follow-ups with real Fathom `action_items` (assignees). Fixed connection scope switch: personal now clears `org_id`, and org-context scope changes can resolve personal cross-context rows (Fathom) instead of "not found".
+
+Why: `invalid_grant` blocked API hydrate; invite-only attendees were wrong for Impromptu Zoom team calls; switching Fathom to Personal from an org workspace failed because lookup required `org_id`.
+
+Impact: Aaron's call now shows 5 speakers + 26 Fathom action items with owners (Nefi/Nate/Aaron/Bryce). Scope-switch fix needs `roas-api` deploy. Current Fathom row is `scope_mode=personal`, `org_id=null`, webhook `89_s3ztsHqQsYhJ4`.
+
+Files: `rehydrate-fathom-backfill.py`, `integrations-core.service.ts`, ROAS Meetings backfill rows, `scripts/roas/README.md`.
+
+## [2026-07-20 20:20] - [FIX]
+
+What: Tagged all Team-call follow-ups in Meetings with Attendees (assignee) and due/Call Date when a deadline was stated in the task text; added `scripts/roas/tag-team-follow-ups.py` for the pass.
+Why: Rehydrated Fathom action items had `suggested_assignee_name` but empty Attendees / Call Date columns in All Meetings, so tasks looked unassigned and undated.
+Impact: 11 Team calls / 99 follow-ups — 98 assignee-tagged, 7 dated from explicit deadlines (e.g. Jul 17/20/27, Thu AM, Aug 4). One left untagged (`Impact Team` org placeholder).
+Files: `scripts/roas/tag-team-follow-ups.py`; ROAS Meetings space items + attendee options.
+
+## [2026-07-20 20:21] - [FIX]
+
+What: Fathom Meetings Attendees now default to transcript speakers; calendar invitees are fallback only (title-pair parse still beats host-only invite lists).
+Why: Invite rosters often include people who never joined (or miss speakers); speakers reflect who was actually on the call.
+Impact: New Fathom ingest tags Attendees from speakers whenever the transcript has usable speaker labels.
+Files: `fathom-meeting-item-enrichment.ts`, enrichment tests, `documentation/features/spaces-automation.md`.
+
+## [2026-07-20 20:27] - [FIX]
 
 What: Fixed Page Grader client bootstrap so a newly created campaign is not marked with the incoming content hash before its first deterministic Brain ingest. Changed Campaign Knowledge indexing from a serial record loop to bounded batches of six and added regression coverage for both behaviors.
 
@@ -444,3 +568,175 @@ Why: The active-client preload created campaign shells that immediately reported
 Impact: New active clients perform their first Brain ingest correctly, while large packages index fast enough to complete without unbounded embedding concurrency. Existing partially imported clients can be safely force-synced because memory and evidence writes remain content-hash deduplicated.
 
 Files: `page-grader-client-import.service.ts`, `page-grader-brain-package-ingest.service.ts`, focused service tests, `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-07-20 20:45] - [DOCS]
+
+What: Updated the Pixel/Viktor Slack roadmap with a production-stabilization phase covering Page Grader preload completion and a shared Slack Events observation stream.
+
+Why: Production verification showed all four enabled Shadow loops were independently rescanning Slack and all 21 recorded runs failed with `ratelimited`; 23 of 26 Page Grader campaign scopes also remained pending their first complete Brain sync.
+
+Impact: The roadmap now makes reliable observation and verified Brain hydration the gate before mass Person Brain compounding or any additional Active behavior.
+
+Files: `documentation/features/meeting-follow-up-slack.md`.
+
+## [2026-07-20 20:29] - [OPS]
+
+What: Manually triggered Pixel post-call Slack review DM for today's Team call "Review client accounts, resolve issues, and assign tasks" (26 follow-ups).
+Why: Call was backfilled so the live automation Slack step never ran; Dylan asked for the recap DM.
+Impact: Pending Slack confirm DM sent to dylan@dylanvanas.com; call item now has `slack_follow_up_confirm` pending for ✅.
+Files: `scripts/roas/send-meeting-follow-up-slack.py`.
+
+## [2026-07-20 20:35] - [FIX]
+
+What: Meeting follow-up Slack confirm now sends two messages — review DM (purpose/takeaways/action items) plus a threaded proposed shareable recap — with link unfurls disabled.
+Why: Stuffing both into one message blew Slack’s ~4k limit mid-content and left raw markdown / unfurled Fathom links.
+Impact: Review stays compact; client-facing draft is a separate thread reply; ✅ still reacts on the review message.
+Files: `meeting-follow-up-slack-message.ts`, `meeting-follow-up-slack-confirm.service.ts`, Slack `postMessage`/`sendMessage` unfurl options, tests, docs, `send-meeting-follow-up-slack.py`.
+
+## [2026-07-20 20:38] - [FIX]
+
+What: Fathom jump links now lead with a clock timestamp (`31:12`), recording is a top `Call report` link, and bottom “Open … recording” footers are removed from review/recap Slack messages.
+Why: Full-sentence link labels hid that takeaways were jumpable; a bottom recording link duplicated the top link and burned Slack characters.
+Impact: Review + proposed recap are clearer and shorter; skill + DB skill row updated; client-accounts call re-DMed in the new format.
+Files: `meeting-follow-up-slack-message.ts`, confirm service/tests, `post-call-delivery` skill + migration, ops send script, docs.
+
+## [2026-07-20 20:42] - [FEATURE]
+
+What: Meeting follow-up confirm now creates one Shadow message proposal per action-item assignee (grouped tasks, friendly reminder), matched to Slack People by email/display name.
+Why: Dylan wants Pixel to nudge each owner with their items from the call without auto-sending — review in Team → People first.
+Impact: Review DM flow unchanged; assignee Shadows appear in People (`assignee_shadow_action_ids` on the call). Send still requires approve + Active.
+Files: `meeting-follow-up-assignee-reminders.ts`, `meeting-follow-up-slack-confirm.service.ts`, `slack-people.repository.ts` (`findPersonByDisplayName`), tests, `meeting-follow-up-slack.md`.
+
+## [2026-07-20 20:46] - [STYLE]
+
+What: Softened per-assignee Shadow reminder copy to a casual follow-up with inline `linked here` call link and “Feel free to message me if you have questions.”
+Why: Prior “quick reminder / already done” tone felt too stiff for teammate DMs.
+Impact: New assignee Shadow proposals use the casual template; sample re-DMed to Dylan.
+Files: `meeting-follow-up-assignee-reminders.ts`, tests, `meeting-follow-up-slack.md`.
+
+## [2026-07-20 20:58] - [FEATURE]
+
+What: Meeting follow-ups reuse campaigns / Page Grader / Slack People names at draft time; assignee-reminder threads get action-item context for Pixel replies; People send stamps `slack_channel_id` with `slack_message_ts` for Conversations tracking.
+Why: Avoid a seeded alias system; fix silent no-reply on non-confirm DM threads; make sent assignee reminders trackable in manage People.
+Impact: Post-call drafts receive `known_names`; eyes+agent path gets empty-token fallback + assignee context; Approve & Send records channel+ts on Shadow.
+Files: `meeting-follow-up-name-knowledge.ts`, `meeting-follow-up-name-knowledge.loader.ts`, `meeting-follow-up-assignee-reminders.ts`, `meeting-follow-up-slack-confirm.service.ts`, `slack.service.ts`, `slack-service-events.base.ts`, `slack-people.repository.ts`, `slack-people.service.ts`, `post-call-delivery/SKILL.md`, `meeting-follow-up-slack.md`, tests.
+
+## [2026-07-20 21:08] - [OPS]
+
+What: Deployed `roas-api` production (`dpl_JBVuipfwQXdZVEPpTivyVudgDGJr` → `api.roas.io`) with meeting follow-up knowledge/reply/People tracking. Sent Aaron assignee-reminder sample DM to Dylan with Shadow `sent` + `slack_message_ts`/`slack_channel_id` stamped for reply-context + Conversations tracking.
+Why: Ship the API path and give a live thread to test eyes + “what about Adam” answers.
+Impact: Reply in that Pixel thread to verify eyes + action-item context; Aaron’s People Conversations should show the sent sample.
+Files: Vercel `roas-api`, ops Slack DM + `slack_shadow_actions` `3ea29ced-…`.
+
+## [2026-07-20 21:10] - [FIX]
+
+What: Paginated Campaign Knowledge object and edge reads through Supabase's 1,000-row response ceiling. Changed Page Grader catch-up so a matching package hash only skips when the mapped campaign actually contains indexed knowledge; empty shells automatically run a forced repair import.
+
+Why: Multifamily and Sakha displayed identical 1,000-object totals despite containing 1,733 and 1,321 objects. The active-client preload also left 22 of 26 mapped campaign brains empty because their hashes were stamped before the first successful ingest.
+
+Impact: Campaign Knowledge can load up to the configured 5,000-object graph limit, and hourly catch-up self-repairs the 22 empty mapped clients without rebuilding the four already-populated brains.
+
+Files: `space-retrieval.repository.ts`, `space-knowledge-graph.service.ts`, `page-grader-brain-sync.repository.ts`, `page-grader-brain-sync.service.ts`, `page-grader.module.ts`, focused tests, `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-07-20 21:14] - [OPS]
+
+What: Granted 20,000 complimentary org credits to ROAS org (`org_credit_purchases` `f1025849-…`, amount_paid 0) and synced `org_monthly_credit_usage.total_credits_purchased` to 71,000.
+Why: Org wallet was exhausted (base + purchased fully used); Slack Pixel replied “out of credits” during assignee-thread test after heavy Brain ingest.
+Impact: Org available credits ~0 → ~19,998. Re-ask Pixel about Adam in the thread should work.
+Files: ROAS prod `org_credit_purchases`, `org_monthly_credit_usage` `611e7fb0-…`.
+
+## [2026-07-20 21:15] - [ARCH]
+
+What: Applied only `20260721040000_org_person_calendar_identities.sql` to ROAS production (`lhfgtsjetcardinpgouq`); aligned schema_migrations version to filename.
+
+Why: Required table/RLS for org Workspace calendar email graph before connecting Google Workspace.
+
+Impact: `org_person_calendar_identities` exists with admin RLS. Workspace Library connect still needs feature code deploy + service account credentials.
+
+Files: ROAS prod DB only (Management API migration).
+
+## [2026-07-20 21:23] - [FIX]
+
+What: Convert Markdown `**bold**` (and links/strikethrough) to Slack mrkdwn before Pixel posts agent replies.
+Why: Slack shows literal asterisks for Markdown bold; agent replies were using `**…**`.
+Impact: New Slack agent replies render bold correctly. Needs `roas-api` redeploy.
+Files: `slack-markdown-to-mrkdwn.ts`, `slack-service-media.base.ts`, tests.
+
+## [2026-07-20 21:31] - [FIX]
+
+What: Added aggregate embedding billing batches for Page Grader Campaign Knowledge imports while retaining six-request provider concurrency. Corrected the paginated graph edge result cast found by the API typecheck.
+
+Why: Gemini billed embeddings by tokens, but ROAS rounded every small embedding request up to one whole internal credit. A roughly $10 provider run therefore consumed more than 100,000 test credits instead of applying the configured markup to aggregate cost.
+
+Impact: Gemini processing volume and external cost are unchanged. New Page Grader imports settle measured tokens once per 250 source rows, keeping ROAS credits close to provider cost × configured markup without unbounded request concurrency.
+
+Files: `embedding.service.ts`, `page-grader-brain-package-ingest.service.ts`, `space-retrieval-index.service.ts`, `space-retrieval.repository.ts`, focused tests, `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-07-20 21:37] - [FIX]
+
+What: Assignee-reminder Slack thread replies now prepend a bounded call brief (purpose + takeaways from the Meetings call item) plus the person's action items; fixed space-retrieval edge cast for deploy typecheck.
+Why: Pixel only saw action-item bullets and claimed the call lacked context even when the meeting summary existed on the call item.
+Impact: Replies in sent assignee-reminder DMs can answer from summary-backed context. Needs roas-api prod redeploy.
+Files: `meeting-follow-up-name-knowledge.ts`, `meeting-follow-up-slack-confirm.service.ts`, `space-retrieval.repository.ts`, tests, `documentation/features/meeting-follow-up-slack.md`.
+
+## [2026-07-20 21:38] - [FIX]
+
+What: Corrected the agency-team migration UUID cast and applied the isolated migration to production.
+Why: The Team screen still showed only three agents because the roster migration was not live, and its first production attempt failed on an untyped `NULL` organization ID.
+Impact: Dylan's production Team screen now shows all seven required agents: Vibey, Atlas, Reed, Blaze, Ivy, Lux, and Jaime.
+Files: `supabase/migrations/20260721010000_team_membership_kinds.sql`, production Supabase migration `20260721010000`.
+
+## [2026-07-20 22:19] - [FEATURE]
+
+What: Deployed People Conversations polish + Channels two-pane UI to production `roas-web` via local CLI archive (`--archive=tgz`). Conversations: Slack mrkdwn formatting, to-review badges, auto-scroll. Channels: left rail + right pane (`peopleView=channels&slackChannel=`). Excluded `*.test.ts(x)` / `__tests__` from web `tsconfig` so ship-gate typecheck matches app production surface.
+
+Why: Local uncommitted UI needed to ship to `app.roas.io` without waiting on git commit/push.
+
+Impact: Production `app.roas.io` READY on `dpl_3rXGeBRTnF1PdP7zUYGY3kU6qK5Y` (gitDirty archive). Dylan can verify Conversations formatting/badges/scroll and Channels left-nav.
+
+Files: `apps/web/src/features/team-2/components/people/*` (Conversations/Channels polish), `use-chat-pane-scroll-to-bottom.ts`, `slack-message-markdown.ts`, `slack-shadow-delivery-label.ts`, `apps/web/tsconfig.json`.
+
+
+## [2026-07-20 22:25] - [OPS]
+
+What: Shipped assignee-reminder call-brief enrichment to production via READY preview `dpl_Apb9vEjnTgQsAvquixStiKSpVmAQ` aliased to `api.roas.io` (direct prod CLI deploys kept getting canceled by concurrent agent/hook races).
+Why: Needed the Slack thread-context fix live despite production deploy cancel storms.
+Impact: `api.roas.io` serves the enriched assignee-reminder prefix + prior mrkdwn/waitUntil fixes from the local dirty tree.
+Files: Vercel alias `api.roas.io` → `dpl_Apb9vEjnTgQsAvquixStiKSpVmAQ`.
+
+## [2026-07-20 22:43] - [FIX]
+
+What: Expanded empty Page Grader Campaign Knowledge recovery so an empty mapped campaign forces its first import even when the integration mapping is missing `content_hash`.
+
+Why: Production ALLBRIGHT proved that the campaign shell could contain the incoming hash while its client-scope mapping did not. The earlier repair only checked for emptiness after a mapping-hash match, so ingestion reached the campaign hash and skipped the empty brain again.
+
+Impact: Empty mapped brand brains now bypass stale campaign hashes exactly once; populated campaign brains retain normal unchanged-hash skipping. Focused sync tests pass, including the missing-mapping-hash case.
+
+Files: `page-grader-brain-sync.service.ts`, `page-grader-brain-sync.service.test.ts`.
+
+## [2026-07-20 22:55] - [FIX]
+
+What: Deployed clean API commit `87f8491c` as `dpl_2gUb184pNWHKAvUE6fZ4WNGTB1w1` to `api.roas.io`, initialized the missing Page Grader webhook secret, recovered empty mapped brand brains sequentially, and audited exact mapping counts.
+
+Why: The bulk catch-up exceeded the five-minute serverless window, and per-client recovery initially exposed the missing-mapping-hash skip case. Concurrent API deployment work also caused superseded Vercel runs until isolated.
+
+Impact: All 26 mapped Page Grader brand brains contain Campaign Knowledge: 12,028 semantic objects total, 0 empty. Recovery ran sequentially to avoid a provider-rate or Gemini-cost spike; `api.roas.io/api` returns 200.
+
+Files: Production Vercel `roas-api`, `user_integrations.metadata.webhook_secret`, mapped Campaign Knowledge rows, `documentation/features/page-grader-campaign-brain-sync.md`.
+
+## [2026-07-20 23:22] - [FEATURE]
+
+What: Added an admin-triggered, 1–365 day Slack Person Brain backfill over enabled Brain channel mappings. Missing non-portal Person Brains are provisioned, sender-specific imports route to managed brains, Ignored people and DMs are excluded, and recurring ISO cursors are normalized to Slack timestamps.
+Why: Managed Person Brains existed as empty containers because historical Slack imports only forked to portal User Brains and Customer Brains; recurring syncs could also send an invalid ISO cursor to Slack.
+Impact: After API deployment, mapped channel history can populate managed Person Brains through the existing resumable/deduplicated Brain queue without a new processing system. The operation remains bounded and explicit.
+Files: `slack-brain-mapping.controller.ts`, `slack-brain-mapping.service.ts`, `slack-sender-resolver.service.ts`, Slack runtime/types/DTOs, Brain Slack import routing, focused tests, route inventory, integration and Slack-agent documentation.
+
+## [2026-07-20 23:47] - [OPS]
+
+What: Pushed the post-call fulfillment and managed Slack Person Brain backfill commits to `codex/post-call-page-grader-bridge`, then deployed the exact verified `deebb839` snapshot to production `roas-api` via an isolated CLI archive.
+
+Why: Vercel's Git deployment ignored the non-main branch, while deploying the dirty workspace could have included unrelated concurrent changes. The clean snapshot preserved production commit `87f8491c` as an ancestor and added only the committed Slack/Brain package.
+
+Impact: Production deployment `dpl_Frxzjra3QnPaycFnV1P6bpFSswCS` is READY and aliased to `api.roas.io`; `/api` returns 200. The admin Person Brain backfill route is deployed but no historical backfill was started.
+
+Files: Vercel `roas-api`; Git branch `codex/post-call-page-grader-bridge`; commits `4a3a24bc`, `deebb839`.

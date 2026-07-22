@@ -7,6 +7,14 @@ export type OrgPersonCalendarSource =
   | 'slack_email'
   | 'portal_email'
 
+/** True only for Google Workspace Directory users (never Slack-only / external). */
+export function isWorkspaceDirectoryIdentity(row: {
+  source: OrgPersonCalendarSource | string
+  google_workspace_user_id?: string | null
+}): boolean {
+  return row.source === 'directory_sync' || Boolean(row.google_workspace_user_id)
+}
+
 export type OrgPersonCalendarIdentity = {
   id: string
   org_id: string
@@ -56,6 +64,7 @@ export type GoogleWorkspaceAgendaEvent = {
   location: string | null
   video_url: string | null
   html_link: string | null
+  ical_uid: string | null
   attendees: Array<{ name: string | null; email: string }>
   source: 'google_workspace'
   calendar_email: string

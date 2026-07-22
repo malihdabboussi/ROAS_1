@@ -6,6 +6,7 @@ import type {
   OrgPersonCalendarIdentity,
   OrgPersonCalendarMatchStatus,
 } from '../types/google-workspace.types'
+import { isWorkspaceDirectoryIdentity } from '../types/google-workspace.types'
 
 @Injectable()
 export class OrgPersonCalendarIdentitiesService {
@@ -14,8 +15,10 @@ export class OrgPersonCalendarIdentitiesService {
     private readonly workspaceRepo: GoogleWorkspaceRepository,
   ) {}
 
-  list(supabase: SupabaseClient, orgId: string) {
-    return this.identities.list(supabase, orgId)
+  /** Calendars UI / Team Agenda candidates: Workspace Directory only. */
+  async list(supabase: SupabaseClient, orgId: string) {
+    const rows = await this.identities.list(supabase, orgId)
+    return rows.filter(isWorkspaceDirectoryIdentity)
   }
 
   async createManual(
@@ -25,58 +28,65 @@ export class OrgPersonCalendarIdentitiesService {
   ) {
     const email = this.identities.normalizeEmail(input.calendar_email)
     if (!email.includes('@')) throw new BadRequestException('calendar_email must be valid')
-    const seeded = await this.identities.upsertByEmail(supabase, {
-      orgId,
-      calendarEmail: email,
-      displayName: input.display_name ?? null,
-      source: 'manual',
-      matchStatus: 'unmatched',
-    })
-    return this.refreshSuggestions(supabase, orgId, seeded)
+    const existing = await this.identities.findByEmail(supabase, orgId, email)
+    if (!existing || !isWorkspaceDirectoryIdentity(existing)) {
+      throw new BadRequestException(
+        'Only Google Workspace Directory users can be added to Team calendars. Run Sync Directory first.',
+      )
+    }
+    return this.refreshSuggestions(supabase, orgId, existing)
   }
 
+  /**
+   * Link Slack / portal / personal-calendar emails onto existing Workspace Directory
+   * identities only. Does not create rows for external Slack contacts.
+   */
   async seedFromOrgSurfaces(supabase: SupabaseClient, orgId: string) {
-    const [slackPeople, portalUsers, personalCalendars] = await Promise.all([
+    const pruned = await this.identities.deleteNonDirectorySources(supabase, orgId)
+    const [slackPeople, portalUsers, personalCalendars, identities] = await Promise.all([
       this.workspaceRepo.listSlackPeopleWithEmail(supabase, orgId),
       this.workspaceRepo.listPortalUsersWithEmail(supabase, orgId),
       this.workspaceRepo.listPersonalCalendarLabels(orgId),
+      this.identities.list(supabase, orgId),
     ])
 
-    let upserted = 0
+    const directoryByEmail = new Map(
+      identities
+        .filter(isWorkspaceDirectoryIdentity)
+        .map((row) => [row.calendar_email, row] as const),
+    )
+
+    let linked = 0
     for (const person of slackPeople) {
       const email = person.email ? this.identities.normalizeEmail(person.email) : ''
       if (!email.includes('@')) continue
-      const existing = await this.identities.findByEmail(supabase, orgId, email)
-      if (existing?.match_status === 'confirmed') continue
-      await this.identities.upsertByEmail(supabase, {
-        orgId,
-        calendarEmail: email,
-        displayName: person.display_name,
-        source: existing?.source === 'directory_sync' ? 'directory_sync' : 'slack_email',
-        suggestedChannelMemberId: person.id,
-        suggestedVibeyUserId: person.vibey_user_id,
-        suggestedPersonBrainId: person.person_brain_id,
-        matchStatus: 'suggested',
-        matchMethod: 'email_exact',
+      const existing = directoryByEmail.get(email)
+      if (!existing || existing.match_status === 'rejected') continue
+      await this.identities.update(supabase, orgId, existing.id, {
+        channel_member_id: person.id,
+        vibey_user_id: person.vibey_user_id ?? existing.vibey_user_id,
+        person_brain_id: person.person_brain_id ?? existing.person_brain_id,
+        suggested_channel_member_id: null,
+        suggested_vibey_user_id: null,
+        suggested_person_brain_id: null,
+        match_status: 'confirmed',
+        match_method: 'email_exact',
       })
-      upserted += 1
+      linked += 1
     }
 
     for (const portal of portalUsers) {
       const email = portal.email ? this.identities.normalizeEmail(portal.email) : ''
       if (!email.includes('@')) continue
-      const existing = await this.identities.findByEmail(supabase, orgId, email)
-      if (existing?.match_status === 'confirmed') continue
-      await this.identities.upsertByEmail(supabase, {
-        orgId,
-        calendarEmail: email,
-        displayName: portal.display_name,
-        source: existing?.source === 'directory_sync' ? 'directory_sync' : 'portal_email',
-        suggestedVibeyUserId: portal.user_id,
-        matchStatus: 'suggested',
-        matchMethod: 'email_exact',
+      const existing = directoryByEmail.get(email)
+      if (!existing || existing.match_status === 'rejected') continue
+      await this.identities.update(supabase, orgId, existing.id, {
+        vibey_user_id: portal.user_id,
+        suggested_vibey_user_id: null,
+        match_status: 'confirmed',
+        match_method: 'email_exact',
       })
-      upserted += 1
+      linked += 1
     }
 
     for (const calendar of personalCalendars) {
@@ -90,25 +100,32 @@ export class OrgPersonCalendarIdentitiesService {
           ? this.identities.normalizeEmail(label)
           : ''
       if (!email.includes('@')) continue
-      const existing = await this.identities.findByEmail(supabase, orgId, email)
-      if (existing?.match_status === 'confirmed') continue
-      await this.identities.upsertByEmail(supabase, {
-        orgId,
-        calendarEmail: email,
-        displayName: existing?.display_name ?? (label || null),
-        source: 'personal_calendar',
-        personalConnectionLabel: label || null,
-        matchStatus: existing?.match_status === 'suggested' ? 'suggested' : 'unmatched',
+      const existing = directoryByEmail.get(email)
+      if (!existing || existing.match_status === 'rejected') continue
+      await this.identities.update(supabase, orgId, existing.id, {
+        personal_connection_label: label || null,
+        match_status: existing.match_status === 'unmatched' ? 'confirmed' : existing.match_status,
+        match_method: existing.match_method ?? 'email_exact',
       })
-      upserted += 1
+      linked += 1
     }
 
-    return { success: true, upserted }
+    return { success: true, linked, pruned, upserted: linked }
   }
 
   async confirm(supabase: SupabaseClient, orgId: string, id: string) {
     const row = await this.identities.findById(supabase, orgId, id)
     if (!row) throw new NotFoundException('Calendar identity not found')
+    if (!isWorkspaceDirectoryIdentity(row)) {
+      throw new BadRequestException(
+        'Only Google Workspace Directory users can be approved for Team Agenda',
+      )
+    }
+    const hasSuggestion = Boolean(
+      row.suggested_channel_member_id ||
+      row.suggested_vibey_user_id ||
+      row.suggested_person_brain_id,
+    )
     return this.identities.update(supabase, orgId, id, {
       channel_member_id: row.suggested_channel_member_id ?? row.channel_member_id,
       vibey_user_id: row.suggested_vibey_user_id ?? row.vibey_user_id,
@@ -117,13 +134,22 @@ export class OrgPersonCalendarIdentitiesService {
       suggested_vibey_user_id: null,
       suggested_person_brain_id: null,
       match_status: 'confirmed',
-      match_method: row.match_method ?? 'manual',
+      match_method: hasSuggestion
+        ? (row.match_method ?? 'email_exact')
+        : row.match_method === 'email_exact'
+          ? 'email_exact'
+          : 'manual',
     })
   }
 
   async reject(supabase: SupabaseClient, orgId: string, id: string) {
     const row = await this.identities.findById(supabase, orgId, id)
     if (!row) throw new NotFoundException('Calendar identity not found')
+    if (!isWorkspaceDirectoryIdentity(row)) {
+      throw new BadRequestException(
+        'Only Google Workspace Directory users appear on Team calendars',
+      )
+    }
     return this.identities.update(supabase, orgId, id, {
       suggested_channel_member_id: null,
       suggested_vibey_user_id: null,
@@ -196,7 +222,9 @@ export class OrgPersonCalendarIdentitiesService {
     orgId: string,
     identity: OrgPersonCalendarIdentity,
   ): Promise<OrgPersonCalendarIdentity> {
-    if (identity.match_status === 'confirmed') return identity
+    if (identity.match_status === 'confirmed' || identity.match_status === 'rejected') {
+      return identity
+    }
     const email = identity.calendar_email
     const [slackPeople, portalUsers] = await Promise.all([
       this.workspaceRepo.listSlackPeopleWithEmail(supabase, orgId),
@@ -209,11 +237,16 @@ export class OrgPersonCalendarIdentitiesService {
       (person) => person.email && this.identities.normalizeEmail(person.email) === email,
     )
     if (!slack && !portal) return identity
+
+    // Exact email match to Slack and/or portal → auto-confirm (no fuzzy).
     return this.identities.update(supabase, orgId, identity.id, {
-      suggested_channel_member_id: slack?.id ?? null,
-      suggested_vibey_user_id: portal?.user_id ?? slack?.vibey_user_id ?? null,
-      suggested_person_brain_id: slack?.person_brain_id ?? null,
-      match_status: 'suggested',
+      channel_member_id: slack?.id ?? identity.channel_member_id,
+      vibey_user_id: portal?.user_id ?? slack?.vibey_user_id ?? identity.vibey_user_id,
+      person_brain_id: slack?.person_brain_id ?? identity.person_brain_id,
+      suggested_channel_member_id: null,
+      suggested_vibey_user_id: null,
+      suggested_person_brain_id: null,
+      match_status: 'confirmed',
       match_method: 'email_exact',
     })
   }

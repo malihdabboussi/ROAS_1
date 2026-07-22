@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
 import { GoogleWorkspaceGoogleClient } from '../integrations/google-workspace-google.client'
 import { OrgPersonCalendarIdentitiesRepository } from '../repositories/org-person-calendar-identities.repository'
+import { isWorkspaceDirectoryIdentity } from '../types/google-workspace.types'
 import { GoogleWorkspaceApiService } from './google-workspace-api.service'
 import { OrgPersonCalendarIdentitiesService } from './org-person-calendar-identities.service'
 
@@ -34,6 +35,9 @@ export class GoogleWorkspaceCalendarService {
     if (!start || !end) throw new BadRequestException('start and end are required')
 
     const identity = await this.identities.resolveIdentity(supabase, scope.orgId, query)
+    if (!isWorkspaceDirectoryIdentity(identity)) {
+      throw new BadRequestException('Calendar identity is not a Google Workspace Directory user')
+    }
     const { serviceAccount } = await this.api.loadServiceAccount(scope.orgId)
     const events = await this.client.listCalendarEvents({
       serviceAccount,
@@ -50,7 +54,7 @@ export class GoogleWorkspaceCalendarService {
   }
 
   async listOrgUpcoming(
-    supabase: SupabaseClient,
+    _supabase: SupabaseClient,
     scope: RequestScope,
     query: {
       start: string
@@ -65,10 +69,13 @@ export class GoogleWorkspaceCalendarService {
     if (!start || !end) throw new BadRequestException('start and end are required')
 
     const { serviceAccount } = await this.api.loadServiceAccount(scope.orgId)
-    const identities = await this.identitiesRepo.list(supabase, scope.orgId)
+    // Service client: Team Agenda must see every confirmed Directory identity,
+    // not only what the caller's RLS snapshot happens to return. Never DWD-pull
+    // Slack-only / manual / external rows.
+    const identities = await this.identitiesRepo.serviceList(scope.orgId)
     const eligible = identities
-      .filter((row) => row.match_status === 'confirmed' || row.source === 'directory_sync')
-      .slice(0, Math.max(1, Math.min(query.limit_people ?? 25, 50)))
+      .filter((row) => row.match_status === 'confirmed' && isWorkspaceDirectoryIdentity(row))
+      .slice(0, Math.max(1, Math.min(query.limit_people ?? 40, 50)))
 
     const people: Array<{
       identity: (typeof identities)[number]
@@ -76,24 +83,27 @@ export class GoogleWorkspaceCalendarService {
       error?: string
     }> = []
 
-    for (const identity of eligible) {
-      try {
-        const events = await this.client.listCalendarEvents({
-          serviceAccount,
-          calendarEmail: identity.calendar_email,
-          start,
-          end,
-          timezone: query.timezone,
-        })
-        people.push({ identity, events })
-      } catch (error) {
-        people.push({
-          identity,
-          events: [],
-          error: error instanceof Error ? error.message : 'Failed to load agenda',
-        })
-      }
-    }
+    const settled = await Promise.all(
+      eligible.map(async (identity) => {
+        try {
+          const events = await this.client.listCalendarEvents({
+            serviceAccount,
+            calendarEmail: identity.calendar_email,
+            start,
+            end,
+            timezone: query.timezone,
+          })
+          return { identity, events }
+        } catch (error) {
+          return {
+            identity,
+            events: [] as Awaited<ReturnType<typeof this.client.listCalendarEvents>>,
+            error: error instanceof Error ? error.message : 'Failed to load agenda',
+          }
+        }
+      }),
+    )
+    people.push(...settled)
 
     return { success: true, people }
   }

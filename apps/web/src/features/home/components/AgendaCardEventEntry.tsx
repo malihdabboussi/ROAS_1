@@ -1,7 +1,8 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { FileText, MapPin, Video } from 'lucide-react'
+import { MapPin, Video, X } from 'lucide-react'
 import type { CalendarAgendaEvent, CalendarAttendee } from '@/lib/services/calendar-api'
 
 const GCAL_EVENT_COLORS: Record<string, { border: string; bg: string; text: string }> = {
@@ -67,6 +68,12 @@ function attendeeRsvpSummary(attendees: CalendarAttendee[]): string | null {
   return parts.join(' · ')
 }
 
+function attendeeLabel(a: CalendarAttendee): string {
+  const name = a.name?.trim()
+  if (name) return name
+  return a.email
+}
+
 function attendeeInitials(a: CalendarAttendee): string {
   if (a.name) {
     const parts = a.name.trim().split(/\s+/)
@@ -78,14 +85,12 @@ function attendeeInitials(a: CalendarAttendee): string {
 }
 
 const AVATAR_COLORS = [
-  'bg-indigo-600',
-  'bg-emerald-600',
-  'bg-rose-600',
-  'bg-amber-600',
-  'bg-cyan-600',
-  'bg-violet-600',
-  'bg-teal-600',
-  'bg-pink-600',
+  'bg-primary/20 text-primary',
+  'bg-success/20 text-success',
+  'bg-destructive/20 text-destructive',
+  'bg-warning/20 text-warning',
+  'bg-secondary text-foreground',
+  'bg-muted text-muted-foreground',
 ]
 
 function avatarColor(index: number): string {
@@ -99,10 +104,77 @@ function videoButtonLabel(ev: CalendarAgendaEvent): string {
 
 const ENTRY_TRANSITION = { type: 'spring', stiffness: 380, damping: 32, mass: 0.7 } as const
 
-function prepChipLabel(status: NonNullable<CalendarAgendaEvent['prep']>['status']): string {
-  if (status === 'ready') return 'Prep ready'
-  if (status === 'failed') return 'Prep failed'
-  return 'Prep pending'
+function AgendaAttendeesControl({ attendees }: { attendees: CalendarAttendee[] }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const summary = attendeeRsvpSummary(attendees)
+
+  useEffect(() => {
+    if (!open) return
+    const onPointer = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onPointer)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onPointer)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div ref={rootRef} className="relative mt-2.5">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          setOpen((v) => !v)
+        }}
+        className="hover:bg-hover-subtle flex items-center gap-2 rounded-md px-1 py-0.5 transition-colors"
+        aria-expanded={open}
+        aria-label="Show attendees"
+        title={attendees.map(attendeeLabel).join(', ')}
+      >
+        <div className="flex -space-x-1.5">
+          {attendees.slice(0, 5).map((a, i) => (
+            <div
+              key={a.email}
+              className={`${avatarColor(i)} border-background flex h-6 w-6 items-center justify-center rounded-full border-2 text-[9px] font-bold`}
+            >
+              {attendeeInitials(a)}
+            </div>
+          ))}
+          {attendees.length > 5 ? (
+            <div className="border-background bg-muted text-muted-foreground flex h-6 w-6 items-center justify-center rounded-full border-2 text-[9px] font-bold">
+              +{attendees.length - 5}
+            </div>
+          ) : null}
+        </div>
+        {summary ? <span className="typo-caption text-muted-foreground">{summary}</span> : null}
+      </button>
+      {open ? (
+        <div
+          className="dropdown-menu-solid z-dropdown absolute left-0 top-full mt-1 min-w-[220px] max-w-[280px] py-1"
+          role="listbox"
+          aria-label="Attendees"
+        >
+          <ul className="max-h-48 overflow-y-auto px-1">
+            {attendees.map((a) => (
+              <li key={a.email} className="px-spacing-2 py-spacing-1">
+                <p className="body-3 text-foreground truncate">{attendeeLabel(a)}</p>
+                {a.name?.trim() ? (
+                  <p className="typo-caption text-muted-foreground truncate">{a.email}</p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 export function AgendaEventEntry({
@@ -111,7 +183,7 @@ export function AgendaEventEntry({
   isNextHero = false,
   onSelect,
   onOpenMeeting,
-  onOpenPrep,
+  onDismiss,
   nowTick,
   showAccountLabel,
 }: {
@@ -120,42 +192,69 @@ export function AgendaEventEntry({
   isNextHero?: boolean
   onSelect: () => void
   onOpenMeeting?: () => void
-  onOpenPrep?: () => void
+  onDismiss?: () => void
   nowTick: number
   showAccountLabel: boolean
 }) {
   const color = eventColor(ev)
   const accountLabel = showAccountLabel && ev.account_label ? String(ev.account_label).trim() : ''
 
+  const dismissButton = onDismiss ? (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation()
+        onDismiss()
+      }}
+      className="text-muted-foreground hover:text-foreground hover:bg-hover-subtle rounded-md p-1 transition-colors"
+      aria-label="Dismiss from agenda"
+      title="Dismiss from agenda"
+    >
+      <X className="h-3.5 w-3.5" aria-hidden />
+    </button>
+  ) : null
+
+  const openMeeting = () => {
+    onOpenMeeting?.()
+  }
+
   return (
     <motion.div
       layout
       transition={ENTRY_TRANSITION}
-      onClick={!isExpanded ? onSelect : undefined}
+      onClick={() => {
+        onSelect()
+        openMeeting()
+      }}
       className={
         isNextHero
-          ? 'agenda-next-card'
+          ? 'agenda-next-card cursor-pointer'
           : isExpanded
-            ? 'card-glass rounded-xl border-l-[4px] p-4'
+            ? 'card-glass cursor-pointer rounded-xl border-l-[4px] p-4'
             : 'hover:bg-hover-subtle cursor-pointer rounded-lg px-2 py-2 transition-colors'
       }
       style={isExpanded && !isNextHero ? { borderLeftColor: color.border } : undefined}
-      role={!isExpanded ? 'button' : undefined}
-      tabIndex={!isExpanded ? 0 : undefined}
-      onKeyDown={
-        !isExpanded
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onSelect()
-              }
-            }
-          : undefined
-      }
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect()
+          openMeeting()
+        }
+      }}
     >
       {isExpanded ? (
         <motion.div layout="position" transition={ENTRY_TRANSITION}>
-          <p className="body-2 text-foreground font-semibold">{ev.title}</p>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="body-2 text-foreground font-semibold">{ev.title}</p>
+              {accountLabel ? (
+                <p className="typo-caption text-muted-foreground mt-0.5 truncate">{accountLabel}</p>
+              ) : null}
+            </div>
+            {dismissButton}
+          </div>
           {ev.source === 'fathom' ? (
             <span className="badge-glass badge-glass-cyan typo-caption mt-1 inline-flex">
               Fathom
@@ -164,7 +263,6 @@ export function AgendaEventEntry({
           <p className="typo-caption text-muted-foreground mt-1">
             {formatCountdown(nowTick, ev) ? `${formatCountdown(nowTick, ev)} · ` : ''}
             {formatTimeRange(ev)}
-            {accountLabel ? ` · ${accountLabel}` : ''}
           </p>
           {ev.location?.trim() ? (
             <p className="typo-caption text-muted-foreground mt-1 flex items-center gap-1">
@@ -173,31 +271,7 @@ export function AgendaEventEntry({
             </p>
           ) : null}
 
-          {ev.attendees.length > 0 && (
-            <div className="mt-2.5 flex items-center gap-2">
-              <div className="flex -space-x-1.5">
-                {ev.attendees.slice(0, 5).map((a, i) => (
-                  <div
-                    key={a.email}
-                    className={`${avatarColor(i)} flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--color-background)] text-[9px] font-bold text-white`}
-                    title={a.name ?? a.email}
-                  >
-                    {attendeeInitials(a)}
-                  </div>
-                ))}
-                {ev.attendees.length > 5 && (
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--color-background)] bg-[var(--color-muted)] text-[9px] font-bold text-[var(--color-muted-foreground)]">
-                    +{ev.attendees.length - 5}
-                  </div>
-                )}
-              </div>
-              {attendeeRsvpSummary(ev.attendees) && (
-                <span className="typo-caption text-muted-foreground">
-                  {attendeeRsvpSummary(ev.attendees)}
-                </span>
-              )}
-            </div>
-          )}
+          {ev.attendees.length > 0 ? <AgendaAttendeesControl attendees={ev.attendees} /> : null}
 
           <div className="mt-3 flex flex-col gap-2">
             {onOpenMeeting ? (
@@ -210,19 +284,6 @@ export function AgendaEventEntry({
                 className="button-glass-secondary body-3 flex w-full items-center justify-center gap-2 rounded-lg py-2 font-semibold"
               >
                 {ev.source === 'fathom' ? 'Open recording' : 'Open meeting'}
-              </button>
-            ) : null}
-            {onOpenPrep ? (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onOpenPrep()
-                }}
-                className="border-border bg-secondary text-foreground hover:bg-hover-subtle body-3 flex w-full items-center justify-center gap-2 rounded-lg border py-2 font-semibold transition-colors"
-              >
-                <FileText className="text-muted-foreground h-4 w-4" aria-hidden />
-                {ev.prep ? prepChipLabel(ev.prep.status) : 'Start prep'}
               </button>
             ) : null}
             {ev.video_url ? (
@@ -258,7 +319,14 @@ export function AgendaEventEntry({
                   minute: '2-digit',
                 })}
           </span>
-          <span className="body-3 min-w-0 flex-1 truncate font-medium">{ev.title}</span>
+          <div className="min-w-0 flex-1">
+            <span className="body-3 text-foreground block truncate font-medium">{ev.title}</span>
+            {accountLabel ? (
+              <span className="typo-caption text-muted-foreground block truncate">
+                {accountLabel}
+              </span>
+            ) : null}
+          </div>
           {ev.source === 'fathom' ? (
             <span className="badge-glass badge-glass-cyan typo-caption shrink-0">Fathom</span>
           ) : null}
@@ -275,12 +343,8 @@ export function AgendaEventEntry({
               Prep
             </span>
           ) : null}
-          {accountLabel ? (
-            <span className="typo-caption text-muted-foreground max-w-[7rem] shrink-0 truncate">
-              {accountLabel}
-            </span>
-          ) : null}
           {ev.video_url ? <Video className="text-muted-foreground h-3.5 w-3.5 shrink-0" /> : null}
+          {dismissButton}
         </motion.div>
       )}
     </motion.div>

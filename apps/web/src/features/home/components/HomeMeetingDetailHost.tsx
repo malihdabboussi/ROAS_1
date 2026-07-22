@@ -1,8 +1,10 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { MapPin, MessageSquare, Video, X } from 'lucide-react'
-import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { askAboutMeetingInChat } from '@/features/home/lib/ask-meeting-in-chat'
+import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
+import { buildSpaceItemHref } from '@/lib/spaces/space-item-href'
 
 function formatTimeRange(ev: CalendarAgendaEvent): string {
   const s = new Date(ev.start)
@@ -27,23 +29,46 @@ function prepLabel(status: NonNullable<CalendarAgendaEvent['prep']>['status']): 
   return 'Prep generating…'
 }
 
+function isHttpUrl(value: string | null | undefined): value is string {
+  return typeof value === 'string' && /^https?:\/\//i.test(value.trim())
+}
+
 export function HomeMeetingDetailHost({
   event,
   onClose,
   onOpenPrep,
   onStartPrep,
-  onOpenSpaceItem,
   prepBusy,
 }: {
   event: CalendarAgendaEvent
   onClose: () => void
   onOpenPrep: () => void
   onStartPrep: () => void
-  onOpenSpaceItem: (spaceId: string, itemId: string, title: string) => void
   prepBusy?: boolean
 }) {
+  const router = useRouter()
   const location = event.location?.trim() || null
   const related = event.related ?? null
+  const relatedHref =
+    related?.space_id && related.call_item_id
+      ? buildSpaceItemHref(related.space_id, related.call_item_id)
+      : null
+
+  const openRelatedCall = () => {
+    if (isHttpUrl(related?.recording_url)) {
+      window.open(related.recording_url.trim(), '_blank', 'noopener,noreferrer')
+      return
+    }
+    if (!relatedHref) return
+    onClose()
+    router.push(relatedHref)
+  }
+
+  const openFollowUp = (itemId: string) => {
+    if (!related?.space_id || !itemId) return
+    onClose()
+    router.push(buildSpaceItemHref(related.space_id, itemId))
+  }
 
   return (
     <div className="z-modal-backdrop bg-modal-overlay fixed inset-0 flex items-center justify-center p-4">
@@ -128,20 +153,18 @@ export function HomeMeetingDetailHost({
             )}
           </section>
 
-          {related ? (
+          {related && (relatedHref || isHttpUrl(related.recording_url)) ? (
             <section className="flex flex-col gap-2">
               <p className="typo-caption text-muted-foreground font-medium uppercase tracking-wide">
                 Call recording & tasks
               </p>
               <button
                 type="button"
-                onClick={() =>
-                  onOpenSpaceItem(related.space_id, related.call_item_id, related.title)
-                }
+                onClick={openRelatedCall}
                 className="border-border hover:bg-hover-subtle body-3 rounded-lg border px-3 py-2 text-left"
               >
                 <span className="text-foreground font-medium">{related.title}</span>
-                {related.recording_url ? (
+                {isHttpUrl(related.recording_url) ? (
                   <span className="text-muted-foreground mt-0.5 block truncate text-[12px]">
                     Recording linked
                   </span>
@@ -153,7 +176,7 @@ export function HomeMeetingDetailHost({
                     <li key={fu.id}>
                       <button
                         type="button"
-                        onClick={() => onOpenSpaceItem(related.space_id, fu.id, fu.title)}
+                        onClick={() => openFollowUp(fu.id)}
                         className="body-3 text-foreground hover:bg-hover-subtle w-full rounded-md px-2 py-1.5 text-left"
                       >
                         {fu.title}

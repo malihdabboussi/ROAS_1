@@ -14,6 +14,11 @@ import {
   pickBestCalendarConnectionRow,
   type CalendarConnectionRef,
 } from './integrations-calendar-connections'
+import {
+  dedupeCalendarAgendaEvents,
+  readGoogleIcalUid,
+  readOutlookIcalUid,
+} from './integrations-calendar-dedupe'
 import { fetchGoogleMultiCalendarAgenda } from './integrations-calendar-google-agenda'
 import {
   assertCalendarProvider,
@@ -27,6 +32,7 @@ import {
   isTimedDateTime,
   normalizeProviderEventId,
 } from './integrations-calendar-mutations'
+import { IntegrationsCalendarTeamService } from './integrations-calendar-team.service'
 import { isPersonalCrossContextProvider } from './personal-cross-context-providers'
 
 export type CalendarAttendee = {
@@ -34,7 +40,6 @@ export type CalendarAttendee = {
   email: string
   status: 'accepted' | 'declined' | 'tentative' | 'needsAction' | 'unknown'
 }
-
 export type CalendarAgendaEvent = {
   id: string
   title: string
@@ -48,12 +53,13 @@ export type CalendarAgendaEvent = {
   color_id: string | null
   attendees: CalendarAttendee[]
   source: 'google_calendar' | 'outlook' | 'fathom'
+  /** Shared across calendars for the same invite (Google iCalUID / Outlook uid). */
+  ical_uid?: string | null
   account_id?: string | null
   account_label?: string | null
   prep?: AgendaPrepLink | null
   related?: AgendaRelatedCall | null
 }
-
 export type CalendarProvider = 'google_calendar' | 'outlook'
 export type CalendarEventAttendeeInput = {
   email: string
@@ -101,6 +107,7 @@ export class IntegrationsCalendarService {
     private readonly repository: IntegrationsRepository,
     private readonly composio: ComposioService,
     private readonly orgScope: OrgScopeService,
+    private readonly teamAgenda: IntegrationsCalendarTeamService,
     @Optional()
     @Inject(forwardRef(() => MeetingsPrecallPrepService))
     private readonly precallPrep?: MeetingsPrecallPrepService,
@@ -115,14 +122,22 @@ export class IntegrationsCalendarService {
       end: string
       timezone?: string
       provider?: string
+      scope?: 'personal' | 'team'
     },
   ): Promise<{
     success: boolean
     events: CalendarAgendaEvent[]
     connected: { google_calendar: boolean; outlook: boolean }
     accounts: CalendarConnectionRef[]
+    team_available: boolean
     error?: string
   }> {
+    if (query.scope === 'team') {
+      return this.teamAgenda.getTeamAgendaWithMine(supabase, user, scope, query, (q) =>
+        this.getAgenda(supabase, user, scope, q),
+      )
+    }
+
     const start = query.start?.trim()
     const end = query.end?.trim()
     if (!start || !end) {
@@ -146,6 +161,7 @@ export class IntegrationsCalendarService {
       google_calendar: googleAccounts.length > 0,
       outlook: outlookAccounts.length > 0,
     }
+    const team_available = await this.teamAgenda.isTeamAvailable(scope)
 
     const events: CalendarAgendaEvent[] = []
     const errors: string[] = []
@@ -222,46 +238,56 @@ export class IntegrationsCalendarService {
       }
     }
 
-    events.sort((a, b) => a.start.localeCompare(b.start))
+    // Collapse multi-account duplicate invites before prep enrichment.
+    let uniqueEvents = dedupeCalendarAgendaEvents(events)
+    uniqueEvents.sort((a, b) => a.start.localeCompare(b.start))
 
     if (this.precallPrep) {
       try {
         const [prepMap, relatedResult] = await Promise.all([
-          events.length > 0
+          uniqueEvents.length > 0
             ? this.precallPrep.enrichAgendaEvents({
                 supabase,
                 userId: user.id,
                 orgId: null,
-                events,
+                events: uniqueEvents,
               })
             : Promise.resolve(new Map()),
           this.precallPrep.enrichAgendaRelatedCalls({
             supabase,
             userId: user.id,
             orgId: null,
-            events,
+            events: uniqueEvents,
             start,
             end,
           }),
         ])
-        for (const event of events) {
+        for (const event of uniqueEvents) {
           event.prep = prepMap.get(event.id) ?? null
           event.related = relatedResult.relatedByEventId.get(event.id) ?? null
         }
         for (const fathomEvent of relatedResult.unmatchedFathomEvents) {
-          events.push(fathomEvent as CalendarAgendaEvent)
+          uniqueEvents.push(fathomEvent as CalendarAgendaEvent)
         }
-        events.sort((a, b) => a.start.localeCompare(b.start))
+        uniqueEvents = dedupeCalendarAgendaEvents(uniqueEvents)
+        uniqueEvents.sort((a, b) => a.start.localeCompare(b.start))
       } catch {
         // Agenda still works without prep / related / Fathom enrichment.
       }
     }
 
-    if (errors.length > 0 && events.length === 0) {
-      return { success: false, events: [], connected, accounts, error: errors.join('; ') }
+    if (errors.length > 0 && uniqueEvents.length === 0) {
+      return {
+        success: false,
+        events: [],
+        connected,
+        accounts,
+        team_available,
+        error: errors.join('; '),
+      }
     }
 
-    return { success: true, events, connected, accounts }
+    return { success: true, events: uniqueEvents, connected, accounts, team_available }
   }
 
   async createEvent(
@@ -477,15 +503,14 @@ export class IntegrationsCalendarService {
     const out: CalendarAgendaEvent[] = []
     for (const item of items) {
       const ev = this.asRecord(item)
-      if (!ev) continue
+      if (!ev || String(ev.status ?? '').toLowerCase() === 'cancelled') continue
       const id = typeof ev.id === 'string' ? ev.id : JSON.stringify(ev.id ?? Math.random())
       const title = typeof ev.summary === 'string' ? ev.summary : '(No title)'
       const colorId = typeof ev.colorId === 'string' ? ev.colorId : null
-
+      const icalUid = readGoogleIcalUid(ev)
       const startObj = this.asRecord(ev.start)
       const endObj = this.asRecord(ev.end)
       if (!startObj || !endObj) continue
-
       const startDate = typeof startObj.date === 'string' ? startObj.date : null
       const endDate = typeof endObj.date === 'string' ? endObj.date : null
       const startDt = typeof startObj.dateTime === 'string' ? startObj.dateTime : null
@@ -579,6 +604,7 @@ export class IntegrationsCalendarService {
         color_id: colorId,
         attendees,
         source: 'google_calendar',
+        ical_uid: icalUid,
       })
     }
     return out
@@ -657,6 +683,7 @@ export class IntegrationsCalendarService {
           : typeof ev.location === 'string'
             ? ev.location.trim()
             : ''
+      const icalUid = readOutlookIcalUid(ev)
       out.push({
         id: `outlook:${id}`,
         title,
@@ -670,6 +697,7 @@ export class IntegrationsCalendarService {
         color_id: colorId,
         attendees,
         source: 'outlook',
+        ical_uid: icalUid,
       })
     }
     return out

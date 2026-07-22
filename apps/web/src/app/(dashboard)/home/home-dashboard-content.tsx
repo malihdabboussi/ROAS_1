@@ -140,9 +140,6 @@ export function HomeDashboardContent() {
             )
           }}
           onStartPrep={() => void handleStartMeetingPrep()}
-          onOpenSpaceItem={(spaceId, itemId, title) => {
-            openYourTurnItemFromMeeting(minimalSpaceYourTurnItem(spaceId, itemId, title, null))
-          }}
         />
       ) : null}
 

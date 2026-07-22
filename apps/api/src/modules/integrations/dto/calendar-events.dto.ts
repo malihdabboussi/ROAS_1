@@ -14,25 +14,28 @@ const OptionalTimedIsoDateTimeSchema = TimedIsoDateTimeSchema.optional()
 
 export const CalendarProviderSchema = z.enum(['google_calendar', 'outlook'])
 
-export const CalendarAgendaQuerySchema = z.object({
-  start: z
-    .string()
-    .min(1, 'start is required')
-    .refine((value) => !Number.isNaN(Date.parse(value)), {
-      message: 'Valid ISO 8601 start is required',
-    }),
-  end: z
-    .string()
-    .min(1, 'end is required')
-    .refine((value) => !Number.isNaN(Date.parse(value)), {
-      message: 'Valid ISO 8601 end is required',
-    }),
-  timezone: z.string().min(1).optional(),
-  provider: CalendarProviderSchema.optional(),
-}).refine((query) => Date.parse(query.end) > Date.parse(query.start), {
-  message: 'end must be after start',
-  path: ['end'],
-})
+export const CalendarAgendaQuerySchema = z
+  .object({
+    start: z
+      .string()
+      .min(1, 'start is required')
+      .refine((value) => !Number.isNaN(Date.parse(value)), {
+        message: 'Valid ISO 8601 start is required',
+      }),
+    end: z
+      .string()
+      .min(1, 'end is required')
+      .refine((value) => !Number.isNaN(Date.parse(value)), {
+        message: 'Valid ISO 8601 end is required',
+      }),
+    timezone: z.string().min(1).optional(),
+    provider: CalendarProviderSchema.optional(),
+    scope: z.enum(['personal', 'team']).optional().default('personal'),
+  })
+  .refine((query) => Date.parse(query.end) > Date.parse(query.start), {
+    message: 'end must be after start',
+    path: ['end'],
+  })
 
 export const CalendarEventParamSchema = z.object({
   provider: CalendarProviderSchema,

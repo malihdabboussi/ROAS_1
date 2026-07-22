@@ -143,7 +143,17 @@ export type AgendaRelatedCall = {
   follow_ups: AgendaRelatedFollowUp[]
 }
 
-const RELATED_CALL_WINDOW_MS = 36 * 60 * 60 * 1000
+/** Pad around the calendar event when deciding whether a Fathom call_date overlaps. */
+export const RELATED_CALL_TIME_PAD_MS = 45 * 60 * 1000
+/**
+ * When title/attendee signals are weak (AI Fathom titles, missing emails), attach a call
+ * only if exactly one calendar event starts within this window of call_date.
+ */
+export const RELATED_CALL_NEAR_START_MS = 10 * 60 * 1000
+/** Minimum Jaccard title similarity when attendee overlap alone is weak. */
+export const RELATED_CALL_TITLE_MIN = 0.4
+/** Minimum score after hard gates (exclusive assigner also enforces this). */
+export const MIN_RELATED_CALL_MATCH_SCORE = 20
 export const FATHOM_AGENDA_SOURCE = 'fathom' as const
 export const FATHOM_AGENDA_DURATION_MS = 30 * 60 * 1000
 
@@ -158,6 +168,97 @@ export function callDateInAgendaWindow(
   const end = new Date(endIso).getTime()
   if (!Number.isFinite(t) || !Number.isFinite(start) || !Number.isFinite(end)) return false
   return t >= start && t <= end
+}
+
+/** True when call_date falls inside the event window (± pad). */
+export function callOverlapsEventWindow(
+  callDate: string | null | undefined,
+  eventStartIso: string,
+  eventEndIso: string,
+  padMs: number = RELATED_CALL_TIME_PAD_MS,
+): boolean {
+  if (!callDate) return false
+  const t = new Date(callDate).getTime()
+  const start = new Date(eventStartIso).getTime()
+  const end = new Date(eventEndIso).getTime()
+  if (!Number.isFinite(t) || !Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+    return false
+  }
+  return t >= start - padMs && t <= end + padMs
+}
+
+function normalizeAgendaTitleTokens(title: string): Set<string> {
+  return new Set(
+    String(title ?? '')
+      .toLowerCase()
+      .replace(/[/\\|x×•·–—_-]+/gi, ' ')
+      .replace(/[^a-z0-9\s]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .split(' ')
+      .filter((t) => t.length > 1),
+  )
+}
+
+export function relatedCallTitleSimilarity(a: string, b: string): number {
+  const left = normalizeAgendaTitleTokens(a)
+  const right = normalizeAgendaTitleTokens(b)
+  if (left.size === 0 || right.size === 0) return 0
+  let inter = 0
+  for (const token of left) {
+    if (right.has(token)) inter += 1
+  }
+  return inter / (left.size + right.size - inter)
+}
+
+/** Fathom sometimes stores `att_dylan_dylanvanas_com` instead of a real email. */
+export function emailFromAttendeeSlug(tag: string): string | null {
+  const raw = String(tag ?? '')
+    .trim()
+    .toLowerCase()
+  if (!raw.startsWith('att_')) return null
+  const body = raw.slice(4)
+  if (!body || body.startsWith('speaker_') || !body.includes('_')) return null
+  const parts = body.split('_').filter(Boolean)
+  if (parts.length < 2) return null
+  const tld = parts[parts.length - 1]
+  const domain = parts[parts.length - 2]
+  const local = parts.slice(0, -2).join('.')
+  if (!local || !domain || !tld || tld.length < 2) return null
+  return `${local}@${domain}.${tld}`
+}
+
+function extractEmailsFromAttendeeTags(attendees: unknown): Set<string> {
+  const emails = new Set<string>()
+  if (!Array.isArray(attendees)) return emails
+  for (const raw of attendees) {
+    const tag = String(raw ?? '')
+      .trim()
+      .toLowerCase()
+    if (!tag) continue
+    const angled = tag.match(/<([^>]+@[^>]+)>/)
+    if (angled?.[1]) {
+      emails.add(angled[1].trim().toLowerCase())
+      continue
+    }
+    const bare = tag.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i)
+    if (bare?.[0]) {
+      emails.add(bare[0].toLowerCase())
+      continue
+    }
+    const fromSlug = emailFromAttendeeSlug(tag)
+    if (fromSlug) emails.add(fromSlug)
+  }
+  return emails
+}
+
+function eventAttendeeEmails(event: PrecallAgendaEventLike): Set<string> {
+  const emails = new Set<string>()
+  for (const a of event.attendees) {
+    const email = a.email?.trim().toLowerCase()
+    if (email) emails.add(email)
+  }
+  return emails
 }
 
 /** Synthetic Agenda row for a Fathom call that did not match a calendar event. */
@@ -215,7 +316,11 @@ export function buildFathomAgendaEvent(input: {
   }
 }
 
-/** Score how well a Fathom call row matches a calendar event (higher is better). */
+/**
+ * Score how well a Fathom call row matches a calendar event (higher is better).
+ * Hard gates: time overlap required; a single shared attendee alone is never enough
+ * when the event lists 2+ emails; wrong titles do not match without strong attendees.
+ */
 export function scoreRelatedCallMatch(
   event: PrecallAgendaEventLike,
   call: {
@@ -224,44 +329,135 @@ export function scoreRelatedCallMatch(
     attendees?: unknown
   },
 ): number {
-  const eventEmails = new Set(
-    event.attendees
-      .map((a) => a.email?.trim().toLowerCase())
-      .filter((v): v is string => Boolean(v)),
-  )
-  const callAttendees = Array.isArray(call.attendees)
-    ? call.attendees.map((a) => String(a).toLowerCase())
-    : []
+  if (!callOverlapsEventWindow(call.call_date, event.start, event.end)) return 0
+
+  const eventEmails = eventAttendeeEmails(event)
+  const callEmails = extractEmailsFromAttendeeTags(call.attendees)
   let emailHits = 0
-  for (const tag of callAttendees) {
-    for (const email of eventEmails) {
-      if (tag.includes(email) || email.includes(tag) || tag.includes(email.split('@')[0] ?? '')) {
-        emailHits += 1
-        break
-      }
+  for (const email of eventEmails) {
+    if (callEmails.has(email)) emailHits += 1
+  }
+
+  const titleSim = relatedCallTitleSimilarity(event.title, String(call.title ?? ''))
+
+  // Shared organizer alone must not glue unrelated meetings together.
+  if (eventEmails.size >= 2 && emailHits < 2 && titleSim < RELATED_CALL_TITLE_MIN) return 0
+  if (eventEmails.size === 1 && emailHits === 0 && titleSim < 0.55) return 0
+  if (eventEmails.size === 0 && titleSim < 0.55) return 0
+  if (eventEmails.size > 0 && emailHits === 0 && titleSim < 0.55) return 0
+
+  const callMs = call.call_date ? new Date(call.call_date).getTime() : NaN
+  const eventStartMs = new Date(event.start).getTime()
+  const eventEndMs = new Date(event.end).getTime()
+  const eventMid =
+    Number.isFinite(eventStartMs) && Number.isFinite(eventEndMs)
+      ? (eventStartMs + eventEndMs) / 2
+      : eventStartMs
+  let timeBonus = 0
+  if (Number.isFinite(callMs) && Number.isFinite(eventMid)) {
+    const deltaMin = Math.abs(callMs - eventMid) / 60_000
+    timeBonus = Math.max(0, 10 - Math.floor(deltaMin / 5))
+  }
+
+  return emailHits * 15 + Math.round(titleSim * 20) + timeBonus
+}
+
+export type RelatedCallMatchCandidate = {
+  eventId: string
+  callId: string
+  score: number
+}
+
+/**
+ * Greedy exclusive assignment: each calendar event and each Fathom call match at most once.
+ * Highest scores win; pairs below MIN_RELATED_CALL_MATCH_SCORE are ignored.
+ */
+export function assignRelatedCallsExclusive(
+  candidates: RelatedCallMatchCandidate[],
+): Map<string, string> {
+  const byScore = [...candidates]
+    .filter((c) => c.score >= MIN_RELATED_CALL_MATCH_SCORE)
+    .sort((a, b) => b.score - a.score || a.eventId.localeCompare(b.eventId))
+  const assigned = new Map<string, string>()
+  const usedCalls = new Set<string>()
+  for (const row of byScore) {
+    if (assigned.has(row.eventId) || usedCalls.has(row.callId)) continue
+    assigned.set(row.eventId, row.callId)
+    usedCalls.add(row.callId)
+  }
+  return assigned
+}
+
+/**
+ * When title/email scoring fails (AI titles, slug attendees), attach a Fathom call to the
+ * unique calendar invite that starts within RELATED_CALL_NEAR_START_MS — and only when no
+ * other unmatched call competes for that same invite.
+ */
+export function assignSoleNearStartRelatedCalls(input: {
+  events: Array<{ id: string; start: string }>
+  calls: Array<{ id: string; call_date: string | null | undefined }>
+  alreadyAssigned: Map<string, string>
+  nearMs?: number
+}): Map<string, string> {
+  const nearMs = input.nearMs ?? RELATED_CALL_NEAR_START_MS
+  const assigned = new Map(input.alreadyAssigned)
+  const usedCalls = new Set(assigned.values())
+  const freeEvents = input.events.filter((e) => !assigned.has(e.id))
+  const freeCalls = input.calls.filter((c) => !usedCalls.has(c.id) && Boolean(c.call_date))
+
+  for (const call of freeCalls) {
+    if (usedCalls.has(call.id)) continue
+    const callMs = new Date(String(call.call_date)).getTime()
+    if (!Number.isFinite(callMs)) continue
+
+    const nearEvents = freeEvents.filter((event) => {
+      if (assigned.has(event.id)) return false
+      const startMs = new Date(event.start).getTime()
+      return Number.isFinite(startMs) && Math.abs(startMs - callMs) <= nearMs
+    })
+    if (nearEvents.length !== 1) continue
+    const event = nearEvents[0]!
+
+    const competingCalls = freeCalls.filter((other) => {
+      if (other.id === call.id || usedCalls.has(other.id)) return false
+      const otherMs = new Date(String(other.call_date)).getTime()
+      const eventMs = new Date(event.start).getTime()
+      return Number.isFinite(otherMs) && Math.abs(otherMs - eventMs) <= nearMs
+    })
+    if (competingCalls.length > 0) continue
+
+    assigned.set(event.id, call.id)
+    usedCalls.add(call.id)
+  }
+
+  return assigned
+}
+
+export function pickMeetingsSpaceId(spaces: Array<Record<string, unknown>>): string | null {
+  let bestId: string | null = null
+  let bestRank = -1
+  for (const space of spaces) {
+    const schema = space.schema as {
+      icon?: string
+      personal_dashboard?: boolean
+      fields?: Array<{ id?: string }>
+    } | null
+    if (!schema?.fields?.some((f) => f.id === 'entry_type')) continue
+    const title = String(space.title ?? '').toLowerCase()
+    const isDashboard =
+      space.space_kind === 'personal_dashboard' ||
+      schema?.personal_dashboard === true ||
+      title === 'personal dashboard'
+    const isMeetingsSurface = schema?.icon === 'video' || title === 'meetings'
+    if (!isDashboard && !isMeetingsSurface) continue
+    let rank = 0
+    if (title === 'meetings') rank += 100
+    if (schema?.icon === 'video') rank += 40
+    if (isDashboard) rank += 10
+    if (rank > bestRank && space.id) {
+      bestRank = rank
+      bestId = String(space.id)
     }
   }
-  if (eventEmails.size > 0 && emailHits === 0) return 0
-
-  let score = emailHits * 10
-  const callMs = call.call_date ? new Date(call.call_date).getTime() : NaN
-  const eventMs = new Date(event.start).getTime()
-  if (Number.isFinite(callMs) && Number.isFinite(eventMs)) {
-    const delta = Math.abs(callMs - eventMs)
-    if (delta > RELATED_CALL_WINDOW_MS) return 0
-    score += Math.max(0, 20 - Math.floor(delta / (60 * 60 * 1000)))
-  }
-
-  const eventTitle = event.title.trim().toLowerCase()
-  const callTitle = String(call.title ?? '')
-    .trim()
-    .toLowerCase()
-  if (
-    eventTitle &&
-    callTitle &&
-    (eventTitle.includes(callTitle) || callTitle.includes(eventTitle))
-  ) {
-    score += 5
-  }
-  return score
+  return bestId
 }

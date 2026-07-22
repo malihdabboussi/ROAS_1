@@ -58,6 +58,9 @@ export function AgendaCardHeader(props: {
   bothConnected: boolean
   provider: ProviderFilter
   setProvider: (p: ProviderFilter) => void
+  agendaScope: 'personal' | 'team'
+  setAgendaScope: (s: 'personal' | 'team') => void
+  showTeamToggle: boolean
   view: AgendaView
   setView: (v: AgendaView) => void
   prepRunning: boolean
@@ -70,6 +73,9 @@ export function AgendaCardHeader(props: {
     bothConnected,
     provider,
     setProvider,
+    agendaScope,
+    setAgendaScope,
+    showTeamToggle,
     view,
     setView,
     prepRunning,
@@ -96,6 +102,24 @@ export function AgendaCardHeader(props: {
       </div>
       {showAgendaSurface && (
         <div className="flex flex-wrap items-center justify-end gap-1">
+          {showTeamToggle ? (
+            <div className="bg-muted/50 mr-1 flex rounded-lg p-0.5">
+              {(['personal', 'team'] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setAgendaScope(s)}
+                  className={`typo-caption rounded-md px-2 py-1 ${
+                    agendaScope === s
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {s === 'personal' ? 'Mine' : 'Team'}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {anyConnected ? (
             <button
               type="button"
@@ -108,7 +132,7 @@ export function AgendaCardHeader(props: {
               {prepRunning ? 'Prepping…' : 'Prep today'}
             </button>
           ) : null}
-          {bothConnected && (
+          {bothConnected && agendaScope === 'personal' && (
             <div className="bg-muted/50 mr-1 flex rounded-lg p-0.5">
               {(['all', 'google_calendar', 'outlook'] as const).map((p) => (
                 <button
@@ -216,40 +240,57 @@ export function AgendaCardRangeNav(props: {
 
 export function AgendaCardDisconnected(props: {
   openCalendarIntegration: (id: 'google_calendar' | 'outlook') => void
+  agendaScope?: 'personal' | 'team'
+  openWorkspaceIntegration?: () => void
 }) {
+  const isTeam = props.agendaScope === 'team'
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-4 py-8 sm:px-6">
       <AgendaEmptyIllustration />
       <div className="max-w-md text-center">
-        <p className="body-3 font-semibold text-[var(--foreground)]">Calendar not connected yet</p>
+        <p className="body-3 font-semibold text-[var(--foreground)]">
+          {isTeam ? 'Team calendar not connected yet' : 'Calendar not connected yet'}
+        </p>
         <p className="body-3 mt-2 leading-relaxed text-[var(--color-muted-foreground)]">
-          Tap a provider to open its integration and connect.
+          {isTeam
+            ? 'Connect Google Workspace in Integrations so Vibey can show teammate agendas with the same Fathom and prep context.'
+            : 'Tap a provider to open its integration and connect.'}
         </p>
       </div>
-      <div className="gap-spacing-3 flex flex-wrap items-center justify-center">
-        {CALENDAR_PROVIDER_CONNECT.map(({ integrationId, label }) => {
-          const src = getIntegrationLogoPath(integrationId)
-          return (
-            <button
-              key={integrationId}
-              type="button"
-              onClick={() => props.openCalendarIntegration(integrationId)}
-              className="rounded-spacing-2 relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden bg-white p-1.5 transition-opacity hover:opacity-90"
-              aria-label={label}
-            >
-              {src ? (
-                <img src={src} alt="" className="block h-7 w-7 object-contain object-center" />
-              ) : (
-                <span className="typo-caption text-muted-foreground font-medium">
-                  {(integrationId === 'google_calendar' ? 'Google Calendar' : 'Microsoft Outlook')
-                    .slice(0, 2)
-                    .toUpperCase()}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+      {isTeam ? (
+        <button
+          type="button"
+          onClick={() => props.openWorkspaceIntegration?.()}
+          className="button-glass-secondary rounded-spacing-2 body-3 px-spacing-4 py-spacing-2"
+        >
+          Open Google Workspace
+        </button>
+      ) : (
+        <div className="gap-spacing-3 flex flex-wrap items-center justify-center">
+          {CALENDAR_PROVIDER_CONNECT.map(({ integrationId, label }) => {
+            const src = getIntegrationLogoPath(integrationId)
+            return (
+              <button
+                key={integrationId}
+                type="button"
+                onClick={() => props.openCalendarIntegration(integrationId)}
+                className="rounded-spacing-2 relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden bg-white p-1.5 transition-opacity hover:opacity-90"
+                aria-label={label}
+              >
+                {src ? (
+                  <img src={src} alt="" className="block h-7 w-7 object-contain object-center" />
+                ) : (
+                  <span className="typo-caption text-muted-foreground font-medium">
+                    {(integrationId === 'google_calendar' ? 'Google Calendar' : 'Microsoft Outlook')
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
