@@ -361,13 +361,23 @@ export abstract class MissionInternalManagerSubtasksBase extends MissionInternal
         )
       }
 
-      await this.missionInternalRepository.resetSubtaskForRetry(
+      const retryRows = await this.missionInternalRepository.listSubtasksForRetryCascade(
         supabase,
-        dto.subtask_id,
+        dto.mission_id,
+      )
+      const activeRetryRows = retryRows.filter((row) => String(row.status) !== 'cancelled')
+      const retrySubtaskIds = [
+        ...this.collectSubtasksToCancelWithDependents(activeRetryRows, dto.subtask_id),
+      ]
+
+      await this.missionInternalRepository.resetSubtasksForRetry(
+        supabase,
+        retrySubtaskIds,
         new Date().toISOString(),
       )
 
-      if (['blocked', 'failed', 'error', 'review', 'done'].includes(mission.status)) {
+      const reopenStatuses = ['blocked', 'failed', 'error', 'review', 'done', 'awaiting_human']
+      if (reopenStatuses.includes(mission.status)) {
         await this.missionsRepository.updateMissionStatus(
           supabase,
           dto.mission_id,
@@ -397,7 +407,7 @@ export abstract class MissionInternalManagerSubtasksBase extends MissionInternal
         },
       })
 
-      const retriedToInProgress = ['blocked', 'failed', 'error', 'review'].includes(mission.status)
+      const retriedToInProgress = reopenStatuses.includes(mission.status)
 
       await this.missionsRepository.insertMissionLog(supabase, {
         mission_id: dto.mission_id,
@@ -409,6 +419,7 @@ export abstract class MissionInternalManagerSubtasksBase extends MissionInternal
         correlation_id: mission.correlation_id,
         payload: {
           subtask_id: dto.subtask_id,
+          retried_subtask_ids: retrySubtaskIds,
           subtask_title: sub.title,
           ...(dto.idempotency_key ? { idempotency_key: dto.idempotency_key } : {}),
         },

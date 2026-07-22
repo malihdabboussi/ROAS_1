@@ -73,7 +73,12 @@ export class MissionInternalRepository {
   async findAwarenessSubtask(
     supabase: SupabaseClient,
     input: { subtaskId: string; missionId: string; userId: string },
-  ): Promise<{ id: string; mission_id: string; user_id: string; scheduled_at?: string | null } | null> {
+  ): Promise<{
+    id: string
+    mission_id: string
+    user_id: string
+    scheduled_at?: string | null
+  } | null> {
     const { data, error } = await supabase
       .from('mission_subtasks')
       .select('id, mission_id, user_id, scheduled_at')
@@ -193,10 +198,7 @@ export class MissionInternalRepository {
     return error?.message ?? null
   }
 
-  async findLatestSubtaskSortOrder(
-    supabase: SupabaseClient,
-    missionId: string,
-  ): Promise<number> {
+  async findLatestSubtaskSortOrder(supabase: SupabaseClient, missionId: string): Promise<number> {
     const { data } = await supabase
       .from('mission_subtasks')
       .select('id, sort_order, status')
@@ -295,6 +297,18 @@ export class MissionInternalRepository {
     return (data || []) as Array<{ id: string; depends_on: string[] | null }>
   }
 
+  async listSubtasksForRetryCascade(
+    supabase: SupabaseClient,
+    missionId: string,
+  ): Promise<Array<{ id: string; status: string; depends_on: string[] | null }>> {
+    const { data, error } = await supabase
+      .from('mission_subtasks')
+      .select('id, status, depends_on')
+      .eq('mission_id', missionId)
+    if (error) throw new Error(error.message)
+    return (data || []) as Array<{ id: string; status: string; depends_on: string[] | null }>
+  }
+
   async cancelSubtasksByIds(
     supabase: SupabaseClient,
     subtaskIds: string[],
@@ -316,38 +330,44 @@ export class MissionInternalRepository {
     if (error) throw new Error(error.message)
   }
 
-  async resetSubtaskForRetry(
+  async resetSubtasksForRetry(
     supabase: SupabaseClient,
-    subtaskId: string,
+    subtaskIds: string[],
     updatedAt: string,
   ): Promise<void> {
-    const { data: existing, error: readError } = await supabase
+    const { data: existingRows, error: readError } = await supabase
       .from('mission_subtasks')
-      .select('execution_state')
-      .eq('id', subtaskId)
-      .maybeSingle()
+      .select('id, execution_state, output_contract')
+      .in('id', subtaskIds)
     if (readError) throw new Error(readError.message)
 
-    const prev =
-      existing?.execution_state && typeof existing.execution_state === 'object'
-        ? (existing.execution_state as Record<string, unknown>)
-        : {}
-    const completedActions = Array.isArray(prev.completed_actions) ? prev.completed_actions : []
-
-    const { error } = await supabase
-      .from('mission_subtasks')
-      .update({
-        status: 'pending',
-        feedback: null,
-        // Drop zombie current_tool / partial stream so UI does not show a dead step as "working"
-        execution_state: {
-          completed_actions: completedActions,
-          current_tool: null,
-          execution_status: 'queued',
-        },
-        updated_at: updatedAt,
-      })
-      .eq('id', subtaskId)
-    if (error) throw new Error(error.message)
+    for (const row of existingRows || []) {
+      const prev =
+        row.execution_state && typeof row.execution_state === 'object'
+          ? (row.execution_state as Record<string, unknown>)
+          : {}
+      const completedActions = Array.isArray(prev.completed_actions) ? prev.completed_actions : []
+      const { error } = await supabase
+        .from('mission_subtasks')
+        .update({
+          status: 'pending',
+          feedback: null,
+          awaiting_human_since: null,
+          sla_escalate_at: null,
+          contract_status: row.output_contract ? 'pending' : null,
+          contract_verification: null,
+          preflight_attempts: 0,
+          correction_attempts: 0,
+          // Drop zombie current_tool / partial stream so UI does not show a dead step as "working"
+          execution_state: {
+            completed_actions: completedActions,
+            current_tool: null,
+            execution_status: 'queued',
+          },
+          updated_at: updatedAt,
+        })
+        .eq('id', String(row.id))
+      if (error) throw new Error(error.message)
+    }
   }
 }
