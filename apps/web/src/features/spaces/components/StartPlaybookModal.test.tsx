@@ -38,4 +38,22 @@ describe('StartPlaybookModal', () => {
       fields: expect.objectContaining({ asset_links: 'https://drive.example/ads' }),
     })
   })
+
+  it('starts the Meta Ads Audit workflow with objective-specific reporting scope', () => {
+    const onStart = vi.fn()
+    render(<StartPlaybookModal open submitting={false} onClose={vi.fn()} onStart={onStart} />)
+    fireEvent.click(screen.getByRole('button', { name: /Meta Ads Audit/i }))
+    fireEvent.change(screen.getByLabelText('Campaign names or IDs (optional)'), {
+      target: { value: 'Registration Campaign' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Start playbook' }))
+    expect(onStart).toHaveBeenCalledWith({
+      playbookId: 'meta-ads-audit',
+      fields: expect.objectContaining({
+        reporting_period: 'last_30d',
+        comparison_period: 'previous_30d',
+        selected_campaigns: 'Registration Campaign',
+      }),
+    })
+  })
 })

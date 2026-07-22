@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import {
+  META_ADS_AUDIT_PLAYBOOK_ID,
+  type MetaAdsAuditKickoffFields,
+} from './playbooks/meta-ads-audit'
+import {
   META_ADS_LAUNCH_PLAYBOOK_ID,
   type MetaAdsLaunchKickoffFields,
 } from './playbooks/meta-ads-launch'
@@ -25,10 +29,17 @@ const EMPTY_META: MetaAdsLaunchKickoffFields = {
   destination_url: '',
   notes: '',
 }
+const EMPTY_AUDIT: MetaAdsAuditKickoffFields = {
+  reporting_period: 'last_30d',
+  comparison_period: 'previous_30d',
+  selected_campaigns: '',
+  notes: '',
+}
 
 export type PlaybookStartRequest =
   | { playbookId: typeof WEBINAR_FULFILLMENT_PLAYBOOK_ID; fields: PlaybookKickoffFields }
   | { playbookId: typeof META_ADS_LAUNCH_PLAYBOOK_ID; fields: MetaAdsLaunchKickoffFields }
+  | { playbookId: typeof META_ADS_AUDIT_PLAYBOOK_ID; fields: MetaAdsAuditKickoffFields }
 
 export function StartPlaybookModal({
   open,
@@ -41,14 +52,16 @@ export function StartPlaybookModal({
   onClose: () => void
   onStart: (request: PlaybookStartRequest) => void
 }) {
-  const [selected, setSelected] = useState<'webinar' | 'meta'>('webinar')
+  const [selected, setSelected] = useState<'webinar' | 'meta' | 'audit'>('webinar')
   const [webinar, setWebinar] = useState(EMPTY_WEBINAR)
   const [meta, setMeta] = useState(EMPTY_META)
+  const [audit, setAudit] = useState(EMPTY_AUDIT)
   useEffect(() => {
     if (!open) return
     setSelected('webinar')
     setWebinar(EMPTY_WEBINAR)
     setMeta(EMPTY_META)
+    setAudit(EMPTY_AUDIT)
   }, [open])
   if (!open || typeof document === 'undefined') return null
 
@@ -75,7 +88,7 @@ export function StartPlaybookModal({
             </button>
           </div>
           <div className="px-spacing-5 pb-spacing-5 space-y-spacing-4">
-            <div className="gap-spacing-2 grid grid-cols-2">
+            <div className="gap-spacing-2 grid grid-cols-3">
               <Choice
                 title="Webinar Fulfillment"
                 detail="Strategy through production"
@@ -87,6 +100,12 @@ export function StartPlaybookModal({
                 detail="Approved assets to paused build"
                 active={selected === 'meta'}
                 onClick={() => setSelected('meta')}
+              />
+              <Choice
+                title="Meta Ads Audit"
+                detail="Live data to gated actions"
+                active={selected === 'audit'}
+                onClick={() => setSelected('audit')}
               />
             </div>
             {selected === 'webinar' ? (
@@ -112,7 +131,7 @@ export function StartPlaybookModal({
                   onChange={(value) => setWebinar((old) => ({ ...old, notes: value }))}
                 />
               </>
-            ) : (
+            ) : selected === 'meta' ? (
               <>
                 <p className="body-4 text-muted-foreground">
                   Mapped PageGrader account context will be included when available.
@@ -143,6 +162,33 @@ export function StartPlaybookModal({
                   onChange={(value) => setMeta((old) => ({ ...old, notes: value }))}
                 />
               </>
+            ) : (
+              <>
+                <p className="body-4 text-muted-foreground">
+                  Blaze will use the mounted Meta account and verify the real result event before
+                  recommending changes.
+                </p>
+                <Field
+                  label="Reporting period"
+                  value={audit.reporting_period}
+                  onChange={(value) => setAudit((old) => ({ ...old, reporting_period: value }))}
+                />
+                <Field
+                  label="Comparison period"
+                  value={audit.comparison_period}
+                  onChange={(value) => setAudit((old) => ({ ...old, comparison_period: value }))}
+                />
+                <Field
+                  label="Campaign names or IDs (optional)"
+                  value={audit.selected_campaigns}
+                  onChange={(value) => setAudit((old) => ({ ...old, selected_campaigns: value }))}
+                />
+                <Field
+                  label="Audit notes (optional)"
+                  value={audit.notes}
+                  onChange={(value) => setAudit((old) => ({ ...old, notes: value }))}
+                />
+              </>
             )}
             <div className="gap-spacing-2 flex justify-end">
               <button
@@ -160,7 +206,9 @@ export function StartPlaybookModal({
                   onStart(
                     selected === 'webinar'
                       ? { playbookId: WEBINAR_FULFILLMENT_PLAYBOOK_ID, fields: webinar }
-                      : { playbookId: META_ADS_LAUNCH_PLAYBOOK_ID, fields: meta },
+                      : selected === 'meta'
+                        ? { playbookId: META_ADS_LAUNCH_PLAYBOOK_ID, fields: meta }
+                        : { playbookId: META_ADS_AUDIT_PLAYBOOK_ID, fields: audit },
                   )
                 }
               >

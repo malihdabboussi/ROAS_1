@@ -48,11 +48,17 @@ describe('ads-research playbook', () => {
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/thumbnail|snapshot/i)
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/mission-linked/i)
     expect(plan?.subtasks[1]?.intent.ecology).toMatch(/check_meta_connection/)
+    expect(plan?.subtasks[1]?.intent.ecology).toMatch(/get_integration/)
+    expect(plan?.subtasks[1]?.intent.ecology).toMatch(/Composio/)
     expect(plan?.subtasks[1]?.intent.ecology).toMatch(/Do not infer/)
     expect(plan?.subtasks[1]?.intent.ecology).toMatch(
       /ADS-R#0 - Verified Campaign Research Context/,
     )
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/never client facts/i)
+    expect(plan?.subtasks[2]?.intent.ecology).toMatch(/unique visual_reference_count/)
+    expect(plan?.subtasks[2]?.intent.ecology).toMatch(/save_document exactly once/)
+    expect(plan?.subtasks[2]?.intent.ecology).toMatch(/10,000 characters/)
+    expect(plan?.subtasks[2]?.intent.ecology).toMatch(/Do not create a draft Doc/)
     expect(plan?.subtasks[3]?.intent.ecology).toMatch(/dylans-super-voice/)
     expect(plan?.subtasks[3]?.intent.ecology).toMatch(/visual reference/i)
     expect(plan?.subtasks[3]?.intent.ecology).toMatch(/Hook.*Body.*CTA/i)
