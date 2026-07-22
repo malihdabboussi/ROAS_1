@@ -296,15 +296,6 @@ export class FathomWebhookService {
   }
 
   async resolveUserFromPayload(event: Record<string, unknown>): Promise<string | null> {
-    const email = (event as any).recorded_by?.email as string | undefined
-    this.logger.warn(`[FATHOM-DEBUG] resolveUserFromPayload: recorded_by.email=${email ?? 'N/A'}`)
-    if (!email) {
-      this.logger.warn(
-        `[FATHOM-DEBUG] resolveUserFromPayload: No email in payload. recorded_by=${JSON.stringify((event as any).recorded_by)?.slice(0, 200)}`,
-      )
-      return null
-    }
-
     const { data, error } = await this.repository.listConnectedIntegrationUserIds()
 
     this.logger.warn(
@@ -315,21 +306,104 @@ export class FathomWebhookService {
 
     const userIds = data.map((row) => row.user_id as string).filter(Boolean)
     const profiles = await this.repository.listProfilesForUserIds(userIds)
-
+    const userIdByEmail = new Map<string, string>()
     for (const profile of profiles ?? []) {
       const row = profile as { id?: string; email?: string | null; fathom_aliases?: string[] }
+      if (!row.id) continue
       const profileEmail = row.email?.trim().toLowerCase()
-      const aliases = Array.isArray(row.fathom_aliases)
-        ? row.fathom_aliases.map((alias) => alias.trim().toLowerCase())
-        : []
-      if (profileEmail === email.toLowerCase() || aliases.includes(email.toLowerCase())) {
-        return row.id ?? null
+      if (profileEmail) userIdByEmail.set(profileEmail, row.id)
+      const aliases = Array.isArray(row.fathom_aliases) ? row.fathom_aliases : []
+      for (const alias of aliases) {
+        const normalized = String(alias ?? '')
+          .trim()
+          .toLowerCase()
+        if (normalized) userIdByEmail.set(normalized, row.id)
       }
     }
 
+    const recordedByEmail = this.normalizeEmail((event as any).recorded_by?.email)
     this.logger.warn(
-      `[FATHOM-DEBUG] resolveUserFromPayload: No exact owner email/alias match; refusing fallback`,
+      `[FATHOM-DEBUG] resolveUserFromPayload: recorded_by.email=${recordedByEmail ?? 'N/A'}`,
+    )
+    if (recordedByEmail) {
+      const ownerMatch = userIdByEmail.get(recordedByEmail)
+      if (ownerMatch) return ownerMatch
+    }
+
+    // Shared-team webhooks often omit the signature. Attribute via invitees /
+    // shared_with so teammate-hosted calls still land for connected attendees.
+    const participantEmails = this.collectParticipantEmails(event)
+    for (const email of participantEmails) {
+      const matched = userIdByEmail.get(email)
+      if (matched) {
+        this.logger.warn(
+          `[FATHOM-DEBUG] resolveUserFromPayload: matched connected user via participant ${email}`,
+        )
+        return matched
+      }
+    }
+
+    // Last resort for unsigned shared_team deliveries: if exactly one connected
+    // account subscribed to shared_team_recordings, that account owns the webhook.
+    const sharedTeamOwners = await this.listSharedTeamRecordingOwnerUserIds()
+    if (sharedTeamOwners.length === 1) {
+      this.logger.warn(
+        `[FATHOM-DEBUG] resolveUserFromPayload: attributed unsigned shared-team event to sole subscriber ${sharedTeamOwners[0]}`,
+      )
+      return sharedTeamOwners[0]
+    }
+
+    this.logger.warn(
+      `[FATHOM-DEBUG] resolveUserFromPayload: No owner/participant/shared-team match; refusing fallback`,
     )
     return null
+  }
+
+  private normalizeEmail(value: unknown): string | null {
+    if (typeof value !== 'string') return null
+    const normalized = value.trim().toLowerCase()
+    return normalized.includes('@') ? normalized : null
+  }
+
+  private collectParticipantEmails(event: Record<string, unknown>): string[] {
+    const emails = new Set<string>()
+    const push = (value: unknown) => {
+      if (typeof value === 'string') {
+        const email = this.normalizeEmail(value)
+        if (email) emails.add(email)
+        return
+      }
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return
+      const row = value as Record<string, unknown>
+      const email = this.normalizeEmail(row.email ?? row.mail ?? row.address)
+      if (email) emails.add(email)
+    }
+
+    for (const key of ['calendar_invitees', 'shared_with', 'invitees', 'attendees'] as const) {
+      const list = event[key]
+      if (!Array.isArray(list)) continue
+      for (const entry of list) push(entry)
+    }
+    return [...emails]
+  }
+
+  private async listSharedTeamRecordingOwnerUserIds(): Promise<string[]> {
+    const rows = await this.repository.listConnectedWebhookRows()
+    const owners: string[] = []
+    for (const row of rows) {
+      const userId = typeof row.user_id === 'string' ? row.user_id : ''
+      if (!userId) continue
+      const metadata =
+        row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+          ? (row.metadata as Record<string, unknown>)
+          : {}
+      const triggeredFor = Array.isArray(metadata.triggered_for)
+        ? metadata.triggered_for.map((entry) => String(entry))
+        : Array.isArray(metadata.webhook_triggered_for)
+          ? metadata.webhook_triggered_for.map((entry) => String(entry))
+          : []
+      if (triggeredFor.includes('shared_team_recordings')) owners.push(userId)
+    }
+    return [...new Set(owners)]
   }
 }

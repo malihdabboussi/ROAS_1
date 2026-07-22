@@ -95,6 +95,17 @@ describe('FathomController behavior', () => {
         data: (adminMock.rowsByTable.get('user_integrations') ?? []) as Array<{ user_id: string }>,
         error: null,
       })),
+      listConnectedWebhookRows: vi.fn(async () =>
+        (
+          (adminMock.rowsByTable.get('user_integrations') ?? []) as Array<{
+            user_id: string
+            metadata?: unknown
+          }>
+        ).map((row) => ({
+          user_id: row.user_id,
+          metadata: row.metadata ?? {},
+        })),
+      ),
       listProfilesForUserIds: vi.fn(async (userIds: string[]) =>
         (adminMock.rowsByTable.get('profiles') ?? []).filter((profile: any) =>
           userIds.includes(profile.id),
@@ -470,6 +481,65 @@ describe('FathomController behavior', () => {
     })
 
     expect(resolved).toBe('user_second')
+  })
+
+  it('resolves teammate-recorded shared calls via calendar invitee email', async () => {
+    adminMock.rowsByTable.set('user_integrations', [{ user_id: 'user_dylan' }])
+    adminMock.rowsByTable.set('profiles', [
+      { id: 'user_dylan', email: 'dylan@dylanvanas.com', fathom_aliases: [] },
+    ])
+
+    const resolved = await webhookService.resolveUserFromPayload({
+      recorded_by: { email: 'nate@roas.co' },
+      calendar_invitees: [{ email: 'nate@roas.co' }, { email: 'dylan@dylanvanas.com' }],
+    })
+
+    expect(resolved).toBe('user_dylan')
+  })
+
+  it('attributes unsigned shared-team webhooks to the sole shared_team subscriber', async () => {
+    adminMock.rowsByTable.set('user_integrations', [
+      {
+        user_id: 'user_dylan',
+        metadata: {
+          triggered_for: ['my_recordings', 'shared_team_recordings'],
+        },
+      },
+    ])
+    adminMock.rowsByTable.set('profiles', [
+      { id: 'user_dylan', email: 'dylan@dylanvanas.com', fathom_aliases: [] },
+    ])
+
+    const resolved = await webhookService.resolveUserFromPayload({
+      recorded_by: { email: 'nefi@roas.co' },
+      calendar_invitees: [{ email: 'nefi@roas.co' }, { email: 'client@example.com' }],
+    })
+
+    expect(resolved).toBe('user_dylan')
+  })
+
+  it('does not attribute unsigned shared-team webhooks when multiple subscribers exist', async () => {
+    adminMock.rowsByTable.set('user_integrations', [
+      {
+        user_id: 'user_dylan',
+        metadata: { triggered_for: ['shared_team_recordings'] },
+      },
+      {
+        user_id: 'user_nate',
+        metadata: { triggered_for: ['shared_team_recordings'] },
+      },
+    ])
+    adminMock.rowsByTable.set('profiles', [
+      { id: 'user_dylan', email: 'dylan@dylanvanas.com', fathom_aliases: [] },
+      { id: 'user_nate', email: 'nate@roas.co', fathom_aliases: [] },
+    ])
+
+    const resolved = await webhookService.resolveUserFromPayload({
+      recorded_by: { email: 'nefi@roas.co' },
+      calendar_invitees: [{ email: 'nefi@roas.co' }],
+    })
+
+    expect(resolved).toBeNull()
   })
 
   it('persists explicit boolean in auto-ingest endpoint', async () => {

@@ -1,5 +1,19 @@
 # Changelog - July 22, 2026
 
+## [2026-07-22 13:00] - [DOCS]
+
+What: Clarified Programs are grouping/rollup only — not a create-from hierarchy level. Updated plan + feature doc accordingly.
+Why: Product intent is campaign buckets + All Tasks scope, not Program as a parent you create into.
+Impact: Phase 2 UI should be section headers + move-to-program + rollup filters; no Program create-parent flows.
+Files: `.docs/plans/programs-hierarchy-and-all-tasks.md`, `documentation/features/programs.md`
+
+## [2026-07-22 12:55] - [FEATURE]
+
+What: Added Programs (grouping above Campaigns) — `programs` table, `campaigns.program_id`, Nest CRUD `/api/programs`, org seed Clients + ROAS Ops, Page Grader campaign backfill into Clients; skipped personal-account program backfill.
+Why: Need a ClickUp Space-level shell so ROAS org can group client campaigns vs ops without renaming campaigns/spaces.
+Impact: After migration + API deploy, `GET /api/programs` returns Clients/ROAS Ops; `PATCH /api/campaigns/:id { program_id }` moves campaigns. Hub/sidebar/All Tasks UI still pending.
+Files: `supabase/migrations/20260722130000_programs.sql`, `apps/api/src/modules/programs/**`, `campaigns-service-01.base.ts`, `app.module.ts`, `apps/web/src/lib/programs/**`, `campaign-api.ts`, `documentation/features/programs.md`, plan
+
 ## [2026-07-22 05:03] - [DOCS]
 
 What: Added the production proof report for the full ads lifecycle, including two live Ads Research runs, visual evidence counts, the Blaze Meta audit, specific recommendations, launch-gate state, automated test results, production deployment, and the remaining client-owned launch inputs.
@@ -95,3 +109,58 @@ What: Bound mission document verification to the contracted title and mapped Spa
 Why: A live Meta audit recommendation task could pass against a different audit Doc while its mission-deliverable copy was stale.
 Impact: Mission contracts now verify the exact user-visible document created for the current subtask.
 Files: `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverables.repository.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverable-contract-evaluator.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-document-content-verifier.ts`, focused tests, `documentation/features/missions.md`
+<<<<<<< HEAD
+=======
+
+## [2026-07-22 11:50] - [FIX]
+
+What: Fixed Brain home statuses stuck on "Loading" for fleets of Person Brains. Replaced per-brain `brain_legend_connection_counts` in `brain_home_health_batch` with a lightweight aggregate (applied to ROAS prod), reduced batch chunks to 10, and made BrainHome clear loading + toast on health batch failure instead of hanging forever.
+Why: `/api/brain/health/batch` was 5xxing under ~20+ brains (legend RPC timeout); the UI had no catch/finally so STATUS stayed "Loading".
+Impact: Brain list can show real status/memory counts again after hard refresh (DB fix is live). Client resilience ships with the next web deploy.
+Files: `20260722115000_brain_home_health_batch_lite.sql`, `BrainHome.tsx`, `brain.service.ts`, `memory-stats.repository.ts`, `brain-toast-errors.config.ts`, `BrainHome.test.tsx`, `scripts/roas/migration-order.txt`
+
+## [2026-07-22 11:57] - [FIX]
+
+What: Loaded every paginated workspace into the Campaigns page and preserved the selected workspace ID when opening from a campaign overview.
+Why: The Campaigns page only loaded the first 100 workspaces, which omitted Sakha Media Group's General workspace, while the campaign overview routed to the generic Spaces page and could open the previously active workspace instead.
+Impact: Existing campaign workspaces, including Sakha Media Group's General workspace and its Ads Research test data, are visible in the Campaigns list and open reliably from the campaign overview.
+Files: `apps/web/src/app/(dashboard)/campaigns/_components/CampaignsHub.tsx`, `apps/web/src/app/(dashboard)/campaigns/_lib/fetch-all-campaign-spaces.ts`, `apps/web/src/app/(dashboard)/campaigns/_lib/fetch-all-campaign-spaces.test.ts`, `apps/web/src/app/(dashboard)/campaigns/[id]/_components/tabs/CampaignOverviewTab.tsx`, `apps/web/src/app/(dashboard)/campaigns/[id]/_components/tabs/CampaignOverviewTab.test.tsx`
+
+## [2026-07-22 12:03] - [FIX]
+
+What: Root-caused Home Agenda Team scope returning personal-only events on production (identical to Mine, labels like dylan@…, no team_available). Live API ignored `scope=team` because production lacked the Team agenda path (`CalendarAgendaQuerySchema.scope` + `IntegrationsCalendarTeamService` + Mine merge) after later git/CLI deploys overwrote earlier archive ships. Redeployed working-tree Team agenda to `roas-api`. Also moved agenda `account_label` under the event title (muted caption) instead of a right-column truncator, and shipped that UI on `roas-web`.
+Why: With Team selected, Dylan only saw personal Composio calendars; teammate Directory calendars (Aaron/Bryce/Nefi/…) never appeared despite confirmed identities and working DWD.
+Impact: `GET …/calendar/agenda?scope=team` now returns teammate names + Mine merge (verified live: 55 events, Aaron/Bryce/Nefi labels). Agenda list titles stay readable with owner under the title.
+Files: `calendar-events.dto.ts`, `integrations-calendar-team.service.ts`, `integrations-calendar.service.ts`, `integrations.module.ts`, `AgendaCardEventEntry.tsx`, `integration-connections.md`
+
+## [2026-07-22 12:03] - [OPS]
+
+What: Deployed Team Agenda API + Agenda label layout to ROAS production via CLI archive (no git push). `roas-api` `dpl_DB9P88YFBfxwihA5AVD4kD3VkzJi` → api.roas.io; `roas-web` `dpl_294vMkDnU3K6YX8EFKMYScHgar2M` → app.roas.io.
+Why: Team agenda code existed only in the dirty working tree; production had drifted to a personal-only agenda handler.
+Impact: Hard-refresh Home → Agenda → Team should show teammate calendars; Mine stays personal. Label sits under the title.
+Files: Vercel Production `roas-api` / `roas-web`
+
+## [2026-07-22 12:11] - [FEATURE]
+
+What: Moved Ready-for-delegation and Team calendar identity review into Team → People (Teammates / Calendars). Org Settings → Team deep-links to People; Integrations Org Workspace panel is connect/sync + link only.
+Why: Keep human resolution in People, not Org Settings.
+Impact: Local main now owns the People consolidation WIP.
+Files: `SlackPeopleView.tsx`, `PeopleTeamCalendarsView.tsx`, `teammates/*`, `OrgSettingsContent.tsx`, `GoogleWorkspaceIdentitiesPanel.tsx`
+
+## [2026-07-22 12:24] - [FIX]
+
+What: Stopped Brain home status from staying stuck on Loading by removing `scopeOptions` identity from the health-batch effect deps (capture campaign scope entries once per ids key). Production still needs a web deploy for this to show.
+Why: Scope-nav re-renders cancelled in-flight `/api/brain/health/batch` loads before `setHealthLoading(false)`, so every row stayed on Loading even after the lite RPC was live.
+Impact: Local/main + next `roas-web` deploy show real status/memory counts instead of perpetual Loading.
+Files: `BrainHome.tsx`
+
+## [2026-07-22 13:03] - [FIX]
+
+What: Fixed Fathom webhook user resolution so teammate-recorded shared-team calls attribute to the connected ROAS account via invitee/shared_with match, or the sole `shared_team_recordings` subscriber when Fathom omits the signature.
+
+Why: Prod was dropping Nate/Nefi-hosted webhooks (`refusing fallback`) because unsigned payloads only matched `recorded_by` to Dylan’s email, so Team meetings never landed in Personal Meetings.
+
+Impact: Shared-team Fathom calls auto-ingest into Dylan’s Meetings again; multi-subscriber unsigned events still require invitee match or a signature.
+
+Files: `fathom-webhook.service.ts`, fathom controller tests, changelog.
+>>>>>>> 84830351 (fix(fathom): attribute unsigned shared-team webhooks to connected account)
