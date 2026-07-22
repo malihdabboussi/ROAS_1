@@ -16,6 +16,7 @@ import {
   UserPlus,
   Zap,
 } from 'lucide-react'
+import * as ActionSummary from '@/lib/flows/automation-action-summary.helpers'
 import {
   getConnectedAppFlowProviderLabel,
   getConnectedAppFlowTriggerBySlug,
@@ -74,12 +75,6 @@ function priorityLabel(fields: FieldDef[], id: string): string {
   if (!id) return 'Any priority'
   const opt = fields.find((f) => f.id === 'priority')?.options?.find((o) => o.id === id)
   return opt?.label ?? id
-}
-
-function emailProviderLabel(toolSlug?: string): string {
-  if (toolSlug?.startsWith('OUTLOOK')) return 'Outlook'
-  if (toolSlug?.startsWith('GMAIL')) return 'Gmail'
-  return 'Email'
 }
 
 function assigneeLabel(roster: TeamRosterEntry[], type: 'human' | 'agent', id: string): string {
@@ -360,7 +355,7 @@ function actionSummary(
         icon: MessageSquare,
         title: `Step ${index + 1}: Email`,
         detail: [
-          emailProviderLabel(action.tool_slug),
+          ActionSummary.emailProviderLabel(action.tool_slug),
           action.subject_source === 'artifact' ? 'From email artifact' : 'Manual content',
           action.to || '…',
         ].join(' · '),
@@ -374,8 +369,7 @@ function actionSummary(
     case 'request_slack_follow_up_confirm':
       return {
         icon: MessageSquare,
-        title: `Step ${index + 1}: Post-call follow-up`,
-        detail: `${action.delivery_mode ?? 'shadow'} · ${action.dm_email || 'admin review'}`,
+        ...ActionSummary.postCallMapSummary(action, index),
       }
     case 'observe_slack_team':
       return {

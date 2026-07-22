@@ -9,6 +9,7 @@ import {
   getConnectedAppFlowTriggerBySlug,
 } from '@/lib/flows/connected-app-flow-triggers'
 import { flowBuilderActionIndexToStepNumber } from '@/lib/flows/flow-builder-step-index.utils'
+import { emailProviderLabel } from './automation-action-summary.helpers'
 
 function statusLabel(fields: FieldDef[], id: string): string {
   if (!id) return '…'
@@ -25,12 +26,6 @@ function priorityLabel(fields: FieldDef[], id: string): string {
   if (!id) return 'Any priority'
   const opt = fields.find((f) => f.id === 'priority')?.options?.find((o) => o.id === id)
   return opt?.label ?? id
-}
-
-function emailProviderLabel(toolSlug?: string): string {
-  if (toolSlug?.startsWith('OUTLOOK')) return 'Outlook'
-  if (toolSlug?.startsWith('GMAIL')) return 'Gmail'
-  return 'Email'
 }
 
 function assigneeLabel(roster: TeamRosterEntry[], type: 'human' | 'agent', id: string): string {

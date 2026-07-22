@@ -14,7 +14,7 @@ const DELIVERY_OPTIONS: AutomationSolidOption[] = [
   { value: 'active', label: 'Active · send internal follow-ups' },
 ]
 
-function FieldGroup({ label, children }: { label: string; children: ReactNode }) {
+export function AutomationFieldGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="gap-spacing-1 flex flex-col">
       <span className="body-4 text-muted-foreground font-medium">{label}</span>
@@ -32,20 +32,20 @@ export function PostCallSlackActionFields({
 }) {
   return (
     <div className="space-y-spacing-3">
-      <FieldGroup label="Mode">
+      <AutomationFieldGroup label="Mode">
         <AutomationSolidSelect
           options={DELIVERY_OPTIONS}
           value={action.delivery_mode ?? 'shadow'}
           onChange={(delivery_mode) => onChange({ delivery_mode } as Partial<PostCallSlackAction>)}
           placeholder="Choose a mode"
         />
-      </FieldGroup>
+      </AutomationFieldGroup>
       <div className="body-3 text-muted-foreground rounded-spacing-2 border-border bg-background px-spacing-3 py-spacing-2 border">
         Shadow runs the complete post-call process and stores reviewable account-manager drafts in
         Team Conversations without sending. Active uses the same drafts and sends only to Internal
         people who are also Active. The client recap remains in the approval thread.
       </div>
-      <FieldGroup label="Review Slack email">
+      <AutomationFieldGroup label="Review Slack email">
         <input
           type="email"
           value={action.dm_email ?? ''}
@@ -53,15 +53,15 @@ export function PostCallSlackActionFields({
           placeholder="dylan@dylanvanas.com"
           className="body-3 h-spacing-9 rounded-spacing-2 border-border bg-background px-spacing-3 text-foreground placeholder:text-muted-foreground focus:ring-ring w-full border outline-none focus:ring-2"
         />
-      </FieldGroup>
-      <FieldGroup label="Approval reaction">
+      </AutomationFieldGroup>
+      <AutomationFieldGroup label="Approval reaction">
         <input
           value={action.confirm_reaction ?? ''}
           onChange={(event) => onChange({ confirm_reaction: event.target.value })}
           placeholder="white_check_mark"
           className="body-3 h-spacing-9 rounded-spacing-2 border-border bg-background px-spacing-3 text-foreground placeholder:text-muted-foreground focus:ring-ring w-full border outline-none focus:ring-2"
         />
-      </FieldGroup>
+      </AutomationFieldGroup>
     </div>
   )
 }

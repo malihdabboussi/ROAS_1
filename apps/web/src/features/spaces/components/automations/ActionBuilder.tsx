@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, type ReactNode } from 'react'
+import { useMemo } from 'react'
 import { ArrowDown, ChevronDown, Clock, Info, Plus, Trash2, UserPlus } from 'lucide-react'
 import {
   AutomationSolidSelect,
@@ -47,7 +47,7 @@ import { AutomationLazySelect } from './AutomationLazySelect'
 import { AutomationRosterSelect } from './AutomationRosterSelect'
 import { AutomationTaskFieldsEditor } from './AutomationTaskFieldsEditor'
 import { ObserveSlackTeamActionFields } from './ObserveSlackTeamActionFields'
-import { PostCallSlackActionFields } from './PostCallSlackActionFields'
+import { AutomationFieldGroup, PostCallSlackActionFields } from './PostCallSlackActionFields'
 import { PromptTemplateEditor } from './PromptTemplateEditor'
 
 interface ActionBuilderProps {
@@ -189,15 +189,6 @@ function priorityFieldDef(fields: FieldDef[]): FieldDef {
         { id: 'urgent', label: 'Urgent', color: 'red' },
       ],
     }
-  )
-}
-
-function AutomationFieldGroup({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="space-y-spacing-1">
-      <div className="typo-caption text-muted-foreground font-medium">{label}</div>
-      {children}
-    </div>
   )
 }
 

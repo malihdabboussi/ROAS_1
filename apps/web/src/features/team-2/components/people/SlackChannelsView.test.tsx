@@ -4,7 +4,6 @@ import {
   fetchSlackChannelActivity,
   fetchSlackChannelCoverage,
   fetchSlackChannels,
-  patchSlackChannelExclusion,
 } from '../../services/slack-people.service'
 import { SlackChannelsView } from './SlackChannelsView'
 
