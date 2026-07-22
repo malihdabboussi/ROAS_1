@@ -106,13 +106,7 @@ export class SlackSenderResolverService {
           : suggestedVibeyUserId
             ? 'suggested_name'
             : 'none'
-      const inferredRelationship = vibeyUserId
-        ? 'internal'
-        : contact
-          ? 'external'
-          : slackUser?.is_restricted || slackUser?.is_ultra_restricted
-            ? 'external'
-            : 'internal'
+      const inferredRelationship = vibeyUserId ? 'internal' : 'external'
       await this.slackRuntimeRepo.upsertResolvedSlackPerson(supabase, {
         user_id: input.userId,
         org_id: input.orgId ?? null,

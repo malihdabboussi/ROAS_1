@@ -50,6 +50,10 @@ export const SLACK_PEOPLE_MESSAGES = {
   CHANNELS_NONE: 'No shared Slack channels are visible to this bot.',
   CHANNELS_LOAD_ERROR: "I couldn't load Pixel's Slack channels. Refresh and try again.",
   CHANNEL_ACTIVITY_ERROR: "I couldn't load that Slack channel conversation. Try again.",
+  SIGNAL_EVIDENCE_SHOW: 'Show source evidence',
+  SIGNAL_EVIDENCE_HIDE: 'Hide source evidence',
+  SIGNAL_EVIDENCE_OLDER: 'The source text was not saved with this older signal.',
+  SIGNAL_EVIDENCE_OPEN_SLACK: 'Open source message in Slack',
   HOW_IT_WORKS: [
     {
       title: '1. Pick a person',

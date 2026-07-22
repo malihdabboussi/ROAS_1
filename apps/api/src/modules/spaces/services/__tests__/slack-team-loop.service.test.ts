@@ -7,6 +7,8 @@ const geminiAnalysis = (signals: Record<string, unknown>[]) => ({
   providerCostUsd: 0.001,
 })
 
+const senderResolver = () => ({ resolveSlackSenders: vi.fn().mockResolvedValue(new Map()) })
+
 describe('SlackTeamLoopService', () => {
   it('handles quiet-hour windows that cross midnight', () => {
     expect(
@@ -54,6 +56,7 @@ describe('SlackTeamLoopService', () => {
       observation as never,
       {} as never,
       {} as never,
+      senderResolver() as never,
     )
 
     const result = await service.run({
@@ -80,6 +83,7 @@ describe('SlackTeamLoopService', () => {
       peopleRepo as never,
       {} as never,
       {} as never,
+      senderResolver() as never,
       {} as never,
       {} as never,
     )
@@ -185,6 +189,7 @@ describe('SlackTeamLoopService', () => {
       observation as never,
       {} as never,
       gemini as never,
+      senderResolver() as never,
     )
 
     const result = await service.run({
@@ -270,7 +275,7 @@ describe('SlackTeamLoopService', () => {
             target_slack_user_id: 'U2',
             target_channel_id: 'C1',
             source_message_ts: '1721000000.000100',
-            proposed_content: 'I can confirm the launch date once the owner responds.',
+            proposed_content: 'U1 can confirm the launch date once the owner responds.',
             rationale: 'A direct launch-date question has no answer yet.',
             brain_memory: null,
             confidence: 0.93,
@@ -289,6 +294,7 @@ describe('SlackTeamLoopService', () => {
       observation as never,
       slackTools as never,
       gemini as never,
+      senderResolver() as never,
     )
 
     const result = await service.run({
@@ -308,9 +314,18 @@ describe('SlackTeamLoopService', () => {
       expect.objectContaining({
         actionKind: 'message',
         targetMemberId: '3f046d1a-4e0e-4ccc-9ea7-b8c07ab25b43',
+        proposedContent: 'Avery can confirm the launch date once the owner responds.',
         sourceChannelId: 'C1',
         sourceMessageTs: '1721000000.000100',
         workflowKey: 'slack_team:unanswered_questions',
+        metadata: expect.objectContaining({
+          source_channel_name: 'client-alpha',
+          source_sender_display_name: 'Avery',
+          source_sender_slack_user_id: 'U1',
+          source_message_text: 'Can somebody confirm the launch date?',
+          source_thread_ts: '1721000000.000100',
+          source_slack_team_id: 'T1',
+        }),
       }),
     )
     expect(slackTools.sendMessage).not.toHaveBeenCalled()
@@ -383,7 +398,7 @@ describe('SlackTeamLoopService', () => {
         ]),
       ),
     }
-    const senderResolver = { resolveSlackSenders: vi.fn().mockResolvedValue(new Map()) }
+    const resolver = senderResolver()
     const service = new SlackTeamLoopService(
       peopleRepo as never,
       {
@@ -393,7 +408,7 @@ describe('SlackTeamLoopService', () => {
       observation as never,
       {} as never,
       gemini as never,
-      senderResolver as never,
+      resolver as never,
     )
 
     const result = await service.run({
@@ -408,7 +423,7 @@ describe('SlackTeamLoopService', () => {
       dailyLimit: 10,
     })
 
-    expect(senderResolver.resolveSlackSenders).toHaveBeenCalledWith(
+    expect(resolver.resolveSlackSenders).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ slackUserIds: ['U3'] }),
     )
@@ -495,6 +510,7 @@ describe('SlackTeamLoopService', () => {
       observation as never,
       slackTools as never,
       gemini as never,
+      senderResolver() as never,
     )
 
     const result = await service.run({
@@ -594,6 +610,7 @@ describe('SlackTeamLoopService', () => {
       observation as never,
       slackTools as never,
       gemini as never,
+      senderResolver() as never,
     )
 
     const result = await service.run({

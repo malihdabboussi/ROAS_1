@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { Injectable, Optional } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { EmbeddingService } from '../../brain/services/embedding.service'
 import { SlackPeopleRepository } from '../../slack/repositories/slack-people.repository'
@@ -7,6 +7,12 @@ import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.s
 import { SlackObservationService } from '../../slack/services/slack-observation.service'
 import { SlackSenderResolverService } from '../../slack/services/slack-sender-resolver.service'
 import { SlackTeamLoopRepository } from '../repositories/slack-team-loop.repository'
+import {
+  resolveSlackIdentityText,
+  slackSignalHasLaterHumanReply,
+  slackSignalMatchesLoop,
+  slackTeamEvidenceMetadata,
+} from './slack-team-loop-evidence'
 
 export type SlackTeamLoopKind =
   | 'brain_compounding'
@@ -111,7 +117,7 @@ export class SlackTeamLoopService {
     private readonly observation: SlackObservationService,
     private readonly slackTools: SlackAgentToolsService,
     private readonly gemini: EmbeddingService,
-    @Optional() private readonly senderResolver?: SlackSenderResolverService,
+    private readonly senderResolver: SlackSenderResolverService,
   ) {}
 
   async run(input: {
@@ -190,7 +196,7 @@ export class SlackTeamLoopService {
           .map((message) => String(message.sender_slack_user_id)),
       ),
     ]
-    if (unknownSenderIds.length > 0 && this.senderResolver && input.personIds.length === 0) {
+    if (unknownSenderIds.length > 0 && input.personIds.length === 0) {
       await this.senderResolver.resolveSlackSenders(input.supabase, {
         botToken: integration.access_token,
         userId: input.userId,
@@ -285,14 +291,16 @@ export class SlackTeamLoopService {
     const rejectedWithoutEvidence = analysis.signals.length - verifiedSignals.length
     const actionableSignals = verifiedSignals.filter(
       (signal) =>
-        signal.kind !== 'unanswered_question' || !this.hasLaterHumanReply(signal, observed),
+        signal.kind !== 'unanswered_question' || !slackSignalHasLaterHumanReply(signal, observed),
     )
     const suppressedByThread = verifiedSignals.length - actionableSignals.length
     let proposed = 0
     let sent = 0
     let memoriesCompounded = 0
     for (const signal of actionableSignals.slice(0, remaining)) {
-      if (!this.signalMatchesLoop(signal.kind, input.loopKind)) continue
+      if (!slackSignalMatchesLoop(signal.kind, input.loopKind)) continue
+      const source = evidenceBySource.get(`${signal.target_channel_id}:${signal.source_message_ts}`)
+      if (!source) continue
       const target = signal.target_slack_user_id
         ? peopleBySlackId.get(signal.target_slack_user_id)
         : undefined
@@ -342,8 +350,8 @@ export class SlackTeamLoopService {
         targetMemberId: internalRecipient?.id ?? null,
         actionKind:
           signal.kind === 'unanswered_question' && internalRecipient ? 'message' : 'workflow',
-        proposedContent: signal.proposed_content,
-        rationale: signal.rationale,
+        proposedContent: resolveSlackIdentityText(signal.proposed_content, peopleBySlackId),
+        rationale: resolveSlackIdentityText(signal.rationale, peopleBySlackId),
         sourceChannelId: signal.target_channel_id,
         sourceMessageTs: signal.source_message_ts,
         workflowKey,
@@ -353,6 +361,7 @@ export class SlackTeamLoopService {
           confidence: signal.confidence,
           evidence_fingerprint: evidenceFingerprint,
           delivery_mode: input.deliveryMode,
+          ...slackTeamEvidenceMetadata({ source, slackTeamId, peopleBySlackId }),
           ...(target && !internalRecipient
             ? {
                 internal_only: true,
@@ -443,37 +452,6 @@ export class SlackTeamLoopService {
       duplicates_skipped: reconciliation.duplicatesSkipped,
       quiet_hours_active: quietHoursActive,
     }
-  }
-
-  private hasLaterHumanReply(
-    signal: SlackTeamSignal,
-    messages: Array<{
-      channel_id: string
-      ts: string
-      thread_ts: string | null
-      user: string
-    }>,
-  ): boolean {
-    const source = messages.find(
-      (message) =>
-        message.channel_id === signal.target_channel_id && message.ts === signal.source_message_ts,
-    )
-    if (!source) return false
-    const threadTs = source.thread_ts || source.ts
-    return messages.some(
-      (message) =>
-        message.channel_id === source.channel_id &&
-        message.thread_ts === threadTs &&
-        Number(message.ts) > Number(source.ts) &&
-        message.user !== 'PIXEL_BOT',
-    )
-  }
-
-  private signalMatchesLoop(kind: SlackTeamSignal['kind'], loopKind: SlackTeamLoopKind): boolean {
-    if (loopKind === 'all') return true
-    if (loopKind === 'brain_compounding') return kind === 'brain_memory'
-    if (loopKind === 'unanswered_questions') return kind === 'unanswered_question'
-    return kind === loopKind
   }
 
   private async analyze(input: {

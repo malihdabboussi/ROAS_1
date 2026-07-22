@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-07-20
+**Last Modified:** 2026-07-22
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact draft is stored in Shadow → Slack DM asks for review (separate threaded proposed recap) → ✅ confirms in ROAS → that exact approved recap is posted in the thread. Per-assignee reminders stay in People until Approve & Send. Confirmed fulfillment action items are independently resolved to a Page Grader client and assignee, delegated, and linked back to the ROAS Action Ledger; internal handoffs and ambiguous items stay in ROAS.
 
@@ -152,11 +152,12 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 
 ### Phase 2 — Conversation command center (implemented foundation)
 
-- Team → People now has People, Conversations, and Channels. Channels uses a Slack-style split: left rail of Pixel’s channels (public `#` / private lock), right pane for the selected channel’s conversation and threads (`peopleView=channels&slackChannel=`).
-- Conversations uses a mail/chat layout: left list of people with Shadow activity, right pane for the selected person’s real Slack DM merged with the Shadow ledger. Message bodies render Slack mrkdwn as readable bold/links/lists; opening a thread scrolls to the latest message. The Conversations tab and chat rows badge `proposed` Shadow actions as “to review”.
+- Team → People now has People, Conversations, Signals, and Channels. Channels uses a Slack-style split: left rail of Pixel’s channels (public `#` / private lock), right pane for the selected channel’s conversation and threads (`peopleView=channels&slackChannel=`).
+- Conversations uses a mail/chat layout: left list of people with Shadow activity, right pane for the selected person’s real Slack DM merged with the Shadow ledger. Message bodies render Slack mrkdwn as readable bold/links/lists; opening a thread scrolls to the latest message. The Conversations tab and chat rows badge person-targeted `proposed` Shadow actions as “to review”.
+- Signals (`peopleView=signals`) is a peer tab for channel-level workflow/risk findings with no `target_member_id`. It uses the same selectable list + detail pattern as Conversations so review does not sit above the chat inbox. Expanded evidence shows the readable channel, speaker, source time, exact Slack excerpt, rationale, confidence, and an Open in Slack link.
 - Product rule: Shadow `target_member_id` must match the real Slack delivery recipient. UI labels say “Sent to this person’s Slack” (or “Ops sample · sent to this Slack DM”) — never imply someone else received the DM.
 - Person conversations and channel timelines show timestamps and distinguish Pixel messages from human messages.
-- Group-DM conversations, richer thread grouping, participants, and inline “why Pixel drafted this” evidence remain follow-up work.
+- Group-DM conversations, richer thread grouping, and participants remain follow-up work.
 - Join action items and unresolved commitments to the conversation that created them.
 - Add review filters: proposed, approved, sent, failed, needs response, and waiting on human.
 
@@ -210,8 +211,9 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 | `docker/agents/vibey/skills/post-call-delivery/SKILL.md`                                         | Runtime/bootstrap copy of the post-call skill                               |
 | `supabase/migrations/20260720234500_vibey_post_call_delivery_skill.sql`                          | Database-backed system skill                                                |
 | `apps/api/src/modules/slack/repositories/slack-people.repository.ts`                             | Persists/advances the Shadow proposal ledger                                |
-| `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx`                             | People / Conversations / Channels entry points                              |
-| `apps/web/src/features/team-2/components/people/SlackPeopleViewsNav.tsx`                         | People views tab strip + Conversations to-review badge                      |
+| `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx`                             | People / Conversations / Signals / Channels entry points                    |
+| `apps/web/src/features/team-2/components/people/SlackPeopleViewsNav.tsx`                         | People views tab strip + Conversations/Signals to-review badges             |
+| `apps/web/src/features/team-2/components/people/SlackTeamSignalsView.tsx`                        | Team signals selectable list + approve/dismiss detail pane                  |
 | `apps/api/src/modules/spaces/services/__tests__/meeting-follow-up-slack-confirm.service.test.ts` | Unit tests                                                                  |
 | `apps/api/src/modules/spaces/services/space-automation.service.ts`                               | Executes `request_slack_follow_up_confirm`                                  |
 | `apps/api/src/modules/spaces/services/slack-team-loop.service.ts`                                | Observes Slack, analyzes signals, writes proposals/memories/sends           |
@@ -300,6 +302,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-22:** Slack observation is webhook-first with hourly reconciliation, durable consumer recovery from the oldest unconsumed ledger event, and thread-aware unanswered-question suppression. Shadow continues during quiet hours because it cannot send; quiet hours block Active delivery only.
 - **2026-07-22:** Slack Team Intelligence uses direct Gemini text generation so usage is covered by the configured Google spend cap and every run records input/output/total tokens plus provider cost. Active mode refuses to start without explicit channel and person allowlists.
 - **2026-07-22:** Flow History distinguishes skipped/no-activity/analyzed/proposed outcomes. Manage People exposes channel-level workflow and risk signals with rationale and exact Slack evidence even when a proposal has no individual recipient.
+- **2026-07-22:** Newly discovered Slack identities fail safe as External unless matched to a portal teammate or manually classified. Signal creation resolves Slack IDs to names and snapshots channel/person/time/source text so later review never depends on mutable Slack lookup state.
 
 ## Related
 

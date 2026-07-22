@@ -66,5 +66,13 @@ describe('SlackSenderResolverService', () => {
         relationship_source: 'manual',
       }),
     )
+    expect(runtime.upsertResolvedSlackPerson).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        platform_id: 'U1',
+        relationship_kind: 'external',
+        relationship_source: 'inferred',
+      }),
+    )
   })
 })
