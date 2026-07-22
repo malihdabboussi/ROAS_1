@@ -1,5 +1,12 @@
 # Changelog - July 22, 2026
 
+## [2026-07-22 13:05] - [FIX]
+
+What: Restored production Team Agenda after overwrite. Live `scope=team` had become identical to personal (`team_available` missing, 0 `workspace:` events). Root cause: `api.roas.io` aliased to `dpl_5J8MhPaPL8o1F2pwYfVY5q5aBX2P` (Codex promote of Page Grader inactive-campaign fix) which lacked Team Agenda, overwriting known-good `dpl_DB9P88YFBfxwihA5AVD4kD3VkzJi`. Instantly re-aliased DB9P88, then archive-deployed local HEAD (+ TS fix for `getTeamAgendaWithMine` loadPersonal scope) as `dpl_E1fW4NdW9BmDmHXuRchRf43AHhyU` → api.roas.io. Post-prove: team_available=true, 58 events / 35 workspace, Aaron/Bryce/Nefi labels present; personal≠team.
+Why: Local main still diverged from origin; incomplete production promotes wipe archive-only Team Agenda.
+Impact: Home → Team calendars work again. Until origin catches up, do not promote/git-deploy roas-api without Team Agenda (`scope===team` / `getTeamAgendaWithMine`).
+Files: `integrations-calendar-team.service.ts` (scope type fix), Vercel `roas-api` Production `dpl_E1fW4NdW9BmDmHXuRchRf43AHhyU`
+
 ## [2026-07-22 13:00] - [DOCS]
 
 What: Clarified Programs are grouping/rollup only — not a create-from hierarchy level. Updated plan + feature doc accordingly.
@@ -109,8 +116,6 @@ What: Bound mission document verification to the contracted title and mapped Spa
 Why: A live Meta audit recommendation task could pass against a different audit Doc while its mission-deliverable copy was stale.
 Impact: Mission contracts now verify the exact user-visible document created for the current subtask.
 Files: `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverables.repository.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverable-contract-evaluator.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-document-content-verifier.ts`, focused tests, `documentation/features/missions.md`
-<<<<<<< HEAD
-=======
 
 ## [2026-07-22 11:50] - [FIX]
 
@@ -163,4 +168,3 @@ Why: Prod was dropping Nate/Nefi-hosted webhooks (`refusing fallback`) because u
 Impact: Shared-team Fathom calls auto-ingest into Dylan’s Meetings again; multi-subscriber unsigned events still require invitee match or a signature.
 
 Files: `fathom-webhook.service.ts`, fathom controller tests, changelog.
->>>>>>> 84830351 (fix(fathom): attribute unsigned shared-team webhooks to connected account)
