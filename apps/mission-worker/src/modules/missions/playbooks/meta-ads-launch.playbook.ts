@@ -54,7 +54,7 @@ export function expandMetaAdsLaunchPlaybook(
       story: 'Blaze builds campaigns, ad sets, and ads in PAUSED state and records every ID.',
       sensory: 'The report maps each asset to returned Meta IDs and PAUSED status.',
       endState: 'ADS#2 - Paused Meta Build Report exists as a native editable Doc.',
-      ecology: `Load roas-meta-ads-launch. Use only Gate 1 approved settings. Create campaigns, ad sets, and ads through Vibey in PAUSED state. Never activate delivery. Verify returned IDs and save ADS#2 - Paused Meta Build Report with review links. Never create a PDF. ${WRITING}`,
+      ecology: `Load roas-meta-ads-launch. Use only Gate 1 approved settings. Call check_meta_connection. For native Meta, create campaigns, ad sets, and ads through Vibey in PAUSED state. If native Meta reports a missing token, call get_integration for Meta. When it confirms connected Composio Meta, use only the exact campaign, ad-set, creative, and ad creation action slugs returned by get_integration through use_integration, with PAUSED status in every supported object. If neither route can prove PAUSED creation, block without creating partial live objects. Never activate delivery. Verify returned IDs and re-read statuses. Save ADS#2 - Paused Meta Build Report with review links. Never create a PDF. ${WRITING}`,
       outputContract: docContract('ADS#2 - Paused Meta Build Report'),
     }),
     task({

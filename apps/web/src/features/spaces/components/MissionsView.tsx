@@ -17,6 +17,10 @@ import type { ViewDef } from '../types/space-schema'
 import { MissionCaptureModal } from './MissionCaptureModal'
 import { MissionsViewListContent } from './MissionsViewListContent'
 import {
+  buildMetaAdsAuditMissionPayload,
+  META_ADS_AUDIT_PLAYBOOK_ID,
+} from './playbooks/meta-ads-audit'
+import {
   buildMetaAdsLaunchMissionPayload,
   META_ADS_LAUNCH_PLAYBOOK_ID,
 } from './playbooks/meta-ads-launch'
@@ -215,13 +219,19 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
       setSubmitting(true)
       try {
         const pageGraderContext =
-          request.playbookId === META_ADS_LAUNCH_PLAYBOOK_ID
+          request.playbookId === META_ADS_LAUNCH_PLAYBOOK_ID ||
+          request.playbookId === META_ADS_AUDIT_PLAYBOOK_ID
             ? await getMappedPageGraderMetaContext({ campaignId, spaceId }).catch(() => null)
             : null
-        const payload =
-          request.playbookId === META_ADS_LAUNCH_PLAYBOOK_ID
-            ? buildMetaAdsLaunchMissionPayload(request.fields, pageGraderContext)
-            : buildWebinarFulfillmentMissionPayload(request.fields)
+        const payload = (() => {
+          if (request.playbookId === META_ADS_LAUNCH_PLAYBOOK_ID) {
+            return buildMetaAdsLaunchMissionPayload(request.fields, pageGraderContext)
+          }
+          if (request.playbookId === META_ADS_AUDIT_PLAYBOOK_ID) {
+            return buildMetaAdsAuditMissionPayload(request.fields, pageGraderContext)
+          }
+          return buildWebinarFulfillmentMissionPayload(request.fields)
+        })()
         const mission = await createMission({
           ...payload,
           campaign_id: campaignId,

@@ -29,6 +29,8 @@ describe('meta-ads-launch playbook', () => {
     expect(plan?.subtasks[0]?.assignTo).toBe('blaze')
     expect(plan?.subtasks[1]?.assignTo).toBe('human:user-1')
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/PAUSED state/)
+    expect(plan?.subtasks[2]?.intent.ecology).toMatch(/get_integration/)
+    expect(plan?.subtasks[2]?.intent.ecology).toMatch(/Composio/)
     expect(plan?.subtasks[3]?.intent.ecology).toMatch(/Activate manually/i)
     expect(plan?.outOfScope).toContain('Creative design or copywriting')
     expect(plan?.outOfScope).toContain('PDF deliverables')

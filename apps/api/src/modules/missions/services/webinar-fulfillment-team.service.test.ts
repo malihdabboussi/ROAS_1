@@ -9,9 +9,10 @@ describe('WebinarFulfillmentTeamService playbook support', () => {
     {} as never,
   )
 
-  it('provisions the agency roster for Webinar Fulfillment and Ads Research', () => {
+  it('provisions the agency roster for every guided agency playbook', () => {
     expect(service.supportsPlaybook('webinar-fulfillment')).toBe(true)
     expect(service.supportsPlaybook('ads-research')).toBe(true)
-    expect(service.supportsPlaybook('meta-ads-launch')).toBe(false)
+    expect(service.supportsPlaybook('meta-ads-launch')).toBe(true)
+    expect(service.supportsPlaybook('meta-ads-audit')).toBe(true)
   })
 })
