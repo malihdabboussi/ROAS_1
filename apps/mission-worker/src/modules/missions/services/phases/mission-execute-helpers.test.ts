@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildContractCorrectionContext,
   extractToolDeliverableReceipt,
   prepareExecutionStateForContractCorrection,
 } from './mission-execute-helpers'
@@ -63,5 +64,16 @@ describe('mission execute helpers', () => {
         reason: 'Document contains 95 em dash characters; expected zero',
       },
     })
+  })
+
+  it('requires a fresh artifact instead of reusing the invalid deliverable', () => {
+    expect(
+      buildContractCorrectionContext({
+        contract_correction: {
+          required_action: 'save_document',
+          reason: 'Document contains 66 em dash characters; expected zero',
+        },
+      }),
+    ).toContain('Do not reuse, cite, or return the previously failed artifact')
   })
 })

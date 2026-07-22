@@ -317,3 +317,4 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 - 2026-06-16: Added mission-worker runtime readiness preflight through Agent API so background Brain ops and mission calls repair missing agent identity before OpenClaw execution.
 - 2026-06-16: Added the same scoped runtime readiness preflight to Brain import job execution paths before Atlas import chunks call OpenClaw.
 - 2026-06-25: Added bounded Main API retry/context logging for mission-worker Brain import sweep calls so transient enqueue failures do not lose their upstream path, origin, status, or attempt evidence.
+- 2026-07-22: Contract-correction executions must create and return a new compliant artifact; a previously rejected deliverable cannot satisfy the retried subtask.

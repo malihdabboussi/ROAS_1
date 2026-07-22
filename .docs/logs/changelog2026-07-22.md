@@ -76,3 +76,9 @@ What: Added hard no-em-dash output contracts to every Meta Ads Audit and Meta Ad
 Why: The live audit used correct Meta evidence but still saved client-facing reports with em dashes even though its skill claimed Dylan Super Voice compliance.
 Impact: Audit context, account analysis, recommendations, optimization logs, closeouts, launch manifests, and paused-build reports now remain in corrective execution until they contain zero em dashes.
 Files: `apps/mission-worker/src/modules/missions/playbooks/meta-ads-audit.playbook.ts`, `apps/mission-worker/src/modules/missions/playbooks/meta-ads-launch.playbook.ts`, focused playbook tests, `documentation/features/missions.md`
+## [2026-07-22 04:30] - [FIX]
+
+What: Made contract-correction prompts explicitly reject the previously failed artifact and require a newly created, compliant deliverable.
+Why: A live Meta audit correction reused its old document after the verifier rejected that document for em dashes.
+Impact: Corrective mission runs now replace invalid output instead of citing it as completed work.
+Files: `apps/mission-worker/src/modules/missions/services/phases/mission-execute-helpers.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-execute-helpers.test.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts`, `documentation/features/missions.md`

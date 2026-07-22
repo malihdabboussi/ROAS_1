@@ -135,6 +135,31 @@ export function prepareExecutionStateForContractCorrection(
   }
 }
 
+export function buildContractCorrectionContext(executionState: unknown): string {
+  const state =
+    executionState && typeof executionState === 'object' && !Array.isArray(executionState)
+      ? (executionState as Record<string, unknown>)
+      : {}
+  const correction =
+    state.contract_correction &&
+    typeof state.contract_correction === 'object' &&
+    !Array.isArray(state.contract_correction)
+      ? (state.contract_correction as Record<string, unknown>)
+      : null
+  if (!correction) return ''
+
+  const requiredAction = String(correction.required_action || '').trim()
+  const reason = String(correction.reason || '').trim()
+  return [
+    '\nCONTRACT_CORRECTION (MANDATORY):',
+    `- previous_failure: ${reason || 'The prior artifact failed output verification.'}`,
+    `- required_action: ${requiredAction || 'Re-run the contracted creation action.'}`,
+    '- Do not reuse, cite, or return the previously failed artifact as proof of completion.',
+    '- Call the required creation action again and return the new compliant deliverable_id.',
+    '- The correction is incomplete until the newly created artifact passes the output contract.',
+  ].join('\n')
+}
+
 export function evaluateSubtaskOutputAlignment(
   subtask: Record<string, any>,
   output: Record<string, unknown>,

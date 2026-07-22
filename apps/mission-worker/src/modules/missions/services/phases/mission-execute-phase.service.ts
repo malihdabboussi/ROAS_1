@@ -34,6 +34,7 @@ import { MissionJsonService } from '../utils/mission-json.service'
 import { resolveMissionEffectiveDomains } from './mission-action-policy'
 import {
   activeSubtasksAllDone,
+  buildContractCorrectionContext,
   CONTRACT_ACTION_DOMAINS,
   evaluateSubtaskOutputAlignment,
   extractToolDeliverableReceipt,
@@ -1247,6 +1248,7 @@ export class MissionExecutePhaseService {
           outputContractExclusivity,
         ].join('\n')
       : ''
+    const contractCorrectionContext = buildContractCorrectionContext(subtask.execution_state)
     const assertionContext = this.buildSubtaskAssertionContext(plan, subtask)
 
     const taskUserMessage = [
@@ -1255,6 +1257,7 @@ export class MissionExecutePhaseService {
       intentBlock,
       assertionContext,
       outputContractBlock,
+      contractCorrectionContext,
       guaranteedContext,
       completedActionsContext,
       `Mission: ${mission.title}`,
