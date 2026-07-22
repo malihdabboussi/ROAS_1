@@ -316,12 +316,7 @@ export class SlackTeamLoopService {
         continue
       }
 
-      if (
-        signal.kind === 'brain_memory' &&
-        input.deliveryMode === 'active' &&
-        target?.person_brain_id &&
-        signal.brain_memory
-      ) {
+      if (signal.kind === 'brain_memory' && target?.person_brain_id && signal.brain_memory) {
         const result = await this.loopRepo.insertPersonMemory(input.supabase, {
           brainId: target.person_brain_id,
           content: signal.brain_memory,

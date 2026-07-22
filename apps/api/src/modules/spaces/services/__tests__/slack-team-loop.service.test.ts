@@ -419,7 +419,7 @@ describe('SlackTeamLoopService', () => {
     expect(result).toMatchObject({ people_discovered: 1, proposed: 1 })
   })
 
-  it('writes Person Brain memories in Active mode without messaging Slack', async () => {
+  it('compounds an enabled Person Brain while delivery stays in Shadow mode', async () => {
     const slackPeople = {
       findOrgSlackIntegration: vi.fn().mockResolvedValue({
         user_id: 'owner-1',
@@ -432,7 +432,7 @@ describe('SlackTeamLoopService', () => {
           platform_id: 'U1',
           display_name: 'Avery',
           relationship_kind: 'internal',
-          delivery_mode: 'active',
+          delivery_mode: 'shadow',
           person_brain_id: 'brain-1',
         },
       ]),
@@ -493,7 +493,7 @@ describe('SlackTeamLoopService', () => {
       userId: 'owner-1',
       orgId: 'org-1',
       loopKind: 'brain_compounding',
-      deliveryMode: 'active',
+      deliveryMode: 'shadow',
       channelIds: ['C1'],
       personIds: ['3f046d1a-4e0e-4ccc-9ea7-b8c07ab25b43'],
       lookbackMinutes: 60,
