@@ -57,6 +57,31 @@ export type PageGraderMetaContext = {
   provenance: { source: 'page_grader'; generated_at: string }
 }
 
+export type PageGraderMeetingUpsert = {
+  source_meeting_id: string
+  meeting_title: string
+  meeting_date: string
+  meeting_duration_minutes?: number | null
+  attendees?: Array<Record<string, unknown>>
+  source_url?: string | null
+  transcript?: string | null
+  summary?: string | null
+  ai_summary?: string | null
+  action_items?: Array<Record<string, unknown>>
+  roas_space_id?: string | null
+  roas_space_item_id?: string | null
+  matched_by?: string
+  sync_hash?: string
+}
+
+export type PageGraderMeetingResult = {
+  id: string
+  client_id: string
+  meeting_title?: string
+  meeting_date?: string
+  source_url?: string | null
+}
+
 @Injectable()
 export class PageGraderIntegration {
   private readonly logger = new Logger(PageGraderIntegration.name)
@@ -183,6 +208,40 @@ export class PageGraderIntegration {
     const work = body.work as PageGraderWorkResult | undefined
     if (!work?.id) throw new BadRequestException('Page Grader create work returned no work id')
     return { work, status: res.status }
+  }
+
+  async upsertClientMeeting(
+    baseUrl: string,
+    apiKey: string,
+    clientId: string,
+    payload: PageGraderMeetingUpsert,
+  ): Promise<{ meeting: PageGraderMeetingResult; created: boolean; unchanged: boolean }> {
+    const url = `${this.normalizeBaseUrl(baseUrl)}/clients/${encodeURIComponent(clientId)}/meetings`
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: this.authHeaders(apiKey),
+      body: JSON.stringify(payload),
+    })
+    const text = await res.text().catch(() => '')
+    let body: Record<string, unknown> = {}
+    try {
+      body = text ? (JSON.parse(text) as Record<string, unknown>) : {}
+    } catch {
+      body = { error: text }
+    }
+    if (!res.ok) {
+      const message =
+        typeof body.error === 'string' ? body.error : text || res.statusText || 'Request failed'
+      throw new BadRequestException(`Page Grader meeting sync failed (${res.status}): ${message}`)
+    }
+    const meeting = body.meeting as PageGraderMeetingResult | undefined
+    if (!meeting?.id)
+      throw new BadRequestException('Page Grader meeting sync returned no meeting id')
+    return {
+      meeting,
+      created: body.created === true,
+      unchanged: body.unchanged === true,
+    }
   }
 
   async getClientBrainPackage(

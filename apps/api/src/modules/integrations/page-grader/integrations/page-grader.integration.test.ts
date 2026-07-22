@@ -66,3 +66,42 @@ describe('PageGraderIntegration.getClientMetaContext', () => {
     ).rejects.toBeInstanceOf(BadRequestException)
   })
 })
+
+describe('PageGraderIntegration.upsertClientMeeting', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends an idempotent meeting payload to the mapped client endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          meeting: { id: 'note-1', client_id: 'client-1' },
+          unchanged: true,
+        }),
+        { status: 200 },
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await new PageGraderIntegration().upsertClientMeeting(
+      'https://portal.example/functions/v1/roas-api/',
+      'secret-api-key',
+      'client/one',
+      {
+        source_meeting_id: 'meeting-1',
+        meeting_title: 'Weekly call',
+        meeting_date: '2026-07-22T16:00:00.000Z',
+      },
+    )
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://portal.example/functions/v1/roas-api/clients/client%2Fone/meetings',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ Authorization: 'Bearer secret-api-key' }),
+      }),
+    )
+    expect(result).toMatchObject({ unchanged: true, meeting: { id: 'note-1' } })
+  })
+})

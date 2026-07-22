@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config'
 import { BrainModule } from '../../brain/brain.module'
 import { SpaceTemplatesModule } from '../../space-templates/space-templates.module'
 import { SpacesModule } from '../../spaces/spaces.module'
+import { PageGraderModule } from '../page-grader/page-grader.module'
 import { FathomMeetingsController } from './controllers/fathom-meetings.controller'
 import { FathomWebhooksController } from './controllers/fathom-webhooks.controller'
 import { FathomController } from './controllers/fathom.controller'
@@ -13,7 +14,7 @@ import { FathomOAuthService } from './services/fathom-oauth.service'
 import { FathomWebhookService } from './services/fathom-webhook.service'
 
 @Module({
-  imports: [ConfigModule, BrainModule, SpacesModule, SpaceTemplatesModule],
+  imports: [ConfigModule, BrainModule, SpacesModule, SpaceTemplatesModule, PageGraderModule],
   controllers: [FathomController, FathomMeetingsController, FathomWebhooksController],
   providers: [
     FathomIntegration,

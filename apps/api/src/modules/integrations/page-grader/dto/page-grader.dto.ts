@@ -120,3 +120,9 @@ export const PageGraderWorkStatusWebhookSchema = z.object({
 })
 
 export type PageGraderWorkStatusWebhookDto = z.infer<typeof PageGraderWorkStatusWebhookSchema>
+
+export const SyncPageGraderMeetingSchema = z.object({
+  client_ids: z.array(z.string().uuid()).min(1).max(20),
+})
+
+export type SyncPageGraderMeetingDto = z.infer<typeof SyncPageGraderMeetingSchema>

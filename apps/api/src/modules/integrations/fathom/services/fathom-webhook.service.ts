@@ -3,6 +3,7 @@ import { buildInteractionDedupeKey, CUSTOMER_INTERACTION_ROUTE_EVENT } from '@vi
 import { BrainImportJobsService } from '../../../brain/services/brain-import-jobs.service'
 import { CustomerBrainService } from '../../../brain/services/customer-brain.service'
 import { SpaceAutomationService } from '../../../spaces/services/space-automation.service'
+import { PageGraderMeetingSyncService } from '../../page-grader/services/page-grader-meeting-sync.service'
 import { FathomRepository } from '../repositories/fathom.repository'
 import { FathomApiService } from './fathom-api.service'
 import { buildFathomEnvelope } from './fathom-envelope.adapter'
@@ -18,6 +19,7 @@ export class FathomWebhookService {
     private readonly customerBrain: CustomerBrainService,
     private readonly spaceAutomation: SpaceAutomationService,
     private readonly repository: FathomRepository,
+    private readonly pageGraderMeetings?: PageGraderMeetingSyncService,
   ) {}
 
   async processWebhookAsync(rawBody: string, signature: string): Promise<void> {
@@ -122,7 +124,8 @@ export class FathomWebhookService {
     await this.captureFathomAlias(userId, (event as any).recorded_by)
     // Meetings call rows must still land for shared_team recordings even when
     // Fathom omits transcript from the webhook body (Slack follow-up is downstream).
-    await this.processSpaceAutomationRoute(userId, event)
+    const spaceRoute = await this.processSpaceAutomationRoute(userId, event)
+    await this.processPageGraderMeetingRoute(userId, event, spaceRoute)
   }
 
   private readTranscriptEntries(event: Record<string, unknown>): Array<{
@@ -193,14 +196,56 @@ export class FathomWebhookService {
   private async processSpaceAutomationRoute(
     userId: string,
     event: Record<string, unknown>,
-  ): Promise<void> {
+  ): Promise<Record<string, unknown> | null> {
     try {
       const admin = this.repository.getServiceClient()
       const result = await this.spaceAutomation.processFathomRecordingEvent(admin, userId, event)
       this.logger.warn(`[FATHOM-DEBUG] Space automation route result: ${JSON.stringify(result)}`)
+      return result as Record<string, unknown>
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       this.logger.warn(`[FATHOM-DEBUG] Space automation route skipped: ${msg}`)
+      return null
+    }
+  }
+
+  private async processPageGraderMeetingRoute(
+    userId: string,
+    event: Record<string, unknown>,
+    routeResult: Record<string, unknown> | null,
+  ): Promise<void> {
+    if (!this.pageGraderMeetings) return
+    const routes = Array.isArray(routeResult?.fanout_results)
+      ? routeResult.fanout_results
+          .map((value) => {
+            const row = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+            return { space_id: String(row.space_id ?? ''), item_id: String(row.item_id ?? '') }
+          })
+          .filter((row) => row.space_id && row.item_id)
+      : []
+    try {
+      const result = await this.pageGraderMeetings.syncFathomMeeting({
+        supabase: this.repository.getServiceClient(),
+        userId,
+        event,
+        routes,
+      })
+      this.logger.log(
+        `[FATHOM-DEBUG] Page Grader meeting sync: ${JSON.stringify({
+          source_meeting_id: result.source_meeting_id,
+          matched_clients: result.matched_clients.map((client) => client.name),
+          synced: result.synced,
+          unchanged: result.unchanged,
+          failed: result.failed,
+          needs_client_mapping: result.needs_client_mapping,
+        })}`,
+      )
+    } catch (error) {
+      this.logger.warn(
+        `[FATHOM-DEBUG] Page Grader meeting sync skipped: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
     }
   }
 

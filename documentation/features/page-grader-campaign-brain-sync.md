@@ -47,16 +47,33 @@ After a meeting recap is approved, ROAS keeps internal handoffs in its Action Le
 
 Page Grader forwards ClickUp status changes to `/api/integrations/page-grader/webhooks/work-status`. It uses `ROAS_WORK_STATUS_WEBHOOK_URL` / `ROAS_WORK_STATUS_WEBHOOK_SECRET` when set, otherwise derives the work-status URL from `ROAS_BRAIN_WEBHOOK_URL` and reuses `ROAS_BRAIN_WEBHOOK_SECRET`. ROAS verifies the connected-client mapping plus the linked `space_item_id`, `client_id`, and `work_id` before updating the Action Ledger.
 
+## Fathom meetings bridge
+
+ROAS remains the Fathom source and routing controller. After the normal Fathom webhook creates its call item in ROAS, ROAS sends a normalized meeting record to the matching Page Grader client's **Meetings → Call Notes** tab. The Page Grader record contains the title, date, duration, attendees, summary, transcript, action items, recording URL, and ROAS provenance.
+
+Client resolution is conservative and ordered:
+
+1. Explicit Page Grader client IDs saved on the ROAS call item
+2. The existing Page Grader client → ROAS campaign/Space mapping
+3. One unique Page Grader client name found in the meeting context
+
+Ambiguous calls are left with `needs_client_mapping` instead of being attached to the wrong client. An operator can attach an internal call to one or more clients with `POST /api/integrations/page-grader/meetings/:spaceItemId/sync` and `{ "client_ids": ["..."] }`. Historical or failed calls are retried through `POST /api/internal/page-grader/meetings/catch-up?limit=100`.
+
+Page Grader upserts on the Fathom meeting ID plus client ID, so webhook retries and catch-up runs do not duplicate calls. Deploy the Page Grader migration and `roas-api` function before deploying the ROAS webhook sender.
+
 ## Code map
 
-| Concern              | Location                                                                             |
-| -------------------- | ------------------------------------------------------------------------------------ |
-| Deterministic ingest | `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts`    |
-| Create/import entry  | `page-grader-client-import.service.ts` → `page-grader-brain-import.service.ts`       |
-| Webhook + catch-up   | `page-grader-brain-sync.service.ts`, `page-grader-webhooks.controller.ts`            |
-| Map clients UI       | `PageGraderClientScopeMapModal.tsx` / `PageGraderClientScopeMapRow.tsx`              |
-| Brain canvas Re-sync | `CampaignAddInfoImportMenu.tsx` / `CampaignAddInfoPanel.tsx`                         |
-| PG package + push    | `page-grader/.../roasBrainPackage.ts`, `roasBrainPush.ts`, `scheduled-brain-refresh` |
+| Concern | Location |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| Deterministic ingest | `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts` |
+| Create/import entry | `page-grader-client-import.service.ts` → `page-grader-brain-import.service.ts` |
+| Campaign Spaces | `page-grader-campaign-space-schema.ts` → `page-grader-client-import.service.ts` |
+| Webhook + catch-up | `page-grader-brain-sync.service.ts`, `page-grader-webhooks.controller.ts` |
+| Map clients UI | `PageGraderClientScopeMapModal.tsx` / `PageGraderClientScopeMapRow.tsx` |
+| Brain canvas Re-sync | `CampaignAddInfoImportMenu.tsx` / `CampaignAddInfoPanel.tsx` |
+| PG package + push | `page-grader/.../roasBrainPackage.ts`, `roasBrainPush.ts`, `scheduled-brain-refresh` |
+| Fathom meetings | `page-grader-meeting-sync.service.ts`, `fathom-webhook.service.ts`, Page Grader `roas-api` |
+
 
 ## Decision Log
 
@@ -73,3 +90,11 @@ Page Grader forwards ClickUp status changes to `/api/integrations/page-grader/we
 - **2026-07-20:** Active-client bootstrap exposed two import defects: newly created campaigns were pre-stamped with the incoming hash and skipped their first ingest, while hundreds of Campaign Knowledge records were indexed serially and exceeded the API request window. New campaigns now receive the hash only after success, and knowledge indexing runs in bounded batches of six.
 - **2026-07-20:** Existing pre-stamped campaign shells could still remain permanently empty because catch-up trusted the matching hash. Catch-up now verifies indexed Campaign Knowledge before skipping and force-repairs empty mapped campaigns even when the client-scope mapping is missing its hash but the campaign shell has one. Graph object/edge reads now page through Supabase's 1,000-row ceiling instead of presenting 1,000 as the brain size. Production recovery verified all 26 mapped brands populated (12,028 semantic objects; 0 empty).
 - **2026-07-20:** High-volume Page Grader imports were charged one minimum internal credit per embedding request even though Gemini's actual cost is token-based. Page Grader keeps the same Gemini calls and six-request concurrency, but settles measured usage in 250-row billing batches so integer rounding applies to aggregate cost.
+- **2026-07-22:** Formalized the cross-product hierarchy: Page Grader client = ROAS client campaign container; Page Grader `client_campaign` = ROAS Space. Hourly and webhook-driven pulls now reconcile campaign Spaces and source-linked Campaign Brief docs even when the brain hash is unchanged. Page Grader Meta account/campaign mappings are recorded on the Space schema and brief when available.
+- **2026-07-22:** The Page Grader brain package includes soft-deleted and archived `client_campaigns`, while the Page Grader UI hides them. Space reconciliation now applies the same visibility rule and safely retires generated-only stale Spaces; operator-edited Spaces are never automatically deleted.
+- **2026-07-22:** Added ROAS-owned Fathom meeting delivery into Page Grader Client Meetings. Explicit mappings win, ambiguous calls wait for review, multi-client internal calls can fan out intentionally, and repeated delivery is idempotent.
+
+## Rollout
+
+Pilot reconciliation should cover five multi-campaign clients first: Andy Elliott, Multifamily Strategy, Standard Plumbing Supply, The One Percent Life, and Sakha Media Group. Review Space names and Meta links in ROAS, correct any source records in Page Grader, then run the same idempotent catch-up across the remaining mapped clients. The active-client workbook is an audit aid for missing campaigns; it is not the source of truth.
+

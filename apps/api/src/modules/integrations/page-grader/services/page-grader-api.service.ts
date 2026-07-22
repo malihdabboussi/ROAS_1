@@ -11,6 +11,7 @@ import type {
   UpsertPageGraderClientScopeMapDto,
 } from '../dto/page-grader.dto'
 import { PageGraderIntegration } from '../integrations/page-grader.integration'
+import type { PageGraderMeetingUpsert } from '../integrations/page-grader.integration'
 import {
   FALLBACK_PAGE_GRADER_TASK_TYPES,
   getPageGraderCreds,
@@ -280,6 +281,11 @@ export class PageGraderApiService {
     orgRole?: import('@vibey/api-shared').OrgRole | null,
   ): Promise<{ success: boolean; results: PageGraderSendResult[] }> {
     return this.sendWorkService.sendWork(supabase, userId, dto, orgId, orgRole)
+  }
+
+  async upsertClientMeeting(userId: string, clientId: string, meeting: PageGraderMeetingUpsert) {
+    const creds = await this.getCreds(userId)
+    return this.pageGrader.upsertClientMeeting(creds.baseUrl, creds.apiKey, clientId, meeting)
   }
 
   private async readClientTagMap(

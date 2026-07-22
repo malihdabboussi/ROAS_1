@@ -22,19 +22,19 @@ import {
 import { SpaceAutomationsRepository } from '../repositories/space-automations.repository'
 import { SpacesRepository } from '../repositories/spaces.repository'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
+import { buildCeoCallIdentity, resolveCeoCallKind } from './fathom-call-kind'
 import {
   resolveFathomAttendeeLabels,
   upsertAttendeeTagOptions,
   type FathomAttendeeLike,
   type FathomTranscriptEntryLike,
 } from './fathom-meeting-item-enrichment'
-import { buildCeoCallIdentity, resolveCeoCallKind } from './fathom-call-kind'
+import { upsertFathomPeopleFromAttendees } from './fathom-meeting-people-upsert'
 import {
   fallbackCeoMeetingTitle,
   provisionalFathomMeetingTitle,
   sanitizeCeoMeetingTitle,
 } from './fathom-meeting-title'
-import { upsertFathomPeopleFromAttendees } from './fathom-meeting-people-upsert'
 import { SocialResearchOrchestrationService } from './social-research-orchestration.service'
 import { SpaceAutomationServiceBase05 } from './space-automation-service-05.base'
 import { renderTemplate, type TemplateContext } from './space-automation-template'
@@ -373,12 +373,10 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
         continue
       }
 
-      const space = (await this.repo.findSpaceById(
-        supabase,
-        runUserId,
-        spaceId,
-        orgId,
-      )) as Record<string, unknown> | null
+      const space = (await this.repo.findSpaceById(supabase, runUserId, spaceId, orgId)) as Record<
+        string,
+        unknown
+      > | null
       const resolvedAttendees = resolveFathomAttendeeLabels({
         attendees: meeting.attendees as FathomAttendeeLike[],
         transcript: meeting.transcript as FathomTranscriptEntryLike[],
@@ -426,9 +424,9 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
       }
 
       const statusField = Array.isArray(this.objectRecord(space?.schema).fields)
-        ? (
-            this.objectRecord(space?.schema).fields as Array<Record<string, unknown>>
-          ).find((field) => String(field.id ?? '') === 'status')
+        ? (this.objectRecord(space?.schema).fields as Array<Record<string, unknown>>).find(
+            (field) => String(field.id ?? '') === 'status',
+          )
         : null
       const statusOptions = Array.isArray(statusField?.options)
         ? (statusField.options as Array<Record<string, unknown>>)
@@ -587,6 +585,7 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
       fanout_count: fanoutResults.length,
       item_id: first.item_id,
       automation_id: first.automation_id,
+      fanout_results: fanoutResults,
     }
   }
 

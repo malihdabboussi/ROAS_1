@@ -10,6 +10,7 @@ import { PageGraderBrainSyncRepository } from './repositories/page-grader-brain-
 import { PageGraderApiService } from './services/page-grader-api.service'
 import { PageGraderBrainImportService } from './services/page-grader-brain-import.service'
 import { PageGraderBrainSyncService } from './services/page-grader-brain-sync.service'
+import { PageGraderMeetingSyncService } from './services/page-grader-meeting-sync.service'
 import { PageGraderSendWorkService } from './services/page-grader-send-work.service'
 
 @Module({
@@ -21,6 +22,7 @@ import { PageGraderSendWorkService } from './services/page-grader-send-work.serv
     PageGraderApiService,
     PageGraderBrainImportService,
     PageGraderBrainSyncService,
+    PageGraderMeetingSyncService,
     PageGraderBrainSyncRepository,
     IntegrationConnectionsRepository,
   ],
@@ -29,6 +31,7 @@ import { PageGraderSendWorkService } from './services/page-grader-send-work.serv
     PageGraderIntegration,
     PageGraderBrainSyncService,
     PageGraderSendWorkService,
+    PageGraderMeetingSyncService,
   ],
 })
 export class PageGraderModule {}
