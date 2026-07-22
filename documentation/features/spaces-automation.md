@@ -1,6 +1,6 @@
 # Spaces Flows
 
-Last Modified: 2026-07-21
+Last Modified: 2026-07-22
 
 ## Overview
 
@@ -22,7 +22,7 @@ Spaces automations run rules from the `space_automations` table through the sing
 - Gmail email triggers can add an inbox category filter. The API maps the selected category to Composio's Gmail `query` trigger config, e.g. `in:inbox category:primary`, so Primary / Promotions / Social / Updates / Forums filtering happens before the webhook event reaches the automation route.
 - Send to Agent actions can request `output_type=email_artifact`. The automation prompt gets a `save_email` contract with the active `space_id` and `source_item_id`; the agent tool saves a `public.emails` row and links it to the source task deliverables. A later Send Email action can resolve subject/body from that linked email artifact while recipients stay defined by the automation.
 - Send to Agent can also request document file outputs. `document_artifact` uses `save_document`, `pdf_artifact` uses `create_pdf`, and `docx_artifact` uses `create_docx` with markdown content so the generated Word file stays linked to the active Space/task context. OpenClaw records previewable tool outputs as task artifact output blocks (`artifact_preview`, `media_asset`, document/file, project, widget, and screenshot blocks), and task-agent completion merges those into task activity before scoped DB readback adds any missed Space Docs, Space items, task-linked email drafts, media assets, and known scoped artifact rows. The same blocks power inline task activity previews and the task Deliverables & media section.
-- Scheduled agent actions do not pre-wake Fly in the scheduler. `SpaceAutomationService` calls `UserAgentApiService` for agent execution, so shared Railway profiles route to the shared Agent API/OpenClaw runtime and Fly-machine profiles wake through the shared runtime service path when needed.
+- Vercel calls the CRON_SECRET-protected `/api/internal/space-automations/process-due` endpoint every minute. The endpoint invokes the existing due-schedule scanner; its database compare-and-swap claim prevents duplicate execution when a warm Nest cron and Vercel wakeup overlap. Scheduled agent actions do not pre-wake Fly in the scheduler. `SpaceAutomationService` calls `UserAgentApiService` for agent execution, so shared Railway profiles route to the shared Agent API/OpenClaw runtime and Fly-machine profiles wake through the shared runtime service path when needed.
 - Rule execution now dispatches through `agent-runtime-queue-automation` when the queue is available. Trigger evaluation, scheduled itemless runs, contact-route automations, Fathom fanout, and connected-app webhook runs enqueue automation jobs with `AGENT_RUNTIME_AUTOMATION_CONCURRENCY` worker concurrency. Unit tests and local contexts without a queue keep the inline fallback path.
 - Flow and Spaces run-history views subscribe to `space_automation_runs` over Supabase Realtime and reload their scoped history after external automation executions, so run history does not depend on reopening the panel.
 
@@ -122,6 +122,7 @@ Spaces automations run rules from the `space_automations` table through the sing
 ## Decision Log
 
 - 2026-07-21: Successful Fathom OAuth reconnect restores the matching user's Fathom routes and automation rules only when they were disabled with the canonical disconnect reason. Manual disables and unrelated failures remain untouched.
+- 2026-07-22: Vercel now wakes the due-schedule processor every minute through a CRON_SECRET-protected internal endpoint. In-process Nest cron remains as an idempotent secondary trigger, but serverless instance warmth is no longer required for scheduled Flows to run.
 - 2026-06-29: Automation run history now listens to `space_automation_runs` changes and reloads the current scoped history for Space and Flow history panels without a manual refresh.
 - 2026-06-25: Added first-party inbound Space webhooks for Flows. Endpoints are managed from `/flows` Webhooks, use required HMAC over the raw JSON body with the signing secret stored in Vault, keep endpoint-level JSON Pointer field mappings, and fan out one received event to every enabled published Flow in the same Space using `trigger.webhook_received`.
 - 2026-06-25: Task-agent completion now reconciles scoped persisted outputs after the stream merge, covering Space Docs, created Space items/tasks, offers, avatars, sequences, renderable presentations, renderable funnels/websites, social posts, ads/ad sets/ad campaigns, forms, flows, task-linked emails, and media assets. Empty funnel shells without pages/files are not added as completed preview deliverables by the readback path.

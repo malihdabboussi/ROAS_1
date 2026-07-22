@@ -28,6 +28,7 @@ import { SpaceAutomationCapabilitiesController } from './controllers/space-autom
 import { SpaceAutomationFlowUpdatesController } from './controllers/space-automation-flow-updates.controller'
 import { SpaceAutomationLifecycleController } from './controllers/space-automation-lifecycle.controller'
 import { SpaceAutomationReadController } from './controllers/space-automation-read.controller'
+import { SpaceAutomationSchedulerInternalController } from './controllers/space-automation-scheduler-internal.controller'
 import { SpaceAutomationTemplatesController } from './controllers/space-automation-templates.controller'
 import { SpaceAutomationsInternalController } from './controllers/space-automations-internal.controller'
 import { SpaceAutomationsController } from './controllers/space-automations.controller'
@@ -165,6 +166,7 @@ import { SpacesService } from './services/spaces.service'
     SpaceAutomationLifecycleController,
     SpaceAutomationTemplatesController,
     SpaceAutomationReadController,
+    SpaceAutomationSchedulerInternalController,
     SpacePrecallPrepController,
     SpaceAutomationsInternalController,
     SpaceWebhooksController,
