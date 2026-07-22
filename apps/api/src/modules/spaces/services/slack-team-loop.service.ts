@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto'
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { EmbeddingService } from '../../brain/services/embedding.service'
 import { SlackPeopleRepository } from '../../slack/repositories/slack-people.repository'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
 import { SlackObservationService } from '../../slack/services/slack-observation.service'
+import { SlackSenderResolverService } from '../../slack/services/slack-sender-resolver.service'
 import { SlackTeamLoopRepository } from '../repositories/slack-team-loop.repository'
 
 export type SlackTeamLoopKind =
@@ -110,6 +111,7 @@ export class SlackTeamLoopService {
     private readonly observation: SlackObservationService,
     private readonly slackTools: SlackAgentToolsService,
     private readonly gemini: EmbeddingService,
+    @Optional() private readonly senderResolver?: SlackSenderResolverService,
   ) {}
 
   async run(input: {
@@ -142,11 +144,11 @@ export class SlackTeamLoopService {
       typeof integration.metadata.team_id === 'string' ? integration.metadata.team_id : ''
     if (!slackTeamId) return { skipped: true, skipped_reason: 'slack_team_id_missing' }
 
-    const people = (await this.peopleRepo.listPeople(input.supabase, input.orgId)) as SlackPerson[]
-    const selectedPeople = input.personIds.length
+    let people = (await this.peopleRepo.listPeople(input.supabase, input.orgId)) as SlackPerson[]
+    let selectedPeople = input.personIds.length
       ? people.filter((person) => input.personIds.includes(person.id))
       : people.filter((person) => person.relationship_kind !== 'ignored')
-    const peopleBySlackId = new Map(selectedPeople.map((person) => [person.platform_id, person]))
+    let peopleBySlackId = new Map(selectedPeople.map((person) => [person.platform_id, person]))
 
     const reconciliation = await this.observation.reconcile({
       supabase: input.supabase,
@@ -176,6 +178,29 @@ export class SlackTeamLoopService {
       senderSlackUserIds: input.personIds.length > 0 ? [...peopleBySlackId.keys()] : [],
       limit: 250,
     })
+    const unknownSenderIds = [
+      ...new Set(
+        pending.events
+          .filter(
+            (message) =>
+              !message.is_bot &&
+              Boolean(message.sender_slack_user_id) &&
+              !peopleBySlackId.has(String(message.sender_slack_user_id)),
+          )
+          .map((message) => String(message.sender_slack_user_id)),
+      ),
+    ]
+    if (unknownSenderIds.length > 0 && this.senderResolver && input.personIds.length === 0) {
+      await this.senderResolver.resolveSlackSenders(input.supabase, {
+        botToken: integration.access_token,
+        userId: input.userId,
+        orgId: input.orgId,
+        slackUserIds: unknownSenderIds,
+      })
+      people = (await this.peopleRepo.listPeople(input.supabase, input.orgId)) as SlackPerson[]
+      selectedPeople = people.filter((person) => person.relationship_kind !== 'ignored')
+      peopleBySlackId = new Map(selectedPeople.map((person) => [person.platform_id, person]))
+    }
     const observed = pending.events
       .filter(
         (message) =>
@@ -395,6 +420,7 @@ export class SlackTeamLoopService {
       channels_observed: reconciliation.channelsReconciled,
       messages_observed: observed.length,
       messages_analyzed: observed.length,
+      people_discovered: unknownSenderIds.length,
       signals_detected: analysis.signals.length,
       signals_rejected_missing_evidence: rejectedWithoutEvidence,
       signals_suppressed_by_thread: suppressedByThread,

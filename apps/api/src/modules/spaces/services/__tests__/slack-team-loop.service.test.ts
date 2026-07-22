@@ -325,6 +325,100 @@ describe('SlackTeamLoopService', () => {
     expect(result).toMatchObject({ channels_observed: 1, messages_observed: 1, proposed: 1 })
   })
 
+  it('registers an unseen Slack sender before attaching their Shadow proposal', async () => {
+    const discovered = {
+      id: 'member-3',
+      platform_id: 'U3',
+      display_name: 'Casey Client',
+      relationship_kind: 'external',
+      delivery_mode: 'shadow',
+      person_brain_id: null,
+    }
+    const peopleRepo = {
+      findOrgSlackIntegration: vi.fn().mockResolvedValue({
+        user_id: 'owner-1',
+        access_token: 'xoxb-test',
+        metadata: { team_id: 'T1' },
+      }),
+      listPeople: vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([discovered]),
+      createShadowAction: vi.fn().mockResolvedValue({ id: 'proposal-1' }),
+    }
+    const observation = {
+      reconcile: vi.fn().mockResolvedValue({
+        channelsReconciled: 1,
+        historyRequests: 1,
+        threadRequests: 0,
+        eventsStored: 1,
+        duplicatesSkipped: 0,
+      }),
+      loadPendingEvents: vi.fn().mockResolvedValue({
+        cursor: null,
+        events: [
+          {
+            channel_id: 'C1',
+            channel_name: 'client-alpha',
+            message_ts: '1721000000.000100',
+            thread_ts: null,
+            sender_slack_user_id: 'U3',
+            text: 'Can somebody confirm the launch date?',
+            is_bot: false,
+          },
+        ],
+      }),
+      advanceConsumer: vi.fn(),
+    }
+    const gemini = {
+      callGeminiWithUsage: vi.fn().mockResolvedValue(
+        geminiAnalysis([
+          {
+            kind: 'unanswered_question',
+            target_slack_user_id: 'U3',
+            target_channel_id: 'C1',
+            source_message_ts: '1721000000.000100',
+            proposed_content: 'I can help get this answered.',
+            rationale: 'The direct question has no reply.',
+            brain_memory: null,
+            confidence: 0.95,
+          },
+        ]),
+      ),
+    }
+    const senderResolver = { resolveSlackSenders: vi.fn().mockResolvedValue(new Map()) }
+    const service = new SlackTeamLoopService(
+      peopleRepo as never,
+      {
+        countActionsSince: vi.fn().mockResolvedValue(0),
+        hasEvidenceFingerprint: vi.fn().mockResolvedValue(false),
+      } as never,
+      observation as never,
+      {} as never,
+      gemini as never,
+      senderResolver as never,
+    )
+
+    const result = await service.run({
+      supabase: {} as never,
+      userId: 'owner-1',
+      orgId: 'org-1',
+      loopKind: 'all',
+      deliveryMode: 'shadow',
+      channelIds: [],
+      personIds: [],
+      lookbackMinutes: 30,
+      dailyLimit: 10,
+    })
+
+    expect(senderResolver.resolveSlackSenders).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ slackUserIds: ['U3'] }),
+    )
+    expect(peopleRepo.createShadowAction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ targetMemberId: 'member-3' }),
+    )
+    expect(result).toMatchObject({ people_discovered: 1, proposed: 1 })
+  })
+
   it('writes Person Brain memories in Active mode without messaging Slack', async () => {
     const slackPeople = {
       findOrgSlackIntegration: vi.fn().mockResolvedValue({
