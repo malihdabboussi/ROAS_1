@@ -48,3 +48,10 @@ What: Added a deterministic Ads Research output verifier that requires at least 
 Why: A research subtask could find ads through an unsaved fallback integration and complete with a document even though the visual Ads Research report had no durable evidence to render.
 Impact: Documents-only research runs now enter corrective execution with the exact missing-search or missing-visual count; successful runs are guaranteed to have renderable mission-linked evidence.
 Files: `apps/mission-worker/src/modules/missions/playbooks/ads-research.playbook.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-visual-evidence-verifier.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-output-contract.types.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverables.repository.ts`, focused tests, `documentation/features/missions.md`
+
+## [2026-07-22 03:36] - [FIX]
+
+What: Made a manager retry reset the selected subtask and all active downstream dependents, clear stale verification state, close any downstream human gate, and reopen an `awaiting_human` Mission for execution.
+Why: Retrying completed Ads Research while its approval gate was open left the parent Mission in `awaiting_human`; the outbox repeatedly rejected the retry as nondispatchable, and downstream recommendations remained based on stale research.
+Impact: Research corrections now rerun the affected recommendation and script chain before returning to human approval, with no manual Mission Control recovery.
+Files: `apps/api/src/modules/missions/repositories/mission-internal.repository.ts`, `apps/api/src/modules/missions/services/mission-internal-manager-subtasks.base.ts`, `apps/api/src/modules/missions/services/__tests__/mission-manager-retry-cascade.test.ts`, `documentation/features/missions.md`
