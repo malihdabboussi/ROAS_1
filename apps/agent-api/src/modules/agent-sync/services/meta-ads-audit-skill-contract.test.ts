@@ -10,6 +10,13 @@ describe('roas-meta-ads-audit skill migration', () => {
     ),
     'utf8',
   )
+  const insightsContractMigration = fs.readFileSync(
+    path.resolve(
+      process.cwd(),
+      '../../supabase/migrations/20260722093500_meta_insights_id_contract.sql',
+    ),
+    'utf8',
+  )
 
   it('requires live objective-specific evidence before recommendations', () => {
     expect(migration).toMatch(/check_meta_connection/)
@@ -29,5 +36,13 @@ describe('roas-meta-ads-audit skill migration', () => {
     expect(migration).toMatch(/template_skill_assignments/)
     expect(migration).toMatch(/'ads_manager', 'roas-meta-ads-audit'/)
     expect(migration).toMatch(/INSERT INTO public\.agent_skills/)
+  })
+
+  it('keeps ROAS scope and Meta hierarchy IDs distinct', () => {
+    expect(insightsContractMigration).toMatch(/campaign_id.*ROAS campaign UUID/i)
+    expect(insightsContractMigration).toMatch(/row\.id.*ad_campaign_id/i)
+    expect(insightsContractMigration).toMatch(/row\.id.*ad_set_id/i)
+    expect(insightsContractMigration).toMatch(/Never put a Meta numeric ID/i)
+    expect(insightsContractMigration).toMatch(/source IN \('template', 'system', 'default'\)/)
   })
 })

@@ -239,7 +239,7 @@ function buildQuickStartExamples(
     if (availableActions.has('get_meta_ads_insights')) {
       examples.push(`Get ad performance:
 \`\`\`json
-{ "action": "get_meta_ads_insights", "label": "Pulling your ad metrics", "data": { "date_preset": "last_7d" } }
+{ "action": "get_meta_ads_insights", "label": "Pulling your ad metrics", "data": { "campaign_id": "ROAS_CAMPAIGN_UUID", "level": "campaign", "date_preset": "last_7d" } }
 \`\`\``)
     }
     if (availableActions.has('list_campaigns')) {

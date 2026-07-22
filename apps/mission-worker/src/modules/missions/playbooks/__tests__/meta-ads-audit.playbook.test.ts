@@ -38,6 +38,8 @@ describe('meta-ads-audit playbook', () => {
     expect(plan?.subtasks[1]?.intent.ecology).toMatch(/get_integration/)
     expect(plan?.subtasks[1]?.intent.ecology).toMatch(/Composio/)
     expect(plan?.subtasks[1]?.intent.ecology).toMatch(/real objective|actual result/i)
+    expect(plan?.subtasks[1]?.intent.ecology).toMatch(/row\.id.*ad_campaign_id/i)
+    expect(plan?.subtasks[1]?.intent.ecology).toMatch(/never.*meta_id.*campaign_id/i)
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/specific action/i)
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/evidence/i)
     expect(plan?.subtasks[3]?.assignTo).toBe('human:user-1')

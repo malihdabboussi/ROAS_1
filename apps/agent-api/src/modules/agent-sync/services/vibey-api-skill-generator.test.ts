@@ -73,4 +73,18 @@ describe('vibey-api skill generator', () => {
     expect(skillMd).toContain('{{trigger.fields.customer_email}}')
     expect(skillMd).toContain('{{trigger.webhook.event_id}}')
   })
+
+  it('distinguishes ROAS scope IDs from Meta hierarchy IDs in insights guidance', () => {
+    const { skillMd, referenceFiles } = generateScopedVibeyApiSkill(
+      new Set(['get_meta_ads_insights']),
+      'analyst',
+    )
+    const output = [skillMd, ...Object.values(referenceFiles)].join('\n')
+
+    expect(output).toContain('ROAS campaign UUID')
+    expect(output).toContain('row.id')
+    expect(output).toContain('ad_campaign_id')
+    expect(output).toContain('date_preset')
+    expect(output).toContain('Never put a Meta numeric ID in campaign_id')
+  })
 })

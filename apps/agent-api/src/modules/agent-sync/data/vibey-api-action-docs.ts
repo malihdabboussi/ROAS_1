@@ -656,9 +656,10 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   },
   get_meta_ads_insights: {
     section: 'Meta',
-    description: 'Reads performance insights from Meta.',
+    description:
+      'Reads objective-specific performance from Meta. campaign_id is always the active ROAS campaign UUID, not a Meta ID. Start at level campaign. For level adset, pass the selected campaign response row.id as ad_campaign_id. For level ad, pass the selected ad-set response row.id as ad_set_id. row.meta_id is evidence only. Never put a Meta numeric ID in campaign_id. Use date_preset or exact start_date and end_date.',
     parameters:
-      '```json\n{"action":"get_meta_ads_insights","label":"Pulling campaign insights","data":{"campaign_id":"UUID"}}\n```',
+      '```json\n{"action":"get_meta_ads_insights","label":"Pulling campaign insights","data":{"campaign_id":"ROAS_CAMPAIGN_UUID","level":"campaign","date_preset":"last_30d"}}\n```\n```json\n{"action":"get_meta_ads_insights","label":"Pulling ad-set insights","data":{"campaign_id":"ROAS_CAMPAIGN_UUID","level":"adset","ad_campaign_id":"CAMPAIGN_RESPONSE_ROW_ID","date_preset":"last_30d"}}\n```',
   },
   get_delivery_estimate: {
     section: 'Meta',

@@ -51,6 +51,8 @@ describe('ads-research playbook', () => {
     expect(plan?.subtasks[1]?.intent.ecology).toMatch(/get_integration/)
     expect(plan?.subtasks[1]?.intent.ecology).toMatch(/Composio/)
     expect(plan?.subtasks[1]?.intent.ecology).toMatch(/Do not infer/)
+    expect(plan?.subtasks[1]?.intent.ecology).toMatch(/row\.id.*ad_campaign_id/i)
+    expect(plan?.subtasks[1]?.intent.ecology).toMatch(/never.*meta_id.*campaign_id/i)
     expect(plan?.subtasks[1]?.intent.ecology).toMatch(
       /ADS-R#0 - Verified Campaign Research Context/,
     )

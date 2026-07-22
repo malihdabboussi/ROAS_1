@@ -34,3 +34,10 @@ What: Minted a short-lived user session for mission and subtask runtime calls in
 Why: Background Blaze tasks have no interactive chat token, so `check_meta_connection` failed before reaching the connected organization-level Meta integration even though valid server-side OAuth credentials existed.
 Impact: Ads Research, Meta Ads Audit, and Meta Ads Launch can use the client's connected Meta account during mission execution without exposing or copying OAuth tokens.
 Files: `apps/agent-api/src/modules/artifacts/legacy/artifacts-legacy.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-session-campaign.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-session-campaign.service.test.ts`, `scripts/arch/loc-allowlist.json`, `documentation/features/missions.md`
+
+## [2026-07-22 02:35] - [FIX]
+
+What: Made Meta insight reporting periods and hierarchy IDs explicit across the hard schema, preflight, runtime action, generated agent docs, Ads Research, and Meta Audit skill.
+Why: The live proof run successfully read campaign results but then reused Meta's numeric campaign ID as the ROAS `campaign_id`, triggering scope mismatches; `date_preset` was also accepted by the agent but ignored by the runtime.
+Impact: Blaze now keeps workspace scope fixed, drills down with returned local row IDs, receives corrective preflight guidance for mixed IDs, and audits exact inclusive date ranges.
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-legacy-meta-api.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-meta-schemas.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-preflight.ts`, generated Vibey API guidance and tests, Ads Research and Meta Ads Audit playbooks and tests, `supabase/migrations/20260722093500_meta_insights_id_contract.sql`, `documentation/features/missions.md`

@@ -8,6 +8,37 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
+function isoDate(date: Date): string {
+  return date.toISOString().slice(0, 10)
+}
+
+function shiftUtcDays(date: Date, days: number): Date {
+  const shifted = new Date(date)
+  shifted.setUTCDate(shifted.getUTCDate() + days)
+  return shifted
+}
+
+function dateRangeForPreset(preset: string, now = new Date()): [string, string] | null {
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  if (preset === 'last_7d') return [isoDate(shiftUtcDays(today, -6)), isoDate(today)]
+  if (preset === 'last_14d') return [isoDate(shiftUtcDays(today, -13)), isoDate(today)]
+  if (preset === 'last_30d') return [isoDate(shiftUtcDays(today, -29)), isoDate(today)]
+  if (preset === 'previous_30d')
+    return [isoDate(shiftUtcDays(today, -59)), isoDate(shiftUtcDays(today, -30))]
+  if (preset === 'this_month') {
+    return [
+      isoDate(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))),
+      isoDate(today),
+    ]
+  }
+  if (preset === 'last_month') {
+    const first = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 1, 1))
+    const last = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 0))
+    return [isoDate(first), isoDate(last)]
+  }
+  return null
+}
+
 @Injectable()
 export class ArtifactLegacyMetaApiService {
   async metaApiCall(
@@ -367,8 +398,14 @@ export class ArtifactLegacyMetaApiService {
       return { success: false, error: 'ad_set_id is required for ad level' }
     }
 
-    const startDate = String(data.start_date ?? data.startDate ?? '').trim()
-    const endDate = String(data.end_date ?? data.endDate ?? '').trim()
+    let startDate = String(data.start_date ?? data.startDate ?? '').trim()
+    let endDate = String(data.end_date ?? data.endDate ?? '').trim()
+    const datePreset = String(data.date_preset ?? data.datePreset ?? '').trim()
+    if ((!startDate || !endDate) && datePreset) {
+      const range = dateRangeForPreset(datePreset)
+      if (!range) return { success: false, error: 'Unsupported date_preset' }
+      ;[startDate, endDate] = range
+    }
 
     const query = new URLSearchParams()
     query.set('campaignId', campaignId)
