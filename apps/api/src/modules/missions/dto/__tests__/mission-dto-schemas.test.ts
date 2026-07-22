@@ -101,6 +101,36 @@ describe('mission DTO schemas', () => {
     })
   })
 
+  it('accepts detailed deterministic playbook ecology instructions', () => {
+    const detailedEcology = 'Use grounded campaign evidence. '.repeat(100)
+
+    const parsed = CreateMissionPlanDtoSchema.parse({
+      mission_id: missionId,
+      user_id: userId,
+      org_id: orgId,
+      title: 'Ads Research',
+      summary: 'Research current and competitive ads.',
+      approach: 'Use the deterministic ads research playbook.',
+      subtasks: [
+        {
+          id: 'research-context',
+          title: 'Prepare campaign research context',
+          assignTo: 'atlas',
+          intent: {
+            why: 'Ground the research',
+            story: 'Verify the client before interpreting ads',
+            sensory: 'A source-backed context document',
+            endState: 'Verified context exists',
+            ecology: detailedEcology,
+          },
+        },
+      ],
+      assignTo: 'blaze',
+    })
+
+    expect(parsed.subtasks[0]?.intent.ecology).toBe(detailedEcology)
+  })
+
   it('parses human, awareness, internal, handoff, and rating DTOs', () => {
     expect(
       CompleteHumanSubtaskDtoSchema.parse({
