@@ -55,3 +55,10 @@ What: Made a manager retry reset the selected subtask and all active downstream 
 Why: Retrying completed Ads Research while its approval gate was open left the parent Mission in `awaiting_human`; the outbox repeatedly rejected the retry as nondispatchable, and downstream recommendations remained based on stale research.
 Impact: Research corrections now rerun the affected recommendation and script chain before returning to human approval, with no manual Mission Control recovery.
 Files: `apps/api/src/modules/missions/repositories/mission-internal.repository.ts`, `apps/api/src/modules/missions/services/mission-internal-manager-subtasks.base.ts`, `apps/api/src/modules/missions/services/__tests__/mission-manager-retry-cascade.test.ts`, `documentation/features/missions.md`
+
+## [2026-07-22 03:53] - [FIX]
+
+What: Added a deterministic finished-document check that rejects Ads Research recommendations and video scripts containing literal or encoded em dashes.
+Why: The live production run loaded Dylan Super Voice and claimed compliance, but the recommendation Doc still contained 95 em dashes and the script Doc contained 44.
+Impact: Client-facing Ads Research copy now remains in corrective execution until its final native Doc contains zero em dashes.
+Files: `apps/mission-worker/src/modules/missions/playbooks/ads-research.playbook.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-document-content-verifier.ts`, `apps/mission-worker/src/modules/missions/services/persistence/mission-deliverables.repository.ts`, focused tests, `documentation/features/missions.md`

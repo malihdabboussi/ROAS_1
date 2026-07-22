@@ -21,6 +21,17 @@ function visualResearchContract() {
   }
 }
 
+function copyDocumentContract(title: string) {
+  const contract = docContract(title)
+  return {
+    ...contract,
+    expected: {
+      ...contract.expected,
+      forbid_em_dash: true,
+    },
+  }
+}
+
 type Kickoff = {
   prompt?: string
   depth: 'standard' | 'deep'
@@ -109,7 +120,7 @@ export function expandAdsResearchPlaybook(
         'Each recommendation links its evidence, audience, angle, format, hypothesis, and draft copy.',
       endState: 'ADS-R#3 - Recommended Ads and Draft Copy exists as a native editable Doc.',
       ecology: `Read ADS-R#0, ADS-R#1, and ADS-R#2. Use the verified client identity, offer, and audience from ADS-R#0 as the boundary for every recommendation. Load roas-ad-concepts and roas-ad-copy. Identify what is working, failing, saturated, and open. Recommend distinct tests with the evidence that supports each one. Map every recommendation to one or more saved visual reference ads by advertiser and saved-search title, then include visual direction, on-image text, paste-ready primary text, headline, description, CTA, destination, and test hypothesis. Present finished copy as straight paste-ready text. Do not split it into Hook, Body, and CTA labels. These are research recommendations, not final production assets. ${WRITING_RULE} Save ADS-R#3 - Recommended Ads and Draft Copy as a native Doc. Never create a PDF.`,
-      outputContract: docContract('ADS-R#3 - Recommended Ads and Draft Copy'),
+      outputContract: copyDocumentContract('ADS-R#3 - Recommended Ads and Draft Copy'),
     }),
     task({
       id: 'st-draft-video-scripts',
@@ -122,7 +133,7 @@ export function expandAdsResearchPlaybook(
         'Every script is continuous copy with shooting instructions, overlays, and shared post-production notes.',
       endState: 'ADS-R#4 - Draft Video Ad Scripts exists as a native editable Doc.',
       ecology: `Load roas-video-ad-scripts and use the evidence and concepts in ADS-R#1 through ADS-R#3. Produce draft scripts only for recommended video concepts. Format each as Script, Shooting instructions, and Overlays, followed by one shared Post-production section. Use no quotation marks around spoken scripts and no timestamps or time ranges. ${WRITING_RULE} Save ADS-R#4 - Draft Video Ad Scripts as a native Doc. Never create a PDF.`,
-      outputContract: docContract('ADS-R#4 - Draft Video Ad Scripts'),
+      outputContract: copyDocumentContract('ADS-R#4 - Draft Video Ad Scripts'),
     }),
     task({
       id: 'st-gate-research-review',

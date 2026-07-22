@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { verifyMissionDocumentContent } from './mission-document-content-verifier'
 import type {
   MissionContractVerificationResult,
   MissionOutputContract,
@@ -187,7 +188,11 @@ export class MissionDeliverablesRepository {
     contract: MissionOutputContract,
   ): Promise<MissionContractVerificationResult> {
     const result = this.evaluateDeliverableContractRow(data, contract)
-    if (!result.ok || contract.artifact_kind !== 'funnel_artifact') return result
+    if (!result.ok) return result
+    if (contract.artifact_kind === 'document_artifact' && data?.id) {
+      return verifyMissionDocumentContent(supabase, String(data.id), contract, result)
+    }
+    if (contract.artifact_kind !== 'funnel_artifact') return result
 
     const expected = contract.expected ?? {}
     const metadata =
