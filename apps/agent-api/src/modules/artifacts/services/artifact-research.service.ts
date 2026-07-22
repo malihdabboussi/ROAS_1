@@ -256,7 +256,7 @@ export class ArtifactResearchService {
     target: Record<string, any>,
     sessionKey?: string,
   ): Promise<string | null> {
-    if (!sessionKey?.includes(':mission:') || typeof target.resolveMissionContext !== 'function') {
+    if (!sessionKey || typeof target.resolveMissionContext !== 'function') {
       return null
     }
     try {
