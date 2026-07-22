@@ -80,6 +80,13 @@ export class ArtifactLegacySessionCampaignService {
     if (sessionKey.includes('::admin-skill-builder')) {
       return ''
     }
+    if (this.isMissionSessionKey(sessionKey)) {
+      const mintAccessToken = target.userSessionMint?.mintAccessToken
+      if (typeof mintAccessToken !== 'function') {
+        throw new Error('Mission user session mint is not configured')
+      }
+      return target.userSessionMint.mintAccessToken(userId)
+    }
     const conversationId = this.parseConversationId(sessionKey)
     if (!conversationId) {
       throw new Error('Invalid x-session-key format')

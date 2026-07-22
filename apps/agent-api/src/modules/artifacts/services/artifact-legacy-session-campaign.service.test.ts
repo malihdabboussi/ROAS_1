@@ -1,6 +1,43 @@
 import { describe, expect, it, vi } from 'vitest'
 import { ArtifactLegacySessionCampaignService } from './artifact-legacy-session-campaign.service'
 
+describe('ArtifactLegacySessionCampaignService.getAccessTokenFromSessionKey', () => {
+  const service = new ArtifactLegacySessionCampaignService()
+  const userId = '92ae97d0-447e-497c-8ecf-bbab8382defc'
+  const missionId = 'bcd4a706-f636-4800-b839-3dfc462b8cd5'
+  const subtaskId = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+
+  it('mints a user session for mission execution without an interactive chat token', async () => {
+    const mintAccessToken = vi.fn(async () => 'mission-user-token')
+    const target = {
+      userSessionMint: { mintAccessToken },
+      requestContext: { get: vi.fn() },
+    }
+    const key = `agent:vibey:mission:blaze:${userId}:${missionId}`
+
+    await expect(service.getAccessTokenFromSessionKey(target, key, userId)).resolves.toBe(
+      'mission-user-token',
+    )
+    expect(mintAccessToken).toHaveBeenCalledWith(userId)
+    expect(target.requestContext.get).not.toHaveBeenCalled()
+  })
+
+  it('mints a user session for subtask execution without an interactive chat token', async () => {
+    const mintAccessToken = vi.fn(async () => 'subtask-user-token')
+    const target = {
+      userSessionMint: { mintAccessToken },
+      requestContext: { get: vi.fn() },
+    }
+    const key = `agent:vibey:subtask:blaze:${userId}:${subtaskId}`
+
+    await expect(service.getAccessTokenFromSessionKey(target, key, userId)).resolves.toBe(
+      'subtask-user-token',
+    )
+    expect(mintAccessToken).toHaveBeenCalledWith(userId)
+    expect(target.requestContext.get).not.toHaveBeenCalled()
+  })
+})
+
 describe('ArtifactLegacySessionCampaignService.parseAgentIdFromSessionKey', () => {
   const service = new ArtifactLegacySessionCampaignService()
   const userId = '92ae97d0-447e-497c-8ecf-bbab8382defc'
