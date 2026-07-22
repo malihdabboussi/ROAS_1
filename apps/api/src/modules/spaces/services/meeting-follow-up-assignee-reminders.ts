@@ -159,7 +159,9 @@ export async function createAssigneeReminderShadowActions(input: {
   fathomUrl: string | null
   followUps: Array<Record<string, unknown>>
   nameKnowledge: NameKnowledgeEntry[]
+  deliveryMode?: 'shadow' | 'active'
   people: AssigneeReminderShadowDeps
+  onCreated?: (actionId: string, personDeliveryMode: string | null) => void
   onSkip?: (assigneeName: string, message: string) => void
 }): Promise<string[]> {
   const groups = groupFollowUpsByAssignee(input.followUps)
@@ -179,7 +181,7 @@ export async function createAssigneeReminderShadowActions(input: {
         )
       }
       if (!person) continue
-      if (person.relationship_kind === 'ignored') continue
+      if (person.relationship_kind !== 'internal') continue
       if (person.delivery_mode === 'off') continue
 
       const followUpIds = group.items
@@ -205,10 +207,14 @@ export async function createAssigneeReminderShadowActions(input: {
           follow_up_ids: followUpIds,
           assignee_name: group.displayName,
           call_title: input.callTitle,
+          flow_delivery_mode: input.deliveryMode ?? 'shadow',
           ...(group.email ? { assignee_email: group.email } : {}),
         },
       })
-      if (action?.id) createdIds.push(action.id)
+      if (action?.id) {
+        createdIds.push(action.id)
+        input.onCreated?.(action.id, person.delivery_mode ?? null)
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       input.onSkip?.(group.displayName, message)

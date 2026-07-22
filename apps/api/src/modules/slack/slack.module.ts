@@ -69,6 +69,7 @@ import { SlackService } from './services/slack.service'
     SlackAgentToolsService,
     SlackBrainMappingService,
     SlackObservationService,
+    SlackPeopleService,
     SlackSenderResolverService,
     SlackRepository,
     SlackRuntimeRepository,

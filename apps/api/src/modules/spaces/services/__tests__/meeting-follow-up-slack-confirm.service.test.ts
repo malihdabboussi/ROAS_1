@@ -52,11 +52,16 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     listPeople: vi.fn().mockResolvedValue([]),
     findAssigneeReminderBySlackMessage: vi.fn().mockResolvedValue(null),
   }
+  const slackPeople = {
+    reviewShadowAction: vi.fn().mockResolvedValue({ action: { id: 'reviewed' } }),
+    sendShadowAction: vi.fn().mockResolvedValue({ action: { id: 'sent', status: 'sent' } }),
+  }
 
   let service: MeetingFollowUpSlackConfirmService
 
   beforeEach(() => {
     vi.clearAllMocks()
+    slackTools.sendMessage.mockReset()
     moduleRef.get.mockReturnValue(undefined)
     service = new MeetingFollowUpSlackConfirmService(
       repo as never,
@@ -65,6 +70,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       slackTools as never,
       userAgentApi as never,
       slackPeopleRepo as never,
+      slackPeople as never,
     )
   })
 
@@ -114,6 +120,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       callItemId: 'call-1',
       callTitle: 'Nate and Dylan ops',
       suggestionIds: ['fu-1', 'fu-2'],
+      deliveryMode: 'active',
     })
 
     expect(userAgentApi.invoke).toHaveBeenCalledWith(
@@ -243,10 +250,10 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     slackPeopleRepo.findPersonByDisplayName.mockImplementation(
       async (_sb: unknown, _org: string, name: string) => {
         if (name === 'Dylan') {
-          return { id: 'person-dylan', relationship_kind: 'team', delivery_mode: 'shadow' }
+          return { id: 'person-dylan', relationship_kind: 'internal', delivery_mode: 'shadow' }
         }
         if (name === 'Nate') {
-          return { id: 'person-nate', relationship_kind: 'team', delivery_mode: 'shadow' }
+          return { id: 'person-nate', relationship_kind: 'internal', delivery_mode: 'shadow' }
         }
         return null
       },
@@ -310,6 +317,170 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       }),
       'org-1',
     )
+  })
+
+  it('runs the complete post-call workflow in Shadow without sending Slack messages', async () => {
+    repo.findItemsByIds.mockResolvedValue([
+      {
+        id: 'fu-1',
+        title: 'Send the account update',
+        custom_data: { suggested_assignee_name: 'Betty' },
+      },
+    ])
+    repo.findItemById.mockResolvedValue({
+      id: 'call-1',
+      title: 'Client review',
+      custom_data: { fathom_url: 'https://fathom.video/calls/1' },
+    })
+    repo.updateItem.mockResolvedValue({})
+    slackPeopleRepo.findPersonByEmail.mockResolvedValue({ id: 'person-dylan' })
+    slackPeopleRepo.findPersonByDisplayName.mockResolvedValue({
+      id: 'person-betty',
+      relationship_kind: 'internal',
+      delivery_mode: 'shadow',
+    })
+    slackPeopleRepo.createShadowAction
+      .mockResolvedValueOnce({ id: 'shadow-recap' })
+      .mockResolvedValueOnce({ id: 'shadow-betty' })
+
+    const result = await service.requestConfirm({
+      supabase: {} as never,
+      userId: 'user-1',
+      orgId: 'org-1',
+      spaceId: 'space-1',
+      callItemId: 'call-1',
+      callTitle: 'Client review',
+      suggestionIds: ['fu-1'],
+      deliveryMode: 'shadow',
+    })
+
+    expect(slackTools.findUserByEmail).not.toHaveBeenCalled()
+    expect(slackTools.openDm).not.toHaveBeenCalled()
+    expect(slackTools.sendMessage).not.toHaveBeenCalled()
+    expect(slackPeople.reviewShadowAction).not.toHaveBeenCalled()
+    expect(slackPeople.sendShadowAction).not.toHaveBeenCalled()
+    expect(result).toMatchObject({
+      delivery_mode: 'shadow',
+      assignee_shadow_action_ids: ['shadow-betty'],
+      assignee_sent_action_ids: [],
+    })
+    expect(repo.updateItem).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      'space-1',
+      'call-1',
+      expect.objectContaining({
+        custom_data: expect.objectContaining({
+          slack_follow_up_confirm: expect.objectContaining({
+            status: 'shadow',
+            delivery_mode: 'shadow',
+            shadow_action_id: 'shadow-recap',
+            assignee_shadow_action_ids: ['shadow-betty'],
+          }),
+        }),
+      }),
+      'org-1',
+    )
+  })
+
+  it('sends the same stored account-manager drafts when the flow is Active', async () => {
+    repo.findItemsByIds.mockResolvedValue([
+      {
+        id: 'fu-1',
+        title: 'Send the account update',
+        custom_data: { suggested_assignee_name: 'Betty' },
+      },
+    ])
+    repo.findItemById.mockResolvedValue({ id: 'call-1', title: 'Client review', custom_data: {} })
+    repo.updateItem.mockResolvedValue({})
+    slackTools.findUserByEmail.mockResolvedValue({ success: true, user: { id: 'U_DYLAN' } })
+    slackTools.openDm.mockResolvedValue({ success: true, channel_id: 'D123' })
+    slackTools.sendMessage
+      .mockResolvedValueOnce({ success: true, ts: '1710000000.000100' })
+      .mockResolvedValueOnce({ success: true, ts: '1710000000.000200' })
+    slackPeopleRepo.findPersonByEmail.mockResolvedValue({ id: 'person-dylan' })
+    slackPeopleRepo.findPersonByDisplayName.mockResolvedValue({
+      id: 'person-betty',
+      relationship_kind: 'internal',
+      delivery_mode: 'active',
+    })
+    slackPeopleRepo.createShadowAction
+      .mockResolvedValueOnce({ id: 'shadow-recap' })
+      .mockResolvedValueOnce({ id: 'shadow-betty' })
+
+    const result = await service.requestConfirm({
+      supabase: {} as never,
+      userId: 'user-1',
+      orgId: 'org-1',
+      spaceId: 'space-1',
+      callItemId: 'call-1',
+      callTitle: 'Client review',
+      suggestionIds: ['fu-1'],
+      deliveryMode: 'active',
+    })
+
+    expect(slackPeople.reviewShadowAction).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      'org-1',
+      'shadow-betty',
+      'approved',
+    )
+    expect(slackPeople.sendShadowAction).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      'org-1',
+      'shadow-betty',
+    )
+    expect(result).toMatchObject({
+      delivery_mode: 'active',
+      assignee_sent_action_ids: ['shadow-betty'],
+    })
+  })
+
+  it('keeps the account-manager draft reviewable when the flow is Active but the person is Shadow', async () => {
+    repo.findItemsByIds.mockResolvedValue([
+      {
+        id: 'fu-1',
+        title: 'Send the account update',
+        custom_data: { suggested_assignee_name: 'Betty' },
+      },
+    ])
+    repo.findItemById.mockResolvedValue({ id: 'call-1', title: 'Client review', custom_data: {} })
+    repo.updateItem.mockResolvedValue({})
+    slackTools.findUserByEmail.mockResolvedValue({ success: true, user: { id: 'U_DYLAN' } })
+    slackTools.openDm.mockResolvedValue({ success: true, channel_id: 'D123' })
+    slackTools.sendMessage
+      .mockResolvedValueOnce({ success: true, ts: '1710000000.000100' })
+      .mockResolvedValueOnce({ success: true, ts: '1710000000.000200' })
+    slackPeopleRepo.findPersonByEmail.mockResolvedValue({ id: 'person-dylan' })
+    slackPeopleRepo.findPersonByDisplayName.mockResolvedValue({
+      id: 'person-betty',
+      relationship_kind: 'internal',
+      delivery_mode: 'shadow',
+    })
+    slackPeopleRepo.createShadowAction
+      .mockResolvedValueOnce({ id: 'shadow-recap' })
+      .mockResolvedValueOnce({ id: 'shadow-betty' })
+
+    const result = await service.requestConfirm({
+      supabase: {} as never,
+      userId: 'user-1',
+      orgId: 'org-1',
+      spaceId: 'space-1',
+      callItemId: 'call-1',
+      callTitle: 'Client review',
+      suggestionIds: ['fu-1'],
+      deliveryMode: 'active',
+    })
+
+    expect(slackPeople.reviewShadowAction).not.toHaveBeenCalled()
+    expect(slackPeople.sendShadowAction).not.toHaveBeenCalled()
+    expect(result).toMatchObject({
+      delivery_mode: 'active',
+      assignee_shadow_action_ids: ['shadow-betty'],
+      assignee_sent_action_ids: [],
+    })
   })
 
   it('skips unmatched assignees and delivery_mode off without failing the review DM', async () => {
@@ -382,6 +553,7 @@ describe('MeetingFollowUpSlackConfirmService', () => {
       callItemId: 'call-1',
       callTitle: 'Empty',
       suggestionIds: [],
+      deliveryMode: 'active',
     })
     expect(result).toMatchObject({ suggestion_count: 0, channel_id: 'D123' })
     expect(userAgentApi.invoke).toHaveBeenCalled()

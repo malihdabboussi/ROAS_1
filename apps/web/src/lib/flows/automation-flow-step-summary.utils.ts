@@ -374,8 +374,8 @@ export function summarizeAutomationAction(
       return { title: 'Send Slack message', detail: action.channel_id || '…' }
     case 'request_slack_follow_up_confirm':
       return {
-        title: 'DM follow-ups for Slack confirm',
-        detail: action.dm_email || 'admin DM',
+        title: 'Post-call Slack follow-up',
+        detail: `${action.delivery_mode ?? 'shadow'} · ${action.dm_email || 'admin review'}`,
       }
     case 'send_channel_message':
       return { title: 'Send channel message', detail: action.channel_id || '…' }

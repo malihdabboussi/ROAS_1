@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { Bot, Info, MessageSquareReply, Send, ShieldCheck } from 'lucide-react'
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { SLACK_PEOPLE_MESSAGES } from '../../config/messages.config'
 import { slackMrkdwnToMarkdown } from '../../lib/slack-message-markdown'
 import type {
   SlackDeliveryMode,
@@ -41,6 +42,11 @@ function formatTimestamp(value: string, slackTimestamp = false): string {
 
 function proposalLabel(action: SlackShadowAction): string {
   if (action.metadata?.source === 'admin_test') return 'Sample message · never auto-sent'
+  if (action.metadata?.source === 'meeting_follow_up_assignee_reminder') {
+    return action.status === 'sent'
+      ? SLACK_PEOPLE_MESSAGES.POST_CALL_SENT_LABEL
+      : SLACK_PEOPLE_MESSAGES.POST_CALL_SHADOW_LABEL
+  }
   if (action.status === 'sent') return 'Sent to Slack'
   return 'Shadow proposal · not sent'
 }

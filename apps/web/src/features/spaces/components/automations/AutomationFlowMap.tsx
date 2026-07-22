@@ -371,6 +371,12 @@ function actionSummary(
         title: `Step ${index + 1}: Slack`,
         detail: action.channel_id || '…',
       }
+    case 'request_slack_follow_up_confirm':
+      return {
+        icon: MessageSquare,
+        title: `Step ${index + 1}: Post-call follow-up`,
+        detail: `${action.delivery_mode ?? 'shadow'} · ${action.dm_email || 'admin review'}`,
+      }
     case 'observe_slack_team':
       return {
         icon: MessageSquare,

@@ -451,6 +451,7 @@ export class SpaceAutomationService extends SpaceAutomationServiceBase19 {
       callItemId: ctx.itemId,
       callTitle: String(item.title ?? ''),
       suggestionIds,
+      deliveryMode: action.delivery_mode === 'active' ? 'active' : 'shadow',
       dmEmail: typeof action.dm_email === 'string' ? action.dm_email : undefined,
       confirmReaction:
         typeof action.confirm_reaction === 'string' ? action.confirm_reaction : undefined,

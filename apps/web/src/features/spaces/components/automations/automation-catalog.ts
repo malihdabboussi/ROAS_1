@@ -554,7 +554,7 @@ export const ACTION_SECTIONS: AutomationCategorizedSection[] = [
       { value: 'send_slack_message', label: 'Send Slack message' },
       {
         value: 'request_slack_follow_up_confirm',
-        label: 'DM follow-ups for Slack confirm',
+        label: 'Post-call Slack follow-up',
       },
       { value: 'observe_slack_team', label: 'Observe Slack team' },
       { value: 'send_channel_message', label: 'Send channel message' },
@@ -1237,6 +1237,7 @@ export function defaultAction(type: string): AutomationAction | null {
     case 'request_slack_follow_up_confirm':
       return {
         type: 'request_slack_follow_up_confirm',
+        delivery_mode: 'shadow',
         dm_email: 'dylan@dylanvanas.com',
         confirm_reaction: 'white_check_mark',
       }

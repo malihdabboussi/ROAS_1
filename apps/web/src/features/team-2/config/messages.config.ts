@@ -86,4 +86,6 @@ export const SLACK_PEOPLE_MESSAGES = {
   SEND_ERROR: "Couldn't send that message. Confirm the person is Active and Slack is connected.",
   SEND_SUCCESS: 'Sent through Slack.',
   ACTIVE_REQUIRED: 'Set this person to Active before Send now becomes available.',
+  POST_CALL_SHADOW_LABEL: 'Post-call follow-up · Shadow · not sent',
+  POST_CALL_SENT_LABEL: 'Post-call follow-up · sent to Slack',
 } as const

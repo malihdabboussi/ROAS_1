@@ -9,6 +9,7 @@ import {
 } from '../../slack/repositories/slack-people-meeting-follow-up'
 import { SlackPeopleRepository } from '../../slack/repositories/slack-people.repository'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
+import { SlackPeopleService } from '../../slack/services/slack-people.service'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import { SpacesRepository } from '../repositories/spaces.repository'
 import { buildMeetingFollowUpActionLedger } from './meeting-follow-up-action-ledger'
@@ -39,7 +40,8 @@ export const DEFAULT_CONFIRM_REACTION = 'white_check_mark'
 export const DEFAULT_ADMIN_DM_EMAIL = 'dylan@dylanvanas.com'
 
 export type SlackFollowUpConfirmPayload = {
-  status: 'pending' | 'approved' | 'failed'
+  status: 'shadow' | 'pending' | 'approved' | 'failed'
+  delivery_mode?: 'shadow' | 'active'
   channel_id: string
   message_ts: string
   space_id: string
@@ -58,6 +60,7 @@ export type SlackFollowUpConfirmPayload = {
   draft_message_ts?: string
   /** Per-assignee Shadow message proposals created with the review DM. */
   assignee_shadow_action_ids?: string[]
+  assignee_sent_action_ids?: string[]
   agent_key?: 'vibey'
   skill_key?: 'post-call-delivery'
   revision_count?: number
@@ -75,6 +78,7 @@ export class MeetingFollowUpSlackConfirmService {
     @Optional() private readonly slackTools?: SlackAgentToolsService,
     @Optional() private readonly userAgentApi?: UserAgentApiService,
     @Optional() private readonly slackPeopleRepo?: SlackPeopleRepository,
+    @Optional() private readonly slackPeople?: SlackPeopleService,
   ) {}
 
   resolveSuggestionIds(
@@ -106,10 +110,14 @@ export class MeetingFollowUpSlackConfirmService {
     callItemId: string
     callTitle: string
     suggestionIds: string[]
+    deliveryMode?: 'shadow' | 'active'
     dmEmail?: string
     confirmReaction?: string
   }): Promise<Record<string, unknown>> {
-    if (!this.slackTools) throw new Error('Slack tools service is not available')
+    const deliveryMode = input.deliveryMode === 'active' ? 'active' : 'shadow'
+    if (deliveryMode === 'active' && !this.slackTools) {
+      throw new Error('Slack tools service is not available')
+    }
     const dmEmail = (
       input.dmEmail?.trim() ||
       this.config.get<string>('MEETING_FOLLOW_UP_SLACK_DM_EMAIL') ||
@@ -159,7 +167,90 @@ export class MeetingFollowUpSlackConfirmService {
 
     const slackOrgId = await this.resolveSlackSendOrgId(input.supabase, input.userId, input.orgId)
 
-    const lookup = await this.slackTools.findUserByEmail(input.supabase, input.userId, slackOrgId, {
+    let shadowActionId: string | undefined
+    if (slackOrgId && this.slackPeopleRepo) {
+      const target = await this.slackPeopleRepo.findPersonByEmail(
+        input.supabase,
+        slackOrgId,
+        dmEmail,
+      )
+      const action = await this.slackPeopleRepo.createShadowAction(input.supabase, {
+        orgId: slackOrgId,
+        userId: input.userId,
+        agentKey: 'vibey',
+        targetMemberId: target?.id ?? null,
+        actionKind: 'workflow',
+        proposedContent: draft.message,
+        rationale: draft.rationale,
+        metadata: {
+          source: 'meeting_follow_up',
+          target_email: dmEmail,
+          call_item_id: input.callItemId,
+          space_id: input.spaceId,
+          skill_key: 'post-call-delivery',
+          flow_delivery_mode: deliveryMode,
+          context_sources: draft.context_sources,
+        },
+      })
+      shadowActionId = action.id
+    }
+
+    const autoSendAssigneeActionIds: string[] = []
+    const assigneeShadowActionIds = await this.createAssigneeReminderShadows({
+      supabase: input.supabase,
+      userId: input.userId,
+      slackOrgId,
+      spaceId: input.spaceId,
+      callItemId: input.callItemId,
+      callTitle: input.callTitle,
+      callItem,
+      followUps,
+      nameKnowledge: draft.name_knowledge,
+      deliveryMode,
+      onCreated: (actionId, personDeliveryMode) => {
+        if (personDeliveryMode === 'active') autoSendAssigneeActionIds.push(actionId)
+      },
+    })
+
+    if (deliveryMode === 'shadow') {
+      const payload: SlackFollowUpConfirmPayload = {
+        status: 'shadow',
+        delivery_mode: 'shadow',
+        channel_id: '',
+        message_ts: '',
+        space_id: input.spaceId,
+        space_item_ids: followUps.map((item) => String((item as { id: string }).id)),
+        confirm_reaction: confirmReaction,
+        dm_email: dmEmail,
+        requested_at: new Date().toISOString(),
+        ...(shadowActionId ? { shadow_action_id: shadowActionId } : {}),
+        ...(assigneeShadowActionIds.length > 0
+          ? { assignee_shadow_action_ids: assigneeShadowActionIds }
+          : {}),
+        assignee_sent_action_ids: [],
+        draft_message: draft.message,
+        draft_rationale: draft.rationale,
+        draft_context_sources: draft.context_sources,
+        agent_key: 'vibey',
+        skill_key: 'post-call-delivery',
+      }
+      await this.storeConfirmPayload(input, payload)
+      return {
+        delivery_mode: 'shadow',
+        sent: false,
+        dm_email: dmEmail,
+        suggestion_count: followUps.length,
+        suggestion_ids: payload.space_item_ids,
+        assignee_shadow_count: assigneeShadowActionIds.length,
+        assignee_shadow_action_ids: assigneeShadowActionIds,
+        assignee_sent_action_ids: [],
+      }
+    }
+
+    const slackTools = this.slackTools
+    if (!slackTools) throw new Error('Slack tools service is not available')
+
+    const lookup = await slackTools.findUserByEmail(input.supabase, input.userId, slackOrgId, {
       email: dmEmail,
     })
     const slackUserId = String((lookup.user as { id?: string } | null | undefined)?.id ?? '').trim()
@@ -167,7 +258,7 @@ export class MeetingFollowUpSlackConfirmService {
       throw new Error(`Slack user not found for email ${dmEmail}`)
     }
 
-    const dm = await this.slackTools.openDm(input.supabase, input.userId, slackOrgId, {
+    const dm = await slackTools.openDm(input.supabase, input.userId, slackOrgId, {
       slack_user_id: slackUserId,
     })
     const channelId = String(dm.channel_id ?? '').trim()
@@ -191,35 +282,8 @@ export class MeetingFollowUpSlackConfirmService {
       fathomUrl: resolveFathomUrl(callItem),
     })
 
-    let shadowActionId: string | undefined
-    if (slackOrgId && this.slackPeopleRepo) {
-      const target = await this.slackPeopleRepo.findPersonByEmail(
-        input.supabase,
-        slackOrgId,
-        dmEmail,
-      )
-      const action = await this.slackPeopleRepo.createShadowAction(input.supabase, {
-        orgId: slackOrgId,
-        userId: input.userId,
-        agentKey: 'vibey',
-        targetMemberId: target?.id ?? null,
-        actionKind: 'workflow',
-        proposedContent: draft.message,
-        rationale: draft.rationale,
-        metadata: {
-          source: 'meeting_follow_up',
-          target_email: dmEmail,
-          call_item_id: input.callItemId,
-          space_id: input.spaceId,
-          skill_key: 'post-call-delivery',
-          context_sources: draft.context_sources,
-        },
-      })
-      shadowActionId = action.id
-    }
-
     const noUnfurl = { unfurl_links: false, unfurl_media: false } as const
-    const sent = await this.slackTools.sendMessage(input.supabase, input.userId, slackOrgId, {
+    const sent = await slackTools.sendMessage(input.supabase, input.userId, slackOrgId, {
       channel_id: channelId,
       text: reviewText,
       ...noUnfurl,
@@ -229,34 +293,25 @@ export class MeetingFollowUpSlackConfirmService {
 
     let draftMessageTs: string | undefined
     if (draftText) {
-      const draftSent = await this.slackTools.sendMessage(
-        input.supabase,
-        input.userId,
-        slackOrgId,
-        {
-          channel_id: channelId,
-          text: draftText,
-          thread_ts: messageTs,
-          ...noUnfurl,
-        },
-      )
+      const draftSent = await slackTools.sendMessage(input.supabase, input.userId, slackOrgId, {
+        channel_id: channelId,
+        text: draftText,
+        thread_ts: messageTs,
+        ...noUnfurl,
+      })
       draftMessageTs = String((draftSent as { ts?: string }).ts ?? '').trim() || undefined
     }
 
-    const assigneeShadowActionIds = await this.createAssigneeReminderShadows({
+    const assigneeSentActionIds = await this.deliverAssigneeShadows({
       supabase: input.supabase,
       userId: input.userId,
-      slackOrgId,
-      spaceId: input.spaceId,
-      callItemId: input.callItemId,
-      callTitle: input.callTitle,
-      callItem,
-      followUps,
-      nameKnowledge: draft.name_knowledge,
+      orgId: slackOrgId,
+      actionIds: autoSendAssigneeActionIds,
     })
 
     const payload: SlackFollowUpConfirmPayload = {
       status: 'pending',
+      delivery_mode: 'active',
       channel_id: channelId,
       message_ts: messageTs,
       space_id: input.spaceId,
@@ -269,6 +324,9 @@ export class MeetingFollowUpSlackConfirmService {
       ...(assigneeShadowActionIds.length > 0
         ? { assignee_shadow_action_ids: assigneeShadowActionIds }
         : {}),
+      ...(assigneeSentActionIds.length > 0
+        ? { assignee_sent_action_ids: assigneeSentActionIds }
+        : {}),
       draft_message: draft.message,
       draft_rationale: draft.rationale,
       draft_context_sources: draft.context_sources,
@@ -276,16 +334,11 @@ export class MeetingFollowUpSlackConfirmService {
       skill_key: 'post-call-delivery',
     }
 
-    await this.repo.updateItem(
-      input.supabase,
-      input.userId,
-      input.spaceId,
-      input.callItemId,
-      { custom_data: { [SLACK_FOLLOW_UP_CONFIRM_KEY]: payload } },
-      input.orgId,
-    )
+    await this.storeConfirmPayload(input, payload)
 
     return {
+      delivery_mode: 'active',
+      sent: true,
       channel_id: channelId,
       message_ts: messageTs,
       dm_email: dmEmail,
@@ -294,7 +347,51 @@ export class MeetingFollowUpSlackConfirmService {
       confirm_reaction: confirmReaction,
       assignee_shadow_count: assigneeShadowActionIds.length,
       assignee_shadow_action_ids: assigneeShadowActionIds,
+      assignee_sent_action_ids: assigneeSentActionIds,
     }
+  }
+
+  private async storeConfirmPayload(
+    input: {
+      supabase: SupabaseClient
+      userId: string
+      orgId: string | null
+      spaceId: string
+      callItemId: string
+    },
+    payload: SlackFollowUpConfirmPayload,
+  ): Promise<void> {
+    await this.repo.updateItem(
+      input.supabase,
+      input.userId,
+      input.spaceId,
+      input.callItemId,
+      { custom_data: { [SLACK_FOLLOW_UP_CONFIRM_KEY]: payload } },
+      input.orgId,
+    )
+  }
+
+  private async deliverAssigneeShadows(input: {
+    supabase: SupabaseClient
+    userId: string
+    orgId: string | null
+    actionIds: string[]
+  }): Promise<string[]> {
+    if (input.actionIds.length === 0) return []
+    if (!this.slackPeople) throw new Error('Slack people delivery service is unavailable')
+    const sentIds: string[] = []
+    for (const actionId of input.actionIds) {
+      await this.slackPeople.reviewShadowAction(
+        input.supabase,
+        input.userId,
+        input.orgId,
+        actionId,
+        'approved',
+      )
+      await this.slackPeople.sendShadowAction(input.supabase, input.userId, input.orgId, actionId)
+      sentIds.push(actionId)
+    }
+    return sentIds
   }
 
   /**
@@ -311,6 +408,8 @@ export class MeetingFollowUpSlackConfirmService {
     callItem: Record<string, unknown> | null
     followUps: Array<Record<string, unknown>>
     nameKnowledge?: NameKnowledgeEntry[]
+    deliveryMode: 'shadow' | 'active'
+    onCreated?: (actionId: string, personDeliveryMode: string | null) => void
   }): Promise<string[]> {
     if (!input.slackOrgId || !this.slackPeopleRepo) return []
     return createAssigneeReminderShadowActions({
@@ -323,6 +422,8 @@ export class MeetingFollowUpSlackConfirmService {
       fathomUrl: resolveFathomUrl(input.callItem),
       followUps: input.followUps,
       nameKnowledge: input.nameKnowledge ?? [],
+      deliveryMode: input.deliveryMode,
+      onCreated: input.onCreated,
       people: {
         createShadowAction: (supabase, payload) =>
           this.slackPeopleRepo!.createShadowAction(supabase, payload),

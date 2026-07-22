@@ -2,9 +2,9 @@
 
 **Last Modified:** 2026-07-22
 
-First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact draft is stored in Shadow → Slack DM asks for review (separate threaded proposed recap) → ✅ confirms in ROAS → that exact approved recap is posted in the thread. Per-assignee reminders stay in People until Approve & Send. Confirmed fulfillment action items are independently resolved to a Page Grader client and assignee, delegated, and linked back to the ROAS Action Ledger; internal handoffs and ambiguous items stay in ROAS.
+First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
 
-## Status (2026-07-20)
+## Status (2026-07-22)
 
 | Area                                                   | State                                                                                                      |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
@@ -13,6 +13,7 @@ First production loop for the always-aware Slack agent: Fathom call lands in Mee
 | Shareable thread recap after ✅                        | Pixel-written, exact approved draft reused                                                                 |
 | Database-backed `post-call-delivery` skill             | Implemented; migration required                                                                            |
 | Shadow proposal in Team → People → Conversations       | Implemented                                                                                                |
+| Flow-level Shadow / Active delivery                    | Implemented; Shadow processes without Slack sends, Active sends eligible internal reminders                |
 | Slack org token resolution (personal call + org Slack) | Fixed                                                                                                      |
 | Topics truncation mid-word                             | Fixed (brief skips Topics dump)                                                                            |
 | Fathom markdown links → Slack mrkdwn                   | Fixed                                                                                                      |
@@ -36,7 +37,8 @@ Fathom recording ready (my_recordings OR shared_team_recordings)
   → Pixel + post-call-delivery skill drafts once
   → store the exact recap in the Shadow ledger
   → request_slack_follow_up_confirm
-       DM admin (default dylan@dylanvanas.com)
+       Shadow: store recap + account-manager drafts in Conversations; send nothing
+       Active: DM admin review + send eligible Internal/Active account-manager drafts
   → human reacts ✅
   → stamp follow-ups confirmed in ROAS
   → reply in Slack thread with the exact approved recap
@@ -70,11 +72,11 @@ The skill is database-first in `agent_skills` and mirrored under `docker/agents/
 2. Service resolves suggestion IDs from the action or the latest `agent_suggest_tasks` step.
 3. Calls Agent API `/api/agents/post-call-draft`, explicitly loading `post-call-delivery`, and receives `{ message, rationale, context_sources }`.
 4. Writes that draft to `slack_shadow_actions` as a `workflow` proposal, linked to the admin's Slack person record when an email match exists.
-5. Opens Slack DM via the bot token and posts a review message; posts the proposed shareable recap as a **threaded** second message.
-6. Creates one Shadow `message` proposal per follow-up assignee matched to a Slack person (grouped tasks, friendly reminder tone). Skips unmatched / ignored / `delivery_mode=off`. Ids stored on `assignee_shadow_action_ids`.
-7. Stores pending payload on the **call** item:
+5. Creates one Shadow `message` proposal per follow-up assignee matched to an **Internal** Slack person (grouped tasks, friendly reminder tone). Skips unmatched, External, Ignored, and `delivery_mode=off`. IDs are stored on `assignee_shadow_action_ids`.
+6. In `delivery_mode=shadow`, stores the run payload and stops without opening a DM or sending any Slack message. In `delivery_mode=active`, opens the admin review DM, posts the proposed recap in its thread, then approves and sends only account-manager proposals whose person record is also Active.
+7. Stores the Shadow or pending payload on the **call** item:
 
-   `custom_data.slack_follow_up_confirm = { status, channel_id, message_ts, space_item_ids, confirm_reaction, assignee_shadow_action_ids?, ... }`
+   `custom_data.slack_follow_up_confirm = { status, delivery_mode, channel_id, message_ts, space_item_ids, confirm_reaction, assignee_shadow_action_ids?, assignee_sent_action_ids?, ... }`
 
 8. Slack Events API `reaction_added` → `SlackService.handleReactionAddedEvent` → `MeetingFollowUpSlackConfirmService.handleReactionAdded`.
 9. On match (pending + correct reaction + channel/ts):
@@ -108,8 +110,10 @@ Before approval, a human reply in the review thread is treated as revision feedb
 - One `action_kind: message` proposal per person who owns ≥1 follow-up
 - Friendly nudge listing only that person’s tasks with an inline `linked here` call link
 - Closes with “Feel free to message me if you have questions.”
-- Review/approve in Team → People; send only when the person is Active (existing Shadow send path)
-- Does **not** auto-send when you ✅ the meeting review
+- Every proposal and delivered message is visible in Team → People → Conversations with a post-call label, call title, timestamp, status, and rationale
+- Flow Shadow never sends; Flow Active sends automatically only when the recipient is Internal and their person delivery mode is Active
+- External and Ignored people never receive proactive post-call messages
+- The admin client recap still requires its own Slack review-thread approval
 - On Approve & Send, Shadow is stamped `sent` with `metadata.slack_message_ts` + `metadata.slack_channel_id` so Conversations can track the DM
 - Ops/`chat.postMessage` samples are **not** tracked unless they go through `sendShadowAction` (or mark the matching Shadow sent after post)
 - If an ops sample is DMed to a different person than the ledger target (e.g. Aaron reminder content posted to Dylan’s Pixel DM), retarget `target_member_id` to the real recipient and keep `metadata.ops_manual` / `original_target_member_id` for audit — do not leave “Sent” under the wrong person

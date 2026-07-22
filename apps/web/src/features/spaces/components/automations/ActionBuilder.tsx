@@ -47,6 +47,7 @@ import { AutomationLazySelect } from './AutomationLazySelect'
 import { AutomationRosterSelect } from './AutomationRosterSelect'
 import { AutomationTaskFieldsEditor } from './AutomationTaskFieldsEditor'
 import { ObserveSlackTeamActionFields } from './ObserveSlackTeamActionFields'
+import { PostCallSlackActionFields } from './PostCallSlackActionFields'
 import { PromptTemplateEditor } from './PromptTemplateEditor'
 
 interface ActionBuilderProps {
@@ -1516,6 +1517,13 @@ export function ActionBuilder({
 
               {action.type === 'observe_slack_team' && (
                 <ObserveSlackTeamActionFields
+                  action={action}
+                  onChange={(patch) => updateAction(idx, patch as Partial<AutomationAction>)}
+                />
+              )}
+
+              {action.type === 'request_slack_follow_up_confirm' && (
+                <PostCallSlackActionFields
                   action={action}
                   onChange={(patch) => updateAction(idx, patch as Partial<AutomationAction>)}
                 />

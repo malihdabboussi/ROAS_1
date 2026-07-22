@@ -1094,10 +1094,9 @@ export type AutomationAction =
     }
   | {
       type: 'request_slack_follow_up_confirm'
+      delivery_mode?: 'shadow' | 'active'
       dm_email?: string
       confirm_reaction?: string
-      page_grader_client_id?: string
-      page_grader_task_type?: string
       suggestion_ids?: string[]
       continuation?: AutomationContinuation
     }

@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   buildAssigneeActionReminderMessage,
   cleanAssigneeDisplayName,
+  createAssigneeReminderShadowActions,
   groupFollowUpsByAssignee,
 } from '../meeting-follow-up-assignee-reminders'
 
@@ -55,5 +56,40 @@ describe('meeting-follow-up-assignee-reminders', () => {
     expect(cleanAssigneeDisplayName('@TheShawnKaplan 615.426.3182')).toBeNull()
     expect(cleanAssigneeDisplayName('Aaron McKeague')).toBe('Aaron McKeague')
     expect(cleanAssigneeDisplayName('Impact Team')).toBeNull()
+  })
+
+  it('never creates a proactive post-call proposal for an external person', async () => {
+    const createShadowAction = vi.fn()
+    const findPersonByDisplayName = vi.fn().mockResolvedValue({
+      id: 'external-client',
+      relationship_kind: 'external',
+      delivery_mode: 'active',
+    })
+
+    const ids = await createAssigneeReminderShadowActions({
+      supabase: {} as never,
+      userId: 'user-1',
+      slackOrgId: 'org-1',
+      spaceId: 'space-1',
+      callItemId: 'call-1',
+      callTitle: 'Client call',
+      fathomUrl: null,
+      followUps: [
+        {
+          id: 'fu-1',
+          title: 'Send the client an update',
+          custom_data: { suggested_assignee_name: 'Client Person' },
+        },
+      ],
+      nameKnowledge: [],
+      people: {
+        createShadowAction,
+        findPersonByEmail: vi.fn().mockResolvedValue(null),
+        findPersonByDisplayName,
+      },
+    })
+
+    expect(ids).toEqual([])
+    expect(createShadowAction).not.toHaveBeenCalled()
   })
 })

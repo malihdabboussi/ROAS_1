@@ -264,6 +264,7 @@ const fathomMeetingLog: SpaceTemplateAutomationSeed = {
     },
     {
       type: 'request_slack_follow_up_confirm',
+      delivery_mode: 'shadow',
       dm_email: 'dylan@dylanvanas.com',
       confirm_reaction: 'white_check_mark',
     },

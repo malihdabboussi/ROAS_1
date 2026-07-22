@@ -39,6 +39,7 @@ export function SlackShadowInbox({
         <div className="divide-border divide-y">
           {actions.map((action) => {
             const person = peopleById.get(action.target_member_id ?? '')
+            const isPostCall = action.metadata?.source === 'meeting_follow_up_assignee_reminder'
             return (
               <article key={action.id} className="p-spacing-4">
                 <div className="gap-spacing-3 flex items-center justify-between">
@@ -57,6 +58,16 @@ export function SlackShadowInbox({
                     {action.status}
                   </span>
                 </div>
+                {isPostCall ? (
+                  <div className="mt-spacing-2 gap-spacing-2 flex flex-wrap items-center">
+                    <span className="badge-glass badge-glass-blue body-4">Post-call follow-up</span>
+                    {typeof action.metadata?.call_title === 'string' ? (
+                      <span className="body-4 text-muted-foreground">
+                        {action.metadata.call_title}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
                 <p className="body-3 text-foreground mt-spacing-2 whitespace-pre-wrap">
                   {action.proposed_content}
                 </p>

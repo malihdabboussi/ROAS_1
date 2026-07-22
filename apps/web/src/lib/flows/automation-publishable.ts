@@ -181,6 +181,9 @@ export function validateConcreteAction(action: AutomationActionLike): string | n
       if (!action.text_template?.trim()) return 'Add Slack message text'
       return null
     case 'request_slack_follow_up_confirm':
+      if (!['shadow', 'active'].includes(action.delivery_mode ?? 'shadow')) {
+        return 'Choose Shadow or Active delivery'
+      }
       return null
     case 'observe_slack_team':
       if (!action.loop_kind?.trim()) return 'Choose what the Slack loop should detect'
