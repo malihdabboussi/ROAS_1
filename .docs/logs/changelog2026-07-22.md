@@ -182,3 +182,10 @@ What: Deployed combined Fathom shared-team ingest + Team Agenda to production `r
 Why: GitHub gitSource deploys for roas-api were being canceled; clean CLI archive deploy was required after fixing the Team Agenda TS2353 build break.
 Impact: Hard-refresh Home Agenda Team + next Nate/Nefi-hosted Fathom call should auto-land in Personal Meetings.
 Files: Vercel Production `roas-api` / `roas-web`
+
+## [2026-07-22 13:44] - [STYLE]
+
+What: Merged the complete Ads Research report experience into current local `main`: action-first run summaries, condensed angle previews, in-app creative analysis, linked research findings, a production path, full-fit media, normalized angle titles, and evidence-first drawers with optional persisted deep analysis.
+Why: Ads Research needed to explain what Blaze researched, make the next production action obvious, and show useful creative evidence before spending additional analysis credits.
+Impact: Users can review research-to-launch at a glance, inspect creatives without leaving ROAS, open supporting outputs directly, and request deeper transcript and formula extraction only when needed.
+Files: `apps/web/src/features/spaces/components/ads-research/**`, `apps/web/src/features/spaces/config/ads-research-messages.config.ts`, focused tests, `documentation/features/social-research.md`, `.docs/plans/agent-follow-up-work.md`

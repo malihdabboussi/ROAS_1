@@ -88,35 +88,28 @@ describe('AdsResearchRunsView', () => {
     )
   })
 
-  it('opens Blaze with a grounded replacement-run preflight', async () => {
+  it('opens completed reports without a replacement-run action', async () => {
     mocks.fetchMissions.mockResolvedValueOnce([existingRun])
+    mocks.listSavedAdSearches.mockResolvedValueOnce([
+      {
+        id: 'search-1',
+        mission_ids: ['mission-previous'],
+        result_count: 14,
+      },
+      {
+        id: 'search-2',
+        mission_ids: ['mission-previous'],
+        result_count: 12,
+      },
+    ])
     render(<AdsResearchRunsView spaceId="space-1" campaignId="campaign-1" />)
 
-    fireEvent.click(await screen.findByText('Research the insurance education offer'))
-    fireEvent.click(screen.getByRole('button', { name: 'Rerun Research' }))
-
-    await vi.waitFor(() => expect(mocks.openFreshChatDrawer).toHaveBeenCalledOnce())
-    expect(mocks.ensureAgencyTeam).toHaveBeenCalledWith('campaign-1')
-    expect(mocks.seedComposer).toHaveBeenCalledWith(
-      expect.objectContaining({
-        agentKey: 'blaze',
-        railIntent: 'new',
-        workContext: {
-          surface: 'spaces',
-          spaceId: 'space-1',
-          campaignId: 'campaign-1',
-        },
-        content: expect.stringContaining('mission-previous'),
-      }),
-    )
-    const prompt = mocks.seedComposer.mock.calls[0]?.[0].content
-    expect(prompt).toContain('verify the client identity')
-    expect(prompt).toContain('Customer Brain')
-    expect(prompt).toContain('mounted Meta')
-    expect(prompt).toContain('fresh replacement mission')
-    expect(prompt).toContain('delegate_to_agent')
-    expect(prompt).toContain('target_agent_key: `vibey`')
-    expect(prompt).toContain('input.playbook_id: `ads-research`')
-    expect(prompt).toContain('Do not reuse')
+    const runTitle = await screen.findByText('Research the insurance education offer')
+    expect(screen.getByText('2 angles')).toBeVisible()
+    expect(screen.getByText('26 visual ads')).toBeVisible()
+    fireEvent.click(runTitle)
+    expect(screen.getByRole('button', { name: 'Mission Details' })).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Rerun Research' })).not.toBeInTheDocument()
+    expect(mocks.openFreshChatDrawer).not.toHaveBeenCalled()
   })
 })

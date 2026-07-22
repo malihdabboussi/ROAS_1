@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   Bookmark,
   BookmarkCheck,
@@ -47,8 +48,10 @@ export function AdResultCard({
   onSave?: () => void
   onClick: () => void
 }) {
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null)
   const badge = formatBadge(ad.format)
   const dateLabel = shownDateLabel(ad.last_shown ?? ad.first_shown)
+  const hasImagePreview = Boolean(ad.image_url && failedImageUrl !== ad.image_url)
 
   return (
     <div
@@ -61,57 +64,66 @@ export function AdResultCard({
           onClick()
         }
       }}
-      className="hover:border-[var(--color-muted-foreground)]/30 group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--color-secondary)] transition-all hover:shadow-lg"
+      className="border-border bg-secondary hover:bg-hover-subtle rounded-spacing-3 group flex cursor-pointer flex-col overflow-hidden border transition-all hover:shadow-lg"
     >
       <div
         className={cn(
-          'relative w-full shrink-0 overflow-hidden bg-black/20',
-          ad.platform === 'tiktok' ? 'aspect-[9/16]' : 'aspect-[9/8]',
+          'bg-secondary relative w-full shrink-0 overflow-hidden',
+          hasImagePreview
+            ? ad.platform === 'tiktok'
+              ? 'aspect-[9/16]'
+              : 'aspect-[9/8]'
+            : 'aspect-square',
         )}
       >
-        {ad.image_url ? (
+        {hasImagePreview ? (
           <img
-            src={ad.image_url}
-            alt={ad.creative_text ?? ad.ad_id}
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+            src={ad.image_url ?? undefined}
+            alt="Ad creative preview"
+            className="h-full w-full object-contain"
             loading="lazy"
             draggable={false}
+            onError={() => setFailedImageUrl(ad.image_url)}
           />
         ) : (
-          <div className="gap-spacing-2 flex h-full w-full flex-col items-center justify-center px-3 text-center text-[var(--color-muted-foreground)]">
+          <div className="gap-spacing-2 px-spacing-3 text-muted-foreground flex h-full w-full flex-col items-center justify-center text-center">
             {ad.creative_text ? (
               <p className="body-3 line-clamp-5">{ad.creative_text}</p>
-            ) : ad.format === 'video' ? (
+            ) : (
               <>
-                {/* Google hides video media in search results — Analyze pulls it when available. */}
-                <Play className="h-7 w-7 opacity-40" />
+                {ad.format === 'video' ? (
+                  <Play className="icon-lg opacity-40" />
+                ) : (
+                  <Megaphone className="icon-lg opacity-30" />
+                )}
                 {ad.advertiser_name ? (
-                  <p className="body-3 line-clamp-2 font-medium text-[var(--foreground)]">
+                  <p className="body-3 text-foreground line-clamp-2 font-medium">
                     {ad.advertiser_name}
                   </p>
                 ) : null}
-                <p className="text-[10px] opacity-70">Video ad — open to analyze</p>
+                <p className="body-4 font-medium">Preview unavailable</p>
+                <p className="typo-caption opacity-70">Open the original ad</p>
               </>
-            ) : (
-              <Megaphone className="h-8 w-8 opacity-30" />
             )}
           </div>
         )}
         {badge && (
-          <span className="absolute left-2 top-2 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
+          <span className="bg-modal-overlay text-foreground typo-section-label left-spacing-2 top-spacing-2 px-spacing-2 py-spacing-1 rounded-spacing-1 absolute font-medium">
             {badge}
           </span>
         )}
         {dateLabel && (
-          <span className="absolute right-2 top-2 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] text-white/80">
+          <span className="bg-modal-overlay text-muted-foreground typo-caption right-spacing-2 top-spacing-2 px-spacing-2 py-spacing-1 rounded-spacing-1 absolute">
             {dateLabel}
           </span>
         )}
         {ad.is_active != null && (
           <span
             className={cn(
-              'absolute bottom-2 left-2 rounded-md px-1.5 py-0.5 text-[10px] font-medium',
-              ad.is_active ? 'bg-emerald-500/80 text-white' : 'bg-black/60 text-white/70',
+              'typo-section-label bottom-spacing-2 left-spacing-2 px-spacing-2 py-spacing-1 rounded-spacing-1 absolute font-medium',
+              ad.is_active
+                ? 'bg-success/80 text-foreground'
+                : 'bg-modal-overlay text-muted-foreground',
             )}
           >
             {ad.is_active ? 'ACTIVE' : 'INACTIVE'}
@@ -126,60 +138,62 @@ export function AdResultCard({
             }}
             title={saved ? 'Saved to space' : 'Save ad to space'}
             className={cn(
-              'absolute bottom-2 right-2 flex items-center justify-center rounded-md bg-black/60 p-1.5 text-white transition-opacity',
-              saved ? 'opacity-100' : 'opacity-0 hover:bg-black/80 group-hover:opacity-100',
+              'bg-modal-overlay text-foreground bottom-spacing-2 right-spacing-2 p-spacing-2 rounded-spacing-1 absolute flex items-center justify-center transition-opacity',
+              saved ? 'opacity-100' : 'hover:bg-secondary opacity-0 group-hover:opacity-100',
             )}
           >
             {saving ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="icon-sm animate-spin" />
             ) : saved ? (
-              <BookmarkCheck className="h-3.5 w-3.5 text-emerald-400" />
+              <BookmarkCheck className="icon-sm text-success" />
             ) : (
-              <Bookmark className="h-3.5 w-3.5" />
+              <Bookmark className="icon-sm" />
             )}
           </button>
         ) : null}
       </div>
 
       {ad.image_url && ad.creative_text ? (
-        <p className="body-3 line-clamp-2 px-3 pt-2 text-[var(--foreground)]">{ad.creative_text}</p>
+        <p className="body-3 text-foreground px-spacing-3 pt-spacing-2 line-clamp-2">
+          {ad.creative_text}
+        </p>
       ) : null}
-      {ad.advertiser_name && (
-        <p className="body-3 truncate px-3 pt-1 text-[var(--color-muted-foreground)]">
+      {ad.advertiser_name && (hasImagePreview || ad.creative_text) ? (
+        <p className="body-3 text-muted-foreground px-spacing-3 pt-spacing-1 truncate">
           {ad.advertiser_name}
         </p>
-      )}
+      ) : null}
 
-      <div className="flex shrink-0 flex-wrap items-center gap-1.5 px-3 py-2.5">
+      <div className="gap-spacing-2 px-spacing-3 py-spacing-2 flex shrink-0 flex-wrap items-center">
         {ad.days_running != null && (
           <span
-            className="badge-glass badge-glass-muted flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+            className="badge-glass badge-glass-muted body-4 gap-spacing-1 px-spacing-2 py-spacing-1 flex items-center rounded-full font-medium"
             title="Days running"
           >
-            <Clock className="h-3 w-3" />
+            <Clock className="icon-xs" />
             {ad.days_running}d
           </span>
         )}
         {ad.reach_estimate && (
           <span
-            className="badge-glass badge-glass-muted flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+            className="badge-glass badge-glass-muted body-4 gap-spacing-1 px-spacing-2 py-spacing-1 flex items-center rounded-full font-medium"
             title="Estimated audience"
           >
-            <Users className="h-3 w-3" />
+            <Users className="icon-xs" />
             {ad.reach_estimate}
           </span>
         )}
         {ad.variant_count != null && ad.variant_count > 1 && (
           <span
-            className="badge-glass badge-glass-muted flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+            className="badge-glass badge-glass-muted body-4 gap-spacing-1 px-spacing-2 py-spacing-1 flex items-center rounded-full font-medium"
             title="Running copies of this creative. More copies usually means it converts"
           >
-            <Layers className="h-3 w-3" />×{ad.variant_count}
+            <Layers className="icon-xs" />×{ad.variant_count}
           </span>
         )}
         {ad.days_running == null && !ad.reach_estimate && (
-          <span className="badge-glass badge-glass-muted flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium">
-            <Eye className="h-3 w-3" />
+          <span className="badge-glass badge-glass-muted body-4 gap-spacing-1 px-spacing-2 py-spacing-1 flex items-center rounded-full font-medium">
+            <Eye className="icon-xs" />
             Ad
           </span>
         )}

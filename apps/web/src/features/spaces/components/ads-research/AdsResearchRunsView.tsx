@@ -14,7 +14,11 @@ import {
   type MissionDeliverable,
 } from '@/lib/missions'
 import { ADS_RESEARCH_MESSAGES } from '../../config/ads-research-messages.config'
-import { ensureAdsResearchAgencyTeam } from '../../services/ads-research.service'
+import {
+  ensureAdsResearchAgencyTeam,
+  listSavedAdSearches,
+  type SavedAdSearchSummary,
+} from '../../services/ads-research.service'
 import { AdsResearchRunCard } from './AdsResearchRunCard'
 import { AdsResearchRunDetailView } from './AdsResearchRunDetailView'
 
@@ -29,20 +33,6 @@ After I answer, stay as Blaze and use \`delegate_to_agent\` with target_agent_ke
 
 Only after the delegated action succeeds, confirm "New mission created" in chat and show or link the mission. Do not send me to Mission Control or ask me to create the mission manually. Use the mounted Meta connection as the source of truth for current performance. Do not infer that Meta is disconnected from missing documents or prior research.`
 
-function buildResearchRerunPrompt(run: Mission): string {
-  return `Rerun Ads Research mission ${run.id} as a fresh replacement mission with Blaze.
-
-Before creating the replacement, verify the client identity in the current Space and campaign context:
-1. Resolve the exact campaign and Space from the current work context.
-2. Read the campaign, Space, linked files, active Theme, and relevant Customer Brain evidence. Use Company Brain only for agency standards, not as proof of the client's identity.
-3. Verify the mounted Meta ad account, Facebook Page, and available campaigns. Treat account and advertiser names as routing evidence, not proof of the business model.
-4. Show me a concise identity summary with the client or brand, business model, offer, audience, sources, and any conflicts. Ask me to confirm or correct it.
-
-After I confirm, stay as Blaze and use \`delegate_to_agent\` with target_agent_key: \`vibey\`. In the task_description, tell Vibey to call \`create_mission\` with the exact current space_id and campaign_id, title \`Ads Research\`, assigned_agent_key \`ads_manager\`, and input.playbook_id: \`ads-research\`. Put the corrected answers into input.playbook_kickoff and include replacement_of_mission_id: \`${run.id}\` in input. Carry forward the prior kickoff only where it is still valid. Do not call \`create_mission\` yourself because mission creation is owned by Vibey.
-
-Do not reuse the prior mission's analysis or deliverables as factual input. Only after the delegated action succeeds, confirm "New mission created" in chat and show or link the replacement mission. Do not send me to Mission Control or ask me to create the mission manually.`
-}
-
 export function AdsResearchRunsView({
   spaceId,
   campaignId,
@@ -52,6 +42,7 @@ export function AdsResearchRunsView({
 }) {
   const [runs, setRuns] = useState<Mission[]>([])
   const [deliverables, setDeliverables] = useState<Record<string, MissionDeliverable[]>>({})
+  const [searches, setSearches] = useState<SavedAdSearchSummary[]>([])
   const [selectedRun, setSelectedRun] = useState<Mission | null>(null)
   const [missionModalOpen, setMissionModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -62,14 +53,18 @@ export function AdsResearchRunsView({
   const loadRuns = useCallback(async () => {
     setLoading(true)
     try {
-      const missions = await fetchMissions({
-        space_id: spaceId,
-        campaign_id: campaignId ?? undefined,
-      })
+      const [missions, savedSearches] = await Promise.all([
+        fetchMissions({
+          space_id: spaceId,
+          campaign_id: campaignId ?? undefined,
+        }),
+        listSavedAdSearches(spaceId),
+      ])
       const researchRuns = missions.filter(
         (mission) => mission.input?.playbook_id === 'ads-research',
       )
       setRuns(researchRuns)
+      setSearches(savedSearches)
       setDeliverables(await fetchDeliverablesForMissions(researchRuns.map((mission) => mission.id)))
     } catch {
       toast.error(ADS_RESEARCH_MESSAGES.LOAD_FAILED)
@@ -108,14 +103,6 @@ export function AdsResearchRunsView({
 
   const startResearch = () => void openBlazeChat(RESEARCH_INTAKE_PROMPT)
 
-  const rerunResearch = (run: Mission) => {
-    if (!campaignId) {
-      toast.error(ADS_RESEARCH_MESSAGES.NO_CAMPAIGN)
-      return
-    }
-    void openBlazeChat(buildResearchRerunPrompt(run))
-  }
-
   const runCountLabel = useMemo(
     () => `${runs.length} research ${runs.length === 1 ? 'run' : 'runs'}`,
     [runs.length],
@@ -130,7 +117,6 @@ export function AdsResearchRunsView({
           spaceId={spaceId}
           onBack={() => setSelectedRun(null)}
           onOpenMission={() => setMissionModalOpen(true)}
-          onRerun={() => rerunResearch(selectedRun)}
         />
         {missionModalOpen ? (
           <MissionDetailModal
@@ -184,6 +170,7 @@ export function AdsResearchRunsView({
                 key={run.id}
                 run={run}
                 deliverables={deliverables[run.id] ?? []}
+                searches={searches.filter((search) => search.mission_ids?.includes(run.id))}
                 onOpen={() => setSelectedRun(run)}
               />
             ))}

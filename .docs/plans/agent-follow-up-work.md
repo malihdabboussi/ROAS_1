@@ -7929,3 +7929,12 @@ Files:
   Evidence: `wc -l` after Signals wiring + home extraction.
   Needed work: Extract URL/nav helpers or loading/error shell if the orchestrator grows further.
   Deferred because: Home roster already extracted to `SlackPeopleHome.tsx`; current change stays under limit.
+
+## 2026-07-22 - [ARCH] Restore the web typecheck baseline
+
+Status: Open
+Found while: Reorganizing the Ads Research run and report UI
+Files: `apps/web/src/components/deliverables/*.test.tsx`, `apps/web/src/components/global-chat/config/work-context.config.test.ts`, `apps/web/src/features/studio/**/*.test.tsx`, `packages/context-breakdown/src/index.ts`, and other unrelated web test fixtures reported by `pnpm --filter @vibey/web typecheck`
+Evidence: The focused Ads Research tests and lint pass, and the typecheck reports no Ads Research errors, but the full web typecheck exits with pre-existing fixture/API drift and a missing `js-tiktoken` module across unrelated deliverables, chat, Studio, sidebar, and context-breakdown surfaces.
+Needed work: Reconcile the stale test fixtures with their current component contracts, restore the context-breakdown dependency, and rerun the full web typecheck until green.
+Reason not done now: Those failures are outside the Ads Research UI and span multiple concurrently changing product surfaces.

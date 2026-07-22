@@ -61,7 +61,13 @@ The media backend exposes `POST /api/media/cache-social-images` for authenticate
 
 Account add, sync, remove, and Social Research schema saves use the selected `activeSpace.org_id` instead of relying on the browser's global active org. This keeps People-panel mutations scoped to the Space the user is viewing, even when their session org differs.
 
-The Ads Research view opens on **Research Runs**. **Run Research** first ensures the agency strategist, copywriter, designer, and ads manager exist and are assigned to the campaign, then opens the exact provisioned ads-manager agent in the slide-in chat and starts a short intake covering the research purpose, Standard or Deep depth, and any specific focus. The runtime key returned by team provisioning is authoritative because a newly hired Blaze agent may use `blaze` rather than the `ads_manager` role slug. Blaze creates the deterministic `ads-research` mission after the user answers and confirms the new mission in chat. Opening a run shows a visual research report inside Ads Research. The report combines the exact saved ad-library cards used by Blaze with the analysis, recommendations, copy, and script deliverables. **Rerun Research** uses the same team preflight, then opens Blaze with a replacement-run preflight that verifies the exact campaign and Space, campaign-specific Customer Brain evidence, and the mounted Meta account before asking the user to confirm the client identity. The replacement run carries forward valid kickoff details but does not treat the old analysis or deliverables as factual input. Mission Details remains a secondary action for operational status, subtasks, activity, and approval. **Library Search** remains available as the secondary surface for manual Meta, TikTok, and Google ad-library searches. Library-only group, layout, sort, and refresh controls stay hidden while Research Runs is active.
+The Ads Research view opens on **Research Runs**. **Run Research** first ensures the agency strategist, copywriter, designer, and ads manager exist and are assigned to the campaign, then opens the exact provisioned ads-manager agent in the slide-in chat and starts a short intake covering the research purpose, Standard or Deep depth, and any specific focus. The runtime key returned by team provisioning is authoritative because a newly hired Blaze agent may use `blaze` rather than the `ads_manager` role slug. Blaze creates the deterministic `ads-research` mission after the user answers and confirms the new mission in chat. Run cards summarize their updated date, status, research-angle count, visual-ad count, and output count so prior work can be compared without opening every mission.
+
+Opening a run shows a visual research report inside Ads Research. The report starts with a linked summary of what Blaze researched, what Blaze found, what Blaze created, and what happens next. It then shows the production path from selecting concepts through launch, while keeping the source documents in one expandable section. Completed reports do not offer a rerun action because rerunning could be mistaken for resetting the existing evidence. Mission Details remains the secondary action for operational status, subtasks, activity, and approval.
+
+Saved searches are condensed into numbered angle rows with thumbnail previews. Renderer-owned numbering strips any old `Angle N:` prefix from saved titles so the displayed angle number cannot conflict with the title. One angle expands at a time and initially limits the evidence grid to six ads, with an explicit action to reveal the full angle. Creative previews use full-fit media rather than cropping the source. Selecting a creative opens the same in-app asset analysis used by Library Search. Before any additional analysis is requested, the drawer shows the evidence already collected: copy, traffic source, destination, search query, and the research angle Blaze used it for. **Deep analyze** is an optional second layer that extracts the transcript, formula, offer, and reusable patterns. Its result is merged back into the mission-linked saved-search snapshot so reopening the creative retains the breakdown without spending credits again. Failed third-party thumbnails render a compact unavailable-preview state instead of retaining a broken video-sized frame.
+
+**Library Search** remains available as the secondary surface for manual Meta, TikTok, and Google ad-library searches. Library-only group, layout, sort, and refresh controls stay hidden while Research Runs is active.
 
 The Ads Research mission deliberately stops before final creative production or Meta publishing. Recommended copy and video scripts load `dylans-super-voice` as their only voice authority, use native editable Docs, and reject PDF output. Ad Creation, Ad Launch, and Ad Optimization remain separate future workflows.
 
@@ -96,6 +102,16 @@ YouTube long-form videos use `youtube_video` (16:9 grid cards) and Shorts use `y
 X tweets use `tweet` (square cards) and video tweets use `tweet_video` (16:9). Each can be toggled independently via `media_show_x_tweets` and `media_show_x_videos`.
 
 ## Decision Log
+
+### 2026-07-22 - Evidence-first research reports
+
+Completed Ads Research reports now summarize the work and production path instead of presenting a generic start card or rerun action. Each saved creative exposes its existing copy, platform, destination, and research context before offering the optional persisted Deep analyze action. Full-fit previews preserve the complete creative, and report-owned angle numbering removes conflicting prefixes from saved search titles.
+
+### 2026-07-22 - Action-first report hierarchy
+
+Ads Research reports now lead with recommended concepts and copy, summarize each run with evidence and output counts, and collapse visual evidence into one expandable research angle at a time. Expired or blocked third-party preview images use a compact fallback so unavailable TikTok media cannot create oversized broken cards.
+
+Creative evidence cards now open the established in-app ad analysis panel instead of navigating directly to third-party media. Any transcript, formula, or platform detail generated there is persisted to the mission-linked saved search.
 
 ### 2026-07-22 - Use the provisioned Blaze runtime key
 

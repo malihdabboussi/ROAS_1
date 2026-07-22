@@ -16,7 +16,6 @@ import {
   Minimize2,
   Play,
   Tag,
-  Target,
   Users,
   Wallet,
   X,
@@ -36,6 +35,10 @@ import {
   formatReadableMultiline,
   splitTranscriptParagraphs,
 } from '../instagram-research/ig-display-text'
+import {
+  AdResearchEvidenceOverview,
+  type AdResearchEvidenceContext,
+} from './AdResearchEvidenceOverview'
 import { adResultExternalLink } from './AdResultCard'
 
 interface AdAnalysisPanelProps {
@@ -44,6 +47,7 @@ interface AdAnalysisPanelProps {
   onClose: () => void
   saved: boolean
   saving: boolean
+  researchContext?: AdResearchEvidenceContext
   /** Hidden when undefined (e.g. opened from the Saved ads grid). */
   onSave?: () => void
   /** Persists analysis fields (transcript/breakdown/details) onto the snapshot or item. */
@@ -138,50 +142,13 @@ function AdAnalysisTabBar({
   )
 }
 
-/** Decorative stack matching IgContentAnalyzeMockup — ads flavored. */
-function AdAnalyzeMockup() {
-  return (
-    <div aria-hidden className="relative mx-auto h-44 w-full max-w-[18rem] select-none">
-      <div className="bg-muted-foreground absolute left-1/2 top-1/2 -z-10 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-5 blur-3xl" />
-      <div className="card-glass absolute left-1 top-8 flex h-[4.25rem] w-[6.5rem] -rotate-6 flex-col overflow-hidden p-0 opacity-45 shadow-lg">
-        <div className="border-border bg-muted flex h-6 shrink-0 items-center border-b px-2 opacity-90">
-          <Megaphone className="h-3 w-3 text-[var(--color-muted-foreground)] opacity-50" />
-        </div>
-        <div className="bg-secondary border-border min-h-0 flex-1 border-t-0" />
-      </div>
-      <div className="card-glass absolute left-1/2 top-3 flex h-[8.25rem] w-[11.5rem] -translate-x-1/2 rotate-1 flex-col overflow-hidden p-0 shadow-2xl">
-        <div className="border-border bg-muted flex h-7 shrink-0 items-center justify-between border-b px-2.5 opacity-90">
-          <div className="flex items-center gap-1.5">
-            <Target className="h-3 w-3 text-[var(--color-muted-foreground)] opacity-50" />
-            <div className="bg-muted-foreground h-2 w-12 rounded-full opacity-25" />
-          </div>
-          <div className="bg-muted-foreground h-2.5 w-9 rounded-full opacity-15" />
-        </div>
-        <div className="flex min-h-0 flex-1 gap-2 p-2">
-          <div className="border-border bg-secondary w-[36%] shrink-0 rounded-md border" />
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 py-0.5">
-            <div className="bg-muted-foreground h-1.5 w-full rounded-full opacity-20" />
-            <div className="bg-muted-foreground h-1 w-[88%] rounded-full opacity-15" />
-            <div className="bg-muted-foreground h-1 w-3/5 rounded-full opacity-15" />
-            <div className="relative mt-auto pt-1">
-              <div className="bg-primary h-7 w-full rounded-md opacity-35" />
-              <div className="absolute bottom-1 right-2">
-                <Zap className="h-3 w-3 text-[var(--color-muted-foreground)] opacity-60 drop-shadow-sm" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export function AdAnalysisPanel({
   ad: initialAd,
   spaceId,
   onClose,
   saved,
   saving,
+  researchContext,
   onSave,
   onAdPatch,
 }: AdAnalysisPanelProps) {
@@ -815,7 +782,7 @@ export function AdAnalysisPanel({
           transition={{ duration: 0.2 }}
         >
           <motion.div
-            className="absolute inset-0 bg-modal-overlay"
+            className="bg-modal-overlay absolute inset-0"
             onClick={requestClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -927,7 +894,7 @@ export function AdAnalysisPanel({
                         <img
                           src={ad.image_url}
                           alt={ad.creative_text ?? ad.ad_id}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-contain"
                         />
                         {ad.video_url && (
                           <button
@@ -1010,31 +977,13 @@ export function AdAnalysisPanel({
               {/* Analyze CTA / tabbed analysis */}
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-[var(--border)]">
                 {!breakdown ? (
-                  <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-8">
-                    <AdAnalyzeMockup />
-                    <div className="mt-4 flex max-w-sm flex-col items-center gap-3 text-center">
-                      <p className="body-3 text-[var(--color-muted-foreground)]">
-                        {ad.format === 'video'
-                          ? 'Extract the full script, hook, ad formula, offer, and steal-worthy patterns in one run.'
-                          : 'Deconstruct the hook, angle, ad formula, offer, and steal-worthy patterns in one run.'}
-                      </p>
-                      {analyzeError ? (
-                        <p className="body-3 text-[var(--color-destructive)]">{analyzeError}</p>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={() => void handleAnalyze()}
-                        disabled={analyzing}
-                        className="badge-glass badge-glass-green rounded-spacing-2 inline-flex items-center px-4 py-2.5 text-xs font-semibold text-emerald-400 transition-opacity hover:opacity-90 disabled:opacity-50"
-                      >
-                        {analyzing
-                          ? ad.format === 'video'
-                            ? 'Transcribing & analyzing…'
-                            : 'Analyzing…'
-                          : 'Analyze ad'}
-                      </button>
-                    </div>
-                  </div>
+                  <AdResearchEvidenceOverview
+                    ad={ad}
+                    researchContext={researchContext}
+                    analyzing={analyzing}
+                    analyzeError={analyzeError}
+                    onDeepAnalyze={() => void handleAnalyze()}
+                  />
                 ) : (
                   <div className="flex min-h-0 flex-1 flex-col">
                     <AdAnalysisTabBar active={tab} onChange={setTab} />

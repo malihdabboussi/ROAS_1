@@ -1,22 +1,20 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, FileText, ListChecks, Megaphone, RotateCcw } from 'lucide-react'
+import { ArrowLeft, ListChecks, Megaphone } from 'lucide-react'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import type { Mission, MissionDeliverable } from '@/lib/missions'
-import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 import { ADS_RESEARCH_MESSAGES } from '../../config/ads-research-messages.config'
-import { DEFAULT_ADS_RESEARCH_CONFIG } from '../../lib/ads-research-group-by'
 import {
   getSavedAdSearch,
   listSavedAdSearches,
   type SavedAdSearch,
   type SavedAdSearchSummary,
 } from '../../services/ads-research.service'
-import { adResultExternalLink } from './AdResultCard'
-import { AdResultsBody } from './AdResultsBody'
+import { AdsResearchAngleSection } from './AdsResearchAngleSection'
+import { AdsResearchDeliverablesSection } from './AdsResearchDeliverablesSection'
 
 interface AdsResearchRunDetailViewProps {
   run: Mission
@@ -24,7 +22,6 @@ interface AdsResearchRunDetailViewProps {
   spaceId: string
   onBack: () => void
   onOpenMission: () => void
-  onRerun: () => void
 }
 
 function searchesForRun(searches: SavedAdSearchSummary[], run: Mission): SavedAdSearchSummary[] {
@@ -39,21 +36,17 @@ function searchesForRun(searches: SavedAdSearchSummary[], run: Mission): SavedAd
   })
 }
 
-function deliverableLabel(title: string): string {
-  return title.replace(/^Task \d+\s*[—-]\s*/, '').replace(/^ADS-R#\d+\s*[—-]\s*/, '')
-}
-
 export function AdsResearchRunDetailView({
   run,
   deliverables,
   spaceId,
   onBack,
   onOpenMission,
-  onRerun,
 }: AdsResearchRunDetailViewProps) {
   const [searches, setSearches] = useState<SavedAdSearch[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [expandedSearchId, setExpandedSearchId] = useState<string | null>(null)
   const [previewDeliverable, setPreviewDeliverable] = useState<MissionDeliverable | null>(null)
 
   useEffect(() => {
@@ -67,7 +60,14 @@ export function AdsResearchRunDetailView({
         ),
       )
       .then((loaded) => {
-        if (active) setSearches(loaded)
+        if (active) {
+          setSearches(loaded)
+          setExpandedSearchId((current) =>
+            current && loaded.some((search) => search.id === current)
+              ? current
+              : (loaded[0]?.id ?? null),
+          )
+        }
       })
       .catch(() => {
         if (active) setLoadError(ADS_RESEARCH_MESSAGES.VISUAL_LOAD_FAILED)
@@ -102,20 +102,10 @@ export function AdsResearchRunDetailView({
             <h1 className="title-h5 text-foreground truncate uppercase">
               {run.brief || run.title}
             </h1>
-            <p className="body-3 text-muted-foreground mt-spacing-1">
-              {totalAds} visual references across {searches.length} searches
-            </p>
+            <p className="body-3 text-muted-foreground mt-spacing-1">Blaze research report</p>
           </div>
         </div>
         <div className="gap-spacing-2 flex items-center">
-          <button
-            type="button"
-            className="button-glass-primary button-compact gap-spacing-2 inline-flex items-center"
-            onClick={onRerun}
-          >
-            <RotateCcw className="icon-sm" />
-            {ADS_RESEARCH_MESSAGES.RERUN_BUTTON}
-          </button>
           <button
             type="button"
             className="button-glass-neutral button-compact gap-spacing-2 inline-flex items-center"
@@ -127,11 +117,34 @@ export function AdsResearchRunDetailView({
         </div>
       </header>
 
-      <section className="gap-spacing-3 flex flex-col">
+      <div className="surface-card border-border rounded-spacing-3 grid border sm:grid-cols-3">
+        <div className="p-spacing-4 border-border border-b sm:border-b-0 sm:border-r">
+          <p className="title-h6 text-foreground">
+            {searches.length} {searches.length === 1 ? 'angle' : 'angles'}
+          </p>
+          <p className="body-4 text-muted-foreground">Research directions</p>
+        </div>
+        <div className="p-spacing-4 border-border border-b sm:border-b-0 sm:border-r">
+          <p className="title-h6 text-foreground">{totalAds} visual ads</p>
+          <p className="body-4 text-muted-foreground">Saved evidence</p>
+        </div>
+        <div className="p-spacing-4">
+          <p className="title-h6 text-foreground">{deliverables.length} outputs</p>
+          <p className="body-4 text-muted-foreground">Analysis and production</p>
+        </div>
+      </div>
+
+      <AdsResearchDeliverablesSection
+        deliverables={deliverables}
+        searches={searches}
+        onOpen={setPreviewDeliverable}
+      />
+
+      <section id="visual-research" className="gap-spacing-3 flex flex-col">
         <div>
           <h2 className="title-h6 text-foreground">VISUAL RESEARCH</h2>
           <p className="body-3 text-muted-foreground">
-            The actual ads Blaze used as research evidence.
+            Review one angle at a time. Each row previews the ads Blaze used as evidence.
           </p>
         </div>
         {loading ? (
@@ -153,57 +166,21 @@ export function AdsResearchRunDetailView({
             </p>
           </div>
         ) : (
-          searches.map((search) => (
-            <div
-              key={search.id}
-              className="surface-card border-border p-spacing-4 gap-spacing-3 rounded-spacing-3 flex flex-col border"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="body-2 text-foreground font-semibold">{search.title}</h3>
-                  <p className="body-4 text-muted-foreground">
-                    {search.platform.toUpperCase()} · {search.results.length} ads
-                  </p>
-                </div>
-              </div>
-              <AdResultsBody
-                ads={search.results}
-                config={DEFAULT_ADS_RESEARCH_CONFIG}
-                savedIds={new Set()}
-                savingIds={new Set()}
-                onAdClick={(ad) => {
-                  const target = adResultExternalLink(ad)
-                  if (target) openInNewTab(target)
-                }}
+          <div className="gap-spacing-3 flex flex-col">
+            {searches.map((search, index) => (
+              <AdsResearchAngleSection
+                key={search.id}
+                search={search}
+                spaceId={spaceId}
+                index={index}
+                expanded={expandedSearchId === search.id}
+                onToggle={() =>
+                  setExpandedSearchId((current) => (current === search.id ? null : search.id))
+                }
               />
-            </div>
-          ))
+            ))}
+          </div>
         )}
-      </section>
-
-      <section className="gap-spacing-3 flex flex-col">
-        <div>
-          <h2 className="title-h6 text-foreground">ANALYSIS AND RECOMMENDATIONS</h2>
-          <p className="body-3 text-muted-foreground">
-            Open the analysis, concepts, copy, and scripts created by Blaze.
-          </p>
-        </div>
-        <div className="gap-spacing-3 grid md:grid-cols-2 xl:grid-cols-3">
-          {deliverables.map((deliverable) => (
-            <button
-              key={deliverable.id}
-              type="button"
-              className="card-glass hover:bg-hover-subtle p-spacing-4 gap-spacing-3 rounded-spacing-3 flex min-h-28 flex-col border-0 text-left transition-colors"
-              onClick={() => setPreviewDeliverable(deliverable)}
-            >
-              <FileText className="icon-sm text-muted-foreground" />
-              <span className="body-2 text-foreground font-semibold">
-                {deliverableLabel(deliverable.title)}
-              </span>
-              <span className="body-4 text-muted-foreground">Open document</span>
-            </button>
-          ))}
-        </div>
       </section>
 
       {previewDeliverable ? (

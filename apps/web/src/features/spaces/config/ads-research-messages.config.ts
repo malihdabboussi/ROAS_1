@@ -5,7 +5,9 @@ export const ADS_RESEARCH_MESSAGES = {
   TEAM_SETUP_FAILED: 'We could not prepare Blaze and the agency team. Try again.',
   PREPARING_TEAM: 'Preparing Blaze…',
   RUN_BUTTON: 'Run Research',
-  RERUN_BUTTON: 'Rerun Research',
+  DEEP_ANALYZE_BUTTON: 'Deep analyze',
+  DEEP_ANALYSIS_DESCRIPTION:
+    'Add a transcript, formula, offer, and reusable patterns. The result is saved to this research run.',
   EMPTY_TITLE: 'No research runs yet',
   EMPTY_DESCRIPTION:
     'Start with Blaze in chat. Your research missions and completed work will appear here.',
