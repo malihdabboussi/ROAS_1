@@ -61,6 +61,10 @@ describe('ads-research playbook', () => {
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/save_document exactly once/)
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/10,000 characters/)
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/Do not create a draft Doc/)
+    expect(plan?.subtasks[2]?.outputContract?.expected).toMatchObject({
+      minimum_saved_search_count: 3,
+      minimum_visual_reference_count: 12,
+    })
     expect(plan?.subtasks[3]?.intent.ecology).toMatch(/dylans-super-voice/)
     expect(plan?.subtasks[3]?.intent.ecology).toMatch(/visual reference/i)
     expect(plan?.subtasks[3]?.intent.ecology).toMatch(/Hook.*Body.*CTA/i)
