@@ -246,6 +246,34 @@ describe('PromptMode action schema and preflight coverage', () => {
     ).toBeNull()
   })
 
+  it('rejects Meta object IDs in the ROAS campaign scope field', async () => {
+    await expect(
+      validateActionPreflight('get_meta_ads_insights', {
+        campaign_id: '120251552697870763',
+        level: 'adset',
+      }),
+    ).resolves.toMatchObject({
+      error: expect.stringMatching(/ROAS campaign UUID/i),
+      agentInstruction: expect.stringMatching(/ad_campaign_id/i),
+    })
+
+    await expect(
+      validateActionPreflight('get_meta_ads_insights', {
+        campaign_id: 'a922909b-eff9-4652-854b-789d5e445c1c',
+        level: 'adset',
+      }),
+    ).resolves.toMatchObject({ error: expect.stringMatching(/ad_campaign_id/i) })
+
+    await expect(
+      validateActionPreflight('get_meta_ads_insights', {
+        campaign_id: 'a922909b-eff9-4652-854b-789d5e445c1c',
+        level: 'adset',
+        ad_campaign_id: '0f94ad96-6c67-43cc-92ab-d0b66904ac81',
+        date_preset: 'last_30d',
+      }),
+    ).resolves.toBeNull()
+  })
+
   it('rejects use_integration malformed capability params before provider execution', async () => {
     await expect(
       validateActionPreflight('use_integration', {

@@ -7718,6 +7718,19 @@ Evidence: The service is 597 LOC after wiring the existing `UserSessionMintServi
 Needed work: Extract the legacy facade's collaborator construction into a focused factory before adding another runtime dependency.
 Reason not done now: The requested fix adds one existing authentication collaborator and stays within the enforced limit; restructuring the entire legacy facade would broaden a production authentication repair.
 
+## 2026-07-22 - [ARCH] Extract Meta preflight and action documentation families
+
+Status: Open
+Found while: Proving objective-specific Meta audit drill-down in production
+Files:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-action-preflight.ts`
+- `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`
+
+Evidence: The live proof fix brings the existing centralized files to 1,021 LOC and 2,711 LOC respectively. The new Meta validator and documentation are bounded, tested, and required by the hard agent-action contract, while both parent catalogs were already substantially over the 600 LOC limit and are recorded elsewhere in this log.
+Needed work: Extract domain-owned Meta preflight validators and Meta action documentation into focused modules without changing the exhaustive registry and drift contracts.
+Reason not done now: The current production correction must keep schema, preflight, runtime, generated docs, and playbook behavior atomic; decomposing unrelated action families would broaden the live Meta repair.
+
 ## 2026-07-21 — API typecheck blocked by pre-existing Slack People contract drift
 
 - Feature/app: API / Slack People

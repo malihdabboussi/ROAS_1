@@ -65,6 +65,11 @@ const ACTION_PREFLIGHT_OVERRIDES: Partial<Record<ArtifactAction, ActionPreflight
     reason:
       'Media operations have operation-specific fields that must be valid before media download or ffmpeg work.',
   },
+  get_meta_ads_insights: {
+    mode: 'static_preflight',
+    reason:
+      'Meta insights must distinguish the active ROAS campaign scope from child Meta hierarchy rows and validate reporting periods before API work.',
+  },
   create_contact: {
     mode: 'static_preflight',
     reason: 'Contact creation requires a valid email address before CRM insert work starts.',
@@ -182,6 +187,7 @@ export const ACTION_PREFLIGHTS: Partial<Record<ArtifactAction, ActionPreflightVa
   analyze_video: validateAnalyzeVideoPreflight,
   transcribe_audio: validateTranscribeAudioPreflight,
   process_media: validateProcessMediaPreflight,
+  get_meta_ads_insights: validateMetaAdsInsightsPreflight,
   create_contact: validateCreateContactPreflight,
   update_contact: validateUpdateContactPreflight,
   add_contact_note: validateAddContactNotePreflight,
@@ -365,6 +371,56 @@ function failure(error: string, code = 'ARTIFACT_ACTION_PREFLIGHT'): ActionPrefl
     },
     observability: { fingerprint: 'artifact.action_preflight' },
   }
+}
+
+function validateMetaAdsInsightsPreflight(
+  data: Record<string, unknown>,
+): ActionPreflightFailure | null {
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  const campaignId = stringValue(data.campaign_id ?? data.campaignId)
+  if (campaignId && !uuid.test(campaignId)) {
+    return {
+      ...failure('campaign_id must be the active ROAS campaign UUID, never a Meta numeric ID'),
+      agentInstruction:
+        'Keep campaign_id as the active ROAS campaign UUID. For ad-set insights, pass the campaign-level response row.id as ad_campaign_id. Never pass row.meta_id in campaign_id.',
+    }
+  }
+
+  const level = stringValue(data.level || 'campaign').toLowerCase()
+  if (!['campaign', 'adset', 'ad'].includes(level)) {
+    return failure('level must be campaign, adset, or ad')
+  }
+  if (level === 'adset') {
+    const adCampaignId = stringValue(data.ad_campaign_id ?? data.adCampaignId)
+    if (!adCampaignId || !uuid.test(adCampaignId)) {
+      return {
+        ...failure('ad_campaign_id must be the local UUID from the campaign-level response row.id'),
+        agentInstruction:
+          'Call campaign-level insights first, keep campaign_id as the active ROAS campaign UUID, then pass the selected response row.id as ad_campaign_id.',
+      }
+    }
+  }
+  if (level === 'ad') {
+    const adSetId = stringValue(data.ad_set_id ?? data.adSetId)
+    if (!adSetId || !uuid.test(adSetId)) {
+      return {
+        ...failure('ad_set_id must be the local UUID from the ad-set response row.id'),
+        agentInstruction:
+          'Call ad-set insights first, then pass the selected response row.id as ad_set_id. Never pass row.meta_id.',
+      }
+    }
+  }
+
+  const preset = stringValue(data.date_preset ?? data.datePreset)
+  if (
+    preset &&
+    !['last_7d', 'last_14d', 'last_30d', 'previous_30d', 'this_month', 'last_month'].includes(
+      preset,
+    )
+  ) {
+    return failure('date_preset is unsupported; use exact start_date and end_date instead')
+  }
+  return null
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

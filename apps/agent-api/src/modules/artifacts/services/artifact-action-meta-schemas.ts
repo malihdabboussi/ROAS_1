@@ -201,6 +201,8 @@ export const PROMPTMODE_META_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       'startDate',
       'end_date',
       'endDate',
+      'date_preset',
+      'datePreset',
     ],
     strings([
       'campaign_id',
@@ -214,6 +216,8 @@ export const PROMPTMODE_META_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       'startDate',
       'end_date',
       'endDate',
+      'date_preset',
+      'datePreset',
     ]),
   ),
   get_delivery_estimate: schema([], ['ad_account_id', 'targeting', 'optimization_goal'], {
