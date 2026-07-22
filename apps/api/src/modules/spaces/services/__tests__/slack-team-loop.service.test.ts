@@ -223,6 +223,14 @@ describe('SlackTeamLoopService', () => {
           delivery_mode: 'shadow',
           person_brain_id: 'brain-1',
         },
+        {
+          id: '4f046d1a-4e0e-4ccc-9ea7-b8c07ab25b44',
+          platform_id: 'U2',
+          display_name: 'Blake',
+          relationship_kind: 'internal',
+          delivery_mode: 'shadow',
+          person_brain_id: 'brain-2',
+        },
       ]),
       countLoopActionsSince: vi.fn().mockResolvedValue(0),
       hasLoopEvidenceFingerprint: vi.fn().mockResolvedValue(false),
@@ -259,7 +267,7 @@ describe('SlackTeamLoopService', () => {
         geminiAnalysis([
           {
             kind: 'unanswered_question',
-            target_slack_user_id: 'U1',
+            target_slack_user_id: 'U2',
             target_channel_id: 'C1',
             source_message_ts: '1721000000.000100',
             proposed_content: 'I can confirm the launch date once the owner responds.',

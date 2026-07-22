@@ -249,11 +249,20 @@ export class SlackTeamLoopService {
       maxSignals: remaining,
     })
 
-    const actionableSignals = analysis.signals.filter(
+    const evidenceBySource = new Map(
+      observed.map((message) => [`${message.channel_id}:${message.ts}`, message]),
+    )
+    const verifiedSignals = analysis.signals.flatMap((signal) => {
+      const source = evidenceBySource.get(`${signal.target_channel_id}:${signal.source_message_ts}`)
+      if (!source || source.user === 'PIXEL_BOT') return []
+      return [{ ...signal, target_slack_user_id: source.user }]
+    })
+    const rejectedWithoutEvidence = analysis.signals.length - verifiedSignals.length
+    const actionableSignals = verifiedSignals.filter(
       (signal) =>
         signal.kind !== 'unanswered_question' || !this.hasLaterHumanReply(signal, observed),
     )
-    const suppressedByThread = analysis.signals.length - actionableSignals.length
+    const suppressedByThread = verifiedSignals.length - actionableSignals.length
     let proposed = 0
     let sent = 0
     let memoriesCompounded = 0
@@ -387,6 +396,7 @@ export class SlackTeamLoopService {
       messages_observed: observed.length,
       messages_analyzed: observed.length,
       signals_detected: analysis.signals.length,
+      signals_rejected_missing_evidence: rejectedWithoutEvidence,
       signals_suppressed_by_thread: suppressedByThread,
       model_calls: analysis.modelCalls,
       model_input_tokens: analysis.inputTokens,
