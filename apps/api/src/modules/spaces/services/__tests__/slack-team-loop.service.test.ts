@@ -437,7 +437,7 @@ describe('SlackTeamLoopService', () => {
         },
       ]),
       countLoopActionsSince: vi.fn().mockResolvedValue(0),
-      hasLoopEvidenceFingerprint: vi.fn().mockResolvedValue(false),
+      hasLoopEvidenceFingerprint: vi.fn().mockResolvedValue(true),
       createShadowAction: vi.fn(),
       insertSlackPersonMemory: vi.fn().mockResolvedValue({ id: 'memory-1', created: true }),
     }

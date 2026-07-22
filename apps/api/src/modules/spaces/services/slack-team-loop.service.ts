@@ -307,15 +307,6 @@ export class SlackTeamLoopService {
           ].join(':'),
         )
         .digest('hex')
-      if (
-        await this.loopRepo.hasEvidenceFingerprint(input.supabase, {
-          orgId: input.orgId,
-          evidenceFingerprint,
-        })
-      ) {
-        continue
-      }
-
       if (signal.kind === 'brain_memory' && target?.person_brain_id && signal.brain_memory) {
         const result = await this.loopRepo.insertPersonMemory(input.supabase, {
           brainId: target.person_brain_id,
@@ -331,6 +322,15 @@ export class SlackTeamLoopService {
           },
         })
         if (result.created) memoriesCompounded += 1
+        continue
+      }
+
+      if (
+        await this.loopRepo.hasEvidenceFingerprint(input.supabase, {
+          orgId: input.orgId,
+          evidenceFingerprint,
+        })
+      ) {
         continue
       }
 
