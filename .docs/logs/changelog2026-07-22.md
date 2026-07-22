@@ -1,5 +1,26 @@
 # Changelog - July 22, 2026
 
+## [2026-07-22 00:31] - [FIX]
+
+What: Team Agenda merges calendar + Fathom duplicates (sole near-start attach + post-inject dedupe) and prefers teammate account labels over confusing Mine/Fathom·Mine on shared calls.
+Why: Fathom AI titles and slug/missing attendees left unmatched Fathom rows beside the real invite; Team+Mine merge labeled shared teammate calls as Mine.
+Impact: One row per real call on Team Agenda; Mine only when the event exists solely on the personal calendar; teammate name wins when both calendars have it.
+Files: `integrations-calendar-dedupe.ts`, `integrations-calendar.service.ts`, `integrations-calendar-team.service.ts`, `meetings-precall-prep.helpers.ts`, `meetings-precall-prep.service.ts`, tests, `integration-connections.md`
+
+## [2026-07-22 00:38] - [OPS]
+
+What: Deployed Team Agenda Fathom/Mine merge fix to production `roas-api` via CLI archive (working tree, no git push). `dpl_4grVxhQaafAkWLVuf9WLxspP1TFA` → api.roas.io (READY). Web not redeployed (labels come from API; Team skips client dedupe).
+Why: Fix needed live for Dylan's Team Agenda duplicates.
+Impact: Hard-refresh Home → Agenda → Team — calendar+Fathom pairs and shared teammate+Mine invites should collapse; Mine only on personal-only rows.
+Files: Vercel `roas-api` Production
+
+## [2026-07-22 00:50] - [FEATURE]
+
+What: Hardened Pixel's Shadow operating loop and automatic post-call review: webhook-first Slack observation with hourly reconciliation, durable outage recovery, thread-aware unanswered-question suppression, direct Gemini analysis with exact token/cost reporting, visible team-level proposals and Flow outcomes, personal-Space-safe Fathom tag updates, and completed-call review drafts even when no action items were extracted. Active now fails closed without explicit channel and person allowlists.
+Why: Green scheduled runs were mostly quiet-hour skips or empty overlapping polls, 97 stored Slack events had no consumer after provider failures, Fathom tag writes used the wrong org scope, and a failed task-suggestion activity insert prevented post-call review from reaching Slack.
+Impact: Shadow runs continuously without sending, drains stored evidence after outages, includes Slack threads, exposes what it analyzed/proposed/cost, and creates an editable internal-review/client-draft Slack thread for completed calls. Broad Active sending remains disabled and guarded.
+Files: `slack-observation.service.ts`, `slack-observation.repository.ts`, `slack-team-loop.service.ts`, `embedding.service.ts`, `meeting-follow-up-slack-confirm.workflow.ts`, `meeting-follow-up-slack-message.ts`, `AutomationRunsLog.tsx`, `SlackShadowConversationView.tsx`, Spaces field-option/store files, `apps/api/tsconfig.json`, focused tests, `20260722004000_allow_agent_suggested_task_activity.sql`, feature documentation
+
 ## [2026-07-22 13:05] - [FIX]
 
 What: Restored production Team Agenda after overwrite. Live `scope=team` had become identical to personal (`team_available` missing, 0 `workspace:` events). Root cause: `api.roas.io` aliased to `dpl_5J8MhPaPL8o1F2pwYfVY5q5aBX2P` (Codex promote of Page Grader inactive-campaign fix) which lacked Team Agenda, overwriting known-good `dpl_DB9P88YFBfxwihA5AVD4kD3VkzJi`. Instantly re-aliased DB9P88, then archive-deployed local HEAD (+ TS fix for `getTeamAgendaWithMine` loadPersonal scope) as `dpl_E1fW4NdW9BmDmHXuRchRf43AHhyU` → api.roas.io. Post-prove: team_available=true, 58 events / 35 workspace, Aaron/Bryce/Nefi labels present; personal≠team.

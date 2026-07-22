@@ -76,6 +76,28 @@ export class SlackService extends SlackEventsBase {
     await super.handleMessageEvent(teamId, nextEvent)
   }
 
+  private async captureObservationEvent(
+    teamId: string,
+    event: NonNullable<SlackEventEnvelope['event']>,
+  ): Promise<void> {
+    try {
+      const { SlackObservationService } = await import('./slack-observation.service')
+      const observation = this.moduleRef.get(SlackObservationService, { strict: false })
+      if (!observation) return
+      await observation.recordWebhookEvent({
+        supabase: this.getServiceRoleClient(),
+        slackTeamId: teamId,
+        event,
+      })
+    } catch (error) {
+      this.logger.warn(
+        `Slack observation capture failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+    }
+  }
+
   protected async handleReactionAddedEvent(
     teamId: string,
     event: NonNullable<SlackEventEnvelope['event']>,
@@ -113,30 +135,8 @@ export class SlackService extends SlackEventsBase {
     }
   }
 
-  private async captureObservationEvent(
-    teamId: string,
-    event: NonNullable<SlackEventEnvelope['event']>,
-  ): Promise<void> {
-    try {
-      const { SlackObservationService } = await import('./slack-observation.service')
-      const observation = this.moduleRef.get(SlackObservationService, { strict: false })
-      if (!observation) return
-      await observation.recordWebhookEvent({
-        supabase: this.getServiceRoleClient(),
-        slackTeamId: teamId,
-        event,
-      })
-    } catch (error) {
-      this.logger.warn(
-        `Slack observation capture failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      )
-    }
-  }
   // ---------------------------------------------------------------------------
   // OAuth
-  // ---------------------------------------------------------------------------
 
   getInstallUrl(
     userId: string,
@@ -395,9 +395,7 @@ export class SlackService extends SlackEventsBase {
     }
   }
 
-  // ---------------------------------------------------------------------------
   // Status / channel management
-  // ---------------------------------------------------------------------------
 
   async getStatus(supabase: SupabaseClient, userId: string, orgId?: string | null) {
     const integration = await this.slackRepo.getIntegration(supabase, userId, orgId)

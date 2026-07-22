@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { OpenRouterBillingClientService } from '../../provider-billing/services/openrouter-billing-client.service'
+import { EmbeddingService } from '../../brain/services/embedding.service'
 import { SlackPeopleRepository } from '../../slack/repositories/slack-people.repository'
 import { SlackAgentToolsService } from '../../slack/services/slack-agent-tools.service'
 import { SlackObservationService } from '../../slack/services/slack-observation.service'
@@ -73,7 +73,7 @@ export class SlackTeamLoopService {
     private readonly loopRepo: SlackTeamLoopRepository,
     private readonly observation: SlackObservationService,
     private readonly slackTools: SlackAgentToolsService,
-    private readonly openRouter: OpenRouterBillingClientService,
+    private readonly gemini: EmbeddingService,
   ) {}
 
   async run(input: {
@@ -89,8 +89,15 @@ export class SlackTeamLoopService {
     quietHours?: QuietHours
     instructions?: string
   }): Promise<Record<string, unknown>> {
-    if (isWithinSlackTeamLoopQuietHours(new Date(), input.quietHours)) {
+    const quietHoursActive = isWithinSlackTeamLoopQuietHours(new Date(), input.quietHours)
+    if (input.deliveryMode === 'active' && quietHoursActive) {
       return { skipped: true, skipped_reason: 'quiet_hours' }
+    }
+    if (
+      input.deliveryMode === 'active' &&
+      (input.channelIds.length === 0 || input.personIds.length === 0)
+    ) {
+      return { skipped: true, skipped_reason: 'active_allowlist_required' }
     }
 
     const integration = await this.peopleRepo.findOrgSlackIntegration(input.supabase, input.orgId)
@@ -171,6 +178,7 @@ export class SlackTeamLoopService {
         channels_observed: reconciliation.channelsReconciled,
         messages_observed: 0,
         proposed: 0,
+        quiet_hours_active: quietHoursActive,
         slack_requests: reconciliation.historyRequests + reconciliation.threadRequests + 1,
         events_stored: reconciliation.eventsStored,
         duplicates_skipped: reconciliation.duplicatesSkipped,
@@ -205,10 +213,15 @@ export class SlackTeamLoopService {
       maxSignals: remaining,
     })
 
+    const actionableSignals = analysis.signals.filter(
+      (signal) =>
+        signal.kind !== 'unanswered_question' || !this.hasLaterHumanReply(signal, observed),
+    )
+    const suppressedByThread = analysis.signals.length - actionableSignals.length
     let proposed = 0
     let sent = 0
     let memoriesCompounded = 0
-    for (const signal of analysis.signals.slice(0, remaining)) {
+    for (const signal of actionableSignals.slice(0, remaining)) {
       if (!this.signalMatchesLoop(signal.kind, input.loopKind)) continue
       const target = signal.target_slack_user_id
         ? peopleBySlackId.get(signal.target_slack_user_id)
@@ -338,6 +351,7 @@ export class SlackTeamLoopService {
       messages_observed: observed.length,
       messages_analyzed: observed.length,
       signals_detected: analysis.signals.length,
+      signals_suppressed_by_thread: suppressedByThread,
       model_calls: analysis.modelCalls,
       model_input_tokens: analysis.inputTokens,
       model_output_tokens: analysis.outputTokens,
@@ -350,7 +364,32 @@ export class SlackTeamLoopService {
       slack_requests: reconciliation.historyRequests + reconciliation.threadRequests + 1,
       events_stored: reconciliation.eventsStored,
       duplicates_skipped: reconciliation.duplicatesSkipped,
+      quiet_hours_active: quietHoursActive,
     }
+  }
+
+  private hasLaterHumanReply(
+    signal: SlackTeamSignal,
+    messages: Array<{
+      channel_id: string
+      ts: string
+      thread_ts: string | null
+      user: string
+    }>,
+  ): boolean {
+    const source = messages.find(
+      (message) =>
+        message.channel_id === signal.target_channel_id && message.ts === signal.source_message_ts,
+    )
+    if (!source) return false
+    const threadTs = source.thread_ts || source.ts
+    return messages.some(
+      (message) =>
+        message.channel_id === source.channel_id &&
+        message.thread_ts === threadTs &&
+        Number(message.ts) > Number(source.ts) &&
+        message.user !== 'PIXEL_BOT',
+    )
   }
 
   private signalMatchesLoop(kind: SlackTeamSignal['kind'], loopKind: SlackTeamLoopKind): boolean {
@@ -369,6 +408,7 @@ export class SlackTeamLoopService {
       channel_id: string
       channel_name: string
       ts: string
+      thread_ts: string | null
       user: string
       text: string
     }>
@@ -408,6 +448,7 @@ export class SlackTeamLoopService {
       channel_id: string
       channel_name: string
       ts: string
+      thread_ts: string | null
       user: string
       text: string
     }>
@@ -424,92 +465,32 @@ export class SlackTeamLoopService {
     const transcript = input.messages
       .map(
         (message) =>
-          `[${message.channel_id}|#${message.channel_name}|${message.ts}] ${message.user === 'PIXEL_BOT' ? 'Pixel (bot)' : (people.get(message.user) ?? message.user)}: ${message.text.slice(0, 1200)}`,
+          `[${message.channel_id}|#${message.channel_name}|${message.ts}|thread=${message.thread_ts || message.ts}] ${message.user === 'PIXEL_BOT' ? 'Pixel (bot)' : (people.get(message.user) ?? message.user)}: ${message.text.slice(0, 1200)}`,
       )
       .join('\n')
-    const completion = await this.openRouter.createChatCompletion({
-      owner: { userId: input.userId, orgId: input.orgId },
-      feature: 'slack_team_loops',
-      action: input.loopKind,
-      sourcePath: 'spaces/slack-team-loop',
-      model: 'anthropic/claude-sonnet-4.6',
-      body: {
-        max_tokens: 3000,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              'Analyze recent Slack messages for a proactive team agent.',
-              `Requested loop: ${input.loopKind}. Return at most ${input.maxSignals} high-confidence signals.`,
-              'Only use explicit evidence in the messages. Do not infer private facts or invent commitments.',
-              'Pixel (bot) messages are reply context only. Never create a Person Brain fact about Pixel or target PIXEL_BOT.',
-              'brain_memory: a durable fact about the named speaker that belongs in their Person Brain.',
-              'workflow_discovery: a repeated manual process with a concrete automation proposal.',
-              'unanswered_question: a direct question that appears unanswered in the supplied window.',
-              'client_risk: an explicit blocker, missed commitment, dissatisfaction, or delivery risk.',
-              'For every signal, copy the exact channel id and source timestamp from its bracket.',
-              input.instructions ? `Additional admin instructions: ${input.instructions}` : '',
-              '',
-              transcript,
-            ]
-              .filter(Boolean)
-              .join('\n'),
-          },
-        ],
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'slack_team_observation',
-            strict: true,
-            schema: {
-              type: 'object',
-              additionalProperties: false,
-              properties: {
-                signals: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    additionalProperties: false,
-                    properties: {
-                      kind: {
-                        type: 'string',
-                        enum: [
-                          'brain_memory',
-                          'workflow_discovery',
-                          'unanswered_question',
-                          'client_risk',
-                        ],
-                      },
-                      target_slack_user_id: { type: ['string', 'null'] },
-                      target_channel_id: { type: 'string' },
-                      source_message_ts: { type: 'string' },
-                      proposed_content: { type: 'string' },
-                      rationale: { type: 'string' },
-                      brain_memory: { type: ['string', 'null'] },
-                      confidence: { type: 'number' },
-                    },
-                    required: [
-                      'kind',
-                      'target_slack_user_id',
-                      'target_channel_id',
-                      'source_message_ts',
-                      'proposed_content',
-                      'rationale',
-                      'brain_memory',
-                      'confidence',
-                    ],
-                  },
-                },
-              },
-              required: ['signals'],
-            },
-          },
-        },
-      },
-      metadata: { messages_observed: input.messages.length },
+    const prompt = [
+      'Analyze recent Slack messages for a proactive team agent.',
+      `Requested loop: ${input.loopKind}. Return at most ${input.maxSignals} high-confidence signals.`,
+      'Only use explicit evidence in the messages. Do not infer private facts or invent commitments.',
+      'Pixel (bot) messages are reply context only. Never create a Person Brain fact about Pixel or target PIXEL_BOT.',
+      'brain_memory: a durable fact about the named speaker that belongs in their Person Brain.',
+      'workflow_discovery: a repeated manual process with a concrete automation proposal.',
+      'unanswered_question: a direct question that appears unanswered in the supplied window.',
+      'Messages with the same thread value are one Slack thread. A question is answered when a later human reply in that thread addresses it; never flag that as unanswered.',
+      'client_risk: an explicit blocker, missed commitment, dissatisfaction, or delivery risk.',
+      'For every signal, copy the exact channel id and source timestamp from its bracket.',
+      'Return only JSON: {"signals":[{"kind":"brain_memory|workflow_discovery|unanswered_question|client_risk","target_slack_user_id":"string or null","target_channel_id":"string","source_message_ts":"string","proposed_content":"string","rationale":"string","brain_memory":"string or null","confidence":0.0}]}',
+      input.instructions ? `Additional admin instructions: ${input.instructions}` : '',
+      '',
+      transcript,
+    ]
+      .filter(Boolean)
+      .join('\n')
+    const completion = await this.gemini.callGeminiWithUsage(prompt, undefined, {
+      userId: input.userId,
+      orgId: input.orgId,
     })
-    const content = completion.data.choices?.[0]?.message?.content
-    const parsed = typeof content === 'string' ? JSON.parse(content) : content
+    const parsed = JSON.parse(completion.text)
     if (
       !parsed ||
       typeof parsed !== 'object' ||
@@ -519,10 +500,10 @@ export class SlackTeamLoopService {
     }
     return {
       signals: (parsed as { signals: SlackTeamSignal[] }).signals,
-      inputTokens: completion.usage?.input ?? 0,
-      outputTokens: completion.usage?.output ?? 0,
-      totalTokens: completion.usage?.totalTokens ?? 0,
-      providerCostUsd: completion.providerCostUsd ?? 0,
+      inputTokens: completion.usage.inputTokens,
+      outputTokens: completion.usage.outputTokens,
+      totalTokens: completion.usage.totalTokens,
+      providerCostUsd: completion.providerCostUsd,
     }
   }
 }

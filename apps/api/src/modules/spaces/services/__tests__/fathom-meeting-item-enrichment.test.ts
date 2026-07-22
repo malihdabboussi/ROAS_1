@@ -31,9 +31,13 @@ describe('fathom-meeting-item-enrichment', () => {
     ).toBe(false)
   })
 
-  it('falls back to transcript speakers when invitees are host-only', () => {
+  it('defaults to transcript speakers even when invitees include multiple people', () => {
     const result = resolveFathomAttendeeLabels({
-      attendees: [{ name: 'Dylan Vanas', email: 'dylan@dylanvanas.com' }],
+      attendees: [
+        { name: 'Dylan Vanas', email: 'dylan@dylanvanas.com' },
+        { name: 'Yasir Khan', email: 'yasir@example.com' },
+        { name: 'Calendar Ghost', email: 'ghost@example.com' },
+      ],
       transcript: [
         { speaker: { display_name: 'Dylan Vanas' }, text: 'Hey' },
         { speaker: { display_name: 'Nate Tilley' }, text: 'Quick update' },
@@ -46,7 +50,20 @@ describe('fathom-meeting-item-enrichment', () => {
     expect(result.labels).toEqual(['Dylan Vanas', 'Nate Tilley'])
   })
 
-  it('parses Carol <> Dylan style titles when speakers are missing', () => {
+  it('falls back to invitees when transcript speakers are unavailable', () => {
+    const result = resolveFathomAttendeeLabels({
+      attendees: [
+        { name: 'Dylan Vanas', email: 'dylan@dylanvanas.com' },
+        { name: 'Yasir Khan', email: 'yasir@example.com' },
+      ],
+      transcript: [{ speaker: { display_name: 'Speaker 2' }, text: 'Hi' }],
+      recordedByEmail: 'dylan@dylanvanas.com',
+    })
+    expect(result.usedSpeakers).toBe(false)
+    expect(result.labels).toEqual(['Dylan Vanas', 'Yasir Khan'])
+  })
+
+  it('parses Carol <> Dylan style titles when speakers and invitees are weak', () => {
     const result = resolveFathomAttendeeLabels({
       attendees: [{ name: 'Dylan Vanas', email: 'dylan@dylanvanas.com' }],
       transcript: [{ speaker: { display_name: 'Speaker 2' }, text: 'Hi' }],

@@ -110,10 +110,6 @@ export class MeetingFollowUpSlackConfirmService {
     confirmReaction?: string
   }): Promise<Record<string, unknown>> {
     if (!this.slackTools) throw new Error('Slack tools service is not available')
-    if (input.suggestionIds.length === 0) {
-      return { skipped: true, reason: 'no_follow_ups' }
-    }
-
     const dmEmail = (
       input.dmEmail?.trim() ||
       this.config.get<string>('MEETING_FOLLOW_UP_SLACK_DM_EMAIL') ||
@@ -127,26 +123,24 @@ export class MeetingFollowUpSlackConfirmService {
       '',
     )
 
-    const followUps = await this.repo.findItemsByIds(
-      input.supabase,
-      input.spaceId,
-      input.suggestionIds,
-    )
-    if (followUps.length === 0) {
-      return { skipped: true, reason: 'follow_ups_not_found' }
+    const followUps =
+      input.suggestionIds.length > 0
+        ? await this.repo.findItemsByIds(input.supabase, input.spaceId, input.suggestionIds)
+        : []
+    if (followUps.length > 0) {
+      await stampMeetingFollowUpActionLedger(
+        { repo: this.repo, logger: this.logger },
+        input.supabase,
+        {
+          userId: input.userId,
+          orgId: input.orgId,
+          spaceId: input.spaceId,
+          callItemId: input.callItemId,
+          followUps,
+          status: 'proposed',
+        },
+      )
     }
-    await stampMeetingFollowUpActionLedger(
-      { repo: this.repo, logger: this.logger },
-      input.supabase,
-      {
-        userId: input.userId,
-        orgId: input.orgId,
-        spaceId: input.spaceId,
-        callItemId: input.callItemId,
-        followUps,
-        status: 'proposed',
-      },
-    )
 
     const callItem =
       ((await this.repo.findItemById(input.supabase, input.spaceId, input.callItemId)) as Record<

@@ -1,4 +1,5 @@
 import { Body, Controller, Headers, Logger, Post, Req, Res } from '@nestjs/common'
+import { waitUntil } from '@vercel/functions'
 import type { Request, Response } from 'express'
 import { SlackService } from '../services/slack.service'
 import type { SlackEventEnvelope } from '../types/slack.types'
@@ -29,14 +30,24 @@ export class SlackWebhookController {
       body,
     })
 
+    // Ack Slack within 3s, then keep the serverless invocation alive for agent reply.
     res.status(200).json({ ok: true })
 
     if (work) {
-      work.catch((err) =>
+      const tracked = work.catch((err) =>
         this.logger.error(
           `Slack event processing failed: ${err instanceof Error ? err.message : String(err)}`,
         ),
       )
+      try {
+        waitUntil(tracked)
+      } catch (err) {
+        this.logger.warn(
+          `waitUntil unavailable; Slack work may be cut short: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        )
+      }
     }
   }
 }

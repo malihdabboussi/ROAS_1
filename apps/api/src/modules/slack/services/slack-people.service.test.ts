@@ -364,6 +364,7 @@ describe('SlackPeopleService', () => {
         expect.objectContaining({ sender_name: 'Pixel', direction: 'outbound' }),
       ]),
     })
+    expect(peopleIndex.listChannels).toHaveBeenCalledWith(expect.anything(), 'org-1')
     expect(slackApi.conversationsRepliesAll).toHaveBeenCalled()
     expect(peopleIndex.listChannels).toHaveBeenCalledWith(expect.anything(), 'org-1')
   })
@@ -433,7 +434,12 @@ describe('SlackPeopleService', () => {
     )
     expect(repository.markShadowActionSent).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ actionId: 'action-1', sentBy: 'admin-1', slackTs: '123.456' }),
+      expect.objectContaining({
+        actionId: 'action-1',
+        sentBy: 'admin-1',
+        slackTs: '123.456',
+        slackChannelId: 'D1',
+      }),
     )
     expect(result).toEqual({ action: { id: 'action-1', status: 'sent' } })
   })

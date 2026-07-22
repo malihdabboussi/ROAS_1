@@ -98,6 +98,21 @@ export const SPACES_ACTIONS_TOAST_SUCCESS = {
   GOOGLE_DOC_CREATED: { userMessage: 'Google Doc created and linked.' },
 } as const
 
+export const SPACES_FIELD_OPTION_TOAST_ERRORS = {
+  CREATE_FAILED: { userMessage: 'Failed to save tag.' },
+  UPDATE_FAILED: { userMessage: 'Failed to update tag.' },
+  DELETE_FAILED: { userMessage: 'Failed to delete tag.' },
+  COLORS_FAILED: { userMessage: 'Failed to save custom colors.' },
+} as const
+
+export function resolveSpaceFieldOptionError(error: unknown, fallback: string): string {
+  if (!(error instanceof Error)) return fallback
+  if (/auth|jwt|session|sign in/i.test(error.message)) {
+    return 'Your session expired. Refresh the page, then try again.'
+  }
+  return error.message || fallback
+}
+
 // ─── Calendar ────────────────────────────────────────────────────────────────
 export const SPACES_CALENDAR_TOAST_ERRORS = {
   CREATE_TASK_FAILED: { userMessage: 'Could not add task to the calendar.' },

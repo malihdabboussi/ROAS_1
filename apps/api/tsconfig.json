@@ -12,7 +12,7 @@
       "@vibey/api-shared/*": ["../../packages/api-shared/src/*"]
     },
     "sourceMap": true,
-    "declaration": true,
+    "declaration": false,
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,

@@ -463,8 +463,9 @@ export class SlackPeopleService {
     const claimed = await this.peopleRepository.claimShadowActionForSend(supabase, orgId, actionId)
     if (!claimed) throw new ConflictException('This proposal is already being sent or changed')
     let result: { ts?: string }
+    let channelId: string | null = null
     try {
-      const channelId = await this.slackApi.openDmChannel(
+      channelId = await this.slackApi.openDmChannel(
         integration.access_token,
         action.target.platform_id,
       )
@@ -483,6 +484,7 @@ export class SlackPeopleService {
       orgId,
       sentBy: userId,
       slackTs: result.ts ?? null,
+      slackChannelId: channelId,
       metadata: action.metadata,
     })
     if (!sent) throw new ConflictException('This proposal changed before it could be sent')

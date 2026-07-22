@@ -189,6 +189,21 @@ describe('spaces active conversation storage', () => {
     useSpacesStore.setState({
       activeSpaceId: 'space-1',
       currentUserId: 'user-1',
+      spaces: [
+        {
+          id: 'space-1',
+          org_id: null,
+          user_id: 'user-1',
+          title: 'Meetings',
+          description: null,
+          campaign_id: null,
+          is_template: false,
+          visibility: 'private',
+          schema: { version: 1, fields: [], views: [] },
+          created_at: '2026-07-07T00:00:00.000Z',
+          updated_at: '2026-07-07T00:00:00.000Z',
+        },
+      ],
       items: [
         {
           id: 'item-1',
@@ -226,7 +241,12 @@ describe('spaces active conversation storage', () => {
 
     await useSpacesStore.getState().updateItem('item-1', { status: 'done' })
 
-    expect(mocks.updateSpaceItem).toHaveBeenCalledWith('space-1', 'item-1', { status: 'done' })
+    expect(mocks.updateSpaceItem).toHaveBeenCalledWith(
+      'space-1',
+      'item-1',
+      { status: 'done' },
+      { orgId: null },
+    )
     expect(fetchSpy).not.toHaveBeenCalled()
     expect(useSpacesStore.getState().items[0]).toMatchObject({
       id: 'item-1',

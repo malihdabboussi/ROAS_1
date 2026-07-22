@@ -1,6 +1,6 @@
 /**
  * Pure helpers for enriching the synthetic Fathom Space item created on webhook.
- * Host-only invitee lists are treated as incomplete Fathom data → prefer transcript speakers.
+ * Attendee tags default to transcript speakers; calendar invitees are fallback only.
  */
 
 import { stripMeetingTitlePrefix } from './fathom-meeting-title'
@@ -65,8 +65,7 @@ export function collectFathomInviteeLabels(attendees: FathomAttendeeLike[]): str
   return labels
 }
 
-const JUNK_SPEAKER =
-  /^(starting transcription\.?.*|speaker\s*\d+|unknown|you|me)$/i
+const JUNK_SPEAKER = /^(starting transcription\.?.*|speaker\s*\d+|unknown|you|me)$/i
 
 export function collectFathomSpeakerLabels(transcript: FathomTranscriptEntryLike[]): string[] {
   const seen = new Set<string>()
@@ -111,14 +110,19 @@ export function resolveFathomAttendeeLabels(input: {
   recordedByEmail: string
   titleHint?: string | null
 }): { labels: string[]; usedSpeakers: boolean } {
-  const inviteeLabels = collectFathomInviteeLabels(input.attendees)
-  if (!isHostOnlyAttendeeList(input.attendees, input.recordedByEmail)) {
-    return { labels: inviteeLabels, usedSpeakers: false }
-  }
+  // Default: who actually spoke on the call (invite lists are often wrong/incomplete).
   const speakerLabels = collectFathomSpeakerLabels(input.transcript)
   if (speakerLabels.length > 0) {
     return { labels: speakerLabels, usedSpeakers: true }
   }
+
+  const inviteeLabels = collectFathomInviteeLabels(input.attendees)
+  // Real multi-person invite roster when speakers are unavailable.
+  if (inviteeLabels.length > 0 && !isHostOnlyAttendeeList(input.attendees, input.recordedByEmail)) {
+    return { labels: inviteeLabels, usedSpeakers: false }
+  }
+
+  // Host-only / empty invitees: try title pair before accepting the host-only list.
   const fromTitle = labelsFromMeetingTitleHint(input.titleHint)
   if (fromTitle.length > 0) {
     return { labels: fromTitle, usedSpeakers: true }
@@ -126,7 +130,7 @@ export function resolveFathomAttendeeLabels(input: {
   return { labels: inviteeLabels, usedSpeakers: false }
 }
 
-/** e.g. "Carol <> Dylan" / "Carol x Dylan" → Carol + Dylan when invitees are host-only. */
+/** e.g. "Carol <> Dylan" / "Carol x Dylan" → Carol + Dylan when speakers + invitees are weak. */
 export function labelsFromMeetingTitleHint(title: string | null | undefined): string[] {
   const raw = stripMeetingTitlePrefix(String(title ?? ''))
   if (!raw) return []

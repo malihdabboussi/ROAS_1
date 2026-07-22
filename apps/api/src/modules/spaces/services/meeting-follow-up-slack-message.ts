@@ -220,7 +220,10 @@ export function buildShareableConfirmReply(input: {
   const title = String(input.callItem?.title ?? 'Meeting').trim() || 'Meeting'
   const brief = briefMeetingSummary(input.callItem)
   const fathomUrl = resolveFathomUrl(input.callItem)
-  const lines = input.followUps.map((item, index) => formatFollowUpLine(item, index))
+  const lines =
+    input.followUps.length > 0
+      ? input.followUps.map((item, index) => formatFollowUpLine(item, index))
+      : ['• No action items proposed.']
 
   return [
     `*Meeting recap: ${title}*`,
@@ -245,7 +248,10 @@ export function buildConfirmMessage(input: {
   // The shareable recap is a separate threaded message (see buildProposedShareableRecapMessage).
   const brief = briefMeetingSummary(input.callItem, { includeNextSteps: false })
   const fathomUrl = resolveFathomUrl(input.callItem)
-  const lines = input.followUps.map((item, index) => formatFollowUpLine(item, index))
+  const lines =
+    input.followUps.length > 0
+      ? input.followUps.map((item, index) => formatFollowUpLine(item, index))
+      : ['• No action items proposed.']
 
   return [
     `*Meeting follow-ups ready for review*`,

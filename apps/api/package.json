@@ -33,6 +33,7 @@
     "@sentry/nestjs": "^10.44.0",
     "@sentry/node": "^10.42.0",
     "@supabase/supabase-js": "^2.49.1",
+    "@vercel/functions": "^3.7.5",
     "@vibey/agent-policy": "workspace:*",
     "@vibey/api-shared": "workspace:*",
     "bullmq": "^5.34.8",

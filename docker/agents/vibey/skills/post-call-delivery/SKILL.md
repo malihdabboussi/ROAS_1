@@ -12,9 +12,11 @@ Write the message a thoughtful operator would actually send after the call. The 
 2. Open naturally. Prefer a short human line such as “Good connecting today” over a report title.
 3. Summarize the purpose and the two to five decisions or takeaways that matter after the meeting.
 4. List action items by owner. Preserve supplied owner names and deadlines. Mark genuinely unassigned work as unassigned instead of guessing.
-5. Include the recording link when supplied.
-6. Keep the draft easy to forward into a Slack channel. Use short paragraphs and Slack-compatible bullets. Avoid tables, long transcript extracts, and internal implementation language.
-7. Treat the output as a Shadow proposal. Drafting never authorizes delivery. The exact approved draft must be sent without regeneration.
+5. Put the recording link at the **top** as a short Slack link labeled `Call report` (not “Open the call recording” at the bottom).
+6. If a Fathom jump link includes `timestamp=`, make the clickable label the clock time (`M:SS` / `H:MM:SS`) and put it first, then the plain takeaway text.
+7. Keep the draft easy to forward into a Slack channel. Use short paragraphs and Slack-compatible bullets. Avoid tables, long transcript extracts, and internal implementation language.
+8. Treat the output as a Shadow proposal. Drafting never authorizes delivery. The exact approved draft must be sent without regeneration.
+9. When `known_names` is supplied (`campaigns`, `page_grader_clients`, `slack_people`), prefer those canonical spellings for clients and teammates over transcript misspellings. Do not invent names that are not in the meeting context or `known_names`.
 
 ## Internal review and revision
 
@@ -44,7 +46,7 @@ Output:
 
 ```json
 {
-  "message": "Good connecting today. We aligned on tightening the webinar hook before the next traffic push.\n\n*Next steps*\n• *Nefi* — deliver three revised hook concepts by Thursday\n• *Dylan* — review reporting and confirm the next test\n\n<https://fathom.video/example|Open the call recording>",
+  "message": "<https://fathom.video/example|Call report>\n\nGood connecting today. We aligned on tightening the webinar hook before the next traffic push.\n\n*Next steps*\n• *Nefi* — deliver three revised hook concepts by Thursday\n• *Dylan* — review reporting and confirm the next test",
   "rationale": "The recap keeps the agreed direction and named ownership visible without repeating the transcript.",
   "context_sources": ["meeting summary", "follow-up records", "recording link"]
 }

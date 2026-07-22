@@ -9,20 +9,21 @@ import {
 } from '@/components/flows/AutomationRunsToolbar'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
-  resolveReportingDates,
-  type ReportingDateRangeInput,
-} from '@/lib/reporting/resolve-reporting-dates'
-import {
+  describeAutomationRunOutcome,
   describeAutomationTriggerEvent,
   runStatusPresentation,
 } from '@/lib/flows/automation-run-presentations'
 import { fetchAutomationRuns, type AutomationRun } from '@/lib/flows/automation-runs-api'
 import { FLOWS_UI } from '@/lib/flows/flows-ui-labels'
+import {
+  resolveReportingDates,
+  type ReportingDateRangeInput,
+} from '@/lib/reporting/resolve-reporting-dates'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils/cn'
 
 const RUN_HISTORY_MIN_WIDTH = 'min-w-[1480px]'
-const RUN_HISTORY_GRID = `${RUN_HISTORY_MIN_WIDTH} grid grid-cols-[minmax(0,112px)_minmax(0,260px)_minmax(0,160px)_minmax(0,160px)_minmax(0,300px)_minmax(0,120px)_minmax(0,160px)_minmax(0,220px)] gap-spacing-3`
+const RUN_HISTORY_GRID = `${RUN_HISTORY_MIN_WIDTH} grid grid-cols-[minmax(0,112px)_minmax(0,260px)_minmax(0,160px)_minmax(0,160px)_minmax(0,240px)_minmax(0,220px)_minmax(0,100px)_minmax(0,160px)_minmax(0,220px)] gap-spacing-3`
 const ALL_RUN_DATES: ReportingDateRangeInput = { time_range: 'all' }
 const RUN_HISTORY_REALTIME_RELOAD_DEBOUNCE_MS = 750
 
@@ -320,6 +321,7 @@ function RunHistoryTable({ rows }: { rows: AutomationRunView[] }) {
         <span className="whitespace-nowrap">Campaign</span>
         <span className="whitespace-nowrap">Space</span>
         <span className="whitespace-nowrap">Trigger</span>
+        <span className="whitespace-nowrap">Outcome</span>
         <span className="whitespace-nowrap">Actions</span>
         <span className="whitespace-nowrap">Error</span>
         <span className="whitespace-nowrap">Ran at</span>
@@ -336,6 +338,7 @@ function RunHistoryTable({ rows }: { rows: AutomationRunView[] }) {
 function AutomationRunHistoryRow({ row }: { row: AutomationRunView }) {
   const { run } = row
   const status = runStatusPresentation(run.status)
+  const outcome = describeAutomationRunOutcome(run.actions_executed)
   const actionCount = run.actions_executed.length
 
   return (
@@ -345,13 +348,21 @@ function AutomationRunHistoryRow({ row }: { row: AutomationRunView }) {
         'hover:bg-hover-subtle px-spacing-6 py-spacing-2 items-center transition-colors',
       )}
     >
-      <span className={cn('body-4 truncate font-medium', status.textClassName)}>
-        {status.label}
+      <span
+        className={cn(
+          'body-4 truncate font-medium',
+          outcome?.label === 'Skipped' ? 'text-muted-foreground' : status.textClassName,
+        )}
+      >
+        {outcome?.label === 'Skipped' ? 'Skipped' : status.label}
       </span>
       <span className="body-4 text-foreground truncate font-medium">{row.flowName}</span>
       <span className="body-4 text-muted-foreground truncate">{row.campaignName}</span>
       <span className="body-4 text-muted-foreground truncate">{row.spaceName}</span>
       <span className="body-4 text-foreground truncate">{row.triggerLabel}</span>
+      <span className="body-4 text-muted-foreground truncate" title={outcome?.detail}>
+        {outcome ? `${outcome.label} · ${outcome.detail}` : '\u2014'}
+      </span>
       <span className="body-4 text-muted-foreground whitespace-nowrap tabular-nums">
         {actionCount} action{actionCount !== 1 ? 's' : ''}
       </span>

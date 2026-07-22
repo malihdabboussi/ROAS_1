@@ -365,18 +365,34 @@ describe('MeetingFollowUpSlackConfirmService', () => {
     )
   })
 
-  it('skips when there are no suggestion ids', async () => {
+  it('still drafts a post-call recap when there are no suggestion ids', async () => {
+    repo.findItemById.mockResolvedValue({ id: 'call-1', title: 'Empty', custom_data: {} })
+    slackTools.findUserByEmail.mockResolvedValue({ success: true, user: { id: 'U_DYLAN' } })
+    slackTools.openDm.mockResolvedValue({ success: true, channel_id: 'D123' })
+    slackTools.sendMessage
+      .mockResolvedValueOnce({ success: true, ts: '1710000000.000100' })
+      .mockResolvedValueOnce({ success: true, ts: '1710000000.000200' })
+    repo.updateItem.mockResolvedValue({})
+
     const result = await service.requestConfirm({
       supabase: {} as never,
       userId: 'user-1',
-      orgId: null,
+      orgId: 'org-1',
       spaceId: 'space-1',
       callItemId: 'call-1',
       callTitle: 'Empty',
       suggestionIds: [],
     })
-    expect(result).toEqual({ skipped: true, reason: 'no_follow_ups' })
-    expect(slackTools.sendMessage).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ suggestion_count: 0, channel_id: 'D123' })
+    expect(userAgentApi.invoke).toHaveBeenCalled()
+    expect(slackTools.sendMessage).toHaveBeenCalledTimes(2)
+    expect(slackTools.sendMessage).toHaveBeenNthCalledWith(
+      1,
+      expect.anything(),
+      'user-1',
+      'org-1',
+      expect.objectContaining({ text: expect.stringContaining('No action items proposed') }),
+    )
   })
 
   it('uses a Slack thread reply to replace the pending client-facing Shadow draft', async () => {

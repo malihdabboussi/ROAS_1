@@ -17,6 +17,12 @@ export interface GeminiTokenUsage {
   totalTokens: number
 }
 
+export type GeminiTextResult = {
+  text: string
+  usage: GeminiTokenUsage
+  providerCostUsd: number
+}
+
 export type BrainGeminiBillingContext = { userId: string; orgId?: string | null }
 
 export type GeminiEmbeddingTaskType =
@@ -270,6 +276,15 @@ export class EmbeddingService {
     systemPrompt?: string,
     billing?: BrainGeminiBillingContext,
   ): Promise<string> {
+    const result = await this.callGeminiWithUsage(prompt, systemPrompt, billing)
+    return result.text
+  }
+
+  async callGeminiWithUsage(
+    prompt: string,
+    systemPrompt?: string,
+    billing?: BrainGeminiBillingContext,
+  ): Promise<GeminiTextResult> {
     const apiKeys = resolveGeminiApiKeys((key) => this.config.get<string>(key))
     if (!apiKeys.length) {
       throw new Error('GEMINI_API_KEY not configured')
@@ -324,7 +339,7 @@ export class EmbeddingService {
           totalTokens: inputTokens + outputTokens,
         }
       }
-      await this.chargeBrainUsage(
+      const providerCostUsd = await this.chargeBrainUsage(
         billing,
         LLM_MODEL_FOR_PRICING,
         chargeUsage,
@@ -332,7 +347,7 @@ export class EmbeddingService {
         costSource,
       )
 
-      return text
+      return { text, usage: chargeUsage, providerCostUsd }
     }
 
     throw new Error(lastError)
@@ -366,12 +381,12 @@ export class EmbeddingService {
     usage: GeminiTokenUsage,
     action: 'embedding' | 'gemini_llm',
     costSource: 'runtime_tokens' | 'char_estimate',
-  ): Promise<void> {
-    if (!billing?.userId || usage.totalTokens <= 0) return
+  ): Promise<number> {
+    if (!billing?.userId || usage.totalTokens <= 0) return 0
     if (!this.creditsService) {
       throw new Error('Credits service is required for Brain Gemini billing')
     }
-    await this.creditsService.processDirectTextUsage({
+    const result = await this.creditsService.processDirectTextUsage({
       userId: billing.userId,
       orgId: billing.orgId ?? undefined,
       feature: 'brain',
@@ -386,6 +401,7 @@ export class EmbeddingService {
       },
       costSource,
     })
+    return result?.apiCost ?? 0
   }
 
   private accumulateEmbeddingBillingBatch(

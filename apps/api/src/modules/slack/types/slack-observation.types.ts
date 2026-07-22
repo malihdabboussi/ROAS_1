@@ -28,4 +28,5 @@ export type SlackObservationMessage = {
 export type SlackObservationCursor = {
   channel_id: string
   last_message_ts: string | null
+  last_reconciled_at: string | null
 }

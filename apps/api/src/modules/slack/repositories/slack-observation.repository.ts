@@ -32,7 +32,7 @@ export class SlackObservationRepository {
   ): Promise<SlackObservationCursor[]> {
     const { data, error } = await supabase
       .from('slack_observation_channels')
-      .select('channel_id, last_message_ts')
+      .select('channel_id, last_message_ts, last_reconciled_at')
       .eq('org_id', input.orgId)
       .eq('slack_team_id', input.slackTeamId)
     if (error) throw new Error(`Failed to list Slack observation cursors: ${error.message}`)
@@ -114,6 +114,19 @@ export class SlackObservationRepository {
       p_last_message_ts: input.lastMessageTs,
     })
     if (error) throw new Error(`Failed to advance Slack observation cursor: ${error.message}`)
+  }
+
+  async markChannelReconciled(
+    supabase: SupabaseClient,
+    input: { orgId: string; slackTeamId: string; channelId: string },
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('slack_observation_channels')
+      .update({ last_reconciled_at: new Date().toISOString() })
+      .eq('org_id', input.orgId)
+      .eq('slack_team_id', input.slackTeamId)
+      .eq('channel_id', input.channelId)
+    if (error) throw new Error(`Failed to mark Slack channel reconciled: ${error.message}`)
   }
 
   async listEventsSince(

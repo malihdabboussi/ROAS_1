@@ -2,6 +2,28 @@ import { describe, expect, it, vi } from 'vitest'
 import { SlackObservationService } from '../slack-observation.service'
 
 describe('SlackObservationService', () => {
+  it('recovers all stored ledger events when a consumer has never advanced', async () => {
+    const repository = {
+      getConsumerCursor: vi.fn().mockResolvedValue(null),
+      listEventsSince: vi.fn().mockResolvedValue([]),
+    }
+    const service = new SlackObservationService(repository as never, {} as never)
+
+    await service.loadPendingEvents({
+      supabase: {} as never,
+      orgId: 'org-1',
+      slackTeamId: 'T1',
+      consumerKey: 'slack_team:all',
+      initialLookbackMinutes: 30,
+      channelIds: [],
+      senderSlackUserIds: [],
+    })
+
+    expect(repository.listEventsSince).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ oldestTs: '0' }),
+    )
+  })
   it('fetches each selected channel once, expands threads, and advances exact cursors', async () => {
     const repository = {
       listChannelCursors: vi
@@ -101,5 +123,37 @@ describe('SlackObservationService', () => {
     expect(slackApi.listConversations).not.toHaveBeenCalled()
     expect(slackApi.getChannelHistorySince).not.toHaveBeenCalled()
     expect(repository.advanceChannelCursor).not.toHaveBeenCalled()
+  })
+
+  it('uses webhooks as the primary path and skips channels reconciled within the last hour', async () => {
+    const repository = {
+      listChannelCursors: vi.fn().mockResolvedValue([
+        {
+          channel_id: 'C1',
+          last_message_ts: '100.000001',
+          last_reconciled_at: new Date().toISOString(),
+        },
+      ]),
+      upsertChannels: vi.fn(),
+    }
+    const slackApi = {
+      listConversations: vi
+        .fn()
+        .mockResolvedValue([{ id: 'C1', name: 'client-alpha', is_member: true }]),
+      getChannelHistorySince: vi.fn(),
+    }
+    const service = new SlackObservationService(repository as never, slackApi as never)
+
+    const result = await service.reconcile({
+      supabase: {} as never,
+      orgId: 'org-1',
+      slackTeamId: 'T1',
+      botToken: 'xoxb-test',
+      channelIds: [],
+      initialLookbackMinutes: 30,
+    })
+
+    expect(slackApi.getChannelHistorySince).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ channelsListed: 1, channelsReconciled: 0, historyRequests: 0 })
   })
 })

@@ -27,7 +27,7 @@ export type {
 
 export interface Space {
   id: string
-  org_id: string
+  org_id: string | null
   user_id: string
   title: string
   description: string | null

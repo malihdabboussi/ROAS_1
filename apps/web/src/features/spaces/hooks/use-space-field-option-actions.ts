@@ -1,5 +1,9 @@
 import { useCallback } from 'react'
 import { toast } from 'sonner'
+import {
+  resolveSpaceFieldOptionError,
+  SPACES_FIELD_OPTION_TOAST_ERRORS,
+} from '../config/spaces-toast-errors.config'
 import { updateSpace } from '../services/spaces.service'
 import type { Space } from '../types'
 import type { SelectOption, SpaceSchema } from '../types/space-schema'
@@ -21,9 +25,21 @@ export function useSpaceFieldOptionActions(opts: {
       const nextSchema = { ...activeSchema, fields: nextFields }
       patchActiveSpaceSchema(nextSchema)
       try {
-        await updateSpace(activeSpace.id, { schema: nextSchema })
-      } catch {
-        toast.error('Failed to save tag')
+        await updateSpace(
+          activeSpace.id,
+          { schema: nextSchema },
+          {
+            orgId: activeSpace.org_id,
+            resilient: true,
+          },
+        )
+      } catch (error) {
+        toast.error(
+          resolveSpaceFieldOptionError(
+            error,
+            SPACES_FIELD_OPTION_TOAST_ERRORS.CREATE_FAILED.userMessage,
+          ),
+        )
         await refresh()
       }
     },
@@ -43,9 +59,21 @@ export function useSpaceFieldOptionActions(opts: {
       const nextSchema = { ...activeSchema, fields: nextFields }
       patchActiveSpaceSchema(nextSchema)
       try {
-        await updateSpace(activeSpace.id, { schema: nextSchema })
-      } catch {
-        toast.error('Failed to update tag')
+        await updateSpace(
+          activeSpace.id,
+          { schema: nextSchema },
+          {
+            orgId: activeSpace.org_id,
+            resilient: true,
+          },
+        )
+      } catch (error) {
+        toast.error(
+          resolveSpaceFieldOptionError(
+            error,
+            SPACES_FIELD_OPTION_TOAST_ERRORS.UPDATE_FAILED.userMessage,
+          ),
+        )
         await refresh()
       }
     },
@@ -62,10 +90,22 @@ export function useSpaceFieldOptionActions(opts: {
       const nextSchema = { ...activeSchema, fields: nextFields }
       patchActiveSpaceSchema(nextSchema)
       try {
-        await updateSpace(activeSpace.id, { schema: nextSchema })
+        await updateSpace(
+          activeSpace.id,
+          { schema: nextSchema },
+          {
+            orgId: activeSpace.org_id,
+            resilient: true,
+          },
+        )
         toast.success('Tag deleted')
-      } catch {
-        toast.error('Failed to delete tag')
+      } catch (error) {
+        toast.error(
+          resolveSpaceFieldOptionError(
+            error,
+            SPACES_FIELD_OPTION_TOAST_ERRORS.DELETE_FAILED.userMessage,
+          ),
+        )
         await refresh()
       }
     },
@@ -81,10 +121,17 @@ export function useSpaceFieldOptionActions(opts: {
       const nextSchema = { ...activeSchema, fields: nextFields }
       patchActiveSpaceSchema(nextSchema)
       try {
-        await updateSpace(activeSpace.id, { schema: nextSchema })
+        await updateSpace(
+          activeSpace.id,
+          { schema: nextSchema },
+          {
+            orgId: activeSpace.org_id,
+            resilient: true,
+          },
+        )
       } catch {
         await refresh()
-        toast.error('Failed to save custom colors')
+        toast.error(SPACES_FIELD_OPTION_TOAST_ERRORS.COLORS_FAILED.userMessage)
       }
     },
     [activeSchema, activeSpace, patchActiveSpaceSchema, refresh],

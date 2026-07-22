@@ -111,7 +111,27 @@ export abstract class SlackEventsBase extends SlackConversationBase {
         `[TRACE] handleMessageEvent DIRECT_CHANNEL: userId=${userId} agentKey=${agentKey} botToken_len=${botToken.length}`,
       )
       await this.slackRepo.touchLastMessage(serviceSupabase, channel.id)
-    } else if (event.channel_type === 'im' || channelId.startsWith('D')) {
+      if (!botToken) {
+        this.logger.warn(
+          `[TRACE] handleMessageEvent: mapped channel ${channel.id} missing bot token; trying fallback`,
+        )
+        const fallback = await this.resolveFallbackRouting(serviceSupabase, teamId)
+        if (!fallback) {
+          this.logger.warn(
+            `[TRACE] handleMessageEvent EXIT: empty bot token and no fallback team=${teamId}`,
+          )
+          return
+        }
+        botToken = fallback.botToken
+        userId = fallback.userId
+        agentKey = fallback.agentKey
+        channelOrgId = fallback.orgId
+      }
+    } else if (
+      event.channel_type === 'im' ||
+      event.channel_type === 'mpim' ||
+      channelId.startsWith('D')
+    ) {
       this.logger.log(
         `[TRACE] handleMessageEvent FALLBACK_ROUTE: channel_type=${event.channel_type} channelId=${channelId}`,
       )

@@ -531,8 +531,7 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
     try {
       const hadStoreSpaces = get().spaces.length > 0
       const usedWarmSnapshot = Boolean(peeked) || hadStoreSpaces
-      const spaces =
-        peeked ?? (hadStoreSpaces ? get().spaces : await cachedSpaces.reload())
+      const spaces = peeked ?? (hadStoreSpaces ? get().spaces : await cachedSpaces.reload())
       const applied = applySpacesSnapshot(spaces)
       await refreshActiveSpaceData(
         applied.nextActiveSpaceId,
@@ -968,7 +967,7 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
   },
 
   updateItem: async (itemId, payload) => {
-    const { activeSpaceId, items } = get()
+    const { activeSpaceId, items, spaces } = get()
     if (!activeSpaceId) return
     const previous = items.find((i) => i.id === itemId)
     let localUpdatedAt: string | null = null
@@ -997,7 +996,10 @@ export const useSpacesStore = create<SpacesState>((set, get) => ({
           }
         }
       }
-      const updated = await updateSpaceItemRequest(activeSpaceId, itemId, payload)
+      const activeSpace = spaces.find((space) => space.id === activeSpaceId)
+      const updated = await updateSpaceItemRequest(activeSpaceId, itemId, payload, {
+        orgId: activeSpace?.org_id ?? null,
+      })
       localUpdatedAt = updated.updated_at
       invalidateSpaceItemsFetchCache(activeSpaceId)
       // Keep the optimistic state as source of truth; only adopt server-derived

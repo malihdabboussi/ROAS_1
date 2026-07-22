@@ -1,11 +1,12 @@
 import { randomUUID } from 'crypto'
 import type { SlackBlock, SlackFileAttachment } from '../types/slack.types'
+import { markdownToSlackMrkdwn } from './slack-markdown-to-mrkdwn'
+import { SlackAuthBase } from './slack-service-auth.base'
 import {
   SLACK_MAX_BLOCKS,
   SLACK_MAX_TEXT_LENGTH,
   SLACK_SECTION_MAX_LENGTH,
 } from './slack-service.shared'
-import { SlackAuthBase } from './slack-service-auth.base'
 
 export abstract class SlackMediaBase extends SlackAuthBase {
   protected async sendSlackReply(
@@ -36,7 +37,9 @@ export abstract class SlackMediaBase extends SlackAuthBase {
     }
   }
 
-  protected collectOutboundDocumentMediaUrls(text: string): Array<{ url: string; filename: string }> {
+  protected collectOutboundDocumentMediaUrls(
+    text: string,
+  ): Array<{ url: string; filename: string }> {
     const seen = new Set<string>()
     const out: Array<{ url: string; filename: string }> = []
     for (const line of text.split('\n')) {
@@ -123,7 +126,9 @@ export abstract class SlackMediaBase extends SlackAuthBase {
     omitDownloadForUrls?: ReadonlySet<string>,
   ): { blocks: SlackBlock[]; plainText: string } {
     const blocks: SlackBlock[] = []
-    const lines = text.split('\n')
+    // Agents often emit Markdown (**bold**); Slack mrkdwn needs *bold*.
+    const normalized = markdownToSlackMrkdwn(text)
+    const lines = normalized.split('\n')
     let buffer = ''
 
     const flushBuffer = () => {
@@ -190,7 +195,7 @@ export abstract class SlackMediaBase extends SlackAuthBase {
     }
 
     flushBuffer()
-    return { blocks, plainText: text }
+    return { blocks, plainText: normalized }
   }
 
   protected chunkText(text: string, maxLen: number): string[] {
@@ -400,6 +405,4 @@ export abstract class SlackMediaBase extends SlackAuthBase {
       contentType,
     )
   }
-
-
 }

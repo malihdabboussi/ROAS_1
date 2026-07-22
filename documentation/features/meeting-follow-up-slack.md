@@ -296,6 +296,10 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-20:** Per-assignee action-item reminders are Shadow `message` proposals created with the meeting review DM (not auto-sent on ✅). Matching uses Slack person email/display name; ignored and `delivery_mode=off` people are skipped.
 - **2026-07-20:** Shadow ledger `target_member_id` must equal the Slack DM recipient. Ops samples delivered to Dylan cannot stay stamped on Aaron as Sent.
 - **2026-07-20:** Person Brain history backfill is opt-in and bounded to enabled mapped channels; it never imports DMs. Managed Person Brains receive sender-filtered forks through the existing Brain queue, while portal users retain their canonical User Brain.
+- **2026-07-22:** Completed calls continue into Slack review even when task suggestion returns no action items. The internal review and editable client-facing draft are still created; the draft explicitly says no action items were proposed.
+- **2026-07-22:** Slack observation is webhook-first with hourly reconciliation, durable consumer recovery from the oldest unconsumed ledger event, and thread-aware unanswered-question suppression. Shadow continues during quiet hours because it cannot send; quiet hours block Active delivery only.
+- **2026-07-22:** Slack Team Intelligence uses direct Gemini text generation so usage is covered by the configured Google spend cap and every run records input/output/total tokens plus provider cost. Active mode refuses to start without explicit channel and person allowlists.
+- **2026-07-22:** Flow History distinguishes skipped/no-activity/analyzed/proposed outcomes. Manage People exposes channel-level workflow and risk signals with rationale and exact Slack evidence even when a proposal has no individual recipient.
 
 ## Related
 

@@ -57,4 +57,39 @@ describe('EmbeddingService billing batches', () => {
       }),
     )
   })
+
+  it('returns Gemini text usage and the actual provider cost used for credit tracking', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          candidates: [{ content: { parts: [{ text: '{"signals":[]}' }] } }],
+          usageMetadata: {
+            promptTokenCount: 80,
+            candidatesTokenCount: 20,
+            totalTokenCount: 100,
+          },
+        }),
+      }),
+    )
+    const config = {
+      get: vi.fn((key: string) => (key === 'GEMINI_API_KEY' ? 'test-key' : undefined)),
+    }
+    const credits = {
+      processDirectTextUsage: vi.fn().mockResolvedValue({ apiCost: 0.004, credits: 1 }),
+    }
+    const service = new EmbeddingService(config as never, credits as never)
+
+    const result = await service.callGeminiWithUsage('Analyze Slack', undefined, {
+      userId: 'user-1',
+      orgId: 'org-1',
+    })
+
+    expect(result).toEqual({
+      text: '{"signals":[]}',
+      usage: { inputTokens: 80, outputTokens: 20, totalTokens: 100 },
+      providerCostUsd: 0.004,
+    })
+  })
 })

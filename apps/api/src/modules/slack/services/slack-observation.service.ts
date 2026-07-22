@@ -6,6 +6,7 @@ import type { SlackObservationEventInput } from '../types/slack-observation.type
 import type { SlackEventEnvelope, SlackHistoryMessage } from '../types/slack.types'
 
 type SlackMessageEvent = NonNullable<SlackEventEnvelope['event']>
+const RECONCILIATION_INTERVAL_MS = 60 * 60 * 1000
 
 @Injectable()
 export class SlackObservationService {
@@ -56,7 +57,7 @@ export class SlackObservationService {
     duplicatesSkipped: number
   }> {
     const available = await this.slackApi.listConversations(input.botToken)
-    const channels = available.filter(
+    const selectedChannels = available.filter(
       (channel) =>
         channel.is_member !== false &&
         (input.channelIds.length === 0 || input.channelIds.includes(channel.id)),
@@ -77,6 +78,16 @@ export class SlackObservationService {
       slackTeamId: input.slackTeamId,
     })
     const cursors = new Map(cursorRows.map((row) => [row.channel_id, row.last_message_ts]))
+    const lastReconciledAt = new Map(
+      cursorRows.map((row) => [row.channel_id, row.last_reconciled_at]),
+    )
+    const reconcileBefore = Date.now() - RECONCILIATION_INTERVAL_MS
+    const channels = selectedChannels.filter((channel) => {
+      const value = lastReconciledAt.get(channel.id)
+      if (!value) return true
+      const timestamp = new Date(value).getTime()
+      return !Number.isFinite(timestamp) || timestamp <= reconcileBefore
+    })
     const initialOldestTs = String((Date.now() - input.initialLookbackMinutes * 60_000) / 1000)
     let historyRequests = 0
     let threadRequests = 0
@@ -125,6 +136,12 @@ export class SlackObservationService {
           channelId: channel.id,
           lastMessageTs: latestTs,
         })
+      } else {
+        await this.repository.markChannelReconciled(input.supabase, {
+          orgId: input.orgId,
+          slackTeamId: input.slackTeamId,
+          channelId: channel.id,
+        })
       }
     }
 
@@ -170,7 +187,11 @@ export class SlackObservationService {
     limit?: number
   }) {
     const cursor = await this.repository.getConsumerCursor(input.supabase, input)
-    const oldestTs = cursor ?? String((Date.now() - input.initialLookbackMinutes * 60_000) / 1000)
+    // The ledger is the durable handoff between Slack capture and analysis. A new consumer must
+    // start at the beginning of the stored ledger so provider outages cannot strand events after
+    // a moving lookback window expires. The limit keeps each recovery batch bounded; advancing the
+    // consumer cursor lets subsequent runs drain the remainder incrementally.
+    const oldestTs = cursor ?? '0'
     const events = await this.repository.listEventsSince(input.supabase, {
       orgId: input.orgId,
       slackTeamId: input.slackTeamId,
