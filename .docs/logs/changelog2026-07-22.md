@@ -1,5 +1,12 @@
 # Changelog - July 22, 2026
 
+## [2026-07-22 05:03] - [DOCS]
+
+What: Added the production proof report for the full ads lifecycle, including two live Ads Research runs, visual evidence counts, the Blaze Meta audit, specific recommendations, launch-gate state, automated test results, production deployment, and the remaining client-owned launch inputs.
+Why: The overnight ads lifecycle goal required a durable, evidence-backed handoff that distinguishes proven platform readiness from the intentionally unapproved Nick campaign launch.
+Impact: Reviewers can trace the live mission and artifact IDs, confirm visual and voice-contract proof, and see exactly what must be supplied before the paused Meta build and activation gates can proceed.
+Files: `.docs/evidence/ads-lifecycle-proof-2026-07-22.md`
+
 ## [2026-07-22 00:25] - [FEATURE]
 
 What: Extended the shell top-right work-area collapse control (PanelRight) from Spaces-only to Team, Brain, Flows, and Artifacts. Collapsing hides the page surface and shows full chat; expanding restores the screen without remounting.
