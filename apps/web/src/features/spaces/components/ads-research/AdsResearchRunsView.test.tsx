@@ -8,7 +8,10 @@ const mocks = vi.hoisted(() => ({
   fetchDeliverablesForMissions: vi.fn().mockResolvedValue({}),
   openFreshChatDrawer: vi.fn(),
   seedComposer: vi.fn(),
-  ensureAgencyTeam: vi.fn().mockResolvedValue({ ok: true, agents: [] }),
+  ensureAgencyTeam: vi.fn().mockResolvedValue({
+    ok: true,
+    agents: [{ role_key: 'ads_manager', agent_key: 'blaze' }],
+  }),
   listSavedAdSearches: vi.fn().mockResolvedValue([]),
   getSavedAdSearch: vi.fn(),
 }))
@@ -64,7 +67,7 @@ describe('AdsResearchRunsView', () => {
     expect(mocks.ensureAgencyTeam).toHaveBeenCalledWith('campaign-1')
     expect(mocks.seedComposer).toHaveBeenCalledWith(
       expect.objectContaining({
-        agentKey: 'ads_manager',
+        agentKey: 'blaze',
         railIntent: 'new',
         workContext: {
           surface: 'spaces',
@@ -96,7 +99,7 @@ describe('AdsResearchRunsView', () => {
     expect(mocks.ensureAgencyTeam).toHaveBeenCalledWith('campaign-1')
     expect(mocks.seedComposer).toHaveBeenCalledWith(
       expect.objectContaining({
-        agentKey: 'ads_manager',
+        agentKey: 'blaze',
         railIntent: 'new',
         workContext: {
           surface: 'spaces',

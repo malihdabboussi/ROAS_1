@@ -89,11 +89,13 @@ export function AdsResearchRunsView({
     }
     setPreparingTeam(true)
     try {
-      await ensureAdsResearchAgencyTeam(campaignId)
+      const team = await ensureAdsResearchAgencyTeam(campaignId)
+      const blazeAgentKey = team.agents.find((agent) => agent.role_key === 'ads_manager')?.agent_key
+      if (!blazeAgentKey) throw new Error('Ads manager agent was not provisioned')
       openFreshChatDrawer()
       seedComposer({
         content,
-        agentKey: 'ads_manager',
+        agentKey: blazeAgentKey,
         railIntent: 'new',
         workContext: { surface: 'spaces', spaceId, campaignId },
       })

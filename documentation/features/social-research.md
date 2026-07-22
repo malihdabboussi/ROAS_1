@@ -1,6 +1,6 @@
 # Social Research
 
-Last Modified: 2026-07-21
+Last Modified: 2026-07-22
 
 ## Overview
 
@@ -61,7 +61,7 @@ The media backend exposes `POST /api/media/cache-social-images` for authenticate
 
 Account add, sync, remove, and Social Research schema saves use the selected `activeSpace.org_id` instead of relying on the browser's global active org. This keeps People-panel mutations scoped to the Space the user is viewing, even when their session org differs.
 
-The Ads Research view opens on **Research Runs**. **Run Research** first ensures the agency strategist, copywriter, designer, and ads manager exist and are assigned to the campaign, then opens Blaze in the slide-in chat and starts a short intake covering the research purpose, Standard or Deep depth, and any specific focus. Blaze creates the deterministic `ads-research` mission after the user answers and confirms the new mission in chat. Opening a run shows a visual research report inside Ads Research. The report combines the exact saved ad-library cards used by Blaze with the analysis, recommendations, copy, and script deliverables. **Rerun Research** uses the same team preflight, then opens Blaze with a replacement-run preflight that verifies the exact campaign and Space, campaign-specific Customer Brain evidence, and the mounted Meta account before asking the user to confirm the client identity. The replacement run carries forward valid kickoff details but does not treat the old analysis or deliverables as factual input. Mission Details remains a secondary action for operational status, subtasks, activity, and approval. **Library Search** remains available as the secondary surface for manual Meta, TikTok, and Google ad-library searches. Library-only group, layout, sort, and refresh controls stay hidden while Research Runs is active.
+The Ads Research view opens on **Research Runs**. **Run Research** first ensures the agency strategist, copywriter, designer, and ads manager exist and are assigned to the campaign, then opens the exact provisioned ads-manager agent in the slide-in chat and starts a short intake covering the research purpose, Standard or Deep depth, and any specific focus. The runtime key returned by team provisioning is authoritative because a newly hired Blaze agent may use `blaze` rather than the `ads_manager` role slug. Blaze creates the deterministic `ads-research` mission after the user answers and confirms the new mission in chat. Opening a run shows a visual research report inside Ads Research. The report combines the exact saved ad-library cards used by Blaze with the analysis, recommendations, copy, and script deliverables. **Rerun Research** uses the same team preflight, then opens Blaze with a replacement-run preflight that verifies the exact campaign and Space, campaign-specific Customer Brain evidence, and the mounted Meta account before asking the user to confirm the client identity. The replacement run carries forward valid kickoff details but does not treat the old analysis or deliverables as factual input. Mission Details remains a secondary action for operational status, subtasks, activity, and approval. **Library Search** remains available as the secondary surface for manual Meta, TikTok, and Google ad-library searches. Library-only group, layout, sort, and refresh controls stay hidden while Research Runs is active.
 
 The Ads Research mission deliberately stops before final creative production or Meta publishing. Recommended copy and video scripts load `dylans-super-voice` as their only voice authority, use native editable Docs, and reject PDF output. Ad Creation, Ad Launch, and Ad Optimization remain separate future workflows.
 
@@ -96,6 +96,10 @@ YouTube long-form videos use `youtube_video` (16:9 grid cards) and Shorts use `y
 X tweets use `tweet` (square cards) and video tweets use `tweet_video` (16:9). Each can be toggled independently via `media_show_x_tweets` and `media_show_x_videos`.
 
 ## Decision Log
+
+### 2026-07-22 - Use the provisioned Blaze runtime key
+
+Run Research and Rerun Research now use the ads-manager agent key returned by the agency-team preflight instead of assuming the role slug is the runtime key. This keeps newly hired `blaze` agents and existing aliased ads-manager agents on the same working path.
 
 ### 2026-07-21 - Provision before Blaze kickoff and enforce visual evidence
 
