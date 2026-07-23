@@ -5,5 +5,6 @@ export const PAID_ADS_META_MESSAGES = {
 
 export const PAID_ADS_WORKSPACE_LABELS = {
   ANALYZE: 'Analyze',
+  PRODUCTION: 'Production',
   LAUNCH: 'Launch',
 } as const

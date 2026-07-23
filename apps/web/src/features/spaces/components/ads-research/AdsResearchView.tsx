@@ -17,9 +17,15 @@ interface AdsResearchViewProps {
     spaceId: string
     campaignId: string | null
   }
+  onStartProduction?: (runId: string) => void
 }
 
-export function AdsResearchView({ view, items, researchContext }: AdsResearchViewProps) {
+export function AdsResearchView({
+  view,
+  items,
+  researchContext,
+  onStartProduction,
+}: AdsResearchViewProps) {
   const [surface, setSurface] = useState<AdsResearchSurface>('runs')
   const setToolbarSurface = useAdsResearchToolbarBridgeStore((state) => state.setSurface)
   const { spaceId, campaignId } = researchContext
@@ -45,7 +51,11 @@ export function AdsResearchView({ view, items, researchContext }: AdsResearchVie
         </div>
       </div>
       {surface === 'runs' ? (
-        <AdsResearchRunsView spaceId={spaceId} campaignId={campaignId} />
+        <AdsResearchRunsView
+          spaceId={spaceId}
+          campaignId={campaignId}
+          onStartProduction={onStartProduction}
+        />
       ) : (
         <AdsResearchLibraryView view={view} items={items} spaceId={spaceId} />
       )}

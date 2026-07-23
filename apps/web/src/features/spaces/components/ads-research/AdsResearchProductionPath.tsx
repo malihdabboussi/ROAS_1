@@ -183,7 +183,7 @@ export function AdsResearchProductionPath({
   }
 
   return (
-    <section className="surface-card border-border p-spacing-4 gap-spacing-4 rounded-spacing-3 flex flex-col border">
+    <section className="gap-spacing-5 flex flex-col">
       <div className="gap-spacing-2 flex items-center">
         <Sparkles className="icon-sm text-primary" />
         <div>

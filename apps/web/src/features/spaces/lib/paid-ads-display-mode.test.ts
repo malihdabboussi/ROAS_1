@@ -21,4 +21,13 @@ describe('paid ads display mode', () => {
     expect(resolved?.id).toBe('paid')
     expect(resolvePaidAdsWorkspaceMode(resolved ?? null)).toBe('research')
   })
+
+  it('preserves the dedicated Production mode', () => {
+    const productionView = {
+      ...views[0],
+      ads_config: { paid_ads_workspace_mode: 'production' },
+    } as ViewDef
+
+    expect(resolvePaidAdsWorkspaceMode(productionView)).toBe('production')
+  })
 })

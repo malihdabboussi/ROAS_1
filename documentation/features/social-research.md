@@ -1,6 +1,6 @@
 # Social Research
 
-Last Modified: 2026-07-22
+Last Modified: 2026-07-23
 
 ## Overview
 
@@ -63,13 +63,15 @@ Account add, sync, remove, and Social Research schema saves use the selected `ac
 
 The Ads Research view opens on **Research Runs**. **Run Research** first ensures the agency strategist, copywriter, designer, and ads manager exist and are assigned to the campaign, then opens the exact provisioned ads-manager agent in the slide-in chat and starts a short intake covering the research purpose, Standard or Deep depth, and any specific focus. The runtime key returned by team provisioning is authoritative because a newly hired Blaze agent may use `blaze` rather than the `ads_manager` role slug. Blaze creates the deterministic `ads-research` mission after the user answers and confirms the new mission in chat. Run cards summarize their updated date, status, research-angle count, visual-ad count, and output count so prior work can be compared without opening every mission.
 
-Opening a run shows a visual research report inside Ads Research. The report starts with a linked summary of what Blaze researched, what Blaze found, what Blaze created, and what happens next. The production path is a real workflow: the user selects named concepts, chooses recording or design for each, and approves the research gate. That human receipt is persisted on the source mission, then ROAS creates an idempotent, linked `meta-ads-launch` mission with the source mission, deliverable ids, approved concepts, and production routes. The launch mission reconciles missing assets, builds reviewable Meta objects in PAUSED state, and keeps final activation behind its human gate. Progress in the research report is derived from those mission steps instead of local UI state.
+Opening a run shows a visual research report inside Ads Research. The report starts with one narrative summary of what Blaze reviewed, found, and created. The deliverable names inside that paragraph open the underlying native Docs, while the evidence count links directly to visual research. A compact circular handoff moves the selected run into the dedicated **Production** workspace instead of embedding the production form inside the report.
+
+The production path is a real workflow: the user selects named concepts, chooses recording or design for each, and approves the research gate. That human receipt is persisted on the source mission, then ROAS creates an idempotent, linked `meta-ads-launch` mission with the source mission, deliverable ids, approved concepts, and production routes. The launch mission reconciles missing assets, builds reviewable Meta objects in PAUSED state, and keeps final activation behind its human gate. Production progress is derived from those mission steps instead of local UI state.
 
 Saved searches are condensed into numbered angle rows with thumbnail previews. Renderer-owned numbering strips any old `Angle N:` prefix from saved titles so the displayed angle number cannot conflict with the title. One angle expands at a time and initially limits the evidence grid to six ads, with an explicit action to reveal the full angle. Creative previews use full-fit media rather than cropping the source. Selecting a creative opens the same in-app asset analysis used by Library Search. Before any additional analysis is requested, the drawer shows the evidence already collected: copy, traffic source, destination, search query, and the research angle Blaze used it for. **Deep analyze** is an optional second layer that extracts the transcript, formula, offer, and reusable patterns. Its result is merged back into the mission-linked saved-search snapshot so reopening the creative retains the breakdown without spending credits again. Failed third-party thumbnails render a compact unavailable-preview state instead of retaining a broken video-sized frame.
 
 **Library Search** remains available as the secondary surface for manual Meta, TikTok, and Google ad-library searches. Library-only group, layout, sort, and refresh controls stay hidden while Research Runs is active.
 
-Paid advertising now appears as one Paid Ads tab with **Analyze**, **Research**, and **Launch** modes. Analyze renders mounted-account reporting and AI analysis, Research renders mission runs plus Library Search, and Launch renders the native campaign/ad-set/ad builder. When an older Space contains both Paid Ads and Ads Research tabs, the tab strip keeps the Paid Ads tab and routes an old Ads Research selection into its Research mode. The legacy schema entry remains intact so consolidation does not delete saved view configuration or research data.
+Paid advertising now appears as one Paid Ads tab with **Analyze**, **Research**, **Production**, and **Launch** modes. Analyze renders mounted-account reporting and AI analysis. Research renders mission runs plus Library Search. Production shows the selected research handoff, concept approvals, recording/design routes, and live mission progress. Launch renders the native campaign/ad-set/ad builder. When an older Space contains both Paid Ads and Ads Research tabs, the tab strip keeps the Paid Ads tab and routes an old Ads Research selection into its Research mode. The legacy schema entry remains intact so consolidation does not delete saved view configuration or research data.
 
 Recommended copy and video scripts load `dylans-super-voice` as their only voice authority, use native editable Docs, and reject PDF output.
 
@@ -104,6 +106,10 @@ YouTube long-form videos use `youtube_video` (16:9 grid cards) and Shorts use `y
 X tweets use `tweet` (square cards) and video tweets use `tweet_video` (16:9). Each can be toggled independently via `media_show_x_tweets` and `media_show_x_videos`.
 
 ## Decision Log
+
+### 2026-07-23 - Dedicated Production workspace
+
+Ads Research reports now use one readable summary paragraph with inline links to Blaze's native deliverables. Counts and four separate summary cards were removed. The concept approval and production handoff moved into a dedicated Production mode between Research and Launch, and the selected source research mission is persisted on the Paid Ads view so the correct handoff reopens after navigation.
 
 ### 2026-07-22 - Persisted production handoff and unified Paid Ads
 
