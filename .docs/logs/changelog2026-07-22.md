@@ -239,3 +239,10 @@ What: Restored and committed the local ROAS Company Wiki rebuild, navigation, bl
 Why: The production wiki data was already live, but the reproducible source files had remained untracked and were later preserved only in a local stash.
 Impact: Local `main` now retains the deterministic, privacy-preserving process needed to validate or rebuild the existing ROAS Internal wiki records without approving Company Cortex signals.
 Files: `scripts/roas/rebuild-company-wiki.py`, `scripts/roas/company_wiki_audit.py`, `scripts/roas/company_wiki_navigation.py`, `scripts/roas/company_wiki_blueprints*.py`
+
+## [2026-07-22 23:11] - [FEATURE]
+
+What: Turned the Ads Research production path into persisted mission actions, added reusable visual Mission Views for Ads Research, Webinar Fulfillment, Meta Ads Launch, and Meta Ads Audit, and consolidated paid advertising into Analyze, Research, and Launch modes.
+Why: The existing production path described a process but could not select concepts, record approval, advance work, or show downstream progress; other playbooks still required interpreting a flat task list; Paid Ads and Ads Research duplicated navigation.
+Impact: Users can select named concepts and recording/design routes, approve the source research gate, start a linked idempotent Meta Launch mission, follow real paused-build/activation progress, review Webinar phases with linked outputs and exact gate actions, and use one Paid Ads surface without deleting legacy research configuration.
+Files: `apps/web/src/features/spaces/components/ads-research/**`, `apps/web/src/features/spaces/components/mission-views/**`, `apps/web/src/features/spaces/components/MissionsView.tsx`, `apps/web/src/features/spaces/components/artifacts/paid-ads/PaidAdsSpaceView.tsx`, `apps/web/src/features/spaces/hooks/use-space-active-view.ts`, `apps/web/src/features/spaces/lib/ads-research-production.ts`, `apps/web/src/features/spaces/lib/mission-view-registry.ts`, `apps/web/src/features/spaces/lib/paid-ads-display-mode.ts`, Paid Ads types/toolbars/tests, `apps/mission-worker/src/modules/missions/playbooks/meta-ads-launch.playbook.ts`, feature docs.
