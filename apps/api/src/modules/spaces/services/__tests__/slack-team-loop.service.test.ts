@@ -346,9 +346,19 @@ describe('SlackTeamLoopService', () => {
       id: 'member-3',
       platform_id: 'U3',
       display_name: 'Casey Client',
+      vibey_user_id: null,
       relationship_kind: 'external',
       delivery_mode: 'shadow',
       person_brain_id: null,
+    }
+    const workspaceOwner = {
+      id: 'member-owner',
+      platform_id: 'U1',
+      display_name: 'Dylan',
+      vibey_user_id: 'owner-1',
+      relationship_kind: 'internal',
+      delivery_mode: 'shadow',
+      person_brain_id: 'brain-owner',
     }
     const peopleRepo = {
       findOrgSlackIntegration: vi.fn().mockResolvedValue({
@@ -356,8 +366,14 @@ describe('SlackTeamLoopService', () => {
         access_token: 'xoxb-test',
         metadata: { team_id: 'T1' },
       }),
-      listPeople: vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([discovered]),
-      createShadowAction: vi.fn().mockResolvedValue({ id: 'proposal-1' }),
+      listPeople: vi
+        .fn()
+        .mockResolvedValueOnce([workspaceOwner])
+        .mockResolvedValueOnce([workspaceOwner, discovered]),
+      createShadowAction: vi
+        .fn()
+        .mockResolvedValueOnce({ id: 'signal-1', metadata: {} })
+        .mockResolvedValueOnce({ id: 'proposal-1', metadata: {} }),
     }
     const observation = {
       reconcile: vi.fn().mockResolvedValue({
@@ -428,7 +444,8 @@ describe('SlackTeamLoopService', () => {
       expect.anything(),
       expect.objectContaining({ slackUserIds: ['U3'] }),
     )
-    expect(peopleRepo.createShadowAction).toHaveBeenCalledWith(
+    expect(peopleRepo.createShadowAction).toHaveBeenNthCalledWith(
+      1,
       expect.anything(),
       expect.objectContaining({
         targetMemberId: null,
@@ -441,7 +458,21 @@ describe('SlackTeamLoopService', () => {
         }),
       }),
     )
-    expect(result).toMatchObject({ people_discovered: 1, proposed: 1 })
+    expect(peopleRepo.createShadowAction).toHaveBeenNthCalledWith(
+      2,
+      expect.anything(),
+      expect.objectContaining({
+        targetMemberId: 'member-owner',
+        actionKind: 'message',
+        proposedContent: expect.stringContaining('Casey Client raised'),
+        metadata: expect.objectContaining({
+          internal_only: true,
+          parent_signal_id: 'signal-1',
+          subject_member_id: 'member-3',
+        }),
+      }),
+    )
+    expect(result).toMatchObject({ people_discovered: 1, proposed: 2 })
   })
 
   it('compounds an enabled Person Brain while delivery stays in Shadow mode', async () => {

@@ -11,6 +11,7 @@ import type {
 } from '../../services/slack-people.service'
 import { SlackPersonBrainControls } from './SlackPersonBrainControls'
 import { SlackPersonChannelContext } from './SlackPersonChannelContext'
+import { SlackRelationshipEditor } from './SlackRelationshipEditor'
 
 const RELATIONSHIP_LABELS: Record<SlackRelationshipKind, string> = {
   internal: 'Internal',
@@ -34,7 +35,9 @@ function initials(name: string): string {
 }
 
 function relationshipLabel(person: SlackDiscoveredPerson): string {
-  return RELATIONSHIP_LABELS[person.relationship_kind]
+  return person.relationship_source === 'manual'
+    ? RELATIONSHIP_LABELS[person.relationship_kind]
+    : 'Unclassified'
 }
 
 interface SlackPeopleRosterProps {
@@ -204,24 +207,10 @@ export function SlackPeopleRoster({
                   </span>
                 </button>
 
-                <div className="bg-secondary p-spacing-1 rounded-spacing-2 flex">
-                  {(Object.keys(RELATIONSHIP_LABELS) as SlackRelationshipKind[]).map((kind) => (
-                    <button
-                      key={kind}
-                      type="button"
-                      aria-label={`Set ${person.display_name} to ${RELATIONSHIP_LABELS[kind]}`}
-                      onClick={() => onUpdateRelationshipKind(person, kind)}
-                      className={cn(
-                        'body-4 px-spacing-2 py-spacing-1 rounded-spacing-1 transition-colors',
-                        person.relationship_kind === kind
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:text-foreground',
-                      )}
-                    >
-                      {RELATIONSHIP_LABELS[kind]}
-                    </button>
-                  ))}
-                </div>
+                <SlackRelationshipEditor
+                  person={person}
+                  onSave={(kind) => onUpdateRelationshipKind(person, kind)}
+                />
 
                 <div className="bg-secondary p-spacing-1 rounded-spacing-2 flex">
                   {(Object.keys(MODE_LABELS) as SlackDeliveryMode[]).map((mode) => (

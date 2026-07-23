@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ArrowLeft, ExternalLink, Eye, Radio } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Eye, Radio, RefreshCw } from 'lucide-react'
 import { SLACK_PEOPLE_MESSAGES } from '../../config/messages.config'
 import { slackMrkdwnToPlainPreview } from '../../lib/slack-message-markdown'
 import { slackSignalEvidence } from '../../lib/slack-signal-evidence'
@@ -14,6 +14,7 @@ interface SlackTeamSignalsViewProps {
   onSelectSignal: (signalId: string) => void
   onReview: (id: string, status: 'approved' | 'dismissed') => void
   onTrain: (signalId: string, instruction: string, saveAsRule: boolean) => void
+  onRefresh: (signalId: string) => void
   onSend: (id: string) => void
 }
 
@@ -41,6 +42,7 @@ export function SlackTeamSignalsView({
   onSelectSignal,
   onReview,
   onTrain,
+  onRefresh,
   onSend,
 }: SlackTeamSignalsViewProps) {
   const signals = useMemo(() => filterTeamSignals(actions), [actions])
@@ -52,6 +54,14 @@ export function SlackTeamSignalsView({
   const actionPlan = selected
     ? actions.filter((action) => action.metadata?.parent_signal_id === selected.id)
     : []
+  const resolution =
+    selected?.metadata?.resolution && typeof selected.metadata.resolution === 'object'
+      ? (selected.metadata.resolution as {
+          resolved?: boolean
+          reason?: string
+          checked_at?: string
+        })
+      : null
 
   return (
     <div className="gap-spacing-3 flex min-h-0 flex-1 flex-col">
@@ -164,6 +174,27 @@ export function SlackTeamSignalsView({
                   <p className="body-4 text-muted-foreground font-medium">Why Pixel flagged this</p>
                   <p className="body-3 text-foreground mt-spacing-1">{selected.rationale}</p>
                 </div>
+              ) : null}
+              <div className="gap-spacing-2 flex flex-wrap items-center">
+                <button
+                  type="button"
+                  className="button-compact button-glass-neutral"
+                  onClick={() => onRefresh(selected.id)}
+                >
+                  <RefreshCw className="icon-xs" /> Check if resolved
+                </button>
+                {resolution ? (
+                  <span
+                    className={`badge-glass body-4 ${
+                      resolution.resolved ? 'badge-glass-green' : 'badge-glass-orange'
+                    }`}
+                  >
+                    {resolution.resolved ? 'Resolved' : 'Still open'}
+                  </span>
+                ) : null}
+              </div>
+              {resolution?.reason ? (
+                <p className="body-4 text-muted-foreground">{resolution.reason}</p>
               ) : null}
               <div>
                 <button
@@ -309,28 +340,43 @@ export function SlackTeamSignalsView({
                   })}
                 </section>
               ) : null}
-              <div className="gap-spacing-2 mt-auto flex flex-wrap items-center">
-                <span className="badge-glass badge-glass-muted body-4 capitalize">
-                  {selected.status}
-                </span>
-                {selected.status === 'proposed' ? (
-                  <button
-                    type="button"
-                    aria-label="Dismiss team signal"
-                    className="button-compact button-glass-neutral"
-                    onClick={() => onReview(selected.id, 'dismissed')}
-                  >
-                    Dismiss
-                  </button>
-                ) : null}
-              </div>
+              <section className="surface-card border-border p-spacing-3 rounded-spacing-3 mt-auto border">
+                <p className="body-4 text-muted-foreground">
+                  {SLACK_PEOPLE_MESSAGES.SIGNAL_REVIEW_HELP}
+                </p>
+                <div className="gap-spacing-2 mt-spacing-2 flex flex-wrap items-center">
+                  <span className="badge-glass badge-glass-muted body-4 capitalize">
+                    {selected.status}
+                  </span>
+                  {selected.status === 'proposed' ? (
+                    <>
+                      <button
+                        type="button"
+                        className="button-compact button-glass-accent"
+                        onClick={() => onReview(selected.id, 'approved')}
+                      >
+                        Mark reviewed
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Dismiss team signal"
+                        className="button-compact button-glass-neutral"
+                        onClick={() => onReview(selected.id, 'dismissed')}
+                      >
+                        Dismiss
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              </section>
             </div>
           ) : (
             <div className="p-spacing-6 flex flex-1 flex-col items-center justify-center text-center">
               <Radio className="icon-lg text-muted-foreground" />
               <p className="body-2 text-foreground mt-spacing-3 font-medium">Select a signal</p>
               <p className="body-4 text-muted-foreground mt-spacing-1 max-w-md">
-                Choose a finding from the list to read the rationale and approve or dismiss it.
+                Choose a finding to inspect its evidence, teach Pixel how to handle it, or mark it
+                reviewed.
               </p>
             </div>
           )}

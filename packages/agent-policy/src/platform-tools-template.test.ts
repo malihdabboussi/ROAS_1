@@ -20,6 +20,23 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('meeting transcript Fathom Zoom Fireflies')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not ask the user to paste a transcript')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('checked call transcripts')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Human teammate →')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Managed AI agent →')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Connected MCP service such as Page Grader →')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'A funnel, landing page, campaign page, or related fulfillment deliverable',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'Do not require the user to know or say "Page Grader"',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'resolve or confirm the client and campaign before creating Page Grader work',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'ask only for missing details that block a safe draft',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not route an MCP service through')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('until the tool result confirms the effect')
     expect(PLATFORM_TOOLS_DEFAULT_MD).not.toContain('**State**')
     expect(PLATFORM_TOOLS_DEFAULT_MD.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)).toBeLessThan(
       PLATFORM_TOOLS_DEFAULT_MD.indexOf(ACTION_CONTRACT_PROTOCOL_HEADING),

@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   fetchSlackChannelActivity,
   fetchSlackChannelCoverage,
@@ -15,7 +15,30 @@ vi.mock('../../services/slack-people.service', () => ({
 }))
 
 describe('SlackChannelsView', () => {
-  beforeEach(() => vi.clearAllMocks())
+  afterEach(cleanup)
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(fetchSlackChannels).mockResolvedValue({
+      connected: true,
+      channels: [{ id: 'C1', name: 'client-alpha', is_private: false }],
+    })
+    vi.mocked(fetchSlackChannelCoverage).mockResolvedValue({
+      summary: { discovered: 1, joined: 1, observed: 1, excluded: 0, inaccessible: 0 },
+      channels: [
+        {
+          channel_id: 'C1',
+          channel_name: 'client-alpha',
+          is_private: false,
+          is_member: true,
+          is_excluded: false,
+          join_status: 'observed',
+          join_error: null,
+          last_reconciled_at: '2026-07-22T12:00:00.000Z',
+        },
+      ],
+    })
+  })
 
   it('lists the Slack channels Pixel belongs to', async () => {
     vi.mocked(fetchSlackChannels).mockResolvedValue({
@@ -78,11 +101,12 @@ describe('SlackChannelsView', () => {
     render(<SlackChannelsView selectedChannelId="C1" onSelectChannel={vi.fn()} onBack={vi.fn()} />)
 
     await waitFor(() => expect(screen.getByText('Here is the proposed follow-up.')).toBeVisible())
+    expect(screen.getByRole('button', { name: /client-alpha/i })).toBeVisible()
     expect(screen.getByText('Here is the proposed follow-up.').closest('article')).toHaveClass(
-      'mr-auto',
+      'self-start',
     )
     expect(screen.getByText('Please revise the second point.').closest('article')).toHaveClass(
-      'ml-auto',
+      'self-end',
     )
     expect(screen.getByText('Thread reply')).toBeVisible()
   })

@@ -1,7 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { describe, expect, it, vi } from 'vitest'
-import type { PageGraderMemoryRow } from '../page-grader-brain-package-build'
+import {
+  computePageGraderPackageContentHash,
+  type PageGraderMemoryRow,
+} from '../page-grader-brain-package-build'
 import { PageGraderBrainPackageIngestService } from '../page-grader-brain-package-ingest.service'
+import { PageGraderKnowledgeIndexService } from '../page-grader-knowledge-index.service'
 
 type IndexKnowledgeObjects = (
   supabase: SupabaseClient,
@@ -34,13 +38,11 @@ describe('PageGraderBrainPackageIngestService', () => {
       createEmbeddingBillingBatch: vi.fn(() => billingBatch),
       settleEmbeddingBillingBatch: vi.fn(async () => undefined),
     }
-    const service = new PageGraderBrainPackageIngestService(
+    const service = new PageGraderKnowledgeIndexService(
       spaceRetrievalIndex as never,
       embedding as never,
     )
-    const indexKnowledgeObjects = (
-      service as unknown as { indexKnowledgeObjects: IndexKnowledgeObjects }
-    ).indexKnowledgeObjects.bind(service)
+    const indexKnowledgeObjects: IndexKnowledgeObjects = service.index.bind(service)
     const rows = Array.from({ length: 13 }, (_, index) => ({
       content: `Knowledge ${index}`,
       content_hash: String(index).padStart(64, '0'),
@@ -76,5 +78,61 @@ describe('PageGraderBrainPackageIngestService', () => {
     expect(embedding.settleEmbeddingBillingBatch).toHaveBeenCalledTimes(1)
     expect(maxInFlight).toBeGreaterThan(1)
     expect(maxInFlight).toBeLessThanOrEqual(6)
+  })
+
+  it('repairs missing Brain embeddings even when the Page Grader package is unchanged', async () => {
+    const pkg = { page_grader_client_id: 'pg-asura' }
+    const contentHash = computePageGraderPackageContentHash(pkg)
+    const campaignQuery: Record<string, unknown> = {
+      select: vi.fn(() => campaignQuery),
+      eq: vi.fn(() => campaignQuery),
+      is: vi.fn(() => campaignQuery),
+      maybeSingle: vi.fn(async () => ({
+        data: {
+          id: 'campaign-1',
+          name: 'Asura Group',
+          config: {
+            external_sources: { page_grader: { content_hash: contentHash } },
+          },
+          context: {},
+        },
+        error: null,
+      })),
+      limit: vi.fn(() => campaignQuery),
+    }
+    const brainQuery: Record<string, unknown> = {
+      select: vi.fn(() => brainQuery),
+      eq: vi.fn(() => brainQuery),
+      limit: vi.fn(() => brainQuery),
+      maybeSingle: vi.fn(async () => ({ data: { id: 'brain-asura' }, error: null })),
+    }
+    const supabase = {
+      from: vi.fn((table: string) => (table === 'campaigns' ? campaignQuery : brainQuery)),
+    }
+    const memoryEmbeddings = {
+      repairBrain: vi.fn(async () => ({ found: 373, embedded: 373, failed: 0 })),
+    }
+    const service = new PageGraderBrainPackageIngestService(
+      {} as never,
+      {} as never,
+      memoryEmbeddings as never,
+    )
+    const result = await service.ingestPackage(supabase as never, {
+      userId: 'user-1',
+      orgId: 'org-1',
+      campaignId: 'campaign-1',
+      package: pkg,
+    })
+
+    expect(memoryEmbeddings.repairBrain).toHaveBeenCalledWith(supabase, {
+      brainId: 'brain-asura',
+      userId: 'user-1',
+      orgId: 'org-1',
+    })
+    expect(result).toMatchObject({
+      skippedUnchanged: true,
+      memoriesEmbedded: 373,
+      memoryEmbeddingFailures: 0,
+    })
   })
 })

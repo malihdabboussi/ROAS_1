@@ -132,6 +132,9 @@ export class McpConfigService {
 
     if (unrestricted) return servers
 
-    return servers.filter((s: McpServerRow) => s.domain === 'universal' || s.domain === agentDomain)
+    return servers.filter(
+      (s: McpServerRow) =>
+        s.domain === 'shared' || s.domain === 'universal' || s.domain === agentDomain,
+    )
   }
 }

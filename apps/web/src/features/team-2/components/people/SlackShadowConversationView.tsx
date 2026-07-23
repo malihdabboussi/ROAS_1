@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, MessagesSquare } from 'lucide-react'
+import { ArrowLeft, MessagesSquare, Radio } from 'lucide-react'
 import type { SlackDiscoveredPerson, SlackShadowAction } from '../../services/slack-people.service'
 import { SlackShadowInbox } from './SlackShadowInbox'
 
@@ -9,6 +9,7 @@ interface SlackShadowConversationViewProps {
   peopleById: Map<string, SlackDiscoveredPerson>
   onBack: () => void
   onOpenPerson: (person: SlackDiscoveredPerson) => void
+  onOpenSignals: () => void
   onReview: (id: string, status: 'approved' | 'dismissed') => void
   onSend: (id: string) => void
 }
@@ -18,12 +19,17 @@ export function SlackShadowConversationView({
   peopleById,
   onBack,
   onOpenPerson,
+  onOpenSignals,
   onReview,
   onSend,
 }: SlackShadowConversationViewProps) {
+  const personActions = actions.filter(
+    (action) => Boolean(action.target_member_id) && peopleById.has(action.target_member_id ?? ''),
+  )
+  const teamSignals = actions.filter((action) => !action.target_member_id)
   const conversationPeople = Array.from(
     new Map(
-      actions.flatMap((action) => {
+      personActions.flatMap((action) => {
         const person = peopleById.get(action.target_member_id ?? '')
         return person ? [[person.id, person] as const] : []
       }),
@@ -74,8 +80,35 @@ export function SlackShadowConversationView({
         )}
       </section>
 
+      {teamSignals.length > 0 ? (
+        <section className="surface-card border-border p-spacing-4 rounded-spacing-4 border">
+          <div className="gap-spacing-3 flex flex-wrap items-center justify-between">
+            <div className="gap-spacing-2 flex min-w-0 items-start">
+              <Radio className="icon-sm text-primary mt-spacing-1 shrink-0" />
+              <div>
+                <h2 className="body-2 text-foreground font-semibold">
+                  {teamSignals.length} team{' '}
+                  {teamSignals.length === 1 ? 'signal needs' : 'signals need'} routing
+                </h2>
+                <p className="body-4 text-muted-foreground mt-spacing-1">
+                  These findings do not have a recipient yet. Review the evidence and tell Pixel
+                  which internal teammate should handle each one.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenSignals}
+              className="button-compact button-glass-primary"
+            >
+              Review Signals
+            </button>
+          </div>
+        </section>
+      ) : null}
+
       <SlackShadowInbox
-        actions={actions}
+        actions={personActions}
         peopleById={peopleById}
         onOpenPerson={onOpenPerson}
         onReview={onReview}

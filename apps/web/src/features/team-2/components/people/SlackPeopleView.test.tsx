@@ -57,7 +57,7 @@ vi.mock('../../hooks/use-slack-people', () => ({
         contact_id: null,
         person_brain_id: null,
         relationship_kind: 'internal',
-        relationship_source: 'inferred',
+        relationship_source: 'manual',
         identity_match_method: 'email',
         identity_match_confidence: 1,
         delivery_mode: 'shadow',
@@ -131,6 +131,9 @@ vi.mock('../../hooks/use-slack-people', () => ({
     createProposal: hookMocks.createProposal,
     reviewAction: hookMocks.reviewAction,
     sendAction: hookMocks.sendAction,
+    trainSignal: vi.fn(),
+    refreshSignal: vi.fn(),
+    refresh: vi.fn(),
     reload: vi.fn(),
   }),
 }))
@@ -145,12 +148,11 @@ describe('SlackPeopleView', () => {
   it('shows the Shadow conversation summary before the Slack roster', () => {
     render(<SlackPeopleView />)
 
-    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
-    expect(screen.getByText(/Internal · shadow/i)).toBeInTheDocument()
-    expect(screen.getByLabelText('Ada Lovelace shares 2 visible Slack channels')).toHaveAttribute(
-      'title',
-      '#general, #team-ops',
-    )
+    expect(screen.getByText('Ada Lovelace')).toBeTruthy()
+    expect(screen.getByText(/Internal · shadow/i)).toBeTruthy()
+    expect(
+      screen.getByLabelText('Ada Lovelace shares 2 visible Slack channels').getAttribute('title'),
+    ).toBe('#general, #team-ops')
     const shadowInbox = screen.getByText('Shadow conversations')
     const slackPeople = screen.getByRole('heading', { name: 'People' })
     expect(
@@ -173,7 +175,10 @@ describe('SlackPeopleView', () => {
     render(<SlackPeopleView />)
 
     fireEvent.click(screen.getByRole('button', { name: 'List view' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Set Ada Lovelace to External' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Internal' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'External' }).at(-1)!)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Save' })[0]!)
     fireEvent.click(screen.getByRole('button', { name: 'Set Ada Lovelace delivery to Active' }))
     fireEvent.click(screen.getByRole('button', { name: 'Manage Bob Stone Brain' }))
     fireEvent.click(screen.getByRole('button', { name: 'Create new Person Brain' }))
@@ -188,21 +193,20 @@ describe('SlackPeopleView', () => {
     render(<SlackPeopleView />)
 
     await waitFor(() => expect(hookMocks.loadPersonActivity).toHaveBeenCalledWith('person-1'))
-    expect(await screen.findByText('I can pull that together.')).toBeInTheDocument()
+    expect(await screen.findByText('I can pull that together.')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /brain/i }))
-    expect(screen.getByText('Ada Brain')).toBeInTheDocument()
-    expect(screen.getByText('Portal identity')).toBeInTheDocument()
+    expect(screen.getByText('Ada Brain')).toBeTruthy()
+    expect(screen.getByText('Portal identity')).toBeTruthy()
   })
 
   it('labels actual Slack messages and Shadow samples with timestamps and rationale', async () => {
     navigationMocks.searchParams = new URLSearchParams('section=people&person=person-1')
     render(<SlackPeopleView />)
 
-    expect(await screen.findByText('Actual Slack message')).toBeInTheDocument()
-    expect(screen.getByText('Sample message · never auto-sent')).toBeInTheDocument()
+    expect(await screen.findByText('Actual Slack message')).toBeTruthy()
+    expect(screen.getByText('Sample message · never auto-sent')).toBeTruthy()
     expect(screen.getAllByRole('time')).toHaveLength(2)
-    expect(screen.getByLabelText(/Why the agent drafted this:/i)).toHaveAttribute(
-      'title',
+    expect(screen.getByLabelText(/Why the agent drafted this:/i).getAttribute('title')).toBe(
       'Testing the review flow.',
     )
   })
@@ -211,7 +215,10 @@ describe('SlackPeopleView', () => {
     navigationMocks.searchParams = new URLSearchParams('section=people&person=person-1')
     render(<SlackPeopleView />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'External' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Internal' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'External' }).at(-1)!)
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(hookMocks.updateRelationshipKind).toHaveBeenCalledWith('person-1', 'external')
   })
@@ -238,7 +245,7 @@ describe('SlackPeopleView', () => {
     navigationMocks.searchParams = new URLSearchParams('section=people&peopleView=shadow')
     render(<SlackPeopleView />)
 
-    expect(screen.getByRole('heading', { name: 'SHADOW CONVERSATIONS' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'SHADOW CONVERSATIONS' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }))
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
 

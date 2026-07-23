@@ -1,7 +1,6 @@
 import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SpaceRetrievalIndexService } from '../../space-retrieval/services/space-retrieval-index.service'
-import { EmbeddingService } from './embedding.service'
 import {
   buildPageGraderEvidenceRows,
   buildPageGraderSeedMemories,
@@ -9,11 +8,12 @@ import {
   computePageGraderPackageContentHash,
   PAGE_GRADER_MEMORY_BATCH,
   pageGraderStringValue,
-  resolvePageGraderKnowledgeSourceType,
   type PageGraderEvidenceRow,
   type PageGraderMemoryRow,
   type PageGraderPackage,
 } from './page-grader-brain-package-build'
+import { PageGraderKnowledgeIndexService } from './page-grader-knowledge-index.service'
+import { PageGraderMemoryEmbeddingService } from './page-grader-memory-embedding.service'
 
 export type PageGraderPackageIngestResult = {
   brainId: string
@@ -22,11 +22,10 @@ export type PageGraderPackageIngestResult = {
   memoriesSkipped: number
   evidenceUpserted: number
   knowledgeIndexed: number
+  memoriesEmbedded: number
+  memoryEmbeddingFailures: number
   skippedUnchanged: boolean
 }
-
-const PAGE_GRADER_KNOWLEDGE_INDEX_CONCURRENCY = 6
-const PAGE_GRADER_KNOWLEDGE_BILLING_BATCH = 250
 
 @Injectable()
 export class PageGraderBrainPackageIngestService {
@@ -35,7 +34,8 @@ export class PageGraderBrainPackageIngestService {
   constructor(
     @Inject(forwardRef(() => SpaceRetrievalIndexService))
     private readonly spaceRetrievalIndex: SpaceRetrievalIndexService,
-    private readonly embedding: EmbeddingService,
+    private readonly knowledgeIndex: PageGraderKnowledgeIndexService,
+    private readonly memoryEmbeddings: PageGraderMemoryEmbeddingService,
   ) {}
 
   async ingestPackage(
@@ -64,6 +64,11 @@ export class PageGraderBrainPackageIngestService {
     const existingHash = this.readStoredContentHash(campaign)
     if (!input.force && existingHash && existingHash === contentHash) {
       const brainId = await this.resolveBrainId(supabase, input.campaignId)
+      const repaired = await this.memoryEmbeddings.repairBrain(supabase, {
+        brainId,
+        userId: input.userId,
+        orgId: input.orgId ?? null,
+      })
       return {
         brainId,
         contentHash,
@@ -71,6 +76,8 @@ export class PageGraderBrainPackageIngestService {
         memoriesSkipped: 0,
         evidenceUpserted: 0,
         knowledgeIndexed: 0,
+        memoriesEmbedded: repaired.embedded,
+        memoryEmbeddingFailures: repaired.failed,
         skippedUnchanged: true,
       }
     }
@@ -87,6 +94,11 @@ export class PageGraderBrainPackageIngestService {
     const memories = [...seeds, ...sources]
 
     const { inserted, skipped } = await this.upsertMemories(supabase, brainId, memories)
+    const repaired = await this.memoryEmbeddings.repairBrain(supabase, {
+      brainId,
+      userId: input.userId,
+      orgId: input.orgId ?? null,
+    })
     const evidenceUpserted = await this.upsertEvidence(supabase, brainId, evidence)
 
     const spaceId =
@@ -100,7 +112,7 @@ export class PageGraderBrainPackageIngestService {
         orgId: input.orgId ?? null,
         spaceId,
       })
-      knowledgeIndexed = await this.indexKnowledgeObjects(supabase, {
+      knowledgeIndexed = await this.knowledgeIndex.index(supabase, {
         userId: input.userId,
         orgId: input.orgId ?? null,
         spaceId,
@@ -153,6 +165,8 @@ export class PageGraderBrainPackageIngestService {
         memories_skipped: skipped,
         evidence_upserted: evidenceUpserted,
         knowledge_indexed: knowledgeIndexed,
+        memories_embedded: repaired.embedded,
+        memory_embedding_failures: repaired.failed,
       }),
     )
 
@@ -163,6 +177,8 @@ export class PageGraderBrainPackageIngestService {
       memoriesSkipped: skipped,
       evidenceUpserted,
       knowledgeIndexed,
+      memoriesEmbedded: repaired.embedded,
+      memoryEmbeddingFailures: repaired.failed,
       skippedUnchanged: false,
     }
   }
@@ -317,100 +333,6 @@ export class PageGraderBrainPackageIngestService {
         }`,
       )
     }
-  }
-
-  private async indexKnowledgeObjects(
-    supabase: SupabaseClient,
-    input: {
-      userId: string
-      orgId: string | null
-      spaceId: string
-      campaignId: string
-      pageGraderClientId: string
-      rows: PageGraderMemoryRow[]
-    },
-  ): Promise<number> {
-    let indexed = 0
-    for (
-      let billingOffset = 0;
-      billingOffset < input.rows.length;
-      billingOffset += PAGE_GRADER_KNOWLEDGE_BILLING_BATCH
-    ) {
-      const billingRows = input.rows.slice(
-        billingOffset,
-        billingOffset + PAGE_GRADER_KNOWLEDGE_BILLING_BATCH,
-      )
-      const billingBatch = this.embedding.createEmbeddingBillingBatch({
-        userId: input.userId,
-        orgId: input.orgId,
-      })
-      try {
-        for (
-          let offset = 0;
-          offset < billingRows.length;
-          offset += PAGE_GRADER_KNOWLEDGE_INDEX_CONCURRENCY
-        ) {
-          const batch = billingRows.slice(offset, offset + PAGE_GRADER_KNOWLEDGE_INDEX_CONCURRENCY)
-          const batchCounts = await Promise.all(
-            batch.map(async (row) => {
-              const sourceType = resolvePageGraderKnowledgeSourceType({
-                memorySourceType: row.source_type,
-                sourceTitle: row.source_title,
-              })
-              const sourceId = `pg:${input.pageGraderClientId}:${row.content_hash.slice(0, 24)}`
-              try {
-                // Prior dual-write used conversation_document for every row; drop the stale kind.
-                if (sourceType !== 'conversation_document') {
-                  await this.spaceRetrievalIndex.deleteSource(
-                    supabase,
-                    'conversation_document',
-                    sourceId,
-                  )
-                }
-                const result = await this.spaceRetrievalIndex.indexSource(supabase, {
-                  sourceType,
-                  sourceId,
-                  userId: input.userId,
-                  orgId: input.orgId ?? undefined,
-                  spaceId: input.spaceId,
-                  force: true,
-                  billingBatch,
-                  row: {
-                    id: sourceId,
-                    title: row.source_title,
-                    content: row.content,
-                    space_id: input.spaceId,
-                    campaign_id: input.campaignId,
-                    org_id: input.orgId,
-                    updated_at: new Date().toISOString(),
-                    metadata: {
-                      page_grader_client_id: input.pageGraderClientId,
-                      ingest_kind: 'page_grader_memory',
-                      content_hash: row.content_hash,
-                      memory_source_type: row.source_type,
-                    },
-                  },
-                })
-                return result.indexed
-              } catch (error) {
-                this.logger.warn(
-                  `Page Grader knowledge index failed for ${sourceId}: ${
-                    error instanceof Error ? error.message : String(error)
-                  }`,
-                )
-                return 0
-              }
-            }),
-          )
-          for (const count of batchCounts) {
-            indexed += count
-          }
-        }
-      } finally {
-        await this.embedding.settleEmbeddingBillingBatch(billingBatch)
-      }
-    }
-    return indexed
   }
 
   private async recordSucceededSyncJob(

@@ -1,6 +1,6 @@
 # Page Grader Campaign Brain Sync
 
-Last Modified: July 20, 2026
+Last Modified: July 23, 2026
 
 ## Overview
 
@@ -11,6 +11,8 @@ Mapped Page Grader clients sync continuously into ROAS campaign brains. Page Gra
 1. Operator maps a Page Grader client → ROAS campaign/space in Settings → Integrations → Page Grader → Map clients. An unmapped client creates a canonical **General** Space; later syncs deterministically reuse the Space marked `schema.custom_data.space_role = general`.
 2. **Create & import / Re-sync** pulls `GET /clients/:id/brain-package` and runs **deterministic dual ingest** (no Atlas LLM):
    - Upserts `ns_memories` (+ evidence chunks) on the campaign brain by `content_hash`
+   - Embeds any Page Grader `ns_memories` rows whose Brain vector is still
+     missing, including unchanged packages from older imports
    - Indexes seed memories into Campaign Knowledge via `SpaceRetrievalIndexService` / `space_semantic_objects`
    - Stamps cursors on `campaigns.config.external_sources.page_grader` and `user_integrations.metadata.client_scope_map`
    - Records a succeeded `page_grader_brain_sync` job for the Brain processing queue
@@ -18,7 +20,11 @@ Mapped Page Grader clients sync continuously into ROAS campaign brains. Page Gra
    - **PG push:** after Client Intel refresh / Send to ROAS-BRAIN, Page Grader POSTs `{ client_id, content_hash }` to `/api/integrations/page-grader/webhooks/brain-package` (`x-page-grader-signature`)
    - **ROAS hourly catch-up:** `POST /api/internal/brain/import-jobs/enqueue-due` and `POST /api/internal/page-grader/brain-sync/catch-up` re-fetch packages for mapped clients and ingest when hash differs
    - **Manual Re-sync:** Map clients row + Brain canvas Import → “Re-sync from Page Grader” (`force: true`)
-4. Unchanged `content_hash` skips writes only when the mapped campaign already has indexed Campaign Knowledge. If the campaign is still an empty shell, catch-up automatically runs one forced, content-hash-deduplicated repair import. Unmapped clients never create campaigns from catch-up/webhook.
+4. Unchanged `content_hash` skips package writes only when the mapped campaign
+   already has indexed Campaign Knowledge. It still repairs missing Campaign
+   Brain embeddings before returning. If the campaign is an empty shell,
+   catch-up automatically runs one forced, content-hash-deduplicated repair
+   import. Unmapped clients never create campaigns from catch-up/webhook.
 5. The importer always writes the canonical Space schema (`version`, system `fields`, standard views, and Page Grader provenance). The web reader also normalizes incomplete legacy schemas, and migration `20260719210500_repair_page_grader_general_spaces.sql` repairs previously malformed Page Grader Spaces in place.
 6. New campaigns keep their package `content_hash` empty until deterministic ingest succeeds. Campaign Knowledge rows index with provider concurrency capped at six. Their measured embedding tokens settle in billing batches of 250 rows so internal credits reflect aggregate provider cost plus markup instead of rounding every vector request up to one credit.
 7. Campaign Knowledge graph reads paginate through Supabase's 1,000-row response ceiling up to the graph endpoint's 5,000-object limit. The response continues to use aggregate database stats for true object and connection totals.
@@ -63,19 +69,29 @@ Page Grader upserts on the Fathom meeting ID plus client ID, so webhook retries 
 
 ## Code map
 
-| Concern              | Location                                                                                   |
-| -------------------- | ------------------------------------------------------------------------------------------ |
-| Deterministic ingest | `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts`          |
-| Create/import entry  | `page-grader-client-import.service.ts` → `page-grader-brain-import.service.ts`             |
-| Campaign Spaces      | `page-grader-campaign-space-schema.ts` → `page-grader-client-import.service.ts`            |
-| Webhook + catch-up   | `page-grader-brain-sync.service.ts`, `page-grader-webhooks.controller.ts`                  |
-| Map clients UI       | `PageGraderClientScopeMapModal.tsx` / `PageGraderClientScopeMapRow.tsx`                    |
-| Brain canvas Re-sync | `CampaignAddInfoImportMenu.tsx` / `CampaignAddInfoPanel.tsx`                               |
-| PG package + push    | `page-grader/.../roasBrainPackage.ts`, `roasBrainPush.ts`, `scheduled-brain-refresh`       |
-| Fathom meetings      | `page-grader-meeting-sync.service.ts`, `fathom-webhook.service.ts`, Page Grader `roas-api` |
+| Concern              | Location                                                                                        |
+| -------------------- | ----------------------------------------------------------------------------------------------- |
+| Deterministic ingest | `apps/api/src/modules/brain/services/page-grader-brain-package-ingest.service.ts`               |
+| Brain vector repair  | `page-grader-memory-embedding.service.ts`, `scripts/roas/backfill-campaign-brain-embeddings.py` |
+| Create/import entry  | `page-grader-client-import.service.ts` → `page-grader-brain-import.service.ts`                  |
+| Campaign Spaces      | `page-grader-campaign-space-schema.ts` → `page-grader-client-import.service.ts`                 |
+| Webhook + catch-up   | `page-grader-brain-sync.service.ts`, `page-grader-webhooks.controller.ts`                       |
+| Map clients UI       | `PageGraderClientScopeMapModal.tsx` / `PageGraderClientScopeMapRow.tsx`                         |
+| Brain canvas Re-sync | `CampaignAddInfoImportMenu.tsx` / `CampaignAddInfoPanel.tsx`                                    |
+| PG package + push    | `page-grader/.../roasBrainPackage.ts`, `roasBrainPush.ts`, `scheduled-brain-refresh`            |
+| Fathom meetings      | `page-grader-meeting-sync.service.ts`, `fathom-webhook.service.ts`, Page Grader `roas-api`      |
 
 ## Decision Log
 
+- **2026-07-23:** Page Grader imports had two separate vector stores:
+  Campaign Knowledge chunks received embeddings, but their canonical
+  `ns_memories` rows did not. Matching package hashes then skipped the importer
+  before repair was possible. Every import now repairs missing Page Grader
+  Brain vectors even when content is unchanged. The production backfill
+  discovers every mapped Page Grader campaign Brain dynamically instead of
+  carrying a hardcoded two-client list. Production repair embedded 8,889
+  previously null vectors across 26 mapped client Brains; the final audit
+  returned zero missing vectors for every mapped client.
 - **2026-07-22:** Programs sit above Campaigns as a ClickUp Space shell (Clients / ROAS Ops). Page Grader still maps **client → campaign**; campaigns with `config.source = 'page_grader'` backfill into the Clients program. See `documentation/features/programs.md`.
 - **2026-07-19:** Replaced Atlas `campaign_file_import` + `save_user_memory` for Page Grader packages. Atlas campaign write tools reject campaign targets, leaving jobs stuck at Processing with 0 objects.
 - **2026-07-19:** Dual-write Brain memories + Campaign Knowledge; hybrid sync (push + hourly catch-up + manual).

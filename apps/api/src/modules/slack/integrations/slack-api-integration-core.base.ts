@@ -132,7 +132,7 @@ export abstract class SlackApiIntegrationCoreBase {
     channelId: string,
     text: string,
     threadTs?: string,
-    options?: { unfurlLinks?: boolean; unfurlMedia?: boolean },
+    options?: { unfurlLinks?: boolean; unfurlMedia?: boolean; replyBroadcast?: boolean },
   ): Promise<SlackApiPostMessageResponse> {
     const body: Record<string, unknown> = {
       channel: channelId,
@@ -142,6 +142,7 @@ export abstract class SlackApiIntegrationCoreBase {
       unfurl_media: options?.unfurlMedia ?? true,
     }
     if (threadTs) body.thread_ts = threadTs
+    if (threadTs && options?.replyBroadcast) body.reply_broadcast = true
 
     const res = await fetch(`${SLACK_API_BASE}/chat.postMessage`, {
       method: 'POST',

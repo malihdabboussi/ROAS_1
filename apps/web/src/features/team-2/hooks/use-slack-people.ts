@@ -14,6 +14,7 @@ import {
   patchSlackPersonIdentity,
   patchSlackPersonRelationshipKind,
   refreshSlackPeople,
+  refreshSlackSignal,
   reviewSlackShadowAction,
   sendSlackShadowAction,
   trainSlackSignal,
@@ -169,14 +170,20 @@ export function useSlackPeople() {
       const result = await trainSlackSignal(signalId, instruction, saveAsRule)
       setActions((current) => [
         ...result.actions,
-        ...current.map((action) =>
-          action.id === signalId ? { ...action, status: 'approved' as const } : action,
-        ),
+        ...current.map((action) => (action.id === signalId ? result.signal : action)),
       ])
       return result
     },
     [],
   )
+
+  const refreshSignal = useCallback(async (signalId: string) => {
+    const result = await refreshSlackSignal(signalId)
+    setActions((current) =>
+      current.map((action) => (action.id === signalId ? result.action : action)),
+    )
+    return result
+  }, [])
 
   return {
     connected,
@@ -196,6 +203,7 @@ export function useSlackPeople() {
     reviewAction,
     sendAction,
     trainSignal,
+    refreshSignal,
     reload,
     refresh,
   }

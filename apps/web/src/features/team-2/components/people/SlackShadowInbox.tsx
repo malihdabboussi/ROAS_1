@@ -51,9 +51,7 @@ export function SlackShadowInbox({
                     >
                       {person.display_name}
                     </button>
-                  ) : (
-                    <p className="body-2 text-foreground font-medium">Unknown person</p>
-                  )}
+                  ) : null}
                   <span className="badge-glass badge-glass-muted body-4 capitalize">
                     {action.status}
                   </span>

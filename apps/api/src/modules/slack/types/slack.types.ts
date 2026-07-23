@@ -289,4 +289,5 @@ export interface SlackHistoryMessage {
   bot_id?: string
   reply_count?: number
   subtype?: string
+  reactions?: Array<{ name: string; users?: string[]; count?: number }>
 }

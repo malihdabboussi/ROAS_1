@@ -19,6 +19,7 @@ import {
   type SlackSignalTrainingDto,
 } from '../dto/slack.dto'
 import { SlackChannelCoverageService } from '../services/slack-channel-coverage.service'
+import { SlackSignalResolutionService } from '../services/slack-signal-resolution.service'
 import { SlackSignalTrainingService } from '../services/slack-signal-training.service'
 
 @Controller('integrations/slack/intelligence')
@@ -28,6 +29,7 @@ export class SlackIntelligenceAdminController {
   constructor(
     private readonly coverage: SlackChannelCoverageService,
     private readonly training: SlackSignalTrainingService,
+    private readonly resolution: SlackSignalResolutionService,
   ) {}
 
   @Get('channels/coverage')
@@ -66,5 +68,14 @@ export class SlackIntelligenceAdminController {
       instruction: body.instruction,
       saveAsRule: body.save_as_rule,
     })
+  }
+
+  @Post('signals/:signalId/refresh')
+  refreshSignal(
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param('signalId') signalId: string,
+  ) {
+    return this.resolution.refresh(supabase, String(scope.orgId), signalId)
   }
 }

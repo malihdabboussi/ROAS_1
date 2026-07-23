@@ -39,9 +39,11 @@ describe('MissionDetailOverlayModals', () => {
     render(
       <MissionDetailOverlayModals
         previewDeliverable={deliverable}
+        deliverables={[deliverable]}
         agents={[]}
         effectiveMission={mission}
         onClosePreview={vi.fn()}
+        onSelectPreview={vi.fn()}
         planModalOpen={false}
         planContent={null}
         subtasks={[]}

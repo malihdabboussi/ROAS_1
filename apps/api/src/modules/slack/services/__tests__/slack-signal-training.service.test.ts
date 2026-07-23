@@ -6,24 +6,41 @@ vi.mock('../../../brain/services/embedding.service', () => ({ EmbeddingService: 
 describe('SlackSignalTrainingService', () => {
   it('creates only internal Shadow actions and stores reusable routing guidance', async () => {
     const people = [
-      { id: 'janine-id', display_name: 'Janine', relationship_kind: 'internal' },
-      { id: 'nefi-id', display_name: 'Nefi', relationship_kind: 'internal' },
-      { id: 'betty-id', display_name: 'Betty', relationship_kind: 'internal' },
-      { id: 'client-id', display_name: 'Josh', relationship_kind: 'external' },
+      {
+        id: 'janine-id',
+        platform_id: 'U1',
+        display_name: 'Janine',
+        username: 'janine',
+        title: 'Finance',
+        relationship_kind: 'internal',
+      },
+      {
+        id: 'nefi-id',
+        platform_id: 'U2',
+        display_name: 'Nefi',
+        username: 'nefi',
+        title: 'Account Manager',
+        relationship_kind: 'internal',
+      },
+      {
+        id: 'betty-id',
+        platform_id: 'U3',
+        display_name: 'Betty',
+        username: 'betty',
+        title: 'Client Success',
+        relationship_kind: 'internal',
+      },
+      {
+        id: 'client-id',
+        platform_id: 'U4',
+        display_name: 'Josh',
+        username: 'josh',
+        title: null,
+        relationship_kind: 'external',
+      },
     ]
     const peopleRepository = {
       listPeople: vi.fn().mockResolvedValue(people),
-      listShadowActions: vi.fn().mockResolvedValue([
-        {
-          id: 'signal-1',
-          target_member_id: null,
-          proposed_content: 'Josh asked for payment, replay, and book details.',
-          rationale: 'Three questions have no reply.',
-          source_channel_id: 'C1',
-          source_message_ts: '100.1',
-          metadata: {},
-        },
-      ]),
       createShadowAction: vi
         .fn()
         .mockImplementation((_client, input) => Promise.resolve({ id: input.targetMemberId })),
@@ -34,17 +51,50 @@ describe('SlackSignalTrainingService', () => {
       callGeminiWithUsage: vi.fn().mockResolvedValue({
         text: JSON.stringify({
           actions: [
-            { recipient_names: ['Janine'], message: 'Please handle the payment link.' },
-            { recipient_names: ['Nefi', 'Betty'], message: 'Please find the replay.' },
-            { recipient_names: ['Josh'], message: 'We will get back to you.' },
+            {
+              recipient_names: ['Janine'],
+              message: 'Please handle the payment link.',
+              destination: 'dm',
+            },
+            {
+              recipient_names: ['Nefi', 'Betty'],
+              message: 'Please find the replay.',
+              destination: 'group_dm',
+            },
+            {
+              recipient_names: ['Josh'],
+              message: 'We will get back to you.',
+              destination: 'source_thread',
+            },
           ],
         }),
+      }),
+    }
+    const resolution = {
+      refresh: vi.fn().mockResolvedValue({
+        action: {
+          id: 'signal-1',
+          target_member_id: null,
+          proposed_content: 'Josh asked for payment, replay, and book details.',
+          rationale: 'Three questions have no reply.',
+          source_channel_id: 'C1',
+          source_message_ts: '100.1',
+          metadata: {},
+        },
+        resolution: {
+          resolved: false,
+          reason: 'No reply',
+          checked_at: '',
+          reply_count: 0,
+          reaction_count: 0,
+        },
       }),
     }
     const service = new SlackSignalTrainingService(
       peopleRepository as never,
       rules as never,
       gemini as never,
+      resolution as never,
     )
 
     const result = await service.train({
