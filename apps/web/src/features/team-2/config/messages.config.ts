@@ -46,7 +46,7 @@ export const SLACK_PEOPLE_MESSAGES = {
   CURRENT_CAPABILITY:
     'Team loops run on a schedule from Loops. Shadow creates reviewable proposals; Active performs only the behavior enabled by an administrator.',
   GHOST_PROFILE_HELP:
-    'Internal, External, and Ignored describe your relationship. The portal icon separately shows whether this Slack identity is linked to an actual Vibey user.',
+    "Internal people can message Pixel with ROAS company and campaign access, but never the owner's Personal Brain. External and Ignored people are denied. This classification also controls Slack Connect users and mixed channels.",
   CHANNELS_NONE: 'No shared Slack channels are visible to this bot.',
   CHANNELS_LOAD_ERROR: "I couldn't load Pixel's Slack channels. Refresh and try again.",
   CHANNEL_ACTIVITY_ERROR: "I couldn't load that Slack channel conversation. Try again.",

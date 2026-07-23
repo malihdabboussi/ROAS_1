@@ -196,6 +196,7 @@ export interface SlackResolvedSender {
   vibeyUserId: string | null
   personBrainId: string | null
   relationshipKind: SlackRelationshipKind
+  isBot: boolean
 }
 
 export type SlackRelationshipKind = 'internal' | 'external' | 'ignored'

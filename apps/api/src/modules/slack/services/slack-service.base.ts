@@ -7,6 +7,7 @@ import { UserAgentApiService } from '../../user-agent-api/services/user-agent-ap
 import { SlackApiIntegration } from '../integrations/slack-api.integration'
 import { SlackRuntimeRepository } from '../repositories/slack-runtime.repository'
 import { SlackRepository } from '../repositories/slack.repository'
+import { SlackAccessControlService } from './slack-access-control.service'
 import type { PendingInstallTokens } from './slack-service.shared'
 
 export abstract class SlackServiceBase {
@@ -27,6 +28,7 @@ export abstract class SlackServiceBase {
     protected readonly userSessionMint: UserSessionMintService,
     protected readonly documentExtraction: DocumentExtractionService,
     protected readonly userAgentApi: UserAgentApiService,
+    protected readonly slackAccessControl: SlackAccessControlService,
   ) {}
 
   protected getServiceRoleClient(): SupabaseClient {

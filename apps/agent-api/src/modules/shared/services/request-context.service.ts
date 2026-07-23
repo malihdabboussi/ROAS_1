@@ -43,6 +43,9 @@ export interface ChannelMemberContext {
   display_name: string
   username?: string
   notes?: Array<{ content: string; saved_at: string }>
+  relationship_kind?: 'internal'
+  is_connection_owner?: boolean
+  personal_brain_access?: boolean
 }
 
 export interface RequestUploadAttachment {

@@ -12,6 +12,7 @@ import type { Response } from 'express'
 import { SupabaseServiceClient } from '@vibey/api-shared'
 import { SyncReadyInterceptor } from '../../agent-sync/interceptors/sync-ready.interceptor'
 import { CreditsService } from '../../billing/services/credits.service'
+import { CHANNEL_CHAT_ERRORS } from '../config/errors.config'
 import { ChannelServiceGuard } from '../guards/channel-service.guard'
 import { ChatService } from '../services/chat.service'
 
@@ -44,6 +45,9 @@ export class ChannelChatController {
         username?: string
         display_name: string
         language?: string
+        relationship_kind?: 'internal'
+        is_connection_owner?: boolean
+        personal_brain_access?: boolean
       }
       documents?: Array<{
         filename: string
@@ -71,11 +75,20 @@ export class ChannelChatController {
       documents,
     } = body
     if (!user_id || !conversation_id || !content) {
-      res.status(400).json({ error: 'Missing user_id, conversation_id, or content' })
+      res.status(400).json({ error: CHANNEL_CHAT_ERRORS.missingRequiredFields })
       return
     }
     if (!access_token) {
-      res.status(400).json({ error: 'Missing access_token' })
+      res.status(400).json({ error: CHANNEL_CHAT_ERRORS.missingAccessToken })
+      return
+    }
+    if (
+      source === 'slack' &&
+      (channel_user?.relationship_kind !== 'internal' ||
+        typeof channel_user.is_connection_owner !== 'boolean' ||
+        typeof channel_user.personal_brain_access !== 'boolean')
+    ) {
+      res.status(403).json({ error: CHANNEL_CHAT_ERRORS.slackAccessDenied })
       return
     }
 
@@ -141,7 +154,7 @@ export class ChannelChatController {
       if (clientAlive) {
         try {
           res.write(
-            `data: ${JSON.stringify({ type: 'error', message: "I couldn't process this message. Try again." })}\n\n`,
+            `data: ${JSON.stringify({ type: 'error', message: CHANNEL_CHAT_ERRORS.processingFailed })}\n\n`,
           )
         } catch {
           clientAlive = false

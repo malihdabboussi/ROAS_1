@@ -11,7 +11,7 @@ import { AgentPolicyService } from '../../agent-policy/services/agent-policy.ser
 import {
   CAMPAIGN_CONTEXT_POLICY_ACTIONS,
   PERSONAL_BRAIN_POLICY_ACTIONS,
-} from '../../artifacts/services/artifact-legacy-runtime-core.service'
+} from '../../artifacts/services/artifact-access-policy-actions'
 import { ChannelInstructionsService } from './channel-instructions.service'
 import { ChatContextAccountingService } from './chat-context-accounting.service'
 import { ChatDocumentContextService } from './chat-document-context.service'
@@ -30,6 +30,9 @@ interface ChatGatewayChannelUser {
   username?: string
   display_name: string
   language?: string
+  relationship_kind?: 'internal'
+  is_connection_owner?: boolean
+  personal_brain_access?: boolean
 }
 
 interface BuildContextInput {
@@ -297,6 +300,9 @@ export class ChatGatewayInputService {
       `- ID: ${channelUser.platform_id}`,
       channelUser.username ? `- Username: @${channelUser.username}` : '',
       `- Name: ${channelUser.display_name}`,
+      channelUser.relationship_kind ? `- Access: ${channelUser.relationship_kind}` : '',
+      channelUser.is_connection_owner ? '- Slack connection owner: yes' : '',
+      channelUser.personal_brain_access === false ? '- Personal Brain access: no' : '',
       channelUser.language ? `- Language: ${channelUser.language}` : '',
     ]
       .filter(Boolean)

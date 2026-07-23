@@ -376,6 +376,7 @@ export class ChatService {
       spaceId,
       scopeKind,
       source,
+      channelUser,
       sendSetupStatus,
       logger: this.logger,
     })

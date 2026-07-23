@@ -149,6 +149,7 @@ export class SlackSenderResolverService {
         vibeyUserId,
         personBrainId: existingIdentity?.person_brain_id ?? null,
         relationshipKind: relationshipKind as 'internal' | 'external' | 'ignored',
+        isBot: slackUser?.is_bot ?? false,
       })
     }
 

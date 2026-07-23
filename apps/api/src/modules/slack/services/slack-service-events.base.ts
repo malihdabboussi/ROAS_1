@@ -93,10 +93,12 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     let userId: string
     let agentKey: string
     let accessToken: string
+    let ownerSlackUserId: string | null
 
     if (channel) {
       const pc = channel.provider_config as Record<string, unknown>
       botToken = typeof pc.bot_token === 'string' ? pc.bot_token : ''
+      ownerSlackUserId = typeof pc.authed_user_id === 'string' ? pc.authed_user_id : null
       const botUserId = typeof pc.bot_user_id === 'string' ? pc.bot_user_id : null
       if (botUserId && event.user === botUserId) {
         this.logger.warn(
@@ -126,6 +128,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
         userId = fallback.userId
         agentKey = fallback.agentKey
         channelOrgId = fallback.orgId
+        ownerSlackUserId = fallback.ownerSlackUserId
       }
     } else if (
       event.channel_type === 'im' ||
@@ -149,6 +152,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       userId = fallback.userId
       agentKey = fallback.agentKey
       channelOrgId = fallback.orgId
+      ownerSlackUserId = fallback.ownerSlackUserId
     } else {
       this.logger.warn(
         `[TRACE] handleMessageEvent EXIT: unmapped channel team=${teamId} channel=${channelId} channel_type=${event.channel_type ?? 'unknown'}`,
@@ -156,25 +160,24 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       return
     }
 
-    const senderContext = await this.resolveSlackSender(
-      serviceSupabase,
-      userId,
-      channelOrgId,
-      event.user,
+    const principal = await this.slackAccessControl.authorizeAndRespond({
+      supabase: serviceSupabase,
       botToken,
-    ).catch(() => null)
-    const effectiveUserId = senderContext?.vibey_user_id ?? userId
-    if (effectiveUserId !== userId) {
-      this.logger.log(
-        `[TRACE] handleMessageEvent SENDER_ROUTE: ownerUserId=${userId} senderUserId=${effectiveUserId} slackUser=${senderContext?.platform_id}`,
-      )
-    }
-    accessToken = await this.userSessionMint.mintAccessToken(effectiveUserId)
+      ownerUserId: userId,
+      ownerSlackUserId,
+      orgId: channelOrgId ?? null,
+      slackUserId: event.user,
+      channelId,
+      isDirectMessage: event.channel_type === 'im' || channelId.startsWith('D'),
+      threadTs: event.thread_ts ?? event.ts,
+    })
+    if (!principal) return
+    accessToken = await this.userSessionMint.mintAccessToken(userId)
 
     let fullMessage = text
     const documents = await this.resolveInboundSlackFiles(
       botToken,
-      effectiveUserId,
+      userId,
       channelOrgId ?? null,
       event.files,
     )
@@ -187,11 +190,11 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     }
 
     this.logger.log(
-      `[TRACE] handleMessageEvent CALLING_processAndReply: userId=${effectiveUserId} ownerUserId=${userId} agentKey=${agentKey} message_len=${fullMessage.length} documents=${documents.length}`,
+      `[TRACE] handleMessageEvent CALLING_processAndReply: userId=${userId} slackUser=${principal.sender.slackUserId} agentKey=${agentKey} message_len=${fullMessage.length} documents=${documents.length}`,
     )
 
     await this.processAndReply({
-      userId: effectiveUserId,
+      userId,
       agentKey,
       botToken,
       channelId,
@@ -200,13 +203,13 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       threadTs: event.thread_ts ?? event.ts,
       messageTs: event.ts,
       accessToken,
-      channelUser: senderContext
-        ? {
-            platform_id: senderContext.platform_id,
-            display_name: senderContext.display_name,
-            username: senderContext.username,
-          }
-        : undefined,
+      channelUser: {
+        platform_id: principal.sender.slackUserId,
+        display_name: principal.sender.displayName,
+        relationship_kind: principal.relationshipKind,
+        is_connection_owner: principal.isConnectionOwner,
+        personal_brain_access: principal.personalBrainAccess,
+      },
       orgId: channelOrgId ?? null,
       documents: documents.length > 0 ? documents : undefined,
     })
@@ -228,27 +231,22 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     const fallback = await this.resolveFallbackRouting(serviceSupabase, teamId)
     if (!fallback) return
 
-    const senderContext = await this.resolveSlackSender(
-      serviceSupabase,
-      fallback.userId,
-      fallback.orgId,
-      event.user,
-      fallback.botToken,
-    ).catch(() => null)
-    const effectiveUserId = senderContext?.vibey_user_id ?? fallback.userId
-    const accessToken =
-      effectiveUserId === fallback.userId
-        ? fallback.accessToken
-        : await this.userSessionMint.mintAccessToken(effectiveUserId)
-    if (effectiveUserId !== fallback.userId) {
-      this.logger.log(
-        `[TRACE] handleAppMentionEvent SENDER_ROUTE: ownerUserId=${fallback.userId} senderUserId=${effectiveUserId} slackUser=${senderContext?.platform_id}`,
-      )
-    }
+    const principal = await this.slackAccessControl.authorizeAndRespond({
+      supabase: serviceSupabase,
+      botToken: fallback.botToken,
+      ownerUserId: fallback.userId,
+      ownerSlackUserId: fallback.ownerSlackUserId,
+      orgId: fallback.orgId,
+      slackUserId: event.user,
+      channelId,
+      isDirectMessage: event.channel_type === 'im' || channelId.startsWith('D'),
+      threadTs: event.thread_ts ?? event.ts,
+    })
+    if (!principal) return
 
     const documents = await this.resolveInboundSlackFiles(
       fallback.botToken,
-      effectiveUserId,
+      fallback.userId,
       fallback.orgId,
       event.files,
     )
@@ -269,7 +267,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       : mentionText
 
     await this.processAndReply({
-      userId: effectiveUserId,
+      userId: fallback.userId,
       agentKey: fallback.agentKey,
       botToken: fallback.botToken,
       channelId,
@@ -277,14 +275,14 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       teamId,
       threadTs: event.thread_ts ?? event.ts,
       messageTs: event.ts,
-      accessToken,
-      channelUser: senderContext
-        ? {
-            platform_id: senderContext.platform_id,
-            display_name: senderContext.display_name,
-            username: senderContext.username,
-          }
-        : undefined,
+      accessToken: fallback.accessToken,
+      channelUser: {
+        platform_id: principal.sender.slackUserId,
+        display_name: principal.sender.displayName,
+        relationship_kind: principal.relationshipKind,
+        is_connection_owner: principal.isConnectionOwner,
+        personal_brain_access: principal.personalBrainAccess,
+      },
       orgId: fallback.orgId,
       documents: documents.length > 0 ? documents : undefined,
     })
@@ -299,6 +297,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     botToken: string
     accessToken: string
     orgId: string | null
+    ownerSlackUserId: string | null
   } | null> {
     const channel = await this.slackRepo.findFallbackChannelByTeam(serviceSupabase, teamId)
     if (!channel) {
@@ -328,12 +327,13 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       botToken,
       accessToken,
       orgId: channel.org_id ?? null,
+      ownerSlackUserId:
+        typeof providerConfig.authed_user_id === 'string' ? providerConfig.authed_user_id : null,
     }
   }
 
   // ---------------------------------------------------------------------------
   // Agent routing + reply
-  // ---------------------------------------------------------------------------
 
   protected async processAndReply(params: {
     userId: string
@@ -350,6 +350,9 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       platform_id: string
       username?: string
       display_name: string
+      relationship_kind: 'internal'
+      is_connection_owner: boolean
+      personal_brain_access: boolean
     }
     documents?: Array<{
       filename: string
@@ -431,6 +434,9 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       platform_id: string
       username?: string
       display_name: string
+      relationship_kind: 'internal'
+      is_connection_owner: boolean
+      personal_brain_access: boolean
     },
     documents?: Array<{
       filename: string

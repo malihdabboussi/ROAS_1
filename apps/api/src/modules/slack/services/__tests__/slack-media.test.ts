@@ -49,6 +49,7 @@ function createService(overrides: { slackApi?: ReturnType<typeof buildMockSlackA
   const channelToken = { mintAccessToken: vi.fn().mockResolvedValue('tok') }
   const documentExtraction = { extractText: vi.fn().mockResolvedValue('') }
   const userAgentApi = { invoke: vi.fn() }
+  const accessControl = { authorize: vi.fn() }
   const svc = new (SlackService as any)(
     api,
     repo,
@@ -57,6 +58,8 @@ function createService(overrides: { slackApi?: ReturnType<typeof buildMockSlackA
     channelToken,
     documentExtraction,
     userAgentApi,
+    accessControl,
+    {},
   )
   return { svc: svc as SlackService, api, repo, channelToken }
 }
@@ -339,6 +342,7 @@ describe('SlackService media helpers', () => {
         botToken: 'xoxb-org',
         accessToken: 'tok',
         orgId: 'org-1',
+        ownerSlackUserId: null,
       })
     })
   })
@@ -396,65 +400,6 @@ describe('SlackService media helpers', () => {
       expect(conversationUpdate.eq).toHaveBeenCalledWith('id', 'conversation-1')
     })
 
-    it('resolves Slack sender context and refreshes the channel member row', async () => {
-      const { svc, api } = createService({ slackApi: buildMockSlackApi() })
-      api.getUserInfo.mockResolvedValue({
-        id: 'U1',
-        name: 'ada',
-        profile: {
-          email: 'ada@example.com',
-          display_name: 'Ada',
-          image_72: 'https://example.com/a.png',
-        },
-      })
-      const existingMember = createThenableQuery({
-        data: { platform_id: 'U1', display_name: 'Old Ada', username: 'old' },
-        error: null,
-      })
-      const orgMembers = createThenableQuery({
-        data: [{ user_id: 'vibey-user-1', profiles: { email: 'ada@example.com' } }],
-        error: null,
-      })
-      const upsert = vi.fn().mockResolvedValue({ error: null })
-      const supabase = {
-        from: vi.fn((table: string) => {
-          if (table === 'channel_members') {
-            return supabase.from.mock.calls.filter(([name]) => name === 'channel_members')
-              .length === 1
-              ? existingMember
-              : { upsert }
-          }
-          if (table === 'org_members') return orgMembers
-          throw new Error(`Unexpected table: ${table}`)
-        }),
-      }
-
-      const result = await (svc as any).resolveSlackSender(
-        supabase,
-        'owner-user',
-        'org-1',
-        'U1',
-        'xoxb',
-      )
-
-      expect(result).toEqual({
-        platform_id: 'U1',
-        display_name: 'Ada',
-        username: 'ada',
-        email: 'ada@example.com',
-        vibey_user_id: 'vibey-user-1',
-      })
-      expect(upsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          user_id: 'owner-user',
-          org_id: 'org-1',
-          platform: 'slack',
-          platform_id: 'U1',
-          display_name: 'Ada',
-        }),
-        { onConflict: 'user_id,platform,platform_id,org_id' },
-      )
-    })
   })
 
   describe('SlackSenderResolverService', () => {
@@ -655,6 +600,7 @@ function createServiceWithRepository(): SlackService {
   const channelToken = { mintAccessToken: vi.fn().mockResolvedValue('tok') }
   const documentExtraction = { extractText: vi.fn().mockResolvedValue('') }
   const userAgentApi = { invoke: vi.fn() }
+  const accessControl = { authorize: vi.fn() }
   return new (SlackService as any)(
     api,
     repo,
@@ -663,5 +609,7 @@ function createServiceWithRepository(): SlackService {
     channelToken,
     documentExtraction,
     userAgentApi,
+    accessControl,
+    {},
   ) as SlackService
 }

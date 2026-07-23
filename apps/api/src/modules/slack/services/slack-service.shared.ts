@@ -13,14 +13,6 @@ export interface PendingInstallTokens {
   ts: number
 }
 
-export interface ResolvedSlackSenderContext {
-  platform_id: string
-  display_name: string
-  username?: string
-  email: string | null
-  vibey_user_id: string | null
-}
-
 export const SLACK_MAX_TEXT_LENGTH = 3900
 export const SLACK_MAX_BLOCKS = 50
 export const SLACK_SECTION_MAX_LENGTH = 3000
@@ -35,6 +27,12 @@ export const MACHINE_NOT_READY_SLACK_MESSAGE =
   "Your agent started, but it wasn't ready in time. Try again in a minute."
 export const GENERIC_SLACK_AGENT_ERROR_MESSAGE =
   "I couldn't process this message. Try again in a moment."
+export const SLACK_ACCESS_DENIED_MESSAGE =
+  "You don't have access to Pixel yet. Ask a ROAS admin to update you in Manage People."
+export const SLACK_CHANNEL_ACCESS_DENIED_MESSAGE =
+  "I can't use private ROAS data in this channel. Ask a ROAS admin to review its members."
+export const SLACK_ACCESS_CHECK_FAILED_MESSAGE =
+  "I couldn't verify Slack access right now. Try again in a moment."
 
 export const SUPABASE_USER_ACCESS_TOKEN_KEY = 'supabase_user_access_token'
 export const SUPABASE_USER_REFRESH_TOKEN_KEY = 'supabase_user_refresh_token'

@@ -161,17 +161,6 @@ export class SlackRuntimeRepository {
     return data ?? []
   }
 
-  async findProfileIdByEmail(supabase: SupabaseClient, email: string): Promise<string | null> {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id')
-      .ilike('email', email)
-      .limit(1)
-      .maybeSingle()
-    if (error) throw error
-    return typeof data?.id === 'string' ? data.id : null
-  }
-
   async findRecentCampaignIdForUser(
     supabase: SupabaseClient,
     userId: string,

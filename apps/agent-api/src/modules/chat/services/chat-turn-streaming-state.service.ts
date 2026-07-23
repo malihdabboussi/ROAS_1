@@ -21,6 +21,9 @@ interface ChannelUser {
   username?: string
   display_name: string
   language?: string
+  relationship_kind?: 'internal'
+  is_connection_owner?: boolean
+  personal_brain_access?: boolean
 }
 
 interface StreamDocument {
@@ -238,6 +241,9 @@ export class ChatTurnStreamingStateService {
             platform_id: input.channelUser.platform_id,
             display_name: input.channelUser.display_name,
             username: input.channelUser.username,
+            relationship_kind: input.channelUser.relationship_kind,
+            is_connection_owner: input.channelUser.is_connection_owner,
+            personal_brain_access: input.channelUser.personal_brain_access,
           }
         : null,
       input.messageScope.space_id,

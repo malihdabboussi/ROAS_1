@@ -5,7 +5,6 @@ import {
   SUPABASE_USER_ACCESS_TOKEN_KEY,
   SUPABASE_USER_REFRESH_TOKEN_KEY,
   type OAuthStatePayload,
-  type ResolvedSlackSenderContext,
 } from './slack-service.shared'
 import { SlackServiceBase } from './slack-service.base'
 
@@ -327,100 +326,5 @@ export abstract class SlackAuthBase extends SlackServiceBase {
     }
     return lines.join('\n')
   }
-
-  protected async resolveSlackSender(
-    supabase: SupabaseClient,
-    userId: string,
-    orgId: string | null | undefined,
-    slackUserId: string | undefined,
-    botToken: string,
-  ): Promise<ResolvedSlackSenderContext | null> {
-    if (!slackUserId) return null
-    const existing = await this.slackRuntimeRepo.findChannelMemberByPlatform(
-      supabase,
-      userId,
-      slackUserId,
-    )
-
-    const userInfo = await this.slackApi.getUserInfo(botToken, slackUserId)
-    const email = userInfo?.profile?.email?.trim().toLowerCase() ?? null
-    const vibeyUserId = await this.resolveVibeyUserIdForSlackEmail(supabase, email, orgId)
-    if (!userInfo) {
-      return {
-        platform_id: slackUserId,
-        display_name: existing?.display_name ?? slackUserId,
-        username: existing?.username ?? undefined,
-        email,
-        vibey_user_id: vibeyUserId,
-      }
-    }
-
-    const displayName =
-      userInfo.profile?.display_name ||
-      userInfo.profile?.real_name ||
-      userInfo.real_name ||
-      userInfo.name ||
-      slackUserId
-    try {
-      await this.slackRuntimeRepo.upsertChannelMember(supabase, {
-        user_id: userId,
-        org_id: orgId ?? null,
-        platform: 'slack',
-        platform_id: slackUserId,
-        display_name: displayName,
-        username: userInfo.name ?? null,
-        avatar_url: userInfo.profile?.image_72 ?? null,
-        title: userInfo.profile?.title ?? null,
-        timezone: userInfo.tz ?? null,
-        is_bot: userInfo.is_bot ?? false,
-      })
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      this.logger.warn(`Failed to upsert Slack member ${slackUserId}: ${message}`)
-    }
-    return {
-      platform_id: slackUserId,
-      display_name: displayName,
-      username: userInfo.name,
-      email,
-      vibey_user_id: vibeyUserId,
-    }
-  }
-
-  protected async resolveVibeyUserIdForSlackEmail(
-    supabase: SupabaseClient,
-    email: string | null,
-    orgId: string | null | undefined,
-  ): Promise<string | null> {
-    if (!email) return null
-    if (orgId) {
-      let rows: Awaited<
-        ReturnType<typeof this.slackRuntimeRepo.listActiveOrgMembersWithProfileEmails>
-      >
-      try {
-        rows = await this.slackRuntimeRepo.listActiveOrgMembersWithProfileEmails(supabase, orgId)
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        this.logger.warn(`Failed to resolve Slack sender org member: ${message}`)
-        return null
-      }
-      for (const row of rows) {
-        const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
-        const profileEmail =
-          typeof profile?.email === 'string' ? profile.email.trim().toLowerCase() : null
-        if (profileEmail === email && typeof row.user_id === 'string') return row.user_id
-      }
-      return null
-    }
-
-    try {
-      return await this.slackRuntimeRepo.findProfileIdByEmail(supabase, email)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      this.logger.warn(`Failed to resolve Slack sender profile: ${message}`)
-      return null
-    }
-  }
-
 
 }

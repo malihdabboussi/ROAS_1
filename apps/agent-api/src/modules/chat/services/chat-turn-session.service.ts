@@ -42,6 +42,9 @@ interface ChannelUser {
   username?: string
   display_name: string
   language?: string
+  relationship_kind?: 'internal'
+  is_connection_owner?: boolean
+  personal_brain_access?: boolean
 }
 
 interface MessageScope {
@@ -281,6 +284,9 @@ export class ChatTurnSessionService {
             platform_id: state.channelUser.platform_id,
             display_name: state.channelUser.display_name,
             username: state.channelUser.username,
+            relationship_kind: state.channelUser.relationship_kind,
+            is_connection_owner: state.channelUser.is_connection_owner,
+            personal_brain_access: state.channelUser.personal_brain_access,
           }
         : null,
       state.messageScope.space_id,

@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 22, 2026 (People owns teammates + calendars)
+Last Modified: July 23, 2026 (Slack Pixel access boundaries)
 
 ## Data Flow
 
@@ -41,6 +41,7 @@ Last Modified: July 22, 2026 (People owns teammates + calendars)
 35. Home Agenda **Call recording & tasks** attaches a Fathom/Meetings call with confident match first: call_date overlap (±45m) + exact email overlap (or strong title confidence), exclusive 1:1. When AI titles / missing emails prevent that, a second pass attaches the call only if exactly one calendar invite starts within ±10m and no other unmatched call competes. Unmatched Fathom rows are still injected when no sole invite exists; Team/personal agenda then merges those leftovers onto the unique nearby calendar row. Opening the recording uses the Fathom URL when present; follow-ups navigate to `/spaces?space=&item=` (not the legacy `/spaces/:id/:itemId` path, which 404s).
 36. On Team agenda, account labels prefer teammate calendar names. **Mine** is only kept when the row exists solely on the caller’s personal calendar; **Fathom** is only kept for unmatched Fathom-only rows (the Fathom badge still appears via `source` / related). Shared Mine+teammate invites drop Mine.
 37. A successful Fathom reconnect restores only automation routes that the matching Fathom disconnect disabled. Routes disabled manually or for another error remain disabled.
+38. Inbound Slack Pixel requests are fail-closed against Manage People before files, credits, or agent tools run. `internal` people use the Slack integration owner's organization context and credits even without a portal account; `external`, `ignored`, unresolved, and identity-check failures never invoke the agent. Non-DM channels are usable only when every human member is Internal. The Slack OAuth installer is the owner; only that identity may retain Personal Brain access. Every other Internal person is blocked from direct and indirect Personal Brain tools at both prompt assembly and tool execution.
 
 ## Code Examples
 
@@ -143,6 +144,8 @@ Reconnect result:
 - A People conversation composer writes only to `slack_shadow_actions`; delivery remains a separate approved-and-Active action. Explicit identity mapping is limited to active members of the current organization.
 - A created Person Brain replaces the creation action in the person intelligence panel; portal identity remains a separate optional mapping. The right-side person panel can collapse to a narrow rail and reopen without leaving the conversation.
 - Slack channel membership is display-only discovery context. Only channels visible to the connected bot are shown, and a refresh must preserve every administrator-set `internal`, `external`, or `ignored` classification because manual relationship metadata remains authoritative.
+- Manage People relationship classification is the Slack Pixel authorization source. Internal Slack Connect identities can be manually classified Internal; portal membership is not required. External, Ignored, and unresolved identities receive a short denial. Mixed channels are denied so an Internal sender cannot expose organization context to a client who can see the thread.
+- Slack teammate execution is owner-funded but not owner-impersonated for private memory. The request uses the integration owner's organization/credits, carries the Slack principal through channel context, strips Personal Brain prompt/tool access for non-owners, and rejects Slack calls that omit this principal contract.
 - Page Grader is discovery context, not a second Meta publisher. Vibey owns Mission approvals, Meta mutations, and audit history. When Page Grader has exactly one active mapped ad account it may recommend that identifier; multiple active accounts require a human selection.
 - Paid Ads must expose connection and campaign-mapping state before launch. A Page Grader recommendation is labeled as context, not permission; only a live Meta connection plus explicit ad-account and Page selection earns the `Meta mounted` state.
 - Paid Ads creation and reporting are modes of one workspace, not separate setup flows. The standalone Ads Performance view remains available for custom reporting layouts, but the normal Paid Ads workflow switches modes in place.

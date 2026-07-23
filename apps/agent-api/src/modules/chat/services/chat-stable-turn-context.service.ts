@@ -17,6 +17,10 @@ import {
   type ValidatedModelSettings,
 } from './chat-model-input.service'
 import type { ChatStablePrewarmContext } from './chat-prewarm-context.service'
+import {
+  applyChannelPrincipalBrainPolicy,
+  type ChannelPrincipalUser,
+} from './chat-channel-principal'
 
 export interface ChatStableTurnContext {
   conversationCampaignId: string | undefined
@@ -55,6 +59,7 @@ export interface ChatStableTurnContextInput {
   spaceId?: string | null
   scopeKind?: ChatScopeKind
   source?: string
+  channelUser?: ChannelPrincipalUser
   sendSetupStatus: (message: string) => Promise<void>
   logger: Pick<Logger, 'warn'>
 }
@@ -86,6 +91,7 @@ export class ChatStableTurnContextService {
       spaceId,
       scopeKind,
       source,
+      channelUser,
       sendSetupStatus,
       logger,
     } = input
@@ -200,6 +206,12 @@ export class ChatStableTurnContextService {
         logger.warn(`policy resolve failed for ${resolvedAgentId}: ${err}`)
       }
     }
+
+    userBrainAccess = applyChannelPrincipalBrainPolicy({
+      source,
+      policyAllowsPersonalBrain: userBrainAccess,
+      channelUser,
+    })
 
     if (
       !prewarmedStableContext &&

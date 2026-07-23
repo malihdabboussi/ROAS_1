@@ -24,6 +24,7 @@ import { SlackRuntimeRepository } from './repositories/slack-runtime.repository'
 import { SlackSignalTrainingRepository } from './repositories/slack-signal-training.repository'
 import { SlackRepository } from './repositories/slack.repository'
 import { SlackAgentToolsService } from './services/slack-agent-tools.service'
+import { SlackAccessControlService } from './services/slack-access-control.service'
 import { SlackBrainMappingService } from './services/slack-brain-mapping.service'
 import { SlackChannelCoverageService } from './services/slack-channel-coverage.service'
 import { SlackObservationService } from './services/slack-observation.service'
@@ -48,6 +49,7 @@ import { SlackService } from './services/slack.service'
   ],
   providers: [
     SlackService,
+    SlackAccessControlService,
     SlackAgentToolsService,
     SlackBrainMappingService,
     SlackObservationService,

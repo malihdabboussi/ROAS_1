@@ -12,7 +12,7 @@ import { AgentRuntimeSkillScopeService } from '../../agent-sync/services/agent-r
 import {
   CAMPAIGN_CONTEXT_POLICY_ACTIONS,
   PERSONAL_BRAIN_POLICY_ACTIONS,
-} from '../../artifacts/services/artifact-legacy-runtime-core.service'
+} from '../../artifacts/services/artifact-access-policy-actions'
 import { BrainContextService } from '../../brain/services/brain-context.service'
 import {
   OpenClawProxyService,

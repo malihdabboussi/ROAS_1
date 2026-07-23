@@ -3,6 +3,10 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { getSystemAgentContract, isProtectedSystemAgent } from '@vibey/agent-policy'
 import { ArtifactLegacyRuntimeRepository } from '../repositories/artifact-legacy-runtime.repository'
 import {
+  CAMPAIGN_CONTEXT_POLICY_ACTIONS,
+  PERSONAL_BRAIN_POLICY_ACTIONS,
+} from './artifact-access-policy-actions'
+import {
   CEO_ONLY_ACTIONS,
   isArtifactActionAllowed,
   isIntegrationSubActionAllowed,
@@ -12,6 +16,7 @@ import {
   type ArtifactAgentRecord,
   type ArtifactCapabilityPolicy,
 } from './artifact-capability.policy'
+import { authorizeChannelPrincipalAction } from './artifact-channel-principal.policy'
 import { ArtifactLegacyRuntimeApiService } from './artifact-legacy-runtime-api.service'
 
 const MUTATING_CAMPAIGN_ACTIONS = new Set([
@@ -83,25 +88,6 @@ const MUTATING_CAMPAIGN_ACTIONS = new Set([
   'prepare_sequence_send',
 ])
 
-export const PERSONAL_BRAIN_POLICY_ACTIONS = new Set([
-  'search_user_brain',
-  'list_user_brain_memories',
-  'crystallize_user_brain',
-  'ingest_user_brain_link',
-  'ingest_user_brain_text',
-  'ingest_user_brain_document',
-])
-
-export const CAMPAIGN_CONTEXT_POLICY_ACTIONS = new Set([
-  'get_campaign',
-  'list_campaigns',
-  'list_campaign_media',
-  'get_campaign_main_dashboard',
-  'get_campaign_social_analytics',
-  'get_campaign_stripe_overview',
-  'discover_channel_context',
-])
-
 const SKILL_WRITE_LOCKED_SYSTEM_AGENT_KEYS = new Set([
   'atlas',
   'brain_scholar',
@@ -160,6 +146,13 @@ export class ArtifactLegacyRuntimeCoreService {
     const callerAgentKey = target.parseAgentIdFromSessionKey(sessionKey ?? '')
     if (!callerAgentKey)
       return { allowed: false, reason: 'Invalid x-session-key: agent key is required' }
+    const channelPrincipalDecision = authorizeChannelPrincipalAction({
+      target,
+      action,
+      data,
+      sessionKey,
+    })
+    if (!channelPrincipalDecision.allowed) return channelPrincipalDecision
     const supabase = await target.getUserClient(userId, sessionKey as string)
     let authOrgId = target.resolveOrgId?.(sessionKey) as string | null | undefined
     if (authOrgId === undefined && sessionKey) {

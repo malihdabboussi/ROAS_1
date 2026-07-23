@@ -262,6 +262,84 @@ describe('ArtifactLegacyRuntimeCoreService mainApiCall error parsing', () => {
     expect(userQueries.records.length).toBeGreaterThanOrEqual(1)
   })
 
+  it('denies personal Brain actions for a non-owner internal Slack principal', async () => {
+    const userQueries = makeQueryClient(async (record) => {
+      if (record.table !== 'agents_registry') throw new Error(`Unexpected table ${record.table}`)
+      return { data: null, error: null }
+    })
+    const service = new ArtifactLegacyRuntimeCoreService()
+
+    const decision = await service.authorizeAction(
+      {
+        resolveUserId: () => 'owner-1',
+        resolveOrgId: () => 'org-1',
+        parseAgentIdFromSessionKey: () => 'viktor',
+        parseConversationId: () => 'conv-1',
+        requestContext: {
+          get: vi.fn(() => ({
+            channel: 'slack',
+            channelMember: {
+              platform_id: 'U_TEAM',
+              relationship_kind: 'internal',
+              personal_brain_access: false,
+            },
+          })),
+        },
+        getUserClient: vi.fn(async () => userQueries.client),
+        agentPolicyService: {
+          canAgentUseCapability: vi.fn(async () => true),
+          canExecuteAction: vi.fn(async () => ({ allowed: true })),
+        },
+      },
+      'search_user_brain',
+      { query: 'owner private life' },
+      'agent:viktor:conv-1',
+    )
+
+    expect(decision).toEqual({
+      allowed: false,
+      reason: 'Personal Brain access is unavailable for this Slack user.',
+    })
+  })
+
+  it.each([
+    ['save_user_memory', { content: 'private note' }],
+    ['search_brain_context', { query: 'private life' }],
+    ['get_brain_pages', { brain_type: 'user_default' }],
+    [
+      'transfer_brain_node',
+      {
+        source_scope: { type: 'user' },
+        target_scope: { type: 'agent', agent_id: 'vibey' },
+      },
+    ],
+  ])('denies indirect personal Brain route %s for a Slack teammate', async (action, data) => {
+    const service = new ArtifactLegacyRuntimeCoreService()
+
+    const decision = await service.authorizeAction(
+      {
+        resolveUserId: () => 'owner-1',
+        parseAgentIdFromSessionKey: () => 'viktor',
+        parseConversationId: () => 'conv-1',
+        requestContext: {
+          get: vi.fn(() => ({
+            channel: 'slack',
+            channelMember: { personal_brain_access: false },
+          })),
+        },
+        getUserClient: vi.fn(),
+      },
+      action,
+      data,
+      'agent:viktor:conv-1',
+    )
+
+    expect(decision).toEqual({
+      allowed: false,
+      reason: 'Personal Brain access is unavailable for this Slack user.',
+    })
+  })
+
   it('resolves mission context from subtask session keys', async () => {
     const missionId = '11111111-1111-4111-8111-111111111111'
     const subtaskId = '22222222-2222-4222-8222-222222222222'

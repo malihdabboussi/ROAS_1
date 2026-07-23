@@ -48,6 +48,9 @@ export interface ChannelUser {
   username?: string
   display_name: string
   language?: string
+  relationship_kind?: 'internal'
+  is_connection_owner?: boolean
+  personal_brain_access?: boolean
 }
 
 export interface ProcessMessageOptions {

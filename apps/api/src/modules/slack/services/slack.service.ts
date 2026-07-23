@@ -10,6 +10,7 @@ import { isSlackAuthError, SlackApiIntegration } from '../integrations/slack-api
 import { SlackRuntimeRepository } from '../repositories/slack-runtime.repository'
 import { SlackRepository } from '../repositories/slack.repository'
 import type { SlackEventEnvelope, SlackWorkspaceChannel } from '../types/slack.types'
+import { SlackAccessControlService } from './slack-access-control.service'
 import { SlackEventsBase } from './slack-service-events.base'
 
 @Injectable()
@@ -22,6 +23,7 @@ export class SlackService extends SlackEventsBase {
     userSessionMint: UserSessionMintService,
     documentExtraction: DocumentExtractionService,
     userAgentApi: UserAgentApiService,
+    slackAccessControl: SlackAccessControlService,
     private readonly moduleRef: ModuleRef,
   ) {
     super(
@@ -32,6 +34,7 @@ export class SlackService extends SlackEventsBase {
       userSessionMint,
       documentExtraction,
       userAgentApi,
+      slackAccessControl,
     )
   }
 
@@ -552,7 +555,6 @@ export class SlackService extends SlackEventsBase {
 
   // ---------------------------------------------------------------------------
   // Webhook: validate sync; caller runs returned Promise via Vercel waitUntil after HTTP 200.
-  // ---------------------------------------------------------------------------
 
   beginEventsWebhookProcessing(params: {
     signature: string | undefined
