@@ -49,6 +49,22 @@ function headingCandidates(content: string): string[] {
   return html.length > 0 ? html : markdown
 }
 
+function recommendationTableCandidates(content: string): string[] {
+  const htmlRows = [...content.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)]
+    .map((row) =>
+      [...(row[1] ?? '').matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((cell) =>
+        plainText(cell[1] ?? ''),
+      ),
+    )
+    .filter((cells) => /^R\d+$/i.test(cells[0] ?? '') && Boolean(cells[1]))
+    .map((cells) => cells[1]!)
+  if (htmlRows.length > 0) return htmlRows
+
+  return [...content.matchAll(/^\|\s*R\d+\s*\|\s*([^|]+)\|/gim)].map((match) =>
+    plainText(match[1] ?? ''),
+  )
+}
+
 export function extractAdsResearchConcepts(
   deliverable: MissionDeliverable | undefined,
 ): AdsResearchConcept[] {
@@ -57,7 +73,13 @@ export function extractAdsResearchConcepts(
   const explicitlyNumbered = headings.filter((heading) =>
     /^(concept|ad|recommendation)\s*\d+/i.test(heading),
   )
-  const candidates = explicitlyNumbered.length > 0 ? explicitlyNumbered : headings
+  const tableRecommendations = recommendationTableCandidates(deliverable.content)
+  const candidates =
+    tableRecommendations.length > 0
+      ? tableRecommendations
+      : explicitlyNumbered.length > 0
+        ? explicitlyNumbered
+        : headings
   const seen = new Set<string>()
   return candidates
     .filter((heading) => {

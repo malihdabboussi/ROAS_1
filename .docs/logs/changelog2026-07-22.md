@@ -280,3 +280,10 @@ What: Committed the existing local Programs sidebar mapping that carries `campai
 Why: The mission release passed its own typing gate, then Vercel exposed that the prior Programs production archive had deployed this correction without putting it on remote main.
 Impact: Git-based web deployments retain the already-live Programs sidebar contract instead of failing production TypeScript.
 Files: `apps/web/src/features/team/components/chat/team-conversations-sidebar.logic.ts`
+
+## [2026-07-22 23:49] - [FIX]
+
+What: Added concept extraction for Blaze's real `Recommendation Index` table format (`R1`, `R2`, and so on), with HTML and Markdown table support.
+Why: Production visual verification showed the actionable handoff correctly loaded the real research gate but could not offer concept selections because the report stored recommendations in rows rather than numbered headings.
+Impact: Existing Ads Research reports now show their named recommendations as selectable production concepts without rerunning research.
+Files: `apps/web/src/features/spaces/lib/ads-research-production.ts`, focused helper test

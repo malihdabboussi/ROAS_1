@@ -46,6 +46,33 @@ describe('ads research production helpers', () => {
     )
   })
 
+  it('extracts the real Blaze recommendation-index table format', () => {
+    expect(
+      extractAdsResearchConcepts(
+        deliverable(`
+          <h2>Recommendation Index</h2>
+          <table><tbody>
+            <tr><th>#</th><th>Name</th><th>Priority</th></tr>
+            <tr><td><p>R1</p></td><td><p>Practitioner Still In It</p></td><td>Run first</td></tr>
+            <tr><td>R2</td><td>Breaking: Agents Quit Cold Calling</td><td>Run first</td></tr>
+          </tbody></table>
+          <h2>Validate Messaging Angles</h2>
+        `),
+      ),
+    ).toEqual([
+      {
+        id: '1-practitioner-still-in-it',
+        title: 'Practitioner Still In It',
+        route: 'design',
+      },
+      {
+        id: '2-breaking-agents-quit-cold-calling',
+        title: 'Breaking: Agents Quit Cold Calling',
+        route: 'design',
+      },
+    ])
+  })
+
   it('finds the human research approval gate', () => {
     const gate = {
       id: 'gate',
