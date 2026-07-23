@@ -431,6 +431,8 @@ describe('SlackPeopleService', () => {
       'xoxb',
       'D1',
       'Quick check-in — anything blocking you today?',
+      undefined,
+      { replyBroadcast: false },
     )
     expect(repository.markShadowActionSent).toHaveBeenCalledWith(
       expect.anything(),
@@ -467,6 +469,35 @@ describe('SlackPeopleService', () => {
     await service.sendShadowAction({} as never, 'admin-1', 'org-1', 'action-1')
 
     expect(slackApi.openDmChannel).toHaveBeenCalledWith('xoxb', 'U1,U2')
+  })
+
+  it('routes an approved Shadow plan back to its source thread with internal mentions', async () => {
+    const { service, repository, slackApi } = createService()
+    repository.findShadowAction.mockResolvedValue({
+      id: 'action-1',
+      status: 'approved',
+      action_kind: 'message',
+      proposed_content: 'Has this campaign risk been handled?',
+      source_channel_id: 'C-SOURCE',
+      source_message_ts: '100.1',
+      metadata: {
+        destination: 'thread_broadcast',
+        recipient_slack_ids: ['U1'],
+        source_thread_ts: '100.1',
+      },
+      target: { platform_id: 'U1', delivery_mode: 'active', relationship_kind: 'internal' },
+    })
+
+    await service.sendShadowAction({} as never, 'admin-1', 'org-1', 'action-1')
+
+    expect(slackApi.openDmChannel).not.toHaveBeenCalled()
+    expect(slackApi.postMessage).toHaveBeenCalledWith(
+      'xoxb',
+      'C-SOURCE',
+      '<@U1> Has this campaign risk been handled?',
+      '100.1',
+      { replyBroadcast: true },
+    )
   })
 
   it('records the administrator who approves a proposed action', async () => {

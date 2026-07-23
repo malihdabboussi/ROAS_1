@@ -31,6 +31,21 @@ draft creation does not publish Meta campaigns or start ad spend.
 4. Source metadata and content hashes prevent the same memory from bouncing
    between systems as a new fact.
 
+## Delegation routing
+
+Pixel resolves the named target before choosing an execution path:
+
+- A human teammate receives a durable assigned ROAS task.
+- A managed ROAS AI agent receives `ask_agent` or `delegate_to_agent`.
+- An explicit request to “delegate to PageGrader” uses the connected
+  `Page Grader` MCP server. Pixel lists that server’s live tools, follows the
+  returned write schema, and calls the selected tool through `use_mcp_tool`.
+
+An explicitly named Page Grader client overrides ambient chat campaign context.
+Pixel must not claim that a request was delegated or created until the tool
+response confirms a durable result. A missing server, unresolved target, or
+failed write is reported as a blocker rather than described as completed.
+
 ## Production setup
 
 1. Deploy the Page Grader migration and `page-grader-mcp` Edge Function.
@@ -56,3 +71,5 @@ draft creation does not publish Meta campaigns or start ad spend.
 - Every call appears in `page_grader_mcp_audit_log`.
 - A saved memory causes the mapped ROAS Brain package to refresh.
 - No test publishes an ad or begins spend.
+- PageGrader delegation creates an audited Page Grader record rather than a
+  `delegate_to_agent` session.

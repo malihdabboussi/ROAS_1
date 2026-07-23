@@ -106,7 +106,19 @@ export class SlackSenderResolverService {
           : suggestedVibeyUserId
             ? 'suggested_name'
             : 'none'
-      const inferredRelationship = vibeyUserId ? 'internal' : 'external'
+      const inferredRelationship = vibeyUserId
+        ? 'internal'
+        : role && CUSTOMER_BRAIN_CONTACT_ROLES.has(role)
+          ? 'external'
+          : slackUser?.is_restricted || slackUser?.is_ultra_restricted
+            ? 'external'
+            : (existingIdentity?.relationship_kind ?? 'external')
+      const relationshipKind =
+        existingIdentity?.relationship_source === 'manual'
+          ? existingIdentity.relationship_kind
+          : inferredRelationship
+      const relationshipSource =
+        existingIdentity?.relationship_source === 'manual' ? 'manual' : 'inferred'
       await this.slackRuntimeRepo.upsertResolvedSlackPerson(supabase, {
         user_id: input.userId,
         org_id: input.orgId ?? null,
@@ -122,12 +134,8 @@ export class SlackSenderResolverService {
         vibey_user_id: vibeyUserId,
         suggested_vibey_user_id: suggestedVibeyUserId,
         contact_id: contact?.id ?? null,
-        relationship_kind:
-          existingIdentity?.relationship_source === 'manual'
-            ? existingIdentity.relationship_kind
-            : inferredRelationship,
-        relationship_source:
-          existingIdentity?.relationship_source === 'manual' ? 'manual' : 'inferred',
+        relationship_kind: relationshipKind,
+        relationship_source: relationshipSource,
         identity_match_method: identityMatchMethod,
         identity_match_confidence: vibeyUserId ? 1 : suggestedVibeyUserId ? 0.95 : 0,
       })
@@ -140,10 +148,7 @@ export class SlackSenderResolverService {
         qualifiesForCustomerBrain: role ? CUSTOMER_BRAIN_CONTACT_ROLES.has(role) : false,
         vibeyUserId,
         personBrainId: existingIdentity?.person_brain_id ?? null,
-        relationshipKind: (existingIdentity?.relationship_kind ?? inferredRelationship) as
-          | 'internal'
-          | 'external'
-          | 'ignored',
+        relationshipKind: relationshipKind as 'internal' | 'external' | 'ignored',
       })
     }
 

@@ -12,12 +12,7 @@ import type {
 } from '../../services/slack-people.service'
 import { SlackPersonBrainControls } from './SlackPersonBrainControls'
 import { SlackPersonChannelContext } from './SlackPersonChannelContext'
-
-const RELATIONSHIP_LABELS: Record<SlackRelationshipKind, string> = {
-  internal: 'Internal',
-  external: 'External',
-  ignored: 'Ignored',
-}
+import { SlackRelationshipEditor } from './SlackRelationshipEditor'
 
 const MODE_LABELS: Record<SlackDeliveryMode, string> = {
   off: 'Off',
@@ -80,7 +75,9 @@ export function SlackPersonInfoPanel({
         </p>
         <div className="mt-spacing-3 gap-spacing-2 flex justify-center">
           <span className="badge-glass badge-glass-muted body-4 capitalize">
-            {person.relationship_kind}
+            {person.relationship_source === 'manual'
+              ? person.relationship_kind
+              : 'Needs classification'}
           </span>
           <span className="badge-glass badge-glass-green body-4 capitalize">
             {person.delivery_mode}
@@ -126,22 +123,8 @@ export function SlackPersonInfoPanel({
 
             <section>
               <h3 className="body-3 text-foreground font-semibold">Person type</h3>
-              <div className="bg-secondary p-spacing-1 rounded-spacing-2 mt-spacing-2 flex">
-                {(Object.keys(RELATIONSHIP_LABELS) as SlackRelationshipKind[]).map((kind) => (
-                  <button
-                    key={kind}
-                    type="button"
-                    onClick={() => onUpdateRelationshipKind(kind)}
-                    className={cn(
-                      'body-4 px-spacing-2 py-spacing-2 rounded-spacing-1 flex-1 font-medium transition-colors',
-                      person.relationship_kind === kind
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground',
-                    )}
-                  >
-                    {RELATIONSHIP_LABELS[kind]}
-                  </button>
-                ))}
+              <div className="mt-spacing-2">
+                <SlackRelationshipEditor person={person} onSave={onUpdateRelationshipKind} />
               </div>
             </section>
 

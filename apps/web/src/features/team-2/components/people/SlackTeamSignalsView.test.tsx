@@ -35,20 +35,20 @@ describe('SlackTeamSignalsView', () => {
         onSelectSignal={vi.fn()}
         onReview={vi.fn()}
         onTrain={vi.fn()}
+        onRefresh={vi.fn()}
         onSend={vi.fn()}
       />,
     )
 
-    expect(screen.getByText('Why Pixel flagged this')).toBeInTheDocument()
+    expect(screen.getByText('Why Pixel flagged this')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Show source evidence' }))
-    expect(screen.getByText('#roas-allbright-coaching-644')).toBeInTheDocument()
-    expect(screen.getByText(/Josh ALLBRiGHT/)).toBeInTheDocument()
-    expect(screen.getByText('Where is the replay from 7/16?')).toBeInTheDocument()
-    expect(screen.getByText('95% confidence')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open source message in Slack' })).toHaveAttribute(
-      'href',
-      'https://slack.com/archives/C123/p1721000000000100',
-    )
+    expect(screen.getByText('#roas-allbright-coaching-644')).toBeTruthy()
+    expect(screen.getByText(/Josh ALLBRiGHT/)).toBeTruthy()
+    expect(screen.getByText('Where is the replay from 7/16?')).toBeTruthy()
+    expect(screen.getByText('95% confidence')).toBeTruthy()
+    expect(
+      screen.getByRole('link', { name: 'Open source message in Slack' }).getAttribute('href'),
+    ).toBe('https://slack.com/archives/C123/p1721000000000100')
   })
 
   it('turns an admin instruction into a reusable internal Shadow action plan', () => {
@@ -77,6 +77,7 @@ describe('SlackTeamSignalsView', () => {
         onSelectSignal={vi.fn()}
         onReview={vi.fn()}
         onTrain={onTrain}
+        onRefresh={vi.fn()}
         onSend={vi.fn()}
       />,
     )
@@ -120,13 +121,12 @@ describe('SlackTeamSignalsView', () => {
         onSelectSignal={vi.fn()}
         onReview={onReview}
         onTrain={vi.fn()}
+        onRefresh={vi.fn()}
         onSend={vi.fn()}
       />,
     )
 
-    expect(
-      screen.getByText(/Mark reviewed only clears this finding from review/),
-    ).toBeInTheDocument()
+    expect(screen.getByText(/Mark reviewed only clears this finding from review/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Mark reviewed' }))
     expect(onReview).toHaveBeenCalledWith('signal-1', 'approved')
   })

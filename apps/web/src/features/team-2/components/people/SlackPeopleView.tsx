@@ -48,6 +48,7 @@ export function SlackPeopleView() {
     reviewAction,
     sendAction,
     trainSignal,
+    refreshSignal,
     refresh,
   } = useSlackPeople()
   const peopleById = new Map(people.map((person) => [person.id, person]))
@@ -105,6 +106,7 @@ export function SlackPeopleView() {
       : showShadowInbox
         ? 'shadow'
         : 'people'
+  const isInboxView = Boolean(selectedPersonId || showShadowInbox || showChannels || showSignals)
   const openView = (view: SlackPeopleViewKey) => {
     if (view === 'channels') openChannels()
     else if (view === 'signals') openSignals()
@@ -160,14 +162,14 @@ export function SlackPeopleView() {
   return (
     <div
       className={
-        selectedPersonId
+        isInboxView
           ? 'p-spacing-3 flex min-h-0 flex-1 flex-col overflow-hidden'
           : 'p-spacing-6 flex min-h-0 flex-1 flex-col overflow-y-auto'
       }
     >
       <div
         className={
-          selectedPersonId
+          isInboxView
             ? 'flex min-h-0 w-full flex-1 flex-col'
             : 'gap-spacing-6 mx-auto flex w-full max-w-6xl flex-col'
         }
@@ -294,6 +296,17 @@ export function SlackPeopleView() {
                   void trainSignal(signalId, instruction, saveAsRule)
                     .then(() => toast.success(SLACK_PEOPLE_MESSAGES.SIGNAL_TRAIN_SUCCESS))
                     .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.SIGNAL_TRAIN_ERROR))
+                }}
+                onRefresh={(signalId) => {
+                  void refreshSignal(signalId)
+                    .then((result) =>
+                      toast.success(
+                        result.resolution.resolved
+                          ? SLACK_PEOPLE_MESSAGES.SIGNAL_REFRESH_RESOLVED
+                          : SLACK_PEOPLE_MESSAGES.SIGNAL_REFRESH_OPEN,
+                      ),
+                    )
+                    .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.SIGNAL_REFRESH_ERROR))
                 }}
               />
             ) : showShadowInbox ? (

@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-07-22
+**Last Modified:** 2026-07-23
 
 First production loop for the always-aware Slack agent: Fathom call lands in Meetings → Pixel drafts a human recap with the database-backed `post-call-delivery` skill (plus live `known_names` from campaigns / Page Grader / Slack People) → the exact recap and account-manager reminders are stored in Shadow Conversations. Flow-level `Shadow` performs the complete processing path without any Slack send. Flow-level `Active` uses those same stored drafts, sends account-manager reminders only to people classified Internal and individually set Active, and keeps the client-facing recap in the admin approval thread.
 
@@ -23,6 +23,10 @@ First production loop for the always-aware Slack agent: Fathom call lands in Mee
 | Pixel channel directory + channel/thread timelines     | Implemented; app deployment required                                                                       |
 | Person Brains in global Brain navigation               | Implemented; app deployment required                                                                       |
 | Scheduled proactive Team loops                         | Installed in Shadow; live history polling is rate-limited and requires the shared observation stream below |
+| Signal resolution refresh                              | Implemented; rechecks source-thread replies and explicit checkmark reactions before planning                 |
+| Internal / External / Ignored classification           | Manual classifications are durable; inferred records require an explicit first save                          |
+| Signal action routing                                  | Internal DM, group DM, source thread, thread broadcast, and source channel remain Shadow until approval       |
+| Named campaign Brain routing from Slack                | Explicit client/campaign names override ambient campaign context                                              |
 | Auto-post to a channel                                 | Not yet                                                                                                    |
 | Page Grader dispatch on confirm                        | Fulfillment candidates only; conservative client/assignee resolution                                       |
 
@@ -159,6 +163,10 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - Team → People now has People, Conversations, Signals, and Channels. Channels uses a Slack-style split: left rail of Pixel’s channels (public `#` / private lock), right pane for the selected channel’s conversation and threads (`peopleView=channels&slackChannel=`).
 - Conversations contains only person-targeted Shadow actions. Team-level findings without a recipient stay in Signals and appear as a clear “team signals need routing” handoff instead of an “Unknown person” conversation. Person timelines merge the real Slack DM with the Shadow ledger, render Slack mrkdwn, open at the latest activity, and expose a jump-to-latest control when an administrator scrolls upward.
 - Signals (`peopleView=signals`) is a peer tab for channel-level workflow/risk findings with no `target_member_id`. It uses the same selectable list + detail pattern as Conversations so review does not sit above the chat inbox. Expanded evidence shows the readable channel, speaker, source time, exact Slack excerpt, rationale, confidence, and an Open in Slack link.
+- Signals and Channels now keep their left directory independently scrollable while the selected signal/channel remains in the middle pane, matching the Conversations inbox interaction.
+- `Check if resolved` reloads the source Slack thread and reactions. A later human reply or an explicit checkmark reaction marks the finding resolved; resolved findings cannot create another action plan.
+- Signal coaching resolves Internal recipients by full name, unique first name, Slack ID, username, or unique role. It reports unmatched recipients and unsupported destinations rather than silently dropping work.
+- Coached actions support Internal DM, Internal group DM, source-thread reply, thread broadcast, and source-channel message. Every action is persisted as Shadow and still requires approval plus an Internal/Active recipient before Slack delivery.
 - Product rule: Shadow `target_member_id` must match the real Slack delivery recipient. UI labels say “Sent to this person’s Slack” (or “Ops sample · sent to this Slack DM”) — never imply someone else received the DM.
 - Person conversations and channel timelines show timestamps and distinguish Pixel messages from human messages.
 - Group-DM conversations, richer thread grouping, and participants remain follow-up work.
@@ -197,6 +205,21 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - Broader routing to Customer, Company, Agent, and Campaign Brains still requires per-loop ownership and permission rules.
 - Show what Pixel learned, why it was saved, which conversations/people/campaigns it connects, and allow correction or deletion.
 - Measure accepted proposals, edits before approval, response rate, commitments completed, time saved, and false-positive rate so each loop improves from real team feedback.
+
+### People classification contract
+
+- `relationship_source=manual` is authoritative. Slack discovery and sender resolution must preserve the saved `Internal`, `External`, or `Ignored` value.
+- Inferred people show the three relationship choices in a dropdown and require `Save`.
+- After saving, the relationship is displayed as a stable badge. Changing it requires `Edit`, a new selection, and another explicit `Save`.
+- Active portal teammates with matching organization/email are backfilled as `Internal/manual`. James Anderson and Nefi Blanco are repaired as Internal for the ROAS organization.
+- A missing portal identity is not sufficient evidence that someone is External. Restricted/guest Slack status or a known customer-contact role may still infer External, but inferred values remain visibly unconfirmed until saved.
+
+### Slack context and delegation contract
+
+- Slack is organization-scoped. Ambient campaign context is a retrieval hint, never a lock.
+- If Dylan names `Asura Group` (or another client/campaign), Pixel must call `search_campaign_brain` with that explicit campaign name/id instead of continuing to query the prior campaign.
+- Human teammate work creates a durable human-assigned task. Managed AI-agent work uses agent delegation. Page Grader work uses its connected MCP tool surface.
+- Pixel may report delegation success only after the selected tool confirms a durable result.
 
 ## File map (what we built / touched)
 

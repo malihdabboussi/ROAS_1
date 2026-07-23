@@ -49,6 +49,7 @@ import { MeetingIngestionRepository } from './repositories/meeting-ingestion.rep
 import { MemoriesRepository } from './repositories/memories.repository'
 import { MemoryBrainResolver } from './repositories/memory-brain-resolver'
 import { MemoryStatsRepository } from './repositories/memory-stats.repository'
+import { PageGraderMemoryEmbeddingRepository } from './repositories/page-grader-memory-embedding.repository'
 import { PendingCapturesRepository } from './repositories/pending-captures.repository'
 import { ScholarContextRepository } from './repositories/scholar-context.repository'
 import { SearchRepository } from './repositories/search.repository'
@@ -91,6 +92,8 @@ import { LinkExtractionService } from './services/link-extraction.service'
 import { MemoriesService } from './services/memories.service'
 import { PageGraderBrainPackageIngestService } from './services/page-grader-brain-package-ingest.service'
 import { PageGraderClientImportService } from './services/page-grader-client-import.service'
+import { PageGraderKnowledgeIndexService } from './services/page-grader-knowledge-index.service'
+import { PageGraderMemoryEmbeddingService } from './services/page-grader-memory-embedding.service'
 import { PendingCapturesService } from './services/pending-captures.service'
 import { ScholarContextService } from './services/scholar-context.service'
 import { SearchService } from './services/search.service'
@@ -187,6 +190,9 @@ import { SnapshotsService } from './services/snapshots.service'
     MemoriesService,
     PageGraderBrainPackageIngestService,
     PageGraderClientImportService,
+    PageGraderKnowledgeIndexService,
+    PageGraderMemoryEmbeddingService,
+    PageGraderMemoryEmbeddingRepository,
     PendingCapturesRepository,
     PendingCapturesService,
     ScholarContextRepository,
@@ -224,6 +230,8 @@ import { SnapshotsService } from './services/snapshots.service'
     MemoriesService,
     PageGraderBrainPackageIngestService,
     PageGraderClientImportService,
+    PageGraderKnowledgeIndexService,
+    PageGraderMemoryEmbeddingService,
     ScholarContextService,
     SearchService,
     SkService,

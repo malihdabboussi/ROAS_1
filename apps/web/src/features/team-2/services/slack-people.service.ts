@@ -233,8 +233,31 @@ export function sendSlackShadowAction(actionId: string) {
 }
 
 export function trainSlackSignal(signalId: string, instruction: string, saveAsRule: boolean) {
-  return backendPost<{ actions: SlackShadowAction[]; rule: { id: string } | null }>(
-    `/api/integrations/slack/intelligence/signals/${signalId}/train`,
-    { instruction, save_as_rule: saveAsRule },
-  )
+  return backendPost<{
+    actions: SlackShadowAction[]
+    rule: { id: string } | null
+    signal: SlackShadowAction
+    diagnostics: {
+      resolved: boolean
+      unmatched_recipients: string[]
+      unsupported_destinations: string[]
+      explanation: string
+    }
+  }>(`/api/integrations/slack/intelligence/signals/${signalId}/train`, {
+    instruction,
+    save_as_rule: saveAsRule,
+  })
+}
+
+export function refreshSlackSignal(signalId: string) {
+  return backendPost<{
+    action: SlackShadowAction
+    resolution: {
+      resolved: boolean
+      reason: string
+      checked_at: string
+      reply_count: number
+      reaction_count: number
+    }
+  }>(`/api/integrations/slack/intelligence/signals/${signalId}/refresh`, {})
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { SlackShadowAction } from '../types/slack.types'
 
 export type SlackSignalPlaybookRule = {
   id: string
@@ -8,6 +9,21 @@ export type SlackSignalPlaybookRule = {
 
 @Injectable()
 export class SlackSignalTrainingRepository {
+  async updateSignalMetadata(
+    supabase: SupabaseClient,
+    input: { actionId: string; orgId: string; metadata: Record<string, unknown> },
+  ): Promise<SlackShadowAction | null> {
+    const { data, error } = await supabase
+      .from('slack_shadow_actions')
+      .update({ metadata: input.metadata })
+      .eq('id', input.actionId)
+      .eq('org_id', input.orgId)
+      .select('*')
+      .maybeSingle()
+    if (error) throw new Error(`Failed to update Slack signal evidence: ${error.message}`)
+    return (data as SlackShadowAction | null) ?? null
+  }
+
   async createRule(
     supabase: SupabaseClient,
     input: { orgId: string; userId: string; signalId: string; instruction: string },

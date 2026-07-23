@@ -7960,3 +7960,19 @@ Resolution: Removed incomplete future-feature test fragments, updated the remain
 ## 2026-07-22 — Migration version collision note
 - `20260722130000` was previously recorded as name `programs` without Slack objects; Slack SQL was applied in place and history name updated to `slack_signal_training_and_channel_coverage`
 - Follow-up: ensure future migrations never reuse timestamps; consider renaming programs migration in repo history if a separate programs file exists elsewhere
+
+## 2026-07-23 — Slack Signals and People service near LOC thresholds
+
+- Feature/app: Slack managed people and signal review
+- Files: `apps/web/src/features/team-2/components/people/SlackTeamSignalsView.tsx` (387 LOC), `apps/api/src/modules/slack/services/slack-people.service.ts` (546 LOC)
+- Evidence: Both remain inside their 400/600 LOC hard limits, but exceed the 80% proactive-extraction thresholds after adding resolution refresh and structured Slack destinations.
+- Needed work: Extract signal evidence/training detail panes and the Shadow-delivery router before either surface gains another behavior.
+- Why not now: The requested behavior is cohesive and validated; a behavior-neutral extraction would broaden the production fix.
+
+## 2026-07-23 — API typecheck requires the built agent-policy workspace package
+
+- Feature/app: API validation environment
+- Files: imports of `@vibey/agent-policy` in agent-team, MCP OAuth, and mission-template services
+- Evidence: Full API typecheck reports only six `TS2307` missing-module errors for `@vibey/agent-policy`. Focused Slack/Page Grader tests and changed-file ESLint pass, and the web typecheck is green.
+- Needed work: Restore the repository typecheck bootstrap so the agent-policy workspace package is built/resolved before API typecheck.
+- Why not now: Repository policy prohibits running builds automatically, and the missing package output is unrelated to the changed Slack/Page Grader code.

@@ -29,6 +29,7 @@ import { SlackChannelCoverageService } from './services/slack-channel-coverage.s
 import { SlackObservationService } from './services/slack-observation.service'
 import { SlackPeopleService } from './services/slack-people.service'
 import { SlackSenderResolverService } from './services/slack-sender-resolver.service'
+import { SlackSignalResolutionService } from './services/slack-signal-resolution.service'
 import { SlackSignalTrainingService } from './services/slack-signal-training.service'
 import { SlackService } from './services/slack.service'
 
@@ -53,6 +54,7 @@ import { SlackService } from './services/slack.service'
     SlackPeopleService,
     SlackChannelCoverageService,
     SlackSignalTrainingService,
+    SlackSignalResolutionService,
     SlackSenderResolverService,
     SlackRepository,
     SlackRuntimeRepository,

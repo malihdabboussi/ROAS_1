@@ -60,6 +60,13 @@ For multi-step work:
 - Persist created or edited assets.
 - Use tasks or missions only when the user asks for tracked work, ownership, status, or async execution.
 
+For delegation and assignment:
+- Resolve the explicitly named target before choosing a tool; a named person, agent, client, campaign, or connected service overrides ambient campaign context.
+- Human teammate → create and assign a durable task with \`create_task\` and \`assignee_type:"human"\`.
+- Managed AI agent → use \`ask_agent\` for consultation or \`delegate_to_agent\` for executable work.
+- Connected MCP service such as Page Grader → call \`list_mcp_tools\`, then \`use_mcp_tool\` with the exact returned schema. Do not route an MCP service through \`delegate_to_agent\`.
+- Do not tell the user work was assigned, delegated, or completed until the tool result confirms the effect and identifies the created work or equivalent durable result.
+
 For unclear, destructive, publish/send, or expensive actions:
 - Ask a focused clarification or use the platform approval flow before acting.`
 

@@ -1,4 +1,25 @@
-# Page Grader Operator
+-- Persist Page Grader MCP routing so Agent API skill sync cannot discard it.
+
+INSERT INTO public.agent_skills (
+  user_id,
+  org_id,
+  agent_key,
+  skill_key,
+  name,
+  description,
+  markdown_content,
+  is_enabled,
+  source
+)
+VALUES
+(
+  NULL,
+  NULL,
+  'vibey',
+  'page-grader-operator',
+  'Page Grader Operator',
+  'Use for Page Grader clients, campaigns, fulfillment, meetings, memories, reporting, or explicit delegation to the Page Grader MCP service.',
+  $skill$# Page Grader Operator
 
 Use this skill when a Slack or ROAS user asks about a Page Grader client,
 campaign, fulfillment task, client meeting, portal memory, or Page Grader's
@@ -64,9 +85,63 @@ cached Meta reporting.
 - "What happened with the Adam Lamb webinar?" → search client intel, recent
   meetings, campaigns, and open tasks as needed; answer with source dates.
 - "Launch the new webinar campaign for Asura Group" → resolve Asura Group even
-  if another campaign is active, clarify missing
-  objective/budget only when needed, then create a campaign draft. State that
-  nothing was published to Meta.
+  if another campaign is active, clarify missing objective/budget only when
+  needed, then create a campaign draft. State that nothing was published to
+  Meta.
 - "Delegate this Asura Group funnel to PageGrader" → list Page Grader MCP
   tools, select the exact fulfillment/campaign write tool, call it with Asura
   Group's resolved identifier, and report only the confirmed result.
+$skill$,
+  true,
+  'system'
+),
+(
+  NULL,
+  NULL,
+  'atlas',
+  'page-grader-operator',
+  'Page Grader Operator',
+  'Use for Page Grader clients, campaigns, fulfillment, meetings, memories, reporting, or explicit delegation to the Page Grader MCP service.',
+  $atlas$# Page Grader Operator
+
+Use the `Page Grader` MCP server whenever a request depends on Page Grader-only
+client, campaign, fulfillment, meeting, memory, or cached Meta information.
+
+ROAS Brain remains the primary reasoning and long-term knowledge system.
+Page Grader remains authoritative for its portal records. Cross-reference both
+when strategy or brand interpretation is required, and call out disagreements.
+
+## Rules
+
+1. Resolve ambiguous names with `page_grader_list_clients`. An explicitly
+   named client overrides ambient campaign context.
+2. Prefer the narrowest read tool. Include source dates and Meta snapshot
+   freshness in the answer.
+3. Treat "launch a campaign" as a campaign draft or fulfillment request. Never
+   silently publish ads or begin spend.
+4. Use a Slack event or ROAS action identifier as the idempotency key for every
+   write.
+5. Do not invent budgets, owners, deadlines, or campaign details.
+6. Save only sourced facts, decisions, and durable preferences as client
+   memories. Include source title and source id.
+7. Report the created Page Grader record and current workflow state after a
+   successful action.
+8. "Delegate to PageGrader" means call `list_mcp_tools` and then
+   `use_mcp_tool` on the Page Grader MCP server. It does not mean
+   `delegate_to_agent`.
+9. Human targets receive assigned tasks; managed AI agents receive
+   `ask_agent` or `delegate_to_agent`.
+10. Never claim delegation or creation succeeded until the tool result
+    confirms a durable effect.
+$atlas$,
+  true,
+  'system'
+)
+ON CONFLICT (agent_key, skill_key) WHERE user_id IS NULL AND org_id IS NULL
+DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  markdown_content = EXCLUDED.markdown_content,
+  is_enabled = EXCLUDED.is_enabled,
+  source = EXCLUDED.source,
+  updated_at = now();

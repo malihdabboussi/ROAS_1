@@ -487,18 +487,46 @@ export class SlackPeopleService {
     let result: { ts?: string }
     let channelId: string | null = null
     try {
-      channelId = await this.slackApi.openDmChannel(
-        integration.access_token,
-        [
-          action.target.platform_id,
-          ...additionalRecipients.map((person) => person?.platform_id).filter(Boolean),
-        ].join(','),
-      )
-      if (!channelId) throw new ConflictException('Could not open a Slack conversation')
+      const destination =
+        typeof action.metadata?.destination === 'string' ? action.metadata.destination : 'dm'
+      const isSourceDestination = [
+        'source_thread',
+        'thread_broadcast',
+        'source_channel',
+      ].includes(destination)
+      if (isSourceDestination) {
+        channelId = action.source_channel_id
+      } else {
+        channelId = await this.slackApi.openDmChannel(
+          integration.access_token,
+          [
+            action.target.platform_id,
+            ...additionalRecipients.map((person) => person?.platform_id).filter(Boolean),
+          ].join(','),
+        )
+      }
+      if (!channelId) throw new ConflictException('Could not resolve the Slack destination')
+      const recipientSlackIds = Array.isArray(action.metadata?.recipient_slack_ids)
+        ? action.metadata.recipient_slack_ids.filter(
+            (value): value is string => typeof value === 'string',
+          )
+        : []
+      const mentions =
+        isSourceDestination && recipientSlackIds.length > 0
+          ? `${recipientSlackIds.map((id) => `<@${id}>`).join(' ')} `
+          : ''
+      const threadTs =
+        destination === 'source_thread' || destination === 'thread_broadcast'
+          ? typeof action.metadata?.source_thread_ts === 'string'
+            ? action.metadata.source_thread_ts
+            : action.source_message_ts
+          : undefined
       result = await this.slackApi.postMessage(
         integration.access_token,
         channelId,
-        action.proposed_content,
+        `${mentions}${action.proposed_content}`,
+        threadTs ?? undefined,
+        { replyBroadcast: destination === 'thread_broadcast' },
       )
     } catch (cause) {
       await this.peopleRepository.markShadowActionFailed(supabase, orgId, actionId)

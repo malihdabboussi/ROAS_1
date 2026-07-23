@@ -56,6 +56,9 @@ export const SLACK_PEOPLE_MESSAGES = {
   SIGNAL_EVIDENCE_OPEN_SLACK: 'Open source message in Slack',
   SIGNAL_TRAIN_SUCCESS: 'Shadow action plan created. Nothing was sent.',
   SIGNAL_TRAIN_ERROR: "Pixel couldn't turn that instruction into an internal action plan.",
+  SIGNAL_REFRESH_RESOLVED: 'This signal is resolved.',
+  SIGNAL_REFRESH_OPEN: 'This signal still appears open.',
+  SIGNAL_REFRESH_ERROR: "Pixel couldn't refresh this signal.",
   SIGNAL_REVIEW_HELP:
     'Mark reviewed only clears this finding from review. It does not create or send a message. To act on it, tell Pixel who should handle it and create an internal Shadow action plan.',
   CHANNEL_EXCLUSION_SUCCESS: 'Slack channel coverage updated.',
