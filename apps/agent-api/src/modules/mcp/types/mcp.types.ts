@@ -1,4 +1,10 @@
-export type McpDomain = 'universal' | 'marketing' | 'analyst' | 'developer' | 'operations'
+export type McpDomain =
+  | 'shared'
+  | 'universal'
+  | 'marketing'
+  | 'analyst'
+  | 'developer'
+  | 'operations'
 
 export interface McpServerRow {
   id: string

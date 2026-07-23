@@ -23,7 +23,7 @@ export class PageGraderMcpRegistrationService {
       url,
       description:
         'Page Grader client, campaign, fulfillment, meeting, memory, and cached Meta context for ROAS agents.',
-      domain: 'universal',
+      domain: 'shared',
       api_key: input.apiKey,
       agent_enabled: true,
     })

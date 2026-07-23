@@ -272,6 +272,8 @@ export class ArtifactMcpService {
     if (policy.domain === 'support') return false
     if (policy.profile === 'vibey_ceo') return true
     if (policy.domain === 'management') return true
-    return server.domain === 'universal' || server.domain === policy.domain
+    return (
+      server.domain === 'shared' || server.domain === 'universal' || server.domain === policy.domain
+    )
   }
 }

@@ -65,15 +65,10 @@ function createSubject(state: FakeState) {
   }
   const vault = {
     getSecret: vi.fn(async (_userId: string, _provider: string, label: string) =>
-      label === 'base_url'
-        ? 'https://example.supabase.co/functions/v1/roas-api'
-        : 'pg-secret',
+      label === 'base_url' ? 'https://example.supabase.co/functions/v1/roas-api' : 'pg-secret',
     ),
   }
-  return new PageGraderMcpBootstrapService(
-    { client } as never,
-    vault as never,
-  )
+  return new PageGraderMcpBootstrapService({ client } as never, vault as never)
 }
 
 describe('PageGraderMcpBootstrapService', () => {
@@ -89,7 +84,7 @@ describe('PageGraderMcpBootstrapService', () => {
         payload: expect.objectContaining({
           name: 'Page Grader',
           server_url: 'https://example.supabase.co/functions/v1/page-grader-mcp',
-          domain: 'universal',
+          domain: 'shared',
           enabled: true,
           agent_enabled: true,
         }),
