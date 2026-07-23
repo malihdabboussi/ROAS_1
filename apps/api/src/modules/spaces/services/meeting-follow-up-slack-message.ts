@@ -232,7 +232,7 @@ export function buildShareableConfirmReply(input: {
     `*Action items*`,
     ...lines,
     '',
-    `_Copy/forward this recap to a channel or the other attendees. Confirmed in ROAS — not sent to Page Grader yet._`,
+    `_Copy/forward this recap to a channel or the other attendees. Confirmed in ROAS — not sent to the ROAS portal yet._`,
   ].join('\n')
 }
 

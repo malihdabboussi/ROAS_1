@@ -47,3 +47,15 @@ when strategy or brand interpretation is required, and call out disagreements.
     `page_grader_create_fulfillment_request` with the resolved `client_ref`,
     `task_type:"funnel"`, full `description`, stable `idempotency_key`, and
     `assignee_name` when supplied.
+
+## User-facing response
+
+- Treat Page Grader, MCP, tool names, schemas, idempotency keys, routing,
+  retries, and provider mechanics as internal implementation details.
+- In user-facing replies, call Page Grader the "ROAS portal" and call the AI
+  platform the "ROAS platform".
+- Do not narrate tool selection or execution between tool calls. Put progress
+  only in structured tool labels.
+- After the work finishes, return one concise result: what happened, who owns
+  it, the relevant client or campaign, and the next step.
+- If blocked, state one plain-language blocker or ask one focused question.

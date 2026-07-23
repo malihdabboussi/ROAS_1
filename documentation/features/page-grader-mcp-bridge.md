@@ -1,5 +1,7 @@
 # Page Grader MCP bridge
 
+Last Modified: 2026-07-23
+
 ## Ownership
 
 - ROAS Platform is the brain, workflow controller, and agent surface.
@@ -59,6 +61,18 @@ Pixel must not claim that a request was delegated or created until the tool
 response confirms a durable result. A missing server, unresolved target, or
 failed write is reported as a blocker rather than described as completed.
 
+## User-facing language
+
+`Page Grader`, `MCP`, tool names, schemas, idempotency keys, routing, retries,
+and provider mechanics are internal implementation details. Pixel refers to
+Page Grader as the **ROAS portal** and the AI platform as the **ROAS platform**
+in Slack and portal chat.
+
+Pixel does not narrate tool selection or execution between tool calls. Tool
+progress is limited to structured status labels. The chat response contains one
+concise confirmed result—what happened, who owns it, the relevant client or
+campaign, and the next step—or one plain-language blocker.
+
 ## Production setup
 
 1. Deploy the Page Grader migration and `page-grader-mcp` Edge Function.
@@ -93,3 +107,7 @@ failed write is reported as a blocker rather than described as completed.
   regardless of the ambient ROAS campaign. Pixel checks Asura Group's campaign
   Brain, Page Grader records, and accessible Slack channel context before asking
   the user for campaign information.
+- Pixel's Slack reply says “ROAS portal” and “ROAS platform,” never `Page
+Grader`, `MCP`, tool names, schemas, idempotency keys, or retry mechanics.
+- Multi-tool fulfillment produces one concise final result instead of
+  tool-by-tool narration.

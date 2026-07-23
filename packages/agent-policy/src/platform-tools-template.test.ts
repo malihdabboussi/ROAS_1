@@ -58,6 +58,17 @@ describe('platform tools template', () => {
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not route an MCP service through')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('until the tool result confirms the effect')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'In user-facing replies, call Page Grader the "ROAS portal"',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('call the AI platform the "ROAS platform"')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'Never expose MCP, tool names, schemas, idempotency keys, routing, retries',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'Do not narrate tool selection or execution between tool calls',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('return one concise result after the work finishes')
     expect(PLATFORM_TOOLS_DEFAULT_MD).not.toContain('**State**')
     expect(PLATFORM_TOOLS_DEFAULT_MD.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)).toBeLessThan(
       PLATFORM_TOOLS_DEFAULT_MD.indexOf(ACTION_CONTRACT_PROTOCOL_HEADING),
@@ -133,6 +144,8 @@ For unclear, destructive, publish/send, or expensive actions:
     expect(repaired).toContain('A bare person name defaults to a human')
     expect(repaired).toContain('A named client or campaign overrides ambient campaign context')
     expect(repaired).toContain('campaign Brain, Page Grader, and relevant Slack channel')
+    expect(repaired).toContain('call Page Grader the "ROAS portal"')
+    expect(repaired).toContain('Do not narrate tool selection or execution between tool calls')
     expect(repaired.split(PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING)).toHaveLength(2)
     expect(second).toBe(repaired)
   })

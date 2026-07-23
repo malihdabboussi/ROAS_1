@@ -77,6 +77,18 @@ own that work.
   durable client preferences. Include a meaningful source title and source id.
 - Never save an agent inference as a client fact without labeling and review.
 
+## User-facing response
+
+- Treat Page Grader, MCP, tool names, schemas, idempotency keys, routing,
+  retries, and provider mechanics as internal implementation details.
+- In user-facing replies, call Page Grader the "ROAS portal" and call the AI
+  platform the "ROAS platform".
+- Do not narrate tool selection or execution between tool calls. Put progress
+  only in structured tool labels.
+- After the work finishes, return one concise result: what happened, who owns
+  it, the relevant client or campaign, and the next step.
+- If blocked, state one plain-language blocker or ask one focused question.
+
 ## Example routing
 
 - "How are Christian's ads doing?" → find the canonical client if necessary,

@@ -128,3 +128,13 @@ Why: Looking up one named client from Slack silently changed the conversation's 
 Impact: Pixel can resolve any accessible named client across the organization without contaminating the Slack thread's campaign context. Exact and unique partial matches work generically; ambiguous or missing clients produce focused resolution errors instead of a guessed match.
 
 Files: `apps/agent-api/src/modules/artifacts/services/artifact-campaign-name-resolver.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-session-campaign.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-actions.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-campaign-brain.test.ts`, `apps/agent-api/src/modules/artifacts/services/artifacts.service.ts`, `apps/agent-api/src/modules/artifacts/legacy/artifacts-legacy.service.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-07-23 15:56] - [FIX]
+
+What: Changed Pixel's always-loaded delegation policy and fulfillment skill so tool execution stays private, progress uses structured labels, and Slack receives one concise confirmed result or one plain-language blocker. Generated replies and the fixed post-call footer now call Page Grader the ROAS portal and the AI platform the ROAS platform.
+
+Why: A multi-tool funnel request streamed Page Grader, MCP, schema, idempotency, routing, and retry narration into Slack as a run-on response.
+
+Impact: Pixel can still use the same internal tools and safety controls, but users see the business outcome, owner, client or campaign, and next step instead of implementation mechanics.
+
+Files: `packages/agent-policy/src/platform-tools-template.ts`, `packages/agent-policy/src/platform-tools-template.test.ts`, `docker/agents/vibey/skills/page-grader-operator/SKILL.md`, `docker/agents/atlas/skills/page-grader-operator/SKILL.md`, `apps/agent-api/src/modules/agent-sync/services/pixel-user-facing-tool-language.test.ts`, `apps/api/src/modules/spaces/services/meeting-follow-up-slack-message.ts`, `apps/api/src/modules/spaces/services/__tests__/meeting-follow-up-slack-message-language.test.ts`, `supabase/migrations/20260723160000_hide_pixel_tool_execution_language.sql`, `documentation/features/page-grader-mcp-bridge.md`
