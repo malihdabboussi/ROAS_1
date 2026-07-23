@@ -149,7 +149,11 @@ export function SidebarHqRail({
                       )
                     }
                     if (item.panelId === 'spaces') {
-                      return c.pathname.startsWith('/spaces') || c.pathname.startsWith('/campaigns')
+                      return (
+                        c.pathname.startsWith('/spaces') ||
+                        c.pathname.startsWith('/campaigns') ||
+                        c.pathname.startsWith('/programs')
+                      )
                     }
                     if (item.panelId === 'team2') return c.pathname.startsWith('/team')
                     if (item.panelId === 'brain') return c.pathname.startsWith('/brain')

@@ -30,11 +30,13 @@ type HubDockFlyoutProps = {
   /** When true, leave timers are ignored until content click or explicit close. */
   pinned?: boolean
   onPinnedChange?: (pinned: boolean) => void
-  /** Suspend leave while a nested flyout is open (Campaigns → spaces). */
+  /** Suspend leave while a nested flyout is open (Programs → create menus). */
   leaveSuspended?: boolean
   /** Gap from trigger right edge. Primary = 2, nested = 0. */
   offsetPx?: number
   nested?: boolean
+  /** Fixed panel width; long names truncate instead of growing the flyout. */
+  fixedWidth?: boolean
   headerActions?: HubDockFlyoutHeaderAction[]
   searchOpen?: boolean
   searchQuery?: string
@@ -72,6 +74,7 @@ export function HubDockFlyout({
   leaveSuspended = false,
   offsetPx = HUB_DOCK_FLYOUT_OFFSET_PX,
   nested = false,
+  fixedWidth = false,
   headerActions,
   searchOpen,
   searchQuery,
@@ -153,7 +156,11 @@ export function HubDockFlyout({
       ref={rootRef}
       data-hub-dock-flyout
       data-hub-dock-flyout-nested={nested ? '' : undefined}
-      className={cn('hub-dock-flyout', nested && 'hub-dock-flyout-nested')}
+      className={cn(
+        'hub-dock-flyout',
+        nested && 'hub-dock-flyout-nested',
+        fixedWidth && 'hub-dock-flyout-fixed',
+      )}
       style={{ top, left }}
       onMouseEnter={() => {
         onEnter()

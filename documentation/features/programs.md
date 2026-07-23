@@ -41,24 +41,27 @@ Move campaign: `PATCH /api/campaigns/:id` with `{ program_id }`
 - Top **New campaign** creates into that program
 - Link back to **All campaigns**
 
-### Sidebar Campaigns tree (rail flyout + hub menu)
+### Sidebar Programs panel (rail flyout + hub menu)
 
-ClickUp-style expandable folders in the Campaigns menu (not section labels only):
+ClickUp Spaces–style **fixed-width** panel (label **Programs**, not Campaigns):
 
-| Action              | Result                                                   |
-| ------------------- | -------------------------------------------------------- |
-| Chevron on Program  | Expand/collapse campaigns under that program (persisted) |
-| Click Program name  | Navigate to `/programs/[id]`                             |
-| Chevron on Campaign | Expand/collapse spaces under that campaign (persisted)   |
-| Click Campaign name | Navigate to `/campaigns/[id]`                            |
-| Click Space         | Open space (same as today)                               |
-| Favourite campaigns | Stay pinned at top of the list                           |
+| Element      | Behavior                                                                                                                                    |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| First paint  | Program folders only (Clients / ROAS Ops / Ungrouped), **collapsed**. Skeleton while programs load — never flash a flat all-campaigns list. |
+| All Tasks    | Top row → `/all-tasks`                                                                                                                      |
+| Header +     | Create menu: New Program / New Campaign / New Space                                                                                         |
+| Footer       | **+ New Program**                                                                                                                           |
+| Icon area    | Leading icon swaps to chevron on hover; click expands/collapses                                                                             |
+| Name         | Navigates to program / campaign / space overview                                                                                            |
+| Hover ⋯ / +  | Program: menu + new campaign; Campaign: existing campaign menu + new space; Space: existing space menu                                      |
+| Width        | Fixed 280px; long names truncate with ellipsis                                                                                              |
+| Expand state | Persisted in `localStorage` (`roas.sidebar.expandedProgramIds`, `expandedSpaceCampaignIds`). Default = collapsed.                           |
 
-Ungrouped campaigns (no `program_id`) appear under an **Ungrouped** folder when present. First visit expands all programs by default; later expand state is stored in `localStorage`.
+Ungrouped campaigns (no `program_id`) appear under an **Ungrouped** folder when present.
 
 ## All Tasks
 
-- Route: `/all-tasks` (hub nav + Campaigns hub link)
+- Route: `/all-tasks` (hub nav + Programs panel + Campaigns hub link)
 - API: `GET /api/tasks/rollup?view=my|all&program_id=&campaign_id=`
 - Tabs: **My Tasks** | **All Tasks**
 - Open top-level space tasks only (status not done/archived)
@@ -70,3 +73,4 @@ Ungrouped campaigns (no `program_id`) appear under an **Ungrouped** folder when 
 - **2026-07-22:** Programs are a ClickUp Space shell; Campaigns stay folders. Create-in-program auto-sets `program_id`. Org-first seed Clients + ROAS Ops; skip personal backfill. Page Grader campaigns backfill into Clients via `config.source = 'page_grader'` / `external_sources.page_grader`.
 - **2026-07-22:** All Tasks rollup ships with My Tasks / All Tasks; space_items only (mission subtasks later).
 - **2026-07-23:** Sidebar Campaigns uses Program → Campaign → Space tree (expand in-menu). Program name opens `/programs/[id]` overview. Nested hover spaces flyout removed from Campaigns dock.
+- **2026-07-23:** Programs sidebar v2 — rename nav to Programs; fixed-width panel; programs-first load (no flat flash); collapsed default; icon→chevron hover; header create menu; row ⋯/+; All Tasks top; + New Program footer.

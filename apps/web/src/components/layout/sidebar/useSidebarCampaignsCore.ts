@@ -50,6 +50,8 @@ export function useSidebarCampaignsCore({
   const [newCampaignName, setNewCampaignName] = useState('')
   const [newCampaignIcon, setNewCampaignIcon] = useState('folder-kanban')
   const [showNewCampaignModal, setShowNewCampaignModal] = useState(false)
+  const [createCampaignProgramId, setCreateCampaignProgramId] = useState<string | null>(null)
+  const [showNewProgramModal, setShowNewProgramModal] = useState(false)
   const [editingCampaign, setEditingCampaign] = useState<SidebarEditingCampaign>(null)
   const [deletingCampaign, setDeletingCampaign] = useState<{ id: string; name: string } | null>(
     null,
@@ -167,6 +169,7 @@ export function useSidebarCampaignsCore({
   }, [campaignMenuId])
 
   const requestCreateCampaign = useCallback(() => {
+    setCreateCampaignProgramId(null)
     setShowNewCampaignModal(true)
   }, [])
 
@@ -399,7 +402,10 @@ export function useSidebarCampaignsCore({
           )
           setEditingCampaign(null)
         } else {
-          const newCampaign = await createCampaign(name, icon)
+          const programId = createCampaignProgramId
+          const newCampaign = await createCampaign(name, icon, {
+            programId: programId ?? undefined,
+          })
           invalidateCampaignsListCache()
           setCampaigns((prev) => [
             {
@@ -411,7 +417,7 @@ export function useSidebarCampaignsCore({
               isSystemPersonal: false,
               isFavorite: false,
               isHidden: false,
-              program_id: newCampaign.program_id ?? null,
+              program_id: newCampaign.program_id ?? programId ?? null,
               config: (newCampaign.config as Record<string, unknown>) ?? {},
               created_at: newCampaign.created_at,
             },
@@ -421,9 +427,11 @@ export function useSidebarCampaignsCore({
         }
       } catch (e) {
         toast.error(sanitizeUserError(e, SIDEBAR_TOAST_ERRORS.SAVE_CAMPAIGN_FAILED.userMessage))
+      } finally {
+        setCreateCampaignProgramId(null)
       }
     },
-    [editingCampaign, setActiveCampaign],
+    [createCampaignProgramId, editingCampaign, setActiveCampaign],
   )
 
   return {
@@ -442,6 +450,10 @@ export function useSidebarCampaignsCore({
     setNewCampaignIcon,
     showNewCampaignModal,
     setShowNewCampaignModal,
+    createCampaignProgramId,
+    setCreateCampaignProgramId,
+    showNewProgramModal,
+    setShowNewProgramModal,
     editingCampaign,
     setEditingCampaign,
     deletingCampaign,

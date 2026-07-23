@@ -188,9 +188,13 @@ export function SidebarHqHubMenuContent({
 
         <SidebarHqHubMenuNavRow
           href="/campaigns"
-          active={c.pathname.startsWith('/campaigns') || c.pathname.startsWith('/spaces')}
+          active={
+            c.pathname.startsWith('/campaigns') ||
+            c.pathname.startsWith('/spaces') ||
+            c.pathname.startsWith('/programs')
+          }
           icon={<ListChecks />}
-          label="Campaigns"
+          label="Programs"
           rowRef={(el) => {
             rowEls.current.spaces = el
           }}

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import type { MouseEvent } from 'react'
 import { ChevronRight, MoreHorizontal, Plus, Star, User } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
-import { getIconColor, IconPicker, LucideIcon, type IconColorId } from '@/components/ui/IconPicker'
+import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space } from '@/features/spaces/types'
 import type { SidebarCampaignRow } from './sidebar-types'
@@ -54,9 +54,9 @@ export function SpaceRow({
   const iconColor = getIconColor(space.schema?.icon_color).textColor
 
   return (
-    <div className="group/row relative flex items-stretch">
+    <div className="group/row relative flex min-w-0 items-stretch">
       {isRenaming ? (
-        <div className="rounded-spacing-2 flex w-full items-center gap-2 px-3 py-1">
+        <div className="rounded-spacing-2 flex w-full min-w-0 items-center gap-2 px-3 py-1">
           <LucideIcon name={spaceIcon} className={`h-4 w-4 shrink-0 ${iconColor}`} />
           <input
             autoFocus
@@ -67,7 +67,7 @@ export function SpaceRow({
               if (e.key === 'Enter') onSubmitRename()
               if (e.key === 'Escape') onCancelRename()
             }}
-            className="body-3 min-w-0 flex-1 rounded bg-transparent px-1 text-[var(--color-foreground)] outline-none ring-1 ring-[var(--color-border)]"
+            className="body-3 border-border text-foreground ring-border min-w-0 flex-1 rounded bg-transparent px-1 outline-none ring-1"
           />
         </div>
       ) : (
@@ -84,10 +84,8 @@ export function SpaceRow({
               e.stopPropagation()
               onOpenMenu({ space, x: e.clientX, y: e.clientY })
             }}
-            className={`nav-glass-hover-purple flex w-full items-center gap-2 rounded-lg px-3 py-1.5 transition-all ${
-              active
-                ? 'nav-glass-selected-purple nav-glass-text-purple'
-                : 'text-[var(--color-muted-foreground)]'
+            className={`nav-glass-hover-purple flex w-full min-w-0 items-center gap-2 rounded-lg px-3 py-1.5 transition-all ${
+              active ? 'nav-glass-selected-purple nav-glass-text-purple' : 'text-muted-foreground'
             }`}
           >
             <LucideIcon name={spaceIcon} className={`h-4 w-4 shrink-0 ${iconColor}`} />
@@ -106,7 +104,7 @@ export function SpaceRow({
             <button
               type="button"
               aria-label="Space options"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--color-muted-foreground)] opacity-0 transition-opacity hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)] group-hover/row:opacity-100"
+              className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 opacity-0 transition-opacity group-hover/row:opacity-100"
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
@@ -133,7 +131,6 @@ export function Section({
   isCreating,
   searchActive,
   onToggle,
-  patchCampaignConfig,
   onOpenCampaignMenu,
   onOpenAddDropdown,
   creatingName,
@@ -153,10 +150,6 @@ export function Section({
   isCreating: boolean
   searchActive: boolean
   onToggle: (bucket: string) => void
-  patchCampaignConfig: (
-    campaignId: string,
-    configPatch: Record<string, unknown>,
-  ) => void | Promise<void>
   onOpenCampaignMenu: (campaign: SidebarCampaignRow, anchorRect: SectionMenuAnchorRect) => void
   onOpenAddDropdown: (e: MouseEvent<HTMLButtonElement>, bucket: string) => void
   creatingName: string
@@ -167,43 +160,42 @@ export function Section({
   favoriteIds: Set<string>
   spaceRowProps: SpaceRowSharedProps
 }) {
+  const iconName = campaignRow?.icon ?? 'folder-kanban'
+  const iconColor = getIconColor(
+    (campaignRow?.config.icon_color as string | undefined) ?? undefined,
+  ).textColor
+
   return (
-    <div>
-      <div className="group/section rounded-spacing-2 hover:bg-hover-subtle flex items-center gap-0.5 transition-colors">
+    <div className="min-w-0">
+      <div className="group/section rounded-spacing-2 hover:bg-hover-subtle flex min-w-0 items-center gap-0.5 transition-colors">
         <button
           type="button"
           onClick={() => onToggle(bucket)}
-          className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground flex h-7 w-7 shrink-0 items-center justify-center rounded transition-colors"
+          className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground relative flex h-7 w-7 shrink-0 items-center justify-center rounded transition-colors"
           aria-expanded={isExpanded}
           aria-label={isExpanded ? `Collapse ${label}` : `Expand ${label}`}
         >
-          <ChevronRight
-            className={`icon-sm shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
-          />
-        </button>
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center">
           {campaignRow ? (
-            <IconPicker
-              className="z-10 shrink-0"
-              value={campaignRow.icon}
-              color={(campaignRow.config.icon_color as string | undefined) ?? 'default'}
-              size="sm"
-              preferAbove
-              onChange={(name) => void patchCampaignConfig(campaignRow.id, { icon: name })}
-              onColorChange={(colorId: IconColorId) =>
-                void patchCampaignConfig(campaignRow.id, { icon_color: colorId })
-              }
-              customTrigger={
-                <LucideIcon
-                  name={campaignRow.icon}
-                  className={`icon-sm ${getIconColor(campaignRow.config.icon_color as string | undefined).textColor}`}
-                />
-              }
+            <LucideIcon
+              name={iconName}
+              className={`icon-sm absolute ${iconColor} transition-opacity ${
+                isExpanded ? 'opacity-0' : 'opacity-100 group-hover/section:opacity-0'
+              }`}
             />
           ) : (
-            <User className="icon-sm text-muted-foreground shrink-0" aria-hidden />
+            <User
+              className={`icon-sm text-muted-foreground absolute shrink-0 transition-opacity ${
+                isExpanded ? 'opacity-0' : 'opacity-100 group-hover/section:opacity-0'
+              }`}
+              aria-hidden
+            />
           )}
-        </div>
+          <ChevronRight
+            className={`icon-sm absolute shrink-0 transition-all duration-150 ${
+              isExpanded ? 'rotate-90 opacity-100' : 'opacity-0 group-hover/section:opacity-100'
+            }`}
+          />
+        </button>
         {campaignRow ? (
           <Link
             href={`/campaigns/${campaignRow.id}`}
@@ -244,41 +236,29 @@ export function Section({
         ) : null}
         <div className="relative flex h-6 w-6 shrink-0 items-center justify-center">
           {sectionSpaces.length > 0 ? (
-            <>
-              <span className="body-3 text-muted-foreground pointer-events-none absolute inset-0 flex items-center justify-center font-medium tabular-nums opacity-100 transition-opacity group-hover/section:opacity-0">
-                {sectionSpaces.length}
-              </span>
-              <button
-                type="button"
-                onClick={(e) => onOpenAddDropdown(e, bucket)}
-                title={`New space in ${label}`}
-                className="text-muted-foreground hover:text-foreground pointer-events-none absolute inset-0 flex items-center justify-center rounded opacity-0 transition-opacity group-hover/section:pointer-events-auto group-hover/section:opacity-100"
-                aria-label={`New space in ${label}`}
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={(e) => onOpenAddDropdown(e, bucket)}
-              title={`New space in ${label}`}
-              className="text-muted-foreground hover:text-foreground pointer-events-none absolute inset-0 flex items-center justify-center rounded opacity-0 transition-opacity group-hover/section:pointer-events-auto group-hover/section:opacity-100"
-              aria-label={`New space in ${label}`}
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </button>
-          )}
+            <span className="body-3 text-muted-foreground pointer-events-none absolute inset-0 flex items-center justify-center font-medium tabular-nums opacity-100 transition-opacity group-hover/section:opacity-0">
+              {sectionSpaces.length}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={(e) => onOpenAddDropdown(e, bucket)}
+            title={`New space in ${label}`}
+            className="text-muted-foreground hover:text-foreground pointer-events-none absolute inset-0 flex items-center justify-center rounded opacity-0 transition-opacity group-hover/section:pointer-events-auto group-hover/section:opacity-100"
+            aria-label={`New space in ${label}`}
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
 
       {isExpanded && (
-        <div className="border-border ml-2 space-y-0.5 border-l pl-2">
+        <div className="border-border ml-2 min-w-0 space-y-0.5 border-l pl-2">
           {sectionSpaces.map((s) => (
             <SpaceRow key={s.id} space={s} favorited={favoriteIds.has(s.id)} {...spaceRowProps} />
           ))}
           {isCreating ? (
-            <div className="flex items-center gap-1.5 px-2 py-1">
+            <div className="flex min-w-0 items-center gap-1.5 px-2 py-1">
               <input
                 value={creatingName}
                 onChange={(e) => setCreatingName(e.target.value)}
@@ -292,17 +272,17 @@ export function Section({
                 disabled={isSubmitting}
                 autoFocus
                 placeholder={isSubmitting ? 'Creating…' : 'Space name'}
-                className="body-3 text-foreground placeholder:text-muted-foreground h-7 flex-1 rounded-md bg-transparent px-2 focus:outline-none disabled:opacity-50"
+                className="body-3 text-foreground placeholder:text-muted-foreground h-7 min-w-0 flex-1 rounded-md bg-transparent px-2 focus:outline-none disabled:opacity-50"
               />
             </div>
           ) : !searchActive ? (
             <button
               type="button"
               onClick={(e) => onOpenAddDropdown(e, bucket)}
-              className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground flex w-full items-center gap-2 px-3 py-1 transition-colors"
+              className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground flex w-full min-w-0 items-center gap-2 px-3 py-1 transition-colors"
             >
               <Plus className="icon-sm shrink-0" />
-              <span className="body-3">New space</span>
+              <span className="body-3 truncate">New space</span>
             </button>
           ) : null}
         </div>

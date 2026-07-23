@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { useShellPrefsHydrated } from '@/components/shell/use-shell-prefs-hydrated'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { StudioSearchModal } from '@/features/studio/components/StudioSearchModal'
@@ -8,8 +9,10 @@ import { FeatureUpdateDetailModal } from '@/features/updates/components/FeatureU
 import { FeatureUpdatesPanel } from '@/features/updates/components/FeatureUpdatesPanel'
 import { useFeatureUpdates } from '@/features/updates/hooks/useFeatureUpdates'
 import type { FeatureUpdate } from '@/features/updates/types'
+import { createProgram } from '@/lib/programs'
 import { DeleteCampaignDialog } from './DeleteCampaignDialog'
 import { NewCampaignModal } from './NewCampaignModal'
+import { NewProgramModal } from './NewProgramModal'
 import type { SidebarCampaignRow, SidebarProps } from './sidebar/sidebar-types'
 import { SidebarHqSection } from './sidebar/SidebarHqSection'
 import { SidebarStudioFooter } from './sidebar/SidebarStudioFooter'
@@ -152,9 +155,28 @@ export function Sidebar(props: SidebarProps) {
           onClose={() => {
             c.setShowNewCampaignModal(false)
             c.setEditingCampaign(null)
+            c.setCreateCampaignProgramId(null)
           }}
           editingCampaign={c.editingCampaign}
           onCreate={c.handleNewCampaignModalCreate}
+        />
+        <NewProgramModal
+          open={c.showNewProgramModal}
+          onClose={() => c.setShowNewProgramModal(false)}
+          onCreate={async (name, icon, iconColor) => {
+            try {
+              await createProgram({
+                name,
+                icon,
+                icon_color: iconColor ?? null,
+              })
+              window.dispatchEvent(new Event('roas:programs-changed'))
+              toast.success(`Program “${name}” is ready`)
+            } catch {
+              toast.error('Could not create program')
+              throw new Error('create program failed')
+            }
+          }}
         />
       </aside>
       <StudioSearchModal

@@ -118,7 +118,6 @@ describe('SidebarHqSpacesGroupedList', () => {
         expandedProgramIds={new Set(['prog-clients'])}
         setExpandedProgramIds={setExpandedProgramIds}
         onCreateSpace={vi.fn()}
-        patchCampaignConfig={vi.fn()}
         isSubmitting={false}
         creatingName=""
         setCreatingName={vi.fn()}

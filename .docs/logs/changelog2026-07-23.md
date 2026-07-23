@@ -1,5 +1,15 @@
 # Changelog - July 23, 2026
 
+## [2026-07-23 14:00] - [FEATURE]
+
+What: Programs sidebar v2 — ClickUp Spaces UX. Nav label Campaigns→Programs; fixed 280px panel; programs-first load with skeleton (no flat All Spaces flash); folders collapsed by default; icon→chevron on hover (click expands, name navigates); header + create menu (New Program / Campaign / Space); row hover ⋯/+; All Tasks at top; footer + New Program; NewProgramModal + program context menu.
+
+Why: Match ClickUp Spaces hierarchy and interaction so Programs feel like a real workspace tree, not a growing flyout of flat campaigns.
+
+Impact: Programs panel shows collapsed Clients/ROAS Ops/Ungrouped, All Tasks, create menu, and truncation. Routes `/campaigns`, `/programs/[id]`, and `/all-tasks` remain unchanged. Included in the consolidated web/API/agent production release.
+
+Files: `SidebarProgramFolder.tsx`, `SidebarHqSpacesBucketList.tsx`, `SidebarHqSpacesGroupedList.tsx`, `SidebarHqSpacesRows.tsx`, `SidebarHqFlyouts.tsx`, `SidebarHqHubMenuDockFlyouts.tsx`, `HubDockFlyout.tsx`, `manage-rail-items.tsx`, `NewProgramModal.tsx`, `SidebarProgramsCreateMenu.tsx`, `SidebarProgramMenuPortal.tsx`, `globals.css`, `documentation/features/programs.md`
+
 ## [2026-07-23 13:53] - [FIX]
 
 What: Consolidated the remaining local Programs, Slack image, and Paid Ads work for a single local-main release. Paid Ads campaign selection now treats each line as one campaign so commas inside campaign names or dates are preserved. Removed a duplicated sidebar controller test property found during reconciliation.

@@ -9,6 +9,7 @@ import {
   type SetStateAction,
 } from 'react'
 import { toast } from 'sonner'
+import { ConfirmDialog } from '@/components/ui/dialogs/ConfirmDialog'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { cachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
 import {
@@ -18,9 +19,9 @@ import {
 import { updateSpace as updateSpaceRequest } from '@/features/spaces/services/spaces.service'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space } from '@/features/spaces/types'
-import { fetchPrograms, type Program } from '@/lib/programs'
+import { deleteProgram, fetchPrograms, updateProgram, type Program } from '@/lib/programs'
 import { groupSidebarCampaignsByProgram } from './group-sidebar-campaigns-by-program'
-import { readExpandedProgramIds, toggleIdInSet } from './sidebar-expand-persistence'
+import { toggleIdInSet } from './sidebar-expand-persistence'
 import type { SidebarCampaignRow } from './sidebar-types'
 import { SidebarHqSpacesBucketList } from './SidebarHqSpacesBucketList'
 import { SidebarHqSpacesListOverlays } from './SidebarHqSpacesListOverlays'
@@ -29,6 +30,7 @@ import type {
   SidebarHqSpaceMenuState,
 } from './SidebarHqSpacesMenuLayers'
 import { type SectionMenuAnchorRect, type SpaceRowSharedProps } from './SidebarHqSpacesRows'
+import { SidebarProgramMenuPortal } from './SidebarProgramMenuPortal'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 const SPACES_ROSTER_REFRESH_INTERVAL_MS = 60_000
@@ -42,7 +44,6 @@ export function SidebarHqSpacesGroupedList({
   expandedIds,
   setExpandedIds,
   onCreateSpace,
-  patchCampaignConfig,
   isSubmitting,
   creatingName,
   setCreatingName,
@@ -56,6 +57,7 @@ export function SidebarHqSpacesGroupedList({
   flyoutMode = false,
   expandedProgramIds,
   setExpandedProgramIds,
+  onNewProgram,
 }: {
   controller: SidebarControllerReturn
   spaces: Space[]
@@ -64,10 +66,6 @@ export function SidebarHqSpacesGroupedList({
   expandedIds: Set<string>
   setExpandedIds: Dispatch<SetStateAction<Set<string>>>
   onCreateSpace: (campaignId?: string | null) => void
-  patchCampaignConfig: (
-    campaignId: string,
-    configPatch: Record<string, unknown>,
-  ) => void | Promise<void>
   isSubmitting: boolean
   creatingName: string
   setCreatingName: (v: string) => void
@@ -78,34 +76,56 @@ export function SidebarHqSpacesGroupedList({
   hasMore: boolean
   loadingMore: boolean
   onLoadMore: () => void
-  /** Dock flyout: hide bottom New campaign (header + covers create). */
+  /** Dock flyout: Programs panel chrome (All Tasks + New Program). */
   flyoutMode?: boolean
   expandedProgramIds: Set<string>
   setExpandedProgramIds: Dispatch<SetStateAction<Set<string>>>
+  onNewProgram?: () => void
 }) {
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const { favoriteIds, hiddenIds, isFavorite, toggleFavorite, toggleHidden } = spaceUserState
   const [creatingInBucket, setCreatingInBucket] = useState<string | null>(null)
   const [menuFor, setMenuFor] = useState<SidebarHqSpaceMenuState | null>(null)
   const [campaignMenuFor, setCampaignMenuFor] = useState<SidebarHqCampaignMenuState | null>(null)
+  const [programMenuFor, setProgramMenuFor] = useState<{
+    program: Program
+    anchorRect: SectionMenuAnchorRect
+  } | null>(null)
   const [renamingSpaceId, setRenamingSpaceId] = useState<string | null>(null)
   const [renameDraft, setRenameDraft] = useState('')
   const [addDropdownAnchor, setAddDropdownAnchor] = useState<DOMRect | null>(null)
   const [addDropdownBucket, setAddDropdownBucket] = useState<string | null>(null)
+  const [deletingProgram, setDeletingProgram] = useState<Program | null>(null)
+  const [deletingProgramBusy, setDeletingProgramBusy] = useState(false)
   const isOrgContext = useOrgStore((s) => s.activeOrgId !== null)
   const [programs, setPrograms] = useState<Program[]>([])
+  const [programsReady, setProgramsReady] = useState(false)
 
   useEffect(() => {
-    void fetchPrograms()
-      .then((rows) => {
-        setPrograms(rows)
-        setExpandedProgramIds((prev) => {
-          if (readExpandedProgramIds() != null || prev.size > 0 || rows.length === 0) return prev
-          return new Set(rows.map((p) => p.id))
+    let cancelled = false
+    const load = () => {
+      setProgramsReady(false)
+      void fetchPrograms()
+        .then((rows) => {
+          if (cancelled) return
+          setPrograms(rows)
         })
-      })
-      .catch(() => setPrograms([]))
-  }, [isOrgContext, setExpandedProgramIds])
+        .catch(() => {
+          if (cancelled) return
+          setPrograms([])
+        })
+        .finally(() => {
+          if (!cancelled) setProgramsReady(true)
+        })
+    }
+    load()
+    const onChanged = () => load()
+    window.addEventListener('roas:programs-changed', onChanged)
+    return () => {
+      cancelled = true
+      window.removeEventListener('roas:programs-changed', onChanged)
+    }
+  }, [isOrgContext])
 
   const startRenameSpace = (space: Space) => {
     setRenamingSpaceId(space.id)
@@ -190,6 +210,11 @@ export function SidebarHqSpacesGroupedList({
     setCreatingInBucket(null)
   }
 
+  function createCampaignInProgram(programId: string | null) {
+    controller.setCreateCampaignProgramId(programId)
+    controller.setShowNewCampaignModal(true)
+  }
+
   const q = (searchQuery ?? '').trim().toLowerCase()
   const searchActive = q.length > 0
   const matchSpace = (s: Space) => (s.title ?? '').toLowerCase().includes(q)
@@ -252,7 +277,6 @@ export function SidebarHqSpacesGroupedList({
   const sectionSharedProps = {
     searchActive,
     onToggle: toggle,
-    patchCampaignConfig,
     onOpenCampaignMenu: (campaign: SidebarCampaignRow, anchorRect: SectionMenuAnchorRect) =>
       setCampaignMenuFor({ campaign, anchorRect }),
     onOpenAddDropdown: openAddDropdown,
@@ -266,18 +290,22 @@ export function SidebarHqSpacesGroupedList({
   }
 
   return (
-    <div className="space-y-0.5">
+    <div className="min-w-0 space-y-0.5">
       <SidebarHqSpacesBucketList
         noResults={noResults}
         searchQuery={searchQuery}
         searchActive={searchActive}
         flyoutMode={flyoutMode}
+        programsReady={programsReady}
         favoriteBuckets={favoriteBuckets}
         otherProgramGroups={otherProgramGroups}
         programs={programs}
         expandedIds={expandedIds}
         expandedProgramIds={expandedProgramIds}
         onToggleProgram={toggleProgram}
+        onCreateCampaignInProgram={createCampaignInProgram}
+        onOpenProgramMenu={(program, anchorRect) => setProgramMenuFor({ program, anchorRect })}
+        onNewProgram={onNewProgram}
         creatingInBucket={creatingInBucket}
         sectionSharedProps={sectionSharedProps}
         controller={controller}
@@ -308,6 +336,65 @@ export function SidebarHqSpacesGroupedList({
         setAddDropdownAnchor={setAddDropdownAnchor}
         setAddDropdownBucket={setAddDropdownBucket}
         onOpenBrowseTemplates={onOpenBrowseTemplates}
+      />
+
+      {programMenuFor ? (
+        <SidebarProgramMenuPortal
+          program={programMenuFor.program}
+          anchorRect={programMenuFor.anchorRect}
+          onClose={() => setProgramMenuFor(null)}
+          onRename={
+            programMenuFor.program.system_kind
+              ? undefined
+              : () => {
+                  const next = window.prompt('Rename program', programMenuFor.program.name)
+                  if (!next?.trim() || next.trim() === programMenuFor.program.name) return
+                  void updateProgram(programMenuFor.program.id, { name: next.trim() })
+                    .then((updated) => {
+                      setPrograms((prev) =>
+                        prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)),
+                      )
+                      toast.success('Program renamed')
+                    })
+                    .catch(() => toast.error('Could not rename program'))
+                }
+          }
+          onCreateCampaign={() => createCampaignInProgram(programMenuFor.program.id)}
+          onDelete={
+            programMenuFor.program.system_kind
+              ? undefined
+              : () => setDeletingProgram(programMenuFor.program)
+          }
+        />
+      ) : null}
+
+      <ConfirmDialog
+        open={!!deletingProgram}
+        onOpenChange={(open) => {
+          if (!open) setDeletingProgram(null)
+        }}
+        title="DELETE PROGRAM?"
+        description={
+          deletingProgram
+            ? `Delete “${deletingProgram.name}”? Campaigns move to Ungrouped.`
+            : undefined
+        }
+        confirmText={deletingProgramBusy ? 'Deleting…' : 'Delete'}
+        confirmingText="Deleting…"
+        confirmDisabled={deletingProgramBusy}
+        onConfirm={() => {
+          if (!deletingProgram || deletingProgramBusy) return
+          setDeletingProgramBusy(true)
+          void deleteProgram(deletingProgram.id)
+            .then(() => {
+              setPrograms((prev) => prev.filter((p) => p.id !== deletingProgram.id))
+              window.dispatchEvent(new Event('roas:programs-changed'))
+              toast.success('Program deleted')
+              setDeletingProgram(null)
+            })
+            .catch(() => toast.error('Could not delete program'))
+            .finally(() => setDeletingProgramBusy(false))
+        }}
       />
     </div>
   )

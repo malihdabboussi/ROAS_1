@@ -1,3 +1,16 @@
+## 2026-07-23 - [ARCH] Programs sidebar v2 — remaining polish
+
+Status: Open
+Found while: ClickUp Programs sidebar v2 redesign
+Files:
+
+- `apps/web/src/components/layout/sidebar/useSidebarController.ts` (~790 LOC; hook limit 300)
+- `apps/web/src/components/layout/sidebar/SidebarHqSpacesGroupedList.tsx` (~412 LOC; approaching component soft limit)
+- Space row `+` create-item (no sidebar create-item flow yet)
+  Evidence: Controller still owns campaign+program modal state; Space `+` deferred because no space-item create surface in sidebar.
+  Needed work: Extract programs create/expand state; wire Space `+` when item-create exists; optional drag-resize for Programs panel.
+  Deferred because: Fixed width + truncate and create menus shipped; resize/item-create out of must-have scope.
+
 ## 2026-07-23 - [ARCH] CampaignsHub + useSidebarController over LOC
 
 Status: Open

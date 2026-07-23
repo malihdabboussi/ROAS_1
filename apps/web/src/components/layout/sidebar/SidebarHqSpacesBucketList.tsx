@@ -1,10 +1,16 @@
 'use client'
 
-import { Plus } from 'lucide-react'
+import Link from 'next/link'
+import { ListTodo, Plus } from 'lucide-react'
 import type { Space } from '@/features/spaces/types'
 import type { Program } from '@/lib/programs'
 import { SIDEBAR_MESSAGES } from '../config/sidebar-messages.config'
-import { Section, SpaceRow, type SpaceRowSharedProps } from './SidebarHqSpacesRows'
+import {
+  Section,
+  SpaceRow,
+  type SectionMenuAnchorRect,
+  type SpaceRowSharedProps,
+} from './SidebarHqSpacesRows'
 import { SidebarProgramFolder } from './SidebarProgramFolder'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -23,17 +29,34 @@ type ProgramGroup = {
   buckets: CampaignBucket[]
 }
 
+function ProgramRowsSkeleton() {
+  return (
+    <div className="space-y-1 px-1 py-1" aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="bg-secondary/60 rounded-spacing-2 flex h-7 items-center gap-2 px-2">
+          <span className="bg-muted-foreground/20 h-4 w-4 shrink-0 rounded" />
+          <span className="bg-muted-foreground/15 h-3 flex-1 rounded" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function SidebarHqSpacesBucketList({
   noResults,
   searchQuery,
   searchActive,
   flyoutMode,
+  programsReady,
   favoriteBuckets,
   otherProgramGroups,
   programs,
   expandedIds,
   expandedProgramIds,
   onToggleProgram,
+  onCreateCampaignInProgram,
+  onOpenProgramMenu,
+  onNewProgram,
   creatingInBucket,
   sectionSharedProps,
   controller,
@@ -49,12 +72,17 @@ export function SidebarHqSpacesBucketList({
   searchQuery?: string
   searchActive: boolean
   flyoutMode: boolean
+  /** False until programs fetch settles — never flash flat campaign list. */
+  programsReady: boolean
   favoriteBuckets: CampaignBucket[]
   otherProgramGroups: ProgramGroup[]
   programs: Program[]
   expandedIds: Set<string>
   expandedProgramIds: Set<string>
   onToggleProgram: (key: string) => void
+  onCreateCampaignInProgram?: (programId: string | null) => void
+  onOpenProgramMenu?: (program: Program, anchorRect: SectionMenuAnchorRect) => void
+  onNewProgram?: () => void
   creatingInBucket: string | null
   sectionSharedProps: Omit<
     Parameters<typeof Section>[0],
@@ -75,15 +103,29 @@ export function SidebarHqSpacesBucketList({
   onLoadMore: () => void
   groupHeaderCls: string
 }) {
+  if (!programsReady) {
+    return <ProgramRowsSkeleton />
+  }
+
   return (
     <>
+      {flyoutMode && !searchActive ? (
+        <Link
+          href="/all-tasks"
+          data-hub-dock-navigate
+          className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground hover:text-foreground mb-1 flex min-w-0 items-center gap-2 px-2 py-1.5 transition-colors"
+        >
+          <ListTodo className="icon-sm shrink-0" aria-hidden />
+          <span className="body-3 min-w-0 flex-1 truncate font-medium">All Tasks</span>
+        </Link>
+      ) : null}
       {noResults ? (
         <p className="body-3 text-muted-foreground px-3 py-6 text-center">
           No spaces match “{searchQuery}”
         </p>
       ) : null}
       {favoriteBuckets.length > 0 ? (
-        <div className={flyoutMode ? 'mb-1 space-y-0.5' : 'mb-3 space-y-0.5'}>
+        <div className={flyoutMode ? 'mb-1 min-w-0 space-y-0.5' : 'mb-3 min-w-0 space-y-0.5'}>
           {!flyoutMode ? <p className={groupHeaderCls}>Favourite</p> : null}
           {favoriteBuckets.map((b) => (
             <Section
@@ -97,7 +139,7 @@ export function SidebarHqSpacesBucketList({
         </div>
       ) : null}
       {otherProgramGroups.length > 0 && !flyoutMode && programs.length === 0 ? (
-        <p className={groupHeaderCls}>Campaigns</p>
+        <p className={groupHeaderCls}>Programs</p>
       ) : null}
       {otherProgramGroups.map((group) => {
         const programExpanded = searchActive || expandedProgramIds.has(group.key)
@@ -111,7 +153,7 @@ export function SidebarHqSpacesBucketList({
           />
         ))
 
-        if (programs.length > 0) {
+        if (programs.length > 0 || group.program != null || group.key === '__ungrouped__') {
           return (
             <SidebarProgramFolder
               key={group.key}
@@ -121,6 +163,12 @@ export function SidebarHqSpacesBucketList({
               campaignCount={group.buckets.length}
               isExpanded={programExpanded}
               onToggle={onToggleProgram}
+              onCreateCampaign={
+                group.program || group.key === '__ungrouped__'
+                  ? onCreateCampaignInProgram
+                  : undefined
+              }
+              onOpenMenu={group.program ? onOpenProgramMenu : undefined}
               compact={flyoutMode}
             >
               {campaignRows}
@@ -129,16 +177,32 @@ export function SidebarHqSpacesBucketList({
         }
 
         return (
-          <div key={group.key} className={flyoutMode ? 'mb-2 space-y-0.5' : 'mb-1 space-y-0.5'}>
+          <div
+            key={group.key}
+            className={flyoutMode ? 'mb-2 min-w-0 space-y-0.5' : 'mb-1 min-w-0 space-y-0.5'}
+          >
             {campaignRows}
           </div>
         )
       })}
+      {!searchActive && flyoutMode && onNewProgram ? (
+        <button
+          type="button"
+          onClick={onNewProgram}
+          className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground hover:text-foreground mt-1 flex w-full min-w-0 items-center gap-0.5 transition-colors"
+          aria-label="New program"
+        >
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center">
+            <Plus className="icon-md shrink-0" aria-hidden />
+          </span>
+          <span className="body-3 min-w-0 flex-1 truncate text-left font-medium">New Program</span>
+        </button>
+      ) : null}
       {!searchActive && !flyoutMode ? (
         <button
           type="button"
           onClick={() => controller.setShowNewCampaignModal(true)}
-          className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground hover:text-foreground flex w-full items-center gap-0.5 transition-colors"
+          className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground hover:text-foreground flex w-full min-w-0 items-center gap-0.5 transition-colors"
           aria-label="New campaign"
         >
           <span className="flex h-7 w-7 shrink-0 items-center justify-center">
@@ -148,7 +212,7 @@ export function SidebarHqSpacesBucketList({
         </button>
       ) : null}
       {sharedSpaces.length > 0 ? (
-        <div className="mt-3 space-y-0.5">
+        <div className="mt-3 min-w-0 space-y-0.5">
           <p className={groupHeaderCls}>Shared with me</p>
           {sharedSpaces.map((s) => (
             <SpaceRow key={s.id} space={s} favorited={favoriteIds.has(s.id)} {...spaceRowProps} />

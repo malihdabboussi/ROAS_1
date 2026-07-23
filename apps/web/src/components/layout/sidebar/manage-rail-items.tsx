@@ -21,7 +21,7 @@ export const manageRailItems: ManageRailItem[] = [
   },
   {
     id: 'spaces',
-    label: 'Campaigns',
+    label: 'Programs',
     type: 'panel',
     panelId: 'spaces',
     icon: <ListChecks className="icon-md" />,

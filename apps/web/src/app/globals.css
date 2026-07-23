@@ -10638,6 +10638,15 @@ html.dark .shell-sidebar-panel {
   box-shadow: var(--shadow-2);
   color: var(--color-foreground);
 }
+.hub-dock-flyout-fixed {
+  box-sizing: border-box;
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
+}
+.hub-dock-flyout-fixed .hub-dock-flyout-body {
+  overflow-x: hidden;
+}
 /* Invisible bridge over the gap between trigger/parent and this panel */
 .hub-dock-flyout::before {
   content: '';

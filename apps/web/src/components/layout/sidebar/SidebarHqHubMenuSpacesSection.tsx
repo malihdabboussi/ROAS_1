@@ -32,7 +32,7 @@ export function SidebarHqHubMenuSpacesSection({
     <div className="min-h-0">
       {c.sidebarListsLoading ? (
         <div className="flex justify-center px-2 py-6">
-          <VibeyLoadingOrb state="processing" size="sm" text="Loading spaces..." />
+          <VibeyLoadingOrb state="processing" size="sm" text="Loading programs..." />
         </div>
       ) : (
         <SidebarHqSpacesGroupedList
@@ -45,7 +45,6 @@ export function SidebarHqHubMenuSpacesSection({
           expandedProgramIds={c.expandedProgramIds}
           setExpandedProgramIds={c.setExpandedProgramIds}
           onCreateSpace={(campaignId) => void c.handleCreateList(campaignId)}
-          patchCampaignConfig={c.patchCampaignConfig}
           isSubmitting={c.isSubmittingList}
           creatingName={c.newListName}
           setCreatingName={c.setNewListName}
@@ -57,6 +56,7 @@ export function SidebarHqHubMenuSpacesSection({
           loadingMore={c.sidebarListsLoadingMore}
           onLoadMore={() => void c.loadMoreSidebarLists()}
           flyoutMode
+          onNewProgram={() => c.setShowNewProgramModal(true)}
         />
       )}
     </div>

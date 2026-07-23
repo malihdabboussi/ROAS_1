@@ -1,12 +1,13 @@
 'use client'
 
-import { Suspense, type Dispatch, type RefObject, type SetStateAction } from 'react'
+import { Suspense, useState, type Dispatch, type RefObject, type SetStateAction } from 'react'
 import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
 import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { HubDockFlyout } from './HubDockFlyout'
 import { SidebarBrainNavLinks } from './SidebarBrainFlyout'
 import { SidebarHqHubMenuSpacesSection } from './SidebarHqHubMenuSpacesSection'
 import { SidebarHqMoreFlyoutBody } from './SidebarHqMoreFlyoutBody'
+import { SidebarProgramsCreateMenu, type ProgramsCreateAction } from './SidebarProgramsCreateMenu'
 import { SidebarTeam2Flyout } from './SidebarTeam2Flyout'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -67,7 +68,22 @@ export function SidebarHqHubMenuDockFlyouts({
   spaceUserState: ReturnType<typeof useSpaceUserState>
   showAdminSections: boolean
 }) {
+  const [createMenuAnchor, setCreateMenuAnchor] = useState<DOMRect | null>(null)
+
   if (!showFlyout || !dock || !anchor) return null
+
+  const handleCreateAction = (action: ProgramsCreateAction) => {
+    if (action === 'program') {
+      c.setShowNewProgramModal(true)
+      return
+    }
+    if (action === 'campaign') {
+      c.setCreateCampaignProgramId(null)
+      c.setShowNewCampaignModal(true)
+      return
+    }
+    setCreateSpaceModalFor({ campaignId: null })
+  }
 
   if (dock === 'team') {
     return (
@@ -97,54 +113,63 @@ export function SidebarHqHubMenuDockFlyouts({
 
   if (dock === 'spaces') {
     return (
-      <HubDockFlyout
-        anchor={anchor}
-        title="Campaigns"
-        onEnter={clearClose}
-        onLeave={scheduleClose}
-        onClose={closeDock}
-        pinned={pinned}
-        onPinnedChange={setPinned}
-        leaveSuspended={false}
-        headerActions={[
-          {
-            kind: 'search',
-            title: 'Search campaigns',
-            onClick: () => setSpacesSearchOpen(true),
-          },
-          {
-            kind: 'plus',
-            title: 'New campaign',
-            onClick: () => c.setShowNewCampaignModal(true),
-          },
-        ]}
-        searchOpen={spacesSearchOpen}
-        searchQuery={spacesSearchQuery}
-        onSearchQueryChange={setSpacesSearchQuery}
-        onSearchClose={() => {
-          setSpacesSearchOpen(false)
-          setSpacesSearchQuery('')
-        }}
-        searchPlaceholder="Search campaigns…"
-        searchInputRef={spacesSearchInputRef}
-      >
-        <SidebarHqHubMenuSpacesSection
-          c={c}
-          spacesSearchOpen={spacesSearchOpen}
-          setSpacesSearchOpen={setSpacesSearchOpen}
-          spacesSearchQuery={spacesSearchQuery}
-          setSpacesSearchQuery={setSpacesSearchQuery}
-          spacesSearchInputRef={spacesSearchInputRef}
-          hiddenSidebarCount={hiddenSidebarCount}
-          hiddenEyeRef={hiddenEyeRef}
-          hiddenMenuOpen={hiddenMenuOpen}
-          setHiddenMenuOpen={setHiddenMenuOpen}
-          openHiddenMenu={openHiddenMenu}
-          setBrowsePanelBucket={setBrowsePanelBucket}
-          setCreateSpaceModalFor={setCreateSpaceModalFor}
-          spaceUserState={spaceUserState}
+      <>
+        <HubDockFlyout
+          anchor={anchor}
+          title="Programs"
+          fixedWidth
+          onEnter={clearClose}
+          onLeave={scheduleClose}
+          onClose={closeDock}
+          pinned={pinned}
+          onPinnedChange={setPinned}
+          leaveSuspended={!!createMenuAnchor}
+          headerActions={[
+            {
+              kind: 'search',
+              title: 'Search programs',
+              onClick: () => setSpacesSearchOpen(true),
+            },
+            {
+              kind: 'plus',
+              title: 'Create',
+              onClick: (e) => setCreateMenuAnchor(e.currentTarget.getBoundingClientRect()),
+            },
+          ]}
+          searchOpen={spacesSearchOpen}
+          searchQuery={spacesSearchQuery}
+          onSearchQueryChange={setSpacesSearchQuery}
+          onSearchClose={() => {
+            setSpacesSearchOpen(false)
+            setSpacesSearchQuery('')
+          }}
+          searchPlaceholder="Search programs…"
+          searchInputRef={spacesSearchInputRef}
+        >
+          <SidebarHqHubMenuSpacesSection
+            c={c}
+            spacesSearchOpen={spacesSearchOpen}
+            setSpacesSearchOpen={setSpacesSearchOpen}
+            spacesSearchQuery={spacesSearchQuery}
+            setSpacesSearchQuery={setSpacesSearchQuery}
+            spacesSearchInputRef={spacesSearchInputRef}
+            hiddenSidebarCount={hiddenSidebarCount}
+            hiddenEyeRef={hiddenEyeRef}
+            hiddenMenuOpen={hiddenMenuOpen}
+            setHiddenMenuOpen={setHiddenMenuOpen}
+            openHiddenMenu={openHiddenMenu}
+            setBrowsePanelBucket={setBrowsePanelBucket}
+            setCreateSpaceModalFor={setCreateSpaceModalFor}
+            spaceUserState={spaceUserState}
+          />
+        </HubDockFlyout>
+        <SidebarProgramsCreateMenu
+          open={!!createMenuAnchor}
+          anchorRect={createMenuAnchor}
+          onClose={() => setCreateMenuAnchor(null)}
+          onSelect={handleCreateAction}
         />
-      </HubDockFlyout>
+      </>
     )
   }
 
@@ -163,7 +188,6 @@ export function SidebarHqHubMenuDockFlyouts({
             kind: 'search',
             title: 'Search brains',
             onClick: () => {
-              /* optional: focus manage brains */
               handleNavigate()
               c.router.push('/brain')
             },

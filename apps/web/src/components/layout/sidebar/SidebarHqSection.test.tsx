@@ -1,8 +1,8 @@
 import type { MouseEvent, ReactNode } from 'react'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SidebarHqSection } from './SidebarHqSection'
-import type { SidebarControllerReturn } from './useSidebarController'
+import { makeSidebarHqController } from './SidebarHqSection.test-support'
 
 const mocks = vi.hoisted(() => ({
   setActiveSpace: vi.fn(),
@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   renameProject: vi.fn(),
   deleteProject: vi.fn(),
   setActiveView: vi.fn(),
+  fetchPrograms: vi.fn(async () => []),
 }))
 
 vi.mock('next/link', () => ({
@@ -41,6 +42,13 @@ vi.mock('next/link', () => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+}))
+
+vi.mock('@/lib/programs', () => ({
+  fetchPrograms: mocks.fetchPrograms,
+  createProgram: vi.fn(),
+  updateProgram: vi.fn(),
+  deleteProgram: vi.fn(),
 }))
 
 vi.mock('@/components/layout/AvatarDropdown', () => ({
@@ -195,142 +203,6 @@ vi.mock('@/lib/utils/open-in-new-tab', () => ({
   openInNewTab: vi.fn(),
 }))
 
-function makeController(
-  overrides: Partial<Record<keyof SidebarControllerReturn, unknown>> = {},
-): SidebarControllerReturn {
-  const controller = {
-    pathname: '/home',
-    router: { push: vi.fn() },
-    activeCampaignId: null,
-    sidebarMode: 'hq',
-    setActiveCampaign: vi.fn(),
-    setSidebarMode: vi.fn(),
-    minimizePanel: vi.fn(),
-    expandPanel: vi.fn(),
-    role: 'member',
-    roleLoading: false,
-    hasManageAccess: true,
-    isAdmin: false,
-    storeHydrated: true,
-    mounted: true,
-    mobileDrawerOpen: false,
-    setMobileDrawerOpen: vi.fn(),
-    collapsed: false,
-    setCollapsed: vi.fn(),
-    studioSearchOpen: false,
-    setStudioSearchOpen: vi.fn(),
-    campaigns: [],
-    campaignsLoading: false,
-    isFreePlan: false,
-    expandedCampaignIds: new Set<string>(),
-    setExpandedCampaignIds: vi.fn(),
-    isCreatingProject: false,
-    setIsCreatingProject: vi.fn(),
-    isSubmittingProject: false,
-    newProjectName: '',
-    setNewProjectName: vi.fn(),
-    isCreatingCampaign: false,
-    setIsCreatingCampaign: vi.fn(),
-    newCampaignName: '',
-    setNewCampaignName: vi.fn(),
-    newCampaignIcon: 'folder-kanban',
-    setNewCampaignIcon: vi.fn(),
-    showNewCampaignModal: false,
-    setShowNewCampaignModal: vi.fn(),
-    editingCampaign: null,
-    setEditingCampaign: vi.fn(),
-    sidebarProjects: [],
-    setSidebarProjects: vi.fn(),
-    sidebarLists: [],
-    sidebarListsLoading: false,
-    reloadSidebarLists: vi.fn(async () => undefined),
-    sidebarListsHasMore: false,
-    sidebarListsLoadingMore: false,
-    loadMoreSidebarLists: vi.fn(async () => []),
-    isCreatingList: false,
-    setIsCreatingList: vi.fn(),
-    newListName: '',
-    setNewListName: vi.fn(),
-    isSubmittingList: false,
-    handleCreateList: vi.fn(async () => undefined),
-    handleCreateListFull: vi.fn(async () => undefined),
-    deletingCampaign: null,
-    setDeletingCampaign: vi.fn(),
-    campaignMenuId: null,
-    setCampaignMenuId: vi.fn(),
-    campaignMenuTriggerRef: { current: null },
-    campaignMenuAnchorRect: null,
-    menuOpenId: null,
-    setMenuOpenId: vi.fn(),
-    moveSubmenuOpenId: null,
-    setMoveSubmenuOpenId: vi.fn(),
-    convMenuTriggerRef: { current: null },
-    convMenuPosition: { top: 0, left: 0 },
-    renamingId: null,
-    setRenamingId: vi.fn(),
-    renameValue: '',
-    setRenameValue: vi.fn(),
-    campaignsFlyout: false,
-    setCampaignsFlyout: vi.fn(),
-    campaignsFlyoutRef: { current: null },
-    agentsFlyout: false,
-    setAgentsFlyout: vi.fn(),
-    agentsFlyoutRef: { current: null },
-    activeManagePanel: null,
-    setActiveManagePanel: vi.fn(),
-    isPanelClosing: false,
-    setIsPanelClosing: vi.fn(),
-    hubMenuOpen: false,
-    hubMenuClosing: false,
-    hubMenuExpandedSections: new Set(),
-    toggleHubMenu: vi.fn(),
-    closeHubMenu: vi.fn(),
-    toggleHubMenuSectionById: vi.fn(),
-    syncHubMenuExpandedToRoute: vi.fn(),
-    expandedSpaceCampaignIds: new Set<string>(),
-    setExpandedSpaceCampaignIds: vi.fn(),
-    expandedProgramIds: new Set<string>(),
-    setExpandedProgramIds: vi.fn(),
-    conversations: [],
-    activeConversationId: null,
-    unreadConversationIds: new Set<string>(),
-    setActiveConversationId: vi.fn(),
-    displayName: 'Sefy',
-    email: 'sefy@example.com',
-    avatarUrl: null,
-    initials: 'S',
-    sortedCampaigns: [],
-    generalCampaign: null,
-    personalCampaign: null,
-    manageCampaigns: [],
-    hiddenCampaigns: [],
-    filteredConversations: [],
-    desktopWidth: 'md:w-[80px]',
-    isActive: vi.fn((href: string) => href === '/home'),
-    handleCreateProject: vi.fn(async () => undefined),
-    handleNewChat: vi.fn(),
-    handleSelectCampaign: vi.fn(),
-    handlePinCampaign: vi.fn(),
-    patchCampaignConfig: vi.fn(async () => undefined),
-    toggleFavoriteCampaign: vi.fn(async () => undefined),
-    toggleHiddenCampaign: vi.fn(async () => undefined),
-    archiveCampaignById: vi.fn(async () => undefined),
-    handleDeleteCampaign: vi.fn(async () => undefined),
-    handleSelectConversation: vi.fn(async () => undefined),
-    handleStudioSearchSelect: vi.fn(),
-    handleStartRename: vi.fn(),
-    handleSubmitRename: vi.fn(async () => undefined),
-    handleToggleFavorite: vi.fn(),
-    handleMoveToCampaign: vi.fn(),
-    handleDeleteConversation: vi.fn(async () => undefined),
-    requestCreateCampaign: vi.fn(),
-    handleCreateCampaignInline: vi.fn(async () => undefined),
-    handleNewCampaignModalCreate: vi.fn(async () => undefined),
-    ...overrides,
-  }
-  return controller as unknown as SidebarControllerReturn
-}
-
 describe('SidebarHqSection', () => {
   afterEach(() => {
     cleanup()
@@ -340,7 +212,7 @@ describe('SidebarHqSection', () => {
   it('renders the mobile HQ hub menu drawer', () => {
     const setMobileDrawerOpen = vi.fn()
     const reloadSidebarLists = vi.fn(async () => undefined)
-    const controller = makeController({
+    const controller = makeSidebarHqController({
       mobileDrawerOpen: true,
       setMobileDrawerOpen,
       reloadSidebarLists,
@@ -366,13 +238,13 @@ describe('SidebarHqSection', () => {
 
     expect(screen.getByText('Home')).toBeTruthy()
     expect(screen.getByText('Team')).toBeTruthy()
-    expect(screen.getByText('Campaigns')).toBeTruthy()
+    expect(screen.getByText('Programs')).toBeTruthy()
     expect(screen.getByText('More')).toBeTruthy()
   })
 
-  it('loads the next spaces page from the desktop spaces panel', () => {
+  it('loads the next spaces page from the desktop spaces panel', async () => {
     const loadMoreSidebarLists = vi.fn(async () => [])
-    const controller = makeController({
+    const controller = makeSidebarHqController({
       activeManagePanel: 'spaces',
       sidebarListsHasMore: true,
       loadMoreSidebarLists,
@@ -393,6 +265,9 @@ describe('SidebarHqSection', () => {
 
     render(<SidebarHqSection c={controller} />)
 
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Load more spaces' })).toBeTruthy()
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Load more spaces' }))
 
     expect(loadMoreSidebarLists).toHaveBeenCalledTimes(1)

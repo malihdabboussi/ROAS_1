@@ -1,3 +1,5 @@
+'use client'
+
 import type { ReactNode } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -14,7 +16,7 @@ vi.mock('next/link', () => ({
 
 vi.mock('@/components/ui/IconPicker', () => ({
   getIconColor: () => ({ textColor: 'text-muted-foreground' }),
-  LucideIcon: () => <span aria-hidden />,
+  LucideIcon: () => <span aria-hidden data-testid="program-icon" />,
 }))
 
 const program = {
@@ -30,8 +32,9 @@ describe('SidebarProgramFolder', () => {
     vi.clearAllMocks()
   })
 
-  it('links program name to program overview and toggles from chevron', () => {
+  it('links program name to program overview and toggles from icon/chevron', () => {
     const onToggle = vi.fn()
+    const onCreateCampaign = vi.fn()
     render(
       <SidebarProgramFolder
         groupKey="prog-clients"
@@ -40,6 +43,7 @@ describe('SidebarProgramFolder', () => {
         campaignCount={3}
         isExpanded={false}
         onToggle={onToggle}
+        onCreateCampaign={onCreateCampaign}
       >
         <div>child</div>
       </SidebarProgramFolder>,
@@ -52,6 +56,9 @@ describe('SidebarProgramFolder', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Expand Clients' }))
     expect(onToggle).toHaveBeenCalledWith('prog-clients')
+
+    fireEvent.click(screen.getByRole('button', { name: 'New campaign in Clients' }))
+    expect(onCreateCampaign).toHaveBeenCalledWith('prog-clients')
   })
 
   it('shows children when expanded and treats Ungrouped as toggle-only', () => {

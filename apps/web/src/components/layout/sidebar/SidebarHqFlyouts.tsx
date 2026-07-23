@@ -17,6 +17,7 @@ import { HubDockFlyout } from './HubDockFlyout'
 import { SidebarBrainNavLinks } from './SidebarBrainFlyout'
 import { SidebarHqMoreFlyoutBody } from './SidebarHqMoreFlyoutBody'
 import { SidebarHqSpacesGroupedList } from './SidebarHqSpacesGroupedList'
+import { SidebarProgramsCreateMenu, type ProgramsCreateAction } from './SidebarProgramsCreateMenu'
 import { SidebarTeam2Flyout } from './SidebarTeam2Flyout'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -67,6 +68,7 @@ export function SidebarHqFlyouts({
   const [pinned, setPinned] = useState(false)
   const [anchor, setAnchor] = useState<DOMRect | null>(null)
   const [subOpen, setSubOpen] = useState(false)
+  const [createMenuAnchor, setCreateMenuAnchor] = useState<DOMRect | null>(null)
   const flyoutCloseEpoch = useShellStore((s) => s.sidebarFlyoutCloseEpoch)
 
   const hoverPanel =
@@ -84,6 +86,7 @@ export function SidebarHqFlyouts({
       setAnchor(null)
       setPinned(false)
       setSubOpen(false)
+      setCreateMenuAnchor(null)
       return
     }
     const measure = () => {
@@ -98,6 +101,7 @@ export function SidebarHqFlyouts({
   const closeHover = () => {
     setPinned(false)
     setSubOpen(false)
+    setCreateMenuAnchor(null)
     setSpacesSearchOpen(false)
     setSpacesSearchQuery('')
     c.setIsCreatingProject(false)
@@ -110,11 +114,24 @@ export function SidebarHqFlyouts({
     if (c.activeManagePanel) closeHover()
   }, [flyoutCloseEpoch])
 
-  const campaignsBody = useMemo(
+  const handleCreateAction = (action: ProgramsCreateAction) => {
+    if (action === 'program') {
+      c.setShowNewProgramModal(true)
+      return
+    }
+    if (action === 'campaign') {
+      c.setCreateCampaignProgramId(null)
+      c.setShowNewCampaignModal(true)
+      return
+    }
+    setCreateSpaceModalFor({ campaignId: null })
+  }
+
+  const programsBody = useMemo(
     () =>
       c.sidebarListsLoading ? (
         <div className="flex justify-center px-2 py-6">
-          <VibeyLoadingOrb state="processing" size="sm" text="Loading spaces..." />
+          <VibeyLoadingOrb state="processing" size="sm" text="Loading programs..." />
         </div>
       ) : (
         <SidebarHqSpacesGroupedList
@@ -127,7 +144,6 @@ export function SidebarHqFlyouts({
           expandedProgramIds={c.expandedProgramIds}
           setExpandedProgramIds={c.setExpandedProgramIds}
           onCreateSpace={(campaignId) => void c.handleCreateList(campaignId)}
-          patchCampaignConfig={c.patchCampaignConfig}
           isSubmitting={c.isSubmittingList}
           creatingName={c.newListName}
           setCreatingName={c.setNewListName}
@@ -139,6 +155,7 @@ export function SidebarHqFlyouts({
           loadingMore={c.sidebarListsLoadingMore}
           onLoadMore={() => void c.loadMoreSidebarLists()}
           flyoutMode
+          onNewProgram={() => c.setShowNewProgramModal(true)}
         />
       ),
     [c, setBrowsePanelBucket, setCreateSpaceModalFor, spaceUserState, spacesSearchQuery],
@@ -206,9 +223,7 @@ export function SidebarHqFlyouts({
         >
           <Suspense
             fallback={
-              <p className="body-3 px-3 py-6 text-center text-[var(--color-muted-foreground)]">
-                Loading…
-              </p>
+              <p className="body-3 text-muted-foreground px-3 py-6 text-center">Loading…</p>
             }
           >
             <SidebarBrainNavLinks onNavigate={closeHover} />
@@ -219,25 +234,29 @@ export function SidebarHqFlyouts({
       {hoverPanel === 'spaces' && anchor ? (
         <HubDockFlyout
           anchor={anchor}
-          title="Campaigns"
+          title="Programs"
+          fixedWidth
           onEnter={clearSpacesFlyoutCloseTimer}
           onLeave={() => {
-            if (!pinned && !subOpen) scheduleSpacesFlyoutClose()
+            if (!pinned && !subOpen && !createMenuAnchor) scheduleSpacesFlyoutClose()
           }}
           onClose={closeHover}
           pinned={pinned}
           onPinnedChange={setPinned}
-          leaveSuspended={subOpen}
+          leaveSuspended={subOpen || !!createMenuAnchor}
           headerActions={[
             {
               kind: 'search',
-              title: 'Search campaigns',
+              title: 'Search programs',
               onClick: () => setSpacesSearchOpen(true),
             },
             {
               kind: 'plus',
-              title: 'New campaign',
-              onClick: () => c.setShowNewCampaignModal(true),
+              title: 'Create',
+              onClick: (e) => {
+                setCreateMenuAnchor(e.currentTarget.getBoundingClientRect())
+                setSubOpen(true)
+              },
             },
           ]}
           searchOpen={spacesSearchOpen}
@@ -247,12 +266,22 @@ export function SidebarHqFlyouts({
             setSpacesSearchOpen(false)
             setSpacesSearchQuery('')
           }}
-          searchPlaceholder="Search campaigns…"
+          searchPlaceholder="Search programs…"
           searchInputRef={spacesSearchInputRef}
         >
-          {campaignsBody}
+          {programsBody}
         </HubDockFlyout>
       ) : null}
+
+      <SidebarProgramsCreateMenu
+        open={!!createMenuAnchor}
+        anchorRect={createMenuAnchor}
+        onClose={() => {
+          setCreateMenuAnchor(null)
+          setSubOpen(false)
+        }}
+        onSelect={handleCreateAction}
+      />
 
       {hoverPanel === 'more' && anchor ? (
         <HubDockFlyout

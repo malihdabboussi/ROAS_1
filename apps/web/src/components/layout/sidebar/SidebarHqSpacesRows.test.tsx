@@ -52,7 +52,6 @@ const baseProps = {
   isCreating: false,
   searchActive: false,
   onToggle: vi.fn(),
-  patchCampaignConfig: vi.fn(async () => undefined),
   onOpenCampaignMenu: vi.fn(),
   onOpenAddDropdown: vi.fn(),
   creatingName: '',
