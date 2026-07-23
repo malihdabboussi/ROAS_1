@@ -11,6 +11,7 @@ import { PageGraderBrainSyncRepository } from './repositories/page-grader-brain-
 import { PageGraderApiService } from './services/page-grader-api.service'
 import { PageGraderBrainImportService } from './services/page-grader-brain-import.service'
 import { PageGraderBrainSyncService } from './services/page-grader-brain-sync.service'
+import { PageGraderMcpBootstrapService } from './services/page-grader-mcp-bootstrap.service'
 import { PageGraderMcpRegistrationService } from './services/page-grader-mcp-registration.service'
 import { PageGraderMeetingSyncService } from './services/page-grader-meeting-sync.service'
 import { PageGraderSendWorkService } from './services/page-grader-send-work.service'
@@ -25,6 +26,7 @@ import { PageGraderSendWorkService } from './services/page-grader-send-work.serv
     PageGraderBrainImportService,
     PageGraderBrainSyncService,
     PageGraderMeetingSyncService,
+    PageGraderMcpBootstrapService,
     PageGraderMcpRegistrationService,
     PageGraderBrainSyncRepository,
     IntegrationConnectionsRepository,
