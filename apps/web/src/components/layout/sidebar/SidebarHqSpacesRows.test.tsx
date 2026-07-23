@@ -34,9 +34,11 @@ const campaignRow: SidebarCampaignRow = {
   icon: 'folder-kanban',
   config: {},
   isFavorite: false,
+  isHidden: false,
   isPinned: false,
   isSystemGeneral: false,
   isSystemPersonal: false,
+  created_at: '2026-01-01',
 }
 
 const baseProps = {

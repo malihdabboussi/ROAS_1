@@ -280,7 +280,7 @@ export function SlackPeopleView() {
               <SlackChannelsView
                 selectedChannelId={selectedChannelId}
                 onSelectChannel={openChannel}
-                onBack={openChannels}
+                onBack={openPeople}
               />
             ) : showSignals ? (
               <SlackTeamSignalsView
@@ -302,6 +302,7 @@ export function SlackPeopleView() {
                 peopleById={peopleById}
                 onBack={openPeople}
                 onOpenPerson={openPerson}
+                onOpenSignals={openSignals}
                 onReview={reviewActionWithToast}
                 onSend={sendActionWithToast}
               />

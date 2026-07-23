@@ -167,6 +167,11 @@ describe('SPACE_AUTOMATION_TEMPLATE_CATALOG', () => {
     for (const template of teamLoops) {
       const parsed = CreatePublishedAutomationSchema.parse(template.body)
       expect(parsed.enabled).toBe(true)
+      expect(parsed.trigger).toEqual(
+        expect.objectContaining({
+          schedule: expect.objectContaining({ interval: 5 }),
+        }),
+      )
       expect(parsed.actions).toEqual([
         expect.objectContaining({
           type: 'observe_slack_team',

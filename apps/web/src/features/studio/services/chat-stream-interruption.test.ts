@@ -436,7 +436,7 @@ describe('mergeMessagesPreservingOrderedBlocks', () => {
       },
     ]
     const backendMessages: Message[] = [
-      localMessages[0],
+      localMessages[0]!,
       {
         id: 'canonical-1',
         conversation_id: 'conversation-1',
@@ -477,7 +477,7 @@ describe('mergeMessagesPreservingOrderedBlocks', () => {
       },
     ]
     const backendMessages: Message[] = [
-      localMessages[0],
+      localMessages[0]!,
       {
         id: 'canonical-1',
         conversation_id: 'conversation-1',
@@ -555,7 +555,7 @@ describe('needsStreamRecovery', () => {
         conversation_id: 'conversation-1',
         role: 'assistant',
         content: '',
-        content_blocks: [{ type: 'text', content: 'Hello from DB blocks' }],
+        content_blocks: [{ id: 'text-1', type: 'text', content: 'Hello from DB blocks' }],
         metadata: {},
         created_at: new Date().toISOString(),
       },

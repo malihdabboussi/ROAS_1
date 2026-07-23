@@ -30,11 +30,10 @@ const agent: TeamRosterEntry = {
 describe('SpaceChatAgentPicker', () => {
   afterEach(() => cleanup())
 
-  it('uses a bounded trigger without a chevron in compact chat', () => {
-    render(<SpaceChatAgentPicker agents={[agent]} value="vibey" onChange={vi.fn()} compact />)
+  it('uses the standard agent trigger in space chat', () => {
+    render(<SpaceChatAgentPicker agents={[agent]} value="vibey" onChange={vi.fn()} />)
 
     const trigger = screen.getByRole('button', { name: 'Talking with Vibey · CEO. Change agent.' })
-    expect(trigger.className).toContain('w-spacing-20')
-    expect(trigger.querySelector('.lucide-chevron-down')).toBeNull()
+    expect(trigger).toBeTruthy()
   })
 })

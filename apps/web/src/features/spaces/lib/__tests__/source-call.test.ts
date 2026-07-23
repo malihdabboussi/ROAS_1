@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { cleanMeetingTitle, readSourceCallMeta } from '../source-call'
 import type { SpaceItem } from '../../types'
+import { cleanMeetingTitle, readSourceCallMeta } from '../source-call'
 
 function item(partial: Partial<SpaceItem> & Pick<SpaceItem, 'id' | 'title'>): SpaceItem {
   return {
     space_id: 's1',
-    org_id: null,
+    org_id: 'org-1',
     user_id: 'u1',
     description: null,
     status: 'logged',

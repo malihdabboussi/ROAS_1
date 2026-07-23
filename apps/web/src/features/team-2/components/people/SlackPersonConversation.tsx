@@ -1,10 +1,11 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Bot, Info, MessageSquareReply, Send, ShieldCheck } from 'lucide-react'
+import { ArrowDown, Bot, Info, MessageSquareReply, Send, ShieldCheck } from 'lucide-react'
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { SLACK_PEOPLE_MESSAGES } from '../../config/messages.config'
+import { useLatestMessageScroll } from '../../hooks/use-latest-message-scroll'
 import { slackMrkdwnToMarkdown } from '../../lib/slack-message-markdown'
 import type {
   SlackDeliveryMode,
@@ -84,6 +85,10 @@ export function SlackPersonConversation({
         })),
     ].sort((a, b) => a.timestamp - b.timestamp)
   }, [actions, messages])
+  const { scrollRef, handleScroll, scrollToLatest, showJumpToLatest } = useLatestMessageScroll(
+    person.id,
+    timeline.length,
+  )
 
   const submit = async () => {
     const content = draft.trim()
@@ -118,23 +123,27 @@ export function SlackPersonConversation({
         </span>
       </header>
 
-      <div className="p-spacing-4 gap-spacing-3 flex min-h-0 flex-1 flex-col overflow-y-auto">
-        {loading ? (
-          <div className="flex flex-1 items-center justify-center">
-            <VibeyLoadingOrb size="sm" text="Opening the Shadow conversation..." />
-          </div>
-        ) : actions.length === 0 && messages.length === 0 ? (
-          <div className="p-spacing-6 flex flex-1 flex-col items-center justify-center text-center">
-            <ShieldCheck className="icon-lg text-primary" />
-            <p className="body-2 text-foreground mt-spacing-3 font-medium">No conversation yet</p>
-            <p className="body-4 text-muted-foreground mt-spacing-1 max-w-md">
-              Draft the first agent message below. It will appear here as a proposal and will not
-              reach Slack.
-            </p>
-          </div>
-        ) : (
-          <>
-            {timeline.map((entry) => {
+      <div className="relative flex min-h-0 flex-1">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="p-spacing-4 gap-spacing-3 flex min-h-0 flex-1 flex-col overflow-y-auto"
+        >
+          {loading ? (
+            <div className="flex flex-1 items-center justify-center">
+              <VibeyLoadingOrb size="sm" text="Opening the Shadow conversation..." />
+            </div>
+          ) : actions.length === 0 && messages.length === 0 ? (
+            <div className="p-spacing-6 flex flex-1 flex-col items-center justify-center text-center">
+              <ShieldCheck className="icon-lg text-primary" />
+              <p className="body-2 text-foreground mt-spacing-3 font-medium">No conversation yet</p>
+              <p className="body-4 text-muted-foreground mt-spacing-1 max-w-md">
+                Draft the first agent message below. It will appear here as a proposal and will not
+                reach Slack.
+              </p>
+            </div>
+          ) : (
+            timeline.map((entry) => {
               if (entry.kind === 'message') {
                 const { message } = entry
                 const agentMessage = message.direction === 'outbound'
@@ -244,9 +253,20 @@ export function SlackPersonConversation({
                   ) : null}
                 </article>
               )
-            })}
-          </>
-        )}
+            })
+          )}
+        </div>
+        {showJumpToLatest ? (
+          <button
+            type="button"
+            onClick={() => scrollToLatest()}
+            className="btn-icon-glass bottom-spacing-4 right-spacing-4 absolute"
+            aria-label="Jump to latest message"
+            title="Jump to latest message"
+          >
+            <ArrowDown className="icon-sm" />
+          </button>
+        ) : null}
       </div>
 
       <footer className="border-border p-spacing-3 shrink-0 border-t">

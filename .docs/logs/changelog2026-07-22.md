@@ -220,3 +220,23 @@ Why: The runtime skill already required top-positioned `Call report` links, time
 Impact: Pixel's post-call drafts now use the same grounded recap, revision, naming, and Shadow-safety instructions regardless of whether the skill is loaded from the database or runtime bootstrap.
 
 Files: `20260722223500_sync_post_call_delivery_skill.sql`, migration order, meeting follow-up documentation
+
+## [2026-07-22 23:05] - [FEATURE]
+
+What: Separated recipient-less Slack findings from person Conversations, added linked Internal workspace-owner Shadow follow-ups for external-subject signals, redesigned Channels as a persistent list-and-conversation inbox, and added automatic/jump-to-latest conversation scrolling. Moved the unified analyzer to a five-minute cursor cadence and rejected findings below 80% confidence.
+
+Why: Team Signals were appearing as unactionable “Unknown person” messages, channel review required navigation back and forth, old timelines opened at the top, and the 15-minute cadence made safe Shadow behavior feel inactive.
+
+Impact: External people remain impossible outbound targets; administrators review evidence in Signals while actionable internal drafts appear under the correct teammate. Conversations and Channels open at current activity, and faster observation does not reprocess old events or spend model tokens on empty runs.
+
+Files: `SlackShadowConversationView.tsx`, `SlackShadowInbox.tsx`, `SlackChannelsView.tsx`, `SlackPersonConversation.tsx`, `use-latest-message-scroll.ts`, `slack-team-loop.service.ts`, `slack-team-loop-analysis.ts`, `space-automation-template-catalog-team.ts`, `20260722230500_accelerate_slack_team_intelligence.sql`, focused tests, Slack automation documentation
+
+## [2026-07-22 23:06] - [FIX]
+
+What: Restored the web production typecheck by removing orphaned future-feature test fragments and aligning stale test fixtures with their current component and shared type contracts.
+
+Why: The Slack release itself passed focused tests, but the mandatory web ship gate was blocked by unrelated test-only drift on `origin/main`.
+
+Impact: The full `@vibey/web` typecheck is green again, with no runtime behavior changes outside the Slack release.
+
+Files: deliverable preview tests, global chat and sidebar fixtures, mission-control fixtures, Space chat/source-call fixtures, Studio ChatInput and message-merge fixtures

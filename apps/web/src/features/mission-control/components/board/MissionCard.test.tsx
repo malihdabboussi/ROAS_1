@@ -11,7 +11,7 @@ const mission = {
   progress_notes: null,
   assigned_agent_key: null,
   subtask_agent_keys: [],
-} as Mission
+} as unknown as Mission
 
 describe('MissionCard', () => {
   it('uses a native button so keyboard users can open the mission', () => {

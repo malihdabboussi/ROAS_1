@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import {
   defaultAgentForSurface,
   filterAgentsForWorkContext,
@@ -12,7 +13,7 @@ describe('work-context.config', () => {
     { kind: 'agent' as const, agent_key: 'atlas', display_name: 'Atlas' },
     { kind: 'agent' as const, agent_key: 'hr', display_name: 'Jaime' },
     { kind: 'agent' as const, agent_key: 'loop', display_name: 'Loop' },
-  ]
+  ] as unknown as TeamRosterEntry[]
 
   it('maps pathnames to surfaces', () => {
     expect(surfaceFromPathname('/spaces/foo')).toBe('spaces')

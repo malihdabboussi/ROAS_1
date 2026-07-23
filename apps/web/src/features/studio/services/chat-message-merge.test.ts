@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Message } from '@/lib/conversations/conversation.types'
+import type { Message } from '../types'
 import { mergeMessagesPreservingOrderedBlocks, mergeOrderedContentBlocks } from './chat.service'
 
 const clarificationBlock = {

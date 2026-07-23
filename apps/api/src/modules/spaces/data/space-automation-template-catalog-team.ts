@@ -2,7 +2,7 @@ import type { SpaceAutomationTemplateSeed } from './space-automation-template-ca
 
 const TEAM_SCHEDULE = {
   type: 'schedule',
-  schedule: { mode: 'preset', preset: 'minutes', interval: 15 },
+  schedule: { mode: 'preset', preset: 'minutes', interval: 5 },
   timezone: 'America/Los_Angeles',
 } as const
 
