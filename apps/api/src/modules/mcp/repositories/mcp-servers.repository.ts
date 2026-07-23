@@ -11,6 +11,16 @@ export class McpServersRepository {
       .limit(1)
   }
 
+  async insertManagedProject(
+    supabase: SupabaseClient,
+    payload: Record<string, unknown>,
+  ): Promise<{
+    data: { id: string } | null
+    error: { message: string } | null
+  }> {
+    return supabase.from('project_repos').insert(payload).select('id').single()
+  }
+
   async listServers(supabase: SupabaseClient, projectId: string) {
     return supabase
       .from('project_mcp_servers')

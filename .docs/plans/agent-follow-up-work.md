@@ -7994,7 +7994,6 @@ Files:
 Evidence: The scoped change adds one Paid Ads view callback and one persisted Ads config field. Both shared files were already over the project limit and are recorded in earlier cleanup entries.
 Needed work: Continue the existing router and schema-domain extraction plan before adding another cross-feature route or artifact config family.
 Reason not done now: Extracting unrelated Space routes or schema families would broaden a bounded Ads Production workflow change.
-
 ## 2026-07-23 - [ARCH] Slack and channel runtime files remain at architecture thresholds
 
 Status: Open

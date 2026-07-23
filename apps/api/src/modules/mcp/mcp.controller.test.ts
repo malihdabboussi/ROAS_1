@@ -185,6 +185,66 @@ describe('McpController server mutations', () => {
     )
   })
 
+  it('creates a hidden workspace MCP project when adding the first server', async () => {
+    mcpUrlSecurityMocks.checkMcpReachability.mockResolvedValue({
+      reachable: true,
+      blocked: false,
+      error: undefined,
+    })
+    const projectLookupQuery = createQuery({ data: null, error: null })
+    const projectInsertQuery = createQuery({ data: { id: 'project-managed' }, error: null })
+    const existingSecretQuery = createQuery({ data: null, error: null })
+    const secretInsertQuery = createQuery({ data: { id: 'secret-1' }, error: null })
+    const secretReadQuery = createQuery({ data: { encrypted_value: 'token-1' }, error: null })
+    const serverInsertQuery = createQuery({
+      data: {
+        id: 'server-1',
+        name: 'Page Grader',
+        server_url: 'https://mcp.example.com',
+        cached_tools: [],
+        cached_resources: [],
+      },
+      error: null,
+    })
+    const serverUpdateQuery = createQuery({ error: null })
+    const projectQueries = [projectLookupQuery, projectInsertQuery]
+    const vaultQueries = [existingSecretQuery, secretInsertQuery, secretReadQuery]
+    const serverQueries = [serverInsertQuery, serverUpdateQuery]
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'project_repos') return projectQueries.shift() ?? createQuery()
+        if (table === 'vault_secrets') return vaultQueries.shift() ?? createQuery()
+        if (table === 'project_mcp_servers') return serverQueries.shift() ?? createQuery()
+        return createQuery()
+      }),
+    }
+    const { controller } = createController()
+
+    await expect(
+      controller.addServer(
+        supabase as never,
+        { id: 'user-1' },
+        { ...scope, orgId: 'org-1', orgRole: 'admin' },
+        {
+          name: 'Page Grader',
+          url: 'https://mcp.example.com',
+          api_key: 'token-1',
+        },
+      ),
+    ).resolves.toEqual(expect.objectContaining({ success: true }))
+    expect(projectInsertQuery.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: 'user-1',
+        org_id: 'org-1',
+        name: 'ROAS Workspace Integrations',
+        manifest: { hidden: true, kind: 'workspace_mcp' },
+      }),
+    )
+    expect(serverInsertQuery.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ project_id: 'project-managed' }),
+    )
+  })
+
   it('tests an MCP server using the stored vault token', async () => {
     const projectQuery = createQuery({ data: { id: 'project-1' }, error: null })
     const serverQuery = createQuery({

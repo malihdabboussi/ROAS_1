@@ -79,7 +79,10 @@ describe('compact artifact data-access services', () => {
   })
 
   it('creates a blog post with campaign and space scope', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true })),
+    )
     let insertedBlog: Record<string, unknown> | null = null
     let updatedSpace: Record<string, unknown> | null = null
     const supabase = {
@@ -218,9 +221,7 @@ describe('compact artifact data-access services', () => {
       _doc_visual_status: 'ready',
     })
     // Soft-fail presentation sync is fine when spaces/presentations mocks are absent.
-    expect(result.presentation_id === null || typeof result.presentation_id === 'string').toBe(
-      true,
-    )
+    expect(result.presentation_id === null || typeof result.presentation_id === 'string').toBe(true)
   })
 
   it('creates and lists custom object records through user-scoped handlers', async () => {
@@ -281,7 +282,10 @@ describe('compact artifact data-access services', () => {
             data: [{ id: 'node-1', kind: 'image', payload: {} }],
             error: null,
           })
-          chain.maybeSingle = vi.fn(async () => ({ data: { payload: { prior: true } }, error: null }))
+          chain.maybeSingle = vi.fn(async () => ({
+            data: { payload: { prior: true } },
+            error: null,
+          }))
           chain.update = vi.fn((payload: Record<string, unknown>) => {
             updatedNode = payload
             return chain
@@ -421,11 +425,11 @@ describe('compact artifact data-access services', () => {
     })
   })
 
-  it('lists MCP servers from the first project repo context', async () => {
+  it('lists MCP servers from an accessible enabled MCP context', async () => {
     const supabase = {
       from: vi.fn((table: string) => {
-        expect(table).toBe('project_repos')
-        return query({ data: { id: 'project-1' }, error: null })
+        expect(table).toBe('project_mcp_servers')
+        return query({ data: { project_id: 'project-1' }, error: null })
       }),
     }
     const mcpConfig = {
@@ -442,5 +446,30 @@ describe('compact artifact data-access services', () => {
 
     expect(result).toEqual({ success: true, servers: [{ id: 'server-1', name: 'Docs' }] })
     expect(mcpConfig.listServers).toHaveBeenCalledWith(supabase, 'project-1')
+  })
+
+  it('falls back to a project repo when no enabled MCP server exists yet', async () => {
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'project_mcp_servers') {
+          return query({ data: null, error: null })
+        }
+        expect(table).toBe('project_repos')
+        return query({ data: { id: 'project-setup' }, error: null })
+      }),
+    }
+    const mcpConfig = {
+      listServers: vi.fn(async () => []),
+    }
+    const service = new ArtifactMcpService(mcpConfig as any, {} as any)
+    const handlers = service.getHandlers({
+      getUserClient: vi.fn(async () => supabase),
+      resolveUserId: vi.fn(() => 'user-1'),
+    })
+
+    const result = await handlers.list_mcp_servers({}, 'session')
+
+    expect(result).toEqual({ success: true, servers: [] })
+    expect(mcpConfig.listServers).toHaveBeenCalledWith(supabase, 'project-setup')
   })
 })
