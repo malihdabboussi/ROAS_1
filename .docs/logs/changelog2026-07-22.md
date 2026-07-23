@@ -232,3 +232,10 @@ What: Cherry-picked Programs hierarchy (Program → Campaign → Space), All Tas
 Why: Land ClickUp-style Programs on local main without a dirty full-branch merge of ads-research UI; preserve Team Agenda already on main.
 Impact: Local main has Programs module + `/all-tasks` + migration; Team Agenda (`getTeamAgendaWithMine`) retained. Not pushed.
 Files: cherry-pick of programs feature + `fetch-all-campaign-spaces` dependency; conflict resolves in `CampaignsHub.tsx`, `agent-follow-up-work.md`.
+
+## [2026-07-22 22:48] - [DOCS]
+
+What: Restored and committed the local ROAS Company Wiki rebuild, navigation, blueprint, and integrity-audit tooling that produced the 84 live SOP pages and six navigation pages.
+Why: The production wiki data was already live, but the reproducible source files had remained untracked and were later preserved only in a local stash.
+Impact: Local `main` now retains the deterministic, privacy-preserving process needed to validate or rebuild the existing ROAS Internal wiki records without approving Company Cortex signals.
+Files: `scripts/roas/rebuild-company-wiki.py`, `scripts/roas/company_wiki_audit.py`, `scripts/roas/company_wiki_navigation.py`, `scripts/roas/company_wiki_blueprints*.py`
