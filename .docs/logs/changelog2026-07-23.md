@@ -99,3 +99,12 @@ Why: A Slack image turn failed twice: production rejected the attachment row thr
 Impact: Pixel can persist Slack image context and give the model a fetchable image URL instead of returning the generic “couldn't process this message” failure.
 
 Files: `slack-runtime.repository.ts`, `slack-service-media.base.ts`, `slack-media.test.ts`, `supabase/migrations/20260723144500_allow_conversation_image_uploads.sql`
+## [2026-07-23 14:42] - [FIX]
+
+What: Corrected Pixel's Page Grader delegation contract so funnel, landing-page, and campaign-page work remains Page Grader fulfillment when the user names a human owner. The named person is now routed through Page Grader's assignee field, and Pixel is explicitly prohibited from using ambient campaign-team or managed-agent lookup as a substitute.
+
+Why: The live request to have Rafay build an Asura Group funnel loaded the correct skill but followed the older named-human rule, searched the current ROAS campaign team, and never created a Page Grader fulfillment request.
+
+Impact: Requests such as “Have Rafay build this funnel for Asura Group” resolve the named client and assignee through Page Grader, call the typed fulfillment tool, preserve the reference and brief, and only report success after Page Grader confirms the durable work record.
+
+Files: `packages/agent-policy/src/platform-tools-template.ts`, `docker/agents/vibey/skills/page-grader-operator/SKILL.md`, `docker/agents/atlas/skills/page-grader-operator/SKILL.md`, `apps/agent-api/src/modules/agent-sync/services/page-grader-human-fulfillment-routing.test.ts`, `supabase/migrations/20260723150500_fix_page_grader_human_fulfillment_routing.sql`, `documentation/features/page-grader-mcp-bridge.md`

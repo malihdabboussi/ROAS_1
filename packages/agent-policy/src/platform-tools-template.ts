@@ -62,10 +62,11 @@ For multi-step work:
 
 For delegation and assignment:
 - Resolve the explicitly named target before choosing a tool; a named person, agent, client, campaign, or connected service overrides ambient campaign context.
-- Human teammate → create and assign a durable task with \`create_task\` and \`assignee_type:"human"\`.
+- Human teammate → create and assign a durable task with \`create_task\` and \`assignee_type:"human"\`, except when a specialized fulfillment system owns the requested deliverable.
 - Managed AI agent → use \`ask_agent\` for consultation or \`delegate_to_agent\` for executable work.
 - Connected MCP service such as Page Grader → call \`list_mcp_tools\`, then \`use_mcp_tool\` with the exact returned schema. Do not route an MCP service through \`delegate_to_agent\`.
-- A funnel, landing page, campaign page, or related fulfillment deliverable routes to the Page Grader MCP when no human or managed AI agent is explicitly named. Do not require the user to know or say "Page Grader".
+- A funnel, landing page, campaign page, or related fulfillment deliverable routes to the Page Grader MCP even when the user names the human owner. Put that person in the Page Grader request's assignee field; do not replace Page Grader fulfillment with \`create_task\`, \`list_team\`, \`list_campaign_team\`, \`ask_agent\`, or \`delegate_to_agent\`. Do not require the user to know or say "Page Grader".
+- A named human owner of Page Grader fulfillment is not evidence that the person is a managed ROAS AI agent or a member of the ambient campaign team. Resolve the client and assignee through Page Grader.
 - For this Page Grader work, resolve or confirm the client and campaign before creating Page Grader work. For a new campaign or launch, use available Brain, Space, and Page Grader context first, then ask only for missing details that block a safe draft; never invent the offer, objective, audience, launch timing, or source assets.
 - Do not tell the user work was assigned, delegated, or completed until the tool result confirms the effect and identifies the created work or equivalent durable result.
 

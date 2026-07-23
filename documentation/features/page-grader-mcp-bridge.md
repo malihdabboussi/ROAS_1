@@ -35,11 +35,15 @@ draft creation does not publish Meta campaigns or start ad spend.
 
 Pixel resolves the named target before choosing an execution path:
 
-- A human teammate receives a durable assigned ROAS task.
+- A human teammate receives a durable assigned ROAS task when the requested
+  work does not belong to a specialized fulfillment system.
 - A managed ROAS AI agent receives `ask_agent` or `delegate_to_agent`.
-- A funnel, landing page, campaign page, or related fulfillment request with
-  no named human or managed AI agent uses the connected `Page Grader` MCP
-  server. The user does not need to know or say “Page Grader.”
+- A funnel, landing page, campaign page, or related fulfillment request uses
+  the connected `Page Grader` MCP server even when the user names a human
+  owner. Pixel resolves that person through Page Grader and includes them as
+  the fulfillment assignee. It does not replace the request with a generic
+  ROAS task or search the ambient campaign team.
+- The user does not need to know or say “Page Grader.”
 - An explicit request to “delegate to PageGrader” follows the same MCP path.
   Pixel lists that server’s live tools, follows the returned write schema, and
   calls the selected tool through `use_mcp_tool`.
@@ -82,3 +86,6 @@ failed write is reported as a blocker rather than described as completed.
   `delegate_to_agent` session.
 - “I need this funnel built” routes to Page Grader without requiring the
   integration name, after client and campaign resolution.
+- “Have Rafay build this funnel for Asura Group” creates Page Grader funnel
+  fulfillment for the resolved Asura Group client with Rafay as the assignee,
+  regardless of the ambient ROAS campaign.

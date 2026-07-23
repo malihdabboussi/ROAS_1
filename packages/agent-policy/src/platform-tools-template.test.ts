@@ -27,6 +27,16 @@ describe('platform tools template', () => {
       'A funnel, landing page, campaign page, or related fulfillment deliverable',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'routes to the Page Grader MCP even when the user names the human owner',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Put that person in the Page Grader request')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'do not replace Page Grader fulfillment with `create_task`, `list_team`, `list_campaign_team`',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'Resolve the client and assignee through Page Grader',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'Do not require the user to know or say "Page Grader"',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
