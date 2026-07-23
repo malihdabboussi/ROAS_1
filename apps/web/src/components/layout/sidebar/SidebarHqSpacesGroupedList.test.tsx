@@ -109,7 +109,13 @@ describe('SidebarHqSpacesGroupedList', () => {
 
     render(
       <SidebarHqSpacesGroupedList
-        controller={{ setShowNewCampaignModal: vi.fn() } as unknown as SidebarControllerReturn}
+        controller={
+          {
+            setShowNewCampaignModal: vi.fn(),
+            setCreateCampaignProgramId: vi.fn(),
+            setShowNewProgramModal: vi.fn(),
+          } as unknown as SidebarControllerReturn
+        }
         spaces={[]}
         campaigns={[campaign]}
         pathname="/spaces"

@@ -13,6 +13,6 @@ product-video/
 docker/
 .agents/
 .documentation/
-*.patch
+/team-invite-layer2.patch
 tmp/
 run/

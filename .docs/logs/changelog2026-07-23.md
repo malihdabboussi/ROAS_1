@@ -1,14 +1,24 @@
 # Changelog - July 23, 2026
 
+## [2026-07-23 14:25] - [FIX]
+
+What: Included tracked pnpm dependency patches in Vercel source uploads while continuing to exclude the unrelated root-level team invite patch.
+
+Why: Production web and funnels deployments failed during installation because `.vercelignore` removed the patch files referenced by the workspace lockfile.
+
+Impact: Vercel can install the monorepo dependencies and proceed to the application builds from the consolidated main release.
+
+Files: `.vercelignore`
+
 ## [2026-07-23 14:00] - [FEATURE]
 
 What: Programs sidebar v2 — ClickUp Spaces UX. Nav label Campaigns→Programs; fixed 280px panel; programs-first load with skeleton (no flat All Spaces flash); folders collapsed by default; icon→chevron on hover (click expands, name navigates); header + create menu (New Program / Campaign / Space); row hover ⋯/+; All Tasks at top; footer + New Program; NewProgramModal + program context menu.
 
 Why: Match ClickUp Spaces hierarchy and interaction so Programs feel like a real workspace tree, not a growing flyout of flat campaigns.
 
-Impact: Programs panel shows collapsed Clients/ROAS Ops/Ungrouped, All Tasks, create menu, and truncation. Routes `/campaigns`, `/programs/[id]`, and `/all-tasks` remain unchanged. Included in the consolidated web/API/agent production release.
+Impact: Hard-refresh app.roas.io → Programs panel shows collapsed Clients/ROAS Ops/Ungrouped, All Tasks, create menu, truncate. Archive-deployed `roas-web` `dpl_7PtVk64bjo189n88WQ2XiXn9GLLP` → app.roas.io. API not redeployed; live `/api/programs`, rollup, and agenda `scope=team` return 401 (routes present). No origin push.
 
-Files: `SidebarProgramFolder.tsx`, `SidebarHqSpacesBucketList.tsx`, `SidebarHqSpacesGroupedList.tsx`, `SidebarHqSpacesRows.tsx`, `SidebarHqFlyouts.tsx`, `SidebarHqHubMenuDockFlyouts.tsx`, `HubDockFlyout.tsx`, `manage-rail-items.tsx`, `NewProgramModal.tsx`, `SidebarProgramsCreateMenu.tsx`, `SidebarProgramMenuPortal.tsx`, `globals.css`, `documentation/features/programs.md`
+Files: `SidebarProgramFolder.tsx`, `SidebarHqSpacesBucketList.tsx`, `SidebarHqSpacesGroupedList.tsx`, `SidebarHqSpacesRows.tsx`, `SidebarHqFlyouts.tsx`, `SidebarHqHubMenuDockFlyouts.tsx`, `HubDockFlyout.tsx`, `manage-rail-items.tsx`, `NewProgramModal.tsx`, `SidebarProgramsCreateMenu.tsx`, `SidebarProgramMenuPortal.tsx`, `globals.css`, `documentation/features/programs.md`, Vercel `roas-web`
 
 ## [2026-07-23 13:53] - [FIX]
 
