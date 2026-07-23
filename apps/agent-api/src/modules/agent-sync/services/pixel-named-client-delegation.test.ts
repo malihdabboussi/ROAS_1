@@ -8,6 +8,13 @@ const migration = readFileSync(
   resolve(repoRoot, 'supabase/migrations/20260723153000_fix_pixel_named_client_delegation.sql'),
   'utf8',
 )
+const channelIdentityMigration = readFileSync(
+  resolve(
+    repoRoot,
+    'supabase/migrations/20260723163000_fix_pixel_slack_channel_identity_routing.sql',
+  ),
+  'utf8',
+)
 const vibeySkill = readFileSync(
   resolve(repoRoot, 'docker/agents/vibey/skills/page-grader-operator/SKILL.md'),
   'utf8',
@@ -37,11 +44,19 @@ describe('Pixel named-client delegation', () => {
     expect(PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK).toContain(
       'Do not limit the search to the campaign attached to the current chat',
     )
+    expect(PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK).toContain(
+      'Treat an explicit Slack channel mention or channel ID as authoritative',
+    )
+    expect(PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK).toContain(
+      'Never infer a different client from message content',
+    )
     expect(vibeySkill).toContain('its own ROAS campaign Brain, Page Grader')
     expect(vibeySkill).toContain('matching Slack channel context Pixel can access')
     expect(vibeySkill).toContain(
       'Do not treat absence from the ambient chat campaign as absence from ROAS',
     )
+    expect(vibeySkill).toContain('Do not silently replace it with a')
+    expect(vibeySkill).toContain('generic ROAS task, a native funnel')
   })
 
   it('persists the routing contract into Pixel global tools and fails closed', () => {
@@ -54,6 +69,16 @@ describe('Pixel named-client delegation', () => {
     expect(migration).toContain('Page Grader named-client source precedence was not persisted')
     expect(migration).toContain(
       "RAISE EXCEPTION 'Pixel named-client delegation guidance was not persisted'",
+    )
+    expect(channelIdentityMigration).toContain(
+      'Treat an explicit Slack channel mention or channel ID as authoritative',
+    )
+    expect(channelIdentityMigration).toContain(
+      'Never infer a different client from message content',
+    )
+    expect(channelIdentityMigration).toContain('If ROAS portal fulfillment fails, stop')
+    expect(channelIdentityMigration).toContain(
+      "RAISE EXCEPTION 'Pixel canonical Slack channel routing policy was not persisted'",
     )
   })
 })

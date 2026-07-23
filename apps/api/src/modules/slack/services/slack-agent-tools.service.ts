@@ -343,12 +343,28 @@ export class SlackAgentToolsService {
   ) {
     if (!params.channel_id?.trim()) throw new BadRequestException('channel_id is required')
     const botToken = await this.resolveBotToken(supabase, userId, orgId)
-    const messages = await this.slackApi.getChannelHistory(
-      botToken,
-      params.channel_id,
-      params.limit ?? 10,
-    )
-    return { success: true, messages }
+    const channelId = params.channel_id.trim()
+    const [channels, messages] = await Promise.all([
+      this.slackApi.listConversations(botToken),
+      this.slackApi.getChannelHistory(botToken, channelId, params.limit ?? 10),
+    ])
+    const matchedChannel = channels.find((channel) => channel.id === channelId)
+    const channel = {
+      id: channelId,
+      name: matchedChannel?.name ?? null,
+      ...(typeof matchedChannel?.is_private === 'boolean'
+        ? { is_private: matchedChannel.is_private }
+        : {}),
+      ...(typeof matchedChannel?.is_member === 'boolean'
+        ? { is_member: matchedChannel.is_member }
+        : {}),
+    }
+    return {
+      success: true,
+      channel,
+      messages,
+      identity_verified: matchedChannel !== undefined,
+    }
   }
 
   async getThreadReplies(

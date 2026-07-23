@@ -136,7 +136,8 @@ export const SLACK_LEGACY_CAPABILITIES: LegacyCapabilityRow[] = [
     action_slug: 'SLACK_GET_CHANNEL_HISTORY',
     execution_mode: 'legacy',
     display_name: 'Get Slack Channel History',
-    description: 'Fetch recent messages from a Slack channel or DM.',
+    description:
+      'Fetch recent messages plus the canonical Slack channel identity. Treat the returned channel id/name as authoritative; never infer a different channel or client from message content.',
     parameters: {
       channel_id: { type: 'string', required: true },
       limit: { type: 'number' },
@@ -233,5 +234,5 @@ export const SLACK_LEGACY_CAPABILITIES: LegacyCapabilityRow[] = [
     examples: [],
     metadata: {},
     domains: [],
-  }
+  },
 ]

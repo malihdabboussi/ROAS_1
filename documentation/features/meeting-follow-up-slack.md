@@ -218,6 +218,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 ### Slack context and delegation contract
 
 - Slack is organization-scoped. Ambient campaign context is a retrieval hint, never a lock.
+- An explicit Slack channel mention or channel ID is authoritative. Channel history returns the canonical channel ID/name with its messages; Pixel must verify that identity before mapping the client and must never substitute a client inferred from message content.
 - Slack replies use compact labeled bullets for row-based data. Markdown tables remain available on portal surfaces, but Pixel's Slack delivery formatter converts any pipe table that slips through before posting.
 - If Dylan names `Asura Group` (or another client/campaign), Pixel must call `search_campaign_brain` with that explicit campaign name/id instead of continuing to query the prior campaign.
 - Cross-campaign Brain reads resolve the named campaign without changing the Slack
@@ -226,6 +227,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - Human teammate work creates a durable human-assigned task. Managed AI-agent work uses agent delegation. Funnel, landing-page, campaign-page, and related fulfillment requests without a named human/agent infer Page Grader and use its connected MCP tool surface; the user does not need to name the integration.
 - Page Grader writes resolve or confirm the client and campaign first. New campaigns and launches reuse known Brain, Space, and Page Grader context, then ask only for genuinely blocking missing details.
 - Pixel may report delegation success only after the selected tool confirms a durable result.
+- In funnel fulfillment, “the portal” means the ROAS portal fulfillment path. Pixel creates a native ROAS platform funnel only when explicitly asked to build it in the ROAS platform funnel builder; a failed portal request stops with a blocker instead of silently becoming a generic task or native funnel.
 - Slack-facing failures use Pixel/product-neutral language; the retired Vibey product name is not shown to Slack users.
 
 ## File map (what we built / touched)
@@ -342,6 +344,8 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-22:** Newly discovered Slack identities fail safe as External unless matched to a portal teammate or manually classified. Signal creation resolves Slack IDs to names and snapshots channel/person/time/source text so later review never depends on mutable Slack lookup state.
 - **2026-07-22:** Recipient-less findings are Signals, never “Unknown person” conversations. External-subject Signals may create a linked Internal workspace-owner Shadow draft, but Pixel cannot target the external subject. The unified analyzer runs every five minutes from its exact cursor and rejects findings below 80% confidence.
 - **2026-07-23:** Slack does not receive raw Markdown tables. Pixel is instructed to use labeled metric bullets in Slack, and the final Slack formatter deterministically converts any remaining pipe table before delivery.
+- **2026-07-23:** Tagged Slack channels are authoritative client context. Pixel verifies the canonical channel identity before campaign/Brain lookup and fails closed rather than returning another client’s data.
+- **2026-07-23:** “The portal” in funnel fulfillment means the ROAS portal workflow. A failed fulfillment call cannot silently fall back to a generic task, native funnel, substitute owner, or substitute client.
 
 ## Related
 

@@ -21,6 +21,8 @@ when strategy or brand interpretation is required, and call out disagreements.
    campaign page, or related fulfillment deliverable, even when a human owner
    is named. Pass that person as the Page Grader assignee. Do not require the
    user to say "Page Grader".
+   In this context, "the portal" means the ROAS portal fulfillment workflow,
+   not permission to generate a native ROAS platform funnel.
 4. Resolve or confirm the client and campaign before a write. For a new
    campaign or launch, retrieve the named client's campaign Brain, Space, Page
    Grader, and relevant Slack channel context, then ask only for missing
@@ -43,6 +45,8 @@ when strategy or brand interpretation is required, and call out disagreements.
    generic ROAS task or ambient campaign-team lookup.
 12. Never claim delegation or creation succeeded until the tool result
     confirms a durable effect.
+    If ROAS portal fulfillment fails, stop instead of replacing it with a
+    generic ROAS task, native funnel, different assignee, or different client.
 13. For funnel work, discover the current MCP schema and use
     `page_grader_create_fulfillment_request` with the resolved `client_ref`,
     `task_type:"funnel"`, full `description`, stable `idempotency_key`, and

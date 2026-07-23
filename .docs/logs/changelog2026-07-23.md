@@ -148,3 +148,13 @@ Why: Slack displayed valid Markdown table pipes and separator rows as raw text, 
 Impact: Pixel's Slack reports remain readable even when a model emits a Markdown table. Portal documents can continue using real Markdown tables.
 
 Files: `apps/api/src/modules/slack/services/slack-markdown-to-mrkdwn.ts`, `apps/api/src/modules/slack/services/__tests__/slack-markdown-to-mrkdwn.test.ts`, `packages/agent-policy/src/platform-tools-template.ts`, `packages/agent-policy/src/platform-tools-template.test.ts`, `supabase/migrations/20260723161000_slack_safe_table_formatting.sql`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-07-23 16:44] - [FIX]
+
+What: Added canonical channel identity to Pixel's Slack channel-history result, made explicit channel mentions authoritative during client resolution, and made ROAS portal funnel fulfillment fail closed instead of silently creating a generic task or native funnel.
+
+Why: Pixel read the explicitly tagged Whole Universe channel but inferred 1DS Collective from message content, returned the wrong client's Meta data, and changed a failed Asura Group fulfillment request into a different kind of work.
+
+Impact: Pixel can verify a tagged channel's real ID/name before campaign, Brain, or reporting lookup. “The portal” remains the ROAS portal fulfillment path unless the user explicitly requests native funnel generation, and a fulfillment failure cannot substitute another work type, owner, or client.
+
+Files: `apps/api/src/modules/slack/services/slack-agent-tools.service.ts`, `apps/api/src/modules/slack/services/slack-agent-tools.service.test.ts`, `apps/api/src/modules/composio/services/slack-legacy-capabilities.partial.ts`, `packages/agent-policy/src/platform-tools-template.ts`, `packages/agent-policy/src/platform-tools-template.test.ts`, `docker/agents/vibey/skills/page-grader-operator/SKILL.md`, `docker/agents/atlas/skills/page-grader-operator/SKILL.md`, `apps/agent-api/src/modules/agent-sync/services/pixel-named-client-delegation.test.ts`, `supabase/migrations/20260723163000_fix_pixel_slack_channel_identity_routing.sql`, `documentation/features/meeting-follow-up-slack.md`, `.docs/plans/pixel-slack-funnel-capability-drift-2026-07-23.md`

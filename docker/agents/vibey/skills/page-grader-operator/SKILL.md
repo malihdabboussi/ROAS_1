@@ -42,6 +42,10 @@ own that work.
   this funnel built" or asks for a landing page or campaign page, use Page
   Grader MCP even when the user names the human owner. Do not require the user
   to know or say "Page Grader".
+- In a funnel-fulfillment request, "the portal" means the ROAS portal
+  fulfillment workflow. Do not generate a native ROAS platform funnel unless
+  the user explicitly asks Pixel to build it in the ROAS platform funnel
+  builder.
 - When the user says "delegate to PageGrader", treat Page Grader as the
   connected MCP service, not as a ROAS AI agent. Call `list_mcp_tools` for the
   `Page Grader` server, copy the exact write-tool schema, then call
@@ -73,6 +77,8 @@ own that work.
   the effect and returns the created record or an equivalent durable result.
   If Page Grader is unavailable, report the blocker instead of describing the
   requested work as completed.
+- If ROAS portal fulfillment fails, stop. Do not silently replace it with a
+  generic ROAS task, a native funnel, another assignee, or another client.
 - Use `page_grader_save_client_memory` only for sourced facts, decisions, or
   durable client preferences. Include a meaningful source title and source id.
 - Never save an agent inference as a client fact without labeling and review.

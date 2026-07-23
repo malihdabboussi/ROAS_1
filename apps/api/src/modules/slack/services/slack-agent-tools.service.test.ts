@@ -11,7 +11,9 @@ describe('SlackAgentToolsService upload asset refs', () => {
       }),
     )
     const slackApi = {
-      uploadExternalFileToChannel: vi.fn().mockResolvedValue({ file_id: 'F123', permalink: 'https://slack.example/F123' }),
+      uploadExternalFileToChannel: vi
+        .fn()
+        .mockResolvedValue({ file_id: 'F123', permalink: 'https://slack.example/F123' }),
     }
     const slackRepo = {
       getIntegration: vi.fn().mockResolvedValue({ access_token: 'xoxb-token' }),
@@ -107,5 +109,39 @@ describe('SlackAgentToolsService searchMessages', () => {
     )
     expect(slackApi.listConversations).not.toHaveBeenCalled()
     expect(result.search_mode).toBe('search_messages')
+  })
+})
+
+describe('SlackAgentToolsService getChannelHistory', () => {
+  it('returns the canonical Slack channel identity with its messages', async () => {
+    const slackApi = {
+      listConversations: vi
+        .fn()
+        .mockResolvedValue([
+          { id: 'C09SMEE0SF3', name: 'roas-wholesale-universe', is_private: true },
+        ]),
+      getChannelHistory: vi
+        .fn()
+        .mockResolvedValue([{ text: 'new VSL redirect', user: 'U1', ts: '1.1' }]),
+    }
+    const slackRepo = {
+      getIntegration: vi.fn().mockResolvedValue({ access_token: 'xoxb-bot' }),
+    }
+    const service = new SlackAgentToolsService(slackApi as never, slackRepo as never)
+
+    await expect(
+      service.getChannelHistory({} as never, 'user-1', 'org-1', {
+        channel_id: 'C09SMEE0SF3',
+      }),
+    ).resolves.toEqual({
+      success: true,
+      channel: {
+        id: 'C09SMEE0SF3',
+        name: 'roas-wholesale-universe',
+        is_private: true,
+      },
+      identity_verified: true,
+      messages: [{ text: 'new VSL redirect', user: 'U1', ts: '1.1' }],
+    })
   })
 })

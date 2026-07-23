@@ -34,6 +34,12 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'campaign Brain, Page Grader, and relevant Slack channel',
     )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'Treat an explicit Slack channel mention or channel ID as authoritative',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'Never infer a different client from message content',
+    )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Connected MCP service such as Page Grader →')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'A funnel, landing page, campaign page, or related fulfillment deliverable',
@@ -148,6 +154,9 @@ For unclear, destructive, publish/send, or expensive actions:
     expect(repaired).toContain('A bare person name defaults to a human')
     expect(repaired).toContain('A named client or campaign overrides ambient campaign context')
     expect(repaired).toContain('campaign Brain, Page Grader, and relevant Slack channel')
+    expect(repaired).toContain(
+      'Treat an explicit Slack channel mention or channel ID as authoritative',
+    )
     expect(repaired).toContain('call Page Grader the "ROAS portal"')
     expect(repaired).toContain('Do not narrate tool selection or execution between tool calls')
     expect(repaired).toContain(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)
