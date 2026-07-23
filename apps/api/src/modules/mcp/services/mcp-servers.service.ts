@@ -54,7 +54,7 @@ export class McpServersService {
     scope: RequestScope,
     body: { name: string; url: string; description?: string; domain?: string; api_key?: string },
   ) {
-    const project = await this.resolveProject(supabase, scope)
+    const project = await this.resolveProject(supabase, scope, true)
     if (!project) return { success: false, error: 'No project found' }
 
     const reachability = await checkMcpReachability(body.url)
@@ -156,7 +156,7 @@ export class McpServersService {
       agent_enabled?: boolean
     },
   ) {
-    const project = await this.resolveProject(supabase, scope)
+    const project = await this.resolveProject(supabase, scope, true)
     if (!project) return { success: false, error: 'No project found' }
 
     const reachability = await checkMcpReachability(body.url)
@@ -381,11 +381,30 @@ export class McpServersService {
   private async resolveProject(
     supabase: SupabaseClient,
     scope: RequestScope,
+    createIfMissing = false,
   ): Promise<{ id: string } | null> {
     const base = this.mcpServersRepository.projectQuery(supabase)
     const q = this.orgScope.applyScope(base, scope)
-    const { data } = await q.maybeSingle()
-    return data ?? null
+    const { data, error } = await q.maybeSingle()
+    if (data?.id) return data
+    if (error || !createIfMissing) return null
+
+    const scopeKey = scope.orgId ?? scope.userId
+    const { data: inserted, error: insertError } =
+      await this.mcpServersRepository.insertManagedProject(supabase, {
+        user_id: scope.userId,
+        org_id: scope.orgId,
+        name: 'ROAS Workspace Integrations',
+        description: 'Hidden compatibility container for workspace-level MCP integrations.',
+        storage_path: `managed-mcp/${scopeKey}/workspace.zip`,
+        entry_point: 'src/App.tsx',
+        dependencies: {},
+        manifest: { hidden: true, kind: 'workspace_mcp' },
+        source: 'agent',
+        source_meta: { managed_by: 'mcp_servers' },
+        status: 'ready',
+      })
+    return insertError ? null : inserted
   }
 
   private async getVaultApiKey(supabase: SupabaseClient, vaultSecretId: string | null) {
