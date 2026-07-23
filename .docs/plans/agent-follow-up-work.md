@@ -7938,3 +7938,15 @@ Files: `apps/web/src/components/deliverables/*.test.tsx`, `apps/web/src/componen
 Evidence: The focused Ads Research tests and lint pass, and the typecheck reports no Ads Research errors, but the full web typecheck exits with pre-existing fixture/API drift and a missing `js-tiktoken` module across unrelated deliverables, chat, Studio, sidebar, and context-breakdown surfaces.
 Needed work: Reconcile the stale test fixtures with their current component contracts, restore the context-breakdown dependency, and rerun the full web typecheck until green.
 Reason not done now: Those failures are outside the Ads Research UI and span multiple concurrently changing product surfaces.
+
+## 2026-07-22 — Slack ship LOC deferrals
+- Feature/app: Slack / Spaces automations (apps/web + apps/api)
+- Files: `ActionBuilder.tsx` (2121), `space-schema.ts` (1415), `automation-catalog.ts` (1319), `meeting-follow-up-slack-confirm.workflow.ts` (948), `slack-team-loop.service.ts` (586)
+- Evidence: LOC check on `origin/main...e90f4586` changed files during production ship
+- Needed work: Split ActionBuilder/catalog/schema and post-call workflow modules under architecture limits
+- Why not now: Out of scope for FF production push; behavior already shipping
+
+## 2026-07-22 — Migration version collision note
+- `20260722130000` was previously recorded as name `programs` without Slack objects; Slack SQL was applied in place and history name updated to `slack_signal_training_and_channel_coverage`
+- Follow-up: ensure future migrations never reuse timestamps; consider renaming programs migration in repo history if a separate programs file exists elsewhere
+

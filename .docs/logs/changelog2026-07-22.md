@@ -220,3 +220,9 @@ Why: The runtime skill already required top-positioned `Call report` links, time
 Impact: Pixel's post-call drafts now use the same grounded recap, revision, naming, and Shadow-safety instructions regardless of whether the skill is loaded from the database or runtime bootstrap.
 
 Files: `20260722223500_sync_post_call_delivery_skill.sql`, migration order, meeting follow-up documentation
+
+## [2026-07-22 15:49] - [FEATURE]
+What: Shipped Slack/Pixel intelligence to production main (e90f4586) then Fathom→Page Grader meetings (21927be6); deployed PG `roas-api` meetings edge function; applied missing Slack migrations on ROAS prod Supabase `lhfgtsjetcardinpgouq` (not Vibey `qfrvyks...`).
+Why: Finish interrupted dual ship — Page Grader meetings bridge + Slack observation/signals/post-call delivery.
+Impact: `origin/main` at 21927be6; api.roas.io + app.roas.io on shipped SHAs; PG POST /clients/:id/meetings live; meetings catch-up scanned 35 / synced 15 / mapping-needed 20.
+Files: Page Grader Lovable `roas-api`; ROAS migrations 20260722111000/1126/1300(repaired)/1430; Vercel roas-api/roas-web; branches `codex/fathom-page-grader-meetings-release`, `codex/fathom-meetings-on-slack-main`.
