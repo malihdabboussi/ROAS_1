@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { PageGraderMcpBootstrapService } from './page-grader-mcp-bootstrap.service'
 
 type FakeState = {
+  project?: { id: string } | null
   existingSecret?: { id: string } | null
   existingServer?: { id: string } | null
   writes: Array<{ table: string; operation: string; payload: Record<string, unknown> }>
@@ -18,7 +19,15 @@ function queryFor(table: string, state: FakeState) {
         error: null,
       }
     }
-    if (table === 'project_repos') return { data: { id: 'project-1' }, error: null }
+    if (table === 'project_repos' && operation === 'select') {
+      return {
+        data: state.project === undefined ? { id: 'project-1' } : state.project,
+        error: null,
+      }
+    }
+    if (table === 'project_repos' && operation === 'insert') {
+      return { data: { id: 'project-managed' }, error: null }
+    }
     if (table === 'vault_secrets' && operation === 'select') {
       return { data: state.existingSecret ?? null, error: null }
     }
@@ -111,6 +120,31 @@ describe('PageGraderMcpBootstrapService', () => {
         table: 'project_mcp_servers',
         operation: 'update',
         payload: expect.objectContaining({ vault_secret_id: 'secret-existing' }),
+      }),
+    )
+  })
+
+  it('creates a hidden managed MCP project when the workspace has no code project', async () => {
+    const state: FakeState = { project: null, writes: [] }
+    const result = await createSubject(state).ensureConnectedRegistrations()
+
+    expect(result).toEqual({ scanned: 1, created: 1, updated: 0, failed: 0 })
+    expect(state.writes).toContainEqual(
+      expect.objectContaining({
+        table: 'project_repos',
+        operation: 'insert',
+        payload: expect.objectContaining({
+          name: 'ROAS Workspace Integrations',
+          manifest: { hidden: true, kind: 'workspace_mcp' },
+          source_meta: { managed_by: 'page_grader_mcp_bootstrap' },
+        }),
+      }),
+    )
+    expect(state.writes).toContainEqual(
+      expect.objectContaining({
+        table: 'project_mcp_servers',
+        operation: 'insert',
+        payload: expect.objectContaining({ project_id: 'project-managed' }),
       }),
     )
   })

@@ -16,6 +16,7 @@ type ConnectedPageGrader = {
 const MCP_NAME = 'Page Grader'
 const MCP_DESCRIPTION =
   'Page Grader client, campaign, fulfillment, meeting, memory, and cached Meta context for ROAS agents.'
+const MANAGED_PROJECT_NAME = 'ROAS Workspace Integrations'
 
 @Injectable()
 export class PageGraderMcpBootstrapService implements OnModuleInit {
@@ -88,19 +89,7 @@ export class PageGraderMcpBootstrapService implements OnModuleInit {
     if (!baseUrl || !apiKey) throw new Error('connected integration is missing credentials')
 
     const serverUrl = derivePageGraderMcpUrl(baseUrl)
-    let projectQuery = this.svc.client
-      .from('project_repos')
-      .select('id')
-      .order('created_at', { ascending: true })
-      .limit(1)
-
-    projectQuery = row.org_id
-      ? projectQuery.eq('org_id', row.org_id)
-      : projectQuery.eq('user_id', row.user_id).is('org_id', null)
-
-    const { data: project, error: projectError } = await projectQuery.maybeSingle()
-    if (projectError) throw new Error(projectError.message)
-    if (!project?.id) throw new Error('no matching ROAS project context')
+    const project = await this.findOrCreateProject(row)
 
     const { data: existingSecret, error: secretLoadError } = await this.svc.client
       .from('vault_secrets')
@@ -173,5 +162,42 @@ export class PageGraderMcpBootstrapService implements OnModuleInit {
       .insert({ project_id: project.id, ...serverPayload })
     if (insertServerError) throw new Error(insertServerError.message)
     return 'created'
+  }
+
+  private async findOrCreateProject(row: ConnectedPageGrader): Promise<{ id: string }> {
+    let projectQuery = this.svc.client
+      .from('project_repos')
+      .select('id')
+      .order('created_at', { ascending: true })
+      .limit(1)
+
+    projectQuery = row.org_id
+      ? projectQuery.eq('org_id', row.org_id)
+      : projectQuery.eq('user_id', row.user_id).is('org_id', null)
+
+    const { data: project, error: projectError } = await projectQuery.maybeSingle()
+    if (projectError) throw new Error(projectError.message)
+    if (project?.id) return project
+
+    const scopeKey = row.org_id ?? row.user_id
+    const { data: inserted, error: insertError } = await this.svc.client
+      .from('project_repos')
+      .insert({
+        user_id: row.user_id,
+        org_id: row.org_id,
+        name: MANAGED_PROJECT_NAME,
+        description: 'Hidden compatibility container for workspace-level MCP integrations.',
+        storage_path: `managed-mcp/${scopeKey}/workspace.zip`,
+        entry_point: 'src/App.tsx',
+        dependencies: {},
+        manifest: { hidden: true, kind: 'workspace_mcp' },
+        source: 'agent',
+        source_meta: { managed_by: 'page_grader_mcp_bootstrap' },
+        status: 'ready',
+      })
+      .select('id')
+      .single()
+    if (insertError) throw new Error(insertError.message)
+    return inserted
   }
 }
