@@ -22,7 +22,7 @@ RUN apt-get update && \
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 
-RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+RUN corepack enable && corepack prepare pnpm@10.23.0 --activate
 
 WORKDIR /openclaw
 
