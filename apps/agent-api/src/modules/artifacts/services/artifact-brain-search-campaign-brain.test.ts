@@ -49,6 +49,7 @@ describe('ArtifactBrainSearchActionsService.searchCampaignBrain', () => {
       resolveUserId: vi.fn(() => 'user-1'),
       resolveOrgId: vi.fn(() => null),
       resolveCampaignId: vi.fn(async () => 'campaign-1'),
+      resolveCampaignIdByNameReadOnly: vi.fn(async () => 'campaign-northstar'),
       getUserClient: vi.fn(async () => ({ kind: 'user-client' })),
       serviceClient: { from },
       brainRetrievalService: { search: brainRetrievalSearch },
@@ -105,6 +106,30 @@ describe('ArtifactBrainSearchActionsService.searchCampaignBrain', () => {
       success: true,
       brain_id: 'brain-campaign-1',
       campaign_id: 'campaign-1',
+      family: 'campaign',
+    })
+  })
+
+  it('resolves any named client without changing the active conversation campaign', async () => {
+    nsBrainsMaybeSingle.mockResolvedValue({ data: { id: 'brain-northstar' }, error: null })
+
+    const result = (await service.searchCampaignBrain(
+      target,
+      { query: 'brand offer audience', campaign_name: 'Northstar Labs' },
+      'agent:vibey:conv-1',
+    )) as Record<string, unknown>
+
+    expect(target.resolveCampaignIdByNameReadOnly).toHaveBeenCalledWith(
+      target.serviceClient,
+      'user-1',
+      'Northstar Labs',
+      null,
+    )
+    expect(target.resolveCampaignId).not.toHaveBeenCalled()
+    expect(result).toMatchObject({
+      success: true,
+      brain_id: 'brain-northstar',
+      campaign_id: 'campaign-northstar',
       family: 'campaign',
     })
   })

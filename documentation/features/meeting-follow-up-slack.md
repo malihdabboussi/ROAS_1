@@ -218,6 +218,9 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 
 - Slack is organization-scoped. Ambient campaign context is a retrieval hint, never a lock.
 - If Dylan names `Asura Group` (or another client/campaign), Pixel must call `search_campaign_brain` with that explicit campaign name/id instead of continuing to query the prior campaign.
+- Cross-campaign Brain reads resolve the named campaign without changing the Slack
+  conversation's active campaign. This prevents one client lookup from leaking into
+  later requests in the same thread.
 - Human teammate work creates a durable human-assigned task. Managed AI-agent work uses agent delegation. Funnel, landing-page, campaign-page, and related fulfillment requests without a named human/agent infer Page Grader and use its connected MCP tool surface; the user does not need to name the integration.
 - Page Grader writes resolve or confirm the client and campaign first. New campaigns and launches reuse known Brain, Space, and Page Grader context, then ask only for genuinely blocking missing details.
 - Pixel may report delegation success only after the selected tool confirms a durable result.

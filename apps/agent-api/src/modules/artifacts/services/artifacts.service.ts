@@ -1,5 +1,6 @@
 import { Injectable, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   ErrorReporter,
   LoggerService,
@@ -274,6 +275,20 @@ export class ArtifactsService extends LegacyArtifactsService {
       data,
       sessionKey,
       onProgress,
+    )
+  }
+
+  async resolveCampaignIdByNameReadOnly(
+    supabase: SupabaseClient,
+    userId: string,
+    campaignName: string,
+    orgId?: string | null,
+  ): Promise<string> {
+    return this.sessionCampaignService.resolveCampaignIdByNameReadOnly(
+      supabase,
+      userId,
+      campaignName,
+      orgId,
     )
   }
 

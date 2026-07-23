@@ -118,3 +118,13 @@ Why: A fresh Slack request for Rafay to build an Asura Group funnel still search
 Impact: Pixel no longer pre-gates human owners through the ambient campaign team, substitutes an AI agent, or treats an unrelated campaign as the only Brain. Funnel requests now stay on the Page Grader fulfillment path and ask for clarification only after named-client sources are exhausted.
 
 Files: `packages/agent-policy/src/platform-tools-template.ts`, `packages/agent-policy/src/platform-tools-template.test.ts`, `packages/agent-policy/src/index.ts`, `docker/agents/vibey/skills/page-grader-operator/SKILL.md`, `docker/agents/atlas/skills/page-grader-operator/SKILL.md`, `apps/agent-api/src/modules/agent-sync/services/pixel-named-client-delegation.test.ts`, `supabase/migrations/20260723153000_fix_pixel_named_client_delegation.sql`, `documentation/features/page-grader-mcp-bridge.md`
+
+## [2026-07-23 15:28] - [FIX]
+
+What: Separated read-only named-campaign resolution from the operation that attaches a conversation to a campaign, then routed explicit cross-client Brain searches through the read-only resolver.
+
+Why: Looking up one named client from Slack silently changed the conversation's active campaign. Later requests inherited that client and Pixel incorrectly claimed it was locked to the wrong Brain.
+
+Impact: Pixel can resolve any accessible named client across the organization without contaminating the Slack thread's campaign context. Exact and unique partial matches work generically; ambiguous or missing clients produce focused resolution errors instead of a guessed match.
+
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-campaign-name-resolver.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-session-campaign.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-actions.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-campaign-brain.test.ts`, `apps/agent-api/src/modules/artifacts/services/artifacts.service.ts`, `apps/agent-api/src/modules/artifacts/legacy/artifacts-legacy.service.ts`, `documentation/features/meeting-follow-up-slack.md`

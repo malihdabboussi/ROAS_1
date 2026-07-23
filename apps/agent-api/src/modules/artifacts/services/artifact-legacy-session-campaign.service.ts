@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ArtifactLegacySessionCampaignRepository } from '../repositories/artifact-legacy-session-campaign.repository'
+import { normalizeCampaignName, resolveCampaignIdByName } from './artifact-campaign-name-resolver'
 import { ArtifactSessionKeyParserService } from './artifact-session-key-parser.service'
 import { canAccessThemeForUser, normalizeThemeId } from './theme-id.util'
 
@@ -227,66 +228,13 @@ export class ArtifactLegacySessionCampaignService {
       : null
   }
 
-  private normalizeCampaignName(value: unknown): string | null {
-    if (typeof value !== 'string') return null
-    const trimmed = value.trim()
-    return trimmed.length > 0 ? trimmed : null
-  }
-
-  private formatCampaignMatches(rows: Array<{ id?: unknown; name?: unknown }>): string {
-    return rows
-      .map((row) => `${String(row.name ?? 'Unnamed campaign')} (${String(row.id ?? 'unknown-id')})`)
-      .join(', ')
-  }
-
-  private async resolveCampaignIdByName(
+  async resolveCampaignIdByNameReadOnly(
     supabase: SupabaseClient,
     userId: string,
     campaignName: string,
     orgId?: string | null,
   ): Promise<string> {
-    const normalizedName = campaignName.toLowerCase()
-
-    const { data: exactRows, error: exactError } = await this.repository.findCampaignNameMatches(
-      supabase,
-      {
-        campaignName,
-        ilikeValue: campaignName,
-        userId,
-        orgId,
-      },
-    )
-    if (exactError) throw exactError
-
-    const exactMatches = (exactRows ?? []).filter(
-      (row) =>
-        String(row.name ?? '')
-          .trim()
-          .toLowerCase() === normalizedName,
-    )
-    if (exactMatches.length === 1) return String(exactMatches[0].id)
-    if (exactMatches.length > 1) {
-      throw new Error(
-        `campaign_name is ambiguous. Matching campaigns: ${this.formatCampaignMatches(exactMatches)}`,
-      )
-    }
-
-    const { data: partialRows, error: partialError } =
-      await this.repository.findCampaignNameMatches(supabase, {
-        campaignName,
-        ilikeValue: `%${campaignName}%`,
-        userId,
-        orgId,
-      })
-    if (partialError) throw partialError
-
-    if ((partialRows ?? []).length === 1) return String(partialRows?.[0]?.id)
-    if ((partialRows ?? []).length > 1) {
-      throw new Error(
-        `campaign_name is ambiguous. Matching campaigns: ${this.formatCampaignMatches(partialRows ?? [])}`,
-      )
-    }
-    throw new Error(`campaign_name not found for user: "${campaignName}"`)
+    return resolveCampaignIdByName(this.repository, supabase, userId, campaignName, orgId)
   }
 
   async findGeneralCampaignId(supabase: SupabaseClient, userId: string): Promise<string | null> {
@@ -423,10 +371,10 @@ export class ArtifactLegacySessionCampaignService {
       }
     }
 
-    const explicitName = this.normalizeCampaignName(input.campaign_name ?? input.campaignName)
+    const explicitName = normalizeCampaignName(input.campaign_name ?? input.campaignName)
     if (explicitName) {
       const nameOrgId = target.resolveOrgId?.(sessionKey) as string | null | undefined
-      const campaignId = await this.resolveCampaignIdByName(
+      const campaignId = await this.resolveCampaignIdByNameReadOnly(
         supabase,
         userId,
         explicitName,

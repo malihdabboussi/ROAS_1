@@ -230,18 +230,23 @@ export class ArtifactBrainSearchActionsService {
 
     // Prefer explicit ids/names over session scope so General chats can still
     // read a client campaign brain (search_campaign_brain is cross-scope).
-    if (!campaignId && campaignName && typeof target.resolveCampaignId === 'function') {
+    if (
+      !campaignId &&
+      campaignName &&
+      typeof target.resolveCampaignIdByNameReadOnly === 'function'
+    ) {
       try {
-        const resolved = await target.resolveCampaignId(
+        const resolved = await target.resolveCampaignIdByNameReadOnly(
           target.serviceClient,
-          { ...input, campaign_name: campaignName },
           userId,
-          sessionKey,
+          campaignName,
+          orgId,
         )
         if (typeof resolved === 'string' && resolved.trim()) campaignId = resolved.trim()
       } catch (err) {
         return {
-          error: err instanceof Error ? err.message : `Failed to resolve campaign_name: ${campaignName}`,
+          error:
+            err instanceof Error ? err.message : `Failed to resolve campaign_name: ${campaignName}`,
         }
       }
     }
@@ -289,12 +294,7 @@ export class ArtifactBrainSearchActionsService {
         resolvedCampaignId,
       )
       if (generalBlock) return generalBlock
-      const access = await this.assertCampaignReadable(
-        target,
-        userId,
-        orgId,
-        resolvedCampaignId,
-      )
+      const access = await this.assertCampaignReadable(target, userId, orgId, resolvedCampaignId)
       if (access) return access
       return { brainId: brain.id as string, campaignId: resolvedCampaignId }
     }

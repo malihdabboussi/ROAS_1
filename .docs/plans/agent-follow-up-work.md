@@ -8038,3 +8038,20 @@ Evidence: The new private-storage signed-URL regression passes and API typecheck
 Needed work: Split media, sender-resolution, repository-seam, and failure-mapping coverage into focused test files, then reconcile the two outbound Markdown-image expectations with the current Slack Markdown normalizer.
 
 Reason not done now: The production incident is confined to inbound Slack attachment persistence and private storage access; restructuring unrelated existing coverage would broaden the emergency fix.
+
+## 2026-07-23 - [ARCH] Artifact campaign services are near the backend LOC limit
+
+Status: Open
+
+Found while: Separating read-only named-client Brain lookup from conversation campaign attachment
+
+Files:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-actions.service.ts` (551 LOC)
+- `apps/agent-api/src/modules/artifacts/legacy/artifacts-legacy.service.ts` (597 LOC)
+
+Evidence: Both touched services remain below the 600-line backend hard limit, but exceed the 80% warning threshold. The new resolver is isolated in a 65-line module, and the change removes campaign-name matching logic from the session service rather than expanding either near-limit file.
+
+Needed work: Split campaign-specific Brain actions from the general Brain action service and continue extracting the legacy artifact facade into domain-owned delegates.
+
+Reason not done now: The requested fix is the campaign-context mutation defect. A broader facade and action-family split is pre-existing architectural work and would increase the risk of this production correction.

@@ -52,7 +52,7 @@ export class ArtifactsService {
   private readonly mediaGenerateService = new ArtifactLegacyMediaGenerateService()
   private readonly mediaStatusService = new ArtifactLegacyMediaStatusService()
   private readonly runtimeCoreService = new ArtifactLegacyRuntimeCoreService()
-  private readonly sessionCampaignService = new ArtifactLegacySessionCampaignService()
+  protected readonly sessionCampaignService = new ArtifactLegacySessionCampaignService()
   private readonly userSessionMint: UserSessionMintService
   private readonly stateMetaService = new ArtifactLegacyStateMetaService()
   private readonly integrationsService = new ArtifactLegacyIntegrationsService()
