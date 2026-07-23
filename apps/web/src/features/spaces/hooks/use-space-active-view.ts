@@ -3,6 +3,10 @@ import { useAccountContextGate, useOrgStore } from '@/lib/org/org-context-store'
 import { artifactGroupableFields } from '../lib/artifact-view-config'
 import { normalizeSpaceSchema } from '../lib/normalize-space-schema'
 import {
+  consolidatePaidAdsViews,
+  resolveConsolidatedPaidAdsView,
+} from '../lib/paid-ads-display-mode'
+import {
   isEditorGatedViewType,
   mergeViewCustomizationLayers,
 } from '../lib/view-customization-merge'
@@ -68,17 +72,30 @@ export function useSpaceActiveView(opts: {
     const allowedViews = activeShareAllowedViewIds
       ? activeSchema.views.filter((view) => activeShareAllowedViewIds.includes(view.id))
       : activeSchema.views
-    const contextAllowedViews = allowedViews.filter(
+    const contextViews = allowedViews.filter(
       (view) => canShowChannelViews || !isChannelViewType(view.type),
     )
+    const contextAllowedViews = consolidatePaidAdsViews(contextViews)
     if (!contextAllowedViews.length) return null
+    const requestedLegacyResearch = contextViews.find(
+      (view) => view.id === activeViewId && view.type === 'ads_research',
+    )
     const orgView =
-      contextAllowedViews.find((view) => view.id === activeViewId) ?? contextAllowedViews[0]!
-    return mergeViewCustomizationLayers(orgView, {
+      resolveConsolidatedPaidAdsView(contextViews, activeViewId) ?? contextAllowedViews[0]!
+    const merged = mergeViewCustomizationLayers(orgView, {
       isTeamSpace,
       overrideLayer: viewOverrides[orgView.id],
       draftLayer: sessionViewDrafts[orgView.id],
     })
+    return requestedLegacyResearch
+      ? {
+          ...merged,
+          ads_config: {
+            ...(merged.ads_config ?? {}),
+            paid_ads_workspace_mode: 'research',
+          },
+        }
+      : merged
   }, [
     activeSchema,
     activeViewId,
@@ -94,13 +111,14 @@ export function useSpaceActiveView(opts: {
     const allowedViews = activeShareAllowedViewIds
       ? activeSchema.views.filter((view) => activeShareAllowedViewIds.includes(view.id))
       : activeSchema.views
-    const contextAllowedViews = allowedViews.filter(
+    const contextViews = allowedViews.filter(
       (view) => canShowChannelViews || !isChannelViewType(view.type),
     )
+    const contextAllowedViews = consolidatePaidAdsViews(contextViews)
     if (!contextAllowedViews.length) return null
     const effectiveId = customizeSubjectViewId ?? activeViewId
     const orgView =
-      contextAllowedViews.find((view) => view.id === effectiveId) ?? contextAllowedViews[0]!
+      resolveConsolidatedPaidAdsView(contextViews, effectiveId) ?? contextAllowedViews[0]!
     return mergeViewCustomizationLayers(orgView, {
       isTeamSpace,
       overrideLayer: viewOverrides[orgView.id],
@@ -119,19 +137,22 @@ export function useSpaceActiveView(opts: {
 
   const visibleViews = useMemo(() => {
     if (!activeSchema?.views) return []
-    return activeSchema.views
-      .filter((view) => {
-        if (activeShareAllowedViewIds && !activeShareAllowedViewIds.includes(view.id)) return false
-        if (!canShowChannelViews && isChannelViewType(view.type)) return false
-        return canAccessEditorViews || !isEditorGatedViewType(view.type)
-      })
-      .map((orgView) =>
-        mergeViewCustomizationLayers(orgView, {
-          isTeamSpace,
-          overrideLayer: viewOverrides[orgView.id],
-          draftLayer: sessionViewDrafts[orgView.id],
-        }),
-      )
+    return consolidatePaidAdsViews(
+      activeSchema.views
+        .filter((view) => {
+          if (activeShareAllowedViewIds && !activeShareAllowedViewIds.includes(view.id))
+            return false
+          if (!canShowChannelViews && isChannelViewType(view.type)) return false
+          return canAccessEditorViews || !isEditorGatedViewType(view.type)
+        })
+        .map((orgView) =>
+          mergeViewCustomizationLayers(orgView, {
+            isTeamSpace,
+            overrideLayer: viewOverrides[orgView.id],
+            draftLayer: sessionViewDrafts[orgView.id],
+          }),
+        ),
+    )
   }, [
     activeSchema?.views,
     activeShareAllowedViewIds,

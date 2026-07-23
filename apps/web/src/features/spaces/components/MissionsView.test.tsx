@@ -163,6 +163,14 @@ vi.mock('@/components/deliverables/deliverable-entity-preview-renderer', () => (
   renderDeliverableEntityPreview: vi.fn(),
 }))
 
+vi.mock('./mission-views/MissionViewsSurface', () => ({
+  MissionViewsSurface: (props: { missions: Mission[]; spaceId?: string | null }) => (
+    <div data-testid="mission-views-surface">
+      {props.missions.length} missions in {props.spaceId ?? 'no space'}
+    </div>
+  ),
+}))
+
 const mission: Mission = {
   id: 'mission-1',
   user_id: 'user-1',
@@ -287,10 +295,8 @@ describe('MissionsView', () => {
 
     await screen.findByTestId('mission-list')
     expect(screen.getByText('Launch plan')).toBeInTheDocument()
-
     fireEvent.click(screen.getByText('Launch plan'))
     expect(await screen.findByTestId('mission-detail-modal')).toHaveTextContent('Launch plan')
-
     fireEvent.click(await screen.findByText('Open deliverable'))
     expect(await screen.findByTestId('deliverable-preview-modal')).toHaveTextContent(
       'Launch document',
@@ -299,14 +305,12 @@ describe('MissionsView', () => {
       'data-renderer',
       'function',
     )
-
     await act(async () => {
       ref.current?.openNewMissionCapture()
     })
     expect(await screen.findByTestId('mission-capture-input')).toHaveTextContent(
       'Tell me what to run...',
     )
-
     fireEvent.click(screen.getByText('Send mission'))
     await waitFor(() => {
       expect(mocks.createMission).toHaveBeenCalledWith(
@@ -326,7 +330,6 @@ describe('MissionsView', () => {
         }),
       )
     })
-
     rerender(
       <MissionsView
         ref={ref}
@@ -365,6 +368,15 @@ describe('MissionsView', () => {
       campaign_id: 'campaign-1',
       space_id: 'space-v3',
     })
+  })
+
+  it('opens the reusable mission views surface for the current space', async () => {
+    renderMissionsView(React.createRef<MissionsViewHandle>(), activeView, undefined, 'space-v3')
+    await screen.findByTestId('mission-list')
+    fireEvent.click(screen.getByRole('button', { name: 'Mission Views' }))
+    expect(await screen.findByTestId('mission-views-surface')).toHaveTextContent(
+      '1 missions in space-v3',
+    )
   })
 
   it('keeps grouped mission list rendering stable', async () => {

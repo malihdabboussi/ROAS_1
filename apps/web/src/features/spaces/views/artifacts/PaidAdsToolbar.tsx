@@ -48,6 +48,8 @@ export function PaidAdsToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
   const hierarchyMode = resolvePaidAdsHierarchyMode(activeView)
   const workspaceMode = resolvePaidAdsWorkspaceMode(activeView)
   const isReportingMode = workspaceMode === 'reporting'
+  const isResearchMode = workspaceMode === 'research'
+  const isNonLaunchMode = isReportingMode || isResearchMode
   const isCreativesMode = hierarchyMode === 'creatives'
   const hideListToolbar = artifactSlidePreviewOpen || artifactDetailOpen
   const canSwitchMode = isPaidAdsViewType(activeView?.type)
@@ -79,22 +81,22 @@ export function PaidAdsToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
         {canSwitchMode ? (
           <PaidAdsWorkspaceModeToggle mode={workspaceMode} onChange={setWorkspaceMode} />
         ) : null}
-        {!isReportingMode && showGroupByInToolbar ? <GroupByButton ctx={ctx} /> : null}
-        {!isReportingMode ? (
+        {!isNonLaunchMode && showGroupByInToolbar ? <GroupByButton ctx={ctx} /> : null}
+        {!isNonLaunchMode ? (
           <PaidAdsModeMenu
             hierarchyMode={hierarchyMode}
             canSwitchMode={canSwitchMode}
             onHierarchyModeChange={setHierarchyMode}
           />
         ) : null}
-        {!isReportingMode && showAddColumnsToolbar ? <AddColumnsButton ctx={ctx} /> : null}
+        {!isNonLaunchMode && showAddColumnsToolbar ? <AddColumnsButton ctx={ctx} /> : null}
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
         <SaveViewSlot ctx={ctx} />
         {activeView ? (
           <AnimatePresence mode="popLayout" initial={false}>
-            {!hideListToolbar && !isReportingMode ? (
+            {!hideListToolbar && !isNonLaunchMode ? (
               <PaidAdsSearchControls
                 isCreativesMode={isCreativesMode}
                 artifactConfig={artifactConfig}
@@ -108,20 +110,20 @@ export function PaidAdsToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
             ) : null}
           </AnimatePresence>
         ) : null}
-        {activeView && !hideListToolbar && !isReportingMode ? (
+        {activeView && !hideListToolbar && !isNonLaunchMode ? (
           <PaidAdsMetaRefreshButton campaignId={activeSpace.campaign_id ?? null} />
         ) : null}
-        {activeView && !hideListToolbar && !isReportingMode ? (
+        {activeView && !hideListToolbar && !isNonLaunchMode ? (
           <div className="border-l-glass mx-1 h-4 w-0 shrink-0 self-center" aria-hidden />
         ) : null}
-        {activeView && isReportingMode ? (
+        {activeView && isNonLaunchMode ? (
           <SpaceCustomizeButton
             schemaEditorOpen={schemaEditorOpen}
             closeCustomizePanel={closeCustomizePanel}
             openCustomizeFromToolbar={openCustomizeFromToolbar}
           />
         ) : null}
-        {activeView && !isReportingMode ? (
+        {activeView && !isNonLaunchMode ? (
           <AnimatePresence mode="popLayout" initial={false}>
             {!hideListToolbar ? (
               <PaidAdsPrimaryActions

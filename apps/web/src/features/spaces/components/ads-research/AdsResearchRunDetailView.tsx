@@ -15,6 +15,7 @@ import {
 } from '../../services/ads-research.service'
 import { AdsResearchAngleSection } from './AdsResearchAngleSection'
 import { AdsResearchDeliverablesSection } from './AdsResearchDeliverablesSection'
+import { AdsResearchProductionPath } from './AdsResearchProductionPath'
 
 interface AdsResearchRunDetailViewProps {
   run: Mission
@@ -138,6 +139,13 @@ export function AdsResearchRunDetailView({
         deliverables={deliverables}
         searches={searches}
         onOpen={setPreviewDeliverable}
+      />
+
+      <AdsResearchProductionPath
+        run={run}
+        deliverables={deliverables}
+        spaceId={spaceId}
+        onOpenRecommendations={setPreviewDeliverable}
       />
 
       <section id="visual-research" className="gap-spacing-3 flex flex-col">

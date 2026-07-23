@@ -380,10 +380,10 @@ export interface OffersConfig extends ArtifactViewBaseConfig {
 
 /** Hierarchy navigator inside the unified Paid Ads space view (not grid/list `display_mode`). */
 export type PaidAdsHierarchyMode = 'structure' | 'ad_sets' | 'creatives'
-export type PaidAdsWorkspaceMode = 'creating' | 'reporting'
+export type PaidAdsWorkspaceMode = 'creating' | 'reporting' | 'research'
 
 export interface AdsConfig extends ArtifactViewBaseConfig {
-  /** Primary workspace surface. Defaults to `creating`. */
+  /** Primary workspace surface. Reporting is shown as Analyze; creating is shown as Launch. */
   paid_ads_workspace_mode?: PaidAdsWorkspaceMode
   /** Campaign tree, ad-set list, or creatives grid. Defaults to `creatives`. */
   paid_ads_mode?: PaidAdsHierarchyMode

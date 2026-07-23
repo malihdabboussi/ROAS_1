@@ -52,6 +52,10 @@ vi.mock('@/components/deliverables/DeliverablePreviewModal', () => ({
   DeliverablePreviewModal: () => null,
 }))
 
+vi.mock('./AdsResearchProductionPath', () => ({
+  AdsResearchProductionPath: () => <div>Actionable production path</div>,
+}))
+
 const run = {
   id: 'mission-1',
   title: 'Ads Research',
@@ -97,7 +101,7 @@ describe('AdsResearchRunDetailView', () => {
     expect(screen.getByText('What Blaze found')).toBeVisible()
     expect(screen.getByText('What Blaze created')).toBeVisible()
     expect(screen.getByText('What happens next')).toBeVisible()
-    expect(screen.getByRole('button', { name: /Review recommended ads/i })).toBeVisible()
+    expect(screen.getByText('Actionable production path')).toBeVisible()
     expect(screen.getByText('2 angles')).toBeVisible()
     expect(screen.getByText('2 visual ads')).toBeVisible()
     expect(screen.getByText('3 outputs')).toBeVisible()

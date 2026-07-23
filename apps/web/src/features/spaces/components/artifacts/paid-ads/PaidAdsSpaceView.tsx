@@ -9,6 +9,7 @@ import {
 } from '@/features/spaces/lib/paid-ads-display-mode'
 import type { ViewDef } from '@/features/spaces/types/space-schema'
 import { createAdsBulk } from '@/lib/artifacts/paid-ads-api'
+import { AdsResearchView } from '../../ads-research/AdsResearchView'
 import type { ArtifactPreviewSelection } from '../artifact-preview-selection'
 import { useArtifactDetailQuery } from '../use-artifact-detail-query'
 import { PaidAdsAdSetsPane } from './PaidAdsAdSetsPane'
@@ -157,13 +158,16 @@ export function PaidAdsSpaceView(props: PaidAdsSpaceViewProps) {
   const { campaignId, spaceId, activeView } = props
 
   if (!campaignId) return <MissingCampaign />
+  const workspaceMode = resolvePaidAdsWorkspaceMode(activeView)
 
   return (
     <PaidAdsWorkspaceShell campaignId={campaignId} spaceId={spaceId}>
-      {resolvePaidAdsWorkspaceMode(activeView) === 'reporting' ? (
+      {workspaceMode === 'reporting' ? (
         <div className="px-spacing-4 py-spacing-3 flex min-h-0 flex-1 overflow-auto">
           <AdsPerformanceView campaignId={campaignId} embedded />
         </div>
+      ) : workspaceMode === 'research' && spaceId ? (
+        <AdsResearchView view={activeView} items={[]} researchContext={{ spaceId, campaignId }} />
       ) : (
         <PaidAdsCreationView {...props} campaignId={campaignId} />
       )}

@@ -11,4 +11,8 @@ export const ADS_RESEARCH_MESSAGES = {
   EMPTY_TITLE: 'No research runs yet',
   EMPTY_DESCRIPTION:
     'Start with Blaze in chat. Your research missions and completed work will appear here.',
+  PRODUCTION_LOAD_FAILED: 'We could not load the production handoff. Try again.',
+  APPROVAL_FAILED: 'We could not save the production selections. Try again.',
+  PRODUCTION_STARTED: 'Selections approved. Meta Ads Launch is ready to prepare the assets.',
+  PRODUCTION_START_FAILED: 'The selections were saved, but the launch handoff could not start.',
 } as const

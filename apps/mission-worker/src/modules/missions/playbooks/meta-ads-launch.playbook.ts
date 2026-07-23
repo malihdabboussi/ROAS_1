@@ -37,7 +37,7 @@ export function expandMetaAdsLaunchPlaybook(
       story: 'Blaze combines approved Space assets with supplied links and uploads.',
       sensory: 'Every ad maps copy, creative, destination, audience, budget, and source.',
       endState: 'ADS#1 - Meta Launch Manifest exists as a native editable Doc.',
-      ecology: `Load roas-meta-ads-launch. Review Meta Ads, Media Plan, Docs, Funnels, and supplied assets. PageGrader context is read-only discovery data, never a credential. Do not write copy or design creative. Assign missing copy to Ivy and missing design to Lux. Save ADS#1 - Meta Launch Manifest as a native Doc. Never create a PDF. Kickoff: ${raw}. ${WRITING}`,
+      ecology: `Load roas-meta-ads-launch. Review Meta Ads, Media Plan, Docs, Funnels, and supplied assets. When kickoff includes source_mission_id, read that source Ads Research mission, its human approval receipt, and every source_deliverable_id before assembling the manifest. Treat the approved concepts in approved_concepts and their recording or design routes as the exact production selection; do not silently substitute a different concept. PageGrader context is read-only discovery data, never a credential. Do not write copy or design creative. Assign missing copy to Ivy and missing design to Lux, and name missing recording assets for the human to supply. Save ADS#1 - Meta Launch Manifest as a native Doc. Never create a PDF. Kickoff: ${raw}. ${WRITING}`,
       outputContract: dylanDocContract('ADS#1 - Meta Launch Manifest'),
     }),
     task({

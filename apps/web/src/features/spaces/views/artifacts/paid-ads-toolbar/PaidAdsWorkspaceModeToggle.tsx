@@ -3,6 +3,7 @@ import type { PaidAdsWorkspaceMode } from '@/features/spaces/types/space-schema'
 
 const OPTIONS: Array<{ id: PaidAdsWorkspaceMode; label: string }> = [
   { id: 'reporting', label: PAID_ADS_WORKSPACE_LABELS.ANALYZE },
+  { id: 'research', label: 'Research' },
   { id: 'creating', label: PAID_ADS_WORKSPACE_LABELS.LAUNCH },
 ]
 

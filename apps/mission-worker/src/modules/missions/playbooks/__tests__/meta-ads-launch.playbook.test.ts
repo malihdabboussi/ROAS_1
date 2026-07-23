@@ -13,6 +13,8 @@ describe('meta-ads-launch playbook', () => {
         input: {
           playbook_kickoff: {
             page_grader_meta_context: { recommended_ad_account_id: 'act_123' },
+            source_mission_id: 'research-1',
+            approved_concepts: [{ title: 'The Referral Ceiling', route: 'design' }],
           },
         },
       },
@@ -27,6 +29,8 @@ describe('meta-ads-launch playbook', () => {
       'st-gate-activation',
     ])
     expect(plan?.subtasks[0]?.assignTo).toBe('blaze')
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/source Ads Research mission/i)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/approved concepts/i)
     expect(plan?.subtasks[1]?.assignTo).toBe('human:user-1')
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/PAUSED state/)
     expect(plan?.subtasks[2]?.intent.ecology).toMatch(/get_integration/)

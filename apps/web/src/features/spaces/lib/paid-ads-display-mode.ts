@@ -25,3 +25,29 @@ export function usesPaidAdsInlineDetail(view: ViewDef | null): boolean {
   if (!view || !isPaidAdsViewType(view.type)) return false
   return resolvePaidAdsHierarchyMode(view) !== 'creatives'
 }
+
+export function consolidatePaidAdsViews(views: ViewDef[]): ViewDef[] {
+  const hasPaidAds = views.some((view) => isPaidAdsViewType(view.type))
+  if (!hasPaidAds) return views
+  return views.filter((view) => view.type !== 'ads_research')
+}
+
+export function resolveConsolidatedPaidAdsView(
+  views: ViewDef[],
+  activeViewId: string | null,
+): ViewDef | undefined {
+  const requested = views.find((view) => view.id === activeViewId)
+  if (requested?.type !== 'ads_research') {
+    const consolidated = consolidatePaidAdsViews(views)
+    return consolidated.find((view) => view.id === activeViewId) ?? consolidated[0]
+  }
+  const paidAds = views.find((view) => isPaidAdsViewType(view.type))
+  if (!paidAds) return requested
+  return {
+    ...paidAds,
+    ads_config: {
+      ...(paidAds.ads_config ?? {}),
+      paid_ads_workspace_mode: 'research',
+    },
+  }
+}

@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronDown, FileText, Search, Sparkles } from 'lucide-react'
+import { ChevronDown, FileText, Search } from 'lucide-react'
 import type { MissionDeliverable } from '@/lib/missions'
 import type { SavedAdSearch } from '../../services/ads-research.service'
 
@@ -98,38 +98,6 @@ export function AdsResearchDeliverablesSection({
             description="Choose the concepts, approve the scripts, then send each ad to recording or design."
             onClick={() => onOpen(scripts ?? recommendations!)}
           />
-        ) : null}
-      </div>
-
-      <div className="surface-card border-border p-spacing-4 gap-spacing-3 rounded-spacing-3 flex flex-col border">
-        <div className="gap-spacing-2 flex items-center">
-          <Sparkles className="icon-sm text-primary" />
-          <p className="body-2 text-foreground font-semibold">PRODUCTION PATH</p>
-        </div>
-        <ol className="gap-spacing-2 grid sm:grid-cols-5">
-          {['Select concepts', 'Approve scripts', 'Record or design', 'Build ads', 'Launch'].map(
-            (step, index) => (
-              <li
-                key={step}
-                className="bg-secondary border-border p-spacing-3 gap-spacing-2 rounded-spacing-2 flex items-center border"
-              >
-                <span className="badge-glass badge-glass-green body-4 flex shrink-0 items-center justify-center rounded-full">
-                  {index + 1}
-                </span>
-                <span className="body-4 text-foreground font-medium">{step}</span>
-              </li>
-            ),
-          )}
-        </ol>
-        {recommendations ? (
-          <button
-            type="button"
-            className="button-glass-primary button-compact gap-spacing-2 inline-flex items-center self-start"
-            onClick={() => onOpen(recommendations)}
-          >
-            Review recommended ads
-            <ArrowRight className="icon-sm" />
-          </button>
         ) : null}
       </div>
 

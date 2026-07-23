@@ -14,6 +14,7 @@ import type { DocumentAttachment } from '@/lib/chat/document-attachments'
 import { createMission, resolveMissionCreateToastMessage } from '@/lib/missions'
 import { getMappedPageGraderMetaContext } from '../services/page-grader-send.service'
 import type { ViewDef } from '../types/space-schema'
+import { MissionViewsSurface } from './mission-views/MissionViewsSurface'
 import { MissionCaptureModal } from './MissionCaptureModal'
 import { MissionsViewListContent } from './MissionsViewListContent'
 import {
@@ -81,6 +82,7 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
   const [missionComposerDraft, setMissionComposerDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [capabilityWarning, setCapabilityWarning] = useState<string | null>(null)
+  const [surface, setSurface] = useState<'list' | 'views'>('list')
   const {
     agents,
     loading,
@@ -261,10 +263,46 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <MissionsViewListContent
-        {...listContentProps}
-        onStartPlaybook={() => setPlaybookOpen(true)}
-      />
+      <div className="border-border px-spacing-4 py-spacing-2 flex shrink-0 items-center border-b">
+        <div className="border-border bg-secondary p-spacing-1 rounded-spacing-2 flex items-center border">
+          <button
+            type="button"
+            className={`body-4 rounded-spacing-1 px-spacing-3 py-spacing-1 font-medium transition-colors ${
+              surface === 'list'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={() => setSurface('list')}
+          >
+            Mission List
+          </button>
+          <button
+            type="button"
+            className={`body-4 rounded-spacing-1 px-spacing-3 py-spacing-1 font-medium transition-colors ${
+              surface === 'views'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={() => setSurface('views')}
+          >
+            Mission Views
+          </button>
+        </div>
+      </div>
+
+      {surface === 'views' && spaceId ? (
+        <MissionViewsSurface
+          missions={listContentProps.sortedMissions}
+          spaceId={spaceId}
+          onBackToList={() => setSurface('list')}
+          onRefresh={loadData}
+        />
+      ) : (
+        <MissionsViewListContent
+          {...listContentProps}
+          onStartPlaybook={() => setPlaybookOpen(true)}
+        />
+      )}
 
       {selectedMission && (
         <MissionDetailModal
