@@ -59,6 +59,7 @@ export function campaignToSidebarRow(campaign: Campaign): SidebarCampaignRow {
     isSystemPersonal,
     isFavorite: !!config.isFavorite,
     isHidden: !!config.isHidden,
+    program_id: campaign.program_id ?? null,
     config,
     created_at: campaign.created_at,
   }
