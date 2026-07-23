@@ -68,6 +68,15 @@ export class McpServersRepository {
     return supabase.from('project_mcp_servers').insert(payload).select('*').single()
   }
 
+  async findServerByUrl(supabase: SupabaseClient, projectId: string, serverUrl: string) {
+    return supabase
+      .from('project_mcp_servers')
+      .select('*')
+      .eq('project_id', projectId)
+      .eq('server_url', serverUrl)
+      .maybeSingle()
+  }
+
   async updateCachedTools(
     supabase: SupabaseClient,
     serverId: string,
