@@ -36,9 +36,11 @@ Only after the delegated action succeeds, confirm "New mission created" in chat 
 export function AdsResearchRunsView({
   spaceId,
   campaignId,
+  onStartProduction,
 }: {
   spaceId: string
   campaignId: string | null
+  onStartProduction?: (runId: string) => void
 }) {
   const [runs, setRuns] = useState<Mission[]>([])
   const [deliverables, setDeliverables] = useState<Record<string, MissionDeliverable[]>>({})
@@ -117,6 +119,7 @@ export function AdsResearchRunsView({
           spaceId={spaceId}
           onBack={() => setSelectedRun(null)}
           onOpenMission={() => setMissionModalOpen(true)}
+          onStartProduction={onStartProduction}
         />
         {missionModalOpen ? (
           <MissionDetailModal

@@ -9,6 +9,7 @@ import {
 } from '@/features/spaces/lib/paid-ads-display-mode'
 import type { ViewDef } from '@/features/spaces/types/space-schema'
 import { createAdsBulk } from '@/lib/artifacts/paid-ads-api'
+import { AdsResearchProductionView } from '../../ads-research/AdsResearchProductionView'
 import { AdsResearchView } from '../../ads-research/AdsResearchView'
 import type { ArtifactPreviewSelection } from '../artifact-preview-selection'
 import { useArtifactDetailQuery } from '../use-artifact-detail-query'
@@ -36,6 +37,7 @@ interface PaidAdsSpaceViewProps {
   onArtifactDeepMetaChange?: (meta: { id: string; title: string } | null) => void
   artifactDeepToolbarExtras?: React.ReactNode
   includeCampaignArtifacts: boolean
+  onViewPatch?: (patch: Partial<ViewDef>) => Promise<void>
 }
 
 function PaidAdsWorkspaceShell({
@@ -155,7 +157,7 @@ function PaidAdsCreationView({
 }
 
 export function PaidAdsSpaceView(props: PaidAdsSpaceViewProps) {
-  const { campaignId, spaceId, activeView } = props
+  const { campaignId, spaceId, activeView, onViewPatch } = props
 
   if (!campaignId) return <MissingCampaign />
   const workspaceMode = resolvePaidAdsWorkspaceMode(activeView)
@@ -167,7 +169,27 @@ export function PaidAdsSpaceView(props: PaidAdsSpaceViewProps) {
           <AdsPerformanceView campaignId={campaignId} embedded />
         </div>
       ) : workspaceMode === 'research' && spaceId ? (
-        <AdsResearchView view={activeView} items={[]} researchContext={{ spaceId, campaignId }} />
+        <AdsResearchView
+          view={activeView}
+          items={[]}
+          researchContext={{ spaceId, campaignId }}
+          onStartProduction={(runId) => {
+            if (!onViewPatch) return
+            void onViewPatch({
+              ads_config: {
+                ...(activeView.ads_config ?? {}),
+                paid_ads_workspace_mode: 'production',
+                paid_ads_production_source_mission_id: runId,
+              },
+            })
+          }}
+        />
+      ) : workspaceMode === 'production' && spaceId ? (
+        <AdsResearchProductionView
+          spaceId={spaceId}
+          campaignId={campaignId}
+          sourceMissionId={activeView.ads_config?.paid_ads_production_source_mission_id}
+        />
       ) : (
         <PaidAdsCreationView {...props} campaignId={campaignId} />
       )}

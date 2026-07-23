@@ -12,6 +12,12 @@ vi.mock('@/components/artifacts/paid-ads/AdsPerformanceViewAdapter', () => ({
   ),
 }))
 
+vi.mock('../../ads-research/AdsResearchProductionView', () => ({
+  AdsResearchProductionView: ({ sourceMissionId }: { sourceMissionId?: string }) => (
+    <div data-testid="paid-ads-production" data-source-mission-id={sourceMissionId} />
+  ),
+}))
+
 vi.mock('./PaidAdsMetaSetupBar', () => ({
   PaidAdsMetaSetupBar: () => <div data-testid="meta-setup" />,
 }))
@@ -61,5 +67,30 @@ describe('PaidAdsSpaceView', () => {
       'campaign-1',
     )
     expect(paidAdsDataMock).not.toHaveBeenCalled()
+  })
+
+  it('renders the selected research handoff in Production mode', () => {
+    const view = makeView()
+    view.ads_config = {
+      paid_ads_workspace_mode: 'production',
+      paid_ads_production_source_mission_id: 'research-1',
+    }
+
+    render(
+      <PaidAdsSpaceView
+        campaignId="campaign-1"
+        spaceId="space-1"
+        activeView={view}
+        selection={null}
+        onSelectionChange={vi.fn()}
+        onViewPatch={vi.fn()}
+        includeCampaignArtifacts={false}
+      />,
+    )
+
+    expect(screen.getByTestId('paid-ads-production')).toHaveAttribute(
+      'data-source-mission-id',
+      'research-1',
+    )
   })
 })

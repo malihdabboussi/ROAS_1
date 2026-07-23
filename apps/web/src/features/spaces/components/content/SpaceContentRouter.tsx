@@ -325,7 +325,6 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
   if (!activeView) {
     return <EmptySpaceCanvas />
   }
-
   if (
     (!isAccountContextReady || isPersonalAccountContext) &&
     (activeView.type === 'channels' || activeView.type === 'channel')
@@ -571,6 +570,7 @@ export function SpaceContentRouter(p: SpaceContentRouterProps) {
           onArtifactDeepMetaChange={setArtifactDeepDetail}
           artifactDeepToolbarExtras={artifactDeepToolbarExtras}
           includeCampaignArtifacts={includeCampaignArtifacts}
+          onViewPatch={handleViewPatch}
         />
       ) : activeView?.type === 'sequences' ? (
         <SequencesSpaceView

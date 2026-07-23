@@ -52,10 +52,6 @@ vi.mock('@/components/deliverables/DeliverablePreviewModal', () => ({
   DeliverablePreviewModal: () => null,
 }))
 
-vi.mock('./AdsResearchProductionPath', () => ({
-  AdsResearchProductionPath: () => <div>Actionable production path</div>,
-}))
-
 const run = {
   id: 'mission-1',
   title: 'Ads Research',
@@ -83,7 +79,8 @@ const marketDeliverable = {
 } as MissionDeliverable
 
 describe('AdsResearchRunDetailView', () => {
-  it('combines visual ad evidence and mission deliverables in one report', async () => {
+  it('summarizes the research with inline deliverable links and routes production separately', async () => {
+    const onStartProduction = vi.fn()
     render(
       <AdsResearchRunDetailView
         run={run}
@@ -91,27 +88,29 @@ describe('AdsResearchRunDetailView', () => {
         spaceId="space-1"
         onBack={vi.fn()}
         onOpenMission={vi.fn()}
+        onStartProduction={onStartProduction}
       />,
     )
 
     expect(await screen.findByText('Competitor webinar ads')).toBeVisible()
     expect(screen.getByText('Insurance education ads')).toBeVisible()
     expect(screen.getByText('RESEARCH SUMMARY')).toBeVisible()
-    expect(screen.getByText('We researched')).toBeVisible()
-    expect(screen.getByText('What Blaze found')).toBeVisible()
-    expect(screen.getByText('What Blaze created')).toBeVisible()
-    expect(screen.getByText('What happens next')).toBeVisible()
-    expect(screen.getByText('Actionable production path')).toBeVisible()
-    expect(screen.getByText('2 angles')).toBeVisible()
-    expect(screen.getByText('2 visual ads')).toBeVisible()
-    expect(screen.getByText('3 outputs')).toBeVisible()
+    expect(
+      screen.getByRole('link', { name: '2 visual ads across 2 research angles' }),
+    ).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Market and Competitive Research' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Recommended Ads and Draft Copy' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Draft Video Ad Scripts' })).toBeVisible()
+    expect(screen.queryByText('PRODUCTION PATH')).not.toBeInTheDocument()
     expect(screen.getByTestId('visual-ads-ad-1')).toHaveTextContent('ad-1')
     expect(screen.queryByTestId('visual-ads-ad-2')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start production' }))
+    expect(onStartProduction).toHaveBeenCalledWith('mission-1')
 
     fireEvent.click(screen.getByRole('button', { name: /Insurance education ads/i }))
     expect(screen.getByTestId('visual-ads-ad-2')).toHaveTextContent('ad-2')
     expect(screen.queryByTestId('visual-ads-ad-1')).not.toBeInTheDocument()
-    expect(screen.getByText('Draft Video Ad Scripts')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Mission Details' })).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Rerun Research' })).not.toBeInTheDocument()
   })

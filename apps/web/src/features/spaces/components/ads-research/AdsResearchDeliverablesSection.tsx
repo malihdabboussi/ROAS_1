@@ -1,4 +1,4 @@
-import { ChevronDown, FileText, Search } from 'lucide-react'
+import { ArrowRight, Sparkles } from 'lucide-react'
 import type { MissionDeliverable } from '@/lib/missions'
 import type { SavedAdSearch } from '../../services/ads-research.service'
 
@@ -18,23 +18,20 @@ function findDeliverable(
   return deliverables.find((deliverable) => pattern.test(deliverable.title))
 }
 
-function SummaryButton({
-  title,
-  description,
-  onClick,
+function DeliverableLink({
+  deliverable,
+  onOpen,
 }: {
-  title: string
-  description: string
-  onClick: () => void
+  deliverable: MissionDeliverable
+  onOpen: (deliverable: MissionDeliverable) => void
 }) {
   return (
     <button
       type="button"
-      className="surface-card border-border hover:bg-hover-subtle p-spacing-4 gap-spacing-2 rounded-spacing-3 flex flex-col border text-left transition-colors"
-      onClick={onClick}
+      className="text-primary inline font-semibold underline-offset-2 hover:underline"
+      onClick={() => onOpen(deliverable)}
     >
-      <span className="body-2 text-foreground font-semibold">{title}</span>
-      <span className="body-4 text-muted-foreground">{description}</span>
+      {deliverableLabel(deliverable.title)}
     </button>
   )
 }
@@ -43,10 +40,12 @@ export function AdsResearchDeliverablesSection({
   deliverables,
   searches,
   onOpen,
+  onStartProduction,
 }: {
   deliverables: MissionDeliverable[]
   searches: SavedAdSearch[]
   onOpen: (deliverable: MissionDeliverable) => void
+  onStartProduction?: () => void
 }) {
   const ordered = [...deliverables].sort(
     (a, b) => deliverableOrder(a.title) - deliverableOrder(b.title),
@@ -59,7 +58,7 @@ export function AdsResearchDeliverablesSection({
   const platformCount = new Set(searches.map((search) => search.platform)).size
 
   return (
-    <section className="gap-spacing-4 flex flex-col">
+    <section className="gap-spacing-3 flex flex-col">
       <div>
         <p className="typo-section-label text-muted-foreground">RESEARCH SUMMARY</p>
         <h2 className="title-h6 text-foreground mt-spacing-1">
@@ -67,62 +66,67 @@ export function AdsResearchDeliverablesSection({
         </h2>
       </div>
 
-      <div className="gap-spacing-3 grid md:grid-cols-2 xl:grid-cols-4">
-        <a
-          href="#visual-research"
-          className="surface-card border-border hover:bg-hover-subtle p-spacing-4 gap-spacing-2 rounded-spacing-3 flex flex-col border transition-colors"
-        >
-          <span className="body-2 text-foreground font-semibold">We researched</span>
+      <div className="surface-card border-border p-spacing-5 gap-spacing-5 rounded-spacing-3 flex flex-wrap items-center border">
+        <p className="body-2 text-foreground min-w-0 flex-1 leading-relaxed">
+          Blaze reviewed{' '}
+          <a
+            href="#visual-research"
+            className="text-primary font-semibold underline-offset-2 hover:underline"
+          >
+            {totalAds} visual ads across {searches.length} research
+            {searches.length === 1 ? ' angle' : ' angles'}
+          </a>{' '}
+          and {platformCount} traffic {platformCount === 1 ? 'source' : 'sources'}.
+          {currentAds ? (
+            <>
+              {' '}
+              The live performance findings are in{' '}
+              <DeliverableLink deliverable={currentAds} onOpen={onOpen} />.
+            </>
+          ) : null}
+          {marketResearch ? (
+            <>
+              {' '}
+              The market patterns and competitive gaps are in{' '}
+              <DeliverableLink deliverable={marketResearch} onOpen={onOpen} />.
+            </>
+          ) : null}
+          {recommendations ? (
+            <>
+              {' '}
+              Blaze turned that evidence into{' '}
+              <DeliverableLink deliverable={recommendations} onOpen={onOpen} />.
+            </>
+          ) : null}
+          {scripts ? (
+            <>
+              {' '}
+              Ready-to-produce scripts are in{' '}
+              <DeliverableLink deliverable={scripts} onOpen={onOpen} />.
+            </>
+          ) : null}{' '}
+          Next, choose which concepts move into recording or design.
+        </p>
+        {onStartProduction ? (
+          <button
+            type="button"
+            className="gap-spacing-3 flex shrink-0 items-center"
+            onClick={onStartProduction}
+            aria-label="Start production"
+          >
+            <span className="btn-icon-glass">
+              <Sparkles className="icon-sm text-primary" />
+            </span>
+            <span className="body-2 text-foreground font-semibold">Start production</span>
+            <ArrowRight className="icon-sm text-muted-foreground" />
+          </button>
+        ) : null}
+        {ordered.length === 0 ? (
           <span className="body-4 text-muted-foreground">
-            {totalAds} visual ads across {searches.length} angles and {platformCount} traffic
-            {platformCount === 1 ? ' source' : ' sources'}.
+            Blaze has not attached the written outputs yet.
           </span>
-        </a>
-        {marketResearch || currentAds ? (
-          <SummaryButton
-            title="What Blaze found"
-            description="The performance signals, competitor patterns, and market gaps behind the recommendations."
-            onClick={() => onOpen(marketResearch ?? currentAds!)}
-          />
-        ) : null}
-        {recommendations ? (
-          <SummaryButton
-            title="What Blaze created"
-            description="Recommended concepts and ready-to-use draft copy tied back to the evidence."
-            onClick={() => onOpen(recommendations)}
-          />
-        ) : null}
-        {scripts || recommendations ? (
-          <SummaryButton
-            title="What happens next"
-            description="Choose the concepts, approve the scripts, then send each ad to recording or design."
-            onClick={() => onOpen(scripts ?? recommendations!)}
-          />
         ) : null}
       </div>
-
-      <details className="surface-card border-border rounded-spacing-3 border">
-        <summary className="p-spacing-4 gap-spacing-2 flex cursor-pointer items-center">
-          <Search className="icon-sm text-muted-foreground" />
-          <span className="body-2 text-foreground flex-1 font-semibold">
-            Sources and deliverables ({ordered.length})
-          </span>
-          <ChevronDown className="icon-sm text-muted-foreground" />
-        </summary>
-        <div className="border-border p-spacing-3 gap-spacing-2 grid border-t md:grid-cols-2">
-          {ordered.map((deliverable) => (
-            <button
-              key={deliverable.id}
-              type="button"
-              className="hover:bg-hover-subtle p-spacing-3 gap-spacing-2 rounded-spacing-2 flex items-center text-left transition-colors"
-              onClick={() => onOpen(deliverable)}
-            >
-              <FileText className="icon-sm text-muted-foreground shrink-0" />
-              <span className="body-3 text-foreground">{deliverableLabel(deliverable.title)}</span>
-            </button>
-          ))}
-        </div>
-      </details>
     </section>
   )
 }

@@ -49,7 +49,8 @@ export function PaidAdsToolbar({ ctx }: { ctx: SpaceToolbarContext }) {
   const workspaceMode = resolvePaidAdsWorkspaceMode(activeView)
   const isReportingMode = workspaceMode === 'reporting'
   const isResearchMode = workspaceMode === 'research'
-  const isNonLaunchMode = isReportingMode || isResearchMode
+  const isProductionMode = workspaceMode === 'production'
+  const isNonLaunchMode = isReportingMode || isResearchMode || isProductionMode
   const isCreativesMode = hierarchyMode === 'creatives'
   const hideListToolbar = artifactSlidePreviewOpen || artifactDetailOpen
   const canSwitchMode = isPaidAdsViewType(activeView?.type)

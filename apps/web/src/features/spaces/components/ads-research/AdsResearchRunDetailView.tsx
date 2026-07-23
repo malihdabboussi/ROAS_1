@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowLeft, ListChecks, Megaphone } from 'lucide-react'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
 import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
@@ -15,7 +15,6 @@ import {
 } from '../../services/ads-research.service'
 import { AdsResearchAngleSection } from './AdsResearchAngleSection'
 import { AdsResearchDeliverablesSection } from './AdsResearchDeliverablesSection'
-import { AdsResearchProductionPath } from './AdsResearchProductionPath'
 
 interface AdsResearchRunDetailViewProps {
   run: Mission
@@ -23,6 +22,7 @@ interface AdsResearchRunDetailViewProps {
   spaceId: string
   onBack: () => void
   onOpenMission: () => void
+  onStartProduction?: (runId: string) => void
 }
 
 function searchesForRun(searches: SavedAdSearchSummary[], run: Mission): SavedAdSearchSummary[] {
@@ -43,6 +43,7 @@ export function AdsResearchRunDetailView({
   spaceId,
   onBack,
   onOpenMission,
+  onStartProduction,
 }: AdsResearchRunDetailViewProps) {
   const [searches, setSearches] = useState<SavedAdSearch[]>([])
   const [loading, setLoading] = useState(true)
@@ -81,11 +82,6 @@ export function AdsResearchRunDetailView({
     }
   }, [run, spaceId])
 
-  const totalAds = useMemo(
-    () => searches.reduce((total, search) => total + search.results.length, 0),
-    [searches],
-  )
-
   return (
     <div className="p-spacing-4 gap-spacing-6 flex min-h-0 flex-1 flex-col overflow-y-auto">
       <header className="gap-spacing-4 flex flex-wrap items-start justify-between">
@@ -118,34 +114,11 @@ export function AdsResearchRunDetailView({
         </div>
       </header>
 
-      <div className="surface-card border-border rounded-spacing-3 grid border sm:grid-cols-3">
-        <div className="p-spacing-4 border-border border-b sm:border-b-0 sm:border-r">
-          <p className="title-h6 text-foreground">
-            {searches.length} {searches.length === 1 ? 'angle' : 'angles'}
-          </p>
-          <p className="body-4 text-muted-foreground">Research directions</p>
-        </div>
-        <div className="p-spacing-4 border-border border-b sm:border-b-0 sm:border-r">
-          <p className="title-h6 text-foreground">{totalAds} visual ads</p>
-          <p className="body-4 text-muted-foreground">Saved evidence</p>
-        </div>
-        <div className="p-spacing-4">
-          <p className="title-h6 text-foreground">{deliverables.length} outputs</p>
-          <p className="body-4 text-muted-foreground">Analysis and production</p>
-        </div>
-      </div>
-
       <AdsResearchDeliverablesSection
         deliverables={deliverables}
         searches={searches}
         onOpen={setPreviewDeliverable}
-      />
-
-      <AdsResearchProductionPath
-        run={run}
-        deliverables={deliverables}
-        spaceId={spaceId}
-        onOpenRecommendations={setPreviewDeliverable}
+        onStartProduction={onStartProduction ? () => onStartProduction(run.id) : undefined}
       />
 
       <section id="visual-research" className="gap-spacing-3 flex flex-col">
