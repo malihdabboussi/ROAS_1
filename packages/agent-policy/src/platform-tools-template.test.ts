@@ -4,6 +4,7 @@ import {
   ensurePlatformToolsRuntimeGuidance,
   hasPlatformToolsRuntimeGuidance,
   PLATFORM_TOOLS_DEFAULT_MD,
+  PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING,
   PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING,
 } from './platform-tools-template.js'
 
@@ -22,6 +23,16 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('checked call transcripts')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Human teammate →')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Managed AI agent →')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('A bare person name defaults to a human')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'Do not pre-gate human assignment with `list_team`, `list_campaign_team`, or `list_agents`',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'A named client or campaign overrides ambient campaign context',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'campaign Brain, Page Grader, and relevant Slack channel',
+    )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Connected MCP service such as Page Grader →')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
       'A funnel, landing page, campaign page, or related fulfillment deliverable',
@@ -100,5 +111,57 @@ Use them in this order:
     expect(repaired).toContain('Do not guess when the platform can know')
     expect(repaired).toContain('Vibey is data-driven')
     expect(second).toBe(repaired)
+  })
+
+  it('adds current delegation guidance to an existing runtime policy', () => {
+    const oldContent = `# TOOLS.md
+
+## Runtime Operating Layers
+
+These layers exist to help the user get faster, more accurate work without repeating context or watching you stumble through avoidable tool errors.
+
+For multi-step work:
+- Make a short plan.
+
+For unclear, destructive, publish/send, or expensive actions:
+- Ask a focused clarification.`
+
+    const repaired = ensurePlatformToolsRuntimeGuidance(oldContent)
+    const second = ensurePlatformToolsRuntimeGuidance(repaired)
+
+    expect(repaired).toContain(PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING)
+    expect(repaired).toContain('A bare person name defaults to a human')
+    expect(repaired).toContain('A named client or campaign overrides ambient campaign context')
+    expect(repaired).toContain('campaign Brain, Page Grader, and relevant Slack channel')
+    expect(repaired.split(PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING)).toHaveLength(2)
+    expect(second).toBe(repaired)
+  })
+
+  it('replaces stale delegation guidance without dropping adjacent custom content', () => {
+    const oldContent = `# TOOLS.md
+
+## Runtime Operating Layers
+
+These layers exist to help the user get faster, more accurate work without repeating context or watching you stumble through avoidable tool errors.
+
+For delegation and assignment:
+- Search only the current campaign team.
+- Substitute an available agent when the named person is missing.
+
+For unclear, destructive, publish/send, or expensive actions:
+- Ask a focused clarification.
+
+## Custom Rules
+
+Keep this.`
+
+    const repaired = ensurePlatformToolsRuntimeGuidance(oldContent)
+
+    expect(repaired).not.toContain('Search only the current campaign team')
+    expect(repaired).not.toContain('Substitute an available agent')
+    expect(repaired).toContain('A bare person name defaults to a human')
+    expect(repaired).toContain('## Custom Rules')
+    expect(repaired).toContain('Keep this.')
+    expect(repaired.split(PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING)).toHaveLength(2)
   })
 })

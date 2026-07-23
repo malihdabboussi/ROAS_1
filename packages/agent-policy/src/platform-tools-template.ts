@@ -6,6 +6,18 @@ import {
 export const PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING = '## Runtime Operating Layers'
 export const PLATFORM_TOOLS_DATA_GROUNDING_PRINCIPLE =
   'Do not guess when the platform can know. Vibey is data-driven: Space, Brain, skills, tool schemas, agent definitions, and user context are the source of truth. Guessing creates wrong work, wasted retries, broken actions, and false memory. If the answer may already exist, retrieve it. If the schema is known, read it. If evidence is insufficient, search again or ask the user. Only make assumptions when they are low-impact, clearly stated, and cheaper than interrupting the user.'
+export const PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING = 'For delegation and assignment:'
+export const PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING}
+- Resolve the explicitly named target before choosing a tool. A bare person name defaults to a human, not a managed AI agent.
+- Human teammate → for ordinary human-owned work, call \`create_task\` with \`assignee_type:"human"\` and \`assignee_name\`. The action resolves active organization members by name. Do not pre-gate human assignment with \`list_team\`, \`list_campaign_team\`, or \`list_agents\`.
+- Managed AI agent → use \`ask_agent\` or \`delegate_to_agent\` only when the user explicitly names a managed AI agent, explicitly asks for an agent, or you intentionally choose an AI agent for otherwise unassigned work.
+- If human assignment returns an ambiguous or missing-member result, ask one focused clarification using the returned candidates or request a full name/email. Do not claim the person does not exist, substitute another human or agent, or claim success.
+- A named client or campaign overrides ambient campaign context. Resolve that named client across its campaign Brain, Page Grader, and relevant Slack channel or Space evidence before asking the user for context. Do not limit the search to the campaign attached to the current chat.
+- Connected MCP service such as Page Grader → call \`list_mcp_tools\`, then \`use_mcp_tool\` with the exact returned schema. Do not route an MCP service through \`delegate_to_agent\`.
+- A funnel, landing page, campaign page, or related fulfillment deliverable routes to the Page Grader MCP even when the user names the human owner. Put that person in the Page Grader request's assignee field; do not replace Page Grader fulfillment with \`create_task\`, \`list_team\`, \`list_campaign_team\`, \`ask_agent\`, or \`delegate_to_agent\`. Do not require the user to know or say "Page Grader".
+- A named human owner of Page Grader fulfillment is not evidence that the person is a managed ROAS AI agent or a member of the ambient campaign team. Resolve the client and assignee through Page Grader.
+- For this Page Grader work, resolve or confirm the client and campaign before creating Page Grader work. For a new campaign or launch, use available campaign Brain, Space, Page Grader, and Slack context first, then ask only for missing details that block a safe draft; never invent the offer, objective, audience, launch timing, or source assets.
+- Do not tell the user work was assigned, delegated, or completed until the tool result confirms the effect and identifies the created work or equivalent durable result.`
 
 export const PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING}
 
@@ -60,15 +72,7 @@ For multi-step work:
 - Persist created or edited assets.
 - Use tasks or missions only when the user asks for tracked work, ownership, status, or async execution.
 
-For delegation and assignment:
-- Resolve the explicitly named target before choosing a tool; a named person, agent, client, campaign, or connected service overrides ambient campaign context.
-- Human teammate → create and assign a durable task with \`create_task\` and \`assignee_type:"human"\`, except when a specialized fulfillment system owns the requested deliverable.
-- Managed AI agent → use \`ask_agent\` for consultation or \`delegate_to_agent\` for executable work.
-- Connected MCP service such as Page Grader → call \`list_mcp_tools\`, then \`use_mcp_tool\` with the exact returned schema. Do not route an MCP service through \`delegate_to_agent\`.
-- A funnel, landing page, campaign page, or related fulfillment deliverable routes to the Page Grader MCP even when the user names the human owner. Put that person in the Page Grader request's assignee field; do not replace Page Grader fulfillment with \`create_task\`, \`list_team\`, \`list_campaign_team\`, \`ask_agent\`, or \`delegate_to_agent\`. Do not require the user to know or say "Page Grader".
-- A named human owner of Page Grader fulfillment is not evidence that the person is a managed ROAS AI agent or a member of the ambient campaign team. Resolve the client and assignee through Page Grader.
-- For this Page Grader work, resolve or confirm the client and campaign before creating Page Grader work. For a new campaign or launch, use available Brain, Space, and Page Grader context first, then ask only for missing details that block a safe draft; never invent the offer, objective, audience, launch timing, or source assets.
-- Do not tell the user work was assigned, delegated, or completed until the tool result confirms the effect and identifies the created work or equivalent durable result.
+${PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK}
 
 For unclear, destructive, publish/send, or expensive actions:
 - Ask a focused clarification or use the platform approval flow before acting.`
@@ -111,10 +115,42 @@ function ensureDataGroundingPrinciple(content: string): string {
   return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_DATA_GROUNDING_PRINCIPLE}${content.slice(insertAt)}`
 }
 
+function ensureDelegationGuidance(content: string): string {
+  const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
+  if (runtimeStart === -1) return content
+
+  const delegationStart = content.indexOf(PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING, runtimeStart)
+  const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
+
+  if (delegationStart !== -1) {
+    if (content.slice(delegationStart).startsWith(PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK)) {
+      return content
+    }
+
+    const delegationEnd =
+      unclearStart > delegationStart ? unclearStart : content.indexOf('\n## ', delegationStart)
+    const replaceEnd = delegationEnd === -1 ? content.length : delegationEnd
+    return `${content.slice(0, delegationStart)}${PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK}\n${content.slice(replaceEnd)}`
+  }
+
+  const actionProtocolStart = content.indexOf(
+    `\n${ACTION_CONTRACT_PROTOCOL_BLOCK.split('\n')[0]}`,
+    runtimeStart,
+  )
+  const insertAt =
+    unclearStart !== -1
+      ? unclearStart
+      : actionProtocolStart !== -1
+        ? actionProtocolStart
+        : content.length
+
+  return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK}${content.slice(insertAt)}`
+}
+
 export function ensurePlatformToolsRuntimeGuidance(content: string): string {
   const withActionProtocol = prependActionContractProtocol(content)
   if (hasPlatformToolsRuntimeGuidance(withActionProtocol)) {
-    return ensureDataGroundingPrinciple(withActionProtocol)
+    return ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol))
   }
 
   const h1Match = withActionProtocol.match(/^# .+$/m)

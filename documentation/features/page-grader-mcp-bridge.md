@@ -49,10 +49,12 @@ Pixel resolves the named target before choosing an execution path:
   calls the selected tool through `use_mcp_tool`.
 
 An explicitly named Page Grader client overrides ambient chat campaign context.
-Before creating work, Pixel resolves or confirms the client and campaign. For a
-new campaign or launch, it retrieves existing Brain, Space, and Page Grader
-context before asking only for details that block a safe draft. It never
-invents the offer, objective, audience, timing, or source assets.
+Before creating work, Pixel resolves or confirms the client and campaign across
+the named client's own campaign Brain, Page Grader records, and matching Slack
+channel or Space evidence. A missing result in the ambient campaign is not
+evidence that the named client has no context. For a new campaign or launch,
+Pixel asks only for details still missing after those sources are checked. It
+never invents the offer, objective, audience, timing, or source assets.
 Pixel must not claim that a request was delegated or created until the tool
 response confirms a durable result. A missing server, unresolved target, or
 failed write is reported as a blocker rather than described as completed.
@@ -88,4 +90,6 @@ failed write is reported as a blocker rather than described as completed.
   integration name, after client and campaign resolution.
 - “Have Rafay build this funnel for Asura Group” creates Page Grader funnel
   fulfillment for the resolved Asura Group client with Rafay as the assignee,
-  regardless of the ambient ROAS campaign.
+  regardless of the ambient ROAS campaign. Pixel checks Asura Group's campaign
+  Brain, Page Grader records, and accessible Slack channel context before asking
+  the user for campaign information.

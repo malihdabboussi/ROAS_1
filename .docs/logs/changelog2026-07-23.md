@@ -108,3 +108,13 @@ Why: The live request to have Rafay build an Asura Group funnel loaded the corre
 Impact: Requests such as “Have Rafay build this funnel for Asura Group” resolve the named client and assignee through Page Grader, call the typed fulfillment tool, preserve the reference and brief, and only report success after Page Grader confirms the durable work record.
 
 Files: `packages/agent-policy/src/platform-tools-template.ts`, `docker/agents/vibey/skills/page-grader-operator/SKILL.md`, `docker/agents/atlas/skills/page-grader-operator/SKILL.md`, `apps/agent-api/src/modules/agent-sync/services/page-grader-human-fulfillment-routing.test.ts`, `supabase/migrations/20260723150500_fix_page_grader_human_fulfillment_routing.sql`, `documentation/features/page-grader-mcp-bridge.md`
+
+## [2026-07-23 15:11] - [FIX]
+
+What: Upgraded Pixel's always-loaded global delegation policy and Page Grader skill so bare names default to humans, named clients override ambient campaign context, and client context is resolved across the client's own campaign Brain, Page Grader records, and accessible Slack channel evidence.
+
+Why: A fresh Slack request for Rafay to build an Asura Group funnel still searched only the currently attached Multifamily Strategy campaign, never called Page Grader, and asked for information already available in Asura Group's campaign Brain, Page Grader account, and Slack channel.
+
+Impact: Pixel no longer pre-gates human owners through the ambient campaign team, substitutes an AI agent, or treats an unrelated campaign as the only Brain. Funnel requests now stay on the Page Grader fulfillment path and ask for clarification only after named-client sources are exhausted.
+
+Files: `packages/agent-policy/src/platform-tools-template.ts`, `packages/agent-policy/src/platform-tools-template.test.ts`, `packages/agent-policy/src/index.ts`, `docker/agents/vibey/skills/page-grader-operator/SKILL.md`, `docker/agents/atlas/skills/page-grader-operator/SKILL.md`, `apps/agent-api/src/modules/agent-sync/services/pixel-named-client-delegation.test.ts`, `supabase/migrations/20260723153000_fix_pixel_named_client_delegation.sql`, `documentation/features/page-grader-mcp-bridge.md`

@@ -12,7 +12,9 @@ when strategy or brand interpretation is required, and call out disagreements.
 ## Rules
 
 1. Resolve ambiguous names with `page_grader_list_clients`. An explicitly
-   named client overrides ambient campaign context.
+   named client overrides ambient campaign context. Resolve it across its own
+   campaign Brain, Page Grader records, and matching Slack channel context
+   before asking the user for information those sources can provide.
 2. Prefer the narrowest read tool. Include source dates and Meta snapshot
    freshness in the answer.
 3. Infer Page Grader when the user asks to build a funnel, landing page,
@@ -20,8 +22,9 @@ when strategy or brand interpretation is required, and call out disagreements.
    is named. Pass that person as the Page Grader assignee. Do not require the
    user to say "Page Grader".
 4. Resolve or confirm the client and campaign before a write. For a new
-   campaign or launch, retrieve known Brain, Space, and Page Grader context,
-   then ask only for missing details that block a safe draft.
+   campaign or launch, retrieve the named client's campaign Brain, Space, Page
+   Grader, and relevant Slack channel context, then ask only for missing
+   details that block a safe draft.
 5. Treat "launch a campaign" as a campaign draft or fulfillment request. Never
    silently publish ads or begin spend.
 6. Use a Slack event or ROAS action identifier as the idempotency key for every

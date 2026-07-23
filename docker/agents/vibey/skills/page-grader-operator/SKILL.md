@@ -17,6 +17,9 @@ own that work.
 - An explicitly named Page Grader client overrides the current ROAS campaign
   context. Resolve that client first and pass its exact identifier to later
   tools.
+- Resolve a named client across its own ROAS campaign Brain, Page Grader
+  client/campaign records, and matching Slack channel context Pixel can access.
+  Do not treat absence from the ambient chat campaign as absence from ROAS.
 - For an ambiguous or misspelled client, call
   `page_grader_list_clients` before another client-scoped tool.
 - Cross-reference Page Grader facts with ROAS Brain when interpretation,
@@ -55,10 +58,10 @@ own that work.
   fulfillment launch request. It never means silently publish ads or begin
   spend.
 - Before a write, resolve or confirm the client and campaign. For a new
-  campaign or launch, retrieve available Brain, Space, and Page Grader context
-  first, then ask only for missing details that block a safe draft. Do not
-  invent the offer, objective, audience, launch timing, source assets, budget,
-  owner, or due date.
+  campaign or launch, retrieve the named client's campaign Brain, Space, Page
+  Grader, and relevant Slack channel context first, then ask only for missing
+  details that block a safe draft. Do not invent the offer, objective,
+  audience, launch timing, source assets, budget, owner, or due date.
 - Build an idempotency key from the Slack event or ROAS action identifier so a
   retry cannot create a second campaign or task.
 - For a funnel fulfillment request, discover the current MCP schema and use
@@ -93,7 +96,8 @@ own that work.
   genuinely blocking missing information, then create the confirmed Page
   Grader work item.
 - "Have Rafay build a funnel similar to this Impact funnel for Asura Group" →
-  resolve Asura Group through Page Grader, keep the reference URL and known
-  client context in the description, create a Page Grader funnel fulfillment
-  request with `assignee_name:"Rafay"`, and report the confirmed record. Do not
-  search the ambient ROAS campaign team for Rafay.
+  resolve Asura Group through its own campaign Brain, Page Grader, and matching
+  Slack channel, keep the reference URL and known client context in the
+  description, create a Page Grader funnel fulfillment request with
+  `assignee_name:"Rafay"`, and report the confirmed record. Do not search the
+  ambient ROAS campaign team for Rafay.
