@@ -67,7 +67,7 @@ export function useSpaceActiveView(opts: {
   const isShareOnlySpace = Boolean(activeSpace?.share_meta)
   const canCustomizeViews = !isShareOnlySpace && canAccessEditorViews
 
-  const activeView = useMemo(() => {
+  const activeView = useMemo<ViewDef | null>(() => {
     if (!activeSchema) return null
     const allowedViews = activeShareAllowedViewIds
       ? activeSchema.views.filter((view) => activeShareAllowedViewIds.includes(view.id))
