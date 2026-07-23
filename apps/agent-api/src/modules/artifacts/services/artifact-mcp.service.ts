@@ -250,7 +250,10 @@ export class ArtifactMcpService {
   }
 
   private async resolveProjectId(supabase: any): Promise<string | null> {
-    return this.artifactMcpRepository.findFirstProjectId(supabase)
+    return (
+      (await this.artifactMcpRepository.findFirstEnabledMcpProjectId(supabase)) ??
+      this.artifactMcpRepository.findFirstProjectId(supabase)
+    )
   }
 
   private resolvePolicy(
