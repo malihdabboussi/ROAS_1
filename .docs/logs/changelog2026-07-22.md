@@ -226,3 +226,9 @@ What: Shipped Slack/Pixel intelligence to production main (e90f4586) then Fathom
 Why: Finish interrupted dual ship — Page Grader meetings bridge + Slack observation/signals/post-call delivery.
 Impact: `origin/main` at 21927be6; api.roas.io + app.roas.io on shipped SHAs; PG POST /clients/:id/meetings live; meetings catch-up scanned 35 / synced 15 / mapping-needed 20.
 Files: Page Grader Lovable `roas-api`; ROAS migrations 20260722111000/1126/1300(repaired)/1430; Vercel roas-api/roas-web; branches `codex/fathom-page-grader-meetings-release`, `codex/fathom-meetings-on-slack-main`.
+## [2026-07-22 22:32] - [FEATURE]
+
+What: Cherry-picked Programs hierarchy (Program → Campaign → Space), All Tasks rollup, hub/sidebar Clients+ROAS Ops grouping, and `20260722130000_programs` migration onto local `main` from `2ffabef5`.
+Why: Land ClickUp-style Programs on local main without a dirty full-branch merge of ads-research UI; preserve Team Agenda already on main.
+Impact: Local main has Programs module + `/all-tasks` + migration; Team Agenda (`getTeamAgendaWithMine`) retained. Not pushed.
+Files: cherry-pick of programs feature + `fetch-all-campaign-spaces` dependency; conflict resolves in `CampaignsHub.tsx`, `agent-follow-up-work.md`.
