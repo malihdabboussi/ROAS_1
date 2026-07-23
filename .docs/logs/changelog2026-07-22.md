@@ -266,3 +266,10 @@ Why: The Slack release itself passed focused tests, but the mandatory web ship g
 Impact: The full `@vibey/web` typecheck is green again, with no runtime behavior changes outside the Slack release.
 
 Files: deliverable preview tests, global chat and sidebar fixtures, mission-control fixtures, Space chat/source-call fixtures, Studio ChatInput and message-merge fixtures
+
+## [2026-07-22 23:38] - [FIX]
+
+What: Bound the consolidated Paid Ads active-view memo to the `ViewDef` contract so its Research workspace literal stays a valid `PaidAdsWorkspaceMode` during the production Next.js build.
+Why: Vercel correctly rejected the otherwise tested release because TypeScript widened the conditional Research override to a generic string at the Space container boundary.
+Impact: Analyze, Research, and Launch retain their typed workspace modes and the mission-experience web release can compile for production.
+Files: `apps/web/src/features/spaces/hooks/use-space-active-view.ts`
