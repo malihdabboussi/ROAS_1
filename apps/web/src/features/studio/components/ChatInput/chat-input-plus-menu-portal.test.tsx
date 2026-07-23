@@ -35,6 +35,7 @@ function defaultProps(overrides: Partial<Parameters<typeof ChatInputPlusMenuPort
     onLocalUpload: vi.fn(),
     onDrive: vi.fn(),
     onDropbox: vi.fn(),
+    onGenerateImage: vi.fn(),
     onCloseMenu: vi.fn(),
     onOpenAtMenu: vi.fn(),
     onToggleAgent: vi.fn(),
@@ -82,9 +83,7 @@ describe('ChatInputPlusMenuPortal', () => {
       </div>,
     )
 
-    fireEvent.mouseDown(
-      (props.portalTarget as HTMLElement).querySelector('.dropdown-menu-solid')!,
-    )
+    fireEvent.mouseDown((props.portalTarget as HTMLElement).querySelector('.dropdown-menu-solid')!)
     expect(onContainerMouseDown).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Media' }))

@@ -52,6 +52,7 @@ describe('useChatInputPlusController', () => {
         integrations: null,
         skills: null,
         access: null,
+        space: null,
       },
     }
     openPlusSubmenuPosition = vi.fn()
@@ -132,6 +133,7 @@ describe('useChatInputPlusController', () => {
         handleFileSelect,
         allSlashItems,
         onOpenAtMenu: handleComposerOpenAtMenu,
+        onGenerateImage: vi.fn(),
       }),
     )
 

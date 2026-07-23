@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createRef } from 'react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ChatInputNormalFooter } from './chat-input-normal-footer'
 
@@ -89,6 +89,7 @@ function defaultProps(overrides: Partial<Parameters<typeof ChatInputNormalFooter
       onLocalUpload: vi.fn(),
       onDrive: vi.fn(),
       onDropbox: vi.fn(),
+      onGenerateImage: vi.fn(),
       onCloseMenu: vi.fn(),
       onOpenAtMenu: vi.fn(),
       onToggleAgent: vi.fn(),

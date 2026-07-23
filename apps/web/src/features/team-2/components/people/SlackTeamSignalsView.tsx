@@ -309,28 +309,43 @@ export function SlackTeamSignalsView({
                   })}
                 </section>
               ) : null}
-              <div className="gap-spacing-2 mt-auto flex flex-wrap items-center">
-                <span className="badge-glass badge-glass-muted body-4 capitalize">
-                  {selected.status}
-                </span>
-                {selected.status === 'proposed' ? (
-                  <button
-                    type="button"
-                    aria-label="Dismiss team signal"
-                    className="button-compact button-glass-neutral"
-                    onClick={() => onReview(selected.id, 'dismissed')}
-                  >
-                    Dismiss
-                  </button>
-                ) : null}
-              </div>
+              <section className="surface-card border-border p-spacing-3 rounded-spacing-3 mt-auto border">
+                <p className="body-4 text-muted-foreground">
+                  {SLACK_PEOPLE_MESSAGES.SIGNAL_REVIEW_HELP}
+                </p>
+                <div className="gap-spacing-2 mt-spacing-2 flex flex-wrap items-center">
+                  <span className="badge-glass badge-glass-muted body-4 capitalize">
+                    {selected.status}
+                  </span>
+                  {selected.status === 'proposed' ? (
+                    <>
+                      <button
+                        type="button"
+                        className="button-compact button-glass-accent"
+                        onClick={() => onReview(selected.id, 'approved')}
+                      >
+                        Mark reviewed
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Dismiss team signal"
+                        className="button-compact button-glass-neutral"
+                        onClick={() => onReview(selected.id, 'dismissed')}
+                      >
+                        Dismiss
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              </section>
             </div>
           ) : (
             <div className="p-spacing-6 flex flex-1 flex-col items-center justify-center text-center">
               <Radio className="icon-lg text-muted-foreground" />
               <p className="body-2 text-foreground mt-spacing-3 font-medium">Select a signal</p>
               <p className="body-4 text-muted-foreground mt-spacing-1 max-w-md">
-                Choose a finding from the list to read the rationale and approve or dismiss it.
+                Choose a finding to inspect its evidence, teach Pixel how to handle it, or mark it
+                reviewed.
               </p>
             </div>
           )}

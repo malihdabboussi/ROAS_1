@@ -100,6 +100,19 @@ export function safeHost(baseUrl: string): string | null {
   }
 }
 
+export function derivePageGraderMcpUrl(baseUrl: string): string {
+  const url = new URL(baseUrl.trim())
+  url.search = ''
+  url.hash = ''
+  url.pathname = url.pathname.replace(/\/+$/, '').replace(/\/roas-api$/i, '/page-grader-mcp')
+  if (!url.pathname.endsWith('/page-grader-mcp')) {
+    throw new BadRequestException(
+      'Page Grader API URL must end in /roas-api so its MCP endpoint can be derived',
+    )
+  }
+  return url.toString().replace(/\/$/, '')
+}
+
 export function mapRoasPriority(raw: unknown): string {
   const value = String(raw ?? '')
     .trim()

@@ -246,3 +246,23 @@ What: Turned the Ads Research production path into persisted mission actions, ad
 Why: The existing production path described a process but could not select concepts, record approval, advance work, or show downstream progress; other playbooks still required interpreting a flat task list; Paid Ads and Ads Research duplicated navigation.
 Impact: Users can select named concepts and recording/design routes, approve the source research gate, start a linked idempotent Meta Launch mission, follow real paused-build/activation progress, review Webinar phases with linked outputs and exact gate actions, and use one Paid Ads surface without deleting legacy research configuration.
 Files: `apps/web/src/features/spaces/components/ads-research/**`, `apps/web/src/features/spaces/components/mission-views/**`, `apps/web/src/features/spaces/components/MissionsView.tsx`, `apps/web/src/features/spaces/components/artifacts/paid-ads/PaidAdsSpaceView.tsx`, `apps/web/src/features/spaces/hooks/use-space-active-view.ts`, `apps/web/src/features/spaces/lib/ads-research-production.ts`, `apps/web/src/features/spaces/lib/mission-view-registry.ts`, `apps/web/src/features/spaces/lib/paid-ads-display-mode.ts`, Paid Ads types/toolbars/tests, `apps/mission-worker/src/modules/missions/playbooks/meta-ads-launch.playbook.ts`, feature docs.
+
+## [2026-07-22 23:05] - [FEATURE]
+
+What: Separated recipient-less Slack findings from person Conversations, added linked Internal workspace-owner Shadow follow-ups for external-subject signals, redesigned Channels as a persistent list-and-conversation inbox, and added automatic/jump-to-latest conversation scrolling. Moved the unified analyzer to a five-minute cursor cadence and rejected findings below 80% confidence.
+
+Why: Team Signals were appearing as unactionable “Unknown person” messages, channel review required navigation back and forth, old timelines opened at the top, and the 15-minute cadence made safe Shadow behavior feel inactive.
+
+Impact: External people remain impossible outbound targets; administrators review evidence in Signals while actionable internal drafts appear under the correct teammate. Conversations and Channels open at current activity, and faster observation does not reprocess old events or spend model tokens on empty runs.
+
+Files: `SlackShadowConversationView.tsx`, `SlackShadowInbox.tsx`, `SlackChannelsView.tsx`, `SlackPersonConversation.tsx`, `use-latest-message-scroll.ts`, `slack-team-loop.service.ts`, `slack-team-loop-analysis.ts`, `space-automation-template-catalog-team.ts`, `20260722230500_accelerate_slack_team_intelligence.sql`, focused tests, Slack automation documentation
+
+## [2026-07-22 23:06] - [FIX]
+
+What: Restored the web production typecheck by removing orphaned future-feature test fragments and aligning stale test fixtures with their current component and shared type contracts.
+
+Why: The Slack release itself passed focused tests, but the mandatory web ship gate was blocked by unrelated test-only drift on `origin/main`.
+
+Impact: The full `@vibey/web` typecheck is green again, with no runtime behavior changes outside the Slack release.
+
+Files: deliverable preview tests, global chat and sidebar fixtures, mission-control fixtures, Space chat/source-call fixtures, Studio ChatInput and message-merge fixtures

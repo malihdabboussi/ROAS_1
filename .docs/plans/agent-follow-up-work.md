@@ -7941,12 +7941,14 @@ Files:
 
 ## 2026-07-22 - [ARCH] Restore the web typecheck baseline
 
-Status: Open
+Status: Resolved 2026-07-22
 Found while: Reorganizing the Ads Research run and report UI
 Files: `apps/web/src/components/deliverables/*.test.tsx`, `apps/web/src/components/global-chat/config/work-context.config.test.ts`, `apps/web/src/features/studio/**/*.test.tsx`, `packages/context-breakdown/src/index.ts`, and other unrelated web test fixtures reported by `pnpm --filter @vibey/web typecheck`
 Evidence: The focused Ads Research tests and lint pass, and the typecheck reports no Ads Research errors, but the full web typecheck exits with pre-existing fixture/API drift and a missing `js-tiktoken` module across unrelated deliverables, chat, Studio, sidebar, and context-breakdown surfaces.
 Needed work: Reconcile the stale test fixtures with their current component contracts, restore the context-breakdown dependency, and rerun the full web typecheck until green.
 Reason not done now: Those failures are outside the Ads Research UI and span multiple concurrently changing product surfaces.
+
+Resolution: Removed incomplete future-feature test fragments, updated the remaining fixtures to current contracts, installed the locked workspace dependencies, and verified `pnpm --filter @vibey/web typecheck` plus 59 focused regression tests.
 
 ## 2026-07-22 — Slack ship LOC deferrals
 - Feature/app: Slack / Spaces automations (apps/web + apps/api)
@@ -7958,4 +7960,3 @@ Reason not done now: Those failures are outside the Ads Research UI and span mul
 ## 2026-07-22 — Migration version collision note
 - `20260722130000` was previously recorded as name `programs` without Slack objects; Slack SQL was applied in place and history name updated to `slack_signal_training_and_channel_coverage`
 - Follow-up: ensure future migrations never reuse timestamps; consider renaming programs migration in repo history if a separate programs file exists elsewhere
-

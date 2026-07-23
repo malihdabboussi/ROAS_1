@@ -31,6 +31,7 @@ import {
 } from '../dto/page-grader.dto'
 import { PageGraderApiService } from '../services/page-grader-api.service'
 import { PageGraderBrainImportService } from '../services/page-grader-brain-import.service'
+import { PageGraderMcpRegistrationService } from '../services/page-grader-mcp-registration.service'
 import { PageGraderMeetingSyncService } from '../services/page-grader-meeting-sync.service'
 
 @Controller('integrations/page-grader')
@@ -40,6 +41,7 @@ export class PageGraderController {
     private readonly api: PageGraderApiService,
     private readonly brainImport: PageGraderBrainImportService,
     private readonly meetingSync: PageGraderMeetingSyncService,
+    private readonly mcpRegistration: PageGraderMcpRegistrationService,
   ) {}
   @Get('status')
   @RequireOrgRole('viewer')
@@ -49,7 +51,12 @@ export class PageGraderController {
   }
   @Post('connect')
   @RequireOrgRole('editor')
-  async connect(@CurrentUser() user: { id: string }, @Body() body: unknown) {
+  async connect(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Body() body: unknown,
+  ) {
     const validation = ConnectPageGraderSchema.safeParse(body)
     if (!validation.success) {
       throw new HttpException(
@@ -58,7 +65,14 @@ export class PageGraderController {
       )
     }
     const result = await this.api.connect(user.id, validation.data.baseUrl, validation.data.apiKey)
-    return { success: true, ...result }
+    const mcp = await this.mcpRegistration.ensure({
+      supabase,
+      user,
+      scope,
+      baseUrl: validation.data.baseUrl,
+      apiKey: validation.data.apiKey,
+    })
+    return { success: true, ...result, mcp }
   }
   @Post('disconnect')
   @RequireOrgRole('editor')

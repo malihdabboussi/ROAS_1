@@ -14,6 +14,7 @@ function createOptions() {
       integrations: null,
       skills: null,
       access: null,
+      space: null,
     } satisfies Record<PlusSubmenuId, HTMLButtonElement | null>,
   }
   const portalTarget = document.createElement('div')
@@ -46,6 +47,7 @@ function createOptions() {
     onLocalUpload: vi.fn(),
     onDrive: vi.fn(),
     onDropbox: vi.fn(),
+    onGenerateImage: vi.fn(),
     onCloseMenu: vi.fn(),
     onOpenAtMenu: vi.fn(),
     handleToggleAgent: vi.fn(),
