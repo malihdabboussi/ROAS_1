@@ -11,7 +11,7 @@ First production loop for the always-aware Slack agent: Fathom call lands in Mee
 | DM with purpose / takeaways / owners / Fathom link     | Working                                                                                                    |
 | ✅ `white_check_mark` → stamp follow-ups in ROAS       | Working                                                                                                    |
 | Shareable thread recap after ✅                        | Pixel-written, exact approved draft reused                                                                 |
-| Database-backed `post-call-delivery` skill             | Implemented; migration required                                                                            |
+| Database-backed `post-call-delivery` skill             | Implemented; runtime copy and production row synchronized                                                   |
 | Shadow proposal in Team → People → Conversations       | Implemented                                                                                                |
 | Flow-level Shadow / Active delivery                    | Implemented; Shadow processes without Slack sends, Active sends eligible internal reminders                |
 | Slack org token resolution (personal call + org Slack) | Fixed                                                                                                      |
@@ -214,6 +214,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 | `apps/agent-api/src/modules/task-agent/services/task-agent-suggestions.service.ts`               | Synchronous Pixel post-call draft using the required skill                  |
 | `docker/agents/vibey/skills/post-call-delivery/SKILL.md`                                         | Runtime/bootstrap copy of the post-call skill                               |
 | `supabase/migrations/20260720234500_vibey_post_call_delivery_skill.sql`                          | Database-backed system skill                                                |
+| `supabase/migrations/20260722223500_sync_post_call_delivery_skill.sql`                           | Synchronizes the live system skill with the runtime copy                    |
 | `apps/api/src/modules/slack/repositories/slack-people.repository.ts`                             | Persists/advances the Shadow proposal ledger                                |
 | `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx`                             | People / Conversations / Signals / Channels entry points                    |
 | `apps/web/src/features/team-2/components/people/SlackPeopleViewsNav.tsx`                         | People views tab strip + Conversations/Signals to-review badges             |

@@ -210,3 +210,13 @@ What: Merged the complete Ads Research report experience into current local `mai
 Why: Ads Research needed to explain what Blaze researched, make the next production action obvious, and show useful creative evidence before spending additional analysis credits.
 Impact: Users can review research-to-launch at a glance, inspect creatives without leaving ROAS, open supporting outputs directly, and request deeper transcript and formula extraction only when needed.
 Files: `apps/web/src/features/spaces/components/ads-research/**`, `apps/web/src/features/spaces/config/ads-research-messages.config.ts`, focused tests, `documentation/features/social-research.md`, `.docs/plans/agent-follow-up-work.md`
+
+## [2026-07-22 22:35] - [FIX]
+
+What: Added an idempotent production migration that synchronizes Pixel's database-backed `post-call-delivery` system skill with its checked-in runtime skill.
+
+Why: The runtime skill already required top-positioned `Call report` links, timestamp-first Fathom links, canonical names, exact Shadow drafts, and revision-before-approval, but the live `agent_skills` row could still contain the older prompt.
+
+Impact: Pixel's post-call drafts now use the same grounded recap, revision, naming, and Shadow-safety instructions regardless of whether the skill is loaded from the database or runtime bootstrap.
+
+Files: `20260722223500_sync_post_call_delivery_skill.sql`, migration order, meeting follow-up documentation
