@@ -154,7 +154,7 @@ export class PageGraderMcpBootstrapService implements OnModuleInit {
       description: MCP_DESCRIPTION,
       server_url: serverUrl,
       vault_secret_id: secretId,
-      domain: 'universal',
+      domain: 'shared',
       enabled: true,
       agent_enabled: true,
     }

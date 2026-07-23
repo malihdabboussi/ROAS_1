@@ -177,7 +177,7 @@ export class McpServersService {
         await this.mcpServersRepository.updateServerFields(supabase, serverId, project.id, {
           enabled: true,
           agent_enabled: body.agent_enabled ?? true,
-          domain: body.domain ?? 'universal',
+          domain: body.domain ?? 'shared',
         })
       }
       return created
@@ -223,7 +223,7 @@ export class McpServersService {
       {
         name: body.name,
         description: body.description ?? existing.description,
-        domain: body.domain ?? existing.domain ?? 'operations',
+        domain: body.domain ?? existing.domain ?? 'shared',
         enabled: true,
         agent_enabled: body.agent_enabled ?? true,
         vault_secret_id: vaultSecretId,

@@ -85,4 +85,23 @@ describe('McpConfigService', () => {
     expect(toolService.listTools).toHaveBeenCalledWith(serverRow, supabase, 'secret-token')
     expect(result.server.cached_tools).toEqual([{ name: 'search', description: 'Search docs' }])
   })
+
+  it('makes shared MCP servers available across agent domains', async () => {
+    const servers = [
+      { id: 'shared', domain: 'shared' },
+      { id: 'matching', domain: 'marketing' },
+      { id: 'other', domain: 'developer' },
+    ]
+    const repository = {
+      listEnabledServersForAgent: vi.fn(async () => ({
+        servers,
+        errorMessage: null,
+      })),
+    }
+    const service = new McpConfigService({} as never, repository as never)
+
+    const result = await service.getEnabledServersForAgent({} as never, 'project-1', 'marketing')
+
+    expect(result.map((server) => server.id)).toEqual(['shared', 'matching'])
+  })
 })
