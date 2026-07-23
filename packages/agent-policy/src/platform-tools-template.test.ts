@@ -3,6 +3,7 @@ import { ACTION_CONTRACT_PROTOCOL_HEADING } from './action-contract-protocol.js'
 import {
   ensurePlatformToolsRuntimeGuidance,
   hasPlatformToolsRuntimeGuidance,
+  PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING,
   PLATFORM_TOOLS_DEFAULT_MD,
   PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING,
   PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING,
@@ -69,6 +70,9 @@ describe('platform tools template', () => {
       'Do not narrate tool selection or execution between tool calls',
     )
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('return one concise result after the work finishes')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Slack does not reliably render Markdown tables')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Date — Spend: $328')
     expect(PLATFORM_TOOLS_DEFAULT_MD).not.toContain('**State**')
     expect(PLATFORM_TOOLS_DEFAULT_MD.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)).toBeLessThan(
       PLATFORM_TOOLS_DEFAULT_MD.indexOf(ACTION_CONTRACT_PROTOCOL_HEADING),
@@ -146,7 +150,10 @@ For unclear, destructive, publish/send, or expensive actions:
     expect(repaired).toContain('campaign Brain, Page Grader, and relevant Slack channel')
     expect(repaired).toContain('call Page Grader the "ROAS portal"')
     expect(repaired).toContain('Do not narrate tool selection or execution between tool calls')
+    expect(repaired).toContain(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)
+    expect(repaired).toContain('Slack does not reliably render Markdown tables')
     expect(repaired.split(PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING)).toHaveLength(2)
+    expect(repaired.split(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)).toHaveLength(2)
     expect(second).toBe(repaired)
   })
 

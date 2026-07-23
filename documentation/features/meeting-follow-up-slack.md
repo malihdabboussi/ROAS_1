@@ -17,6 +17,7 @@ First production loop for the always-aware Slack agent: Fathom call lands in Mee
 | Slack org token resolution (personal call + org Slack) | Fixed                                                                                                      |
 | Topics truncation mid-word                             | Fixed (brief skips Topics dump)                                                                            |
 | Fathom markdown links → Slack mrkdwn                   | Fixed                                                                                                      |
+| Markdown tables in Pixel replies                       | Fixed; Slack delivery converts them to compact labeled bullets                                             |
 | Owner names as linked bullets                          | Fixed (headers + nested tasks)                                                                             |
 | Friendly human recap voice                             | Implemented through the post-call skill                                                                    |
 | Thread-reply revise loop                               | Implemented for pending post-call drafts                                                                   |
@@ -217,6 +218,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 ### Slack context and delegation contract
 
 - Slack is organization-scoped. Ambient campaign context is a retrieval hint, never a lock.
+- Slack replies use compact labeled bullets for row-based data. Markdown tables remain available on portal surfaces, but Pixel's Slack delivery formatter converts any pipe table that slips through before posting.
 - If Dylan names `Asura Group` (or another client/campaign), Pixel must call `search_campaign_brain` with that explicit campaign name/id instead of continuing to query the prior campaign.
 - Cross-campaign Brain reads resolve the named campaign without changing the Slack
   conversation's active campaign. This prevents one client lookup from leaking into
@@ -339,6 +341,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-22:** Flow History distinguishes skipped/no-activity/analyzed/proposed outcomes. Manage People exposes channel-level workflow and risk signals with rationale and exact Slack evidence even when a proposal has no individual recipient.
 - **2026-07-22:** Newly discovered Slack identities fail safe as External unless matched to a portal teammate or manually classified. Signal creation resolves Slack IDs to names and snapshots channel/person/time/source text so later review never depends on mutable Slack lookup state.
 - **2026-07-22:** Recipient-less findings are Signals, never “Unknown person” conversations. External-subject Signals may create a linked Internal workspace-owner Shadow draft, but Pixel cannot target the external subject. The unified analyzer runs every five minutes from its exact cursor and rejects findings below 80% confidence.
+- **2026-07-23:** Slack does not receive raw Markdown tables. Pixel is instructed to use labeled metric bullets in Slack, and the final Slack formatter deterministically converts any remaining pipe table before delivery.
 
 ## Related
 

@@ -20,6 +20,14 @@ export const PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_DELEGA
 - Do not tell the user work was assigned, delegated, or completed until the tool result confirms the effect and identifies the created work or equivalent durable result.
 - Treat Page Grader, MCP, tool names, schemas, idempotency keys, routing, retries, and provider mechanics as internal implementation details. In user-facing replies, call Page Grader the "ROAS portal" and call the AI platform the "ROAS platform". Never expose MCP, tool names, schemas, idempotency keys, routing, retries, or provider mechanics.
 - Do not narrate tool selection or execution between tool calls. Put short progress only in structured tool labels. In chat, return one concise result after the work finishes: what happened, who owns it, the relevant client or campaign, and the next step. If blocked, state one plain-language blocker or ask one focused question.`
+export const PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING = '### Slack Output Formatting'
+export const PLATFORM_TOOLS_CHANNEL_FORMATTING_BLOCK = `${PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING}
+
+Slack does not reliably render Markdown tables. When replying in Slack, express rows as compact labeled bullets instead of pipe-delimited table syntax.
+
+Example: \`• Date — Spend: $328 · Leads: 42 · CPL: $7.82 · CTR: 2.38%\`
+
+Keep real Markdown tables for surfaces that render them, such as portal documents.`
 
 export const PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING}
 
@@ -75,6 +83,8 @@ For multi-step work:
 - Use tasks or missions only when the user asks for tracked work, ownership, status, or async execution.
 
 ${PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK}
+
+${PLATFORM_TOOLS_CHANNEL_FORMATTING_BLOCK}
 
 For unclear, destructive, publish/send, or expensive actions:
 - Ask a focused clarification or use the platform approval flow before acting.`
@@ -149,10 +159,23 @@ function ensureDelegationGuidance(content: string): string {
   return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_DELEGATION_GUIDANCE_BLOCK}${content.slice(insertAt)}`
 }
 
+function ensureChannelFormattingGuidance(content: string): string {
+  const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
+  if (runtimeStart === -1 || content.includes(PLATFORM_TOOLS_CHANNEL_FORMATTING_BLOCK)) {
+    return content
+  }
+
+  const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
+  const insertAt = unclearStart === -1 ? content.length : unclearStart
+  return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_CHANNEL_FORMATTING_BLOCK}${content.slice(insertAt)}`
+}
+
 export function ensurePlatformToolsRuntimeGuidance(content: string): string {
   const withActionProtocol = prependActionContractProtocol(content)
   if (hasPlatformToolsRuntimeGuidance(withActionProtocol)) {
-    return ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol))
+    return ensureChannelFormattingGuidance(
+      ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+    )
   }
 
   const h1Match = withActionProtocol.match(/^# .+$/m)

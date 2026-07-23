@@ -138,3 +138,13 @@ Why: A multi-tool funnel request streamed Page Grader, MCP, schema, idempotency,
 Impact: Pixel can still use the same internal tools and safety controls, but users see the business outcome, owner, client or campaign, and next step instead of implementation mechanics.
 
 Files: `packages/agent-policy/src/platform-tools-template.ts`, `packages/agent-policy/src/platform-tools-template.test.ts`, `docker/agents/vibey/skills/page-grader-operator/SKILL.md`, `docker/agents/atlas/skills/page-grader-operator/SKILL.md`, `apps/agent-api/src/modules/agent-sync/services/pixel-user-facing-tool-language.test.ts`, `apps/api/src/modules/spaces/services/meeting-follow-up-slack-message.ts`, `apps/api/src/modules/spaces/services/__tests__/meeting-follow-up-slack-message-language.test.ts`, `supabase/migrations/20260723160000_hide_pixel_tool_execution_language.sql`, `documentation/features/page-grader-mcp-bridge.md`
+
+## [2026-07-23 16:06] - [FIX]
+
+What: Added Slack-safe row formatting to Pixel's global instructions and final outbound formatter. Markdown tables are now converted into compact labeled bullets while fenced code remains unchanged.
+
+Why: Slack displayed valid Markdown table pipes and separator rows as raw text, making campaign metrics difficult to scan.
+
+Impact: Pixel's Slack reports remain readable even when a model emits a Markdown table. Portal documents can continue using real Markdown tables.
+
+Files: `apps/api/src/modules/slack/services/slack-markdown-to-mrkdwn.ts`, `apps/api/src/modules/slack/services/__tests__/slack-markdown-to-mrkdwn.test.ts`, `packages/agent-policy/src/platform-tools-template.ts`, `packages/agent-policy/src/platform-tools-template.test.ts`, `supabase/migrations/20260723161000_slack_safe_table_formatting.sql`, `documentation/features/meeting-follow-up-slack.md`
