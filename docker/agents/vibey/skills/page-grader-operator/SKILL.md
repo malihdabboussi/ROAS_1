@@ -1,8 +1,9 @@
 # Page Grader Operator
 
 Use this skill when a Slack or ROAS user asks about a Page Grader client,
-campaign, fulfillment task, client meeting, portal memory, or Page Grader's
-cached Meta reporting.
+campaign, fulfillment task, client meeting, portal memory, cached Meta
+reporting, or asks to build a funnel, landing page, campaign page, or related
+fulfillment deliverable without naming Page Grader.
 
 ## Source routing
 
@@ -33,6 +34,10 @@ cached Meta reporting.
 
 ## Taking action
 
+- Infer Page Grader from the requested deliverable. When the user says "I need
+  this funnel built" or asks for a landing page or campaign page without naming
+  a human or managed ROAS AI agent, use Page Grader MCP. Do not require the
+  user to know or say "Page Grader".
 - When the user says "delegate to PageGrader", treat Page Grader as the
   connected MCP service, not as a ROAS AI agent. Call `list_mcp_tools` for the
   `Page Grader` server, copy the exact write-tool schema, then call
@@ -43,8 +48,11 @@ cached Meta reporting.
 - "Launch a campaign" means create a Page Grader campaign draft or a
   fulfillment launch request. It never means silently publish ads or begin
   spend.
-- Before a write, restate the client, intended result, and important supplied
-  constraints. Do not invent budget, owner, due date, or campaign details.
+- Before a write, resolve or confirm the client and campaign. For a new
+  campaign or launch, retrieve available Brain, Space, and Page Grader context
+  first, then ask only for missing details that block a safe draft. Do not
+  invent the offer, objective, audience, launch timing, source assets, budget,
+  owner, or due date.
 - Build an idempotency key from the Slack event or ROAS action identifier so a
   retry cannot create a second campaign or task.
 - Report the created Page Grader record and its current workflow state.
@@ -70,3 +78,7 @@ cached Meta reporting.
 - "Delegate this Asura Group funnel to PageGrader" → list Page Grader MCP
   tools, select the exact fulfillment/campaign write tool, call it with Asura
   Group's resolved identifier, and report only the confirmed result.
+- "I need this funnel built for Asura Group" → infer Page Grader, resolve Asura
+  Group and its campaign, retrieve known campaign details, ask only for
+  genuinely blocking missing information, then create the confirmed Page
+  Grader work item.

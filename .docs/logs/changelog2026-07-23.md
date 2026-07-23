@@ -21,3 +21,13 @@
 **Impact:** An administrator explicitly saves a person type once and must enter Edit mode to change it. Signals can be rechecked against current Slack replies/reactions before planning. Pixel can draft an Internal DM, group DM, source-thread reply, broadcast, or channel message while keeping every result in Shadow until approval. Named clients such as Asura Group override ambient Slack campaign context.
 
 **Files:** `apps/api/src/modules/slack/**`, `apps/web/src/features/team-2/**`, `docker/agents/vibey/skills/slack-signal-operator/SKILL.md`, `supabase/migrations/20260723143000_preserve_slack_people_classifications.sql`, `supabase/migrations/20260723143100_slack_signal_operator_routing_skill.sql`, and `documentation/features/meeting-follow-up-slack.md`.
+
+## [2026-07-23 12:19] - [FIX]
+
+**What:** Made Pixel infer Page Grader for funnel, landing-page, campaign-page, and related fulfillment requests even when the user does not name the integration. Added client/campaign resolution and launch-detail grounding rules. Removed the retired Vibey name from generic, credits, and expired-session Slack failures.
+
+**Why:** Natural requests such as “I need this funnel built” could fall into generic agent delegation because Page Grader routing depended on the integration being named. Slack errors also exposed an obsolete product name.
+
+**Impact:** Explicit humans still receive assigned tasks, managed AI agents still receive agent delegation, and unassigned fulfillment outcomes route through Page Grader MCP after the minimum client/campaign grounding. Slack failures now stay consistent with Pixel.
+
+**Files:** `packages/agent-policy/src/platform-tools-template.ts`, `docker/agents/{vibey,atlas}/skills/page-grader-operator/SKILL.md`, `supabase/migrations/20260723124500_page_grader_delegation_routing_skill.sql`, `apps/api/src/modules/slack/services/slack-service.shared.ts`, `apps/api/src/modules/slack/services/slack-service-events.base.ts`, tests, and feature documentation.

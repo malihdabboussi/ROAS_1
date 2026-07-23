@@ -23,10 +23,10 @@ First production loop for the always-aware Slack agent: Fathom call lands in Mee
 | Pixel channel directory + channel/thread timelines     | Implemented; app deployment required                                                                       |
 | Person Brains in global Brain navigation               | Implemented; app deployment required                                                                       |
 | Scheduled proactive Team loops                         | Installed in Shadow; live history polling is rate-limited and requires the shared observation stream below |
-| Signal resolution refresh                              | Implemented; rechecks source-thread replies and explicit checkmark reactions before planning                 |
-| Internal / External / Ignored classification           | Manual classifications are durable; inferred records require an explicit first save                          |
-| Signal action routing                                  | Internal DM, group DM, source thread, thread broadcast, and source channel remain Shadow until approval       |
-| Named campaign Brain routing from Slack                | Explicit client/campaign names override ambient campaign context                                              |
+| Signal resolution refresh                              | Implemented; rechecks source-thread replies and explicit checkmark reactions before planning               |
+| Internal / External / Ignored classification           | Manual classifications are durable; inferred records require an explicit first save                        |
+| Signal action routing                                  | Internal DM, group DM, source thread, thread broadcast, and source channel remain Shadow until approval    |
+| Named campaign Brain routing from Slack                | Explicit client/campaign names override ambient campaign context                                           |
 | Auto-post to a channel                                 | Not yet                                                                                                    |
 | Page Grader dispatch on confirm                        | Fulfillment candidates only; conservative client/assignee resolution                                       |
 
@@ -218,8 +218,10 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 
 - Slack is organization-scoped. Ambient campaign context is a retrieval hint, never a lock.
 - If Dylan names `Asura Group` (or another client/campaign), Pixel must call `search_campaign_brain` with that explicit campaign name/id instead of continuing to query the prior campaign.
-- Human teammate work creates a durable human-assigned task. Managed AI-agent work uses agent delegation. Page Grader work uses its connected MCP tool surface.
+- Human teammate work creates a durable human-assigned task. Managed AI-agent work uses agent delegation. Funnel, landing-page, campaign-page, and related fulfillment requests without a named human/agent infer Page Grader and use its connected MCP tool surface; the user does not need to name the integration.
+- Page Grader writes resolve or confirm the client and campaign first. New campaigns and launches reuse known Brain, Space, and Page Grader context, then ask only for genuinely blocking missing details.
 - Pixel may report delegation success only after the selected tool confirms a durable result.
+- Slack-facing failures use Pixel/product-neutral language; the retired Vibey product name is not shown to Slack users.
 
 ## File map (what we built / touched)
 

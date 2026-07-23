@@ -625,8 +625,24 @@ describe('SlackService media helpers', () => {
       const { svc } = createService()
 
       expect((svc as any).userFacingSlackError('unexpected')).toBe(
-        "I couldn't process this message. Try again or check the Vibey app.",
+        "I couldn't process this message. Try again in a moment.",
       )
+    })
+
+    it('keeps old Vibey branding out of every user-facing Slack failure', () => {
+      const { svc } = createService()
+      const messages = [
+        (svc as any).userFacingSlackError('credits_exhausted'),
+        (svc as any).userFacingSlackError('Agent API returned 401 (token_expired)'),
+        (svc as any).userFacingSlackError('unexpected'),
+      ]
+
+      expect(messages).toEqual([
+        "I'm out of credits for this account. Add credits in the app, then send this again.",
+        'Your Slack connection expired. Reconnect Slack in Settings to continue.',
+        "I couldn't process this message. Try again in a moment.",
+      ])
+      expect(messages.join(' ')).not.toMatch(/vibey/i)
     })
   })
 })

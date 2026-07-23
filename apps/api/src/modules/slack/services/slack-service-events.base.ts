@@ -527,7 +527,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
   protected userFacingSlackError(message: string): string {
     if (this.isCreditsExhaustedMessage(message)) return CREDITS_EXHAUSTED_SLACK_MESSAGE
     if (message.includes('token_expired')) {
-      return 'Your Vibey session expired. Reconnect Slack in Settings to continue.'
+      return 'Your Slack connection expired. Reconnect Slack in Settings to continue.'
     }
     if (
       message.includes('UserMachineUnreachableError') ||

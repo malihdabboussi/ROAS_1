@@ -37,11 +37,18 @@ Pixel resolves the named target before choosing an execution path:
 
 - A human teammate receives a durable assigned ROAS task.
 - A managed ROAS AI agent receives `ask_agent` or `delegate_to_agent`.
-- An explicit request to “delegate to PageGrader” uses the connected
-  `Page Grader` MCP server. Pixel lists that server’s live tools, follows the
-  returned write schema, and calls the selected tool through `use_mcp_tool`.
+- A funnel, landing page, campaign page, or related fulfillment request with
+  no named human or managed AI agent uses the connected `Page Grader` MCP
+  server. The user does not need to know or say “Page Grader.”
+- An explicit request to “delegate to PageGrader” follows the same MCP path.
+  Pixel lists that server’s live tools, follows the returned write schema, and
+  calls the selected tool through `use_mcp_tool`.
 
 An explicitly named Page Grader client overrides ambient chat campaign context.
+Before creating work, Pixel resolves or confirms the client and campaign. For a
+new campaign or launch, it retrieves existing Brain, Space, and Page Grader
+context before asking only for details that block a safe draft. It never
+invents the offer, objective, audience, timing, or source assets.
 Pixel must not claim that a request was delegated or created until the tool
 response confirms a durable result. A missing server, unresolved target, or
 failed write is reported as a blocker rather than described as completed.
@@ -73,3 +80,5 @@ failed write is reported as a blocker rather than described as completed.
 - No test publishes an ad or begins spend.
 - PageGrader delegation creates an audited Page Grader record rather than a
   `delegate_to_agent` session.
+- “I need this funnel built” routes to Page Grader without requiring the
+  integration name, after client and campaign resolution.
