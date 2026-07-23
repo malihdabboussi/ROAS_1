@@ -1,0 +1,18 @@
+# Keep CLI archive deploys small (local junk not needed on Vercel).
+.worktrees/
+.next/
+**/.next/
+apps/web/.next/
+apps/openclaw/node_modules/
+Ad Swipe Files/
+.pnpm-store/
+.claude/
+.docs/
+documentation/
+product-video/
+docker/
+.agents/
+.documentation/
+*.patch
+tmp/
+run/

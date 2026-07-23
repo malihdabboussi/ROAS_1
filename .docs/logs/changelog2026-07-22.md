@@ -1,5 +1,19 @@
 # Changelog - July 22, 2026
 
+## [2026-07-22 23:20] - [FIX]
+
+What: Granted `authenticated` + `service_role` CRUD on `public.programs` (`20260723120000_programs_grants`) and backfilled the same GRANTs into `20260722130000_programs.sql`. Canceled competing `roas-api` BUILDING deploy from `codex/post-call-skill-sync` that would have overwritten Team Agenda.
+Why: Programs migration enabled RLS but never GRANTed table privileges, so live `/api/programs` 500'd with `permission denied for table programs`.
+Impact: Auth org smoke now returns Clients (26 campaigns) + ROAS Ops. Team Agenda still live: scope=team 29 events / 19 accounts vs scope=personal 15 / 2.
+Files: `supabase/migrations/20260723120000_programs_grants.sql`, `supabase/migrations/20260722130000_programs.sql`
+
+## [2026-07-22 23:15] - [OPS]
+
+What: Shipped Programs to ROAS production. Migration `20260722130000_programs` already applied on Supabase `lhfgtsjetcardinpgouq` (4 seed rows: Clients + ROAS Ops × 2 orgs; `campaigns.program_id` backfilled). Archive-deployed local main (Programs + Team Agenda) — `roas-api` `dpl_4YtTQ71vr3qVtiTNQgoGPh3CwR3X` → api.roas.io; `roas-web` `dpl_AQEqCehwf7JmwXwXcEDG8kAAESG5` → app.roas.io. Fixed web build TS (`program_id` on `campaignToSidebarRow`). Canceled competing git/CLI promotes that would steal the alias without Programs/Team Agenda. No origin push.
+Why: User approved migration + deploy so Campaigns hub Clients/ROAS Ops and `/all-tasks` show in production.
+Impact: Hard-refresh app.roas.io → Campaigns (program sections) and `/all-tasks`. Home → Agenda → Team still uses `getTeamAgendaWithMine` on live API (routes 401 without auth, not 404).
+Files: `team-conversations-sidebar.logic.ts`, `.vercelignore`, Vercel Production `roas-api` / `roas-web`, Supabase `lhfgtsjetcardinpgouq`
+
 ## [2026-07-22 00:31] - [FIX]
 
 What: Team Agenda merges calendar + Fathom duplicates (sole near-start attach + post-inject dedupe) and prefers teammate account labels over confusing Mine/Fathom·Mine on shared calls.

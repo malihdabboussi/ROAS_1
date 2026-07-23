@@ -398,7 +398,7 @@ export abstract class SlackMediaBase extends SlackAuthBase {
   ): Promise<string> {
     const supabase = this.getServiceRoleClient()
     const storagePath = `${userId}/slack/${randomUUID()}-${filename}`
-    return this.slackRuntimeRepo.uploadCampaignStorageObjectAndGetPublicUrl(
+    return this.slackRuntimeRepo.uploadCampaignStorageObjectAndCreateSignedUrl(
       supabase,
       storagePath,
       buffer,

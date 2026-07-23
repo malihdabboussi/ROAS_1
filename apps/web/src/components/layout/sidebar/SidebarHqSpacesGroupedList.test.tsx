@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { SidebarCampaignRow } from './sidebar-types'
 import { SidebarHqSpacesGroupedList } from './SidebarHqSpacesGroupedList'
@@ -8,10 +8,31 @@ import type { SidebarControllerReturn } from './useSidebarController'
 const mocks = vi.hoisted(() => ({
   loadRoster: vi.fn(async () => undefined),
   setActiveSpace: vi.fn(),
+  fetchPrograms: vi.fn(async () => [
+    {
+      id: 'prog-clients',
+      name: 'Clients',
+      slug: 'clients',
+      system_kind: 'clients',
+      icon: 'folder-kanban',
+      icon_color: 'default',
+      sort_order: 0,
+      org_id: 'org-1',
+      user_id: null,
+      config: {},
+      created_at: '',
+      updated_at: '',
+      deleted_at: null,
+    },
+  ]),
 }))
 
 vi.mock('next/link', () => ({
-  default: ({ children, ...props }: { children: ReactNode }) => <a {...props}>{children}</a>,
+  default: ({ children, href, ...props }: { children: ReactNode; href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }))
 
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
@@ -22,12 +43,15 @@ vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
 
 vi.mock('@/components/ui/IconPicker', () => ({
   getIconColor: () => ({ textColor: 'text-muted-foreground' }),
+  IconPicker: ({ customTrigger }: { customTrigger?: ReactNode }) => (
+    <button type="button">{customTrigger ?? 'icon'}</button>
+  ),
   LucideIcon: () => <span aria-hidden />,
 }))
 
 vi.mock('@/features/org/store/use-org-store', () => ({
-  useOrgStore: (selector: (state: { activeOrgId: null }) => unknown) =>
-    selector({ activeOrgId: null }),
+  useOrgStore: (selector: (state: { activeOrgId: string }) => unknown) =>
+    selector({ activeOrgId: 'org-1' }),
 }))
 
 vi.mock('@/features/spaces/hooks/use-cached-spaces', () => ({
@@ -55,7 +79,7 @@ vi.mock('@/features/spaces/store/use-spaces-store', () => {
 })
 
 vi.mock('@/lib/programs', () => ({
-  fetchPrograms: vi.fn(async () => []),
+  fetchPrograms: mocks.fetchPrograms,
 }))
 
 vi.mock('./SidebarHqSpacesMenuLayers', () => ({
@@ -69,7 +93,7 @@ const campaign = {
   icon: 'folder',
   config: {},
   isFavorite: false,
-  program_id: null,
+  program_id: 'prog-clients',
 } as SidebarCampaignRow
 
 describe('SidebarHqSpacesGroupedList', () => {
@@ -78,8 +102,10 @@ describe('SidebarHqSpacesGroupedList', () => {
     vi.clearAllMocks()
   })
 
-  it('offers templates from the nested campaign New space action', () => {
+  it('expands program → campaign → offers New space in the tree', async () => {
     const onOpenBrowseTemplates = vi.fn()
+    const setExpandedIds = vi.fn()
+    const setExpandedProgramIds = vi.fn()
 
     render(
       <SidebarHqSpacesGroupedList
@@ -87,8 +113,10 @@ describe('SidebarHqSpacesGroupedList', () => {
         spaces={[]}
         campaigns={[campaign]}
         pathname="/spaces"
-        expandedIds={new Set()}
-        setExpandedIds={vi.fn()}
+        expandedIds={new Set(['campaign-1'])}
+        setExpandedIds={setExpandedIds}
+        expandedProgramIds={new Set(['prog-clients'])}
+        setExpandedProgramIds={setExpandedProgramIds}
         onCreateSpace={vi.fn()}
         patchCampaignConfig={vi.fn()}
         isSubmitting={false}
@@ -112,7 +140,16 @@ describe('SidebarHqSpacesGroupedList', () => {
       />,
     )
 
-    fireEvent.mouseEnter(screen.getByText('Impact'))
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Clients' }).getAttribute('href')).toBe(
+        '/programs/prog-clients',
+      )
+    })
+
+    expect(screen.getByRole('link', { name: 'Impact' }).getAttribute('href')).toBe(
+      '/campaigns/campaign-1',
+    )
+
     fireEvent.click(screen.getByRole('button', { name: 'New space' }))
     fireEvent.click(screen.getByRole('button', { name: 'Browse templates' }))
 

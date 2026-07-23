@@ -43,7 +43,7 @@ describe('StartPlaybookModal', () => {
     const onStart = vi.fn()
     render(<StartPlaybookModal open submitting={false} onClose={vi.fn()} onStart={onStart} />)
     fireEvent.click(screen.getByRole('button', { name: /Meta Ads Audit/i }))
-    fireEvent.change(screen.getByLabelText('Campaign names or IDs (optional)'), {
+    fireEvent.change(screen.getByLabelText('Campaign names or IDs, one per line (optional)'), {
       target: { value: 'Registration Campaign' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Start playbook' }))

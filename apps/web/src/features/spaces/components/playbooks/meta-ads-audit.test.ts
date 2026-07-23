@@ -7,7 +7,7 @@ describe('buildMetaAdsAuditMissionPayload', () => {
       {
         reporting_period: 'last_14d',
         comparison_period: 'previous_14d',
-        selected_campaigns: 'Campaign One, Campaign Two\nCampaign Three',
+        selected_campaigns: 'Campaign One, July 15, 2026\nCampaign Three',
         notes: 'Prioritize registration cost.',
       },
       { connected: true, recommended_ad_account_id: 'act_123' },
@@ -18,7 +18,7 @@ describe('buildMetaAdsAuditMissionPayload', () => {
       playbook_kickoff: {
         reporting_period: 'last_14d',
         comparison_period: 'previous_14d',
-        selected_campaigns: ['Campaign One', 'Campaign Two', 'Campaign Three'],
+        selected_campaigns: ['Campaign One, July 15, 2026', 'Campaign Three'],
         notes: 'Prioritize registration cost.',
         page_grader_meta_context: { connected: true, recommended_ad_account_id: 'act_123' },
       },

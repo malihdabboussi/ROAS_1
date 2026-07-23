@@ -9,7 +9,7 @@ export type MetaAdsAuditKickoffFields = {
 
 function parseCampaignSelection(value: string) {
   return value
-    .split(/[\n,]/)
+    .split(/\r?\n/)
     .map((item) => item.trim())
     .filter(Boolean)
 }

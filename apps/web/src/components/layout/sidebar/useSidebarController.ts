@@ -24,6 +24,12 @@ import {
 import { useUserRole } from '@/hooks/use-user-role'
 import { billingApi } from '@/lib/billing/billing-api'
 import { SIDEBAR_TOAST_ERRORS } from '../config/sidebar-toast-errors.config'
+import {
+  readExpandedProgramIds,
+  readExpandedSpaceCampaignIds,
+  writeExpandedProgramIds,
+  writeExpandedSpaceCampaignIds,
+} from './sidebar-expand-persistence'
 import type { HubMenuSectionId } from './sidebar-hq-hub-menu.types'
 import { defaultHubMenuExpandedSections, toggleHubMenuSection } from './sidebar-hq-hub-menu.utils'
 import type { ConversationTypeFilter, SidebarProps } from './sidebar-types'
@@ -158,7 +164,30 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   const [hubMenuExpandedSections, setHubMenuExpandedSections] = useState<Set<HubMenuSectionId>>(
     new Set(),
   )
-  const [expandedSpaceCampaignIds, setExpandedSpaceCampaignIds] = useState<Set<string>>(new Set())
+  const [expandedSpaceCampaignIds, setExpandedSpaceCampaignIds] = useState<Set<string>>(
+    () => readExpandedSpaceCampaignIds() ?? new Set(),
+  )
+  const [expandedProgramIds, setExpandedProgramIds] = useState<Set<string>>(
+    () => readExpandedProgramIds() ?? new Set(),
+  )
+  const skipCampaignExpandPersist = useRef(true)
+  const skipProgramExpandPersist = useRef(true)
+
+  useEffect(() => {
+    if (skipCampaignExpandPersist.current) {
+      skipCampaignExpandPersist.current = false
+      return
+    }
+    writeExpandedSpaceCampaignIds(expandedSpaceCampaignIds)
+  }, [expandedSpaceCampaignIds])
+
+  useEffect(() => {
+    if (skipProgramExpandPersist.current) {
+      skipProgramExpandPersist.current = false
+      return
+    }
+    writeExpandedProgramIds(expandedProgramIds)
+  }, [expandedProgramIds])
 
   // Hover flyouts must not survive programmatic navigation (chat deep-links, task open, etc.).
   useEffect(() => {
@@ -710,6 +739,8 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     syncHubMenuExpandedToRoute,
     expandedSpaceCampaignIds,
     setExpandedSpaceCampaignIds,
+    expandedProgramIds,
+    setExpandedProgramIds,
     conversations,
     activeConversationId,
     unreadConversationIds,

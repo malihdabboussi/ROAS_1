@@ -143,9 +143,6 @@ export function Section({
   isSubmitting,
   favoriteIds,
   spaceRowProps,
-  flyoutMode = false,
-  onHoverCampaign,
-  onLeaveCampaign,
 }: {
   bucket: string
   label: string
@@ -169,62 +166,19 @@ export function Section({
   isSubmitting: boolean
   favoriteIds: Set<string>
   spaceRowProps: SpaceRowSharedProps
-  /** Compact dock-flyout: static chevron; hover opens nested spaces flyout. */
-  flyoutMode?: boolean
-  onHoverCampaign?: (bucket: string, anchor: DOMRect) => void
-  onLeaveCampaign?: () => void
 }) {
-  if (flyoutMode) {
-    const iconName = campaignRow?.icon ?? 'folder'
-    const iconColor = getIconColor(
-      (campaignRow?.config.icon_color as string | undefined) ?? 'default',
-    ).textColor
-    return (
-      <div
-        className="hub-dock-flyout-row group/section"
-        onMouseEnter={(e) => {
-          onHoverCampaign?.(bucket, e.currentTarget.getBoundingClientRect())
-        }}
-        onMouseLeave={(e) => {
-          const related = e.relatedTarget
-          if (
-            related instanceof Element &&
-            related.closest('[data-hub-dock-flyout-nested]')
-          ) {
-            return
-          }
-          onLeaveCampaign?.()
-        }}
-      >
-        <LucideIcon name={iconName} className={`hub-dock-flyout-row-icon ${iconColor}`} />
-        {campaignRow ? (
-          <Link
-            href={`/campaigns/${campaignRow.id}`}
-            data-hub-dock-navigate
-            className="min-w-0 flex-1 truncate"
-          >
-            {label}
-          </Link>
-        ) : (
-          <span className="min-w-0 flex-1 truncate text-left">{label}</span>
-        )}
-        <span className="hub-dock-flyout-count">{sectionSpaces.length}</span>
-      </div>
-    )
-  }
-
   return (
     <div>
       <div className="group/section rounded-spacing-2 hover:bg-hover-subtle flex items-center gap-0.5 transition-colors">
         <button
           type="button"
           onClick={() => onToggle(bucket)}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--color-foreground)]"
+          className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground flex h-7 w-7 shrink-0 items-center justify-center rounded transition-colors"
           aria-expanded={isExpanded}
           aria-label={isExpanded ? `Collapse ${label}` : `Expand ${label}`}
         >
           <ChevronRight
-            className={`h-4 w-4 shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
+            className={`icon-sm shrink-0 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
           />
         </button>
         <div className="flex h-7 w-7 shrink-0 items-center justify-center">
@@ -242,24 +196,25 @@ export function Section({
               customTrigger={
                 <LucideIcon
                   name={campaignRow.icon}
-                  className={`h-4 w-4 ${getIconColor(campaignRow.config.icon_color as string | undefined).textColor}`}
+                  className={`icon-sm ${getIconColor(campaignRow.config.icon_color as string | undefined).textColor}`}
                 />
               }
             />
           ) : (
-            <User className="h-4 w-4 shrink-0 text-[var(--color-muted-foreground)]" aria-hidden />
+            <User className="icon-sm text-muted-foreground shrink-0" aria-hidden />
           )}
         </div>
         {campaignRow ? (
           <Link
             href={`/campaigns/${campaignRow.id}`}
+            data-hub-dock-navigate
             onContextMenu={(e) => {
               e.preventDefault()
               e.stopPropagation()
               const r = e.currentTarget.getBoundingClientRect()
               onOpenCampaignMenu(campaignRow, r)
             }}
-            className="body-3 min-w-0 flex-1 truncate px-0 py-1 font-medium text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
+            className="body-3 text-muted-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 font-medium transition-colors"
           >
             {label}
           </Link>
@@ -267,7 +222,7 @@ export function Section({
           <button
             type="button"
             onClick={() => onToggle(bucket)}
-            className="body-3 min-w-0 flex-1 truncate px-0 py-1 text-left font-medium text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
+            className="body-3 text-muted-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 text-left font-medium transition-colors"
           >
             {label}
           </button>
@@ -282,7 +237,7 @@ export function Section({
             }}
             title={`More options for ${label}`}
             aria-label={`More options for ${label}`}
-            className="pointer-events-none flex h-6 w-6 shrink-0 items-center justify-center rounded text-[var(--color-muted-foreground)] opacity-0 transition-opacity hover:bg-[var(--color-hover-subtle)] hover:text-[var(--color-foreground)] group-hover/section:pointer-events-auto group-hover/section:opacity-100"
+            className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground pointer-events-none flex h-6 w-6 shrink-0 items-center justify-center rounded opacity-0 transition-opacity group-hover/section:pointer-events-auto group-hover/section:opacity-100"
           >
             <MoreHorizontal className="h-3.5 w-3.5" />
           </button>
@@ -290,14 +245,14 @@ export function Section({
         <div className="relative flex h-6 w-6 shrink-0 items-center justify-center">
           {sectionSpaces.length > 0 ? (
             <>
-              <span className="body-3 pointer-events-none absolute inset-0 flex items-center justify-center font-medium tabular-nums text-[var(--color-muted-foreground)] opacity-100 transition-opacity group-hover/section:opacity-0">
+              <span className="body-3 text-muted-foreground pointer-events-none absolute inset-0 flex items-center justify-center font-medium tabular-nums opacity-100 transition-opacity group-hover/section:opacity-0">
                 {sectionSpaces.length}
               </span>
               <button
                 type="button"
                 onClick={(e) => onOpenAddDropdown(e, bucket)}
                 title={`New space in ${label}`}
-                className="pointer-events-none absolute inset-0 flex items-center justify-center rounded text-[var(--color-muted-foreground)] opacity-0 transition-opacity hover:text-[var(--color-foreground)] group-hover/section:pointer-events-auto group-hover/section:opacity-100"
+                className="text-muted-foreground hover:text-foreground pointer-events-none absolute inset-0 flex items-center justify-center rounded opacity-0 transition-opacity group-hover/section:pointer-events-auto group-hover/section:opacity-100"
                 aria-label={`New space in ${label}`}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -308,7 +263,7 @@ export function Section({
               type="button"
               onClick={(e) => onOpenAddDropdown(e, bucket)}
               title={`New space in ${label}`}
-              className="pointer-events-none absolute inset-0 flex items-center justify-center rounded text-[var(--color-muted-foreground)] opacity-0 transition-opacity hover:text-[var(--color-foreground)] group-hover/section:pointer-events-auto group-hover/section:opacity-100"
+              className="text-muted-foreground hover:text-foreground pointer-events-none absolute inset-0 flex items-center justify-center rounded opacity-0 transition-opacity group-hover/section:pointer-events-auto group-hover/section:opacity-100"
               aria-label={`New space in ${label}`}
             >
               <Plus className="h-3.5 w-3.5" />
@@ -318,7 +273,7 @@ export function Section({
       </div>
 
       {isExpanded && (
-        <div className="ml-2 space-y-0.5 border-l border-[var(--color-border)] pl-2">
+        <div className="border-border ml-2 space-y-0.5 border-l pl-2">
           {sectionSpaces.map((s) => (
             <SpaceRow key={s.id} space={s} favorited={favoriteIds.has(s.id)} {...spaceRowProps} />
           ))}
@@ -337,16 +292,16 @@ export function Section({
                 disabled={isSubmitting}
                 autoFocus
                 placeholder={isSubmitting ? 'Creating…' : 'Space name'}
-                className="body-3 h-7 flex-1 rounded-md bg-transparent px-2 text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none disabled:opacity-50"
+                className="body-3 text-foreground placeholder:text-muted-foreground h-7 flex-1 rounded-md bg-transparent px-2 focus:outline-none disabled:opacity-50"
               />
             </div>
           ) : !searchActive ? (
             <button
               type="button"
               onClick={(e) => onOpenAddDropdown(e, bucket)}
-              className="rounded-spacing-2 hover:bg-hover-subtle flex w-full items-center gap-2 px-3 py-1 text-[var(--color-muted-foreground)] transition-colors"
+              className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground flex w-full items-center gap-2 px-3 py-1 transition-colors"
             >
-              <Plus className="h-4 w-4 shrink-0" />
+              <Plus className="icon-sm shrink-0" />
               <span className="body-3">New space</span>
             </button>
           ) : null}

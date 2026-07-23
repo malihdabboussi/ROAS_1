@@ -230,13 +230,17 @@ describe('SlackService media helpers', () => {
       expect(result).toHaveLength(0)
     })
 
-    it('uploads inbound Slack media to campaign storage and returns the public URL', async () => {
+    it('uploads inbound Slack media to private campaign storage and returns a signed URL', async () => {
       const { svc } = createService()
       const upload = vi.fn().mockResolvedValue({ error: null })
-      const getPublicUrl = vi.fn(() => ({
-        data: { publicUrl: 'https://cdn.example.com/file.png' },
+      const createSignedUrl = vi.fn().mockResolvedValue({
+        data: { signedUrl: 'https://cdn.example.com/file.png?token=signed' },
+        error: null,
+      })
+      const storageFrom = vi.fn(() => ({
+        upload,
+        createSignedUrl,
       }))
-      const storageFrom = vi.fn(() => ({ upload, getPublicUrl }))
       vi.spyOn(svc as any, 'getServiceRoleClient').mockReturnValue({
         storage: { from: storageFrom },
       })
@@ -254,10 +258,11 @@ describe('SlackService media helpers', () => {
         Buffer.from('image'),
         { contentType: 'image/png', upsert: false },
       )
-      expect(getPublicUrl).toHaveBeenCalledWith(
+      expect(createSignedUrl).toHaveBeenCalledWith(
         expect.stringMatching(/^user-1\/slack\/.+-logo\.png$/),
+        365 * 24 * 60 * 60,
       )
-      expect(result).toBe('https://cdn.example.com/file.png')
+      expect(result).toBe('https://cdn.example.com/file.png?token=signed')
     })
   })
 
@@ -399,7 +404,6 @@ describe('SlackService media helpers', () => {
       expect(conversationUpdate.update).toHaveBeenCalledWith({ campaign_id: 'campaign-1' })
       expect(conversationUpdate.eq).toHaveBeenCalledWith('id', 'conversation-1')
     })
-
   })
 
   describe('SlackSenderResolverService', () => {

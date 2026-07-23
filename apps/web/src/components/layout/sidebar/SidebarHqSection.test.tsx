@@ -289,6 +289,8 @@ function makeController(
     syncHubMenuExpandedToRoute: vi.fn(),
     expandedSpaceCampaignIds: new Set<string>(),
     setExpandedSpaceCampaignIds: vi.fn(),
+    expandedProgramIds: new Set<string>(),
+    setExpandedProgramIds: vi.fn(),
     conversations: [],
     activeConversationId: null,
     unreadConversationIds: new Set<string>(),

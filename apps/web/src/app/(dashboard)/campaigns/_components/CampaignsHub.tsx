@@ -32,7 +32,7 @@ function campaignIconName(campaign: Campaign): string {
   return ((campaign.config as Record<string, unknown>)?.icon as string) ?? 'folder-kanban'
 }
 
-export function CampaignsHub() {
+export function CampaignsHub({ focusProgramId }: { focusProgramId?: string } = {}) {
   const router = useRouter()
   const { setActiveCampaign } = useCampaignMode()
   const setActiveSpace = useSpacesStore((s) => s.setActiveSpace)
@@ -115,9 +115,15 @@ export function CampaignsHub() {
           return campaignSpaces.some((space) => space.title.toLowerCase().includes(q))
         })
     const groups = groupCampaignsByProgram(filtered, programs)
-    if (!q) return groups
-    return groups.filter((g) => g.campaigns.length > 0 || g.program == null)
-  }, [campaigns, programs, query, spacesByCampaignId])
+    const scoped = focusProgramId ? groups.filter((g) => g.key === focusProgramId) : groups
+    if (!q) return scoped
+    return scoped.filter((g) => g.campaigns.length > 0 || g.program == null)
+  }, [campaigns, focusProgramId, programs, query, spacesByCampaignId])
+
+  const focusProgram = useMemo(
+    () => (focusProgramId ? (programs.find((p) => p.id === focusProgramId) ?? null) : null),
+    [focusProgramId, programs],
+  )
 
   const toggleExpanded = useCallback((campaignId: string) => {
     setExpandedIds((prev) => {
@@ -166,9 +172,11 @@ export function CampaignsHub() {
       try {
         const resolvedProgramId =
           programId === undefined
-            ? isOrgContext()
-              ? defaultOrgProgramId(programs)
-              : null
+            ? focusProgramId
+              ? focusProgramId
+              : isOrgContext()
+                ? defaultOrgProgramId(programs)
+                : null
             : programId
         const created = await createCampaign(
           name,
@@ -190,7 +198,7 @@ export function CampaignsHub() {
         setCreatingCampaign(false)
       }
     },
-    [isOrgContext, newCampaignName, openCampaign, programs],
+    [focusProgramId, isOrgContext, newCampaignName, openCampaign, programs],
   )
 
   const handleCreateSpace = useCallback(
@@ -251,12 +259,24 @@ export function CampaignsHub() {
       <div className="p-spacing-4 md:p-spacing-6 mx-auto w-full max-w-3xl">
         <div className="mb-spacing-4 flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="title-h3 text-foreground">CAMPAIGNS</h1>
+            <h1 className="title-h3 text-foreground">
+              {focusProgram ? focusProgram.name.toUpperCase() : 'CAMPAIGNS'}
+            </h1>
             <p className="body-3 text-muted-foreground mt-spacing-1">
-              Programs group campaigns. Create a campaign inside a program to land it there.
+              {focusProgram
+                ? 'Campaigns and spaces in this program.'
+                : 'Programs group campaigns. Create a campaign inside a program to land it there.'}
             </p>
           </div>
           <div className="gap-spacing-2 flex flex-wrap items-center">
+            {focusProgram ? (
+              <Link
+                href="/campaigns"
+                className="button-glass-neutral body-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-medium"
+              >
+                All campaigns
+              </Link>
+            ) : null}
             <Link
               href="/all-tasks"
               className="button-glass-neutral body-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-medium"

@@ -1,3 +1,26 @@
+## 2026-07-23 - [ARCH] CampaignsHub + useSidebarController over LOC
+
+Status: Open
+Found while: ClickUp-style Programs sidebar tree
+Files:
+
+- `apps/web/src/app/(dashboard)/campaigns/_components/CampaignsHub.tsx` (~450 LOC; component limit 400)
+- `apps/web/src/components/layout/sidebar/useSidebarController.ts` (~782 LOC; hook limit 300)
+  Evidence: `focusProgramId` overview reuse and expand persistence added lines to already-large files.
+  Needed work: Split CampaignsHub into load/actions + presentational pieces; extract expand-persistence / hub-menu state from `useSidebarController`.
+  Deferred because: In-scope deliverable was sidebar Program tree + `/programs/[id]`; full controller/hub split is adjacent cleanup.
+
+## 2026-07-23 - [ARCH] Protect api.roas.io from Programs + Team Agenda wipe
+
+Status: Open
+Found while: Investigating flat Campaigns flyout (no Clients / ROAS Ops)
+Files:
+
+- Vercel project `roas-api` (`prj_YwUti53Q9vB6rMKPB5cpW8w7h0qL`) Production alias `api.roas.io`
+  Evidence: CLI deploy from Slack commit `5111b808` (`dpl_5DAz…`) overwrote Programs+Team Agenda archive; live `/api/programs` and `/api/tasks/rollup` returned 404; web flyout silently flattened.
+  Needed work: Land Programs + Team Agenda on origin/main; add pre-promote smoke (`GET /api/programs` not 404 + agenda `scope=team` → `team_available`); cancel competing git/CLI promotes that lack both.
+  Deferred because: Immediate fix was re-alias + archive redeploy; permanent protection needs origin catch-up.
+
 ## 2026-07-22 - [ARCH] Protect api.roas.io from Team Agenda wipe
 
 Status: Open
@@ -7987,3 +8010,19 @@ Files:
 Evidence: Focused extraction moved the new access responder and Personal Brain route classifier into dedicated modules, bringing all changed production services under or at the 600-line hard limit. The existing Slack media test remains over the limit after obsolete sender-resolution coverage was removed.
 Needed work: Continue the existing Slack service split, divide Slack media test families, and extract the remaining legacy authorization and gateway preparation responsibilities before adding another workflow to these files.
 Reason not done now: The new security policy is already isolated. Splitting unrelated OAuth, media, and gateway behaviors would broaden this access-control change and increase deployment risk.
+
+## 2026-07-23 - [TEST] Slack media test file exceeds the repository LOC limit
+
+Status: Open
+
+Found while: Repairing inbound Slack image processing
+
+Files:
+
+- `apps/api/src/modules/slack/services/__tests__/slack-media.test.ts` (672 LOC; repository limit 600)
+
+Evidence: The new private-storage signed-URL regression passes and API typecheck is green. Running the complete file reports two existing outbound Markdown-image assertions that fail independently of the inbound image fix.
+
+Needed work: Split media, sender-resolution, repository-seam, and failure-mapping coverage into focused test files, then reconcile the two outbound Markdown-image expectations with the current Slack Markdown normalizer.
+
+Reason not done now: The production incident is confined to inbound Slack attachment persistence and private storage access; restructuring unrelated existing coverage would broaden the emergency fix.

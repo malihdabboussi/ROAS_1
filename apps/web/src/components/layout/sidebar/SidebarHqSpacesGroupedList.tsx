@@ -1,10 +1,8 @@
 'use client'
 
 import {
-  useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type Dispatch,
   type MouseEvent,
@@ -22,7 +20,7 @@ import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space } from '@/features/spaces/types'
 import { fetchPrograms, type Program } from '@/lib/programs'
 import { groupSidebarCampaignsByProgram } from './group-sidebar-campaigns-by-program'
-import { HUB_DOCK_SUB_FLYOUT_LEAVE_MS } from './HubDockFlyout'
+import { readExpandedProgramIds, toggleIdInSet } from './sidebar-expand-persistence'
 import type { SidebarCampaignRow } from './sidebar-types'
 import { SidebarHqSpacesBucketList } from './SidebarHqSpacesBucketList'
 import { SidebarHqSpacesListOverlays } from './SidebarHqSpacesListOverlays'
@@ -30,7 +28,6 @@ import type {
   SidebarHqCampaignMenuState,
   SidebarHqSpaceMenuState,
 } from './SidebarHqSpacesMenuLayers'
-import { SidebarHqSpacesNestedFlyout } from './SidebarHqSpacesNestedFlyout'
 import { type SectionMenuAnchorRect, type SpaceRowSharedProps } from './SidebarHqSpacesRows'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -57,10 +54,8 @@ export function SidebarHqSpacesGroupedList({
   loadingMore,
   onLoadMore,
   flyoutMode = false,
-  onHoldParentFlyout,
-  onReleaseParentFlyout,
-  onSubFlyoutOpenChange,
-  onCloseParentFlyout,
+  expandedProgramIds,
+  setExpandedProgramIds,
 }: {
   controller: SidebarControllerReturn
   spaces: Space[]
@@ -83,12 +78,10 @@ export function SidebarHqSpacesGroupedList({
   hasMore: boolean
   loadingMore: boolean
   onLoadMore: () => void
-  /** Dock flyout: nested spaces sub-flyout on campaign hover; no New campaign row. */
+  /** Dock flyout: hide bottom New campaign (header + covers create). */
   flyoutMode?: boolean
-  onHoldParentFlyout?: () => void
-  onReleaseParentFlyout?: () => void
-  onSubFlyoutOpenChange?: (open: boolean) => void
-  onCloseParentFlyout?: () => void
+  expandedProgramIds: Set<string>
+  setExpandedProgramIds: Dispatch<SetStateAction<Set<string>>>
 }) {
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const { favoriteIds, hiddenIds, isFavorite, toggleFavorite, toggleHidden } = spaceUserState
@@ -99,53 +92,20 @@ export function SidebarHqSpacesGroupedList({
   const [renameDraft, setRenameDraft] = useState('')
   const [addDropdownAnchor, setAddDropdownAnchor] = useState<DOMRect | null>(null)
   const [addDropdownBucket, setAddDropdownBucket] = useState<string | null>(null)
-  const [subBucket, setSubBucket] = useState<string | null>(null)
-  const [subAnchor, setSubAnchor] = useState<DOMRect | null>(null)
-  const subLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isOrgContext = useOrgStore((s) => s.activeOrgId !== null)
   const [programs, setPrograms] = useState<Program[]>([])
 
   useEffect(() => {
     void fetchPrograms()
-      .then(setPrograms)
+      .then((rows) => {
+        setPrograms(rows)
+        setExpandedProgramIds((prev) => {
+          if (readExpandedProgramIds() != null || prev.size > 0 || rows.length === 0) return prev
+          return new Set(rows.map((p) => p.id))
+        })
+      })
       .catch(() => setPrograms([]))
-  }, [isOrgContext])
-
-  const clearSubLeave = useCallback(() => {
-    if (subLeaveTimer.current) {
-      clearTimeout(subLeaveTimer.current)
-      subLeaveTimer.current = null
-    }
-  }, [])
-
-  const closeSubFlyout = useCallback(() => {
-    clearSubLeave()
-    setSubBucket(null)
-    setSubAnchor(null)
-    onSubFlyoutOpenChange?.(false)
-  }, [clearSubLeave, onSubFlyoutOpenChange])
-
-  const openSubFlyout = useCallback(
-    (bucket: string, anchor: DOMRect) => {
-      clearSubLeave()
-      onHoldParentFlyout?.()
-      setSubBucket(bucket)
-      setSubAnchor(anchor)
-      onSubFlyoutOpenChange?.(true)
-    },
-    [clearSubLeave, onHoldParentFlyout, onSubFlyoutOpenChange],
-  )
-
-  const scheduleSubClose = useCallback(() => {
-    clearSubLeave()
-    subLeaveTimer.current = setTimeout(() => {
-      subLeaveTimer.current = null
-      closeSubFlyout()
-      onReleaseParentFlyout?.()
-    }, HUB_DOCK_SUB_FLYOUT_LEAVE_MS)
-  }, [clearSubLeave, closeSubFlyout, onReleaseParentFlyout])
-
-  useEffect(() => () => clearSubLeave(), [clearSubLeave])
+  }, [isOrgContext, setExpandedProgramIds])
 
   const startRenameSpace = (space: Space) => {
     setRenamingSpaceId(space.id)
@@ -184,19 +144,25 @@ export function SidebarHqSpacesGroupedList({
     const active = spaces.find((s) => s.id === activeSpaceId)
     if (!active) return
     const bucket = active.campaign_id ?? ''
+    const campaign = campaigns.find((c) => c.id === active.campaign_id)
     setExpandedIds((prev) => {
       if (prev.has(bucket)) return prev
       return new Set([...prev, bucket])
     })
-  }, [activeSpaceId, spaces, setExpandedIds])
+    if (campaign?.program_id) {
+      setExpandedProgramIds((prev) => {
+        if (prev.has(campaign.program_id as string)) return prev
+        return new Set([...prev, campaign.program_id as string])
+      })
+    }
+  }, [activeSpaceId, spaces, campaigns, setExpandedIds, setExpandedProgramIds])
 
   function toggle(bucket: string) {
-    setExpandedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(bucket)) next.delete(bucket)
-      else next.add(bucket)
-      return next
-    })
+    setExpandedIds((prev) => toggleIdInSet(prev, bucket))
+  }
+
+  function toggleProgram(key: string) {
+    setExpandedProgramIds((prev) => toggleIdInSet(prev, key))
   }
 
   function startCreating(bucket: string) {
@@ -253,22 +219,21 @@ export function SidebarHqSpacesGroupedList({
     const groups = groupSidebarCampaignsByProgram(rows, programs)
     return groups
       .map((group) => ({
-        ...group,
+        key: group.key,
+        label: group.label,
+        program: group.program,
         buckets: group.campaigns
           .map((campaign) => otherBuckets.find((b) => b.bucket === campaign.id))
           .filter((b): b is (typeof otherBuckets)[number] => !!b),
       }))
       .filter((g) => g.buckets.length > 0 || (!searchActive && g.program != null))
   }, [otherBuckets, programs, searchActive])
-  const subBucketData =
-    flyoutMode && subBucket ? (campaignBuckets.find((b) => b.bucket === subBucket) ?? null) : null
   const noResults =
     searchActive &&
     favoriteBuckets.length === 0 &&
     otherBuckets.length === 0 &&
     sharedSpaces.length === 0
-  const groupHeaderCls =
-    'px-3 pb-1 pt-1 text-[10px] font-medium tracking-wider text-[var(--color-muted-foreground)]'
+  const groupHeaderCls = 'typo-section-label text-muted-foreground px-3 pb-1 pt-1'
 
   const spaceRowProps: SpaceRowSharedProps = {
     pathname,
@@ -298,9 +263,6 @@ export function SidebarHqSpacesGroupedList({
     isSubmitting,
     favoriteIds,
     spaceRowProps,
-    flyoutMode,
-    onHoverCampaign: flyoutMode ? openSubFlyout : undefined,
-    onLeaveCampaign: flyoutMode ? scheduleSubClose : undefined,
   }
 
   return (
@@ -314,6 +276,8 @@ export function SidebarHqSpacesGroupedList({
         otherProgramGroups={otherProgramGroups}
         programs={programs}
         expandedIds={expandedIds}
+        expandedProgramIds={expandedProgramIds}
+        onToggleProgram={toggleProgram}
         creatingInBucket={creatingInBucket}
         sectionSharedProps={sectionSharedProps}
         controller={controller}
@@ -345,34 +309,6 @@ export function SidebarHqSpacesGroupedList({
         setAddDropdownBucket={setAddDropdownBucket}
         onOpenBrowseTemplates={onOpenBrowseTemplates}
       />
-
-      {flyoutMode && subBucketData && subAnchor ? (
-        <SidebarHqSpacesNestedFlyout
-          anchor={subAnchor}
-          label={subBucketData.label}
-          campaignId={subBucketData.campaignId}
-          bucket={subBucketData.bucket}
-          sectionSpaces={subBucketData.sectionSpaces}
-          creatingInBucket={creatingInBucket}
-          creatingName={creatingName}
-          setCreatingName={setCreatingName}
-          isSubmitting={isSubmitting}
-          onSubmitCreate={handleSubmit}
-          onCancelCreate={cancelCreating}
-          onOpenAddDropdown={openAddDropdown}
-          onEnter={() => {
-            clearSubLeave()
-            onHoldParentFlyout?.()
-          }}
-          onLeave={scheduleSubClose}
-          onClose={() => {
-            closeSubFlyout()
-            onCloseParentFlyout?.()
-          }}
-          onCloseParentFlyout={onCloseParentFlyout}
-          closeSubFlyout={closeSubFlyout}
-        />
-      ) : null}
     </div>
   )
 }

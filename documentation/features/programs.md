@@ -1,6 +1,6 @@
 # Programs
 
-Last Modified: July 22, 2026
+Last Modified: July 23, 2026
 
 ## Overview
 
@@ -28,10 +28,33 @@ Move campaign: `PATCH /api/campaigns/:id` with `{ program_id }`
 
 ## UI (hub + sidebar)
 
-- Campaigns hub groups under program sections (empty programs still shown)
+### Campaigns hub (`/campaigns`)
+
+- Groups under program sections (empty programs still shown)
 - Per-program **Campaign** control creates into that program
+- Program name links to `/programs/[id]`
 - Menu: Move to program / Ungrouped
-- Sidebar HQ spaces list uses program headers above campaign rows
+
+### Program overview (`/programs/[id]`)
+
+- Same hub tree scoped to one program (Clients, ROAS Ops, …)
+- Top **New campaign** creates into that program
+- Link back to **All campaigns**
+
+### Sidebar Campaigns tree (rail flyout + hub menu)
+
+ClickUp-style expandable folders in the Campaigns menu (not section labels only):
+
+| Action              | Result                                                   |
+| ------------------- | -------------------------------------------------------- |
+| Chevron on Program  | Expand/collapse campaigns under that program (persisted) |
+| Click Program name  | Navigate to `/programs/[id]`                             |
+| Chevron on Campaign | Expand/collapse spaces under that campaign (persisted)   |
+| Click Campaign name | Navigate to `/campaigns/[id]`                            |
+| Click Space         | Open space (same as today)                               |
+| Favourite campaigns | Stay pinned at top of the list                           |
+
+Ungrouped campaigns (no `program_id`) appear under an **Ungrouped** folder when present. First visit expands all programs by default; later expand state is stored in `localStorage`.
 
 ## All Tasks
 
@@ -46,3 +69,4 @@ Move campaign: `PATCH /api/campaigns/:id` with `{ program_id }`
 
 - **2026-07-22:** Programs are a ClickUp Space shell; Campaigns stay folders. Create-in-program auto-sets `program_id`. Org-first seed Clients + ROAS Ops; skip personal backfill. Page Grader campaigns backfill into Clients via `config.source = 'page_grader'` / `external_sources.page_grader`.
 - **2026-07-22:** All Tasks rollup ships with My Tasks / All Tasks; space_items only (mission subtasks later).
+- **2026-07-23:** Sidebar Campaigns uses Program → Campaign → Space tree (expand in-menu). Program name opens `/programs/[id]` overview. Nested hover spaces flyout removed from Campaigns dock.

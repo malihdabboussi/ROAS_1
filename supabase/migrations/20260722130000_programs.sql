@@ -89,6 +89,9 @@ DROP POLICY IF EXISTS programs_service_all ON public.programs;
 CREATE POLICY programs_service_all ON public.programs FOR ALL TO service_role
   USING (true) WITH CHECK (true);
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.programs TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.programs TO service_role;
+
 -- Seed Clients + ROAS Ops for every org (idempotent).
 INSERT INTO public.programs (org_id, user_id, name, slug, system_kind, icon, sort_order)
 SELECT o.id, NULL, 'Clients', 'clients', 'clients', 'users', 0

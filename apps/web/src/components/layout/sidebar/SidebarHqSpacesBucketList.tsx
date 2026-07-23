@@ -5,6 +5,7 @@ import type { Space } from '@/features/spaces/types'
 import type { Program } from '@/lib/programs'
 import { SIDEBAR_MESSAGES } from '../config/sidebar-messages.config'
 import { Section, SpaceRow, type SpaceRowSharedProps } from './SidebarHqSpacesRows'
+import { SidebarProgramFolder } from './SidebarProgramFolder'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 type CampaignBucket = {
@@ -18,6 +19,7 @@ type CampaignBucket = {
 type ProgramGroup = {
   key: string
   label: string
+  program: Program | null
   buckets: CampaignBucket[]
 }
 
@@ -30,6 +32,8 @@ export function SidebarHqSpacesBucketList({
   otherProgramGroups,
   programs,
   expandedIds,
+  expandedProgramIds,
+  onToggleProgram,
   creatingInBucket,
   sectionSharedProps,
   controller,
@@ -49,6 +53,8 @@ export function SidebarHqSpacesBucketList({
   otherProgramGroups: ProgramGroup[]
   programs: Program[]
   expandedIds: Set<string>
+  expandedProgramIds: Set<string>
+  onToggleProgram: (key: string) => void
   creatingInBucket: string | null
   sectionSharedProps: Omit<
     Parameters<typeof Section>[0],
@@ -72,7 +78,7 @@ export function SidebarHqSpacesBucketList({
   return (
     <>
       {noResults ? (
-        <p className="body-3 px-3 py-6 text-center text-[var(--color-muted-foreground)]">
+        <p className="body-3 text-muted-foreground px-3 py-6 text-center">
           No spaces match “{searchQuery}”
         </p>
       ) : null}
@@ -90,32 +96,53 @@ export function SidebarHqSpacesBucketList({
           ))}
         </div>
       ) : null}
-      {otherProgramGroups.length > 0 && !flyoutMode ? (
+      {otherProgramGroups.length > 0 && !flyoutMode && programs.length === 0 ? (
         <p className={groupHeaderCls}>Campaigns</p>
       ) : null}
-      {otherProgramGroups.map((group) => (
-        <div key={group.key} className="mb-1 space-y-0.5">
-          {programs.length > 0 ? <p className={groupHeaderCls}>{group.label}</p> : null}
-          {group.buckets.map((b) => (
-            <Section
-              key={b.bucket}
-              {...b}
-              {...sectionSharedProps}
-              isExpanded={searchActive || expandedIds.has(b.bucket)}
-              isCreating={creatingInBucket === b.bucket}
-            />
-          ))}
-        </div>
-      ))}
+      {otherProgramGroups.map((group) => {
+        const programExpanded = searchActive || expandedProgramIds.has(group.key)
+        const campaignRows = group.buckets.map((b) => (
+          <Section
+            key={b.bucket}
+            {...b}
+            {...sectionSharedProps}
+            isExpanded={searchActive || expandedIds.has(b.bucket)}
+            isCreating={creatingInBucket === b.bucket}
+          />
+        ))
+
+        if (programs.length > 0) {
+          return (
+            <SidebarProgramFolder
+              key={group.key}
+              groupKey={group.key}
+              label={group.label}
+              program={group.program}
+              campaignCount={group.buckets.length}
+              isExpanded={programExpanded}
+              onToggle={onToggleProgram}
+              compact={flyoutMode}
+            >
+              {campaignRows}
+            </SidebarProgramFolder>
+          )
+        }
+
+        return (
+          <div key={group.key} className={flyoutMode ? 'mb-2 space-y-0.5' : 'mb-1 space-y-0.5'}>
+            {campaignRows}
+          </div>
+        )
+      })}
       {!searchActive && !flyoutMode ? (
         <button
           type="button"
           onClick={() => controller.setShowNewCampaignModal(true)}
-          className="rounded-spacing-2 hover:bg-hover-subtle flex w-full items-center gap-0.5 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
+          className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground hover:text-foreground flex w-full items-center gap-0.5 transition-colors"
           aria-label="New campaign"
         >
           <span className="flex h-7 w-7 shrink-0 items-center justify-center">
-            <Plus className="h-4 w-4 shrink-0" aria-hidden />
+            <Plus className="icon-md shrink-0" aria-hidden />
           </span>
           <span className="body-3 min-w-0 flex-1 truncate text-left font-medium">New campaign</span>
         </button>
@@ -133,7 +160,7 @@ export function SidebarHqSpacesBucketList({
           type="button"
           onClick={onLoadMore}
           disabled={loadingMore}
-          className="rounded-spacing-2 hover:bg-hover-subtle mt-3 flex w-full items-center justify-center px-3 py-2 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)] disabled:opacity-60"
+          className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground hover:text-foreground mt-3 flex w-full items-center justify-center px-3 py-2 transition-colors disabled:opacity-60"
         >
           <span className="body-3 font-medium">
             {loadingMore

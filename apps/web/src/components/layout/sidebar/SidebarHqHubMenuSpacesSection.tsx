@@ -12,10 +12,6 @@ export function SidebarHqHubMenuSpacesSection({
   setBrowsePanelBucket,
   setCreateSpaceModalFor,
   spaceUserState,
-  onHoldParentFlyout,
-  onReleaseParentFlyout,
-  onSubFlyoutOpenChange,
-  onCloseParentFlyout,
 }: {
   c: SidebarControllerReturn
   spacesSearchOpen: boolean
@@ -31,10 +27,6 @@ export function SidebarHqHubMenuSpacesSection({
   setBrowsePanelBucket: Dispatch<SetStateAction<string | null>>
   setCreateSpaceModalFor: Dispatch<SetStateAction<{ campaignId: string | null } | null>>
   spaceUserState: ReturnType<typeof useSpaceUserState>
-  onHoldParentFlyout?: () => void
-  onReleaseParentFlyout?: () => void
-  onSubFlyoutOpenChange?: (open: boolean) => void
-  onCloseParentFlyout?: () => void
 }) {
   return (
     <div className="min-h-0">
@@ -50,6 +42,8 @@ export function SidebarHqHubMenuSpacesSection({
           pathname={c.pathname}
           expandedIds={c.expandedSpaceCampaignIds}
           setExpandedIds={c.setExpandedSpaceCampaignIds}
+          expandedProgramIds={c.expandedProgramIds}
+          setExpandedProgramIds={c.setExpandedProgramIds}
           onCreateSpace={(campaignId) => void c.handleCreateList(campaignId)}
           patchCampaignConfig={c.patchCampaignConfig}
           isSubmitting={c.isSubmittingList}
@@ -63,10 +57,6 @@ export function SidebarHqHubMenuSpacesSection({
           loadingMore={c.sidebarListsLoadingMore}
           onLoadMore={() => void c.loadMoreSidebarLists()}
           flyoutMode
-          onHoldParentFlyout={onHoldParentFlyout}
-          onReleaseParentFlyout={onReleaseParentFlyout}
-          onSubFlyoutOpenChange={onSubFlyoutOpenChange}
-          onCloseParentFlyout={onCloseParentFlyout}
         />
       )}
     </div>

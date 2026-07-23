@@ -9,8 +9,8 @@ import {
   type RefObject,
   type SetStateAction,
 } from 'react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { useShellStore } from '@/components/shell/use-shell-store'
+import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
 import { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { HubDockFlyout } from './HubDockFlyout'
@@ -108,7 +108,6 @@ export function SidebarHqFlyouts({
   useEffect(() => {
     if (flyoutCloseEpoch === 0) return
     if (c.activeManagePanel) closeHover()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- close on epoch bump only
   }, [flyoutCloseEpoch])
 
   const campaignsBody = useMemo(
@@ -125,6 +124,8 @@ export function SidebarHqFlyouts({
           pathname={c.pathname}
           expandedIds={c.expandedSpaceCampaignIds}
           setExpandedIds={c.setExpandedSpaceCampaignIds}
+          expandedProgramIds={c.expandedProgramIds}
+          setExpandedProgramIds={c.setExpandedProgramIds}
           onCreateSpace={(campaignId) => void c.handleCreateList(campaignId)}
           patchCampaignConfig={c.patchCampaignConfig}
           isSubmitting={c.isSubmittingList}
@@ -138,24 +139,9 @@ export function SidebarHqFlyouts({
           loadingMore={c.sidebarListsLoadingMore}
           onLoadMore={() => void c.loadMoreSidebarLists()}
           flyoutMode
-          onHoldParentFlyout={clearSpacesFlyoutCloseTimer}
-          onReleaseParentFlyout={() => {
-            if (!pinned) scheduleSpacesFlyoutClose()
-          }}
-          onSubFlyoutOpenChange={setSubOpen}
-          onCloseParentFlyout={closeHover}
         />
       ),
-    [
-      c,
-      clearSpacesFlyoutCloseTimer,
-      pinned,
-      scheduleSpacesFlyoutClose,
-      setBrowsePanelBucket,
-      setCreateSpaceModalFor,
-      spaceUserState,
-      spacesSearchQuery,
-    ],
+    [c, setBrowsePanelBucket, setCreateSpaceModalFor, spaceUserState, spacesSearchQuery],
   )
 
   if (placement === 'inline') return null

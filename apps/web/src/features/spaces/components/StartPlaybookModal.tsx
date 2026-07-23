@@ -179,7 +179,7 @@ export function StartPlaybookModal({
                   onChange={(value) => setAudit((old) => ({ ...old, comparison_period: value }))}
                 />
                 <Field
-                  label="Campaign names or IDs (optional)"
+                  label="Campaign names or IDs, one per line (optional)"
                   value={audit.selected_campaigns}
                   onChange={(value) => setAudit((old) => ({ ...old, selected_campaigns: value }))}
                 />

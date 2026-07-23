@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { ChevronRight, Plus } from 'lucide-react'
 import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
 import type { Space } from '@/features/spaces/types'
@@ -82,7 +83,16 @@ export function CampaignsHubProgramSection({
         </button>
         <LucideIcon name={icon} className={cn('h-4 w-4 shrink-0', iconColor)} />
         <div className="min-w-0 flex-1">
-          <p className="body-2 text-foreground font-medium">{group.label}</p>
+          {program ? (
+            <Link
+              href={`/programs/${program.id}`}
+              className="body-2 text-foreground hover:text-foreground font-medium transition-colors"
+            >
+              {group.label}
+            </Link>
+          ) : (
+            <p className="body-2 text-foreground font-medium">{group.label}</p>
+          )}
           <p className="body-4 text-muted-foreground">
             {group.campaigns.length === 0
               ? 'No campaigns'

@@ -105,7 +105,7 @@ export function SidebarHqHubMenuDockFlyouts({
         onClose={closeDock}
         pinned={pinned}
         onPinnedChange={setPinned}
-        leaveSuspended={subOpen}
+        leaveSuspended={false}
         headerActions={[
           {
             kind: 'search',
@@ -143,10 +143,6 @@ export function SidebarHqHubMenuDockFlyouts({
           setBrowsePanelBucket={setBrowsePanelBucket}
           setCreateSpaceModalFor={setCreateSpaceModalFor}
           spaceUserState={spaceUserState}
-          onHoldParentFlyout={clearClose}
-          onReleaseParentFlyout={scheduleClose}
-          onSubFlyoutOpenChange={setSubOpen}
-          onCloseParentFlyout={closeDock}
         />
       </HubDockFlyout>
     )

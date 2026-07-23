@@ -246,13 +246,14 @@ export class SlackRuntimeRepository {
     return created.id
   }
 
-  async uploadCampaignStorageObjectAndGetPublicUrl(
+  async uploadCampaignStorageObjectAndCreateSignedUrl(
     supabase: SupabaseClient,
     storagePath: string,
     buffer: Buffer,
     contentType: string,
   ): Promise<string> {
-    const { error } = await supabase.storage.from('campaigns').upload(storagePath, buffer, {
+    const storage = supabase.storage.from('campaigns')
+    const { error } = await storage.upload(storagePath, buffer, {
       contentType,
       upsert: false,
     })
@@ -260,9 +261,15 @@ export class SlackRuntimeRepository {
       throw new Error(`Supabase storage upload failed: ${error.message}`)
     }
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from('campaigns').getPublicUrl(storagePath)
-    return publicUrl
+    const { data, error: signedUrlError } = await storage.createSignedUrl(
+      storagePath,
+      365 * 24 * 60 * 60,
+    )
+    if (signedUrlError || !data?.signedUrl) {
+      throw new Error(
+        `Supabase storage signed URL failed: ${signedUrlError?.message ?? 'No signed URL returned'}`,
+      )
+    }
+    return data.signedUrl
   }
 }
