@@ -29,3 +29,13 @@ Why: The clean production image could not build without the generated canvas ass
 Impact: The Fly runtime now includes the verified Higgsfield MCP execution path. Deep health passes with the agent API, OpenClaw gateway, and auth service reachable.
 
 Files: `apps/openclaw/src/canvas-host/a2ui/a2ui.bundle.js`, `apps/openclaw/src/canvas-host/a2ui/.bundle.hash`, Fly app `roas-runtimes`
+
+## 2026-07-24 09:34 - [FIX]
+
+What: Added a five-second same-model retry before fallback for provider-busy Pixel runs and a specific Slack-facing busy response when every attempt remains unavailable.
+
+Why: A valid Slack follow-up reached Pixel, but the primary and fallback models were both attempted inside the same rate-limit window and the real cause was hidden behind a generic processing error.
+
+Impact: Transient provider throttles can recover without user action. Exhausted attempts remain visibly incomplete, do not receive a success checkmark, and tell the user Pixel is temporarily busy without exposing provider internals.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/controllers/channel-chat.controller.ts`, tests, `documentation/features/meeting-follow-up-slack.md`

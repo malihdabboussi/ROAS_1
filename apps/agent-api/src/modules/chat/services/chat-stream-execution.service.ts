@@ -108,12 +108,16 @@ export class ChatStreamExecutionService {
       }
     }
 
+    if (result.failed && this.streamRecoveryService.isRetryableProviderError(result.failed)) {
+      result = await this.retryBusyProvider(input, result)
+    }
+
     if (
       result.failed &&
       this.streamRecoveryService.isRetryableProviderError(result.failed) &&
       isModelStrategy(input.selectedModelInput)
     ) {
-      result = await this.retryFallbackModel(input, result.failed)
+      result = await this.retryFallbackModel(input, result)
     }
 
     return result
@@ -269,8 +273,9 @@ export class ChatStreamExecutionService {
 
   private async retryFallbackModel(
     input: ChatStreamExecutionInput,
-    failure: string,
+    failedResult: OpenClawCompletionResult,
   ): Promise<OpenClawCompletionResult> {
+    const failure = failedResult.failed ?? 'provider_busy'
     const fallback = resolveFallbackForStrategy(input.selectedModelInput as ModelStrategy, 'chat')
     const fallbackSettings = await this.modelInputService.validateModelSettings(
       fallback.modelId,
@@ -294,6 +299,7 @@ export class ChatStreamExecutionService {
     return {
       ...retryResult,
       recoveryEvents: [
+        ...(failedResult.recoveryEvents ?? []),
         ...(retryResult.recoveryEvents ?? []),
         this.buildRecoveryEvent(
           'fallback_model_retry',
@@ -302,6 +308,44 @@ export class ChatStreamExecutionService {
           {
             from_model: input.gatewayModelId ?? null,
             to_model: fallback.modelId,
+          },
+        ),
+      ],
+    }
+  }
+
+  private async retryBusyProvider(
+    input: ChatStreamExecutionInput,
+    failedResult: OpenClawCompletionResult,
+  ): Promise<OpenClawCompletionResult> {
+    const failure = failedResult.failed ?? 'provider_busy'
+    if (input.chatTimingLogsEnabled) {
+      input.logger.warn(
+        `[ChatFlow] provider_busy_retry ${input.chatDiag} model=${input.gatewayModelId ?? 'default'} reason=${failure}`,
+      )
+    }
+    await new Promise<void>((resolve) => setTimeout(resolve, 5000))
+    await input.progressiveSend('status', {
+      phase: 'thinking',
+      message: 'Pixel is busy — retrying your message',
+    })
+    const retryResult = await this.streamCompletion(
+      input,
+      input.inputArray,
+      input.gatewayModelId || undefined,
+    )
+    return {
+      ...retryResult,
+      recoveryEvents: [
+        ...(failedResult.recoveryEvents ?? []),
+        ...(retryResult.recoveryEvents ?? []),
+        this.buildRecoveryEvent(
+          'provider_busy_retry',
+          retryResult.failed ? 'failed' : 'recovered',
+          retryResult.failed ?? failure,
+          {
+            model: input.gatewayModelId ?? null,
+            delay_ms: 5000,
           },
         ),
       ],

@@ -119,4 +119,34 @@ describe('ChatStreamExecutionService', () => {
     expect(streamCompletion).toHaveBeenCalledTimes(1)
     expect(result.failed).toBe('context_window_exceeded: input is too long')
   })
+
+  it('waits and retries the selected model after a provider rate limit', async () => {
+    vi.useFakeTimers()
+    const streamCompletion = vi
+      .fn()
+      .mockResolvedValueOnce({
+        content: '',
+        toolSteps: [],
+        failed: 'API rate limit reached. Please try again later.',
+      })
+      .mockResolvedValueOnce({
+        content: 'Recovered after the provider throttle cleared.',
+        toolSteps: [],
+      })
+    const service = makeService({ streamCompletion })
+
+    const resultPromise = service.run(makeRunInput())
+    await vi.advanceTimersByTimeAsync(5000)
+    const result = await resultPromise
+
+    expect(streamCompletion).toHaveBeenCalledTimes(2)
+    expect(result.failed).toBeUndefined()
+    expect(result.content).toBe('Recovered after the provider throttle cleared.')
+    expect(result.recoveryEvents).toEqual([
+      expect.objectContaining({
+        type: 'provider_busy_retry',
+        status: 'recovered',
+      }),
+    ])
+  })
 })

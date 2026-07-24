@@ -142,4 +142,38 @@ describe('ChannelChatController Telegram channel chat', () => {
     expect(creditsService.assertHasAvailableCredits).not.toHaveBeenCalled()
     expect(chatService.processMessage).not.toHaveBeenCalled()
   })
+
+  it('returns a specific busy response after provider retries are exhausted', async () => {
+    const chatService = {
+      processMessage: vi.fn(async () => {
+        throw new Error('API rate limit reached. Please try again later.')
+      }),
+    }
+    const creditsService = { assertHasAvailableCredits: vi.fn(async () => undefined) }
+    const controller = new ChannelChatController(
+      chatService as any,
+      { client: {} } as any,
+      creditsService as any,
+    )
+    const res = mockSseResponse()
+
+    await controller.sendMessage(
+      {
+        user_id: 'user-1',
+        conversation_id: 'conversation-1',
+        content: 'Please revise that message',
+        source: 'telegram',
+        access_token: 'access-token',
+      },
+      res,
+    )
+
+    expect(res.write).toHaveBeenCalledWith(
+      `data: ${JSON.stringify({
+        type: 'error',
+        message:
+          "Pixel is temporarily busy. I retried your message, but I still couldn't get a response. Please try again in a moment.",
+      })}\n\n`,
+    )
+  })
 })

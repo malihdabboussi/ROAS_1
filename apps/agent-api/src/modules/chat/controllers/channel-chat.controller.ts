@@ -12,6 +12,7 @@ import type { Response } from 'express'
 import { SupabaseServiceClient } from '@vibey/api-shared'
 import { SyncReadyInterceptor } from '../../agent-sync/interceptors/sync-ready.interceptor'
 import { CreditsService } from '../../billing/services/credits.service'
+import { classifyChatStreamError } from '../chat-stream-errors'
 import { CHANNEL_CHAT_ERRORS } from '../config/errors.config'
 import { ChannelServiceGuard } from '../guards/channel-service.guard'
 import { ChatService } from '../services/chat.service'
@@ -153,9 +154,11 @@ export class ChannelChatController {
       this.logger.error(`Channel chat stream error: ${message}`)
       if (clientAlive) {
         try {
-          res.write(
-            `data: ${JSON.stringify({ type: 'error', message: CHANNEL_CHAT_ERRORS.processingFailed })}\n\n`,
-          )
+          const userMessage =
+            classifyChatStreamError(message) === 'busy'
+              ? CHANNEL_CHAT_ERRORS.providerBusy
+              : CHANNEL_CHAT_ERRORS.processingFailed
+          res.write(`data: ${JSON.stringify({ type: 'error', message: userMessage })}\n\n`)
         } catch {
           clientAlive = false
         }
