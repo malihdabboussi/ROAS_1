@@ -544,6 +544,16 @@ function buildActionOutputBlocks(
       defaultName: 'Website',
     })
   }
+  if (action === 'create_funnel') {
+    return buildArtifactPreviewBlock({
+      artifactType: 'funnel',
+      result,
+      data,
+      idKeys: ['funnel_id', 'funnelId', 'id'],
+      nameKeys: ['name', 'title'],
+      defaultName: 'Funnel',
+    })
+  }
   if (action === 'create_theme' || action === 'extract_website_theme') {
     return buildArtifactPreviewBlock({
       artifactType: 'theme',
@@ -703,7 +713,7 @@ export function resolveUiBlocksFromToolResult(params: {
     })
   }
 
-  if (action === 'generate_video') {
+  if (action === 'generate_video' || action === 'get_video_status') {
     return buildMediaAssetBlock({
       action,
       data,

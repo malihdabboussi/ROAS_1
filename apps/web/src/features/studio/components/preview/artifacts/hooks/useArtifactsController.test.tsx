@@ -36,8 +36,9 @@ vi.mock('@/features/studio/contexts/CampaignModeContext', () => ({
 }))
 
 vi.mock('@/features/studio/store/use-chat-store', () => ({
-  useChatStore: (selector: (state: { setPendingComposerText: typeof mocks.setPendingComposerText }) => unknown) =>
-    selector({ setPendingComposerText: mocks.setPendingComposerText }),
+  useChatStore: (
+    selector: (state: { setPendingComposerText: typeof mocks.setPendingComposerText }) => unknown,
+  ) => selector({ setPendingComposerText: mocks.setPendingComposerText }),
 }))
 
 vi.mock('@/lib/artifacts', () => ({
@@ -362,6 +363,25 @@ describe('useArtifactsController', () => {
           type: 'ad',
           resourceId: 'ad-1',
           label: 'Hero ad',
+        }),
+      )
+    })
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('vibey-open-artifact', {
+          detail: { artifactType: 'website', artifactId: 'website-1', name: 'Brand Website' },
+        }),
+      )
+    })
+
+    await waitFor(() => {
+      expect(mocks.handleSelect).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'funnel-website-1',
+          type: 'funnel',
+          resourceId: 'website-1',
+          label: 'Brand Website',
         }),
       )
     })

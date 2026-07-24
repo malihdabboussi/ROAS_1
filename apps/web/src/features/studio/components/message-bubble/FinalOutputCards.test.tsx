@@ -67,4 +67,64 @@ describe('FinalOutputCards', () => {
       }),
     )
   })
+
+  it('opens a created funnel in the in-app artifact workspace', () => {
+    const listener = vi.fn()
+    window.addEventListener('vibey-open-artifact', listener)
+    const blocks: FinalOutputBlock[] = [
+      {
+        type: 'artifact_preview',
+        id: 'funnel-1',
+        artifactType: 'funnel',
+        artifactId: 'funnel-1',
+        name: 'Lead Magnet Funnel',
+        spaceId: 'space-1',
+      },
+    ]
+
+    render(<FinalOutputCards blocks={blocks} />)
+    fireEvent.click(screen.getByRole('button', { name: /Lead Magnet Funnel/i }))
+
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        detail: {
+          artifactType: 'funnel',
+          artifactId: 'funnel-1',
+          name: 'Lead Magnet Funnel',
+          spaceId: 'space-1',
+        },
+      }),
+    )
+    window.removeEventListener('vibey-open-artifact', listener)
+  })
+
+  it('opens a generated video in the in-app media workspace', () => {
+    const listener = vi.fn()
+    window.addEventListener('vibey-open-media', listener)
+    const mediaAssetId = '565c9d8e-a74f-456a-90bf-8eb98d4e26a3'
+    const blocks: FinalOutputBlock[] = [
+      {
+        type: 'media_asset',
+        id: `media-${mediaAssetId}`,
+        mediaAssetId,
+        spaceId: 'c0a6bc09-9502-4b0e-9438-302ed1482531',
+        url: 'https://cdn.vibey.ai/video.mp4',
+        title: 'Generated video',
+        kind: 'video',
+      },
+    ]
+
+    render(<FinalOutputCards blocks={blocks} />)
+    fireEvent.click(screen.getByRole('button', { name: /Generated video/i }))
+
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        detail: expect.objectContaining({
+          mediaAssetId,
+          title: 'Generated video',
+        }),
+      }),
+    )
+    window.removeEventListener('vibey-open-media', listener)
+  })
 })

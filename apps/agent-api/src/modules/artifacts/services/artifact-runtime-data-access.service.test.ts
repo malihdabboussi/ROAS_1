@@ -115,7 +115,9 @@ describe('artifact runtime data access services', () => {
     }
     const handlers = new ArtifactChannelMembersService().getHandlers(target)
 
-    await expect(handlers.save_member_note({ note: ' Important buyer ' }, 'session')).resolves.toEqual({
+    await expect(
+      handlers.save_member_note({ note: ' Important buyer ' }, 'session'),
+    ).resolves.toEqual({
       success: true,
       notes_count: 2,
     })
@@ -378,6 +380,8 @@ describe('artifact runtime data access services', () => {
       service.getVideoStatus(target, { job_id: 'job-1' }, 'mission-session'),
     ).resolves.toMatchObject({
       job_id: 'job-1',
+      media_asset_id: 'asset-1',
+      prompt: 'Video prompt',
       status: 'succeeded',
       success: true,
       url: 'https://cdn.example/video.mp4',

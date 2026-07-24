@@ -1,6 +1,6 @@
 # Website Artifacts
 
-Last Modified: 2026-07-17
+Last Modified: 2026-07-24
 
 ## Overview
 
@@ -84,6 +84,8 @@ History APIs:
 
 `update_funnel_page.files` and `update_website_page.files` require `replace_entire_page: true`. Small edits should use `patch_funnel_file` or `write_funnel_file`, which also record history.
 
+Successful `create_website` results identify the output as a website even though storage remains in `funnels`. Chat opens the card as the same underlying funnel artifact in Studio and focuses the Websites view in a Space. `create_funnel` retains a transport fallback that synthesizes the same openable artifact card when a downstream tool envelope omits backend `ui_blocks`.
+
 ## Skill Layer
 
 Skill work follows `.cursor/skills/claude-skills/SKILL.md`: DB-backed `agent_skills` and `agent_skill_resources` are canonical. The migration `supabase/migrations/20260604120000_first_class_website_skill_contracts.sql` updates persistent skill guidance.
@@ -128,3 +130,4 @@ Design Contracts mark substantive choices as Confirmed, Proposed, or Missing so 
 - **2026-07-17** — Added a browsable page-version timeline and arbitrary restore for funnels and websites. Reason: durable change sets existed, but users could only step backward or forward one edit at a time and could not see or select saved versions.
 - **2026-07-17** — Added a high-fidelity design-contract and fresh screenshot-critique workflow for funnels and websites. Reason: wireframing and builder skills existed, but no specialist layer owned subject-specific art direction, deliberate mobile composition, or independent visual QA.
 - **2026-07-17** — Tightened Design Contracts after blind forward-testing. Reason: the first run was visually specific and evidence-safe but allowed provisional fallback typography and arbitrary layout percentages to read as approved decisions and produced a longer-than-needed handoff.
+- **2026-07-24** — Aligned created website/funnel result types and chat destinations. Reason: website rows share funnel storage, but users must still see and open them as Websites while funnel cards continue to route to Funnels.

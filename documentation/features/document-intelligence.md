@@ -17,6 +17,7 @@ Last Modified: July 24, 2026
 11. Current and previous user-uploaded image URLs are also exposed as authorized source inputs for ordinary benign edits. Chat routes those requests to native `generate_image` with `input_image_url`; it does not require a separate OpenAI integration.
 12. Previous/stored image URLs, readable `media_assets` ids, and normalized `asset_ref` handles are exposed with `analyze_image` for re-reading, ranking, text-in-image checks, and carousel selection.
 13. `analyze_image` accepts public image URLs, readable `media_assets` ids, `asset_ref`, or `asset_refs`, rejects local/private URLs and redirects, downloads only image MIME types with timeout/size limits, and sends the image through the platform-managed vision path.
+14. Async video generation returns a platform job id. `get_video_status` accepts that same `job_id`; a successful poll returns the saved media asset id, URL, prompt, and active Space scope so chat renders an openable in-app video card.
 
 ## Code Examples
 
@@ -76,6 +77,18 @@ Image edit action:
 }
 ```
 
+Video completion poll:
+
+```json
+{
+  "action": "get_video_status",
+  "label": "Checking video status",
+  "data": {
+    "job_id": "video-job-id-returned-by-generate-video"
+  }
+}
+```
+
 ## Decision Log
 
 - V1 uses the existing Gemini OCR services. No new OCR provider was introduced.
@@ -89,3 +102,4 @@ Image edit action:
 - `analyze_image` is a platform capability, not a skill-specific workaround. Agents must use Vibey-managed tools and connected integrations for image analysis, never user-pasted API keys or tokens.
 - Presigned upload confirmation returns `asset_ref` as the stable handoff between upload, indexing, Brain imports, and mission attachment flows.
 - File-aware actions accept `asset_ref` as the stable handoff and normalize it to legacy handler fields internally, so agents do not guess between local paths, signed URLs, Drive links, and media asset ids.
+- Video polling uses the Vibey media job id rather than a provider operation id. The completed response carries first-party media identity so the final chat output opens inside the Media workspace instead of degrading to an external URL.

@@ -326,7 +326,7 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
     duration_seconds: 'number',
     aspect_ratio: 'string',
   }),
-  get_video_status: schema(['operation_id'], ['operation_id'], stringType(['operation_id'])),
+  get_video_status: schema(['job_id'], ['job_id'], stringType(['job_id'])),
   analyze_video: schema(
     [['media_url', 'file_url', 'url', 'video_url']],
     [

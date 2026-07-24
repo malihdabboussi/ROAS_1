@@ -295,6 +295,23 @@ describe('space ROAS chat panel logic', () => {
     expect(
       resolveSpaceChatAutoFocusTarget([
         message({
+          id: 'assistant-website',
+          metadata: {
+            content_blocks_ordered: [
+              {
+                type: 'artifact_preview',
+                artifactType: 'website',
+                artifactId: 'website-1',
+              },
+            ],
+          },
+        }),
+      ]),
+    ).toEqual({ key: 'websites:website-1', viewType: 'websites' })
+
+    expect(
+      resolveSpaceChatAutoFocusTarget([
+        message({
           id: 'assistant-4',
           metadata: {
             content_blocks_ordered: [

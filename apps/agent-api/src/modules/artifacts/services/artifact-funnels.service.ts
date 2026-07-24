@@ -444,12 +444,13 @@ export class ArtifactFunnelsService {
   }
 
   private buildFunnelResult(data: Record<string, any>, reused: boolean) {
+    const artifactType = data.funnel_type === 'website' ? 'website' : 'funnel'
     return {
       ui_blocks: [
         {
           type: 'artifact_preview',
-          id: `artifact-funnel-${data.id}`,
-          artifactType: 'funnel',
+          id: `artifact-${artifactType}-${data.id}`,
+          artifactType,
           artifactId: data.id,
           name: data.name ?? 'Untitled Funnel',
           status: data.status ?? 'draft',

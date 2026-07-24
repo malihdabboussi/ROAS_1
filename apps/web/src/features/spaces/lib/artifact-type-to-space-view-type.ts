@@ -3,6 +3,8 @@ export function artifactTypeToSpaceViewType(artifactType: string): string | null
   switch (artifactType) {
     case 'funnel':
       return 'funnels'
+    case 'website':
+      return 'websites'
     case 'offer':
       return 'offers'
     case 'ad-campaign':

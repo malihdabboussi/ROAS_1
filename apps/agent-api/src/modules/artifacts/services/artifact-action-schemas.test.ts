@@ -164,6 +164,23 @@ describe('PromptMode action schema and preflight coverage', () => {
     })
   })
 
+  it('uses the video job id returned by generate_video when polling status', () => {
+    expect(
+      validateActionData('get_video_status', {
+        job_id: 'video-job-1',
+      }),
+    ).toBeNull()
+    expect(
+      validateActionData('get_video_status', {
+        operation_id: 'provider-operation-1',
+      }),
+    ).toMatch(/job_id/i)
+    expect(describeActionContract('get_video_status')).toMatchObject({
+      required: ['job_id'],
+      optional: ['job_id'],
+    })
+  })
+
   it('rejects transcribe_audio source mistakes before runtime work', async () => {
     await expect(validateActionPreflight('transcribe_audio', {})).resolves.toMatchObject({
       error: expect.stringMatching(/media_url/i),

@@ -8228,3 +8228,20 @@ Evidence: `pnpm architecture:check` stops with `ENOENT` because the tracked work
 Needed work: Remove or replace the stale test symlink, or make the architecture walker handle broken symlinks without aborting the entire repository check.
 
 Reason not done now: The broken OpenClaw test fixture is unrelated to chat media routing and changing it would broaden this production fix.
+
+## 2026-07-24 - [ARCH] Split UI block extractor by output family
+
+Status: Open
+
+Found while: Auditing chat creation outputs for funnels, websites, images, videos, and documents
+
+Files:
+
+- `apps/agent-api/src/modules/shared/ui-block-extractor.ts` (964 LOC after the scoped fixes; repository limit 600)
+- `apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-status.service.ts` (505 LOC; proactive split threshold 500, hard limit 600)
+
+Evidence: The extractor already exceeded the hard LOC limit before this work and currently combines integration repair, campaign artifacts, media, documents, browser screenshots, Meta, clarification, and plan parsing. The video-status service remains under the hard limit but owns provider polling, upload, billing, mission delivery, and result formatting. The scoped changes only align funnel fallback and completed-video output behavior.
+
+Needed work: Extract media and artifact-output builders into focused modules while keeping `resolveUiBlocksFromToolResult` as the transport chokepoint. Split provider-specific video polling from shared completion/result formatting.
+
+Reason not done now: The requested fix targets broken creation results. Decomposing every unrelated UI-block family would materially broaden the change and overlap other active chat work.

@@ -3,15 +3,13 @@
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCampaignMode } from '@/features/studio/contexts/CampaignModeContext'
-import { emitActiveArtifactSelection } from '@/lib/chat/use-active-artifact-selection-signal'
-import { fetchFunnelWithPages, type FunnelPage } from '@/lib/artifacts'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
-import type { VibeyPendingArtifactOpenSimpleType } from '@/lib/artifacts/pending-artifact-open'
+import { fetchFunnelWithPages, type FunnelPage } from '@/lib/artifacts'
 import type { ArtifactPreviewResource as SelectedResource } from '@/lib/artifacts/artifact-preview-types'
+import type { VibeyPendingArtifactOpenSimpleType } from '@/lib/artifacts/pending-artifact-open'
+import { emitActiveArtifactSelection } from '@/lib/chat/use-active-artifact-selection-signal'
 import type { TreeNode } from '../tree/types'
 import { useArtifactMutations } from './useArtifactMutations'
-import { useArtifactsData } from './useArtifactsData'
-import { useArtifactSelection } from './useArtifactSelection'
 import {
   buildActiveArtifactSelection,
   findNodeById,
@@ -20,6 +18,8 @@ import {
   pendingToSyntheticTreeNode,
   sortPages,
 } from './useArtifactsController.helpers'
+import { useArtifactsData } from './useArtifactsData'
+import { useArtifactSelection } from './useArtifactSelection'
 
 export function useArtifactsController(campaignId: string) {
   const router = useRouter()
@@ -86,7 +86,9 @@ export function useArtifactsController(campaignId: string) {
         return
       }
       expandPanel('artifacts')
-      const type = detail.artifactType as VibeyPendingArtifactOpenSimpleType
+      const type = (
+        detail.artifactType === 'website' ? 'funnel' : detail.artifactType
+      ) as VibeyPendingArtifactOpenSimpleType
       const node = pendingToSyntheticTreeNode({
         kind: 'simple',
         type,

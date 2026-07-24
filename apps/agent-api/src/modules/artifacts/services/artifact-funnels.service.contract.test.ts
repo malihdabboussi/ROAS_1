@@ -272,6 +272,47 @@ describe('ArtifactFunnelsService contract behavior', () => {
     expect(result).toMatchObject({ success: true, funnel_type: 'website' })
   })
 
+  it('returns a website preview for natively created website funnels', async () => {
+    const repository = {
+      findSlug: vi.fn(async () => ({ data: null, error: null })),
+      createFunnel: vi.fn(async (_supabase: unknown, payload: Record<string, unknown>) => ({
+        data: {
+          id: 'website-1',
+          name: 'Brand Website',
+          funnel_type: 'website',
+          status: 'draft',
+          space_id: 'space-1',
+          ...payload,
+        },
+        error: null,
+      })),
+    }
+    const service = new ArtifactFunnelsService(undefined, repository as any)
+    const target = {
+      resolveUserId: vi.fn(() => 'user-1'),
+      resolveOrgId: vi.fn(() => 'org-1'),
+      getUserClient: vi.fn(async () => ({})),
+      resolveCampaignId: vi.fn(async () => 'campaign-1'),
+      resolveThemeId: vi.fn(async () => null),
+      isMissionSessionKey: vi.fn(() => false),
+    }
+
+    const result = (await service
+      .getHandlers(target as any)
+      .create_website({ name: 'Brand Website', space_id: 'space-1' }, 'session-1')) as Record<
+      string,
+      any
+    >
+
+    expect(result.ui_blocks).toEqual([
+      expect.objectContaining({
+        artifactType: 'website',
+        artifactId: 'website-1',
+        name: 'Brand Website',
+      }),
+    ])
+  })
+
   it('normalizes add_website_page home defaults before delegating to addFunnelPage', async () => {
     const service = new ArtifactFunnelsService()
     const target = {

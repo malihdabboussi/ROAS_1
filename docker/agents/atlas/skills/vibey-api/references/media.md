@@ -101,11 +101,11 @@ Reads status of in-flight media generation jobs for the campaign.
 ```
 
 ## get_video_status
-**Required keys:** `operation_id`
+**Required keys:** `job_id`
 
-**Optional keys:** `operation_id`
+**Optional keys:** `job_id`
 
-**Types:** `operation_id`: string
+**Types:** `job_id`: string
 
 Polls video generation job status. **job_id is REQUIRED**. Call after wait(30) following generate_video. Returns status: starting, processing, succeeded, or failed. If still processing, call wait(30) and poll again. When succeeded, returns the video URL.
 

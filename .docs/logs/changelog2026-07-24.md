@@ -155,3 +155,13 @@ Why: The fork API created the conversation and copied its messages, but the UI o
 Impact: Clicking Fork now opens the new chat immediately. The production fork shown in the report was verified as conversation `26aa2a05-4693-480d-b802-c21b79bd0a41` with 30 copied messages.
 
 Files: `apps/web/src/features/studio/components/message-bubble/AssistantActions.tsx`, `apps/web/src/features/studio/components/message-bubble/AssistantActions.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-07-24 16:31] - [FIX]
+
+What: Aligned chat creation output contracts for funnels, websites, and async videos; added an empty-baseline capability drift guard across schemas, registries, policies, and agent docs; and verified output cards open canonical in-app destinations.
+
+Why: Video generation returned `job_id` while its status schema required `operation_id`, completed polls omitted the saved media id, funnel fallback cards were missing, and website results could be labeled or opened through the wrong artifact route.
+
+Impact: Agents can poll generated videos with the returned job id, completed videos open in Space Media, funnels retain an openable fallback card, and websites open as Websites while sharing funnel storage. Focused backend and web tests cover the execution, result, render, and open paths.
+
+Files: `artifact-action-additional-schemas.ts`, `artifact-legacy-media-status.service.ts`, `artifact-funnels.service.ts`, `ui-block-extractor.ts`, `FinalOutputCards.test.tsx`, `useArtifactsController.ts`, `artifact-type-to-space-view-type.ts`, creation-output drift tests/report, `documentation/features/website-artifacts.md`, `documentation/features/document-intelligence.md`

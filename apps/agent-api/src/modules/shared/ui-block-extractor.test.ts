@@ -190,6 +190,70 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
     ])
   })
 
+  it('synthesizes a funnel preview when a transport omits backend ui blocks', () => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'create_funnel',
+      toolArgs: { data: { name: 'Lead Magnet Funnel', space_id: 'space-1' } },
+      result: {
+        success: true,
+        id: 'funnel-1',
+        name: 'Lead Magnet Funnel',
+        status: 'draft',
+        space_id: 'space-1',
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      expect.objectContaining({
+        type: 'artifact_preview',
+        artifactType: 'funnel',
+        artifactId: 'funnel-1',
+        name: 'Lead Magnet Funnel',
+        status: 'draft',
+        spaceId: 'space-1',
+      }),
+    ])
+  })
+
+  it('emits a saved video block after video generation polling succeeds', () => {
+    const assetId = '565c9d8e-a74f-456a-90bf-8eb98d4e26a3'
+    const spaceId = 'c0a6bc09-9502-4b0e-9438-302ed1482531'
+
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'get_video_status',
+      toolArgs: { data: { job_id: 'video-job-1' } },
+      result: {
+        success: true,
+        job_id: 'video-job-1',
+        status: 'succeeded',
+        url: 'https://cdn.vibey.ai/video.mp4',
+        media_asset_id: assetId,
+        space_id: spaceId,
+        prompt: 'A cinematic product launch',
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      expect.objectContaining({
+        type: 'media_asset',
+        mediaAssetId: assetId,
+        spaceId,
+        url: 'https://cdn.vibey.ai/video.mp4',
+        title: 'Generated video',
+        kind: 'video',
+        prompt: 'A cinematic product launch',
+      }),
+    ])
+  })
+
   it('synthesizes form preview blocks from text-envelope tool results', () => {
     const blocks = resolveUiBlocksFromToolResult({
       name: 'vibey_backend',

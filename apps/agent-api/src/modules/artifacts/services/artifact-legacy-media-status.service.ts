@@ -3,6 +3,23 @@ import { ArtifactMissionDeliverablesRepository } from '../repositories/artifact-
 import { ArtifactLegacyMediaJobsService } from './artifact-legacy-media-jobs.service'
 import { ArtifactLegacyMediaUploadService } from './artifact-legacy-media-upload.service'
 
+function buildSucceededVideoStatus(
+  job: Record<string, unknown>,
+  url: string,
+  mediaAssetId?: string | null,
+  spaceId?: string | null,
+) {
+  return {
+    success: true,
+    job_id: job.id,
+    status: 'succeeded',
+    url,
+    ...(mediaAssetId ? { media_asset_id: mediaAssetId } : {}),
+    prompt: String(job.prompt ?? ''),
+    ...(spaceId ? { space_id: spaceId } : {}),
+  }
+}
+
 @Injectable()
 export class ArtifactLegacyMediaStatusService {
   constructor(
@@ -59,12 +76,12 @@ export class ArtifactLegacyMediaStatusService {
           mediaAssetId: String(job.media_asset_id ?? ''),
         })
       }
-      return {
-        success: true,
-        job_id: job.id,
-        status: job.status,
-        url: (job.result_url as string) ?? '',
-      }
+      return buildSucceededVideoStatus(
+        job,
+        (job.result_url as string) ?? '',
+        String(job.media_asset_id),
+        spaceIdFromCtx,
+      )
     }
 
     const provider = String(job.provider ?? '')
@@ -246,7 +263,7 @@ export class ArtifactLegacyMediaStatusService {
         })
       }
 
-      return { success: true, job_id: job.id, status: 'succeeded', url: upload.url ?? '' }
+      return buildSucceededVideoStatus(job, upload.url ?? '', assetId, spaceIdFromCtx)
     }
 
     if (provider === 'google') {
@@ -430,7 +447,7 @@ export class ArtifactLegacyMediaStatusService {
         })
       }
 
-      return { success: true, job_id: job.id, status: 'succeeded', url: upload.url ?? '' }
+      return buildSucceededVideoStatus(job, upload.url ?? '', assetId, spaceIdFromCtx)
     }
 
     return { success: false, error: 'Unsupported provider' }
