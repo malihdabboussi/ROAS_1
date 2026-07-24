@@ -97,9 +97,9 @@ describe('ChatService context helpers', () => {
     })
     const service = makeModelInputService({ client })
 
-    await expect(
-      service.resolveAgentConfiguredModel(client, 'user-1', 'zara', null),
-    ).resolves.toBe('auto:power')
+    await expect(service.resolveAgentConfiguredModel(client, 'user-1', 'zara', null)).resolves.toBe(
+      'auto:power',
+    )
     await expect(service.loadModelCapability('anthropic/claude-opus-4.6')).resolves.toEqual({
       provider: 'anthropic',
       modelName: 'claude-opus-4.6',
@@ -197,7 +197,35 @@ describe('ChatService context helpers', () => {
         index_error: null,
       }),
     )
-    expect(logger.log).toHaveBeenCalledWith('Saved 2 uploaded document(s) to conversation_documents')
+    expect(logger.log).toHaveBeenCalledWith(
+      'Saved 2 uploaded document(s) to conversation_documents',
+    )
+  })
+
+  it('routes current and previous image attachments into in-chat image editing', () => {
+    const service = makeDocumentContextService({})
+    const currentContext = service.buildImageContext([
+      {
+        filename: 'employee.png',
+        type: 'image',
+        fileUrl: 'https://cdn.example.com/employee.png',
+        mediaAssetId: 'media-1',
+      },
+    ])
+    const previousContext = service.buildImageUrlContext([
+      {
+        filename: 'employee.png',
+        url: 'https://cdn.example.com/employee.png',
+      },
+    ])
+
+    for (const context of [currentContext, previousContext]) {
+      expect(context).toContain('generate_image')
+      expect(context).toContain('input_image_url')
+      expect(context).toContain('https://cdn.example.com/employee.png')
+      expect(context).toContain('Do not search for an external OpenAI or ChatGPT integration')
+      expect(context).toContain('Do not invent a separate consent requirement')
+    }
   })
 
   it('loads uploaded document cache rows into normalized metadata', async () => {
@@ -302,9 +330,9 @@ describe('ChatService context helpers', () => {
       })),
       findUserProfile: vi.fn(async () => ({
         data: {
-            full_name: 'Ava Admin',
-            email: 'ava@example.com',
-          },
+          full_name: 'Ava Admin',
+          email: 'ava@example.com',
+        },
         error: null,
       })),
     }
@@ -329,15 +357,15 @@ describe('ChatService context helpers', () => {
     const repository = {
       listTeamRosterAgents: vi.fn(async () => ({
         data: [
-            {
-              agent_key: 'copywriter',
-              name: 'Cora',
-              role: 'Copywriter',
-              level: 'employee',
-              specialty: 'Launches',
-              config: { capability_domain: 'marketing' },
-            },
-          ],
+          {
+            agent_key: 'copywriter',
+            name: 'Cora',
+            role: 'Copywriter',
+            level: 'employee',
+            specialty: 'Launches',
+            config: { capability_domain: 'marketing' },
+          },
+        ],
         error: null,
       })),
     }
@@ -362,13 +390,13 @@ describe('ChatService context helpers', () => {
         error: null,
       })),
       listAgentsByKeys: vi.fn(async () => [
-            {
-              agent_key: 'designer',
-              role: 'Designer',
-              specialty: 'Ads',
-              config: { capability_domain: 'marketing' },
-            },
-          ]),
+        {
+          agent_key: 'designer',
+          role: 'Designer',
+          specialty: 'Ads',
+          config: { capability_domain: 'marketing' },
+        },
+      ]),
     }
     const service = makeProfileContextService({ client, repository })
 

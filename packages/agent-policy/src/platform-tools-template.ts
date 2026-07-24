@@ -31,6 +31,14 @@ Slack does not reliably render Markdown tables. When replying in Slack, express 
 Example: \`• Date — Spend: $328 · Leads: 42 · CPL: $7.82 · CTR: 2.38%\`
 
 Keep real Markdown tables for surfaces that render them, such as portal documents.`
+export const PLATFORM_TOOLS_MEDIA_ROUTING_HEADING = '### Image And Video Creation'
+export const PLATFORM_TOOLS_MEDIA_ROUTING_BLOCK = `${PLATFORM_TOOLS_MEDIA_ROUTING_HEADING}
+
+- An image attached in the current message or listed under user-uploaded images is an available source asset. For a requested image edit, call \`generate_image\` with that attachment URL as \`input_image_url\` and describe both what to change and what to preserve.
+- For an ordinary benign edit of a user-supplied photo, treat the supplied image as an authorized editing input. Do not invent a separate consent requirement or refuse solely because the photo contains a real person. Continue to follow applicable safety policy for the requested result.
+- Image generation and editing are native ROAS capabilities. Do not search for or require an external OpenAI or ChatGPT integration, and do not tell the user to leave chat to complete the image request.
+- Use native \`generate_video\` for supported video generation. When a video skill explicitly routes the work to Higgsfield, use \`list_mcp_tools\` and \`use_mcp_tool\` for the connected Higgsfield server from this chat. Do not route Higgsfield through external-integration search or claim it is unavailable without checking the connected MCP tools.
+- Do not claim an image or video was created until the generation tool returns success.`
 
 export const PLATFORM_TOOLS_RUNTIME_GUIDANCE_BLOCK = `${PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING}
 
@@ -74,6 +82,8 @@ For ad-library / competitor ad research (Meta, Google, TikTok ad libraries, "wha
 - Use \`social_analysis\` Meta Ad Library actions for depth (company ads, ad details, video-ad transcripts).
 - Do not invent longevity or transcript data. If both surfaces fail, fall back to web search and label references \`[inferred — web]\`.
 - If \`ads_intelligence\` is blocked for your role, hand the request to a marketing teammate with \`ask_agent\`.
+
+${PLATFORM_TOOLS_MEDIA_ROUTING_BLOCK}
 
 For deliverable work:
 - Read the matching workflow skill first.
@@ -173,11 +183,24 @@ function ensureChannelFormattingGuidance(content: string): string {
   return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_CHANNEL_FORMATTING_BLOCK}${content.slice(insertAt)}`
 }
 
+function ensureMediaRoutingGuidance(content: string): string {
+  const runtimeStart = content.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)
+  if (runtimeStart === -1 || content.includes(PLATFORM_TOOLS_MEDIA_ROUTING_BLOCK)) {
+    return content
+  }
+
+  const unclearStart = content.indexOf('\nFor unclear,', runtimeStart)
+  const insertAt = unclearStart === -1 ? content.length : unclearStart
+  return `${content.slice(0, insertAt)}\n\n${PLATFORM_TOOLS_MEDIA_ROUTING_BLOCK}${content.slice(insertAt)}`
+}
+
 export function ensurePlatformToolsRuntimeGuidance(content: string): string {
   const withActionProtocol = prependActionContractProtocol(content)
   if (hasPlatformToolsRuntimeGuidance(withActionProtocol)) {
     return ensureChannelFormattingGuidance(
-      ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+      ensureMediaRoutingGuidance(
+        ensureDelegationGuidance(ensureDataGroundingPrinciple(withActionProtocol)),
+      ),
     )
   }
 

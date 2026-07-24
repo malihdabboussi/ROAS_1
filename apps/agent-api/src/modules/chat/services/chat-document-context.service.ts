@@ -178,7 +178,8 @@ export class ChatDocumentContextService {
   buildImageContext(documents: ChatDocumentAttachment[]): string {
     if (documents.length === 0) return ''
     const parts: string[] = [
-      '\n\n---\n**CURRENT MESSAGE IMAGE FILES (already attached as native image inputs; inspect them directly. Use analyze_image only later with image_url or asset_id if you need to re-read stored images.)**\n',
+      '\n\n---\n**CURRENT MESSAGE IMAGE FILES (already attached as native image inputs; inspect them directly. For a requested edit, call generate_image with the image_url as input_image_url. Use analyze_image only later if you need to re-read a stored image.)**\n',
+      '\nThese user-supplied images are available as authorized inputs for ordinary benign edits. Do not invent a separate consent requirement solely because an image contains a real person. Do not search for an external OpenAI or ChatGPT integration; image creation and editing happen in this chat through generate_image.\n',
     ]
     for (const doc of documents) {
       parts.push(
@@ -248,7 +249,8 @@ export class ChatDocumentContextService {
   buildImageUrlContext(images: Array<{ filename: string; url: string }>): string {
     if (images.length === 0) return ''
     const lines = [
-      '\n\n---\n**USER-UPLOADED IMAGES (available for use in funnels, ads, social posts, etc.; use analyze_image with image_url to inspect or rank them)**\n',
+      '\n\n---\n**USER-UPLOADED IMAGES (available as source assets for image creation and editing, as well as funnels, ads, and social posts)**\n',
+      'For a requested edit, call generate_image with the selected URL as input_image_url and describe what to change and preserve. These user-supplied images are authorized inputs for ordinary benign edits. Do not invent a separate consent requirement solely because an image contains a real person. Do not search for an external OpenAI or ChatGPT integration; complete image creation and editing in this chat through generate_image.\n',
     ]
     for (const img of images) {
       lines.push(

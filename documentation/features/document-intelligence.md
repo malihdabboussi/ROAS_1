@@ -1,6 +1,6 @@
 # Document Intelligence
 
-Last Modified: June 22, 2026
+Last Modified: July 24, 2026
 
 ## Data Flow
 
@@ -14,8 +14,9 @@ Last Modified: June 22, 2026
 8. Chat saves `conversation_documents.metadata.document_intelligence` so each uploaded file has traceable read status.
 9. File chips show upload/read status by polling `GET /api/media/assets/:id` after presigned upload confirmation.
 10. Current-message uploaded images are attached to the model as native `input_image` parts so the agent can inspect them directly without a separate image-reader step.
-11. Previous/stored image URLs, readable `media_assets` ids, and normalized `asset_ref` handles are exposed with `analyze_image` for re-reading, ranking, text-in-image checks, and carousel selection.
-12. `analyze_image` accepts public image URLs, readable `media_assets` ids, `asset_ref`, or `asset_refs`, rejects local/private URLs and redirects, downloads only image MIME types with timeout/size limits, and sends the image through the platform-managed vision path.
+11. Current and previous user-uploaded image URLs are also exposed as authorized source inputs for ordinary benign edits. Chat routes those requests to native `generate_image` with `input_image_url`; it does not require a separate OpenAI integration.
+12. Previous/stored image URLs, readable `media_assets` ids, and normalized `asset_ref` handles are exposed with `analyze_image` for re-reading, ranking, text-in-image checks, and carousel selection.
+13. `analyze_image` accepts public image URLs, readable `media_assets` ids, `asset_ref`, or `asset_refs`, rejects local/private URLs and redirects, downloads only image MIME types with timeout/size limits, and sends the image through the platform-managed vision path.
 
 ## Code Examples
 
@@ -61,6 +62,20 @@ Image analysis action:
 }
 ```
 
+Image edit action:
+
+```json
+{
+  "action": "generate_image",
+  "label": "Editing the attached portrait",
+  "data": {
+    "input_image_url": "https://cdn.example.com/employee.png",
+    "prompt": "Replace the solid background with a realistic outdoor park while preserving the person's face, skin tone, hair, and clothing.",
+    "aspect_ratio": "1:1"
+  }
+}
+```
+
 ## Decision Log
 
 - V1 uses the existing Gemini OCR services. No new OCR provider was introduced.
@@ -70,6 +85,7 @@ Image analysis action:
 - The OpenClaw request now uses real `input_file` content parts instead of mutating tool results after the model has already responded.
 - Upload UX remains lightweight: chips show `Reading`, `Ready`, or `Failed`; sending is not blocked after upload completes.
 - Direct image uploads rely on the selected model's native image understanding. `analyze_image` exists only as the platform adapter for image URLs/assets that are not currently attached to the model turn.
+- A benign edit of a user-uploaded photo uses the platform-native image action. The agent must not invent a separate consent gate solely because the supplied image contains a real person, search for an external OpenAI connection, or send the user to another application.
 - `analyze_image` is a platform capability, not a skill-specific workaround. Agents must use Vibey-managed tools and connected integrations for image analysis, never user-pasted API keys or tokens.
 - Presigned upload confirmation returns `asset_ref` as the stable handoff between upload, indexing, Brain imports, and mission attachment flows.
 - File-aware actions accept `asset_ref` as the stable handoff and normalize it to legacy handler fields internally, so agents do not guess between local paths, signed URLs, Drive links, and media asset ids.

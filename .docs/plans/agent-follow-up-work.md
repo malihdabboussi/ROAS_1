@@ -8211,3 +8211,20 @@ Files:
 Evidence: Both remain under 600 LOC but grew with Program inheritance asserts; space-permissions already logged historically near limit.
 Needed work: Extract Program-gate helper and campaign list annotation into dedicated collaborators if either file crosses 600.
 Deferred because: In-scope MVP only needed the gate; full split was out of request scope.
+
+## 2026-07-24 - [ARCH] Architecture checker follows a stale absolute symlink
+
+Status: Open
+
+Found while: Verifying attached-image editing and chat media routing
+
+Files:
+
+- `apps/openclaw/src/canvas-host/a2ui/test-link-1782116645255-348bba5dc9fbd.txt`
+- `scripts/arch/check-loc.mjs`
+
+Evidence: `pnpm architecture:check` stops with `ENOENT` because the tracked workspace contains a symlink to `/Users/2fun/Documents/1 - Creation/vibey2.0/apps/openclaw/package.json`, which does not exist on this machine. All changed production files remain below their applicable LOC limits, and focused lint, tests, and typechecks pass.
+
+Needed work: Remove or replace the stale test symlink, or make the architecture walker handle broken symlinks without aborting the entire repository check.
+
+Reason not done now: The broken OpenClaw test fixture is unrelated to chat media routing and changing it would broaden this production fix.

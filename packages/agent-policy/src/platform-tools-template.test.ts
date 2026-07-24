@@ -6,6 +6,7 @@ import {
   PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING,
   PLATFORM_TOOLS_DEFAULT_MD,
   PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING,
+  PLATFORM_TOOLS_MEDIA_ROUTING_HEADING,
   PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING,
 } from './platform-tools-template.js'
 
@@ -79,6 +80,18 @@ describe('platform tools template', () => {
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Slack does not reliably render Markdown tables')
     expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Date — Spend: $328')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(PLATFORM_TOOLS_MEDIA_ROUTING_HEADING)
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'call `generate_image` with that attachment URL as `input_image_url`',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('Do not invent a separate consent requirement')
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'Do not search for or require an external OpenAI or ChatGPT integration',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain(
+      'When a video skill explicitly routes the work to Higgsfield',
+    )
+    expect(PLATFORM_TOOLS_DEFAULT_MD).toContain('`list_mcp_tools` and `use_mcp_tool`')
     expect(PLATFORM_TOOLS_DEFAULT_MD).not.toContain('**State**')
     expect(PLATFORM_TOOLS_DEFAULT_MD.indexOf(PLATFORM_TOOLS_RUNTIME_GUIDANCE_HEADING)).toBeLessThan(
       PLATFORM_TOOLS_DEFAULT_MD.indexOf(ACTION_CONTRACT_PROTOCOL_HEADING),
@@ -161,8 +174,12 @@ For unclear, destructive, publish/send, or expensive actions:
     expect(repaired).toContain('Do not narrate tool selection or execution between tool calls')
     expect(repaired).toContain(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)
     expect(repaired).toContain('Slack does not reliably render Markdown tables')
+    expect(repaired).toContain(PLATFORM_TOOLS_MEDIA_ROUTING_HEADING)
+    expect(repaired).toContain('call `generate_image`')
+    expect(repaired).toContain('Higgsfield')
     expect(repaired.split(PLATFORM_TOOLS_DELEGATION_GUIDANCE_HEADING)).toHaveLength(2)
     expect(repaired.split(PLATFORM_TOOLS_CHANNEL_FORMATTING_HEADING)).toHaveLength(2)
+    expect(repaired.split(PLATFORM_TOOLS_MEDIA_ROUTING_HEADING)).toHaveLength(2)
     expect(second).toBe(repaired)
   })
 
