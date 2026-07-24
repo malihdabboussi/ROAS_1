@@ -1,9 +1,16 @@
 export {
   createProgram,
   deleteProgram,
+  deleteProgramShare,
   fetchProgram,
   fetchPrograms,
+  listProgramShares,
   updateProgram,
+  upsertProgramShare,
   type Program,
+  type ProgramShare,
+  type ProgramShareLevel,
+  type ProgramSharesResponse,
   type ProgramSystemKind,
+  type ProgramVisibility,
 } from './programs-api'

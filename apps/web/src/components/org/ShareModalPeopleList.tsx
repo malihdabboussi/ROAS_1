@@ -21,6 +21,7 @@ export function ShareModalPeopleList({
   ownerAvatarSrc,
   ownerLabel,
   peopleOpen,
+  permissionOptions = SHARE_PERMISSION_OPTIONS,
   setPeopleOpen,
   sharedCount,
 }: {
@@ -32,6 +33,7 @@ export function ShareModalPeopleList({
   ownerAvatarSrc: string | null
   ownerLabel: string
   peopleOpen: boolean
+  permissionOptions?: { value: SharePermission; label: string }[]
   setPeopleOpen: (open: boolean) => void
   sharedCount: number
 }) {
@@ -141,7 +143,7 @@ export function ShareModalPeopleList({
                   <div className="w-32 shrink-0">
                     <SettingsSelect
                       value={state.permission}
-                      options={SHARE_PERMISSION_OPTIONS}
+                      options={permissionOptions}
                       onChange={(permission) => onPermissionChange(state.member.id, permission)}
                       disabled={state.saving}
                       triggerClassName="gap-spacing-1 h-spacing-8 px-spacing-2 input-glass rounded-spacing-2 body-3 flex w-full items-center justify-between transition-colors disabled:opacity-60"

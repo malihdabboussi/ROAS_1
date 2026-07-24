@@ -7,6 +7,7 @@ import { FathomModule } from '../integrations/fathom/fathom.module'
 import { FirefliesModule } from '../integrations/fireflies/fireflies.module'
 import { MetaModule } from '../integrations/meta/meta.module'
 import { MissionsModule } from '../missions/missions.module'
+import { ProgramsModule } from '../programs/programs.module'
 import { SpaceRetrievalModule } from '../space-retrieval/space-retrieval.module'
 import { SpacesModule } from '../spaces/spaces.module'
 import { UsersModule } from '../users/users.module'
@@ -73,6 +74,7 @@ import { WorkflowsService } from './services/workflows.service'
     FirefliesModule,
     SpacesModule,
     SpaceRetrievalModule,
+    ProgramsModule,
     forwardRef(() => MissionsModule),
   ],
   controllers: [

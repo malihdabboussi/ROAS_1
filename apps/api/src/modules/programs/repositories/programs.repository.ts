@@ -65,6 +65,8 @@ export class ProgramsRepository {
       icon_color?: string | null
       sort_order?: number
       system_kind?: string | null
+      visibility?: 'workspace' | 'private' | 'selected'
+      created_by?: string | null
     },
   ): Promise<ProgramRow> {
     const orgId = input.orgId ?? null
@@ -77,6 +79,8 @@ export class ProgramsRepository {
       icon_color: input.icon_color ?? null,
       sort_order: input.sort_order ?? 100,
       system_kind: input.system_kind ?? null,
+      visibility: input.visibility ?? 'workspace',
+      created_by: input.created_by ?? input.userId,
       config: {},
     }
     const { data, error } = await supabase.from('programs').insert(payload).select('*').single()

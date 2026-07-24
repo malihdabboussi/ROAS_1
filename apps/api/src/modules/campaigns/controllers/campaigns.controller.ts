@@ -39,7 +39,7 @@ export class CampaignsController {
     @Supabase() supabase: SupabaseClient,
     @OrgContext() scope: RequestScope,
   ) {
-    return this.campaignsService.listCampaigns(supabase, user.id, scope.orgId)
+    return this.campaignsService.listCampaigns(supabase, user.id, scope.orgId, scope.orgRole)
   }
 
   @Get('user-state')
@@ -95,12 +95,13 @@ export class CampaignsController {
 
   @Get(':id')
   async get(
+    @CurrentUser() user: { id: string; email: string },
     @Supabase() supabase: SupabaseClient,
     @OrgContext() scope: RequestScope,
     @Param('id') id: string,
   ) {
     if (!isCampaignUuid(id)) throw new NotFoundException('Campaign not found')
-    return this.campaignsService.getCampaign(supabase, id, scope.orgId)
+    return this.campaignsService.getCampaign(supabase, id, scope.orgId, user.id, scope.orgRole)
   }
 
   @Post()
@@ -118,13 +119,21 @@ export class CampaignsController {
   @Patch(':id')
   @RequireOrgRole('editor')
   async update(
+    @CurrentUser() user: { id: string; email: string },
     @Supabase() supabase: SupabaseClient,
     @OrgContext() scope: RequestScope,
     @Param('id') id: string,
     @Body() body: Record<string, unknown>,
   ) {
     if (!isCampaignUuid(id)) throw new NotFoundException('Campaign not found')
-    return this.campaignsService.updateCampaign(supabase, id, body, scope.orgId)
+    return this.campaignsService.updateCampaign(
+      supabase,
+      id,
+      body,
+      scope.orgId,
+      user.id,
+      scope.orgRole,
+    )
   }
 
   @Patch(':id/context')

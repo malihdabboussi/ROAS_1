@@ -38,17 +38,22 @@ export class ProgramsController {
   constructor(private readonly programsService: ProgramsService) {}
 
   @Get()
-  async list(@Supabase() supabase: SupabaseClient, @OrgContext() scope: RequestScope) {
-    return this.programsService.list(supabase, scope.orgId)
+  async list(
+    @CurrentUser() user: { id: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+  ) {
+    return this.programsService.list(supabase, user.id, scope.orgRole, scope.orgId)
   }
 
   @Get(':id')
   async getById(
+    @CurrentUser() user: { id: string },
     @Supabase() supabase: SupabaseClient,
     @OrgContext() scope: RequestScope,
     @Param(new ZodValidationPipe(ProgramIdParamSchema)) params: ProgramIdParam,
   ) {
-    return this.programsService.getById(supabase, params.id, scope.orgId)
+    return this.programsService.getById(supabase, params.id, user.id, scope.orgRole, scope.orgId)
   }
 
   @Post()
@@ -66,21 +71,30 @@ export class ProgramsController {
   @Patch(':id')
   @RequireOrgRole('editor')
   async update(
+    @CurrentUser() user: { id: string },
     @Supabase() supabase: SupabaseClient,
     @OrgContext() scope: RequestScope,
     @Param(new ZodValidationPipe(ProgramIdParamSchema)) params: ProgramIdParam,
     @Body(new ZodValidationPipe(UpdateProgramSchema)) body: UpdateProgramInput,
   ) {
-    return this.programsService.update(supabase, params.id, body, scope.orgId)
+    return this.programsService.update(
+      supabase,
+      params.id,
+      body,
+      user.id,
+      scope.orgRole,
+      scope.orgId,
+    )
   }
 
   @Delete(':id')
   @RequireOrgRole('editor')
   async delete(
+    @CurrentUser() user: { id: string },
     @Supabase() supabase: SupabaseClient,
     @OrgContext() scope: RequestScope,
     @Param(new ZodValidationPipe(ProgramIdParamSchema)) params: ProgramIdParam,
   ) {
-    return this.programsService.delete(supabase, params.id, scope.orgId)
+    return this.programsService.delete(supabase, params.id, user.id, scope.orgRole, scope.orgId)
   }
 }

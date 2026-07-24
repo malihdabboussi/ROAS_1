@@ -1,6 +1,6 @@
 # Programs
 
-Last Modified: July 23, 2026
+Last Modified: July 24, 2026
 
 ## Overview
 
@@ -19,12 +19,45 @@ ROAS org-first system programs: **Clients**, **ROAS Ops**. Personal-account prog
 ## Data model
 
 - `programs` — org-owned (`org_id` set, `user_id` null) or personal (`org_id` null, `user_id` set)
-- `campaigns.program_id` — nullable FK; null = Ungrouped
+- `programs.visibility` — `workspace` | `private` | `selected` (default `workspace`)
+- `programs.created_by` — durable Program owner (set on create; nullable for legacy rows)
+- `program_shares` — ACL rows (`entity_type=user`, `level` `view`|`edit`)
+- `campaigns.program_id` — nullable FK; null = Ungrouped / **General** (no Program gate)
 - System kinds: `clients`, `roas_ops`, `personal` (unique per scope when set)
 
-Migration: `supabase/migrations/20260722130000_programs.sql`  
-API: `GET/POST/PATCH/DELETE /api/programs`  
-Move campaign: `PATCH /api/campaigns/:id` with `{ program_id }`
+Migrations:
+
+- `supabase/migrations/20260722130000_programs.sql`
+- `supabase/migrations/20260724190155_program_permissions.sql`
+
+API:
+
+- `GET/POST/PATCH/DELETE /api/programs`
+- `GET/POST /api/programs/:id/shares`, `DELETE /api/programs/:id/shares/:shareId`
+- Move campaign: `PATCH /api/campaigns/:id` with `{ program_id }` (requires Program `edit`)
+
+## Permissions (MVP)
+
+| Mode                | Who can see the Program (+ inherit into its Campaigns + Spaces) |
+| ------------------- | --------------------------------------------------------------- |
+| **Workspace**       | All active org members (default; current behavior)              |
+| **Private**         | `created_by` + people on `program_shares`                       |
+| **Selected people** | Explicit `program_shares` (+ `created_by` retains manage)       |
+
+Roles (API `view`/`edit`, UI Viewer/Editor):
+
+- **Viewer** — read Program tree / campaigns / spaces under it
+- **Editor** — mutate Program metadata, manage shares, create/move campaigns into Program
+
+**Inheritance:** Campaigns and Spaces under a Program require Program access. Effective level = intersection (min) of Program role and existing campaign/space grants. Program gate wins: a space share to someone without Program access does **not** grant entry.
+
+**Agents:** no agent-specific Program ACL. Agent tools use the invoking user’s Program access (RLS `has_program_access` / `has_org_campaign_access`).
+
+**Org admin/owner** break-glass: always manage Program ACL / visibility.
+
+**Legacy `created_by` null:** left null for existing Programs. Flipping to Private/Selected sets `created_by` to the acting admin/user. Until then, org admins manage restricted modes.
+
+**Workspace ACL rows:** kept when switching back to Workspace; ignored until Private/Selected again.
 
 ## UI (hub + sidebar)
 
@@ -52,10 +85,12 @@ ClickUp Spaces–style **fixed-width** panel (label **Programs**, not Campaigns)
 | Header +     | Create menu: New Program / New Campaign / New Space                                                                                              |
 | Footer       | **+ New Program**                                                                                                                                |
 | Icon area    | Leading icon swaps to chevron on hover; click expands/collapses                                                                                  |
-| Name         | Navigates to program / campaign / space overview                                                                                                 |
-| Hover ⋯ / +  | Program: menu + new campaign; Campaign: existing campaign menu + new space; Space: existing space menu                                           |
+| Name         | Navigates to program / campaign / space overview; lock icon when `visibility !== workspace`                                                      |
+| Hover ⋯ / +  | Program: Share / Rename / Copy link / New campaign / Delete; Campaign: existing campaign menu + new space; Space: existing space menu            |
 | Layout       | ClickUp-style primary flyout aligned below the top bar, 360px wide and nearly full viewport height; long names truncate with ellipsis.           |
 | Expand state | Persisted in `localStorage` (`roas.sidebar.expandedProgramIds`, `expandedSpaceCampaignIds`). Default = collapsed.                                |
+
+Share opens the shared org `ShareModal` with Program visibility (Workspace / Private / Selected) and Viewer/Editor people list (`@/components/org` + `@/lib/org`).
 
 Ungrouped campaigns (no `program_id`) appear under an **Ungrouped** folder when present.
 The Programs tree automatically finishes paginating stored spaces in the background, so older
@@ -71,6 +106,7 @@ the user switches workspaces.
 - Open top-level space tasks only (status not done/archived)
 - Row opens `/spaces?space=…&item=…`
 - Your Turn remains the personal inbox
+- Rollup filters campaigns by Program access before loading spaces/items
 
 ## Decision Log
 
@@ -79,3 +115,4 @@ the user switches workspaces.
 - **2026-07-23:** Sidebar Campaigns uses Program → Campaign → Space tree (expand in-menu). Program name opens `/programs/[id]` overview. Nested hover spaces flyout removed from Campaigns dock.
 - **2026-07-23:** Programs sidebar v2 — rename nav to Programs; fixed-width panel; programs-first load (no flat flash); collapsed default; icon→chevron hover; header create menu; row ⋯/+; All Tasks top; + New Program footer.
 - **2026-07-23:** Programs sidebar v3 — All Tasks lives only inside Programs; primary dock flyouts use the tall top-aligned shell; all space pages load in the background; campaign/program caches follow the active organization; Personal campaign detail resolves safely while viewing an organization.
+- **2026-07-24:** Program-level permissions MVP — `visibility` + `created_by` + `program_shares`; Nest `ProgramPermissionsService`; inherit into campaign list/get/move, space access intersection, All Tasks rollup; org ShareModal extended for Program; Workspace keeps ACL rows inert; flipping creator-less Program to Private/Selected sets `created_by` to acting user. Compat: space shares outside Program ACL no longer grant access.

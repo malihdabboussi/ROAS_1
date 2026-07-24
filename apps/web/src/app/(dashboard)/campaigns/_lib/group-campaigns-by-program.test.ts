@@ -30,6 +30,8 @@ function program(partial: Partial<Program> & { id: string; name: string }): Prog
     icon_color: null,
     sort_order: 0,
     config: {},
+    visibility: 'workspace',
+    created_by: 'u1',
     created_at: '2026-01-01',
     updated_at: '2026-01-01',
     deleted_at: null,

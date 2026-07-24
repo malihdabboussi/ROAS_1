@@ -8172,3 +8172,14 @@ Evidence: An exact `git archive 64553b53` build first failed because `docker/age
 Needed work: After approval, review and include those two established runtime inputs in the exact-commit Fly package, deploy `roas-runtimes`, and verify deep health plus an authenticated Higgsfield tool-list call.
 
 Reason not done now: Shipping Git-ignored local code/config is outside the verified commit and requires explicit informed authorization.
+
+## 2026-07-24 - [ARCH] Split space-permissions / campaigns-service-01 after Program gate
+
+Status: Open
+Found while: Program-level permissions MVP
+Files:
+- `apps/api/src/modules/spaces/services/space-permissions.service.ts` (569 LOC)
+- `apps/api/src/modules/campaigns/services/campaigns-service-01.base.ts` (518 LOC)
+Evidence: Both remain under 600 LOC but grew with Program inheritance asserts; space-permissions already logged historically near limit.
+Needed work: Extract Program-gate helper and campaign list annotation into dedicated collaborators if either file crosses 600.
+Deferred because: In-scope MVP only needed the gate; full split was out of request scope.

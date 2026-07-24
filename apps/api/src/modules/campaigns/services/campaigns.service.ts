@@ -15,6 +15,7 @@ import { LinkExtractionService } from '../../brain/services/link-extraction.serv
 import type { MeetingTranscriptEntry } from '../../brain/types/brain.types'
 import { FirefliesApiService } from '../../integrations/fireflies/services/fireflies-api.service'
 import { MissionAgentGatewayService } from '../../missions/services/gateways/mission-agent-gateway.service'
+import { ProgramPermissionsService } from '../../programs/services/program-permissions.service'
 import { CampaignAccessRepository } from '../repositories/campaign-access.repository'
 import { CampaignsRepository } from '../repositories/campaigns.repository'
 import { CampaignsServiceBase04 } from './campaigns-service-04.base'
@@ -29,6 +30,7 @@ export class CampaignsService extends CampaignsServiceBase04 {
     @Optional() @Inject(MissionAgentGatewayService) agentGateway?: MissionAgentGatewayService,
     @Optional() brainOpsHook?: BrainOpsHookService,
     @Optional() campaignAccessRepo?: CampaignAccessRepository,
+    @Optional() programPermissions?: ProgramPermissionsService,
   ) {
     super(
       campaignsRepo,
@@ -38,6 +40,7 @@ export class CampaignsService extends CampaignsServiceBase04 {
       agentGateway,
       brainOpsHook,
       campaignAccessRepo,
+      programPermissions,
     )
   }
 }

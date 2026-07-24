@@ -1,6 +1,7 @@
-import { ForbiddenException, Injectable, Optional } from '@nestjs/common'
+import { ForbiddenException, Inject, Injectable, Optional } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OrgRole } from '@vibey/api-shared'
+import { ProgramPermissionsService } from '../../programs/services/program-permissions.service'
 import type {
   SpaceShareEntityType,
   SpaceShareLevel,
@@ -46,6 +47,7 @@ export class SpacePermissionsService {
   private readonly permissionsRepo: SpacePermissionsRepository
   private readonly publicShareResolver: SpacePublicShareResolverService
   private readonly shareManagement: SpaceShareManagementService
+  private readonly programPermissions: ProgramPermissionsService | null
 
   constructor(
     @Optional()
@@ -54,10 +56,14 @@ export class SpacePermissionsService {
     publicShareResolver?: SpacePublicShareResolverService,
     @Optional()
     shareManagement?: SpaceShareManagementService,
+    @Optional()
+    @Inject(ProgramPermissionsService)
+    programPermissions?: ProgramPermissionsService,
   ) {
     this.permissionsRepo = permissionsRepo ?? new SpacePermissionsRepository()
     this.publicShareResolver = publicShareResolver ?? new SpacePublicShareResolverService()
     this.shareManagement = shareManagement ?? new SpaceShareManagementService()
+    this.programPermissions = programPermissions ?? null
   }
 
   private maxLevel(levels: Array<SpaceShareLevel | null | undefined>): SpaceShareLevel | null {
@@ -74,6 +80,48 @@ export class SpacePermissionsService {
   private baselineFromOrgRole(orgRole: OrgRole | null): SpaceShareLevel | null {
     if (!orgRole) return null
     return ORG_BASELINE_LEVEL[orgRole]
+  }
+
+  private minSpaceLevel(
+    a: SpaceShareLevel | null,
+    b: SpaceShareLevel | null,
+  ): SpaceShareLevel | null {
+    if (!a || !b) return null
+    return LEVEL_WEIGHT[a] <= LEVEL_WEIGHT[b] ? a : b
+  }
+
+  private programLevelToSpaceLevel(level: 'view' | 'edit'): SpaceShareLevel {
+    return level
+  }
+
+  private async applyProgramGate(
+    supabase: SupabaseClient,
+    space: SpaceRow,
+    userId: string,
+    orgRole: OrgRole | null | undefined,
+    orgId: string | null | undefined,
+    spaceLevel: SpaceShareLevel | null,
+  ): Promise<SpaceShareLevel | null> {
+    if (!spaceLevel || !this.programPermissions || !space.campaign_id) return spaceLevel
+    const { data: campaign, error } = await supabase
+      .from('campaigns')
+      .select('program_id')
+      .eq('id', space.campaign_id)
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    const programId =
+      campaign && typeof campaign.program_id === 'string' ? campaign.program_id : null
+    if (!programId) return spaceLevel
+
+    const programLevel = await this.programPermissions.resolveProgramLevel(
+      supabase,
+      programId,
+      userId,
+      orgRole,
+      orgId,
+    )
+    if (!programLevel) return null
+    return this.minSpaceLevel(spaceLevel, this.programLevelToSpaceLevel(programLevel))
   }
 
   private shareApplies(
@@ -223,24 +271,35 @@ export class SpacePermissionsService {
     const space = await this.permissionsRepo.loadSpaceForAccess(supabase, spaceId)
     if (!space) return null
 
-    // Space owner is always admin on the space and on every item it contains —
-    // short-circuit before touching `space_items` so a missing/broken item row
-    // can never strip rights from the user who owns the space.
-    if (space.user_id === userId) return 'admin'
+    // Space owner is always admin on the space relative to space ACL —
+    // still intersect with Program gate so Program ACL cannot be bypassed.
+    if (space.user_id === userId) {
+      return this.applyProgramGate(supabase, space, userId, orgRole, orgId, 'admin')
+    }
 
     const spaceShareScope = await this.resolveSpaceShareLevel(supabase, spaceId, userId, orgId)
-    const spaceLevel = this.resolveSpaceLevelFromSpaceRow(
+    const spaceLevelRaw = this.resolveSpaceLevelFromSpaceRow(
       spaceShareScope.level,
       userId,
       orgId,
       orgRole,
       space,
     )
+    const spaceLevel = await this.applyProgramGate(
+      supabase,
+      space,
+      userId,
+      orgRole,
+      orgId,
+      spaceLevelRaw,
+    )
     if (!itemId) return spaceLevel
 
     const item = await this.permissionsRepo.loadItem(supabase, spaceId, itemId)
     if (!item) return null
-    if (item.user_id === userId) return 'admin'
+    if (item.user_id === userId) {
+      return this.applyProgramGate(supabase, space, userId, orgRole, orgId, 'admin')
+    }
 
     const shareLevel = await this.resolveShareLevelFromItemTree(
       supabase,
@@ -310,13 +369,14 @@ export class SpacePermissionsService {
     if (!space) throw new ForbiddenException('Insufficient permissions for this space')
 
     const spaceShareScope = await this.resolveSpaceShareLevel(supabase, spaceId, userId, orgId)
-    const level = this.resolveSpaceLevelFromSpaceRow(
+    const levelRaw = this.resolveSpaceLevelFromSpaceRow(
       spaceShareScope.level,
       userId,
       orgId,
       orgRole,
       space,
     )
+    const level = await this.applyProgramGate(supabase, space, userId, orgRole, orgId, levelRaw)
     if (!level) throw new ForbiddenException('Insufficient permissions for this space')
 
     if (space.user_id === userId) return { level, allowed_view_ids: null }

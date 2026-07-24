@@ -84,7 +84,12 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
     if (typeof patch.is_hidden === 'boolean') cleaned.is_hidden = patch.is_hidden
     return this.campaignAccessRepo.upsertUserState(supabase, cleaned)
   }
-  async listCampaigns(supabase: SupabaseClient, userId: string, orgId?: string | null) {
+  async listCampaigns(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId?: string | null,
+    orgRole?: string | null,
+  ) {
     await this.ensureGeneralCampaign(supabase, userId, orgId)
     // Home always uses the personal-account Personal campaign — ensure it exists
     // even when listing org campaigns.
@@ -99,12 +104,14 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
         ? [personal, ...campaigns]
         : campaigns
     if (withPersonal.length === 0) return []
+
+    let membershipRole = orgRole ?? null
     let permissionByCampaign = new Map<string, 'view' | 'edit'>()
     if (orgId) {
       const membership = await this.campaignAccessRepo.findOrgMembership(supabase, orgId, userId)
       if (membership) {
-        const orgRole = membership.role as string
-        const isOrgAdmin = orgRole === 'owner' || orgRole === 'admin'
+        membershipRole = (membership.role as string) ?? membershipRole
+        const isOrgAdmin = membershipRole === 'owner' || membershipRole === 'admin'
         if (isOrgAdmin) {
           for (const c of withPersonal) permissionByCampaign.set(String(c.id), 'edit')
         } else {
@@ -122,9 +129,28 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
       }
       if (personal) permissionByCampaign.set(String(personal.id), 'edit')
     }
+
+    const accessible = this.programPermissions
+      ? await this.programPermissions.filterAccessibleCampaignsByProgram(
+          supabase,
+          withPersonal.map((c) => ({
+            ...c,
+            id: String(c.id),
+            program_id:
+              c.program_id === undefined || c.program_id === null ? null : String(c.program_id),
+          })),
+          userId,
+          membershipRole as never,
+          orgId,
+          'view',
+        )
+      : withPersonal
+    const accessibleIds = new Set(accessible.map((c) => String(c.id)))
+    const visibleCampaigns = withPersonal.filter((c) => accessibleIds.has(String(c.id)))
+
     const ownerIds = Array.from(
       new Set(
-        withPersonal
+        visibleCampaigns
           .map((campaign) => String(campaign.user_id))
           .filter((campaignOwnerId) => campaignOwnerId !== userId),
       ),
@@ -147,7 +173,7 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
       )
     }
 
-    return withPersonal.map((campaign) => {
+    return visibleCampaigns.map((campaign) => {
       const ownerId = String(campaign.user_id)
       const isOwner = ownerId === userId
       const memberPermission = permissionByCampaign.get(String(campaign.id))
@@ -161,7 +187,13 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
       }
     })
   }
-  async getCampaign(supabase: SupabaseClient, id: string, orgId?: string | null) {
+  async getCampaign(
+    supabase: SupabaseClient,
+    id: string,
+    orgId?: string | null,
+    userId?: string,
+    orgRole?: string | null,
+  ) {
     // Personal campaigns (org_id null) are merged into org campaign lists for the
     // Programs sidebar. Resolve them when active org context would otherwise 404.
     let campaign = await this.campaignsRepo.findById(supabase, id, { orgId })
@@ -169,6 +201,21 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
       campaign = await this.campaignsRepo.findById(supabase, id, { orgId: null })
     }
     if (!campaign) throw new NotFoundException('Campaign not found')
+    if (userId && this.programPermissions) {
+      await this.programPermissions.assertCampaignProgramAccess(
+        supabase,
+        {
+          program_id:
+            campaign.program_id === undefined || campaign.program_id === null
+              ? null
+              : String(campaign.program_id),
+        },
+        userId,
+        orgRole as never,
+        'view',
+        orgId,
+      )
+    }
     return campaign
   }
   async listCampaignTeam(supabase: SupabaseClient, userId: string, campaignId: string) {
@@ -389,6 +436,8 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
     id: string,
     data: Record<string, unknown>,
     orgId?: string | null,
+    userId?: string,
+    orgRole?: string | null,
   ) {
     // Personal campaign is org_id null — look up without org filter when needed.
     let campaign = await this.campaignsRepo.findById(supabase, id, { orgId })
@@ -432,6 +481,36 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
         const { data: program, error: programError } = await programQuery.maybeSingle()
         if (programError) throw new Error(`DB error: ${programError.message}`)
         if (!program) throw new BadRequestException('Program not found in this workspace')
+        if (userId && this.programPermissions) {
+          await this.programPermissions.assertProgramAccess(
+            supabase,
+            programId,
+            userId,
+            orgRole as never,
+            'edit',
+            campaignOrgId ?? orgId,
+          )
+        }
+      }
+      // Moving out of a restricted Program still requires access to that Program.
+      const currentProgramId =
+        campaign.program_id === undefined || campaign.program_id === null
+          ? null
+          : String(campaign.program_id)
+      if (
+        currentProgramId &&
+        userId &&
+        this.programPermissions &&
+        (programId === null || programId !== currentProgramId)
+      ) {
+        await this.programPermissions.assertProgramAccess(
+          supabase,
+          currentProgramId,
+          userId,
+          orgRole as never,
+          'edit',
+          orgId,
+        )
       }
     }
     return this.campaignsRepo.update(supabase, id, data)

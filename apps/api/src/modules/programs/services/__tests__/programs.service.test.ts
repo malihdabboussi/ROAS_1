@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProgramsRepository } from '../../repositories/programs.repository'
+import { ProgramPermissionsService } from '../program-permissions.service'
 import { ProgramsService } from '../programs.service'
 
 describe('ProgramsService', () => {
@@ -13,6 +14,11 @@ describe('ProgramsService', () => {
     countCampaignsByProgramIds: ReturnType<typeof vi.fn>
     ensureOrgSystemPrograms: ReturnType<typeof vi.fn>
   }
+  let permissions: {
+    filterAccessiblePrograms: ReturnType<typeof vi.fn>
+    assertProgramAccess: ReturnType<typeof vi.fn>
+    setVisibility: ReturnType<typeof vi.fn>
+  }
   let service: ProgramsService
 
   beforeEach(() => {
@@ -25,7 +31,17 @@ describe('ProgramsService', () => {
       countCampaignsByProgramIds: vi.fn().mockResolvedValue({}),
       ensureOrgSystemPrograms: vi.fn().mockResolvedValue(undefined),
     }
-    service = new ProgramsService(repo as unknown as ProgramsRepository)
+    permissions = {
+      filterAccessiblePrograms: vi.fn(async (_s, rows) =>
+        rows.map((row: { id: string }) => ({ ...row, effective_level: 'edit' })),
+      ),
+      assertProgramAccess: vi.fn().mockResolvedValue('edit'),
+      setVisibility: vi.fn(),
+    }
+    service = new ProgramsService(
+      repo as unknown as ProgramsRepository,
+      permissions as unknown as ProgramPermissionsService,
+    )
   })
 
   it('lists programs with campaign counts after ensuring org system programs', async () => {
@@ -41,6 +57,8 @@ describe('ProgramsService', () => {
         icon_color: null,
         sort_order: 0,
         config: {},
+        visibility: 'workspace',
+        created_by: null,
         created_at: '2026-07-22T00:00:00.000Z',
         updated_at: '2026-07-22T00:00:00.000Z',
         deleted_at: null,
@@ -48,7 +66,7 @@ describe('ProgramsService', () => {
     ])
     repo.countCampaignsByProgramIds.mockResolvedValue({ p1: 2 })
 
-    const result = await service.list(supabase, 'org-1')
+    const result = await service.list(supabase, 'user-1', 'admin', 'org-1')
     expect(repo.ensureOrgSystemPrograms).toHaveBeenCalledWith(supabase, 'org-1')
     expect(result[0]?.campaign_count).toBe(2)
   })
@@ -65,16 +83,18 @@ describe('ProgramsService', () => {
       icon_color: null,
       sort_order: 0,
       config: {},
+      visibility: 'workspace',
+      created_by: null,
       created_at: '',
       updated_at: '',
       deleted_at: null,
     })
-    await expect(service.delete(supabase, 'p1', 'org-1')).rejects.toThrow(
+    await expect(service.delete(supabase, 'p1', 'user-1', 'admin', 'org-1')).rejects.toThrow(
       'System programs cannot be deleted',
     )
   })
 
-  it('creates a custom program with derived slug', async () => {
+  it('creates a custom program with derived slug and created_by', async () => {
     repo.create.mockResolvedValue({
       id: 'p2',
       org_id: 'org-1',
@@ -86,6 +106,8 @@ describe('ProgramsService', () => {
       icon_color: null,
       sort_order: 100,
       config: {},
+      visibility: 'workspace',
+      created_by: 'user-1',
       created_at: '',
       updated_at: '',
       deleted_at: null,
@@ -93,7 +115,13 @@ describe('ProgramsService', () => {
     const created = await service.create(supabase, 'user-1', { name: 'Video Ops' }, 'org-1')
     expect(repo.create).toHaveBeenCalledWith(
       supabase,
-      expect.objectContaining({ slug: 'video-ops', name: 'Video Ops', orgId: 'org-1' }),
+      expect.objectContaining({
+        slug: 'video-ops',
+        name: 'Video Ops',
+        orgId: 'org-1',
+        created_by: 'user-1',
+        visibility: 'workspace',
+      }),
     )
     expect(created.slug).toBe('video-ops')
   })

@@ -69,3 +69,23 @@ Why: Home toast storms needed the API/queue-worker/web fix live, and local WIP w
 Impact: `origin/main` = `6b904ad1`. Vercel `roas-api` / `roas-web` / `roas-funnels` READY; Railway `queue-worker` Online; smoke 4/4.
 
 Files: production deploy of commit `6b904ad1`
+
+## [2026-07-24 12:06] - [FEATURE]
+
+What: Shipped Program-level permissions MVP (visibility workspace/private/selected, created_by, program_shares, has_program_access; Nest ProgramPermissionsService; campaign/space/All Tasks inherit; org ShareModal + sidebar Share/lock).
+
+Why: Programs were org-wide with no ACL; Private/Selected needed a Program boundary that inherits into campaigns and spaces.
+
+Impact: Default workspace behavior unchanged. Restricted Programs hide from non-ACL members in sidebar, hub, All Tasks, and campaign/space APIs. Agents inherit invoking-user access via RLS.
+
+Files: `supabase/migrations/20260724190155_program_permissions.sql`, `apps/api/src/modules/programs/*`, `apps/api/src/modules/campaigns/*`, `apps/api/src/modules/spaces/services/space-permissions*`, `apps/web/src/lib/org/org-resource-sharing.ts`, `apps/web/src/components/org/ShareModal*`, `apps/web/src/components/layout/sidebar/SidebarProgram*`, `documentation/features/programs.md`
+
+## [2026-07-24 12:21] - [FEATURE]
+
+What: Applied `program_permissions` migration on ROAS prod and archive-deployed Program ACL MVP to production aliases.
+
+Why: Ship Program visibility/shares with inherit gates live on api.roas.io / app.roas.io without git push.
+
+Impact: Migration on `lhfgtsjetcardinpgouq` (4 Programs default workspace). `roas-api` `dpl_Ax3TfvkFZQeGeTLqeXg4TKeh3ExL` → api.roas.io; `roas-web` `dpl_8uXenuiokK4k1Zh9XRom3KiGFusW` → app.roas.io. Smoke 4/4. `/api/programs` returns 401 (route present).
+
+Files: production deploy of branch `feat/program-level-permissions` working tree

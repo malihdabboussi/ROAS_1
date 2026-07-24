@@ -27,6 +27,6 @@ export class TaskRollupController {
     @OrgContext() scope: RequestScope,
     @Query(new ZodValidationPipe(TaskRollupQuerySchema)) query: TaskRollupQuery,
   ) {
-    return this.taskRollupService.list(supabase, user.id, query, scope.orgId)
+    return this.taskRollupService.list(supabase, user.id, query, scope.orgId, scope.orgRole)
   }
 }

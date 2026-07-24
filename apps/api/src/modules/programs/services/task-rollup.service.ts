@@ -1,23 +1,48 @@
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { OrgRole } from '@vibey/api-shared'
 import type { TaskRollupItem, TaskRollupQuery } from '../dto/task-rollup.dto'
 import { TaskRollupRepository } from '../repositories/task-rollup.repository'
+import { ProgramPermissionsService } from './program-permissions.service'
 
 @Injectable()
 export class TaskRollupService {
-  constructor(private readonly taskRollupRepo: TaskRollupRepository) {}
+  constructor(
+    private readonly taskRollupRepo: TaskRollupRepository,
+    private readonly programPermissions: ProgramPermissionsService,
+  ) {}
 
   async list(
     supabase: SupabaseClient,
     userId: string,
     query: TaskRollupQuery,
     orgId?: string | null,
+    orgRole?: OrgRole | null,
   ): Promise<TaskRollupItem[]> {
-    const campaigns = await this.taskRollupRepo.listCampaigns(supabase, {
+    if (query.program_id) {
+      await this.programPermissions.assertProgramAccess(
+        supabase,
+        query.program_id,
+        userId,
+        orgRole,
+        'view',
+        orgId,
+      )
+    }
+
+    const campaignsRaw = await this.taskRollupRepo.listCampaigns(supabase, {
       orgId,
       programId: query.program_id,
       campaignId: query.campaign_id,
     })
+    const campaigns = await this.programPermissions.filterAccessibleCampaignsByProgram(
+      supabase,
+      campaignsRaw,
+      userId,
+      orgRole,
+      orgId,
+      'view',
+    )
     if (campaigns.length === 0) return []
 
     const campaignsById = new Map(campaigns.map((c) => [c.id, c]))

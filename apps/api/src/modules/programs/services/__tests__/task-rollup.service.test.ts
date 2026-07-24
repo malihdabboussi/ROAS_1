@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TaskRollupRepository } from '../../repositories/task-rollup.repository'
+import { ProgramPermissionsService } from '../program-permissions.service'
 import { TaskRollupService } from '../task-rollup.service'
 
 describe('TaskRollupService', () => {
@@ -10,6 +11,10 @@ describe('TaskRollupService', () => {
     listOpenSpaceItems: ReturnType<typeof vi.fn>
     listProgramsByIds: ReturnType<typeof vi.fn>
     mapItems: TaskRollupRepository['mapItems']
+  }
+  let permissions: {
+    assertProgramAccess: ReturnType<typeof vi.fn>
+    filterAccessibleCampaignsByProgram: ReturnType<typeof vi.fn>
   }
   let service: TaskRollupService
 
@@ -22,7 +27,14 @@ describe('TaskRollupService', () => {
       listProgramsByIds: vi.fn().mockResolvedValue([{ id: 'prog-1', name: 'Clients' }]),
       mapItems: realRepo.mapItems.bind(realRepo),
     }
-    service = new TaskRollupService(repo as unknown as TaskRollupRepository)
+    permissions = {
+      assertProgramAccess: vi.fn().mockResolvedValue('view'),
+      filterAccessibleCampaignsByProgram: vi.fn(async (_s, campaigns) => campaigns),
+    }
+    service = new TaskRollupService(
+      repo as unknown as TaskRollupRepository,
+      permissions as unknown as ProgramPermissionsService,
+    )
   })
 
   it('returns empty when no campaigns match', async () => {
@@ -84,11 +96,33 @@ describe('TaskRollupService', () => {
       'user-1',
       { view: 'all', program_id: 'prog-1', limit: 20 },
       'org-1',
+      'viewer',
+    )
+    expect(permissions.assertProgramAccess).toHaveBeenCalledWith(
+      supabase,
+      'prog-1',
+      'user-1',
+      'viewer',
+      'view',
+      'org-1',
     )
     expect(repo.listCampaigns).toHaveBeenCalledWith(
       supabase,
       expect.objectContaining({ programId: 'prog-1', orgId: 'org-1' }),
     )
     expect(repo.listSpacesForCampaigns).not.toHaveBeenCalled()
+  })
+
+  it('filters campaigns under inaccessible programs before loading spaces', async () => {
+    repo.listCampaigns.mockResolvedValue([
+      { id: 'c1', name: 'Visible', program_id: 'prog-1' },
+      { id: 'c2', name: 'Hidden', program_id: 'prog-private' },
+    ])
+    permissions.filterAccessibleCampaignsByProgram.mockResolvedValue([
+      { id: 'c1', name: 'Visible', program_id: 'prog-1' },
+    ])
+    repo.listSpacesForCampaigns.mockResolvedValue([])
+    await service.list(supabase, 'user-1', { view: 'all', limit: 50 }, 'org-1', 'viewer')
+    expect(repo.listSpacesForCampaigns).toHaveBeenCalledWith(supabase, ['c1'])
   })
 })

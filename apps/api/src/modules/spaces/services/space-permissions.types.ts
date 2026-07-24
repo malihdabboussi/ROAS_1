@@ -4,6 +4,7 @@ export type SpaceRow = {
   id: string
   org_id: string | null
   user_id: string
+  campaign_id: string | null
   visibility: 'private' | 'team'
   share_link_enabled: boolean
   share_token: string | null

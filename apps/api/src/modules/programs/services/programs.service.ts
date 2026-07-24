@@ -5,31 +5,61 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { OrgRole } from '@vibey/api-shared'
 import type { CreateProgramInput, ProgramRow, UpdateProgramInput } from '../dto/programs.dto'
 import { ProgramsRepository } from '../repositories/programs.repository'
+import { ProgramPermissionsService } from './program-permissions.service'
 
 @Injectable()
 export class ProgramsService {
-  constructor(private readonly programsRepo: ProgramsRepository) {}
+  constructor(
+    private readonly programsRepo: ProgramsRepository,
+    private readonly programPermissions: ProgramPermissionsService,
+  ) {}
 
-  async list(supabase: SupabaseClient, orgId?: string | null): Promise<ProgramRow[]> {
+  async list(
+    supabase: SupabaseClient,
+    userId: string,
+    orgRole: OrgRole | null | undefined,
+    orgId?: string | null,
+  ): Promise<ProgramRow[]> {
     if (orgId) {
       await this.programsRepo.ensureOrgSystemPrograms(supabase, orgId)
     }
     const rows = await this.programsRepo.list(supabase, orgId)
+    const accessible = await this.programPermissions.filterAccessiblePrograms(
+      supabase,
+      rows,
+      userId,
+      orgRole,
+    )
     const counts = await this.programsRepo.countCampaignsByProgramIds(
       supabase,
-      rows.map((r) => r.id),
+      accessible.map((r) => r.id),
       orgId,
     )
-    return rows.map((row) => ({ ...row, campaign_count: counts[row.id] ?? 0 }))
+    return accessible.map((row) => ({ ...row, campaign_count: counts[row.id] ?? 0 }))
   }
 
-  async getById(supabase: SupabaseClient, id: string, orgId?: string | null): Promise<ProgramRow> {
+  async getById(
+    supabase: SupabaseClient,
+    id: string,
+    userId: string,
+    orgRole: OrgRole | null | undefined,
+    orgId?: string | null,
+  ): Promise<ProgramRow> {
     const row = await this.programsRepo.findById(supabase, id, orgId)
     if (!row) throw new NotFoundException('Program not found')
+    const level = await this.programPermissions.assertProgramAccess(
+      supabase,
+      id,
+      userId,
+      orgRole,
+      'view',
+      orgId,
+    )
     const counts = await this.programsRepo.countCampaignsByProgramIds(supabase, [row.id], orgId)
-    return { ...row, campaign_count: counts[row.id] ?? 0 }
+    return { ...row, campaign_count: counts[row.id] ?? 0, effective_level: level }
   }
 
   async create(
@@ -56,6 +86,8 @@ export class ProgramsService {
       icon: input.icon,
       icon_color: input.icon_color,
       sort_order: input.sort_order,
+      visibility: input.visibility ?? 'workspace',
+      created_by: userId,
     })
   }
 
@@ -63,14 +95,33 @@ export class ProgramsService {
     supabase: SupabaseClient,
     id: string,
     input: UpdateProgramInput,
+    userId: string,
+    orgRole: OrgRole | null | undefined,
     orgId?: string | null,
   ): Promise<ProgramRow> {
     const existing = await this.programsRepo.findById(supabase, id, orgId)
     if (!existing) throw new NotFoundException('Program not found')
+    await this.programPermissions.assertProgramAccess(supabase, id, userId, orgRole, 'edit', orgId)
     if (existing.system_kind && input.name && input.name !== existing.name) {
       throw new ForbiddenException('System program name cannot be changed')
     }
-    const updated = await this.programsRepo.update(supabase, id, input, orgId)
+
+    if (input.visibility && input.visibility !== existing.visibility) {
+      await this.programPermissions.setVisibility(
+        supabase,
+        id,
+        input.visibility,
+        userId,
+        orgRole,
+        orgId,
+      )
+    }
+
+    const { visibility: _visibility, ...rest } = input
+    const updated =
+      Object.keys(rest).length > 0
+        ? await this.programsRepo.update(supabase, id, rest, orgId)
+        : await this.programsRepo.findById(supabase, id, orgId)
     if (!updated) throw new NotFoundException('Program not found')
     return updated
   }
@@ -78,6 +129,8 @@ export class ProgramsService {
   async delete(
     supabase: SupabaseClient,
     id: string,
+    userId: string,
+    orgRole: OrgRole | null | undefined,
     orgId?: string | null,
   ): Promise<{ deleted: true }> {
     const existing = await this.programsRepo.findById(supabase, id, orgId)
@@ -85,6 +138,12 @@ export class ProgramsService {
     if (existing.system_kind) {
       throw new ForbiddenException('System programs cannot be deleted')
     }
+    const isAdmin = orgRole === 'owner' || orgRole === 'admin'
+    const isCreator = existing.created_by != null && existing.created_by === userId
+    if (!isAdmin && !isCreator) {
+      throw new ForbiddenException('Only the program owner or an org admin can delete a program')
+    }
+    await this.programPermissions.assertProgramAccess(supabase, id, userId, orgRole, 'edit', orgId)
     const deleted = await this.programsRepo.softDelete(supabase, id, orgId)
     if (!deleted) throw new NotFoundException('Program not found')
     return { deleted: true }
@@ -98,5 +157,24 @@ export class ProgramsService {
     if (programId == null) return
     const row = await this.programsRepo.findById(supabase, programId, orgId)
     if (!row) throw new BadRequestException('Program not found in this workspace')
+  }
+
+  async assertProgramAccessInScope(
+    supabase: SupabaseClient,
+    programId: string | null,
+    userId: string,
+    orgRole: OrgRole | null | undefined,
+    required: 'view' | 'edit',
+    orgId?: string | null,
+  ): Promise<void> {
+    if (programId == null) return
+    await this.programPermissions.assertProgramAccess(
+      supabase,
+      programId,
+      userId,
+      orgRole,
+      required,
+      orgId,
+    )
   }
 }

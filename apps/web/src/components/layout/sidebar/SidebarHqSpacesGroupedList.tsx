@@ -18,11 +18,10 @@ import {
 import { updateSpace as updateSpaceRequest } from '@/features/spaces/services/spaces.service'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space } from '@/features/spaces/types'
-import { deleteProgram, fetchPrograms, updateProgram, type Program } from '@/lib/programs'
+import { fetchPrograms, type Program } from '@/lib/programs'
 import { groupSidebarCampaignsByProgram } from './group-sidebar-campaigns-by-program'
 import { toggleIdInSet } from './sidebar-expand-persistence'
 import type { SidebarCampaignRow } from './sidebar-types'
-import { SidebarDeleteProgramDialog } from './SidebarDeleteProgramDialog'
 import { SidebarHqSpacesBucketList } from './SidebarHqSpacesBucketList'
 import { SidebarHqSpacesListOverlays } from './SidebarHqSpacesListOverlays'
 import type {
@@ -30,7 +29,7 @@ import type {
   SidebarHqSpaceMenuState,
 } from './SidebarHqSpacesMenuLayers'
 import { type SectionMenuAnchorRect, type SpaceRowSharedProps } from './SidebarHqSpacesRows'
-import { SidebarProgramMenuPortal } from './SidebarProgramMenuPortal'
+import { SidebarProgramOverlays } from './SidebarProgramOverlays'
 import { useAutoLoadRemainingSpaces } from './use-auto-load-remaining-spaces'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -98,6 +97,7 @@ export function SidebarHqSpacesGroupedList({
   const [addDropdownBucket, setAddDropdownBucket] = useState<string | null>(null)
   const [deletingProgram, setDeletingProgram] = useState<Program | null>(null)
   const [deletingProgramBusy, setDeletingProgramBusy] = useState(false)
+  const [sharingProgram, setSharingProgram] = useState<Program | null>(null)
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const isOrgContext = activeOrgId !== null
   const [programs, setPrograms] = useState<Program[]>([])
@@ -347,53 +347,17 @@ export function SidebarHqSpacesGroupedList({
         onOpenBrowseTemplates={onOpenBrowseTemplates}
       />
 
-      {programMenuFor ? (
-        <SidebarProgramMenuPortal
-          program={programMenuFor.program}
-          anchorRect={programMenuFor.anchorRect}
-          onClose={() => setProgramMenuFor(null)}
-          onRename={
-            programMenuFor.program.system_kind
-              ? undefined
-              : () => {
-                  const next = window.prompt('Rename program', programMenuFor.program.name)
-                  if (!next?.trim() || next.trim() === programMenuFor.program.name) return
-                  void updateProgram(programMenuFor.program.id, { name: next.trim() })
-                    .then((updated) => {
-                      setPrograms((prev) =>
-                        prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)),
-                      )
-                      toast.success('Program renamed')
-                    })
-                    .catch(() => toast.error('Could not rename program'))
-                }
-          }
-          onCreateCampaign={() => createCampaignInProgram(programMenuFor.program.id)}
-          onDelete={
-            programMenuFor.program.system_kind
-              ? undefined
-              : () => setDeletingProgram(programMenuFor.program)
-          }
-        />
-      ) : null}
-
-      <SidebarDeleteProgramDialog
-        program={deletingProgram}
-        busy={deletingProgramBusy}
-        onClose={() => setDeletingProgram(null)}
-        onConfirm={() => {
-          if (!deletingProgram || deletingProgramBusy) return
-          setDeletingProgramBusy(true)
-          void deleteProgram(deletingProgram.id)
-            .then(() => {
-              setPrograms((prev) => prev.filter((p) => p.id !== deletingProgram.id))
-              window.dispatchEvent(new Event('roas:programs-changed'))
-              toast.success('Program deleted')
-              setDeletingProgram(null)
-            })
-            .catch(() => toast.error('Could not delete program'))
-            .finally(() => setDeletingProgramBusy(false))
-        }}
+      <SidebarProgramOverlays
+        programMenuFor={programMenuFor}
+        setProgramMenuFor={setProgramMenuFor}
+        sharingProgram={sharingProgram}
+        setSharingProgram={setSharingProgram}
+        deletingProgram={deletingProgram}
+        setDeletingProgram={setDeletingProgram}
+        deletingProgramBusy={deletingProgramBusy}
+        setDeletingProgramBusy={setDeletingProgramBusy}
+        setPrograms={setPrograms}
+        onCreateCampaign={createCampaignInProgram}
       />
     </div>
   )

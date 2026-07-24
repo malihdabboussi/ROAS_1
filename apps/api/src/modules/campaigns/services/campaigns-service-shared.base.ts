@@ -4,6 +4,7 @@ import { EmbeddingService } from '../../brain/services/embedding.service'
 import { LinkExtractionService } from '../../brain/services/link-extraction.service'
 import { FirefliesApiService } from '../../integrations/fireflies/services/fireflies-api.service'
 import { MissionAgentGatewayService } from '../../missions/services/gateways/mission-agent-gateway.service'
+import { ProgramPermissionsService } from '../../programs/services/program-permissions.service'
 import { CampaignAccessRepository } from '../repositories/campaign-access.repository'
 import { CampaignsRepository } from '../repositories/campaigns.repository'
 
@@ -92,5 +93,6 @@ export abstract class CampaignsServiceSharedBase {
     protected readonly agentGateway?: MissionAgentGatewayService,
     protected readonly brainOpsHook?: BrainOpsHookService,
     protected readonly campaignAccessRepo: CampaignAccessRepository = new CampaignAccessRepository(),
+    protected readonly programPermissions?: ProgramPermissionsService,
   ) {}
 }

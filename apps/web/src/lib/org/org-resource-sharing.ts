@@ -3,13 +3,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { backendGet } from '@/lib/api/backend-client'
+import {
+  deleteProgramShare,
+  listProgramShares,
+  updateProgram,
+  upsertProgramShare,
+  type ProgramShare,
+  type ProgramVisibility,
+} from '@/lib/programs'
 import { createClient } from '@/lib/supabase/client'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
-import { ORG_TOAST_ERRORS } from './org-toast-errors'
 import { orgService, type OrgMember } from './org-api'
 import { useOrgStore } from './org-context-store'
+import { ORG_TOAST_ERRORS } from './org-toast-errors'
 
-export type ShareResourceType = 'campaign' | 'brain'
+export type ShareResourceType = 'campaign' | 'brain' | 'program'
 export type SharePermission = 'view' | 'edit'
 
 export const SHARE_PERMISSION_OPTIONS: { value: SharePermission; label: string }[] = [
@@ -17,12 +25,28 @@ export const SHARE_PERMISSION_OPTIONS: { value: SharePermission; label: string }
   { value: 'edit', label: 'Full edit' },
 ]
 
+export const PROGRAM_SHARE_PERMISSION_OPTIONS: { value: SharePermission; label: string }[] = [
+  { value: 'view', label: 'Viewer' },
+  { value: 'edit', label: 'Editor' },
+]
+
+export const PROGRAM_VISIBILITY_OPTIONS: { value: ProgramVisibility; label: string }[] = [
+  { value: 'workspace', label: 'Workspace' },
+  { value: 'private', label: 'Private' },
+  { value: 'selected', label: 'Selected people' },
+]
+
+export function getSharePermissionOptions(resourceType: ShareResourceType) {
+  return resourceType === 'program' ? PROGRAM_SHARE_PERMISSION_OPTIONS : SHARE_PERMISSION_OPTIONS
+}
+
 export interface MemberShareState {
   member: OrgMember
   enabled: boolean
   permission: SharePermission
   saving: boolean
   brainShareId?: string | null
+  programShareId?: string | null
 }
 
 export function brainLevelToPermission(level: 'view' | 'query' | 'train'): SharePermission {
@@ -63,8 +87,12 @@ export function useOrgResourceSharing({
   const [inviting, setInviting] = useState(false)
   const [ownerAvatarUrls, setOwnerAvatarUrls] = useState<string[]>([])
   const [ownerAvatarIndex, setOwnerAvatarIndex] = useState(0)
+  const [programVisibility, setProgramVisibility] = useState<ProgramVisibility>('workspace')
+  const [visibilitySaving, setVisibilitySaving] = useState(false)
+  const [canManageShares, setCanManageShares] = useState(true)
 
-  const ownerLabel = resourceType === 'campaign' ? 'Campaign' : 'Brain'
+  const ownerLabel =
+    resourceType === 'campaign' ? 'Campaign' : resourceType === 'brain' ? 'Brain' : 'Program'
 
   useEffect(() => {
     if (!open) {
@@ -114,6 +142,27 @@ export function useOrgResourceSharing({
             saving: false,
           })),
         )
+        setCanManageShares(true)
+      } else if (resourceType === 'program') {
+        const sharesRes = await listProgramShares(resourceId)
+        setProgramVisibility(sharesRes.visibility)
+        setCanManageShares(sharesRes.can_manage_shares)
+        const sharesByUser = new Map<string, ProgramShare>()
+        for (const share of sharesRes.shares ?? []) {
+          if (share.entity_type === 'user') sharesByUser.set(share.entity_id, share)
+        }
+        setMemberStates(
+          active.map((member) => {
+            const share = sharesByUser.get(member.user_id)
+            return {
+              member,
+              enabled: Boolean(share),
+              permission: share?.level ?? 'view',
+              saving: false,
+              programShareId: share?.id ?? null,
+            }
+          }),
+        )
       } else {
         const sharesRes = await orgService.listBrainShares(activeOrgId)
         const sharesByUser = new Map<string, { id: string; level: 'view' | 'query' | 'train' }>()
@@ -138,6 +187,7 @@ export function useOrgResourceSharing({
             }
           }),
         )
+        setCanManageShares(true)
       }
     } catch (error) {
       toast.error(sanitizeUserError(error, ORG_TOAST_ERRORS.LOAD_SHARES_FAILED.userMessage))
@@ -181,6 +231,19 @@ export function useOrgResourceSharing({
                 : item,
             ),
           )
+        } else if (resourceType === 'program') {
+          const share = await upsertProgramShare(resourceId, {
+            entity_type: 'user',
+            entity_id: state.member.user_id,
+            level: state.permission,
+          })
+          setMemberStates((prev) =>
+            prev.map((item) =>
+              item.member.id === memberId
+                ? { ...item, programShareId: share.id, permission: state.permission }
+                : item,
+            ),
+          )
         } else {
           await orgService.upsertCampaignPermission(
             activeOrgId,
@@ -196,6 +259,15 @@ export function useOrgResourceSharing({
         setMemberStates((prev) =>
           prev.map((item) =>
             item.member.id === memberId ? { ...item, brainShareId: null } : item,
+          ),
+        )
+      } else if (resourceType === 'program') {
+        if (state.programShareId) {
+          await deleteProgramShare(resourceId, state.programShareId)
+        }
+        setMemberStates((prev) =>
+          prev.map((item) =>
+            item.member.id === memberId ? { ...item, programShareId: null } : item,
           ),
         )
       } else {
@@ -234,6 +306,17 @@ export function useOrgResourceSharing({
             item.member.id === memberId ? { ...item, brainShareId: res.permission.id } : item,
           ),
         )
+      } else if (resourceType === 'program') {
+        const share = await upsertProgramShare(resourceId, {
+          entity_type: 'user',
+          entity_id: state.member.user_id,
+          level: permission,
+        })
+        setMemberStates((prev) =>
+          prev.map((item) =>
+            item.member.id === memberId ? { ...item, programShareId: share.id } : item,
+          ),
+        )
       } else {
         await orgService.upsertCampaignPermission(activeOrgId, resourceId, memberId, permission)
       }
@@ -246,6 +329,22 @@ export function useOrgResourceSharing({
       toast.error(sanitizeUserError(error, ORG_TOAST_ERRORS.UPDATE_PERMISSION_FAILED.userMessage))
     } finally {
       setSaving(memberId, false)
+    }
+  }
+
+  const handleVisibilityChange = async (visibility: ProgramVisibility) => {
+    if (resourceType !== 'program') return
+    const previous = programVisibility
+    setProgramVisibility(visibility)
+    setVisibilitySaving(true)
+    try {
+      await updateProgram(resourceId, { visibility })
+      // Keep ACL rows when returning to workspace (ignored until Private/Selected).
+    } catch (error) {
+      setProgramVisibility(previous)
+      toast.error(sanitizeUserError(error, ORG_TOAST_ERRORS.UPDATE_PERMISSION_FAILED.userMessage))
+    } finally {
+      setVisibilitySaving(false)
     }
   }
 
@@ -266,15 +365,18 @@ export function useOrgResourceSharing({
     }
   }
 
-  const sharedCount = useMemo(() => memberStates.filter((state) => state.enabled).length, [
-    memberStates,
-  ])
+  const sharedCount = useMemo(
+    () => memberStates.filter((state) => state.enabled).length,
+    [memberStates],
+  )
 
   return {
     activeOrgId,
+    canManageShares,
     handleInvite,
     handlePermissionChange,
     handleToggle,
+    handleVisibilityChange,
     inviteEmail,
     inviting,
     loading,
@@ -282,9 +384,12 @@ export function useOrgResourceSharing({
     ownerAvatarSrc: ownerAvatarUrls[ownerAvatarIndex] ?? null,
     ownerLabel,
     peopleOpen,
+    permissionOptions: getSharePermissionOptions(resourceType),
+    programVisibility,
     setInviteEmail,
     setOwnerAvatarIndex,
     setPeopleOpen,
     sharedCount,
+    visibilitySaving,
   }
 }

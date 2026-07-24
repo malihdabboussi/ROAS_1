@@ -3,8 +3,14 @@
 import { useEffect, useRef } from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
+import { SettingsSelect } from '@/components/ui/forms/SettingsSelect'
 import { Tooltip } from '@/components/ui/tooltip'
-import { type ShareResourceType, useOrgResourceSharing } from '@/lib/org'
+import {
+  PROGRAM_VISIBILITY_OPTIONS,
+  useOrgResourceSharing,
+  type ShareResourceType,
+} from '@/lib/org'
+import type { ProgramVisibility } from '@/lib/programs'
 import { ShareModalPeopleList } from './ShareModalPeopleList'
 
 export interface ShareModalProps {
@@ -43,7 +49,7 @@ export function ShareModal({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="z-modal-backdrop bg-modal-overlay fixed inset-0" />
         <DialogPrimitive.Content className="z-modal-layer-3 p-spacing-4 fixed inset-0 flex items-center justify-center">
-          <div className="surface-card wizard-container-border rounded-spacing-4 flex max-h-dvh w-full max-w-lg flex-col overflow-hidden border border-border bg-card shadow-2xl">
+          <div className="surface-card wizard-container-border rounded-spacing-4 border-border bg-card flex max-h-dvh w-full max-w-lg flex-col overflow-hidden border shadow-2xl">
             <div className="px-spacing-6 pt-spacing-6 pb-spacing-2 shrink-0">
               <div className="flex items-center justify-between">
                 <DialogPrimitive.Title className="title-h6 text-foreground font-semibold uppercase tracking-wide">
@@ -60,6 +66,27 @@ export function ShareModal({
                 <span className="text-foreground font-medium">{resourceName}</span>
               </DialogPrimitive.Description>
             </div>
+
+            {resourceType === 'program' ? (
+              <div className="px-spacing-6 pt-spacing-3 shrink-0">
+                <label className="body-3 text-muted-foreground mb-spacing-1 block">
+                  Who can access
+                </label>
+                <SettingsSelect
+                  value={sharing.programVisibility}
+                  options={PROGRAM_VISIBILITY_OPTIONS}
+                  onChange={(visibility) =>
+                    void sharing.handleVisibilityChange(visibility as ProgramVisibility)
+                  }
+                  disabled={sharing.visibilitySaving || !sharing.canManageShares}
+                  triggerClassName="gap-spacing-1 h-spacing-9 px-spacing-3 input-glass rounded-spacing-2 body-3 flex w-full items-center justify-between transition-colors disabled:opacity-60"
+                />
+                <p className="body-3 text-muted-foreground mt-spacing-1">
+                  Workspace is everyone in the org. Private and Selected use the people list below.
+                  ACL rows are kept when switching back to Workspace.
+                </p>
+              </div>
+            ) : null}
 
             <div className="px-spacing-6 pt-spacing-3 shrink-0">
               <div className="gap-spacing-2 flex items-center">
@@ -91,6 +118,7 @@ export function ShareModal({
               ownerAvatarSrc={sharing.ownerAvatarSrc}
               ownerLabel={sharing.ownerLabel}
               peopleOpen={sharing.peopleOpen}
+              permissionOptions={sharing.permissionOptions}
               setPeopleOpen={sharing.setPeopleOpen}
               sharedCount={sharing.sharedCount}
               onOwnerAvatarError={() => sharing.setOwnerAvatarIndex((index) => index + 1)}

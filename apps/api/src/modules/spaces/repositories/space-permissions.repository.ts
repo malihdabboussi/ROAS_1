@@ -25,7 +25,7 @@ export class SpacePermissionsRepository {
   ): Promise<SpaceRow | null> {
     let query = supabase
       .from('spaces')
-      .select('id, org_id, user_id, visibility, share_link_enabled, share_token')
+      .select('id, org_id, user_id, campaign_id, visibility, share_link_enabled, share_token')
       .eq('id', spaceId)
     if (orgId) {
       query = query.eq('org_id', orgId)
@@ -38,7 +38,7 @@ export class SpacePermissionsRepository {
   async loadSpaceForAccess(supabase: SupabaseClient, spaceId: string): Promise<SpaceRow | null> {
     const { data, error } = await supabase
       .from('spaces')
-      .select('id, org_id, user_id, visibility, share_link_enabled, share_token')
+      .select('id, org_id, user_id, campaign_id, visibility, share_link_enabled, share_token')
       .eq('id', spaceId)
       .maybeSingle()
     if (error) throw new Error(error.message)

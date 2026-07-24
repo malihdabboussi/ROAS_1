@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Copy, Edit2, Plus, Trash2 } from 'lucide-react'
+import { Copy, Edit2, Plus, Share2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Program } from '@/lib/programs'
 import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
@@ -18,6 +18,7 @@ export function SidebarProgramMenuPortal({
   onRename,
   onCreateCampaign,
   onDelete,
+  onShare,
 }: {
   program: Program
   anchorRect: SectionMenuAnchorRect
@@ -25,6 +26,7 @@ export function SidebarProgramMenuPortal({
   onRename?: () => void
   onCreateCampaign: () => void
   onDelete?: () => void
+  onShare?: () => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
@@ -91,6 +93,19 @@ export function SidebarProgramMenuPortal({
           >
             <Edit2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
             Rename
+          </button>
+        ) : null}
+        {onShare ? (
+          <button
+            type="button"
+            className={rowCls}
+            onClick={() => {
+              onShare()
+              onClose()
+            }}
+          >
+            <Share2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            Share
           </button>
         ) : null}
         <button

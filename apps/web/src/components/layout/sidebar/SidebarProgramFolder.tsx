@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import type { MouseEvent, ReactNode } from 'react'
-import { ChevronRight, MoreHorizontal, Plus } from 'lucide-react'
+import { ChevronRight, Lock, MoreHorizontal, Plus } from 'lucide-react'
 import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
 import type { Program } from '@/lib/programs'
 import { SIDEBAR_UNGROUPED_PROGRAM_KEY } from './group-sidebar-campaigns-by-program'
@@ -37,6 +37,7 @@ export function SidebarProgramFolder({
     program && groupKey !== SIDEBAR_UNGROUPED_PROGRAM_KEY ? `/programs/${program.id}` : null
   const canCreate = Boolean(onCreateCampaign)
   const canMenu = Boolean(program && onOpenMenu)
+  const isRestricted = Boolean(program && program.visibility && program.visibility !== 'workspace')
 
   function openMenu(e: MouseEvent<HTMLButtonElement | HTMLAnchorElement>) {
     if (!program || !onOpenMenu) return
@@ -73,7 +74,12 @@ export function SidebarProgramFolder({
             onContextMenu={openMenu}
             className="body-3 text-muted-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 font-medium transition-colors"
           >
-            {label}
+            <span className="gap-spacing-1 inline-flex max-w-full items-center">
+              <span className="truncate">{label}</span>
+              {isRestricted ? (
+                <Lock className="icon-xs text-muted-foreground shrink-0" aria-label="Restricted" />
+              ) : null}
+            </span>
           </Link>
         ) : (
           <button
@@ -81,7 +87,12 @@ export function SidebarProgramFolder({
             onClick={() => onToggle(groupKey)}
             className="body-3 text-muted-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 text-left font-medium transition-colors"
           >
-            {label}
+            <span className="gap-spacing-1 inline-flex max-w-full items-center">
+              <span className="truncate">{label}</span>
+              {isRestricted ? (
+                <Lock className="icon-xs text-muted-foreground shrink-0" aria-label="Restricted" />
+              ) : null}
+            </span>
           </button>
         )}
         {canMenu ? (
