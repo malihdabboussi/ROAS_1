@@ -14,6 +14,7 @@ import {
 } from '@/lib/missions'
 import { ADS_RESEARCH_MESSAGES } from '../../config/ads-research-messages.config'
 import { AdsResearchProductionPath } from './AdsResearchProductionPath'
+import { IgOrganicVideoProductionLauncher } from './IgOrganicVideoProductionLauncher'
 
 interface AdsResearchProductionViewProps {
   spaceId: string
@@ -81,13 +82,23 @@ export function AdsResearchProductionView({
 
   if (!selectedRun) {
     return (
-      <div className="p-spacing-4 flex min-h-0 flex-1 overflow-y-auto">
-        <div className="surface-card border-border p-spacing-8 rounded-spacing-3 flex flex-1 flex-col items-center justify-center border text-center">
+      <div className="p-spacing-4 gap-spacing-5 flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <header>
+          <p className="typo-section-label text-muted-foreground">PAID ADS WORKFLOW</p>
+          <h1 className="title-h5 text-foreground mt-spacing-1 uppercase">PRODUCTION</h1>
+          <p className="body-3 text-muted-foreground mt-spacing-1">
+            Create video ads directly, or complete Ads Research to produce from recommendations.
+          </p>
+        </header>
+        <IgOrganicVideoProductionLauncher campaignId={campaignId} spaceId={spaceId} />
+        <div className="surface-card border-border p-spacing-8 rounded-spacing-3 flex flex-col items-center justify-center border text-center">
           <Sparkles className="icon-lg text-muted-foreground" />
-          <h1 className="title-h5 text-foreground mt-spacing-3 uppercase">PRODUCTION</h1>
+          <h2 className="title-h5 text-foreground mt-spacing-3 uppercase">
+            NO RESEARCH HANDOFF YET
+          </h2>
           <p className="body-3 text-muted-foreground mt-spacing-1 max-w-xl">
-            Complete an Ads Research run first. Approved concepts will move here for recording,
-            design, and ad building.
+            Complete an Ads Research run to add its recommended concepts and copy to this production
+            workspace.
           </p>
         </div>
       </div>
@@ -127,6 +138,13 @@ export function AdsResearchProductionView({
           })}
         </div>
       ) : null}
+
+      <IgOrganicVideoProductionLauncher
+        campaignId={campaignId}
+        spaceId={spaceId}
+        sourceMissionId={selectedRun.id}
+        sourceDeliverables={deliverables[selectedRun.id] ?? []}
+      />
 
       <AdsResearchProductionPath
         run={selectedRun}

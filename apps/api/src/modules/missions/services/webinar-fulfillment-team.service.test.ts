@@ -12,6 +12,7 @@ describe('WebinarFulfillmentTeamService playbook support', () => {
   it('provisions the agency roster for every guided agency playbook', () => {
     expect(service.supportsPlaybook('webinar-fulfillment')).toBe(true)
     expect(service.supportsPlaybook('ads-research')).toBe(true)
+    expect(service.supportsPlaybook('ig-organic-video-ad')).toBe(true)
     expect(service.supportsPlaybook('meta-ads-launch')).toBe(true)
     expect(service.supportsPlaybook('meta-ads-audit')).toBe(true)
   })

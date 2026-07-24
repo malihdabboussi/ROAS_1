@@ -1,0 +1,33 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { describe, expect, it } from 'vitest'
+
+describe('ig-organic-video-ad skill migration', () => {
+  const migration = fs.readFileSync(
+    path.resolve(
+      process.cwd(),
+      '../../supabase/migrations/20260723204214_ig_organic_video_ad_skill.sql',
+    ),
+    'utf8',
+  )
+
+  it('uses the direct Higgsfield MCP and reuses stock footage by default', () => {
+    expect(migration).toMatch(/direct Higgsfield MCP/i)
+    expect(migration).toMatch(/https:\/\/mcp\.higgsfield\.ai/i)
+    expect(migration).toMatch(/Do not route Higgsfield through Composio/i)
+    expect(migration).toMatch(/reuse_when_available/i)
+  })
+
+  it('keeps copy approval separate from rendering', () => {
+    expect(migration).toMatch(/Copy is a separate approval stage/i)
+    expect(migration).toMatch(/Stop for approval before generating footage or rendering/i)
+    expect(migration).toMatch(/Never ask an image or video model to render copy/i)
+  })
+
+  it('locks rendering to Pillow and the approved emoji set', () => {
+    expect(migration).toMatch(/render_ig_story\.py/i)
+    expect(migration).toMatch(/Pillow/i)
+    expect(migration).toMatch(/👇.*⏰.*✅.*🚨.*🙌/s)
+    expect(migration).toMatch(/embedded color/i)
+  })
+})

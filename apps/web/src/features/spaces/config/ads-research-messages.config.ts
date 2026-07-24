@@ -15,4 +15,6 @@ export const ADS_RESEARCH_MESSAGES = {
   APPROVAL_FAILED: 'We could not save the production selections. Try again.',
   PRODUCTION_STARTED: 'Selections approved. Meta Ads Launch is ready to prepare the assets.',
   PRODUCTION_START_FAILED: 'The selections were saved, but the launch handoff could not start.',
+  VIDEO_PRODUCTION_STARTED: 'IG organic video production started.',
+  VIDEO_PRODUCTION_START_FAILED: 'We could not start IG organic video production. Try again.',
 } as const

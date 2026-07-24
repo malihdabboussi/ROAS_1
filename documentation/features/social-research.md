@@ -67,6 +67,8 @@ Opening a run shows a visual research report inside Ads Research. The report sta
 
 The production path is a real workflow: the user selects named concepts, chooses recording or design for each, and approves the research gate. That human receipt is persisted on the source mission, then ROAS creates an idempotent, linked `meta-ads-launch` mission with the source mission, deliverable ids, approved concepts, and production routes. The launch mission reconciles missing assets, builds reviewable Meta objects in PAUSED state, and keeps final activation behind its human gate. Production progress is derived from those mission steps instead of local UI state.
 
+Production also exposes an IG organic video-ad launcher. The user can select one or many lifestyle scenes, reuse clean preset footage to avoid generation credits, or request fresh Higgsfield footage. Copy is an explicit first stage: Lux either proposes sticker copy from the campaign and source research or renders user-supplied copy verbatim after approval. The mission preserves its source research ids, selected scene ids, source strategy, music strategy, and one of the approved Apple-style emoji glyphs (`👇`, `⏰`, `✅`, `🚨`, `🙌`). The `ig-organic-video-ad` skill is available to Lux and Vibey so the same playbook can be started from Production or conversational channels. New footage uses the direct Higgsfield MCP; preset footage and Pillow-rendered stickers remain the credit-saving default.
+
 Saved searches are condensed into numbered angle rows with thumbnail previews. Renderer-owned numbering strips any old `Angle N:` prefix from saved titles so the displayed angle number cannot conflict with the title. One angle expands at a time and initially limits the evidence grid to six ads, with an explicit action to reveal the full angle. Creative previews use full-fit media rather than cropping the source. Selecting a creative opens the same in-app asset analysis used by Library Search. Before any additional analysis is requested, the drawer shows the evidence already collected: copy, traffic source, destination, search query, and the research angle Blaze used it for. **Deep analyze** is an optional second layer that extracts the transcript, formula, offer, and reusable patterns. Its result is merged back into the mission-linked saved-search snapshot so reopening the creative retains the breakdown without spending credits again. Failed third-party thumbnails render a compact unavailable-preview state instead of retaining a broken video-sized frame.
 
 **Library Search** remains available as the secondary surface for manual Meta, TikTok, and Google ad-library searches. Library-only group, layout, sort, and refresh controls stay hidden while Research Runs is active.
@@ -106,6 +108,10 @@ YouTube long-form videos use `youtube_video` (16:9 grid cards) and Shorts use `y
 X tweets use `tweet` (square cards) and video tweets use `tweet_video` (16:9). Each can be toggled independently via `media_show_x_tweets` and `media_show_x_videos`.
 
 ## Decision Log
+
+### 2026-07-23 - IG organic video production
+
+Added the reusable `ig-organic-video-ad` mission and Production launcher with the full 16-concept library plus a second reusable pool reference, eight clean preset videos and matching stills, separate copy approval, scene-matched music direction, deterministic Pillow sticker rendering, and a five-glyph Apple-style emoji allowlist. Higgsfield stays a direct MCP connection instead of a Composio action, while Lux and Vibey share the same skill for UI and chat initiation.
 
 ### 2026-07-23 - Dedicated Production workspace
 
