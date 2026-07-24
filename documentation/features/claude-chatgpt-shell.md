@@ -1,6 +1,6 @@
 # Claude/ChatGPT shell (apps/web)
 
-Last Modified: 2026-07-19
+Last Modified: 2026-07-24
 
 ## Overview
 
@@ -25,6 +25,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 12. Artifact chips, chat outputs, Space artifact/media cards, Brain source previews, Space document visuals, and the Files summary tab publish the shared `@/lib/artifacts` shell-viewer target. The shell opens one resizable right-side viewer, swaps content in place, and closes it on top-level navigation.
 13. Space-backed document targets load the real Space item into the canonical document editor's inline mode, including the owning Space's fields, Doc/Visual views, fixed rich-text toolbar, grouped Copy/download actions, Google Docs export, settings/share controls, and autosave route. The shared viewer can expand that same editor to full screen without swapping renderers. Generic documents and files without a Space item continue to use the read-only deliverable renderer. **Open in Space** launches the same document in its full Space destination. Media targets add download, visual aspect-ratio choices, Space image history, and **Edit in chat**. Opening media never attaches it to the active conversation; edit and resize actions deliberately start a fresh chat, with resize prompts sent as a new image task.
 14. `/artifacts` is the account-wide artifact library. It paginates through docs and media, merges every campaign-artifact family from the active organization plus personal legacy assets owned by the signed-in user, labels each row with its campaign or Space, and opens rows in the shared viewer. Uploaded assets are hidden by default and available through the source filter. Type filters include Docs, Images, Sheets, Presentations, Funnels, Campaign assets, and Files. More → Artifacts links here; Space-specific views remain inside their Space.
+15. Forking an assistant turn creates a new conversation with the original messages through that turn, adds it to chat state, and navigates to the canonical `/home?conv=` URL for the returned fork id. The success toast is shown only after creation succeeds.
 
 ## Key files
 
@@ -58,6 +59,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 - Empty **docked** chat drawer is greeting + composer only — never Home template fan / “For you” extras (those stay on the full `/home?chat=new` surface).
 - The new-chat agent bar shows only the agent picker; a separate “New chat” label is redundant on the dedicated new-chat surface.
 - Home composer sends must enter `/home?chat=starting` so the chat panel is mounted to consume the queued seed. The created conversation then becomes the canonical `/home?conv=` route; queued sends must never wait for an unrelated chat surface to mount.
+- A successful message fork must navigate to the returned conversation's canonical `/home?conv=` route. Updating only the in-memory active conversation is insufficient because the shell URL is authoritative and can reopen the source conversation.
 - Conversation scope is explicit and editable in the chat header. The saved conversation scope—not merely the currently visible route—drives new messages and agent tool context, so moving a chat does not require navigating away from the current Space.
 - Conversation titles appear in the shell breadcrumb and beside the agent only when chat owns the full workspace. Clicking the full-header title renames it; the docked header omits it to protect the scope and collapse controls at narrow widths.
 - The shell owns one artifact viewer instead of each feature inventing a modal. Opening an artifact collapses the Files/Tasks/Sources summary panel; opening chat or the summary panel closes the artifact viewer. File swaps preserve the surrounding page and chat.

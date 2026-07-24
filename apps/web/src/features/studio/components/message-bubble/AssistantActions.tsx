@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 import { AgentTurnFeedbackActions } from '@/components/chat/AgentTurnFeedbackActions'
@@ -24,6 +25,7 @@ export function AssistantActions({
   inlineAction?: React.ReactNode
   pinActions?: boolean
 }) {
+  const router = useRouter()
   const [forking, setForking] = useState(false)
 
   const handleFork = useCallback(async () => {
@@ -31,13 +33,14 @@ export function AssistantActions({
     setForking(true)
     try {
       const newConv = await forkConversation(conversationId, messageId)
+      router.push(`/home?conv=${encodeURIComponent(newConv.id)}`)
       toast.success(`Forked to "${newConv.title}"`)
     } catch {
       toast.error('Failed to fork conversation')
     } finally {
       setForking(false)
     }
-  }, [conversationId, messageId])
+  }, [conversationId, messageId, router])
 
   if (isStreaming || !content?.trim()) return null
 
