@@ -13,6 +13,7 @@ describe('WebinarFulfillmentTeamService playbook support', () => {
     expect(service.supportsPlaybook('webinar-fulfillment')).toBe(true)
     expect(service.supportsPlaybook('ads-research')).toBe(true)
     expect(service.supportsPlaybook('ig-organic-video-ad')).toBe(true)
+    expect(service.supportsPlaybook('static-ad-production')).toBe(true)
     expect(service.supportsPlaybook('meta-ads-launch')).toBe(true)
     expect(service.supportsPlaybook('meta-ads-audit')).toBe(true)
   })

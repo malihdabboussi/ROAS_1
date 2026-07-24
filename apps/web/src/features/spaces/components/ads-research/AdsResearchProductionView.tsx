@@ -15,6 +15,7 @@ import {
 import { ADS_RESEARCH_MESSAGES } from '../../config/ads-research-messages.config'
 import { AdsResearchProductionPath } from './AdsResearchProductionPath'
 import { IgOrganicVideoProductionLauncher } from './IgOrganicVideoProductionLauncher'
+import { StaticAdProductionLauncher } from './StaticAdProductionLauncher'
 
 interface AdsResearchProductionViewProps {
   spaceId: string
@@ -35,6 +36,7 @@ export function AdsResearchProductionView({
   const [deliverables, setDeliverables] = useState<Record<string, MissionDeliverable[]>>({})
   const [selectedRunId, setSelectedRunId] = useState<string | null>(sourceMissionId ?? null)
   const [preview, setPreview] = useState<MissionDeliverable | null>(null)
+  const [productionType, setProductionType] = useState<'static' | 'video'>('static')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -90,7 +92,29 @@ export function AdsResearchProductionView({
             Create video ads directly, or complete Ads Research to produce from recommendations.
           </p>
         </header>
-        <IgOrganicVideoProductionLauncher campaignId={campaignId} spaceId={spaceId} />
+        <div className="gap-spacing-2 flex">
+          <button
+            type="button"
+            className={
+              productionType === 'static' ? 'button-glass-primary' : 'button-glass-neutral'
+            }
+            onClick={() => setProductionType('static')}
+          >
+            Static ads
+          </button>
+          <button
+            type="button"
+            className={productionType === 'video' ? 'button-glass-primary' : 'button-glass-neutral'}
+            onClick={() => setProductionType('video')}
+          >
+            Video ads
+          </button>
+        </div>
+        {productionType === 'static' ? (
+          <StaticAdProductionLauncher campaignId={campaignId} spaceId={spaceId} />
+        ) : (
+          <IgOrganicVideoProductionLauncher campaignId={campaignId} spaceId={spaceId} />
+        )}
         <div className="surface-card border-border p-spacing-8 rounded-spacing-3 flex flex-col items-center justify-center border text-center">
           <Sparkles className="icon-lg text-muted-foreground" />
           <h2 className="title-h5 text-foreground mt-spacing-3 uppercase">
@@ -139,12 +163,38 @@ export function AdsResearchProductionView({
         </div>
       ) : null}
 
-      <IgOrganicVideoProductionLauncher
-        campaignId={campaignId}
-        spaceId={spaceId}
-        sourceMissionId={selectedRun.id}
-        sourceDeliverables={deliverables[selectedRun.id] ?? []}
-      />
+      <div className="gap-spacing-2 flex">
+        <button
+          type="button"
+          className={productionType === 'static' ? 'button-glass-primary' : 'button-glass-neutral'}
+          onClick={() => setProductionType('static')}
+        >
+          Static ads
+        </button>
+        <button
+          type="button"
+          className={productionType === 'video' ? 'button-glass-primary' : 'button-glass-neutral'}
+          onClick={() => setProductionType('video')}
+        >
+          Video ads
+        </button>
+      </div>
+
+      {productionType === 'static' ? (
+        <StaticAdProductionLauncher
+          campaignId={campaignId}
+          spaceId={spaceId}
+          sourceMissionId={selectedRun.id}
+          sourceDeliverables={deliverables[selectedRun.id] ?? []}
+        />
+      ) : (
+        <IgOrganicVideoProductionLauncher
+          campaignId={campaignId}
+          spaceId={spaceId}
+          sourceMissionId={selectedRun.id}
+          sourceDeliverables={deliverables[selectedRun.id] ?? []}
+        />
+      )}
 
       <AdsResearchProductionPath
         run={selectedRun}

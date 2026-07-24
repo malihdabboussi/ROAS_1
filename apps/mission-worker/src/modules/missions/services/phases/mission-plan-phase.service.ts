@@ -68,9 +68,14 @@ export class MissionPlanPhaseService {
           : ''
 
       if (
-        ['webinar-fulfillment', 'ads-research', 'meta-ads-launch', 'meta-ads-audit'].includes(
-          playbookIdEarly,
-        ) &&
+        [
+          'webinar-fulfillment',
+          'ads-research',
+          'ig-organic-video-ad',
+          'static-ad-production',
+          'meta-ads-launch',
+          'meta-ads-audit',
+        ].includes(playbookIdEarly) &&
         mission.campaign_id
       ) {
         await this.ensureWebinarFulfillmentTeam(mission, playbookIdEarly)

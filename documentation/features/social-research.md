@@ -1,6 +1,6 @@
 # Social Research
 
-Last Modified: 2026-07-23
+Last Modified: 2026-07-24
 
 ## Overview
 
@@ -69,6 +69,8 @@ The production path is a real workflow: the user selects named concepts, chooses
 
 Production also exposes an IG organic video-ad launcher. The user can select one or many lifestyle scenes, reuse clean preset footage to avoid generation credits, or request fresh Higgsfield footage. Copy is an explicit first stage: Lux either proposes sticker copy from the campaign and source research or renders user-supplied copy verbatim after approval. The mission preserves its source research ids, selected scene ids, source strategy, music strategy, and one of the approved Apple-style emoji glyphs (`👇`, `⏰`, `✅`, `🚨`, `🙌`). The `ig-organic-video-ad` skill is available to Lux and Vibey so the same playbook can be started from Production or conversational channels. New footage uses the direct Higgsfield MCP; preset footage and Pillow-rendered stickers remain the credit-saving default.
 
+Production now opens on a Static ads / Video ads choice. Static production exposes ten formats across person-led, proof/authority, and graphic families, with a selectable output count from one through ten and 4:5 or 9:16 sizing. Users can ask Lux to write from the campaign and linked Ads Research deliverables or supply exact copy, then select or upload approved founder, customer, product, proof, or visual-reference images from Media. Person-led formats require an explicit real-upload or generated-person choice. The `static-ad-production` mission assigns one exact-count production task to Lux, and the shared `static-ad-book` skill is installed for both Lux and Vibey so the same request can start in Ads Production or chat. The skill packages ten deterministic HTML templates, a Playwright PNG renderer, proof and legal checks, full-size visual QA, and immediate Space Media registration.
+
 Saved searches are condensed into numbered angle rows with thumbnail previews. Renderer-owned numbering strips any old `Angle N:` prefix from saved titles so the displayed angle number cannot conflict with the title. One angle expands at a time and initially limits the evidence grid to six ads, with an explicit action to reveal the full angle. Creative previews use full-fit media rather than cropping the source. Selecting a creative opens the same in-app asset analysis used by Library Search. Before any additional analysis is requested, the drawer shows the evidence already collected: copy, traffic source, destination, search query, and the research angle Blaze used it for. **Deep analyze** is an optional second layer that extracts the transcript, formula, offer, and reusable patterns. Its result is merged back into the mission-linked saved-search snapshot so reopening the creative retains the breakdown without spending credits again. Failed third-party thumbnails render a compact unavailable-preview state instead of retaining a broken video-sized frame.
 
 **Library Search** remains available as the secondary surface for manual Meta, TikTok, and Google ad-library searches. Library-only group, layout, sort, and refresh controls stay hidden while Research Runs is active.
@@ -108,6 +110,10 @@ YouTube long-form videos use `youtube_video` (16:9 grid cards) and Shorts use `y
 X tweets use `tweet` (square cards) and video tweets use `tweet_video` (16:9). Each can be toggled independently via `media_show_x_tweets` and `media_show_x_videos`.
 
 ## Decision Log
+
+### 2026-07-24 - Static ad production
+
+Added a guided static-ad production launcher and executable mission playbook. The user chooses one or more of ten formats, requests one to ten outputs, selects feed or Story size, chooses generated or exact copy, and can attach approved Media references. The supplied Static Ad Book is seeded intact with all references, templates, examples, and its deterministic renderer, and is assigned to both Lux and Vibey for UI and chat initiation. The existing IG organic video launcher is also registered as an executable worker playbook instead of creating an unknown playbook mission.
 
 ### 2026-07-23 - IG organic video production
 

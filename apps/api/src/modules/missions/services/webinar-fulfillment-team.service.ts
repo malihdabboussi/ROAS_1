@@ -48,6 +48,7 @@ export class WebinarFulfillmentTeamService {
       WEBINAR_FULFILLMENT_PLAYBOOK_ID,
       'ads-research',
       'ig-organic-video-ad',
+      'static-ad-production',
       'meta-ads-launch',
       'meta-ads-audit',
     ].includes(String(playbookId || '').trim())
