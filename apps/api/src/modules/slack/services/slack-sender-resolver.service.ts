@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { ContactIdentifierService } from '../../leads/services/contact-identifier.service'
 import { SlackApiIntegration } from '../integrations/slack-api.integration'
 import { SlackRuntimeRepository } from '../repositories/slack-runtime.repository'
+import type { SlackIdentityState } from '../repositories/slack-runtime.repository'
 import type { SlackResolvedSender } from '../types/slack.types'
 
 const CUSTOMER_BRAIN_CONTACT_ROLES = new Set(['customer', 'lead', 'team_of_customer'])
@@ -57,6 +58,13 @@ export class SlackSenderResolverService {
     const existingIdentityBySlackId = new Map(
       existingIdentityRows.map((row) => [row.platform_id, row]),
     )
+    const linkedIdentityRows = await this.slackRuntimeRepo.listLinkedSlackIdentityState(supabase, {
+      userId: input.userId,
+      orgId: input.orgId,
+      vibeyUserIds: this.uniqueLinkedIds(existingIdentityRows, 'vibey_user_id'),
+      contactIds: this.uniqueLinkedIds(existingIdentityRows, 'contact_id'),
+      personBrainIds: this.uniqueLinkedIds(existingIdentityRows, 'person_brain_id'),
+    })
     const out = new Map<string, SlackResolvedSender>()
 
     for (const slackUserId of uniqueIds) {
@@ -89,11 +97,34 @@ export class SlackSenderResolverService {
       const emailMatchedUserId = email
         ? (orgIdentities.byEmail.get(email.toLowerCase()) ?? null)
         : null
-      const confirmedNameUserId =
-        existingIdentity?.identity_match_method === 'confirmed_name'
-          ? existingIdentity.vibey_user_id
-          : null
-      const vibeyUserId = emailMatchedUserId ?? confirmedNameUserId
+      const storedUserId = existingIdentity?.vibey_user_id ?? null
+      const vibeyUserId = emailMatchedUserId ?? storedUserId
+      const personBrainId = existingIdentity?.person_brain_id ?? null
+      let trustedLinkedIdentity = this.findTrustedLinkedIdentity(
+        {
+          vibeyUserId,
+          contactId: contact?.id ?? existingIdentity?.contact_id ?? null,
+          personBrainId,
+        },
+        linkedIdentityRows,
+      )
+      if (!trustedLinkedIdentity && (vibeyUserId || contact?.id || personBrainId)) {
+        const newlyLinkedRows = await this.slackRuntimeRepo.listLinkedSlackIdentityState(supabase, {
+          userId: input.userId,
+          orgId: input.orgId,
+          vibeyUserIds: vibeyUserId ? [vibeyUserId] : [],
+          contactIds: contact?.id ? [contact.id] : [],
+          personBrainIds: personBrainId ? [personBrainId] : [],
+        })
+        trustedLinkedIdentity = this.findTrustedLinkedIdentity(
+          {
+            vibeyUserId,
+            contactId: contact?.id ?? existingIdentity?.contact_id ?? null,
+            personBrainId,
+          },
+          newlyLinkedRows,
+        )
+      }
       const suggestedVibeyUserId = vibeyUserId
         ? null
         : (orgIdentities.uniqueByName.get(
@@ -101,8 +132,8 @@ export class SlackSenderResolverService {
           ) ?? null)
       const identityMatchMethod = emailMatchedUserId
         ? 'email'
-        : confirmedNameUserId
-          ? 'confirmed_name'
+        : storedUserId
+          ? (existingIdentity?.identity_match_method ?? 'confirmed_name')
           : suggestedVibeyUserId
             ? 'suggested_name'
             : 'none'
@@ -116,9 +147,13 @@ export class SlackSenderResolverService {
       const relationshipKind =
         existingIdentity?.relationship_source === 'manual'
           ? existingIdentity.relationship_kind
-          : inferredRelationship
+          : trustedLinkedIdentity
+            ? trustedLinkedIdentity.relationship_kind
+            : inferredRelationship
       const relationshipSource =
-        existingIdentity?.relationship_source === 'manual' ? 'manual' : 'inferred'
+        existingIdentity?.relationship_source === 'manual' || trustedLinkedIdentity
+          ? 'manual'
+          : 'inferred'
       await this.slackRuntimeRepo.upsertResolvedSlackPerson(supabase, {
         user_id: input.userId,
         org_id: input.orgId ?? null,
@@ -133,7 +168,7 @@ export class SlackSenderResolverService {
         is_bot: slackUser?.is_bot ?? false,
         vibey_user_id: vibeyUserId,
         suggested_vibey_user_id: suggestedVibeyUserId,
-        contact_id: contact?.id ?? null,
+        contact_id: contact?.id ?? existingIdentity?.contact_id ?? null,
         relationship_kind: relationshipKind,
         relationship_source: relationshipSource,
         identity_match_method: identityMatchMethod,
@@ -143,11 +178,11 @@ export class SlackSenderResolverService {
         slackUserId,
         displayName: this.displayName(slackUser, slackUserId),
         email,
-        contactId: contact?.id ?? null,
+        contactId: contact?.id ?? existingIdentity?.contact_id ?? null,
         contactRole: role,
         qualifiesForCustomerBrain: role ? CUSTOMER_BRAIN_CONTACT_ROLES.has(role) : false,
         vibeyUserId,
-        personBrainId: existingIdentity?.person_brain_id ?? null,
+        personBrainId,
         relationshipKind: relationshipKind as 'internal' | 'external' | 'ignored',
         isBot: slackUser?.is_bot ?? false,
       })
@@ -278,5 +313,31 @@ export class SlackSenderResolverService {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, ' ')
       .trim()
+  }
+
+  private uniqueLinkedIds(
+    rows: SlackIdentityState[],
+    key: 'vibey_user_id' | 'contact_id' | 'person_brain_id',
+  ): string[] {
+    return [...new Set(rows.map((row) => row[key]).filter((id): id is string => Boolean(id)))]
+  }
+
+  private findTrustedLinkedIdentity(
+    identity: {
+      vibeyUserId: string | null
+      contactId: string | null
+      personBrainId: string | null
+    },
+    candidates: SlackIdentityState[],
+  ): SlackIdentityState | null {
+    const matches = candidates.filter(
+      (candidate) =>
+        candidate.relationship_source === 'manual' &&
+        ((identity.vibeyUserId && candidate.vibey_user_id === identity.vibeyUserId) ||
+          (identity.contactId && candidate.contact_id === identity.contactId) ||
+          (identity.personBrainId && candidate.person_brain_id === identity.personBrainId)),
+    )
+    const relationshipKinds = new Set(matches.map((candidate) => candidate.relationship_kind))
+    return relationshipKinds.size === 1 ? (matches[0] ?? null) : null
   }
 }

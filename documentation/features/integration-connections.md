@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 24, 2026 (Higgsfield native MCP OAuth)
+Last Modified: July 24, 2026 (Slack identity aliases and group DM agent action)
 
 ## Data Flow
 
@@ -44,6 +44,8 @@ Last Modified: July 24, 2026 (Higgsfield native MCP OAuth)
 38. Inbound Slack Pixel requests are fail-closed against Manage People before files, credits, or agent tools run. `internal` people use the Slack integration owner's organization context and credits even without a portal account; `external`, `ignored`, unresolved, and identity-check failures never invoke the agent. Non-DM channels are usable only when every human member is Internal. The Slack OAuth installer is the owner; only that identity may retain Personal Brain access. Every other Internal person is blocked from direct and indirect Personal Brain tools at both prompt assembly and tool execution.
 39. Higgsfield connects natively through OAuth 2.1 authorization code + PKCE against `https://mcp.higgsfield.ai/mcp`. The visible `user_integrations` row contains status only; the durable access/refresh token bundle lives in `vault_secrets` and the linked `project_mcp_servers` row is shared and agent-enabled. Agent runtime refreshes expiring access tokens before Slack or mission tool execution.
 40. Inbound Slack files tolerate Slack's abbreviated event payloads: when an event contains only a file id, Pixel resolves the complete file with `files.info` before downloading and passing the native image/document to the agent. Forwarded Slack message unfurls are normalized into message context, and Pixel loads recent discussion from the referenced source channel when the installed bot can read it.
+41. Pixel's native Slack conversation action accepts either one recipient or up to eight unique recipients. A multi-recipient request opens or reuses a Slack group DM, including the requesting Slack user when the request says “with me.” The action returns each participant's resolved Slack display name so Pixel never needs to expose a raw Slack user ID in its response.
+42. Multiple Slack accounts can represent one durable person. Accounts linked by a confirmed portal user, contact, or managed Person Brain inherit that person's manual Internal/External/Ignored classification while retaining separate Slack delivery ids. Slack Connect is transport metadata, not a relationship classification; an unlinked Slack Connect account remains fail-closed until an admin links or classifies it. Display-name similarity never grants trust.
 
 ## Code Examples
 
@@ -150,6 +152,8 @@ Reconnect result:
 - Manage People relationship classification is the Slack Pixel authorization source. Internal Slack Connect identities can be manually classified Internal; portal membership is not required. External, Ignored, and unresolved identities receive a short denial. Mixed channels are denied so an Internal sender cannot expose organization context to a client who can see the thread.
 - Slack teammate execution is owner-funded but not owner-impersonated for private memory. The request uses the integration owner's organization/credits, carries the Slack principal through channel context, strips Personal Brain prompt/tool access for non-owners, and rejects Slack calls that omit this principal contract.
 - A forwarded Slack card is context, not ordinary link-preview decoration. Pixel preserves its author, channel, message, links, and source permalink, then reads the referenced channel through the existing Slack connection when authorized. Abbreviated file events must be hydrated through Slack before the file is considered unavailable.
+- Slack conversation creation is one native action for both direct and group DMs. One `slack_user_id` opens a 1:1 DM; `slack_user_ids` opens a group DM and returns resolved participant names with the conversation id. Existing Slack installations must grant `mpim:write` before Pixel can create a new group DM.
+- A person may have several Slack delivery identities, including ordinary workspace and Slack Connect accounts. Strong identity links (`vibey_user_id`, `contact_id`, or `person_brain_id`) unify authorization and Brain ownership without merging the Slack ids themselves. Manual classification on a linked identity wins over Slack's restricted-user flag; unlinked restricted identities remain External.
 - Page Grader is discovery context, not a second Meta publisher. Vibey owns Mission approvals, Meta mutations, and audit history. When Page Grader has exactly one active mapped ad account it may recommend that identifier; multiple active accounts require a human selection.
 - Paid Ads must expose connection and campaign-mapping state before launch. A Page Grader recommendation is labeled as context, not permission; only a live Meta connection plus explicit ad-account and Page selection earns the `Meta mounted` state.
 - Paid Ads creation and reporting are modes of one workspace, not separate setup flows. The standalone Ads Performance view remains available for custom reporting layouts, but the normal Paid Ads workflow switches modes in place.

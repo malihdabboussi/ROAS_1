@@ -10,6 +10,16 @@ type OrgMemberProfileRow = {
     | null
 }
 
+export type SlackIdentityState = {
+  platform_id: string
+  vibey_user_id: string | null
+  contact_id: string | null
+  person_brain_id: string | null
+  relationship_kind: string
+  relationship_source: string
+  identity_match_method: string
+}
+
 @Injectable()
 export class SlackRuntimeRepository {
   private readonly serviceRoleFetch = createResilientFetch({
@@ -89,25 +99,46 @@ export class SlackRuntimeRepository {
   async listSlackIdentityState(
     supabase: SupabaseClient,
     input: { userId: string; orgId?: string | null; platformIds: string[] },
-  ): Promise<
-    Array<{
-      platform_id: string
-      vibey_user_id: string | null
-      person_brain_id: string | null
-      relationship_kind: string
-      relationship_source: string
-      identity_match_method: string
-    }>
-  > {
+  ): Promise<SlackIdentityState[]> {
     if (input.platformIds.length === 0) return []
     let query = supabase
       .from('channel_members')
       .select(
-        'platform_id, vibey_user_id, person_brain_id, relationship_kind, relationship_source, identity_match_method',
+        'platform_id, vibey_user_id, contact_id, person_brain_id, relationship_kind, relationship_source, identity_match_method',
       )
       .eq('user_id', input.userId)
       .eq('platform', 'slack')
       .in('platform_id', input.platformIds)
+    query = input.orgId ? query.eq('org_id', input.orgId) : query.is('org_id', null)
+    const { data, error } = await query
+    if (error) throw error
+    return data ?? []
+  }
+
+  async listLinkedSlackIdentityState(
+    supabase: SupabaseClient,
+    input: {
+      userId: string
+      orgId?: string | null
+      vibeyUserIds: string[]
+      contactIds: string[]
+      personBrainIds: string[]
+    },
+  ): Promise<SlackIdentityState[]> {
+    const filters = [
+      ...input.vibeyUserIds.map((id) => `vibey_user_id.eq.${id}`),
+      ...input.contactIds.map((id) => `contact_id.eq.${id}`),
+      ...input.personBrainIds.map((id) => `person_brain_id.eq.${id}`),
+    ]
+    if (filters.length === 0) return []
+    let query = supabase
+      .from('channel_members')
+      .select(
+        'platform_id, vibey_user_id, contact_id, person_brain_id, relationship_kind, relationship_source, identity_match_method',
+      )
+      .eq('user_id', input.userId)
+      .eq('platform', 'slack')
+      .or(filters.join(','))
     query = input.orgId ? query.eq('org_id', input.orgId) : query.is('org_id', null)
     const { data, error } = await query
     if (error) throw error

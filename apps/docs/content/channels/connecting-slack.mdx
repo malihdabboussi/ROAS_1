@@ -1,6 +1,6 @@
 ---
-title: "Connecting Slack"
-description: "Install Vibey as a Slack bot in your workspace so agents can respond to DMs and channel mentions."
+title: 'Connecting Slack'
+description: 'Install Vibey as a Slack bot in your workspace so agents can respond to DMs and channel mentions.'
 ---
 
 ## Prerequisites
@@ -18,10 +18,12 @@ description: "Install Vibey as a Slack bot in your workspace so agents can respo
     Click the Slack connect button. You'll be redirected to Slack's OAuth screen.
   </Step>
   <Step title="Authorize the App">
-    Review the permissions and click **Allow**. Vibey requests access to read messages, post replies, and view workspace members.
+    Review the permissions and click **Allow**. Vibey requests access to read messages, post
+    replies, and view workspace members.
   </Step>
   <Step title="Map a Channel (Optional)">
-    After installation, you can map the bot to a specific Slack channel. This means messages in that channel are routed directly to your agent without needing `@Vibey`.
+    After installation, you can map the bot to a specific Slack channel. This means messages in that
+    channel are routed directly to your agent without needing `@Vibey`.
   </Step>
 </Steps>
 
@@ -37,27 +39,33 @@ When you install Vibey to Slack:
 
 Vibey requests these Slack scopes:
 
-| Scope | What it does |
-|---|---|
-| `app_mentions:read` | Receives `@Vibey` mentions in channels |
-| `assistant:write` | Lets Vibey act as a Slack App Agent |
-| `bookmarks:read`, `bookmarks:write` | Reads and manages channel bookmarks |
-| `channels:history` | Reads recent channel messages for context when mentioned |
-| `channels:read` | Lists available channels for mapping |
-| `chat:write` | Posts replies and threaded messages |
-| `chat:write.public` | Posts to channels Vibey hasn't been added to |
-| `commands` | Adds slash commands and shortcuts |
-| `files:read`, `files:write` | Reads shared files and uploads attachments |
-| `groups:history`, `groups:read` | Handles private channels Vibey is added to |
-| `im:history`, `im:read`, `im:write` | Handles direct messages |
-| `links:read`, `links:write` | Reads URLs in messages and renders link previews |
-| `mpim:history`, `mpim:read` | Handles group direct messages |
-| `reactions:read`, `reactions:write` | Adds/removes emoji reactions (processing indicators) |
-| `remote_files:read` | Views remote files added by Vibey |
-| `search:read.files` | Searches files across the workspace |
-| `search:read.im`, `search:read.mpim` | Searches direct and group DM content |
-| `search:read.private`, `search:read.public` | Searches private and public channel content |
-| `users:read` | Syncs workspace member profiles |
+| Scope                                       | What it does                                             |
+| ------------------------------------------- | -------------------------------------------------------- |
+| `app_mentions:read`                         | Receives `@Vibey` mentions in channels                   |
+| `assistant:write`                           | Lets Vibey act as a Slack App Agent                      |
+| `bookmarks:read`, `bookmarks:write`         | Reads and manages channel bookmarks                      |
+| `channels:history`                          | Reads recent channel messages for context when mentioned |
+| `channels:read`                             | Lists available channels for mapping                     |
+| `chat:write`                                | Posts replies and threaded messages                      |
+| `chat:write.public`                         | Posts to channels Vibey hasn't been added to             |
+| `commands`                                  | Adds slash commands and shortcuts                        |
+| `files:read`, `files:write`                 | Reads shared files and uploads attachments               |
+| `groups:history`, `groups:read`             | Handles private channels Vibey is added to               |
+| `im:history`, `im:read`, `im:write`         | Handles direct messages                                  |
+| `links:read`, `links:write`                 | Reads URLs in messages and renders link previews         |
+| `mpim:history`, `mpim:read`, `mpim:write`   | Reads and opens group direct messages                    |
+| `reactions:read`, `reactions:write`         | Adds/removes emoji reactions (processing indicators)     |
+| `remote_files:read`                         | Views remote files added by Vibey                        |
+| `search:read.files`                         | Searches files across the workspace                      |
+| `search:read.im`, `search:read.mpim`        | Searches direct and group DM content                     |
+| `search:read.private`, `search:read.public` | Searches private and public channel content              |
+| `users:read`                                | Syncs workspace member profiles                          |
+
+Slack Connect members are not automatically trusted or rejected solely because Slack marks them as
+external to the workspace. Manage People links each Slack account to a durable portal user, contact,
+or Person Brain. Linked accounts share the saved Internal/External/Ignored classification while
+remaining separate Slack delivery addresses. Unlinked Slack Connect accounts stay blocked until an
+administrator reviews them.
 
 ## How It Works
 

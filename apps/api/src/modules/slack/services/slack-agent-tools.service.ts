@@ -420,13 +420,38 @@ export class SlackAgentToolsService {
     supabase: SupabaseClient,
     userId: string,
     orgId: string | null | undefined,
-    params: { slack_user_id: string },
+    params: { slack_user_id?: string; slack_user_ids?: string[] },
   ) {
-    if (!params.slack_user_id?.trim()) throw new BadRequestException('slack_user_id is required')
+    const recipientIds = params.slack_user_ids ?? [params.slack_user_id ?? '']
+    if (
+      recipientIds.length === 0 ||
+      recipientIds.length > 8 ||
+      recipientIds.some((recipientId) => !recipientId.trim()) ||
+      new Set(recipientIds).size !== recipientIds.length
+    ) {
+      throw new BadRequestException('Provide between one and eight unique Slack user IDs')
+    }
     const botToken = await this.resolveBotToken(supabase, userId, orgId)
-    const channelId = await this.slackApi.openDmChannel(botToken, params.slack_user_id)
-    if (!channelId) throw new BadRequestException('Could not open DM with that user')
-    return { success: true, channel_id: channelId }
+    const channelId = await this.slackApi.openDmChannel(botToken, recipientIds.join(','))
+    if (!channelId) throw new BadRequestException('Could not open that Slack conversation')
+    const participants = await Promise.all(
+      recipientIds.map(async (slackUserId) => {
+        const user = await this.slackApi.getUserInfo(botToken, slackUserId)
+        const displayName =
+          user?.profile?.display_name?.trim() ||
+          user?.profile?.real_name?.trim() ||
+          user?.real_name?.trim() ||
+          user?.name?.trim() ||
+          'Slack teammate'
+        return { slack_user_id: slackUserId, display_name: displayName }
+      }),
+    )
+    return {
+      success: true,
+      channel_id: channelId,
+      conversation_type: recipientIds.length === 1 ? 'dm' : 'group_dm',
+      participants,
+    }
   }
 
   async uploadFile(

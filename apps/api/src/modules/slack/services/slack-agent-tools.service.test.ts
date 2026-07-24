@@ -145,3 +145,68 @@ describe('SlackAgentToolsService getChannelHistory', () => {
     })
   })
 })
+
+describe('SlackAgentToolsService openDm', () => {
+  it('opens a multi-person DM and returns friendly participant names', async () => {
+    const slackApi = {
+      openDmChannel: vi.fn().mockResolvedValue('G123'),
+      getUserInfo: vi
+        .fn()
+        .mockResolvedValueOnce({
+          id: 'U-DYLAN',
+          name: 'dylan',
+          profile: { display_name: 'Dylan Vanas' },
+        })
+        .mockResolvedValueOnce({
+          id: 'U-BETTY',
+          name: 'betty',
+          profile: { real_name: 'Betty' },
+        }),
+    }
+    const slackRepo = {
+      getIntegration: vi.fn().mockResolvedValue({ access_token: 'xoxb-token' }),
+    }
+    const service = new SlackAgentToolsService(slackApi as never, slackRepo as never)
+
+    await expect(
+      service.openDm({} as never, 'user-1', 'org-1', {
+        slack_user_ids: ['U-DYLAN', 'U-BETTY'],
+      }),
+    ).resolves.toEqual({
+      success: true,
+      channel_id: 'G123',
+      conversation_type: 'group_dm',
+      participants: [
+        { slack_user_id: 'U-DYLAN', display_name: 'Dylan Vanas' },
+        { slack_user_id: 'U-BETTY', display_name: 'Betty' },
+      ],
+    })
+    expect(slackApi.openDmChannel).toHaveBeenCalledWith('xoxb-token', 'U-DYLAN,U-BETTY')
+  })
+
+  it('preserves the legacy single-user input while resolving its display name', async () => {
+    const slackApi = {
+      openDmChannel: vi.fn().mockResolvedValue('D123'),
+      getUserInfo: vi.fn().mockResolvedValue({
+        id: 'U-BETTY',
+        name: 'betty',
+        real_name: 'Betty D/S',
+      }),
+    }
+    const slackRepo = {
+      getIntegration: vi.fn().mockResolvedValue({ access_token: 'xoxb-token' }),
+    }
+    const service = new SlackAgentToolsService(slackApi as never, slackRepo as never)
+
+    await expect(
+      service.openDm({} as never, 'user-1', 'org-1', {
+        slack_user_id: 'U-BETTY',
+      }),
+    ).resolves.toEqual({
+      success: true,
+      channel_id: 'D123',
+      conversation_type: 'dm',
+      participants: [{ slack_user_id: 'U-BETTY', display_name: 'Betty D/S' }],
+    })
+  })
+})

@@ -115,3 +115,43 @@ What: Archive-deployed Personal→org Meetings + General UI rename + org Meeting
 Why: DB clone already live; ship code so Home/Agenda/ensureMeetingsSpace prefer org Meetings and UI shows General instead of Ungrouped, without wiping Programs/Team Agenda via a stale git deploy.
 Impact: `api.roas.io` → `dpl_4zoos5ePGPQkARdPcta1zBmqnSzY` READY; `app.roas.io` → `dpl_8tg2Lo34LbqFMay1iAWiFvRd1De6` READY. Smoke: `/api/programs` 401, Team Agenda `scope=team` 401, `app.roas.io/login` 200. No origin push.
 Files: local branch `fix/personal-to-org-meetings-spaces` working tree; Vercel `roas-api` / `roas-web`
+
+## [2026-07-24 15:11] - [FIX]
+
+What: Extended Pixel's native Slack DM action to open one-to-one or multi-person conversations, return the conversation type, and resolve every recipient to a friendly Slack display name.
+
+Why: Pixel could only open a one-to-one DM and received only a channel id, so a request for a group chat with Dylan and Betty was rejected and Pixel exposed Betty's raw Slack user id.
+
+Impact: Pixel can use one action for a direct or group DM, include the requesting user when asked for a chat “with me,” and refer to participants by name. Slack OAuth now requests the `mpim:write` permission required to create group DMs.
+
+Files: `apps/api/src/modules/slack/dto/slack.dto.ts`, `apps/api/src/modules/slack/dto/slack.dto.test.ts`, `apps/api/src/modules/slack/services/slack-agent-tools.service.ts`, `apps/api/src/modules/slack/services/slack-agent-tools.service.test.ts`, `apps/api/src/modules/slack/services/slack.service.ts`, `apps/api/src/modules/composio/services/slack-legacy-capabilities.partial.ts`, `supabase/migrations/20260724232000_slack_group_dm_agent_action.sql`, `apps/docs/content/channels/connecting-slack.mdx`, `documentation/features/integration-connections.md`
+
+## [2026-07-24 15:29] - [FIX]
+
+What: Unified authorization and Person Brain ownership across multiple Slack delivery identities linked to the same portal user, contact, or managed Person Brain. Slack Connect accounts now inherit a saved manual classification only through a strong identity link; names alone never grant access.
+
+Why: Teammates such as Bryce can have a regular Slack account and a Slack Connect account. The records were evaluated independently, so a known Internal teammate could be blocked as External in a group conversation.
+
+Impact: Linked Slack aliases behave as one durable person for trust and Brain context while preserving their separate Slack ids for delivery. Existing linked inferred records are backfilled from an unambiguous manual classification, managed Person Brains can be shared by aliases, and unknown Slack Connect members remain fail-closed.
+
+Files: `apps/api/src/modules/slack/repositories/slack-runtime.repository.ts`, `apps/api/src/modules/slack/services/slack-sender-resolver.service.ts`, `apps/api/src/modules/slack/services/slack-sender-resolver.service.test.ts`, `supabase/migrations/20260724234000_slack_identity_aliases.sql`, `apps/docs/content/channels/connecting-slack.mdx`, `documentation/features/integration-connections.md`
+
+## [2026-07-24 15:30] - [FIX]
+
+What: Routed current and prior chat image attachments into the native image-edit action, explicitly treated user-supplied photos as valid inputs for ordinary benign edits, and added native video/Higgsfield chat routing to the shared agent tool instructions.
+
+Why: Vibey received and could see an employee portrait but invented a separate consent restriction, searched for an external OpenAI integration, and told the user to leave ROAS instead of using the already-permitted media actions.
+
+Impact: Agents can edit an attached photo directly in chat with `generate_image`; they no longer require a separate ChatGPT connection for native image work, and Higgsfield-specific video skills route through the connected in-chat MCP tools.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-document-context.service.ts`, `apps/agent-api/src/modules/chat/services/chat.service.context-helpers.test.ts`, `packages/agent-policy/src/platform-tools-template.ts`, `packages/agent-policy/src/platform-tools-template.test.ts`, `documentation/features/document-intelligence.md`
+
+## [2026-07-24 15:35] - [FIX]
+
+What: Made a successful assistant-message fork navigate directly to the new conversation's canonical Home chat URL and added a regression test for the returned fork id.
+
+Why: The fork API created the conversation and copied its messages, but the UI only changed in-memory chat state. The original URL remained authoritative and reopened the source conversation, leaving the user on the old chat despite the success toast.
+
+Impact: Clicking Fork now opens the new chat immediately. The production fork shown in the report was verified as conversation `26aa2a05-4693-480d-b802-c21b79bd0a41` with 30 copied messages.
+
+Files: `apps/web/src/features/studio/components/message-bubble/AssistantActions.tsx`, `apps/web/src/features/studio/components/message-bubble/AssistantActions.test.tsx`, `documentation/features/claude-chatgpt-shell.md`

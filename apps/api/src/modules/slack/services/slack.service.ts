@@ -209,6 +209,7 @@ export class SlackService extends SlackEventsBase {
       'links:write',
       'mpim:history',
       'mpim:read',
+      'mpim:write',
       'reactions:read',
       'reactions:write',
       'remote_files:read',
@@ -233,7 +234,6 @@ export class SlackService extends SlackEventsBase {
       redirect_uri: redirectUri,
       state,
     })
-
     return { url: `https://slack.com/oauth/v2/authorize?${qs.toString()}` }
   }
 

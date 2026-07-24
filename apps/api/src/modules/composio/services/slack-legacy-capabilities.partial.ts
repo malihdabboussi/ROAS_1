@@ -196,12 +196,14 @@ export const SLACK_LEGACY_CAPABILITIES: LegacyCapabilityRow[] = [
     integration_id: 'slack',
     action_slug: 'SLACK_OPEN_DM',
     execution_mode: 'legacy',
-    display_name: 'Open Slack DM',
-    description: 'Open (or reuse) a direct-message channel with a Slack user. Returns channel_id.',
+    display_name: 'Open Slack DM or Group DM',
+    description:
+      'Open or reuse a Slack DM. Use slack_user_id for one recipient. Use slack_user_ids for a group DM; when the user asks for a group chat "with me", include the requesting Slack user ID plus every named recipient. Returns the channel ID, conversation type, and friendly participant names. Refer to people by the returned names, never raw Slack IDs.',
     parameters: {
-      slack_user_id: { type: 'string', required: true },
+      slack_user_id: { type: 'string' },
+      slack_user_ids: { type: 'array' },
     },
-    examples: [],
+    examples: [{ slack_user_id: 'U01234567' }, { slack_user_ids: ['U01234567', 'U07654321'] }],
     metadata: {},
     domains: [],
   },

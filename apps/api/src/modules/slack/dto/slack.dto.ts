@@ -66,9 +66,32 @@ export const SlackReactionDtoSchema = z.object({
 })
 export type SlackReactionDto = z.infer<typeof SlackReactionDtoSchema>
 
-export const SlackOpenDmDtoSchema = z.object({
-  slack_user_id: z.string().min(1),
-})
+export const SlackOpenDmDtoSchema = z
+  .object({
+    slack_user_id: z.string().min(1).optional(),
+    slack_user_ids: z.array(z.string().min(1)).min(1).max(8).optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const hasSingleRecipient = Boolean(value.slack_user_id)
+    const hasRecipientList = Boolean(value.slack_user_ids)
+    if (hasSingleRecipient === hasRecipientList) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Provide exactly one of slack_user_id or slack_user_ids',
+      })
+    }
+    if (
+      value.slack_user_ids &&
+      new Set(value.slack_user_ids).size !== value.slack_user_ids.length
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['slack_user_ids'],
+        message: 'slack_user_ids must contain unique recipients',
+      })
+    }
+  })
 export type SlackOpenDmDto = z.infer<typeof SlackOpenDmDtoSchema>
 
 export const SlackUploadFileDtoSchema = z.object({
