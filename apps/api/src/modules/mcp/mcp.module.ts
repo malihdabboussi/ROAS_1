@@ -20,6 +20,6 @@ import { McpServersService } from './services/mcp-servers.service'
     McpOAuthConsentRepository,
     McpServersRepository,
   ],
-  exports: [McpServersService],
+  exports: [McpServersService, McpProbeService],
 })
 export class McpModule {}

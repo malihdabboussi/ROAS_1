@@ -135,6 +135,13 @@ export type {
 } from './services/funnel-tsx-contract'
 export { countPresentationSlides } from './services/presentation-slide-count'
 export {
+  MCP_OAUTH_TOKEN_BUNDLE_VERSION,
+  mcpOAuthTokenNeedsRefresh,
+  parseMcpOAuthTokenBundle,
+  serializeMcpOAuthTokenBundle,
+} from './services/mcp-oauth-token-bundle'
+export type { McpOAuthTokenBundle } from './services/mcp-oauth-token-bundle'
+export {
   isModelStrategy,
   resolveFallbackForStrategy,
   resolveModelForStrategy,

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { McpRepository } from '../repositories/mcp.repository'
 import type { McpDomain, McpServerRow, McpServerSummary } from '../types/mcp.types'
+import { McpOAuthTokenService } from './mcp-oauth-token.service'
 import { McpToolService } from './mcp-tool.service'
 
 @Injectable()
@@ -11,6 +12,7 @@ export class McpConfigService {
   constructor(
     private readonly toolService: McpToolService,
     private readonly repository: McpRepository,
+    private readonly oauthToken: McpOAuthTokenService,
   ) {}
 
   async addServer(
@@ -114,7 +116,9 @@ export class McpConfigService {
   async getAuthToken(supabase: SupabaseClient, server: McpServerRow): Promise<string | null> {
     if (!server.vault_secret_id) return null
 
-    return this.repository.getAuthToken(supabase, server.vault_secret_id)
+    const rawValue = await this.repository.getAuthToken(supabase, server.vault_secret_id)
+    if (!rawValue) return null
+    return this.oauthToken.resolve(server.vault_secret_id, rawValue)
   }
 
   async getEnabledServersForAgent(

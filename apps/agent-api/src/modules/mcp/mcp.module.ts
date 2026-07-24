@@ -3,11 +3,18 @@ import { ConfigModule } from '@nestjs/config'
 import { McpRepository } from './repositories/mcp.repository'
 import { McpConfigService } from './services/mcp-config.service'
 import { McpConnectionService } from './services/mcp-connection.service'
+import { McpOAuthTokenService } from './services/mcp-oauth-token.service'
 import { McpToolService } from './services/mcp-tool.service'
 
 @Module({
   imports: [ConfigModule],
-  providers: [McpRepository, McpConnectionService, McpToolService, McpConfigService],
+  providers: [
+    McpRepository,
+    McpConnectionService,
+    McpToolService,
+    McpOAuthTokenService,
+    McpConfigService,
+  ],
   exports: [McpConnectionService, McpToolService, McpConfigService],
 })
 export class McpModule {}

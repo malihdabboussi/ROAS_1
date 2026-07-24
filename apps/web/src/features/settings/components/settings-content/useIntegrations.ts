@@ -397,6 +397,16 @@ export function useIntegrations() {
         return { completedSynchronously: true }
       }
 
+      if (provider === 'higgsfield') {
+        const res = await backendPost<{ success: boolean; authorizeUrl: string }>(
+          '/api/integrations/higgsfield/connect',
+          { redirectTo },
+        )
+        if (!res?.authorizeUrl) throw new Error('Missing Higgsfield authorize URL')
+        window.open(res.authorizeUrl, '_blank', 'noopener,noreferrer')
+        return
+      }
+
       const mode = String(providerModes[integrationId] ?? providerModes[provider] ?? '')
         .trim()
         .toLowerCase()
@@ -594,6 +604,12 @@ export function useIntegrations() {
 
       if (provider === 'page_grader') {
         await backendPost('/api/integrations/page-grader/disconnect', {})
+        await loadData()
+        return
+      }
+
+      if (provider === 'higgsfield') {
+        await backendPost('/api/integrations/higgsfield/disconnect', {})
         await loadData()
         return
       }

@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common'
 
@@ -29,12 +30,14 @@ export class McpConnectionService implements OnModuleDestroy {
   private readonly pool = new Map<string, ActiveConnection>()
 
   isHealthy(serverUrl: string): boolean {
-    const cached = this.pool.get(serverUrl)
-    return !!cached?.healthy
+    return [...this.pool.entries()].some(
+      ([key, connection]) => key.startsWith(`${serverUrl}#`) && connection.healthy,
+    )
   }
 
   async connect(opts: ConnectOptions): Promise<Client> {
-    const cached = this.pool.get(opts.serverUrl)
+    const poolKey = this.poolKey(opts.serverUrl, opts.authToken)
+    const cached = this.pool.get(poolKey)
     const fresh = cached && cached.healthy && Date.now() - cached.connectedAt < CONNECTION_TTL_MS
     if (fresh) {
       return cached.client
@@ -42,7 +45,7 @@ export class McpConnectionService implements OnModuleDestroy {
 
     if (cached) {
       await this.closeQuietly(cached.client)
-      this.pool.delete(opts.serverUrl)
+      this.pool.delete(poolKey)
     }
 
     const headers: Record<string, string> = {}
@@ -56,11 +59,11 @@ export class McpConnectionService implements OnModuleDestroy {
     const wireLifecycle = () => {
       client.onerror = (err: Error) => {
         this.logger.warn(`MCP transport error ${opts.serverUrl}: ${err.message}`)
-        this.markUnhealthy(opts.serverUrl)
+        this.markUnhealthy(poolKey)
       }
       client.onclose = () => {
         this.logger.warn(`MCP connection closed ${opts.serverUrl}`)
-        this.markUnhealthy(opts.serverUrl)
+        this.markUnhealthy(poolKey)
       }
     }
 
@@ -81,7 +84,7 @@ export class McpConnectionService implements OnModuleDestroy {
     }
 
     wireLifecycle()
-    this.pool.set(opts.serverUrl, {
+    this.pool.set(poolKey, {
       client,
       connectedAt: Date.now(),
       healthy: true,
@@ -89,16 +92,17 @@ export class McpConnectionService implements OnModuleDestroy {
     return client
   }
 
-  private markUnhealthy(serverUrl: string): void {
-    const entry = this.pool.get(serverUrl)
+  private markUnhealthy(poolKey: string): void {
+    const entry = this.pool.get(poolKey)
     if (entry) entry.healthy = false
   }
 
   async disconnect(serverUrl: string): Promise<void> {
-    const cached = this.pool.get(serverUrl)
-    if (!cached) return
-    await this.closeQuietly(cached.client)
-    this.pool.delete(serverUrl)
+    const matches = [...this.pool.entries()].filter(([key]) => key.startsWith(`${serverUrl}#`))
+    for (const [key, cached] of matches) {
+      await this.closeQuietly(cached.client)
+      this.pool.delete(key)
+    }
   }
 
   async disconnectAll(): Promise<void> {
@@ -118,5 +122,13 @@ export class McpConnectionService implements OnModuleDestroy {
     } catch (err) {
       this.logger.warn(`Error closing MCP client: ${err}`)
     }
+  }
+
+  private poolKey(serverUrl: string, authToken: string | null | undefined): string {
+    const fingerprint = createHash('sha256')
+      .update(authToken ?? '')
+      .digest('hex')
+      .slice(0, 16)
+    return `${serverUrl}#${fingerprint}`
   }
 }

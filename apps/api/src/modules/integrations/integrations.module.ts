@@ -21,6 +21,7 @@ import { GitHubModule } from './github/github.module'
 import { GoHighLevelModule } from './gohighlevel/gohighlevel.module'
 import { GoogleDriveModule } from './google-drive/google-drive.module'
 import { GoogleWorkspaceModule } from './google-workspace/google-workspace.module'
+import { HiggsfieldModule } from './higgsfield/higgsfield.module'
 import { MetaModule } from './meta/meta.module'
 import { OpenAICodexModule } from './openai-codex/openai-codex.module'
 import { PageGraderModule } from './page-grader/page-grader.module'
@@ -62,6 +63,7 @@ import { WordpressModule } from './wordpress/wordpress.module'
     CalendlyModule,
     GoogleDriveModule,
     GoogleWorkspaceModule,
+    HiggsfieldModule,
     DropboxModule,
     FathomModule,
     FanbasisModule,

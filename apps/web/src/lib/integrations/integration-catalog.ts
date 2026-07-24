@@ -40,6 +40,16 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     is_active: true,
   },
   {
+    id: 'higgsfield',
+    provider: 'higgsfield',
+    name: 'Higgsfield',
+    description:
+      'Connect Higgsfield so ROAS agents and missions can create and manage video assets.',
+    category: 'automation',
+    auth_type: 'oauth2',
+    is_active: true,
+  },
+  {
     id: 'twitter',
     provider: 'twitter',
     name: 'X (Twitter)',

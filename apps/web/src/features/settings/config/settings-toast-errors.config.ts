@@ -77,6 +77,7 @@ export const INTEGRATION_CONNECT_SUCCESS_BY_PROVIDER: Record<string, string> = {
   openai_codex: 'OpenAI Codex connected',
   anthropic_claude: 'Claude Subscription connected',
   airtable: 'Airtable connected',
+  higgsfield: 'Higgsfield connected',
 }
 
 export const INTEGRATION_CONNECT_SUCCESS_FALLBACK = 'Integration connected'

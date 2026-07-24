@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 23, 2026 (Slack Pixel access boundaries)
+Last Modified: July 24, 2026 (Higgsfield native MCP OAuth)
 
 ## Data Flow
 
@@ -42,6 +42,7 @@ Last Modified: July 23, 2026 (Slack Pixel access boundaries)
 36. On Team agenda, account labels prefer teammate calendar names. **Mine** is only kept when the row exists solely on the caller’s personal calendar; **Fathom** is only kept for unmatched Fathom-only rows (the Fathom badge still appears via `source` / related). Shared Mine+teammate invites drop Mine.
 37. A successful Fathom reconnect restores only automation routes that the matching Fathom disconnect disabled. Routes disabled manually or for another error remain disabled.
 38. Inbound Slack Pixel requests are fail-closed against Manage People before files, credits, or agent tools run. `internal` people use the Slack integration owner's organization context and credits even without a portal account; `external`, `ignored`, unresolved, and identity-check failures never invoke the agent. Non-DM channels are usable only when every human member is Internal. The Slack OAuth installer is the owner; only that identity may retain Personal Brain access. Every other Internal person is blocked from direct and indirect Personal Brain tools at both prompt assembly and tool execution.
+39. Higgsfield connects natively through OAuth 2.1 authorization code + PKCE against `https://mcp.higgsfield.ai/mcp`. The visible `user_integrations` row contains status only; the durable access/refresh token bundle lives in `vault_secrets` and the linked `project_mcp_servers` row is shared and agent-enabled. Agent runtime refreshes expiring access tokens before Slack or mission tool execution.
 
 ## Code Examples
 
@@ -111,6 +112,7 @@ Reconnect result:
 ## Decision Log
 
 - Fathom reconnect is responsible for reversing its own disconnect side effects. Reactivation is restricted to routes whose stored disable reason exactly matches the Fathom disconnect reason, so reconnect cannot silently enable intentionally disabled automations.
+- Higgsfield is a native MCP integration, not a Composio toolkit. OAuth authorization is resource-bound to the exact Higgsfield MCP URL, credentials stay in the vault, and MCP connection pooling includes a token fingerprint so two workspaces can never reuse one another's authenticated transport.
 - A generic `connected` badge is not enough. The product must answer whether this agent can use this integration right now.
 - Personal and org-shared connections are separate scopes. A personal fallback requires explicit user approval for the current task.
 - Personal-account Google Calendar and Outlook follow the same private cross-context pattern as Fathom/Page Grader: usable by you inside an org, never visible to teammates, never auto-shared. Shared allowlist lives in `personal-cross-context-providers.ts` (status + calendar + overview; Slack remains overview-only projection).

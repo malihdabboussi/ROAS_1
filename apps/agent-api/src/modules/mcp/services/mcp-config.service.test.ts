@@ -32,7 +32,7 @@ describe('McpConfigService', () => {
       testConnection: vi.fn(async () => ({ ok: true, toolCount: 1 })),
       listTools: vi.fn(async () => [{ name: 'search', description: 'Search docs' }]),
     }
-    const service = new McpConfigService(toolService as never, new McpRepository())
+    const service = new McpConfigService(toolService as never, new McpRepository(), {} as never)
     const secretQuery = makeQuery({ data: { id: 'secret-1' } })
     const serverRow = {
       id: 'server-1',
@@ -98,7 +98,7 @@ describe('McpConfigService', () => {
         errorMessage: null,
       })),
     }
-    const service = new McpConfigService({} as never, repository as never)
+    const service = new McpConfigService({} as never, repository as never, {} as never)
 
     const result = await service.getEnabledServersForAgent({} as never, 'project-1', 'marketing')
 

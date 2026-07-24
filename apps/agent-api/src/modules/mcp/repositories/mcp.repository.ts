@@ -1,10 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type {
-  McpCachedResource,
-  McpCachedTool,
-  McpServerRow,
-} from '../types/mcp.types'
+import type { McpCachedResource, McpCachedTool, McpServerRow } from '../types/mcp.types'
 
 @Injectable()
 export class McpRepository {
@@ -62,10 +58,7 @@ export class McpRepository {
     return { server: (server as McpServerRow | null) ?? null, errorMessage: error?.message ?? null }
   }
 
-  async getServerVaultSecretId(
-    supabase: SupabaseClient,
-    serverId: string,
-  ): Promise<string | null> {
+  async getServerVaultSecretId(supabase: SupabaseClient, serverId: string): Promise<string | null> {
     const { data: server } = await supabase
       .from('project_mcp_servers')
       .select('vault_secret_id')
@@ -146,6 +139,40 @@ export class McpRepository {
       .single()
 
     return data?.encrypted_value ?? null
+  }
+
+  async updateAuthToken(
+    supabase: SupabaseClient,
+    vaultSecretId: string,
+    encryptedValue: string,
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('vault_secrets')
+      .update({ encrypted_value: encryptedValue, updated_at: new Date().toISOString() })
+      .eq('id', vaultSecretId)
+    if (error) throw new Error('Could not persist refreshed MCP OAuth credentials')
+  }
+
+  async markOAuthNeedsReconnect(
+    supabase: SupabaseClient,
+    vaultSecretId: string,
+    provider: string,
+  ): Promise<void> {
+    const { data: server } = await supabase
+      .from('project_mcp_servers')
+      .select('id')
+      .eq('vault_secret_id', vaultSecretId)
+      .maybeSingle()
+    if (!server?.id) return
+    await supabase
+      .from('user_integrations')
+      .update({
+        status: 'needs_reconnect',
+        error_message: `${provider} authorization expired`,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('integration_id', provider)
+      .eq('metadata->>server_id', server.id)
   }
 
   async listEnabledServersForAgent(
