@@ -218,7 +218,7 @@ export function CampaignsHubCampaignCard({
                         className="body-3 text-foreground hover:bg-hover-subtle flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left"
                       >
                         <FolderInput className="h-4 w-4" />
-                        Ungrouped
+                        General
                       </button>
                     ) : null}
                   </>

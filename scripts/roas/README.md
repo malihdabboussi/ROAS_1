@@ -2,6 +2,17 @@
 
 Agent-facing entry points for ROAS production deploys. Secrets live in gitignored `scripts/roas/roas-secrets.env` (template: `roas-secrets.env.template`).
 
+## Personal → org Meetings / spaces clone (one-time)
+
+`clone-personal-spaces-to-org.py` clones Dylan's personal Meetings (items + Fathom Meeting Log) into ROAS org General, moves CEO HQ + Sales Pipeline into org General, disables the personal Fathom automation, and sets Fathom auto-ingest billing to the ROAS org.
+
+```bash
+python3 scripts/roas/clone-personal-spaces-to-org.py --dry-run
+python3 scripts/roas/clone-personal-spaces-to-org.py
+```
+
+Idempotent: skips clone if org Meetings already exists; skips moves already on org General.
+
 ## ROAS Company Wiki rebuild
 
 `rebuild-company-wiki.py` upgrades the existing ROAS Internal wiki records in place. It uses

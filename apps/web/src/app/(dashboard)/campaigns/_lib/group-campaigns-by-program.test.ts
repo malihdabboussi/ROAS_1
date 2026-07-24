@@ -52,7 +52,7 @@ describe('groupCampaignsByProgram', () => {
     ]
 
     const groups = groupCampaignsByProgram(campaigns, programs)
-    expect(groups.map((g) => g.label)).toEqual(['Clients', 'ROAS Ops', 'Ungrouped'])
+    expect(groups.map((g) => g.label)).toEqual(['Clients', 'ROAS Ops', 'General'])
     expect(groups[0]?.campaigns.map((c) => c.id)).toEqual(['c1'])
     expect(groups[2]?.key).toBe(UNGROUPED_PROGRAM_KEY)
   })

@@ -14,7 +14,7 @@ import {
   isEligiblePrecallEvent,
   localDayBounds,
   mapPrepItemToAgendaLink,
-  pickMeetingsSpaceId,
+  resolvePreferredMeetingsSpaceId,
   scoreRelatedCallMatch,
   type AgendaPrepLink,
   type AgendaRelatedCall,
@@ -64,22 +64,21 @@ export class MeetingsPrecallPrepService {
     private readonly configService: ConfigService,
   ) {}
 
-  /**
-   * Resolve personal-account Meetings / Personal Dashboard.
-   * Home Agenda prep and related calls always use this space — never the active org dashboard.
-   */
   async resolveMeetingsSpaceId(
     supabase: SupabaseClient,
     userId: string,
-    _orgId?: string | null,
+    orgId?: string | null,
   ): Promise<string | null> {
-    const spaces = await this.spacesRepo.findAllSpaces(
-      supabase,
-      userId,
-      { limit: 200, paginated: false },
-      null,
-    )
-    return pickMeetingsSpaceId(spaces as Array<Record<string, unknown>>)
+    return resolvePreferredMeetingsSpaceId({
+      orgId,
+      loadSpaces: (scopeOrgId) =>
+        this.spacesRepo.findAllSpaces(
+          supabase,
+          userId,
+          { limit: 200, paginated: false },
+          scopeOrgId,
+        ) as Promise<Array<Record<string, unknown>>>,
+    })
   }
 
   async runForToday(input: {
@@ -201,11 +200,11 @@ export class MeetingsPrecallPrepService {
   }): Promise<Map<string, AgendaPrepLink>> {
     const ids = [...new Set(input.events.map((e) => e.id).filter(Boolean))]
     if (ids.length === 0) return new Map()
-    // Prep items live on the personal-account Meetings space.
+    // Prep items live on the resolved Meetings space (org preferred, else personal).
     const rows = await this.spacesRepo.findPrepItemsByCalendarEventIds(
       input.supabase,
       input.userId,
-      null,
+      input.orgId,
       ids,
     )
     const map = new Map<string, AgendaPrepLink>()
@@ -244,7 +243,7 @@ export class MeetingsPrecallPrepService {
     const relatedByEventId = new Map<string, AgendaRelatedCall>()
     const unmatchedFathomEvents: ReturnType<typeof buildFathomAgendaEvent>[] = []
 
-    const spaceId = await this.resolveMeetingsSpaceId(input.supabase, input.userId, null)
+    const spaceId = await this.resolveMeetingsSpaceId(input.supabase, input.userId, input.orgId)
     if (!spaceId) return { relatedByEventId, unmatchedFathomEvents }
 
     const windowStartMs = new Date(input.start).getTime()

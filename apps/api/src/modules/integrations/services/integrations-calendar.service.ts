@@ -249,14 +249,14 @@ export class IntegrationsCalendarService {
             ? this.precallPrep.enrichAgendaEvents({
                 supabase,
                 userId: user.id,
-                orgId: null,
+                orgId: scope.orgId ?? null,
                 events: uniqueEvents,
               })
             : Promise.resolve(new Map()),
           this.precallPrep.enrichAgendaRelatedCalls({
             supabase,
             userId: user.id,
-            orgId: null,
+            orgId: scope.orgId ?? null,
             events: uniqueEvents,
             start,
             end,

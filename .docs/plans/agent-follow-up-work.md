@@ -1,3 +1,31 @@
+## 2026-07-24 - [FIX] Personal → org Meetings / Programs General rename follow-ups
+
+Feature/App: meetings / fathom / programs
+Found while: Cloning personal Meetings into ROAS org + Ungrouped→General rename
+
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts` (617 LOC; service limit 600)
+  Evidence: `wc -l` after org-prefer resolve + enrichAgendaRelatedCalls orgId pass-through.
+  Needed work: Extract meetings-space resolution + agenda enrichment into a shared helper module.
+  Deferred because: In-scope was org Meetings target + dual-write stop, not service split.
+
+- `apps/api/src/modules/integrations/services/integrations-calendar.service.ts` (736 LOC; service limit 600)
+  Evidence: Pre-existing over-limit; only orgId wiring for prep enrichment touched.
+  Needed work: Continue extracting parse/mutation helpers.
+  Deferred because: Out of scope for personal→org Meetings move.
+
+- `apps/web/src/app/(dashboard)/campaigns/_components/CampaignsHub.tsx` (448 LOC; component limit 400)
+  Evidence: Pre-existing near/over limit; only toast label Ungrouped→General changed.
+  Needed work: Extract list sections / reload into a hook or child components.
+  Deferred because: Label rename only.
+
+- Org General still has empty-ish `Personal Dashboard` (`1d8241f5-…`) beside the new Meetings clone.
+  Needed work: Hide from Spaces switcher, archive, or retire for ROAS.
+  Deferred because: Product still allows per-org private dashboard; Meetings is now the Fathom target.
+
+- Personal Meetings (`d957d348-…`) remains with history + disabled Fathom automation.
+  Needed work: Decide whether to archive/hide personal Meetings once org clone is verified for a week.
+  Deferred because: User asked for one-time clone (not destructive delete).
+
 ## 2026-07-24 - [OPS] Deploy OpenClaw Slack import rate-limit fixes + monitor OpenRouter
 
 Status: Done (shipped `6b904ad1` to main; Vercel api/web/funnels READY; Railway queue-worker Online). Still watch OpenRouter capacity on next Slack daily backfill.

@@ -48,7 +48,7 @@ export function groupSidebarCampaignsByProgram(
     if (ungrouped.length > 0) {
       groups.push({
         key: SIDEBAR_UNGROUPED_PROGRAM_KEY,
-        label: 'Ungrouped',
+        label: 'General',
         program: null,
         campaigns: ungrouped,
       })

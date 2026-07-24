@@ -60,15 +60,11 @@ export async function runMeetingsPrecallPrepToday(input: {
   failed: number
   day_key: string
 }> {
-  // Home prep always writes to the personal-account Meetings space.
-  return backendPost(
-    `/api/spaces/${input.spaceId}/precall-prep/today`,
-    {
-      timezone: input.timezone,
-      refresh: input.refresh !== false,
-    },
-    { orgId: null },
-  )
+  // Prep writes follow the Meetings space org (resolved by the client).
+  return backendPost(`/api/spaces/${input.spaceId}/precall-prep/today`, {
+    timezone: input.timezone,
+    refresh: input.refresh !== false,
+  })
 }
 
 export async function runMeetingsPrecallPrepEvent(input: {
@@ -83,16 +79,12 @@ export async function runMeetingsPrecallPrepEvent(input: {
   status: 'pending' | 'ready' | 'failed'
   kind: 'created' | 'refreshed' | 'skipped'
 }> {
-  // Home prep always writes to the personal-account Meetings space.
-  return backendPost(
-    `/api/spaces/${input.spaceId}/precall-prep/event`,
-    {
-      calendar_event_id: input.calendarEventId,
-      timezone: input.timezone,
-      refresh: input.refresh !== false,
-    },
-    { orgId: null },
-  )
+  // Prep writes follow the Meetings space org (resolved by the client).
+  return backendPost(`/api/spaces/${input.spaceId}/precall-prep/event`, {
+    calendar_event_id: input.calendarEventId,
+    timezone: input.timezone,
+    refresh: input.refresh !== false,
+  })
 }
 
 export type CalendarAgendaAccount = {

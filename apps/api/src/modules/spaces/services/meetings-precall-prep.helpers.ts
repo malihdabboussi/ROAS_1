@@ -461,3 +461,14 @@ export function pickMeetingsSpaceId(spaces: Array<Record<string, unknown>>): str
   }
   return bestId
 }
+
+export async function resolvePreferredMeetingsSpaceId(input: {
+  orgId?: string | null
+  loadSpaces: (orgId: string | null) => Promise<Array<Record<string, unknown>>>
+}): Promise<string | null> {
+  if (input.orgId) {
+    const orgMeetings = pickMeetingsSpaceId(await input.loadSpaces(input.orgId))
+    if (orgMeetings) return orgMeetings
+  }
+  return pickMeetingsSpaceId(await input.loadSpaces(null))
+}

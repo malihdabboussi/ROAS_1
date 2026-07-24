@@ -19,7 +19,7 @@ function campaignSort(a: Campaign, b: Campaign): number {
   return (a.name ?? '').localeCompare(b.name ?? '')
 }
 
-/** Group campaigns under programs; null program_id → Ungrouped. */
+/** Group campaigns under programs; null program_id → General. */
 export function groupCampaignsByProgram(
   campaigns: Campaign[],
   programs: Program[],
@@ -52,7 +52,7 @@ export function groupCampaignsByProgram(
   }
 
   const ungrouped = buckets.get(UNGROUPED_PROGRAM_KEY) ?? []
-  // Orphan program_ids (program missing from list) also land ungrouped.
+  // Orphan program_ids (program missing from list) also land in General.
   for (const [key, list] of buckets) {
     if (key === UNGROUPED_PROGRAM_KEY) continue
     ungrouped.push(...list)
@@ -62,7 +62,7 @@ export function groupCampaignsByProgram(
     groups.push({
       key: UNGROUPED_PROGRAM_KEY,
       program: null,
-      label: 'Ungrouped',
+      label: 'General',
       sortOrder: Number.MAX_SAFE_INTEGER,
       campaigns: ungrouped.sort(campaignSort),
     })

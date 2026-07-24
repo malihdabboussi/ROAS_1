@@ -125,7 +125,7 @@ describe('IntegrationsCalendarTeamService', () => {
     expect(result.events[0]?.prep?.space_item_id).toBe('prep-1')
     expect(result.events[0]?.related?.call_item_id).toBe('call-1')
     expect(precallPrep.enrichAgendaRelatedCalls).toHaveBeenCalledWith(
-      expect.objectContaining({ orgId: null }),
+      expect.objectContaining({ orgId: 'org-1' }),
     )
     expect(precallPrep.enrichAgendaEvents).toHaveBeenCalledWith(
       expect.objectContaining({

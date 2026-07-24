@@ -22,7 +22,7 @@ ROAS org-first system programs: **Clients**, **ROAS Ops**. Personal-account prog
 - `programs.visibility` — `workspace` | `private` | `selected` (default `workspace`)
 - `programs.created_by` — durable Program owner (set on create; nullable for legacy rows)
 - `program_shares` — ACL rows (`entity_type=user`, `level` `view`|`edit`)
-- `campaigns.program_id` — nullable FK; null = Ungrouped / **General** (no Program gate)
+- `campaigns.program_id` — nullable FK; null = **General** (UI folder; internal key `__ungrouped__`)
 - System kinds: `clients`, `roas_ops`, `personal` (unique per scope when set)
 
 Migrations:
@@ -66,7 +66,7 @@ Roles (API `view`/`edit`, UI Viewer/Editor):
 - Groups under program sections (empty programs still shown)
 - Per-program **Campaign** control creates into that program
 - Program name links to `/programs/[id]`
-- Menu: Move to program / Ungrouped
+- Menu: Move to program / General
 
 ### Program overview (`/programs/[id]`)
 
@@ -78,21 +78,20 @@ Roles (API `view`/`edit`, UI Viewer/Editor):
 
 ClickUp Spaces–style **fixed-width** panel (label **Programs**, not Campaigns):
 
-| Element      | Behavior                                                                                                                                         |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| First paint  | Stable program-row skeleton, then Program folders (Clients / ROAS Ops / Ungrouped). The panel never flashes blank or shows a flat campaign list. |
-| All Tasks    | Top row → `/all-tasks`                                                                                                                           |
-| Header +     | Create menu: New Program / New Campaign / New Space                                                                                              |
-| Footer       | **+ New Program**                                                                                                                                |
-| Icon area    | Leading icon swaps to chevron on hover; click expands/collapses                                                                                  |
-| Name         | Navigates to program / campaign / space overview; lock icon when `visibility !== workspace`                                                      |
-| Hover ⋯ / +  | Program: Share / Rename / Copy link / New campaign / Delete; Campaign: existing campaign menu + new space; Space: existing space menu            |
-| Layout       | ClickUp-style primary flyout aligned below the top bar, 360px wide and nearly full viewport height; long names truncate with ellipsis.           |
-| Expand state | Persisted in `localStorage` (`roas.sidebar.expandedProgramIds`, `expandedSpaceCampaignIds`). Default = collapsed.                                |
+| Element      | Behavior                                                                                                                                       |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| First paint  | Stable program-row skeleton, then Program folders (Clients / ROAS Ops / General). The panel never flashes blank or shows a flat campaign list. |
+| All Tasks    | Top row → `/all-tasks`                                                                                                                         |
+| Header +     | Create menu: New Program / New Campaign / New Space                                                                                            |
+| Footer       | **+ New Program**                                                                                                                              |
+| Icon area    | Leading icon swaps to chevron on hover; click expands/collapses                                                                                |
+| Name         | Navigates to program / campaign / space overview; lock icon when `visibility !== workspace`                                                    |
+| Hover ⋯ / +  | Program: Share / Rename / Copy link / New campaign / Delete; Campaign: existing campaign menu + new space; Space: existing space menu          |
+| Layout       | ClickUp-style primary flyout aligned below the top bar, 360px wide and nearly full viewport height; long names truncate with ellipsis.         |
+| Expand state | Persisted in `localStorage` (`roas.sidebar.expandedProgramIds`, `expandedSpaceCampaignIds`). Default = collapsed.                              |
 
+Campaigns with no `program_id` appear under a **General** folder when present.
 Share opens the shared org `ShareModal` with Program visibility (Workspace / Private / Selected) and Viewer/Editor people list (`@/components/org` + `@/lib/org`).
-
-Ungrouped campaigns (no `program_id`) appear under an **Ungrouped** folder when present.
 The Programs tree automatically finishes paginating stored spaces in the background, so older
 Personal, calendar, client, and operations spaces do not depend on a manual **Load more** click.
 Campaign, program, and user-state caches are scoped to the active organization and refresh when
@@ -116,3 +115,4 @@ the user switches workspaces.
 - **2026-07-23:** Programs sidebar v2 — rename nav to Programs; fixed-width panel; programs-first load (no flat flash); collapsed default; icon→chevron hover; header create menu; row ⋯/+; All Tasks top; + New Program footer.
 - **2026-07-23:** Programs sidebar v3 — All Tasks lives only inside Programs; primary dock flyouts use the tall top-aligned shell; all space pages load in the background; campaign/program caches follow the active organization; Personal campaign detail resolves safely while viewing an organization.
 - **2026-07-24:** Program-level permissions MVP — `visibility` + `created_by` + `program_shares`; Nest `ProgramPermissionsService`; inherit into campaign list/get/move, space access intersection, All Tasks rollup; org ShareModal extended for Program; Workspace keeps ACL rows inert; flipping creator-less Program to Private/Selected sets `created_by` to acting user. Compat: space shares outside Program ACL no longer grant access.
+- **2026-07-24:** UI rename: program folder **Ungrouped** → **General** (null `program_id`). Canonical ROAS Meetings / CEO HQ / Sales Pipeline live on org General campaign (not cross-org personal injection).

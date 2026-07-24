@@ -1,8 +1,44 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { SlackHistoryMessage, SlackResolvedSender } from '../types/slack.types'
+import type {
+  SlackHistoryMessage,
+  SlackMessageAttachment,
+  SlackResolvedSender,
+} from '../types/slack.types'
+import { parseSlackForwardedMessage } from './slack-forwarded-message-context'
 import { SlackMediaBase } from './slack-service-media.base'
 
 export abstract class SlackConversationBase extends SlackMediaBase {
+  protected async buildForwardedMessageContext(
+    supabase: SupabaseClient,
+    userId: string,
+    botToken: string,
+    currentChannelId: string,
+    attachments: SlackMessageAttachment[] | undefined,
+  ): Promise<string> {
+    const forwarded = parseSlackForwardedMessage(attachments)
+    if (!forwarded) return ''
+
+    if (!forwarded.channelId || forwarded.channelId === currentChannelId) {
+      return forwarded.context
+    }
+
+    const channelContext = await this.buildChannelContext(
+      supabase,
+      userId,
+      botToken,
+      forwarded.channelId,
+    ).catch((error) => {
+      this.logger.warn(
+        `Failed to load forwarded Slack channel ${forwarded.channelId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+      return ''
+    })
+
+    return channelContext ? `${forwarded.context}\n\n${channelContext}` : forwarded.context
+  }
+
   async pushSlackAwarenessPoint(userId: string, agentKey: string, content: string) {
     const serviceSupabase = this.getServiceRoleClient()
     const channel = await this.slackRepo.findChannelByAgentKey(serviceSupabase, userId, agentKey)

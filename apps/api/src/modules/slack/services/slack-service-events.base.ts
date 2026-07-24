@@ -14,21 +14,10 @@ export abstract class SlackEventsBase extends SlackConversationBase {
   protected async processEventAsync(envelope: SlackEventEnvelope): Promise<void> {
     const event = envelope.event
     const teamId = envelope.team_id
-    if (!teamId || !event) {
-      this.logger.warn(
-        `[TRACE] processEventAsync EXIT: teamId=${teamId ?? 'missing'} event=${event ? 'present' : 'missing'}`,
-      )
-      return
-    }
+    if (!teamId || !event) return
 
-    if (event.subtype === 'bot_message') {
-      this.logger.warn(`[TRACE] processEventAsync EXIT: subtype=bot_message`)
-      return
-    }
-    if (event.bot_id) {
-      this.logger.warn(`[TRACE] processEventAsync EXIT: bot_id=${event.bot_id}`)
-      return
-    }
+    if (event.subtype === 'bot_message') return
+    if (event.bot_id) return
 
     this.logger.log(
       `[TRACE] processEventAsync PASS: team=${teamId} type=${event.type} user=${event.user} channel=${event.channel} channel_type=${event.channel_type} subtype=${event.subtype ?? 'none'} text_len=${(event.text ?? '').length} files=${event.files?.length ?? 0}`,
@@ -40,8 +29,6 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       await this.handleMessageEvent(teamId, event)
     } else if (event.type === 'reaction_added') {
       await this.handleReactionAddedEvent(teamId, event)
-    } else {
-      this.logger.warn(`[TRACE] processEventAsync EXIT: unhandled event.type=${event.type}`)
     }
   }
 
@@ -64,16 +51,13 @@ export abstract class SlackEventsBase extends SlackConversationBase {
 
     const text = event.text ?? ''
     const hasFiles = Array.isArray(event.files) && event.files.length > 0
-    if (!text && !hasFiles) {
+    const hasAttachments = Array.isArray(event.attachments) && event.attachments.length > 0
+    if (!text && !hasFiles && !hasAttachments) {
       this.logger.warn(
         `[TRACE] handleMessageEvent EXIT: no text and no files, channel=${channelId}`,
       )
       return
     }
-
-    this.logger.log(
-      `[TRACE] handleMessageEvent START: team=${teamId} channel=${channelId} channel_type=${event.channel_type ?? 'unknown'} text_len=${text.length} hasFiles=${hasFiles}`,
-    )
 
     const serviceSupabase = this.getServiceRoleClient()
     const channel = await this.slackRepo.findActiveChannelByTeamAndChannel(
@@ -83,10 +67,6 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     )
 
     let channelOrgId: string | null | undefined = channel?.org_id
-
-    this.logger.log(
-      `[TRACE] handleMessageEvent channel_lookup: found=${!!channel} channel_id=${channel?.id ?? 'none'}`,
-    )
 
     let botToken: string
     let userId: string
@@ -180,6 +160,16 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       channelOrgId ?? null,
       event.files,
     )
+    const forwardedContext = await this.buildForwardedMessageContext(
+      serviceSupabase,
+      userId,
+      botToken,
+      channelId,
+      event.attachments,
+    )
+    if (forwardedContext) {
+      fullMessage = fullMessage ? `${fullMessage}\n\n${forwardedContext}` : forwardedContext
+    }
     if (hasFiles && documents.length === 0) {
       const fileContext = this.buildFileContext(event.files!)
       fullMessage = fullMessage ? `${fullMessage}\n\n${fileContext}` : fileContext
@@ -224,7 +214,8 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     let text = event.text ?? ''
     text = text.replace(/<@[A-Z0-9]+>\s*/g, '').trim()
     const hasFiles = Array.isArray(event.files) && event.files.length > 0
-    if (!text && !hasFiles) return
+    const hasAttachments = Array.isArray(event.attachments) && event.attachments.length > 0
+    if (!text && !hasFiles && !hasAttachments) return
 
     const serviceSupabase = this.getServiceRoleClient()
     const fallback = await this.resolveFallbackRouting(serviceSupabase, teamId)
@@ -249,6 +240,13 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       fallback.orgId,
       event.files,
     )
+    const forwardedContext = await this.buildForwardedMessageContext(
+      serviceSupabase,
+      fallback.userId,
+      fallback.botToken,
+      channelId,
+      event.attachments,
+    )
 
     const channelContext = await this.buildChannelContext(
       serviceSupabase,
@@ -260,7 +258,8 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       return ''
     })
 
-    const mentionText = text || (documents.length > 0 ? '[User sent a file]' : '')
+    const attachmentText = forwardedContext ? `${text}\n\n${forwardedContext}`.trim() : text
+    const mentionText = attachmentText || (documents.length > 0 ? '[User sent a file]' : '')
     const messageWithContext = channelContext
       ? `${channelContext}\n\n[You were mentioned with]: ${mentionText}`
       : mentionText

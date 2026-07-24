@@ -61,12 +61,12 @@ describe('SidebarProgramFolder', () => {
     expect(onCreateCampaign).toHaveBeenCalledWith('prog-clients')
   })
 
-  it('shows children when expanded and treats Ungrouped as toggle-only', () => {
+  it('shows children when expanded and treats General as toggle-only', () => {
     const onToggle = vi.fn()
     render(
       <SidebarProgramFolder
         groupKey="__ungrouped__"
-        label="Ungrouped"
+        label="General"
         program={null}
         campaignCount={1}
         isExpanded
@@ -76,9 +76,9 @@ describe('SidebarProgramFolder', () => {
       </SidebarProgramFolder>,
     )
 
-    expect(screen.queryByRole('link', { name: 'Ungrouped' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'General' })).toBeNull()
     expect(screen.getByText('campaign-row')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Ungrouped' }))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     expect(onToggle).toHaveBeenCalledWith('__ungrouped__')
   })
 })

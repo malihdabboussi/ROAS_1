@@ -82,6 +82,7 @@ export interface SlackEvent {
   subtype?: string
   file_id?: string
   files?: SlackFileAttachment[]
+  attachments?: SlackMessageAttachment[]
   /** reaction_added / reaction_removed */
   reaction?: string
   item?: {
@@ -108,6 +109,21 @@ export interface SlackFileInfoResponse {
   ok: boolean
   error?: string
   file?: SlackFileAttachment
+}
+
+export interface SlackMessageAttachment {
+  author_name?: string
+  text?: string
+  fallback?: string
+  title?: string
+  title_link?: string
+  from_url?: string
+  footer?: string
+  channel_id?: string
+  channel_name?: string
+  ts?: string
+  message_ts?: string
+  is_msg_unfurl?: boolean
 }
 
 export type SlackBlock =

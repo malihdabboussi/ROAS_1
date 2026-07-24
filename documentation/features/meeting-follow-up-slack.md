@@ -302,16 +302,17 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 
 ## Key IDs used in admin testing (prod)
 
-| Thing                 | Value                                                          |
-| --------------------- | -------------------------------------------------------------- |
-| Meetings space        | `d957d348-c30a-4dbb-a089-ba3092332543`                         |
-| Sample call           | `9bf47aa7-b361-489e-b403-f213ba42e443` (“Nate and Dylan ops…”) |
-| Slack team            | `T03JLKLPXLY`                                                  |
-| Dylan Slack user      | `U03HG94MS8P`                                                  |
-| DM channel            | `D0ACYFPD62V`                                                  |
-| Default confirm email | `dylan@dylanvanas.com`                                         |
-| Confirm reaction      | `white_check_mark`                                             |
-| Events URL            | `https://api.roas.io/api/webhooks/slack/events`                |
+| Thing                                      | Value                                                                |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| Meetings space (org)                       | `71d2f284-78c5-4495-83d1-058dc285f094` (ROAS General; Fathom target) |
+| Meetings space (old personal clone source) | `d957d348-c30a-4dbb-a089-ba3092332543` (automation disabled)         |
+| Sample call                                | `9bf47aa7-b361-489e-b403-f213ba42e443` (“Nate and Dylan ops…”)       |
+| Slack team                                 | `T03JLKLPXLY`                                                        |
+| Dylan Slack user                           | `U03HG94MS8P`                                                        |
+| DM channel                                 | `D0ACYFPD62V`                                                        |
+| Default confirm email                      | `dylan@dylanvanas.com`                                               |
+| Confirm reaction                           | `white_check_mark`                                                   |
+| Events URL                                 | `https://api.roas.io/api/webhooks/slack/events`                      |
 
 ## Commits (feature line)
 

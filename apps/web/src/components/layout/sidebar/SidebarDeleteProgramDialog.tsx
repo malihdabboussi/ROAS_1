@@ -21,7 +21,7 @@ export function SidebarDeleteProgramDialog({
         if (!open) onClose()
       }}
       title="DELETE PROGRAM?"
-      description={program ? `Delete “${program.name}”? Campaigns move to Ungrouped.` : undefined}
+      description={program ? `Delete “${program.name}”? Campaigns move to General.` : undefined}
       confirmText={busy ? 'Deleting…' : 'Delete'}
       confirmingText="Deleting…"
       confirmDisabled={busy}

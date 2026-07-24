@@ -264,7 +264,8 @@ export abstract class SlackMediaBase extends SlackAuthBase {
       text?: string
     }> = []
 
-    for (const file of files) {
+    for (const rawFile of files) {
+      const file = await this.hydrateSlackFile(botToken, rawFile)
       const downloadUrl = file.url_private_download ?? file.url_private
       if (!downloadUrl) continue
 
@@ -319,6 +320,27 @@ export abstract class SlackMediaBase extends SlackAuthBase {
     }
 
     return results
+  }
+
+  protected async hydrateSlackFile(
+    botToken: string,
+    file: SlackFileAttachment,
+  ): Promise<SlackFileAttachment> {
+    if (file.url_private_download || file.url_private) return file
+
+    try {
+      const response = await this.slackApi.getFileInfo(botToken, file.id)
+      if (!response.ok || !response.file) {
+        this.logger.warn(`Slack files.info failed for ${file.id}: ${response.error ?? 'not_found'}`)
+        return file
+      }
+      return { ...file, ...response.file, id: file.id }
+    } catch (error) {
+      this.logger.warn(
+        `Slack files.info failed for ${file.id}: ${error instanceof Error ? error.message : String(error)}`,
+      )
+      return file
+    }
   }
 
   protected static readonly PLAIN_TEXT_EXTENSIONS = new Set([

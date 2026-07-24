@@ -222,7 +222,7 @@ export function CampaignsHub({ focusProgramId }: { focusProgramId?: string } = {
     try {
       const updated = await updateCampaign(campaign.id, { program_id: programId })
       setCampaigns((prev) => prev.map((c) => (c.id === campaign.id ? updated : c)))
-      toast.success(programId ? 'Moved to program' : 'Moved to Ungrouped')
+      toast.success(programId ? 'Moved to program' : 'Moved to General')
     } catch {
       toast.error('Could not move campaign')
     }

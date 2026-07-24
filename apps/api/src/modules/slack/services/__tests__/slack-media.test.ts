@@ -192,11 +192,49 @@ describe('SlackService media helpers', () => {
       expect(result).toHaveLength(0)
     })
 
-    it('skips files without url_private', async () => {
-      const { svc } = createService()
+    it('hydrates abbreviated Slack files before downloading them', async () => {
+      const { svc, api } = createService()
+      api.getFileInfo.mockResolvedValue({
+        ok: true,
+        file: {
+          id: 'F1',
+          name: 'orphan.png',
+          mimetype: 'image/png',
+          size: 100,
+          url_private_download: 'https://files.slack.com/F1/download',
+        },
+      })
+      vi.spyOn(svc as any, 'uploadSlackMediaToStorage').mockResolvedValue(
+        'https://storage.example.com/orphan.png',
+      )
       const files = [{ id: 'F1', name: 'orphan.png', mimetype: 'image/png', size: 100 }]
+
       const result = await (svc as any).resolveInboundSlackFiles('xoxb-token', 'user1', null, files)
+
+      expect(api.getFileInfo).toHaveBeenCalledWith('xoxb-token', 'F1')
+      expect(api.downloadFile).toHaveBeenCalledWith(
+        'xoxb-token',
+        'https://files.slack.com/F1/download',
+      )
+      expect(result).toEqual([
+        expect.objectContaining({
+          filename: 'orphan.png',
+          type: 'image',
+          fileUrl: 'https://storage.example.com/orphan.png',
+        }),
+      ])
+    })
+
+    it('skips an abbreviated file only when Slack cannot resolve it', async () => {
+      const { svc, api } = createService()
+      api.getFileInfo.mockResolvedValue({ ok: false, error: 'file_not_found' })
+
+      const result = await (svc as any).resolveInboundSlackFiles('xoxb-token', 'user1', null, [
+        { id: 'F1' },
+      ])
+
       expect(result).toHaveLength(0)
+      expect(api.downloadFile).not.toHaveBeenCalled()
     })
 
     it('skips files over size limit', async () => {

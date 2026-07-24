@@ -1,5 +1,15 @@
 # Changelog - July 24, 2026
 
+## [2026-07-24 11:05] - [FIX]
+
+What: Cloned personal Meetings (268 items + Fathom Meeting Log) into ROAS org General; moved CEO HQ + Sales Pipeline into org General; disabled personal Fathom Meeting Log; set Fathom auto-ingest billing to ROAS org. Prefer org Meetings for Home/Agenda/Fathom ensure; rename Programs UI folder Ungrouped → General.
+
+Why: Cross-org personal Meetings injection was buggy and no longer needed; team Fathom should land in the org workspace. Ungrouped campaigns already behave as General.
+
+Impact: ROAS General now has Meetings / CEO HQ / Sales Pipeline. New Fathom webhooks route to org Meetings automation `ef3975a7-…`. Personal Meetings history remains as a disabled-automation archive. UI shows General instead of Ungrouped. Requires api/web deploy for resolution + rename.
+
+Files: `scripts/roas/clone-personal-spaces-to-org.py`, `meetings-precall-prep.service.ts`, `fathom-oauth.service.ts`, `resolve-meetings-space-id.ts`, `integrations-calendar*.ts`, `calendar-api.ts`, Programs Ungrouped→General UI files, `documentation/features/programs.md`, `documentation/features/meeting-follow-up-slack.md`
+
 ## 2026-07-24 08:39 - [FEATURE]
 
 What: Added Higgsfield as a native OAuth-connected MCP integration with PKCE, resource-bound authorization, vaulted access/refresh tokens, automatic agent-runtime token refresh, agent-enabled MCP registration, and Settings connect/disconnect UI.
@@ -89,3 +99,19 @@ Why: Ship Program visibility/shares with inherit gates live on api.roas.io / app
 Impact: Migration on `lhfgtsjetcardinpgouq` (4 Programs default workspace). `roas-api` `dpl_Ax3TfvkFZQeGeTLqeXg4TKeh3ExL` → api.roas.io; `roas-web` `dpl_8uXenuiokK4k1Zh9XRom3KiGFusW` → app.roas.io. Smoke 4/4. `/api/programs` returns 401 (route present).
 
 Files: production deploy of branch `feat/program-level-permissions` working tree
+
+## [2026-07-24 11:14] - [FIX]
+
+What: Hydrated abbreviated inbound Slack file events through `files.info` before download, added forwarded-message unfurl parsing, and loaded recent context from a forwarded message's source channel when Pixel has access.
+
+Why: Pixel silently discarded screenshots whose event contained only a Slack file id and treated forwarded channel messages as ordinary links, so it claimed it could not see either the attachment or the referenced conversation.
+
+Impact: Forwarded Slack messages now carry their author, channel, content, links, and readable source-channel discussion into Pixel. Attached screenshots and documents reach the agent even when Slack omits their private download URL from the initial event.
+
+Files: `apps/api/src/modules/slack/types/slack.types.ts`, `apps/api/src/modules/slack/services/slack-forwarded-message-context.ts`, `apps/api/src/modules/slack/services/slack-service-conversation.base.ts`, `apps/api/src/modules/slack/services/slack-service-events.base.ts`, `apps/api/src/modules/slack/services/slack-service-media.base.ts`, Slack regression tests, `documentation/features/integration-connections.md`
+
+## [2026-07-24 11:23] - [FEATURE]
+What: Archive-deployed Personal→org Meetings + General UI rename + org Meetings resolution / Fathom routing prefs to production (API + web). Protected aliases from competing CLI/git promotes.
+Why: DB clone already live; ship code so Home/Agenda/ensureMeetingsSpace prefer org Meetings and UI shows General instead of Ungrouped, without wiping Programs/Team Agenda via a stale git deploy.
+Impact: `api.roas.io` → `dpl_4zoos5ePGPQkARdPcta1zBmqnSzY` READY; `app.roas.io` → `dpl_8tg2Lo34LbqFMay1iAWiFvRd1De6` READY. Smoke: `/api/programs` 401, Team Agenda `scope=team` 401, `app.roas.io/login` 200. No origin push.
+Files: local branch `fix/personal-to-org-meetings-spaces` working tree; Vercel `roas-api` / `roas-web`

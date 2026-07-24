@@ -8,6 +8,7 @@ import {
   isEligiblePrecallEvent,
   localDayBounds,
   mapPrepItemToAgendaLink,
+  resolvePreferredMeetingsSpaceId,
   scoreRelatedCallMatch,
 } from '../meetings-precall-prep.helpers'
 
@@ -85,6 +86,27 @@ describe('meetings-precall-prep.helpers', () => {
     )
     expect(dayKey).toBe('2026-07-16')
     expect(new Date(startIso).getTime()).toBeLessThan(new Date(endIso).getTime())
+  })
+
+  it('prefers the organization Meetings space and falls back to personal', async () => {
+    const meetings = (id: string) => [
+      {
+        id,
+        title: 'Meetings',
+        schema: { icon: 'video', fields: [{ id: 'entry_type' }] },
+      },
+    ]
+    const orgResult = await resolvePreferredMeetingsSpaceId({
+      orgId: 'org-1',
+      loadSpaces: async (orgId) => meetings(orgId ? 'org-meetings' : 'personal-meetings'),
+    })
+    expect(orgResult).toBe('org-meetings')
+
+    const fallbackResult = await resolvePreferredMeetingsSpaceId({
+      orgId: 'org-1',
+      loadSpaces: async (orgId) => (orgId ? [] : meetings('personal-meetings')),
+    })
+    expect(fallbackResult).toBe('personal-meetings')
   })
 
   it('scores related call matches by attendee overlap and time', () => {
