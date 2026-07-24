@@ -49,3 +49,13 @@ Why: A valid Slack follow-up reached Pixel, but the primary and fallback models 
 Impact: Transient provider throttles can recover without user action. Exhausted attempts remain visibly incomplete, do not receive a success checkmark, and tell the user Pixel is temporarily busy without exposing provider internals.
 
 Files: `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/controllers/channel-chat.controller.ts`, tests, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-07-24 10:01] - [FIX]
+
+What: Fixed Slack→brain import OpenClaw stream failures cascading into toast spam. SSE failures now surface nested `response.error` (OpenRouter rate limits), stale recovery no longer double-claims live 15m streams, agent-api health recovery no longer wakes rate-limited retries, Slack daily enqueues are staggered, and Home toasts batch identical failures.
+
+Why: ~249 `campaign_slack_import` jobs failed today with generic "OpenClaw stream failed" while the real cause was provider rate limits; a 5-minute stale reclaim plus wake-on-health-recovery burned attempts and flooded the Home notifier.
+
+Impact: Imports back off on rate limits instead of failing opaquely; duplicate toasts collapse; failed jobs were requeued with a staggered schedule starting ~30 minutes out. Deploy of api/queue-worker/web is still required for the code path.
+
+Files: `apps/api/src/modules/missions/services/gateways/mission-agent-gateway.service.ts`, `apps/api/src/modules/canvas/services/canvas-delegation.service.ts`, `apps/api/src/modules/brain/services/brain-import-jobs.base.ts`, `apps/api/src/modules/brain/services/brain-import-jobs-runtime.base.ts`, `apps/api/src/modules/brain/services/brain-import-jobs.types.ts`, `apps/api/src/modules/brain/repositories/brain-import-jobs-runtime.repository.ts`, `apps/queue-worker/src/modules/slack-sync/services/slack-sync.service.ts`, `apps/web/src/features/brain/components/BrainImportJobNotifier.tsx`

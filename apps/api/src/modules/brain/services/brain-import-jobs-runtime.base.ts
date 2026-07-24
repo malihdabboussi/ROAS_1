@@ -5,10 +5,10 @@ import type {
   BrainImportJobRecord,
   BrainImportJobStatus,
   BrainImportJobType,
-  BrainImportRuntimeExecutionPayload,
   BrainImportRuntimeClaimResult,
+  BrainImportRuntimeExecutionPayload,
 } from './brain-import-jobs.types'
-import { CREDIT_EXHAUSTED_MESSAGE, readPositiveInt } from './brain-import-jobs.types'
+import { readPositiveInt } from './brain-import-jobs.types'
 
 export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
   protected abstract buildAtlasExecutionPlan(
@@ -87,9 +87,7 @@ export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
     await this.executeClaimedJob(claimed)
   }
 
-  async claimRuntimeJobForExternalExecution(
-    jobId: string,
-  ): Promise<BrainImportRuntimeClaimResult> {
+  async claimRuntimeJobForExternalExecution(jobId: string): Promise<BrainImportRuntimeClaimResult> {
     const claimed = await this.claimReadyRuntimeJob(jobId)
     if (!claimed) return { claimed: false, reason: 'not_claimed' }
     try {
@@ -207,7 +205,9 @@ export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
   // ── Private: Job Infrastructure ─────────────────────────────────────────
 
   private async recoverStaleJobs(admin: SupabaseClient) {
-    const staleThreshold = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+    const staleThreshold = new Date(
+      Date.now() - BrainImportJobsBase.STALE_PROCESSING_MS,
+    ).toISOString()
     const stale = await this.runtimeRepository.findStaleJobs(admin, staleThreshold)
     if (!stale?.length) return
 
@@ -216,7 +216,7 @@ export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
       const nextStatus = Number(job.attempts) >= maxAttempts ? 'failed' : 'retry'
       const update: Record<string, unknown> = {
         status: nextStatus,
-        last_error: 'Recovered: stuck in processing beyond 5-minute timeout',
+        last_error: `Recovered: stuck in processing beyond ${Math.floor(BrainImportJobsBase.STALE_PROCESSING_MS / 60000)}-minute timeout`,
       }
       if (nextStatus === 'failed') {
         update.completed_at = new Date().toISOString()
@@ -227,7 +227,6 @@ export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
       this.logger.warn(`Recovered stale job ${job.id} → ${nextStatus}`)
     }
   }
-
 
   private sanitizePayload(payload: Record<string, unknown>): Record<string, unknown> {
     const serialized = JSON.stringify(payload)
@@ -260,17 +259,17 @@ export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
     }
 
     const { data, error } = await this.runtimeRepository.insertJob(admin, {
-        user_id: userId,
-        org_id: orgId ?? null,
-        job_type: jobType,
-        title,
-        dedupe_key: dedupeKey,
-        payload: safePayload,
-        status: 'queued',
-        attempts: 0,
-        max_attempts: this.maxAttempts,
-        next_attempt_at: new Date().toISOString(),
-      })
+      user_id: userId,
+      org_id: orgId ?? null,
+      job_type: jobType,
+      title,
+      dedupe_key: dedupeKey,
+      payload: safePayload,
+      status: 'queued',
+      attempts: 0,
+      max_attempts: this.maxAttempts,
+      next_attempt_at: new Date().toISOString(),
+    })
 
     if (error?.message?.includes('uq_brain_import_jobs_active_dedupe')) {
       let raced: { id: string; status: BrainImportJobStatus } | null = null
@@ -360,14 +359,16 @@ export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
 
   private async markJobFailed(job: BrainImportJobRecord, message: string): Promise<void> {
     const creditsExhausted = this.isCreditsExhaustedError(message)
+    const rateLimited = this.isRateLimitError(message)
+    const displayMessage = this.formatJobFailureMessage(message)
     const nextStatus =
       creditsExhausted || job.attempts >= (job.max_attempts || this.maxAttempts)
         ? 'failed'
         : 'retry'
-    const retryDelayMs = this.getBackoffMs(job.attempts)
+    const retryDelayMs = this.getBackoffMs(job.attempts, message)
     const update: Record<string, unknown> = {
       status: nextStatus,
-      last_error: (creditsExhausted ? CREDIT_EXHAUSTED_MESSAGE : message).slice(0, 1200),
+      last_error: displayMessage.slice(0, 1200),
       completed_at: nextStatus === 'failed' ? new Date().toISOString() : null,
     }
     if (nextStatus === 'retry') {
@@ -396,22 +397,22 @@ export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
       void this.emitJobNotification(
         job,
         'failed',
-        creditsExhausted ? CREDIT_EXHAUSTED_MESSAGE : message,
-        creditsExhausted ? 'credits_exhausted' : undefined,
+        displayMessage,
+        creditsExhausted ? 'credits_exhausted' : rateLimited ? 'rate_limited' : undefined,
       ).catch(() => {})
     } else {
       await this.enqueueRuntimeJob(job.id, retryDelayMs).catch((err) =>
         this.logger.warn(`Failed to schedule retry for brain import job ${job.id}: ${err}`),
       )
     }
-    this.logger.warn(`Brain import job ${job.id} failed (${nextStatus}): ${message}`)
+    this.logger.warn(`Brain import job ${job.id} failed (${nextStatus}): ${displayMessage}`)
   }
 
   private async emitJobNotification(
     job: BrainImportJobRecord,
     outcome: 'succeeded' | 'failed',
     errorMessage?: string,
-    failureReason?: 'credits_exhausted',
+    failureReason?: 'credits_exhausted' | 'rate_limited',
   ) {
     try {
       const admin = this.getAdminClient()

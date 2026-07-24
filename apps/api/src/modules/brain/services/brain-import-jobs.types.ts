@@ -18,6 +18,9 @@ export type BrainImportJobStatus = 'queued' | 'processing' | 'retry' | 'succeede
 export const CREDIT_EXHAUSTED_MESSAGE =
   'Your account is out of credits. Add credits, then retry this import.'
 
+export const RATE_LIMIT_MESSAGE =
+  'Model provider rate limit reached. Import will retry automatically.'
+
 export type BrainImportJobRecord = {
   id: string
   user_id: string

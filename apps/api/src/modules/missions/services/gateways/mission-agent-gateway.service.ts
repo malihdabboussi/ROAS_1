@@ -421,9 +421,19 @@ export class MissionAgentGatewayService {
   }
 
   private extractSseFailureReason(event: Record<string, unknown>): string {
-    const error = event.error as Record<string, unknown> | undefined
-    if (error && typeof error.message === 'string') return error.message
-    if (typeof event.message === 'string') return event.message
+    const candidates: Array<unknown> = [
+      event.error,
+      (event.response as Record<string, unknown> | undefined)?.error,
+    ]
+    for (const candidate of candidates) {
+      if (!candidate || typeof candidate !== 'object') continue
+      const error = candidate as Record<string, unknown>
+      const message = typeof error.message === 'string' ? error.message.trim() : ''
+      if (!message) continue
+      const code = typeof error.code === 'string' ? error.code.trim() : ''
+      return code ? `${code}: ${message}` : message
+    }
+    if (typeof event.message === 'string' && event.message.trim()) return event.message.trim()
     return 'OpenClaw stream failed'
   }
 

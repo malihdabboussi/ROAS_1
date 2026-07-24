@@ -10,12 +10,12 @@ import {
   type SetStateAction,
 } from 'react'
 import { useShellStore } from '@/components/shell/use-shell-store'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
 import { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { HubDockFlyout } from './HubDockFlyout'
 import { SidebarBrainNavLinks } from './SidebarBrainFlyout'
 import { SidebarHqMoreFlyoutBody } from './SidebarHqMoreFlyoutBody'
+import { ProgramRowsSkeleton } from './SidebarHqSpacesBucketList'
 import { SidebarHqSpacesGroupedList } from './SidebarHqSpacesGroupedList'
 import { SidebarProgramsCreateMenu, type ProgramsCreateAction } from './SidebarProgramsCreateMenu'
 import { SidebarTeam2Flyout } from './SidebarTeam2Flyout'
@@ -130,9 +130,7 @@ export function SidebarHqFlyouts({
   const programsBody = useMemo(
     () =>
       c.sidebarListsLoading ? (
-        <div className="flex justify-center px-2 py-6">
-          <VibeyLoadingOrb state="processing" size="sm" text="Loading programs..." />
-        </div>
+        <ProgramRowsSkeleton />
       ) : (
         <SidebarHqSpacesGroupedList
           controller={c}

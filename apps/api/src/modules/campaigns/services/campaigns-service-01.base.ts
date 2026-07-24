@@ -69,7 +69,11 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
     patch: { is_favorite?: boolean; is_hidden?: boolean },
     orgId?: string | null,
   ) {
-    const campaign = await this.campaignsRepo.findById(supabase, campaignId, { orgId })
+    // Personal campaigns are merged into org lists — resolve with personal fallback.
+    let campaign = await this.campaignsRepo.findById(supabase, campaignId, { orgId })
+    if (!campaign && orgId) {
+      campaign = await this.campaignsRepo.findById(supabase, campaignId, { orgId: null })
+    }
     if (!campaign) throw new NotFoundException('Campaign not found')
     const cleaned: Record<string, unknown> = {
       user_id: userId,
@@ -158,7 +162,12 @@ export abstract class CampaignsServiceBase01 extends CampaignsServiceSharedBase 
     })
   }
   async getCampaign(supabase: SupabaseClient, id: string, orgId?: string | null) {
-    const campaign = await this.campaignsRepo.findById(supabase, id, { orgId })
+    // Personal campaigns (org_id null) are merged into org campaign lists for the
+    // Programs sidebar. Resolve them when active org context would otherwise 404.
+    let campaign = await this.campaignsRepo.findById(supabase, id, { orgId })
+    if (!campaign && orgId) {
+      campaign = await this.campaignsRepo.findById(supabase, id, { orgId: null })
+    }
     if (!campaign) throw new NotFoundException('Campaign not found')
     return campaign
   }

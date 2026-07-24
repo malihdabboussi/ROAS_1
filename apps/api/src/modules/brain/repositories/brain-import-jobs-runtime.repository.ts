@@ -23,10 +23,18 @@ export class BrainImportJobsRuntimeRepository {
   async findRetryJobs(client: SupabaseClient, limit: number) {
     const { data, error } = await client
       .from('brain_import_jobs')
-      .select('id')
+      .select('id, last_error, next_attempt_at')
       .eq('status', 'retry')
+      .order('next_attempt_at', { ascending: true })
       .limit(limit)
-    return { data: data ?? [], error }
+    return {
+      data: (data ?? []) as Array<{
+        id: string
+        last_error: string | null
+        next_attempt_at: string
+      }>,
+      error,
+    }
   }
 
   async wakeRetryJob(client: SupabaseClient, jobId: string, nextAttemptAt: string) {
@@ -34,6 +42,7 @@ export class BrainImportJobsRuntimeRepository {
       .from('brain_import_jobs')
       .update({ next_attempt_at: nextAttemptAt })
       .eq('id', jobId)
+      .eq('status', 'retry')
   }
 
   async findDueJobIds(client: SupabaseClient, nowIso: string, limit: number) {

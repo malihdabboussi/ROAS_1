@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useOrgStore } from '@/features/org/store/use-org-store'
 import {
   archiveCampaign,
   campaignListCacheKey,
@@ -15,23 +16,21 @@ import {
   type CampaignUserState,
 } from '@/features/studio/services/campaign.service'
 import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
-import { getOrgScopedKey } from '@/lib/utils/org-storage'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { SIDEBAR_TOAST_ERRORS } from '../config/sidebar-toast-errors.config'
 import type { SidebarCampaignRow, SidebarEditingCampaign } from './sidebar-types'
 
 // Shared with use-space-campaign-name.ts (and other campaigns consumers): one
 // org-scoped network call per 60s window across the whole app instead of one per mount.
-const CAMPAIGNS_LIST_CACHE_KEY = 'campaigns:list'
 const CAMPAIGNS_USER_STATE_CACHE_KEY = 'campaigns:user-state'
 const CAMPAIGNS_CACHE_TTL_MS = 60_000
 
-function invalidateCampaignsListCache() {
-  invalidateCachedFetch(CAMPAIGNS_LIST_CACHE_KEY)
+function sidebarCampaignStorageKey(orgId: string | null): string {
+  return orgId ? `vibey-campaigns-cache:${orgId}` : 'vibey-campaigns-cache'
 }
 
-function invalidateCampaignsUserStateCache() {
-  invalidateCachedFetch(CAMPAIGNS_USER_STATE_CACHE_KEY)
+function campaignUserStateCacheKey(orgId: string | null): string {
+  return `${CAMPAIGNS_USER_STATE_CACHE_KEY}:${orgId ?? 'personal'}`
 }
 
 export function useSidebarCampaignsCore({
@@ -41,8 +40,10 @@ export function useSidebarCampaignsCore({
   activeCampaignId: string | null
   setActiveCampaign: (id: string | null, name?: string | null, icon?: string | null) => void
 }) {
-  const campaignsCacheKey = getOrgScopedKey('vibey-campaigns-cache')
-  const campaignsListCacheKey = campaignListCacheKey()
+  const activeOrgId = useOrgStore((state) => state.activeOrgId)
+  const campaignsCacheKey = sidebarCampaignStorageKey(activeOrgId)
+  const campaignsListCacheKey = campaignListCacheKey(activeOrgId)
+  const campaignsUserStateCacheKey = campaignUserStateCacheKey(activeOrgId)
   const router = useRouter()
   const [campaigns, setCampaigns] = useState<SidebarCampaignRow[]>([])
   const [campaignsLoading, setCampaignsLoading] = useState(true)
@@ -68,7 +69,7 @@ export function useSidebarCampaignsCore({
   useEffect(() => {
     function handleCampaignDeleted(e: Event) {
       const { id: deletedId } = (e as CustomEvent<{ id: string }>).detail
-      invalidateCampaignsListCache()
+      invalidateCachedFetch(campaignsListCacheKey)
       setCampaigns((prev) => prev.filter((c) => c.id !== deletedId))
       try {
         const cached = localStorage.getItem(campaignsCacheKey)
@@ -86,12 +87,15 @@ export function useSidebarCampaignsCore({
     }
     window.addEventListener('campaign-deleted', handleCampaignDeleted)
     return () => window.removeEventListener('campaign-deleted', handleCampaignDeleted)
-  }, [activeCampaignId, campaignsCacheKey, setActiveCampaign])
+  }, [activeCampaignId, campaignsCacheKey, campaignsListCacheKey, setActiveCampaign])
 
   useEffect(() => {
+    let cancelled = false
+    let restoredFromCache = false
     try {
       const cached = localStorage.getItem(campaignsCacheKey)
       if (cached) {
+        restoredFromCache = true
         const parsed = JSON.parse(cached) as Array<Partial<SidebarCampaignRow>>
         setCampaigns(
           parsed.map((c) => ({
@@ -113,6 +117,10 @@ export function useSidebarCampaignsCore({
     } catch {
       /* empty */
     }
+    if (!restoredFromCache) {
+      setCampaigns([])
+      setCampaignsLoading(true)
+    }
 
     async function load() {
       try {
@@ -120,10 +128,11 @@ export function useSidebarCampaignsCore({
           cachedFetch(campaignsListCacheKey, fetchCampaigns, {
             ttlMs: CAMPAIGNS_CACHE_TTL_MS,
           }),
-          cachedFetch(CAMPAIGNS_USER_STATE_CACHE_KEY, fetchCampaignUserState, {
+          cachedFetch(campaignsUserStateCacheKey, fetchCampaignUserState, {
             ttlMs: CAMPAIGNS_CACHE_TTL_MS,
           }).catch(() => [] as CampaignUserState[]),
         ])
+        if (cancelled) return
         const stateById = new Map(userStateRows.map((s) => [s.campaign_id, s]))
         const mapped: SidebarCampaignRow[] = data.map((c) => {
           const state = stateById.get(c.id)
@@ -148,13 +157,17 @@ export function useSidebarCampaignsCore({
           /* empty */
         }
       } catch (e) {
+        if (cancelled) return
         toast.error(sanitizeUserError(e, SIDEBAR_TOAST_ERRORS.LOAD_CAMPAIGNS_FAILED.userMessage))
       } finally {
-        setCampaignsLoading(false)
+        if (!cancelled) setCampaignsLoading(false)
       }
     }
     void load()
-  }, [campaignsCacheKey, campaignsListCacheKey])
+    return () => {
+      cancelled = true
+    }
+  }, [campaignsCacheKey, campaignsListCacheKey, campaignsUserStateCacheKey])
 
   useEffect(() => {
     if (campaignMenuId && campaignMenuTriggerRef.current) {
@@ -182,7 +195,7 @@ export function useSidebarCampaignsCore({
     setNewCampaignIcon('folder-kanban')
     try {
       const newCampaign = await createCampaign(name, icon)
-      invalidateCampaignsListCache()
+      invalidateCachedFetch(campaignsListCacheKey)
       setCampaigns((prev) => [
         {
           id: newCampaign.id,
@@ -203,7 +216,7 @@ export function useSidebarCampaignsCore({
     } catch (e) {
       toast.error(sanitizeUserError(e, SIDEBAR_TOAST_ERRORS.SAVE_CAMPAIGN_FAILED.userMessage))
     }
-  }, [newCampaignName, newCampaignIcon, setActiveCampaign])
+  }, [campaignsListCacheKey, newCampaignName, newCampaignIcon, setActiveCampaign])
 
   const sortedCampaigns = useMemo(() => {
     const rank = (c: SidebarCampaignRow) => {
@@ -246,7 +259,7 @@ export function useSidebarCampaignsCore({
         const campaign = campaigns.find((c) => c.id === campaignId)
         if (!campaign) return
         await updateCampaign(campaignId, { config: { ...campaign.config, isPinned: newPinned } })
-        invalidateCampaignsListCache()
+        invalidateCachedFetch(campaignsListCacheKey)
         setCampaigns((prev) =>
           prev.map((c) =>
             c.id === campaignId
@@ -259,7 +272,7 @@ export function useSidebarCampaignsCore({
       }
       setCampaignMenuId(null)
     },
-    [campaigns],
+    [campaigns, campaignsListCacheKey],
   )
 
   const patchCampaignConfig = useCallback(
@@ -275,20 +288,20 @@ export function useSidebarCampaignsCore({
       setCampaigns((prev) => prev.map((c) => (c.id === campaignId ? optimistic : c)))
       try {
         await updateCampaign(campaignId, { config: nextConfig })
-        invalidateCampaignsListCache()
+        invalidateCachedFetch(campaignsListCacheKey)
       } catch (e) {
         setCampaigns((prev) => prev.map((c) => (c.id === campaignId ? previous : c)))
         toast.error(sanitizeUserError(e, SIDEBAR_TOAST_ERRORS.SAVE_CAMPAIGN_FAILED.userMessage))
       }
     },
-    [campaigns],
+    [campaigns, campaignsListCacheKey],
   )
 
   const handleDeleteCampaign = useCallback(
     async (campaignId: string) => {
       try {
         await deleteCampaign(campaignId)
-        invalidateCampaignsListCache()
+        invalidateCachedFetch(campaignsListCacheKey)
         setCampaigns((prev) => prev.filter((c) => c.id !== campaignId))
         if (activeCampaignId === campaignId) {
           setActiveCampaign(null)
@@ -299,7 +312,7 @@ export function useSidebarCampaignsCore({
       }
       setCampaignMenuId(null)
     },
-    [activeCampaignId, setActiveCampaign, router],
+    [activeCampaignId, campaignsListCacheKey, setActiveCampaign, router],
   )
 
   const toggleFavoriteCampaign = useCallback(
@@ -312,13 +325,13 @@ export function useSidebarCampaignsCore({
       )
       try {
         await updateCampaignUserState(campaignId, { is_favorite: next })
-        invalidateCampaignsUserStateCache()
+        invalidateCachedFetch(campaignsUserStateCacheKey)
       } catch (e) {
         setCampaigns((prev) => prev.map((c) => (c.id === campaignId ? previous : c)))
         toast.error(sanitizeUserError(e, 'Failed to update favorite'))
       }
     },
-    [campaigns],
+    [campaigns, campaignsUserStateCacheKey],
   )
 
   const toggleHiddenCampaign = useCallback(
@@ -329,7 +342,7 @@ export function useSidebarCampaignsCore({
       setCampaigns((prev) => prev.map((c) => (c.id === campaignId ? { ...c, isHidden: next } : c)))
       try {
         await updateCampaignUserState(campaignId, { is_hidden: next })
-        invalidateCampaignsUserStateCache()
+        invalidateCachedFetch(campaignsUserStateCacheKey)
         if (next) {
           toast.success(`Hidden "${previous.name}"`, {
             action: {
@@ -339,7 +352,7 @@ export function useSidebarCampaignsCore({
                   prev.map((c) => (c.id === campaignId ? { ...c, isHidden: false } : c)),
                 )
                 void updateCampaignUserState(campaignId, { is_hidden: false })
-                  .then(() => invalidateCampaignsUserStateCache())
+                  .then(() => invalidateCachedFetch(campaignsUserStateCacheKey))
                   .catch(() => {})
               },
             },
@@ -351,7 +364,7 @@ export function useSidebarCampaignsCore({
         toast.error(sanitizeUserError(e, 'Failed to hide campaign'))
       }
     },
-    [campaigns, activeCampaignId, setActiveCampaign],
+    [campaigns, activeCampaignId, campaignsUserStateCacheKey, setActiveCampaign],
   )
 
   const archiveCampaignById = useCallback(
@@ -361,7 +374,7 @@ export function useSidebarCampaignsCore({
       setCampaigns((prev) => prev.filter((c) => c.id !== campaignId))
       try {
         await archiveCampaign(campaignId)
-        invalidateCampaignsListCache()
+        invalidateCachedFetch(campaignsListCacheKey)
         toast.success(`Archived "${previous.name}"`)
         if (activeCampaignId === campaignId) {
           setActiveCampaign(null)
@@ -373,7 +386,7 @@ export function useSidebarCampaignsCore({
       }
       setCampaignMenuId(null)
     },
-    [campaigns, activeCampaignId, setActiveCampaign, router],
+    [campaigns, activeCampaignId, campaignsListCacheKey, setActiveCampaign, router],
   )
 
   const handleNewCampaignModalCreate = useCallback(
@@ -384,7 +397,7 @@ export function useSidebarCampaignsCore({
             name,
             config: { ...editingCampaign.config, icon },
           })
-          invalidateCampaignsListCache()
+          invalidateCachedFetch(campaignsListCacheKey)
           setCampaigns((prev) =>
             prev.map((c) =>
               c.id === editingCampaign.id
@@ -406,7 +419,7 @@ export function useSidebarCampaignsCore({
           const newCampaign = await createCampaign(name, icon, {
             programId: programId ?? undefined,
           })
-          invalidateCampaignsListCache()
+          invalidateCachedFetch(campaignsListCacheKey)
           setCampaigns((prev) => [
             {
               id: newCampaign.id,
@@ -431,7 +444,7 @@ export function useSidebarCampaignsCore({
         setCreateCampaignProgramId(null)
       }
     },
-    [createCampaignProgramId, editingCampaign, setActiveCampaign],
+    [campaignsListCacheKey, createCampaignProgramId, editingCampaign, setActiveCampaign],
   )
 
   return {

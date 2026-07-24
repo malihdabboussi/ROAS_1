@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactNode } from 'react'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SidebarHqSection } from './SidebarHqSection'
 import { makeSidebarHqController } from './SidebarHqSection.test-support'
@@ -237,12 +237,13 @@ describe('SidebarHqSection', () => {
     )
 
     expect(screen.getByText('Home')).toBeTruthy()
+    expect(screen.queryByText('All Tasks')).toBeNull()
     expect(screen.getByText('Team')).toBeTruthy()
     expect(screen.getByText('Programs')).toBeTruthy()
     expect(screen.getByText('More')).toBeTruthy()
   })
 
-  it('loads the next spaces page from the desktop spaces panel', async () => {
+  it('loads the next spaces page automatically from the desktop Programs panel', async () => {
     const loadMoreSidebarLists = vi.fn(async () => [])
     const controller = makeSidebarHqController({
       activeManagePanel: 'spaces',
@@ -265,11 +266,6 @@ describe('SidebarHqSection', () => {
 
     render(<SidebarHqSection c={controller} />)
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Load more spaces' })).toBeTruthy()
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Load more spaces' }))
-
-    expect(loadMoreSidebarLists).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(loadMoreSidebarLists).toHaveBeenCalledTimes(1))
   })
 })

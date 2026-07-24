@@ -41,6 +41,41 @@ describe('HubDockFlyout', () => {
     expect(onClose).not.toHaveBeenCalled()
   })
 
+  it('anchors primary flyouts below the top bar with full-height panel chrome', () => {
+    render(
+      <HubDockFlyout
+        anchor={anchor}
+        title="Programs"
+        onClose={() => {}}
+        onEnter={() => {}}
+        onLeave={() => {}}
+      >
+        <p>Flyout body</p>
+      </HubDockFlyout>,
+    )
+
+    const flyout = screen.getByText('Programs').closest('[data-hub-dock-flyout]')
+    expect(flyout?.classList.contains('hub-dock-flyout-viewport')).toBe(true)
+  })
+
+  it('keeps nested flyouts aligned to their parent row', () => {
+    render(
+      <HubDockFlyout
+        anchor={anchor}
+        title="Nested"
+        nested
+        onClose={() => {}}
+        onEnter={() => {}}
+        onLeave={() => {}}
+      >
+        <p>Flyout body</p>
+      </HubDockFlyout>,
+    )
+
+    const flyout = screen.getByText('Nested').closest('[data-hub-dock-flyout]')
+    expect(flyout?.classList.contains('hub-dock-flyout-viewport')).toBe(false)
+  })
+
   it('closes when mousedown lands outside the flyout and portaled menus', () => {
     const onClose = vi.fn()
 

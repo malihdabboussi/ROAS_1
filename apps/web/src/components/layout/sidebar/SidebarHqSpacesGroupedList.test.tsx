@@ -160,4 +160,48 @@ describe('SidebarHqSpacesGroupedList', () => {
 
     expect(onOpenBrowseTemplates).toHaveBeenCalledWith('campaign-1')
   })
+
+  it('loads remaining space pages in the background while Programs is open', async () => {
+    const onLoadMore = vi.fn()
+
+    render(
+      <SidebarHqSpacesGroupedList
+        controller={
+          {
+            setShowNewCampaignModal: vi.fn(),
+            setCreateCampaignProgramId: vi.fn(),
+            setShowNewProgramModal: vi.fn(),
+          } as unknown as SidebarControllerReturn
+        }
+        spaces={[]}
+        campaigns={[campaign]}
+        pathname="/spaces"
+        expandedIds={new Set()}
+        setExpandedIds={vi.fn()}
+        expandedProgramIds={new Set()}
+        setExpandedProgramIds={vi.fn()}
+        onCreateSpace={vi.fn()}
+        isSubmitting={false}
+        creatingName=""
+        setCreatingName={vi.fn()}
+        onOpenBrowseTemplates={vi.fn()}
+        onOpenCreateSpaceModal={vi.fn()}
+        spaceUserState={
+          {
+            favoriteIds: new Set<string>(),
+            hiddenIds: new Set<string>(),
+            isFavorite: vi.fn(() => false),
+            toggleFavorite: vi.fn(),
+            toggleHidden: vi.fn(),
+          } as never
+        }
+        hasMore
+        loadingMore={false}
+        onLoadMore={onLoadMore}
+        flyoutMode
+      />,
+    )
+
+    await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1))
+  })
 })

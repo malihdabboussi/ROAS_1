@@ -24,6 +24,11 @@ function buildFailureMessage(job: BrainImportNotificationJob): string {
   return err ? `Import failed: ${err}` : `Import failed: ${job.title}`
 }
 
+function failureToastKey(job: BrainImportNotificationJob): string {
+  const err = typeof job.last_error === 'string' ? job.last_error.trim() : ''
+  return err || `title:${job.title}`
+}
+
 export function BrainImportJobNotifier() {
   const inFlightRef = useRef(false)
   const queueVisibleRef = useRef(false)
@@ -65,6 +70,8 @@ export function BrainImportJobNotifier() {
       if (!jobs.length) return
 
       const acknowledgedIds: string[] = []
+      const failureGroups = new Map<string, BrainImportNotificationJob[]>()
+
       for (const job of jobs) {
         if (job.status === 'succeeded') {
           if (!queueVisibleRef.current) {
@@ -74,10 +81,29 @@ export function BrainImportJobNotifier() {
           continue
         }
         if (job.status === 'failed') {
-          if (!queueVisibleRef.current) {
-            toast.error(buildFailureMessage(job))
-          }
+          const key = failureToastKey(job)
+          const group = failureGroups.get(key) ?? []
+          group.push(job)
+          failureGroups.set(key, group)
           acknowledgedIds.push(job.id)
+        }
+      }
+
+      if (!queueVisibleRef.current) {
+        for (const group of failureGroups.values()) {
+          const first = group[0]
+          if (!first) continue
+          if (group.length === 1) {
+            toast.error(buildFailureMessage(first))
+            continue
+          }
+          toast.error(
+            `Import failed (${group.length}): ${
+              typeof first.last_error === 'string' && first.last_error.trim()
+                ? first.last_error
+                : first.title
+            }`,
+          )
         }
       }
 

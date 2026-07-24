@@ -29,7 +29,7 @@ type ProgramGroup = {
   buckets: CampaignBucket[]
 }
 
-function ProgramRowsSkeleton() {
+export function ProgramRowsSkeleton() {
   return (
     <div className="space-y-1 px-1 py-1" aria-hidden>
       {[0, 1, 2].map((i) => (

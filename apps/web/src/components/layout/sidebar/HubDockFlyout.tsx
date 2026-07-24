@@ -90,6 +90,13 @@ export function HubDockFlyout({
 
   const reposition = useCallback(() => {
     const el = rootRef.current
+    if (!nested) {
+      const width = el?.offsetWidth ?? 360
+      const maxLeft = Math.max(8, window.innerWidth - width - 8)
+      setTop(52)
+      setLeft(Math.min(anchor.right + offsetPx, maxLeft))
+      return
+    }
     const height = el?.offsetHeight ?? 0
     const maxTop =
       height > 0
@@ -102,7 +109,7 @@ export function HubDockFlyout({
     if (nextLeft > maxLeft) nextLeft = maxLeft
     setTop(nextTop)
     setLeft(nextLeft)
-  }, [anchor.right, anchor.top, offsetPx])
+  }, [anchor.right, anchor.top, nested, offsetPx])
 
   useLayoutEffect(() => {
     reposition()
@@ -158,6 +165,7 @@ export function HubDockFlyout({
       data-hub-dock-flyout-nested={nested ? '' : undefined}
       className={cn(
         'hub-dock-flyout',
+        !nested && 'hub-dock-flyout-viewport',
         nested && 'hub-dock-flyout-nested',
         fixedWidth && 'hub-dock-flyout-fixed',
       )}

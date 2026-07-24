@@ -1,3 +1,54 @@
+## 2026-07-24 - [OPS] Deploy OpenClaw Slack import rate-limit fixes + monitor OpenRouter
+
+Status: Open
+Found while: Fixing Home toast spam from failed Slack brain imports
+Files:
+- `apps/api` brain import + mission agent gateway
+- `apps/queue-worker` slack sync enqueue
+- `apps/web` BrainImportJobNotifier
+Evidence: Production burned ~249 Slack imports on OpenRouter `rate_limit`; code fix is local on the working branch and needs api/queue-worker/web deploy. Provider capacity itself is external.
+Needed work: Ship the fix to production (prefer a clean branch off main), confirm staggered requeue succeeds, and decide whether OpenRouter limits/keys need raising for Atlas brain-import volume.
+Deferred because: Fix is implemented and jobs requeued; deploy/branch hygiene is a separate ship step from this dirty feature branch.
+
+## 2026-07-23 - [ARCH] Make Fly runtime builds reproducible from tracked source
+
+Status: Open
+Found while: Deploying the Pixel empty-response streaming fix
+Files:
+
+- `docker/Dockerfile`
+- `.gitignore`
+- `apps/openclaw/.gitignore`
+- `scripts/roas/deploy-fly-runtimes.sh`
+  Evidence: A clean Git archive could not build the runtime because the Dockerfile requires the ignored `docker/agents/hr` bundle, the ignored `apps/openclaw/pnpm-lock.yaml`, and the ignored prebuilt A2UI bundle. The deployment only succeeded after restoring those existing generated/runtime assets to the isolated build context.
+  Needed work: Define a reproducible tracked or generated source for each required asset, validate them before starting a Fly build, and prevent deployment scripts from depending silently on ignored workstation state.
+  Deferred because: The production incident required restoring Pixel replies without broadening the change into runtime packaging architecture.
+
+## 2026-07-23 - [ARCH] Audit request-close listeners on remaining streaming endpoints
+
+Status: Open
+Found while: Fixing empty Pixel Slack replies from the shared agent runtime
+Files:
+
+- `apps/agent-api/src/modules/chat/services/chat-stream-http.service.ts`
+- `apps/agent-api/src/modules/chat/controllers/chat-status.controller.ts`
+- `apps/agent-api/src/modules/admin-skill-builder/controllers/admin-skill-builder.controller.ts`
+- `apps/api/src/modules/admin/enterprise/enterprise-skill-builder-sessions.controller.ts`
+  Evidence: These endpoints also register lifecycle behavior against `res.req.on('close')`; Node may emit that event when the incoming request completes rather than when the outgoing response disconnects.
+  Needed work: Audit each endpoint’s intended cancellation semantics, switch genuine response-disconnect tracking to the outgoing response, and add endpoint-specific regression coverage.
+  Deferred because: The reported production incident is isolated to `/api/channel-chat`; changing unrelated streaming surfaces without tracing their consumers would exceed this fix.
+
+## 2026-07-23 - [FIX] Personal campaign org-scope fallback incomplete on analytics/knowledge
+
+Status: Open
+Found while: Fixing Programs sidebar "Campaign not found" for Personal under org context
+Files:
+
+- `apps/api/src/modules/campaigns/services/campaigns-service-02.base.ts` (`getCampaignAnalytics`, `getCampaignEmailAnalytics`, `getCampaignAdAnalytics`, `getCampaignReportingWidgets`, `listKnowledgeNodes`, …)
+  Evidence: `getCampaign` / update / delete / upsertUserState now fall back to `org_id` null when org lookup misses; analytics/knowledge still call `findById(..., { orgId })` only.
+  Needed work: Extract shared `findByIdInScope` (org then personal) and use it for all campaign-id org-scoped reads, or allow `org_id.eq.X,org_id.is.null` in repo when querying by id.
+  Deferred because: Page open was blocked only by `getCampaign`; tab fetches are secondary and Personal page now loads.
+
 ## 2026-07-23 - [ARCH] Programs sidebar v2 — remaining polish
 
 Status: Open
@@ -8055,3 +8106,69 @@ Evidence: Both touched services remain below the 600-line backend hard limit, bu
 Needed work: Split campaign-specific Brain actions from the general Brain action service and continue extracting the legacy artifact facade into domain-owned delegates.
 
 Reason not done now: The requested fix is the campaign-context mutation defect. A broader facade and action-family split is pre-existing architectural work and would increase the risk of this production correction.
+
+## 2026-07-23 - [ARCH] Sidebar campaign controller is near the frontend hook limit
+
+Status: Open
+
+Found while: Fixing Programs workspace completeness and organization-scoped campaign caches
+
+Files:
+
+- `apps/web/src/components/layout/sidebar/useSidebarCampaignsCore.ts` (488 LOC; lint limit 500)
+
+Evidence: The hook now owns organization-scoped hydration, network loading, cache invalidation, campaign mutations, menus, and modal state. Focused sidebar tests, lint, and the full web typecheck pass.
+
+Needed work: Extract campaign cache hydration/invalidation and campaign mutation callbacks into focused hooks before adding another sidebar campaign behavior.
+
+Reason not done now: The requested fix required the cache to react to the active organization. A broader behavior-neutral controller split would expand this UI correction and overlap the existing sidebar controller cleanup.
+
+## 2026-07-23 - [ARCH] Slack event service is at the backend LOC threshold
+
+Status: Open
+
+Found while: Repairing silent Pixel Slack replies and adding completion reactions
+
+Files:
+
+- `apps/api/src/modules/slack/services/slack-service-events.base.ts` (598 LOC; repository limit 600)
+
+Evidence: The reply lifecycle fix remains within the hard limit, but the service owns event routing, agent execution, reply delivery, reactions, error responses, and welcome messages.
+
+Needed work: Extract the agent reply/reaction lifecycle into a focused Slack reply-delivery service before adding another event behavior.
+
+Reason not done now: The production incident required a bounded correction to the existing chokepoint. A broader event-service split would materially increase the deployment surface.
+
+## 2026-07-24 - [ARCH] Integrations hook and catalog remain oversized
+
+Status: Open
+
+Found while: Adding native Higgsfield MCP OAuth
+
+Files:
+
+- `apps/web/src/features/settings/components/settings-content/useIntegrations.ts` (869 LOC)
+- `apps/web/src/lib/integrations/integration-catalog.ts` (518 LOC)
+
+Evidence: The Higgsfield branches are bounded and the full web typecheck plus focused lint pass, but both existing integration registry files exceed the frontend module target.
+
+Needed work: Move native-provider connect/disconnect routing into provider-owned adapters and split the integration catalog by category without changing catalog order.
+
+Reason not done now: The requested connector needs one native provider route. Refactoring every existing provider would broaden the production OAuth change.
+
+## 2026-07-24 - [DEPLOY] Fly runtime archive depends on ignored local inputs
+
+Status: Blocked pending explicit approval
+
+Found while: Deploying Higgsfield MCP token refresh to `roas-runtimes`
+
+Files:
+
+- `docker/agents/hr` (Git-ignored runtime directory required by `docker/Dockerfile`)
+- `apps/openclaw/pnpm-lock.yaml` (Git-ignored lockfile required by OpenClaw's frozen install)
+
+Evidence: An exact `git archive 64553b53` build first failed because `docker/agents/hr` was absent. Adding only that folder reached OpenClaw install, which then failed because the ignored nested lockfile was absent. The release safety gate rejected deploying with both ignored inputs without fresh user approval.
+
+Needed work: After approval, review and include those two established runtime inputs in the exact-commit Fly package, deploy `roas-runtimes`, and verify deep health plus an authenticated Higgsfield tool-list call.
+
+Reason not done now: Shipping Git-ignored local code/config is outside the verified commit and requires explicit informed authorization.

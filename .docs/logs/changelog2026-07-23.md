@@ -1,5 +1,25 @@
 # Changelog - July 23, 2026
 
+## [2026-07-23 17:08] - [FIX]
+
+What: Kept channel-chat SSE responses alive after the incoming HTTP request body closes by tracking the outgoing response lifecycle instead. Added a regression test that closes the request before the agent emits content.
+
+Why: Slack events reached Pixel and the shared runtime returned HTTP 200, but the controller marked the client disconnected before generation completed, suppressing every response chunk and leaving Slack with no reply.
+
+Impact: Pixel can stream completed agent responses back through Slack instead of acknowledging messages with an eye reaction and then silently returning an empty response. Commit `84112536` was pushed to `main` and deployed to the `roas-runtimes` Fly app; deep readiness passed with the gateway and auth dependencies reachable.
+
+Files: `apps/agent-api/src/modules/chat/controllers/channel-chat.controller.ts`, `apps/agent-api/src/modules/chat/controllers/__tests__/channel-chat.controller.telegram.test.ts`
+
+## [2026-07-23 16:48] - [FIX]
+
+What: `getCampaign` / `upsertUserState` now fall back to personal (`org_id` null) when an org-scoped lookup misses — same pattern as update/delete. Added regression tests.
+
+Why: Programs sidebar merges the Personal campaign into org lists, but GET `/api/campaigns/:id` with `x-org-id` filtered `org_id = <org>` and returned 404.
+
+Impact: Clicking Personal (and other personal-scoped campaigns) from the org Programs tree opens successfully. Archive-deployed `roas-api` `dpl_56sir1jbimhRspixa61z5f3EzH6P` → api.roas.io. Verified GET Personal with `x-org-id` → 200; `/api/programs` and rollup still present. Web unchanged (API-only). No origin push.
+
+Files: `campaigns-service-01.base.ts`, `campaigns.service.test.ts`, Vercel Production `roas-api`
+
 ## [2026-07-23 14:25] - [FIX]
 
 What: Included tracked pnpm dependency patches in Vercel source uploads while continuing to exclude the unrelated root-level team invite patch.
@@ -158,3 +178,33 @@ Why: Pixel read the explicitly tagged Whole Universe channel but inferred 1DS Co
 Impact: Pixel can verify a tagged channel's real ID/name before campaign, Brain, or reporting lookup. “The portal” remains the ROAS portal fulfillment path unless the user explicitly requests native funnel generation, and a fulfillment failure cannot substitute another work type, owner, or client.
 
 Files: `apps/api/src/modules/slack/services/slack-agent-tools.service.ts`, `apps/api/src/modules/slack/services/slack-agent-tools.service.test.ts`, `apps/api/src/modules/composio/services/slack-legacy-capabilities.partial.ts`, `packages/agent-policy/src/platform-tools-template.ts`, `packages/agent-policy/src/platform-tools-template.test.ts`, `docker/agents/vibey/skills/page-grader-operator/SKILL.md`, `docker/agents/atlas/skills/page-grader-operator/SKILL.md`, `apps/agent-api/src/modules/agent-sync/services/pixel-named-client-delegation.test.ts`, `supabase/migrations/20260723163000_fix_pixel_slack_channel_identity_routing.sql`, `documentation/features/meeting-follow-up-slack.md`, `.docs/plans/pixel-slack-funnel-capability-drift-2026-07-23.md`
+
+## [2026-07-23 20:42] - [FIX]
+
+What: Consolidated All Tasks inside the Programs flyout, upgraded primary sidebar flyouts to a wider near-full-height top-aligned layout, replaced the blank Programs load with stable row skeletons, automatically paginated the complete spaces tree, scoped campaign/program state to the active organization, and preserved Personal campaign access while an organization is selected.
+
+Why: The main sidebar duplicated All Tasks, Programs briefly rendered white, older Personal/calendar/client spaces stayed hidden behind manual pagination, organization switches could reuse stale campaign data, and opening the Personal campaign from an organization could return “Campaign not found.”
+
+Impact: Programs now behaves like a consistent ClickUp-style workspace panel, shows the complete campaign/space hierarchy without manual loading, and follows workspace changes without leaking stale rows or breaking Personal navigation.
+
+Files: `apps/web/src/components/layout/sidebar/*`, `apps/web/src/app/globals.css`, `apps/website/src/app/globals.css`, `apps/api/src/modules/campaigns/services/campaigns-service-01.base.ts`, `apps/api/src/modules/campaigns/services/__tests__/campaigns.service.test.ts`, `documentation/features/programs.md`
+
+## [2026-07-23 20:42] - [FEATURE]
+
+What: Added an IG organic Story video production launcher and reusable mission skill. Users can select one or many scenes, reuse eight clean preset clips, generate fresh Higgsfield variants, run a separate copy approval stage, choose from five approved Apple-style emojis, and preserve the source Ads Research handoff.
+
+Why: Organic-looking caption videos needed one production contract for the Paid Ads UI and agent chat, with deterministic Pillow text and preset reuse so repeated ads do not spend unnecessary generation credits.
+
+Impact: Lux and Vibey can run the same `ig-organic-video-ad` playbook from Production or conversational channels. Higgsfield is treated as a direct MCP connection, copy is approved before rendering, and selected scene count determines the number of video outputs.
+
+Files: `apps/web/src/features/spaces/components/ads-research/IgOrganicVideoProductionLauncher.tsx`, `apps/web/src/features/spaces/components/ads-research/AdsResearchProductionView.tsx`, `apps/web/src/features/spaces/components/playbooks/ig-organic-video.ts`, `apps/web/src/features/spaces/config/ig-organic-video-scenes.config.ts`, `apps/api/src/modules/missions/services/webinar-fulfillment-team.service.ts`, `apps/agent-api/src/modules/agent-sync/services/ig-organic-video-ad-skill-contract.test.ts`, `supabase/migrations/20260723204214_ig_organic_video_ad_skill.sql`, `documentation/features/social-research.md`
+
+## [2026-07-23 20:54] - [FIX]
+
+What: Fixed Pixel's Slack completion lifecycle so code-only Agent API errors such as `no_answer` cannot be mistaken for a successful empty response. Pixel now keeps 👀 while working, adds ✅ only after Slack accepts the reply, and posts the standard retry message without ✅ when generation or delivery fails.
+
+Why: The prior stream-close repair kept the response stream alive but did not handle structured error events that omitted a message. Those events returned an empty answer, removed 👀, and left the user with no reply or visible failure.
+
+Impact: A Slack request can no longer silently lose its processing indicator. Successful requests visibly complete with ✅; unsuccessful requests remain visibly incomplete and receive a retry response.
+
+Files: `apps/api/src/modules/slack/services/slack-service-conversation.base.ts`, `apps/api/src/modules/slack/services/slack-service-events.base.ts`, `apps/api/src/modules/slack/integrations/slack-api-integration-core.base.ts`, `apps/api/src/modules/slack/services/__tests__/slack-service-events.test.ts`, `apps/api/src/modules/slack/integrations/slack-api.integration.test.ts`, `documentation/features/meeting-follow-up-slack.md`

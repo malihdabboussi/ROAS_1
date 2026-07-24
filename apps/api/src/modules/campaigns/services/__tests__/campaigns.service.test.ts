@@ -163,6 +163,44 @@ describe('CampaignsService', () => {
       })
       expect(mockRepo.findById).toHaveBeenCalledWith(supabase, 'campaign-1', { orgId: undefined })
     })
+
+    it('persists personal campaign user state while an organization is active', async () => {
+      mockRepo.findById
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 'personal-1', org_id: null })
+      const supabase = {
+        from: vi.fn(() => {
+          const chain: Record<string, any> = {}
+          for (const method of ['upsert', 'select']) chain[method] = vi.fn().mockReturnValue(chain)
+          chain.single = vi.fn().mockResolvedValue({
+            data: {
+              campaign_id: 'personal-1',
+              is_favorite: true,
+              is_hidden: false,
+              updated_at: '2026-07-23T00:00:00Z',
+            },
+            error: null,
+          })
+          return chain
+        }),
+      } as any
+
+      await expect(
+        (service.upsertUserState as any)(
+          supabase,
+          'user-1',
+          'personal-1',
+          { is_favorite: true },
+          'org-1',
+        ),
+      ).resolves.toMatchObject({ campaign_id: 'personal-1', is_favorite: true })
+      expect(mockRepo.findById).toHaveBeenNthCalledWith(1, supabase, 'personal-1', {
+        orgId: 'org-1',
+      })
+      expect(mockRepo.findById).toHaveBeenNthCalledWith(2, supabase, 'personal-1', {
+        orgId: null,
+      })
+    })
   })
 
   describe('getCampaign', () => {
@@ -175,6 +213,27 @@ describe('CampaignsService', () => {
     it('should throw if campaign not found', async () => {
       mockRepo.findById.mockResolvedValue(null)
       await expect(service.getCampaign(mockSupabase, '999')).rejects.toThrow('Campaign not found')
+    })
+
+    it('should fall back to personal campaign when org-scoped lookup misses', async () => {
+      mockRepo.findById
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 'personal-1', name: 'Personal', org_id: null })
+      const result = await service.getCampaign(mockSupabase, 'personal-1', 'org-1')
+      expect(result).toEqual({ id: 'personal-1', name: 'Personal', org_id: null })
+      expect(mockRepo.findById).toHaveBeenNthCalledWith(1, mockSupabase, 'personal-1', {
+        orgId: 'org-1',
+      })
+      expect(mockRepo.findById).toHaveBeenNthCalledWith(2, mockSupabase, 'personal-1', {
+        orgId: null,
+      })
+    })
+
+    it('should not fall back when org-scoped campaign exists', async () => {
+      mockRepo.findById.mockResolvedValue({ id: 'org-c1', name: 'Org', org_id: 'org-1' })
+      const result = await service.getCampaign(mockSupabase, 'org-c1', 'org-1')
+      expect(result.name).toBe('Org')
+      expect(mockRepo.findById).toHaveBeenCalledTimes(1)
     })
   })
 

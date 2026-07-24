@@ -5,7 +5,11 @@ import type { Queue } from 'bullmq'
 import type { ErrorReporter } from '@vibey/api-shared'
 import { BrainImportJobsRuntimeRepository } from '../repositories/brain-import-jobs-runtime.repository'
 import type { BrainImportJobRecord } from './brain-import-jobs.types'
-import { readPositiveInt } from './brain-import-jobs.types'
+import {
+  CREDIT_EXHAUSTED_MESSAGE,
+  RATE_LIMIT_MESSAGE,
+  readPositiveInt,
+} from './brain-import-jobs.types'
 
 export abstract class BrainImportJobsBase {
   static readonly MAX_PAYLOAD_BYTES = 5_000_000
@@ -20,6 +24,11 @@ export abstract class BrainImportJobsBase {
     'assetRef',
   ])
   static readonly MAX_PROMPT_INPUT_BYTES = 2_000_000
+  /** Must exceed OpenClaw brain-job invoke timeout (900s) so live streams are not double-claimed. */
+  static readonly STALE_PROCESSING_MS = readPositiveInt(
+    process.env.BRAIN_IMPORT_STALE_PROCESSING_MS,
+    20 * 60 * 1000,
+  )
 
   protected readonly logger = new Logger('BrainImportJobsService')
   protected readonly pollIntervalMs = 3000
@@ -68,7 +77,7 @@ export abstract class BrainImportJobsBase {
       this.agentApiHealthy = false
     }
     if (!wasHealthy && this.agentApiHealthy) {
-      this.logger.log('Agent-api recovered -- waking retry jobs immediately')
+      this.logger.log('Agent-api recovered -- waking gateway-unavailable retry jobs')
       void this.wakeRetryJobs()
     }
   }
@@ -82,6 +91,10 @@ export abstract class BrainImportJobsBase {
     if (fetchError || !retryJobs?.length) return
 
     for (const job of retryJobs) {
+      const lastError = typeof job.last_error === 'string' ? job.last_error : ''
+      // Do not pull forward rate-limit / app failures — those keep their backoff.
+      if (!this.isAgentUnavailableError(lastError)) continue
+
       const jitterMs = Math.floor(Math.random() * 30_000)
       const { error } = await this.runtimeRepository.wakeRetryJob(
         admin,
@@ -160,7 +173,12 @@ export abstract class BrainImportJobsBase {
     return this.adminClient
   }
 
-  protected getBackoffMs(attempts: number): number {
+  protected getBackoffMs(attempts: number, message?: string): number {
+    if (message && this.isRateLimitError(message)) {
+      if (attempts <= 1) return 15 * 60 * 1000
+      if (attempts === 2) return 45 * 60 * 1000
+      return 2 * 60 * 60 * 1000
+    }
     if (attempts <= 1) return 60 * 60 * 1000
     if (attempts === 2) return 3 * 60 * 60 * 1000
     return 3 * 60 * 60 * 1000
@@ -180,5 +198,37 @@ export abstract class BrainImportJobsBase {
     return (
       normalized.includes('credits_exhausted') || normalized.includes('agent request failed (402)')
     )
+  }
+
+  protected isRateLimitError(message: string): boolean {
+    const normalized = message.toLowerCase()
+    return (
+      normalized.includes('rate_limit') ||
+      normalized.includes('rate limit') ||
+      normalized.includes('api rate limit') ||
+      normalized.includes('too many requests') ||
+      normalized.includes('(429)')
+    )
+  }
+
+  protected isAgentUnavailableError(message: string): boolean {
+    const normalized = message.toLowerCase()
+    return (
+      normalized.includes('gateway connection') ||
+      normalized.includes('fetch failed') ||
+      normalized.includes('ensure-ready') ||
+      normalized.includes('econnrefused') ||
+      normalized.includes('enotfound') ||
+      normalized.includes('socket hang up') ||
+      normalized.includes('network') ||
+      normalized.includes('agent request failed (503)') ||
+      normalized.includes('agent request failed (502)')
+    )
+  }
+
+  protected formatJobFailureMessage(message: string): string {
+    if (this.isCreditsExhaustedError(message)) return CREDIT_EXHAUSTED_MESSAGE
+    if (this.isRateLimitError(message)) return RATE_LIMIT_MESSAGE
+    return message
   }
 }

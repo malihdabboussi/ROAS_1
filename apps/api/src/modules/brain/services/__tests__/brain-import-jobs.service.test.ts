@@ -308,6 +308,23 @@ describe('BrainImportJobsService', () => {
     expect(isCreditsExhausted('Gateway connection error: fetch failed')).toBe(false)
   })
 
+  it('classifies provider rate limits and keeps them out of gateway wake-ups', () => {
+    const service = new BrainImportJobsService({ get: vi.fn() } as any)
+    const isRateLimit = (message: string) => (service as any).isRateLimitError(message)
+    const isUnavailable = (message: string) => (service as any).isAgentUnavailableError(message)
+    const format = (message: string) => (service as any).formatJobFailureMessage(message)
+
+    expect(
+      isRateLimit(
+        'provider_error: All models failed (4): openrouter/anthropic/claude-opus-4.6: API rate limit reached. (rate_limit)',
+      ),
+    ).toBe(true)
+    expect(isUnavailable('OpenClaw stream failed')).toBe(false)
+    expect(isUnavailable('Gateway connection error: fetch failed')).toBe(true)
+    expect(format('API rate limit reached. (rate_limit)')).toContain('rate limit')
+    expect((service as any).getBackoffMs(1, 'API rate limit reached')).toBe(15 * 60 * 1000)
+  })
+
   it('dedupes runtime BullMQ jobs by brain import job id', async () => {
     const queue = { add: vi.fn().mockResolvedValue({}) }
     const service = new BrainImportJobsService(

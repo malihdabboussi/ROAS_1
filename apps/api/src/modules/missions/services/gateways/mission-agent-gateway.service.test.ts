@@ -93,4 +93,27 @@ describe('MissionAgentGatewayService', () => {
     expect(service.triggerAgentSkillsSync).toHaveBeenCalledWith('user-1', 'atlas', 'org-1')
     expect(service.triggerAgentSkillsSync).toHaveBeenCalledWith('user-2', 'atlas', 'org-1')
   })
+
+  it('surfaces nested OpenClaw SSE provider errors instead of a generic stream failure', async () => {
+    const sse = [
+      'data: {"type":"response.failed","response":{"error":{"code":"provider_error","message":"All models failed (4): openrouter/anthropic/claude-opus-4.6: API rate limit reached. (rate_limit)"}}}\n\n',
+    ].join('')
+    const invoke = vi.fn(async (_userId: string, path: string) => {
+      if (path === '/api/agents/atlas/ensure-ready') {
+        return new Response(JSON.stringify({ ready: true }), { status: 200 })
+      }
+      if (path === '/api/artifacts/openclaw/responses') {
+        return new Response(sse, {
+          status: 200,
+          headers: { 'content-type': 'text/event-stream' },
+        })
+      }
+      return new Response(JSON.stringify({ error: 'unexpected path' }), { status: 404 })
+    })
+    const service = new MissionAgentGatewayService({ invoke } as never)
+
+    await expect(
+      service.callOpenClawForBrainJob('user-1', 'atlas', 'system', 'user', undefined, 'user'),
+    ).rejects.toThrow(/provider_error: All models failed/)
+  })
 })

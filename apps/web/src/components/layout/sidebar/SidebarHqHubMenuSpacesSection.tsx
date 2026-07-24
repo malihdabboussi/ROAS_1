@@ -1,8 +1,8 @@
 'use client'
 
 import type { Dispatch, RefObject, SetStateAction } from 'react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
+import { ProgramRowsSkeleton } from './SidebarHqSpacesBucketList'
 import { SidebarHqSpacesGroupedList } from './SidebarHqSpacesGroupedList'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -31,9 +31,7 @@ export function SidebarHqHubMenuSpacesSection({
   return (
     <div className="min-h-0">
       {c.sidebarListsLoading ? (
-        <div className="flex justify-center px-2 py-6">
-          <VibeyLoadingOrb state="processing" size="sm" text="Loading programs..." />
-        </div>
+        <ProgramRowsSkeleton />
       ) : (
         <SidebarHqSpacesGroupedList
           controller={c}

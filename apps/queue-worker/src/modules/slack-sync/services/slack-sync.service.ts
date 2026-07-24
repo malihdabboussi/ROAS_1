@@ -20,6 +20,8 @@ type SlackBrainMapping = {
 @Injectable()
 export class SlackSyncService {
   private readonly logger = new Logger(SlackSyncService.name)
+  /** Spread Atlas OpenClaw calls so daily Slack backfills do not trip provider rate limits. */
+  private static readonly ENQUEUE_STAGGER_MS = 20_000
 
   constructor(
     private readonly databaseService: DatabaseService,
@@ -68,6 +70,9 @@ export class SlackSyncService {
           .limit(1)
           .maybeSingle()
         if (existing.data?.id) continue
+        const nextAttemptAt = new Date(
+          now.getTime() + enqueued * SlackSyncService.ENQUEUE_STAGGER_MS,
+        ).toISOString()
         const { error: insertError } = await supabase.from('brain_import_jobs').insert({
           user_id: mapping.user_id,
           org_id: mapping.org_id,
@@ -93,7 +98,7 @@ export class SlackSyncService {
           status: 'queued',
           attempts: 0,
           max_attempts: 3,
-          next_attempt_at: now.toISOString(),
+          next_attempt_at: nextAttemptAt,
         })
         if (insertError) throw insertError
         enqueued += 1

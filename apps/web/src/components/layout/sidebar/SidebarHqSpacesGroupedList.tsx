@@ -9,7 +9,6 @@ import {
   type SetStateAction,
 } from 'react'
 import { toast } from 'sonner'
-import { ConfirmDialog } from '@/components/ui/dialogs/ConfirmDialog'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { cachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
 import {
@@ -23,6 +22,7 @@ import { deleteProgram, fetchPrograms, updateProgram, type Program } from '@/lib
 import { groupSidebarCampaignsByProgram } from './group-sidebar-campaigns-by-program'
 import { toggleIdInSet } from './sidebar-expand-persistence'
 import type { SidebarCampaignRow } from './sidebar-types'
+import { SidebarDeleteProgramDialog } from './SidebarDeleteProgramDialog'
 import { SidebarHqSpacesBucketList } from './SidebarHqSpacesBucketList'
 import { SidebarHqSpacesListOverlays } from './SidebarHqSpacesListOverlays'
 import type {
@@ -31,6 +31,7 @@ import type {
 } from './SidebarHqSpacesMenuLayers'
 import { type SectionMenuAnchorRect, type SpaceRowSharedProps } from './SidebarHqSpacesRows'
 import { SidebarProgramMenuPortal } from './SidebarProgramMenuPortal'
+import { useAutoLoadRemainingSpaces } from './use-auto-load-remaining-spaces'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 const SPACES_ROSTER_REFRESH_INTERVAL_MS = 60_000
@@ -97,9 +98,17 @@ export function SidebarHqSpacesGroupedList({
   const [addDropdownBucket, setAddDropdownBucket] = useState<string | null>(null)
   const [deletingProgram, setDeletingProgram] = useState<Program | null>(null)
   const [deletingProgramBusy, setDeletingProgramBusy] = useState(false)
-  const isOrgContext = useOrgStore((s) => s.activeOrgId !== null)
+  const activeOrgId = useOrgStore((s) => s.activeOrgId)
+  const isOrgContext = activeOrgId !== null
   const [programs, setPrograms] = useState<Program[]>([])
   const [programsReady, setProgramsReady] = useState(false)
+
+  useAutoLoadRemainingSpaces({
+    enabled: flyoutMode,
+    hasMore,
+    loadingMore,
+    onLoadMore,
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -125,7 +134,7 @@ export function SidebarHqSpacesGroupedList({
       cancelled = true
       window.removeEventListener('roas:programs-changed', onChanged)
     }
-  }, [isOrgContext])
+  }, [activeOrgId])
 
   const startRenameSpace = (space: Space) => {
     setRenamingSpaceId(space.id)
@@ -368,20 +377,10 @@ export function SidebarHqSpacesGroupedList({
         />
       ) : null}
 
-      <ConfirmDialog
-        open={!!deletingProgram}
-        onOpenChange={(open) => {
-          if (!open) setDeletingProgram(null)
-        }}
-        title="DELETE PROGRAM?"
-        description={
-          deletingProgram
-            ? `Delete “${deletingProgram.name}”? Campaigns move to Ungrouped.`
-            : undefined
-        }
-        confirmText={deletingProgramBusy ? 'Deleting…' : 'Delete'}
-        confirmingText="Deleting…"
-        confirmDisabled={deletingProgramBusy}
+      <SidebarDeleteProgramDialog
+        program={deletingProgram}
+        busy={deletingProgramBusy}
+        onClose={() => setDeletingProgram(null)}
         onConfirm={() => {
           if (!deletingProgram || deletingProgramBusy) return
           setDeletingProgramBusy(true)
