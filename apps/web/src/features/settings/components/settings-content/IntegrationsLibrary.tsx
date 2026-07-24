@@ -10,6 +10,7 @@ import type { ConnectIntegrationOptions } from './useIntegrations'
 const CATEGORY_ORDER: Integration['category'][] = [
   'admin',
   'social',
+  'automation',
   'ads_analytics',
   'email_marketing',
   'payments',
@@ -21,6 +22,7 @@ const CATEGORY_ORDER: Integration['category'][] = [
 const CATEGORY_LABELS: Record<string, string> = {
   admin: 'Admin Integrations',
   social: 'Social Media',
+  automation: 'Automation',
   ads_analytics: 'Advertising & Analytics',
   email_marketing: 'Email & Marketing',
   payments: 'Payments',
