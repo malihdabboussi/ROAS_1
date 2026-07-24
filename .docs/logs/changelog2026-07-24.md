@@ -59,3 +59,13 @@ Why: ~249 `campaign_slack_import` jobs failed today with generic "OpenClaw strea
 Impact: Imports back off on rate limits instead of failing opaquely; duplicate toasts collapse; failed jobs were requeued with a staggered schedule starting ~30 minutes out. Deploy of api/queue-worker/web is still required for the code path.
 
 Files: `apps/api/src/modules/missions/services/gateways/mission-agent-gateway.service.ts`, `apps/api/src/modules/canvas/services/canvas-delegation.service.ts`, `apps/api/src/modules/brain/services/brain-import-jobs.base.ts`, `apps/api/src/modules/brain/services/brain-import-jobs-runtime.base.ts`, `apps/api/src/modules/brain/services/brain-import-jobs.types.ts`, `apps/api/src/modules/brain/repositories/brain-import-jobs-runtime.repository.ts`, `apps/queue-worker/src/modules/slack-sync/services/slack-sync.service.ts`, `apps/web/src/features/brain/components/BrainImportJobNotifier.tsx`
+
+## [2026-07-24 10:42] - [FIX]
+
+What: Pushed and deployed `6b904ad1` (OpenClaw Slack import rate-limit hardening + Programs sidebar WIP) to production.
+
+Why: Home toast storms needed the API/queue-worker/web fix live, and local WIP was ready to ship.
+
+Impact: `origin/main` = `6b904ad1`. Vercel `roas-api` / `roas-web` / `roas-funnels` READY; Railway `queue-worker` Online; smoke 4/4.
+
+Files: production deploy of commit `6b904ad1`
