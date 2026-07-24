@@ -1,14 +1,14 @@
 ## 2026-07-24 - [OPS] Deploy OpenClaw Slack import rate-limit fixes + monitor OpenRouter
 
-Status: Open
+Status: Done (shipped `6b904ad1` to main; Vercel api/web/funnels READY; Railway queue-worker Online). Still watch OpenRouter capacity on next Slack daily backfill.
 Found while: Fixing Home toast spam from failed Slack brain imports
 Files:
 - `apps/api` brain import + mission agent gateway
 - `apps/queue-worker` slack sync enqueue
 - `apps/web` BrainImportJobNotifier
-Evidence: Production burned ~249 Slack imports on OpenRouter `rate_limit`; code fix is local on the working branch and needs api/queue-worker/web deploy. Provider capacity itself is external.
-Needed work: Ship the fix to production (prefer a clean branch off main), confirm staggered requeue succeeds, and decide whether OpenRouter limits/keys need raising for Atlas brain-import volume.
-Deferred because: Fix is implemented and jobs requeued; deploy/branch hygiene is a separate ship step from this dirty feature branch.
+Evidence: Production burned ~249 Slack imports on OpenRouter `rate_limit`; code fix shipped and 25 unique imports were requeued with stagger.
+Needed work: Confirm staggered requeue succeeds after rate limits clear; decide whether OpenRouter limits/keys need raising for Atlas brain-import volume.
+Deferred because: Deploy complete; provider capacity is external.
 
 ## 2026-07-23 - [ARCH] Make Fly runtime builds reproducible from tracked source
 
