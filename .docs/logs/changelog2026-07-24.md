@@ -9,3 +9,13 @@ Why: Video-ad missions and Slack agents need durable Higgsfield access without A
 Impact: Admins can connect Higgsfield once from Integrations; ROAS agents can discover and call its MCP tools, and expiring access tokens refresh without interrupting missions.
 
 Files: `apps/api/src/modules/integrations/higgsfield/*`, `apps/agent-api/src/modules/mcp/*`, `apps/web/src/features/settings/components/settings-content/useIntegrations.ts`, `apps/web/src/lib/integrations/integration-catalog.ts`, `packages/api-shared/src/services/mcp-oauth-token-bundle.ts`, `supabase/migrations/20260724223000_higgsfield_mcp_integration.sql`
+
+## 2026-07-24 08:54 - [FEATURE]
+
+What: Applied the Higgsfield catalog migration to ROAS production, configured the production OAuth client/callback/state signer, and deployed the exact connector commit to `api.roas.io`, `app.roas.io`, and `sites.roas.io`.
+
+Why: The connector needs a live callback, catalog row, and Settings card before a user can authorize Higgsfield.
+
+Impact: The Higgsfield card and protected connect/callback routes are live. The Fly agent-runtime deployment remains gated because its established Docker build requires two Git-ignored local runtime inputs.
+
+Files: Supabase `lhfgtsjetcardinpgouq`, Vercel `roas-api` deployment `dpl_62p1osBwt88UQkoaXJjzGvSrQHhk`, Vercel production web/funnels from commit `64553b53`
