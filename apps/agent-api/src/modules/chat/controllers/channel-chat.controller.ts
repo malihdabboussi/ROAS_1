@@ -111,7 +111,7 @@ export class ChannelChatController {
     const generationAbort = new AbortController()
 
     let clientAlive = true
-    res.req.on('close', () => {
+    res.on('close', () => {
       clientAlive = false
     })
 

@@ -1,9 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 import { ChannelChatController } from '../channel-chat.controller'
 
-function mockSseResponse() {
+function mockSseResponse(options?: { closeRequestImmediately?: boolean }) {
   const res: any = {
-    req: { on: vi.fn() },
+    req: {
+      on: vi.fn((_event: string, listener: () => void) => {
+        if (options?.closeRequestImmediately) listener()
+      }),
+    },
+    on: vi.fn(),
     setHeader: vi.fn(),
     flushHeaders: vi.fn(),
     write: vi.fn(),
@@ -69,6 +74,43 @@ describe('ChannelChatController Telegram channel chat', () => {
     expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/event-stream; charset=utf-8')
     expect(res.write).toHaveBeenCalledWith(
       `data: ${JSON.stringify({ type: 'content_delta', content: 'Answer' })}\n\n`,
+    )
+    expect(res.write).toHaveBeenCalledWith('data: [DONE]\n\n')
+    expect(res.end).toHaveBeenCalled()
+  })
+
+  it('continues streaming after the incoming request body closes', async () => {
+    const chatService = {
+      processMessage: vi.fn(async ({ send }) => {
+        await send('content_delta', { content: 'Answer after request close' })
+      }),
+    }
+    const creditsService = { assertHasAvailableCredits: vi.fn(async () => undefined) }
+    const controller = new ChannelChatController(
+      chatService as any,
+      { client: {} } as any,
+      creditsService as any,
+    )
+    const res = mockSseResponse({ closeRequestImmediately: true })
+
+    await controller.sendMessage(
+      {
+        user_id: 'user-1',
+        conversation_id: 'conversation-1',
+        content: 'Keep streaming',
+        source: 'telegram',
+        access_token: 'access-token',
+      },
+      res,
+    )
+
+    expect(res.req.on).not.toHaveBeenCalled()
+    expect(res.on).toHaveBeenCalledWith('close', expect.any(Function))
+    expect(res.write).toHaveBeenCalledWith(
+      `data: ${JSON.stringify({
+        type: 'content_delta',
+        content: 'Answer after request close',
+      })}\n\n`,
     )
     expect(res.write).toHaveBeenCalledWith('data: [DONE]\n\n')
     expect(res.end).toHaveBeenCalled()
