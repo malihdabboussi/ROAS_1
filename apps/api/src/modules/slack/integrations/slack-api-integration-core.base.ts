@@ -281,9 +281,9 @@ export abstract class SlackApiIntegrationCoreBase {
     channelId: string,
     timestamp: string,
     name: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
-      await fetch(`${SLACK_API_BASE}/reactions.add`, {
+      const response = await fetch(`${SLACK_API_BASE}/reactions.add`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${botToken}`,
@@ -291,8 +291,13 @@ export abstract class SlackApiIntegrationCoreBase {
         },
         body: JSON.stringify({ channel: channelId, timestamp, name }),
       })
+      const result = (await response.json()) as { ok: boolean; error?: string }
+      if (result.ok || result.error === 'already_reacted') return true
+      this.logger.warn(`reactions.add failed: ${result.error ?? 'unknown_error'}`)
+      return false
     } catch (err) {
       this.logger.warn(`reactions.add failed: ${err}`)
+      return false
     }
   }
 

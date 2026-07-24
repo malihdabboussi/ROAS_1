@@ -128,6 +128,19 @@ describe('SlackApiIntegration', () => {
     expect(String(fetchMock.mock.calls[1]?.[0])).toContain('cursor=next-page')
   })
 
+  it('reports whether Slack accepted a completion reaction', async () => {
+    fetchMock.mockResolvedValueOnce({ json: async () => ({ ok: true }) }).mockResolvedValueOnce({
+      json: async () => ({ ok: false, error: 'missing_scope' }),
+    })
+
+    await expect(integration.addReaction('xoxb', 'C1', '100.1', 'white_check_mark')).resolves.toBe(
+      true,
+    )
+    await expect(integration.addReaction('xoxb', 'C1', '100.1', 'white_check_mark')).resolves.toBe(
+      false,
+    )
+  })
+
   it('uploadExternalFileToChannel throws when binary upload is not ok', async () => {
     fetchMock
       .mockResolvedValueOnce({

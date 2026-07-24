@@ -45,7 +45,6 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     }
   }
 
-  /** Override in SlackService to route meeting follow-up confirms (emoji → approve). */
   protected async handleReactionAddedEvent(
     _teamId: string,
     _event: NonNullable<SlackEventEnvelope['event']>,
@@ -332,9 +331,6 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Agent routing + reply
-
   protected async processAndReply(params: {
     userId: string
     agentKey: string
@@ -365,9 +361,10 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     this.logger.log(
       `[TRACE] processAndReply START: userId=${params.userId} agentKey=${params.agentKey} channel=${params.channelId} message_len=${params.message.length}`,
     )
-    if (params.botToken && params.channelId && params.messageTs) {
-      this.slackApi
-        .addReaction(params.botToken, params.channelId, params.messageTs, 'eyes')
+    const canReact = Boolean(params.botToken && params.channelId && params.messageTs)
+    if (canReact) {
+      await this.slackApi
+        .addReaction(params.botToken, params.channelId, params.messageTs!, 'eyes')
         .catch(() => {})
     }
     try {
@@ -388,24 +385,29 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       this.logger.log(
         `[TRACE] processAndReply routeToAgent RETURNED: response_len=${response?.length ?? 0}`,
       )
-      if (params.botToken && params.channelId && params.messageTs) {
-        this.slackApi
-          .removeReaction(params.botToken, params.channelId, params.messageTs, 'eyes')
-          .catch(() => {})
-      }
-      if (response && params.botToken) {
-        this.logger.log(`[TRACE] processAndReply SENDING_REPLY: len=${response.length}`)
-        await this.sendSlackReply(params.botToken, params.channelId, response, params.threadTs)
-        this.logger.log(`[TRACE] processAndReply REPLY_SENT`)
-      } else {
-        this.logger.warn(
-          `[TRACE] processAndReply NO_REPLY: response=${response ? 'truthy' : 'null/empty'} botToken=${params.botToken ? 'present' : 'missing'}`,
+      if (!response) throw new Error('no_answer')
+      if (!params.botToken) throw new Error('missing_bot_token')
+
+      this.logger.log(`[TRACE] processAndReply SENDING_REPLY: len=${response.length}`)
+      await this.sendSlackReply(params.botToken, params.channelId, response, params.threadTs)
+      this.logger.log(`[TRACE] processAndReply REPLY_SENT`)
+      if (canReact) {
+        const markedComplete = await this.slackApi.addReaction(
+          params.botToken,
+          params.channelId,
+          params.messageTs!,
+          'white_check_mark',
         )
+        if (markedComplete) {
+          await this.slackApi
+            .removeReaction(params.botToken, params.channelId, params.messageTs!, 'eyes')
+            .catch(() => {})
+        }
       }
     } catch (err) {
-      if (params.botToken && params.channelId && params.messageTs) {
-        this.slackApi
-          .removeReaction(params.botToken, params.channelId, params.messageTs, 'eyes')
+      if (canReact) {
+        await this.slackApi
+          .removeReaction(params.botToken, params.channelId, params.messageTs!, 'eyes')
           .catch(() => {})
       }
       const msg = err instanceof Error ? err.message : String(err)
@@ -547,10 +549,6 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     if (message.includes('Machine not ready')) return MACHINE_NOT_READY_SLACK_MESSAGE
     return GENERIC_SLACK_AGENT_ERROR_MESSAGE
   }
-
-  // ---------------------------------------------------------------------------
-  // Welcome DM
-  // ---------------------------------------------------------------------------
 
   protected async sendWelcomeDm(botToken: string, slackUserId?: string): Promise<void> {
     if (!slackUserId) return

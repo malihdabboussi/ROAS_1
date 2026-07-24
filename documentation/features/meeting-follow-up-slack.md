@@ -28,6 +28,7 @@ First production loop for the always-aware Slack agent: Fathom call lands in Mee
 | Internal / External / Ignored classification           | Manual classifications are durable; inferred records require an explicit first save                        |
 | Signal action routing                                  | Internal DM, group DM, source thread, thread broadcast, and source channel remain Shadow until approval    |
 | Named campaign Brain routing from Slack                | Explicit client/campaign names override ambient campaign context                                           |
+| Pixel reply completion reactions                       | 👀 while processing; ✅ only after Slack accepts the completed reply                                       |
 | Auto-post to a channel                                 | Not yet                                                                                                    |
 | Page Grader dispatch on confirm                        | Fulfillment candidates only; conservative client/assignee resolution                                       |
 
@@ -134,6 +135,7 @@ Before approval, a human reply in the review thread is treated as revision feedb
 - Pending **review** thread → revise client-facing draft (existing)
 - Ops sample / no pending confirm → normal Pixel path: eyes reaction + agent reply
 - Sent **assignee-reminder** thread → same Pixel path, with a bounded call brief (purpose + takeaways from the Meetings call item summary/description) plus that person's action items prepended from the Shadow ledger (`call_item_id` + `follow_up_ids`)
+- Pixel keeps 👀 while the agent is working. After the response is accepted by Slack, Pixel adds ✅ and removes 👀. A missing agent answer or failed Slack delivery removes 👀, posts the standard retry message, and never marks the request complete.
 
 **Confirm reply (after ✅)**
 

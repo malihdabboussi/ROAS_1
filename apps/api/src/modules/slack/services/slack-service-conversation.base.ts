@@ -123,8 +123,14 @@ export abstract class SlackConversationBase extends SlackMediaBase {
           }
           if (event.type === 'content_delta' && typeof event.content === 'string') {
             fullContent += event.content
-          } else if (event.type === 'error' && typeof event.message === 'string') {
-            throw new Error(event.message)
+          } else if (event.type === 'error') {
+            const detail =
+              typeof event.message === 'string'
+                ? event.message
+                : typeof event.code === 'string'
+                  ? event.code
+                  : 'agent_error'
+            throw new Error(detail)
           } else if (
             event.type === 'status' &&
             event.status === 'failed' &&
@@ -201,6 +207,4 @@ export abstract class SlackConversationBase extends SlackMediaBase {
 
     return this.slackRuntimeRepo.createSlackConversation(supabase, insertPayload)
   }
-
-
 }
