@@ -30,6 +30,16 @@ Impact: The Fly runtime now includes the verified Higgsfield MCP execution path.
 
 Files: `apps/openclaw/src/canvas-host/a2ui/a2ui.bundle.js`, `apps/openclaw/src/canvas-host/a2ui/.bundle.hash`, Fly app `roas-runtimes`
 
+## 2026-07-24 10:03 - [FIX]
+
+What: Added the missing Automation section to the integrations Library and covered it with a Higgsfield rendering regression test.
+
+Why: Higgsfield was active in the integration catalog but its valid `automation` category was absent from the Library's display order, so the UI silently omitted its card.
+
+Impact: Searching or browsing the integrations Library now shows Higgsfield with an enabled Connect action.
+
+Files: `apps/web/src/features/settings/components/settings-content/IntegrationsLibrary.tsx`, `apps/web/src/features/settings/components/settings-content/IntegrationsLibrary.test.tsx`
+
 ## 2026-07-24 09:34 - [FIX]
 
 What: Added a five-second same-model retry before fallback for provider-busy Pixel runs and a specific Slack-facing busy response when every attempt remains unavailable.
