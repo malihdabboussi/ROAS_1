@@ -5,6 +5,7 @@ import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatP
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { ResizableDivider } from '@/components/layout/ResizableDivider'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
+import { initConversationTitleAutogen } from '@/features/studio/services/conversation-title-scheduler'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cn } from '@/lib/utils/cn'
 import { ShellChatMenu } from './ShellChatMenu'
@@ -44,6 +45,10 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
   const historyDragStartWidth = useRef(historyWidth)
   const historyDragStartDrawerWidth = useRef(width)
   const lastHandledNewChatNonceRef = useRef(0)
+
+  useEffect(() => {
+    initConversationTitleAutogen()
+  }, [])
 
   // Mount at zero width, then slide the body in on the next frame so the page
   // glides sideways instead of the panel popping into the flex row.

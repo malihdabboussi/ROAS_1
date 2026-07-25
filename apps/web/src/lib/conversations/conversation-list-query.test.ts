@@ -120,13 +120,13 @@ describe('conversation list query', () => {
     expect(groups.at(-1)?.items.length).toBeGreaterThanOrEqual(3)
   })
 
-  it('defaults include logo leading icons and flat grouping', () => {
+  it('defaults include no leading icons and flat grouping', () => {
     expect(DEFAULT_CHAT_HISTORY_FILTERS).toMatchObject({
       status: 'active',
       lastActivity: 'all',
       type: 'all',
       groupBy: 'none',
-      leadingIcon: 'logo',
+      leadingIcon: 'none',
     })
   })
 })

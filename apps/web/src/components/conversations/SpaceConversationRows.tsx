@@ -9,6 +9,7 @@ import {
   formatCompactRelativeTime,
   getAgentInitial,
   getConversationAgentDisplay,
+  needsGeneratedConversationTitle,
   stripLegacySpacesConversationTitle,
   type ChatHistoryLeadingIcon,
   type Conversation,
@@ -70,10 +71,12 @@ function ConversationRowTitle({ rawTitle }: { rawTitle: string | null }) {
     if (target === prev) return
     prevTargetRef.current = target
 
-    const prevWasPlaceholder = prev === 'Untitled conversation'
-    const targetIsPlaceholder = target === 'Untitled conversation'
+    const prevWasDraft = prev === 'Untitled conversation' || needsGeneratedConversationTitle(prev)
+    const targetIsDraft =
+      target === 'Untitled conversation' || needsGeneratedConversationTitle(target)
 
-    if (!prevWasPlaceholder || targetIsPlaceholder) {
+    // Typewriter only when a raw/placeholder title upgrades to a short topic label.
+    if (!prevWasDraft || targetIsDraft) {
       setShown(target)
       return
     }
@@ -95,7 +98,7 @@ function ConversationRowTitle({ rawTitle }: { rawTitle: string | null }) {
     }
   }, [target])
 
-  return <p className="body-3 truncate font-medium">{shown}</p>
+  return <p className="body-2 truncate font-medium">{shown}</p>
 }
 
 function ConversationAgentAvatar({
@@ -187,7 +190,7 @@ export function SpaceConversationRow({
     <div
       onContextMenu={(event) => onOpenContextMenu(event, conversation.id)}
       className={cn(
-        'group/conversation px-spacing-2 py-spacing-1 gap-spacing-2 rounded-spacing-3 flex items-center transition-colors',
+        'group/conversation px-spacing-3 py-spacing-2 gap-spacing-3 rounded-spacing-3 flex items-center transition-colors',
         selected
           ? 'bg-hover-subtle text-foreground'
           : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground',
@@ -224,7 +227,7 @@ export function SpaceConversationRow({
               onCancelRename()
             }
           }}
-          className="body-3 border-primary bg-background text-foreground rounded-spacing-1 px-spacing-1 py-spacing-1 min-w-0 flex-1 border font-medium outline-none"
+          className="body-2 border-primary bg-background text-foreground rounded-spacing-1 px-spacing-1 py-spacing-1 min-w-0 flex-1 border font-medium outline-none"
         />
       ) : (
         <button

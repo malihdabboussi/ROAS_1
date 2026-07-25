@@ -37,6 +37,7 @@ import { ConversationsService } from './services/conversations.service'
     ConversationPermissionsRepository,
     ConversationsRepository,
     MessagesRepository,
+    ConversationTitleSuggestionService,
   ],
 })
 export class ConversationsModule {}

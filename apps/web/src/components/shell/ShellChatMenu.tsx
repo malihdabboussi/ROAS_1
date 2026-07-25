@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { ConversationShareModal } from '@/components/conversations'
 import { ChatHistoryFilterMenu } from '@/components/conversations/ChatHistoryFilterMenu'
@@ -13,11 +13,13 @@ import { cachedFetch, invalidateCachedFetch, peekCachedFetch } from '@/lib/cache
 import { fetchCampaigns } from '@/lib/campaigns'
 import {
   assignConversationCampaign,
+  autoTitleConversation,
   DEFAULT_CHAT_HISTORY_FILTERS,
   deleteConversation,
   duplicateConversation,
   fetchConversations,
   filterConversationsForHistory,
+  needsGeneratedConversationTitle,
   renameConversation,
   setConversationArchived,
   setConversationPinned,
@@ -141,6 +143,43 @@ export function ShellChatMenu() {
   useEffect(() => {
     void reloadConversations()
   }, [reloadConversations])
+
+  const autoTitleAttemptedRef = useRef(new Set<string>())
+
+  // Upgrade raw first-line / "Slack Chat" titles to short AI topic labels (bounded).
+  useEffect(() => {
+    const candidates = conversations
+      .filter(
+        (row) =>
+          needsGeneratedConversationTitle(row.title) && !autoTitleAttemptedRef.current.has(row.id),
+      )
+      .slice(0, 12)
+    if (candidates.length === 0) return
+
+    let cancelled = false
+    const run = async () => {
+      for (const row of candidates) {
+        if (cancelled) return
+        autoTitleAttemptedRef.current.add(row.id)
+        try {
+          const result = await autoTitleConversation(row.id)
+          if (!result.updated || !result.title) continue
+          if (cancelled) return
+          useChatStore.getState().updateConversation(row.id, { title: result.title })
+          setConversations((prev) =>
+            prev.map((c) => (c.id === row.id ? { ...c, title: result.title } : c)),
+          )
+        } catch {
+          // Non-critical — keep the existing title.
+        }
+      }
+      invalidateCachedFetch('shell-conversations:')
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [conversations])
 
   const visibleConversations = useMemo(
     () => filterConversationsForHistory(conversations, filters),

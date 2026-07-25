@@ -12,10 +12,7 @@ export class ConversationTitleSuggestionService {
     private readonly creditsService: CreditsService,
   ) {}
 
-  async suggestConversationTitle(
-    userMessage: string,
-    userId: string,
-  ): Promise<{ title: string }> {
+  async suggestConversationTitle(userMessage: string, userId: string): Promise<{ title: string }> {
     const geminiApiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY
     if (!geminiApiKey) {
       await this.logger.logError({
@@ -38,7 +35,12 @@ ${input}
 Reply with ONLY valid JSON, no markdown, in this exact shape:
 {"title":"<short chat title>"}
 
-Rules for title: 3-8 words, describe the topic briefly, no quotes inside the string, no emojis, no trailing punctuation.`
+Rules for title:
+- 3-6 words (short noun phrase, like ChatGPT/Claude sidebar titles)
+- Prefer Title Case when natural (e.g. "Budget Approval Check")
+- Describe the topic, not a greeting or the first sentence verbatim
+- No quotes inside the string, no emojis, no trailing punctuation
+- Never include Slack IDs, channel mentions, or raw markup`
 
     const model = 'gemini-3.5-flash'
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`
@@ -133,8 +135,7 @@ Rules for title: 3-8 words, describe the topic briefly, no quotes inside the str
     } catch (err) {
       if (
         err instanceof Error &&
-        (err.message === ERR_SUGGEST_TITLE_UNAVAILABLE ||
-          err.message === ERR_SUGGEST_TITLE_FAILED)
+        (err.message === ERR_SUGGEST_TITLE_UNAVAILABLE || err.message === ERR_SUGGEST_TITLE_FAILED)
       ) {
         throw err
       }

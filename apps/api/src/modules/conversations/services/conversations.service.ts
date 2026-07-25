@@ -7,12 +7,18 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OrgRole } from '@vibey/api-shared'
 import { ConversationsRepository } from '../repositories/conversations.repository'
-import { ConversationPermissionsService } from './conversation-permissions.service'
+import { MessagesRepository } from '../repositories/messages.repository'
+import {
+  needsGeneratedConversationTitle,
+  resolveSuggestedConversationTitle,
+  titleFromFirstUserMessage,
+} from '../utils/conversation-title.util'
 import {
   ConversationAssetsService,
   type ConversationAssetsScope,
 } from './conversation-assets.service'
 import { ConversationMessagesService } from './conversation-messages.service'
+import { ConversationPermissionsService } from './conversation-permissions.service'
 import { ConversationTitleSuggestionService } from './conversation-title-suggestion.service'
 
 /**
@@ -29,6 +35,7 @@ export class ConversationsService {
     private readonly assetsService: ConversationAssetsService,
     private readonly titleSuggestionService: ConversationTitleSuggestionService,
     private readonly conversationMessages: ConversationMessagesService,
+    private readonly messagesRepo: MessagesRepository,
   ) {}
 
   private asRecord(value: unknown): Record<string, unknown> | null {
@@ -439,7 +446,6 @@ export class ConversationsService {
     await this.permissionsService.deleteConversationShare(supabase, conversationId, shareId, orgId)
   }
 
-
   /** @internal Discriminant for controller → HTTP mapping (never sent to client). */
   static readonly ERR_SUGGEST_TITLE_UNAVAILABLE = 'SUGGEST_TITLE_UNAVAILABLE'
   static readonly ERR_SUGGEST_TITLE_FAILED = 'SUGGEST_TITLE_FAILED'
@@ -449,5 +455,68 @@ export class ConversationsService {
    */
   async suggestConversationTitle(userMessage: string, userId: string): Promise<{ title: string }> {
     return this.titleSuggestionService.suggestConversationTitle(userMessage, userId)
+  }
+
+  /**
+   * Replace a raw/placeholder conversation title using the first user message + Gemini.
+   * No-op when the current title already looks curated.
+   */
+  async autoTitleConversation(
+    supabase: SupabaseClient,
+    userId: string,
+    conversationId: string,
+    orgId?: string | null,
+    orgRole?: OrgRole | null,
+    firstMessageOverride?: string,
+  ): Promise<{ title: string; updated: boolean }> {
+    await this.permissionsService.assertCanAccessConversation(
+      supabase,
+      userId,
+      orgRole,
+      conversationId,
+      'edit',
+      orgId,
+    )
+    const conversation = await this.getConversationForRead(supabase, conversationId, userId, orgId)
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found')
+    }
+
+    const currentTitle = typeof conversation.title === 'string' ? conversation.title : null
+    if (!needsGeneratedConversationTitle(currentTitle)) {
+      return { title: currentTitle ?? '', updated: false }
+    }
+
+    const firstMessage =
+      (firstMessageOverride ?? '').trim() ||
+      (await this.messagesRepo.findFirstUserMessageContent(supabase, conversationId)) ||
+      ''
+    if (!firstMessage) {
+      return { title: currentTitle ?? '', updated: false }
+    }
+
+    let suggested = ''
+    try {
+      const result = await this.titleSuggestionService.suggestConversationTitle(
+        firstMessage,
+        userId,
+      )
+      suggested = result.title
+    } catch {
+      suggested = ''
+    }
+
+    const title = resolveSuggestedConversationTitle(suggested, firstMessage, 60)
+    if (!title || title === currentTitle) {
+      const fallback = titleFromFirstUserMessage(firstMessage, 48)
+      if (!fallback || fallback === currentTitle) {
+        return { title: currentTitle ?? '', updated: false }
+      }
+      await this.conversationsRepo.update(supabase, conversationId, { title: fallback })
+      return { title: fallback, updated: true }
+    }
+
+    await this.conversationsRepo.update(supabase, conversationId, { title })
+    return { title, updated: true }
   }
 }

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { BrainModule } from '../brain/brain.module'
+import { ConversationsModule } from '../conversations/conversations.module'
 import { LeadsModule } from '../leads/leads.module'
 import { MachinesModule } from '../machines/machines.module'
 import { UserAgentApiModule } from '../user-agent-api/user-agent-api.module'
@@ -23,8 +24,8 @@ import { SlackPeopleRepository } from './repositories/slack-people.repository'
 import { SlackRuntimeRepository } from './repositories/slack-runtime.repository'
 import { SlackSignalTrainingRepository } from './repositories/slack-signal-training.repository'
 import { SlackRepository } from './repositories/slack.repository'
-import { SlackAgentToolsService } from './services/slack-agent-tools.service'
 import { SlackAccessControlService } from './services/slack-access-control.service'
+import { SlackAgentToolsService } from './services/slack-agent-tools.service'
 import { SlackBrainMappingService } from './services/slack-brain-mapping.service'
 import { SlackChannelCoverageService } from './services/slack-channel-coverage.service'
 import { SlackObservationService } from './services/slack-observation.service'
@@ -35,7 +36,7 @@ import { SlackSignalTrainingService } from './services/slack-signal-training.ser
 import { SlackService } from './services/slack.service'
 
 @Module({
-  imports: [MachinesModule, BrainModule, LeadsModule, UserAgentApiModule],
+  imports: [MachinesModule, BrainModule, ConversationsModule, LeadsModule, UserAgentApiModule],
   controllers: [
     SlackController,
     SlackOAuthController,

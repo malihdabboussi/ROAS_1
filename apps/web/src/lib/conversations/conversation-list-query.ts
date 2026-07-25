@@ -26,7 +26,7 @@ export const DEFAULT_CHAT_HISTORY_FILTERS: ChatHistoryFilterState = {
   lastActivity: 'all',
   type: 'all',
   groupBy: 'none',
-  leadingIcon: 'logo',
+  leadingIcon: 'none',
 }
 
 export interface ConversationListGroup {

@@ -205,7 +205,8 @@ export abstract class SlackConversationBase extends SlackMediaBase {
     slackChannelId: string,
     slackThreadTs?: string,
     orgId?: string | null,
-  ): Promise<string> {
+    firstMessage?: string,
+  ): Promise<{ id: string; title: string | null }> {
     const existing = await this.slackRuntimeRepo.findSlackConversation(supabase, {
       userId,
       agentKey,
@@ -221,7 +222,7 @@ export abstract class SlackConversationBase extends SlackMediaBase {
           await this.slackRuntimeRepo.updateConversationCampaign(supabase, existing.id, campaignId)
         }
       }
-      return existing.id
+      return { id: existing.id, title: existing.title ?? null }
     }
 
     const campaignId = await this.getDefaultCampaignIdForUser(supabase, userId)
@@ -232,15 +233,42 @@ export abstract class SlackConversationBase extends SlackMediaBase {
     }
     if (slackThreadTs) metadata.slack_thread_ts = slackThreadTs
 
+    const { titleFromFirstUserMessage } =
+      await import('../../conversations/utils/conversation-title.util')
+    const seedTitle = titleFromFirstUserMessage(firstMessage, 48) || null
+
     const insertPayload: Record<string, unknown> = {
       user_id: userId,
-      title: 'Slack Chat',
+      title: seedTitle,
       agent_id: agentKey,
       metadata,
       org_id: orgId ?? null,
     }
     if (campaignId) insertPayload.campaign_id = campaignId
 
-    return this.slackRuntimeRepo.createSlackConversation(supabase, insertPayload)
+    const id = await this.slackRuntimeRepo.createSlackConversation(supabase, insertPayload)
+    return { id, title: seedTitle }
+  }
+
+  /** Nest ModuleRef when available — enables Gemini title suggestion from SlackService. */
+  protected titleModuleRef: import('@nestjs/core').ModuleRef | null = null
+
+  protected async retitleSlackConversationIfNeeded(
+    supabase: SupabaseClient,
+    conversationId: string,
+    userId: string,
+    firstMessage: string,
+    currentTitle: string | null,
+  ): Promise<void> {
+    const { retitleSlackConversationIfNeeded } = await import('./slack-conversation-title')
+    await retitleSlackConversationIfNeeded({
+      supabase,
+      conversationId,
+      userId,
+      firstMessage,
+      currentTitle,
+      slackRuntimeRepo: this.slackRuntimeRepo,
+      moduleRef: this.titleModuleRef,
+    })
   }
 }

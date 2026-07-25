@@ -56,7 +56,7 @@ export function SpaceConversationSections({
               </button>
             ) : null}
             {!collapsed ? (
-              <div className="gap-spacing-1 flex flex-col">
+              <div className="gap-spacing-2 flex flex-col">
                 {visibleItems.map((conversation) => renderConversationRow(conversation, group.id))}
                 {hiddenRemaining > 0 ? (
                   <button

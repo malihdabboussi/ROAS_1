@@ -233,10 +233,10 @@ export class SlackRuntimeRepository {
       slackThreadTs?: string
       orgId?: string | null
     },
-  ): Promise<{ id: string; campaign_id: string | null } | null> {
+  ): Promise<{ id: string; campaign_id: string | null; title: string | null } | null> {
     let query = supabase
       .from('conversations')
-      .select('id, campaign_id')
+      .select('id, campaign_id, title')
       .eq('user_id', input.userId)
       .eq('agent_id', input.agentKey)
       .eq('metadata->>slack_team_id', input.slackTeamId)
@@ -261,6 +261,14 @@ export class SlackRuntimeRepository {
       .from('conversations')
       .update({ campaign_id: campaignId })
       .eq('id', conversationId)
+  }
+
+  async updateConversationTitle(
+    supabase: SupabaseClient,
+    conversationId: string,
+    title: string,
+  ): Promise<void> {
+    await supabase.from('conversations').update({ title }).eq('id', conversationId)
   }
 
   async createSlackConversation(

@@ -452,7 +452,7 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     )
     const serviceSupabase = this.getServiceRoleClient()
 
-    const conversationId = await this.getOrCreateSlackConversation(
+    const conversation = await this.getOrCreateSlackConversation(
       serviceSupabase,
       userId,
       agentKey,
@@ -460,8 +460,21 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       slackChannelId,
       slackThreadTs,
       orgId,
+      userMessage,
     )
+    const conversationId = conversation.id
     this.logger.log(`[TRACE] routeToAgent CONVERSATION: conversationId=${conversationId}`)
+    void this.retitleSlackConversationIfNeeded(
+      serviceSupabase,
+      conversationId,
+      userId,
+      userMessage,
+      conversation.title,
+    ).catch((err) =>
+      this.logger.warn(
+        `[TRACE] routeToAgent RETITLE_FAILED: ${err instanceof Error ? err.message : String(err)}`,
+      ),
+    )
 
     const internalToken = process.env.INTERNAL_API_TOKEN ?? ''
     const chatPayload = JSON.stringify({

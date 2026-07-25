@@ -322,7 +322,7 @@ export function SpaceConversationsList({
         headerStartSlot={headerStartSlot}
         headerEndSlot={headerEndSlot}
       />
-      <div className="p-spacing-2 min-h-0 flex-1 overflow-y-auto">
+      <div className="p-spacing-3 min-h-0 flex-1 overflow-y-auto">
         {loading ? (
           <div className="body-4 text-muted-foreground p-spacing-4 text-center">
             Loading conversations...

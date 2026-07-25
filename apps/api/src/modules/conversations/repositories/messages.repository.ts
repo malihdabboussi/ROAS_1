@@ -91,6 +91,24 @@ export class MessagesRepository {
     return typeof data?.id === 'string' ? data.id : null
   }
 
+  async findFirstUserMessageContent(
+    supabase: SupabaseClient,
+    conversationId: string,
+  ): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('content')
+      .eq('conversation_id', conversationId)
+      .eq('role', 'user')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    if (error) throw new Error(`DB error: ${error.message}`)
+    const content = typeof data?.content === 'string' ? data.content.trim() : ''
+    return content.length > 0 ? content : null
+  }
+
   async findUpToMessage(supabase: SupabaseClient, conversationId: string, messageId: string) {
     const message = await this.findById(supabase, messageId)
     if (!message) throw new Error('Message not found')

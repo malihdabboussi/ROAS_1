@@ -1,5 +1,16 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Patch, Post, UseGuards } from '@nestjs/common'
-import { ThrottlerGuard } from '@nestjs/throttler'
+import {
+  Body,
+  Controller,
+  Delete,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common'
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   AuthGuard,
@@ -16,6 +27,38 @@ import { ConversationsService } from '../services/conversations.service'
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
 export class ConversationRecordsController {
   constructor(private readonly conversationsService: ConversationsService) {}
+
+  @Post(':id/auto-title')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  async autoTitle(
+    @CurrentUser() user: { id: string; email: string },
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+    @Param('id') conversationId: string,
+    @Body() body?: { user_message?: string },
+  ) {
+    try {
+      return await this.conversationsService.autoTitleConversation(
+        supabase,
+        user.id,
+        conversationId,
+        scope.orgId,
+        scope.orgRole,
+        body?.user_message,
+      )
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : ''
+      if (msg === ConversationsService.ERR_SUGGEST_TITLE_UNAVAILABLE) {
+        throw new HttpException(
+          'Title suggestion is temporarily unavailable',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        )
+      }
+      if (error instanceof HttpException) throw error
+      throw new HttpException('Could not auto-title conversation', HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+  }
 
   @Post(':id/fork')
   @HttpCode(HttpStatus.CREATED)

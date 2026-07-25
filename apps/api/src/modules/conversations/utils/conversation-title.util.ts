@@ -11,22 +11,12 @@ const LEGACY_DEFAULTS = [
 const RAW_OPENERS =
   /^(hi|hey|hello|yo|sup|all right|alright|ok|okay|so|can you|could you|do we|do you|let me|please|thanks|thank you|hrey)\b/i
 
-/** Strip auto-generated/legacy default titles in conversation UI. */
-export function stripLegacySpacesConversationTitle(raw: string | null | undefined): string {
-  const title = (raw ?? '').trim()
-  if (!title) return ''
-  if (LEGACY_DEFAULTS.some((re) => re.test(title))) return ''
-  return title
-}
-
 export function isPlaceholderConversationTitle(raw: string | null | undefined): boolean {
-  return stripLegacySpacesConversationTitle(raw).length === 0
+  const title = (raw ?? '').trim()
+  if (!title) return true
+  return LEGACY_DEFAULTS.some((re) => re.test(title))
 }
 
-/**
- * True when the stored title still looks like a raw first-message dump (or a
- * legacy placeholder) rather than a short topic label like Claude/ChatGPT.
- */
 export function needsGeneratedConversationTitle(raw: string | null | undefined): boolean {
   if (isPlaceholderConversationTitle(raw)) return true
   const title = (raw ?? '').replace(/\s+/g, ' ').trim()
@@ -40,8 +30,8 @@ export function needsGeneratedConversationTitle(raw: string | null | undefined):
   return false
 }
 
-function cleanMessageForTitle(raw: string): string {
-  return raw
+export function titleFromFirstUserMessage(raw: string | null | undefined, maxLen = 48): string {
+  const collapsed = (raw ?? '')
     .replace(/<((?:https?:\/\/|mailto:)[^>|]+)\|([^>]+)>/g, '$2')
     .replace(/<(https?:\/\/[^>]+)>/g, '')
     .replace(/<@([A-Z0-9]+)>/gi, '')
@@ -50,11 +40,6 @@ function cleanMessageForTitle(raw: string): string {
     .replace(/:([a-z0-9_+-]+):/gi, '')
     .replace(/\s+/g, ' ')
     .trim()
-}
-
-/** Deterministic list title from the first user message when LLM naming fails. */
-export function titleFromFirstUserMessage(raw: string | null | undefined, maxLen = 48): string {
-  const collapsed = cleanMessageForTitle(raw ?? '')
   if (!collapsed) return ''
   const sentence = collapsed.split(/(?<=[.!?])\s+/)[0] ?? collapsed
   if (sentence.length <= maxLen) return sentence
@@ -63,10 +48,6 @@ export function titleFromFirstUserMessage(raw: string | null | undefined, maxLen
   return (boundary > 16 ? sliced.slice(0, boundary) : sliced).trim()
 }
 
-/**
- * Prefer a model-suggested title; otherwise use a first-message snippet so the
- * sidebar never stays on a blank / "Untitled" placeholder after a send.
- */
 export function resolveSuggestedConversationTitle(
   suggested: string | null | undefined,
   firstUserMessage: string,

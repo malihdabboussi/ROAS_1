@@ -1,5 +1,12 @@
 # Changelog - July 25, 2026
 
+## [2026-07-25 17:15] - [FIX]
+
+What: Chat history titles now use Gemini short topic labels (Claude/ChatGPT-style) instead of raw first-message dumps, with a bounded auto-title backfill for existing raw/"Slack Chat" rows; list rows use looser spacing and default to no leading icons.
+Why: Inbox history looked dense and hard to scan because shell/studio never ran suggest-title, Slack seeded "Slack Chat", and stream success reaffirmed the raw snippet over any curated title.
+Impact: New in-app and Slack chats get summary titles; opening chat history upgrades up to 12 existing raw titles; Recents-style spacing reads closer to Claude/ChatGPT.
+Files: `conversation-title.ts`, `conversation-title-scheduler.ts`, `ShellChatMenu.tsx`, `SpaceConversationRows.tsx`, `conversation-records.controller.ts`, `conversations.service.ts`, `slack-service-conversation.base.ts`, `slack.service.ts`
+
 ## [2026-07-25 17:05] - [FEATURE]
 
 What: Added scoped List, Board, Calendar, Overview, and Assets work views across All Tasks, Programs, and Campaigns, with URL-backed filters and persisted Program view visibility.

@@ -410,7 +410,7 @@ describe('SlackService media helpers', () => {
     it('backfills a default campaign on an existing Slack conversation without one', async () => {
       const service = createServiceWithRepository()
       const conversationLookup = createThenableQuery({
-        data: { id: 'conversation-1', campaign_id: null },
+        data: { id: 'conversation-1', campaign_id: null, title: 'Slack Chat' },
         error: null,
       })
       const campaignLookup = createThenableQuery({ data: { id: 'campaign-1' }, error: null })
@@ -438,7 +438,8 @@ describe('SlackService media helpers', () => {
         'org-1',
       )
 
-      expect(result).toBe('conversation-1')
+      expect(result).toEqual({ id: 'conversation-1', title: expect.anything() })
+      expect(result.id).toBe('conversation-1')
       expect(conversationUpdate.update).toHaveBeenCalledWith({ campaign_id: 'campaign-1' })
       expect(conversationUpdate.eq).toHaveBeenCalledWith('id', 'conversation-1')
     })

@@ -62,6 +62,7 @@ function createService(
     {} as never,
     {} as never,
     conversationMessages as never,
+    messagesRepo as never,
   )
 
   return { service, conversationsRepo, messagesRepo, permissionsService }
@@ -94,11 +95,10 @@ describe('ConversationsService message workflows', () => {
       'org-1',
     )
     expect(conversationsRepo.findByIdOrgScoped).toHaveBeenCalledWith({}, 'conv-1', 'org-1')
-    expect(messagesRepo.findByConversationId).toHaveBeenCalledWith(
-      {},
-      'conv-1',
-      { before: '2026-06-17T00:00:00.000Z', limit: 25 },
-    )
+    expect(messagesRepo.findByConversationId).toHaveBeenCalledWith({}, 'conv-1', {
+      before: '2026-06-17T00:00:00.000Z',
+      limit: 25,
+    })
   })
 
   it('patches message metadata without dropping existing metadata', async () => {
@@ -154,14 +154,7 @@ describe('ConversationsService message workflows', () => {
     })
 
     await expect(
-      service.forkConversation(
-        {} as never,
-        'user-1',
-        'conv-1',
-        'msg-2',
-        'org-1',
-        'viewer',
-      ),
+      service.forkConversation({} as never, 'user-1', 'conv-1', 'msg-2', 'org-1', 'viewer'),
     ).resolves.toMatchObject({
       conversation: { id: 'conv-fork' },
       messageCount: 2,
@@ -190,20 +183,17 @@ describe('ConversationsService message workflows', () => {
         default_model_id: 'model-1',
       }),
     )
-    expect(messagesRepo.bulkCreate).toHaveBeenCalledWith(
-      {},
-      [
-        expect.objectContaining({ conversation_id: 'conv-fork', role: 'user', content: 'Start' }),
-        expect.objectContaining({
-          conversation_id: 'conv-fork',
-          role: 'assistant',
-          content: 'Done',
-          content_blocks: [{ type: 'text', content: 'Done' }],
-          metadata: { b: 2 },
-          model_id: 'model-1',
-        }),
-      ],
-    )
+    expect(messagesRepo.bulkCreate).toHaveBeenCalledWith({}, [
+      expect.objectContaining({ conversation_id: 'conv-fork', role: 'user', content: 'Start' }),
+      expect.objectContaining({
+        conversation_id: 'conv-fork',
+        role: 'assistant',
+        content: 'Done',
+        content_blocks: [{ type: 'text', content: 'Done' }],
+        metadata: { b: 2 },
+        model_id: 'model-1',
+      }),
+    ])
   })
 
   it('recalculates the last response-chain pointer after deleting from a message', async () => {
@@ -227,31 +217,20 @@ describe('ConversationsService message workflows', () => {
       },
     })
 
-    await service.deleteMessagesFrom(
-      {} as never,
-      'user-1',
-      'conv-1',
-      'msg-2',
-      'org-1',
-      'editor',
-    )
+    await service.deleteMessagesFrom({} as never, 'user-1', 'conv-1', 'msg-2', 'org-1', 'editor')
 
     expect(messagesRepo.deleteFrom).toHaveBeenCalledWith({}, 'conv-1', 'msg-2')
-    expect(conversationsRepo.update).toHaveBeenCalledWith(
-      {},
-      'conv-1',
-      {
-        metadata: {
-          existing: true,
-          response_chain_last: {
-            openclaw_response_id: 'oc-1',
-            provider_response_id: 'provider-1',
-            previous_response_id: 'provider-0',
-            message_id: 'msg-2',
-            updated_at: expect.any(String),
-          },
+    expect(conversationsRepo.update).toHaveBeenCalledWith({}, 'conv-1', {
+      metadata: {
+        existing: true,
+        response_chain_last: {
+          openclaw_response_id: 'oc-1',
+          provider_response_id: 'provider-1',
+          previous_response_id: 'provider-0',
+          message_id: 'msg-2',
+          updated_at: expect.any(String),
         },
       },
-    )
+    })
   })
 })

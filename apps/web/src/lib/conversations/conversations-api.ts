@@ -165,6 +165,18 @@ export async function renameConversation(id: string, title: string): Promise<voi
   await backendPatch(`/api/conversations/${id}`, { title })
 }
 
+export async function autoTitleConversation(
+  id: string,
+  userMessage?: string,
+): Promise<{ title: string; updated: boolean }> {
+  if (isPendingConversationId(id)) {
+    return { title: '', updated: false }
+  }
+  return backendPost<{ title: string; updated: boolean }>(`/api/conversations/${id}/auto-title`, {
+    ...(userMessage ? { user_message: userMessage } : {}),
+  })
+}
+
 export async function setConversationArchived(
   id: string,
   archived: boolean,

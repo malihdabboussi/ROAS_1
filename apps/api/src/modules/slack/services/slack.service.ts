@@ -36,8 +36,8 @@ export class SlackService extends SlackEventsBase {
       userAgentApi,
       slackAccessControl,
     )
+    this.titleModuleRef = moduleRef
   }
-
   protected async processEventAsync(envelope: SlackEventEnvelope): Promise<void> {
     if (envelope.team_id && envelope.event) {
       await this.captureObservationEvent(envelope.team_id, envelope.event)

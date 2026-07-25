@@ -1,3 +1,19 @@
+## 2026-07-25 - [ARCH] Studio chat.service still oversized (title scheduler external)
+
+Status: Open
+
+Found while: Chat history AI titles + list spacing polish
+
+Files:
+
+- `apps/web/src/features/studio/services/chat.service.ts` (2796 LOC on main; allowlist still 2545)
+
+Evidence: Title scheduling lives in `conversation-title-scheduler.ts` (store subscribe) so chat.service was not grown. Allowlist debt remains pre-existing.
+
+Needed work: Split send/stream helpers until under allowlist; stop stream-end title reaffirm from overwriting curated titles inside chat.service.
+
+Reason not done now: Architecture gate blocks growing chat.service; external scheduler + history backfill covers the UX.
+
 ## 2026-07-25 - [ARCH] Funnel editor pre-existing oversized modules
 
 Status: Open
@@ -8412,3 +8428,46 @@ Found while: Repurposing expand control + removing Home/Work toggle
   Evidence: `wc -l` after hover/click AI Chats wiring; `hubExpanded` is forced false so the hub-menu layer is dead.
   Needed work: Delete the unused expanded hub-menu layer + leftover pin/peek handlers now that the rail is icon-only.
   Deferred because: In-scope was interaction rewire; full dead-code strip risks more test churn tonight.
+
+## 2026-07-25 - [FEATURE] Campaign same-list reorder in Programs sidebar
+
+Feature/App: programs / sidebar
+Found while: Implementing ClickUp-style program + space reorder
+
+- `campaigns` table / `Campaign` type — no `sort_order` column or API field
+  Evidence: `campaign-api.ts` Campaign interface; migrations only add `program_id` to campaigns; sidebar groups campaigns without an order field.
+  Needed work: Add `campaigns.sort_order` (migration + PATCH DTO) then wire `@dnd-kit/sortable` within each program folder, mirroring program/space reorder.
+  Deferred because: User asked to skip inventing campaign schema without approval.
+
+## 2026-07-25 - [ARCH] Home flyout touched oversized sidebar controller
+
+Status: Open
+
+Found while: Building the Home Agenda + Inbox triage redesign
+
+Files:
+
+- `apps/web/src/components/layout/sidebar/useSidebarController.ts` (798 LOC; hook limit 300)
+
+Evidence: The Home panel uses the existing typed `activeManagePanel` state and adds no new controller behavior, but the touched hook remains well over the frontend hook limit. All new Home/Inbox components are below their applicable limits; the largest is `InboxFeed.tsx` at 321 LOC.
+
+Needed work: Extract panel-open/close state and hover lifecycle from the sidebar data/controller responsibilities into a focused hook, preserving the existing public controller contract.
+
+Reason not done now: The Home submenu only needs one additional panel id. A full sidebar controller decomposition would broaden the requested Home and Inbox build.
+
+## 2026-07-25 - [OPS] Linked Supabase migration history blocks safe Inbox migration push
+
+Status: Blocked
+
+Found while: Verifying `20260725120000_user_notifications_inbox_triage.sql`
+
+Files:
+
+- `supabase/migrations/20260725120000_user_notifications_inbox_triage.sql`
+- Supabase migration history for linked project `lhfgtsjetcardinpgouq`
+
+Evidence: `supabase db push --dry-run` connected successfully but stopped because remote versions `20260716215937`, `20260716220226`, `20260716220901`, `20260716220903`, `20260720042223`, and `20260721013000` are absent locally. A normal push could not safely prove that it would apply only the Inbox migration.
+
+Needed work: Reconcile the linked branch with `supabase migration repair` and `supabase db pull` under the repository's database-release workflow, then dry-run and apply the Inbox migration and run advisors.
+
+Reason not done now: Repairing shared remote migration history is a separate database operation and could alter migration state beyond this feature.
