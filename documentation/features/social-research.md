@@ -1,6 +1,6 @@
 # Social Research
 
-Last Modified: 2026-07-24
+Last Modified: 2026-07-25
 
 ## Overview
 
@@ -67,7 +67,7 @@ Opening a run shows a visual research report inside Ads Research. The report sta
 
 The production path is a real workflow: the user selects named concepts, chooses recording or design for each, and approves the research gate. That human receipt is persisted on the source mission, then ROAS creates an idempotent, linked `meta-ads-launch` mission with the source mission, deliverable ids, approved concepts, and production routes. The launch mission reconciles missing assets, builds reviewable Meta objects in PAUSED state, and keeps final activation behind its human gate. Production progress is derived from those mission steps instead of local UI state.
 
-Production also exposes an IG organic video-ad launcher. The user can select one or many lifestyle scenes, reuse clean preset footage to avoid generation credits, or request fresh Higgsfield footage. Copy is an explicit first stage: Lux either proposes sticker copy from the campaign and source research or renders user-supplied copy verbatim after approval. The mission preserves its source research ids, selected scene ids, source strategy, music strategy, and one of the approved Apple-style emoji glyphs (`👇`, `⏰`, `✅`, `🚨`, `🙌`). The `ig-organic-video-ad` skill is available to Lux and Vibey so the same playbook can be started from Production or conversational channels. New footage uses the direct Higgsfield MCP; preset footage and Pillow-rendered stickers remain the credit-saving default.
+Production also exposes an IG organic video-ad launcher. The user can select one or many lifestyle scenes, reuse clean preset footage to avoid generation credits, or request fresh Higgsfield footage. Copy is an explicit first stage: Lux either proposes sticker copy from the campaign and source research or renders user-supplied copy verbatim after approval. Submitting the exact-copy form records `copy_approved: true`, so that click is the approval and an unattended mission can continue without asking for the same confirmation again. Agent-written copy still stops for human approval. The mission preserves its source research ids, selected scene ids, source strategy, music strategy, and one of the approved Apple-style emoji glyphs (`👇`, `⏰`, `✅`, `🚨`, `🙌`). The `ig-organic-video-ad` skill is available to Lux and Vibey so the same playbook can be started from Production or conversational channels. New footage uses the direct Higgsfield MCP; preset footage and Pillow-rendered stickers remain the credit-saving default.
 
 Production now opens on a Static ads / Video ads choice. Static production exposes ten formats across person-led, proof/authority, and graphic families, with a selectable output count from one through ten and 4:5 or 9:16 sizing. Users can ask Lux to write from the campaign and linked Ads Research deliverables or supply exact copy, then select or upload approved founder, customer, product, proof, or visual-reference images from Media. Person-led formats require an explicit real-upload or generated-person choice. The `static-ad-production` mission assigns one exact-count production task to Lux, and the shared `static-ad-book` skill is installed for both Lux and Vibey so the same request can start in Ads Production or chat. The skill packages ten deterministic HTML templates, a Playwright PNG renderer, proof and legal checks, full-size visual QA, and immediate Space Media registration.
 
@@ -110,6 +110,10 @@ YouTube long-form videos use `youtube_video` (16:9 grid cards) and Shorts use `y
 X tweets use `tweet` (square cards) and video tweets use `tweet_video` (16:9). Each can be toggled independently via `media_show_x_tweets` and `media_show_x_videos`.
 
 ## Decision Log
+
+### 2026-07-25 - Exact-copy approval is not requested twice
+
+Exact-copy video launches now carry `copy_approved: true` from the initiating Production action. The mission worker and shared skill treat that signal as permission to begin footage and rendering without another copy-confirmation pause. The bypass applies only to complete user-supplied copy; `write_for_me` continues to require explicit human approval.
 
 ### 2026-07-24 - Static ad production
 

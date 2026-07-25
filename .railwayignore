@@ -1,2 +1,57 @@
-apps/openclaw/CLAUDE.md
-apps/openclaw/src/gateway/server-methods/CLAUDE.md
+# Dependencies (installed in Docker)
+node_modules
+**/node_modules
+
+# Build outputs (built in Docker)
+**/dist
+**/.turbo
+
+# Git
+.git
+.gitignore
+.gitmodules
+
+# IDE
+.cursor
+.claude
+.vscode
+**/.DS_Store
+
+# Environment files (secrets passed as env vars)
+.env
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs
+*.log
+**/*.log
+
+# Test files
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+**/test
+
+# Documentation (not needed in image)
+.docs
+docs
+*.md
+!docker/agents/**/*.md
+
+# Other apps — the Railway roas-platform service builds mission-worker only.
+apps/web
+apps/admin
+apps/site
+apps/website
+apps/queue-worker
+apps/api
+apps/agent-api
+apps/funnels
+apps/openclaw
+apps/chrome-extension
+apps/docs
+Vibey_legacy
+
+# Lockfile is copied explicitly by the mission-worker Dockerfile.
+!pnpm-lock.yaml
