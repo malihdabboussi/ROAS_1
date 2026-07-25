@@ -320,7 +320,7 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
     }
 
     const eventRow = insertedEvent.data as Record<string, unknown>
-    // Fan out across THREE source modes (Phase 3 of fathom-org-sharing plan):
+    // Resolve matching routes across THREE source modes:
     //
     // 1. self    — rule owner = recording owner. The historical case.
     // 2. user    — admin's rule pointed at a specific user_integrations.id;
@@ -329,7 +329,8 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
     //              member of that team records.
     //
     // Each mode is loaded with its own filtered query so we never scan the
-    // global trigger table. Results get unioned + deduped by route id.
+    // global trigger table. A single canonical route stores the meeting so
+    // one Fathom call cannot become duplicate meeting records.
     const matchingRoutes = await this.collectMatchingFathomRoutes(supabase, userId, meeting)
 
     if (matchingRoutes.length === 0) {
@@ -337,14 +338,15 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
       return { processed: false, reason: 'no_matching_route' }
     }
 
-    const fanoutResults: Array<{
+    const canonicalRoute = this.selectCanonicalFathomRoute(matchingRoutes)
+    const canonicalResults: Array<{
       route_id: string
       space_id: string
       automation_id: string
       item_id: string
     }> = []
 
-    for (const routeRecord of matchingRoutes) {
+    for (const routeRecord of [canonicalRoute]) {
       const spaceId = String(routeRecord.space_id)
       const automationId = String(routeRecord.automation_id)
       const orgId = routeRecord.org_id ? String(routeRecord.org_id) : null
@@ -364,7 +366,7 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
         this.logger.log(
           `Fathom meeting ${meeting.meetingId} already on space ${spaceId} as ${String(existingCall.id)} — skipping duplicate create`,
         )
-        fanoutResults.push({
+        canonicalResults.push({
           route_id: String(routeRecord.id),
           space_id: spaceId,
           automation_id: automationId,
@@ -557,7 +559,7 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
         })
       }
 
-      fanoutResults.push({
+      canonicalResults.push({
         route_id: String(routeRecord.id),
         space_id: spaceId,
         automation_id: automationId,
@@ -565,28 +567,49 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
       })
     }
 
-    // The audit row stores ONE pointer (the first match) plus the fan-out
-    // count in `payload_summary`. Per-execution detail lives in
-    // `space_automation_runs` (one row per rule).
-    const first = fanoutResults[0]
+    // The audit row stores the canonical meeting pointer plus how many routes
+    // matched, which preserves routing diagnostics without duplicating data.
+    const first = canonicalResults[0]
     await this.updateExternalEvent(supabase, eventRow.id, {
       status: 'processed',
       external_trigger_id: first.route_id,
       space_id: first.space_id,
       automation_id: first.automation_id,
       item_id: first.item_id,
-      org_id: matchingRoutes[0].org_id ? String(matchingRoutes[0].org_id) : null,
+      org_id: canonicalRoute.org_id ? String(canonicalRoute.org_id) : null,
       processed_at: new Date().toISOString(),
-      payload_summary: { ...payloadSummary, fanout_count: fanoutResults.length },
+      payload_summary: {
+        ...payloadSummary,
+        fanout_count: canonicalResults.length,
+        matching_route_count: matchingRoutes.length,
+      },
     })
 
     return {
       processed: true,
-      fanout_count: fanoutResults.length,
+      fanout_count: canonicalResults.length,
+      space_id: first.space_id,
       item_id: first.item_id,
       automation_id: first.automation_id,
-      fanout_results: fanoutResults,
     }
+  }
+
+  private selectCanonicalFathomRoute(
+    routes: Array<Record<string, unknown>>,
+  ): Record<string, unknown> {
+    return routes.slice().sort((left, right) => {
+      const score = (route: Record<string, unknown>) => {
+        const filters = this.objectRecord(route.filters)
+        const source = this.objectRecord(route.source)
+        const filterScore = Object.values(filters).filter(
+          (value) => value !== null && value !== undefined && String(value).trim() !== '',
+        ).length
+        const orgScore = route.org_id ? 3 : 0
+        const sourceScore = source.mode === 'user' ? 2 : source.mode === 'self' ? 1 : 0
+        return filterScore * 10 + orgScore + sourceScore
+      }
+      return score(right) - score(left) || String(left.id).localeCompare(String(right.id))
+    })[0]
   }
 
   /** Always AI-name Meetings rows — purpose-first CEO labels, no "Meeting:" prefix. */

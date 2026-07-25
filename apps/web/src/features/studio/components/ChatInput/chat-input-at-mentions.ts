@@ -3,13 +3,15 @@ import { MENU_GROUP_PREVIEW } from './chat-input-constants'
 export interface AtMentionItem {
   id: string
   label: string
-  section: 'artifact' | 'media' | 'mission' | 'space-task'
+  section: 'artifact' | 'media' | 'mission' | 'space-task' | 'person'
   /** Artifact sub-type, media mime_type, mission status label, or space-task status (for filter). */
   type?: string
   /** Public URL for inline thumbnail (media assets). */
   thumbnailUrl?: string
   /** Space task row: OptionDot color (preset name, hex, or gradient). */
   spaceTaskStatusColor?: string
+  /** Durable Person Brain connected to this identity, when available. */
+  brainId?: string
 }
 
 export type StudioArtifactNavRow =
@@ -205,4 +207,10 @@ export function buildStudioMediaNavRows(
   return rows
 }
 
-export type StudioAtMenuTabId = 'tasks' | 'artifacts' | 'media' | 'missions' | 'campaigns'
+export type StudioAtMenuTabId =
+  | 'people'
+  | 'tasks'
+  | 'artifacts'
+  | 'media'
+  | 'missions'
+  | 'campaigns'

@@ -1,4 +1,4 @@
-import { File } from 'lucide-react'
+import { File, UserRound } from 'lucide-react'
 import { OptionDot } from '@/components/ui/status/OptionBadge'
 import type { AtMentionItem, StudioAtMenuTabId } from './chat-input-at-mentions'
 
@@ -86,6 +86,18 @@ export function StudioAtMentionLeading({ item }: { item: AtMentionItem }) {
   if (item.section === 'space-task') {
     return <OptionDot color={item.spaceTaskStatusColor} size="sm" />
   }
+  if (item.section === 'person') {
+    return item.thumbnailUrl ? (
+      <img
+        src={item.thumbnailUrl}
+        alt=""
+        className="h-4 w-4 shrink-0 rounded-full object-cover"
+        loading="lazy"
+      />
+    ) : (
+      <UserRound className="text-muted-foreground h-4 w-4 shrink-0" />
+    )
+  }
   if (item.thumbnailUrl) return <AtItemThumbnail item={item} />
   return null
 }
@@ -107,10 +119,7 @@ export function StudioAtMoreRowLeadingSpacer({
 }) {
   if (variant === 'status-dot-slot') {
     return (
-      <span
-        aria-hidden
-        className="inline-flex h-2.5 w-2.5 shrink-0 items-center justify-center"
-      />
+      <span aria-hidden className="inline-flex h-2.5 w-2.5 shrink-0 items-center justify-center" />
     )
   }
   return <span aria-hidden className="h-4 w-4 shrink-0" />

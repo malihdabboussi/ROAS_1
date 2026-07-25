@@ -1,6 +1,6 @@
-import type { AttachedArtifact } from '../chat/ArtifactAttachments'
 import type { MessageReference } from '../../types'
 import { getAtTokenAtCursor } from '../../utils/textarea-caret-viewport'
+import type { AttachedArtifact } from '../chat/ArtifactAttachments'
 import type { AtMentionItem } from './chat-input-at-mentions'
 
 type ReferenceAtMentionItem = AtMentionItem & {
@@ -36,10 +36,7 @@ export function getAtCampaignSelectionTextUpdate(
   }
 }
 
-export function getAtMentionSelectionTextUpdate(
-  text: string,
-  cursor: number,
-): AtMentionTextUpdate {
+export function getAtMentionSelectionTextUpdate(text: string, cursor: number): AtMentionTextUpdate {
   const safeCursor = Math.min(cursor, text.length)
   const token = getAtTokenAtCursor(text, safeCursor)
   if (!token) return { nextText: text, cursor: text.length }
@@ -58,6 +55,7 @@ export function buildMessageReferenceFromAtMention(
     id: item.id,
     label: item.label,
     type: item.type,
+    ...(item.section === 'person' && item.brainId ? { brain_id: item.brainId } : {}),
     ...(sourceCampaignId ? { campaign_id: sourceCampaignId } : {}),
   }
 }

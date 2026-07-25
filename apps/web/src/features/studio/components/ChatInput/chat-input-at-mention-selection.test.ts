@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { AttachedArtifact } from '../chat/ArtifactAttachments'
 import type { MessageReference } from '../../types'
-import type { AtMentionItem } from './chat-input-at-mentions'
+import type { AttachedArtifact } from '../chat/ArtifactAttachments'
 import {
   appendUniqueAttachedArtifact,
   appendUniqueMessageReference,
@@ -10,6 +9,7 @@ import {
   getAtCampaignSelectionTextUpdate,
   getAtMentionSelectionTextUpdate,
 } from './chat-input-at-mention-selection'
+import type { AtMentionItem } from './chat-input-at-mentions'
 
 const artifactItem = {
   id: 'artifact-1',
@@ -53,6 +53,24 @@ describe('chat-input-at-mention-selection', () => {
       label: 'Offer One',
       type: 'offer',
       campaign_id: 'campaign-2',
+    })
+  })
+
+  it('builds a durable person reference for a portal or ghost user', () => {
+    expect(
+      buildMessageReferenceFromAtMention({
+        id: 'slack-person-1',
+        label: 'Bob Builder',
+        section: 'person',
+        type: 'managed_person',
+        brainId: 'brain-bob',
+      }),
+    ).toEqual({
+      kind: 'person',
+      id: 'slack-person-1',
+      label: 'Bob Builder',
+      type: 'managed_person',
+      brain_id: 'brain-bob',
     })
   })
 

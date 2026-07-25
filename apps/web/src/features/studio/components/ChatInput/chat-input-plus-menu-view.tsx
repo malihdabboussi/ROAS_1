@@ -17,6 +17,7 @@ import {
   Settings2,
   ShieldCheck,
   Upload,
+  UserRound,
   type LucideIcon,
 } from 'lucide-react'
 import { CloudAttachMenuItems } from '@/components/media/CloudAttachMenuItems'
@@ -57,6 +58,7 @@ const ATTACH_MENU_ITEMS: Array<{
   label: string
   icon: LucideIcon
 }> = [
+  { id: 'people', label: 'People', icon: UserRound },
   { id: 'tasks', label: 'Tasks', icon: Check },
   { id: 'artifacts', label: 'Artifacts', icon: FolderOpen },
   { id: 'media', label: 'Media', icon: File },

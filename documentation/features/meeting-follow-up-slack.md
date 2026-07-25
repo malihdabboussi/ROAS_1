@@ -38,7 +38,8 @@ First production loop for the always-aware Slack agent: Fathom call lands in Mee
 Fathom recording ready (my_recordings OR shared_team_recordings)
   → webhook resolves owner by webhook secret
   → optional transcript hydrate via Fathom API if payload omitted it
-  → Meetings space item (call)  ← required; Slack loop never starts without this
+  → choose one canonical matching Meetings route (organization route wins an equal match)
+  → one Meetings space item (call)  ← required; Slack loop never starts without this
   → agent_suggest_tasks (follow-ups with suggested owners)
   → Pixel + post-call-delivery skill drafts once
   → store the exact recap in the Shadow ledger
@@ -53,6 +54,8 @@ Fathom recording ready (my_recordings OR shared_team_recordings)
 ```
 
 Team meetings (teammate-hosted Fathom recordings shared to your plan) use the same path. Pixel/Slack follow-up is downstream of the Meetings call row — if the webhook never creates that row, no Slack agent work runs.
+
+Fathom transcript entries are timestamped speaker segments, not separate meeting copies. A call with 867 transcript entries is still one call. When personal and organization automations both match the same webhook, the routing service records the call only once in the highest-specificity canonical route and records the number of matching routes for diagnostics.
 
 ## Agent strategy (Pixel / internal `vibey`)
 
@@ -350,6 +353,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-07-23:** Tagged Slack channels are authoritative client context. Pixel verifies the canonical channel identity before campaign/Brain lookup and fails closed rather than returning another client’s data.
 - **2026-07-23:** “The portal” in funnel fulfillment means the ROAS portal workflow. A failed fulfillment call cannot silently fall back to a generic task, native funnel, substitute owner, or substitute client.
 - **2026-07-24:** Provider rate limits receive one delayed retry on the selected model before model fallback. Exhausted retries return a specific Pixel-busy response instead of the generic processing error.
+- **2026-07-24:** A Fathom webhook materializes one canonical Meetings item even when personal and organization automations both match. Equal filters prefer the organization Meetings route; transcript entry count remains segment count, not meeting count.
 
 ## Related
 

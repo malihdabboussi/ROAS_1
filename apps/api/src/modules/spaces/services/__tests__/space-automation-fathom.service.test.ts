@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import { SpaceAutomationService } from '../space-automation.service'
-import { automationsRepoFromRepo } from './space-automation-test-utils'
 import { chain } from './space-automation-fathom-test-helpers'
+import { automationsRepoFromRepo } from './space-automation-test-utils'
 
-describe('SpaceAutomationService Fathom recording fanout', () => {
+describe('SpaceAutomationService Fathom recording routing', () => {
   it('creates one Space item and runs matching automation for a Fathom recording webhook', async () => {
     const createdItem = { id: 'item_1', title: 'Demo call' }
     const route = {
@@ -83,6 +83,7 @@ describe('SpaceAutomationService Fathom recording fanout', () => {
     expect(result).toEqual({
       processed: true,
       fanout_count: 1,
+      space_id: 'space_1',
       item_id: 'item_1',
       automation_id: 'automation_1',
     })
@@ -97,8 +98,7 @@ describe('SpaceAutomationService Fathom recording fanout', () => {
     expect(repo.createActivity).toHaveBeenCalledOnce()
   })
 
-  it('fans out a single Fathom recording across every matching rule the user owns', async () => {
-    const itemA = { id: 'item_a', title: 'Demo call' }
+  it('stores a Fathom recording once when multiple Space routes match', async () => {
     const itemB = { id: 'item_b', title: 'Demo call' }
     const routeA = {
       id: 'route_a',
@@ -106,22 +106,20 @@ describe('SpaceAutomationService Fathom recording fanout', () => {
       automation_id: 'automation_a',
       user_id: 'user_1',
       org_id: null,
-      filters: { title_contains: 'Demo' },
+      filters: {},
     }
     const routeB = {
       id: 'route_b',
       space_id: 'space_b',
       automation_id: 'automation_b',
       user_id: 'user_1',
-      org_id: null,
+      org_id: 'org_1',
       filters: {},
     }
-    const createItem = vi.fn().mockResolvedValueOnce(itemA).mockResolvedValueOnce(itemB)
+    const createItem = vi.fn().mockResolvedValue(itemB)
     const repo = {
       createItem,
-      updateItem: vi.fn().mockImplementation(async (_s, _u, _space, itemId) =>
-        itemId === 'item_a' ? itemA : itemB,
-      ),
+      updateItem: vi.fn().mockResolvedValue(itemB),
       createActivity: vi.fn().mockResolvedValue({}),
       findSpaceById: vi.fn().mockResolvedValue({
         schema: {
@@ -145,7 +143,7 @@ describe('SpaceAutomationService Fathom recording fanout', () => {
         },
       }),
       updateSpace: vi.fn().mockResolvedValue({}),
-      findItemById: vi.fn().mockResolvedValue(itemA),
+      findItemById: vi.fn().mockResolvedValue(itemB),
       findItemByFathomMeetingId: vi.fn().mockResolvedValue(null),
       findSubtasksByParentId: vi.fn().mockResolvedValue([]),
       findActivityByItemId: vi.fn().mockResolvedValue([]),
@@ -188,11 +186,19 @@ describe('SpaceAutomationService Fathom recording fanout', () => {
 
     expect(result).toEqual({
       processed: true,
-      fanout_count: 2,
-      item_id: 'item_a',
-      automation_id: 'automation_a',
+      fanout_count: 1,
+      space_id: 'space_b',
+      item_id: 'item_b',
+      automation_id: 'automation_b',
     })
-    expect(repo.createItem).toHaveBeenCalledTimes(2)
-    expect(repo.createActivity).toHaveBeenCalledTimes(2)
+    expect(repo.createItem).toHaveBeenCalledTimes(1)
+    expect(repo.createItem).toHaveBeenCalledWith(
+      expect.anything(),
+      'user_1',
+      'space_b',
+      expect.anything(),
+      'org_1',
+    )
+    expect(repo.createActivity).toHaveBeenCalledTimes(1)
   })
 })

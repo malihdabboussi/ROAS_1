@@ -1,5 +1,5 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
 import { useCallback, useState, type Dispatch, type SetStateAction } from 'react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { AtMentionItem } from './chat-input-at-mentions'
 import {
@@ -48,7 +48,7 @@ function defaultOptions(
 }
 
 describe('useChatInputAtMentionLayout', () => {
-  it('builds menu tabs and resets to the first tab when the menu opens', async () => {
+  it('builds menu tabs and resets to People when the menu opens', async () => {
     const spaceTask = item('task-1', 'space-task', 'todo')
     const { result, rerender } = renderHook((props) => useLayoutHarness(props), {
       initialProps: defaultOptions({
@@ -61,13 +61,14 @@ describe('useChatInputAtMentionLayout', () => {
     })
 
     expect(result.current.layout.studioAtTabsForMenu.map((tab) => tab.id)).toEqual([
+      'people',
       'tasks',
       'artifacts',
       'media',
       'missions',
       'campaigns',
     ])
-    expect(result.current.layout.atMenuTab).toBe('artifacts')
+    expect(result.current.layout.atMenuTab).toBe('people')
 
     rerender(
       defaultOptions({
@@ -80,7 +81,7 @@ describe('useChatInputAtMentionLayout', () => {
     )
 
     await waitFor(() => {
-      expect(result.current.layout.atMenuTab).toBe('tasks')
+      expect(result.current.layout.atMenuTab).toBe('people')
       expect(result.current.atHighlight).toBe(-1)
     })
   })
@@ -106,7 +107,7 @@ describe('useChatInputAtMentionLayout', () => {
     expect(result.current.layout.atNavCount).toBe(1)
   })
 
-  it('uses cross-campaign tabs and restores the task tab after exiting cross-campaign mode', async () => {
+  it('uses cross-campaign tabs and restores People after exiting cross-campaign mode', async () => {
     const spaceTask = item('task-1', 'space-task', 'todo')
     const { result, rerender } = renderHook((props) => useLayoutHarness(props), {
       initialProps: defaultOptions({
@@ -142,7 +143,7 @@ describe('useChatInputAtMentionLayout', () => {
     )
 
     await waitFor(() => {
-      expect(result.current.layout.atMenuTab).toBe('tasks')
+      expect(result.current.layout.atMenuTab).toBe('people')
       expect(result.current.atHighlight).toBe(-1)
     })
   })

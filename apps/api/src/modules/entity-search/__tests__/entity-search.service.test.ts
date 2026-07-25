@@ -44,6 +44,8 @@ describe('EntitySearchService', () => {
           subtitle: 'ada@example.com',
           iconUrl: 'https://example.com/avatar.png',
           url: null,
+          personKind: 'portal_user',
+          brainId: null,
         },
       ],
     })
@@ -75,6 +77,67 @@ describe('EntitySearchService', () => {
     })
 
     expect(spacesQuery.eq).toHaveBeenCalledWith('org_id', 'org-1')
+  })
+
+  it('includes Slack-only people with Person Brains and deduplicates mapped portal users', async () => {
+    const repository = {
+      searchOrgRoster: vi.fn(async () => [
+        {
+          participant_id: 'participant-1',
+          user_id: 'user-1',
+          display_name: 'Bob Builder',
+          role_label: 'Media buyer',
+          avatar_url: null,
+        },
+      ]),
+      searchManagedPeople: vi.fn(async () => [
+        {
+          id: 'slack-alias',
+          vibey_user_id: 'user-1',
+          display_name: 'Bob B.',
+          relationship_kind: 'internal',
+          person_brain_id: null,
+          avatar_url: null,
+        },
+        {
+          id: 'slack-ghost',
+          vibey_user_id: null,
+          display_name: 'Client Carol',
+          relationship_kind: 'external',
+          person_brain_id: 'brain-carol',
+          avatar_url: 'https://example.com/carol.png',
+        },
+      ]),
+      listDefaultUserBrains: vi.fn(async () => [{ id: 'brain-bob', owner_id: 'user-1' }]),
+    }
+    const service = new EntitySearchService(repository as never)
+
+    await expect(
+      service.search({} as never, 'user-1', 'org-1', '', ['person'], 10, 0, null),
+    ).resolves.toEqual({
+      results: [
+        {
+          kind: 'person',
+          id: 'user-1',
+          label: 'Bob Builder',
+          subtitle: 'Media buyer',
+          iconUrl: null,
+          url: null,
+          personKind: 'portal_user',
+          brainId: 'brain-bob',
+        },
+        {
+          kind: 'person',
+          id: 'slack-ghost',
+          label: 'Client Carol',
+          subtitle: 'External · Person Brain',
+          iconUrl: 'https://example.com/carol.png',
+          url: null,
+          personKind: 'managed_person',
+          brainId: 'brain-carol',
+        },
+      ],
+    })
   })
 
   it('returns campaign and artifact results through the unified search contract', async () => {

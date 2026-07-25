@@ -11,7 +11,12 @@ export interface SpaceChatAttachedArtifact {
   label: string
 }
 
-export type SpaceChatMessageReferenceKind = 'artifact' | 'media' | 'mission' | 'conversation'
+export type SpaceChatMessageReferenceKind =
+  | 'artifact'
+  | 'media'
+  | 'mission'
+  | 'conversation'
+  | 'person'
 
 export interface SpaceChatMessageReference {
   kind: SpaceChatMessageReferenceKind
@@ -19,6 +24,7 @@ export interface SpaceChatMessageReference {
   label: string
   type?: string
   campaign_id?: string
+  brain_id?: string
 }
 
 export interface HomeChatSeedPayload {

@@ -117,6 +117,49 @@ export class ChatAttachmentContextRepository {
     return data ?? []
   }
 
+  async listManagedPersonReferences(
+    supabase: SupabaseClient,
+    input: { orgId: string; personIds: readonly string[]; limit: number },
+  ): Promise<Array<Record<string, unknown>>> {
+    if (input.personIds.length === 0) return []
+    const { data } = await this.table(supabase, 'channel_members')
+      .select('id, display_name, title, relationship_kind, person_brain_id')
+      .eq('org_id', input.orgId)
+      .eq('platform', 'slack')
+      .in('id', [...input.personIds])
+      .limit(input.limit)
+    return data ?? []
+  }
+
+  async listPortalPersonReferences(
+    supabase: SupabaseClient,
+    input: { orgId: string; userIds: readonly string[]; limit: number },
+  ): Promise<Array<Record<string, unknown>>> {
+    if (input.userIds.length === 0) return []
+    const { data } = await this.table(supabase, 'team_roster')
+      .select('user_id, display_name, role_label, avatar_url')
+      .eq('org_id', input.orgId)
+      .eq('kind', 'human')
+      .in('user_id', [...input.userIds])
+      .limit(input.limit)
+    return data ?? []
+  }
+
+  async listDefaultUserBrainReferences(
+    supabase: SupabaseClient,
+    userIds: readonly string[],
+  ): Promise<Array<Record<string, unknown>>> {
+    if (userIds.length === 0) return []
+    const { data } = await this.table(supabase, 'ns_brains')
+      .select('id, owner_id, name')
+      .in('owner_id', [...userIds])
+      .eq('scope', 'user')
+      .eq('is_default', true)
+      .is('org_id', null)
+      .limit(userIds.length)
+    return data ?? []
+  }
+
   async listUserNotificationsByIds(
     supabase: SupabaseClient,
     notificationIds: readonly string[],

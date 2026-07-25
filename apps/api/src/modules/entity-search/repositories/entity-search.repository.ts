@@ -221,6 +221,46 @@ export class EntitySearchRepository {
     return data ?? []
   }
 
+  async searchManagedPeople(
+    supabase: SupabaseClient,
+    orgId: string,
+    q: string,
+    limit: number,
+    offset: number,
+  ): Promise<any[]> {
+    let query = supabase
+      .from('channel_members')
+      .select(
+        'id,vibey_user_id,display_name,title,avatar_url,relationship_kind,person_brain_id,updated_at',
+      )
+      .eq('org_id', orgId)
+      .eq('platform', 'slack')
+      .eq('is_bot', false)
+      .neq('relationship_kind', 'ignored')
+      .order('display_name')
+    query = applyTextFilter(query, 'display_name', q)
+    query = applyRange(query, offset, limit)
+    const { data, error } = await query
+    if (error) return []
+    return data ?? []
+  }
+
+  async listDefaultUserBrains(
+    supabase: SupabaseClient,
+    userIds: string[],
+  ): Promise<Array<{ id: string; owner_id: string }>> {
+    if (userIds.length === 0) return []
+    const { data, error } = await supabase
+      .from('ns_brains')
+      .select('id,owner_id')
+      .in('owner_id', userIds)
+      .eq('scope', 'user')
+      .eq('is_default', true)
+      .is('org_id', null)
+    if (error) return []
+    return data ?? []
+  }
+
   async findPersonalProfile(
     supabase: SupabaseClient,
     userId: string,

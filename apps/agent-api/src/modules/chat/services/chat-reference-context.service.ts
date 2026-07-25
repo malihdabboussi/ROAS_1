@@ -15,11 +15,12 @@ export interface HighlightedArtifact {
 }
 
 export interface MessageReference {
-  kind: 'artifact' | 'media' | 'mission' | 'conversation'
+  kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person'
   id: string
   label: string
   type?: string
   campaign_id?: string
+  brain_id?: string
 }
 
 export interface UiSelectedArtifact {
@@ -111,7 +112,9 @@ export class ChatReferenceContextService {
           notificationIds,
         )
       if (notifError) {
-        logger.warn(`Failed to resolve notifications for highlighted artifacts: ${notifError.message}`)
+        logger.warn(
+          `Failed to resolve notifications for highlighted artifacts: ${notifError.message}`,
+        )
       } else {
         for (const row of notifRows ?? []) {
           if (typeof row.id === 'string') notificationById.set(row.id, row)
@@ -130,7 +133,8 @@ export class ChatReferenceContextService {
           )
         } else {
           for (const row of awarenessRows ?? []) {
-            if (typeof row.id === 'string') notificationById.set(row.id, { ...row, _kind: 'awareness' })
+            if (typeof row.id === 'string')
+              notificationById.set(row.id, { ...row, _kind: 'awareness' })
           }
         }
       }
@@ -318,6 +322,7 @@ export class ChatReferenceContextService {
     const missionRefs = refs.filter((ref) => ref.kind === 'mission')
     const artifactRefs = refs.filter((ref) => ref.kind === 'artifact')
     const conversationRefs = refs.filter((ref) => ref.kind === 'conversation')
+    const personRefs = refs.filter((ref) => ref.kind === 'person')
 
     for (const artifact of artifactRefs) {
       const crossNote = artifact.campaign_id ? `, cross-campaign: ${artifact.campaign_id}` : ''
@@ -386,6 +391,50 @@ export class ChatReferenceContextService {
         orgId ?? null,
       )
       lines.push(...conversationLines)
+    }
+
+    if (personRefs.length > 0 && orgId) {
+      const managedRefs = personRefs.filter((ref) => ref.type === 'managed_person')
+      const portalRefs = personRefs.filter((ref) => ref.type === 'portal_user')
+      const [managedRows, portalRows, defaultUserBrains] = await Promise.all([
+        this.chatAttachmentContextRepository.listManagedPersonReferences(serviceClient, {
+          orgId,
+          personIds: managedRefs.map((ref) => ref.id),
+          limit: MAX_REFS,
+        }),
+        this.chatAttachmentContextRepository.listPortalPersonReferences(serviceClient, {
+          orgId,
+          userIds: portalRefs.map((ref) => ref.id),
+          limit: MAX_REFS,
+        }),
+        this.chatAttachmentContextRepository.listDefaultUserBrainReferences(
+          serviceClient,
+          portalRefs.map((ref) => ref.id),
+        ),
+      ])
+      const managedById = new Map(managedRows.map((row) => [String(row.id ?? ''), row]))
+      const portalById = new Map(portalRows.map((row) => [String(row.user_id ?? ''), row]))
+      const brainByOwnerId = new Map(
+        defaultUserBrains.map((brain) => [String(brain.owner_id ?? ''), brain]),
+      )
+      for (const ref of personRefs) {
+        const managedRow = managedById.get(ref.id)
+        const portalRow = portalById.get(ref.id)
+        if (!managedRow && !portalRow) continue
+        const portalBrain = brainByOwnerId.get(ref.id)
+        const name = String(
+          managedRow?.display_name ?? portalRow?.display_name ?? 'Organization person',
+        )
+        const role = String(managedRow?.title ?? portalRow?.role_label ?? '').trim()
+        const relationship = String(managedRow?.relationship_kind ?? '').trim()
+        const brainId = String(managedRow?.person_brain_id ?? portalBrain?.id ?? '').trim()
+        const details = [
+          role || null,
+          relationship || null,
+          brainId ? `Person Brain: ${brainId}` : null,
+        ].filter(Boolean)
+        lines.push(`- [Person] ${name}${details.length ? ` (${details.join(', ')})` : ''}`)
+      }
     }
 
     return lines.join('\n')

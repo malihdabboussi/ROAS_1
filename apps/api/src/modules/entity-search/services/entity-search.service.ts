@@ -404,22 +404,55 @@ export class EntitySearchService {
   ): Promise<EntitySearchResult[]> {
     if (orgId) {
       const rosterKind = kind === 'person' ? 'human' : 'agent'
-      const rows = await this.entitySearchRepository.searchOrgRoster(
-        supabase,
-        orgId,
-        q,
-        limit,
-        offset,
-        rosterKind,
+      const [rows, managedPeople] = await Promise.all([
+        this.entitySearchRepository.searchOrgRoster(supabase, orgId, q, limit, offset, rosterKind),
+        kind === 'person'
+          ? this.entitySearchRepository.searchManagedPeople(supabase, orgId, q, limit, offset)
+          : Promise.resolve([]),
+      ])
+      const portalUserIds = [
+        ...new Set(rows.map((row: any) => String(row.user_id ?? '')).filter(Boolean)),
+      ]
+      const defaultUserBrains =
+        kind === 'person'
+          ? await this.entitySearchRepository.listDefaultUserBrains(supabase, portalUserIds)
+          : []
+      const brainByOwnerId = new Map(
+        defaultUserBrains.map((brain) => [String(brain.owner_id), String(brain.id)]),
       )
-      return rows.map((row: any) => ({
+      const rosterResults = rows.map((row: any) => ({
         kind,
         id: row.user_id ?? row.agent_key ?? row.participant_id,
         label: row.display_name ?? row.agent_key ?? 'Member',
         subtitle: row.role_label ?? (kind === 'person' ? 'Person' : 'Agent'),
         iconUrl: row.avatar_url ?? null,
         url: null,
+        ...(kind === 'person'
+          ? {
+              personKind: 'portal_user' as const,
+              brainId: brainByOwnerId.get(String(row.user_id ?? '')) ?? null,
+            }
+          : {}),
       }))
+      if (kind !== 'person') return rosterResults
+      const portalUserIdSet = new Set(portalUserIds)
+      const managedResults: EntitySearchResult[] = managedPeople
+        .filter((row: any) => !row.vibey_user_id || !portalUserIdSet.has(String(row.vibey_user_id)))
+        .map((row: any) => ({
+          kind: 'person',
+          id: String(row.id),
+          label: row.display_name || 'Slack person',
+          subtitle: `${String(row.relationship_kind ?? 'unknown')
+            .replace(/_/g, ' ')
+            .replace(/^\w/, (letter) => letter.toUpperCase())}${
+            row.person_brain_id ? ' · Person Brain' : ' · Slack profile'
+          }`,
+          iconUrl: row.avatar_url ?? null,
+          url: null,
+          personKind: 'managed_person',
+          brainId: row.person_brain_id ?? null,
+        }))
+      return [...rosterResults, ...managedResults].slice(0, limit)
     }
 
     if (kind === 'person') {
@@ -437,6 +470,8 @@ export class EntitySearchService {
           subtitle: row.email ?? 'Person',
           iconUrl: row.avatar_url ?? null,
           url: null,
+          personKind: 'portal_user',
+          brainId: null,
         }))
     }
 

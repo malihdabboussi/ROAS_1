@@ -1,5 +1,5 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
 import type { RefObject } from 'react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { AtMentionItem } from './chat-input-at-mentions'
 import {
@@ -15,6 +15,21 @@ function textareaRef(value: string): RefObject<HTMLTextAreaElement | null> {
 }
 
 function defaultFetch(path: string): unknown {
+  if (path === '/api/entity-search?types=person&limit=50') {
+    return {
+      results: [
+        {
+          kind: 'person',
+          id: 'person-1',
+          label: 'Bob Builder',
+          subtitle: 'Internal · Person Brain',
+          iconUrl: 'https://cdn.test/bob.png',
+          personKind: 'managed_person',
+          brainId: 'brain-bob',
+        },
+      ],
+    }
+  }
   if (path === '/api/campaigns/campaign-1/offers') {
     return [{ id: 'offer-1', name: 'Offer One' }]
   }
@@ -106,6 +121,33 @@ describe('useChatInputAtMentionData', () => {
     expect(fetchJson).toHaveBeenCalledWith('/api/campaigns/campaign-1/offers')
     expect(fetchJson).toHaveBeenCalledWith('/api/media/assets?campaign_id=campaign-1&limit=50')
     expect(fetchJson).toHaveBeenCalledWith('/api/campaigns')
+    expect(fetchJson).toHaveBeenCalledWith('/api/entity-search?types=person&limit=50')
+  })
+
+  it('loads people and Person Brains on the account-level Home composer', async () => {
+    const fetchJson = vi.fn(async (path: string) => defaultFetch(path))
+    const options = defaultOptions({
+      campaignId: undefined,
+      fetchJson,
+      textareaRef: textareaRef('@bob'),
+    })
+    const { result } = renderHook(() => useChatInputAtMentionData(options))
+
+    act(() => result.current.syncAtMenuFromComposer('@bob', '@bob'.length))
+
+    await waitFor(() => {
+      expect(result.current.atItems).toEqual([
+        {
+          id: 'person-1',
+          label: 'Bob Builder',
+          section: 'person',
+          type: 'managed_person',
+          thumbnailUrl: 'https://cdn.test/bob.png',
+          brainId: 'brain-bob',
+        },
+      ])
+    })
+    expect(fetchJson).toHaveBeenCalledWith('/api/entity-search?types=person&limit=50')
   })
 
   it('loads cross-campaign artifacts, media, and missions into the active menu items', async () => {

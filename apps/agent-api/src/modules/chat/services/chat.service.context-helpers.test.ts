@@ -320,6 +320,110 @@ describe('ChatService context helpers', () => {
     expect(context).toContain('agent: zara')
   })
 
+  it('resolves an organization-scoped person reference and exposes its Person Brain', async () => {
+    const client = makeClient({
+      channel_members: [
+        {
+          id: 'person-1',
+          display_name: 'Bob Builder',
+          title: 'Media buyer',
+          relationship_kind: 'internal',
+          person_brain_id: 'brain-bob',
+        },
+      ],
+    })
+    const service = makeReferenceContextService(client)
+
+    const context = await service.buildMessageReferencesContext(
+      [
+        {
+          kind: 'person',
+          id: 'person-1',
+          label: 'Bob',
+          type: 'managed_person',
+          brain_id: 'brain-bob',
+        },
+      ],
+      'user-1',
+      'org-1',
+    )
+
+    expect(context).toContain('[Person] Bob Builder')
+    expect(context).toContain('Media buyer')
+    expect(context).toContain('Person Brain: brain-bob')
+  })
+
+  it('resolves a portal teammate reference and validates their default User Brain', async () => {
+    const client = makeClient({
+      team_roster: [
+        {
+          user_id: 'user-bob',
+          display_name: 'Bob Builder',
+          role_label: 'Media buyer',
+        },
+      ],
+      ns_brains: [
+        {
+          id: 'brain-bob',
+          owner_id: 'user-bob',
+          name: 'Bob Brain',
+        },
+      ],
+    })
+    const service = makeReferenceContextService(client)
+
+    const context = await service.buildMessageReferencesContext(
+      [
+        {
+          kind: 'person',
+          id: 'user-bob',
+          label: 'Bob',
+          type: 'portal_user',
+          brain_id: 'brain-bob',
+        },
+      ],
+      'user-1',
+      'org-1',
+    )
+
+    expect(context).toContain('[Person] Bob Builder')
+    expect(context).toContain('Media buyer')
+    expect(context).toContain('Person Brain: brain-bob')
+  })
+
+  it('rejects unresolved people and never trusts a client-supplied Brain id', async () => {
+    const client = makeClient({
+      channel_members: [],
+      team_roster: [],
+      ns_brains: [
+        {
+          id: 'brain-outside-org',
+          owner_id: 'user-outside-org',
+          name: 'Outside Brain',
+        },
+      ],
+    })
+    const service = makeReferenceContextService(client)
+
+    const context = await service.buildMessageReferencesContext(
+      [
+        {
+          kind: 'person',
+          id: 'user-outside-org',
+          label: 'Spoofed teammate',
+          type: 'portal_user',
+          brain_id: 'brain-outside-org',
+        },
+      ],
+      'user-1',
+      'org-1',
+    )
+
+    expect(context).not.toContain('[Person]')
+    expect(context).not.toContain('Spoofed teammate')
+    expect(context).not.toContain('brain-outside-org')
+  })
+
   it('builds and caches organization-scoped user profile summaries', async () => {
     const client = {}
     const repository = {

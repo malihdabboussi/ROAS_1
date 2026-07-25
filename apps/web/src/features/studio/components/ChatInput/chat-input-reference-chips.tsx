@@ -25,7 +25,11 @@ export function ChatInputReferenceChips({
         <div
           key={`${ref.kind}-${ref.id}`}
           className={`group flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm ${
-            ref.kind === 'media' ? 'badge-glass badge-glass-cyan' : 'badge-glass badge-glass-orange'
+            ref.kind === 'media'
+              ? 'badge-glass badge-glass-cyan'
+              : ref.kind === 'person'
+                ? 'badge-glass badge-glass-green'
+                : 'badge-glass badge-glass-orange'
           }`}
         >
           <span className="max-w-36 truncate" title={ref.label}>

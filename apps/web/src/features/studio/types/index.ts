@@ -9,6 +9,7 @@ import type {
 } from '@/lib/artifacts/comment-artifact-types'
 import type { DocumentAttachment } from '@/lib/chat/document-attachments'
 import type { UiSelectedArtifact } from '@/lib/chat/ui-selected-artifact'
+
 export type { Campaign } from '@/lib/campaigns/campaign-api'
 export type {
   Ad,
@@ -181,7 +182,7 @@ export interface HighlightedArtifact {
   label: string
 }
 
-export type MessageReferenceKind = 'artifact' | 'media' | 'mission' | 'conversation'
+export type MessageReferenceKind = 'artifact' | 'media' | 'mission' | 'conversation' | 'person'
 
 export interface MessageReference {
   kind: MessageReferenceKind
@@ -191,6 +192,8 @@ export interface MessageReference {
   type?: string
   /** Source campaign — present when cross-referencing another campaign (Phase 2) */
   campaign_id?: string
+  /** Person Brain connected to a portal or managed Slack identity. */
+  brain_id?: string
 }
 
 export type ChatScopeKind =

@@ -44,4 +44,6 @@ export interface EntitySearchResult {
   artifactKind?: EntitySearchArtifactKind
   sequenceId?: string
   funnelId?: string
+  personKind?: 'portal_user' | 'managed_person'
+  brainId?: string | null
 }

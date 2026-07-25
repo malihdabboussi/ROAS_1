@@ -1,12 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from 'react'
-import { AT_SECTION_PREVIEW } from './chat-input-constants'
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import {
   buildStudioArtifactNavRows,
   buildStudioMediaNavRows,
@@ -15,6 +7,7 @@ import {
   type AtMentionItem,
   type StudioAtMenuTabId,
 } from './chat-input-at-mentions'
+import { AT_SECTION_PREVIEW } from './chat-input-constants'
 
 export interface UseChatInputAtMentionLayoutOptions {
   atItems: AtMentionItem[]
@@ -38,7 +31,7 @@ export function useChatInputAtMentionLayout({
   spaceTaskMentions,
   setAtHighlight,
 }: UseChatInputAtMentionLayoutOptions) {
-  const [atMenuTab, setAtMenuTab] = useState<StudioAtMenuTabId>('artifacts')
+  const [atMenuTab, setAtMenuTab] = useState<StudioAtMenuTabId>('people')
   const [atArtifactCollapsedByType, setAtArtifactCollapsedByType] = useState<
     Record<string, boolean>
   >({})
@@ -50,6 +43,7 @@ export function useChatInputAtMentionLayout({
 
   const atMenuLayout = useMemo(() => {
     const spaceTaskItems = atItems.filter((i) => i.section === 'space-task')
+    const personItems = atItems.filter((i) => i.section === 'person')
     const artifactItems = atItems.filter((i) => i.section === 'artifact')
     const mediaItems = atItems.filter((i) => i.section === 'media')
     const missionItems = atItems.filter((i) => i.section === 'mission')
@@ -68,6 +62,7 @@ export function useChatInputAtMentionLayout({
         : otherCampaigns.slice(0, 3)
     return {
       spaceTaskItems,
+      personItems,
       artifactItems,
       mediaItems,
       missionItems,
@@ -95,6 +90,7 @@ export function useChatInputAtMentionLayout({
       ]
     }
     const tabs: { id: StudioAtMenuTabId; label: string }[] = []
+    tabs.push({ id: 'people', label: 'People' })
     if (spaceTaskMentions.length > 0) {
       tabs.push({ id: 'tasks', label: 'Tasks' })
     }
@@ -113,8 +109,14 @@ export function useChatInputAtMentionLayout({
     | { kind: 'items'; items: AtMentionItem[]; crossCampaignId?: string }
     | { kind: 'campaigns'; items: Array<{ id: string; name: string }> }
   >(() => {
-    const { spaceTaskVisible, artifactItems, mediaItems, missionVisible, campaignMatches } =
-      atMenuLayout
+    const {
+      personItems,
+      spaceTaskVisible,
+      artifactItems,
+      mediaItems,
+      missionVisible,
+      campaignMatches,
+    } = atMenuLayout
     if (crossCampaignMode) {
       let items: AtMentionItem[] = []
       if (atMenuTab === 'artifacts') items = artifactItems
@@ -126,7 +128,8 @@ export function useChatInputAtMentionLayout({
       return { kind: 'campaigns', items: campaignMatches }
     }
     let items: AtMentionItem[] = []
-    if (atMenuTab === 'tasks') items = spaceTaskVisible
+    if (atMenuTab === 'people') items = personItems
+    else if (atMenuTab === 'tasks') items = spaceTaskVisible
     else if (atMenuTab === 'artifacts') items = artifactItems
     else if (atMenuTab === 'media') items = mediaItems
     else if (atMenuTab === 'missions') items = missionVisible
@@ -176,7 +179,7 @@ export function useChatInputAtMentionLayout({
 
   useEffect(() => {
     if (!studioAtTabsForMenu.some((t) => t.id === atMenuTab)) {
-      setAtMenuTab(studioAtTabsForMenu[0]?.id ?? 'artifacts')
+      setAtMenuTab(studioAtTabsForMenu[0]?.id ?? 'people')
     }
   }, [studioAtTabsForMenu, atMenuTab])
 
@@ -186,7 +189,7 @@ export function useChatInputAtMentionLayout({
     const wasOpen = atMenuWasOpenRef.current
     atMenuWasOpenRef.current = nowOpen
     if (nowOpen && !wasOpen && !crossCampaignMode) {
-      setAtMenuTab(studioAtTabsForMenu[0]?.id ?? 'artifacts')
+      setAtMenuTab(studioAtTabsForMenu[0]?.id ?? 'people')
       setAtHighlight(-1)
     }
   }, [atMenuOpen, crossCampaignMode, studioAtTabsForMenu, setAtHighlight])
@@ -194,7 +197,7 @@ export function useChatInputAtMentionLayout({
   const crossCampaignWasOpenRef = useRef(crossCampaignMode)
   useEffect(() => {
     if (atMenuOpen && crossCampaignWasOpenRef.current && !crossCampaignMode) {
-      setAtMenuTab(spaceTaskMentions.length > 0 ? 'tasks' : 'artifacts')
+      setAtMenuTab('people')
       setAtHighlight(-1)
     }
     crossCampaignWasOpenRef.current = crossCampaignMode
