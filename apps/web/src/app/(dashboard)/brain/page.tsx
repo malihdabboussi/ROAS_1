@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { BrainConstellationLoader } from '@/features/brain/components/BrainConstellationLoader'
 import BrainHome from '@/features/brain/containers/BrainHome'
 
 // The scoped visualization (~5k lines incl. ForceGraph, NodeDetailModal,
@@ -11,11 +11,7 @@ import BrainHome from '@/features/brain/containers/BrainHome'
 // plain /brain visits don't parse the whole subtree.
 const BrainVisualization = dynamic(() => import('@/features/brain/components/BrainVisualization'), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center">
-      <VibeyLoadingOrb text="Loading Brain..." state="processing" size="lg" />
-    </div>
-  ),
+  loading: () => <BrainConstellationLoader />,
 })
 
 function BrainRouter() {
@@ -28,13 +24,7 @@ function BrainRouter() {
 export default function BrainPage() {
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <Suspense
-        fallback={
-          <div className="flex h-full items-center justify-center">
-            <VibeyLoadingOrb text="Loading Brain..." state="processing" size="lg" />
-          </div>
-        }
-      >
+      <Suspense fallback={<BrainConstellationLoader />}>
         <BrainRouter />
       </Suspense>
     </div>

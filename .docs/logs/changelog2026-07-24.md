@@ -1,5 +1,35 @@
 # Changelog - July 24, 2026
 
+## [2026-07-24 21:55] - [FIX]
+
+What: Unblocked the `roas-web` production build — added the missing `isShellWorkspaceRoute` import in `ShellChatMenu.tsx` (it was referenced but never imported) and typed the `AgentTurnFeedbackActions` mock-call tuple in `AssistantActions.test.tsx` so `next build`'s TypeScript step compiles.
+
+Why: The committed shell/chat code failed `next build` typecheck (`Cannot find name 'isShellWorkspaceRoute'`), which blocked deploying the Programs/flyout polish to app.roas.io.
+
+Impact: `roas-web` now builds and deploys to production. No runtime behavior change.
+
+Files: `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/features/studio/components/message-bubble/AssistantActions.test.tsx`
+
+## [2026-07-24 21:50] - [STYLE]
+
+What: Retargeted brand primary from emerald green to Pixel purple (`#9333ea` / vibe-purple), including primary glass buttons (`button-glass-primary`, `button-glass-accent`) and empty-chat capability chips.
+
+Why: Accent CTAs and chat capability icons still used green while Pixel/Inbox selection already read purple.
+
+Impact: New chat, Mission Accept, capability strip, and other primary accents now match Pixel purple. Success/status greens (`--color-success`, `badge-glass-green`) stay green.
+
+Files: `apps/web/src/app/globals.css`, `apps/website/src/app/globals.css`, `design-guidelines.md`
+
+## [2026-07-24 21:42] - [FEATURE]
+
+What: Repurposed top-bar PanelLeft to expand/collapse AI Chats (HQ rail stays icon-only), made AI Chats hover=docked mini / click=full-screen with a compact pill while open, removed Home/Work menu toggle, rounded the history New chat button, and added a perpetual marquee on empty-chat capability chips.
+
+Why: Expanding the HQ menu competed with AI Chats; the Work tab had no durable home; the overflowing AI Chats pill collided with history Search; New chat lacked the app's standard radius; capability chips were static.
+
+Impact: Nav stays collapsed; AI Chats is the primary expand surface; New chat matches Accept-style rounding; capability strip scrolls until hover/focus.
+
+Files: `ShellTopBar.tsx`, `SidebarHqRail.tsx`, `ShellAiChatsButton.tsx`, `SidebarHqHubMenu.tsx`, `SidebarHqHubMenuContent.tsx`, deleted `ShellMenuChrome.tsx` / `SidebarWorkMenu.tsx`, `SpaceConversationsHeader.tsx`, `ShellEmptyChatCapabilityScroller.tsx`, both `globals.css`, tests, `claude-chatgpt-shell.md`
+
 ## [2026-07-24 21:34] - [STYLE]
 
 What: Extended the Programs ClickUp-style polish to all hub-rail flyouts (Team, Brain, More, and the shared communication/channels nav) by upgrading the shared `.hub-dock-flyout-*` utilities instead of a second system — `.hub-dock-flyout-row` now uses `body-2` type, `.hub-dock-flyout-caption` is a stronger uppercase section header, and a new `.hub-dock-flyout-divider` hairline separates sections. Brain flyout now renders tinted square scope tiles (`badge-glass-*` per scope type), section dividers, and truncates the User-brains group to the first 5 with a "Show more" toggle (User brain always pinned above). Extracted the Brain row/helper presentational code into `SidebarBrainFlyoutRows.tsx` to stay under the 400-line limit. Unified Team section subheaders and "Show more" wording across flyouts.
@@ -9,6 +39,116 @@ Why: The wider flyouts read inconsistently vs the new Programs menu, and user br
 Impact: Team/Brain/More/channels flyouts share one denser, more readable ClickUp-like hierarchy; Brain no longer overflows and navigation to every brain is preserved (Show more reveals the rest). No ACL, routing, or data changes. Fixed-width viewport + truncate unchanged. Hub-dock utilities are web-dashboard-only (not present in `apps/website`), so no website globals sync needed.
 
 Files: `apps/web/src/app/globals.css`, `apps/web/src/components/layout/sidebar/SidebarBrainFlyout.tsx`, `SidebarBrainFlyoutRows.tsx` (new), `SidebarTeam2Flyout.tsx`, `HomeCommunicationNav.tsx`
+
+## [2026-07-24 21:36] - [FIX]
+
+What: Empty-chat hero now always uses the active agent name/avatar (Pixel + lamp), not the org name.
+
+Why: With an org named ROAS, the hero showed "ROAS" while the picker said "Pixel".
+
+Impact: Center hero matches the agent picker — Pixel, not ROAS.
+
+Files: `SpaceChatAgentEmptyState.tsx`, `SpaceChatAgentEmptyState.test.tsx`
+
+## [2026-07-24 21:34] - [FEATURE]
+
+What: Restored the empty-chat composer chrome (Find/Research/Create/… action pills, hover-expanding capability scroller, and the "Ask, create, search, @ to mention…" placeholder) that had regressed out of `SpaceVibeyChatPanel`'s render body, and renamed the default agent to "Pixel" with a lamp avatar via a single roster-normalization chokepoint.
+
+Why: The pills/scroller/placeholder wiring was reverted (imports/state survived but the JSX usage was lost), so none of it rendered; separately the default agent still showed the seeded "Vibey"/"ROAS" identity with an AI-generated human portrait.
+
+Impact: Empty chats now show pills above the composer, a capability strip under the hero that seeds the composer on click (and returns when the composer is cleared), and the new placeholder. `fetchTeamRoster` now presents the default `vibey` agent as "Pixel" with `/pixel-avatar.png` — but only when the org is still on the seeded default name, so customized agent names/avatars are untouched. Product/brand "Vibey" is unchanged.
+
+Files: `SpaceVibeyChatPanel.tsx`, `SpaceChatAgentEmptyState.tsx`, `lib/team/default-agent-identity.ts` (+test), `lib/team/team-roster-api.ts`, `space-vibey-chat-panel.constants.ts`, `apps/web/public/pixel-avatar.png`, `apps/website/public/pixel-avatar.png`
+
+## [2026-07-24 21:14] - [STYLE]
+
+What: Moved AI Chats out of the centered Search control into a pen-marked launcher below the ROAS logo, added the matching AI Chats collapse control to the drawer header, and restored New to the chat-history toolbar.
+
+Why: Search and chat entry were competing in the top bar, while opening and collapsing the drawer did not feel spatially connected to the left navigation.
+
+Impact: Search is centered by itself; the collapsed sidebar exposes a protruding AI Chats launcher above Inbox; the opened drawer collapses through its matching header control; fresh chats start from New beside history Search/filter.
+
+Files: `ShellAiChatsButton.tsx`, `ShellTopBar.tsx`, `SidebarHqRail.tsx`, `SpaceChatHeaderActions.tsx`, `SpaceConversationsHeader.tsx`, `ShellChatMenu.tsx`, both product `globals.css` files, focused tests, and `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-07-24 21:06] - [FIX]
+
+What: Chat history filter menu now expands options inline on click, adds Icon (agent / logo / status / none) and bottom Reset to defaults, and maps Icon=agent to all-agent fetch in the shell drawer.
+
+Why: Right-side hover submenus were clipped in the narrow history rail so filters looked dead; users wanted reset at the bottom and control over row leading marks instead of always showing Slack logos.
+
+Impact: Type / Status / Last activity / Group by / Icon selections apply immediately; Reset restores defaults; shell rows can show agent avatars, channel logos, status, or no leading mark.
+
+Files: `ChatHistoryFilterMenu.tsx`, `conversation-list-query.ts`, `SpaceConversationRows.tsx`, `SpaceConversationsList.tsx`, `ShellChatMenu.tsx`, `AllChatsPage.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-07-24 20:21] - [FIX]
+
+What: Collapsing the page work area now expands the AI chat drawer in place (history rail stays visible) and animates the page closed, instead of swapping to a bare full-screen chat that dropped history.
+
+Why: Closing the right-side collapse control was unmounting ShellChatDrawer and replacing it with GlobalChatPanel alone, so chat history disappeared in "full screen" chat.
+
+Impact: PanelRight collapse on Inbox/Brain/Spaces/etc keeps Today/Yesterday thread list + active chat; page content slides/shrinks away. Expand restores the page.
+
+Files: `ShellWorkspace.tsx`, `ShellChatDrawer.tsx`, `globals.css`, shell drawer/workspace tests
+
+## [2026-07-24 20:22] - [FIX]
+
+What: Top-left sidebar pin/expand works while AI Chats is open — HQ rail is no longer force-hidden (`w-0` / `return null`) when the chat drawer is open.
+
+Why: Chat-covers-menu logic blocked PanelLeft from showing Home/Work; pin state changed but the menu never rendered.
+
+Impact: With AI Chats open, Expand/Collapse sidebar shows or hides the menu beside the chat drawer.
+
+Files: `Sidebar.tsx`, `SidebarHqRail.tsx`, `ShellTopBar.test.tsx`
+
+## [2026-07-24 20:32] - [FEATURE]
+
+What: Claude-style chat history — default flat list (group by None), nested filter menu (Type / Status / Last activity / Group by date|status|campaign|agent|channel), Show all agent conversations in the filter strip, pop-out to full-page `/chats` with Search / Select / New.
+
+Why: Date buckets (Today / Yesterday / Last 7 Days) were hard-coded; Claude uses None by default with optional grouping and a dedicated All Chats surface.
+
+Impact: Shell AI drawer history is a single newest-first list unless Group by is set. Filter status defaults to Active; activity default All. `/chats` is the All Chats and Tasks page.
+
+Files: `conversation-list-query.ts`, `ChatHistoryFilterMenu.tsx`, `SpaceConversationsList.tsx`, `SpaceConversationSections.tsx`, `ShellChatMenu.tsx`, `AllChatsPage.tsx`, `app/(dashboard)/chats/page.tsx`
+
+## [2026-07-24 20:36] - [FIX]
+
+What: Page work-area open/close now right-anchors the panel body to the clip edge so Show page slides in from the right (not left-growing beside chat).
+
+Why: Flex width growth revealed left-aligned dashboard content first, which felt like a left-side entrance.
+
+Impact: Collapse page / Show page animates from the right edge of the shell.
+
+Files: `ShellWorkspace.tsx`, `globals.css`
+
+## [2026-07-24 20:38] - [STYLE]
+
+What: Chat history header is Search + hover-only All Chats pop-out + Filter. Show all agent conversations moved into the filter menu.
+
+Why: Match the tighter Claude-like toolbar (no always-visible agents icon).
+
+Impact: Shell chat list toolbar shows fewer icons; agents scope is a filter checkbox.
+
+Files: `ChatHistoryFilterMenu.tsx`, `SpaceConversationsHeader.tsx`
+
+## [2026-07-24 20:52] - [FEATURE]
+
+What: Added a draggable, persisted width for the AI drawer's chat-history rail and made scrollbars across the product appear only during active scrolling.
+
+Why: The fixed 200px history rail truncated conversation titles, while the globally styled scrollbar thumb remained visible even when the list was idle.
+
+Impact: Users can widen or narrow chat history in docked and full-screen chat; docked resizing preserves active-chat space by growing the drawer with the rail. Any product scrollbar fades back to hidden shortly after scrolling stops.
+
+Files: `root-providers.tsx`, `ShellChatDrawer.tsx`, `ResizableDivider.tsx`, `use-shell-store.ts`, both product `globals.css` files, and focused tests
+
+## [2026-07-24 20:59] - [FIX]
+
+What: Removed the AI drawer's fixed 720px resize ceiling, made dragging it to the viewport edge collapse the page into full-screen chat, and changed page restoration to an explicit slide from beyond the right edge.
+
+Why: The fixed drawer clamp stopped the drag halfway across larger screens, while width-only flex growth could still reveal the page from the left.
+
+Impact: The AI drawer can consume the full available shell width. Releasing at the right edge enters the same full-screen state as the collapse button, and Show page restores the prior docked width while the page slides in from the right.
+
+Files: `ShellChatDrawer.tsx`, `ShellWorkspace.tsx`, `use-shell-store.ts`, `globals.css`, shell tests, and `documentation/features/claude-chatgpt-shell.md`
 
 ## [2026-07-24 21:20] - [STYLE]
 
@@ -244,3 +384,33 @@ Why: Ads Production could launch the prior video form but the worker did not rec
 Impact: Users can choose Static ads or Video ads, request 1-10 client-ready static outputs, attach approved people/products/proof, and have Lux create visually verified image Deliverables in Space Media. Vibey can invoke the same Static Ad Book conversationally. Focused web, API, agent-api, and mission-worker tests pass; the supplied renderer produced and passed visual QA on a real 1080x1350 PNG.
 
 Files: `apps/web/src/features/spaces/components/ads-research/*StaticAd*`, `apps/web/src/features/spaces/components/ads-research/AdsResearchProductionView.tsx`, `apps/web/src/features/spaces/components/playbooks/static-ad-production*`, `apps/web/src/features/spaces/config/static-ad-formats.config.ts`, `apps/mission-worker/src/modules/missions/playbooks/*ad-production*`, `apps/mission-worker/src/modules/missions/playbooks/ig-organic-video-ad.playbook.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-plan-phase.service.ts`, `apps/api/src/modules/missions/services/webinar-fulfillment-team.service.ts`, `apps/agent-api/src/modules/agent-sync/services/static-ad-book-skill-contract.test.ts`, `supabase/migrations/20260724143000_static_ad_book_skill.sql`, `documentation/features/social-research.md`
+
+## [2026-07-24 21:21] - [FEATURE]
+
+What: ClickUp Brain–inspired empty mini-chat — capability scroller under agency/agent hero (seeds composer; clear restores chips), Find/Research/Create… action pills above the input, Ask/create/search placeholder, and removed the redundant “New chat” header title.
+
+Why: Docked empty chat lagged ClickUp’s discoverability and still showed a useless New chat label.
+
+Impact: Empty conversations guide users into prompts without leaving the drawer; capability chips (what) stay distinct from action pills (how).
+
+Files: `SpaceChatAgentEmptyState.tsx`, `SpaceVibeyChatPanel.tsx`, `ShellEmptyChat*.tsx`, `shell-empty-chat-prompts.config.ts`, `ChatInput` `onComposerValueChange`, web+website `globals.css`, `claude-chatgpt-shell.md`, tests
+
+## [2026-07-24 21:26] - [STYLE]
+
+What: Redesigned AI Chats peek (left-aligned overflow, chevron, stays as toggle), full-width New under history Search, Cursor-style relative ages on chat rows, X to close the drawer, tightened history search, and removed chat names from the top bar.
+
+Why: Peek/history chrome felt sparse and ClickUp/Cursor-inspired density was clearer for scanning recency and starting chats.
+
+Impact: Collapsed rail peeks AI Chats from the left; history is denser and more scannable; closing chat is an X or the peek toggle.
+
+Files: `ShellAiChatsButton.tsx`, `SidebarHqRail.tsx`, `SpaceConversationsHeader.tsx`, `SpaceConversationRows.tsx`, `SpaceChatHeaderActions.tsx`, `ShellTopBar.tsx`, `format-compact-relative-time.ts`, web+website `globals.css`, docs/tests
+
+## [2026-07-24 23:08] - [FIX]
+
+What: Completed the release verification fixes for the AI Chats, Programs sidebar, and shared chat surfaces by removing a stale shell route import and updating test fixtures and mocks to match the current team-roster and Programs contracts.
+
+Why: The implementation type-checked, but focused tests still referenced the pre-cache Programs API and an incomplete roster entry, which would block packaging the remaining WIP as one clean release.
+
+Impact: Web and API type-checks pass, the Fathom routing tests pass, and all 69 focused web tests for the changed shell, conversation, Brain, and chat surfaces pass.
+
+Files: `ShellChatMenu.tsx`, `SpaceChatAgentEmptyState.test.tsx`, `SidebarHqSection.test.tsx`, `SidebarHqSpacesGroupedList.test.tsx`

@@ -39,6 +39,8 @@ export interface ChatInputProps {
   setTextRef?: React.MutableRefObject<((text: string) => void) | null>
   /** Mirrors the current composer text on each render. */
   composerMirrorRef?: React.MutableRefObject<string>
+  /** Fires whenever composer text changes (empty-state chrome, etc.). */
+  onComposerValueChange?: (value: string) => void
   /** Selected capability chip shown inside composer footer. */
   activeCapabilityChip?: { label: string; icon: string } | null
   /** Clear selected capability chip. */

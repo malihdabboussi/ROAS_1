@@ -1,4 +1,5 @@
 import { backendGet } from '@/lib/api/backend-client'
+import { normalizeDefaultAgentIdentity } from '@/lib/team/default-agent-identity'
 
 export interface TeamRosterEntry {
   participant_id: string
@@ -34,5 +35,6 @@ export async function fetchTeamRoster(opts?: FetchTeamRosterOptions): Promise<Te
   if (opts?.kind) params.set('kind', opts.kind)
   if (opts?.readyOnly) params.set('ready_only', 'true')
   const qs = params.toString()
-  return backendGet<TeamRosterEntry[]>(`/api/team-roster${qs ? `?${qs}` : ''}`)
+  const roster = await backendGet<TeamRosterEntry[]>(`/api/team-roster${qs ? `?${qs}` : ''}`)
+  return roster.map(normalizeDefaultAgentIdentity)
 }

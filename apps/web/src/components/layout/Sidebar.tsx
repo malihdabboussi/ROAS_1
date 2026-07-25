@@ -4,12 +4,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useShellPrefsHydrated } from '@/components/shell/use-shell-prefs-hydrated'
 import { useShellStore } from '@/components/shell/use-shell-store'
+import { useOrgStore } from '@/features/org/store/use-org-store'
 import { StudioSearchModal } from '@/features/studio/components/StudioSearchModal'
 import { FeatureUpdateDetailModal } from '@/features/updates/components/FeatureUpdateDetailModal'
 import { FeatureUpdatesPanel } from '@/features/updates/components/FeatureUpdatesPanel'
 import { useFeatureUpdates } from '@/features/updates/hooks/useFeatureUpdates'
 import type { FeatureUpdate } from '@/features/updates/types'
-import { useOrgStore } from '@/features/org/store/use-org-store'
 import { createProgram, invalidateProgramsListCache } from '@/lib/programs'
 import { DeleteCampaignDialog } from './DeleteCampaignDialog'
 import { NewCampaignModal } from './NewCampaignModal'
@@ -28,19 +28,12 @@ export function Sidebar(props: SidebarProps) {
   const shellPrefsHydrated = useShellPrefsHydrated()
   const sidebarPinnedRaw = useShellStore((s) => s.sidebarPinned)
   const sidebarPeekRaw = useShellStore((s) => s.sidebarPeek)
-  const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
   const sidebarPinned = shellPrefsHydrated ? sidebarPinnedRaw : false
   const sidebarPeek = shellPrefsHydrated ? sidebarPeekRaw : false
-  // AI drawer covers the menu — collapse HQ rail width to zero while open.
+  // Menu pin/peek still works while AI chat is open — drawer sits beside the rail.
   const hqDesktopWidth =
-    c.sidebarMode === 'hq'
-      ? chatDrawerOpen
-        ? 'md:w-0 md:min-w-0 md:overflow-hidden md:border-0 md:p-0'
-        : sidebarPinned
-          ? 'md:w-[272px]'
-          : 'md:w-[72px]'
-      : c.desktopWidth
-  const hqPeeking = c.sidebarMode === 'hq' && sidebarPeek && !sidebarPinned && !chatDrawerOpen
+    c.sidebarMode === 'hq' ? (sidebarPinned ? 'md:w-[272px]' : 'md:w-[72px]') : c.desktopWidth
+  const hqPeeking = c.sidebarMode === 'hq' && sidebarPeek && !sidebarPinned
   const {
     updates: featureUpdateRows,
     loading: featureUpdatesLoading,

@@ -90,6 +90,7 @@ vi.mock('@/lib/programs', () => ({
   loadProgramsCached: mocks.loadProgramsCached,
   peekProgramsMemoryCache: mocks.peekProgramsMemoryCache,
   readProgramsLocalCache: mocks.readProgramsLocalCache,
+  resolveProgramIconColorId: () => 'purple',
 }))
 
 vi.mock('./SidebarHqSpacesMenuLayers', () => ({

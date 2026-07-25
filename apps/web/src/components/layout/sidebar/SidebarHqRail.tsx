@@ -1,16 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { surfaceFromPathname } from '@/components/global-chat/config/work-context.config'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import { isShellHomeRoute } from '@/components/shell/shell-route-policy'
+import { ShellAiChatsButton } from '@/components/shell/ShellAiChatsButton'
 import { shellSidebarExpanded, useShellStore } from '@/components/shell/use-shell-store'
 import { cn } from '@/lib/utils/cn'
 import { isManageRailItemActive, workContextSurfaceForPanel } from './sidebar-hq-rail.helpers'
 import type { ManageRailItem } from './sidebar-types'
 import { SidebarHqHubLogoButton } from './SidebarHqHubLogoButton'
-import { SidebarHqHubMenuPane, type HubMenuPaneProps } from './SidebarHqHubMenu'
+import type { HubMenuPaneProps } from './SidebarHqHubMenu'
 import { SidebarHqShellFooter } from './SidebarHqShellFooter'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -20,7 +22,6 @@ export function SidebarHqRail({
   visibleRailItems,
   clearSpacesFlyoutCloseTimer,
   closeHoverManageFlyout,
-  hubMenuProps,
 }: {
   c: SidebarControllerReturn
   featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
@@ -30,6 +31,7 @@ export function SidebarHqRail({
   hubMenuProps: HubMenuPaneProps
 }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
   const sidebarPinned = useShellStore((s) => s.sidebarPinned)
@@ -37,28 +39,23 @@ export function SidebarHqRail({
   const holdSidebarPeek = useShellStore((s) => s.holdSidebarPeek)
   const scheduleSidebarPeekClose = useShellStore((s) => s.scheduleSidebarPeekClose)
   const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
+  const workAreaOpen = useShellStore((s) => s.workAreaOpen)
+  const openChatDrawer = useShellStore((s) => s.openChatDrawer)
+  const restoreChatDrawer = useShellStore((s) => s.restoreChatDrawer)
+  const minimizeChatDrawer = useShellStore((s) => s.minimizeChatDrawer)
+  const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
+  const setSidebarPinned = useShellStore((s) => s.setSidebarPinned)
   const shellExpanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
 
+  // Keep the HQ rail icon-only — never promote the expanded hub menu.
   useEffect(() => {
-    if (chatDrawerOpen) {
-      // AI drawer covers the menu — force hub closed while chat is open.
-      if (c.hubMenuOpen || c.hubMenuClosing) c.forceCloseHubMenu()
-      return
-    }
-    if (shellExpanded) {
-      if (!c.hubMenuOpen && !c.hubMenuClosing) c.openHubMenu()
-      return
-    }
-    // Peek/pin end: close instantly — animated close thrash causes the glitchy pop.
+    setSidebarPinned(false)
     if (c.hubMenuOpen || c.hubMenuClosing) c.forceCloseHubMenu()
-  }, [
-    chatDrawerOpen,
-    shellExpanded,
-    c.hubMenuOpen,
-    c.hubMenuClosing,
-    c.openHubMenu,
-    c.forceCloseHubMenu,
-  ])
+  }, [c.hubMenuOpen, c.hubMenuClosing, c.forceCloseHubMenu, setSidebarPinned])
+
+  useEffect(() => {
+    if (shellExpanded && (c.hubMenuOpen || c.hubMenuClosing)) c.forceCloseHubMenu()
+  }, [shellExpanded, c.hubMenuOpen, c.hubMenuClosing, c.forceCloseHubMenu])
 
   const syncWorkContextForPath = (href: string) => {
     setWorkContext({ surface: surfaceFromPathname(href) })
@@ -91,18 +88,55 @@ export function SidebarHqRail({
     router.push('/home')
   }
 
-  const isPeeking = sidebarPeek && !sidebarPinned
-  const hubExpanded = !chatDrawerOpen && (c.hubMenuOpen || c.hubMenuClosing || shellExpanded)
+  const isPeeking = false
+  // Icon rail only — expanded hub menu is retired.
+  const hubExpanded = false
+  const routeConversationId = searchParams.get('conv')
+  const chatParam = searchParams.get('chat')
+  const homeAiOpen =
+    isShellHomeRoute(c.pathname) &&
+    (Boolean(routeConversationId) || chatParam === 'new' || chatParam === 'starting')
+  const aiChatsActive = chatDrawerOpen || homeAiOpen
+  const chatFullScreen = chatDrawerOpen && !workAreaOpen
 
-  // AI drawer covers the sidebar menu entirely while open.
-  if (chatDrawerOpen) {
-    return null
+  /** Hover opens the docked (mini) chat drawer. */
+  const peekOpenAiChats = () => {
+    closeHoverManageFlyout()
+    if (chatDrawerOpen || homeAiOpen) return
+    if (isShellHomeRoute(c.pathname) && (routeConversationId || chatParam)) {
+      router.push('/home')
+      if (routeConversationId) openChatDrawer(routeConversationId)
+      else restoreChatDrawer()
+      return
+    }
+    restoreChatDrawer()
+  }
+
+  /**
+   * Click opens full-screen chat. If already full-screen, collapses the drawer.
+   * If docked, upgrades to full-screen.
+   */
+  const clickAiChats = () => {
+    closeHoverManageFlyout()
+    if (chatFullScreen) {
+      minimizeChatDrawer()
+      return
+    }
+    if (isShellHomeRoute(c.pathname) && (routeConversationId || chatParam)) {
+      router.push('/home')
+      if (routeConversationId) openChatDrawer(routeConversationId)
+      else restoreChatDrawer()
+      setWorkAreaOpen(false)
+      return
+    }
+    if (!chatDrawerOpen) restoreChatDrawer()
+    setWorkAreaOpen(false)
   }
 
   return (
     <div
       className={cn(
-        'hub-sidebar-shell box-border flex h-full min-h-0 shrink-0 flex-col transition-[width] duration-200 ease-out',
+        'hub-sidebar-shell relative box-border flex h-full min-h-0 shrink-0 flex-col transition-[width] duration-200 ease-out',
         hubExpanded ? 'hub-sidebar-shell-expanded' : 'hub-sidebar-shell-collapsed',
         // Hover peek pops over main content; pin stays in-flow.
         isPeeking && 'hub-sidebar-shell-peek',
@@ -117,7 +151,7 @@ export function SidebarHqRail({
     >
       <div
         className={cn(
-          'flex min-h-0 flex-1 flex-col overflow-hidden',
+          'flex min-h-0 flex-1 flex-col overflow-visible',
           hubExpanded ? 'bg-background shell-sidebar-panel' : 'card-glass rounded-2xl',
         )}
       >
@@ -125,7 +159,16 @@ export function SidebarHqRail({
           <SidebarHqHubLogoButton hubOpen={hubExpanded} onToggle={goHome} />
         </div>
 
-        <div className="relative min-h-0 flex-1">
+        <div className="hub-sidebar-ai-row shrink-0">
+          <ShellAiChatsButton
+            active={aiChatsActive}
+            compact={aiChatsActive}
+            onClick={clickAiChats}
+            onMouseEnter={peekOpenAiChats}
+          />
+        </div>
+
+        <div className="relative min-h-0 flex-1 overflow-hidden">
           <div
             className={cn(
               'hub-sidebar-layer flex h-full w-full flex-col',
@@ -339,15 +382,6 @@ export function SidebarHqRail({
                 return null
               })}
             </nav>
-          </div>
-          <div
-            className={cn(
-              'hub-sidebar-layer flex h-full min-w-0 flex-col',
-              hubExpanded && 'hub-sidebar-layer-visible',
-            )}
-            aria-hidden={!hubExpanded}
-          >
-            {hubExpanded ? <SidebarHqHubMenuPane {...hubMenuProps} /> : null}
           </div>
         </div>
         <SidebarHqShellFooter

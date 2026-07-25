@@ -1,5 +1,6 @@
 export { ConversationActionsMenu } from './ConversationActionsMenu'
 export type { ConversationActionsMenuProps } from './ConversationActionsMenu'
+export { ChatHistoryFilterMenu } from './ChatHistoryFilterMenu'
 export { ConversationHeaderTitle } from './ConversationHeaderTitle'
 export { ConversationScopePicker } from './ConversationScopePicker'
 export type { ConversationScopePickerHandle } from './ConversationScopePicker'

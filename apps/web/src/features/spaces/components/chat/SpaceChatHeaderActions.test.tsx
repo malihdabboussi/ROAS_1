@@ -1,7 +1,6 @@
 import type { HTMLAttributes } from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-
 import { SpaceChatHeaderActions } from './SpaceChatHeaderActions'
 
 vi.mock('framer-motion', () => ({
@@ -88,5 +87,32 @@ describe('SpaceChatHeaderActions', () => {
 
     expect(onSearchQueryChange).toHaveBeenCalledWith('launch plan')
     expect(onSearchClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('uses an X close control in shell chrome', () => {
+    const onCollapse = vi.fn()
+
+    render(
+      <SpaceChatHeaderActions
+        searchOpen={false}
+        searchQuery=""
+        voiceActive={false}
+        hasVoiceTasks={false}
+        hasRunningVoiceTasks={false}
+        onCollapse={onCollapse}
+        onSearchOpen={vi.fn()}
+        onSearchClose={vi.fn()}
+        onSearchQueryChange={vi.fn()}
+        onNewConversation={vi.fn()}
+        onShowVoiceRuns={vi.fn()}
+        onShowConversations={vi.fn()}
+        hideHistoryChrome
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close AI Chats' }))
+
+    expect(onCollapse).toHaveBeenCalledTimes(1)
+    expect(screen.queryByLabelText('Collapse ROAS chat')).not.toBeInTheDocument()
   })
 })

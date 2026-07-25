@@ -1,14 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { BrainVisualizationCanvasStage } from './BrainVisualizationCanvasStage'
 import type { BrainConnection, BrainMemory } from '../types'
+import { BrainVisualizationCanvasStage } from './BrainVisualizationCanvasStage'
 
 const mocks = vi.hoisted(() => ({
   forceGraphProps: vi.fn(),
-}))
-
-vi.mock('@/components/vibey/vibey-loading-orb', () => ({
-  VibeyLoadingOrb: ({ text }: { text?: string }) => <div data-testid="loading-orb">{text}</div>,
 }))
 
 vi.mock('./ForceGraph', async () => {
@@ -106,13 +102,13 @@ describe('BrainVisualizationCanvasStage', () => {
     expect(onRetry).toHaveBeenCalledTimes(1)
   })
 
-  it('shows the loading orb only while loading without graph data', () => {
+  it('shows the constellation placeholder only while loading without graph data', () => {
     renderCanvasStage({
       activeLoading: true,
       hasActiveGraphData: false,
     })
 
-    expect(screen.getByTestId('loading-orb').textContent).toBe('Loading Brain...')
+    expect(screen.getByRole('img', { name: 'Loading Brain…' })).toBeTruthy()
     expect(screen.queryByTestId('force-graph')).toBeNull()
   })
 

@@ -139,11 +139,9 @@ describe('SpaceConversationsList', () => {
   it('renders grouped conversations and preserves row interactions', () => {
     const onSelectConversation = vi.fn()
 
-    render(<SpaceConversationsList {...baseProps({ onSelectConversation })} />)
+    render(<SpaceConversationsList {...baseProps({ onSelectConversation, groupBy: 'date' })} />)
 
-    expect(screen.getByText('Pinned')).toBeTruthy()
     expect(screen.getByText('Today')).toBeTruthy()
-    expect(screen.getByText('Archived')).toBeTruthy()
     expect(screen.getByText('Untitled conversation')).toBeTruthy()
     expect(screen.getByText('Thinking through it')).toBeTruthy()
     expect(screen.getByTestId('chat-orb')).toBeTruthy()
@@ -169,5 +167,22 @@ describe('SpaceConversationsList', () => {
     expect(screen.getByText('Untitled conversation')).toBeTruthy()
     expect(screen.queryByText('Launch plan')).toBeNull()
     expect(commitCount).toBeLessThan(12)
+  })
+
+  it('keeps New as a full-width control under the shell history toolbar', () => {
+    const onNewConversation = vi.fn()
+
+    render(
+      <SpaceConversationsList
+        {...baseProps({
+          hideHeaderBottomBorder: true,
+          newButtonBelowSearch: true,
+          onNewConversation,
+        })}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }))
+
+    expect(onNewConversation).toHaveBeenCalledTimes(1)
   })
 })

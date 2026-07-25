@@ -24,7 +24,7 @@ describe('shell persisted prefs hydration', () => {
     useShellStore.setState({
       sidebarPinned: false,
       menuMode: 'home',
-      spaceWorkOpen: true,
+      workAreaOpen: true,
       rightPanel: { open: false, tab: 'tasks' },
     })
   })
@@ -42,6 +42,15 @@ describe('shell persisted prefs hydration', () => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ sidebarPinned: true }))
     hydrateShellStoreFromStorage()
     expect(useShellStore.getState().sidebarPinned).toBe(false)
+  })
+
+  it('restores and clamps the chat history rail width', () => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ chatHistoryWidth: 900 }))
+    hydrateShellStoreFromStorage()
+    expect(useShellStore.getState().chatHistoryWidth).toBe(420)
+
+    useShellStore.getState().setChatHistoryWidth(100)
+    expect(useShellStore.getState().chatHistoryWidth).toBe(180)
   })
 })
 
@@ -87,17 +96,25 @@ describe('shell artifact viewer state', () => {
   })
 })
 
-describe('shell space work dock', () => {
+describe('shell work area', () => {
   beforeEach(() => {
     useShellStore.setState({
-      spaceWorkOpen: false,
+      workAreaOpen: false,
+      chatDrawer: { open: false, conversationId: null, width: 420, minimized: true },
     })
   })
 
-  it('toggles the Space dock open without item tabs', () => {
-    useShellStore.getState().setSpaceWorkOpen(true)
-    expect(useShellStore.getState().spaceWorkOpen).toBe(true)
-    useShellStore.getState().toggleSpaceWorkOpen()
-    expect(useShellStore.getState().spaceWorkOpen).toBe(false)
+  it('toggles the work area on any route', () => {
+    useShellStore.getState().setWorkAreaOpen(true)
+    expect(useShellStore.getState().workAreaOpen).toBe(true)
+    useShellStore.getState().toggleWorkAreaOpen()
+    expect(useShellStore.getState().workAreaOpen).toBe(false)
+  })
+
+  it('opens the chat drawer when the work area collapses', () => {
+    useShellStore.getState().setWorkAreaOpen(true)
+    useShellStore.getState().setWorkAreaOpen(false)
+    expect(useShellStore.getState().chatDrawer.open).toBe(true)
+    expect(useShellStore.getState().chatDrawer.minimized).toBe(false)
   })
 })

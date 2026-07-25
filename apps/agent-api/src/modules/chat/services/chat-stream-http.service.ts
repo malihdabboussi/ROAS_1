@@ -43,11 +43,12 @@ export interface ChatMessageBody {
     label: string
   }>
   message_references?: Array<{
-    kind: 'artifact' | 'media' | 'mission'
+    kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person'
     id: string
     label: string
     type?: string
     campaign_id?: string
+    brain_id?: string
   }>
   ui_selected_artifact?: {
     id: string
@@ -396,9 +397,7 @@ export class ChatStreamHttpService {
 
   private resolveRequestId(req: Request): string {
     const raw =
-      req.headers['x-vibey-request-id'] ??
-      req.headers['x-request-id'] ??
-      req.headers['x-vercel-id']
+      req.headers['x-vibey-request-id'] ?? req.headers['x-request-id'] ?? req.headers['x-vercel-id']
     const value = Array.isArray(raw) ? raw[0] : raw
     return typeof value === 'string' && value.trim().length > 0
       ? value.trim().slice(0, 256)

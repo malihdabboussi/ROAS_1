@@ -262,7 +262,7 @@ Every button = **size class** + **color variant class**.
 
 | Class | Use | Example |
 |---|---|---|
-| `button-glass-primary` | Primary CTA — green/emerald glass, brand-aligned | "Continue", "Create", "Add" |
+| `button-glass-primary` | Primary CTA — Pixel purple glass, brand-aligned | "Continue", "Create", "Add" |
 | `button-glass-neutral` | Cancel, Back, secondary action | "Cancel", "Back" |
 | `button-glass-destructive` | Destructive action | "Delete", "Remove" |
 | `button-glass-purple` | Special / nav-aligned action | View entity, navigate-into |
@@ -872,7 +872,7 @@ The product is being prepared for a white-label distribution. **Every** style de
 | `--color-background`, `--color-card`, `--color-secondary` | ✅ | Page chrome |
 | `--color-foreground`, `--color-muted-foreground` | ✅ | Text palette |
 | `--color-border` | ✅ | Hairlines |
-| `--color-primary` | ✅ | Brand primary (default green) |
+| `--color-primary` | ✅ | Brand primary (Pixel purple) |
 | `--color-accent-selected` | ✅ | Selected nav state (default Vibey purple) |
 | `--color-destructive`, `--color-warning`, `--color-success` | ✅ | Semantic states |
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { PastedTextComposerControls, usePastedTextBlocks } from '@/features/composer/pasted-text'
 import { usePresignedUpload } from '@/lib/hooks/use-presigned-upload'
 import { useWorkspaceSettingsModal } from '@/lib/settings/workspace-settings-modal-context'
@@ -53,6 +53,7 @@ export function ChatInput({
   insertTextRef,
   setTextRef,
   composerMirrorRef,
+  onComposerValueChange,
   activeCapabilityChip,
   onClearCapabilityChip,
   compact = false,
@@ -100,6 +101,10 @@ export function ChatInput({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const valueRef = useRef(value)
   valueRef.current = value
+
+  useEffect(() => {
+    onComposerValueChange?.(value)
+  }, [onComposerValueChange, value])
 
   const { upload: presignedUpload } = usePresignedUpload()
   const {

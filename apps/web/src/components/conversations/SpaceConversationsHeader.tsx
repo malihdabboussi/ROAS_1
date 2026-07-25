@@ -17,12 +17,13 @@ interface SpaceConversationsHeaderProps {
   hideHeaderBottomBorder?: boolean
   /** Hide the green New control when another surface already owns new-chat. */
   hideNewButton?: boolean
+  /** Render New as a full-width row under the search/filter toolbar. */
+  newButtonBelowSearch?: boolean
   /** Omit inline list search when a parent surface owns search. */
   hideSearch?: boolean
-  /**
-   * Parent-owned search control rendered after agent/filter controls
-   * (e.g. shell Studio search). Used when `hideSearch` is true.
-   */
+  /** Extra controls before all-agents (e.g. pop-out to All Chats). */
+  headerStartSlot?: ReactNode
+  /** Parent-owned search control when `hideSearch` is true. */
   searchSlot?: ReactNode
   /** Extra controls after all-agents, before search (e.g. list filter). */
   headerEndSlot?: ReactNode
@@ -43,8 +44,10 @@ export function SpaceConversationsHeader({
   hideBackButton,
   hideHeaderBottomBorder,
   hideNewButton,
+  newButtonBelowSearch,
   hideSearch,
   searchSlot,
+  headerStartSlot,
   headerEndSlot,
   compactHeader,
   compactSearchOpen,
@@ -54,6 +57,9 @@ export function SpaceConversationsHeader({
   allAgentsMode,
   onAllAgentsModeChange,
 }: SpaceConversationsHeaderProps) {
+  const showInlineNew = !hideNewButton && !newButtonBelowSearch
+  const showBelowNew = !hideNewButton && newButtonBelowSearch
+
   const allAgentsButton = showAllAgentsToggle ? (
     <button
       type="button"
@@ -74,7 +80,7 @@ export function SpaceConversationsHeader({
 
   const inlineSearch = !hideSearch ? (
     hideHeaderBottomBorder ? (
-      <label className="hub-menu-link-row text-muted-foreground relative min-w-0 flex-1 cursor-text">
+      <label className="shell-chat-history-search text-muted-foreground relative min-w-0 flex-1 cursor-text">
         <Search className="shrink-0" aria-hidden />
         <input
           value={query}
@@ -100,132 +106,162 @@ export function SpaceConversationsHeader({
     <div className="min-w-0 flex-1">{searchSlot}</div>
   ) : null
 
+  const belowSearchNew = showBelowNew ? (
+    <button
+      type="button"
+      onClick={onNewConversation}
+      className="button-glass-primary body-3 rounded-spacing-2 mt-spacing-2 h-spacing-8 gap-spacing-1 inline-flex w-full items-center justify-center font-semibold"
+      aria-label="New chat"
+      title="New chat"
+    >
+      <Plus className="icon-sm" aria-hidden />
+      <span>New chat</span>
+    </button>
+  ) : null
+
   return (
     <div
       className={cn(
-        'gap-spacing-2 flex shrink-0 items-center',
+        'flex shrink-0 flex-col',
         hideHeaderBottomBorder ? 'pb-spacing-1' : 'p-spacing-3 border-border border-b',
       )}
     >
-      {!hideBackButton ? (
-        <button
-          type="button"
-          onClick={onBack}
-          className="btn-icon-bare hover:bg-hover-subtle shrink-0"
-          aria-label="Back to chat"
-          title="Back to chat"
-        >
-          <ArrowLeft className="icon-sm" />
-        </button>
-      ) : null}
-      {compactHeader ? (
-        <div className="gap-spacing-2 group flex min-w-0 flex-1 items-center">
-          <div className="body-3 text-foreground min-w-0 flex-1 truncate font-semibold">
-            Conversations
-          </div>
-          <div
-            className={cn(
-              'gap-spacing-0 flex shrink-0 items-center transition-[opacity,transform] duration-200 ease-out',
-              compactSearchOpen || hideSearch
-                ? 'pointer-events-auto translate-x-0 opacity-100'
-                : 'pointer-events-none translate-x-4 opacity-0 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100',
-            )}
-            onClick={(event) => event.stopPropagation()}
+      <div className="gap-spacing-2 flex items-center">
+        {!hideBackButton ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="btn-icon-bare hover:bg-hover-subtle shrink-0"
+            aria-label="Back to chat"
+            title="Back to chat"
           >
-            <button
-              type="button"
-              onClick={() => onCollapsedChange?.(true)}
-              className={CONVERSATION_ICON_BUTTON_CLASS}
-              aria-label="Collapse conversations"
-              title="Collapse conversations"
+            <ArrowLeft className="icon-sm" />
+          </button>
+        ) : null}
+        {compactHeader ? (
+          <div className="gap-spacing-2 group flex min-w-0 flex-1 items-center">
+            <div className="body-3 text-foreground min-w-0 flex-1 truncate font-semibold">
+              Conversations
+            </div>
+            <div
+              className={cn(
+                'gap-spacing-0 flex shrink-0 items-center transition-[opacity,transform] duration-200 ease-out',
+                compactSearchOpen || hideSearch
+                  ? 'pointer-events-auto translate-x-0 opacity-100'
+                  : 'pointer-events-none translate-x-4 opacity-0 group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100',
+              )}
+              onClick={(event) => event.stopPropagation()}
             >
-              <RxDoubleArrowLeft className="icon-sm" aria-hidden />
-            </button>
-            {allAgentsButton}
-            {headerEndSlot}
-            {!hideSearch ? (
-              <>
-                <motion.div
-                  initial={false}
-                  animate={{
-                    width: compactSearchOpen ? 180 : 0,
-                    opacity: compactSearchOpen ? 1 : 0,
-                  }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  className="shrink-0 overflow-hidden"
-                >
-                  <div className="relative w-[180px]">
-                    <input
-                      type="search"
-                      value={query}
-                      onChange={(event) => onQueryChange(event.target.value)}
-                      placeholder="Search..."
-                      className="input-glass body-3 text-foreground h-spacing-8 rounded-spacing-2 py-spacing-1 pl-spacing-3 pr-spacing-8 w-full"
-                      autoFocus={compactSearchOpen}
-                    />
+              <button
+                type="button"
+                onClick={() => onCollapsedChange?.(true)}
+                className={CONVERSATION_ICON_BUTTON_CLASS}
+                aria-label="Collapse conversations"
+                title="Collapse conversations"
+              >
+                <RxDoubleArrowLeft className="icon-sm" aria-hidden />
+              </button>
+              {headerStartSlot}
+              {allAgentsButton}
+              {headerEndSlot}
+              {!hideSearch ? (
+                <>
+                  <motion.div
+                    initial={false}
+                    animate={{
+                      width: compactSearchOpen ? 180 : 0,
+                      opacity: compactSearchOpen ? 1 : 0,
+                    }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    className="shrink-0 overflow-hidden"
+                  >
+                    <div className="relative w-[180px]">
+                      <input
+                        type="search"
+                        value={query}
+                        onChange={(event) => onQueryChange(event.target.value)}
+                        placeholder="Search..."
+                        className="input-glass body-3 text-foreground h-spacing-8 rounded-spacing-2 py-spacing-1 pl-spacing-3 pr-spacing-8 w-full"
+                        autoFocus={compactSearchOpen}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onCompactSearchOpenChange(false)
+                          onQueryChange('')
+                        }}
+                        className="btn-icon-bare absolute right-1 top-1/2 -translate-y-1/2"
+                        aria-label="Close search"
+                        title="Close search"
+                      >
+                        <X className="icon-sm" aria-hidden />
+                      </button>
+                    </div>
+                  </motion.div>
+                  {!compactSearchOpen ? (
                     <button
                       type="button"
-                      onClick={() => {
-                        onCompactSearchOpenChange(false)
-                        onQueryChange('')
-                      }}
-                      className="btn-icon-bare absolute right-1 top-1/2 -translate-y-1/2"
-                      aria-label="Close search"
-                      title="Close search"
+                      onClick={() => onCompactSearchOpenChange(true)}
+                      className={CONVERSATION_ICON_BUTTON_CLASS}
+                      aria-label="Search conversations"
+                      title="Search conversations"
                     >
-                      <X className="icon-sm" aria-hidden />
+                      <Search className="icon-sm" aria-hidden />
                     </button>
-                  </div>
-                </motion.div>
-                {!compactSearchOpen ? (
-                  <button
-                    type="button"
-                    onClick={() => onCompactSearchOpenChange(true)}
-                    className={CONVERSATION_ICON_BUTTON_CLASS}
-                    aria-label="Search conversations"
-                    title="Search conversations"
-                  >
-                    <Search className="icon-sm" aria-hidden />
-                  </button>
-                ) : null}
-              </>
-            ) : null}
-            {!hideNewButton ? (
+                  ) : null}
+                </>
+              ) : null}
+              {showInlineNew ? (
+                <button
+                  type="button"
+                  onClick={onNewConversation}
+                  className={CONVERSATION_ICON_BUTTON_CLASS}
+                  aria-label="New conversation"
+                  title="New conversation"
+                >
+                  <Plus className="icon-sm" aria-hidden />
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : hideHeaderBottomBorder ? (
+          <div className="group/chat-history-header gap-spacing-1 flex min-w-0 flex-1 items-center">
+            {inlineSearch}
+            {headerStartSlot}
+            {headerEndSlot}
+            {showInlineNew ? (
               <button
                 type="button"
                 onClick={onNewConversation}
-                className={CONVERSATION_ICON_BUTTON_CLASS}
-                aria-label="New conversation"
-                title="New conversation"
+                className="button-compact button-glass-primary gap-spacing-1 shrink-0"
+                aria-label="New chat"
+                title="New chat"
               >
                 <Plus className="icon-sm" aria-hidden />
+                <span>New</span>
               </button>
             ) : null}
           </div>
-        </div>
-      ) : hideHeaderBottomBorder ? (
-        <>
-          {inlineSearch}
-          {allAgentsButton}
-          {headerEndSlot}
-        </>
-      ) : (
-        <>
-          {allAgentsButton}
-          {headerEndSlot}
-          {inlineSearch}
-          {!hideNewButton ? (
-            <button
-              type="button"
-              onClick={onNewConversation}
-              className="badge-glass badge-glass-green body-4 rounded-spacing-2 h-spacing-8 gap-spacing-1 px-spacing-3 inline-flex shrink-0 items-center font-semibold leading-none transition-opacity hover:opacity-90"
-            >
-              <Plus className="icon-sm" />
-              New
-            </button>
-          ) : null}
-        </>
-      )}
+        ) : (
+          <>
+            {headerStartSlot}
+            {allAgentsButton}
+            {headerEndSlot}
+            {inlineSearch}
+            {showInlineNew ? (
+              <button
+                type="button"
+                onClick={onNewConversation}
+                className="badge-glass badge-glass-green body-4 rounded-spacing-2 h-spacing-8 gap-spacing-1 px-spacing-3 inline-flex shrink-0 items-center font-semibold leading-none transition-opacity hover:opacity-90"
+              >
+                <Plus className="icon-sm" />
+                New
+              </button>
+            ) : null}
+          </>
+        )}
+      </div>
+      {belowSearchNew}
     </div>
   )
 }

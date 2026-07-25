@@ -215,14 +215,12 @@ export class FathomWebhookService {
     routeResult: Record<string, unknown> | null,
   ): Promise<void> {
     if (!this.pageGraderMeetings) return
-    const routes = Array.isArray(routeResult?.fanout_results)
-      ? routeResult.fanout_results
-          .map((value) => {
-            const row = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
-            return { space_id: String(row.space_id ?? ''), item_id: String(row.item_id ?? '') }
-          })
-          .filter((row) => row.space_id && row.item_id)
-      : []
+    // A Fathom recording now lands on exactly one canonical Space route, so the
+    // automation result carries a single space_id/item_id pointer instead of a
+    // fan-out array.
+    const spaceId = String(routeResult?.space_id ?? '')
+    const itemId = String(routeResult?.item_id ?? '')
+    const routes = spaceId && itemId ? [{ space_id: spaceId, item_id: itemId }] : []
     try {
       const result = await this.pageGraderMeetings.syncFathomMeeting({
         supabase: this.repository.getServiceClient(),

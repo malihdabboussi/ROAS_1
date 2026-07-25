@@ -9,6 +9,7 @@ interface ResizableDividerProps {
   compact?: boolean
   /** When false, hides the grip icon and uses a narrower hit target (e.g. Spaces chat split). */
   showGrip?: boolean
+  ariaLabel?: string
 }
 
 export function ResizableDivider({
@@ -16,6 +17,7 @@ export function ResizableDivider({
   isDragging,
   compact,
   showGrip = true,
+  ariaLabel = 'Resize panel',
 }: ResizableDividerProps) {
   const handlePointerDown = (e: React.PointerEvent) => {
     e.preventDefault()
@@ -30,6 +32,7 @@ export function ResizableDivider({
       onPointerDown={handlePointerDown}
       role="separator"
       aria-orientation="vertical"
+      aria-label={ariaLabel}
       tabIndex={0}
     >
       {compact ? (

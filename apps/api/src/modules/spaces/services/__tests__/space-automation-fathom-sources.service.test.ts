@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { SpaceAutomationService } from '../space-automation.service'
-import { automationsRepoFromRepo } from './space-automation-test-utils'
 import { chain } from './space-automation-fathom-test-helpers'
+import { automationsRepoFromRepo } from './space-automation-test-utils'
 
 describe('SpaceAutomationService Fathom source routing', () => {
   it('fans out user-source rules built by an admin to a sales rep recording', async () => {
@@ -107,6 +107,7 @@ describe('SpaceAutomationService Fathom source routing', () => {
     expect(result).toEqual({
       processed: true,
       fanout_count: 1,
+      space_id: 'space_admin',
       item_id: 'item_admin',
       automation_id: 'automation_admin',
     })
@@ -225,6 +226,7 @@ describe('SpaceAutomationService Fathom source routing', () => {
     expect(result).toEqual({
       processed: true,
       fanout_count: 1,
+      space_id: 'space_team',
       item_id: 'item_team',
       automation_id: 'automation_team',
     })

@@ -1,6 +1,5 @@
 'use client'
 
-import { RxDoubleArrowLeft } from 'react-icons/rx'
 import { motion } from 'framer-motion'
 import { List, ListTodo, Plus, Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
@@ -50,11 +49,14 @@ export function SpaceChatHeaderActions({
       <button
         type="button"
         onClick={onCollapse}
-        className="text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 flex shrink-0 items-center justify-center transition-colors"
-        aria-label="Collapse ROAS chat"
-        title="Collapse ROAS chat"
+        className={cn(
+          'text-muted-foreground hover:text-foreground h-spacing-8 w-spacing-8 rounded-spacing-2 flex shrink-0 items-center justify-center transition-colors',
+          hideHistoryChrome && 'btn-icon-bare hover:bg-hover-subtle',
+        )}
+        aria-label={hideHistoryChrome ? 'Close AI Chats' : 'Collapse ROAS chat'}
+        title={hideHistoryChrome ? 'Close AI Chats' : 'Collapse ROAS chat'}
       >
-        <RxDoubleArrowLeft className="icon-sm" aria-hidden />
+        <X className="icon-sm" aria-hidden />
       </button>
       {!hideHistoryChrome ? (
         <>

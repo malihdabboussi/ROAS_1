@@ -30,9 +30,10 @@ type PersistedShell = {
   sidebarPinned?: boolean
   menuMode?: ShellMenuMode
   chatDrawerWidth?: number
+  chatHistoryWidth?: number
   rightPanelOpen?: boolean
   rightPanelTab?: ShellRightPanelTab
-  spaceWorkOpen?: boolean
+  workAreaOpen?: boolean
   artifactViewerWidth?: number
 }
 
@@ -58,12 +59,22 @@ function writePersisted(partial: PersistedShell) {
 }
 
 const CHAT_DRAWER_WIDTH_MIN = 360
-const CHAT_DRAWER_WIDTH_MAX = 720
+const CHAT_DRAWER_WIDTH_FALLBACK_MAX = 1920
+const CHAT_HISTORY_WIDTH_MIN = 180
+const CHAT_HISTORY_WIDTH_MAX = 420
 const ARTIFACT_VIEWER_WIDTH_MIN = 360
 const ARTIFACT_VIEWER_WIDTH_MAX = 720
 
 function clampChatDrawerWidth(width: number): number {
-  return Math.min(CHAT_DRAWER_WIDTH_MAX, Math.max(CHAT_DRAWER_WIDTH_MIN, width))
+  const viewportMax =
+    typeof window === 'undefined'
+      ? CHAT_DRAWER_WIDTH_FALLBACK_MAX
+      : Math.max(CHAT_DRAWER_WIDTH_MIN, window.innerWidth)
+  return Math.min(viewportMax, Math.max(CHAT_DRAWER_WIDTH_MIN, width))
+}
+
+function clampChatHistoryWidth(width: number): number {
+  return Math.min(CHAT_HISTORY_WIDTH_MAX, Math.max(CHAT_HISTORY_WIDTH_MIN, width))
 }
 
 function clampArtifactViewerWidth(width: number): number {
@@ -75,7 +86,9 @@ interface ShellStore {
   sidebarPeek: boolean
   menuMode: ShellMenuMode
   chatDrawer: ShellChatDrawerState
-  spaceWorkOpen: boolean
+  chatHistoryWidth: number
+  /** Page work area (Space dock, Brain, Inbox, …) visible; false = chat full width. */
+  workAreaOpen: boolean
   rightPanel: ShellRightPanelState
   artifactViewer: ShellArtifactViewerState
   newChatNonce: number
@@ -96,8 +109,9 @@ interface ShellStore {
   restoreChatDrawer: () => void
   closeChatDrawer: () => void
   setChatDrawerWidth: (width: number) => void
-  setSpaceWorkOpen: (open: boolean) => void
-  toggleSpaceWorkOpen: () => void
+  setChatHistoryWidth: (width: number) => void
+  setWorkAreaOpen: (open: boolean) => void
+  toggleWorkAreaOpen: () => void
   setRightPanelOpen: (open: boolean) => void
   toggleRightPanel: () => void
   setRightPanelTab: (tab: ShellRightPanelTab) => void
@@ -126,7 +140,8 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     width: 420,
     minimized: false,
   },
-  spaceWorkOpen: true,
+  chatHistoryWidth: 200,
+  workAreaOpen: true,
   rightPanel: {
     open: false,
     tab: 'tasks',
@@ -208,9 +223,9 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   minimizeChatDrawer: () => {
     set((s) => ({
       chatDrawer: { ...s.chatDrawer, open: false, minimized: true },
-      spaceWorkOpen: true,
+      workAreaOpen: true,
     }))
-    writePersisted({ spaceWorkOpen: true })
+    writePersisted({ workAreaOpen: true })
   },
   restoreChatDrawer: () => {
     set((s) => ({
@@ -230,20 +245,25 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     writePersisted({ chatDrawerWidth: clamped })
     set((s) => ({ chatDrawer: { ...s.chatDrawer, width: clamped } }))
   },
-  setSpaceWorkOpen: (open) => {
-    writePersisted({ spaceWorkOpen: open })
+  setChatHistoryWidth: (width) => {
+    const clamped = clampChatHistoryWidth(width)
+    writePersisted({ chatHistoryWidth: clamped })
+    set({ chatHistoryWidth: clamped })
+  },
+  setWorkAreaOpen: (open) => {
+    writePersisted({ workAreaOpen: open })
     if (!open) {
       set((s) => ({
-        spaceWorkOpen: false,
+        workAreaOpen: false,
         chatDrawer: { ...s.chatDrawer, open: true, minimized: false },
         artifactViewer: { ...s.artifactViewer, target: null },
       }))
       return
     }
-    set({ spaceWorkOpen: open })
+    set({ workAreaOpen: open })
   },
-  toggleSpaceWorkOpen: () => {
-    get().setSpaceWorkOpen(!get().spaceWorkOpen)
+  toggleWorkAreaOpen: () => {
+    get().setWorkAreaOpen(!get().workAreaOpen)
   },
   setRightPanelOpen: (open) => {
     writePersisted({ rightPanelOpen: open })
@@ -291,10 +311,10 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         conversationId: null,
         minimized: false,
       },
-      spaceWorkOpen: true,
+      workAreaOpen: true,
       artifactViewer: { ...s.artifactViewer, target: null },
     }))
-    writePersisted({ spaceWorkOpen: true })
+    writePersisted({ workAreaOpen: true })
   },
   openFreshChatDrawer: () => {
     set((s) => ({
@@ -343,7 +363,8 @@ export function hydrateShellStoreFromStorage(): void {
       ...useShellStore.getState().chatDrawer,
       width: clampChatDrawerWidth(persisted.chatDrawerWidth ?? 420),
     },
-    spaceWorkOpen: persisted.spaceWorkOpen ?? true,
+    chatHistoryWidth: clampChatHistoryWidth(persisted.chatHistoryWidth ?? 200),
+    workAreaOpen: persisted.workAreaOpen ?? true,
     rightPanel: {
       open: persisted.rightPanelOpen ?? false,
       tab: persisted.rightPanelTab ?? 'tasks',

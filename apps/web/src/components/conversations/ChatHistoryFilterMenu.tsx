@@ -1,0 +1,297 @@
+'use client'
+
+import { useEffect, useId, useRef, useState } from 'react'
+import { Check, ChevronDown, ListFilter, SquareArrowOutUpRight } from 'lucide-react'
+import {
+  chatHistoryActivityLabel,
+  chatHistoryGroupByLabel,
+  chatHistoryLeadingIconLabel,
+  chatHistoryStatusLabel,
+  chatHistoryTypeLabel,
+  DEFAULT_CHAT_HISTORY_FILTERS,
+  type ChatHistoryActivityFilter,
+  type ChatHistoryFilterState,
+  type ChatHistoryGroupBy,
+  type ChatHistoryLeadingIcon,
+  type ChatHistoryStatusFilter,
+  type ChatHistoryTypeFilter,
+} from '@/lib/conversations'
+import { cn } from '@/lib/utils/cn'
+
+type SubmenuKey = 'type' | 'status' | 'lastActivity' | 'groupBy' | 'leadingIcon' | null
+
+interface ChatHistoryFilterMenuProps {
+  value: ChatHistoryFilterState
+  onChange: (next: ChatHistoryFilterState) => void
+  onOpenAllChats?: () => void
+  className?: string
+}
+
+const TYPE_OPTIONS: ChatHistoryTypeFilter[] = ['all', 'in_app', 'slack', 'telegram']
+const STATUS_OPTIONS: ChatHistoryStatusFilter[] = ['active', 'archived', 'all']
+const ACTIVITY_OPTIONS: ChatHistoryActivityFilter[] = ['1d', '3d', '7d', '30d', 'all']
+const GROUP_BY_OPTIONS: ChatHistoryGroupBy[] = [
+  'none',
+  'date',
+  'status',
+  'campaign',
+  'agent',
+  'channel',
+]
+const LEADING_ICON_OPTIONS: ChatHistoryLeadingIcon[] = ['agent', 'logo', 'status', 'none']
+
+export function ChatHistoryFilterMenu({
+  value,
+  onChange,
+  onOpenAllChats,
+  className,
+}: ChatHistoryFilterMenuProps) {
+  const [open, setOpen] = useState(false)
+  const [submenu, setSubmenu] = useState<SubmenuKey>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const menuId = useId()
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+        setSubmenu(null)
+      }
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false)
+        setSubmenu(null)
+      }
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  const rowClass =
+    'body-3 hover:bg-hover-subtle gap-spacing-3 flex w-full items-center justify-between rounded-spacing-2 px-spacing-3 py-spacing-2 text-left'
+
+  const toggleSubmenu = (key: Exclude<SubmenuKey, null>) => {
+    setSubmenu((prev) => (prev === key ? null : key))
+  }
+
+  const selectFilter = (next: ChatHistoryFilterState) => {
+    onChange(next)
+    setSubmenu(null)
+  }
+
+  return (
+    <div ref={rootRef} className={cn('relative flex shrink-0 items-center gap-0.5', className)}>
+      {onOpenAllChats ? (
+        <button
+          type="button"
+          onClick={onOpenAllChats}
+          className={cn(
+            'btn-icon-bare hover:bg-hover-subtle shrink-0 transition-opacity',
+            open
+              ? 'opacity-100'
+              : 'opacity-0 focus-visible:opacity-100 group-hover/chat-history-header:opacity-100',
+          )}
+          aria-label="Open all chats"
+          title="All chats"
+          tabIndex={open ? 0 : -1}
+        >
+          <SquareArrowOutUpRight className="icon-sm" aria-hidden />
+        </button>
+      ) : null}
+      <button
+        type="button"
+        onClick={() => {
+          setOpen((prev) => !prev)
+          setSubmenu(null)
+        }}
+        className={cn(
+          'btn-icon-bare hover:bg-hover-subtle shrink-0',
+          open && 'bg-hover-subtle text-foreground',
+        )}
+        aria-label="Filter conversations"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={menuId}
+        title="Filter"
+      >
+        <ListFilter className="icon-sm" aria-hidden />
+      </button>
+
+      {open ? (
+        <div
+          id={menuId}
+          role="menu"
+          className="dropdown-menu-solid border-border z-dropdown absolute right-0 top-full mt-1 w-[224px] overflow-hidden rounded-xl border p-1 shadow-lg"
+        >
+          <FilterRow
+            label="Type"
+            value={chatHistoryTypeLabel(value.type)}
+            expanded={submenu === 'type'}
+            onToggle={() => toggleSubmenu('type')}
+            className={rowClass}
+          />
+          {submenu === 'type'
+            ? TYPE_OPTIONS.map((option) => (
+                <SubmenuOption
+                  key={option}
+                  label={chatHistoryTypeLabel(option)}
+                  selected={value.type === option}
+                  onSelect={() => selectFilter({ ...value, type: option })}
+                />
+              ))
+            : null}
+
+          <FilterRow
+            label="Status"
+            value={chatHistoryStatusLabel(value.status)}
+            expanded={submenu === 'status'}
+            onToggle={() => toggleSubmenu('status')}
+            className={rowClass}
+          />
+          {submenu === 'status'
+            ? STATUS_OPTIONS.map((option) => (
+                <SubmenuOption
+                  key={option}
+                  label={chatHistoryStatusLabel(option)}
+                  selected={value.status === option}
+                  onSelect={() => selectFilter({ ...value, status: option })}
+                />
+              ))
+            : null}
+
+          <FilterRow
+            label="Last activity"
+            value={chatHistoryActivityLabel(value.lastActivity)}
+            expanded={submenu === 'lastActivity'}
+            onToggle={() => toggleSubmenu('lastActivity')}
+            className={rowClass}
+          />
+          {submenu === 'lastActivity'
+            ? ACTIVITY_OPTIONS.map((option) => (
+                <SubmenuOption
+                  key={option}
+                  label={chatHistoryActivityLabel(option)}
+                  selected={value.lastActivity === option}
+                  onSelect={() => selectFilter({ ...value, lastActivity: option })}
+                />
+              ))
+            : null}
+
+          <div className="border-border my-1 border-t" />
+
+          <FilterRow
+            label="Group by"
+            value={chatHistoryGroupByLabel(value.groupBy)}
+            expanded={submenu === 'groupBy'}
+            onToggle={() => toggleSubmenu('groupBy')}
+            className={rowClass}
+          />
+          {submenu === 'groupBy'
+            ? GROUP_BY_OPTIONS.map((option) => (
+                <SubmenuOption
+                  key={option}
+                  label={chatHistoryGroupByLabel(option)}
+                  selected={value.groupBy === option}
+                  onSelect={() => selectFilter({ ...value, groupBy: option })}
+                />
+              ))
+            : null}
+
+          <FilterRow
+            label="Icon"
+            value={chatHistoryLeadingIconLabel(value.leadingIcon)}
+            expanded={submenu === 'leadingIcon'}
+            onToggle={() => toggleSubmenu('leadingIcon')}
+            className={rowClass}
+          />
+          {submenu === 'leadingIcon'
+            ? LEADING_ICON_OPTIONS.map((option) => (
+                <SubmenuOption
+                  key={option}
+                  label={chatHistoryLeadingIconLabel(option)}
+                  selected={value.leadingIcon === option}
+                  onSelect={() => selectFilter({ ...value, leadingIcon: option })}
+                />
+              ))
+            : null}
+
+          <div className="border-border my-1 border-t" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onChange({ ...DEFAULT_CHAT_HISTORY_FILTERS })
+              setOpen(false)
+              setSubmenu(null)
+            }}
+            className={rowClass}
+          >
+            <span className="text-foreground">Reset to defaults</span>
+          </button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function FilterRow({
+  label,
+  value,
+  expanded,
+  onToggle,
+  className,
+}: {
+  label: string
+  value: string
+  expanded: boolean
+  onToggle: () => void
+  className: string
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      aria-expanded={expanded}
+      onClick={onToggle}
+      className={cn(className, expanded && 'bg-hover-subtle')}
+    >
+      <span className="text-foreground">{label}</span>
+      <span className="text-muted-foreground gap-spacing-1 flex items-center">
+        {value}
+        <ChevronDown
+          className={cn('icon-sm transition-transform', expanded && 'rotate-180')}
+          aria-hidden
+        />
+      </span>
+    </button>
+  )
+}
+
+function SubmenuOption({
+  label,
+  selected,
+  onSelect,
+}: {
+  label: string
+  selected: boolean
+  onSelect: () => void
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitemradio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className="body-3 text-muted-foreground hover:bg-hover-subtle hover:text-foreground gap-spacing-2 rounded-spacing-2 py-spacing-2 pl-spacing-6 pr-spacing-3 flex w-full items-center justify-between text-left"
+    >
+      <span>{label}</span>
+      {selected ? <Check className="icon-sm text-primary" aria-hidden /> : null}
+    </button>
+  )
+}

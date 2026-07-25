@@ -35,11 +35,12 @@ interface HighlightedArtifact {
 }
 
 interface MessageReference {
-  kind: 'artifact' | 'media' | 'mission' | 'conversation'
+  kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person'
   id: string
   label: string
   type?: string
   campaign_id?: string
+  brain_id?: string
 }
 
 interface UiSelectedArtifact {

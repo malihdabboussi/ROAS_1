@@ -6,12 +6,13 @@ import { ConversationChannelIcon } from '@/components/chat/ConversationChannelIc
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyChatOrb } from '@/components/vibey/vibey-chat-orb'
 import {
+  formatCompactRelativeTime,
   getAgentInitial,
   getConversationAgentDisplay,
   stripLegacySpacesConversationTitle,
+  type ChatHistoryLeadingIcon,
   type Conversation,
   type ConversationAgentDisplay,
-  type ConversationSection,
 } from '@/lib/conversations'
 import { cn } from '@/lib/utils/cn'
 
@@ -36,10 +37,22 @@ function ConversationRowStateIcon({
 function ConversationRowLeadingIcon({
   conversation,
   runtimeState,
+  leadingIcon,
+  agentByKey,
 }: {
   conversation: Conversation
   runtimeState?: ConversationRowRuntimeState
+  leadingIcon: ChatHistoryLeadingIcon
+  agentByKey?: Record<string, ConversationAgentDisplay>
 }) {
+  if (leadingIcon === 'none') return null
+  if (leadingIcon === 'agent') {
+    return <ConversationAgentAvatar conversation={conversation} agentByKey={agentByKey} />
+  }
+  if (leadingIcon === 'status') {
+    return <ConversationRowStateIcon runtimeState={runtimeState} />
+  }
+  // logo — channel mark when present; otherwise in-progress / done status
   const source = conversation.metadata?.source
   if (source === 'slack' || source === 'telegram') {
     return <ConversationChannelIcon metadata={conversation.metadata} />
@@ -124,14 +137,16 @@ function ConversationRowSubtitle({ runtimeState }: { runtimeState?: Conversation
 
 interface SpaceConversationRowProps {
   conversation: Conversation
-  section: ConversationSection
+  section: string
   selected: boolean
   pinned: boolean
   renaming: boolean
   renameDraft: string
   showSubtitle: boolean
   runtimeState?: ConversationRowRuntimeState
+  /** @deprecated Prefer `leadingIcon="agent"`. Kept for Spaces callers. */
   allAgentsMode?: boolean
+  leadingIcon?: ChatHistoryLeadingIcon
   agentByKey?: Record<string, ConversationAgentDisplay>
   menuOpen: boolean
   renameInputRef: RefObject<HTMLInputElement | null>
@@ -152,6 +167,7 @@ export function SpaceConversationRow({
   showSubtitle,
   runtimeState,
   allAgentsMode,
+  leadingIcon,
   agentByKey,
   menuOpen,
   renameInputRef,
@@ -162,26 +178,37 @@ export function SpaceConversationRow({
   onSubmitRename,
   onCancelRename,
 }: SpaceConversationRowProps) {
+  const resolvedLeadingIcon: ChatHistoryLeadingIcon =
+    leadingIcon ?? (allAgentsMode ? 'agent' : 'logo')
+  const showLeadingSlot = resolvedLeadingIcon !== 'none'
+  const relativeAge = formatCompactRelativeTime(conversation.updated_at)
+
   return (
     <div
       onContextMenu={(event) => onOpenContextMenu(event, conversation.id)}
       className={cn(
-        'group/conversation px-spacing-2 py-spacing-1 gap-spacing-2 rounded-spacing-3 flex items-start transition-colors',
+        'group/conversation px-spacing-2 py-spacing-1 gap-spacing-2 rounded-spacing-3 flex items-center transition-colors',
         selected
           ? 'bg-hover-subtle text-foreground'
           : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground',
         menuOpen && 'bg-hover-subtle text-foreground',
       )}
     >
-      {allAgentsMode ? (
-        <div className="mt-spacing-0-5 flex shrink-0 items-center justify-center">
-          <ConversationAgentAvatar conversation={conversation} agentByKey={agentByKey} />
+      {showLeadingSlot ? (
+        <div
+          className={cn(
+            'flex shrink-0 items-center justify-center',
+            resolvedLeadingIcon === 'agent' ? 'icon-md' : 'icon-sm',
+          )}
+        >
+          <ConversationRowLeadingIcon
+            conversation={conversation}
+            runtimeState={runtimeState}
+            leadingIcon={resolvedLeadingIcon}
+            agentByKey={agentByKey}
+          />
         </div>
-      ) : (
-        <div className="mt-spacing-0-5 icon-sm flex shrink-0 items-center justify-center">
-          <ConversationRowLeadingIcon conversation={conversation} runtimeState={runtimeState} />
-        </div>
-      )}
+      ) : null}
       {renaming ? (
         <input
           ref={renameInputRef}
@@ -212,18 +239,31 @@ export function SpaceConversationRow({
           {showSubtitle ? <ConversationRowSubtitle runtimeState={runtimeState} /> : null}
         </button>
       )}
-      <button
-        type="button"
-        onClick={(event) => onOpenMenu(event, conversation.id)}
-        className={cn(
-          'text-muted-foreground hover:bg-hover-subtle hover:text-foreground mt-spacing-0-5 rounded-spacing-1 p-spacing-1 transition-opacity',
-          menuOpen ? 'opacity-100' : 'opacity-0 group-hover/conversation:opacity-100',
-        )}
-        aria-label="Conversation actions"
-        aria-haspopup="menu"
-      >
-        <MoreHorizontal className="icon-sm" />
-      </button>
+      <div className="relative flex shrink-0 items-center justify-end">
+        {relativeAge ? (
+          <span
+            className={cn(
+              'typo-caption text-muted-foreground text-right tabular-nums transition-opacity',
+              menuOpen ? 'opacity-0' : 'group-hover/conversation:opacity-0',
+            )}
+            title={conversation.updated_at}
+          >
+            {relativeAge}
+          </span>
+        ) : null}
+        <button
+          type="button"
+          onClick={(event) => onOpenMenu(event, conversation.id)}
+          className={cn(
+            'text-muted-foreground hover:bg-hover-subtle hover:text-foreground rounded-spacing-1 p-spacing-1 absolute inset-y-0 right-0 flex items-center justify-center transition-opacity',
+            menuOpen ? 'opacity-100' : 'opacity-0 group-hover/conversation:opacity-100',
+          )}
+          aria-label="Conversation actions"
+          aria-haspopup="menu"
+        >
+          <MoreHorizontal className="icon-sm" />
+        </button>
+      </div>
     </div>
   )
 }

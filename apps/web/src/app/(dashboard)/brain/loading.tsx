@@ -1,9 +1,5 @@
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { BrainConstellationLoader } from '@/features/brain/components/BrainConstellationLoader'
 
 export default function BrainLoading() {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <VibeyLoadingOrb text="Loading Brain..." state="processing" size="lg" />
-    </div>
-  )
+  return <BrainConstellationLoader />
 }

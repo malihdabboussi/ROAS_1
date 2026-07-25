@@ -3,7 +3,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AssistantActions } from './AssistantActions'
 
 const actionMocks = vi.hoisted(() => ({
-  AgentTurnFeedbackActions: vi.fn(() => <div data-testid="agent-turn-feedback-actions" />),
+  AgentTurnFeedbackActions: vi.fn(
+    (_props: { onFork?: () => void | Promise<void> }, _legacyContext?: unknown) => (
+      <div data-testid="agent-turn-feedback-actions" />
+    ),
+  ),
   forkConversation: vi.fn(),
   push: vi.fn(),
 }))

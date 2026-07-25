@@ -2,8 +2,8 @@
 
 import type { RefObject } from 'react'
 import { AlertCircle, RefreshCw } from 'lucide-react'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import type { BrainConnection, BrainMemory } from '../types'
+import { BrainConstellationLoader } from './BrainConstellationLoader'
 import ForceGraph, { type ForceGraphHandle } from './ForceGraph'
 
 interface BrainVisualizationCanvasStageProps {
@@ -53,11 +53,7 @@ export function BrainVisualizationCanvasStage({
   }
 
   if (activeLoading && !hasActiveGraphData) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <VibeyLoadingOrb text="Loading Brain..." state="processing" size="lg" />
-      </div>
-    )
+    return <BrainConstellationLoader />
   }
 
   return (

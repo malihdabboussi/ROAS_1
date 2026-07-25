@@ -165,23 +165,23 @@
     --card-foreground: #1a1a1a;
     --popover: #fffdf8;
     --popover-foreground: #1a1a1a;
-    --primary: #10b981;
+    --primary: #9333ea;
     --primary-foreground: #ffffff;
     --secondary: #f3f4f6;
     --secondary-foreground: #374151;
     --muted: #f3f4f6;
     --muted-foreground: #4b5563;
-    --accent: rgb(16, 185, 129);
+    --accent: rgb(147, 51, 234);
     --accent-foreground: #1a1a1a;
     --border: rgba(0, 0, 0, 0.08);
-    --ring: #10b981;
+    --ring: #9333ea;
 
     /* Semantic */
     --color-background: #faf9f6;
     --color-foreground: #1a1a1a;
     --color-card: #fffdf8;
     --color-card-foreground: #1a1a1a;
-    --color-primary: #10b981;
+    --color-primary: #9333ea;
     --color-primary-foreground: #ffffff;
     --color-secondary: #f3f4f6;
     --color-secondary-foreground: #374151;
@@ -204,8 +204,8 @@
     --color-warning-rgb: 255 149 0;
     --color-destructive: rgb(239, 68, 68);
     --color-destructive-rgb: 239 68 68;
-    --color-primary-hover: rgb(52, 211, 153);
-    --color-primary-rgb: 16, 185, 129;
+    --color-primary-hover: rgb(199, 126, 255);
+    --color-primary-rgb: 147, 51, 234;
     --color-foreground-rgb: 26, 26, 26;
     --color-hover-subtle: #e8e5df;
 
@@ -229,24 +229,24 @@
     --card-foreground: #f5f5f5;
     --popover: #202020;
     --popover-foreground: #f5f5f5;
-    --primary: rgb(16, 185, 129);
-    --primary-foreground: #161616;
+    --primary: rgb(147, 51, 234);
+    --primary-foreground: #f5f5f5;
     --secondary: #2a2a2a;
     --secondary-foreground: #d4d4d4;
     --muted: #2a2a2a;
     --muted-foreground: #a3a3a3;
-    --accent: rgb(16, 185, 129);
-    --accent-foreground: #161616;
+    --accent: rgb(147, 51, 234);
+    --accent-foreground: #f5f5f5;
     --border: rgba(255, 255, 255, 0.1);
-    --ring: rgb(16, 185, 129);
+    --ring: rgb(147, 51, 234);
 
     /* Semantic */
     --color-background: #161616;
     --color-foreground: #f5f5f5;
     --color-card: #202020;
     --color-card-foreground: #f5f5f5;
-    --color-primary: rgb(16, 185, 129);
-    --color-primary-foreground: #161616;
+    --color-primary: rgb(147, 51, 234);
+    --color-primary-foreground: #f5f5f5;
     --color-secondary: #2a2a2a;
     --color-secondary-foreground: #d4d4d4;
     --color-muted: #2a2a2a;
@@ -267,8 +267,8 @@
     --color-warning-rgb: 255 149 0;
     --color-destructive: rgb(239, 68, 68);
     --color-destructive-rgb: 239 68 68;
-    --color-primary-hover: rgb(52, 211, 153);
-    --color-primary-rgb: 16, 185, 129;
+    --color-primary-hover: rgb(199, 126, 255);
+    --color-primary-rgb: 147, 51, 234;
     --color-foreground-rgb: 245, 245, 245;
     --color-hover-subtle: #2a2a2a;
 
@@ -394,6 +394,81 @@
 
 html.dark .section-card {
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Brain constellation loader — SVG stand-in for the force graph while it loads */
+.brain-loader {
+  width: min(280px, 60%);
+  height: auto;
+  aspect-ratio: 1;
+}
+.brain-loader-rotor {
+  transform-origin: 50% 50%;
+  animation: brain-loader-spin 60s linear infinite;
+}
+.brain-loader-link {
+  stroke: var(--color-muted-foreground);
+  stroke-width: 0.4;
+  stroke-opacity: 0.28;
+}
+.brain-loader-node {
+  animation: brain-loader-pulse 3s ease-in-out infinite;
+}
+.brain-loader-node-fact {
+  fill: rgb(var(--brain-fact-rgb));
+}
+.brain-loader-node-decision {
+  fill: rgb(var(--brain-decision-rgb));
+}
+.brain-loader-node-insight {
+  fill: rgb(var(--brain-insight-rgb));
+}
+.brain-loader-node-story {
+  fill: rgb(var(--brain-story-rgb));
+}
+.brain-loader-node-framework {
+  fill: rgb(var(--brain-framework-rgb));
+}
+.brain-loader-node-preference {
+  fill: rgb(var(--brain-preference-rgb));
+}
+.brain-loader-delay-0 {
+  animation-delay: 0s;
+}
+.brain-loader-delay-1 {
+  animation-delay: 0.25s;
+}
+.brain-loader-delay-2 {
+  animation-delay: 0.5s;
+}
+.brain-loader-delay-3 {
+  animation-delay: 0.75s;
+}
+.brain-loader-delay-4 {
+  animation-delay: 1s;
+}
+.brain-loader-delay-5 {
+  animation-delay: 1.25s;
+}
+@keyframes brain-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes brain-loader-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brain-loader-rotor,
+  .brain-loader-node {
+    animation: none;
+  }
 }
 
 /* ============================================================================
@@ -2072,38 +2147,38 @@ html.dark .input-glass:focus {
   white-space: nowrap;
 }
 
-/* Primary (emerald) */
+/* Primary (Pixel purple) */
 .button-glass-primary {
   position: relative;
   overflow: hidden;
   background: linear-gradient(
     135deg,
-    rgba(16, 185, 129, 0.25) 0%,
-    rgba(52, 211, 153, 0.35) 50%,
-    rgba(16, 185, 129, 0.2) 100%
+    rgba(147, 51, 234, 0.25) 0%,
+    rgba(199, 126, 255, 0.35) 50%,
+    rgba(147, 51, 234, 0.2) 100%
   );
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  border: 1px solid rgba(147, 51, 234, 0.4);
   box-shadow:
-    0 2px 12px rgba(16, 185, 129, 0.15),
+    0 2px 12px rgba(147, 51, 234, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    inset 0 -1px 0 rgba(16, 185, 129, 0.1);
+    inset 0 -1px 0 rgba(147, 51, 234, 0.1);
   color: rgb(var(--vibe-black));
   transition: all 0.3s ease;
 }
 html.dark .button-glass-primary {
   background: linear-gradient(
     135deg,
-    rgba(16, 185, 129, 0.12) 0%,
-    rgba(52, 211, 153, 0.18) 50%,
-    rgba(16, 185, 129, 0.1) 100%
+    rgba(147, 51, 234, 0.12) 0%,
+    rgba(199, 126, 255, 0.18) 50%,
+    rgba(147, 51, 234, 0.1) 100%
   );
-  border: 1px solid rgba(52, 211, 153, 0.28);
+  border: 1px solid rgba(199, 126, 255, 0.28);
   box-shadow:
-    0 2px 16px rgba(16, 185, 129, 0.1),
+    0 2px 16px rgba(147, 51, 234, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 -1px 0 rgba(16, 185, 129, 0.06);
-  color: rgb(167, 243, 208);
+    inset 0 -1px 0 rgba(147, 51, 234, 0.06);
+  color: rgb(var(--vibe-purple-light));
 }
 .button-glass-primary::after {
   content: '';
@@ -3686,6 +3761,26 @@ html.dark .status-dot-glass-muted {
 .scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+html[data-transient-scrollbars='true'],
+html[data-transient-scrollbars='true'] * {
+  scrollbar-color: transparent transparent;
+}
+html[data-transient-scrollbars='true']::-webkit-scrollbar-thumb,
+html[data-transient-scrollbars='true'] *::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+html[data-transient-scrollbars='true'][data-scrolling='true'],
+html[data-transient-scrollbars='true'][data-scrolling='true'] * {
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+html[data-transient-scrollbars='true'][data-scrolling='true']::-webkit-scrollbar-thumb,
+html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+html[data-transient-scrollbars='true'][data-scrolling='true']::-webkit-scrollbar-thumb:hover,
+html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* ============================================================================
@@ -5669,38 +5764,38 @@ html.dark .card-elevated {
 }
 
 /* ============================================================================
-   SECTION 32: BUTTON GLASS ACCENT (emerald CTA)
+   SECTION 32: BUTTON GLASS ACCENT (Pixel purple CTA)
    ============================================================================ */
 .button-glass-accent {
   position: relative;
   overflow: hidden;
   background: linear-gradient(
     135deg,
-    rgba(16, 185, 129, 0.25) 0%,
-    rgba(52, 211, 153, 0.35) 50%,
-    rgba(16, 185, 129, 0.2) 100%
+    rgba(147, 51, 234, 0.25) 0%,
+    rgba(199, 126, 255, 0.35) 50%,
+    rgba(147, 51, 234, 0.2) 100%
   );
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  border: 1px solid rgba(147, 51, 234, 0.4);
   box-shadow:
-    0 2px 12px rgba(16, 185, 129, 0.15),
+    0 2px 12px rgba(147, 51, 234, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    inset 0 -1px 0 rgba(16, 185, 129, 0.1);
+    inset 0 -1px 0 rgba(147, 51, 234, 0.1);
   color: rgb(var(--vibe-black));
   transition: all 0.3s ease;
 }
 html.dark .button-glass-accent {
   background: linear-gradient(
     135deg,
-    rgba(16, 185, 129, 0.12) 0%,
-    rgba(52, 211, 153, 0.18) 50%,
-    rgba(16, 185, 129, 0.1) 100%
+    rgba(147, 51, 234, 0.12) 0%,
+    rgba(199, 126, 255, 0.18) 50%,
+    rgba(147, 51, 234, 0.1) 100%
   );
-  border: 1px solid rgba(52, 211, 153, 0.28);
+  border: 1px solid rgba(199, 126, 255, 0.28);
   box-shadow:
-    0 2px 16px rgba(16, 185, 129, 0.1),
+    0 2px 16px rgba(147, 51, 234, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  color: rgb(167, 243, 208);
+  color: rgb(var(--vibe-purple-light));
 }
 .button-glass-accent::after {
   content: '';
@@ -10452,6 +10547,42 @@ html.dark .chat-markdown-code-block__shadow {
   padding-left: 4px;
   padding-right: 4px;
 }
+.hub-sidebar-ai-row {
+  position: relative;
+  z-index: 40;
+  display: flex;
+  width: 100%;
+  min-height: var(--spacing-10);
+  flex-shrink: 0;
+  justify-content: flex-start;
+  padding-bottom: var(--spacing-2);
+  padding-left: var(--spacing-1);
+  overflow: visible;
+}
+.hub-sidebar-shell-collapsed .hub-sidebar-ai-row {
+  justify-content: flex-start;
+  overflow: visible;
+}
+.hub-sidebar-shell-collapsed .shell-ai-chats-button {
+  margin-right: calc(-1 * (var(--spacing-16) + var(--spacing-8)));
+}
+.hub-sidebar-shell-collapsed .shell-ai-chats-button-compact {
+  margin-right: calc(-1 * var(--spacing-4));
+  gap: var(--spacing-1);
+  padding: 0 var(--spacing-2);
+  max-width: calc(100% + var(--spacing-4));
+}
+.hub-sidebar-shell-collapsed .shell-ai-chats-button-label-compact {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: var(--spacing-12);
+}
+.hub-sidebar-shell-expanded .hub-sidebar-ai-row {
+  justify-content: flex-start;
+  padding-right: var(--spacing-2);
+  padding-left: var(--spacing-2);
+}
 .hub-sidebar-logo-button {
   display: flex;
   align-items: center;
@@ -10548,8 +10679,7 @@ html.dark .chat-markdown-code-block__shadow {
   height: 36px;
   transform: translateX(-50%);
   align-items: center;
-  gap: 4px;
-  padding: 3px 3px 3px 10px;
+  padding: 3px 10px;
   border: 1px solid var(--color-shell-border);
   border-radius: 999px;
   background: var(--color-card);
@@ -10594,85 +10724,248 @@ html.dark .chat-markdown-code-block__shadow {
   letter-spacing: 0.02em;
   color: var(--color-muted-foreground);
 }
-.shell-topbar-ai-btn {
+.shell-ai-chats-button {
   display: flex;
-  height: 100%;
+  height: var(--spacing-8);
   flex-shrink: 0;
   align-items: center;
-  gap: 7px;
-  border: 1px solid var(--color-shell-border);
-  border-radius: 999px;
-  background: var(--color-secondary);
-  padding: 0 10px 0 12px;
-  color: var(--color-muted-foreground);
+  gap: var(--spacing-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--spacing-16);
+  background: var(--color-card);
+  padding: 0 var(--spacing-3) 0 var(--spacing-3);
+  color: var(--color-foreground);
   cursor: pointer;
-  font-size: 12.5px;
-  font-weight: 600;
   line-height: 1;
+  box-shadow: var(--shadow-1);
   transition:
     background 0.12s ease-out,
     color 0.12s ease-out,
-    border-color 0.12s ease-out;
+    border-color 0.12s ease-out,
+    box-shadow 0.12s ease-out;
 }
-.shell-topbar-ai-btn:hover {
+.shell-ai-chats-button:hover {
   color: var(--color-foreground);
   background: var(--color-hover-subtle);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-2);
 }
-.shell-topbar-ai-btn-active {
-  border-color: var(--color-border);
-  background: var(--color-card);
+.shell-ai-chats-button-active {
+  border-color: var(--color-primary);
+  background: var(--color-secondary);
   color: var(--color-foreground);
 }
-.shell-topbar-ai-orb {
+.shell-ai-chats-button-compact {
+  transition:
+    margin 0.2s ease,
+    padding 0.2s ease,
+    gap 0.2s ease,
+    max-width 0.2s ease,
+    background 0.12s ease-out,
+    color 0.12s ease-out,
+    border-color 0.12s ease-out,
+    box-shadow 0.12s ease-out;
+}
+.shell-chat-history-search {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--spacing-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--spacing-16);
+  background: var(--color-background);
+  padding: var(--spacing-1) var(--spacing-3);
+  transition:
+    border-color 0.12s ease-out,
+    background 0.12s ease-out;
+}
+.shell-chat-history-search:focus-within {
+  border-color: var(--color-primary);
+  background: var(--color-card);
+}
+.shell-chat-history-search svg {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
-  border-radius: 999px;
-  background: var(--color-primary);
-  opacity: 0.85;
 }
-/* Home / Work segmented toggle */
-.shell-menu-mode-toggle {
+/* Empty chat capability scroller — perpetual marquee; pauses & expands on hover. */
+.shell-empty-capability-scroller-frame {
   display: flex;
-  gap: 3px;
-  border-radius: 10px;
-  background: var(--color-secondary);
-  padding: 3px;
-}
-.shell-menu-mode-tab {
-  display: flex;
-  flex: 1;
-  align-items: center;
+  width: 100%;
   justify-content: center;
-  gap: 6px;
-  border-radius: 8px;
+}
+.shell-empty-capability-scroller {
+  display: flex;
+  max-width: min(100%, 22rem);
+  align-items: center;
+  overflow: hidden;
+  padding: var(--spacing-1) var(--spacing-2);
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black var(--spacing-4),
+    black calc(100% - var(--spacing-4)),
+    transparent
+  );
+  transition: max-width 0.2s ease;
+}
+.shell-empty-capability-scroller:hover,
+.shell-empty-capability-scroller:focus-within {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: none;
+}
+.shell-empty-capability-scroller:hover .shell-empty-capability-marquee-track,
+.shell-empty-capability-scroller:focus-within .shell-empty-capability-marquee-track {
+  animation-play-state: paused;
+}
+.shell-empty-capability-scroller::-webkit-scrollbar {
+  display: none;
+}
+.shell-empty-capability-marquee {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+}
+.shell-empty-capability-marquee-track {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: var(--spacing-3);
+  animation: shell-empty-capability-marquee 28s linear infinite;
+}
+@keyframes shell-empty-capability-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell-empty-capability-marquee-track {
+    animation: none;
+  }
+}
+.shell-empty-capability-chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-1);
   border: none;
   background: transparent;
-  padding: 6px 0;
-  font-size: 12.5px;
+  padding: var(--spacing-1) var(--spacing-1);
+  color: var(--color-primary);
+  font-size: 0.8125rem;
   font-weight: 500;
-  line-height: 1;
-  color: var(--color-muted-foreground);
+  line-height: 1.2;
+  white-space: nowrap;
   cursor: pointer;
-  transition:
-    background 0.12s ease-out,
-    color 0.12s ease-out,
-    box-shadow 0.12s ease-out;
+  transition: color 0.12s ease;
 }
-.shell-menu-mode-tab svg {
-  width: 13px;
-  height: 13px;
+.shell-empty-capability-chip:hover {
+  color: var(--color-primary-hover);
+}
+/* AI chat drawer — the shell collapses the HQ rail over 300ms, so the drawer
+   uses the same duration/easing and slides its body instead of reflowing it. */
+.shell-chat-drawer {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
   flex-shrink: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-background);
 }
-.shell-menu-mode-tab-active {
-  background: var(--color-card);
-  color: var(--color-foreground);
-  font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+.shell-chat-drawer-expanded {
+  flex: 1 1 0%;
+  min-width: 0;
+  border-right: none;
 }
-html.dark .shell-menu-mode-tab-active {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+.shell-chat-drawer-animated {
+  transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+.shell-chat-drawer-body {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.shell-chat-drawer-body-expanded {
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 0%;
+  transform: none;
+}
+.shell-chat-drawer-body-animated {
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.shell-chat-drawer-menu {
+  display: flex;
+  width: 200px;
+  flex-shrink: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--color-border);
+  padding: var(--spacing-2) var(--spacing-2) 0;
+}
+.shell-work-area {
+  position: relative;
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  flex: 1 1 0%;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    flex-grow 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    flex-basis 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.shell-work-area-collapsed {
+  flex-grow: 0;
+  flex-basis: 0;
+  max-width: 0;
+  pointer-events: none;
+}
+/* Pin the page to the right edge of the clip so open/close reveals from the right,
+   not as a left-growing flex child beside the chat drawer. */
+.shell-work-area-body {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+.shell-work-area-body-anchored {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  flex: none;
+  transform: translateX(0);
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.shell-work-area-body-collapsed {
+  transform: translateX(100%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell-chat-drawer-animated,
+  .shell-chat-drawer-body-animated,
+  .shell-work-area,
+  .shell-work-area-body-anchored {
+    transition: none;
+  }
+}
+/* Home / Work segmented toggle removed — HQ rail is icon-only; AI Chats owns expand. */
 
 .shell-sidebar-new-btn {
   display: flex;

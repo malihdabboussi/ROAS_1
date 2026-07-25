@@ -28,6 +28,8 @@ import {
   type GlobalChatSeedDetail,
   type GlobalChatVoiceStartDetail,
 } from '@/components/global-chat/store/use-global-chat-store'
+import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
+import { ShellEmptyChatActionPills } from '@/components/shell/ShellEmptyChatActionPills'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
@@ -339,6 +341,7 @@ export function SpaceVibeyChatPanel({
   const lastUserPromptHeightRef = useRef(0)
   const setTextRef = useRef<((text: string) => void) | null>(null)
   const composerMirrorRef = useRef('')
+  const [composerHasText, setComposerHasText] = useState(false)
   const previousMessageCountRef = useRef(0)
   const isProgrammaticScrollRef = useRef(false)
   const initialHydrationRef = useRef<string | null>(null)
@@ -349,7 +352,6 @@ export function SpaceVibeyChatPanel({
   const lastConversationsLoadSigRef = useRef<string | null>(null)
   const voiceStartedRef = useRef(false)
   const externalSendInFlightRef = useRef(false)
-
   useEffect(() => {
     homeSeedConsumedRef.current = false
   }, [chatScopeStorageId])
@@ -556,7 +558,6 @@ export function SpaceVibeyChatPanel({
     () => resolveSpaceChatEmptyStateAgent(chatAgents, activeAgentKey, VIBEY_ROSTER_FALLBACK),
     [activeAgentKey, chatAgents],
   )
-
   const turnData = useMemo(() => buildSpaceChatTurnData(displayMessages), [displayMessages])
   const streamRecoveryTriggerKey = useMemo(() => {
     const lastAssistant = getLastAssistantMessage(messages)
@@ -1363,7 +1364,6 @@ export function SpaceVibeyChatPanel({
     await new Promise((resolve) => setTimeout(resolve, 100))
     await processNextQueueItem()
   }, [selectedConversationId, isStreaming, processNextQueueItem])
-
   const handleQueueRemove = useCallback(
     (itemId: string) => {
       if (!selectedConversationId) return
@@ -1371,12 +1371,18 @@ export function SpaceVibeyChatPanel({
     },
     [selectedConversationId, removeQueueItem],
   )
-
   const handleQueueEdit = useCallback((item: { id: string; content: string }) => {
     setEditingQueueItemId(item.id)
     setTextRef.current?.(item.content)
   }, [])
-
+  const handleEmptyChatPromptSeed = useCallback(
+    (prompt: string) => setTextRef.current?.(prompt),
+    [],
+  )
+  const handleComposerValueChange = useCallback(
+    (next: string) => setComposerHasText(next.trim().length > 0),
+    [],
+  )
   const handleComposerSendWithQueueEdit = useCallback(
     (
       content: string,
@@ -2033,21 +2039,13 @@ export function SpaceVibeyChatPanel({
               disabled={agentPickerDisabled}
             />
           </div>
-          {headerLayout === 'full' ? (
-            sessionTitle && selectedConversationId ? (
-              <ConversationHeaderTitle
-                title={sessionTitle}
-                onRename={(title) => handleRenameConversation(selectedConversationId, title)}
-              />
-            ) : (
-              <div className="text-muted-foreground body-3 px-spacing-2 min-w-0 flex-1 truncate text-left">
-                New chat
-              </div>
-            )
+          {headerLayout === 'full' && sessionTitle && selectedConversationId ? (
+            <ConversationHeaderTitle
+              title={sessionTitle}
+              onRename={(title) => handleRenameConversation(selectedConversationId, title)}
+            />
           ) : (
-            <div className="text-muted-foreground body-3 px-spacing-2 min-w-0 flex-1 truncate text-left">
-              New chat
-            </div>
+            <div className="min-w-0 flex-1" aria-hidden />
           )}
           {!isChannelScope && spaceId ? (
             <ConversationScopePicker
@@ -2138,9 +2136,12 @@ export function SpaceVibeyChatPanel({
                         </div>
                       ) : null}
                       {messages.length === 0 && !isLoadingMessages ? (
-                        <SpaceChatAgentEmptyState agent={emptyStateAgent} />
+                        <SpaceChatAgentEmptyState
+                          agent={emptyStateAgent}
+                          showCapabilities={!composerHasText}
+                          onSelectCapability={handleEmptyChatPromptSeed}
+                        />
                       ) : null}
-
                       <div className="flex flex-1 flex-col gap-3">
                         {turnData.leadingMessages.map((m) => (
                           <div key={m.id} data-message-id={m.id}>
@@ -2334,6 +2335,11 @@ export function SpaceVibeyChatPanel({
                           Read-only. Ask the owner for edit access.
                         </div>
                       ) : null}
+                      {messages.length === 0 &&
+                      !isLoadingMessages &&
+                      !selectedConversationReadOnly ? (
+                        <ShellEmptyChatActionPills onSelect={handleEmptyChatPromptSeed} />
+                      ) : null}
                       <ComposerInputStack
                         stackActive={isStreaming && !selectedConversationReadOnly}
                         topSlot={
@@ -2357,13 +2363,16 @@ export function SpaceVibeyChatPanel({
                           conversationId={selectedConversationId}
                           setTextRef={setTextRef}
                           composerMirrorRef={composerMirrorRef}
+                          onComposerValueChange={handleComposerValueChange}
                           onEnqueue={editingQueueItemId ? undefined : handleEnqueue}
                           onSendNow={handleQueueSendNowNext}
                           queueLength={queue.length}
                           placeholder={
                             selectedConversationReadOnly
                               ? 'Read-only conversation'
-                              : `Message ${activeAgentName}...`
+                              : messages.length === 0
+                                ? SHELL_EMPTY_CHAT_PLACEHOLDER
+                                : `Message ${activeAgentName}...`
                           }
                           initialValue={composerRestore?.text}
                           initialDocuments={composerRestore?.documents}

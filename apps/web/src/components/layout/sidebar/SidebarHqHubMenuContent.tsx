@@ -62,7 +62,6 @@ export function SidebarHqHubMenuContent({
 }) {
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
   const setChatCollapsed = useGlobalChatStore((s) => s.setCollapsed)
-  const setMenuMode = useShellStore((s) => s.setMenuMode)
   const flyoutCloseEpoch = useShellStore((s) => s.sidebarFlyoutCloseEpoch)
   const [dock, setDock] = useState<HubMenuDockKey | null>(null)
   const [anchor, setAnchor] = useState<DOMRect | null>(null)
@@ -151,7 +150,6 @@ export function SidebarHqHubMenuContent({
           icon={<Inbox />}
           label="Inbox"
           onNavigate={() => {
-            setMenuMode('home')
             setWorkContext({ surface: 'general' })
             handleNavigate()
           }}

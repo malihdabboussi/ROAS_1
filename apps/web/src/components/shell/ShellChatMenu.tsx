@@ -2,44 +2,32 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ListFilter } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConversationShareModal } from '@/components/conversations'
+import { ChatHistoryFilterMenu } from '@/components/conversations/ChatHistoryFilterMenu'
 import { SpaceConversationsList } from '@/components/conversations/SpaceConversationsListAdapter'
-import { Team2FilterDropdown } from '@/components/filters'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cachedFetch, invalidateCachedFetch, peekCachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { fetchCampaigns } from '@/lib/campaigns'
 import {
   assignConversationCampaign,
+  DEFAULT_CHAT_HISTORY_FILTERS,
   deleteConversation,
   duplicateConversation,
   fetchConversations,
-  getConversationAgentKey,
-  isConversationPinned,
+  filterConversationsForHistory,
   renameConversation,
   setConversationArchived,
   setConversationPinned,
+  type ChatHistoryFilterState,
   type Conversation,
   type ConversationAgentDisplay,
 } from '@/lib/conversations'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
-import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
+import { isShellHomeRoute } from './shell-route-policy'
 import { useShellStore } from './use-shell-store'
-
-type ChatListFilter = 'all' | 'pinned' | 'campaign' | 'non-campaign' | `agent:${string}`
-
-function matchesChatFilter(conversation: Conversation, filter: ChatListFilter): boolean {
-  if (filter === 'all') return true
-  if (filter === 'pinned') return isConversationPinned(conversation)
-  if (filter === 'campaign') return Boolean(conversation.campaign_id)
-  if (filter === 'non-campaign') return !conversation.campaign_id
-  if (filter.startsWith('agent:')) {
-    return getConversationAgentKey(conversation) === filter.slice('agent:'.length)
-  }
-  return true
-}
 
 export function ShellChatMenu() {
   const pathname = usePathname() ?? '/home'
@@ -59,12 +47,12 @@ export function ShellChatMenu() {
   const activeOrgName = useOrgStore((s) => s.getActiveOrg()?.organizations.name ?? 'Workspace')
   const isOrgContext = Boolean(activeOrgId)
 
-  const [allAgentsMode, setAllAgentsMode] = useState(false)
-  const [listFilter, setListFilter] = useState<ChatListFilter>('all')
+  const [filters, setFilters] = useState<ChatHistoryFilterState>(DEFAULT_CHAT_HISTORY_FILTERS)
+  const allAgentsMode = filters.leadingIcon === 'agent'
   const [listQuery, setListQuery] = useState('')
   const [shareConversation, setShareConversation] = useState<Conversation | null>(null)
+  const [campaignNameById, setCampaignNameById] = useState<Record<string, string>>({})
   const [conversations, setConversations] = useState<Conversation[]>(() => {
-    // Initial mount is always agent-scoped (allAgentsMode starts false).
     return peekCachedFetch<Conversation[]>(`shell-conversations:${activeAgentKey}`) ?? []
   })
   const [loading, setLoading] = useState(
@@ -75,7 +63,26 @@ export function ShellChatMenu() {
     void loadRoster()
   }, [loadRoster])
 
-  // Mirror live title updates from the chat send path into the shell list.
+  useEffect(() => {
+    if (filters.groupBy !== 'campaign') return
+    let cancelled = false
+    void fetchCampaigns()
+      .then((campaigns) => {
+        if (cancelled) return
+        const map: Record<string, string> = {}
+        for (const campaign of campaigns) {
+          map[campaign.id] = campaign.name?.trim() || 'Campaign'
+        }
+        setCampaignNameById(map)
+      })
+      .catch(() => {
+        if (!cancelled) setCampaignNameById({})
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [filters.groupBy])
+
   useEffect(() => {
     if (storeConversations.length === 0) return
     setConversations((prev) => {
@@ -135,40 +142,13 @@ export function ShellChatMenu() {
     void reloadConversations()
   }, [reloadConversations])
 
-  const filterOptions = useMemo(() => {
-    const agentKeys = new Set<string>()
-    for (const conversation of conversations) {
-      agentKeys.add(getConversationAgentKey(conversation))
-    }
-    const agentOptions = [...agentKeys]
-      .sort((a, b) => {
-        const nameA = agentByKey[a]?.name ?? a
-        const nameB = agentByKey[b]?.name ?? b
-        return nameA.localeCompare(nameB)
-      })
-      .map((agentKey) => ({
-        id: `agent:${agentKey}`,
-        label: agentByKey[agentKey]?.name ?? agentKey,
-        description: 'Agent',
-      }))
-    return [
-      { id: 'all', label: 'All chats' },
-      { id: 'pinned', label: 'Pinned' },
-      { id: 'campaign', label: 'Campaign chats' },
-      { id: 'non-campaign', label: 'General chats' },
-      ...agentOptions,
-    ]
-  }, [agentByKey, conversations])
-
   const visibleConversations = useMemo(
-    () => conversations.filter((conversation) => matchesChatFilter(conversation, listFilter)),
-    [conversations, listFilter],
+    () => filterConversationsForHistory(conversations, filters),
+    [conversations, filters],
   )
 
   const openConversation = useCallback(
     (id: string) => {
-      // Always open in the left AI drawer (history stays visible). Shared
-      // /home?conv= links still mount full chat via ShellWorkspace.
       if (isShellHomeRoute(pathname) && (searchParams.get('conv') || searchParams.get('chat'))) {
         router.push('/home')
       }
@@ -185,8 +165,16 @@ export function ShellChatMenu() {
     openFreshChatDrawer()
   }, [openFreshChatDrawer, pathname, router, searchParams, setActiveConversationId])
 
+  const openAllChats = useCallback(() => {
+    router.push('/chats')
+  }, [router])
+
   const activeConversationId = useChatStore((s) => s.activeConversationId)
   const selectedConversationId = chatDrawer.conversationId ?? activeConversationId ?? null
+
+  const filterControls = (
+    <ChatHistoryFilterMenu value={filters} onChange={setFilters} onOpenAllChats={openAllChats} />
+  )
 
   return (
     <>
@@ -205,8 +193,8 @@ export function ShellChatMenu() {
             setConversations((prev) => prev.filter((c) => c.id !== conversationId))
             if (selectedConversationId === conversationId) {
               setActiveConversationId(null)
-              if (isShellWorkspaceRoute(pathname)) openChatDrawer(null)
-              else router.push('/home')
+              if (isShellHomeRoute(pathname) && searchParams.get('conv')) router.push('/home')
+              openChatDrawer(null)
             }
           }}
           onRenameConversation={async (conversationId, title) => {
@@ -275,25 +263,14 @@ export function ShellChatMenu() {
           loading={loading}
           hideBackButton
           hideHeaderBottomBorder
-          hideNewButton
+          newButtonBelowSearch
           isOrgContext={isOrgContext}
-          showAllAgentsToggle
           allAgentsMode={allAgentsMode}
-          onAllAgentsModeChange={setAllAgentsMode}
+          leadingIcon={filters.leadingIcon}
           agentByKey={agentByKey}
-          headerEndSlot={
-            <Team2FilterDropdown
-              label="Filter"
-              trigger="icon"
-              icon={<ListFilter className="icon-sm" />}
-              options={filterOptions}
-              currentId={listFilter}
-              onSelect={(id) => setListFilter(id as ChatListFilter)}
-              align="left"
-              menuClassName="min-w-48 max-h-72 overflow-y-auto"
-              showDescriptionAsTooltip
-            />
-          }
+          groupBy={filters.groupBy}
+          campaignNameById={campaignNameById}
+          headerEndSlot={filterControls}
         />
       </div>
       {isOrgContext ? (

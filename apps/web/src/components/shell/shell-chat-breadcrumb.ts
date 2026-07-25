@@ -1,16 +1,16 @@
 interface FullShellConversationInput {
   pathname: string
   hasConversationParam: boolean
-  spaceWorkOpen: boolean
+  workAreaOpen: boolean
   chatDrawerOpen: boolean
 }
 
 export function isFullShellConversation({
   pathname,
   hasConversationParam,
-  spaceWorkOpen,
+  workAreaOpen,
   chatDrawerOpen,
 }: FullShellConversationInput): boolean {
   if (pathname === '/home' && hasConversationParam) return true
-  return pathname.startsWith('/spaces') && !spaceWorkOpen && chatDrawerOpen
+  return !workAreaOpen && chatDrawerOpen
 }

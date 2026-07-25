@@ -7,7 +7,7 @@ describe('isFullShellConversation', () => {
       isFullShellConversation({
         pathname: '/home',
         hasConversationParam: true,
-        spaceWorkOpen: true,
+        workAreaOpen: true,
         chatDrawerOpen: false,
       }),
     ).toBe(true)
@@ -18,7 +18,7 @@ describe('isFullShellConversation', () => {
       isFullShellConversation({
         pathname: '/spaces',
         hasConversationParam: false,
-        spaceWorkOpen: false,
+        workAreaOpen: false,
         chatDrawerOpen: true,
       }),
     ).toBe(true)
@@ -26,9 +26,20 @@ describe('isFullShellConversation', () => {
       isFullShellConversation({
         pathname: '/spaces',
         hasConversationParam: false,
-        spaceWorkOpen: true,
+        workAreaOpen: true,
         chatDrawerOpen: true,
       }),
     ).toBe(false)
+  })
+
+  it('treats a collapsed work area as full chat on non-Space routes', () => {
+    expect(
+      isFullShellConversation({
+        pathname: '/brain',
+        hasConversationParam: false,
+        workAreaOpen: false,
+        chatDrawerOpen: true,
+      }),
+    ).toBe(true)
   })
 })

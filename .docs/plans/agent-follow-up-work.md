@@ -8337,3 +8337,29 @@ Evidence: The current classifier supports only Personal and Team and treats owne
 Needed work: Classify Personal, Internal Team, and Client calls from participant identities, organization roster, customer/campaign contacts, calendar/Fathom metadata, and explicit manual overrides. Backfill only high-confidence historical classifications and surface ambiguity for review.
 
 Reason not done now: Accurate customer-versus-team classification needs bounded identity and campaign matching. Guessing from titles or attendee count would repeat the root problem and risks relabeling the meeting archive incorrectly.
+
+## 2026-07-24 - [ARCH] SpaceVibeyChatPanel + ChatInput still over LOC limits
+
+Status: Open
+
+Found while: Adding ClickUp-inspired empty mini-chat chrome
+
+Files:
+
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` (~2464 LOC; hard-limit violation)
+- `apps/web/src/features/studio/components/ChatInput.tsx` (~605 LOC; hard-limit violation)
+
+Evidence: Empty-chat wiring added only thin callbacks/props; both files were already far over architecture limits.
+
+Needed work: Continue extracting SpaceVibeyChatPanel into panel chrome / empty-state / composer stack modules; split ChatInput shell from draft/send/recording hooks.
+
+Reason not done now: In-scope work is empty-state UX. Full panel/composer decomposition would dominate the change.
+## 2026-07-24 - [ARCH] Shell AI Chats expand rewire — SidebarHqRail over LOC
+
+Feature/App: shell / sidebar
+Found while: Repurposing expand control + removing Home/Work toggle
+
+- `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx` (407 LOC; over 400 component)
+  Evidence: `wc -l` after hover/click AI Chats wiring; `hubExpanded` is forced false so the hub-menu layer is dead.
+  Needed work: Delete the unused expanded hub-menu layer + leftover pin/peek handlers now that the rail is icon-only.
+  Deferred because: In-scope was interaction rewire; full dead-code strip risks more test churn tonight.

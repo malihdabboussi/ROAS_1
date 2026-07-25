@@ -1,6 +1,7 @@
 'use client'
 
 import { Bot } from 'lucide-react'
+import { ShellEmptyChatCapabilityScroller } from '@/components/shell/ShellEmptyChatCapabilityScroller'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 
 const DEFAULT_SPACE_CHAT_AGENT_KEY = 'vibey'
@@ -27,27 +28,46 @@ function buildSpaceChatAgentGreeting(agent: TeamRosterEntry): string {
 
 interface SpaceChatAgentEmptyStateProps {
   agent: TeamRosterEntry
+  /** When true, show capability chips under the hero (hidden once composer has text). */
+  showCapabilities?: boolean
+  onSelectCapability?: (prompt: string) => void
 }
 
-export function SpaceChatAgentEmptyState({ agent }: SpaceChatAgentEmptyStateProps) {
-  const greeting = buildSpaceChatAgentGreeting(agent)
+export function SpaceChatAgentEmptyState({
+  agent,
+  showCapabilities = false,
+  onSelectCapability,
+}: SpaceChatAgentEmptyStateProps) {
+  const heroTitle = agent.display_name
+  const heroAvatar = agent.avatar_url
+  const showAgentRole = Boolean(agent.role_label)
+  // Default agent (Pixel) keeps the hero to name + capabilities — no long greeting.
+  const greeting =
+    agent.agent_key === DEFAULT_SPACE_CHAT_AGENT_KEY ? null : buildSpaceChatAgentGreeting(agent)
 
   return (
-    <div className="flex flex-col items-center justify-center px-4 py-24">
+    <div className="flex flex-1 flex-col items-center justify-center px-4 py-16">
       <div className="mb-spacing-4 h-spacing-16 w-spacing-16 shrink-0 overflow-hidden rounded-full">
-        {agent.avatar_url ? (
-          <img src={agent.avatar_url} alt="" className="h-full w-full object-cover" />
+        {heroAvatar ? (
+          <img src={heroAvatar} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span className="flex h-full w-full items-center justify-center bg-violet-500/20 text-violet-300">
-            <Bot className="h-8 w-8" aria-hidden />
+          <span className="bg-primary/20 text-primary flex h-full w-full items-center justify-center">
+            <Bot className="icon-lg" aria-hidden />
           </span>
         )}
       </div>
-      <p className="body-1 text-foreground text-center font-semibold">{agent.display_name}</p>
-      {agent.role_label ? (
+      <p className="body-1 text-foreground text-center font-semibold">{heroTitle}</p>
+      {showAgentRole ? (
         <p className="body-4 text-muted-foreground mt-spacing-1 text-center">{agent.role_label}</p>
       ) : null}
-      <p className="body-3 text-muted-foreground mt-spacing-4 max-w-md text-center">{greeting}</p>
+      {greeting ? (
+        <p className="body-3 text-muted-foreground mt-spacing-4 max-w-md text-center">{greeting}</p>
+      ) : null}
+      {showCapabilities && onSelectCapability ? (
+        <div className="mt-spacing-6 w-full max-w-3xl">
+          <ShellEmptyChatCapabilityScroller onSelect={onSelectCapability} />
+        </div>
+      ) : null}
     </div>
   )
 }

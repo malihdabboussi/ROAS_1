@@ -1,3 +1,7 @@
+import {
+  DEFAULT_AGENT_AVATAR_URL,
+  DEFAULT_AGENT_DISPLAY_NAME,
+} from '@/lib/team/default-agent-identity'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { DEFAULT_SPACE_CHAT_AGENT_KEY } from './space-vibey-chat-panel.logic'
 
@@ -18,8 +22,8 @@ export const VIBEY_ROSTER_FALLBACK: TeamRosterEntry = {
   org_id: null,
   user_id: null,
   agent_key: DEFAULT_SPACE_CHAT_AGENT_KEY,
-  display_name: 'ROAS',
-  avatar_url: null,
+  display_name: DEFAULT_AGENT_DISPLAY_NAME,
+  avatar_url: DEFAULT_AGENT_AVATAR_URL,
   role_label: null,
   specialties: [],
   accepts_assignments: true,

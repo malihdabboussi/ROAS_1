@@ -1,17 +1,21 @@
 import { Injectable, type Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { ChatScopeKind, DocumentIntelligenceMetadata, SupabaseServiceClient } from '@vibey/api-shared'
+import type {
+  ChatScopeKind,
+  DocumentIntelligenceMetadata,
+  SupabaseServiceClient,
+} from '@vibey/api-shared'
 import { MessagesRepository } from '../../conversations/repositories/messages.repository'
 import type { RequestUploadAttachment } from '../../shared/services/request-context.service'
 import { RequestContextService } from '../../shared/services/request-context.service'
+import { ChatProgressiveStreamService } from './chat-progressive-stream.service'
 import { ChatReferenceContextService } from './chat-reference-context.service'
 import type { ChatRunCheckpointKind } from './chat-run-checkpoint.service'
 import { ChatRunCheckpointService } from './chat-run-checkpoint.service'
-import { ChatProgressiveStreamService } from './chat-progressive-stream.service'
-import { MessageTimelineService } from './message-timeline.service'
-import type { SendFn } from './openclaw-proxy.service'
 import type { CompletedPlatformTool } from './chat-setup-events.service'
 import type { RecordChatTurnTimingSpan } from './chat-turn-session.service'
+import { MessageTimelineService } from './message-timeline.service'
+import type { SendFn } from './openclaw-proxy.service'
 
 type DbOperation = <T>(operation: (supabase: SupabaseClient) => Promise<T>) => Promise<T>
 type ToolStep = { name: string; label: string; status: string }
@@ -47,11 +51,12 @@ interface HighlightedArtifact {
 }
 
 interface MessageReference {
-  kind: 'artifact' | 'media' | 'mission' | 'conversation'
+  kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person'
   id: string
   label: string
   type?: string
   campaign_id?: string
+  brain_id?: string
 }
 
 interface UiSelectedArtifact {

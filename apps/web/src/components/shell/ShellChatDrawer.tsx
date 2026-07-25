@@ -10,11 +10,18 @@ import { cn } from '@/lib/utils/cn'
 import { ShellChatMenu } from './ShellChatMenu'
 import { useShellStore } from './use-shell-store'
 
-export function ShellChatDrawer() {
+/** Matches the drawer/HQ-rail transition in globals.css. */
+const DRAWER_SLIDE_MS = 300
+const DRAWER_COLLAPSE_EDGE_TOLERANCE = 24
+
+export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
   const open = useShellStore((s) => s.chatDrawer.open)
   const width = useShellStore((s) => s.chatDrawer.width)
   const conversationId = useShellStore((s) => s.chatDrawer.conversationId)
+  const historyWidth = useShellStore((s) => s.chatHistoryWidth)
   const setChatDrawerWidth = useShellStore((s) => s.setChatDrawerWidth)
+  const setChatHistoryWidth = useShellStore((s) => s.setChatHistoryWidth)
+  const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
   const minimizeChatDrawer = useShellStore((s) => s.minimizeChatDrawer)
   const newChatNonce = useShellStore((s) => s.newChatNonce)
 
@@ -24,9 +31,38 @@ export function ShellChatDrawer() {
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
 
   const [isDragging, setIsDragging] = useState(false)
+  const [isHistoryDragging, setIsHistoryDragging] = useState(false)
+  const [mounted, setMounted] = useState(open)
+  const [slidIn, setSlidIn] = useState(false)
+  const drawerRef = useRef<HTMLDivElement>(null)
   const dragStartX = useRef(0)
   const dragStartWidth = useRef(width)
+  const dragStartLeft = useRef(0)
+  const dragDividerWidth = useRef(0)
+  const dragRemainingWidth = useRef(Number.POSITIVE_INFINITY)
+  const historyDragStartX = useRef(0)
+  const historyDragStartWidth = useRef(historyWidth)
+  const historyDragStartDrawerWidth = useRef(width)
   const lastHandledNewChatNonceRef = useRef(0)
+
+  // Mount at zero width, then slide the body in on the next frame so the page
+  // glides sideways instead of the panel popping into the flex row.
+  useEffect(() => {
+    if (!open) {
+      setSlidIn(false)
+      const timer = setTimeout(() => setMounted(false), DRAWER_SLIDE_MS)
+      return () => clearTimeout(timer)
+    }
+    setMounted(true)
+    let inner = 0
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => setSlidIn(true))
+    })
+    return () => {
+      cancelAnimationFrame(outer)
+      cancelAnimationFrame(inner)
+    }
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -61,52 +97,134 @@ export function ShellChatDrawer() {
       setIsDragging(true)
       dragStartX.current = e.clientX
       dragStartWidth.current = width
+      dragStartLeft.current = drawerRef.current?.getBoundingClientRect().left ?? 0
+      dragDividerWidth.current = e.currentTarget.getBoundingClientRect().width
+      dragRemainingWidth.current = Number.POSITIVE_INFINITY
     },
     [width],
+  )
+
+  const handleHistoryMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      setIsHistoryDragging(true)
+      historyDragStartX.current = e.clientX
+      historyDragStartWidth.current = historyWidth
+      historyDragStartDrawerWidth.current = width
+    },
+    [historyWidth, width],
   )
 
   useEffect(() => {
     if (!isDragging) return
     const onMove = (e: PointerEvent) => {
       const delta = e.clientX - dragStartX.current
-      setChatDrawerWidth(dragStartWidth.current + delta)
+      const availableWidth = Math.max(
+        0,
+        window.innerWidth - dragStartLeft.current - dragDividerWidth.current,
+      )
+      const nextWidth = Math.min(availableWidth, dragStartWidth.current + delta)
+      dragRemainingWidth.current = availableWidth - nextWidth
+      setChatDrawerWidth(nextWidth)
     }
-    const onUp = () => setIsDragging(false)
+    const onUp = () => {
+      setIsDragging(false)
+      if (dragRemainingWidth.current > DRAWER_COLLAPSE_EDGE_TOLERANCE) return
+      // Reaching the right edge is the drag equivalent of "chat full screen".
+      // Keep the prior docked width so showing the page again restores its layout.
+      setWorkAreaOpen(false)
+      setChatDrawerWidth(dragStartWidth.current)
+    }
     document.addEventListener('pointermove', onMove)
     document.addEventListener('pointerup', onUp)
     return () => {
       document.removeEventListener('pointermove', onMove)
       document.removeEventListener('pointerup', onUp)
     }
-  }, [isDragging, setChatDrawerWidth])
+  }, [isDragging, setChatDrawerWidth, setWorkAreaOpen])
 
-  if (!open) return null
+  useEffect(() => {
+    if (!isHistoryDragging) return
+    const onMove = (e: PointerEvent) => {
+      const delta = e.clientX - historyDragStartX.current
+      setChatHistoryWidth(historyDragStartWidth.current + delta)
+      // In docked mode, grow the whole drawer with the history rail so the
+      // active chat does not get squeezed by the same drag.
+      if (!expanded) {
+        setChatDrawerWidth(historyDragStartDrawerWidth.current + delta)
+      }
+    }
+    const onUp = () => setIsHistoryDragging(false)
+    document.addEventListener('pointermove', onMove)
+    document.addEventListener('pointerup', onUp)
+    return () => {
+      document.removeEventListener('pointermove', onMove)
+      document.removeEventListener('pointerup', onUp)
+    }
+  }, [expanded, isHistoryDragging, setChatDrawerWidth, setChatHistoryWidth])
+
+  if (!mounted) return null
+
+  // Expanded = page collapsed: history stays, chat fills the freed width.
+  // Docked = fixed width with slide-in animation.
+  const drawerWidthStyle = expanded ? undefined : { width: slidIn ? `${width}px` : '0px' }
+  const bodyStyle = expanded
+    ? undefined
+    : {
+        width: `${width}px`,
+        transform: slidIn ? 'translateX(0)' : `translateX(-${width}px)`,
+      }
 
   return (
     <>
       <div
+        ref={drawerRef}
         className={cn(
-          'border-border bg-background flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-r',
-          !isDragging && 'transition-[width] duration-200 ease-out',
+          'shell-chat-drawer',
+          expanded && 'shell-chat-drawer-expanded',
+          !isDragging && !expanded && 'shell-chat-drawer-animated',
         )}
-        style={{ width: `${width}px` }}
+        style={drawerWidthStyle}
+        aria-hidden={!expanded && !slidIn}
         data-shell-chat-drawer
+        data-expanded={expanded ? 'true' : 'false'}
       >
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          <div className="border-border px-spacing-2 pt-spacing-2 flex w-[200px] shrink-0 flex-col overflow-hidden border-r">
+        <div
+          className={cn(
+            'shell-chat-drawer-body',
+            expanded && 'shell-chat-drawer-body-expanded',
+            !isDragging && !expanded && 'shell-chat-drawer-body-animated',
+          )}
+          style={bodyStyle}
+        >
+          <div
+            className="shell-chat-drawer-menu"
+            style={{ width: `${historyWidth}px` }}
+            data-shell-chat-history
+          >
             <ShellChatMenu />
           </div>
+          <ResizableDivider
+            onMouseDown={handleHistoryMouseDown}
+            isDragging={isHistoryDragging}
+            compact
+            showGrip={false}
+            ariaLabel="Resize chat history"
+          />
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <GlobalChatPanel shellSidebarChrome onCollapseChat={() => minimizeChatDrawer()} />
           </div>
         </div>
       </div>
-      <ResizableDivider
-        onMouseDown={handleMouseDown}
-        isDragging={isDragging}
-        compact
-        showGrip={false}
-      />
+      {!expanded ? (
+        <ResizableDivider
+          onMouseDown={handleMouseDown}
+          isDragging={isDragging}
+          compact
+          showGrip={false}
+          ariaLabel="Resize AI chat drawer"
+        />
+      ) : null}
     </>
   )
 }

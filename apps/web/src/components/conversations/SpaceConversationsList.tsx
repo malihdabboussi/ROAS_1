@@ -4,20 +4,17 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { MessageSquare } from 'lucide-react'
 import {
   getConversationAgentDisplay,
-  groupConversationsBySection,
-  isConversationPinned,
+  groupConversationsForHistory,
   stripLegacySpacesConversationTitle,
+  type ChatHistoryGroupBy,
+  type ChatHistoryLeadingIcon,
   type Conversation,
   type ConversationAgentDisplay,
-  type ConversationSection,
 } from '@/lib/conversations'
 import { SpaceConversationActionsSurface } from './SpaceConversationActionsSurface'
-import { SpaceConversationsHeader } from './SpaceConversationsHeader'
-import {
-  SpaceConversationRow,
-  type ConversationRowRuntimeState,
-} from './SpaceConversationRows'
+import { SpaceConversationRow, type ConversationRowRuntimeState } from './SpaceConversationRows'
 import { SpaceConversationSections } from './SpaceConversationSections'
+import { SpaceConversationsHeader } from './SpaceConversationsHeader'
 
 export interface SpaceConversationsListProps {
   conversations: Conversation[]
@@ -65,18 +62,25 @@ export interface SpaceConversationsListProps {
   /** When true, rows show the source agent avatar and search includes agent names. */
   allAgentsMode?: boolean
   onAllAgentsModeChange?: (enabled: boolean) => void
+  /** Leading mark on each row (agent / logo / status / none). Overrides allAgentsMode avatar. */
+  leadingIcon?: ChatHistoryLeadingIcon
   agentByKey?: Record<string, ConversationAgentDisplay>
   hideNewButton?: boolean
+  /** Render New as a full-width control under the search/filter toolbar. */
+  newButtonBelowSearch?: boolean
   /** When true, omit the inline list search (caller owns search UI). */
   hideSearch?: boolean
   /** Parent-owned search control shown after agent/filter when `hideSearch` is true. */
   searchSlot?: ReactNode
   headerEndSlot?: ReactNode
+  /** Claude-style list organization. Default: flat (none). */
+  groupBy?: ChatHistoryGroupBy
+  campaignNameById?: Record<string, string>
+  headerStartSlot?: ReactNode
 }
 
 const INITIAL_SECTION_VISIBLE = 6
 const SECTION_VISIBLE_INCREMENT = 6
-const SUBTITLE_SECTIONS: ReadonlySet<ConversationSection> = new Set(['pinned', 'today'])
 
 export function SpaceConversationsList({
   conversations,
@@ -110,11 +114,16 @@ export function SpaceConversationsList({
   showAllAgentsToggle,
   allAgentsMode,
   onAllAgentsModeChange,
+  leadingIcon,
   agentByKey,
   hideNewButton,
+  newButtonBelowSearch,
   hideSearch,
   searchSlot,
   headerEndSlot,
+  headerStartSlot,
+  groupBy = 'none',
+  campaignNameById,
 }: SpaceConversationsListProps) {
   const [menuConversationId, setMenuConversationId] = useState<string | null>(null)
   const [menuAnchor, setMenuAnchor] = useState<{ top: number; left: number } | null>(null)
@@ -122,12 +131,8 @@ export function SpaceConversationsList({
   const [renameDraft, setRenameDraft] = useState('')
   const [compactSearchOpen, setCompactSearchOpen] = useState(false)
   const renameInputRef = useRef<HTMLInputElement>(null)
-  const [sectionCollapsed, setSectionCollapsed] = useState<
-    Partial<Record<ConversationSection, boolean>>
-  >({})
-  const [sectionVisibleRows, setSectionVisibleRows] = useState<
-    Partial<Record<ConversationSection, number>>
-  >({})
+  const [sectionCollapsed, setSectionCollapsed] = useState<Partial<Record<string, boolean>>>({})
+  const [sectionVisibleRows, setSectionVisibleRows] = useState<Partial<Record<string, number>>>({})
 
   useEffect(() => {
     if (renameId && renameInputRef.current) {
@@ -137,31 +142,52 @@ export function SpaceConversationsList({
   }, [renameId])
 
   const q = query.trim().toLowerCase()
+  const includeAgentInSearch = Boolean(allAgentsMode) || leadingIcon === 'agent'
   const visible = useMemo(() => {
     if (!q) return conversations
     return conversations.filter((conversation) => {
       const label =
         stripLegacySpacesConversationTitle(conversation.title) || 'Untitled conversation'
-      const agentName = allAgentsMode
+      const agentName = includeAgentInSearch
         ? getConversationAgentDisplay(conversation, agentByKey).name
         : ''
       return `${label} ${agentName}`.toLowerCase().includes(q)
     })
-  }, [agentByKey, allAgentsMode, conversations, q])
+  }, [agentByKey, conversations, includeAgentInSearch, q])
 
-  const grouped = useMemo(() => groupConversationsBySection(visible), [visible])
+  const groups = useMemo(() => {
+    const agentNameByKey: Record<string, string> = {}
+    if (agentByKey) {
+      for (const [key, value] of Object.entries(agentByKey)) {
+        agentNameByKey[key] = value.name
+      }
+    }
+    const runtimePhaseById: Record<string, string | null | undefined> = {}
+    if (conversationRuntimeById) {
+      for (const [id, runtime] of Object.entries(conversationRuntimeById)) {
+        runtimePhaseById[id] = runtime?.phase
+      }
+    }
+    return groupConversationsForHistory(visible, {
+      groupBy,
+      agentNameByKey,
+      campaignNameById,
+      runtimePhaseById,
+    })
+  }, [agentByKey, campaignNameById, conversationRuntimeById, groupBy, visible])
 
   useEffect(() => {
     setSectionVisibleRows({})
     setSectionCollapsed({})
-  }, [q])
+  }, [q, groupBy])
 
-  const rowCapForSection = (section: ConversationSection, total: number) => {
+  const rowCapForSection = (section: string, total: number) => {
+    if (groupBy === 'none') return total
     const cap = sectionVisibleRows[section] ?? INITIAL_SECTION_VISIBLE
     return Math.min(Math.max(cap, 0), total)
   }
 
-  const toggleSectionCollapsed = (section: ConversationSection) => {
+  const toggleSectionCollapsed = (section: string) => {
     setSectionCollapsed((prevColl) => {
       const willExpand = prevColl[section] === true
       if (willExpand) {
@@ -175,7 +201,7 @@ export function SpaceConversationsList({
     })
   }
 
-  const showMoreInSection = (section: ConversationSection) => {
+  const showMoreInSection = (section: string) => {
     setSectionVisibleRows((prev) => {
       const cur = prev[section] ?? INITIAL_SECTION_VISIBLE
       return { ...prev, [section]: cur + SECTION_VISIBLE_INCREMENT }
@@ -238,16 +264,20 @@ export function SpaceConversationsList({
     setRenameDraft('')
   }
 
-  const renderConversationRow = (conversation: Conversation, section: ConversationSection) => {
+  const renderConversationRow = (conversation: Conversation, sectionId: string) => {
     const selected = conversation.id === selectedConversationId
-    const pinned = isConversationPinned(conversation)
+    const pinned = Boolean(
+      conversation.metadata &&
+      typeof conversation.metadata === 'object' &&
+      (conversation.metadata as { pinned?: unknown }).pinned === true,
+    )
     const renaming = renameId === conversation.id
-    const showSubtitle = SUBTITLE_SECTIONS.has(section)
+    const showSubtitle = sectionId === 'today' || sectionId === 'pinned' || groupBy === 'none'
     return (
       <SpaceConversationRow
         key={conversation.id}
         conversation={conversation}
-        section={section}
+        section={sectionId}
         selected={selected}
         pinned={pinned}
         renaming={renaming}
@@ -255,6 +285,7 @@ export function SpaceConversationsList({
         showSubtitle={showSubtitle}
         runtimeState={conversationRuntimeById?.[conversation.id]}
         allAgentsMode={allAgentsMode}
+        leadingIcon={leadingIcon}
         agentByKey={agentByKey}
         menuOpen={menuConversationId === conversation.id}
         renameInputRef={renameInputRef}
@@ -285,18 +316,20 @@ export function SpaceConversationsList({
         allAgentsMode={allAgentsMode}
         onAllAgentsModeChange={onAllAgentsModeChange}
         hideNewButton={hideNewButton}
+        newButtonBelowSearch={newButtonBelowSearch}
         hideSearch={hideSearch}
         searchSlot={searchSlot}
+        headerStartSlot={headerStartSlot}
         headerEndSlot={headerEndSlot}
       />
-      <div className="min-h-0 flex-1 overflow-y-auto p-spacing-2">
+      <div className="p-spacing-2 min-h-0 flex-1 overflow-y-auto">
         {loading ? (
           <div className="body-4 text-muted-foreground p-spacing-4 text-center">
             Loading conversations...
           </div>
         ) : visible.length === 0 ? (
           <div className="p-spacing-6 text-center">
-            <MessageSquare className="text-muted-foreground mx-auto icon-lg" />
+            <MessageSquare className="text-muted-foreground icon-lg mx-auto" />
             <p className="body-3 mt-spacing-2 font-semibold">No conversations yet</p>
             <p className="body-4 text-muted-foreground mt-spacing-1">
               Start a chat and it will show up here.
@@ -304,7 +337,7 @@ export function SpaceConversationsList({
           </div>
         ) : (
           <SpaceConversationSections
-            grouped={grouped}
+            groups={groups}
             sectionCollapsed={sectionCollapsed}
             rowCapForSection={rowCapForSection}
             onToggleSectionCollapsed={toggleSectionCollapsed}

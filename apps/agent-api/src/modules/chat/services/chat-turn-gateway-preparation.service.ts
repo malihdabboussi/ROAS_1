@@ -7,24 +7,18 @@ import { AgentRuntimeService } from '../../shared/services/agent-runtime.service
 import { CampaignContextService } from './campaign-context.service'
 import { ChatContextAccountingService } from './chat-context-accounting.service'
 import { ChatDocumentContextService } from './chat-document-context.service'
-import {
-  ChatGatewayInputService,
-  type ChatGatewayInputContext,
-} from './chat-gateway-input.service'
+import { ChatGatewayInputService, type ChatGatewayInputContext } from './chat-gateway-input.service'
 import { ChatMessageEnrichmentService } from './chat-message-enrichment.service'
 import { ChatModelInputService, type ChatModelSettings } from './chat-model-input.service'
 import type { ChatStablePrewarmContext } from './chat-prewarm-context.service'
 import { ChatProfileContextService } from './chat-profile-context.service'
 import { ChatSessionHistoryService } from './chat-session-history.service'
 import { ChatSetupEventsService } from './chat-setup-events.service'
+import type { ResolvedSlashCommand } from './chat-slash-command.service'
 import type { ChatStableTurnContext } from './chat-stable-turn-context.service'
 import type { RecordChatTurnTimingSpan } from './chat-turn-session.service'
 import { IntegrationContextService } from './integration-context.service'
-import type {
-  OpenClawInputMessage,
-  OpenClawSkillCatalog,
-} from './openclaw-proxy.service'
-import type { ResolvedSlashCommand } from './chat-slash-command.service'
+import type { OpenClawInputMessage, OpenClawSkillCatalog } from './openclaw-proxy.service'
 
 type ChatGatewayChannel = 'telegram' | 'slack' | 'studio'
 
@@ -49,11 +43,12 @@ interface HighlightedArtifact {
 }
 
 interface MessageReference {
-  kind: 'artifact' | 'media' | 'mission' | 'conversation'
+  kind: 'artifact' | 'media' | 'mission' | 'conversation' | 'person'
   id: string
   label: string
   type?: string
   campaign_id?: string
+  brain_id?: string
 }
 
 interface ChannelUser {
@@ -514,10 +509,12 @@ export class ChatTurnGatewayPreparationService {
             return [] as Array<{ filename: string; url: string }>
           }),
       input.hasCampaignAccess
-        ? this.profileContextService.buildUserProfileSummary(input.userId, input.orgId).catch((err) => {
-            input.logger.warn(`User profile context failed: ${err}`)
-            return ''
-          })
+        ? this.profileContextService
+            .buildUserProfileSummary(input.userId, input.orgId)
+            .catch((err) => {
+              input.logger.warn(`User profile context failed: ${err}`)
+              return ''
+            })
         : Promise.resolve(''),
       input.resolvedAgentId === 'atlas' || input.resolvedAgentId === 'hr'
         ? this.profileContextService
@@ -528,10 +525,12 @@ export class ChatTurnGatewayPreparationService {
             })
         : Promise.resolve(''),
       input.hasCampaignAccess
-        ? this.profileContextService.buildCampaignTeamContext(input.resolvedCampaignId).catch((err) => {
-            input.logger.warn(`Campaign team context failed: ${err}`)
-            return ''
-          })
+        ? this.profileContextService
+            .buildCampaignTeamContext(input.resolvedCampaignId)
+            .catch((err) => {
+              input.logger.warn(`Campaign team context failed: ${err}`)
+              return ''
+            })
         : Promise.resolve(''),
       input.hasCampaignAccess && input.resolvedCampaignId
         ? this.campaignContext
@@ -549,10 +548,12 @@ export class ChatTurnGatewayPreparationService {
               return ''
             })
         : Promise.resolve(''),
-      this.brainContext.resolveAgentBrainPresence(input.userId, input.resolvedAgentId, input.orgId).catch((err) => {
-        input.logger.warn(`Agent brain presence resolve failed: ${err}`)
-        return { hasAgentBrain: false, brainId: null }
-      }),
+      this.brainContext
+        .resolveAgentBrainPresence(input.userId, input.resolvedAgentId, input.orgId)
+        .catch((err) => {
+          input.logger.warn(`Agent brain presence resolve failed: ${err}`)
+          return { hasAgentBrain: false, brainId: null }
+        }),
     ])
 
     return {
@@ -568,7 +569,10 @@ export class ChatTurnGatewayPreparationService {
 
   private shouldUsePublicAgentQuickContext(source: string | undefined, content: string): boolean {
     if (source !== 'public_agent') return false
-    const normalized = content.trim().toLowerCase().replace(/[!?.,]+$/g, '')
+    const normalized = content
+      .trim()
+      .toLowerCase()
+      .replace(/[!?.,]+$/g, '')
     if (!normalized || normalized.length > 180) return false
     if (/^(hi|hello|hey|yo|sup|gm|good morning|good afternoon|good evening)$/.test(normalized)) {
       return true

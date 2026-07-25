@@ -1,6 +1,7 @@
 import type { MouseEvent, ReactNode } from 'react'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { useShellStore } from '@/components/shell/use-shell-store'
 import { SidebarHqSection } from './SidebarHqSection'
 import { makeSidebarHqController } from './SidebarHqSection.test-support'
 
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   deleteProject: vi.fn(),
   setActiveView: vi.fn(),
   fetchPrograms: vi.fn(async () => []),
+  loadProgramsCached: vi.fn(async () => []),
 }))
 
 vi.mock('next/link', () => ({
@@ -42,10 +44,14 @@ vi.mock('next/link', () => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }))
 
 vi.mock('@/lib/programs', () => ({
   fetchPrograms: mocks.fetchPrograms,
+  loadProgramsCached: mocks.loadProgramsCached,
+  peekProgramsMemoryCache: vi.fn(() => undefined),
+  readProgramsLocalCache: vi.fn(() => null),
   createProgram: vi.fn(),
   updateProgram: vi.fn(),
   deleteProgram: vi.fn(),
@@ -236,14 +242,14 @@ describe('SidebarHqSection', () => {
       <SidebarHqSection c={controller} featureUpdates={{ hasUnread: true, onOpen: vi.fn() }} />,
     )
 
-    expect(screen.getByText('Home')).toBeTruthy()
+    expect(screen.getByText('Inbox')).toBeTruthy()
     expect(screen.queryByText('All Tasks')).toBeNull()
     expect(screen.getByText('Team')).toBeTruthy()
     expect(screen.getByText('Programs')).toBeTruthy()
     expect(screen.getByText('More')).toBeTruthy()
   })
 
-  it('loads the next spaces page automatically from the desktop Programs panel', async () => {
+  it('does not load the next spaces page until a Programs tree item is expanded', async () => {
     const loadMoreSidebarLists = vi.fn(async () => [])
     const controller = makeSidebarHqController({
       activeManagePanel: 'spaces',
@@ -266,6 +272,23 @@ describe('SidebarHqSection', () => {
 
     render(<SidebarHqSection c={controller} />)
 
-    await waitFor(() => expect(loadMoreSidebarLists).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(mocks.loadProgramsCached).toHaveBeenCalled())
+    expect(loadMoreSidebarLists).not.toHaveBeenCalled()
+  })
+
+  it('opens AI Chats from the launcher below the ROAS logo', () => {
+    useShellStore.setState({
+      chatDrawer: { open: false, conversationId: null, width: 420, minimized: true },
+    })
+    const controller = makeSidebarHqController({
+      mobileDrawerOpen: false,
+      pathname: '/campaigns',
+    })
+
+    render(<SidebarHqSection c={controller} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Open AI Chats' }))
+
+    expect(useShellStore.getState().chatDrawer.open).toBe(true)
+    expect(screen.getByRole('button', { name: 'Collapse AI Chats' })).toBeInTheDocument()
   })
 })
