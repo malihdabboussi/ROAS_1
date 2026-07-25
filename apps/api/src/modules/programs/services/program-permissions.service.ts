@@ -144,15 +144,9 @@ export class ProgramPermissionsService {
     ]
     if (programIds.length === 0) return campaigns
 
-    const programs = await Promise.all(
-      programIds.map((id) => this.programsRepo.findById(supabase, id, orgId)),
-    )
-    const accessible = await this.filterAccessiblePrograms(
-      supabase,
-      programs.filter((p): p is ProgramRow => Boolean(p)),
-      userId,
-      orgRole,
-    )
+    // Resolve every referenced program in one query (was N findById calls).
+    const programs = await this.programsRepo.listByIds(supabase, programIds, orgId)
+    const accessible = await this.filterAccessiblePrograms(supabase, programs, userId, orgRole)
     const allowed = new Set(
       accessible.filter((p) => this.hasRequiredLevel(p.effective_level, required)).map((p) => p.id),
     )
@@ -161,6 +155,38 @@ export class ProgramPermissionsService {
       if (!campaign.program_id) return true
       return allowed.has(campaign.program_id)
     })
+  }
+
+  /**
+   * Gate a space move between campaigns by the invoking user's Program access.
+   * Moving a space into a campaign that lives in a restricted Program requires
+   * Program `edit`; leaving a restricted Program requires `edit` on the source
+   * too, so a Private Program's ACL can't be bypassed via space reparenting.
+   */
+  async assertSpaceCampaignMoveAccess(
+    supabase: SupabaseClient,
+    sourceCampaignId: string | null,
+    targetCampaignId: string | null,
+    userId: string,
+    orgRole: OrgRole | null | undefined,
+    required: ProgramShareLevel = 'edit',
+    orgId?: string | null,
+  ): Promise<void> {
+    const campaignIds = [sourceCampaignId, targetCampaignId].filter(
+      (id): id is string => typeof id === 'string' && id.length > 0,
+    )
+    if (campaignIds.length === 0) return
+    const programByCampaign = await this.permissionsRepo.findProgramIdsByCampaignIds(
+      supabase,
+      campaignIds,
+    )
+    const seen = new Set<string>()
+    for (const campaignId of campaignIds) {
+      const programId = programByCampaign.get(campaignId) ?? null
+      if (!programId || seen.has(programId)) continue
+      seen.add(programId)
+      await this.assertProgramAccess(supabase, programId, userId, orgRole, required, orgId)
+    }
   }
 
   async assertCampaignProgramAccess(

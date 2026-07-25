@@ -30,12 +30,16 @@ import {
   type ProgramIdParam,
   type UpdateProgramInput,
 } from '../dto/programs.dto'
+import { ProgramShareCompatService } from '../services/program-share-compat.service'
 import { ProgramsService } from '../services/programs.service'
 
 @Controller('programs')
 @UseGuards(AuthGuard, OrgContextGuard, OrgRoleGuard)
 export class ProgramsController {
-  constructor(private readonly programsService: ProgramsService) {}
+  constructor(
+    private readonly programsService: ProgramsService,
+    private readonly shareCompat: ProgramShareCompatService,
+  ) {}
 
   @Get()
   async list(
@@ -44,6 +48,21 @@ export class ProgramsController {
     @OrgContext() scope: RequestScope,
   ) {
     return this.programsService.list(supabase, user.id, scope.orgRole, scope.orgId)
+  }
+
+  /**
+   * Read-only report of space shares overridden by Program privacy. Static path
+   * declared before `:id` so it is not captured by the param route.
+   */
+  @Get('share-conflicts')
+  @RequireOrgRole('admin')
+  async shareConflicts(
+    @Supabase() supabase: SupabaseClient,
+    @OrgContext() scope: RequestScope,
+  ) {
+    if (!scope.orgId) return { conflicts: [] }
+    const conflicts = await this.shareCompat.listConflicts(supabase, scope.orgId)
+    return { conflicts }
   }
 
   @Get(':id')

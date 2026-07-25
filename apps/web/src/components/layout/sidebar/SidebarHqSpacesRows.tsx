@@ -7,6 +7,7 @@ import { useGlobalChatStore } from '@/components/global-chat/store/use-global-ch
 import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space } from '@/features/spaces/types'
+import { CampaignDragHandle, DraggableSpace } from './sidebar-tree-dnd'
 import type { SidebarCampaignRow } from './sidebar-types'
 
 export type SectionMenuAnchorRect = { top: number; left: number; bottom: number; right: number }
@@ -67,7 +68,7 @@ export function SpaceRow({
               if (e.key === 'Enter') onSubmitRename()
               if (e.key === 'Escape') onCancelRename()
             }}
-            className="body-3 border-border text-foreground ring-border min-w-0 flex-1 rounded bg-transparent px-1 outline-none ring-1"
+            className="body-2 border-border text-foreground ring-border min-w-0 flex-1 rounded bg-transparent px-1 outline-none ring-1"
           />
         </div>
       ) : (
@@ -89,7 +90,7 @@ export function SpaceRow({
             }`}
           >
             <LucideIcon name={spaceIcon} className={`h-4 w-4 shrink-0 ${iconColor}`} />
-            <span className="body-3 min-w-0 flex-1 truncate">
+            <span className="body-2 min-w-0 flex-1 truncate">
               {space.title}
               {viewSuffix ? ` • ${viewSuffix}` : ''}
             </span>
@@ -140,6 +141,7 @@ export function Section({
   isSubmitting,
   favoriteIds,
   spaceRowProps,
+  enableDnd = false,
 }: {
   bucket: string
   label: string
@@ -149,6 +151,7 @@ export function Section({
   isExpanded: boolean
   isCreating: boolean
   searchActive: boolean
+  enableDnd?: boolean
   onToggle: (bucket: string) => void
   onOpenCampaignMenu: (campaign: SidebarCampaignRow, anchorRect: SectionMenuAnchorRect) => void
   onOpenAddDropdown: (e: MouseEvent<HTMLButtonElement>, bucket: string) => void
@@ -206,7 +209,7 @@ export function Section({
               const r = e.currentTarget.getBoundingClientRect()
               onOpenCampaignMenu(campaignRow, r)
             }}
-            className="body-3 text-muted-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 font-medium transition-colors"
+            className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 font-medium transition-colors"
           >
             {label}
           </Link>
@@ -214,11 +217,18 @@ export function Section({
           <button
             type="button"
             onClick={() => onToggle(bucket)}
-            className="body-3 text-muted-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 text-left font-medium transition-colors"
+            className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 text-left font-medium transition-colors"
           >
             {label}
           </button>
         )}
+        {campaignRow && enableDnd ? (
+          <CampaignDragHandle
+            campaignId={campaignRow.id}
+            programId={campaignRow.program_id ?? null}
+            label={label}
+          />
+        ) : null}
         {campaignRow ? (
           <button
             type="button"
@@ -254,9 +264,15 @@ export function Section({
 
       {isExpanded && (
         <div className="border-border ml-2 min-w-0 space-y-0.5 border-l pl-2">
-          {sectionSpaces.map((s) => (
-            <SpaceRow key={s.id} space={s} favorited={favoriteIds.has(s.id)} {...spaceRowProps} />
-          ))}
+          {sectionSpaces.map((s) =>
+            enableDnd ? (
+              <DraggableSpace key={s.id} spaceId={s.id} campaignId={campaignId}>
+                <SpaceRow space={s} favorited={favoriteIds.has(s.id)} {...spaceRowProps} />
+              </DraggableSpace>
+            ) : (
+              <SpaceRow key={s.id} space={s} favorited={favoriteIds.has(s.id)} {...spaceRowProps} />
+            ),
+          )}
           {isCreating ? (
             <div className="flex min-w-0 items-center gap-1.5 px-2 py-1">
               <input
@@ -282,7 +298,7 @@ export function Section({
               className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground flex w-full min-w-0 items-center gap-2 px-3 py-1 transition-colors"
             >
               <Plus className="icon-sm shrink-0" />
-              <span className="body-3 truncate">New space</span>
+              <span className="body-2 truncate">New space</span>
             </button>
           ) : null}
         </div>

@@ -12,6 +12,7 @@ import { resolveScopedOrgId } from '@vibey/api-shared'
 import { CreditsService } from '../../billing/services/credits.service'
 import { extractUrlsFromHtml } from '../../link-preview/lib/extract-urls'
 import { LinkPreviewService } from '../../link-preview/services/link-preview.service'
+import { ProgramPermissionsService } from '../../programs/services/program-permissions.service'
 import { SpaceRetrievalIndexService } from '../../space-retrieval/services/space-retrieval-index.service'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import type {
@@ -156,6 +157,7 @@ export abstract class SpacesServiceBase01 {
   protected readonly generalCampaignRepo: SpacesGeneralCampaignRepository
   protected readonly automationRunsRepo: SpaceAutomationRunsRepository
   protected readonly userStateRepo: SpacesUserStateRepository
+  protected readonly programPermissions: ProgramPermissionsService | null
 
   constructor(
     protected readonly repo: SpacesRepository,
@@ -169,10 +171,12 @@ export abstract class SpacesServiceBase01 {
     generalCampaignRepo?: SpacesGeneralCampaignRepository,
     automationRunsRepo?: SpaceAutomationRunsRepository,
     userStateRepo?: SpacesUserStateRepository,
+    programPermissions?: ProgramPermissionsService | null,
   ) {
     this.generalCampaignRepo = generalCampaignRepo ?? new SpacesGeneralCampaignRepository()
     this.automationRunsRepo = automationRunsRepo ?? new SpaceAutomationRunsRepository()
     this.userStateRepo = userStateRepo ?? new SpacesUserStateRepository()
+    this.programPermissions = programPermissions ?? null
   }
 
   async list(supabase: SupabaseClient, userId: string, query: SpaceQuery, orgId?: string | null) {
@@ -445,6 +449,28 @@ export abstract class SpacesServiceBase01 {
       'admin',
       orgId,
     )
+    // Reparenting a space into another campaign must respect the target/source
+    // Program ACL — otherwise a Private Program could be bypassed via drag-move.
+    if (
+      Object.prototype.hasOwnProperty.call(dto, 'campaign_id') &&
+      this.programPermissions
+    ) {
+      const current = await this.repo.findSpaceById(supabase, userId, spaceId, orgId)
+      const sourceCampaignId =
+        current && typeof current.campaign_id === 'string' ? current.campaign_id : null
+      const targetCampaignId = typeof dto.campaign_id === 'string' ? dto.campaign_id : null
+      if (sourceCampaignId !== targetCampaignId) {
+        await this.programPermissions.assertSpaceCampaignMoveAccess(
+          supabase,
+          sourceCampaignId,
+          targetCampaignId,
+          userId,
+          orgRole,
+          'edit',
+          orgId,
+        )
+      }
+    }
     if (
       dto.schema !== undefined &&
       dto.schema &&

@@ -10782,11 +10782,11 @@ html.dark .hub-dock-flyout {
   padding: 2px 4px 6px;
 }
 .hub-dock-flyout-title {
-  font-size: 11px;
+  font-size: var(--text-body-2);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-tertiary);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--color-foreground);
 }
 .hub-dock-flyout-header-actions {
   display: flex;

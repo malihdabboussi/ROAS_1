@@ -13,6 +13,7 @@ import { resolveScopedOrgId } from '@vibey/api-shared'
 import { CreditsService } from '../../billing/services/credits.service'
 import { extractUrlsFromHtml } from '../../link-preview/lib/extract-urls'
 import { LinkPreviewService } from '../../link-preview/services/link-preview.service'
+import { ProgramPermissionsService } from '../../programs/services/program-permissions.service'
 import { SpaceRetrievalIndexService } from '../../space-retrieval/services/space-retrieval-index.service'
 import { UserAgentApiService } from '../../user-agent-api/services/user-agent-api.service'
 import type {
@@ -115,6 +116,7 @@ export class SpacesService extends SpacesServiceBase07 {
     @Optional() generalCampaignRepo?: SpacesGeneralCampaignRepository,
     @Optional() automationRunsRepo?: SpaceAutomationRunsRepository,
     @Optional() userStateRepo?: SpacesUserStateRepository,
+    @Optional() @Inject(ProgramPermissionsService) programPermissions?: ProgramPermissionsService,
   ) {
     super(
       repo,
@@ -128,6 +130,7 @@ export class SpacesService extends SpacesServiceBase07 {
       generalCampaignRepo,
       automationRunsRepo,
       userStateRepo,
+      programPermissions ?? null,
     )
   }
 }

@@ -3,9 +3,11 @@ import { ProgramSharingController } from './controllers/program-sharing.controll
 import { ProgramsController } from './controllers/programs.controller'
 import { TaskRollupController } from './controllers/task-rollup.controller'
 import { ProgramPermissionsRepository } from './repositories/program-permissions.repository'
+import { ProgramShareCompatRepository } from './repositories/program-share-compat.repository'
 import { ProgramsRepository } from './repositories/programs.repository'
 import { TaskRollupRepository } from './repositories/task-rollup.repository'
 import { ProgramPermissionsService } from './services/program-permissions.service'
+import { ProgramShareCompatService } from './services/program-share-compat.service'
 import { ProgramsService } from './services/programs.service'
 import { TaskRollupService } from './services/task-rollup.service'
 
@@ -16,6 +18,8 @@ import { TaskRollupService } from './services/task-rollup.service'
     ProgramsRepository,
     ProgramPermissionsService,
     ProgramPermissionsRepository,
+    ProgramShareCompatService,
+    ProgramShareCompatRepository,
     TaskRollupService,
     TaskRollupRepository,
   ],

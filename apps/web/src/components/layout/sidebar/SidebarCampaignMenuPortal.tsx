@@ -8,6 +8,7 @@ import {
   Edit2,
   EyeOff,
   FolderInput,
+  Lock,
   Palette,
   Plus,
   Share2,
@@ -43,6 +44,7 @@ export interface SidebarCampaignMenuPortalProps {
   ) => void | Promise<void>
   onHide?: () => void
   onArchive?: () => void
+  onMakePersonal?: () => void
   onDeleteRequest: () => void
   onRequestShare: () => void
   onRequestTransfer?: () => void
@@ -60,6 +62,7 @@ export function SidebarCampaignMenuPortal({
   onPatchCampaignConfig,
   onHide,
   onArchive,
+  onMakePersonal,
   onDeleteRequest,
   onRequestShare,
   onManageTeam,
@@ -261,6 +264,21 @@ export function SidebarCampaignMenuPortal({
                   <span>Manage team</span>
                 </button>
               )}
+            </>
+          )}
+
+        {/* Personal via Private Personal Program (Program ACL). */}
+        {!campaign.isSystemGeneral &&
+          !campaign.isSystemPersonal &&
+          perm.canAdmin &&
+          onMakePersonal &&
+          isOrgContext() && (
+            <>
+              <div className="border-border border-t" />
+              <button type="button" onClick={wrap(onMakePersonal)} className={itemCls}>
+                <Lock className={itemIcon} />
+                <span>Make personal</span>
+              </button>
             </>
           )}
 

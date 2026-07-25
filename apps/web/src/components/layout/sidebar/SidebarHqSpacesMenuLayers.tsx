@@ -76,6 +76,7 @@ export function SidebarHqCampaignMenuLayer({
           onPatchCampaignConfig={controller.patchCampaignConfig}
           onHide={() => void controller.toggleHiddenCampaign(campaignMenuFor.campaign.id)}
           onArchive={() => void controller.archiveCampaignById(campaignMenuFor.campaign.id)}
+          onMakePersonal={() => void controller.makeCampaignPersonal(campaignMenuFor.campaign.id)}
           onDeleteRequest={() => {
             controller.setDeletingCampaign({
               id: campaignMenuFor.campaign.id,

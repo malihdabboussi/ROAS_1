@@ -140,6 +140,8 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     toggleFavoriteCampaign,
     toggleHiddenCampaign,
     archiveCampaignById,
+    makeCampaignPersonal,
+    moveCampaignToProgram,
     handleDeleteCampaign,
     handleNewCampaignModalCreate,
   } = useSidebarCampaignsCore({
@@ -202,10 +204,9 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     setAgentsFlyout(false)
   }, [pathname])
 
-  // Prefetch in HQ mode so Campaigns hover flyouts are not empty while the
-  // first spaces page is still in flight after mouseenter.
+  // Load spaces when the Programs panel / hub section is open (or already cached).
+  // Do not keep a permanent HQ prefetch that refetches on every rail mount.
   const hubSpacesDataEnabled =
-    sidebarMode === 'hq' ||
     activeManagePanel === 'spaces' ||
     (hubMenuOpen && hubMenuExpandedSections.has('spaces'))
   const hubProjectsDataEnabled =
@@ -781,6 +782,8 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
     toggleFavoriteCampaign,
     toggleHiddenCampaign,
     archiveCampaignById,
+    makeCampaignPersonal,
+    moveCampaignToProgram,
     handleDeleteCampaign,
     handleSelectConversation,
     handleStudioSearchSelect,

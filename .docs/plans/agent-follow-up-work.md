@@ -1,3 +1,37 @@
+## 2026-07-24 - [ARCH] Programs polish part 2 — files pushed over LOC limits
+
+Feature/App: programs / sidebar + spaces share
+Found while: Sidebar drag-reorder + inherit harden + share compat on `feat/programs-polish`
+
+- `apps/web/src/features/spaces/components/ShareModal.tsx` (822 LOC; over 400 component / 600 max)
+  Evidence: `wc -l` after adding `programPrivacyNotice` banner (~+18 lines). Was already ~804 (pre-existing debt).
+  Needed work: Extract people-list, visibility selector, and notice banner into sub-components.
+  Deferred because: In-scope was only the privacy-override notice, not a modal decomposition.
+
+- `apps/web/src/components/layout/sidebar/SidebarHqSpacesGroupedList.tsx` (426 LOC; over 400 component)
+  Evidence: `wc -l` after wiring `SidebarTreeDndProvider` + `handleMoveSpace`/`handleMoveCampaign` (~+37 lines).
+  Needed work: Extract drag move handlers into a small hook (e.g. `useSidebarTreeDnd`).
+  Deferred because: In-scope was drag-reorder wiring; component split not requested.
+
+- `apps/web/src/components/layout/sidebar/useSidebarCampaignsCore.ts` (555 LOC; near 600 budget)
+  Evidence: `wc -l` after adding `moveCampaignToProgram`.
+  Needed work: Split create/edit/delete/move handlers from list loading (see prior entry).
+  Deferred because: Behavior change only.
+
+## 2026-07-24 - [PERF] Programs polish — oversized sidebar controllers
+
+Feature/App: programs / sidebar
+Found while: Programs create RLS + sidebar hover cache polish on `feat/programs-polish`
+
+- `apps/web/src/components/layout/sidebar/useSidebarController.ts` (791 LOC; over 600)
+  Evidence: `wc -l` after hubSpacesDataEnabled + makeCampaignPersonal wire-through.
+  Needed work: Extract HQ panel/hub-menu state into a dedicated hook.
+  Deferred because: In-scope was hover refetch + personal wiring, not controller split.
+
+- `apps/web/src/components/layout/sidebar/useSidebarCampaignsCore.ts` (532 LOC; near/over component-hook budget)
+  Evidence: Added makeCampaignPersonal + programs cache invalidation.
+  Needed work: Split create/edit/delete handlers from list loading.
+  Deferred because: Behavior change only; full extract out of scope.
 
 ## 2026-07-24 - [FEATURE] Chat shell Home|Work + AI drawer redesign follow-ups
 
@@ -19,6 +53,7 @@ Found while: Implementing Home|Work toggle, centered Search+AI Chats, drawer cov
   Evidence: Shared conversation store allows continue-in-app; replies do not post back to Slack.
   Needed work: Optional two-way send path if product wants live Slack sync from the drawer.
   Deferred because: Explicitly called out as a separate product decision in the redesign discussion.
+
 
 ## 2026-07-24 - [FIX] Personal → org Meetings / Programs General rename follow-ups
 

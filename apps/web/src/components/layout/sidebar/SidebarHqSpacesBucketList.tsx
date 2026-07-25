@@ -11,6 +11,7 @@ import {
   type SectionMenuAnchorRect,
   type SpaceRowSharedProps,
 } from './SidebarHqSpacesRows'
+import { CampaignDropZone, ProgramDropZone } from './sidebar-tree-dnd'
 import { SidebarProgramFolder } from './SidebarProgramFolder'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -43,6 +44,7 @@ export function ProgramRowsSkeleton() {
 }
 
 export function SidebarHqSpacesBucketList({
+  enableDnd = false,
   noResults,
   searchQuery,
   searchActive,
@@ -68,6 +70,8 @@ export function SidebarHqSpacesBucketList({
   onLoadMore,
   groupHeaderCls,
 }: {
+  /** Enable drag-reorder wrappers (space→campaign, campaign→program). */
+  enableDnd?: boolean
   noResults: boolean
   searchQuery?: string
   searchActive: boolean
@@ -110,14 +114,17 @@ export function SidebarHqSpacesBucketList({
   return (
     <>
       {flyoutMode && !searchActive ? (
-        <Link
-          href="/all-tasks"
-          data-hub-dock-navigate
-          className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground hover:text-foreground mb-1 flex min-w-0 items-center gap-2 px-2 py-1.5 transition-colors"
-        >
-          <ListTodo className="icon-sm shrink-0" aria-hidden />
-          <span className="body-3 min-w-0 flex-1 truncate font-medium">All Tasks</span>
-        </Link>
+        <>
+          <Link
+            href="/all-tasks"
+            data-hub-dock-navigate
+            className="rounded-spacing-2 hover:bg-hover-subtle text-foreground hover:text-foreground flex min-w-0 items-center gap-2 px-2 py-1.5 transition-colors"
+          >
+            <ListTodo className="icon-sm text-muted-foreground shrink-0" aria-hidden />
+            <span className="body-2 min-w-0 flex-1 truncate font-medium">All Tasks</span>
+          </Link>
+          <div className="border-border mx-1 my-1.5 border-t" role="separator" />
+        </>
       ) : null}
       {noResults ? (
         <p className="body-3 text-muted-foreground px-3 py-6 text-center">
@@ -127,15 +134,25 @@ export function SidebarHqSpacesBucketList({
       {favoriteBuckets.length > 0 ? (
         <div className={flyoutMode ? 'mb-1 min-w-0 space-y-0.5' : 'mb-3 min-w-0 space-y-0.5'}>
           {!flyoutMode ? <p className={groupHeaderCls}>Favourite</p> : null}
-          {favoriteBuckets.map((b) => (
-            <Section
-              key={b.bucket}
-              {...b}
-              {...sectionSharedProps}
-              isExpanded={searchActive || expandedIds.has(b.bucket)}
-              isCreating={creatingInBucket === b.bucket}
-            />
-          ))}
+          {favoriteBuckets.map((b) => {
+            const section = (
+              <Section
+                key={b.bucket}
+                {...b}
+                {...sectionSharedProps}
+                enableDnd={enableDnd}
+                isExpanded={searchActive || expandedIds.has(b.bucket)}
+                isCreating={creatingInBucket === b.bucket}
+              />
+            )
+            return enableDnd ? (
+              <CampaignDropZone key={b.bucket} campaignId={b.campaignId}>
+                {section}
+              </CampaignDropZone>
+            ) : (
+              section
+            )
+          })}
         </div>
       ) : null}
       {otherProgramGroups.length > 0 && !flyoutMode && programs.length === 0 ? (
@@ -143,18 +160,28 @@ export function SidebarHqSpacesBucketList({
       ) : null}
       {otherProgramGroups.map((group) => {
         const programExpanded = searchActive || expandedProgramIds.has(group.key)
-        const campaignRows = group.buckets.map((b) => (
-          <Section
-            key={b.bucket}
-            {...b}
-            {...sectionSharedProps}
-            isExpanded={searchActive || expandedIds.has(b.bucket)}
-            isCreating={creatingInBucket === b.bucket}
-          />
-        ))
+        const campaignRows = group.buckets.map((b) => {
+          const section = (
+            <Section
+              key={b.bucket}
+              {...b}
+              {...sectionSharedProps}
+              enableDnd={enableDnd}
+              isExpanded={searchActive || expandedIds.has(b.bucket)}
+              isCreating={creatingInBucket === b.bucket}
+            />
+          )
+          return enableDnd ? (
+            <CampaignDropZone key={b.bucket} campaignId={b.campaignId}>
+              {section}
+            </CampaignDropZone>
+          ) : (
+            section
+          )
+        })
 
         if (programs.length > 0 || group.program != null || group.key === '__ungrouped__') {
-          return (
+          const folder = (
             <SidebarProgramFolder
               key={group.key}
               groupKey={group.key}
@@ -174,6 +201,13 @@ export function SidebarHqSpacesBucketList({
               {campaignRows}
             </SidebarProgramFolder>
           )
+          return enableDnd ? (
+            <ProgramDropZone key={group.key} programId={group.program?.id ?? null}>
+              {folder}
+            </ProgramDropZone>
+          ) : (
+            folder
+          )
         }
 
         return (
@@ -186,17 +220,20 @@ export function SidebarHqSpacesBucketList({
         )
       })}
       {!searchActive && flyoutMode && onNewProgram ? (
-        <button
-          type="button"
-          onClick={onNewProgram}
-          className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground hover:text-foreground mt-1 flex w-full min-w-0 items-center gap-0.5 transition-colors"
-          aria-label="New program"
-        >
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center">
-            <Plus className="icon-md shrink-0" aria-hidden />
-          </span>
-          <span className="body-3 min-w-0 flex-1 truncate text-left font-medium">New Program</span>
-        </button>
+        <>
+          <div className="border-border mx-1 my-1.5 border-t" role="separator" />
+          <button
+            type="button"
+            onClick={onNewProgram}
+            className="rounded-spacing-2 hover:bg-hover-subtle text-muted-foreground hover:text-foreground flex w-full min-w-0 items-center gap-0.5 transition-colors"
+            aria-label="New program"
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center">
+              <Plus className="icon-md shrink-0" aria-hidden />
+            </span>
+            <span className="body-2 min-w-0 flex-1 truncate text-left font-medium">New Program</span>
+          </button>
+        </>
       ) : null}
       {!searchActive && !flyoutMode ? (
         <button

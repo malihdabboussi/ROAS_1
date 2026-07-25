@@ -9,7 +9,8 @@ import { FeatureUpdateDetailModal } from '@/features/updates/components/FeatureU
 import { FeatureUpdatesPanel } from '@/features/updates/components/FeatureUpdatesPanel'
 import { useFeatureUpdates } from '@/features/updates/hooks/useFeatureUpdates'
 import type { FeatureUpdate } from '@/features/updates/types'
-import { createProgram } from '@/lib/programs'
+import { useOrgStore } from '@/features/org/store/use-org-store'
+import { createProgram, invalidateProgramsListCache } from '@/lib/programs'
 import { DeleteCampaignDialog } from './DeleteCampaignDialog'
 import { NewCampaignModal } from './NewCampaignModal'
 import { NewProgramModal } from './NewProgramModal'
@@ -177,10 +178,15 @@ export function Sidebar(props: SidebarProps) {
                 icon,
                 icon_color: iconColor ?? null,
               })
+              invalidateProgramsListCache(useOrgStore.getState().activeOrgId)
               window.dispatchEvent(new Event('roas:programs-changed'))
               toast.success(`Program “${name}” is ready`)
-            } catch {
-              toast.error('Could not create program')
+            } catch (e) {
+              toast.error(
+                e instanceof Error && e.message && !e.message.startsWith('Backend error')
+                  ? e.message
+                  : 'Could not create program',
+              )
               throw new Error('create program failed')
             }
           }}

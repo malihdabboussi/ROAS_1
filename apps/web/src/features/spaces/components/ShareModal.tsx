@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, ChevronRight, LayoutGrid, Link2, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, LayoutGrid, Link2, Lock, X } from 'lucide-react'
 import { toast } from 'sonner'
 import Switch from '@/components/ui/forms/switch'
 import { Tooltip } from '@/components/ui/tooltip'
@@ -61,6 +61,11 @@ interface ShareModalProps {
   activeViewId?: string | null
   activeViewName?: string | null
   canManageSharing?: boolean
+  /**
+   * When the space's campaign lives in a private/selected Program, Program
+   * privacy overrides space shares. Surface it so sharing doesn't silently fail.
+   */
+  programPrivacyNotice?: { programName: string | null } | null
 }
 
 export function ShareModal({
@@ -81,6 +86,7 @@ export function ShareModal({
   activeViewId = null,
   activeViewName = null,
   canManageSharing = true,
+  programPrivacyNotice = null,
 }: ShareModalProps) {
   const { activeOrgId, getActiveOrg } = useOrgStore()
   type ShareRecord = Pick<
@@ -482,6 +488,19 @@ export function ShareModal({
             )}
           </p>
         </div>
+
+        {entityType === 'space' && programPrivacyNotice ? (
+          <div className="px-spacing-6 pb-spacing-2">
+            <div className="gap-spacing-2 rounded-spacing-2 border-border bg-secondary px-spacing-3 py-spacing-2 flex items-start border">
+              <Lock className="icon-sm text-muted-foreground mt-0.5 shrink-0" aria-hidden />
+              <p className="body-3 text-muted-foreground">
+                {programPrivacyNotice.programName
+                  ? `This space lives in the private program “${programPrivacyNotice.programName}.” People you add here won't get access unless they're also added to that program.`
+                  : "This space lives in a private program. People you add here won't get access unless they're also added to that program."}
+              </p>
+            </div>
+          </div>
+        ) : null}
 
         {showInviteComposer ? (
           <div className="px-spacing-6 pt-spacing-3">

@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react'
 import { createPortal } from 'react-dom'
@@ -175,10 +176,13 @@ export function IconLibraryPopup({
       ref={popupRef}
       data-icon-picker-popup
       {...{ [HUB_DOCK_PORTAL_GUARD]: '' }}
-      className={`surface-card fixed ${zIndexClass} flex max-h-[400px] w-[300px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] shadow-2xl`}
+      // pointer-events-auto: Radix Dialog sets body { pointer-events: none } while open;
+      // this popup is portaled to body, so without auto it paints but cannot receive clicks.
+      className={`surface-card pointer-events-auto fixed ${zIndexClass} flex max-h-[400px] w-[300px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] shadow-2xl`}
       style={{ top: pos.top, left: pos.left }}
       onClick={(e: ReactMouseEvent) => e.stopPropagation()}
       onMouseDown={(e: ReactMouseEvent) => e.stopPropagation()}
+      onPointerDown={(e: ReactPointerEvent) => e.stopPropagation()}
     >
       {onColorChange && (
         <div className="flex items-center gap-1.5 border-b border-[var(--color-border)] px-3 py-2">

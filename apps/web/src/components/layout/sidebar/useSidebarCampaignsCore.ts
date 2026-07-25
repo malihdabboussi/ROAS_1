@@ -16,6 +16,10 @@ import {
   type CampaignUserState,
 } from '@/features/studio/services/campaign.service'
 import { cachedFetch, invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import {
+  invalidateProgramsListCache,
+  loadProgramsCached,
+} from '@/lib/programs'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { SIDEBAR_TOAST_ERRORS } from '../config/sidebar-toast-errors.config'
 import type { SidebarCampaignRow, SidebarEditingCampaign } from './sidebar-types'
@@ -389,6 +393,67 @@ export function useSidebarCampaignsCore({
     [campaigns, activeCampaignId, campaignsListCacheKey, setActiveCampaign, router],
   )
 
+  /** Move a campaign into the user's Private Personal Program (Program ACL). */
+  const makeCampaignPersonal = useCallback(
+    async (campaignId: string) => {
+      const previous = campaigns.find((c) => c.id === campaignId)
+      if (!previous || previous.isSystemGeneral || previous.isSystemPersonal) return
+      try {
+        const programs = await loadProgramsCached(activeOrgId)
+        const personalProgram = programs.find(
+          (p) =>
+            p.created_by != null &&
+            p.visibility === 'private' &&
+            (p.config as { personal_default?: boolean } | null)?.personal_default === true,
+        )
+        if (!personalProgram) {
+          toast.error('Personal program is not ready yet. Open Programs and try again.')
+          return
+        }
+        if (previous.program_id === personalProgram.id) {
+          toast.success(`“${previous.name}” is already personal`)
+          return
+        }
+        await updateCampaign(campaignId, { program_id: personalProgram.id })
+        invalidateCachedFetch(campaignsListCacheKey)
+        invalidateProgramsListCache(activeOrgId)
+        setCampaigns((prev) =>
+          prev.map((c) =>
+            c.id === campaignId ? { ...c, program_id: personalProgram.id } : c,
+          ),
+        )
+        window.dispatchEvent(new Event('roas:programs-changed'))
+        toast.success(`“${previous.name}” is now personal`)
+      } catch (e) {
+        toast.error(sanitizeUserError(e, 'Failed to make campaign personal'))
+      }
+      setCampaignMenuId(null)
+    },
+    [activeOrgId, campaigns, campaignsListCacheKey],
+  )
+
+  /** Drag-move a campaign into another program (or out to no program). */
+  const moveCampaignToProgram = useCallback(
+    async (campaignId: string, programId: string | null) => {
+      const previous = campaigns.find((c) => c.id === campaignId)
+      if (!previous || previous.isSystemGeneral || previous.isSystemPersonal) return
+      if ((previous.program_id ?? null) === (programId ?? null)) return
+      setCampaigns((prev) =>
+        prev.map((c) => (c.id === campaignId ? { ...c, program_id: programId } : c)),
+      )
+      try {
+        await updateCampaign(campaignId, { program_id: programId })
+        invalidateCachedFetch(campaignsListCacheKey)
+        invalidateProgramsListCache(activeOrgId)
+        window.dispatchEvent(new Event('roas:programs-changed'))
+      } catch (e) {
+        setCampaigns((prev) => prev.map((c) => (c.id === campaignId ? previous : c)))
+        toast.error(sanitizeUserError(e, SIDEBAR_TOAST_ERRORS.MOVE_CAMPAIGN_FAILED.userMessage))
+      }
+    },
+    [activeOrgId, campaigns, campaignsListCacheKey],
+  )
+
   const handleNewCampaignModalCreate = useCallback(
     async (name: string, icon: string) => {
       try {
@@ -482,6 +547,8 @@ export function useSidebarCampaignsCore({
     toggleFavoriteCampaign,
     toggleHiddenCampaign,
     archiveCampaignById,
+    makeCampaignPersonal,
+    moveCampaignToProgram,
     handleDeleteCampaign,
     handleNewCampaignModalCreate,
   }

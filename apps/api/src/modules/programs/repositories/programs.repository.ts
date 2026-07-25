@@ -36,6 +36,25 @@ export class ProgramsRepository {
     return (data as ProgramRow | null) ?? null
   }
 
+  /** Batch load programs by id (single query) — avoids per-program findById N+1. */
+  async listByIds(
+    supabase: SupabaseClient,
+    ids: string[],
+    orgId?: string | null,
+  ): Promise<ProgramRow[]> {
+    if (ids.length === 0) return []
+    let query = supabase
+      .from('programs')
+      .select('*')
+      .in('id', [...new Set(ids)])
+      .is('deleted_at', null)
+    if (orgId) query = query.eq('org_id', orgId)
+    else query = query.is('org_id', null)
+    const { data, error } = await query
+    if (error) throw new Error(`Failed to load programs: ${error.message}`)
+    return (data ?? []) as ProgramRow[]
+  }
+
   async findSystemByKind(
     supabase: SupabaseClient,
     systemKind: string,
@@ -54,6 +73,24 @@ export class ProgramsRepository {
     return (data as ProgramRow | null) ?? null
   }
 
+  async findPersonalDefaultForUser(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string,
+  ): Promise<ProgramRow | null> {
+    const { data, error } = await supabase
+      .from('programs')
+      .select('*')
+      .eq('org_id', orgId)
+      .eq('created_by', userId)
+      .is('deleted_at', null)
+      .contains('config', { personal_default: true })
+      .limit(1)
+      .maybeSingle()
+    if (error) throw new Error(`Failed to load personal program: ${error.message}`)
+    return (data as ProgramRow | null) ?? null
+  }
+
   async create(
     supabase: SupabaseClient,
     input: {
@@ -67,6 +104,7 @@ export class ProgramsRepository {
       system_kind?: string | null
       visibility?: 'workspace' | 'private' | 'selected'
       created_by?: string | null
+      config?: Record<string, unknown>
     },
   ): Promise<ProgramRow> {
     const orgId = input.orgId ?? null
@@ -81,10 +119,25 @@ export class ProgramsRepository {
       system_kind: input.system_kind ?? null,
       visibility: input.visibility ?? 'workspace',
       created_by: input.created_by ?? input.userId,
-      config: {},
+      config: input.config ?? {},
     }
-    const { data, error } = await supabase.from('programs').insert(payload).select('*').single()
-    if (error) throw new Error(`Failed to create program: ${error.message}`)
+    // Insert without RETURNING first: older SELECT policies that call
+    // has_program_access(id) cannot see the in-flight row and reject RETURNING.
+    const { error: insertError } = await supabase.from('programs').insert(payload)
+    if (insertError) throw new Error(`Failed to create program: ${insertError.message}`)
+
+    let query = supabase
+      .from('programs')
+      .select('*')
+      .eq('slug', input.slug)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+    if (orgId) query = query.eq('org_id', orgId)
+    else query = query.eq('user_id', input.userId)
+    const { data, error } = await query.maybeSingle()
+    if (error) throw new Error(`Failed to load created program: ${error.message}`)
+    if (!data) throw new Error('Failed to load created program')
     return data as ProgramRow
   }
 

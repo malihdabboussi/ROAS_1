@@ -4,7 +4,7 @@ import Link from 'next/link'
 import type { MouseEvent, ReactNode } from 'react'
 import { ChevronRight, Lock, MoreHorizontal, Plus } from 'lucide-react'
 import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
-import type { Program } from '@/lib/programs'
+import { resolveProgramIconColorId, type Program } from '@/lib/programs'
 import { SIDEBAR_UNGROUPED_PROGRAM_KEY } from './group-sidebar-campaigns-by-program'
 import type { SectionMenuAnchorRect } from './SidebarHqSpacesRows'
 
@@ -32,7 +32,10 @@ export function SidebarProgramFolder({
   compact?: boolean
 }) {
   const iconName = program?.icon ?? 'folder-kanban'
-  const iconColor = getIconColor(program?.icon_color ?? undefined).textColor
+  const iconAppearance = getIconColor(
+    resolveProgramIconColorId(program?.id, program?.icon_color),
+  )
+  const showChevron = isExpanded
   const href =
     program && groupKey !== SIDEBAR_UNGROUPED_PROGRAM_KEY ? `/programs/${program.id}` : null
   const canCreate = Boolean(onCreateCampaign)
@@ -57,13 +60,17 @@ export function SidebarProgramFolder({
           aria-expanded={isExpanded}
           aria-label={isExpanded ? `Collapse ${label}` : `Expand ${label}`}
         >
-          <LucideIcon
-            name={iconName}
-            className={`icon-sm shrink-0 transition-opacity ${iconColor} opacity-100 group-hover/program:opacity-0 ${isExpanded ? 'opacity-0' : ''}`}
-          />
+          <span
+            className={`absolute flex h-5 w-5 items-center justify-center rounded transition-opacity ${
+              iconAppearance.glassClass || 'badge-glass-muted'
+            } ${showChevron ? 'opacity-0' : 'opacity-100 group-hover/program:opacity-0'}`}
+            aria-hidden
+          >
+            <LucideIcon name={iconName} className={`h-3 w-3 shrink-0 ${iconAppearance.textColor}`} />
+          </span>
           <ChevronRight
             className={`icon-sm absolute shrink-0 transition-all duration-150 ${
-              isExpanded ? 'rotate-90 opacity-100' : 'opacity-0 group-hover/program:opacity-100'
+              showChevron ? 'rotate-90 opacity-100' : 'opacity-0 group-hover/program:opacity-100'
             }`}
           />
         </button>
@@ -72,7 +79,7 @@ export function SidebarProgramFolder({
             href={href}
             data-hub-dock-navigate
             onContextMenu={openMenu}
-            className="body-3 text-muted-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 font-medium transition-colors"
+            className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 font-medium transition-colors"
           >
             <span className="gap-spacing-1 inline-flex max-w-full items-center">
               <span className="truncate">{label}</span>
@@ -85,7 +92,7 @@ export function SidebarProgramFolder({
           <button
             type="button"
             onClick={() => onToggle(groupKey)}
-            className="body-3 text-muted-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 text-left font-medium transition-colors"
+            className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 text-left font-medium transition-colors"
           >
             <span className="gap-spacing-1 inline-flex max-w-full items-center">
               <span className="truncate">{label}</span>

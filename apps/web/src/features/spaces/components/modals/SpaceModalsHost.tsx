@@ -5,6 +5,7 @@ import { useState, type RefObject } from 'react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import type { TeamRosterEntry } from '@/features/org/services/org.service'
 import { useOrgStore } from '@/features/org/store/use-org-store'
+import { useSpaceProgramPrivacy } from '../../hooks/use-space-program-privacy'
 import { updateSpace } from '../../services/spaces.service'
 import { useSpacesStore } from '../../store/use-spaces-store'
 import type { Space, SpaceItem } from '../../types'
@@ -185,6 +186,7 @@ export type SpaceModalsHostProps = {
 export function SpaceModalsHost(p: SpaceModalsHostProps) {
   const { isOrgContext, hasMinRole } = useOrgStore()
   const [viewShareTarget, setViewShareTarget] = useState<{ id: string; name: string } | null>(null)
+  const spaceProgramPrivacy = useSpaceProgramPrivacy(p.activeSpace ?? null)
 
   const {
     activeSpace,
@@ -490,6 +492,11 @@ export function SpaceModalsHost(p: SpaceModalsHostProps) {
           activeViewId={activeView?.id ?? null}
           activeViewName={activeView?.name ?? null}
           canManageSharing={isOrgContext() ? hasMinRole('admin') : true}
+          programPrivacyNotice={
+            spaceProgramPrivacy.restricted
+              ? { programName: spaceProgramPrivacy.programName }
+              : null
+          }
           onSpacePatch={(patch: Partial<Space>) => {
             useSpacesStore.setState((s) => ({
               spaces: s.spaces.map((sp) => (sp.id === activeSpace.id ? { ...sp, ...patch } : sp)),

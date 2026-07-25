@@ -1,5 +1,35 @@
 # Changelog - July 24, 2026
 
+## [2026-07-24 21:20] - [STYLE]
+
+What: Programs flyout ClickUp-style visual polish — section dividers (All Tasks / tree / New Program), `body-2` row labels, larger flyout title, colored program icon tiles (`badge-glass-*`), and deterministic default colors when `icon_color` is empty (user picks preserved). New Program modal defaults to a colorful swatch.
+
+Why: ClickUp Spaces menu reads clearer with colored tiles, larger type, and stronger section separation; Programs without a stored color looked gray-only.
+
+Impact: Programs panel hierarchy and default colors match the ClickUp reference without changing ACL/dnd behavior. Fixed-width truncate unchanged.
+
+Files: `program-icon-appearance.ts` (+ test), `SidebarProgramFolder.tsx`, `SidebarHqSpacesBucketList.tsx`, `SidebarHqSpacesRows.tsx`, `NewProgramModal.tsx`, `HubDockFlyout` title CSS in `apps/web/src/app/globals.css`, `documentation/features/programs.md`
+
+## [2026-07-24 21:12] - [FEATURE]
+
+What: Programs polish part 2 — (1) ClickUp-style sidebar drag-reorder: drag a space into another campaign, drag a campaign into another program (or out to General); (2) Program-access hardening: space moves now assert Program `edit` on the source/target campaign's Program, and program access resolution is batched (single `listByIds` instead of per-program `findById`); (3) Compat: read-only report + Share-UI notice for space shares overridden by Program privacy.
+
+Why: The new drag-move made it trivial to reparent a space/campaign into a Private Program, which would have bypassed the Program ACL. Sharing a space that sits inside a private Program silently failed for invitees. Program list gates were doing N+1 lookups per sidebar/hub request.
+
+Impact: Users can reorganize the Programs tree by dragging (optimistic + rollback + Vibey-voice toast on failure); moving into a program the user can't edit is rejected server-side. The Share modal warns when a space lives in a private program. `GET /programs/share-conflicts` (org admin) lists overridden shares. No destructive changes.
+
+Files: `apps/web/.../sidebar/sidebar-tree-dnd.tsx` (+ test), `SidebarHqSpacesRows.tsx`, `SidebarHqSpacesBucketList.tsx`, `SidebarHqSpacesGroupedList.tsx`, `useSidebarCampaignsCore.ts`, `useSidebarController.ts`, `config/sidebar-toast-errors.config.ts`, `features/spaces/hooks/use-space-program-privacy.ts`, `features/spaces/components/ShareModal.tsx`, `features/spaces/components/modals/SpaceModalsHost.tsx`, `apps/api/.../spaces/services/spaces-service-01.base.ts`, `spaces/services/spaces.service.ts`, `programs/services/program-permissions.service.ts` (+ test), `programs/repositories/programs.repository.ts`, `programs/services/program-share-compat.ts` (+ test), `program-share-compat.service.ts`, `program-share-compat.repository.ts`, `programs/controllers/programs.controller.ts`, `programs.module.ts`, `documentation/features/programs.md`, `documentation/features/program-share-privacy-overrides.md`
+
+## [2026-07-24 20:55] - [FIX]
+
+What: Fixed Create Program (RLS INSERT…RETURNING), IconPicker clicks inside dialogs, Programs sidebar hover refetch, and Personal via Private Program ACL.
+
+Why: Program create failed because SELECT RLS called has_program_access on an in-flight row; icon picker was portaled under Dialog body pointer-events:none; Programs panel remounted and refetching on every hover; users needed personal campaigns without a parallel ACL.
+
+Impact: Create Program works on prod after DB migration (applied). Folders render from org-scoped cache on hover. Each user gets a Private Personal Program; Make personal moves campaigns into it. Web/API code still needs merge/deploy for UI/API ensure + picker/perf.
+
+Files: `supabase/migrations/20260724204707_programs_insert_returning_rls.sql`, `programs.repository.ts`, `programs.service.ts`, `NewProgramModal.tsx`, `IconLibraryPopup.tsx`, `programs-list-cache.ts`, `SidebarHqSpacesGroupedList.tsx`, `useSidebarController.ts`, `useSidebarCampaignsCore.ts`, `SidebarCampaignMenuPortal.tsx`, `documentation/features/programs.md`
+
 ## [2026-07-24 11:05] - [FIX]
 
 What: Cloned personal Meetings (268 items + Fathom Meeting Log) into ROAS org General; moved CEO HQ + Sales Pipeline into org General; disabled personal Fathom Meeting Log; set Fathom auto-ingest billing to ROAS org. Prefer org Meetings for Home/Agenda/Fathom ensure; rename Programs UI folder Ungrouped → General.

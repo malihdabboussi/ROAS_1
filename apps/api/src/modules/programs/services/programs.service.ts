@@ -25,6 +25,7 @@ export class ProgramsService {
   ): Promise<ProgramRow[]> {
     if (orgId) {
       await this.programsRepo.ensureOrgSystemPrograms(supabase, orgId)
+      await this.ensureUserPersonalProgram(supabase, userId, orgId)
     }
     const rows = await this.programsRepo.list(supabase, orgId)
     const accessible = await this.programPermissions.filterAccessiblePrograms(
@@ -39,6 +40,40 @@ export class ProgramsService {
       orgId,
     )
     return accessible.map((row) => ({ ...row, campaign_count: counts[row.id] ?? 0 }))
+  }
+
+  /**
+   * Per-user Private Program used as the "make campaign personal" target.
+   * Does not use system_kind=personal (unique per org) — tags via config.personal_default.
+   */
+  async ensureUserPersonalProgram(
+    supabase: SupabaseClient,
+    userId: string,
+    orgId: string,
+  ): Promise<ProgramRow> {
+    const existing = await this.programsRepo.findPersonalDefaultForUser(supabase, userId, orgId)
+    if (existing) return existing
+    const slug = `personal-${userId.replace(/-/g, '').slice(0, 12)}`
+    try {
+      return await this.programsRepo.create(supabase, {
+        orgId,
+        userId,
+        name: 'Personal',
+        slug,
+        icon: 'house',
+        sort_order: 50,
+        visibility: 'private',
+        created_by: userId,
+        config: { personal_default: true },
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : ''
+      if (message.toLowerCase().includes('duplicate')) {
+        const again = await this.programsRepo.findPersonalDefaultForUser(supabase, userId, orgId)
+        if (again) return again
+      }
+      throw err
+    }
   }
 
   async getById(

@@ -15,8 +15,12 @@ vi.mock('next/link', () => ({
 }))
 
 vi.mock('@/components/ui/IconPicker', () => ({
-  getIconColor: () => ({ textColor: 'text-muted-foreground' }),
+  getIconColor: () => ({ textColor: 'text-muted-foreground', glassClass: 'badge-glass-purple' }),
   LucideIcon: () => <span aria-hidden data-testid="program-icon" />,
+}))
+
+vi.mock('@/lib/programs', () => ({
+  resolveProgramIconColorId: () => 'purple',
 }))
 
 const program = {

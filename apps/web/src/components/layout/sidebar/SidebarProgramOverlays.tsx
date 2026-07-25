@@ -3,7 +3,14 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { toast } from 'sonner'
 import { ShareModal } from '@/components/org'
-import { deleteProgram, fetchPrograms, updateProgram, type Program } from '@/lib/programs'
+import { useOrgStore } from '@/features/org/store/use-org-store'
+import {
+  deleteProgram,
+  fetchPrograms,
+  invalidateProgramsListCache,
+  updateProgram,
+  type Program,
+} from '@/lib/programs'
 import { SidebarDeleteProgramDialog } from './SidebarDeleteProgramDialog'
 import type { SectionMenuAnchorRect } from './SidebarHqSpacesRows'
 import { SidebarProgramMenuPortal } from './SidebarProgramMenuPortal'
@@ -93,6 +100,7 @@ export function SidebarProgramOverlays({
           setDeletingProgramBusy(true)
           void deleteProgram(deletingProgram.id)
             .then(() => {
+              invalidateProgramsListCache(useOrgStore.getState().activeOrgId)
               setPrograms((prev) => prev.filter((program) => program.id !== deletingProgram.id))
               window.dispatchEvent(new Event('roas:programs-changed'))
               toast.success('Program deleted')

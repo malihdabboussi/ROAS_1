@@ -13,6 +13,7 @@ describe('ProgramsService', () => {
     softDelete: ReturnType<typeof vi.fn>
     countCampaignsByProgramIds: ReturnType<typeof vi.fn>
     ensureOrgSystemPrograms: ReturnType<typeof vi.fn>
+    findPersonalDefaultForUser: ReturnType<typeof vi.fn>
   }
   let permissions: {
     filterAccessiblePrograms: ReturnType<typeof vi.fn>
@@ -30,6 +31,7 @@ describe('ProgramsService', () => {
       softDelete: vi.fn(),
       countCampaignsByProgramIds: vi.fn().mockResolvedValue({}),
       ensureOrgSystemPrograms: vi.fn().mockResolvedValue(undefined),
+      findPersonalDefaultForUser: vi.fn().mockResolvedValue(null),
     }
     permissions = {
       filterAccessiblePrograms: vi.fn(async (_s, rows) =>
@@ -65,10 +67,60 @@ describe('ProgramsService', () => {
       },
     ])
     repo.countCampaignsByProgramIds.mockResolvedValue({ p1: 2 })
+    repo.findPersonalDefaultForUser.mockResolvedValue({
+      id: 'personal-prog',
+      org_id: 'org-1',
+      user_id: null,
+      name: 'Personal',
+      slug: 'personal-user1',
+      system_kind: null,
+      icon: 'house',
+      icon_color: null,
+      sort_order: 50,
+      config: { personal_default: true },
+      visibility: 'private',
+      created_by: 'user-1',
+      created_at: '',
+      updated_at: '',
+      deleted_at: null,
+    })
 
     const result = await service.list(supabase, 'user-1', 'admin', 'org-1')
     expect(repo.ensureOrgSystemPrograms).toHaveBeenCalledWith(supabase, 'org-1')
+    expect(repo.findPersonalDefaultForUser).toHaveBeenCalledWith(supabase, 'user-1', 'org-1')
     expect(result[0]?.campaign_count).toBe(2)
+  })
+
+  it('ensures a private personal program when missing', async () => {
+    repo.findPersonalDefaultForUser.mockResolvedValue(null)
+    repo.create.mockResolvedValue({
+      id: 'p-personal',
+      org_id: 'org-1',
+      user_id: null,
+      name: 'Personal',
+      slug: 'personal-user1user1',
+      system_kind: null,
+      icon: 'house',
+      icon_color: null,
+      sort_order: 50,
+      config: { personal_default: true },
+      visibility: 'private',
+      created_by: 'user-1',
+      created_at: '',
+      updated_at: '',
+      deleted_at: null,
+    })
+    const created = await service.ensureUserPersonalProgram(supabase, 'user-1', 'org-1')
+    expect(repo.create).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({
+        name: 'Personal',
+        visibility: 'private',
+        created_by: 'user-1',
+        config: { personal_default: true },
+      }),
+    )
+    expect(created.id).toBe('p-personal')
   })
 
   it('rejects deleting system programs', async () => {

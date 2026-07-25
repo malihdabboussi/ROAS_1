@@ -5,27 +5,35 @@ import type { SidebarCampaignRow } from './sidebar-types'
 import { SidebarHqSpacesGroupedList } from './SidebarHqSpacesGroupedList'
 import type { SidebarControllerReturn } from './useSidebarController'
 
-const mocks = vi.hoisted(() => ({
-  loadRoster: vi.fn(async () => undefined),
-  setActiveSpace: vi.fn(),
-  fetchPrograms: vi.fn(async () => [
+const mocks = vi.hoisted(() => {
+  const programs = [
     {
       id: 'prog-clients',
       name: 'Clients',
       slug: 'clients',
-      system_kind: 'clients',
+      system_kind: 'clients' as const,
       icon: 'folder-kanban',
       icon_color: 'default',
       sort_order: 0,
       org_id: 'org-1',
       user_id: null,
       config: {},
+      visibility: 'workspace' as const,
+      created_by: null,
       created_at: '',
       updated_at: '',
       deleted_at: null,
     },
-  ]),
-}))
+  ]
+  return {
+    loadRoster: vi.fn(async () => undefined),
+    setActiveSpace: vi.fn(),
+    programs,
+    loadProgramsCached: vi.fn(async () => programs),
+    peekProgramsMemoryCache: vi.fn(() => undefined),
+    readProgramsLocalCache: vi.fn(() => null),
+  }
+})
 
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: { children: ReactNode; href: string }) => (
@@ -79,7 +87,9 @@ vi.mock('@/features/spaces/store/use-spaces-store', () => {
 })
 
 vi.mock('@/lib/programs', () => ({
-  fetchPrograms: mocks.fetchPrograms,
+  loadProgramsCached: mocks.loadProgramsCached,
+  peekProgramsMemoryCache: mocks.peekProgramsMemoryCache,
+  readProgramsLocalCache: mocks.readProgramsLocalCache,
 }))
 
 vi.mock('./SidebarHqSpacesMenuLayers', () => ({
@@ -179,6 +189,52 @@ describe('SidebarHqSpacesGroupedList', () => {
         expandedIds={new Set()}
         setExpandedIds={vi.fn()}
         expandedProgramIds={new Set()}
+        setExpandedProgramIds={vi.fn()}
+        onCreateSpace={vi.fn()}
+        isSubmitting={false}
+        creatingName=""
+        setCreatingName={vi.fn()}
+        onOpenBrowseTemplates={vi.fn()}
+        onOpenCreateSpaceModal={vi.fn()}
+        spaceUserState={
+          {
+            favoriteIds: new Set<string>(),
+            hiddenIds: new Set<string>(),
+            isFavorite: vi.fn(() => false),
+            toggleFavorite: vi.fn(),
+            toggleHidden: vi.fn(),
+          } as never
+        }
+        hasMore
+        loadingMore={false}
+        onLoadMore={onLoadMore}
+        flyoutMode
+      />,
+    )
+
+    // Hover-open alone must not page all spaces; expand gates load-more.
+    await waitFor(() => expect(mocks.loadProgramsCached).toHaveBeenCalled())
+    expect(onLoadMore).not.toHaveBeenCalled()
+  })
+
+  it('loads remaining spaces after a campaign is expanded in the flyout', async () => {
+    const onLoadMore = vi.fn()
+
+    render(
+      <SidebarHqSpacesGroupedList
+        controller={
+          {
+            setShowNewCampaignModal: vi.fn(),
+            setCreateCampaignProgramId: vi.fn(),
+            setShowNewProgramModal: vi.fn(),
+          } as unknown as SidebarControllerReturn
+        }
+        spaces={[]}
+        campaigns={[campaign]}
+        pathname="/spaces"
+        expandedIds={new Set(['campaign-1'])}
+        setExpandedIds={vi.fn()}
+        expandedProgramIds={new Set(['prog-clients'])}
         setExpandedProgramIds={vi.fn()}
         onCreateSpace={vi.fn()}
         isSubmitting={false}

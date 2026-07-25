@@ -5,6 +5,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { X } from 'lucide-react'
 import { IconPicker, type IconColorId } from '@/components/ui/IconPicker'
+import { pickNewProgramColorId } from '@/lib/programs'
 
 export function NewProgramModal({
   open,
@@ -17,14 +18,14 @@ export function NewProgramModal({
 }) {
   const [name, setName] = useState('')
   const [selectedIcon, setSelectedIcon] = useState('layers')
-  const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined)
+  const [selectedColor, setSelectedColor] = useState<string>(() => pickNewProgramColorId())
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!open) return
     setName('')
     setSelectedIcon('layers')
-    setSelectedColor(undefined)
+    setSelectedColor(pickNewProgramColorId())
     setSubmitting(false)
   }, [open])
 
@@ -43,8 +44,28 @@ export function NewProgramModal({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="bg-modal-overlay fixed inset-0 z-50" />
-        <DialogPrimitive.Content className="surface-card border-border fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-visible rounded-2xl border shadow-2xl">
+        <DialogPrimitive.Overlay className="z-modal-backdrop bg-modal-overlay fixed inset-0" />
+        <DialogPrimitive.Content
+          className="surface-card border-border z-modal-content fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-visible rounded-2xl border shadow-2xl"
+          onPointerDownOutside={(event) => {
+            const target = event.target
+            if (target instanceof Element && target.closest('[data-icon-picker-popup]')) {
+              event.preventDefault()
+            }
+          }}
+          onFocusOutside={(event) => {
+            const target = event.target
+            if (target instanceof Element && target.closest('[data-icon-picker-popup]')) {
+              event.preventDefault()
+            }
+          }}
+          onInteractOutside={(event) => {
+            const target = event.target
+            if (target instanceof Element && target.closest('[data-icon-picker-popup]')) {
+              event.preventDefault()
+            }
+          }}
+        >
           <VisuallyHidden.Root>
             <DialogPrimitive.Description>
               Name your program so campaigns and spaces stay grouped.
@@ -84,6 +105,7 @@ export function NewProgramModal({
                   onChange={setSelectedIcon}
                   onColorChange={(id: IconColorId) => setSelectedColor(id)}
                   size="lg"
+                  popupZIndexClass="z-modal-layer-4"
                 />
                 <input
                   id="program-name"

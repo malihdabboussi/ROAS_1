@@ -18,8 +18,16 @@ import {
 import { updateSpace as updateSpaceRequest } from '@/features/spaces/services/spaces.service'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space } from '@/features/spaces/types'
-import { fetchPrograms, type Program } from '@/lib/programs'
+import {
+  loadProgramsCached,
+  peekProgramsMemoryCache,
+  readProgramsLocalCache,
+  type Program,
+} from '@/lib/programs'
+import { SIDEBAR_TOAST_ERRORS } from '../config/sidebar-toast-errors.config'
+import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { groupSidebarCampaignsByProgram } from './group-sidebar-campaigns-by-program'
+import { SidebarTreeDndProvider } from './sidebar-tree-dnd'
 import { toggleIdInSet } from './sidebar-expand-persistence'
 import type { SidebarCampaignRow } from './sidebar-types'
 import { SidebarHqSpacesBucketList } from './SidebarHqSpacesBucketList'
@@ -100,11 +108,20 @@ export function SidebarHqSpacesGroupedList({
   const [sharingProgram, setSharingProgram] = useState<Program | null>(null)
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const isOrgContext = activeOrgId !== null
-  const [programs, setPrograms] = useState<Program[]>([])
-  const [programsReady, setProgramsReady] = useState(false)
+  const [programs, setPrograms] = useState<Program[]>(() => {
+    return (
+      peekProgramsMemoryCache(activeOrgId) ?? readProgramsLocalCache(activeOrgId) ?? []
+    )
+  })
+  const [programsReady, setProgramsReady] = useState(
+    () =>
+      peekProgramsMemoryCache(activeOrgId) != null ||
+      readProgramsLocalCache(activeOrgId) != null,
+  )
 
+  // Page remaining spaces only after the user expands a campaign/program — not on hover open.
   useAutoLoadRemainingSpaces({
-    enabled: flyoutMode,
+    enabled: flyoutMode && (expandedIds.size > 0 || expandedProgramIds.size > 0),
     hasMore,
     loadingMore,
     onLoadMore,
@@ -112,23 +129,34 @@ export function SidebarHqSpacesGroupedList({
 
   useEffect(() => {
     let cancelled = false
-    const load = () => {
+    const cached =
+      peekProgramsMemoryCache(activeOrgId) ?? readProgramsLocalCache(activeOrgId)
+    if (cached) {
+      setPrograms(cached)
+      setProgramsReady(true)
+    } else {
       setProgramsReady(false)
-      void fetchPrograms()
+    }
+
+    const load = (opts?: { forceSkeleton?: boolean }) => {
+      if (opts?.forceSkeleton && !peekProgramsMemoryCache(activeOrgId)) {
+        setProgramsReady(false)
+      }
+      void loadProgramsCached(activeOrgId)
         .then((rows) => {
           if (cancelled) return
           setPrograms(rows)
         })
         .catch(() => {
           if (cancelled) return
-          setPrograms([])
+          if (!cached) setPrograms([])
         })
         .finally(() => {
           if (!cancelled) setProgramsReady(true)
         })
     }
     load()
-    const onChanged = () => load()
+    const onChanged = () => load({ forceSkeleton: false })
     window.addEventListener('roas:programs-changed', onChanged)
     return () => {
       cancelled = true
@@ -224,6 +252,34 @@ export function SidebarHqSpacesGroupedList({
     controller.setShowNewCampaignModal(true)
   }
 
+  async function handleMoveSpace(spaceId: string, toCampaignId: string) {
+    const previous = spaces.find((s) => s.id === spaceId)
+    if (!previous || previous.campaign_id === toCampaignId) return
+    const apply = (campaignId: string | null) => {
+      cachedSpaces.mutate((prev) =>
+        (prev ?? []).map((sp) => (sp.id === spaceId ? { ...sp, campaign_id: campaignId } : sp)),
+      )
+      useSpacesStore.setState((s) => ({
+        spaces: s.spaces.map((sp) => (sp.id === spaceId ? { ...sp, campaign_id: campaignId } : sp)),
+      }))
+    }
+    apply(toCampaignId)
+    setExpandedIds((prev) => new Set([...prev, toCampaignId]))
+    try {
+      await updateSpaceRequest(spaceId, { campaign_id: toCampaignId })
+    } catch (e) {
+      apply(previous.campaign_id ?? null)
+      toast.error(sanitizeUserError(e, SIDEBAR_TOAST_ERRORS.MOVE_SPACE_FAILED.userMessage))
+    }
+  }
+
+  function handleMoveCampaign(campaignId: string, toProgramId: string | null) {
+    if (toProgramId) {
+      setExpandedProgramIds((prev) => new Set([...prev, toProgramId]))
+    }
+    void controller.moveCampaignToProgram(campaignId, toProgramId)
+  }
+
   const q = (searchQuery ?? '').trim().toLowerCase()
   const searchActive = q.length > 0
   const matchSpace = (s: Space) => (s.title ?? '').toLowerCase().includes(q)
@@ -299,8 +355,13 @@ export function SidebarHqSpacesGroupedList({
   }
 
   return (
-    <div className="min-w-0 space-y-0.5">
+    <SidebarTreeDndProvider
+      onMoveSpace={(spaceId, toCampaignId) => void handleMoveSpace(spaceId, toCampaignId)}
+      onMoveCampaign={handleMoveCampaign}
+    >
+      <div className="min-w-0 space-y-0.5">
       <SidebarHqSpacesBucketList
+        enableDnd
         noResults={noResults}
         searchQuery={searchQuery}
         searchActive={searchActive}
@@ -359,6 +420,7 @@ export function SidebarHqSpacesGroupedList({
         setPrograms={setPrograms}
         onCreateCampaign={createCampaignInProgram}
       />
-    </div>
+      </div>
+    </SidebarTreeDndProvider>
   )
 }
