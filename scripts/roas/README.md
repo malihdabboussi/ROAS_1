@@ -104,6 +104,11 @@ for diagnostics during startup.
 | `verify-roas-runtime-profiles.sql` | Drift audit — fails if any profile/pool still routes to Vibey |
 | `verify-vercel-env-freshness.sh`   | Guard — confirms critical env vars predate current prod build |
 
+The root `.railwayignore` keeps Railway CLI mission-worker uploads aligned with
+the mission-worker Docker build context. Do not remove the other-app exclusions:
+tracked files in those apps are not part of the worker image and may include
+machine-local symlink fixtures that the Railway uploader cannot archive.
+
 ### Drift guardrails (Phase 4)
 
 Vercel bakes env vars at **build time**, so adding a var without redeploying leaves
