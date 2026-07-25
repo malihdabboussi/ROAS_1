@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, type Dispatch, type SetStateAction } from 'react'
-import { ShellChatMenu } from '@/components/shell/ShellChatMenu'
-import { ShellMenuModeToggle, ShellSidebarNewButton } from '@/components/shell/ShellMenuChrome'
+import { ShellMenuModeToggle } from '@/components/shell/ShellMenuChrome'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { SidebarHqHubMenuContent } from './SidebarHqHubMenuContent'
+import { SidebarWorkMenu } from './SidebarWorkMenu'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 export type HubMenuPaneProps = {
@@ -46,11 +46,8 @@ export function SidebarHqHubMenuPane({ c, ...contentProps }: HubMenuPaneProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <ShellMenuModeToggle />
-      {menuMode === 'chat' ? (
-        <>
-          <ShellSidebarNewButton />
-          <ShellChatMenu />
-        </>
+      {menuMode === 'work' ? (
+        <SidebarWorkMenu />
       ) : (
         <SidebarHqHubMenuContent
           {...contentProps}

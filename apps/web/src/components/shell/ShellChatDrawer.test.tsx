@@ -42,6 +42,10 @@ vi.mock('@/components/layout/ResizableDivider', () => ({
   ResizableDivider: () => null,
 }))
 
+vi.mock('./ShellChatMenu', () => ({
+  ShellChatMenu: () => <div>Chat history</div>,
+}))
+
 describe('ShellChatDrawer', () => {
   beforeEach(() => {
     useShellStore.setState({

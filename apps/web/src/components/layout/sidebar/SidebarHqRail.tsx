@@ -7,6 +7,7 @@ import { surfaceFromPathname } from '@/components/global-chat/config/work-contex
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { shellSidebarExpanded, useShellStore } from '@/components/shell/use-shell-store'
 import { cn } from '@/lib/utils/cn'
+import { isManageRailItemActive, workContextSurfaceForPanel } from './sidebar-hq-rail.helpers'
 import type { ManageRailItem } from './sidebar-types'
 import { SidebarHqHubLogoButton } from './SidebarHqHubLogoButton'
 import { SidebarHqHubMenuPane, type HubMenuPaneProps } from './SidebarHqHubMenu'
@@ -35,39 +36,36 @@ export function SidebarHqRail({
   const sidebarPeek = useShellStore((s) => s.sidebarPeek)
   const holdSidebarPeek = useShellStore((s) => s.holdSidebarPeek)
   const scheduleSidebarPeekClose = useShellStore((s) => s.scheduleSidebarPeekClose)
+  const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
   const shellExpanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
 
   useEffect(() => {
+    if (chatDrawerOpen) {
+      // AI drawer covers the menu — force hub closed while chat is open.
+      if (c.hubMenuOpen || c.hubMenuClosing) c.forceCloseHubMenu()
+      return
+    }
     if (shellExpanded) {
       if (!c.hubMenuOpen && !c.hubMenuClosing) c.openHubMenu()
       return
     }
     // Peek/pin end: close instantly — animated close thrash causes the glitchy pop.
     if (c.hubMenuOpen || c.hubMenuClosing) c.forceCloseHubMenu()
-  }, [shellExpanded, c.hubMenuOpen, c.hubMenuClosing, c.openHubMenu, c.forceCloseHubMenu])
+  }, [
+    chatDrawerOpen,
+    shellExpanded,
+    c.hubMenuOpen,
+    c.hubMenuClosing,
+    c.openHubMenu,
+    c.forceCloseHubMenu,
+  ])
 
   const syncWorkContextForPath = (href: string) => {
     setWorkContext({ surface: surfaceFromPathname(href) })
   }
 
   const syncWorkContextForPanel = (panelId: 'projects' | 'spaces' | 'team2' | 'brain' | 'more') => {
-    if (panelId === 'spaces') {
-      setWorkContext({ surface: 'spaces' })
-      return
-    }
-    if (panelId === 'brain') {
-      setWorkContext({ surface: 'brain' })
-      return
-    }
-    if (panelId === 'team2') {
-      setWorkContext({ surface: 'team' })
-      return
-    }
-    if (panelId === 'more') {
-      setWorkContext({ surface: 'general' })
-      return
-    }
-    setWorkContext({ surface: 'general' })
+    setWorkContext({ surface: workContextSurfaceForPanel(panelId) })
   }
 
   const pushIfNeeded = (href: string) => {
@@ -94,7 +92,12 @@ export function SidebarHqRail({
   }
 
   const isPeeking = sidebarPeek && !sidebarPinned
-  const hubExpanded = c.hubMenuOpen || c.hubMenuClosing || shellExpanded
+  const hubExpanded = !chatDrawerOpen && (c.hubMenuOpen || c.hubMenuClosing || shellExpanded)
+
+  // AI drawer covers the sidebar menu entirely while open.
+  if (chatDrawerOpen) {
+    return null
+  }
 
   return (
     <div
@@ -135,31 +138,7 @@ export function SidebarHqRail({
           >
             <nav className="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2">
               {visibleRailItems.map((item) => {
-                const isItemActive = (() => {
-                  if (item.type === 'link') {
-                    if (item.id === 'home') return c.pathname === item.href
-                    return c.isActive(item.href)
-                  }
-                  if (item.type === 'panel') {
-                    if (item.panelId === 'more') {
-                      return (
-                        c.pathname.startsWith('/projects') ||
-                        c.pathname.startsWith('/flows') ||
-                        c.pathname.startsWith('/artifacts')
-                      )
-                    }
-                    if (item.panelId === 'spaces') {
-                      return (
-                        c.pathname.startsWith('/spaces') ||
-                        c.pathname.startsWith('/campaigns') ||
-                        c.pathname.startsWith('/programs')
-                      )
-                    }
-                    if (item.panelId === 'team2') return c.pathname.startsWith('/team')
-                    if (item.panelId === 'brain') return c.pathname.startsWith('/brain')
-                  }
-                  return false
-                })()
+                const isItemActive = isManageRailItemActive(item, c.pathname, c.isActive)
                 const iconSpan = (
                   <span
                     className={`flex items-center justify-center rounded-lg border border-transparent p-1.5 transition-all ${

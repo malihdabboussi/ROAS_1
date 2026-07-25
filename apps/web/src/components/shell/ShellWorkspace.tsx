@@ -28,7 +28,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const openChatDrawer = useShellStore((s) => s.openChatDrawer)
   const minimizeChatDrawer = useShellStore((s) => s.minimizeChatDrawer)
   const requestNewChat = useShellStore((s) => s.requestNewChat)
-  const setMenuMode = useShellStore((s) => s.setMenuMode)
   const setSpaceWorkOpen = useShellStore((s) => s.setSpaceWorkOpen)
 
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
@@ -55,9 +54,8 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (chatParam !== 'new') return
     requestNewChat()
-    setMenuMode('chat')
     setActiveConversationId(null)
-  }, [chatParam, requestNewChat, setMenuMode, setActiveConversationId])
+  }, [chatParam, requestNewChat, setActiveConversationId])
 
   useEffect(() => {
     if (!convParam) return
@@ -67,15 +65,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     }
     openConversationInSpaceChat(convParam)
     setActiveConversationId(convParam)
-    setMenuMode('chat')
-  }, [
-    convParam,
-    pathname,
-    openChatDrawer,
-    openConversationInSpaceChat,
-    setActiveConversationId,
-    setMenuMode,
-  ])
+  }, [convParam, pathname, openChatDrawer, openConversationInSpaceChat, setActiveConversationId])
 
   useEffect(() => {
     if (!isShellHomeRoute(pathname) || chatParam !== 'starting' || !activeConversationId) return
@@ -92,7 +82,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const spaceDockCollapsed = onSpaces && !spaceWorkOpen
   const summaryConversationId = showFullConversation
     ? (convParam ?? activeConversationId)
-    : isShellWorkspaceRoute(pathname) && chatDrawerOpen
+    : chatDrawerOpen
       ? chatDrawerConversationId
       : null
 
@@ -107,13 +97,14 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     )
   }
 
-  const showWorkspaceChatDrawer =
-    isShellWorkspaceRoute(pathname) && (!onSpaces || spaceWorkOpen) && !showFullNewChat
+  // Left AI drawer (history + chat) on Home and workspace routes. Full-page Home
+  // chat / collapsed Space chat remain dedicated fullscreen surfaces.
+  const showChatDrawer = (!onSpaces || spaceWorkOpen) && !showFullNewChat && !showFullConversation
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
-        {showWorkspaceChatDrawer ? <ShellChatDrawer /> : null}
+        {showChatDrawer ? <ShellChatDrawer /> : null}
 
         {onSpaces ? (
           <>

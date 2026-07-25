@@ -10,7 +10,7 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react'
-import { Brain, ChevronDown, House, ListChecks, Users } from 'lucide-react'
+import { Brain, ChevronDown, Inbox, ListChecks, Users } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
@@ -148,8 +148,8 @@ export function SidebarHqHubMenuContent({
         <SidebarHqHubMenuNavRow
           href="/home"
           active={c.pathname === '/home'}
-          icon={<House />}
-          label="Home"
+          icon={<Inbox />}
+          label="Inbox"
           onNavigate={() => {
             setMenuMode('home')
             setWorkContext({ surface: 'general' })

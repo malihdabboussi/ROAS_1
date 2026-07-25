@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type MouseEvent, type RefObject } from 'react'
 import { CheckCircle2, MoreHorizontal, Pin } from 'lucide-react'
+import { ConversationChannelIcon } from '@/components/chat/ConversationChannelIcon'
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyChatOrb } from '@/components/vibey/vibey-chat-orb'
 import {
@@ -30,6 +31,20 @@ function ConversationRowStateIcon({
     return <VibeyChatOrb state="processing" className="vibey-chat-orb--neutral" />
   }
   return <CheckCircle2 className="text-muted-foreground icon-sm shrink-0" />
+}
+
+function ConversationRowLeadingIcon({
+  conversation,
+  runtimeState,
+}: {
+  conversation: Conversation
+  runtimeState?: ConversationRowRuntimeState
+}) {
+  const source = conversation.metadata?.source
+  if (source === 'slack' || source === 'telegram') {
+    return <ConversationChannelIcon metadata={conversation.metadata} />
+  }
+  return <ConversationRowStateIcon runtimeState={runtimeState} />
 }
 
 function ConversationRowTitle({ rawTitle }: { rawTitle: string | null }) {
@@ -93,11 +108,7 @@ function ConversationAgentAvatar({
   )
 }
 
-function ConversationRowSubtitle({
-  runtimeState,
-}: {
-  runtimeState?: ConversationRowRuntimeState
-}) {
+function ConversationRowSubtitle({ runtimeState }: { runtimeState?: ConversationRowRuntimeState }) {
   if (!runtimeState?.isRunning) return null
   const phase = runtimeState.phase ?? 'idle'
   const toolLabel = runtimeState.toolLabel ?? null
@@ -155,7 +166,7 @@ export function SpaceConversationRow({
     <div
       onContextMenu={(event) => onOpenContextMenu(event, conversation.id)}
       className={cn(
-        'group/conversation px-spacing-2 py-spacing-1 gap-spacing-2 flex items-start rounded-spacing-3 transition-colors',
+        'group/conversation px-spacing-2 py-spacing-1 gap-spacing-2 rounded-spacing-3 flex items-start transition-colors',
         selected
           ? 'bg-hover-subtle text-foreground'
           : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground',
@@ -168,7 +179,7 @@ export function SpaceConversationRow({
         </div>
       ) : (
         <div className="mt-spacing-0-5 icon-sm flex shrink-0 items-center justify-center">
-          <ConversationRowStateIcon runtimeState={runtimeState} />
+          <ConversationRowLeadingIcon conversation={conversation} runtimeState={runtimeState} />
         </div>
       )}
       {renaming ? (
@@ -186,7 +197,7 @@ export function SpaceConversationRow({
               onCancelRename()
             }
           }}
-          className="body-3 border-primary bg-background text-foreground min-w-0 flex-1 rounded-spacing-1 border px-spacing-1 py-spacing-1 font-medium outline-none"
+          className="body-3 border-primary bg-background text-foreground rounded-spacing-1 px-spacing-1 py-spacing-1 min-w-0 flex-1 border font-medium outline-none"
         />
       ) : (
         <button

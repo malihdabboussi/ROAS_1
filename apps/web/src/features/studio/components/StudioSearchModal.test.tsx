@@ -19,15 +19,57 @@ afterEach(() => {
 })
 
 describe('StudioSearchModal', () => {
+  it('shows an idle hint when opened with an empty query', () => {
+    render(<StudioSearchModal open onClose={vi.fn()} campaigns={[]} onSelect={vi.fn()} />)
+
+    expect(
+      screen.getByText('Start typing to search tasks, docs, chats, and campaigns.'),
+    ).toBeTruthy()
+    expect(searchMock).not.toHaveBeenCalled()
+  })
+
   it('renders server-backed tasks, docs, deliverables, conversations, campaigns, and artifacts', async () => {
     vi.useFakeTimers()
     searchMock.mockResolvedValue([
-      { kind: 'task', id: 'task-1', label: 'Strategy task', subtitle: 'Task', url: '/spaces?space=s1&item=task-1' },
-      { kind: 'doc', id: 'doc-1', label: 'Strategy doc', subtitle: 'Doc', url: '/spaces?space=s1&item=doc-1' },
-      { kind: 'deliverable', id: 'del-1', label: 'Strategy output', subtitle: 'Deliverable', url: '/mission-control?mission=m1' },
+      {
+        kind: 'task',
+        id: 'task-1',
+        label: 'Strategy task',
+        subtitle: 'Task',
+        url: '/spaces?space=s1&item=task-1',
+      },
+      {
+        kind: 'doc',
+        id: 'doc-1',
+        label: 'Strategy doc',
+        subtitle: 'Doc',
+        url: '/spaces?space=s1&item=doc-1',
+      },
+      {
+        kind: 'deliverable',
+        id: 'del-1',
+        label: 'Strategy output',
+        subtitle: 'Deliverable',
+        url: '/mission-control?mission=m1',
+      },
       { kind: 'conversation', id: 'conv-1', label: 'Strategy chat', subtitle: 'Vibey', url: null },
-      { kind: 'campaign', id: 'camp-1', label: 'Strategy campaign', subtitle: 'Campaign', url: null, campaignIcon: 'target' },
-      { kind: 'artifact', id: 'offer-1', label: 'Strategy offer', subtitle: 'Offer', url: null, campaignId: 'camp-1', artifactKind: 'offer' },
+      {
+        kind: 'campaign',
+        id: 'camp-1',
+        label: 'Strategy campaign',
+        subtitle: 'Campaign',
+        url: null,
+        campaignIcon: 'target',
+      },
+      {
+        kind: 'artifact',
+        id: 'offer-1',
+        label: 'Strategy offer',
+        subtitle: 'Offer',
+        url: null,
+        campaignId: 'camp-1',
+        artifactKind: 'offer',
+      },
     ])
 
     render(
@@ -59,14 +101,7 @@ describe('StudioSearchModal', () => {
     vi.useFakeTimers()
     searchMock.mockRejectedValue(new Error('network down'))
 
-    render(
-      <StudioSearchModal
-        open
-        onClose={vi.fn()}
-        campaigns={[]}
-        onSelect={vi.fn()}
-      />,
-    )
+    render(<StudioSearchModal open onClose={vi.fn()} campaigns={[]} onSelect={vi.fn()} />)
 
     fireEvent.change(screen.getByPlaceholderText('Search everything…'), {
       target: { value: 'strategy' },

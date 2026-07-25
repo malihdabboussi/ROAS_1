@@ -1,3 +1,25 @@
+
+## 2026-07-24 - [FEATURE] Chat shell Home|Work + AI drawer redesign follow-ups
+
+Feature/App: shell / chat
+Found while: Implementing Home|Work toggle, centered Search+AI Chats, drawer covering menu
+
+
+- `apps/web/src/features/studio/components/StudioSearchModal.tsx`
+  Evidence: Mockup called for Chat / Agents / Slack peer filter tabs; current modal has no kind tabs.
+  Needed work: Add Conversations/Chat, Agents, Slack filters as peers to existing result kinds.
+  Deferred because: Shell chrome was the requested build; search already surfaces conversations.
+
+- `apps/web/src/components/layout/sidebar/SidebarWorkMenu.tsx`
+  Evidence: Work items are placeholder navigations to integrations/campaigns/brain.
+  Needed work: Wire real Page Grader actions (bulk send, scope map modal, import) once product picks the exact WORK set.
+  Deferred because: User asked for the shell outline first; PG action surface still TBD.
+
+- Web → Slack reply relay for Slack-origin conversations
+  Evidence: Shared conversation store allows continue-in-app; replies do not post back to Slack.
+  Needed work: Optional two-way send path if product wants live Slack sync from the drawer.
+  Deferred because: Explicitly called out as a separate product decision in the redesign discussion.
+
 ## 2026-07-24 - [FIX] Personal → org Meetings / Programs General rename follow-ups
 
 Feature/App: meetings / fathom / programs
@@ -8245,3 +8267,38 @@ Evidence: The extractor already exceeded the hard LOC limit before this work and
 Needed work: Extract media and artifact-output builders into focused modules while keeping `resolveUiBlocksFromToolResult` as the transport chokepoint. Split provider-specific video polling from shared completion/result formatting.
 
 Reason not done now: The requested fix targets broken creation results. Decomposing every unrelated UI-block family would materially broaden the change and overlap other active chat work.
+
+## 2026-07-24 - [ARCH] Split canonical Fathom routing base and near-limit context services
+
+Status: Open
+
+Found while: Canonicalizing Fathom meeting storage and adding Person Brain chat references
+
+Files:
+
+- `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts` (728 LOC; pre-existing hard-limit violation)
+- `apps/api/src/modules/entity-search/services/entity-search.service.ts` (494 LOC; proactive split threshold)
+- `apps/agent-api/src/modules/chat/services/chat-reference-context.service.ts` (491 LOC; proactive split threshold)
+
+Evidence: The Fathom base already owns webhook hydration, route discovery, canonical selection, meeting persistence, automation execution, and audit updates. The two context services remain below the 600 LOC hard limit but have crossed the 480 LOC proactive split threshold.
+
+Needed work: Extract Fathom route selection/persistence into a focused collaborator, organization-person result assembly into an entity-search collaborator, and structured reference builders by reference family while preserving the existing service boundaries.
+
+Reason not done now: The in-scope change is bounded to canonical meeting selection and the new Person reference family. Decomposing unrelated reference and automation families would materially broaden the change.
+
+## 2026-07-24 - [FEATURE] Replace heuristic Fathom call-kind labels with identity-aware classification
+
+Status: Open
+
+Found while: Verifying the duplicated Fathom meeting
+
+Files:
+
+- `apps/api/src/modules/spaces/services/fathom-call-kind.ts`
+- `apps/api/src/modules/space-templates/data/space-template-catalog-personal-dashboard.ts`
+
+Evidence: The current classifier supports only Personal and Team and treats owner-recorded attendance as strong Personal evidence. That can label client or internal-team calls as Personal even though canonical storage now prevents duplicate copies.
+
+Needed work: Classify Personal, Internal Team, and Client calls from participant identities, organization roster, customer/campaign contacts, calendar/Fathom metadata, and explicit manual overrides. Backfill only high-confidence historical classifications and surface ambiguity for review.
+
+Reason not done now: Accurate customer-versus-team classification needs bounded identity and campaign matching. Guessing from titles or attendee count would repeat the root problem and risks relabeling the meeting archive incorrectly.

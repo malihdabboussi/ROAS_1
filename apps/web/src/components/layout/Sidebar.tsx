@@ -27,12 +27,19 @@ export function Sidebar(props: SidebarProps) {
   const shellPrefsHydrated = useShellPrefsHydrated()
   const sidebarPinnedRaw = useShellStore((s) => s.sidebarPinned)
   const sidebarPeekRaw = useShellStore((s) => s.sidebarPeek)
+  const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
   const sidebarPinned = shellPrefsHydrated ? sidebarPinnedRaw : false
   const sidebarPeek = shellPrefsHydrated ? sidebarPeekRaw : false
-  // Pin pushes layout; peek overlays (rail stays 72px). Never widen for peek.
+  // AI drawer covers the menu — collapse HQ rail width to zero while open.
   const hqDesktopWidth =
-    c.sidebarMode === 'hq' ? (sidebarPinned ? 'md:w-[272px]' : 'md:w-[72px]') : c.desktopWidth
-  const hqPeeking = c.sidebarMode === 'hq' && sidebarPeek && !sidebarPinned
+    c.sidebarMode === 'hq'
+      ? chatDrawerOpen
+        ? 'md:w-0 md:min-w-0 md:overflow-hidden md:border-0 md:p-0'
+        : sidebarPinned
+          ? 'md:w-[272px]'
+          : 'md:w-[72px]'
+      : c.desktopWidth
+  const hqPeeking = c.sidebarMode === 'hq' && sidebarPeek && !sidebarPinned && !chatDrawerOpen
   const {
     updates: featureUpdateRows,
     loading: featureUpdatesLoading,

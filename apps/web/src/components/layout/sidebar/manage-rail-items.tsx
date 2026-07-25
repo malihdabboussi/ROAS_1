@@ -1,15 +1,15 @@
 'use client'
 
-import { Brain, Ellipsis, House, ListChecks, Users } from 'lucide-react'
+import { Brain, Ellipsis, Inbox, ListChecks, Users } from 'lucide-react'
 import type { ManageRailItem } from './sidebar-types'
 
 export const manageRailItems: ManageRailItem[] = [
   {
     id: 'home',
-    label: 'Home',
+    label: 'Inbox',
     type: 'link',
     href: '/home',
-    icon: <House className="icon-md" />,
+    icon: <Inbox className="icon-md" />,
   },
   {
     id: 'team',

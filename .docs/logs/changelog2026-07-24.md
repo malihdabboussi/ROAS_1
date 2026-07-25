@@ -156,6 +156,26 @@ Impact: Clicking Fork now opens the new chat immediately. The production fork sh
 
 Files: `apps/web/src/features/studio/components/message-bubble/AssistantActions.tsx`, `apps/web/src/features/studio/components/message-bubble/AssistantActions.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
 
+## [2026-07-24 16:18] - [FEATURE]
+
+What: Redesigned the dashboard shell: Home|Work sidebar toggle (Inbox/Team/Programs/Brain/More vs Page Grader actions), centered Search ⌘K + AI Chats unit, AI drawer that covers the sidebar menu with in-drawer history + Slack badges, and top-right limited to summary + space expand/collapse.
+
+Why: Align shell UX with ClickUp-style Search/AI Chats; stop using Chat as a sidebar mode; surface Slack-origin threads in history.
+
+Impact: Opening AI Chats hides the HQ menu and docks history+chat on the left. Work menu hosts Page Grader entry points. Fullscreen Home chat unchanged.
+
+Files: `ShellTopBar.tsx`, `ShellMenuChrome.tsx`, `ShellChatDrawer.tsx`, `ShellChatMenu.tsx`, `ShellWorkspace.tsx`, `use-shell-store.ts`, `SidebarHqHubMenu.tsx`, `SidebarHqHubMenuContent.tsx`, `SidebarWorkMenu.tsx`, `SidebarHqRail.tsx`, `manage-rail-items.tsx`, `SpaceConversationRows.tsx`, `apps/web/src/app/globals.css`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-07-24 16:25] - [FIX]
+
+What: Made AI Chats always open the left drawer with history (including on Home), restyled the top Search+AI Chats control as a ClickUp-style unified pill, collapsed the HQ sidebar while the drawer is open, and added an idle hint so ⌘K no longer looks broken when empty.
+
+Why: AI Chats was routing Home to full-page `/home?chat=new`; Search idle state looked empty; the center control needed a nested AI Chats pill.
+
+Impact: AI Chats / pen dock chat beside the current page with history on the left. Search still needs typing to fetch — idle copy explains that. Next.js HMR `Failed to fetch` is unrelated to search API.
+
+Files: `ShellTopBar.tsx`, `ShellWorkspace.tsx`, `ShellChatMenu.tsx`, `Sidebar.tsx`, `StudioSearchModal.tsx`, `studio-search-messages.config.ts`, `apps/web/src/app/globals.css`, related tests
+
 ## [2026-07-24 16:31] - [FIX]
 
 What: Aligned chat creation output contracts for funnels, websites, and async videos; added an empty-baseline capability drift guard across schemas, registries, policies, and agent docs; and verified output cards open canonical in-app destinations.
@@ -166,6 +186,15 @@ Impact: Agents can poll generated videos with the returned job id, completed vid
 
 Files: `artifact-action-additional-schemas.ts`, `artifact-legacy-media-status.service.ts`, `artifact-funnels.service.ts`, `ui-block-extractor.ts`, `FinalOutputCards.test.tsx`, `useArtifactsController.ts`, `artifact-type-to-space-view-type.ts`, creation-output drift tests/report, `documentation/features/website-artifacts.md`, `documentation/features/document-intelligence.md`
 
+## [2026-07-24 16:39] - [FEATURE]
+
+What: Added organization-scoped People attachments to every shared Chat composer and changed Fathom webhook routing to create one canonical Meetings item when multiple personal/organization routes match. Person references now fail closed when the selected identity cannot be resolved inside the active organization, and client-supplied Brain identifiers are never trusted. Prepared a guarded cleanup migration for the known duplicate meeting.
+
+Why: Users need to reference portal teammates and Slack-only people directly in ordinary ROAS chats so agents can use the correct User or Person Brain. A single Fathom call was also being materialized in two Spaces even though its 867 transcript rows were only timestamped speaker segments of one transcript.
+
+Impact: Home, Space, and agent chats can attach a validated person from the `@` or plus menu. The backend resolves the person through the active organization and supplies the correct Brain context; unresolved, cross-organization, or spoofed references contribute no context. Future Fathom calls choose one canonical route, with organization Meetings preferred on an equal match; the exact historical duplicate can be removed separately by deploying the guarded migration.
+
+Files: `apps/web/src/features/studio/components/ChatInput/*`, `apps/web/src/features/studio/types/index.ts`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.ts`, `apps/api/src/modules/entity-search/*`, `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts`, `apps/agent-api/src/modules/chat/*`, `supabase/migrations/20260724235500_dedupe_canonical_fathom_meeting.sql`, `documentation/features/claude-chatgpt-shell.md`, `documentation/features/meeting-follow-up-slack.md`
 ## [2026-07-24 16:39] - [FEATURE]
 
 What: Added full static-ad production to Paid Ads Production with ten selectable formats, one-to-ten output quantities, feed/Story sizing, campaign/research copy or exact copy, Media uploads, explicit real/generated person sourcing, and one shared mission path for UI and chat. Seeded the complete Static Ad Book skill with all references, templates, examples, and deterministic HTML-to-PNG renderer for Lux and Vibey. Registered both static-ad and the existing IG organic video launchers as executable mission-worker playbooks.

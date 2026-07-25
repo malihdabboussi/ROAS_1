@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from 'react'
 import { toast } from 'sonner'
+import { useShellStore } from '@/components/shell/use-shell-store'
 import { cachedProjects, useCachedProjects } from '@/features/projects/hooks/use-cached-projects'
 import { createProject, ensureSandboxRunning } from '@/features/projects/services/projects.service'
 import type { ProjectRepo } from '@/features/projects/types'
@@ -531,6 +532,12 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   const handleStudioSearchSelect = useCallback(
     (sel: StudioSearchModalSelection) => {
       if (sel.type === 'conversation') {
+        // HQ shell: open in the left AI drawer. Studio/team sidebar keeps legacy select.
+        if (sidebarMode === 'hq') {
+          useShellStore.getState().openChatDrawer(sel.id)
+          setStudioSearchOpen(false)
+          return
+        }
         void handleSelectConversation(sel.id)
         return
       }
@@ -573,6 +580,7 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
       expandPanel,
       pathname,
       router,
+      sidebarMode,
     ],
   )
 

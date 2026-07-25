@@ -6,7 +6,7 @@ import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
 
 const STORAGE_KEY = 'vibey.shell.v1'
 
-export type ShellMenuMode = 'home' | 'chat'
+export type ShellMenuMode = 'home' | 'work'
 export type ShellRightPanelTab = 'tasks' | 'files' | 'sources'
 
 export type ShellChatDrawerState = {
@@ -57,8 +57,8 @@ function writePersisted(partial: PersistedShell) {
   }
 }
 
-const CHAT_DRAWER_WIDTH_MIN = 240
-const CHAT_DRAWER_WIDTH_MAX = 560
+const CHAT_DRAWER_WIDTH_MIN = 360
+const CHAT_DRAWER_WIDTH_MAX = 720
 const ARTIFACT_VIEWER_WIDTH_MIN = 360
 const ARTIFACT_VIEWER_WIDTH_MAX = 720
 
@@ -79,7 +79,7 @@ interface ShellStore {
   rightPanel: ShellRightPanelState
   artifactViewer: ShellArtifactViewerState
   newChatNonce: number
-  /** Bumped to close HQ dock flyouts (Home/Chat, New, pin). */
+  /** Bumped to close HQ dock flyouts (Home/Work, pin). */
   sidebarFlyoutCloseEpoch: number
   pageBreadcrumb: ReactNode | null
   pageBreadcrumbOwner: object | null
@@ -123,7 +123,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   chatDrawer: {
     open: false,
     conversationId: null,
-    width: 280,
+    width: 420,
     minimized: false,
   },
   spaceWorkOpen: true,
@@ -284,7 +284,6 @@ export const useShellStore = create<ShellStore>((set, get) => ({
   requestNewChat: () => {
     set((s) => ({
       newChatNonce: s.newChatNonce + 1,
-      menuMode: 'chat',
       sidebarFlyoutCloseEpoch: s.sidebarFlyoutCloseEpoch + 1,
       chatDrawer: {
         ...s.chatDrawer,
@@ -295,12 +294,11 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       spaceWorkOpen: true,
       artifactViewer: { ...s.artifactViewer, target: null },
     }))
-    writePersisted({ menuMode: 'chat', spaceWorkOpen: true })
+    writePersisted({ spaceWorkOpen: true })
   },
   openFreshChatDrawer: () => {
     set((s) => ({
       newChatNonce: s.newChatNonce + 1,
-      menuMode: 'chat',
       sidebarFlyoutCloseEpoch: s.sidebarFlyoutCloseEpoch + 1,
       chatDrawer: {
         ...s.chatDrawer,
@@ -311,7 +309,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       rightPanel: { ...s.rightPanel, open: false },
       artifactViewer: { ...s.artifactViewer, target: null },
     }))
-    writePersisted({ menuMode: 'chat', rightPanelOpen: false })
+    writePersisted({ rightPanelOpen: false })
   },
   setPageBreadcrumb: (node, owner = null) => {
     if (node === null) {
@@ -337,12 +335,13 @@ export function hydrateShellStoreFromStorage(): void {
   if (shellStoreHydratedFromStorage) return
   shellStoreHydratedFromStorage = true
   const persisted = readPersisted()
+  const persistedMenuMode = persisted.menuMode === 'work' ? 'work' : 'home'
   useShellStore.setState({
     sidebarPinned: persisted.sidebarPinned ?? false,
-    menuMode: persisted.menuMode ?? 'home',
+    menuMode: persistedMenuMode,
     chatDrawer: {
       ...useShellStore.getState().chatDrawer,
-      width: clampChatDrawerWidth(persisted.chatDrawerWidth ?? 280),
+      width: clampChatDrawerWidth(persisted.chatDrawerWidth ?? 420),
     },
     spaceWorkOpen: persisted.spaceWorkOpen ?? true,
     rightPanel: {

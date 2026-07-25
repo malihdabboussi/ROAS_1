@@ -7,6 +7,7 @@ import { ResizableDivider } from '@/components/layout/ResizableDivider'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cn } from '@/lib/utils/cn'
+import { ShellChatMenu } from './ShellChatMenu'
 import { useShellStore } from './use-shell-store'
 
 export function ShellChatDrawer() {
@@ -91,8 +92,13 @@ export function ShellChatDrawer() {
         style={{ width: `${width}px` }}
         data-shell-chat-drawer
       >
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <GlobalChatPanel shellSidebarChrome onCollapseChat={() => minimizeChatDrawer()} />
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <div className="border-border px-spacing-2 pt-spacing-2 flex w-[200px] shrink-0 flex-col overflow-hidden border-r">
+            <ShellChatMenu />
+          </div>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <GlobalChatPanel shellSidebarChrome onCollapseChat={() => minimizeChatDrawer()} />
+          </div>
         </div>
       </div>
       <ResizableDivider

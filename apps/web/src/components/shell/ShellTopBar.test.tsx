@@ -5,6 +5,7 @@ import { ShellTopBar } from './ShellTopBar'
 
 const mocks = vi.hoisted(() => ({
   pathname: '/home',
+  push: vi.fn(),
   shellState: {
     sidebarPinned: true,
     sidebarPeek: false,
@@ -14,6 +15,8 @@ const mocks = vi.hoisted(() => ({
     requestNewChat: vi.fn(),
     openFreshChatDrawer: vi.fn(),
     restoreChatDrawer: vi.fn(),
+    minimizeChatDrawer: vi.fn(),
+    openChatDrawer: vi.fn(),
     chatDrawer: { open: false },
     toggleRightPanel: vi.fn(),
     openRightPanelSurface: vi.fn(),
@@ -27,7 +30,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({
   usePathname: () => mocks.pathname,
-  useRouter: () => ({ back: vi.fn(), forward: vi.fn(), push: vi.fn() }),
+  useRouter: () => ({ back: vi.fn(), forward: vi.fn(), push: mocks.push }),
   useSearchParams: () => new URLSearchParams(),
 }))
 
@@ -84,6 +87,14 @@ describe('ShellTopBar', () => {
     expect(screen.getByTitle('New chat')).toBeInTheDocument()
   })
 
+  it('opens a fresh left drawer chat from the pencil on Home', () => {
+    render(<ShellTopBar />)
+    fireEvent.click(screen.getByTitle('New chat'))
+
+    expect(mocks.shellState.openFreshChatDrawer).toHaveBeenCalledTimes(1)
+    expect(mocks.push).not.toHaveBeenCalledWith('/home?chat=new')
+  })
+
   it('restores the last chat from the pencil when the workspace drawer is closed', () => {
     mocks.pathname = '/spaces'
     mocks.shellState.chatDrawer = { open: false }
@@ -91,9 +102,7 @@ describe('ShellTopBar', () => {
     render(<ShellTopBar />)
     fireEvent.click(screen.getByTitle('New chat'))
 
-    expect(mocks.shellState.restoreChatDrawer).toHaveBeenCalledTimes(1)
-    expect(mocks.shellState.openFreshChatDrawer).not.toHaveBeenCalled()
-    expect(mocks.shellState.requestNewChat).not.toHaveBeenCalled()
+    expect(mocks.shellState.openFreshChatDrawer).toHaveBeenCalledTimes(1)
   })
 
   it('opens a fresh docked chat from the pencil when the workspace drawer is already open', () => {
@@ -104,16 +113,45 @@ describe('ShellTopBar', () => {
     fireEvent.click(screen.getByTitle('New chat'))
 
     expect(mocks.shellState.openFreshChatDrawer).toHaveBeenCalledTimes(1)
-    expect(mocks.shellState.restoreChatDrawer).not.toHaveBeenCalled()
-    expect(mocks.shellState.requestNewChat).not.toHaveBeenCalled()
   })
 
-  it('opens the full new-chat screen from the pencil on Home', () => {
-    render(<ShellTopBar />)
-    fireEvent.click(screen.getByTitle('New chat'))
+  it('toggles the AI Chats drawer from the centered control on Home', () => {
+    mocks.pathname = '/home'
+    mocks.shellState.chatDrawer = { open: false }
 
-    expect(mocks.shellState.requestNewChat).toHaveBeenCalledTimes(1)
-    expect(mocks.shellState.openFreshChatDrawer).not.toHaveBeenCalled()
+    render(<ShellTopBar />)
+    fireEvent.click(screen.getByTitle('AI Chats'))
+
+    expect(mocks.shellState.restoreChatDrawer).toHaveBeenCalledTimes(1)
+    expect(mocks.push).not.toHaveBeenCalledWith('/home?chat=new')
+  })
+
+  it('toggles the AI Chats drawer from the centered control on workspace routes', () => {
+    mocks.pathname = '/spaces'
+    mocks.shellState.chatDrawer = { open: false }
+
+    render(<ShellTopBar />)
+    fireEvent.click(screen.getByTitle('AI Chats'))
+
+    expect(mocks.shellState.restoreChatDrawer).toHaveBeenCalledTimes(1)
+  })
+
+  it('minimizes the AI Chats drawer when the centered control is active', () => {
+    mocks.pathname = '/spaces'
+    mocks.shellState.chatDrawer = { open: true }
+
+    render(<ShellTopBar />)
+    fireEvent.click(screen.getByTitle('AI Chats'))
+
+    expect(mocks.shellState.minimizeChatDrawer).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders the unified Search + AI Chats control without a duplicate Search icon', () => {
+    render(<ShellTopBar />)
+
+    expect(screen.getByTitle('Search')).toBeInTheDocument()
+    expect(screen.getByTitle('AI Chats')).toBeInTheDocument()
+    expect(screen.queryAllByTitle('Search')).toHaveLength(1)
   })
 
   it('does not show an inert options control beside a registered breadcrumb', () => {

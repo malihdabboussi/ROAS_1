@@ -17,7 +17,10 @@ import {
 type SearchableCampaign = { id: string; name: string; icon: string }
 type Row = { key: string; index: number; result: StudioGlobalSearchResult }
 
-const ARTIFACT_BADGE_LABEL: Record<NonNullable<StudioGlobalSearchResult['artifactKind']>, string> = {
+const ARTIFACT_BADGE_LABEL: Record<
+  NonNullable<StudioGlobalSearchResult['artifactKind']>,
+  string
+> = {
   offer: 'Offer',
   funnel: 'Funnel',
   website: 'Website',
@@ -94,12 +97,7 @@ interface StudioSearchModalProps {
   onSelect: (selection: StudioSearchModalSelection) => void
 }
 
-export function StudioSearchModal({
-  open,
-  onClose,
-  campaigns,
-  onSelect,
-}: StudioSearchModalProps) {
+export function StudioSearchModal({ open, onClose, campaigns, onSelect }: StudioSearchModalProps) {
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   const [results, setResults] = useState<StudioGlobalSearchResult[]>([])
@@ -162,9 +160,7 @@ export function StudioSearchModal({
   useEffect(() => {
     const list = listRef.current
     if (!list) return
-    const activeElement = list.querySelector(
-      `[data-index="${activeIndex}"]`,
-    ) as HTMLElement | null
+    const activeElement = list.querySelector(`[data-index="${activeIndex}"]`) as HTMLElement | null
     activeElement?.scrollIntoView({ block: 'nearest' })
   }, [activeIndex])
 
@@ -234,7 +230,11 @@ export function StudioSearchModal({
 
   return (
     <>
-      <div className="z-modal-backdrop fixed inset-0 bg-modal-overlay" onClick={onClose} aria-hidden />
+      <div
+        className="z-modal-backdrop bg-modal-overlay fixed inset-0"
+        onClick={onClose}
+        aria-hidden
+      />
       <div
         className="z-modal-content fixed inset-0 flex items-center justify-center p-4"
         onClick={onClose}
@@ -269,7 +269,7 @@ export function StudioSearchModal({
 
           <div ref={listRef} className="scrollbar-hide py-spacing-2 max-h-[360px] overflow-y-auto">
             {loading && (
-              <p className="typo-caption px-spacing-4 py-spacing-1 text-[var(--color-muted-foreground)]">
+              <p className="typo-caption px-spacing-4 py-spacing-1 text-muted-foreground">
                 {STUDIO_SEARCH_MESSAGES.SEARCHING}
               </p>
             )}
@@ -277,17 +277,20 @@ export function StudioSearchModal({
               <div className="px-spacing-4 py-spacing-8 text-center">
                 <p className="body-2 text-destructive">{STUDIO_SEARCH_MESSAGES.FAILED}</p>
               </div>
+            ) : !loading && !query.trim() ? (
+              <div className="px-spacing-4 py-spacing-8 text-center">
+                <p className="body-2 text-muted-foreground">{STUDIO_SEARCH_MESSAGES.IDLE}</p>
+              </div>
             ) : !loading && query.trim() && rows.length === 0 ? (
               <div className="px-spacing-4 py-spacing-8 text-center">
-                <p className="body-2 text-[var(--color-muted-foreground)]">
-                  {STUDIO_SEARCH_MESSAGES.EMPTY}
-                </p>
+                <p className="body-2 text-muted-foreground">{STUDIO_SEARCH_MESSAGES.EMPTY}</p>
               </div>
             ) : (
               rows.map((row) => {
                 const active = row.index === activeIndex
                 const result = row.result
-                const disabled = result.kind === 'artifact' && !campaigns.some((c) => c.id === result.campaignId)
+                const disabled =
+                  result.kind === 'artifact' && !campaigns.some((c) => c.id === result.campaignId)
                 return (
                   <button
                     key={row.key}

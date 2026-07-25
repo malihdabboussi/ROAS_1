@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ListFilter } from 'lucide-react'
 import { toast } from 'sonner'
@@ -25,7 +25,7 @@ import {
   type ConversationAgentDisplay,
 } from '@/lib/conversations'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
-import { isShellWorkspaceRoute } from './shell-route-policy'
+import { isShellHomeRoute } from './shell-route-policy'
 import { useShellStore } from './use-shell-store'
 
 type ChatListFilter = 'all' | 'pinned' | 'campaign' | 'non-campaign' | `agent:${string}`
@@ -44,11 +44,9 @@ function matchesChatFilter(conversation: Conversation, filter: ChatListFilter): 
 export function ShellChatMenu() {
   const pathname = usePathname() ?? '/home'
   const router = useRouter()
+  const searchParams = useSearchParams()
   const openChatDrawer = useShellStore((s) => s.openChatDrawer)
   const openFreshChatDrawer = useShellStore((s) => s.openFreshChatDrawer)
-  const restoreChatDrawer = useShellStore((s) => s.restoreChatDrawer)
-  const requestNewChat = useShellStore((s) => s.requestNewChat)
-  const setMenuMode = useShellStore((s) => s.setMenuMode)
   const chatDrawer = useShellStore((s) => s.chatDrawer)
 
   const activeAgentKey = useGlobalChatStore((s) => s.activeAgentKey)
@@ -169,37 +167,23 @@ export function ShellChatMenu() {
 
   const openConversation = useCallback(
     (id: string) => {
-      setMenuMode('chat')
-      if (isShellWorkspaceRoute(pathname)) {
-        openChatDrawer(id)
-        return
+      // Always open in the left AI drawer (history stays visible). Shared
+      // /home?conv= links still mount full chat via ShellWorkspace.
+      if (isShellHomeRoute(pathname) && (searchParams.get('conv') || searchParams.get('chat'))) {
+        router.push('/home')
       }
-      if (chatDrawer.minimized && chatDrawer.conversationId === id) {
-        restoreChatDrawer()
-      }
-      router.push(`/home?conv=${encodeURIComponent(id)}`)
+      openChatDrawer(id)
     },
-    [
-      chatDrawer.conversationId,
-      chatDrawer.minimized,
-      openChatDrawer,
-      pathname,
-      restoreChatDrawer,
-      router,
-      setMenuMode,
-    ],
+    [openChatDrawer, pathname, router, searchParams],
   )
 
   const handleNewConversation = useCallback(() => {
     setActiveConversationId(null)
-    if (isShellWorkspaceRoute(pathname)) {
-      openFreshChatDrawer()
-      return
+    if (isShellHomeRoute(pathname) && (searchParams.get('conv') || searchParams.get('chat'))) {
+      router.push('/home')
     }
-    requestNewChat()
-    setMenuMode('chat')
-    router.push('/home?chat=new')
-  }, [openFreshChatDrawer, pathname, requestNewChat, router, setActiveConversationId, setMenuMode])
+    openFreshChatDrawer()
+  }, [openFreshChatDrawer, pathname, router, searchParams, setActiveConversationId])
 
   const activeConversationId = useChatStore((s) => s.activeConversationId)
   const selectedConversationId = chatDrawer.conversationId ?? activeConversationId ?? null

@@ -7,7 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FolderGit2,
-  House,
+  Inbox,
   Layers3,
   List,
   ListChecks,
@@ -25,7 +25,7 @@ import { dispatchOpenStudioSearch } from '@/features/studio/utils/open-studio-se
 import { stripLegacySpacesConversationTitle } from '@/lib/conversations/conversation-title'
 import { cn } from '@/lib/utils/cn'
 import { isFullShellConversation } from './shell-chat-breadcrumb'
-import { isShellWorkspaceRoute } from './shell-route-policy'
+import { isShellHomeRoute } from './shell-route-policy'
 import { ShellOpenInMenu } from './ShellOpenInMenu'
 import { useShellOpenIn } from './ShellOpenInProvider'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
@@ -34,9 +34,9 @@ import { shellSidebarExpanded, useShellStore } from './use-shell-store'
 function breadcrumbFromPath(
   pathname: string,
   spaceTitle: string | null,
-): { label: string; Icon: typeof House } {
+): { label: string; Icon: typeof Inbox } {
   if (pathname === '/home' || pathname.startsWith('/home/')) {
-    return { label: 'Home', Icon: House }
+    return { label: 'Inbox', Icon: Inbox }
   }
   if (pathname.startsWith('/team')) return { label: 'Team', Icon: Users }
   if (pathname.startsWith('/brain')) return { label: 'Brain', Icon: Brain }
@@ -50,7 +50,7 @@ function breadcrumbFromPath(
       Icon: ListChecks,
     }
   }
-  return { label: 'Home', Icon: House }
+  return { label: 'Inbox', Icon: Inbox }
 }
 
 export function ShellTopBar() {
@@ -66,15 +66,15 @@ export function ShellTopBar() {
   const toggleSidebarPinned = useShellStore((s) => s.toggleSidebarPinned)
   const holdSidebarPeek = useShellStore((s) => s.holdSidebarPeek)
   const scheduleSidebarPeekClose = useShellStore((s) => s.scheduleSidebarPeekClose)
-  const requestNewChat = useShellStore((s) => s.requestNewChat)
+  const openChatDrawer = useShellStore((s) => s.openChatDrawer)
   const openFreshChatDrawer = useShellStore((s) => s.openFreshChatDrawer)
   const restoreChatDrawer = useShellStore((s) => s.restoreChatDrawer)
+  const minimizeChatDrawer = useShellStore((s) => s.minimizeChatDrawer)
   const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
   const toggleRightPanel = useShellStore((s) => s.toggleRightPanel)
   const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
   const spaceWorkOpen = useShellStore((s) => s.spaceWorkOpen)
   const toggleSpaceWorkOpen = useShellStore((s) => s.toggleSpaceWorkOpen)
-  const setMenuMode = useShellStore((s) => s.setMenuMode)
   const pageBreadcrumb = useShellStore((s) => s.pageBreadcrumb)
 
   const { targets } = useShellOpenIn()
@@ -89,6 +89,7 @@ export function ShellTopBar() {
   const activeConversationId = useChatStore((s) => s.activeConversationId)
   const conversations = useChatStore((s) => s.conversations)
   const routeConversationId = searchParams.get('conv')
+  const chatParam = searchParams.get('chat')
   const breadcrumbConversationId = routeConversationId ?? activeConversationId
   const activeConversationTitle = useMemo(() => {
     const conversation = conversations.find((item) => item.id === breadcrumbConversationId)
@@ -108,6 +109,10 @@ export function ShellTopBar() {
   const expanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
   const onSpaces = pathname.startsWith('/spaces')
   const visiblePageBreadcrumb = fullConversation ? null : pageBreadcrumb
+  const homeAiOpen =
+    isShellHomeRoute(pathname) &&
+    (Boolean(routeConversationId) || chatParam === 'new' || chatParam === 'starting')
+  const aiChatsActive = chatDrawerOpen || homeAiOpen
 
   const histIndex = useRef(0)
   const histMax = useRef(0)
@@ -129,16 +134,27 @@ export function ShellTopBar() {
   }, [scheduleSidebarPeekClose])
 
   const goNewChat = () => {
-    // Pencil: restore last chat when the drawer is closed; start a fresh
-    // chat when a chat is already open. Home / full chat → /home?chat=new.
-    if (isShellWorkspaceRoute(pathname)) {
-      if (chatDrawerOpen) openFreshChatDrawer()
+    // Pencil: always dock a fresh chat in the left AI drawer (with history).
+    if (isShellHomeRoute(pathname) && (routeConversationId || chatParam)) {
+      router.push('/home')
+    }
+    openFreshChatDrawer()
+  }
+
+  const toggleAiChats = () => {
+    if (chatDrawerOpen) {
+      minimizeChatDrawer()
+      return
+    }
+    // Leave full-page Home chat if open — AI Chats is the left drawer + history.
+    if (isShellHomeRoute(pathname) && (routeConversationId || chatParam)) {
+      const convId = routeConversationId
+      router.push('/home')
+      if (convId) openChatDrawer(convId)
       else restoreChatDrawer()
       return
     }
-    requestNewChat()
-    setMenuMode('chat')
-    router.push('/home?chat=new')
+    restoreChatDrawer()
   }
 
   const goBack = () => {
@@ -209,17 +225,31 @@ export function ShellTopBar() {
         )}
       </div>
 
-      <div className="ml-auto flex items-center gap-1.5">
-        <ShellOpenInMenu targets={targets} />
-
+      <div className="shell-topbar-center-unit">
         <button
           type="button"
           title="Search"
           onClick={() => dispatchOpenStudioSearch()}
-          className="shell-topbar-icon-btn"
+          className="shell-topbar-search-btn"
         >
-          <Search />
+          <Search className="shell-topbar-search-icon" aria-hidden />
+          <span className="shell-topbar-search-label">Search</span>
+          <kbd className="shell-topbar-search-kbd">⌘K</kbd>
         </button>
+        <button
+          type="button"
+          title="AI Chats"
+          aria-pressed={aiChatsActive}
+          onClick={toggleAiChats}
+          className={cn('shell-topbar-ai-btn', aiChatsActive && 'shell-topbar-ai-btn-active')}
+        >
+          <span>AI Chats</span>
+          <span className="shell-topbar-ai-orb" aria-hidden />
+        </button>
+      </div>
+
+      <div className="ml-auto flex items-center gap-1.5">
+        <ShellOpenInMenu targets={targets} />
 
         <button
           type="button"
