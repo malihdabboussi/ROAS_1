@@ -198,13 +198,13 @@ Files: `apps/web/src/features/studio/components/ChatInput/*`, `apps/web/src/feat
 
 ## [2026-07-24 20:41] - [FIX]
 
-What: Corrected the Fly runtime image to package the tracked HR system-agent template instead of an ignored local workspace directory.
+What: Corrected the Fly runtime image to package the tracked HR system-agent template instead of an ignored local workspace directory, and committed the OpenClaw lockfile used by frozen production installs.
 
-Why: Exact-commit production builds could not find `docker/agents/hr`, so Pixel's otherwise verified release failed before the runtime image was created.
+Why: Exact-commit production builds could not find `docker/agents/hr` and could not reproduce OpenClaw dependencies because its lockfile was ignored, so Pixel's otherwise verified release failed before the runtime image was created.
 
-Impact: Clean releases no longer depend on developer-local ignored files, and the HR runtime workspace is built from the repository's canonical template.
+Impact: Clean releases no longer depend on developer-local ignored files, the HR runtime workspace is built from the repository's canonical template, and OpenClaw's frozen install is reproducible.
 
-Files: `docker/Dockerfile`
+Files: `docker/Dockerfile`, `apps/openclaw/pnpm-lock.yaml`
 
 ## [2026-07-24 16:39] - [FEATURE]
 
