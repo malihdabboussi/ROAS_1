@@ -69,6 +69,7 @@ export class HiggsfieldRepository {
 
   async removeConnection(scope: RequestScope): Promise<void> {
     const admin = this.serviceClient.client
+    const vaultLabel = this.resolveVaultLabel(scope)
     let projectQuery = admin.from('project_repos').select('id')
     projectQuery = scope.orgId
       ? projectQuery.eq('org_id', scope.orgId)
@@ -87,7 +88,7 @@ export class HiggsfieldRepository {
       .from('vault_secrets')
       .delete()
       .eq('provider', 'mcp')
-      .eq('label', VAULT_LABEL)
+      .eq('label', vaultLabel)
     secretQuery = scope.orgId
       ? secretQuery.eq('org_id', scope.orgId)
       : secretQuery.eq('user_id', scope.userId).is('org_id', null)
@@ -133,11 +134,12 @@ export class HiggsfieldRepository {
 
   private async upsertVaultSecret(scope: RequestScope, tokenBundle: string): Promise<string> {
     const admin = this.serviceClient.client
+    const vaultLabel = this.resolveVaultLabel(scope)
     let query = admin
       .from('vault_secrets')
       .select('id')
       .eq('provider', 'mcp')
-      .eq('label', VAULT_LABEL)
+      .eq('label', vaultLabel)
     query = scope.orgId
       ? query.eq('org_id', scope.orgId)
       : query.eq('user_id', scope.userId).is('org_id', null)
@@ -146,7 +148,7 @@ export class HiggsfieldRepository {
       user_id: scope.userId,
       org_id: scope.orgId,
       provider: 'mcp',
-      label: VAULT_LABEL,
+      label: vaultLabel,
       secret_type: 'oauth_token',
       encrypted_value: tokenBundle,
       metadata: { server_url: SERVER_URL, oauth_provider: 'higgsfield' },
@@ -163,5 +165,9 @@ export class HiggsfieldRepository {
       throw new BadRequestException('Could not store the Higgsfield credentials')
     }
     return data.id
+  }
+
+  private resolveVaultLabel(scope: RequestScope): string {
+    return scope.orgId ? `${VAULT_LABEL}:org:${scope.orgId}` : VAULT_LABEL
   }
 }

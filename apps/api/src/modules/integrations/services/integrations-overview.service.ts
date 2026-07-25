@@ -57,6 +57,7 @@ const INTEGRATION_IDS_FOR_OVERVIEW = [
   'zoom',
   'active_campaign',
   'page_grader',
+  'higgsfield',
   'whop',
   'fanbasis',
   'paypal',
