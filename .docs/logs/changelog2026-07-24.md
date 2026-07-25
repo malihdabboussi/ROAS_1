@@ -195,6 +195,17 @@ Why: Users need to reference portal teammates and Slack-only people directly in 
 Impact: Home, Space, and agent chats can attach a validated person from the `@` or plus menu. The backend resolves the person through the active organization and supplies the correct Brain context; unresolved, cross-organization, or spoofed references contribute no context. Future Fathom calls choose one canonical route, with organization Meetings preferred on an equal match; the exact historical duplicate can be removed separately by deploying the guarded migration.
 
 Files: `apps/web/src/features/studio/components/ChatInput/*`, `apps/web/src/features/studio/types/index.ts`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.ts`, `apps/api/src/modules/entity-search/*`, `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts`, `apps/agent-api/src/modules/chat/*`, `supabase/migrations/20260724235500_dedupe_canonical_fathom_meeting.sql`, `documentation/features/claude-chatgpt-shell.md`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-07-24 20:41] - [FIX]
+
+What: Corrected the Fly runtime image to package the tracked HR system-agent template instead of an ignored local workspace directory.
+
+Why: Exact-commit production builds could not find `docker/agents/hr`, so Pixel's otherwise verified release failed before the runtime image was created.
+
+Impact: Clean releases no longer depend on developer-local ignored files, and the HR runtime workspace is built from the repository's canonical template.
+
+Files: `docker/Dockerfile`
+
 ## [2026-07-24 16:39] - [FEATURE]
 
 What: Added full static-ad production to Paid Ads Production with ten selectable formats, one-to-ten output quantities, feed/Story sizing, campaign/research copy or exact copy, Media uploads, explicit real/generated person sourcing, and one shared mission path for UI and chat. Seeded the complete Static Ad Book skill with all references, templates, examples, and deterministic HTML-to-PNG renderer for Lux and Vibey. Registered both static-ad and the existing IG organic video launchers as executable mission-worker playbooks.

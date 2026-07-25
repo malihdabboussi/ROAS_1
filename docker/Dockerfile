@@ -162,7 +162,7 @@ COPY --chown=node:node docker/openclaw.json /home/node/.openclaw/openclaw.json
 # ── Copy agent workspaces (read-only consciousness + skills) ──
 # Core system agents are pre-seeded; org/custom agents are created by AgentSyncService at boot.
 COPY --chown=node:node docker/agents/vibey /app/agents/vibey
-COPY --chown=node:node docker/agents/hr /app/agents/hr
+COPY --chown=node:node docker/agents/templates/hr /app/agents/hr
 COPY --chown=node:node docker/agents/atlas /app/agents/atlas
 
 # ── Copy custom tool plugin ───────────────────────────────────
