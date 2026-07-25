@@ -6,23 +6,22 @@ import type {
 } from '../types/home-cards'
 
 export const HOME_LAYOUT_STORAGE_KEY = 'vibey-home-layout'
+export const HOME_LAYOUT_VERSION = 2 as const
 
 /** Per-user local cache so shared browsers do not leak another account's layout. */
 export function homeLayoutStorageKey(userId: string): string {
   return `${HOME_LAYOUT_STORAGE_KEY}:${userId}`
 }
 
-export const DEFAULT_HOME_CARD_IDS: HomeCardId[] = [
-  'favorite_spaces',
-  'favorite_conversations',
-  'favorite_campaigns',
-  'my_tasks',
-  'approval_queue',
-  'notification_feed',
-]
+export const DEFAULT_HOME_CARD_IDS: HomeCardId[] = ['agenda', 'inbox_feed']
 
 export const DEFAULT_HOME_LAYOUT: HomeLayoutState = {
+  version: HOME_LAYOUT_VERSION,
   cardIds: [...DEFAULT_HOME_CARD_IDS],
+  cardSizes: {
+    agenda: 'full',
+    inbox_feed: 'full',
+  },
 }
 
 export const HOME_CARD_DEFINITIONS: HomeCardDefinition[] = [
@@ -83,6 +82,16 @@ export const HOME_CARD_DEFINITIONS: HomeCardDefinition[] = [
     title: 'Agenda',
     description: 'Upcoming calendar events',
   },
+  {
+    id: 'inbox_feed',
+    title: 'Inbox',
+    description: 'Primary, Other, Later, and Cleared notifications',
+  },
+  {
+    id: 'chat_composer',
+    title: 'Ask ROAS',
+    description: 'Start work with ROAS from your Home dashboard',
+  },
 ]
 
 export function homeCardDefinition(id: HomeCardId): HomeCardDefinition {
@@ -113,6 +122,12 @@ export function parseHomeLayout(raw: unknown): HomeLayoutState {
   if (!raw || typeof raw !== 'object')
     return { ...DEFAULT_HOME_LAYOUT, cardIds: [...DEFAULT_HOME_CARD_IDS] }
   const o = raw as Record<string, unknown>
+  if (o.version !== HOME_LAYOUT_VERSION)
+    return {
+      ...DEFAULT_HOME_LAYOUT,
+      cardIds: [...DEFAULT_HOME_CARD_IDS],
+      cardSizes: { ...DEFAULT_HOME_LAYOUT.cardSizes },
+    }
   const ids = o.cardIds
   if (!Array.isArray(ids)) return { ...DEFAULT_HOME_LAYOUT, cardIds: [...DEFAULT_HOME_CARD_IDS] }
   const valid = new Set(HOME_CARD_DEFINITIONS.map((c) => c.id))
@@ -121,5 +136,15 @@ export function parseHomeLayout(raw: unknown): HomeLayoutState {
   )
   if (cardIds.length === 0) return { ...DEFAULT_HOME_LAYOUT, cardIds: [...DEFAULT_HOME_CARD_IDS] }
   const cardSizes = parseCardSizes(o.cardSizes, cardIds)
-  return cardSizes ? { cardIds, cardSizes } : { cardIds }
+  return cardSizes
+    ? { version: HOME_LAYOUT_VERSION, cardIds, cardSizes }
+    : { version: HOME_LAYOUT_VERSION, cardIds }
+}
+
+export function homeLayoutNeedsMigration(raw: unknown): boolean {
+  return (
+    !raw ||
+    typeof raw !== 'object' ||
+    (raw as Record<string, unknown>).version !== HOME_LAYOUT_VERSION
+  )
 }

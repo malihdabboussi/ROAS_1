@@ -1,20 +1,16 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, Download, MessageSquare } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Download, MessageSquare } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
-import {
-  AspectRatioMenuOption,
-  CHATGPT_STYLE_ASPECT_OPTIONS,
-  type ChatGptStyleAspectRatio,
-} from '@/components/media/aspect-ratio-menu'
+import { MediaImageEditComposer } from '@/components/media'
 import { isShellWorkspaceRoute } from '@/components/shell/shell-route-policy'
 import { ShellArtifactViewerPanel } from '@/components/shell/ShellArtifactViewerPanel'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
 import type { DocumentAttachment } from '@/lib/chat/document-attachments'
-import { listAssets, type MediaAsset } from '@/lib/services/media-api'
+import { getAsset, listAssets, type MediaAsset } from '@/lib/services/media-api'
 import { cn } from '@/lib/utils/cn'
 
 function targetAttachment(target: ShellArtifactViewerTarget): DocumentAttachment | null {
@@ -36,8 +32,40 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
   const requestNewChat = useShellStore((s) => s.requestNewChat)
   const openArtifactViewer = useShellStore((s) => s.openArtifactViewer)
   const [history, setHistory] = useState<MediaAsset[]>([])
-  const [aspectOpen, setAspectOpen] = useState(false)
-  const aspectRef = useRef<HTMLDivElement | null>(null)
+  const [resolvedAsset, setResolvedAsset] = useState<MediaAsset | null>(null)
+  const activeTarget = useMemo<ShellArtifactViewerTarget>(() => {
+    if (!resolvedAsset) return target
+    return {
+      ...target,
+      id: resolvedAsset.id,
+      mediaAssetId: resolvedAsset.id,
+      title: resolvedAsset.name || target.title,
+      fileName: resolvedAsset.original_filename || resolvedAsset.name || target.fileName,
+      fileUrl: resolvedAsset.public_url,
+      mimeType: resolvedAsset.mime_type,
+      spaceId: resolvedAsset.space_id || target.spaceId,
+      campaignId: resolvedAsset.campaign_id || target.campaignId,
+      conversationId: resolvedAsset.conversation_id || target.conversationId,
+    }
+  }, [resolvedAsset, target])
+
+  useEffect(() => {
+    if (!target.mediaAssetId) {
+      setResolvedAsset(null)
+      return
+    }
+    let cancelled = false
+    void getAsset(target.mediaAssetId)
+      .then((asset) => {
+        if (!cancelled) setResolvedAsset(asset)
+      })
+      .catch(() => {
+        if (!cancelled) setResolvedAsset(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [target.mediaAssetId])
 
   const openChat = useCallback(() => {
     if (isShellWorkspaceRoute(pathname)) {
@@ -50,7 +78,7 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
 
   const seedFreshChat = useCallback(
     (content: string, seedMode?: 'attach') => {
-      const attachment = targetAttachment(target)
+      const attachment = targetAttachment(activeTarget)
       if (!attachment) return
       openChat()
       seedComposer({
@@ -59,22 +87,22 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
         seedMode,
         railIntent: 'new',
         workContext: {
-          surface: target.spaceId ? 'spaces' : 'general',
-          spaceId: target.spaceId || undefined,
-          campaignId: target.campaignId || undefined,
+          surface: activeTarget.spaceId ? 'spaces' : 'general',
+          spaceId: activeTarget.spaceId || undefined,
+          campaignId: activeTarget.campaignId || undefined,
         },
       })
     },
-    [openChat, seedComposer, target],
+    [activeTarget, openChat, seedComposer],
   )
 
   useEffect(() => {
-    if (!target.spaceId || target.type !== 'image') {
+    if (!activeTarget.spaceId || activeTarget.type !== 'image') {
       setHistory([])
       return
     }
     let cancelled = false
-    void listAssets({ space_id: target.spaceId, asset_type: 'image', limit: 40 })
+    void listAssets({ space_id: activeTarget.spaceId, asset_type: 'image', limit: 40 })
       .then((result) => {
         if (cancelled) return
         const generated = result.assets.filter((asset) => {
@@ -95,16 +123,7 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
     return () => {
       cancelled = true
     }
-  }, [target.spaceId, target.type])
-
-  useEffect(() => {
-    if (!aspectOpen) return
-    const onDown = (event: MouseEvent) => {
-      if (!aspectRef.current?.contains(event.target as Node)) setAspectOpen(false)
-    }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
-  }, [aspectOpen])
+  }, [activeTarget.mediaAssetId, activeTarget.spaceId, activeTarget.type])
 
   const historyItems = useMemo(() => {
     const seen = new Set<string>()
@@ -119,50 +138,8 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
     seedFreshChat('', 'attach')
   }, [seedFreshChat])
 
-  const changeAspectRatio = useCallback(
-    (ratio: ChatGptStyleAspectRatio) => {
-      setAspectOpen(false)
-      seedFreshChat(
-        [
-          `Regenerate the attached image at aspect ratio ${ratio}.`,
-          target.mediaAssetId
-            ? `Use edit_image with parent_image_asset_id ${target.mediaAssetId} and aspect_ratio ${ratio}.`
-            : null,
-          'Preserve the subject and composition as much as possible.',
-        ]
-          .filter(Boolean)
-          .join('\n'),
-      )
-    },
-    [seedFreshChat, target.mediaAssetId],
-  )
-
   const actions = (
     <>
-      {target.type === 'image' ? (
-        <div ref={aspectRef} className="relative shrink-0">
-          <button
-            type="button"
-            onClick={() => setAspectOpen((open) => !open)}
-            className="body-4 text-foreground hover:bg-hover-subtle border-border gap-spacing-1 rounded-spacing-2 px-spacing-2 flex h-7 items-center border"
-          >
-            Aspect ratio
-            <ChevronDown className="h-3 w-3" />
-          </button>
-          {aspectOpen ? (
-            <div className="dropdown-menu-solid p-spacing-2 gap-spacing-1 z-dropdown absolute left-0 top-8 flex min-w-64 flex-col">
-              {CHATGPT_STYLE_ASPECT_OPTIONS.map((option) => (
-                <AspectRatioMenuOption
-                  key={option.ratio}
-                  ratio={option.ratio}
-                  label={option.label}
-                  onSelect={() => changeAspectRatio(option.ratio)}
-                />
-              ))}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
       <button
         type="button"
         onClick={editInChat}
@@ -171,10 +148,10 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
         <MessageSquare className="h-3 w-3" />
         Edit in chat
       </button>
-      {target.fileUrl ? (
+      {activeTarget.fileUrl ? (
         <a
-          href={target.fileUrl}
-          download={target.fileName || target.title}
+          href={activeTarget.fileUrl}
+          download={activeTarget.fileName || activeTarget.title}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Download artifact"
@@ -187,59 +164,82 @@ export function ShellMediaArtifactViewer({ target }: { target: ShellArtifactView
   )
 
   return (
-    <ShellArtifactViewerPanel target={target} actions={actions}>
-      <div className="p-spacing-4 gap-spacing-4 flex min-h-full flex-col">
-        <div className="border-border surface-card rounded-spacing-3 shadow-1 flex min-h-72 items-center justify-center overflow-hidden border">
-          {target.type === 'video' && target.fileUrl ? (
-            <video src={target.fileUrl} controls className="max-h-full w-full object-contain" />
-          ) : target.type === 'audio' && target.fileUrl ? (
-            <audio src={target.fileUrl} controls className="mx-spacing-4 w-full" />
-          ) : target.fileUrl ? (
-            <img
-              src={target.fileUrl}
-              alt={target.title}
-              className="max-h-full w-full object-contain"
-            />
-          ) : (
-            <p className="body-3 text-muted-foreground">No preview available</p>
-          )}
-        </div>
-
-        {target.type === 'image' && historyItems.length > 0 ? (
-          <div>
-            <p className="typo-caption text-muted-foreground mb-spacing-2 uppercase tracking-wide">
-              History
-            </p>
-            <div className="gap-spacing-2 scrollbar-hide flex overflow-x-auto">
-              {historyItems.map((asset) => {
-                const active = asset.id === target.mediaAssetId
-                return (
-                  <button
-                    key={asset.id}
-                    type="button"
-                    onClick={() =>
-                      openArtifactViewer({
-                        ...target,
-                        id: asset.id,
-                        mediaAssetId: asset.id,
-                        title: asset.name || target.title,
-                        fileName: asset.original_filename || asset.name || target.fileName,
-                        fileUrl: asset.public_url,
-                        mimeType: asset.mime_type,
-                      })
-                    }
-                    className={cn(
-                      'border-border rounded-spacing-2 h-14 w-14 shrink-0 overflow-hidden border',
-                      active && 'border-primary ring-primary/30 ring-2',
-                    )}
-                    aria-label={`Open ${asset.name}`}
-                  >
-                    <img src={asset.public_url!} alt="" className="h-full w-full object-cover" />
-                  </button>
-                )
-              })}
-            </div>
+    <ShellArtifactViewerPanel target={activeTarget} actions={actions}>
+      <div className="flex min-h-full flex-col">
+        <div className="p-spacing-4 gap-spacing-4 flex min-h-0 flex-1 flex-col">
+          <div className="border-border surface-card rounded-spacing-3 shadow-1 flex min-h-72 items-center justify-center overflow-hidden border">
+            {activeTarget.type === 'video' && activeTarget.fileUrl ? (
+              <video
+                src={activeTarget.fileUrl}
+                controls
+                className="max-h-full w-full object-contain"
+              />
+            ) : activeTarget.type === 'audio' && activeTarget.fileUrl ? (
+              <audio src={activeTarget.fileUrl} controls className="mx-spacing-4 w-full" />
+            ) : activeTarget.fileUrl ? (
+              <img
+                src={activeTarget.fileUrl}
+                alt={activeTarget.title}
+                className="max-h-full w-full object-contain"
+              />
+            ) : (
+              <p className="body-3 text-muted-foreground">No preview available</p>
+            )}
           </div>
+
+          {activeTarget.type === 'image' && historyItems.length > 0 ? (
+            <div>
+              <p className="typo-caption text-muted-foreground mb-spacing-2 uppercase tracking-wide">
+                History
+              </p>
+              <div className="gap-spacing-2 scrollbar-hide flex overflow-x-auto">
+                {historyItems.map((asset) => {
+                  const active = asset.id === activeTarget.mediaAssetId
+                  return (
+                    <button
+                      key={asset.id}
+                      type="button"
+                      onClick={() =>
+                        openArtifactViewer({
+                          ...activeTarget,
+                          id: asset.id,
+                          mediaAssetId: asset.id,
+                          title: asset.name || activeTarget.title,
+                          fileName: asset.original_filename || asset.name || activeTarget.fileName,
+                          fileUrl: asset.public_url,
+                          mimeType: asset.mime_type,
+                        })
+                      }
+                      className={cn(
+                        'border-border rounded-spacing-2 h-14 w-14 shrink-0 overflow-hidden border',
+                        active && 'border-primary ring-primary/30 ring-2',
+                      )}
+                      aria-label={`Open ${asset.name}`}
+                    >
+                      <img src={asset.public_url!} alt="" className="h-full w-full object-cover" />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
+        </div>
+        {activeTarget.type === 'image' && activeTarget.mediaAssetId && activeTarget.fileUrl ? (
+          <MediaImageEditComposer
+            assetId={activeTarget.mediaAssetId}
+            assetUrl={activeTarget.fileUrl}
+            spaceId={activeTarget.spaceId}
+            campaignId={activeTarget.campaignId}
+            onGenerated={({ assetId, url }) =>
+              openArtifactViewer({
+                ...activeTarget,
+                id: assetId,
+                mediaAssetId: assetId,
+                fileUrl: url,
+                title: 'Edited image',
+              })
+            }
+          />
         ) : null}
       </div>
     </ShellArtifactViewerPanel>

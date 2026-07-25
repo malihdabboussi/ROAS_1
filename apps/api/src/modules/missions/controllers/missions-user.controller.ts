@@ -1,16 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common'
+import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common'
 import { ThrottlerGuard } from '@nestjs/throttler'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
@@ -73,73 +61,5 @@ export class MissionsUserController {
     @OrgContext() _scope: RequestScope,
   ) {
     return this.missionsUserOperationsService.toggleAutoApprovePlans(user, supabase, body)
-  }
-
-  @Get('notifications')
-  async listNotifications(
-    @CurrentUser() user: { id: string },
-    @Supabase() supabase: SupabaseClient,
-    @Query() query: { limit?: string; unread_only?: string },
-    @OrgContext() scope: RequestScope,
-  ) {
-    return this.missionsUserOperationsService.listNotifications(user, supabase, query, scope)
-  }
-
-  @Get('notifications/unread-count')
-  async getUnreadCount(
-    @CurrentUser() user: { id: string },
-    @Supabase() supabase: SupabaseClient,
-    @OrgContext() scope: RequestScope,
-  ) {
-    return this.missionsUserOperationsService.getUnreadCount(user, supabase, scope)
-  }
-
-  @Post('notifications/read-all')
-  @HttpCode(HttpStatus.OK)
-  async markNotificationsReadAll(
-    @CurrentUser() user: { id: string },
-    @Supabase() supabase: SupabaseClient,
-    @OrgContext() scope: RequestScope,
-  ) {
-    return this.missionsUserOperationsService.markNotificationsReadAll(user, supabase, scope)
-  }
-
-  @Delete('notifications/read')
-  async deleteReadNotifications(
-    @CurrentUser() user: { id: string },
-    @Supabase() supabase: SupabaseClient,
-    @OrgContext() scope: RequestScope,
-  ) {
-    return this.missionsUserOperationsService.deleteReadNotifications(user, supabase, scope)
-  }
-
-  @Patch('notifications/:notificationId/read')
-  async markNotificationRead(
-    @CurrentUser() user: { id: string },
-    @Supabase() supabase: SupabaseClient,
-    @Param('notificationId') notificationId: string,
-    @OrgContext() scope: RequestScope,
-  ) {
-    return this.missionsUserOperationsService.markNotificationRead(
-      user,
-      supabase,
-      notificationId,
-      scope,
-    )
-  }
-
-  @Delete('notifications/:notificationId')
-  async deleteNotification(
-    @CurrentUser() user: { id: string },
-    @Supabase() supabase: SupabaseClient,
-    @Param('notificationId') notificationId: string,
-    @OrgContext() scope: RequestScope,
-  ) {
-    return this.missionsUserOperationsService.deleteNotification(
-      user,
-      supabase,
-      notificationId,
-      scope,
-    )
   }
 }

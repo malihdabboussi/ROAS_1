@@ -14,6 +14,7 @@ import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-mod
 import { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
 import { HubDockFlyout } from './HubDockFlyout'
 import { SidebarBrainNavLinks } from './SidebarBrainFlyout'
+import { SidebarHomeFlyout } from './SidebarHomeFlyout'
 import { SidebarHqMoreFlyoutBody } from './SidebarHqMoreFlyoutBody'
 import { ProgramRowsSkeleton } from './SidebarHqSpacesBucketList'
 import { SidebarHqSpacesGroupedList } from './SidebarHqSpacesGroupedList'
@@ -74,6 +75,7 @@ export function SidebarHqFlyouts({
   const hoverPanel =
     showHover && !c.isPanelClosing
       ? c.activeManagePanel === 'team2' ||
+        c.activeManagePanel === 'home' ||
         c.activeManagePanel === 'brain' ||
         c.activeManagePanel === 'spaces' ||
         c.activeManagePanel === 'more'
@@ -163,6 +165,22 @@ export function SidebarHqFlyouts({
 
   return (
     <>
+      {hoverPanel === 'home' && anchor ? (
+        <HubDockFlyout
+          anchor={anchor}
+          title="Home"
+          onEnter={clearSpacesFlyoutCloseTimer}
+          onLeave={() => {
+            if (!pinned) scheduleSpacesFlyoutClose()
+          }}
+          onClose={closeHover}
+          pinned={pinned}
+          onPinnedChange={setPinned}
+        >
+          <SidebarHomeFlyout pathname={c.pathname} />
+        </HubDockFlyout>
+      ) : null}
+
       {hoverPanel === 'team2' && anchor ? (
         <HubDockFlyout
           anchor={anchor}

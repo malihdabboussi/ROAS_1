@@ -1,4 +1,4 @@
-import type { ManageRailItem } from './sidebar-types'
+import type { ManagePanelId, ManageRailItem } from './sidebar-types'
 
 export function isManageRailItemActive(
   item: ManageRailItem,
@@ -10,6 +10,7 @@ export function isManageRailItemActive(
     return isActive(item.href)
   }
   if (item.type !== 'panel') return false
+  if (item.panelId === 'home') return pathname === '/home' || pathname.startsWith('/home/')
   if (item.panelId === 'more') {
     return (
       pathname.startsWith('/projects') ||
@@ -30,7 +31,7 @@ export function isManageRailItemActive(
 }
 
 export function workContextSurfaceForPanel(
-  panelId: 'projects' | 'spaces' | 'team2' | 'brain' | 'more',
+  panelId: ManagePanelId,
 ): 'spaces' | 'brain' | 'team' | 'general' {
   if (panelId === 'spaces') return 'spaces'
   if (panelId === 'brain') return 'brain'

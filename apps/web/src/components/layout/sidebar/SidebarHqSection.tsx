@@ -12,7 +12,7 @@ import { SidebarHqRail } from './SidebarHqRail'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 const SPACES_FLYOUT_CLOSE_DELAY_MS = 350
-const HOVER_CLOSE_PANELS = new Set(['spaces', 'team2', 'brain', 'more'])
+const HOVER_CLOSE_PANELS = new Set(['home', 'spaces', 'team2', 'brain', 'more'])
 
 export function SidebarHqSection({
   c,

@@ -3,20 +3,20 @@
 import { useCallback, useRef, useState, type KeyboardEvent } from 'react'
 import { ArrowUp, Paperclip, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import {
   HomeDashboardV4Chip,
   HomeDashboardV4Menu,
   HomeDashboardV4MenuItem,
   HomeDashboardV4MenuLabel,
 } from '@/components/home-dashboard-v4/HomeDashboardV4Menu'
-import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import type { DocumentAttachment } from '@/lib/chat/document-attachments'
 import { usePresignedUpload } from '@/lib/hooks/use-presigned-upload'
 import type { ImageGenerationModelIdWeb } from '@/lib/services/media-api'
 import { cn } from '@/lib/utils/cn'
 import { AspectRatioGlyph, aspectRatioLabel } from './aspect-ratio-menu'
-import type { CoverAspectRatio } from './use-media-image-generation'
+import type { CoverAspectRatio } from './media-image-generation-types'
 import { useMediaImageGeneration } from './use-media-image-generation'
 
 export interface MediaGenerateComposerProps {
@@ -120,8 +120,7 @@ export function MediaGenerateComposer({
     [upload, campaignId, spaceId, hook, onGenerated],
   )
 
-  const canSubmit =
-    hook.prompt.trim().length > 0 && !sending && !hook.isLoadingModels && !attaching
+  const canSubmit = hook.prompt.trim().length > 0 && !sending && !hook.isLoadingModels && !attaching
 
   const handleSubmit = useCallback(() => {
     const prompt = hook.prompt.trim()
@@ -175,20 +174,20 @@ export function MediaGenerateComposer({
   }
 
   return (
-    <div className={cn('min-w-0 w-full', className)}>
+    <div className={cn('w-full min-w-0', className)}>
       <div className="home-composer-v4-shell relative min-w-0">
         {hook.referencePreviewUrl ? (
-          <div className="mb-spacing-2 flex items-center gap-spacing-2 px-spacing-2">
+          <div className="mb-spacing-2 gap-spacing-2 px-spacing-2 flex items-center">
             <div className="relative shrink-0">
               <img
                 src={hook.referencePreviewUrl}
                 alt=""
-                className="border-border h-12 w-12 rounded-spacing-2 border object-cover"
+                className="border-border rounded-spacing-2 h-12 w-12 border object-cover"
               />
               <button
                 type="button"
                 onClick={hook.clearReference}
-                className="bg-card border-border absolute -right-1 -top-1 inline-flex h-4 w-4 items-center justify-center rounded-spacing-1 border"
+                className="bg-card border-border rounded-spacing-1 absolute -right-1 -top-1 inline-flex h-4 w-4 items-center justify-center border"
                 aria-label="Remove reference"
               >
                 <X className="h-2.5 w-2.5" />
@@ -200,7 +199,7 @@ export function MediaGenerateComposer({
           </div>
         ) : null}
 
-        <div className="relative flex-1 px-spacing-2 pt-3">
+        <div className="px-spacing-2 relative flex-1 pt-3">
           <textarea
             value={hook.prompt}
             onChange={(e) => hook.setPrompt(e.target.value)}
@@ -212,7 +211,7 @@ export function MediaGenerateComposer({
           />
         </div>
 
-        <div className="home-composer-v4-standard-footer flex w-full min-w-0 flex-wrap items-center justify-between gap-2 px-spacing-2 py-spacing-2">
+        <div className="home-composer-v4-standard-footer px-spacing-2 py-spacing-2 flex w-full min-w-0 flex-wrap items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
             <button
               type="button"
@@ -242,9 +241,7 @@ export function MediaGenerateComposer({
                 open={openDropdown === 'ratio'}
                 selected={openDropdown === 'ratio'}
                 innerRef={ratioChipRef}
-                onClick={() =>
-                  setOpenDropdown((d) => (d === 'ratio' ? null : 'ratio'))
-                }
+                onClick={() => setOpenDropdown((d) => (d === 'ratio' ? null : 'ratio'))}
               />
               <HomeDashboardV4Menu
                 open={openDropdown === 'ratio'}
@@ -280,9 +277,7 @@ export function MediaGenerateComposer({
                 open={openDropdown === 'model'}
                 selected={openDropdown === 'model'}
                 innerRef={modelChipRef}
-                onClick={() =>
-                  setOpenDropdown((d) => (d === 'model' ? null : 'model'))
-                }
+                onClick={() => setOpenDropdown((d) => (d === 'model' ? null : 'model'))}
               />
               <HomeDashboardV4Menu
                 open={openDropdown === 'model'}

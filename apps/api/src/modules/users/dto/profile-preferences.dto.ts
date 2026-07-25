@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 const HomeLayoutSchema = z.object({
+  version: z.literal(2).optional(),
   cardIds: z.array(z.string().min(1).max(64)).max(32),
   cardSizes: z.record(z.string(), z.enum(['half', 'full'])).optional(),
 })

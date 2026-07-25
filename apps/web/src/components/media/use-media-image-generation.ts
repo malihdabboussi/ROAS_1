@@ -3,77 +3,25 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   deleteAsset,
-  editImageStream,
   fetchImageGenerationModels,
-  generateImageStream,
   listAssets,
-  type GenerateImageParams,
   type GenerationProgress,
   type GenerationResult,
   type ImageGenerationModelIdWeb,
-  type ImageGenerationModelMeta,
 } from '@/lib/services/media-api'
-
-const DEFAULT_MODEL: ImageGenerationModelIdWeb = 'gpt-5.4-image-2'
-
-const FALLBACK_IMAGE_MODELS: ImageGenerationModelMeta[] = [
-  {
-    id: 'gpt-5.4-image-2',
-    name: 'ChatGPT',
-    tier: 'pro',
-    description: 'OpenAI GPT Image 2 — ChatGPT images (not GPT-5.6 chat).',
-    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:2', '4:3'],
-    defaultAspectRatio: '16:9',
-  },
-  {
-    id: 'gemini-3.1-flash-image-preview',
-    name: 'Nano Banana 2',
-    tier: 'free',
-    description: 'Best for fast drafts and iteration.',
-    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:2', '4:3'],
-    defaultAspectRatio: '16:9',
-  },
-  {
-    id: 'gemini-3-pro-image-preview',
-    name: 'Nano Banana',
-    tier: 'pro',
-    description: 'Best for polished, final assets.',
-    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:2', '4:3'],
-    defaultAspectRatio: '16:9',
-  },
-]
-
-const IMAGE_MODEL_IDS = new Set<ImageGenerationModelIdWeb>([
-  'gemini-3-pro-image-preview',
-  'gemini-3.1-flash-image-preview',
-  'gpt-5.4-image-2',
-])
-
-export type CoverAspectRatio = NonNullable<GenerateImageParams['aspect_ratio']>
-
-export interface MediaGeneratedImage {
-  id: string
-  url: string
-  prompt: string
-}
-
-export interface MediaBatchImage {
-  id: string
-  url: string
-}
-
-interface UseMediaImageGenerationOptions {
-  /** When panel opens — fetch creations + models */
-  open: boolean
-  campaignId?: string | null
-  spaceId?: string | null
-  /** Extra tags on generated assets (e.g. iteration pointer). */
-  extraTags?: string[]
-  /** Load prior AI creations into the hook (modal grid). Default true. */
-  loadCreations?: boolean
-  /** Fired after each successful generate/edit completion. */
-  onGenerationComplete?: (result: { url: string; assetId: string }) => void
-}
+import {
+  DEFAULT_IMAGE_MODEL,
+  FALLBACK_IMAGE_MODELS,
+  IMAGE_MODEL_IDS,
+  runMediaImageGeneration,
+} from './media-image-generation-runner'
+import type {
+  CoverAspectRatio,
+  MediaBatchImage,
+  MediaGeneratedImage,
+  MediaImageGenerationOverrides,
+  UseMediaImageGenerationOptions,
+} from './media-image-generation-types'
 
 export function useMediaImageGeneration({
   open,
@@ -85,9 +33,9 @@ export function useMediaImageGeneration({
 }: UseMediaImageGenerationOptions) {
   const [prompt, setPrompt] = useState('')
   const [aspectRatio, setAspectRatio] = useState<CoverAspectRatio>('16:9')
-  const [selectedModel, setSelectedModel] = useState<ImageGenerationModelIdWeb>(DEFAULT_MODEL)
+  const [selectedModel, setSelectedModel] = useState<ImageGenerationModelIdWeb>(DEFAULT_IMAGE_MODEL)
   const [imageCount, setImageCount] = useState(1)
-  const [availableModels, setAvailableModels] = useState<ImageGenerationModelMeta[]>([])
+  const [availableModels, setAvailableModels] = useState<typeof FALLBACK_IMAGE_MODELS>([])
   const [isLoadingModels, setIsLoadingModels] = useState(false)
   const [referenceAssetId, setReferenceAssetId] = useState<string | null>(null)
   const [referencePreviewUrl, setReferencePreviewUrl] = useState<string | null>(null)
@@ -152,9 +100,9 @@ export function useMediaImageGeneration({
         const list = res.models?.length > 0 ? res.models : FALLBACK_IMAGE_MODELS
         setAvailableModels(list)
         // Always prefer ChatGPT / GPT Image 2 when available (ignore stale API defaults).
-        const hasPreferred = list.some((m) => m.id === DEFAULT_MODEL)
+        const hasPreferred = list.some((m) => m.id === DEFAULT_IMAGE_MODEL)
         if (hasPreferred) {
-          setSelectedModel(DEFAULT_MODEL)
+          setSelectedModel(DEFAULT_IMAGE_MODEL)
           return
         }
         const fromApi = res.defaultModel as ImageGenerationModelIdWeb | undefined
@@ -169,7 +117,7 @@ export function useMediaImageGeneration({
       })
       .catch(() => {
         setAvailableModels(FALLBACK_IMAGE_MODELS)
-        setSelectedModel(DEFAULT_MODEL)
+        setSelectedModel(DEFAULT_IMAGE_MODEL)
       })
       .finally(() => setIsLoadingModels(false))
   }, [open, fetchCreations, clearReference])
@@ -207,97 +155,87 @@ export function useMediaImageGeneration({
         })
         setGeneratedImageUrl(url)
         setPreviewImageUrl(url)
+        setPrompt('')
         onGenerationComplete?.({ url, assetId: id })
       }
     },
     [onGenerationComplete],
   )
 
-  const handleGenerate = useCallback(async () => {
-    const p = prompt.trim()
-    if (!p || isGenerating) return
+  const generate = useCallback(
+    async (overrides: MediaImageGenerationOverrides = {}) => {
+      const p = (overrides.prompt ?? prompt).trim()
+      const requestedAspectRatio = overrides.aspectRatio ?? aspectRatio
+      if (!p || isGenerating) return
 
-    setIsGenerating(true)
-    setProgress(0)
-    setProgressMessage('')
-    setGeneratedImageUrl(null)
-    setCurrentBatchImages([])
-    setSelectedBatchIndex(0)
+      setIsGenerating(true)
+      setProgress(0)
+      setProgressMessage('')
+      setGeneratedImageUrl(null)
+      setCurrentBatchImages([])
+      setSelectedBatchIndex(0)
 
-    const tagList = ['ai-generated', ...(extraTags ?? [])]
-    const streamHandlers = {
-      onStart: () => {
-        setProgressMessage(referenceAssetId ? 'Applying edits…' : 'Starting…')
-      },
-      onProgress: (ev: GenerationProgress) => {
-        setProgress(ev.progress)
-        setProgressMessage(ev.message)
-      },
-      onComplete: applyComplete,
-      onError: (msg: string) => {
-        setProgressMessage(msg)
-      },
-    }
-
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 120_000)
-    try {
-      if (referenceAssetId) {
-        await editImageStream(
-          {
-            prompt: p,
-            aspect_ratio: aspectRatio,
-            category: 'ai-generated',
-            tags: [...tagList, 'ai-edited'],
-            model: selectedModel,
-            parent_image_asset_id: referenceAssetId,
-            ...(campaignId ? { campaign_id: campaignId } : {}),
-            ...(spaceId ? { space_id: spaceId } : {}),
-          },
-          streamHandlers,
-          controller.signal,
-        )
-      } else {
-        const params: GenerateImageParams = {
-          prompt: p,
-          aspect_ratio: aspectRatio,
-          category: 'ai-generated',
-          tags: tagList,
-          model: selectedModel,
-          count: imageCount,
-          ...(campaignId ? { campaign_id: campaignId } : {}),
-          ...(spaceId ? { space_id: spaceId } : {}),
-        }
-        await generateImageStream(params, streamHandlers, controller.signal)
+      const streamHandlers = {
+        onStart: () => {
+          setProgressMessage(referenceAssetId ? 'Applying edits…' : 'Starting…')
+        },
+        onProgress: (ev: GenerationProgress) => {
+          setProgress(ev.progress)
+          setProgressMessage(ev.message)
+        },
+        onComplete: applyComplete,
+        onError: (msg: string) => {
+          setProgressMessage(msg)
+        },
       }
-      void fetchCreations()
-    } catch (err) {
-      const aborted =
-        (err instanceof Error && err.name === 'AbortError') || controller.signal.aborted
-      setProgressMessage(
-        aborted
-          ? 'Image generation timed out. Try again or switch models.'
-          : err instanceof Error
-            ? err.message
-            : 'Image generation failed',
-      )
-    } finally {
-      clearTimeout(timeout)
-      setIsGenerating(false)
-    }
-  }, [
-    prompt,
-    isGenerating,
-    aspectRatio,
-    campaignId,
-    spaceId,
-    fetchCreations,
-    selectedModel,
-    imageCount,
-    extraTags,
-    referenceAssetId,
-    applyComplete,
-  ])
+
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 120_000)
+      try {
+        await runMediaImageGeneration({
+          prompt: p,
+          aspectRatio: requestedAspectRatio,
+          model: selectedModel,
+          imageCount,
+          referenceAssetId,
+          campaignId,
+          spaceId,
+          extraTags,
+          handlers: streamHandlers,
+          signal: controller.signal,
+        })
+        void fetchCreations()
+      } catch (err) {
+        const aborted =
+          (err instanceof Error && err.name === 'AbortError') || controller.signal.aborted
+        setProgressMessage(
+          aborted
+            ? 'Image generation timed out. Try again or switch models.'
+            : err instanceof Error
+              ? err.message
+              : 'Image generation failed',
+        )
+      } finally {
+        clearTimeout(timeout)
+        setIsGenerating(false)
+      }
+    },
+    [
+      prompt,
+      isGenerating,
+      aspectRatio,
+      campaignId,
+      spaceId,
+      fetchCreations,
+      selectedModel,
+      imageCount,
+      extraTags,
+      referenceAssetId,
+      applyComplete,
+    ],
+  )
+
+  const handleGenerate = useCallback(() => generate(), [generate])
 
   const selectBatchImage = useCallback(
     (index: number) => {
@@ -351,6 +289,7 @@ export function useMediaImageGeneration({
     generatedImages,
     isLoadingCreations,
     handleGenerate,
+    generate,
     handleDeleteGeneratedImage,
     fetchCreations,
     referenceAssetId,
@@ -359,7 +298,3 @@ export function useMediaImageGeneration({
     clearReference,
   }
 }
-
-export type DocGeneratedImage = MediaGeneratedImage
-export type DocBatchImage = MediaBatchImage
-export const useDocImageGen = useMediaImageGeneration

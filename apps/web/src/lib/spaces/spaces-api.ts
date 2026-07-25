@@ -173,6 +173,13 @@ export async function fetchSpaces<TSpace = SpaceSummary>(
   return backendGet<TSpace[]>(spacesListPath(opts), backend)
 }
 
+export async function fetchSpaceById<TSpace = SpaceSummary>(
+  spaceId: string,
+  backend?: BackendFetchOptions,
+): Promise<TSpace> {
+  return backendGet<TSpace>(`/api/spaces/${spaceId}`, backend)
+}
+
 export async function fetchSpacesPage<TSpace = SpaceSummary>(
   opts?: FetchSpacesPageOptions,
   backend?: BackendFetchOptions,

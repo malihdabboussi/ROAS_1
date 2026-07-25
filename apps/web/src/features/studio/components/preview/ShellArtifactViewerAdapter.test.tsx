@@ -1,7 +1,8 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import type { ShellArtifactViewerTarget } from '@/lib/artifacts'
+import { VIBEY_OPEN_MEDIA_EVENT } from '@/lib/media/open-media-asset-in-app'
 import { ShellArtifactViewerAdapter } from './ShellArtifactViewerAdapter'
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/chat' }))
@@ -33,6 +34,12 @@ vi.mock('@/components/spaces/SpaceDocEditorPanelAdapter', () => ({
   SpaceDocEditorPanelAdapter: () => <div data-testid="canonical-space-editor" />,
 }))
 
+vi.mock('./ShellMediaArtifactViewer', () => ({
+  ShellMediaArtifactViewer: ({ target }: { target: ShellArtifactViewerTarget }) => (
+    <div data-testid="media-studio">{target.mediaAssetId}</div>
+  ),
+}))
+
 const target: ShellArtifactViewerTarget = {
   id: 'doc-1',
   entityId: 'doc-1',
@@ -55,5 +62,25 @@ describe('ShellArtifactViewerAdapter', () => {
 
     await waitFor(() => expect(screen.getByTestId('canonical-space-editor')).toBeTruthy())
     expect(screen.queryByTestId('lightweight-preview')).toBeNull()
+  })
+
+  it('opens the image studio when a chat image has no mounted Space consumer', async () => {
+    useShellStore.setState({ artifactViewer: { target: null, width: 480 } })
+    render(<ShellArtifactViewerAdapter />)
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent(VIBEY_OPEN_MEDIA_EVENT, {
+          detail: {
+            mediaAssetId: '0f3fa1a4-6c8e-4282-bc68-00161152e039',
+            title: 'Generated dog',
+          },
+          cancelable: true,
+        }),
+      )
+    })
+
+    await waitFor(() => expect(screen.getByTestId('media-studio')).toBeTruthy())
+    expect(screen.getByText('0f3fa1a4-6c8e-4282-bc68-00161152e039')).toBeTruthy()
   })
 })

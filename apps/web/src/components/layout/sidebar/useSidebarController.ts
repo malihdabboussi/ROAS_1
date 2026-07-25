@@ -33,7 +33,7 @@ import {
 } from './sidebar-expand-persistence'
 import type { HubMenuSectionId } from './sidebar-hq-hub-menu.types'
 import { defaultHubMenuExpandedSections, toggleHubMenuSection } from './sidebar-hq-hub-menu.utils'
-import type { ConversationTypeFilter, SidebarProps } from './sidebar-types'
+import type { ConversationTypeFilter, ManagePanelId, SidebarProps } from './sidebar-types'
 import { useSidebarCampaignsCore } from './useSidebarCampaignsCore'
 
 function isAppTeamRoute(pathname: string) {
@@ -162,9 +162,7 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   const [agentsFlyout, setAgentsFlyout] = useState(false)
   const agentsFlyoutRef = useRef<HTMLDivElement>(null)
 
-  const [activeManagePanel, setActiveManagePanel] = useState<
-    'projects' | 'spaces' | 'team2' | 'brain' | 'more' | null
-  >(null)
+  const [activeManagePanel, setActiveManagePanel] = useState<ManagePanelId | null>(null)
   const [isPanelClosing, setIsPanelClosing] = useState(false)
   const [hubMenuOpen, setHubMenuOpen] = useState(false)
   const [hubMenuClosing, setHubMenuClosing] = useState(false)
@@ -207,8 +205,7 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   // Load spaces when the Programs panel / hub section is open (or already cached).
   // Do not keep a permanent HQ prefetch that refetches on every rail mount.
   const hubSpacesDataEnabled =
-    activeManagePanel === 'spaces' ||
-    (hubMenuOpen && hubMenuExpandedSections.has('spaces'))
+    activeManagePanel === 'spaces' || (hubMenuOpen && hubMenuExpandedSections.has('spaces'))
   const hubProjectsDataEnabled =
     activeManagePanel === 'projects' || activeManagePanel === 'more' || hubMenuOpen
 

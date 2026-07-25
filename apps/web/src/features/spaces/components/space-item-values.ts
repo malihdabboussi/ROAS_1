@@ -1,5 +1,12 @@
+import { resolveStatusDotColorFromId, resolveStatusLabelFromId } from '@/lib/spaces'
 import type { SpaceItem } from '../types'
 import type { FieldDef } from '../types/space-schema'
+
+export {
+  resolveMissionSubtaskStatusDotColor,
+  resolveStatusDotColorFromId,
+  resolveStatusLabelFromId,
+} from '@/lib/spaces'
 
 export type AssigneeFieldValue = Array<{ type: 'human' | 'agent'; id: string }>
 
@@ -209,17 +216,6 @@ export function formatSpaceTaskStatusLabel(statusId: string): string {
   }
 }
 
-/** Resolve status column text using space schema `status` field options when present. */
-export function resolveStatusLabelFromId(
-  statusId: string,
-  statusField: FieldDef | null | undefined,
-): string {
-  const id = typeof statusId === 'string' && statusId.length > 0 ? statusId : 'todo'
-  const fromSchema = statusField?.options?.find((o) => o.id === id)?.label
-  if (fromSchema) return fromSchema
-  return formatSpaceTaskStatusLabel(id)
-}
-
 export function resolveSpaceTaskStatusDisplay(
   item: SpaceItem,
   statusField: FieldDef | null | undefined,
@@ -227,40 +223,6 @@ export function resolveSpaceTaskStatusDisplay(
   const raw = readFieldValue(item, 'status')
   const id = typeof raw === 'string' && raw.length > 0 ? raw : String(item.status ?? 'todo')
   return resolveStatusLabelFromId(id, statusField)
-}
-
-/** Color token / hex / gradient for `OptionDot` (aligned with schema status option color). */
-const BUILTIN_SPACE_TASK_STATUS_DOT_COLOR: Record<string, string> = {
-  todo: 'slate',
-  in_progress: 'blue',
-  in_review: 'amber',
-  done: 'emerald',
-  archived: 'slate',
-}
-
-const BUILTIN_MISSION_SUBTASK_STATUS_DOT_COLOR: Record<string, string> = {
-  pending: 'slate',
-  in_progress: 'amber',
-  awaiting_human: 'orange',
-  revision: 'violet',
-  done: 'emerald',
-  blocked: 'yellow',
-  cancelled: 'slate',
-}
-
-export function resolveStatusDotColorFromId(
-  statusId: string,
-  statusField: FieldDef | null | undefined,
-): string | undefined {
-  const id = typeof statusId === 'string' && statusId.length > 0 ? statusId : 'todo'
-  const fromSchema = statusField?.options?.find((o) => o.id === id)?.color
-  if (fromSchema !== undefined && fromSchema !== '') return fromSchema
-  return BUILTIN_SPACE_TASK_STATUS_DOT_COLOR[id]
-}
-
-export function resolveMissionSubtaskStatusDotColor(statusId: string): string | undefined {
-  const id = typeof statusId === 'string' && statusId.length > 0 ? statusId : 'pending'
-  return BUILTIN_MISSION_SUBTASK_STATUS_DOT_COLOR[id]
 }
 
 const BUILTIN_MISSION_STATUS_DOT_COLOR: Record<string, string> = {

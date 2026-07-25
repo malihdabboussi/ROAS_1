@@ -32,6 +32,7 @@ export function useSpaceOpenMediaEvent({
       const detail = (event as CustomEvent<VibeyOpenMediaDetail>).detail
       const mediaAssetId = detail?.mediaAssetId?.trim()
       if (!mediaAssetId) return
+      event.preventDefault()
 
       const targetSpaceId =
         typeof detail.spaceId === 'string' && detail.spaceId.trim()

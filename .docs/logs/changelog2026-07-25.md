@@ -1,5 +1,33 @@
 # Changelog - July 25, 2026
 
+## [2026-07-25 17:05] - [FEATURE]
+
+What: Added scoped List, Board, Calendar, Overview, and Assets work views across All Tasks, Programs, and Campaigns, with URL-backed filters and persisted Program view visibility.
+Why: Programs and Campaigns lacked the same useful work-management surfaces already available inside Spaces.
+Impact: Users can manage work at the organization, Program, and Campaign levels without leaking tasks or assets across Campaign boundaries.
+Files: `apps/web/src/components/work-views`, `apps/web/src/lib/work-views`, All Tasks, Program and Campaign routes, Programs API, tests, and feature documentation.
+
+## [2026-07-25 17:08] - [FEATURE]
+
+What: Rebuilt Home around Agenda and Inbox, added Primary/Other/Later/Cleared notification triage, dedicated Inbox APIs, full-page Home routes, and a Home navigation flyout.
+Why: Home needed actionable daily work surfaces and notification state that remains independent from read status.
+Impact: Users can triage notifications with optimistic recovery, see accurate bucket counts, and open dedicated Inbox, Meetings, and My Tasks pages.
+Files: Home components and routes, notification components/contracts/API, Missions notification controller/service/repository, sidebar Home flyout, and `20260725120000_user_notifications_inbox_triage.sql`.
+
+## [2026-07-25 17:10] - [FEATURE]
+
+What: Upgraded the shared image viewer into a direct image-editing studio with prompt edits, persisted aspect-ratio versions, version history, progress, download, Canva handoff, and asset-ID hydration.
+Why: Image previews previously required indirect chat handoffs and could fail when the opening card did not contain a complete URL.
+Impact: Images opened from chat, Campaigns, and Spaces now share one functional editing workflow and persist newly generated versions.
+Files: `apps/web/src/components/media`, Space media workspace, shell media viewer, media-open helpers, tests, and shell feature documentation.
+
+## [2026-07-25 17:12] - [ARCH]
+
+What: Removed the obsolete `SidebarHqSection` oversized-file allowlist entry after the shared sidebar extraction reduced it below its component limit.
+Why: The staged architecture gate correctly rejected a stale exception for a now-compliant file.
+Impact: The architecture ratchet now enforces the normal component limit for `SidebarHqSection`.
+Files: `scripts/arch/loc-allowlist.json`
+
 ## 2026-07-25 16:16 - [FIX]
 
 What: Made Higgsfield organization credentials use an organization-scoped vault label, added Higgsfield to the canonical integrations overview provider list, and covered both paths with focused regression tests.

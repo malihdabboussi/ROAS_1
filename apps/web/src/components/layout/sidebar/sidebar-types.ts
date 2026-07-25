@@ -9,6 +9,8 @@ export interface SidebarProps {
   avatarUrl?: string | null
 }
 
+export type ManagePanelId = 'home' | 'projects' | 'spaces' | 'team2' | 'brain' | 'more'
+
 export type ManageRailItem = {
   id: string
   label: string
@@ -17,7 +19,7 @@ export type ManageRailItem = {
   | { type: 'link'; href: string }
   | {
       type: 'panel'
-      panelId: 'projects' | 'spaces' | 'team2' | 'brain' | 'more'
+      panelId: ManagePanelId
       href?: string
     }
   | { type: 'mode-switch' }

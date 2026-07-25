@@ -9,6 +9,10 @@ import { ShellArtifactViewerPanel } from '@/components/shell/ShellArtifactViewer
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { SpaceDocEditorPanelAdapter } from '@/components/spaces/SpaceDocEditorPanelAdapter'
 import { SHELL_ARTIFACT_OPEN_EVENT, type ShellArtifactViewerTarget } from '@/lib/artifacts'
+import {
+  VIBEY_OPEN_MEDIA_EVENT,
+  type VibeyOpenMediaDetail,
+} from '@/lib/media/open-media-asset-in-app'
 import type { MissionDeliverable } from '@/lib/missions'
 import { cn } from '@/lib/utils/cn'
 import { ShellMediaArtifactViewer } from './ShellMediaArtifactViewer'
@@ -97,6 +101,26 @@ export function ShellArtifactViewerAdapter() {
     }
     window.addEventListener(SHELL_ARTIFACT_OPEN_EVENT, onOpen)
     return () => window.removeEventListener(SHELL_ARTIFACT_OPEN_EVENT, onOpen)
+  }, [openArtifactViewer])
+
+  useEffect(() => {
+    const onOpenMedia = (event: Event) => {
+      const mediaEvent = event as CustomEvent<VibeyOpenMediaDetail>
+      const detail = mediaEvent.detail
+      if (!detail?.mediaAssetId) return
+      queueMicrotask(() => {
+        if (mediaEvent.defaultPrevented) return
+        openArtifactViewer({
+          id: detail.mediaAssetId,
+          mediaAssetId: detail.mediaAssetId,
+          title: detail.title?.trim() || 'Generated image',
+          type: 'image',
+          spaceId: detail.spaceId,
+        })
+      })
+    }
+    window.addEventListener(VIBEY_OPEN_MEDIA_EVENT, onOpenMedia)
+    return () => window.removeEventListener(VIBEY_OPEN_MEDIA_EVENT, onOpenMedia)
   }, [openArtifactViewer])
 
   useEffect(() => {

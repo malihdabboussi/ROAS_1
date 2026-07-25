@@ -10,11 +10,14 @@ export type HomeCardId =
   | 'recent_communications'
   | 'completed_automations'
   | 'agenda'
+  | 'inbox_feed'
+  | 'chat_composer'
 
 /** Grid footprint in the 2-column Home dashboard. */
 export type HomeCardGridSize = 'half' | 'full'
 
 export interface HomeLayoutState {
+  version: 2
   cardIds: HomeCardId[]
   /** Optional per-card width. Missing keys default to `half`. */
   cardSizes?: Partial<Record<HomeCardId, HomeCardGridSize>>

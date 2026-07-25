@@ -1,8 +1,11 @@
 import { BadRequestException } from '@nestjs/common'
 import { describe, expect, it, vi } from 'vitest'
+import { NotificationsInboxRepository } from '../repositories/notifications-inbox.repository'
 import { MissionsUserOperationsService } from '../services/missions-user-operations.service'
+import { NotificationsInboxService } from '../services/notifications-inbox.service'
 import { MissionsFeedbackController } from './missions-feedback.controller'
 import { MissionsLifecycleController } from './missions-lifecycle.controller'
+import { MissionsNotificationsController } from './missions-notifications.controller'
 import { MissionsUserController } from './missions-user.controller'
 
 function createQuery(result: Record<string, unknown> = { data: null, error: null }) {
@@ -33,6 +36,12 @@ function createUserController(
   return new MissionsUserController(new MissionsUserOperationsService(mediaIndexer as never))
 }
 
+function createNotificationsController() {
+  return new MissionsNotificationsController(
+    new NotificationsInboxService(new NotificationsInboxRepository()),
+  )
+}
+
 function createLifecycleController(
   overrides: { mediaIndexer?: { indexAsset: ReturnType<typeof vi.fn> } } = {},
 ) {
@@ -40,7 +49,6 @@ function createLifecycleController(
     indexAsset: vi.fn().mockResolvedValue(undefined),
   }
   return new MissionsLifecycleController(
-    {} as never,
     {} as never,
     {} as never,
     {} as never,
@@ -119,13 +127,13 @@ describe('MissionsController profile settings', () => {
         return createQuery()
       }),
     }
-    const controller = createUserController()
+    const controller = createNotificationsController()
 
     await expect(
-      controller.listNotifications(
+      controller.list(
         { id: 'user-1' },
         supabase as never,
-        { limit: '10', unread_only: 'true' },
+        { limit: 10, unread_only: true, view: 'all', types: [] },
         { userId: 'user-1', orgId: 'org-1', orgRole: 'admin' },
       ),
     ).resolves.toEqual([{ id: 'notification-1' }])
@@ -143,10 +151,10 @@ describe('MissionsController profile settings', () => {
         return createQuery()
       }),
     }
-    const controller = createUserController()
+    const controller = createNotificationsController()
 
     await expect(
-      controller.markNotificationsReadAll({ id: 'user-1' }, supabase as never, {
+      controller.markAllRead({ id: 'user-1' }, supabase as never, {
         userId: 'user-1',
         orgId: 'org-1',
         orgRole: 'admin',

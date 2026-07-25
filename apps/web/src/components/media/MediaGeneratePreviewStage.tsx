@@ -2,7 +2,7 @@
 
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { cn } from '@/lib/utils/cn'
-import type { MediaBatchImage } from './use-media-image-generation'
+import type { MediaBatchImage } from './media-image-generation-types'
 
 interface MediaGeneratePreviewStageProps {
   previewImageUrl: string | null

@@ -1,34 +1,14 @@
 'use client'
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from 'react'
-import { createPortal } from 'react-dom'
-import { ArrowUp, ChevronDown, Download, ExternalLink, MessageSquare } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Download, ExternalLink, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import { MediaImageEditComposer } from '@/components/media'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import type { DocumentAttachment } from '@/lib/chat/document-attachments'
-import {
-  MEDIA_TOAST_ERRORS,
-  MEDIA_TOAST_SUCCESS,
-} from '@/lib/config/media-toast-errors.config'
-import {
-  connectComposioIntegration,
-  subscribeIntegrationOAuthEvents,
-} from '@/lib/integrations'
-import {
-  ASPECT_RATIO_MENU_WIDTH,
-  AspectRatioMenuOption,
-  CHATGPT_STYLE_ASPECT_OPTIONS,
-  type ChatGptStyleAspectRatio,
-} from '@/components/media/aspect-ratio-menu'
+import { MEDIA_TOAST_ERRORS, MEDIA_TOAST_SUCCESS } from '@/lib/config/media-toast-errors.config'
+import { connectComposioIntegration, subscribeIntegrationOAuthEvents } from '@/lib/integrations'
 import { listAssets, openMediaAssetInCanva, type MediaAsset } from '@/lib/services/media-api'
 import { cn } from '@/lib/utils/cn'
 import { useMediaDetailQuery } from '../../components/media/use-media-detail-query'
@@ -69,40 +49,9 @@ export function MediaImageWorkspace({
   const seedComposer = useGlobalChatStore((s) => s.seedComposer)
   const [history, setHistory] = useState<MediaAsset[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
-  const [editPrompt, setEditPrompt] = useState('')
-  const [aspectOpen, setAspectOpen] = useState(false)
-  const [sending, setSending] = useState(false)
   const [canvaOpening, setCanvaOpening] = useState(false)
-  const aspectBtnRef = useRef<HTMLButtonElement>(null)
-  const aspectMenuRef = useRef<HTMLDivElement>(null)
-  const [aspectCoords, setAspectCoords] = useState<{ top: number; left: number } | null>(null)
   const pendingCanvaRetryRef = useRef(false)
   const openInCanvaRef = useRef<(() => Promise<void>) | null>(null)
-
-  useLayoutEffect(() => {
-    if (!aspectOpen || !aspectBtnRef.current) {
-      setAspectCoords(null)
-      return
-    }
-    const rect = aspectBtnRef.current.getBoundingClientRect()
-    setAspectCoords({
-      top: rect.bottom + 4,
-      left: Math.max(8, rect.right - ASPECT_RATIO_MENU_WIDTH),
-    })
-  }, [aspectOpen])
-
-  useEffect(() => {
-    if (!aspectOpen) return
-    const onDown = (e: MouseEvent) => {
-      const t = e.target
-      if (!(t instanceof Node)) return
-      if (aspectBtnRef.current?.contains(t)) return
-      if (aspectMenuRef.current?.contains(t)) return
-      setAspectOpen(false)
-    }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
-  }, [aspectOpen])
 
   useEffect(() => {
     return subscribeIntegrationOAuthEvents((event) => {
@@ -161,49 +110,21 @@ export function MediaImageWorkspace({
     return rows
   }, [asset, history])
 
-  const seedEdit = useCallback(
-    (content: string) => {
-      const doc = assetDocument(asset)
-      setSending(true)
-      try {
-        seedComposer({
-          content,
-          documents: doc ? [doc] : undefined,
-          workContext: {
-            surface: 'spaces',
-            spaceId,
-            campaignId,
-          },
-          railIntent: 'new',
-        })
-        setEditPrompt('')
-      } finally {
-        setSending(false)
-      }
-    },
-    [asset, campaignId, seedComposer, spaceId],
-  )
-
   const openInChat = useCallback(() => {
     const doc = assetDocument(asset)
     if (!doc) return
     const conversationId = asset.conversation_id?.trim() || undefined
-    setSending(true)
-    try {
-      seedComposer({
-        content: '',
-        documents: [doc],
-        conversationId,
-        seedMode: 'attach',
-        workContext: {
-          surface: 'spaces',
-          spaceId,
-          campaignId,
-        },
-      })
-    } finally {
-      setSending(false)
-    }
+    seedComposer({
+      content: '',
+      documents: [doc],
+      conversationId,
+      seedMode: 'attach',
+      workContext: {
+        surface: 'spaces',
+        spaceId,
+        campaignId,
+      },
+    })
   }, [asset, campaignId, seedComposer, spaceId])
 
   const isVideo = asset.asset_type === 'video'
@@ -258,46 +179,6 @@ export function MediaImageWorkspace({
 
   openInCanvaRef.current = openInCanva
 
-  const submitEdits = useCallback(() => {
-    const prompt = editPrompt.trim()
-    if (!prompt || sending) return
-    seedEdit(
-      [
-        `Edit this attached image using edit_image with parent_image_asset_id ${asset.id}.`,
-        `Edits: ${prompt}`,
-        `Pass space_id "${spaceId}" so the result is saved into this space's media library.`,
-        campaignId ? `campaign_id: ${campaignId}` : null,
-      ]
-        .filter(Boolean)
-        .join('\n'),
-    )
-  }, [asset.id, campaignId, editPrompt, seedEdit, sending, spaceId])
-
-  const regenerateAspect = useCallback(
-    (ratio: ChatGptStyleAspectRatio) => {
-      setAspectOpen(false)
-      seedEdit(
-        [
-          `Regenerate the attached image at aspect ratio ${ratio}.`,
-          `Use edit_image with parent_image_asset_id ${asset.id} and aspect_ratio ${ratio}.`,
-          `Preserve the subject and composition as much as possible.`,
-          `Pass space_id "${spaceId}" so the new version is saved into this space's media library.`,
-          campaignId ? `campaign_id: ${campaignId}` : null,
-        ]
-          .filter(Boolean)
-          .join('\n'),
-      )
-    },
-    [asset.id, campaignId, seedEdit, spaceId],
-  )
-
-  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      submitEdits()
-    }
-  }
-
   return (
     <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
       <aside className="border-border gap-spacing-2 p-spacing-2 flex w-20 shrink-0 flex-col overflow-y-auto border-r">
@@ -316,7 +197,9 @@ export function MediaImageWorkspace({
                 onClick={() => setMediaQuery(row.id)}
                 className={cn(
                   'rounded-spacing-2 border-border relative aspect-square w-full overflow-hidden border',
-                  active ? 'border-primary ring-primary/30 ring-2' : 'hover:border-muted-foreground/50',
+                  active
+                    ? 'border-primary ring-primary/30 ring-2'
+                    : 'hover:border-muted-foreground/50',
                 )}
                 aria-label={row.name}
               >
@@ -332,54 +215,11 @@ export function MediaImageWorkspace({
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="gap-spacing-2 px-spacing-4 py-spacing-3 relative z-dropdown flex shrink-0 flex-wrap items-center justify-end">
-          <div className="relative">
-            <button
-              ref={aspectBtnRef}
-              type="button"
-              onClick={() => setAspectOpen((v) => !v)}
-              className="body-3 text-foreground hover:bg-hover-subtle border-border gap-spacing-1 rounded-spacing-2 inline-flex h-8 items-center border px-spacing-3"
-            >
-              Aspect ratio
-              <ChevronDown className="icon-sm text-muted-foreground" />
-            </button>
-            {aspectOpen && aspectCoords && typeof document !== 'undefined'
-              ? createPortal(
-                  <div
-                    ref={aspectMenuRef}
-                    data-dropdown
-                    className="z-dropdown fixed"
-                    style={{
-                      top: aspectCoords.top,
-                      left: aspectCoords.left,
-                      width: ASPECT_RATIO_MENU_WIDTH,
-                    }}
-                  >
-                    <div className="dropdown-menu-solid p-spacing-2">
-                      <p className="typo-caption text-muted-foreground px-spacing-2 py-spacing-1">
-                        Generate this image with a different aspect ratio
-                      </p>
-                      <div className="flex flex-col gap-spacing-1">
-                        {CHATGPT_STYLE_ASPECT_OPTIONS.map((opt) => (
-                          <AspectRatioMenuOption
-                            key={opt.ratio}
-                            ratio={opt.ratio}
-                            label={opt.label}
-                            onSelect={() => regenerateAspect(opt.ratio)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>,
-                  document.body,
-                )
-              : null}
-          </div>
-
+        <div className="gap-spacing-2 px-spacing-4 py-spacing-3 z-dropdown relative flex shrink-0 flex-wrap items-center justify-end">
           <button
             type="button"
             onClick={openInChat}
-            className="body-3 text-foreground hover:bg-hover-subtle border-border gap-spacing-1 rounded-spacing-2 inline-flex h-8 items-center border px-spacing-3"
+            className="body-3 text-foreground hover:bg-hover-subtle border-border gap-spacing-1 rounded-spacing-2 px-spacing-3 inline-flex h-8 items-center border"
           >
             <MessageSquare className="icon-sm" />
             Show in chat
@@ -390,7 +230,7 @@ export function MediaImageWorkspace({
               type="button"
               disabled={canvaOpening}
               onClick={() => void openInCanva()}
-              className="body-3 text-foreground hover:bg-hover-subtle border-border gap-spacing-1 rounded-spacing-2 inline-flex h-8 items-center border px-spacing-3 disabled:opacity-50"
+              className="body-3 text-foreground hover:bg-hover-subtle border-border gap-spacing-1 rounded-spacing-2 px-spacing-3 inline-flex h-8 items-center border disabled:opacity-50"
             >
               {canvaOpening ? (
                 <VibeyLoadingOrb state="processing" size="sm" className="gap-0 py-0" />
@@ -432,46 +272,14 @@ export function MediaImageWorkspace({
           </div>
         </div>
 
-        {!isVideo ? (
-          <div className="home-dashboard-v4 relative shrink-0 overflow-hidden border-t border-border">
-            <div className="home-dashboard-v4-hero-glow" aria-hidden />
-            <div className="home-dashboard-v4-hero-grid" aria-hidden />
-            <div className="home-dashboard-v4-column home-dashboard-v4-column-media-composer">
-              <div className="home-composer-v4-shell relative">
-                <div className="relative flex-1 px-spacing-2 pt-3">
-                  <textarea
-                    value={editPrompt}
-                    onChange={(e) => setEditPrompt(e.target.value)}
-                    onKeyDown={onKeyDown}
-                    disabled={sending}
-                    placeholder="Describe edits…"
-                    rows={2}
-                    className="body-2 text-foreground placeholder:text-muted-foreground w-full resize-none bg-transparent outline-none disabled:opacity-50"
-                  />
-                </div>
-                <div className="home-composer-v4-standard-footer flex w-full items-center justify-end px-spacing-2 py-spacing-2">
-                  <button
-                    type="button"
-                    disabled={!editPrompt.trim() || sending}
-                    onClick={submitEdits}
-                    className={cn(
-                      'hd4-send-btn shrink-0',
-                      editPrompt.trim() && !sending
-                        ? 'hd4-send-btn-active'
-                        : 'hd4-send-btn-idle opacity-50',
-                    )}
-                    aria-label="Send message"
-                  >
-                    {sending ? (
-                      <VibeyLoadingOrb state="processing" size="sm" className="gap-0 py-0" />
-                    ) : (
-                      <ArrowUp className="icon-sm" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+        {!isVideo && asset.public_url ? (
+          <MediaImageEditComposer
+            assetId={asset.id}
+            assetUrl={asset.public_url}
+            spaceId={spaceId}
+            campaignId={campaignId}
+            onGenerated={({ assetId }) => setMediaQuery(assetId)}
+          />
         ) : null}
       </div>
     </div>

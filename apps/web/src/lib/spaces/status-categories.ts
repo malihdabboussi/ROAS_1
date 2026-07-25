@@ -54,3 +54,62 @@ export const STATUS_COLORS = [
 ] as const
 
 export type StatusColorId = (typeof STATUS_COLORS)[number]['id']
+
+const BUILTIN_SPACE_TASK_STATUS_DOT_COLOR: Record<string, string> = {
+  todo: 'slate',
+  in_progress: 'blue',
+  in_review: 'amber',
+  done: 'emerald',
+  archived: 'slate',
+}
+
+const BUILTIN_MISSION_SUBTASK_STATUS_DOT_COLOR: Record<string, string> = {
+  pending: 'slate',
+  in_progress: 'amber',
+  awaiting_human: 'orange',
+  revision: 'violet',
+  done: 'emerald',
+  blocked: 'yellow',
+  cancelled: 'slate',
+}
+
+export function resolveStatusLabelFromId(
+  statusId: string,
+  statusField: { options?: SelectOption[] } | null | undefined,
+): string {
+  const id = statusId || 'todo'
+  const fromSchema = statusField?.options?.find((option) => option.id === id)?.label
+  if (fromSchema) return fromSchema
+  const builtInLabel: Record<string, string> = {
+    todo: 'To do',
+    in_progress: 'In progress',
+    in_review: 'In review',
+    done: 'Done',
+    archived: 'Archived',
+  }
+  if (builtInLabel[id]) return builtInLabel[id]
+  return id
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((word) =>
+      word.length <= 2
+        ? word.toUpperCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+    )
+    .join(' ')
+}
+
+export function resolveStatusDotColorFromId(
+  statusId: string,
+  statusField: { options?: SelectOption[] } | null | undefined,
+): string | undefined {
+  const id = statusId || 'todo'
+  return (
+    statusField?.options?.find((option) => option.id === id)?.color ??
+    BUILTIN_SPACE_TASK_STATUS_DOT_COLOR[id]
+  )
+}
+
+export function resolveMissionSubtaskStatusDotColor(statusId: string): string | undefined {
+  return BUILTIN_MISSION_SUBTASK_STATUS_DOT_COLOR[statusId || 'pending']
+}

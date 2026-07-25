@@ -6,6 +6,9 @@ import { MobilePageHeader } from '@/components/layout/MobilePageHeader'
 
 function homeMobileTitle(pathname: string): string {
   if (pathname === '/home') return 'Home'
+  if (pathname === '/home/inbox') return 'Inbox'
+  if (pathname === '/home/meetings') return 'Meetings'
+  if (pathname === '/home/my-tasks') return 'My Tasks'
   if (pathname.startsWith('/home/channels')) return 'Channels'
   return 'Home'
 }

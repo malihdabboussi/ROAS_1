@@ -34,6 +34,8 @@ export * from './MediaPickerLibraryToolbar'
 export * from './MediaPickerMetaPanel'
 export * from './aspect-ratio-menu'
 export * from './MediaGenerateComposer'
+export * from './MediaImageEditComposer'
+export * from './media-image-generation-types'
 export * from './MediaGenerateModal'
 export {
   openMediaAssetInApp,
@@ -68,3 +70,4 @@ export * from './use-media-picker-outside-click'
 export * from './use-media-picker-selection'
 export * from './use-media-picker-upload'
 export * from './use-media-image-generation'
+export { useMediaImageGeneration as useDocImageGen } from './use-media-image-generation'

@@ -8,7 +8,7 @@ import { useGlobalChatStore } from '@/components/global-chat/store/use-global-ch
 import { shellSidebarExpanded, useShellStore } from '@/components/shell/use-shell-store'
 import { cn } from '@/lib/utils/cn'
 import { isManageRailItemActive, workContextSurfaceForPanel } from './sidebar-hq-rail.helpers'
-import type { ManageRailItem } from './sidebar-types'
+import type { ManagePanelId, ManageRailItem } from './sidebar-types'
 import { SidebarHqHubLogoButton } from './SidebarHqHubLogoButton'
 import type { HubMenuPaneProps } from './SidebarHqHubMenu'
 import { SidebarHqShellFooter } from './SidebarHqShellFooter'
@@ -52,7 +52,7 @@ export function SidebarHqRail({
     setWorkContext({ surface: surfaceFromPathname(href) })
   }
 
-  const syncWorkContextForPanel = (panelId: 'projects' | 'spaces' | 'team2' | 'brain' | 'more') => {
+  const syncWorkContextForPanel = (panelId: ManagePanelId) => {
     setWorkContext({ surface: workContextSurfaceForPanel(panelId) })
   }
 
@@ -194,6 +194,37 @@ export function SidebarHqRail({
                       {iconSpan}
                       {labelSpan}
                     </Link>
+                  )
+                }
+                if (item.type === 'panel' && item.panelId === 'home') {
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      data-hub-rail-trigger="home"
+                      onMouseEnter={() => {
+                        clearSpacesFlyoutCloseTimer()
+                        c.setIsPanelClosing(false)
+                        c.setActiveManagePanel('home')
+                      }}
+                      onFocus={() => {
+                        clearSpacesFlyoutCloseTimer()
+                        c.setIsPanelClosing(false)
+                        c.setActiveManagePanel('home')
+                      }}
+                      onClick={() => {
+                        closeHubIfOpen()
+                        syncWorkContextForPanel('home')
+                        setCollapsed(true)
+                        c.setIsPanelClosing(false)
+                        c.setActiveManagePanel('home')
+                        pushIfNeeded(item.href ?? '/home')
+                      }}
+                      className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                    >
+                      {iconSpan}
+                      {labelSpan}
+                    </button>
                   )
                 }
                 if (item.type === 'panel' && item.panelId === 'spaces') {

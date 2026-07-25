@@ -1,4 +1,4 @@
-/** Cross-surface opener: chat / cards → Space Media deep workspace. */
+/** Cross-surface opener: chat/cards → the nearest available image studio. */
 
 export const VIBEY_OPEN_MEDIA_EVENT = 'vibey-open-media'
 
@@ -19,6 +19,7 @@ export function openMediaAssetInApp(detail: VibeyOpenMediaDetail | string) {
   window.dispatchEvent(
     new CustomEvent<VibeyOpenMediaDetail>(VIBEY_OPEN_MEDIA_EVENT, {
       detail: { ...payload, mediaAssetId: id },
+      cancelable: true,
     }),
   )
   return true

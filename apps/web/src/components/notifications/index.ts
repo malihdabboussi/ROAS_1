@@ -1,0 +1,1 @@
+export { InboxFeed } from './InboxFeed'

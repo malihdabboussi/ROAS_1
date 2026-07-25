@@ -85,65 +85,6 @@ export class MissionsUserOperationsService {
     return { auto_approve_plans: !!body.enabled }
   }
 
-  async listNotifications(
-    user: CurrentUser,
-    supabase: SupabaseClient,
-    query: { limit?: string; unread_only?: string },
-    scope: RequestScope,
-  ) {
-    const limit = query.limit ? parseInt(query.limit, 10) : 50
-    const unreadOnly = query.unread_only === 'true'
-    return this.userOperationsRepository.listNotifications(supabase, user.id, scope, {
-      limit,
-      unreadOnly,
-    })
-  }
-
-  async getUnreadCount(user: CurrentUser, supabase: SupabaseClient, scope: RequestScope) {
-    const count = await this.userOperationsRepository.getUnreadCount(supabase, user.id, scope)
-    return { count }
-  }
-
-  async markNotificationsReadAll(user: CurrentUser, supabase: SupabaseClient, scope: RequestScope) {
-    await this.userOperationsRepository.markNotificationsReadAll(supabase, user.id, scope)
-    return { ok: true }
-  }
-
-  async deleteReadNotifications(user: CurrentUser, supabase: SupabaseClient, scope: RequestScope) {
-    await this.userOperationsRepository.deleteReadNotifications(supabase, user.id, scope)
-    return { ok: true }
-  }
-
-  async markNotificationRead(
-    user: CurrentUser,
-    supabase: SupabaseClient,
-    notificationId: string,
-    scope: RequestScope,
-  ) {
-    await this.userOperationsRepository.markNotificationRead(
-      supabase,
-      user.id,
-      notificationId,
-      scope,
-    )
-    return { ok: true }
-  }
-
-  async deleteNotification(
-    user: CurrentUser,
-    supabase: SupabaseClient,
-    notificationId: string,
-    scope: RequestScope,
-  ) {
-    await this.userOperationsRepository.deleteNotification(
-      supabase,
-      user.id,
-      notificationId,
-      scope,
-    )
-    return { ok: true }
-  }
-
   async uploadAttachment(
     user: CurrentUser,
     supabase: SupabaseClient,
@@ -198,10 +139,7 @@ export class MissionsUserOperationsService {
     }
 
     const { assetId, error: assetError } =
-      await this.userOperationsRepository.insertMissionAttachmentMediaAsset(
-        supabase,
-        mediaAssetRow,
-      )
+      await this.userOperationsRepository.insertMissionAttachmentMediaAsset(supabase, mediaAssetRow)
 
     if (assetError || !assetId) {
       throw new BadRequestException(assetError?.message ?? 'Failed to register mission attachment')

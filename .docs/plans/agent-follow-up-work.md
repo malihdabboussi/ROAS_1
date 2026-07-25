@@ -8337,6 +8337,39 @@ Needed work: Extract Fathom route selection/persistence into a focused collabora
 
 Reason not done now: The in-scope change is bounded to canonical meeting selection and the new Person reference family. Decomposing unrelated reference and automation families would materially broaden the change.
 
+## 2026-07-25 - [ARCH] Home flyout touched oversized sidebar controller
+
+Status: Open
+
+Found while: Building the Home Agenda + Inbox triage redesign
+
+Files:
+
+- `apps/web/src/components/layout/sidebar/useSidebarController.ts` (798 LOC; hook limit 300)
+
+Evidence: The Home panel uses the existing typed `activeManagePanel` state and adds no new controller behavior, but the touched hook remains over the frontend hook limit. All new Home/Inbox components remain below their applicable limits.
+
+Needed work: Extract panel-open/close state and hover lifecycle from the sidebar data/controller responsibilities into a focused hook while preserving the existing public controller contract.
+
+Reason not done now: The Home submenu only needs one additional panel id. A full sidebar controller decomposition would broaden the requested Home and Inbox build.
+
+## 2026-07-25 - [OPS] Linked Supabase migration history requires reconciliation
+
+Status: Blocked
+
+Found while: Verifying `20260725120000_user_notifications_inbox_triage.sql`
+
+Files:
+
+- `supabase/migrations/20260725120000_user_notifications_inbox_triage.sql`
+- Supabase migration history for linked project `lhfgtsjetcardinpgouq`
+
+Evidence: The earlier dry run found remote versions `20260716215937`, `20260716220226`, `20260716220901`, `20260716220903`, `20260720042223`, and `20260721013000` absent locally, so the migration must not be applied until current remote history is reconciled and a new dry run proves the exact release set.
+
+Needed work: Reconcile the linked branch under the repository database-release workflow, rerun the dry run, apply only the verified Inbox migration, and run advisors.
+
+Reason not done now: Repairing shared remote migration history can alter shared release state and must be verified against the current production migration list first.
+
 ## 2026-07-24 - [FEATURE] Replace heuristic Fathom call-kind labels with identity-aware classification
 
 Status: Open

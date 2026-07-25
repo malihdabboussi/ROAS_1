@@ -82,4 +82,7 @@ export const MEDIA_TOAST_SUCCESS = {
   CANVA_CONNECTED: {
     userMessage: 'Canva connected. Opening your design…',
   },
+  IMAGE_EDITED: {
+    userMessage: 'New image version created.',
+  },
 } as const

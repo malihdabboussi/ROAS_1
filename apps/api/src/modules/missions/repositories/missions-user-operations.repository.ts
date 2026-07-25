@@ -45,85 +45,6 @@ export class MissionsUserOperationsRepository {
     return error
   }
 
-  async listNotifications(
-    supabase: SupabaseClient,
-    userId: string,
-    scope: RequestScope,
-    opts: { limit: number; unreadOnly: boolean },
-  ) {
-    let query = supabase
-      .from('user_notifications')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(opts.limit)
-    query = scope.orgId ? query.eq('org_id', scope.orgId) : query.is('org_id', null)
-    if (opts.unreadOnly) query = query.is('read_at', null)
-    const { data } = await query
-    return data ?? []
-  }
-
-  async getUnreadCount(supabase: SupabaseClient, userId: string, scope: RequestScope) {
-    let query = supabase
-      .from('user_notifications')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .is('read_at', null)
-    query = scope.orgId ? query.eq('org_id', scope.orgId) : query.is('org_id', null)
-    const { count } = await query
-    return count ?? 0
-  }
-
-  async markNotificationsReadAll(supabase: SupabaseClient, userId: string, scope: RequestScope) {
-    let query = supabase
-      .from('user_notifications')
-      .update({ read_at: new Date().toISOString() })
-      .eq('user_id', userId)
-      .is('read_at', null)
-    query = scope.orgId ? query.eq('org_id', scope.orgId) : query.is('org_id', null)
-    await query
-  }
-
-  async deleteReadNotifications(supabase: SupabaseClient, userId: string, scope: RequestScope) {
-    let query = supabase
-      .from('user_notifications')
-      .delete()
-      .eq('user_id', userId)
-      .not('read_at', 'is', null)
-    query = scope.orgId ? query.eq('org_id', scope.orgId) : query.is('org_id', null)
-    await query
-  }
-
-  async markNotificationRead(
-    supabase: SupabaseClient,
-    userId: string,
-    notificationId: string,
-    scope: RequestScope,
-  ) {
-    let query = supabase
-      .from('user_notifications')
-      .update({ read_at: new Date().toISOString() })
-      .eq('id', notificationId)
-      .eq('user_id', userId)
-    query = scope.orgId ? query.eq('org_id', scope.orgId) : query.is('org_id', null)
-    await query
-  }
-
-  async deleteNotification(
-    supabase: SupabaseClient,
-    userId: string,
-    notificationId: string,
-    scope: RequestScope,
-  ) {
-    let query = supabase
-      .from('user_notifications')
-      .delete()
-      .eq('id', notificationId)
-      .eq('user_id', userId)
-    query = scope.orgId ? query.eq('org_id', scope.orgId) : query.is('org_id', null)
-    await query
-  }
-
   async findMissionAttachmentCampaignId(
     supabase: SupabaseClient,
     userId: string,
@@ -160,11 +81,7 @@ export class MissionsUserOperationsRepository {
     supabase: SupabaseClient,
     input: Record<string, unknown>,
   ): Promise<{ assetId?: string; error: { message: string } | null }> {
-    const { data, error } = await supabase
-      .from('media_assets')
-      .insert(input)
-      .select('id')
-      .single()
+    const { data, error } = await supabase.from('media_assets').insert(input).select('id').single()
     return { assetId: data?.id as string | undefined, error }
   }
 

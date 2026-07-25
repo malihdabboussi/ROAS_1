@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { openMediaAssetInApp, VIBEY_OPEN_MEDIA_EVENT } from './open-media-asset-in-app'
 
 describe('openMediaAssetInApp', () => {
@@ -19,6 +19,7 @@ describe('openMediaAssetInApp', () => {
       expect.objectContaining({
         type: VIBEY_OPEN_MEDIA_EVENT,
         detail: { mediaAssetId: id, title: 'Horse' },
+        cancelable: true,
       }),
     )
   })

@@ -36,9 +36,11 @@ function isFathomAgendaEvent(ev: CalendarAgendaEvent): boolean {
 export function AgendaCard({
   onOpenItem,
   onOpenMeeting,
+  fullHeight = false,
 }: {
   onOpenItem?: (item: YourTurnItem) => void | Promise<void>
   onOpenMeeting?: (event: CalendarAgendaEvent) => void
+  fullHeight?: boolean
 } = {}) {
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
   const {
@@ -201,7 +203,11 @@ export function AgendaCard({
   }, [dismissPending])
 
   return (
-    <div className="section-card card-elevated flex h-[420px] flex-col overflow-hidden">
+    <div
+      className={`section-card card-elevated flex flex-col overflow-hidden ${
+        fullHeight ? 'h-full min-h-0' : 'h-[420px]'
+      }`}
+    >
       <AgendaCardHeader
         showAgendaSurface={showAgendaSurface || showTeamToggle}
         accounts={accounts}

@@ -3,7 +3,7 @@
 import { Trash2 } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { cn } from '@/lib/utils/cn'
-import type { MediaGeneratedImage } from './use-media-image-generation'
+import type { MediaGeneratedImage } from './media-image-generation-types'
 
 interface MediaGenerateCreationsGridProps {
   generatedImages: MediaGeneratedImage[]
@@ -49,10 +49,10 @@ export function MediaGenerateCreationsGrid({
                 <button
                   type="button"
                   onClick={() => onDeleteGeneratedImage(img.id, img.url)}
-                  className="absolute right-1 top-1 rounded bg-secondary p-1 opacity-0 transition-opacity group-hover/img:opacity-100"
+                  className="bg-secondary absolute right-1 top-1 rounded p-1 opacity-0 transition-opacity group-hover/img:opacity-100"
                   aria-label="Delete"
                 >
-                  <Trash2 className="h-3 w-3 text-destructive" />
+                  <Trash2 className="text-destructive h-3 w-3" />
                 </button>
               ) : null}
             </div>

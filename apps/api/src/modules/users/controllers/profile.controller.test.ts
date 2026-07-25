@@ -172,6 +172,7 @@ describe('ProfileController profile routes', () => {
     await expect(
       controller.updatePreferences({ id: 'user-1' }, supabase as never, {
         home_layout: {
+          version: 2,
           cardIds: ['favorite_spaces', 'my_tasks'],
           cardSizes: { my_tasks: 'full' },
         },
@@ -181,6 +182,7 @@ describe('ProfileController profile routes', () => {
       preferences: {
         theme: 'dark',
         home_layout: {
+          version: 2,
           cardIds: ['favorite_spaces', 'my_tasks'],
           cardSizes: { my_tasks: 'full' },
         },
@@ -190,6 +192,7 @@ describe('ProfileController profile routes', () => {
       preferences: {
         theme: 'dark',
         home_layout: {
+          version: 2,
           cardIds: ['favorite_spaces', 'my_tasks'],
           cardSizes: { my_tasks: 'full' },
         },

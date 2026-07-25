@@ -11,7 +11,9 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('@/lib/services/media-api', () => ({
+  getAsset: vi.fn().mockResolvedValue(null),
   listAssets: vi.fn().mockResolvedValue({ assets: [] }),
+  fetchImageGenerationModels: vi.fn().mockResolvedValue({ models: [] }),
 }))
 
 const target: ShellArtifactViewerTarget = {
@@ -43,19 +45,16 @@ describe('ShellMediaArtifactViewer', () => {
     expect(useGlobalChatStore.getState().pendingSeed).toBeNull()
   })
 
-  it('shows visual ratio options and starts a fresh resize chat', () => {
+  it('keeps chat handoff available without attaching until requested', () => {
     render(<ShellMediaArtifactViewer target={target} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Aspect ratio' }))
-    expect(screen.getByText('Square')).toBeTruthy()
-    expect(screen.getByText('1:1')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /Square/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit in chat' }))
 
     expect(useGlobalChatStore.getState().pendingSeed).toMatchObject({
       railIntent: 'new',
       documents: [{ mediaAssetId: 'image-1' }],
+      seedMode: 'attach',
     })
-    expect(useGlobalChatStore.getState().pendingSeed?.seedMode).toBeUndefined()
     expect(useGlobalChatStore.getState().pendingSeed?.conversationId).toBeUndefined()
     expect(useShellStore.getState().chatDrawer).toMatchObject({
       open: true,

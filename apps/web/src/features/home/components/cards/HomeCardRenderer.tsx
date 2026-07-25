@@ -1,11 +1,13 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import type { ComponentProps } from 'react'
 import { AgendaCard } from '@/features/home/components/AgendaCard'
 import { ApprovalQueueCard } from '@/features/home/components/cards/ApprovalQueueCard'
 import { FavoriteCampaignsCard } from '@/features/home/components/cards/FavoriteCampaignsCard'
 import { FavoriteConversationsCard } from '@/features/home/components/cards/FavoriteConversationsCard'
 import { FavoriteSpacesCard } from '@/features/home/components/cards/FavoriteSpacesCard'
+import { InboxFeedCard } from '@/features/home/components/cards/InboxFeedCard'
 import { MyTasksCard } from '@/features/home/components/cards/MyTasksCard'
 import { NotificationFeedCard } from '@/features/home/components/cards/NotificationFeedCard'
 import { OrgPulseCard } from '@/features/home/components/cards/OrgPulseCard'
@@ -16,6 +18,12 @@ import { RecentAgentConversationsCard } from '@/features/home/components/RecentA
 import type { HomeCardId } from '@/features/home/types/home-cards'
 import type { HomeFeedScopeState } from '@/features/home/types/home-feed-scope'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
+
+const ChatComposerCard = dynamic(() =>
+  import('@/features/home/components/cards/ChatComposerCard').then(
+    (module) => module.ChatComposerCard,
+  ),
+)
 
 type HomeRendererYourTurnItem = ComponentProps<typeof MyTasksCard>['items'][number]
 type HomeRendererNotification = Parameters<
@@ -98,6 +106,10 @@ export function HomeCardRenderer({
       return <CompletedSpaceAutomationsCard />
     case 'agenda':
       return <AgendaCard onOpenItem={onOpenItem} onOpenMeeting={onOpenMeeting} />
+    case 'inbox_feed':
+      return <InboxFeedCard />
+    case 'chat_composer':
+      return <ChatComposerCard />
     default:
       return null
   }

@@ -6,10 +6,10 @@ import { Check, ChevronDown, Images, X } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import type { ImageGenerationModelIdWeb } from '@/lib/services/media-api'
 import { cn } from '@/lib/utils/cn'
+import type { CoverAspectRatio } from './media-image-generation-types'
 import { MediaGenerateCountMenu } from './MediaGenerateCountMenu'
 import { MediaGenerateCreationsGrid } from './MediaGenerateCreationsGrid'
 import { MediaGeneratePreviewStage } from './MediaGeneratePreviewStage'
-import type { CoverAspectRatio } from './use-media-image-generation'
 import { useMediaImageGeneration } from './use-media-image-generation'
 
 export interface MediaGenerateModalProps {
@@ -154,7 +154,7 @@ export function MediaGenerateModal({
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
-                <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4">
                 <MediaGeneratePreviewStage
                   previewImageUrl={hook.previewImageUrl}
                   isGenerating={hook.isGenerating}

@@ -16,6 +16,7 @@ import { InternalMissionsController } from './controllers/internal-missions.cont
 import { MissionsAccessApprovalController } from './controllers/missions-access-approval.controller'
 import { MissionsFeedbackController } from './controllers/missions-feedback.controller'
 import { MissionsLifecycleController } from './controllers/missions-lifecycle.controller'
+import { MissionsNotificationsController } from './controllers/missions-notifications.controller'
 import { MissionsQueryController } from './controllers/missions-query.controller'
 import { MissionsStatusController } from './controllers/missions-status.controller'
 import { MissionsSubtasksController } from './controllers/missions-subtasks.controller'
@@ -30,6 +31,7 @@ import { MissionSkillSeederRepository } from './repositories/mission-skill-seede
 import { MissionsPlanDecisionRepository } from './repositories/missions-plan-decision.repository'
 import { MissionsUserOperationsRepository } from './repositories/missions-user-operations.repository'
 import { MissionsRepository } from './repositories/missions.repository'
+import { NotificationsInboxRepository } from './repositories/notifications-inbox.repository'
 import { AgentCheckpointsService } from './services/agent-checkpoints.service'
 import { AgentManagementService } from './services/agent-management.service'
 import { AgentOnboardingService } from './services/agent-onboarding.service'
@@ -54,6 +56,7 @@ import { MissionsInternalOperationsService } from './services/missions-internal-
 import { MissionsPlanDecisionService } from './services/missions-plan-decision.service'
 import { MissionsQueryService } from './services/missions-query.service'
 import { MissionsUserOperationsService } from './services/missions-user-operations.service'
+import { NotificationsInboxService } from './services/notifications-inbox.service'
 import { SkillCatalogOrganizationService } from './services/skill-catalog-organization.service'
 import { MissionSkillSeederService } from './services/skills/mission-skill-seeder.service'
 import { AgentTemplateCatalogSeederService } from './services/templates/agent-template-catalog-seeder.service'
@@ -73,6 +76,7 @@ import { WebinarFulfillmentTeamService } from './services/webinar-fulfillment-te
   ],
   controllers: [
     MissionsController,
+    MissionsNotificationsController,
     MissionsUserController,
     MissionsQueryController,
     MissionsLifecycleController,
@@ -97,6 +101,7 @@ import { WebinarFulfillmentTeamService } from './services/webinar-fulfillment-te
     MissionsCancellationService,
     MissionsInternalOperationsService,
     MissionsUserOperationsService,
+    NotificationsInboxService,
     MissionsAgentOperationsService,
     AgentCheckpointsService,
     AgentCheckpointsRepository,
@@ -108,6 +113,7 @@ import { WebinarFulfillmentTeamService } from './services/webinar-fulfillment-te
     MissionServiceRoleClientRepository,
     MissionsPlanDecisionRepository,
     MissionsUserOperationsRepository,
+    NotificationsInboxRepository,
     MissionOutboxService,
     MissionPermissionsService,
     MissionListSummaryService,

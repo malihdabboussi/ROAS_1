@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
 import {
+  fetchSpaceById,
   fetchSpaceItem,
   fetchSpaceItemById,
   fetchSpaces,
@@ -54,6 +55,18 @@ describe('spaces api', () => {
     await expect(fetchSpaces({ limit: 200 })).resolves.toEqual([])
 
     expect(backendGetMock).toHaveBeenCalledWith('/api/spaces?limit=100', undefined)
+  })
+
+  it('fetches one space through the shared API boundary', async () => {
+    const backendOptions = { orgId: 'org-1' }
+    backendGetMock.mockResolvedValue({ id: 'space-1', title: 'Space' })
+
+    await expect(fetchSpaceById('space-1', backendOptions)).resolves.toEqual({
+      id: 'space-1',
+      title: 'Space',
+    })
+
+    expect(backendGetMock).toHaveBeenCalledWith('/api/spaces/space-1', backendOptions)
   })
 
   it('fetches a cursor-paginated spaces page', async () => {

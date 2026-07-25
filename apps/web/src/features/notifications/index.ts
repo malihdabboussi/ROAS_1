@@ -1,2 +1,5 @@
 export { useNotificationsFeed } from './hooks/use-notifications-feed'
 export type { UnifiedFeedItem } from './hooks/use-notifications-feed'
+export { InboxFeed } from '@/components/notifications'
+export { useInboxTriage } from '@/lib/notifications'
+export type { InboxTriageCounts, InboxView } from '@/lib/notifications'
