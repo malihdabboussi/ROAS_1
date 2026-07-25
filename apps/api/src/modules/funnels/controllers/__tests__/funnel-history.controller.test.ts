@@ -60,4 +60,21 @@ describe('FunnelHistoryController', () => {
       changeSetId: 'change-1',
     })
   })
+
+  it('passes a bookmark update to the history service', async () => {
+    const service = {
+      setBookmark: vi.fn(async () => ({ success: true, bookmarked: true })),
+    }
+    const controller = new FunnelHistoryController(service as never)
+
+    await controller.setBookmark({} as never, 'funnel-1', 'change-1', {
+      bookmarked: true,
+    })
+
+    expect(service.setBookmark).toHaveBeenCalledWith({} as never, {
+      funnelId: 'funnel-1',
+      changeSetId: 'change-1',
+      bookmarked: true,
+    })
+  })
 })

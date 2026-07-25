@@ -24,6 +24,7 @@ const MAX_HISTORY = 50
 const HISTORY_PERSIST_DEBOUNCE_MS = 400
 
 const historyPersistTimers: Record<string, ReturnType<typeof setTimeout>> = {}
+const fileSaveQueues = new Map<string, Promise<void>>()
 
 export type FunnelDesignSaveOptions = {
   funnelPageId?: string | null
@@ -39,6 +40,8 @@ interface FunnelDesignChatState {
   selectedTrace: FunnelElementTrace | null
   undoStack: FunnelDesignHistoryEntry[]
   redoStack: FunnelDesignHistoryEntry[]
+  pendingSaveCount: number
+  saveStatus: 'idle' | 'saving' | 'saved' | 'error'
   registerSession: (session: FunnelDesignSession) => void
   clearSession: () => void
   setDesignChatActive: (active: boolean) => void
@@ -47,6 +50,26 @@ interface FunnelDesignChatState {
   saveFile: (path: string, content: string, options?: FunnelDesignSaveOptions) => void
   undo: () => void
   redo: () => void
+}
+
+function beginSave() {
+  useFunnelDesignChatStore.setState((state) => ({
+    pendingSaveCount: state.pendingSaveCount + 1,
+    saveStatus: 'saving',
+  }))
+}
+
+function finishSave(funnelId: string, failed = false) {
+  useFunnelDesignChatStore.setState((state) => {
+    const pendingSaveCount = Math.max(0, state.pendingSaveCount - 1)
+    return {
+      pendingSaveCount,
+      saveStatus: failed ? 'error' : pendingSaveCount > 0 ? 'saving' : 'saved',
+    }
+  })
+  if (!failed && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('funnel-editor:history-changed', { detail: { funnelId } }))
+  }
 }
 
 function dispatchLiveStyleUpdate(
@@ -115,6 +138,33 @@ function adoptServerFile(
   })
 }
 
+function enqueueFunnelFileSave(
+  session: FunnelDesignSession,
+  path: string,
+  content: string,
+  funnelPageId: string | undefined,
+) {
+  const queueKey = `${session.funnelId}:${path}`
+  const previous = fileSaveQueues.get(queueKey) ?? Promise.resolve()
+  beginSave()
+  let queuedSave: Promise<void>
+  queuedSave = previous
+    .then(async () => {
+      try {
+        const file = await saveFunnelFile(session.funnelId, path, content, { funnelPageId })
+        adoptServerFile(path, content, file)
+        finishSave(session.funnelId)
+      } catch (error) {
+        finishSave(session.funnelId, true)
+        toast.error(error instanceof Error ? error.message : 'Could not save edit')
+      }
+    })
+    .finally(() => {
+      if (fileSaveQueues.get(queueKey) === queuedSave) fileSaveQueues.delete(queueKey)
+    })
+  fileSaveQueues.set(queueKey, queuedSave)
+}
+
 function persistFunnelFile(
   path: string,
   content: string,
@@ -143,15 +193,12 @@ function persistFunnelFile(
   }
 
   setBundleFileContent(path, content)
-  void saveFunnelFile(session.funnelId, path, content, {
-    funnelPageId: options.funnelPageId ?? currentFile?.funnel_page_id ?? undefined,
-  })
-    .then((file) => {
-      adoptServerFile(path, content, file)
-    })
-    .catch((error) => {
-      toast.error(error instanceof Error ? error.message : 'Could not save edit')
-    })
+  enqueueFunnelFileSave(
+    session,
+    path,
+    content,
+    options.funnelPageId ?? currentFile?.funnel_page_id ?? undefined,
+  )
 }
 
 function queueHistoryPersist(path: string, funnelPageId: string | null) {
@@ -163,15 +210,12 @@ function queueHistoryPersist(path: string, funnelPageId: string | null) {
     if (!session) return
     const file = findBundleFile(bundle, path)
     if (!file) return
-    void saveFunnelFile(session.funnelId, path, file.content, {
-      funnelPageId: file.funnel_page_id ?? funnelPageId ?? undefined,
-    })
-      .then((saved) => {
-        adoptServerFile(path, file.content, saved)
-      })
-      .catch((error) => {
-        toast.error(error instanceof Error ? error.message : 'Could not save edit')
-      })
+    enqueueFunnelFileSave(
+      session,
+      path,
+      file.content,
+      file.funnel_page_id ?? funnelPageId ?? undefined,
+    )
   }, HISTORY_PERSIST_DEBOUNCE_MS)
 }
 
@@ -182,6 +226,8 @@ export const useFunnelDesignChatStore = create<FunnelDesignChatState>()((set, ge
   selectedTrace: null,
   undoStack: [],
   redoStack: [],
+  pendingSaveCount: 0,
+  saveStatus: 'idle',
 
   registerSession: (session) =>
     set((state) => {
@@ -200,6 +246,8 @@ export const useFunnelDesignChatStore = create<FunnelDesignChatState>()((set, ge
         designChatActive: false,
         undoStack: [],
         redoStack: [],
+        pendingSaveCount: 0,
+        saveStatus: 'idle',
       }
     }),
 
@@ -211,6 +259,8 @@ export const useFunnelDesignChatStore = create<FunnelDesignChatState>()((set, ge
       designChatActive: false,
       undoStack: [],
       redoStack: [],
+      pendingSaveCount: 0,
+      saveStatus: 'idle',
     }),
 
   setDesignChatActive: (active) => set({ designChatActive: active }),

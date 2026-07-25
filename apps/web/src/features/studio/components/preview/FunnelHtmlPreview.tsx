@@ -135,47 +135,14 @@ export function FunnelHtmlPreview({
   }, [bridgeEnabled, liveStyleNonce, liveStyles])
 
   const postApplyThemeCss = useCallback(
-    (trigger: 'effect' | 'viewport-ready') => {
-      // #region agent log
-      fetch('http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'bd981c' },
-        body: JSON.stringify({
-          sessionId: 'bd981c',
-          runId: 'post-fix',
-          hypothesisId: 'H2',
-          location: 'FunnelHtmlPreview.tsx:postApplyThemeCss',
-          message:
-            !bridgeEnabled || liveThemeCss == null
-              ? 'apply-theme-css SKIPPED'
-              : 'apply-theme-css POSTED',
-          data: {
-            trigger,
-            pageId: bundle.page.id,
-            funnelId,
-            bridgeEnabled,
-            cssLen: liveThemeCss?.length ?? null,
-            liveThemeNonce,
-            hasContentWindow: Boolean(iframeRef.current?.contentWindow),
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {})
-      // #endregion
+    (_trigger: 'effect' | 'viewport-ready') => {
       if (!bridgeEnabled || liveThemeCss == null) return
       iframeRef.current?.contentWindow?.postMessage(
         { type: 'funnel:apply-theme-css', css: liveThemeCss, fontsUrl: liveThemeFontsUrl },
         '*',
       )
     },
-    [
-      bridgeEnabled,
-      bundle.page.id,
-      funnelId,
-      liveThemeCss,
-      liveThemeFontsUrl,
-      liveThemeNonce,
-    ],
+    [bridgeEnabled, liveThemeCss, liveThemeFontsUrl],
   )
 
   useEffect(() => {
@@ -215,6 +182,32 @@ export function FunnelHtmlPreview({
     }
     window.addEventListener('funnel-editor:apply-live-styles', handler)
     return () => window.removeEventListener('funnel-editor:apply-live-styles', handler)
+  }, [bridgeEnabled, funnelId])
+
+  useEffect(() => {
+    if (!bridgeEnabled) return
+    const handler = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{
+          funnelId?: string
+          domPath?: string | null
+          text?: string
+          attributes?: Record<string, string>
+        }>
+      ).detail
+      if (detail?.funnelId !== funnelId) return
+      iframeRef.current?.contentWindow?.postMessage(
+        {
+          type: 'funnel:apply-content',
+          domPath: detail.domPath ?? null,
+          ...(typeof detail.text === 'string' ? { text: detail.text } : {}),
+          ...(detail.attributes ? { attributes: detail.attributes } : {}),
+        },
+        '*',
+      )
+    }
+    window.addEventListener('funnel-editor:apply-live-content', handler)
+    return () => window.removeEventListener('funnel-editor:apply-live-content', handler)
   }, [bridgeEnabled, funnelId])
 
   useEffect(() => {

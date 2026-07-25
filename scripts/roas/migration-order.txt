@@ -756,3 +756,4 @@
 20260722130000_slack_signal_training_and_channel_coverage.sql
 20260722143000_post_call_slack_delivery_mode.sql
 20260722223500_sync_post_call_delivery_skill.sql
+20260725160000_funnel_history_bookmarks.sql

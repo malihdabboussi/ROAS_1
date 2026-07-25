@@ -1,3 +1,19 @@
+## 2026-07-25 - [ARCH] Funnel editor pre-existing oversized modules
+
+Status: Open
+
+Found while: Adding direct visual editing, history bookmarks, and one-click publishing
+
+Files:
+
+- `apps/web/src/features/studio/lib/html-bundle-bridge.ts` (628 LOC; over the 300 LOC utility limit)
+
+Evidence: The visual editor controls and publish menu were split into shared/feature-owned modules under the component limit, but the existing iframe bridge was already oversized. The bridge was reduced by removing obsolete localhost debug instrumentation.
+
+Needed work: Split the iframe bridge into selection, theme, slide-navigation, and live-edit script builders.
+
+Reason not done now: These are broad structural splits around security-sensitive iframe and publishing behavior. The requested UX is fully implemented and covered by focused tests; decomposing these existing modules belongs in a dedicated behavior-preserving refactor.
+
 ## 2026-07-24 - [ARCH] Programs polish part 2 — files pushed over LOC limits
 
 Feature/App: programs / sidebar + spaces share

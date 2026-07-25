@@ -169,6 +169,11 @@ export function buildEditorBridgeScript(options: EditorBridgeOptions): string {
       slide_index: section ? sections.indexOf(section) : null,
       source_file: sourceEl ? sourceEl.getAttribute('data-vibey-source') : null,
       source_hint: cleanSourceHint(el),
+      attributes: {
+        src: el.getAttribute('src'),
+        alt: el.getAttribute('alt'),
+        href: el.getAttribute('href'),
+      },
       computed_style: {
         font_family: computed.fontFamily || null,
         font_size: computed.fontSize || null,
@@ -305,47 +310,6 @@ export function buildEditorBridgeScript(options: EditorBridgeOptions): string {
     }
   };
 
-  // #region debug-log - H2: bridge paint reporter (main iframe)
-  const __vibeyBridgeDebugReport = (message, vars) => {
-    try {
-      const activeSlideStyle = document.getElementById('vibey-active-slide-view');
-      const visibleSection = Array.from(document.querySelectorAll('section')).find((s) => getComputedStyle(s).display !== 'none') || null;
-      const h1 = (visibleSection && visibleSection.querySelector('h1,h2,h3')) || document.querySelector('h1,h2,h3');
-      const rect = visibleSection ? visibleSection.getBoundingClientRect() : null;
-      fetch('http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'bd981c' },
-        body: JSON.stringify({
-          sessionId: 'bd981c',
-          hypothesisId: 'H2',
-          location: 'html-bundle-bridge (main iframe)',
-          message,
-          data: {
-            artifactId,
-            themeNative: Boolean(document.querySelector('[data-vibey-theme-native="true"], .vibey-theme-native')),
-            viewport: { w: window.innerWidth, h: window.innerHeight },
-            activeSlideViewApplied: Boolean(activeSlideStyle),
-            bodyScrollHeight: document.body ? document.body.scrollHeight : null,
-            themeStyleEls: {
-              live: Boolean(document.getElementById('vibey-tweaks-live')),
-              initial: Boolean(document.getElementById('vibey-tweaks-initial')),
-              bridge: Boolean(document.getElementById('vibey-tweaks-theme')),
-            },
-            vars,
-            sampled: {
-              bodyBg: document.body ? getComputedStyle(document.body).backgroundColor : null,
-              sectionBg: visibleSection ? getComputedStyle(visibleSection).backgroundColor : null,
-              headingColor: h1 ? getComputedStyle(h1).color : null,
-              sectionRect: rect ? { w: Math.round(rect.width), h: Math.round(rect.height) } : null,
-            },
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-    } catch (_) {}
-  };
-  // #endregion
-
   function applyThemePaintToDocument() {
     const root = document.documentElement;
     const read = (name) => getComputedStyle(root).getPropertyValue(name).trim();
@@ -362,12 +326,6 @@ export function buildEditorBridgeScript(options: EditorBridgeOptions): string {
     const fontBody = read('--font-body');
     const themeNative = Boolean(document.querySelector('[data-vibey-theme-native="true"], .vibey-theme-native'));
 
-    // #region debug-log - H2: bridge theme-native early return
-    if (themeNative) {
-      __vibeyBridgeDebugReport('bridge paint SKIPPED (theme-native)', { pageBg, slideBg, heading, body, primary, card, border });
-      return;
-    }
-    // #endregion
     if (themeNative) return;
 
     if (pageBg) {
@@ -486,9 +444,6 @@ export function buildEditorBridgeScript(options: EditorBridgeOptions): string {
       if (primarySolid) paintSet(el, 'border-color', primarySolid);
     });
 
-    // #region debug-log - H2: bridge paint applied (main iframe)
-    __vibeyBridgeDebugReport('bridge paint APPLIED', { pageBg, slideBg, heading, body, primary, card, border });
-    // #endregion
   }
 
   const getSlideSections = () =>
@@ -580,6 +535,19 @@ export function buildEditorBridgeScript(options: EditorBridgeOptions): string {
       target.setAttribute('data-vibey-paint', painted.join(' '));
       if (data.styles.fontFamily) ensureFontLoaded(data.styles.fontFamily);
     }
+    if (data.type === '${p}:apply-content') {
+      const target = data.domPath ? document.body.querySelector(data.domPath) : selectedElement;
+      if (!target) return;
+      selectedElement = target;
+      if (typeof data.text === 'string') target.textContent = data.text;
+      if (data.attributes && typeof data.attributes === 'object') {
+        Object.keys(data.attributes).forEach((name) => {
+          const value = data.attributes[name];
+          if (typeof value === 'string') target.setAttribute(name, value);
+        });
+      }
+      updateHover(target);
+    }
     if (data.type === '${p}:apply-theme-css') {
       const styleId = 'vibey-tweaks-theme';
       let styleEl = document.getElementById(styleId);
@@ -611,15 +579,9 @@ export function buildEditorBridgeScript(options: EditorBridgeOptions): string {
           requestAnimationFrame(() => applyThemePaintToDocument());
         });
       }
-      // #region debug-log - H2: apply-theme-css received in main iframe
-      __vibeyBridgeDebugReport('apply-theme-css RECEIVED (cssLen=' + String(data.css ? data.css.length : 0) + ', fontsUrl=' + String(Boolean(data.fontsUrl)) + ')', {});
-      // #endregion
     }
     if (data.type === '${p}:jump-slide') {
       applyActiveSlide(data.index);
-      // #region debug-log - H2: jump-slide applied in main iframe
-      __vibeyBridgeDebugReport('jump-slide APPLIED (index=' + String(data.index) + ')', {});
-      // #endregion
     }
   });
 

@@ -20,6 +20,7 @@ export interface FunnelHistoryEntry {
   label: string | null
   status: 'applied' | 'undone'
   metadata?: Record<string, unknown>
+  is_bookmarked?: boolean
   created_at: string
   updated_at: string
 }
@@ -73,4 +74,15 @@ export function restoreFunnelVersion(
     change_set_id: changeSetId,
     ...bodyForPage(funnelPageId),
   })
+}
+
+export function setFunnelHistoryBookmark(
+  funnelId: string,
+  changeSetId: string,
+  bookmarked: boolean,
+) {
+  return backendPost<{ success: boolean; change_set_id: string; bookmarked: boolean }>(
+    `/api/funnels/${funnelId}/history/${changeSetId}/bookmark`,
+    { bookmarked },
+  )
 }
