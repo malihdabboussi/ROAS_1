@@ -22,6 +22,7 @@ describe('FunnelHistoryControls', () => {
         onRedo={onRedo}
         onHistoryOpen={vi.fn()}
         onRestore={vi.fn()}
+        onBookmark={vi.fn()}
       />,
     )
 
@@ -36,6 +37,7 @@ describe('FunnelHistoryControls', () => {
   it('opens the saved revision timeline and restores an older version', () => {
     const onHistoryOpen = vi.fn()
     const onRestore = vi.fn()
+    const onBookmark = vi.fn()
 
     render(
       <FunnelHistoryControls
@@ -49,6 +51,7 @@ describe('FunnelHistoryControls', () => {
             action: 'write_funnel_file',
             source: 'agent',
             status: 'applied',
+            is_bookmarked: true,
             created_at: '2026-06-16T12:00:00.000Z',
             updated_at: '2026-06-16T12:00:00.000Z',
           },
@@ -69,6 +72,7 @@ describe('FunnelHistoryControls', () => {
         onRedo={vi.fn()}
         onHistoryOpen={onHistoryOpen}
         onRestore={onRestore}
+        onBookmark={onBookmark}
       />,
     )
 
@@ -78,6 +82,8 @@ describe('FunnelHistoryControls', () => {
     expect(screen.getByText('Updated index.html')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Restore Updated index.html' }))
     expect(onRestore).toHaveBeenCalledWith('change-1')
+    fireEvent.click(screen.getByRole('button', { name: 'Unbookmark Updated styles.css' }))
+    expect(onBookmark).toHaveBeenCalledWith('change-2', false)
 
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(screen.queryByRole('dialog', { name: 'Version history' })).toBeNull()

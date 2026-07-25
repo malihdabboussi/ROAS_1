@@ -2,18 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import {
-  Check,
-  ChevronDown,
-  Copy,
-  ExternalLink,
-  Globe,
-  Loader2,
-  Monitor,
-  Settings,
-  Smartphone,
-  Tablet,
-} from 'lucide-react'
+import { ChevronDown, Globe, Loader2, Monitor, Settings, Smartphone, Tablet } from 'lucide-react'
 import { toast } from 'sonner'
 import { FunnelStatusGlassCapsule } from '@/components/artifacts'
 import { STUDIO_INLINE_ERRORS } from '@/features/studio/config/studio-inline-errors.config'
@@ -21,6 +10,7 @@ import { backendPost } from '@/lib/api/backend-client'
 import { buildPublishedFunnelUrl } from '@/lib/platform/platform-urls'
 import { useFunnelFullModeStore } from '../../store/use-funnel-full-mode-store'
 import { ConnectCustomDomainModal } from './ConnectCustomDomainModal'
+import { FunnelPublishMenu } from './FunnelPublishMenu'
 import { PresentationEditModeToolbar } from './PresentationEditModeToolbar'
 
 // ============================================================================
@@ -455,7 +445,13 @@ export function FunnelToolbar({
             <button
               ref={publishBtnRef}
               type="button"
-              onClick={() => setPublishDropdownOpen((o) => !o)}
+              onClick={() => {
+                if (isPublished) {
+                  setPublishDropdownOpen((open) => !open)
+                  return
+                }
+                void handlePublish()
+              }}
               disabled={publishing}
               data-tooltip={
                 isCompact
@@ -504,101 +500,21 @@ export function FunnelToolbar({
                 <Settings className="h-3.5 w-3.5 shrink-0" />
               </button>
             ) : null}
-            {publishDropdownOpen &&
-              createPortal(
-                <div
-                  data-publish-dropdown
-                  className="surface-card border-border z-dropdown fixed w-[320px] rounded-lg border p-2 shadow-lg"
-                  style={{
-                    top: dropdownPosition.top,
-                    left: dropdownPosition.left,
-                  }}
-                >
-                  {!isPublished ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void handlePublish()
-                        setPublishDropdownOpen(false)
-                      }}
-                      disabled={publishing}
-                      className="body-3 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)] disabled:opacity-50"
-                    >
-                      <Globe className="h-4 w-4" />
-                      <span>Publish</span>
-                    </button>
-                  ) : (
-                    <>
-                      {liveUrl && (
-                        <>
-                          <div className="px-3 py-2">
-                            <div className="flex items-center gap-1.5">
-                              <input
-                                readOnly
-                                value={liveUrl}
-                                onFocus={(e) => e.currentTarget.select()}
-                                className="h-spacing-10 rounded-spacing-2 border-border bg-background px-spacing-3 body-2 text-foreground w-full border outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  await handleCopyUrl()
-                                  setTimeout(() => setPublishDropdownOpen(false), 800)
-                                }}
-                                data-tooltip="Copy"
-                                data-side="bottom"
-                                className="tooltip rounded-spacing-2 flex-shrink-0 p-2 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
-                              >
-                                {copied ? (
-                                  <Check className="h-4 w-4 text-emerald-400" />
-                                ) : (
-                                  <Copy className="h-4 w-4" />
-                                )}
-                              </button>
-                              <a
-                                href={liveUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={() => setPublishDropdownOpen(false)}
-                                data-tooltip="Open"
-                                data-side="bottom"
-                                className="tooltip rounded-spacing-2 flex-shrink-0 p-2 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPublishDropdownOpen(false)
-                          setDomainModalOpen(true)
-                        }}
-                        disabled={publishing}
-                        className="body-3 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)] disabled:opacity-50"
-                      >
-                        <Globe className="h-4 w-4" />
-                        <span>Connect custom domain</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void handleUnpublish()
-                          setPublishDropdownOpen(false)
-                        }}
-                        disabled={publishing}
-                        className="body-3 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-red-600 transition-colors hover:bg-red-500/10 disabled:opacity-50"
-                      >
-                        <Globe className="h-4 w-4" />
-                        <span>Unpublish</span>
-                      </button>
-                    </>
-                  )}
-                </div>,
-                document.body,
-              )}
+            <FunnelPublishMenu
+              open={publishDropdownOpen && isPublished}
+              position={dropdownPosition}
+              publishing={publishing}
+              liveUrl={liveUrl}
+              copied={copied}
+              onPublish={() => void handlePublish()}
+              onCopyUrl={handleCopyUrl}
+              onClose={() => setPublishDropdownOpen(false)}
+              onConnectDomain={() => {
+                setPublishDropdownOpen(false)
+                setDomainModalOpen(true)
+              }}
+              onUnpublish={() => void handleUnpublish()}
+            />
           </div>
         </div>
       </div>

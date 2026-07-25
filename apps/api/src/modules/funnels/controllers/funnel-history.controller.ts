@@ -22,6 +22,10 @@ const FunnelHistoryRestoreBodySchema = z.object({
   funnel_page_id: z.string().uuid().optional().nullable(),
 })
 
+const FunnelHistoryBookmarkBodySchema = z.object({
+  bookmarked: z.boolean(),
+})
+
 @Controller('funnels')
 @UseGuards(AuthGuard, ThrottlerGuard, OrgContextGuard, OrgRoleGuard)
 export class FunnelHistoryController {
@@ -89,6 +93,21 @@ export class FunnelHistoryController {
       funnelId,
       funnelPageId: body.funnel_page_id ?? null,
       changeSetId: body.change_set_id,
+    })
+  }
+
+  @Post(':id/history/:changeSetId/bookmark')
+  async setBookmark(
+    @Supabase() supabase: SupabaseClient,
+    @Param('id') funnelId: string,
+    @Param('changeSetId') changeSetId: string,
+    @Body(new ZodValidationPipe(FunnelHistoryBookmarkBodySchema))
+    body: z.infer<typeof FunnelHistoryBookmarkBodySchema>,
+  ) {
+    return this.funnelHistoryService.setBookmark(supabase, {
+      funnelId,
+      changeSetId,
+      bookmarked: body.bookmarked,
     })
   }
 }

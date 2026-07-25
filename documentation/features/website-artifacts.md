@@ -1,6 +1,6 @@
 # Website Artifacts
 
-Last Modified: 2026-07-24
+Last Modified: 2026-07-25
 
 ## Overview
 
@@ -33,12 +33,26 @@ Studio or agent writes funnel_files
   -> capture before/after file snapshots in funnel_change_sets + funnel_change_items
   -> Undo applies before_snapshot to funnel_files
   -> Redo applies after_snapshot to funnel_files
-  -> Version history lists the 50 latest restorable page edits
+  -> Version history groups the 50 latest restorable page edits by date
+  -> Users can bookmark important versions for quick recognition
   -> Restore replays Undo/Redo in order until the selected version is current
   -> restored page rows are touched so previews refetch the active bundle
 ```
 
-History scope is the current page plus shared files. The funnel toolbar exposes Undo, Redo, and a version-history menu for funnels and websites backed by HTML bundles. Each entry identifies whether Studio or Vibey made the edit and can restore that page version. History does not currently version assets, funnel settings, or legacy TSX page content.
+History scope is the current page plus shared files. The funnel toolbar exposes Undo, Redo, and a date-grouped version-history menu for funnels and websites backed by HTML bundles. Each entry identifies whether the user or Vibey made the edit, can be bookmarked, and can restore that page version. A restore creates another durable change set, so restoring never destroys the versions that came after it. History does not currently version assets, funnel settings, or legacy TSX page content.
+
+### Full-Mode Editing and Publishing
+
+The full-screen funnel and website editor supports a short visual-edit loop:
+
+1. Choose Design and click an element in the live preview.
+2. Edit text directly, replace a selected image from the media library, edit image alt text, or change typography/layout controls.
+3. The iframe applies the change immediately while the source-file save runs in the background.
+4. The editor shows Saving, Saved, or Save failed state, and the successful change appears in durable history.
+
+Direct edits use the selected element's source file and unique source hint. If the source can no longer be mapped uniquely, the editor refuses the write instead of changing a different element. Background writes are serialized per file so rapid edits cannot reach the server out of order and resurrect older content.
+
+Draft funnels publish from the primary Publish button in one click. Published funnels expose an explicit Publish updates action. Publishing remains snapshot-based: saved editor changes do not alter the live URL until Publish updates succeeds.
 
 ## Backend Layer
 
@@ -69,6 +83,7 @@ History APIs:
 - `POST /api/funnels/:id/history/undo`
 - `POST /api/funnels/:id/history/redo`
 - `POST /api/funnels/:id/history/restore`
+- `POST /api/funnels/:id/history/:changeSetId/bookmark`
 
 ## Actions
 
@@ -112,7 +127,10 @@ Design Contracts mark substantive choices as Confirmed, Proposed, or Missing so 
 - `artifact-action-schemas.test.ts` covers `describe_action` allowed values and website examples.
 - `artifact-funnels.service.contract.test.ts` covers `create_website`, Home page defaults, `general-home-page -> home-page`, history capture, and full-replacement guardrails.
 - `funnel-history.service.test.ts` covers record, undo, ordered redo, arbitrary version restore, redo superseding, page/shared scope, and no-op edit behavior.
-- Web history tests cover the API client, timeline loading, version restore, undo/redo hook state, toolbar controls, and iframe `funnel:history` delegation.
+- Web history tests cover timeline grouping, bookmarks, version restore, undo/redo hook state, toolbar controls, and iframe `funnel:history` delegation.
+- Direct-edit tests cover escaped text writes, image replacement, alt-text insertion, and stale source-hint refusal.
+- Save-queue tests cover rapid same-file writes and verify that the newest content remains authoritative.
+- Publishing tests cover one-click first publish and the explicit Publish updates action.
 - `agent-policy.test.ts` covers website action contracts and MCP exposure.
 - `supabase/functions/vibey-artifacts/ownership.test.ts` covers fallback Edge Function owner scoping before page writes.
 - `funnel-site-design-skill-contract.test.ts` covers the canonical skill, current builder-template handoff for future hires, all existing designer-role agents, responsive critique, user-authored copy preservation, legacy retirement, and Opus 4.8 routing.
@@ -131,3 +149,4 @@ Design Contracts mark substantive choices as Confirmed, Proposed, or Missing so 
 - **2026-07-17** — Added a high-fidelity design-contract and fresh screenshot-critique workflow for funnels and websites. Reason: wireframing and builder skills existed, but no specialist layer owned subject-specific art direction, deliberate mobile composition, or independent visual QA.
 - **2026-07-17** — Tightened Design Contracts after blind forward-testing. Reason: the first run was visually specific and evidence-safe but allowed provisional fallback typography and arbitrary layout percentages to read as approved decisions and produced a longer-than-needed handoff.
 - **2026-07-24** — Aligned created website/funnel result types and chat destinations. Reason: website rows share funnel storage, but users must still see and open them as Websites while funnel cards continue to route to Funnels.
+- **2026-07-25** — Shortened the full-mode edit/publish loop and made history easier to navigate. Reason: durable primitives existed, but users could not directly edit content or images, see save progress, recognize important versions, or publish a draft without opening a secondary menu.

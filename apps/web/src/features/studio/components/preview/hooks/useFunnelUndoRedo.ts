@@ -9,6 +9,7 @@ import {
   fetchFunnelHistoryState,
   redoFunnelChange,
   restoreFunnelVersion,
+  setFunnelHistoryBookmark,
   undoFunnelChange,
   type FunnelHistoryEntry,
 } from '@/features/studio/services/funnel-history.service'
@@ -82,6 +83,16 @@ export function useFunnelUndoRedo({
     setCurrentChangeSetId(null)
   }, [funnelId, funnelPageId])
 
+  useEffect(() => {
+    const handleHistoryChanged = (event: Event) => {
+      const detail = (event as CustomEvent<{ funnelId?: string }>).detail
+      if (detail?.funnelId !== funnelId) return
+      void refreshState().catch(() => undefined)
+    }
+    window.addEventListener('funnel-editor:history-changed', handleHistoryChanged)
+    return () => window.removeEventListener('funnel-editor:history-changed', handleHistoryChanged)
+  }, [funnelId, refreshState])
+
   const requestHistory = useCallback(
     async (direction: Direction) => {
       if (!funnelId || pendingAction) return
@@ -139,6 +150,29 @@ export function useFunnelUndoRedo({
     ],
   )
 
+  const toggleBookmark = useCallback(
+    async (changeSetId: string, bookmarked: boolean) => {
+      if (!funnelId) return
+      setEntries((current) =>
+        current.map((entry) =>
+          entry.id === changeSetId ? { ...entry, is_bookmarked: bookmarked } : entry,
+        ),
+      )
+      try {
+        await setFunnelHistoryBookmark(funnelId, changeSetId, bookmarked)
+      } catch (err) {
+        setEntries((current) =>
+          current.map((entry) =>
+            entry.id === changeSetId ? { ...entry, is_bookmarked: !bookmarked } : entry,
+          ),
+        )
+        console.error('Failed to bookmark funnel version:', err)
+        toast.error(STUDIO_INLINE_ERRORS.FUNNEL_HISTORY_BOOKMARK)
+      }
+    },
+    [funnelId],
+  )
+
   return {
     canUndo,
     canRedo,
@@ -151,6 +185,7 @@ export function useFunnelUndoRedo({
     refreshState,
     loadHistory,
     restore,
+    toggleBookmark,
     undo: () => requestHistory('undo'),
     redo: () => requestHistory('redo'),
     requestHistory,

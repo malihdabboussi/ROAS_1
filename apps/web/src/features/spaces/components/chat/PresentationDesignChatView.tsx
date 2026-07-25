@@ -2,8 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Redo2, Undo2 } from 'lucide-react'
+import { PresentationDesignEmptyMockup } from '@/components/artifacts'
 import { ColorPicker } from '@/components/ui/ColorPicker'
-import { PresentationDesignEmptyMockup } from '@/features/studio/components/preview/PresentationDesignEmptyMockup'
+import { applyPresentationDirectEdit } from '@/features/studio/lib/presentation-direct-edit'
+import {
+  usePresentationDesignChatStore,
+  type PresentationDesignSaveOptions,
+} from '@/features/studio/store/use-presentation-design-chat-store'
+import { usePresentationFullModeStore } from '@/features/studio/store/use-presentation-full-mode-store'
+import type { PresentationBundle, PresentationElementTrace } from '@/features/studio/types'
+import { FontPicker, FontWeightPicker } from '@/features/themes/components/FontPicker'
 import {
   buildLiveStylePatch,
   cssColorToHexOrDefault,
@@ -13,15 +21,7 @@ import {
   parseLineHeightRatio,
   parsePx,
   PRESENTATION_FONT_SIZE_OPTIONS,
-} from '@/features/studio/lib/presentation-design-utils'
-import { applyPresentationDirectEdit } from '@/features/studio/lib/presentation-direct-edit'
-import {
-  usePresentationDesignChatStore,
-  type PresentationDesignSaveOptions,
-} from '@/features/studio/store/use-presentation-design-chat-store'
-import { usePresentationFullModeStore } from '@/features/studio/store/use-presentation-full-mode-store'
-import type { PresentationBundle, PresentationElementTrace } from '@/features/studio/types'
-import { FontPicker, FontWeightPicker } from '@/features/themes/components/FontPicker'
+} from '@/lib/artifacts'
 import { cn } from '@/lib/utils/cn'
 
 function DesignSelectRow({

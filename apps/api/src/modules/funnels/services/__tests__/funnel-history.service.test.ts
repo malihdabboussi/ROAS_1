@@ -29,6 +29,7 @@ function createRepo() {
     markChangeSetStatus: vi.fn(async () => undefined),
     restoreFileSnapshot: vi.fn(async () => undefined),
     supersedeRedo: vi.fn(async () => undefined),
+    setBookmarked: vi.fn(async () => ({ id: 'change-1', is_bookmarked: true })),
     touchPages: vi.fn(async () => undefined),
   }
 }
@@ -90,6 +91,25 @@ describe('FunnelHistoryService', () => {
 
     expect(repo.supersedeRedo).not.toHaveBeenCalled()
     expect(repo.createChangeSet).not.toHaveBeenCalled()
+  })
+
+  it('bookmarks a saved version in the requested funnel', async () => {
+    const result = await service.setBookmark(supabase, {
+      funnelId: 'funnel-1',
+      changeSetId: 'change-1',
+      bookmarked: true,
+    })
+
+    expect(repo.setBookmarked).toHaveBeenCalledWith(supabase, {
+      funnelId: 'funnel-1',
+      changeSetId: 'change-1',
+      bookmarked: true,
+    })
+    expect(result).toEqual({
+      success: true,
+      change_set_id: 'change-1',
+      bookmarked: true,
+    })
   })
 
   it('undo restores before snapshots and exposes redo state', async () => {

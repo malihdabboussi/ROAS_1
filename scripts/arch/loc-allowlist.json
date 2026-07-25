@@ -174,11 +174,6 @@
       "limit": 400,
       "lines": 1252
     },
-    "apps/web/src/features/spaces/components/chat/FunnelDesignChatView.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 514
-    },
     "apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx": {
       "kind": "web-component",
       "limit": 400,

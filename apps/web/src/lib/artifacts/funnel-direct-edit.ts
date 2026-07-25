@@ -1,13 +1,20 @@
-import type { FunnelPageBundle } from '../services/artifact-preview.service'
-import type { FunnelElementTrace } from '../types'
+import type { FunnelElementTrace } from './comment-artifact-types'
+import type { FunnelPageBundle } from './funnel-artifact-types'
 
 export type FunnelDirectEditPatch =
   | { type: 'text'; value: string }
   | { type: 'style'; property: string; value: string }
   | { type: 'class'; value: string }
+  | { type: 'attribute'; name: 'src' | 'alt'; value: string }
 
 export type FunnelDirectEditResult =
-  | { success: true; path: string; content: string; funnelPageId: string | null }
+  | {
+      success: true
+      path: string
+      content: string
+      funnelPageId: string | null
+      sourceHint: string | null
+    }
   | { success: false; error: string }
 
 function findSourceFile(bundle: FunnelPageBundle, trace: FunnelElementTrace | null) {
@@ -30,11 +37,33 @@ function replaceExactlyOnce(source: string, find: string, replace: string): stri
   return source.replace(find, replace)
 }
 
+function escapeHtmlText(value: string): string {
+  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+}
+
+function escapeHtmlAttribute(value: string): string {
+  return escapeHtmlText(value).replaceAll('"', '&quot;')
+}
+
 function replaceAttribute(source: string, attr: 'class' | 'style', value: string): string | null {
   const pattern = new RegExp(`\\s${attr}=["'][^"']*["']`)
   const matches = source.match(new RegExp(pattern.source, 'g'))?.length ?? 0
   if (matches !== 1) return null
   return source.replace(pattern, ` ${attr}="${value}"`)
+}
+
+function updateElementAttribute(
+  sourceHint: string,
+  name: 'src' | 'alt',
+  value: string,
+): string | null {
+  const escapedValue = escapeHtmlAttribute(value)
+  const attributePattern = new RegExp(`\\s${name}=(["'])[^"']*\\1`, 'i')
+  if (attributePattern.test(sourceHint)) {
+    return sourceHint.replace(attributePattern, ` ${name}="${escapedValue}"`)
+  }
+  if (!/^<[a-zA-Z0-9-]+\b/.test(sourceHint)) return null
+  return sourceHint.replace(/^<([a-zA-Z0-9-]+)([^>]*)>/, `<$1$2 ${name}="${escapedValue}">`)
 }
 
 function replaceSourceHint(
@@ -69,6 +98,27 @@ function updateStyleAttribute(sourceHint: string, property: string, value: strin
   return sourceHint.replace(stylePattern, ` style="${declarations.join('; ')};"`)
 }
 
+function applyPatchToSourceHint(
+  trace: FunnelElementTrace | null,
+  patch: FunnelDirectEditPatch,
+): string | null {
+  const sourceHint = trace?.source_hint
+  if (!sourceHint) return null
+  if (patch.type === 'text') {
+    const textSnapshot = trace.text_snapshot?.trim()
+    return textSnapshot
+      ? replaceExactlyOnce(sourceHint, textSnapshot, escapeHtmlText(patch.value))
+      : null
+  }
+  if (patch.type === 'attribute') {
+    return updateElementAttribute(sourceHint, patch.name, patch.value)
+  }
+  if (patch.type === 'class') {
+    return replaceAttribute(sourceHint, 'class', patch.value)
+  }
+  return updateStyleAttribute(sourceHint, patch.property, patch.value)
+}
+
 export function applyFunnelDirectEdit(
   bundle: FunnelPageBundle,
   trace: FunnelElementTrace | null,
@@ -79,23 +129,23 @@ export function applyFunnelDirectEdit(
 
   let nextContent: string | null = null
   const textSnapshot = trace?.text_snapshot?.trim()
+  const nextSourceHint = applyPatchToSourceHint(trace, patch)
 
   if (patch.type === 'text') {
     if (!textSnapshot) return { success: false, error: 'Selected element has no text to replace' }
     nextContent =
-      replaceSourceHint(file.content, trace, (sourceHint) =>
-        replaceExactlyOnce(sourceHint, textSnapshot, patch.value),
-      ) ?? replaceExactlyOnce(file.content, textSnapshot, patch.value)
+      replaceSourceHint(file.content, trace, () => nextSourceHint) ??
+      replaceExactlyOnce(file.content, textSnapshot, escapeHtmlText(patch.value))
   } else if (patch.type === 'class') {
     nextContent =
-      replaceSourceHint(file.content, trace, (sourceHint) =>
-        replaceAttribute(sourceHint, 'class', patch.value),
-      ) ?? replaceAttribute(file.content, 'class', patch.value)
+      replaceSourceHint(file.content, trace, () => nextSourceHint) ??
+      replaceAttribute(file.content, 'class', patch.value)
+  } else if (patch.type === 'attribute') {
+    nextContent = replaceSourceHint(file.content, trace, () => nextSourceHint)
   } else {
     nextContent =
-      replaceSourceHint(file.content, trace, (sourceHint) =>
-        updateStyleAttribute(sourceHint, patch.property, patch.value),
-      ) ?? replaceAttribute(file.content, 'style', `${patch.property}: ${patch.value} !important;`)
+      replaceSourceHint(file.content, trace, () => nextSourceHint) ??
+      replaceAttribute(file.content, 'style', `${patch.property}: ${patch.value} !important;`)
   }
 
   if (nextContent === null) {
@@ -110,5 +160,6 @@ export function applyFunnelDirectEdit(
     path: file.path,
     content: nextContent,
     funnelPageId: file.funnel_page_id,
+    sourceHint: nextSourceHint,
   }
 }

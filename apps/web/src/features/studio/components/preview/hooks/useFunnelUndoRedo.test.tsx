@@ -7,6 +7,7 @@ const fetchHistoryMock = vi.hoisted(() => vi.fn())
 const undoMock = vi.hoisted(() => vi.fn())
 const redoMock = vi.hoisted(() => vi.fn())
 const restoreMock = vi.hoisted(() => vi.fn())
+const bookmarkMock = vi.hoisted(() => vi.fn())
 const toastErrorMock = vi.hoisted(() => vi.fn())
 const toastSuccessMock = vi.hoisted(() => vi.fn())
 
@@ -16,6 +17,7 @@ vi.mock('@/features/studio/services/funnel-history.service', () => ({
   undoFunnelChange: undoMock,
   redoFunnelChange: redoMock,
   restoreFunnelVersion: restoreMock,
+  setFunnelHistoryBookmark: bookmarkMock,
 }))
 
 vi.mock('sonner', () => ({
@@ -29,6 +31,7 @@ describe('useFunnelUndoRedo', () => {
     undoMock.mockReset()
     redoMock.mockReset()
     restoreMock.mockReset()
+    bookmarkMock.mockReset()
     toastErrorMock.mockReset()
     toastSuccessMock.mockReset()
   })
@@ -116,5 +119,31 @@ describe('useFunnelUndoRedo', () => {
     expect(restoreMock).toHaveBeenCalledWith('funnel-1', 'change-1', 'page-1')
     expect(onRestored).toHaveBeenCalledTimes(1)
     expect(toastSuccessMock).toHaveBeenCalled()
+  })
+
+  it('optimistically bookmarks a saved revision', async () => {
+    fetchStateMock.mockResolvedValue({ can_undo: true, can_redo: false })
+    fetchHistoryMock.mockResolvedValueOnce({
+      entries: [{ id: 'change-1', label: 'Updated index.html', status: 'applied' }],
+      current_change_set_id: 'change-1',
+    })
+    bookmarkMock.mockResolvedValueOnce({
+      success: true,
+      change_set_id: 'change-1',
+      bookmarked: true,
+    })
+    const { result } = renderHook(() =>
+      useFunnelUndoRedo({ funnelId: 'funnel-1', funnelPageId: 'page-1' }),
+    )
+
+    await act(async () => {
+      await result.current.loadHistory()
+    })
+    await act(async () => {
+      await result.current.toggleBookmark('change-1', true)
+    })
+
+    expect(bookmarkMock).toHaveBeenCalledWith('funnel-1', 'change-1', true)
+    expect(result.current.entries[0]?.is_bookmarked).toBe(true)
   })
 })
