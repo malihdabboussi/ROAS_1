@@ -24,6 +24,7 @@ export function buildIgOrganicVideoMissionPayload(fields: IgOrganicVideoKickoffF
       playbook_id: IG_ORGANIC_VIDEO_PLAYBOOK_ID,
       playbook_kickoff: {
         copy_mode: fields.copyMode,
+        copy_approved: fields.copyMode === 'use_my_copy',
         source_strategy: fields.sourceStrategy,
         selected_scene_ids: fields.selectedSceneIds,
         pill_line: fields.pillLine.trim() || undefined,

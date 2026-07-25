@@ -3,13 +3,12 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 describe('ig-organic-video-ad skill migration', () => {
-  const migration = fs.readFileSync(
-    path.resolve(
-      process.cwd(),
-      '../../supabase/migrations/20260723204214_ig_organic_video_ad_skill.sql',
-    ),
-    'utf8',
-  )
+  const migration = [
+    '../../supabase/migrations/20260723204214_ig_organic_video_ad_skill.sql',
+    '../../supabase/migrations/20260725153000_ig_organic_video_preapproved_copy.sql',
+  ]
+    .map((filePath) => fs.readFileSync(path.resolve(process.cwd(), filePath), 'utf8'))
+    .join('\n')
 
   it('uses the direct Higgsfield MCP and reuses stock footage by default', () => {
     expect(migration).toMatch(/direct Higgsfield MCP/i)
@@ -21,6 +20,9 @@ describe('ig-organic-video-ad skill migration', () => {
   it('keeps copy approval separate from rendering', () => {
     expect(migration).toMatch(/Copy is a separate approval stage/i)
     expect(migration).toMatch(/Stop for approval before generating footage or rendering/i)
+    expect(migration).toMatch(/copy_approved/i)
+    expect(migration).toMatch(/proceed directly to Stage 2/i)
+    expect(migration).toMatch(/write_for_me.*cannot bypass copy approval/is)
     expect(migration).toMatch(/Never ask an image or video model to render copy/i)
   })
 

@@ -20,6 +20,10 @@ export function expandIgOrganicVideoAdPlaybook(
   const count = Math.max(1, sceneIds.length)
   const designer = pickAgent(['designer', 'lux'], input.workerAgentKeys, input.managerKey)
   const scope = JSON.stringify(raw)
+  const hasPreapprovedCopy = raw.copy_mode === 'use_my_copy' && raw.copy_approved === true
+  const copyInstruction = hasPreapprovedCopy
+    ? 'The kickoff has copy_approved true with use_my_copy, so proceed without another copy confirmation.'
+    : 'Complete the skill copy approval before footage or rendering; write_for_me cannot bypass approval.'
   const assertionKey = 'A-ig-organic-video-production'
   const subtask: MissionPlaybookPlanResult['subtasks'][number] = {
     id: 'st-ig-organic-video-production',
@@ -34,7 +38,7 @@ export function expandIgOrganicVideoAdPlaybook(
       story: 'Lux approves copy, reuses clean footage where possible, and renders exact stickers.',
       sensory: `Exactly ${count} readable 9:16 videos are visible in campaign Space Media.`,
       endState: 'Every selected scene exists as a visually verified native video Deliverable.',
-      ecology: `Load ig-organic-video-ad and follow it as the production authority. Use this kickoff exactly: ${scope}. Produce exactly ${count} videos, one per selected scene. Complete the skill's copy approval, footage resolution, Pillow sticker rendering, Apple-style emoji, audio, full-frame visual QA, and Media registration requirements. Never route Higgsfield through Composio and never publish to Meta.`,
+      ecology: `Load ig-organic-video-ad and follow it as the production authority. Use this kickoff exactly: ${scope}. ${copyInstruction} Produce exactly ${count} videos, one per selected scene. Complete footage resolution, Pillow sticker rendering, Apple-style emoji, audio, full-frame visual QA, and Media registration requirements. Never route Higgsfield through Composio and never publish to Meta.`,
     }),
     outputContract: {
       artifact_kind: 'media_artifact',
