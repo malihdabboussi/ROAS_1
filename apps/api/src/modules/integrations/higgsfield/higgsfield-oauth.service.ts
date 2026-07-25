@@ -32,6 +32,13 @@ type TokenResponse = {
   refresh_token?: string
   expires_in?: number
   scope?: string
+  id_token?: string
+}
+
+type IdentityClaims = {
+  email?: string
+  name?: string
+  preferred_username?: string
 }
 
 @Injectable()
@@ -88,6 +95,8 @@ export class HiggsfieldOAuthService {
     const parsedState = this.verifyState(state)
     const tokens = await this.exchangeCode(code, parsedState.codeVerifier)
     if (!tokens.access_token) throw new BadRequestException('Higgsfield did not return access')
+    const identity = this.decodeIdentityClaims(tokens.id_token)
+    const connectionLabel = identity.email ?? identity.name ?? identity.preferred_username ?? null
 
     const expiresAt =
       typeof tokens.expires_in === 'number'
@@ -143,7 +152,10 @@ export class HiggsfieldOAuthService {
           server_url: RESOURCE,
           token_storage: 'vault_secrets',
           tool_count: probe?.ok ? probe.tools.length : 0,
+          ...(identity.email ? { email: identity.email } : {}),
+          ...(identity.name ? { name: identity.name } : {}),
         },
+        connection_label: connectionLabel,
         updated_at: now,
       },
       parsedState.orgId,
@@ -186,6 +198,27 @@ export class HiggsfieldOAuthService {
     })
     if (!response.ok) throw new BadRequestException('Higgsfield rejected the connection')
     return (await response.json()) as TokenResponse
+  }
+
+  private decodeIdentityClaims(idToken?: string): IdentityClaims {
+    if (!idToken) return {}
+    try {
+      const payload = idToken.split('.')[1]
+      if (!payload) return {}
+      const parsed = JSON.parse(
+        Buffer.from(payload, 'base64url').toString('utf8'),
+      ) as IdentityClaims
+      return {
+        email: typeof parsed.email === 'string' ? parsed.email.trim() || undefined : undefined,
+        name: typeof parsed.name === 'string' ? parsed.name.trim() || undefined : undefined,
+        preferred_username:
+          typeof parsed.preferred_username === 'string'
+            ? parsed.preferred_username.trim() || undefined
+            : undefined,
+      }
+    } catch {
+      return {}
+    }
   }
 
   private assertConfigured(): void {

@@ -18,6 +18,7 @@ describe('FathomOAuthService', () => {
       isConfigured: vi.fn().mockReturnValue(true),
       buildAuthorizationUrl: vi.fn(),
       exchangeCodeForTokens: vi.fn(),
+      listTeams: vi.fn().mockResolvedValue([]),
       createWebhook: vi.fn(),
       deleteWebhook: vi.fn(),
       refreshAccessToken: vi.fn(),
@@ -75,6 +76,7 @@ describe('FathomOAuthService', () => {
       refresh_token: 'refresh_1',
     })
     fathom.createWebhook.mockResolvedValue({ id: 'wh_1', secret: 'whsec_1' })
+    fathom.listTeams.mockResolvedValue([{ name: 'ROAS Team' }])
     repo.getIntegrationMetadata.mockResolvedValue({ auto_ingest: false })
 
     const state = (service as any).signState({
@@ -97,6 +99,7 @@ describe('FathomOAuthService', () => {
       { access_token: 'access_1', refresh_token: 'refresh_1' },
       {
         auto_ingest: false,
+        team_name: 'ROAS Team',
         webhook_secret: 'whsec_1',
         webhook_id: 'wh_1',
         triggered_for: [

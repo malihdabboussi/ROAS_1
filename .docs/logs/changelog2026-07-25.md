@@ -110,3 +110,10 @@ What: Added same-list Program and Space ordering while preserving cross-parent s
 Why: Existing drag-and-drop only reparented items and did not persist same-list ordering.
 Impact: Programs and Spaces can be reordered directly in the sidebar.
 Files: sidebar DnD components/tests, `sidebar-tree-mutation-handlers.ts`, grouped-list props, Space contracts/service, Programs sidebar components, `20260725074000_spaces_sort_order.sql`
+
+## [2026-07-25 16:54] - [FIX]
+
+What: Unified connected-account display and rename labels, surfaced account identities in integration group headers, and persisted provider-specific identities for Meta, Fathom, Higgsfield, and Page Grader.
+Why: Generic provider names and `Account 1` fallbacks made multiple connections ambiguous, while Meta incorrectly labeled the OAuth account with its first client Page.
+Impact: Settings consistently identifies the credential owner or endpoint; existing opaque ids are safely masked and future native connections persist better labels.
+Files: integration settings label helper/components/tests; Meta, Fathom, Higgsfield, and Page Grader connection services/tests; `documentation/features/integration-connections.md`

@@ -123,6 +123,21 @@ export class FathomIntegration {
     return res.json() as Promise<FathomMeetingList>
   }
 
+  async listTeams(accessToken: string): Promise<Array<{ name: string }>> {
+    const res = await fetch(`${this.API_BASE}/teams`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    if (!res.ok) {
+      const text = await res.text()
+      this.throwApiError(res.status, text || 'Failed to list Fathom teams', '/teams')
+    }
+    const body = (await res.json()) as { items?: Array<{ name?: string }> }
+    return (body.items ?? [])
+      .filter((team): team is { name: string } => typeof team.name === 'string')
+      .map((team) => ({ name: team.name.trim() }))
+      .filter((team) => team.name.length > 0)
+  }
+
   async getRecordingTranscript(
     accessToken: string,
     recordingId: string | number,
@@ -142,7 +157,11 @@ export class FathomIntegration {
       } catch {
         /* use raw text */
       }
-      this.throwApiError(res.status, detail || 'Failed to get transcript', `/recordings/${id}/transcript`)
+      this.throwApiError(
+        res.status,
+        detail || 'Failed to get transcript',
+        `/recordings/${id}/transcript`,
+      )
     }
     return res.json() as Promise<{
       transcript: Array<{ speaker?: { display_name?: string }; text?: string; timestamp?: string }>
@@ -223,6 +242,7 @@ export class FathomIntegration {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-    if (!res.ok) this.throwApiError(res.status, 'Failed to delete Fathom webhook', `/webhooks/${webhookId}`)
+    if (!res.ok)
+      this.throwApiError(res.status, 'Failed to delete Fathom webhook', `/webhooks/${webhookId}`)
   }
 }

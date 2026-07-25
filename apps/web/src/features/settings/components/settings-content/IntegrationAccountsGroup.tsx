@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { getIntegrationLogoPath } from '@/lib/integrations/integration-logo'
 import { ConnectedIntegrationCard } from './ConnectedIntegrationCard'
+import { getIntegrationGroupIdentitySummary } from './integration-connection-label'
 import type { Integration, UserIntegration } from './integrations.types'
 
 export interface IntegrationAccountsGroupProps {
@@ -47,6 +48,7 @@ export function IntegrationAccountsGroup({
   const [expanded, setExpanded] = useState(defaultExpanded)
   const logoPath = getIntegrationLogoPath(integration.provider)
   const showBody = variant === 'library' || expanded
+  const identitySummary = getIntegrationGroupIdentitySummary(rows, integration)
 
   return (
     <div className="surface-card rounded-spacing-3 border-border border">
@@ -63,25 +65,24 @@ export function IntegrationAccountsGroup({
           />
           {logoPath ? (
             <div className="flex h-5 w-5 shrink-0 items-center justify-center">
-              <img
-                src={logoPath}
-                alt={integration.name}
-                className="block h-4 w-4 object-contain"
-              />
+              <img src={logoPath} alt={integration.name} className="block h-4 w-4 object-contain" />
             </div>
           ) : null}
           <span className="title-h6 font-medium">{integration.name}</span>
-          <span className="body-3 text-muted-foreground">{rows.length}</span>
+          {identitySummary ? (
+            <span className="body-3 text-muted-foreground min-w-0 flex-1 truncate">
+              {identitySummary}
+            </span>
+          ) : (
+            <span className="flex-1" />
+          )}
+          <span className="body-3 text-muted-foreground shrink-0">{rows.length}</span>
         </button>
       ) : (
         <div className="gap-spacing-2 px-spacing-4 py-spacing-3 flex w-full items-center">
           {logoPath ? (
             <div className="flex h-5 w-5 shrink-0 items-center justify-center">
-              <img
-                src={logoPath}
-                alt={integration.name}
-                className="block h-4 w-4 object-contain"
-              />
+              <img src={logoPath} alt={integration.name} className="block h-4 w-4 object-contain" />
             </div>
           ) : null}
           <div className="min-w-0 flex-1">
@@ -91,6 +92,11 @@ export function IntegrationAccountsGroup({
             </div>
             {integration.description ? (
               <p className="body-3 text-muted-foreground mt-spacing-1">{integration.description}</p>
+            ) : null}
+            {identitySummary ? (
+              <p className="body-3 text-muted-foreground mt-spacing-1 truncate">
+                {identitySummary}
+              </p>
             ) : null}
           </div>
           <span className="body-3 text-muted-foreground shrink-0">{rows.length}</span>
@@ -104,6 +110,7 @@ export function IntegrationAccountsGroup({
               userIntegration={userIntegration}
               integration={integration}
               accountIndex={index + 1}
+              accountCount={rows.length}
               onRefresh={onRefresh}
               onDisconnect={onDisconnect}
               onReconnect={onReconnect}

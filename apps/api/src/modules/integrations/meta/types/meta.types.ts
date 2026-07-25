@@ -4,6 +4,11 @@ export type MetaTokenResponse = {
   expires_in: number
 }
 
+export type MetaUserProfile = {
+  id: string
+  name: string | null
+}
+
 export type MetaUserIntegration = {
   id: string
   user_id: string

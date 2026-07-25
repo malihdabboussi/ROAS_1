@@ -9,6 +9,7 @@ import type {
   MetaPageInfo,
   MetaPixel,
   MetaTokenResponse,
+  MetaUserProfile,
 } from '../types/meta.types'
 
 export abstract class MetaIntegrationCoreBase {
@@ -170,11 +171,7 @@ export abstract class MetaIntegrationCoreBase {
     await new Promise((resolve) => setTimeout(resolve, ms))
   }
 
-  protected async fetchWithRetry(
-    url: string,
-    init: RequestInit | undefined,
-    errorLabel: string,
-  ) {
+  protected async fetchWithRetry(url: string, init: RequestInit | undefined, errorLabel: string) {
     const maxAttempts = 3
     const retryDelaysMs = [250, 600]
     let lastError: unknown = null
@@ -232,20 +229,20 @@ export abstract class MetaIntegrationCoreBase {
     return results
   }
 
-  async getMetaUserId(accessToken: string): Promise<string> {
+  async getMetaUserProfile(accessToken: string): Promise<MetaUserProfile> {
     const params = new URLSearchParams()
-    params.set('fields', 'id')
+    params.set('fields', 'id,name')
     params.set('access_token', accessToken)
     params.set('appsecret_proof', this.buildAppSecretProof(accessToken))
     const url = `${this.API_BASE}/me?${params.toString()}`
-    const response = await this.fetchWithRetry(url, undefined, 'Failed to fetch Meta user ID')
+    const response = await this.fetchWithRetry(url, undefined, 'Failed to fetch Meta user profile')
     const raw = await response.text()
     if (!response.ok) {
-      throw new BadRequestException(`Failed to fetch Meta user ID: ${raw.slice(0, 200)}`)
+      throw new BadRequestException(`Failed to fetch Meta user profile: ${raw.slice(0, 200)}`)
     }
-    const parsed = JSON.parse(raw) as { id?: string }
+    const parsed = JSON.parse(raw) as { id?: string; name?: string }
     if (!parsed.id) throw new BadRequestException('Meta /me returned no user ID')
-    return parsed.id
+    return { id: parsed.id, name: parsed.name?.trim() || null }
   }
 
   async getAdAccounts(accessToken: string): Promise<MetaAdAccount[]> {

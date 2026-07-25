@@ -82,6 +82,7 @@ export class PageGraderApiService {
 
     const webhookSecret = `pgwh_${randomBytes(24).toString('hex')}`
     const now = new Date().toISOString()
+    const baseUrlHost = safeHost(baseUrl)
     await this.connections.upsertConnection(PAGE_GRADER_PROVIDER, userId, {
       user_id: userId,
       integration_id: PAGE_GRADER_PROVIDER,
@@ -92,7 +93,8 @@ export class PageGraderApiService {
       token_expires_at: null,
       connected_at: now,
       error_message: null,
-      metadata: { base_url_host: safeHost(baseUrl), webhook_secret: webhookSecret },
+      metadata: { base_url_host: baseUrlHost, webhook_secret: webhookSecret },
+      connection_label: baseUrlHost,
       updated_at: now,
       scope_mode: 'personal',
     })

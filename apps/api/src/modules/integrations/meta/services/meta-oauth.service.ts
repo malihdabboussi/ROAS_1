@@ -69,8 +69,8 @@ export class MetaOAuthService {
       ? new Date(Date.now() + longLivedTokens.expires_in * 1000).toISOString()
       : null
 
-    const [metaUserId, adAccounts, pages] = await Promise.all([
-      this.meta.getMetaUserId(longLivedTokens.access_token),
+    const [metaUserProfile, adAccounts, pages] = await Promise.all([
+      this.meta.getMetaUserProfile(longLivedTokens.access_token),
       this.meta.getAdAccounts(longLivedTokens.access_token),
       this.meta.getPages(longLivedTokens.access_token),
     ])
@@ -80,7 +80,8 @@ export class MetaOAuthService {
       longLivedTokens,
       expiresAt,
       {
-        meta_user_id: metaUserId,
+        meta_user_id: metaUserProfile.id,
+        meta_user_name: metaUserProfile.name,
         ad_accounts: adAccounts.map((a) => ({ id: a.id, name: a.name, currency: a.currency })),
         pages: pages.map((p) => ({
           id: p.id,
@@ -237,15 +238,8 @@ export class MetaOAuthService {
   ): Promise<void> {
     this.assertSupabaseServiceConfigured()
     const now = new Date().toISOString()
-    const pages = metadata.pages as
-      | Array<{
-          name?: string
-          instagram_business_account?: { username?: string }
-        }>
-      | undefined
-    const metaLabel = pages?.[0]?.instagram_business_account?.username
-      ? `@${pages[0].instagram_business_account.username}`
-      : (pages?.[0]?.name ?? null)
+    const metaLabel =
+      typeof metadata.meta_user_name === 'string' ? metadata.meta_user_name.trim() || null : null
 
     const row = {
       user_id: userId,

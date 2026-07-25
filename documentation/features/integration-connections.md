@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 25, 2026 (Higgsfield overview visibility)
+Last Modified: July 25, 2026 (connected-account identity labels)
 
 ## Data Flow
 
@@ -46,6 +46,7 @@ Last Modified: July 25, 2026 (Higgsfield overview visibility)
 40. Inbound Slack files tolerate Slack's abbreviated event payloads: when an event contains only a file id, Pixel resolves the complete file with `files.info` before downloading and passing the native image/document to the agent. Forwarded Slack message unfurls are normalized into message context, and Pixel loads recent discussion from the referenced source channel when the installed bot can read it.
 41. Pixel's native Slack conversation action accepts either one recipient or up to eight unique recipients. A multi-recipient request opens or reuses a Slack group DM, including the requesting Slack user when the request says “with me.” The action returns each participant's resolved Slack display name so Pixel never needs to expose a raw Slack user ID in its response.
 42. Multiple Slack accounts can represent one durable person. Accounts linked by a confirmed portal user, contact, or managed Person Brain inherit that person's manual Internal/External/Ignored classification while retaining separate Slack delivery ids. Slack Connect is transport metadata, not a relationship classification; an unlinked Slack Connect account remains fail-closed until an admin links or classifies it. Display-name similarity never grants trust.
+43. Integration Manage and Library resolve one stable account identity for both display and rename mode. Provider identity wins over generic numbering: Meta uses the Facebook login profile rather than the first client Page, Fathom uses its team, Higgsfield uses OIDC email/name when supplied, Page Grader uses its host, and opaque Codex/Higgsfield ids are masked. Group headers summarize the connected identities so collapsed rows remain distinguishable.
 
 ## Code Examples
 
@@ -117,6 +118,7 @@ Reconnect result:
 - Fathom reconnect is responsible for reversing its own disconnect side effects. Reactivation is restricted to routes whose stored disable reason exactly matches the Fathom disconnect reason, so reconnect cannot silently enable intentionally disabled automations.
 - Higgsfield is a native MCP integration, not a Composio toolkit. OAuth authorization is resource-bound to the exact Higgsfield MCP URL, credentials stay in the vault, and MCP connection pooling includes a token fingerprint so two workspaces can never reuse one another's authenticated transport.
 - A personal Higgsfield connection does not satisfy a workspace connection. The workspace overview only exposes Higgsfield rows in the active organization scope; users must complete the organization connect flow to make it available to organization agents and missions.
+- Connected-account labels identify the credential owner or endpoint, not a downstream client/resource. Meta Page names therefore cannot label the Meta OAuth account; Page selection remains separate configuration. Display and rename mode share the same fallback so opening rename never changes a row from a provider name to `Account 1`.
 - A generic `connected` badge is not enough. The product must answer whether this agent can use this integration right now.
 - Personal and org-shared connections are separate scopes. A personal fallback requires explicit user approval for the current task.
 - Personal-account Google Calendar and Outlook follow the same private cross-context pattern as Fathom/Page Grader: usable by you inside an org, never visible to teammates, never auto-shared. Shared allowlist lives in `personal-cross-context-providers.ts` (status + calendar + overview; Slack remains overview-only projection).

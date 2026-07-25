@@ -46,6 +46,8 @@ export class FathomRepository {
       connected_at: now,
       error_message: null,
       metadata,
+      connection_label:
+        typeof metadata.team_name === 'string' ? metadata.team_name.trim() || null : null,
       scope_mode: scope.scopeMode,
       updated_at: now,
     }
@@ -84,7 +86,10 @@ export class FathomRepository {
     return { data, error }
   }
 
-  async getRequestMetadata(client: SupabaseClient, userId: string): Promise<Record<string, unknown>> {
+  async getRequestMetadata(
+    client: SupabaseClient,
+    userId: string,
+  ): Promise<Record<string, unknown>> {
     const { data } = await client
       .from('user_integrations')
       .select('metadata')
@@ -109,7 +114,10 @@ export class FathomRepository {
       throw new BadRequestException(`Failed to update Fathom auto-ingest: ${error.message}`)
   }
 
-  async getLatestIntegrationId(client: SupabaseClient, userId: string): Promise<string | undefined> {
+  async getLatestIntegrationId(
+    client: SupabaseClient,
+    userId: string,
+  ): Promise<string | undefined> {
     const { data: rowsBefore } = await client
       .from('user_integrations')
       .select('id')
@@ -239,7 +247,10 @@ export class FathomRepository {
     }
   }
 
-  async updateFathomAliases(userId: string, aliases: string[]): Promise<{ message?: string } | null> {
+  async updateFathomAliases(
+    userId: string,
+    aliases: string[],
+  ): Promise<{ message?: string } | null> {
     const { error } = await this.serviceClient.client
       .from('profiles')
       .update({ fathom_aliases: aliases })
@@ -247,7 +258,9 @@ export class FathomRepository {
     return error
   }
 
-  async enqueueBrainOpsOutboxRows(rows: Array<Record<string, unknown>>): Promise<{ message?: string } | null> {
+  async enqueueBrainOpsOutboxRows(
+    rows: Array<Record<string, unknown>>,
+  ): Promise<{ message?: string } | null> {
     const { error } = await this.serviceClient.client.from('brain_ops_outbox').upsert(rows, {
       onConflict: 'dedupe_key',
       ignoreDuplicates: true,

@@ -93,6 +93,12 @@ export class FathomOAuthService {
     }
 
     const existingMeta = await this.getIntegrationMetadata(parsedState.userId)
+    const teams = await this.fathom.listTeams(tokens.access_token).catch((err) => {
+      const message = err instanceof Error ? err.message : String(err)
+      this.logger.warn(`Fathom account label lookup failed during OAuth callback: ${message}`)
+      return []
+    })
+    if (teams[0]?.name) existingMeta.team_name = teams[0].name
     let webhookMeta: {
       webhook_secret: string
       webhook_id: string

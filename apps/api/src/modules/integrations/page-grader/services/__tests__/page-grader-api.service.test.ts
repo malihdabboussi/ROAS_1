@@ -71,6 +71,21 @@ describe('PageGraderApiService.sendWork', () => {
     )
   })
 
+  it('labels the connection with its Page Grader host', async () => {
+    pageGrader.healthCheck.mockResolvedValue({ ok: true })
+
+    await service.connect('user-1', 'https://portal.example.com/', 'test-key')
+
+    expect(connections.upsertConnection).toHaveBeenCalledWith(
+      'page_grader',
+      'user-1',
+      expect.objectContaining({
+        connection_label: 'portal.example.com',
+        metadata: expect.objectContaining({ base_url_host: 'portal.example.com' }),
+      }),
+    )
+  })
+
   it('retries ClickUp via idempotent create when already sent', async () => {
     spaces.getItem.mockResolvedValue({
       id: 'item-1',

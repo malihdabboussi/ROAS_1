@@ -63,6 +63,9 @@ describe('HiggsfieldOAuthService', () => {
 
   it('exchanges the code, stores the vault bundle, and registers the agent MCP server', async () => {
     const { service, repository, connections } = createService()
+    const identityPayload = Buffer.from(
+      JSON.stringify({ email: 'creator@example.com', name: 'Creator' }),
+    ).toString('base64url')
     const authorization = new URL(
       service.getAuthorizationUrl(
         { userId: 'user-1', orgId: 'org-1', orgRole: 'admin' },
@@ -76,6 +79,7 @@ describe('HiggsfieldOAuthService', () => {
           refresh_token: 'refresh-1',
           expires_in: 3600,
           scope: 'openid email offline_access',
+          id_token: `header.${identityPayload}.signature`,
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
@@ -107,6 +111,11 @@ describe('HiggsfieldOAuthService', () => {
         scope_mode: 'org_shared',
         access_token: null,
         refresh_token: null,
+        connection_label: 'creator@example.com',
+        metadata: expect.objectContaining({
+          email: 'creator@example.com',
+          name: 'Creator',
+        }),
       }),
       'org-1',
       'org_shared',

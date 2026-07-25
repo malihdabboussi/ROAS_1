@@ -89,7 +89,7 @@ describe('MetaOAuthService', () => {
         access_token: 'long-lived',
         expires_in: 3600,
       }),
-      getMetaUserId: vi.fn().mockResolvedValue('meta-user-1'),
+      getMetaUserProfile: vi.fn().mockResolvedValue({ id: 'meta-user-1', name: 'Dylan Vanas' }),
       getAdAccounts: vi.fn().mockResolvedValue([
         { id: 'act_1', name: 'Acme Ads', currency: 'USD' },
         { id: 'act_2', name: 'Other', currency: 'EUR' },
@@ -124,9 +124,10 @@ describe('MetaOAuthService', () => {
         access_token: 'long-lived',
         org_id: 'org-1',
         scope_mode: 'personal',
-        connection_label: '@acme',
+        connection_label: 'Dylan Vanas',
         metadata: {
           meta_user_id: 'meta-user-1',
+          meta_user_name: 'Dylan Vanas',
           ad_accounts: [
             { id: 'act_1', name: 'Acme Ads', currency: 'USD' },
             { id: 'act_2', name: 'Other', currency: 'EUR' },

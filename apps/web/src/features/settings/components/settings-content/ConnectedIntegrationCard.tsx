@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, Pencil, RefreshCw, Star, Trash2, User, Users, Zap } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { ConfirmDialog } from './ConfirmDialog'
 import { FacebookPagePickerModal } from './FacebookPagePickerModal'
+import { getIntegrationConnectionDisplayLabel } from './integration-connection-label'
 import type { Integration, UserIntegration } from './integrations.types'
 import { LinkedInCompanyPagePickerModal } from './LinkedInCompanyPagePickerModal'
 import { PageGraderClientScopeMapModal } from './PageGraderClientScopeMapModal'
@@ -15,6 +16,7 @@ interface ConnectedIntegrationCardProps {
   userIntegration: UserIntegration
   integration: Integration
   accountIndex?: number
+  accountCount?: number
   onRefresh: (userIntegration: UserIntegration) => void
   onDisconnect: (userIntegration: UserIntegration) => Promise<void> | void
   onReconnect?: (integration: Integration) => void
@@ -123,6 +125,7 @@ export function ConnectedIntegrationCard({
   userIntegration,
   integration,
   accountIndex,
+  accountCount = 1,
   onRefresh,
   onDisconnect,
   onReconnect,
@@ -201,79 +204,13 @@ export function ConnectedIntegrationCard({
     }
   }
 
-  const connectionIdentity = useMemo(() => {
-    const meta = userIntegration.metadata ?? {}
-    const provider = integration.provider.toLowerCase()
-
-    const labeled =
-      (typeof userIntegration.connection_label === 'string' &&
-        userIntegration.connection_label.trim()) ||
-      (typeof meta.connection_label === 'string' && meta.connection_label.trim()) ||
-      null
-    // Codex often stores account UUID as connection_label when email is missing.
-    const opaqueUuid =
-      labeled && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(labeled)
-    if (labeled && !opaqueUuid) return labeled
-
-    if (provider === 'slack') {
-      return (
-        (typeof meta.teamName === 'string' && meta.teamName) ||
-        (typeof meta.team_name === 'string' && meta.team_name) ||
-        null
-      )
-    }
-    if (provider === 'paypal') return (meta.email as string) ?? null
-    if (provider === 'dropbox')
-      return (meta.display_name as string) ?? (meta.email as string) ?? null
-    if (provider === 'calendly') return (meta.calendly_user_email as string) ?? null
-    if (provider === 'fireflies') return (meta.name as string) ?? (meta.email as string) ?? null
-    if (provider === 'fathom') return (meta.email as string) ?? (meta.name as string) ?? null
-    if (provider === 'stripe') return (meta.stripe_user_id as string) ?? null
-    if (provider === 'openai_codex' || provider === 'openai-codex') {
-      return (typeof meta.email === 'string' && meta.email) || null
-    }
-
-    if (provider === 'meta' || provider === 'facebook' || provider === 'meta ads') {
-      const pages = meta.pages as
-        | Array<{
-            name?: string
-            instagram_business_account?: { username?: string }
-          }>
-        | undefined
-      if (pages?.length) {
-        const igUser = pages[0]?.instagram_business_account?.username
-        if (igUser) return `@${igUser}`
-        if (pages[0]?.name) return pages[0].name
-      }
-      return null
-    }
-
-    if (typeof meta.email === 'string' && meta.email) return meta.email
-
-    return null
-  }, [userIntegration.connection_label, userIntegration.metadata, integration.provider])
-
-  const customLabel = (() => {
-    const raw = userIntegration.connection_label?.trim() || null
-    if (!raw) return null
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)) return null
-    return raw
-  })()
-
-  const displayLabel = customLabel
-    ? customLabel
-    : connectionIdentity
-      ? accountIndex && accountIndex > 1
-        ? `Account ${accountIndex}: ${connectionIdentity}`
-        : connectionIdentity
-      : accountIndex && accountIndex > 1
-        ? `Account ${accountIndex}`
-        : integration.name
-
-  const editableLabel =
-    customLabel ||
-    connectionIdentity ||
-    (accountIndex ? `Account ${accountIndex}` : integration.name)
+  const displayLabel = getIntegrationConnectionDisplayLabel({
+    userIntegration,
+    integration,
+    accountIndex: accountIndex ?? 1,
+    accountCount,
+  })
+  const editableLabel = displayLabel
 
   useEffect(() => {
     if (!isEditingLabel) return
