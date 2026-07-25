@@ -375,6 +375,17 @@ Why: Users need to reference portal teammates and Slack-only people directly in 
 Impact: Home, Space, and agent chats can attach a validated person from the `@` or plus menu. The backend resolves the person through the active organization and supplies the correct Brain context; unresolved, cross-organization, or spoofed references contribute no context. Future Fathom calls choose one canonical route, with organization Meetings preferred on an equal match; the exact historical duplicate can be removed separately by deploying the guarded migration.
 
 Files: `apps/web/src/features/studio/components/ChatInput/*`, `apps/web/src/features/studio/types/index.ts`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.ts`, `apps/api/src/modules/entity-search/*`, `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts`, `apps/agent-api/src/modules/chat/*`, `supabase/migrations/20260724235500_dedupe_canonical_fathom_meeting.sql`, `documentation/features/claude-chatgpt-shell.md`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-07-24 20:41] - [FIX]
+
+What: Corrected the Fly runtime image to package the tracked HR system-agent template instead of an ignored local workspace directory, and committed the OpenClaw lockfile used by frozen production installs.
+
+Why: Exact-commit production builds could not find `docker/agents/hr` and could not reproduce OpenClaw dependencies because its lockfile was ignored, so Pixel's otherwise verified release failed before the runtime image was created.
+
+Impact: Clean releases no longer depend on developer-local ignored files, the HR runtime workspace is built from the repository's canonical template, and OpenClaw's frozen install is reproducible.
+
+Files: `docker/Dockerfile`, `apps/openclaw/pnpm-lock.yaml`
+
 ## [2026-07-24 16:39] - [FEATURE]
 
 What: Added full static-ad production to Paid Ads Production with ten selectable formats, one-to-ten output quantities, feed/Story sizing, campaign/research copy or exact copy, Media uploads, explicit real/generated person sourcing, and one shared mission path for UI and chat. Seeded the complete Static Ad Book skill with all references, templates, examples, and deterministic HTML-to-PNG renderer for Lux and Vibey. Registered both static-ad and the existing IG organic video launchers as executable mission-worker playbooks.
@@ -414,3 +425,13 @@ Why: The implementation type-checked, but focused tests still referenced the pre
 Impact: Web and API type-checks pass, the Fathom routing tests pass, and all 69 focused web tests for the changed shell, conversation, Brain, and chat surfaces pass.
 
 Files: `ShellChatMenu.tsx`, `SpaceChatAgentEmptyState.test.tsx`, `SidebarHqSection.test.tsx`, `SidebarHqSpacesGroupedList.test.tsx`
+
+## [2026-07-24 20:55] - [FIX]
+
+What: Restored the missing workspace-route policy import used when deleting the currently selected shell conversation and made the fork-action mock preserve its component prop contract during type checking.
+
+Why: The web production build correctly rejected a reference to `isShellWorkspaceRoute` that was not imported into `ShellChatMenu`.
+
+Impact: The shell preserves its intended post-delete navigation behavior, the fork regression remains type-safe, and the web release can complete type checking.
+
+Files: `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/features/studio/components/message-bubble/AssistantActions.test.tsx`
