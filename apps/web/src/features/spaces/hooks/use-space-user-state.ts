@@ -123,7 +123,7 @@ export function useSpaceUserState() {
   }
 }
 
-export function sortSpacesWithFavoritesFirst<T extends { id: string }>(
+export function sortSpacesWithFavoritesFirst<T extends { id: string; sort_order?: number }>(
   spaces: T[],
   favoriteIds: Set<string>,
 ): T[] {
@@ -131,6 +131,6 @@ export function sortSpacesWithFavoritesFirst<T extends { id: string }>(
     const af = favoriteIds.has(a.id)
     const bf = favoriteIds.has(b.id)
     if (af !== bf) return af ? -1 : 1
-    return 0
+    return (a.sort_order ?? 0) - (b.sort_order ?? 0)
   })
 }

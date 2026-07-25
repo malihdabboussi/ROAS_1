@@ -134,6 +134,7 @@ export const UpdateSpaceSchema = z
     is_template: z.boolean().optional(),
     visibility: z.enum(['private', 'team']).optional(),
     schema: SpaceSchemaDtoSchema.optional(),
+    sort_order: z.number().int().min(0).optional(),
   })
   .refine(
     (v) =>
@@ -142,7 +143,8 @@ export const UpdateSpaceSchema = z
       v.campaign_id !== undefined ||
       v.is_template !== undefined ||
       v.visibility !== undefined ||
-      v.schema !== undefined,
+      v.schema !== undefined ||
+      v.sort_order !== undefined,
     { message: 'At least one update field is required' },
   )
 export type UpdateSpaceDto = z.infer<typeof UpdateSpaceSchema>

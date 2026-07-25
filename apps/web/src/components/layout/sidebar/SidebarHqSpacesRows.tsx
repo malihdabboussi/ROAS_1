@@ -7,7 +7,7 @@ import { useGlobalChatStore } from '@/components/global-chat/store/use-global-ch
 import { getIconColor, LucideIcon } from '@/components/ui/IconPicker'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space } from '@/features/spaces/types'
-import { CampaignDragHandle, DraggableSpace } from './sidebar-tree-dnd'
+import { DraggableCampaignHeader, SortableSpace, SpaceSortableContext } from './sidebar-tree-dnd'
 import type { SidebarCampaignRow } from './sidebar-types'
 
 export type SectionMenuAnchorRect = { top: number; left: number; bottom: number; right: number }
@@ -171,64 +171,103 @@ export function Section({
   return (
     <div className="min-w-0">
       <div className="group/section rounded-spacing-2 hover:bg-hover-subtle flex min-w-0 items-center gap-0.5 transition-colors">
-        <button
-          type="button"
-          onClick={() => onToggle(bucket)}
-          className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground relative flex h-7 w-7 shrink-0 items-center justify-center rounded transition-colors"
-          aria-expanded={isExpanded}
-          aria-label={isExpanded ? `Collapse ${label}` : `Expand ${label}`}
-        >
-          {campaignRow ? (
-            <LucideIcon
-              name={iconName}
-              className={`icon-sm absolute ${iconColor} transition-opacity ${
-                isExpanded ? 'opacity-0' : 'opacity-100 group-hover/section:opacity-0'
-              }`}
-            />
-          ) : (
-            <User
-              className={`icon-sm text-muted-foreground absolute shrink-0 transition-opacity ${
-                isExpanded ? 'opacity-0' : 'opacity-100 group-hover/section:opacity-0'
-              }`}
-              aria-hidden
-            />
-          )}
-          <ChevronRight
-            className={`icon-sm absolute shrink-0 transition-all duration-150 ${
-              isExpanded ? 'rotate-90 opacity-100' : 'opacity-0 group-hover/section:opacity-100'
-            }`}
-          />
-        </button>
-        {campaignRow ? (
-          <Link
-            href={`/campaigns/${campaignRow.id}`}
-            data-hub-dock-navigate
-            onContextMenu={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              const r = e.currentTarget.getBoundingClientRect()
-              onOpenCampaignMenu(campaignRow, r)
-            }}
-            className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 font-medium transition-colors"
-          >
-            {label}
-          </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onToggle(bucket)}
-            className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 text-left font-medium transition-colors"
-          >
-            {label}
-          </button>
-        )}
         {campaignRow && enableDnd ? (
-          <CampaignDragHandle
+          <DraggableCampaignHeader
             campaignId={campaignRow.id}
             programId={campaignRow.program_id ?? null}
-            label={label}
-          />
-        ) : null}
+          >
+            <div className="flex min-w-0 flex-1 cursor-grab items-center gap-0.5 active:cursor-grabbing">
+              <button
+                type="button"
+                onClick={() => onToggle(bucket)}
+                className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground relative flex h-7 w-7 shrink-0 items-center justify-center rounded transition-colors"
+                aria-expanded={isExpanded}
+                aria-label={isExpanded ? `Collapse ${label}` : `Expand ${label}`}
+              >
+                <LucideIcon
+                  name={iconName}
+                  className={`icon-sm absolute ${iconColor} transition-opacity ${
+                    isExpanded ? 'opacity-0' : 'opacity-100 group-hover/section:opacity-0'
+                  }`}
+                />
+                <ChevronRight
+                  className={`icon-sm absolute shrink-0 transition-all duration-150 ${
+                    isExpanded
+                      ? 'rotate-90 opacity-100'
+                      : 'opacity-0 group-hover/section:opacity-100'
+                  }`}
+                />
+              </button>
+              <Link
+                href={`/campaigns/${campaignRow.id}`}
+                data-hub-dock-navigate
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const r = e.currentTarget.getBoundingClientRect()
+                  onOpenCampaignMenu(campaignRow, r)
+                }}
+                className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 font-medium transition-colors"
+              >
+                {label}
+              </Link>
+            </div>
+          </DraggableCampaignHeader>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => onToggle(bucket)}
+              className="text-muted-foreground hover:bg-hover-subtle hover:text-foreground relative flex h-7 w-7 shrink-0 items-center justify-center rounded transition-colors"
+              aria-expanded={isExpanded}
+              aria-label={isExpanded ? `Collapse ${label}` : `Expand ${label}`}
+            >
+              {campaignRow ? (
+                <LucideIcon
+                  name={iconName}
+                  className={`icon-sm absolute ${iconColor} transition-opacity ${
+                    isExpanded ? 'opacity-0' : 'opacity-100 group-hover/section:opacity-0'
+                  }`}
+                />
+              ) : (
+                <User
+                  className={`icon-sm text-muted-foreground absolute shrink-0 transition-opacity ${
+                    isExpanded ? 'opacity-0' : 'opacity-100 group-hover/section:opacity-0'
+                  }`}
+                  aria-hidden
+                />
+              )}
+              <ChevronRight
+                className={`icon-sm absolute shrink-0 transition-all duration-150 ${
+                  isExpanded ? 'rotate-90 opacity-100' : 'opacity-0 group-hover/section:opacity-100'
+                }`}
+              />
+            </button>
+            {campaignRow ? (
+              <Link
+                href={`/campaigns/${campaignRow.id}`}
+                data-hub-dock-navigate
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const r = e.currentTarget.getBoundingClientRect()
+                  onOpenCampaignMenu(campaignRow, r)
+                }}
+                className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 font-medium transition-colors"
+              >
+                {label}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onToggle(bucket)}
+                className="body-2 text-foreground hover:text-foreground min-w-0 flex-1 truncate px-0 py-1 text-left font-medium transition-colors"
+              >
+                {label}
+              </button>
+            )}
+          </>
+        )}
         {campaignRow ? (
           <button
             type="button"
@@ -264,14 +303,18 @@ export function Section({
 
       {isExpanded && (
         <div className="border-border ml-2 min-w-0 space-y-0.5 border-l pl-2">
-          {sectionSpaces.map((s) =>
-            enableDnd ? (
-              <DraggableSpace key={s.id} spaceId={s.id} campaignId={campaignId}>
-                <SpaceRow space={s} favorited={favoriteIds.has(s.id)} {...spaceRowProps} />
-              </DraggableSpace>
-            ) : (
+          {enableDnd ? (
+            <SpaceSortableContext spaceIds={sectionSpaces.map((s) => s.id)}>
+              {sectionSpaces.map((s) => (
+                <SortableSpace key={s.id} spaceId={s.id} campaignId={campaignId}>
+                  <SpaceRow space={s} favorited={favoriteIds.has(s.id)} {...spaceRowProps} />
+                </SortableSpace>
+              ))}
+            </SpaceSortableContext>
+          ) : (
+            sectionSpaces.map((s) => (
               <SpaceRow key={s.id} space={s} favorited={favoriteIds.has(s.id)} {...spaceRowProps} />
-            ),
+            ))
           )}
           {isCreating ? (
             <div className="flex min-w-0 items-center gap-1.5 px-2 py-1">

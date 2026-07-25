@@ -6,12 +6,17 @@ import type { Space } from '@/features/spaces/types'
 import type { Program } from '@/lib/programs'
 import { SIDEBAR_MESSAGES } from '../config/sidebar-messages.config'
 import {
+  CampaignDropZone,
+  ProgramDropZone,
+  ProgramSortableContext,
+  SortableProgram,
+} from './sidebar-tree-dnd'
+import {
   Section,
   SpaceRow,
   type SectionMenuAnchorRect,
   type SpaceRowSharedProps,
 } from './SidebarHqSpacesRows'
-import { CampaignDropZone, ProgramDropZone } from './sidebar-tree-dnd'
 import { SidebarProgramFolder } from './SidebarProgramFolder'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -158,67 +163,96 @@ export function SidebarHqSpacesBucketList({
       {otherProgramGroups.length > 0 && !flyoutMode && programs.length === 0 ? (
         <p className={groupHeaderCls}>Programs</p>
       ) : null}
-      {otherProgramGroups.map((group) => {
-        const programExpanded = searchActive || expandedProgramIds.has(group.key)
-        const campaignRows = group.buckets.map((b) => {
-          const section = (
-            <Section
-              key={b.bucket}
-              {...b}
-              {...sectionSharedProps}
-              enableDnd={enableDnd}
-              isExpanded={searchActive || expandedIds.has(b.bucket)}
-              isCreating={creatingInBucket === b.bucket}
-            />
-          )
-          return enableDnd ? (
-            <CampaignDropZone key={b.bucket} campaignId={b.campaignId}>
-              {section}
-            </CampaignDropZone>
-          ) : (
-            section
-          )
-        })
+      <ProgramSortableContext
+        programIds={otherProgramGroups
+          .map((g) => g.program?.id)
+          .filter((id): id is string => Boolean(id))}
+      >
+        {otherProgramGroups.map((group) => {
+          const programExpanded = searchActive || expandedProgramIds.has(group.key)
+          const campaignRows = group.buckets.map((b) => {
+            const section = (
+              <Section
+                key={b.bucket}
+                {...b}
+                {...sectionSharedProps}
+                enableDnd={enableDnd}
+                isExpanded={searchActive || expandedIds.has(b.bucket)}
+                isCreating={creatingInBucket === b.bucket}
+              />
+            )
+            return enableDnd ? (
+              <CampaignDropZone key={b.bucket} campaignId={b.campaignId}>
+                {section}
+              </CampaignDropZone>
+            ) : (
+              section
+            )
+          })
 
-        if (programs.length > 0 || group.program != null || group.key === '__ungrouped__') {
-          const folder = (
-            <SidebarProgramFolder
+          if (programs.length > 0 || group.program != null || group.key === '__ungrouped__') {
+            if (group.program && enableDnd) {
+              return (
+                <SortableProgram key={group.key} programId={group.program.id}>
+                  {(bind) => (
+                    <SidebarProgramFolder
+                      groupKey={group.key}
+                      label={group.label}
+                      program={group.program}
+                      campaignCount={group.buckets.length}
+                      isExpanded={programExpanded}
+                      onToggle={onToggleProgram}
+                      onCreateCampaign={onCreateCampaignInProgram}
+                      onOpenMenu={onOpenProgramMenu}
+                      compact={flyoutMode}
+                      sortable={bind}
+                    >
+                      {campaignRows}
+                    </SidebarProgramFolder>
+                  )}
+                </SortableProgram>
+              )
+            }
+
+            const folder = (
+              <SidebarProgramFolder
+                key={group.key}
+                groupKey={group.key}
+                label={group.label}
+                program={group.program}
+                campaignCount={group.buckets.length}
+                isExpanded={programExpanded}
+                onToggle={onToggleProgram}
+                onCreateCampaign={
+                  group.program || group.key === '__ungrouped__'
+                    ? onCreateCampaignInProgram
+                    : undefined
+                }
+                onOpenMenu={group.program ? onOpenProgramMenu : undefined}
+                compact={flyoutMode}
+              >
+                {campaignRows}
+              </SidebarProgramFolder>
+            )
+            return enableDnd ? (
+              <ProgramDropZone key={group.key} programId={group.program?.id ?? null}>
+                {folder}
+              </ProgramDropZone>
+            ) : (
+              folder
+            )
+          }
+
+          return (
+            <div
               key={group.key}
-              groupKey={group.key}
-              label={group.label}
-              program={group.program}
-              campaignCount={group.buckets.length}
-              isExpanded={programExpanded}
-              onToggle={onToggleProgram}
-              onCreateCampaign={
-                group.program || group.key === '__ungrouped__'
-                  ? onCreateCampaignInProgram
-                  : undefined
-              }
-              onOpenMenu={group.program ? onOpenProgramMenu : undefined}
-              compact={flyoutMode}
+              className={flyoutMode ? 'mb-2 min-w-0 space-y-0.5' : 'mb-1 min-w-0 space-y-0.5'}
             >
               {campaignRows}
-            </SidebarProgramFolder>
+            </div>
           )
-          return enableDnd ? (
-            <ProgramDropZone key={group.key} programId={group.program?.id ?? null}>
-              {folder}
-            </ProgramDropZone>
-          ) : (
-            folder
-          )
-        }
-
-        return (
-          <div
-            key={group.key}
-            className={flyoutMode ? 'mb-2 min-w-0 space-y-0.5' : 'mb-1 min-w-0 space-y-0.5'}
-          >
-            {campaignRows}
-          </div>
-        )
-      })}
+        })}
+      </ProgramSortableContext>
       {!searchActive && flyoutMode && onNewProgram ? (
         <>
           <div className="border-border mx-1 my-1.5 border-t" role="separator" />
@@ -231,7 +265,9 @@ export function SidebarHqSpacesBucketList({
             <span className="flex h-7 w-7 shrink-0 items-center justify-center">
               <Plus className="icon-md shrink-0" aria-hidden />
             </span>
-            <span className="body-2 min-w-0 flex-1 truncate text-left font-medium">New Program</span>
+            <span className="body-2 min-w-0 flex-1 truncate text-left font-medium">
+              New Program
+            </span>
           </button>
         </>
       ) : null}

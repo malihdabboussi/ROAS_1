@@ -157,7 +157,9 @@ export async function ensureGeneralSpace(): Promise<Space> {
 
 export async function updateSpace(
   spaceId: string,
-  payload: Partial<Pick<Space, 'title' | 'description' | 'campaign_id' | 'visibility' | 'schema'>>,
+  payload: Partial<
+    Pick<Space, 'title' | 'description' | 'campaign_id' | 'visibility' | 'schema' | 'sort_order'>
+  >,
   backend?: BackendFetchOptions,
 ): Promise<Space> {
   const body =

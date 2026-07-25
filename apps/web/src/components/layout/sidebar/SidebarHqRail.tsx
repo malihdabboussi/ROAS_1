@@ -1,12 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { surfaceFromPathname } from '@/components/global-chat/config/work-context.config'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
-import { isShellHomeRoute } from '@/components/shell/shell-route-policy'
-import { ShellAiChatsButton } from '@/components/shell/ShellAiChatsButton'
 import { shellSidebarExpanded, useShellStore } from '@/components/shell/use-shell-store'
 import { cn } from '@/lib/utils/cn'
 import { isManageRailItemActive, workContextSurfaceForPanel } from './sidebar-hq-rail.helpers'
@@ -31,19 +29,12 @@ export function SidebarHqRail({
   hubMenuProps: HubMenuPaneProps
 }) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
   const sidebarPinned = useShellStore((s) => s.sidebarPinned)
   const sidebarPeek = useShellStore((s) => s.sidebarPeek)
   const holdSidebarPeek = useShellStore((s) => s.holdSidebarPeek)
   const scheduleSidebarPeekClose = useShellStore((s) => s.scheduleSidebarPeekClose)
-  const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
-  const workAreaOpen = useShellStore((s) => s.workAreaOpen)
-  const openChatDrawer = useShellStore((s) => s.openChatDrawer)
-  const restoreChatDrawer = useShellStore((s) => s.restoreChatDrawer)
-  const minimizeChatDrawer = useShellStore((s) => s.minimizeChatDrawer)
-  const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
   const setSidebarPinned = useShellStore((s) => s.setSidebarPinned)
   const shellExpanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
 
@@ -91,47 +82,6 @@ export function SidebarHqRail({
   const isPeeking = false
   // Icon rail only — expanded hub menu is retired.
   const hubExpanded = false
-  const routeConversationId = searchParams.get('conv')
-  const chatParam = searchParams.get('chat')
-  const homeAiOpen =
-    isShellHomeRoute(c.pathname) &&
-    (Boolean(routeConversationId) || chatParam === 'new' || chatParam === 'starting')
-  const aiChatsActive = chatDrawerOpen || homeAiOpen
-  const chatFullScreen = chatDrawerOpen && !workAreaOpen
-
-  /** Hover opens the docked (mini) chat drawer. */
-  const peekOpenAiChats = () => {
-    closeHoverManageFlyout()
-    if (chatDrawerOpen || homeAiOpen) return
-    if (isShellHomeRoute(c.pathname) && (routeConversationId || chatParam)) {
-      router.push('/home')
-      if (routeConversationId) openChatDrawer(routeConversationId)
-      else restoreChatDrawer()
-      return
-    }
-    restoreChatDrawer()
-  }
-
-  /**
-   * Click opens full-screen chat. If already full-screen, collapses the drawer.
-   * If docked, upgrades to full-screen.
-   */
-  const clickAiChats = () => {
-    closeHoverManageFlyout()
-    if (chatFullScreen) {
-      minimizeChatDrawer()
-      return
-    }
-    if (isShellHomeRoute(c.pathname) && (routeConversationId || chatParam)) {
-      router.push('/home')
-      if (routeConversationId) openChatDrawer(routeConversationId)
-      else restoreChatDrawer()
-      setWorkAreaOpen(false)
-      return
-    }
-    if (!chatDrawerOpen) restoreChatDrawer()
-    setWorkAreaOpen(false)
-  }
 
   return (
     <div
@@ -159,15 +109,6 @@ export function SidebarHqRail({
           <SidebarHqHubLogoButton hubOpen={hubExpanded} onToggle={goHome} />
         </div>
 
-        <div className="hub-sidebar-ai-row shrink-0">
-          <ShellAiChatsButton
-            active={aiChatsActive}
-            compact={aiChatsActive}
-            onClick={clickAiChats}
-            onMouseEnter={peekOpenAiChats}
-          />
-        </div>
-
         <div className="relative min-h-0 flex-1 overflow-hidden">
           <div
             className={cn(
@@ -179,7 +120,7 @@ export function SidebarHqRail({
             )}
             aria-hidden={hubExpanded}
           >
-            <nav className="flex flex-1 flex-col items-center gap-0.5 px-0.5 py-2">
+            <nav className="flex flex-1 flex-col items-center gap-0.5 px-0.5 pb-2 pt-0">
               {visibleRailItems.map((item) => {
                 const isItemActive = isManageRailItemActive(item, c.pathname, c.isActive)
                 const iconSpan = (

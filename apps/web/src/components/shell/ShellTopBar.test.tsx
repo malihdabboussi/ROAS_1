@@ -83,13 +83,13 @@ describe('ShellTopBar', () => {
     cleanup()
   })
 
-  it('keeps Search centered without chat controls in the top bar', () => {
+  it('keeps Search centered with AI Chats on the top-left panel control', () => {
     render(<ShellTopBar />)
 
     expect(screen.getByTitle('Search')).toBeInTheDocument()
     expect(screen.queryAllByTitle('Search')).toHaveLength(1)
     expect(screen.queryByTitle('New chat')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Open AI Chats')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Open AI Chats')).toBeInTheDocument()
   })
 
   it('offers the work-area collapse on every route, not just Spaces', () => {
@@ -117,7 +117,7 @@ describe('ShellTopBar', () => {
     mocks.shellState.chatDrawer = { open: false }
 
     render(<ShellTopBar />)
-    fireEvent.click(screen.getByTitle('Expand AI Chats'))
+    fireEvent.click(screen.getByTitle('Open AI Chats'))
 
     expect(mocks.shellState.restoreChatDrawer).toHaveBeenCalledTimes(1)
   })

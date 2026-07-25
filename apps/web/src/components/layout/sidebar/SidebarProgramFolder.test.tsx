@@ -82,6 +82,7 @@ describe('SidebarProgramFolder', () => {
 
     expect(screen.queryByRole('link', { name: 'General' })).toBeNull()
     expect(screen.getByText('campaign-row')).toBeTruthy()
+    expect(screen.getByTestId('program-chevron')).toHaveClass('rotate-90', 'opacity-0')
     fireEvent.click(screen.getByRole('button', { name: 'General' }))
     expect(onToggle).toHaveBeenCalledWith('__ungrouped__')
   })

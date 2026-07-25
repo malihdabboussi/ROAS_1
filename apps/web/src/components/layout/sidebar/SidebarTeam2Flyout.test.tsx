@@ -54,16 +54,18 @@ describe('SidebarTeam2Flyout', () => {
     mocks.searchParams = new URLSearchParams()
   })
 
-  it('links directly to Manage People and marks it active', () => {
+  it('links directly to People and marks it active', () => {
     mocks.searchParams = new URLSearchParams('section=people')
 
     render(<SidebarTeam2Flyout pathname="/team" embedded />)
 
-    const link = screen.getByRole('link', { name: 'Manage People' })
+    const link = screen.getByRole('link', { name: 'People' })
     expect(link).toHaveAttribute('href', '/team?section=people')
     expect(link).toHaveClass('hub-dock-flyout-row-active')
-    expect(screen.getByRole('link', { name: 'Manage Agents' })).not.toHaveClass(
+    expect(screen.getByRole('link', { name: 'Agents' })).not.toHaveClass(
       'hub-dock-flyout-row-active',
     )
+    expect(screen.getByRole('link', { name: 'Skills' })).toBeInTheDocument()
+    expect(screen.queryByText('TEAM')).not.toBeInTheDocument()
   })
 })

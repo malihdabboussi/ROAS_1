@@ -117,7 +117,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const WORK_AREA_SLIDE_MS = 300
   const workAreaRef = useRef<HTMLDivElement>(null)
   const [anchoredWidth, setAnchoredWidth] = useState<number | null>(null)
-  const [anchorActive, setAnchorActive] = useState(false)
+  const [workAreaBodyCollapsed, setWorkAreaBodyCollapsed] = useState(workAreaCollapsed)
   const wasWorkAreaCollapsedRef = useRef(workAreaCollapsed)
   const workAreaAnimatingRef = useRef(false)
 
@@ -165,28 +165,33 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
       const width = measureWorkAreaTargetWidth()
       if (width > 0) setAnchoredWidth(width)
       workAreaAnimatingRef.current = true
-      setAnchorActive(true)
+      setWorkAreaBodyCollapsed(true)
       return
     }
     if (!wasCollapsed) {
       workAreaAnimatingRef.current = false
-      setAnchorActive(false)
       return
     }
-    // Collapsed → open: slide the fixed-width page in from beyond the right
-    // edge, then release it back to normal flex sizing after the transition.
+    // Collapsed → open: keep the page beyond the right edge for one frame.
+    // Removing the class in the same render as the wrapper expands skips the
+    // transform transition and makes the page appear to enter from the left.
     workAreaAnimatingRef.current = true
-    setAnchorActive(true)
+    setWorkAreaBodyCollapsed(true)
+    const frame = window.requestAnimationFrame(() => {
+      setWorkAreaBodyCollapsed(false)
+    })
     const timer = setTimeout(() => {
       const width = measureWorkAreaTargetWidth()
       if (width > 0) setAnchoredWidth(width)
       workAreaAnimatingRef.current = false
-      setAnchorActive(false)
     }, WORK_AREA_SLIDE_MS)
-    return () => clearTimeout(timer)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      clearTimeout(timer)
+    }
   }, [measureWorkAreaTargetWidth, workAreaCollapsed])
 
-  const bodyAnchored = anchorActive && anchoredWidth != null && anchoredWidth > 0
+  const bodyAnchored = anchoredWidth != null && anchoredWidth > 0
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -203,7 +208,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
             className={cn(
               'shell-work-area-body',
               bodyAnchored && 'shell-work-area-body-anchored',
-              bodyAnchored && workAreaCollapsed && 'shell-work-area-body-collapsed',
+              bodyAnchored && workAreaBodyCollapsed && 'shell-work-area-body-collapsed',
             )}
             style={bodyAnchored ? { width: `${anchoredWidth}px` } : undefined}
           >

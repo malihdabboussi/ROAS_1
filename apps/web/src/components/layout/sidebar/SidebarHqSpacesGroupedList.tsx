@@ -1,20 +1,10 @@
 'use client'
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type Dispatch,
-  type MouseEvent,
-  type SetStateAction,
-} from 'react'
+import { useEffect, useMemo, useState, type MouseEvent } from 'react'
 import { toast } from 'sonner'
 import { useOrgStore } from '@/features/org/store/use-org-store'
 import { cachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
-import {
-  sortSpacesWithFavoritesFirst,
-  useSpaceUserState,
-} from '@/features/spaces/hooks/use-space-user-state'
+import { sortSpacesWithFavoritesFirst } from '@/features/spaces/hooks/use-space-user-state'
 import { updateSpace as updateSpaceRequest } from '@/features/spaces/services/spaces.service'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import type { Space } from '@/features/spaces/types'
@@ -24,13 +14,13 @@ import {
   readProgramsLocalCache,
   type Program,
 } from '@/lib/programs'
-import { SIDEBAR_TOAST_ERRORS } from '../config/sidebar-toast-errors.config'
-import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
 import { groupSidebarCampaignsByProgram } from './group-sidebar-campaigns-by-program'
-import { SidebarTreeDndProvider } from './sidebar-tree-dnd'
 import { toggleIdInSet } from './sidebar-expand-persistence'
+import { SidebarTreeDndProvider } from './sidebar-tree-dnd'
+import { createSidebarTreeMutationHandlers } from './sidebar-tree-mutation-handlers'
 import type { SidebarCampaignRow } from './sidebar-types'
 import { SidebarHqSpacesBucketList } from './SidebarHqSpacesBucketList'
+import type { SidebarHqSpacesGroupedListProps } from './SidebarHqSpacesGroupedList.types'
 import { SidebarHqSpacesListOverlays } from './SidebarHqSpacesListOverlays'
 import type {
   SidebarHqCampaignMenuState,
@@ -39,7 +29,6 @@ import type {
 import { type SectionMenuAnchorRect, type SpaceRowSharedProps } from './SidebarHqSpacesRows'
 import { SidebarProgramOverlays } from './SidebarProgramOverlays'
 import { useAutoLoadRemainingSpaces } from './use-auto-load-remaining-spaces'
-import type { SidebarControllerReturn } from './useSidebarController'
 
 const SPACES_ROSTER_REFRESH_INTERVAL_MS = 60_000
 let lastSpacesRosterLoadAt = 0
@@ -66,30 +55,7 @@ export function SidebarHqSpacesGroupedList({
   expandedProgramIds,
   setExpandedProgramIds,
   onNewProgram,
-}: {
-  controller: SidebarControllerReturn
-  spaces: Space[]
-  campaigns: SidebarCampaignRow[]
-  pathname: string
-  expandedIds: Set<string>
-  setExpandedIds: Dispatch<SetStateAction<Set<string>>>
-  onCreateSpace: (campaignId?: string | null) => void
-  isSubmitting: boolean
-  creatingName: string
-  setCreatingName: (v: string) => void
-  searchQuery?: string
-  onOpenBrowseTemplates: (bucket: string) => void
-  onOpenCreateSpaceModal: (campaignId: string | null) => void
-  spaceUserState: ReturnType<typeof useSpaceUserState>
-  hasMore: boolean
-  loadingMore: boolean
-  onLoadMore: () => void
-  /** Dock flyout: Programs panel chrome (All Tasks + New Program). */
-  flyoutMode?: boolean
-  expandedProgramIds: Set<string>
-  setExpandedProgramIds: Dispatch<SetStateAction<Set<string>>>
-  onNewProgram?: () => void
-}) {
+}: SidebarHqSpacesGroupedListProps) {
   const activeSpaceId = useSpacesStore((s) => s.activeSpaceId)
   const { favoriteIds, hiddenIds, isFavorite, toggleFavorite, toggleHidden } = spaceUserState
   const [creatingInBucket, setCreatingInBucket] = useState<string | null>(null)
@@ -109,15 +75,23 @@ export function SidebarHqSpacesGroupedList({
   const activeOrgId = useOrgStore((s) => s.activeOrgId)
   const isOrgContext = activeOrgId !== null
   const [programs, setPrograms] = useState<Program[]>(() => {
-    return (
-      peekProgramsMemoryCache(activeOrgId) ?? readProgramsLocalCache(activeOrgId) ?? []
-    )
+    return peekProgramsMemoryCache(activeOrgId) ?? readProgramsLocalCache(activeOrgId) ?? []
   })
   const [programsReady, setProgramsReady] = useState(
     () =>
-      peekProgramsMemoryCache(activeOrgId) != null ||
-      readProgramsLocalCache(activeOrgId) != null,
+      peekProgramsMemoryCache(activeOrgId) != null || readProgramsLocalCache(activeOrgId) != null,
   )
+  const { handleMoveSpace, handleMoveCampaign, handleReorderPrograms, handleReorderSpaces } =
+    createSidebarTreeMutationHandlers({
+      activeOrgId,
+      programs,
+      setPrograms,
+      spaces,
+      favoriteIds,
+      setExpandedIds,
+      setExpandedProgramIds,
+      controller,
+    })
 
   // Page remaining spaces only after the user expands a campaign/program — not on hover open.
   useAutoLoadRemainingSpaces({
@@ -129,8 +103,7 @@ export function SidebarHqSpacesGroupedList({
 
   useEffect(() => {
     let cancelled = false
-    const cached =
-      peekProgramsMemoryCache(activeOrgId) ?? readProgramsLocalCache(activeOrgId)
+    const cached = peekProgramsMemoryCache(activeOrgId) ?? readProgramsLocalCache(activeOrgId)
     if (cached) {
       setPrograms(cached)
       setProgramsReady(true)
@@ -252,34 +225,6 @@ export function SidebarHqSpacesGroupedList({
     controller.setShowNewCampaignModal(true)
   }
 
-  async function handleMoveSpace(spaceId: string, toCampaignId: string) {
-    const previous = spaces.find((s) => s.id === spaceId)
-    if (!previous || previous.campaign_id === toCampaignId) return
-    const apply = (campaignId: string | null) => {
-      cachedSpaces.mutate((prev) =>
-        (prev ?? []).map((sp) => (sp.id === spaceId ? { ...sp, campaign_id: campaignId } : sp)),
-      )
-      useSpacesStore.setState((s) => ({
-        spaces: s.spaces.map((sp) => (sp.id === spaceId ? { ...sp, campaign_id: campaignId } : sp)),
-      }))
-    }
-    apply(toCampaignId)
-    setExpandedIds((prev) => new Set([...prev, toCampaignId]))
-    try {
-      await updateSpaceRequest(spaceId, { campaign_id: toCampaignId })
-    } catch (e) {
-      apply(previous.campaign_id ?? null)
-      toast.error(sanitizeUserError(e, SIDEBAR_TOAST_ERRORS.MOVE_SPACE_FAILED.userMessage))
-    }
-  }
-
-  function handleMoveCampaign(campaignId: string, toProgramId: string | null) {
-    if (toProgramId) {
-      setExpandedProgramIds((prev) => new Set([...prev, toProgramId]))
-    }
-    void controller.moveCampaignToProgram(campaignId, toProgramId)
-  }
-
   const q = (searchQuery ?? '').trim().toLowerCase()
   const searchActive = q.length > 0
   const matchSpace = (s: Space) => (s.title ?? '').toLowerCase().includes(q)
@@ -358,68 +303,72 @@ export function SidebarHqSpacesGroupedList({
     <SidebarTreeDndProvider
       onMoveSpace={(spaceId, toCampaignId) => void handleMoveSpace(spaceId, toCampaignId)}
       onMoveCampaign={handleMoveCampaign}
+      onReorderPrograms={(activeId, overId) => void handleReorderPrograms(activeId, overId)}
+      onReorderSpaces={(campaignId, activeId, overId) =>
+        void handleReorderSpaces(campaignId, activeId, overId)
+      }
     >
       <div className="min-w-0 space-y-0.5">
-      <SidebarHqSpacesBucketList
-        enableDnd
-        noResults={noResults}
-        searchQuery={searchQuery}
-        searchActive={searchActive}
-        flyoutMode={flyoutMode}
-        programsReady={programsReady}
-        favoriteBuckets={favoriteBuckets}
-        otherProgramGroups={otherProgramGroups}
-        programs={programs}
-        expandedIds={expandedIds}
-        expandedProgramIds={expandedProgramIds}
-        onToggleProgram={toggleProgram}
-        onCreateCampaignInProgram={createCampaignInProgram}
-        onOpenProgramMenu={(program, anchorRect) => setProgramMenuFor({ program, anchorRect })}
-        onNewProgram={onNewProgram}
-        creatingInBucket={creatingInBucket}
-        sectionSharedProps={sectionSharedProps}
-        controller={controller}
-        sharedSpaces={sharedSpaces}
-        favoriteIds={favoriteIds}
-        spaceRowProps={spaceRowProps}
-        hasMore={hasMore}
-        loadingMore={loadingMore}
-        onLoadMore={onLoadMore}
-        groupHeaderCls={groupHeaderCls}
-      />
+        <SidebarHqSpacesBucketList
+          enableDnd
+          noResults={noResults}
+          searchQuery={searchQuery}
+          searchActive={searchActive}
+          flyoutMode={flyoutMode}
+          programsReady={programsReady}
+          favoriteBuckets={favoriteBuckets}
+          otherProgramGroups={otherProgramGroups}
+          programs={programs}
+          expandedIds={expandedIds}
+          expandedProgramIds={expandedProgramIds}
+          onToggleProgram={toggleProgram}
+          onCreateCampaignInProgram={createCampaignInProgram}
+          onOpenProgramMenu={(program, anchorRect) => setProgramMenuFor({ program, anchorRect })}
+          onNewProgram={onNewProgram}
+          creatingInBucket={creatingInBucket}
+          sectionSharedProps={sectionSharedProps}
+          controller={controller}
+          sharedSpaces={sharedSpaces}
+          favoriteIds={favoriteIds}
+          spaceRowProps={spaceRowProps}
+          hasMore={hasMore}
+          loadingMore={loadingMore}
+          onLoadMore={onLoadMore}
+          groupHeaderCls={groupHeaderCls}
+        />
 
-      <SidebarHqSpacesListOverlays
-        campaignMenuFor={campaignMenuFor}
-        setCampaignMenuFor={setCampaignMenuFor}
-        menuFor={menuFor}
-        setMenuFor={setMenuFor}
-        controller={controller}
-        startCreating={startCreating}
-        campaigns={campaigns}
-        activeSpaceId={activeSpaceId}
-        isFavorite={isFavorite}
-        toggleFavorite={toggleFavorite}
-        toggleHidden={toggleHidden}
-        startRenameSpace={startRenameSpace}
-        addDropdownAnchor={addDropdownAnchor}
-        addDropdownBucket={addDropdownBucket}
-        setAddDropdownAnchor={setAddDropdownAnchor}
-        setAddDropdownBucket={setAddDropdownBucket}
-        onOpenBrowseTemplates={onOpenBrowseTemplates}
-      />
+        <SidebarHqSpacesListOverlays
+          campaignMenuFor={campaignMenuFor}
+          setCampaignMenuFor={setCampaignMenuFor}
+          menuFor={menuFor}
+          setMenuFor={setMenuFor}
+          controller={controller}
+          startCreating={startCreating}
+          campaigns={campaigns}
+          activeSpaceId={activeSpaceId}
+          isFavorite={isFavorite}
+          toggleFavorite={toggleFavorite}
+          toggleHidden={toggleHidden}
+          startRenameSpace={startRenameSpace}
+          addDropdownAnchor={addDropdownAnchor}
+          addDropdownBucket={addDropdownBucket}
+          setAddDropdownAnchor={setAddDropdownAnchor}
+          setAddDropdownBucket={setAddDropdownBucket}
+          onOpenBrowseTemplates={onOpenBrowseTemplates}
+        />
 
-      <SidebarProgramOverlays
-        programMenuFor={programMenuFor}
-        setProgramMenuFor={setProgramMenuFor}
-        sharingProgram={sharingProgram}
-        setSharingProgram={setSharingProgram}
-        deletingProgram={deletingProgram}
-        setDeletingProgram={setDeletingProgram}
-        deletingProgramBusy={deletingProgramBusy}
-        setDeletingProgramBusy={setDeletingProgramBusy}
-        setPrograms={setPrograms}
-        onCreateCampaign={createCampaignInProgram}
-      />
+        <SidebarProgramOverlays
+          programMenuFor={programMenuFor}
+          setProgramMenuFor={setProgramMenuFor}
+          sharingProgram={sharingProgram}
+          setSharingProgram={setSharingProgram}
+          deletingProgram={deletingProgram}
+          setDeletingProgram={setDeletingProgram}
+          deletingProgramBusy={deletingProgramBusy}
+          setDeletingProgramBusy={setDeletingProgramBusy}
+          setPrograms={setPrograms}
+          onCreateCampaign={createCampaignInProgram}
+        />
       </div>
     </SidebarTreeDndProvider>
   )

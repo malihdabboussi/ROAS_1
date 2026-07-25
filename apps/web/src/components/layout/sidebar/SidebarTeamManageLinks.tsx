@@ -24,7 +24,7 @@ export function SidebarTeamManageLinks({
         className={`hub-dock-flyout-row ${agentsActive ? 'hub-dock-flyout-row-active' : ''}`}
       >
         <LayoutGrid />
-        <span className="min-w-0 flex-1 truncate">Manage Agents</span>
+        <span className="min-w-0 flex-1 truncate">Agents</span>
       </Link>
       <Link
         href="/team/skills"
@@ -32,7 +32,7 @@ export function SidebarTeamManageLinks({
         className={`hub-dock-flyout-row ${skillsActive ? 'hub-dock-flyout-row-active' : ''}`}
       >
         <BookCheck />
-        <span className="min-w-0 flex-1 truncate">Manage Skills</span>
+        <span className="min-w-0 flex-1 truncate">Skills</span>
       </Link>
       {showManagePeople ? (
         <Link
@@ -41,7 +41,7 @@ export function SidebarTeamManageLinks({
           className={`hub-dock-flyout-row ${peopleActive ? 'hub-dock-flyout-row-active' : ''}`}
         >
           <UserRoundSearch />
-          <span className="min-w-0 flex-1 truncate">Manage People</span>
+          <span className="min-w-0 flex-1 truncate">People</span>
         </Link>
       ) : null}
     </div>

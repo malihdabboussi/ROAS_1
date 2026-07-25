@@ -32,6 +32,8 @@ export interface Space {
   title: string
   description: string | null
   campaign_id: string | null
+  /** Relative order within a campaign (Programs sidebar reorder). */
+  sort_order?: number
   is_template: boolean
   visibility: 'private' | 'team'
   space_kind?: 'standard' | 'personal_dashboard'

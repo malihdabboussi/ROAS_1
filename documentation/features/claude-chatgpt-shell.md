@@ -1,10 +1,10 @@
 # Claude/ChatGPT shell (apps/web)
 
-Last Modified: 2026-07-24
+Last Modified: 2026-07-25
 
 ## Overview
 
-Dashboard chrome inspired by Claude/ChatGPT and ClickUp: top bar with centered Search ⌘K, icon-rail HQ sidebar (always collapsed) with an AI Chats launcher under the logo, a resizable left AI drawer with chat history, a Space work dock (no open-item tab strip), a shared artifact slide-out, and a right summary panel (Tasks / Files / Sources).
+Dashboard chrome inspired by Claude/ChatGPT and ClickUp: top bar with centered Search ⌘K and a top-left PanelLeft control for AI Chats, icon-rail HQ sidebar (always collapsed), a resizable left AI drawer with chat history, a Space work dock (no open-item tab strip), a shared artifact slide-out, and a right summary panel (Tasks / Files / Sources).
 
 Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `shell-state.md`).
 
@@ -14,7 +14,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 2. `DashboardFrame` renders a full-width `ShellTopBar`, then a row of HQ sidebar + `ShellWorkspace` (T-junction — sidebar under the top bar, never overlaying it). On `/spaces`, `ShellWorkspace` keeps the Space page mounted inside `SpaceWorkDock`; collapse hides the dock and shows full chat without unmounting Space.
 3. Feature pages publish rich breadcrumbs with `ShellBreadcrumb`; `ShellTopBar` renders them in place of the path-label fallback. Publishers today: Team, Spaces, Flows, Skills.
 4. Top-bar PanelLeft expands/collapses the AI chat drawer (not the HQ menu). The HQ rail stays icon-only.
-   4b. Global Search is the centered top-bar control. Search opens `StudioSearchModal` (⌘K; idle until you type). **AI Chats** lives under the ROAS logo: hover opens the docked mini drawer; click opens full-screen chat; while open the pill shrinks so it does not collide with history Search.
+   4b. Global Search is the centered top-bar control. Search opens `StudioSearchModal` (⌘K; idle until you type). **AI Chats** is the top-left PanelLeft control: click opens/collapses the drawer.
 5. Rail lists Inbox, Team, Programs, Brain, More (flyouts). Chat history lives inside the AI drawer. Slack-origin rows show a channel badge via `ConversationChannelIcon` / `metadata.source`.
    The history rail has its own persisted drag width. The outer drawer can resize to the viewport edge; releasing there enters full-screen chat and preserves the prior docked width for restoration.
 6. Opening a conversation in the drawer stays on the current workspace page. Home full chat uses `/home?conv=` / `/home?chat=new`. Top-bar pencil on workspace: if the drawer is closed → `restoreChatDrawer()` (last chat); if open → fresh chat.
@@ -39,7 +39,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 - `apps/web/src/lib/artifacts/global-artifacts-api.ts`
 - `apps/web/src/features/artifacts/components/GlobalArtifactsPage.tsx`
 - `apps/web/src/app/(dashboard)/dashboard-shell.tsx`
-- `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx` (AI Chats hover/click + icon rail)
+- `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx` (icon rail)
 - `apps/web/src/components/layout/sidebar/SidebarHqHubMenu.tsx`
 
 ## Decision Log
@@ -55,7 +55,7 @@ Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `she
 - Dock flyouts use a left hover bridge + tight offsets (primary 2px / nested 0) and ignore leave when the pointer moves into another `[data-hub-dock-flyout]`, so parent → nested paths stay reachable. Vertical position is clamped to the viewport after measure.
 - Disabled Brain scopes show muted “Enable in Manage Brains” rows linking to Manage Brains.
 - The top bar owns centered global Search / Cmd-K only; chat open/new controls live with the chat surfaces instead of competing with Search.
-- **AI Chats** sits directly below the ROAS logo and above Inbox. Hover opens the docked mini drawer; click opens full-screen chat; while open the pill shrinks. Top-bar PanelLeft expands/collapses the drawer. Rail items: Inbox / Team / Programs / Brain / More.
+- **AI Chats** is the top-left PanelLeft control in the shell top bar (opens/collapses the drawer). The HQ rail under the ROAS logo has no under-logo AI Chats pill.
 - Chat history lives inside the drawer beside the panel, can be resized separately, and shows channel badges for Slack-origin conversations. History rows show compact relative ages (`19m` / `1d` / `1mo`) on the right; the overflow menu replaces that age on hover.
 - `RootProviders` enables transient product scrollbars: thumbs are transparent while idle, become visible for active scroll events, and hide again after the activity window.
 - Chat-menu **New** on workspace routes always docks a fresh chat (does not dismiss Space/work content) and sits full-width under the history Search/filter row with `rounded-spacing-2`.

@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactNode } from 'react'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { SidebarHqSection } from './SidebarHqSection'
@@ -276,7 +276,7 @@ describe('SidebarHqSection', () => {
     expect(loadMoreSidebarLists).not.toHaveBeenCalled()
   })
 
-  it('opens AI Chats from the launcher below the ROAS logo', () => {
+  it('does not render an AI Chats launcher under the ROAS logo', () => {
     useShellStore.setState({
       chatDrawer: { open: false, conversationId: null, width: 420, minimized: true },
     })
@@ -286,9 +286,8 @@ describe('SidebarHqSection', () => {
     })
 
     render(<SidebarHqSection c={controller} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Open AI Chats' }))
 
-    expect(useShellStore.getState().chatDrawer.open).toBe(true)
-    expect(screen.getByRole('button', { name: 'Collapse AI Chats' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Open AI Chats' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Collapse AI Chats' })).not.toBeInTheDocument()
   })
 })

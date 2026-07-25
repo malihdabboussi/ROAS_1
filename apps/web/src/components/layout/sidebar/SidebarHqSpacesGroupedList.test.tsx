@@ -90,6 +90,9 @@ vi.mock('@/lib/programs', () => ({
   loadProgramsCached: mocks.loadProgramsCached,
   peekProgramsMemoryCache: mocks.peekProgramsMemoryCache,
   readProgramsLocalCache: mocks.readProgramsLocalCache,
+  writeProgramsLocalCache: vi.fn(),
+  invalidateProgramsListCache: vi.fn(),
+  updateProgram: vi.fn(),
   resolveProgramIconColorId: () => 'purple',
 }))
 

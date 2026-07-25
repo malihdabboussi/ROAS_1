@@ -155,7 +155,7 @@ describe('ShellWorkspace', () => {
     expect(screen.getByText('Brain page').closest('[aria-hidden="true"]')).not.toBeNull()
   })
 
-  it('slides the work area in from beyond the right edge when reopening', () => {
+  it('slides the work area in from beyond the right edge when reopening', async () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
       new DOMRect(0, 0, 800, 600),
     )
@@ -176,6 +176,9 @@ describe('ShellWorkspace', () => {
     rerender(<ShellWorkspace>Brain page</ShellWorkspace>)
 
     expect(pageBody).toHaveClass('shell-work-area-body-anchored')
-    expect(pageBody).not.toHaveClass('shell-work-area-body-collapsed')
+    expect(pageBody).toHaveClass('shell-work-area-body-collapsed')
+    await waitFor(() => {
+      expect(pageBody).not.toHaveClass('shell-work-area-body-collapsed')
+    })
   })
 })

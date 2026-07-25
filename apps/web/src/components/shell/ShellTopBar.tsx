@@ -119,7 +119,8 @@ export function ShellTopBar() {
     <header className="shell-topbar">
       <button
         type="button"
-        title={chatDrawerOpen ? 'Collapse AI Chats' : 'Expand AI Chats'}
+        title={chatDrawerOpen ? 'Collapse AI Chats' : 'Open AI Chats'}
+        aria-label={chatDrawerOpen ? 'Collapse AI Chats' : 'Open AI Chats'}
         aria-pressed={chatDrawerOpen}
         onClick={toggleAiChat}
         className={cn('shell-topbar-icon-btn', chatDrawerOpen && 'shell-topbar-icon-btn-active')}

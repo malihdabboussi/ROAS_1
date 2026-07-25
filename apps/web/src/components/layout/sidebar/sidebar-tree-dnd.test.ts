@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveSidebarDrop } from './sidebar-tree-dnd'
+import { resolveSidebarDrop, resolveSidebarReorder } from './sidebar-tree-dnd'
 
 describe('resolveSidebarDrop', () => {
   it('moves a space into a different campaign', () => {
@@ -7,6 +7,15 @@ describe('resolveSidebarDrop', () => {
       resolveSidebarDrop(
         { dndType: 'space', spaceId: 's1', campaignId: 'c1' },
         { dndType: 'campaign-drop', campaignId: 'c2' },
+      ),
+    ).toEqual({ kind: 'space', spaceId: 's1', toCampaignId: 'c2' })
+  })
+
+  it('moves a space onto a space in a different campaign', () => {
+    expect(
+      resolveSidebarDrop(
+        { dndType: 'space', spaceId: 's1', campaignId: 'c1' },
+        { dndType: 'space', spaceId: 's2', campaignId: 'c2' },
       ),
     ).toEqual({ kind: 'space', spaceId: 's1', toCampaignId: 'c2' })
   })
@@ -57,6 +66,41 @@ describe('resolveSidebarDrop', () => {
     expect(resolveSidebarDrop(null, { dndType: 'program', programId: 'p1' })).toBeNull()
     expect(
       resolveSidebarDrop({ dndType: 'campaign', campaignId: 'c1', programId: 'p1' }, undefined),
+    ).toBeNull()
+  })
+})
+
+describe('resolveSidebarReorder', () => {
+  it('reorders programs', () => {
+    expect(
+      resolveSidebarReorder(
+        { dndType: 'program', programId: 'p1' },
+        { dndType: 'program', programId: 'p2' },
+      ),
+    ).toEqual({ kind: 'programs', activeId: 'p1', overId: 'p2' })
+  })
+
+  it('reorders spaces within the same campaign', () => {
+    expect(
+      resolveSidebarReorder(
+        { dndType: 'space', spaceId: 's1', campaignId: 'c1' },
+        { dndType: 'space', spaceId: 's2', campaignId: 'c1' },
+      ),
+    ).toEqual({ kind: 'spaces', campaignId: 'c1', activeId: 's1', overId: 's2' })
+  })
+
+  it('ignores same-item or cross-campaign space drops (reorder path)', () => {
+    expect(
+      resolveSidebarReorder(
+        { dndType: 'space', spaceId: 's1', campaignId: 'c1' },
+        { dndType: 'space', spaceId: 's1', campaignId: 'c1' },
+      ),
+    ).toBeNull()
+    expect(
+      resolveSidebarReorder(
+        { dndType: 'space', spaceId: 's1', campaignId: 'c1' },
+        { dndType: 'space', spaceId: 's2', campaignId: 'c2' },
+      ),
     ).toBeNull()
   })
 })

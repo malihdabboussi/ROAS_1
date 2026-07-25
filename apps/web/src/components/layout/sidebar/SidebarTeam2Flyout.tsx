@@ -269,14 +269,5 @@ export function SidebarTeam2Flyout({ pathname, embedded = false }: SidebarTeam2F
     return <div className="px-2 pb-2">{teamBody}</div>
   }
 
-  return (
-    <>
-      <div className="flex items-center justify-between px-3 py-3">
-        <span className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
-          Team
-        </span>
-      </div>
-      <div className="scrollbar-hide flex-1 overflow-y-auto px-2 pb-2">{teamBody}</div>
-    </>
-  )
+  return <div className="scrollbar-hide flex-1 overflow-y-auto px-2 pb-2">{teamBody}</div>
 }

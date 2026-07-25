@@ -10,5 +10,11 @@ export const SIDEBAR_TOAST_ERRORS = {
   MOVE_SPACE_FAILED: {
     userMessage: "Couldn't move that space — you may not have access to that program.",
   },
+  REORDER_PROGRAMS_FAILED: {
+    userMessage: "Couldn't reorder programs. Try again.",
+  },
+  REORDER_SPACES_FAILED: {
+    userMessage: "Couldn't reorder spaces. Try again.",
+  },
   DEFAULT_ACCOUNT_SAVE_FAILED: { userMessage: "Couldn't save the default account. Try again." },
 } as const
