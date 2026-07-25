@@ -47,12 +47,21 @@ describe('funnel history service', () => {
   })
 
   it('loads the revision timeline and restores a selected version', async () => {
-    backendGetMock.mockResolvedValueOnce({ entries: [], current_change_set_id: null })
+    backendGetMock.mockResolvedValueOnce({
+      entries: [
+        {
+          id: 'change-1',
+          metadata: { is_bookmarked: true },
+        },
+      ],
+      current_change_set_id: 'change-1',
+    })
     backendPostMock.mockResolvedValueOnce({ success: true, changed: true })
 
-    await fetchFunnelHistory('funnel-1', 'page-1')
+    const timeline = await fetchFunnelHistory('funnel-1', 'page-1')
     await restoreFunnelVersion('funnel-1', 'change-1', 'page-1')
 
+    expect(timeline.entries[0]?.is_bookmarked).toBe(true)
     expect(backendGetMock).toHaveBeenCalledWith(
       '/api/funnels/funnel-1/history?funnel_page_id=page-1',
     )

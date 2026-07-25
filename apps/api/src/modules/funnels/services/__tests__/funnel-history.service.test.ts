@@ -29,7 +29,10 @@ function createRepo() {
     markChangeSetStatus: vi.fn(async () => undefined),
     restoreFileSnapshot: vi.fn(async () => undefined),
     supersedeRedo: vi.fn(async () => undefined),
-    setBookmarked: vi.fn(async () => ({ id: 'change-1', is_bookmarked: true })),
+    setBookmarked: vi.fn(async () => ({
+      id: 'change-1',
+      metadata: { is_bookmarked: true },
+    })),
     touchPages: vi.fn(async () => undefined),
   }
 }

@@ -80,7 +80,7 @@ export class FunnelHistoryRepository {
     let q = supabase
       .from('funnel_change_sets')
       .select(
-        'id, funnel_id, funnel_page_id, source, action, label, status, metadata, is_bookmarked, created_at, updated_at',
+        'id, funnel_id, funnel_page_id, source, action, label, status, metadata, created_at, updated_at',
       )
       .eq('funnel_id', input.funnelId)
       .in('status', ['applied', 'undone'])
@@ -135,12 +135,22 @@ export class FunnelHistoryRepository {
     supabase: SupabaseClient,
     input: { funnelId: string; changeSetId: string; bookmarked: boolean },
   ) {
-    const { data, error } = await supabase
+    const { data: existing, error: readError } = await supabase
       .from('funnel_change_sets')
-      .update({ is_bookmarked: input.bookmarked })
+      .select('id, metadata')
       .eq('id', input.changeSetId)
       .eq('funnel_id', input.funnelId)
-      .select('id, is_bookmarked')
+      .maybeSingle()
+    if (readError) throw new Error(`Failed to read funnel version: ${readError.message}`)
+    if (!existing) return null
+    const metadata =
+      existing.metadata && typeof existing.metadata === 'object' ? existing.metadata : {}
+    const { data, error } = await supabase
+      .from('funnel_change_sets')
+      .update({ metadata: { ...metadata, is_bookmarked: input.bookmarked } })
+      .eq('id', input.changeSetId)
+      .eq('funnel_id', input.funnelId)
+      .select('id, metadata')
       .maybeSingle()
     if (error) throw new Error(`Failed to bookmark funnel version: ${error.message}`)
     return data

@@ -8,4 +8,4 @@ Why: The builder had durable file history and visual styling, but the core creat
 
 Impact: Users can edit selected content in place, replace images from their media library, understand when changes are saved, mark important versions, restore without losing later history, and publish through a clearer snapshot workflow.
 
-Files: `apps/web/src/features/studio`, `apps/web/src/features/spaces/components/chat/FunnelDesignChatView.tsx`, `apps/web/src/lib/artifacts/comment-artifact-types.ts`, `apps/api/src/modules/funnels`, `supabase/migrations/20260725160000_funnel_history_bookmarks.sql`, `scripts/roas/migration-order.txt`, `documentation/features/website-artifacts.md`
+Files: `apps/web/src/features/studio`, `apps/web/src/features/spaces/components/chat/FunnelDesignChatView.tsx`, `apps/web/src/lib/artifacts`, `apps/api/src/modules/funnels`, `documentation/features/website-artifacts.md`

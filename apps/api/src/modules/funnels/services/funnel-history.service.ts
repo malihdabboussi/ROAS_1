@@ -46,7 +46,6 @@ export interface RestorableChangeSet {
   metadata: Record<string, unknown>
   created_at: string
   updated_at: string
-  is_bookmarked?: boolean
 }
 
 const SNAPSHOT_COMPARE_KEYS = [
