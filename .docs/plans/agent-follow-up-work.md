@@ -8471,3 +8471,19 @@ Evidence: `supabase db push --dry-run` connected successfully but stopped becaus
 Needed work: Reconcile the linked branch with `supabase migration repair` and `supabase db pull` under the repository's database-release workflow, then dry-run and apply the Inbox migration and run advisors.
 
 Reason not done now: Repairing shared remote migration history is a separate database operation and could alter migration state beyond this feature.
+
+## 2026-07-25 - [ARCH] CEO chat quick-start wiring touches oversized Space chat panel
+
+Status: Open
+
+Found while: Replacing decorative CEO chat prompt seeds with executable workflow routing
+
+Files:
+
+- `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx` (2,454 LOC; grandfathered component hard-limit violation)
+
+Evidence: The quick-start lifecycle and panel props were extracted into focused private modules, reducing the panel below its 2,469-line architecture allowance. It was already documented as a decomposition target and remains far above the 400-line component limit.
+
+Needed work: Continue the planned Space chat decomposition by extracting conversation/session orchestration and the composer/send shell behind focused hooks and private components.
+
+Reason not done now: Decomposing the entire chat runtime would materially expand this behavior-focused change and increase regression risk across streaming, voice, queues, artifact editing, and conversation history.
