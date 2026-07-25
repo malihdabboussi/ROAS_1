@@ -43,10 +43,19 @@ describe('FunnelHistoryRepository', () => {
   })
 
   it('scopes bookmark updates to both the funnel and change set', async () => {
-    const query = createHistoryQuery({
-      data: { id: 'change-1', is_bookmarked: true },
-      error: null,
-    })
+    const query = createHistoryQuery(null)
+    query.maybeSingle
+      .mockResolvedValueOnce({
+        data: { id: 'change-1', metadata: { source: 'design' } },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: {
+          id: 'change-1',
+          metadata: { source: 'design', is_bookmarked: true },
+        },
+        error: null,
+      })
     const supabase = { from: vi.fn(() => query) }
     const repository = new FunnelHistoryRepository()
 
@@ -56,8 +65,12 @@ describe('FunnelHistoryRepository', () => {
       bookmarked: true,
     })
 
-    expect(query.update).toHaveBeenCalledWith({ is_bookmarked: true })
+    expect(query.update).toHaveBeenCalledWith({
+      metadata: { source: 'design', is_bookmarked: true },
+    })
     expect(query.eq).toHaveBeenNthCalledWith(1, 'id', 'change-1')
     expect(query.eq).toHaveBeenNthCalledWith(2, 'funnel_id', 'funnel-1')
+    expect(query.eq).toHaveBeenNthCalledWith(3, 'id', 'change-1')
+    expect(query.eq).toHaveBeenNthCalledWith(4, 'funnel_id', 'funnel-1')
   })
 })

@@ -39,7 +39,7 @@ Studio or agent writes funnel_files
   -> restored page rows are touched so previews refetch the active bundle
 ```
 
-History scope is the current page plus shared files. The funnel toolbar exposes Undo, Redo, and a date-grouped version-history menu for funnels and websites backed by HTML bundles. Each entry identifies whether the user or Vibey made the edit, can be bookmarked, and can restore that page version. A restore creates another durable change set, so restoring never destroys the versions that came after it. History does not currently version assets, funnel settings, or legacy TSX page content.
+History scope is the current page plus shared files. The funnel toolbar exposes Undo, Redo, and a date-grouped version-history menu for funnels and websites backed by HTML bundles. Each entry identifies whether the user or Vibey made the edit, can be bookmarked through its existing change-set metadata, and can restore that page version. A restore creates another durable change set, so restoring never destroys the versions that came after it. History does not currently version assets, funnel settings, or legacy TSX page content.
 
 ### Full-Mode Editing and Publishing
 
