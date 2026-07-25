@@ -184,11 +184,7 @@ export function SidebarTeam2Flyout({ pathname, embedded = false }: SidebarTeam2F
 
         {/* Direct Messages */}
         <div>
-          <div className="flex items-center justify-between px-3 pb-1 pt-1">
-            <span className="text-[10px] font-medium tracking-wider text-[var(--color-muted-foreground)]">
-              Direct messages
-            </span>
-          </div>
+          <p className="hub-dock-flyout-caption">Direct messages</p>
           {(agentsLoading || (bootstrapLoading && sortedAgents.length === 0)) && (
             <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">Loading…</p>
           )}
@@ -218,7 +214,7 @@ export function SidebarTeam2Flyout({ pathname, embedded = false }: SidebarTeam2F
               {/* Spacer matches the 20px avatar + 8px gap so the label aligns with agent names. */}
               <span className="inline-block h-5 w-5 shrink-0" aria-hidden />
               <span className="body-3">
-                {dmExpanded ? 'See less' : `See more (${sortedAgents.length - DM_RECENT_LIMIT})`}
+                {dmExpanded ? 'Show less' : `Show more (${sortedAgents.length - DM_RECENT_LIMIT})`}
               </span>
             </button>
           )}
@@ -226,11 +222,7 @@ export function SidebarTeam2Flyout({ pathname, embedded = false }: SidebarTeam2F
 
         {showOrgCollaboration ? (
           <div>
-            <div className="flex items-center justify-between px-3 pb-1 pt-1">
-              <span className="text-[10px] font-medium tracking-wider text-[var(--color-muted-foreground)]">
-                People
-              </span>
-            </div>
+            <p className="hub-dock-flyout-caption">People</p>
             {(peopleLoading || (bootstrapLoading && people.length === 0)) && (
               <p className="px-3 py-1 text-[11px] text-[var(--color-muted-foreground)]">Loading…</p>
             )}
@@ -263,7 +255,7 @@ export function SidebarTeam2Flyout({ pathname, embedded = false }: SidebarTeam2F
               >
                 <span className="inline-block h-5 w-5 shrink-0" aria-hidden />
                 <span className="body-3">
-                  {peopleExpanded ? 'See less' : `See more (${people.length - DM_RECENT_LIMIT})`}
+                  {peopleExpanded ? 'Show less' : `Show more (${people.length - DM_RECENT_LIMIT})`}
                 </span>
               </button>
             )}

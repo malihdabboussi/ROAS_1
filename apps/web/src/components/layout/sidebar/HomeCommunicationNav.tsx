@@ -231,7 +231,7 @@ export function HomeCommunicationNav({
                 >
                   <span className="inline-block h-4 w-4 shrink-0" aria-hidden />
                   <span className="body-3">
-                    {expanded ? 'See less' : `See more (${sorted.length - CHANNELS_RECENT_LIMIT})`}
+                    {expanded ? 'Show less' : `Show more (${sorted.length - CHANNELS_RECENT_LIMIT})`}
                   </span>
                 </button>
               )}

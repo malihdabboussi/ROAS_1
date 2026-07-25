@@ -2,15 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import {
-  BadgeCheck,
   Bot,
   Brain,
   Building2,
   GraduationCap,
   LayoutGrid,
-  MoreHorizontal,
   Plus,
   Share2,
   User,
@@ -23,113 +21,16 @@ import { useBrainScopeMenuActions } from '@/features/brain/hooks/use-brain-scope
 import type { BrainScopeNavOption } from '@/features/brain/hooks/use-brain-scope-nav-options'
 import { useBrainScopeNavOptions } from '@/features/brain/hooks/use-brain-scope-nav-options'
 import { dispatchBrainAddAgentModal } from '@/features/brain/lib/brain-agent-modal.events'
-import { brainHomeHref, brainScopeHref } from '@/features/brain/lib/brain-scope-nav'
+import { brainHomeHref } from '@/features/brain/lib/brain-scope-nav'
 import { dispatchBrainTrainModal } from '@/features/brain/lib/brain-training-modal.events'
-
-const CAMPAIGN_KNOWLEDGE_RECENT_LIMIT = 5
-
-function scopeRowIcon(option: BrainScopeNavOption, fallback: ReactNode): ReactNode {
-  const imageUrl = option.imageUrl?.trim()
-  if (imageUrl) {
-    return <img src={imageUrl} alt="" className="hub-dock-flyout-avatar" />
-  }
-  return fallback
-}
-
-function sectionHeader(label: string) {
-  return <p className="hub-dock-flyout-caption">{label}</p>
-}
-
-function EnableBrainRow({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <Link
-      href={brainHomeHref()}
-      data-hub-dock-navigate
-      onClick={() => onNavigate?.()}
-      className="hub-dock-flyout-row hub-dock-flyout-row-muted"
-    >
-      <span className="min-w-0 flex-1 truncate">Enable in Manage Brains</span>
-    </Link>
-  )
-}
-
-function BrainScopeRow({
-  option,
-  pathname,
-  currentScope,
-  onNavigate,
-  icon,
-  menuOpen,
-  onOpenMenu,
-}: {
-  option: BrainScopeNavOption
-  pathname: string
-  currentScope: string | null
-  onNavigate?: () => void
-  icon: ReactNode
-  menuOpen: boolean
-  onOpenMenu: (option: BrainScopeNavOption, clientX: number, clientY: number) => void
-}) {
-  const isActive = pathname.startsWith('/brain') && currentScope === option.id
-
-  const openMenuAt = (clientX: number, clientY: number) => {
-    onOpenMenu(option, clientX, clientY)
-  }
-
-  const openMenuFromButton = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const rect = e.currentTarget.getBoundingClientRect()
-    onOpenMenu(option, rect.right - 224, rect.bottom + 4)
-  }
-
-  return (
-    <div
-      className="group/brain-scope relative flex items-center"
-      onContextMenu={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        openMenuAt(e.clientX, e.clientY)
-      }}
-    >
-      <Link
-        href={brainScopeHref(option.id)}
-        data-hub-dock-navigate
-        onClick={() => onNavigate?.()}
-        className={`hub-dock-flyout-row pr-8 ${isActive ? 'hub-dock-flyout-row-active' : ''}`}
-      >
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full">
-          {icon}
-        </span>
-        <span className="min-w-0 flex-1 truncate">{option.label}</span>
-        {option.scopeType === 'person' ? (
-          option.personIdentityKind === 'portal' ? (
-            <BadgeCheck className="text-primary h-3.5 w-3.5 shrink-0" aria-label="Portal account" />
-          ) : (
-            <UserRound
-              className="text-muted-foreground h-3.5 w-3.5 shrink-0"
-              aria-label="External person"
-            />
-          )
-        ) : null}
-      </Link>
-      <div className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center">
-        <button
-          type="button"
-          aria-label="Brain actions"
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
-          onClick={openMenuFromButton}
-          className={`absolute inset-0 flex items-center justify-center rounded p-0.5 text-[var(--color-muted-foreground)] transition-opacity hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)] ${
-            menuOpen ? 'opacity-100' : 'opacity-0 group-hover/brain-scope:opacity-100'
-          }`}
-        >
-          <MoreHorizontal className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    </div>
-  )
-}
+import {
+  BrainScopeRow,
+  CAMPAIGN_KNOWLEDGE_RECENT_LIMIT,
+  EnableBrainRow,
+  scopeRowIcon,
+  sectionHeader,
+  USER_BRAIN_RECENT_LIMIT,
+} from './SidebarBrainFlyoutRows'
 
 export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
@@ -142,6 +43,7 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
     position: { x: number; y: number }
   } | null>(null)
   const [campaignKnowledgeExpanded, setCampaignKnowledgeExpanded] = useState(false)
+  const [userBrainsExpanded, setUserBrainsExpanded] = useState(false)
 
   const {
     userBrain,
@@ -176,6 +78,11 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
       campaignKnowledge,
     }
   }, [scopeOptions])
+
+  const peopleAndShared = useMemo(
+    () => [...personBrains, ...sharedBrains],
+    [personBrains, sharedBrains],
+  )
 
   const openMenu = (option: BrainScopeNavOption, clientX: number, clientY: number) => {
     setMenuState({ option, position: { x: clientX, y: clientY } })
@@ -225,54 +132,65 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
                 pathname={pathname}
                 currentScope={currentScope}
                 onNavigate={onNavigate}
-                icon={scopeRowIcon(userBrain, <User className="h-4 w-4 shrink-0" />)}
+                icon={scopeRowIcon(userBrain, User)}
                 menuOpen={isMenuOpenFor(userBrain.id)}
                 onOpenMenu={openMenu}
               />
             ) : (
               <EnableBrainRow onNavigate={onNavigate} />
             )}
-            {personBrains.map((option) => (
-              <BrainScopeRow
-                key={option.id}
-                option={option}
-                pathname={pathname}
-                currentScope={currentScope}
-                onNavigate={onNavigate}
-                icon={scopeRowIcon(option, <UserRound className="h-4 w-4 shrink-0" />)}
-                menuOpen={isMenuOpenFor(option.id)}
-                onOpenMenu={openMenu}
-              />
-            ))}
-            {sharedBrains.map((option) => (
-              <BrainScopeRow
-                key={option.id}
-                option={option}
-                pathname={pathname}
-                currentScope={currentScope}
-                onNavigate={onNavigate}
-                icon={scopeRowIcon(option, <Share2 className="h-4 w-4 shrink-0" />)}
-                menuOpen={isMenuOpenFor(option.id)}
-                onOpenMenu={openMenu}
-              />
-            ))}
+            {(userBrainsExpanded ? peopleAndShared : peopleAndShared.slice(0, USER_BRAIN_RECENT_LIMIT)).map(
+              (option) => (
+                <BrainScopeRow
+                  key={option.id}
+                  option={option}
+                  pathname={pathname}
+                  currentScope={currentScope}
+                  onNavigate={onNavigate}
+                  icon={scopeRowIcon(
+                    option,
+                    option.scopeType === 'shared' ? Share2 : UserRound,
+                  )}
+                  menuOpen={isMenuOpenFor(option.id)}
+                  onOpenMenu={openMenu}
+                />
+              ),
+            )}
+            {peopleAndShared.length > USER_BRAIN_RECENT_LIMIT ? (
+              <button
+                type="button"
+                onClick={() => setUserBrainsExpanded((v) => !v)}
+                className="hover:bg-hover-subtle flex w-full items-center gap-3 rounded-lg px-2.5 py-1.5 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+              >
+                <span className="inline-block h-5 w-5 shrink-0" aria-hidden />
+                <span className="body-3">
+                  {userBrainsExpanded
+                    ? 'Show less'
+                    : `Show more (${peopleAndShared.length - USER_BRAIN_RECENT_LIMIT})`}
+                </span>
+              </button>
+            ) : null}
           </div>
 
           {companyBrain ? (
-            <div className="space-y-0.5">
-              {sectionHeader('Company brains')}
-              <BrainScopeRow
-                option={companyBrain}
-                pathname={pathname}
-                currentScope={currentScope}
-                onNavigate={onNavigate}
-                icon={<Building2 className="h-4 w-4 shrink-0" />}
-                menuOpen={isMenuOpenFor(companyBrain.id)}
-                onOpenMenu={openMenu}
-              />
-            </div>
+            <>
+              <div className="hub-dock-flyout-divider" role="separator" />
+              <div className="space-y-0.5">
+                {sectionHeader('Company brains')}
+                <BrainScopeRow
+                  option={companyBrain}
+                  pathname={pathname}
+                  currentScope={currentScope}
+                  onNavigate={onNavigate}
+                  icon={scopeRowIcon(companyBrain, Building2)}
+                  menuOpen={isMenuOpenFor(companyBrain.id)}
+                  onOpenMenu={openMenu}
+                />
+              </div>
+            </>
           ) : null}
 
+          <div className="hub-dock-flyout-divider" role="separator" />
           <div className="space-y-0.5">
             {sectionHeader('Customer brains')}
             {customerBrain ? (
@@ -281,7 +199,7 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
                 pathname={pathname}
                 currentScope={currentScope}
                 onNavigate={onNavigate}
-                icon={<Users className="h-4 w-4 shrink-0" />}
+                icon={scopeRowIcon(customerBrain, Users)}
                 menuOpen={isMenuOpenFor(customerBrain.id)}
                 onOpenMenu={openMenu}
               />
@@ -290,6 +208,7 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
             )}
           </div>
 
+          <div className="hub-dock-flyout-divider" role="separator" />
           <div className="space-y-0.5">
             {sectionHeader('Agent brains')}
             {agentBrains.length === 0 && agentsWithoutBrain.length === 0 ? (
@@ -302,7 +221,7 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
                   pathname={pathname}
                   currentScope={currentScope}
                   onNavigate={onNavigate}
-                  icon={scopeRowIcon(option, <Bot className="h-4 w-4 shrink-0" />)}
+                  icon={scopeRowIcon(option, Bot)}
                   menuOpen={isMenuOpenFor(option.id)}
                   onOpenMenu={openMenu}
                 />
@@ -324,6 +243,7 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
             ) : null}
           </div>
 
+          <div className="hub-dock-flyout-divider" role="separator" />
           <div className="space-y-0.5">
             {sectionHeader('Campaign Knowledge')}
             {campaignKnowledge.length === 0 ? (
@@ -342,7 +262,7 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
                     pathname={pathname}
                     currentScope={currentScope}
                     onNavigate={onNavigate}
-                    icon={<Brain className="h-4 w-4 shrink-0" />}
+                    icon={scopeRowIcon(option, Brain)}
                     menuOpen={isMenuOpenFor(option.id)}
                     onOpenMenu={openMenu}
                   />
@@ -351,13 +271,13 @@ export function SidebarBrainNavLinks({ onNavigate }: { onNavigate?: () => void }
                   <button
                     type="button"
                     onClick={() => setCampaignKnowledgeExpanded((v) => !v)}
-                    className="hover:bg-hover-subtle flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+                    className="hover:bg-hover-subtle flex w-full items-center gap-3 rounded-lg px-2.5 py-1.5 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--foreground)]"
                   >
-                    <span className="inline-block h-4 w-4 shrink-0" aria-hidden />
+                    <span className="inline-block h-5 w-5 shrink-0" aria-hidden />
                     <span className="body-3">
                       {campaignKnowledgeExpanded
-                        ? 'See less'
-                        : `See more (${campaignKnowledge.length - CAMPAIGN_KNOWLEDGE_RECENT_LIMIT})`}
+                        ? 'Show less'
+                        : `Show more (${campaignKnowledge.length - CAMPAIGN_KNOWLEDGE_RECENT_LIMIT})`}
                     </span>
                   </button>
                 ) : null}

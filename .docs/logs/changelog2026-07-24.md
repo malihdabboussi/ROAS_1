@@ -1,5 +1,15 @@
 # Changelog - July 24, 2026
 
+## [2026-07-24 21:34] - [STYLE]
+
+What: Extended the Programs ClickUp-style polish to all hub-rail flyouts (Team, Brain, More, and the shared communication/channels nav) by upgrading the shared `.hub-dock-flyout-*` utilities instead of a second system — `.hub-dock-flyout-row` now uses `body-2` type, `.hub-dock-flyout-caption` is a stronger uppercase section header, and a new `.hub-dock-flyout-divider` hairline separates sections. Brain flyout now renders tinted square scope tiles (`badge-glass-*` per scope type), section dividers, and truncates the User-brains group to the first 5 with a "Show more" toggle (User brain always pinned above). Extracted the Brain row/helper presentational code into `SidebarBrainFlyoutRows.tsx` to stay under the 400-line limit. Unified Team section subheaders and "Show more" wording across flyouts.
+
+Why: The wider flyouts read inconsistently vs the new Programs menu, and user brains overflowed the fixed-height Brain flyout viewport.
+
+Impact: Team/Brain/More/channels flyouts share one denser, more readable ClickUp-like hierarchy; Brain no longer overflows and navigation to every brain is preserved (Show more reveals the rest). No ACL, routing, or data changes. Fixed-width viewport + truncate unchanged. Hub-dock utilities are web-dashboard-only (not present in `apps/website`), so no website globals sync needed.
+
+Files: `apps/web/src/app/globals.css`, `apps/web/src/components/layout/sidebar/SidebarBrainFlyout.tsx`, `SidebarBrainFlyoutRows.tsx` (new), `SidebarTeam2Flyout.tsx`, `HomeCommunicationNav.tsx`
+
 ## [2026-07-24 21:20] - [STYLE]
 
 What: Programs flyout ClickUp-style visual polish — section dividers (All Tasks / tree / New Program), `body-2` row labels, larger flyout title, colored program icon tiles (`badge-glass-*`), and deterministic default colors when `icon_color` is empty (user picks preserved). New Program modal defaults to a colorful swatch.

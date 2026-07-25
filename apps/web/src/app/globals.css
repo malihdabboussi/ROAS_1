@@ -10850,10 +10850,17 @@ html.dark .hub-dock-flyout {
   color: var(--color-muted-foreground);
 }
 .hub-dock-flyout-caption {
-  padding: 6px 10px 2px;
-  font-size: 11px;
-  font-weight: 500;
+  padding: 10px 10px 3px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--color-tertiary);
+}
+.hub-dock-flyout-divider {
+  height: 1px;
+  margin: 6px 8px;
+  background: var(--color-border);
 }
 .hub-dock-flyout-row {
   display: flex;
@@ -10862,7 +10869,7 @@ html.dark .hub-dock-flyout {
   gap: 12px;
   border-radius: 8px;
   padding: 7px 10px;
-  font-size: 13px;
+  font-size: var(--text-body-2);
   font-weight: 500;
   color: var(--color-nav);
   transition:
