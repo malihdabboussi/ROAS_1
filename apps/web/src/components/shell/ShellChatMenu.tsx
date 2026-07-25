@@ -25,7 +25,7 @@ import {
   type ConversationAgentDisplay,
 } from '@/lib/conversations'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
-import { isShellHomeRoute } from './shell-route-policy'
+import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
 import { useShellStore } from './use-shell-store'
 
 type ChatListFilter = 'all' | 'pinned' | 'campaign' | 'non-campaign' | `agent:${string}`

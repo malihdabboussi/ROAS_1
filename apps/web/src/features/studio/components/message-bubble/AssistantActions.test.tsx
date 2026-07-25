@@ -2,8 +2,15 @@ import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AssistantActions } from './AssistantActions'
 
+interface MockFeedbackActionsProps {
+  onFork?: () => void | Promise<void>
+  [key: string]: unknown
+}
+
 const actionMocks = vi.hoisted(() => ({
-  AgentTurnFeedbackActions: vi.fn(() => <div data-testid="agent-turn-feedback-actions" />),
+  AgentTurnFeedbackActions: vi.fn((_props: MockFeedbackActionsProps) => (
+    <div data-testid="agent-turn-feedback-actions" />
+  )),
   forkConversation: vi.fn(),
   push: vi.fn(),
 }))

@@ -215,3 +215,13 @@ Why: Ads Production could launch the prior video form but the worker did not rec
 Impact: Users can choose Static ads or Video ads, request 1-10 client-ready static outputs, attach approved people/products/proof, and have Lux create visually verified image Deliverables in Space Media. Vibey can invoke the same Static Ad Book conversationally. Focused web, API, agent-api, and mission-worker tests pass; the supplied renderer produced and passed visual QA on a real 1080x1350 PNG.
 
 Files: `apps/web/src/features/spaces/components/ads-research/*StaticAd*`, `apps/web/src/features/spaces/components/ads-research/AdsResearchProductionView.tsx`, `apps/web/src/features/spaces/components/playbooks/static-ad-production*`, `apps/web/src/features/spaces/config/static-ad-formats.config.ts`, `apps/mission-worker/src/modules/missions/playbooks/*ad-production*`, `apps/mission-worker/src/modules/missions/playbooks/ig-organic-video-ad.playbook.ts`, `apps/mission-worker/src/modules/missions/services/phases/mission-plan-phase.service.ts`, `apps/api/src/modules/missions/services/webinar-fulfillment-team.service.ts`, `apps/agent-api/src/modules/agent-sync/services/static-ad-book-skill-contract.test.ts`, `supabase/migrations/20260724143000_static_ad_book_skill.sql`, `documentation/features/social-research.md`
+
+## [2026-07-24 20:55] - [FIX]
+
+What: Restored the missing workspace-route policy import used when deleting the currently selected shell conversation and made the fork-action mock preserve its component prop contract during type checking.
+
+Why: The web production build correctly rejected a reference to `isShellWorkspaceRoute` that was not imported into `ShellChatMenu`.
+
+Impact: The shell preserves its intended post-delete navigation behavior, the fork regression remains type-safe, and the web release can complete type checking.
+
+Files: `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/features/studio/components/message-bubble/AssistantActions.test.tsx`
