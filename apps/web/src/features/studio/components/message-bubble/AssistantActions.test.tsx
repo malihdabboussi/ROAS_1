@@ -89,7 +89,10 @@ describe('AssistantActions', () => {
       />,
     )
 
-    const props = actionMocks.AgentTurnFeedbackActions.mock.calls.at(-1)?.[0]
+    const lastCall = actionMocks.AgentTurnFeedbackActions.mock.calls.at(-1) as
+      | [{ onFork?: () => void | Promise<void> }]
+      | undefined
+    const props = lastCall?.[0]
     await act(async () => {
       await props?.onFork?.()
     })
