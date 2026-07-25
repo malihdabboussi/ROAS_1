@@ -1,32 +1,32 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ListTodo } from 'lucide-react'
 import { toast } from 'sonner'
-import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
+import { TaskWorkViewContent, WorkViewTabs } from '@/components/work-views'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { fetchPrograms, type Program } from '@/lib/programs'
 import { buildSpaceItemHref } from '@/lib/spaces/space-item-href'
-import { fetchTaskRollup, type TaskRollupItem, type TaskRollupView } from '@/lib/tasks'
+import type { TaskRollupItem, TaskRollupView } from '@/lib/tasks'
+import { resolveWorkViewFromSearch, useTaskRollup, type TaskWorkViewId } from '@/lib/work-views'
 import { ALL_TASKS_TOAST_ERRORS } from '../config/all-tasks-toast-errors.config'
-
-function formatDue(value: string | null): string {
-  if (!value) return '—'
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-}
 
 export function AllTasksBoard() {
   const router = useRouter()
-  const [view, setView] = useState<TaskRollupView>('my')
-  const [programId, setProgramId] = useState<string>('')
-  const [campaignId, setCampaignId] = useState<string>('')
+  const searchParams = useSearchParams()
+  const [scope, setScope] = useState<TaskRollupView>(
+    searchParams.get('scope') === 'all' ? 'all' : 'my',
+  )
+  const [workView, setWorkView] = useState<TaskWorkViewId>(() =>
+    resolveWorkViewFromSearch(
+      { view: searchParams.get('view'), tab: searchParams.get('tab') },
+      'list',
+    ),
+  )
+  const [programId, setProgramId] = useState(searchParams.get('program') ?? '')
+  const [campaignId, setCampaignId] = useState(searchParams.get('campaign') ?? '')
   const [programs, setPrograms] = useState<Program[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [items, setItems] = useState<TaskRollupItem[]>([])
-  const [loading, setLoading] = useState(true)
 
   const loadMeta = useCallback(async () => {
     const [programRows, campaignRows] = await Promise.all([
@@ -37,31 +37,51 @@ export function AllTasksBoard() {
     setCampaigns(campaignRows)
   }, [])
 
-  const loadItems = useCallback(async () => {
-    setLoading(true)
-    try {
-      const rows = await fetchTaskRollup({
-        view,
-        programId: programId || null,
-        campaignId: campaignId || null,
-        limit: 200,
-      })
-      setItems(rows)
-    } catch {
-      toast.error(ALL_TASKS_TOAST_ERRORS.LOAD_FAILED.userMessage)
-      setItems([])
-    } finally {
-      setLoading(false)
-    }
-  }, [view, programId, campaignId])
+  const handleLoadError = useCallback(() => {
+    toast.error(ALL_TASKS_TOAST_ERRORS.LOAD_FAILED.userMessage)
+  }, [])
+
+  const { items, loading } = useTaskRollup({
+    scope,
+    programId: programId || null,
+    campaignId: campaignId || null,
+    onError: handleLoadError,
+  })
 
   useEffect(() => {
     void loadMeta()
   }, [loadMeta])
 
   useEffect(() => {
-    void loadItems()
-  }, [loadItems])
+    const nextScope = searchParams.get('scope') === 'all' ? 'all' : 'my'
+    const nextView = resolveWorkViewFromSearch(
+      { view: searchParams.get('view'), tab: searchParams.get('tab') },
+      'list',
+    )
+    setScope(nextScope)
+    setWorkView(nextView)
+    setProgramId(searchParams.get('program') ?? '')
+    setCampaignId(searchParams.get('campaign') ?? '')
+  }, [searchParams])
+
+  const updateSearch = useCallback(
+    (updates: Record<string, string>) => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('tab')
+      for (const [key, value] of Object.entries(updates)) {
+        if (value) params.set(key, value)
+        else params.delete(key)
+      }
+      const query = params.toString()
+      router.replace(`/all-tasks${query ? `?${query}` : ''}`, { scroll: false })
+    },
+    [router, searchParams],
+  )
+
+  useEffect(() => {
+    if (!searchParams.get('tab') || searchParams.get('view')) return
+    updateSearch({ view: workView })
+  }, [searchParams, updateSearch, workView])
 
   const campaignOptions = useMemo(() => {
     if (!programId) return campaigns
@@ -78,13 +98,23 @@ export function AllTasksBoard() {
           </p>
         </div>
 
-        <div className="mb-spacing-4 gap-spacing-2 flex flex-wrap items-center">
+        <div className="mb-spacing-4 gap-spacing-2 flex flex-wrap items-center justify-between">
+          <WorkViewTabs
+            value={workView}
+            onChange={(nextView) => {
+              setWorkView(nextView)
+              updateSearch({ view: nextView })
+            }}
+          />
           <div className="gap-spacing-1 border-border flex rounded-lg border p-1">
             <button
               type="button"
-              onClick={() => setView('my')}
+              onClick={() => {
+                setScope('my')
+                updateSearch({ scope: '' })
+              }}
               className={`body-3 rounded-md px-3 py-1.5 font-medium ${
-                view === 'my'
+                scope === 'my'
                   ? 'button-glass-accent'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
@@ -93,9 +123,12 @@ export function AllTasksBoard() {
             </button>
             <button
               type="button"
-              onClick={() => setView('all')}
+              onClick={() => {
+                setScope('all')
+                updateSearch({ scope: 'all' })
+              }}
               className={`body-3 rounded-md px-3 py-1.5 font-medium ${
-                view === 'all'
+                scope === 'all'
                   ? 'button-glass-accent'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
@@ -109,6 +142,7 @@ export function AllTasksBoard() {
             onChange={(e) => {
               setProgramId(e.target.value)
               setCampaignId('')
+              updateSearch({ program: e.target.value, campaign: '' })
             }}
             className="input-glass body-3 text-foreground rounded-lg px-3 py-2"
             aria-label="Filter by program"
@@ -123,7 +157,10 @@ export function AllTasksBoard() {
 
           <select
             value={campaignId}
-            onChange={(e) => setCampaignId(e.target.value)}
+            onChange={(e) => {
+              setCampaignId(e.target.value)
+              updateSearch({ campaign: e.target.value })
+            }}
             className="input-glass body-3 text-foreground rounded-lg px-3 py-2"
             aria-label="Filter by campaign"
           >
@@ -136,56 +173,19 @@ export function AllTasksBoard() {
           </select>
         </div>
 
-        {loading ? (
-          <div className="flex min-h-[240px] items-center justify-center">
-            <VibeyLoadingOrb text="Loading tasks..." state="processing" size="sm" />
-          </div>
-        ) : items.length === 0 ? (
-          <div className="surface-card border-border rounded-spacing-3 p-spacing-6 border text-center">
-            <ListTodo className="text-muted-foreground mb-spacing-2 mx-auto h-8 w-8" />
-            <p className="body-2 text-foreground font-medium">No open tasks</p>
-            <p className="body-3 text-muted-foreground mt-spacing-1">
-              {view === 'my'
-                ? 'Nothing assigned to you in this scope.'
-                : 'No open tasks match these filters.'}
-            </p>
-          </div>
-        ) : (
-          <div className="surface-card border-border rounded-spacing-3 overflow-hidden border">
-            <div className="border-border text-muted-foreground body-4 hidden grid-cols-12 gap-2 border-b px-4 py-2 font-medium md:grid">
-              <span className="col-span-4">Task</span>
-              <span className="col-span-2">Campaign</span>
-              <span className="col-span-2">Space</span>
-              <span className="col-span-2">Status</span>
-              <span className="col-span-2">Due</span>
-            </div>
-            <ul>
-              {items.map((item) => (
-                <li key={item.id} className="border-border border-b last:border-b-0">
-                  <button
-                    type="button"
-                    onClick={() => router.push(buildSpaceItemHref(item.space_id, item.id))}
-                    className="hover:bg-hover-subtle body-3 text-foreground grid w-full grid-cols-1 gap-1 px-4 py-3 text-left md:grid-cols-12 md:items-center md:gap-2"
-                  >
-                    <span className="col-span-4 truncate font-medium">{item.title}</span>
-                    <span className="text-muted-foreground col-span-2 truncate">
-                      {item.campaign_name ?? '—'}
-                    </span>
-                    <span className="text-muted-foreground col-span-2 truncate">
-                      {item.space_title}
-                    </span>
-                    <span className="text-muted-foreground col-span-2 truncate capitalize">
-                      {item.status.replace(/_/g, ' ')}
-                    </span>
-                    <span className="text-muted-foreground col-span-2 truncate">
-                      {formatDue(item.due_at)}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <TaskWorkViewContent
+          view={workView}
+          items={items}
+          loading={loading}
+          emptyMessage={
+            scope === 'my'
+              ? 'Nothing assigned to you in this scope.'
+              : 'No open tasks match these filters.'
+          }
+          onOpenTask={(item: TaskRollupItem) =>
+            router.push(buildSpaceItemHref(item.space_id, item.id))
+          }
+        />
       </div>
     </div>
   )

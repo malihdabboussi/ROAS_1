@@ -40,12 +40,20 @@ export const CreateProgramSchema = z.object({
 })
 export type CreateProgramInput = z.infer<typeof CreateProgramSchema>
 
+export const ProgramWorkViewSchema = z.enum(['overview', 'list', 'board', 'calendar'])
+
 export const UpdateProgramSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   icon: z.string().trim().max(80).nullable().optional(),
   icon_color: z.string().trim().max(40).nullable().optional(),
   sort_order: z.number().int().min(0).optional(),
   visibility: ProgramVisibilitySchema.optional(),
+  config: z
+    .object({
+      visible_program_views: z.array(ProgramWorkViewSchema).min(1).max(4),
+    })
+    .strict()
+    .optional(),
 })
 export type UpdateProgramInput = z.infer<typeof UpdateProgramSchema>
 

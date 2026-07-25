@@ -177,4 +177,54 @@ describe('ProgramsService', () => {
     )
     expect(created.slug).toBe('video-ops')
   })
+
+  it('merges validated work-view preferences into existing Program config', async () => {
+    repo.findById.mockResolvedValue({
+      id: 'p2',
+      org_id: 'org-1',
+      user_id: null,
+      name: 'Video Ops',
+      slug: 'video-ops',
+      system_kind: null,
+      icon: null,
+      icon_color: null,
+      sort_order: 100,
+      config: { personal_default: true, retained: 'yes' },
+      visibility: 'private',
+      created_by: 'user-1',
+      created_at: '',
+      updated_at: '',
+      deleted_at: null,
+    })
+    repo.update.mockResolvedValue({
+      id: 'p2',
+      config: {
+        personal_default: true,
+        retained: 'yes',
+        visible_program_views: ['overview', 'board'],
+      },
+    })
+
+    await service.update(
+      supabase,
+      'p2',
+      { config: { visible_program_views: ['overview', 'board'] } },
+      'user-1',
+      'admin',
+      'org-1',
+    )
+
+    expect(repo.update).toHaveBeenCalledWith(
+      supabase,
+      'p2',
+      {
+        config: {
+          personal_default: true,
+          retained: 'yes',
+          visible_program_views: ['overview', 'board'],
+        },
+      },
+      'org-1',
+    )
+  })
 })

@@ -2,6 +2,10 @@
 export const TOGGLEABLE_CAMPAIGN_TAB_IDS = [
   'overview',
   'dashboard',
+  'list',
+  'board',
+  'calendar',
+  'assets',
   'knowledge',
   'reporting',
 ] as const
@@ -12,6 +16,10 @@ export type ToggleableCampaignTabId = (typeof TOGGLEABLE_CAMPAIGN_TAB_IDS)[numbe
 export const DEFAULT_VISIBLE_CAMPAIGN_TABS: ToggleableCampaignTabId[] = [
   'overview',
   'dashboard',
+  'list',
+  'board',
+  'calendar',
+  'assets',
   'knowledge',
   'reporting',
 ]
@@ -51,6 +59,10 @@ export function readVisibleCampaignTabs(config: unknown): ToggleableCampaignTabI
 export const CAMPAIGN_TAB_LABELS: Record<ToggleableCampaignTabId, string> = {
   overview: 'Overview',
   dashboard: 'Work',
+  list: 'List',
+  board: 'Board',
+  calendar: 'Calendar',
+  assets: 'Assets',
   knowledge: 'Brand & Knowledge',
   reporting: 'Reporting',
 }

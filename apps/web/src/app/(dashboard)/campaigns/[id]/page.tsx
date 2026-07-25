@@ -2,7 +2,17 @@
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BarChart3, BookOpen, LayoutGrid, Menu, PieChart } from 'lucide-react'
+import {
+  BarChart3,
+  BookOpen,
+  CalendarDays,
+  Columns3,
+  FolderOpen,
+  LayoutGrid,
+  List,
+  Menu,
+  PieChart,
+} from 'lucide-react'
 import { LucideIcon } from '@/components/ui/IconPicker'
 import { Tabs, TabsContent } from '@/components/ui/navigation/tabs'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
@@ -10,10 +20,12 @@ import { updateCampaign } from '@/features/studio/services/campaign.service'
 import { CampaignTeamManageModal } from '@/features/team/components/CampaignTeamManageModal'
 import { useUserRole } from '@/hooks/use-user-role'
 import { CampaignHeader } from './_components/CampaignHeader'
+import { CampaignAssetsTab } from './_components/tabs/CampaignAssetsTab'
 import { CampaignDashboardTab } from './_components/tabs/CampaignDashboardTab'
 import { CampaignKnowledgeTab } from './_components/tabs/CampaignKnowledgeTab'
 import { CampaignOverviewTab } from './_components/tabs/CampaignOverviewTab'
 import { CampaignReportingTab } from './_components/tabs/CampaignReportingTab'
+import { CampaignTaskTab } from './_components/tabs/CampaignTaskTab'
 import { useCampaignAutosave } from './_hooks/use-campaign-autosave'
 import { useCampaignDetailData } from './_hooks/use-campaign-detail-data'
 import {
@@ -27,13 +39,17 @@ import {
 const MOBILE_TAB_ICONS: Partial<Record<ToggleableCampaignTabId, typeof BarChart3>> = {
   overview: LayoutGrid,
   dashboard: BarChart3,
+  list: List,
+  board: Columns3,
+  calendar: CalendarDays,
+  assets: FolderOpen,
   knowledge: BookOpen,
   reporting: PieChart,
 }
 
-function resolveTabFromSearch(tabParam: string | null): string {
-  if (!tabParam) return DEFAULT_CAMPAIGN_TAB
-  const normalized = normalizeCampaignTabId(tabParam)
+function resolveTabFromSearch(viewParam: string | null, tabParam: string | null): string {
+  const normalized =
+    normalizeCampaignTabId(viewParam ?? '') ?? normalizeCampaignTabId(tabParam ?? '')
   return normalized ?? DEFAULT_CAMPAIGN_TAB
 }
 
@@ -44,8 +60,9 @@ export default function CampaignDetailPage() {
   const { loading: roleLoading } = useUserRole()
   const [isMobile, setIsMobile] = useState(false)
 
-  const tabParam = searchParams.get('tab')
-  const [activeTab, setActiveTab] = useState(() => resolveTabFromSearch(tabParam))
+  const [activeTab, setActiveTab] = useState(() =>
+    resolveTabFromSearch(searchParams.get('view'), searchParams.get('tab')),
+  )
   const [completionChartType, setCompletionChartType] = useState<'bar' | 'area' | 'line' | 'pie'>(
     'bar',
   )
@@ -81,8 +98,9 @@ export default function CampaignDetailPage() {
     (value: string) => {
       setActiveTab(value)
       const params = new URLSearchParams(searchParams.toString())
-      if (value === DEFAULT_CAMPAIGN_TAB) params.delete('tab')
-      else params.set('tab', value)
+      params.delete('tab')
+      if (value === DEFAULT_CAMPAIGN_TAB) params.delete('view')
+      else params.set('view', value)
       const qs = params.toString()
       router.replace(`/campaigns/${id}${qs ? `?${qs}` : ''}`, { scroll: false })
     },
@@ -103,7 +121,11 @@ export default function CampaignDetailPage() {
   )
 
   useEffect(() => {
-    let current = resolveTabFromSearch(searchParams.get('tab'))
+    const current = resolveTabFromSearch(searchParams.get('view'), searchParams.get('tab'))
+    if (searchParams.get('tab') && !searchParams.get('view')) {
+      handleTabChange(current)
+      return
+    }
     if (!detail.campaign) {
       setActiveTab(current)
       return
@@ -219,20 +241,14 @@ export default function CampaignDetailPage() {
               <Menu className="h-4 w-4" />
             </button>
             <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
-              <LucideIcon
-                name={detail.campaignIcon}
-                className="text-foreground h-4 w-4 shrink-0"
-              />
+              <LucideIcon name={detail.campaignIcon} className="text-foreground h-4 w-4 shrink-0" />
               <span className="body-2 text-foreground min-w-0 truncate font-medium">
                 {detail.campaign.name}
               </span>
             </div>
             <div className="w-spacing-8" />
           </div>
-          <div
-            className="gap-spacing-1 flex items-center justify-center overflow-x-auto py-1"
-            style={{ scrollbarWidth: 'none' }}
-          >
+          <div className="scrollbar-hide gap-spacing-1 flex items-center justify-center overflow-x-auto py-1">
             {mobileTabsVisible.map((tab) => {
               const isActive = activeTab === tab.value
               const Icon = tab.icon
@@ -306,6 +322,22 @@ export default function CampaignDetailPage() {
             timeframeDropdownOpen={timeframeDropdownOpen}
             setTimeframeDropdownOpen={setTimeframeDropdownOpen}
           />
+        </TabsContent>
+
+        <TabsContent value="list" className="animate-tab-enter">
+          <CampaignTaskTab campaignId={id} view="list" />
+        </TabsContent>
+
+        <TabsContent value="board" className="animate-tab-enter">
+          <CampaignTaskTab campaignId={id} view="board" />
+        </TabsContent>
+
+        <TabsContent value="calendar" className="animate-tab-enter">
+          <CampaignTaskTab campaignId={id} view="calendar" />
+        </TabsContent>
+
+        <TabsContent value="assets" className="animate-tab-enter">
+          <CampaignAssetsTab campaignId={id} />
         </TabsContent>
 
         <TabsContent value="knowledge" className="animate-tab-enter">

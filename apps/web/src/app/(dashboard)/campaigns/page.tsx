@@ -2,9 +2,9 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { CampaignsHub } from './_components/CampaignsHub'
 import { useCampaignMode } from '@/features/studio/contexts/CampaignModeContext'
 import { fetchCampaigns } from '@/features/studio/services/campaign.service'
+import { CampaignsHub } from './_components/CampaignsHub'
 
 export default function CampaignsPage() {
   const router = useRouter()
@@ -32,10 +32,9 @@ export default function CampaignsPage() {
           return
         }
         redirected.current = true
-        const icon =
-          ((first.config as Record<string, unknown>)?.icon as string) ?? 'folder-kanban'
+        const icon = ((first.config as Record<string, unknown>)?.icon as string) ?? 'folder-kanban'
         setActiveCampaign(first.id, first.name ?? 'Campaign', icon)
-        router.replace(`/campaigns/${first.id}?tab=dashboard`)
+        router.replace(`/campaigns/${first.id}?view=dashboard`)
       } catch {
         if (!cancelled) setReady(true)
       }

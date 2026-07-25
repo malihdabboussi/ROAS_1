@@ -1,10 +1,5 @@
-'use client'
-
-import { useParams } from 'next/navigation'
-import { CampaignsHub } from '../../campaigns/_components/CampaignsHub'
+import { ProgramWorkspace } from './_components/ProgramWorkspace'
 
 export default function ProgramOverviewPage() {
-  const { id } = useParams<{ id: string }>()
-  if (!id) return null
-  return <CampaignsHub focusProgramId={id} />
+  return <ProgramWorkspace />
 }

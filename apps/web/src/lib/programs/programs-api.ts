@@ -3,6 +3,7 @@ import { backendDelete, backendGet, backendPatch, backendPost } from '@/lib/api/
 export type ProgramSystemKind = 'clients' | 'roas_ops' | 'personal'
 export type ProgramVisibility = 'workspace' | 'private' | 'selected'
 export type ProgramShareLevel = 'view' | 'edit'
+export type ProgramWorkView = 'overview' | 'list' | 'board' | 'calendar'
 
 export type Program = {
   id: string
@@ -70,6 +71,9 @@ export async function updateProgram(
     icon_color?: string | null
     sort_order?: number
     visibility?: ProgramVisibility
+    config?: {
+      visible_program_views: ProgramWorkView[]
+    }
   },
 ): Promise<Program> {
   return backendPatch<Program>(`/api/programs/${encodeURIComponent(id)}`, input)

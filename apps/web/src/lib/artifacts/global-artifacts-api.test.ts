@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { backendGet } from '@/lib/api/backend-client'
-import { fetchGlobalArtifacts } from './global-artifacts-api'
+import { fetchCampaignArtifacts, fetchGlobalArtifacts } from './global-artifacts-api'
 
 vi.mock('@/lib/api/backend-client', () => ({ backendGet: vi.fn() }))
 
@@ -197,5 +197,51 @@ describe('fetchGlobalArtifacts', () => {
       '/api/media/assets?limit=100&offset=100',
       undefined,
     )
+  })
+})
+
+describe('fetchCampaignArtifacts', () => {
+  it('returns only artifacts and media belonging to the requested Campaign', async () => {
+    vi.mocked(backendGet).mockImplementation(async (path: string) => {
+      if (path.startsWith('/api/entity-search?') && path.includes('types=doc')) {
+        return { results: [] } as never
+      }
+      if (path.startsWith('/api/entity-search?') && path.includes('types=artifact')) {
+        return {
+          results: [
+            {
+              kind: 'artifact',
+              id: 'asset-1',
+              label: 'Campaign one ad',
+              subtitle: 'Ad',
+              url: null,
+              campaignId: 'campaign-1',
+              artifactKind: 'ad',
+            },
+            {
+              kind: 'artifact',
+              id: 'asset-2',
+              label: 'Campaign two ad',
+              subtitle: 'Ad',
+              url: null,
+              campaignId: 'campaign-2',
+              artifactKind: 'ad',
+            },
+          ],
+        } as never
+      }
+      if (path.startsWith('/api/media/assets')) return { assets: [], total: 0 } as never
+      if (path === '/api/campaigns') {
+        return [
+          { id: 'campaign-1', name: 'One' },
+          { id: 'campaign-2', name: 'Two' },
+        ] as never
+      }
+      if (path.startsWith('/api/spaces')) return [] as never
+      throw new Error(`Unexpected path: ${path}`)
+    })
+
+    const items = await fetchCampaignArtifacts('campaign-1', '')
+    expect(items.map((item) => item.id)).toEqual(['asset-1'])
   })
 })

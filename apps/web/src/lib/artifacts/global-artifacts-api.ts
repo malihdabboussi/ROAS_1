@@ -134,7 +134,8 @@ function contextLabel(
 
 function mapDocument(row: EntityResult, spaces: Map<string, SpaceResult>): GlobalArtifactItem {
   const route = spaceRoute(row.url)
-  const label = route ? (spaces.get(route.spaceId)?.title ?? 'Space') : 'Conversation'
+  const space = route ? spaces.get(route.spaceId) : null
+  const label = space?.title ?? (route ? 'Space' : 'Conversation')
   return {
     id: row.id,
     title: row.label,
@@ -150,6 +151,7 @@ function mapDocument(row: EntityResult, spaces: Map<string, SpaceResult>): Globa
       entityId: route?.itemId ?? row.id,
       entityTable: route ? 'space_items' : 'conversation_documents',
       spaceId: route?.spaceId,
+      campaignId: space?.campaign_id ?? undefined,
       contextLabel: label,
       contextUrl: route ? `/spaces?space=${encodeURIComponent(route.spaceId)}` : row.url,
       internalUrl: row.url,
@@ -275,4 +277,13 @@ export async function fetchGlobalArtifacts(
     const dateOrder = (b.updatedAt ?? '').localeCompare(a.updatedAt ?? '')
     return dateOrder || a.title.localeCompare(b.title)
   })
+}
+
+export async function fetchCampaignArtifacts(
+  campaignId: string,
+  rawQuery: string,
+  signal?: AbortSignal,
+): Promise<GlobalArtifactItem[]> {
+  const items = await fetchGlobalArtifacts(rawQuery, signal)
+  return items.filter((item) => item.viewer.campaignId === campaignId)
 }

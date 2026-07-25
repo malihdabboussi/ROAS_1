@@ -32,7 +32,13 @@ function campaignIconName(campaign: Campaign): string {
   return ((campaign.config as Record<string, unknown>)?.icon as string) ?? 'folder-kanban'
 }
 
-export function CampaignsHub({ focusProgramId }: { focusProgramId?: string } = {}) {
+export function CampaignsHub({
+  focusProgramId,
+  embedded = false,
+}: {
+  focusProgramId?: string
+  embedded?: boolean
+} = {}) {
   const router = useRouter()
   const { setActiveCampaign } = useCampaignMode()
   const setActiveSpace = useSpacesStore((s) => s.setActiveSpace)
@@ -149,7 +155,7 @@ export function CampaignsHub({ focusProgramId }: { focusProgramId?: string } = {
       setActiveCampaign(campaign.id, campaign.name ?? 'Campaign', icon)
       router.push(
         tab === 'dashboard'
-          ? `/campaigns/${campaign.id}?tab=dashboard`
+          ? `/campaigns/${campaign.id}?view=dashboard`
           : `/campaigns/${campaign.id}`,
       )
     },
@@ -258,18 +264,20 @@ export function CampaignsHub({ focusProgramId }: { focusProgramId?: string } = {
     <div className="h-full min-h-0 overflow-y-auto">
       <div className="p-spacing-4 md:p-spacing-6 mx-auto w-full max-w-3xl">
         <div className="mb-spacing-4 flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="title-h3 text-foreground">
-              {focusProgram ? focusProgram.name.toUpperCase() : 'CAMPAIGNS'}
-            </h1>
-            <p className="body-3 text-muted-foreground mt-spacing-1">
-              {focusProgram
-                ? 'Campaigns and spaces in this program.'
-                : 'Programs group campaigns. Create a campaign inside a program to land it there.'}
-            </p>
-          </div>
+          {!embedded ? (
+            <div className="min-w-0">
+              <h1 className="title-h3 text-foreground">
+                {focusProgram ? focusProgram.name.toUpperCase() : 'CAMPAIGNS'}
+              </h1>
+              <p className="body-3 text-muted-foreground mt-spacing-1">
+                {focusProgram
+                  ? 'Campaigns and spaces in this program.'
+                  : 'Programs group campaigns. Create a campaign inside a program to land it there.'}
+              </p>
+            </div>
+          ) : null}
           <div className="gap-spacing-2 flex flex-wrap items-center">
-            {focusProgram ? (
+            {focusProgram && !embedded ? (
               <Link
                 href="/campaigns"
                 className="button-glass-neutral body-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-medium"
@@ -277,12 +285,14 @@ export function CampaignsHub({ focusProgramId }: { focusProgramId?: string } = {
                 All campaigns
               </Link>
             ) : null}
-            <Link
-              href="/all-tasks"
-              className="button-glass-neutral body-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-medium"
-            >
-              All Tasks
-            </Link>
+            {!embedded ? (
+              <Link
+                href="/all-tasks"
+                className="button-glass-neutral body-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-medium"
+              >
+                All Tasks
+              </Link>
+            ) : null}
             <button
               type="button"
               onClick={() => {

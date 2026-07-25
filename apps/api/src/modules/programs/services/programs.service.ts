@@ -152,7 +152,16 @@ export class ProgramsService {
       )
     }
 
-    const { visibility: _visibility, ...rest } = input
+    const { visibility: _visibility, config, ...fields } = input
+    const rest = config
+      ? {
+          ...fields,
+          config: {
+            ...existing.config,
+            ...config,
+          },
+        }
+      : fields
     const updated =
       Object.keys(rest).length > 0
         ? await this.programsRepo.update(supabase, id, rest, orgId)
