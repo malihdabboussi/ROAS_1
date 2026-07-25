@@ -13,6 +13,11 @@ export interface PresentationElementTrace {
   slide_index: number | null
   source_file: string | null
   source_hint: string | null
+  attributes?: {
+    src: string | null
+    alt: string | null
+    href: string | null
+  } | null
   computed_style?: {
     font_family: string | null
     font_size: string | null

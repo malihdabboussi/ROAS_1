@@ -20,6 +20,7 @@ export interface FunnelHistoryEntry {
   label: string | null
   status: 'applied' | 'undone'
   metadata?: Record<string, unknown>
+  is_bookmarked?: boolean
   created_at: string
   updated_at: string
 }
@@ -44,10 +45,17 @@ export function fetchFunnelHistoryState(funnelId: string, funnelPageId?: string 
   )
 }
 
-export function fetchFunnelHistory(funnelId: string, funnelPageId?: string | null) {
-  return backendGet<FunnelHistoryTimeline>(
+export async function fetchFunnelHistory(funnelId: string, funnelPageId?: string | null) {
+  const timeline = await backendGet<FunnelHistoryTimeline>(
     `/api/funnels/${funnelId}/history${encodePageScope(funnelPageId)}`,
   )
+  return {
+    ...timeline,
+    entries: timeline.entries.map((entry) => ({
+      ...entry,
+      is_bookmarked: entry.metadata?.is_bookmarked === true,
+    })),
+  }
 }
 
 export function undoFunnelChange(funnelId: string, funnelPageId?: string | null) {
@@ -73,4 +81,15 @@ export function restoreFunnelVersion(
     change_set_id: changeSetId,
     ...bodyForPage(funnelPageId),
   })
+}
+
+export function setFunnelHistoryBookmark(
+  funnelId: string,
+  changeSetId: string,
+  bookmarked: boolean,
+) {
+  return backendPost<{ success: boolean; change_set_id: string; bookmarked: boolean }>(
+    `/api/funnels/${funnelId}/history/${changeSetId}/bookmark`,
+    { bookmarked },
+  )
 }

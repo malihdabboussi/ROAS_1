@@ -113,6 +113,9 @@ export function ArtifactPreviewPane({
         onRedo={() => void funnelHistory.redo()}
         onHistoryOpen={() => void funnelHistory.loadHistory()}
         onRestore={(changeSetId) => void funnelHistory.restore(changeSetId)}
+        onBookmark={(changeSetId, bookmarked) =>
+          void funnelHistory.toggleBookmark(changeSetId, bookmarked)
+        }
       />
     ) : null
 

@@ -1,5 +1,15 @@
 # Changelog - July 25, 2026
 
+## 2026-07-25 08:18 - [FEATURE]
+
+What: Added direct text and image editing in full funnel/website mode, serialized background saves with live status feedback, date-grouped and bookmarkable history, one-click first publish, and an explicit Publish updates action.
+
+Why: The builder had durable file history and visual styling, but the core create-edit-recover-publish loop required too many indirect steps compared with leading AI website builders.
+
+Impact: Users can edit selected content in place, replace images from their media library, understand when changes are saved, mark important versions, restore without losing later history, and publish through a clearer snapshot workflow.
+
+Files: `apps/web/src/features/studio`, `apps/web/src/features/spaces/components/chat/FunnelDesignChatView.tsx`, `apps/web/src/lib/artifacts`, `apps/api/src/modules/funnels`, `documentation/features/website-artifacts.md`
+
 ## [2026-07-25 08:22] - [FIX]
 
 What: Added an explicit `copy_approved` handoff for exact-copy IG organic video launches, taught the mission worker to skip only the redundant second confirmation, and added a guarded database migration that updates unchanged skill copies while preserving user-edited variants.

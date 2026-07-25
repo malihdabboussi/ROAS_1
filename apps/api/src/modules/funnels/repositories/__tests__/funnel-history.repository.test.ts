@@ -3,7 +3,7 @@ import { FunnelHistoryRepository } from '../funnel-history.repository'
 
 function createHistoryQuery(result: unknown) {
   const query: Record<string, ReturnType<typeof vi.fn>> = {}
-  for (const method of ['select', 'eq', 'or', 'is', 'in', 'order', 'limit']) {
+  for (const method of ['select', 'update', 'eq', 'or', 'is', 'in', 'order', 'limit']) {
     query[method] = vi.fn(() => query)
   }
   query.maybeSingle = vi.fn(async () => result)
@@ -40,5 +40,37 @@ describe('FunnelHistoryRepository', () => {
 
     expect(query.order).toHaveBeenCalledWith('created_at', { ascending: false })
     expect(query.limit).toHaveBeenCalledWith(50)
+  })
+
+  it('scopes bookmark updates to both the funnel and change set', async () => {
+    const query = createHistoryQuery(null)
+    query.maybeSingle
+      .mockResolvedValueOnce({
+        data: { id: 'change-1', metadata: { source: 'design' } },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: {
+          id: 'change-1',
+          metadata: { source: 'design', is_bookmarked: true },
+        },
+        error: null,
+      })
+    const supabase = { from: vi.fn(() => query) }
+    const repository = new FunnelHistoryRepository()
+
+    await repository.setBookmarked(supabase as never, {
+      funnelId: 'funnel-1',
+      changeSetId: 'change-1',
+      bookmarked: true,
+    })
+
+    expect(query.update).toHaveBeenCalledWith({
+      metadata: { source: 'design', is_bookmarked: true },
+    })
+    expect(query.eq).toHaveBeenNthCalledWith(1, 'id', 'change-1')
+    expect(query.eq).toHaveBeenNthCalledWith(2, 'funnel_id', 'funnel-1')
+    expect(query.eq).toHaveBeenNthCalledWith(3, 'id', 'change-1')
+    expect(query.eq).toHaveBeenNthCalledWith(4, 'funnel_id', 'funnel-1')
   })
 })

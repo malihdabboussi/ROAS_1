@@ -31,6 +31,12 @@ interface RestoreHistoryScope extends HistoryScope {
   changeSetId: string
 }
 
+interface BookmarkHistoryInput {
+  funnelId: string
+  changeSetId: string
+  bookmarked: boolean
+}
+
 export interface RestorableChangeSet {
   id: string
   status: 'applied' | 'undone'
@@ -212,6 +218,16 @@ export class FunnelHistoryService {
       changed: changes.length > 0,
       restored_change_set_id: target.id,
       ...(await this.getState(supabase, input)),
+    }
+  }
+
+  async setBookmark(supabase: SupabaseClient, input: BookmarkHistoryInput) {
+    const changeSet = await this.historyRepo.setBookmarked(supabase, input)
+    if (!changeSet) throw new NotFoundException('Funnel version not found')
+    return {
+      success: true,
+      change_set_id: input.changeSetId,
+      bookmarked: input.bookmarked,
     }
   }
 

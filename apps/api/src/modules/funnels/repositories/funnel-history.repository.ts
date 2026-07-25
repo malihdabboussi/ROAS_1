@@ -131,6 +131,31 @@ export class FunnelHistoryRepository {
     return changeSet
   }
 
+  async setBookmarked(
+    supabase: SupabaseClient,
+    input: { funnelId: string; changeSetId: string; bookmarked: boolean },
+  ) {
+    const { data: existing, error: readError } = await supabase
+      .from('funnel_change_sets')
+      .select('id, metadata')
+      .eq('id', input.changeSetId)
+      .eq('funnel_id', input.funnelId)
+      .maybeSingle()
+    if (readError) throw new Error(`Failed to read funnel version: ${readError.message}`)
+    if (!existing) return null
+    const metadata =
+      existing.metadata && typeof existing.metadata === 'object' ? existing.metadata : {}
+    const { data, error } = await supabase
+      .from('funnel_change_sets')
+      .update({ metadata: { ...metadata, is_bookmarked: input.bookmarked } })
+      .eq('id', input.changeSetId)
+      .eq('funnel_id', input.funnelId)
+      .select('id, metadata')
+      .maybeSingle()
+    if (error) throw new Error(`Failed to bookmark funnel version: ${error.message}`)
+    return data
+  }
+
   async listChangeItems(supabase: SupabaseClient, changeSetId: string) {
     const { data, error } = await supabase
       .from('funnel_change_items')

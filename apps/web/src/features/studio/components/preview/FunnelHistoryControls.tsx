@@ -21,6 +21,7 @@ interface FunnelHistoryControlsProps {
   onRedo: () => void
   onHistoryOpen: () => void
   onRestore: (changeSetId: string) => void
+  onBookmark: (changeSetId: string, bookmarked: boolean) => void
 }
 
 function HistoryIconButton({
@@ -64,6 +65,7 @@ export function FunnelHistoryControls({
   onRedo,
   onHistoryOpen,
   onRestore,
+  onBookmark,
 }: FunnelHistoryControlsProps) {
   const historyTriggerRef = useRef<HTMLButtonElement>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -127,6 +129,7 @@ export function FunnelHistoryControls({
         restoringChangeSetId={restoringChangeSetId}
         onClose={closeHistory}
         onRestore={onRestore}
+        onBookmark={onBookmark}
       />
     </>
   )
