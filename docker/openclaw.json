@@ -344,16 +344,17 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "openrouter/anthropic/claude-opus-4.6",
+        "primary": "openrouter/anthropic/claude-sonnet-4.6",
         "fallbacks": [
-          "openrouter/anthropic/claude-sonnet-4.6",
           "openrouter/google/gemini-3.1-pro-preview",
-          "openrouter/google/gemini-3.5-flash"
+          "openrouter/google/gemini-3.5-flash",
+          "openrouter/anthropic/claude-opus-4.6"
         ]
       },
       "models": {
         "openrouter/anthropic/claude-opus-4.6": {
           "params": {
+            "cacheRetention": "short",
             "openRouterRouting": {
               "only": ["anthropic"],
               "order": ["anthropic"]
@@ -362,6 +363,7 @@
         },
         "openrouter/anthropic/claude-opus-4.6-fast": {
           "params": {
+            "cacheRetention": "short",
             "openRouterRouting": {
               "only": ["anthropic"],
               "order": ["anthropic"]
@@ -370,6 +372,7 @@
         },
         "openrouter/anthropic/claude-opus-4.7": {
           "params": {
+            "cacheRetention": "short",
             "openRouterRouting": {
               "only": ["anthropic"],
               "order": ["anthropic"]
@@ -378,6 +381,7 @@
         },
         "openrouter/anthropic/claude-opus-4.7-fast": {
           "params": {
+            "cacheRetention": "short",
             "openRouterRouting": {
               "only": ["anthropic"],
               "order": ["anthropic"]
@@ -386,6 +390,7 @@
         },
         "openrouter/anthropic/claude-opus-4.8": {
           "params": {
+            "cacheRetention": "short",
             "openRouterRouting": {
               "only": ["anthropic"],
               "order": ["anthropic"]
@@ -394,6 +399,7 @@
         },
         "openrouter/anthropic/claude-opus-4.8-fast": {
           "params": {
+            "cacheRetention": "short",
             "openRouterRouting": {
               "only": ["anthropic"],
               "order": ["anthropic"]
@@ -402,6 +408,7 @@
         },
         "openrouter/anthropic/claude-fable-5": {
           "params": {
+            "cacheRetention": "short",
             "openRouterRouting": {
               "only": ["anthropic"],
               "order": ["anthropic"]
@@ -410,6 +417,7 @@
         },
         "openrouter/anthropic/claude-sonnet-4.6": {
           "params": {
+            "cacheRetention": "short",
             "openRouterRouting": {
               "only": ["anthropic"],
               "order": ["anthropic"]
@@ -418,6 +426,7 @@
         },
         "openrouter/anthropic/claude-haiku-4.5": {
           "params": {
+            "cacheRetention": "short",
             "openRouterRouting": {
               "only": ["anthropic"],
               "order": ["anthropic"]
@@ -484,13 +493,24 @@
       "workspace": "${AGENTS_BASE_DIR}/vibey",
       "skipBootstrap": true,
       "promptMode": "vibey",
-      "bootstrapTotalMaxChars": 30000,
+      "bootstrapTotalMaxChars": 24000,
+      "contextTokens": 65536,
       "contextPruning": {
         "mode": "cache-ttl",
-        "ttl": "1h"
+        "ttl": "5m",
+        "keepLastAssistants": 2,
+        "softTrimRatio": 0.25,
+        "hardClearRatio": 0.45,
+        "minPrunableToolChars": 8000,
+        "softTrim": {
+          "maxChars": 2500,
+          "headChars": 1000,
+          "tailChars": 1000
+        }
       },
       "compaction": {
-        "mode": "safeguard"
+        "mode": "safeguard",
+        "maxHistoryShare": 0.5
       },
       "heartbeat": {
         "every": "25m",

@@ -11,6 +11,7 @@ const TASKS: TaskType[] = [
   'mission_execute',
   'mission_review',
   'mission_awareness',
+  'mission_quality_eval',
 ]
 
 describe('model strategy routing', () => {

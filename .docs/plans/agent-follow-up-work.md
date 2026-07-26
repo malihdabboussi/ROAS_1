@@ -8487,3 +8487,22 @@ Evidence: The quick-start lifecycle and panel props were extracted into focused 
 Needed work: Continue the planned Space chat decomposition by extracting conversation/session orchestration and the composer/send shell behind focused hooks and private components.
 
 Reason not done now: Decomposing the entire chat runtime would materially expand this behavior-focused change and increase regression risk across streaming, voice, queues, artifact editing, and conversation history.
+
+## 2026-07-26 - [ARCH] Token-cost guardrails touched oversized runtime chokepoints
+
+Status: Open
+
+Found while: Cutting OpenRouter token usage without reducing agent quality
+
+Files:
+
+- `apps/mission-worker/src/modules/brain-ops/brain-ops.processor.ts` (3,631 LOC; over the 600-line service limit)
+- `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts` (2,506 LOC; over the 600-line service limit)
+- `apps/openclaw/src/gateway/openresponses-http.ts` (2,077 LOC after debug-residue removal)
+- `apps/openclaw/src/agents/pi-embedded-runner/run.ts` (pre-existing oversized runner)
+
+Evidence: The scoped fix uses the existing provider request, Brain-operation, Mission gateway, and OpenResponses chokepoints so context, output, tool, model, and cache limits apply at the actual execution boundary. The touched Brain reranker was brought under its service limit by extracting a 230-line deterministic scoring helper; the remaining hosts are pre-existing oversized chokepoints. Focused tests pass. Agent API typecheck passes. Mission Worker package typecheck remains blocked by missing built workspace declarations for `@vibey/context-breakdown` and `@vibey/agent-policy`; OpenClaw's full test typecheck remains blocked by broad pre-existing extension/test errors. The broad OpenResponses HTTP suite also has a pre-existing conversation-history fixture failure reproduced unchanged on `main`, while the isolated tool-choice contract passes.
+
+Needed work: Continue existing decomposition plans for the Brain processor, Mission gateway, OpenResponses handler, and embedded runner. Repair the workspace typecheck dependency/build contract and the OpenResponses history fixture independently.
+
+Reason not done now: Structural decomposition and unrelated baseline test repair would expand a production cost-control change across multiple execution systems. The in-scope paths are covered by targeted tests and remain behaviorally isolated.

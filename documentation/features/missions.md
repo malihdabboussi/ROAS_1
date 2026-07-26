@@ -1,6 +1,6 @@
 # Missions harness
 
-Last updated: 2026-07-22
+Last updated: 2026-07-26
 
 ## Full subtask workspace
 
@@ -218,6 +218,15 @@ Routing behavior:
 - Mission state patching resolves the runtime target before wake; it wakes Fly only when the resolved target has a `machineId`.
 - Mission worker runtime identities now match Agent API shared runtime IDs: org agents use `org-{orgId}-{agentKey}`, and personal agents use `user-{userId}-{agentKey}` when `AGENT_RUNTIME_MODE=shared`.
 - Mission worker jobs now register under runtime queue names: `agent-runtime-queue-mission` for mission outbox work and `agent-runtime-queue-brain` for Brain ops. Concurrency is configurable with `AGENT_RUNTIME_MISSION_CONCURRENCY` and `AGENT_RUNTIME_BRAIN_CONCURRENCY`.
+
+## Runtime token guardrails
+
+Mission OpenClaw requests default to a 32,768-token output ceiling. This is a ceiling, not a target, and does not change the selected model, agent instructions, available skills, or tool permissions for ordinary Mission execution. A caller can apply a smaller ceiling for a bounded internal workflow.
+
+Customer Brain pattern analysis is one such bounded workflow. The worker already loads the relevant memories, beliefs, perspectives, discriminator axes, organization, and offers before inference. It therefore sends that self-contained packet with `tool_choice: none` and an 8,192-token output ceiling. OpenClaw maps `tool_choice: none` to its native LLM-only mode, so neither client tools nor native Vibey tools are exposed for that run. The returned JSON still passes the existing ID, evidence, distinct-customer, and write-threshold validation before any Brain state changes.
+
+This prevents scheduled pattern analysis from recursively searching or delegating over data already present in its prompt. Interactive agents and normal Mission work retain their tools, and explicit Power/Opus routing remains available.
+
 - Mission OpenClaw calls include explicit workload lanes: `mission:{missionId}`, `mission:{missionId}:subtask:{subtaskId}`, `mission:{missionId}:eval`, and `brain:{orgOrUserId}:{outboxId}` for Brain ops. This keeps long mission and Brain runs out of OpenClaw's default `main` lane.
 - Brain import jobs now dispatch through `agent-runtime-queue-brain-import`. Mission-worker owns the queue processor: sweep jobs call the API internal due-job endpoint, and concrete import jobs call the API internal process endpoint. The API remains the durable `brain_import_jobs` state owner and Atlas import service. Execution uses `AGENT_RUNTIME_BRAIN_IMPORT_CONCURRENCY`, `AGENT_RUNTIME_BRAIN_IMPORT_PER_USER_CONCURRENCY`, and `AGENT_RUNTIME_BRAIN_IMPORT_BATCH_SIZE` caps. Each Atlas import call uses `brain-import:{jobId}` as its OpenClaw lane. Sweep calls retry transient Main API enqueue failures with `AGENT_RUNTIME_BRAIN_IMPORT_MAIN_API_MAX_ATTEMPTS` and log path, origin, status, attempt, and retryability context when the upstream request fails.
 - Mission-worker Bull Board at `/admin/queues` monitors the five active runtime queues: chat, mission, Brain ops, Brain import, and automation. Mission/Brain use the mission-worker Bull connection; chat, Brain import, and automation use the agent-runtime Redis resolver and shared queue prefix.
@@ -275,6 +284,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 
 ## Decision Log
 
+- 2026-07-26: Made Customer Brain pattern analysis a bounded, tool-free inference because the worker already supplies its full evidence packet. Kept normal Mission tools and explicit Power model routing unchanged while reducing the default Mission output ceiling from 64K to 32K.
 - 2026-07-22: Applied the deterministic no-em-dash verifier to every Meta Audit and Meta Launch Doc rather than relying on the agent's claimed Dylan Super Voice compliance.
 - 2026-07-22: Made corrective execution remove only the failed contract action and stale partial output from its checkpoint so agents can replace rejected artifacts without repeating valid reads or research.
 - 2026-07-22: Added a dedicated Meta Ads Audit & Optimization playbook, native-to-Composio Meta routing, explicit human-gated mutations, post-change verification, and strict unique visual evidence plus single-save assembly for Ads Research.

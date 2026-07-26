@@ -37,6 +37,29 @@ async function postResponses(body: unknown) {
 }
 
 describe("OpenResponses RBAC filter fields", () => {
+  it("disables both client and native tools when tool_choice is none", async () => {
+    agentCommand.mockReset();
+    agentCommand.mockResolvedValueOnce({ payloads: [{ text: "ok" }] } as never);
+
+    const res = await postResponses({
+      model: "openclaw",
+      input: "analyze the supplied data only",
+      tools: [
+        {
+          type: "function",
+          function: { name: "search_external_context", description: "Search context" },
+        },
+      ],
+      tool_choice: "none",
+    });
+
+    expect(res.status).toBe(200);
+    await res.text();
+    const [opts] = agentCommand.mock.calls[0] ?? [];
+    expect((opts as { clientTools?: unknown[] } | undefined)?.clientTools).toBeUndefined();
+    expect((opts as { disableTools?: boolean } | undefined)?.disableTools).toBe(true);
+  });
+
   it("passes enabled_toolkits and disabled_native_actions into agent command", async () => {
     agentCommand.mockReset();
     agentCommand.mockResolvedValueOnce({ payloads: [{ text: "ok" }] } as never);

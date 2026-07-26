@@ -1335,8 +1335,7 @@ export class BrainOpsProcessor extends WorkerHost {
             ...draft.member_contact_ids,
             ...distinctCustomerUnits.map((unitId) => input.contactIdByUnitId.get(unitId)),
           ].filter(
-            (contactId): contactId is string =>
-              !!contactId && input.validContactIds.has(contactId),
+            (contactId): contactId is string => !!contactId && input.validContactIds.has(contactId),
           ),
         ),
       )
@@ -2261,7 +2260,10 @@ export class BrainOpsProcessor extends WorkerHost {
       memories.map(customerUnitIdForMemory).filter((id): id is string => !!id),
     )
 
-    if (memories.length === 0 || distinctCustomerUnitIds.size < CUSTOMER_BELIEF_MIN_DISTINCT_UNITS) {
+    if (
+      memories.length === 0 ||
+      distinctCustomerUnitIds.size < CUSTOMER_BELIEF_MIN_DISTINCT_UNITS
+    ) {
       this.logger.log(
         `customer pattern-analysis: brain=${brainId.slice(0, 8)} skipping — ` +
           `memories=${memories.length} distinct_customer_units=${distinctCustomerUnitIds.size} ` +
@@ -2320,7 +2322,7 @@ export class BrainOpsProcessor extends WorkerHost {
       taskUserMessage,
       undefined,
       'mission_execute',
-      { channel: 'brain-ops' },
+      { channel: 'brain-ops', maxOutputTokens: 8_192, toolChoice: 'none' },
     )
 
     const decision = this.parsePatternAnalysisDecision(String(result.content ?? ''), brainId)
@@ -2524,7 +2526,7 @@ export class BrainOpsProcessor extends WorkerHost {
     return [
       '/customer-brain-pattern-analysis',
       '',
-      'Run a cross-customer pattern analysis pass on this customer brain. Read the inputs and emit the JSON decision described in your skill markdown. The worker validates ids and thresholds before writing.',
+      'Run one cross-customer pattern analysis pass on this customer brain. All required inputs are included below: do not call tools, search, delegate, or fetch more context. Emit only the JSON decision described in your skill markdown. The worker validates ids and thresholds before writing.',
       '',
       '## BRAIN',
       `brain_id: ${input.brainId}`,
@@ -2708,7 +2710,10 @@ export class BrainOpsProcessor extends WorkerHost {
   }
 
   private normalizeBeliefIdentity(value: string | null | undefined): string {
-    return String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
+    return String(value ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
   }
 
   private findExistingBeliefForDraft(
@@ -2922,7 +2927,10 @@ export class BrainOpsProcessor extends WorkerHost {
               supporting_memories: supportingMemories,
               strength: newStrength,
               status: newStatus,
-              evidence_type: this.strongestEvidenceType(existing.evidence_type, update.evidence_type),
+              evidence_type: this.strongestEvidenceType(
+                existing.evidence_type,
+                update.evidence_type,
+              ),
               reinforcement_count: reinforcements,
               last_reinforced_at: new Date().toISOString(),
               ...evidenceWindow,
@@ -3606,10 +3614,7 @@ function sourceIdentityForInteractionParticipant(
 
 function customerUnitIdForMemory(memory: CustomerMemoryRow): string | null {
   return (
-    memory.customer_entity_id ??
-    memory.contact_id ??
-    memory.customer_source_identity_id ??
-    null
+    memory.customer_entity_id ?? memory.contact_id ?? memory.customer_source_identity_id ?? null
   )
 }
 

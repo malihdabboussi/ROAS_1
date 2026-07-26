@@ -11,11 +11,7 @@ function makeProcessor() {
   ) as any
 }
 
-function makeMemory(
-  id: string,
-  contactId: string | null,
-  overrides: Record<string, unknown> = {},
-) {
+function makeMemory(id: string, contactId: string | null, overrides: Record<string, unknown> = {}) {
   return {
     id,
     content: `${contactId ?? id} memory`,
@@ -61,6 +57,24 @@ function makeRecordingSupabase() {
 }
 
 describe('BrainOpsProcessor customer pattern analysis', () => {
+  it('builds a self-contained tool-free analysis prompt', () => {
+    const processor = makeProcessor()
+
+    const prompt = processor.buildCustomerPatternPrompt({
+      brainId: 'brain-1',
+      orgName: 'Acme',
+      offers: [],
+      axes: [],
+      existingBeliefs: [],
+      existingPerspectives: [],
+      memories: [makeMemory('memory-1', 'contact-1')],
+    })
+
+    expect(prompt).toContain('All required inputs are included below')
+    expect(prompt).toContain('do not call tools, search, delegate, or fetch more context')
+    expect(prompt).toContain('Emit only the JSON decision')
+  })
+
   it('parses evidence_type on belief updates and drops invalid tiers', () => {
     const processor = makeProcessor()
 

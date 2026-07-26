@@ -1,6 +1,6 @@
 # Chat Stream Recovery
 
-Last Modified: 2026-06-29
+Last Modified: 2026-07-26
 
 ## Overview
 
@@ -69,6 +69,10 @@ Chat streaming uses Supabase messages as the canonical record and Redis as the l
 - Autoscaler state and the cross-replica lock live in the same Redis connection used by Agent Runtime queues.
 - Public widget agent prewarm is conversation-independent. It may include runtime readiness, model routing, policy, agent registration, user/team/integration summaries, and agent Brain presence, but conversation history, campaign team/theme, and previous images wait for the conversation-level prewarm or Send path.
 - Conversation-level public widget prewarm and Send must join an in-flight agent prewarm or reuse the completed agent cache entry before building conversation-scoped stable context.
+- The default OpenClaw runtime context is capped at 65,536 tokens with safeguard compaction and five-minute stale-tool pruning. A validated per-request context selection can still override that default for work that explicitly needs a larger window.
+- Chat response ceilings are 32,768 tokens for standard models, 16,384 for Haiku, and 65,536 for Codex work. These are safety ceilings; they do not change the selected model or reasoning quality.
+- The runtime default is Claude Sonnet 4.6. Claude Opus remains available through explicit Power/manual selection and as the final fallback, rather than being charged for every unclassified request.
+- OpenRouter-backed Anthropic requests use the short prompt-cache retention tier. This aligns cache lifetime with five-minute context pruning and avoids paying the higher one-hour cache-write multiplier for inactive sessions.
 
 ## Recovery Behavior
 
@@ -80,6 +84,7 @@ Context-window failures are model failures, not transport failures. OpenClaw own
 
 ## Decision Log
 
+- 2026-07-26: Kept Sonnet as the quality default, retained explicit Opus/Power access, capped ordinary context/output growth, aligned Anthropic cache retention with pruning, and reduced stale tool-result retention. The change targets repeated payload growth rather than downgrading high-value work.
 - 2026-06-29: Mapped missing OpenAI Codex subscription auth to `openai_codex_not_connected` and the existing OpenAI Codex reconnect banner, preventing generic resend failures for subscription-model chats.
 - 2026-06-25: Persisted chat model routing observability before gateway execution and added first-class OpenAI Codex/Claude subscription gate classifications so failed runs show the right admin action and traces do not inherit the database default model.
 - 2026-06-24: Moved context-window recovery ownership back into OpenClaw: overflow now emits `response.compaction` events, compacts or truncates inside the runner, retries the same run, and lets Agent API classify unrecovered overflow without creating synthetic compact prompts.

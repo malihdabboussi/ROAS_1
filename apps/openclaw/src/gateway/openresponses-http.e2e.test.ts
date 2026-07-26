@@ -320,6 +320,7 @@ describe("OpenResponses HTTP API (e2e)", () => {
       expect(
         (optsToolNone as { clientTools?: unknown[] } | undefined)?.clientTools,
       ).toBeUndefined();
+      expect((optsToolNone as { disableTools?: boolean } | undefined)?.disableTools).toBe(true);
       await ensureResponseConsumed(resToolNone);
 
       mockAgentOnce([{ text: "ok" }]);

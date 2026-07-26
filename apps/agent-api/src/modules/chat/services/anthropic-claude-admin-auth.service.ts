@@ -30,43 +30,19 @@ export class AnthropicClaudeAdminAuthService {
   async resolveRuntimeCredential(
     userId: string | undefined,
   ): Promise<AnthropicClaudeRuntimeCredential | null> {
-    if (!userId) {
-      // #region agent log
-      fetch('http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cacf83'},body:JSON.stringify({sessionId:'cacf83',location:'anthropic-claude-admin-auth.service.ts:resolveRuntimeCredential',message:'claude_auth_no_user_id',data:{hasUserId:false},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-      return null
-    }
+    if (!userId) return null
     const isAdmin = await this.isPlatformAdmin(userId)
-    if (!isAdmin) {
-      // #region agent log
-      fetch('http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cacf83'},body:JSON.stringify({sessionId:'cacf83',location:'anthropic-claude-admin-auth.service.ts:resolveRuntimeCredential',message:'claude_auth_not_admin',data:{userIdPresent:true,isAdmin:false},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-      return null
-    }
+    if (!isAdmin) return null
 
     const connection = await this.loadConnection(userId)
-    if (!connection) {
-      // #region agent log
-      fetch('http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cacf83'},body:JSON.stringify({sessionId:'cacf83',location:'anthropic-claude-admin-auth.service.ts:resolveRuntimeCredential',message:'claude_auth_no_connection',data:{isAdmin:true,hasConnection:false},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-      return null
-    }
+    if (!connection) return null
 
     const label =
       typeof connection.metadata?.vault_secret_label === 'string'
         ? connection.metadata.vault_secret_label
         : ANTHROPIC_CLAUDE_VAULT_LABEL
     const accessToken = await this.loadSetupToken(userId, label)
-    if (!accessToken) {
-      // #region agent log
-      fetch('http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cacf83'},body:JSON.stringify({sessionId:'cacf83',location:'anthropic-claude-admin-auth.service.ts:resolveRuntimeCredential',message:'claude_auth_vault_token_missing',data:{isAdmin:true,hasConnection:true,vaultLabel:label},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      return null
-    }
-
-    // #region agent log
-    fetch('http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cacf83'},body:JSON.stringify({sessionId:'cacf83',location:'anthropic-claude-admin-auth.service.ts:resolveRuntimeCredential',message:'claude_auth_token_resolved',data:{isAdmin:true,hasConnection:true,vaultLabel:label,tokenLen:accessToken.length,tokenPrefix:accessToken.slice(0,15),validPrefix:accessToken.startsWith(ANTHROPIC_CLAUDE_TOKEN_PREFIX),trimmed:accessToken===accessToken.trim()},timestamp:Date.now(),hypothesisId:'A,B,C'})}).catch(()=>{});
-    // #endregion
+    if (!accessToken) return null
 
     return {
       provider: ANTHROPIC_CLAUDE_PROVIDER,
@@ -103,14 +79,11 @@ export class AnthropicClaudeAdminAuthService {
   }
 
   private async loadSetupToken(userId: string, label: string): Promise<string | null> {
-    const { encryptedValue, error } = await this.repository.findVaultEncryptedValue(
-      this.supabase,
-      {
-        userId,
-        provider: ANTHROPIC_CLAUDE_PROVIDER,
-        label,
-      },
-    )
+    const { encryptedValue, error } = await this.repository.findVaultEncryptedValue(this.supabase, {
+      userId,
+      provider: ANTHROPIC_CLAUDE_PROVIDER,
+      label,
+    })
 
     if (error) {
       this.logger.warn(`Claude vault lookup failed: ${error.message}`)

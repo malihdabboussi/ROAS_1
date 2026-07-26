@@ -31,6 +31,7 @@ function candidate(overrides: Partial<BrainRetrievalCandidate>): BrainRetrievalC
 describe('BrainRerankerService', () => {
   afterEach(() => {
     vi.restoreAllMocks()
+    vi.unstubAllEnvs()
   })
 
   it('prioritizes exact title evidence over a vague semantic match', async () => {
@@ -156,5 +157,49 @@ describe('BrainRerankerService', () => {
     ).fetchOpenRouterGenerationCost('key', 'generation-id')
 
     expect(cost).toBeNull()
+  })
+
+  it('caps reranker output and uses minimal reasoning', async () => {
+    vi.stubEnv('BRAIN_LLM_RERANKER', '1')
+    vi.stubEnv('BRAIN_LLM_RERANKER_MODEL', 'google/gemini-3.5-flash')
+    vi.stubEnv('OPENROUTER_API_KEY', 'test-key')
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: 'generation-id',
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    ranked: [{ id: 'candidate', score: 0.9, reason: 'Direct evidence' }],
+                  }),
+                },
+              },
+            ],
+            usage: { prompt_tokens: 100, completion_tokens: 40, total_tokens: 140 },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { total_cost: 0.001 } }), { status: 200 }),
+      )
+    const recordAttempt = vi.fn(async () => undefined)
+    const service = new BrainRerankerService(undefined, { recordAttempt } as never)
+
+    const result = await service.rerank('Candidate evidence', [candidate({})], 1, {
+      userId: 'user-1',
+    })
+
+    const request = fetchMock.mock.calls[0]?.[1]
+    const payload = JSON.parse(String(request?.body)) as Record<string, unknown>
+    expect(payload).toMatchObject({
+      max_completion_tokens: 1200,
+      reasoning: { effort: 'minimal', exclude: true },
+    })
+    expect(result[0]?.id).toBe('candidate')
+    expect(recordAttempt).toHaveBeenCalledTimes(2)
   })
 })

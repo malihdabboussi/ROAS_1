@@ -295,32 +295,6 @@ export async function runEmbeddedPiAgent(
       const runtimeCredentialForProvider = params.runtimeCredentials?.find(
         (credential) => normalizeProviderId(credential.provider) === normalizeProviderId(provider),
       );
-      // #region agent log
-      {
-        const rtToken = runtimeCredentialForProvider?.accessToken;
-        fetch("http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "cacf83" },
-          body: JSON.stringify({
-            sessionId: "cacf83",
-            location: "pi-embedded-runner/run.ts:runEmbeddedPiAgent",
-            message: "openclaw_auth_path_selected",
-            data: {
-              provider,
-              modelId,
-              runtimeCredCount: params.runtimeCredentials?.length ?? 0,
-              matchedRuntimeCredential: Boolean(runtimeCredentialForProvider),
-              authPath: runtimeCredentialForProvider ? "runtime_credential" : "auth_profile",
-              tokenLen: rtToken?.length ?? 0,
-              tokenPrefix: rtToken?.slice(0, 15) ?? "",
-              validPrefix: rtToken?.startsWith("sk-ant-oat01-") ?? false,
-            },
-            timestamp: Date.now(),
-            hypothesisId: "E",
-          }),
-        }).catch(() => {});
-      }
-      // #endregion
       const profileCandidates = runtimeCredentialForProvider
         ? [undefined]
         : lockedProfileId
@@ -388,25 +362,6 @@ export async function runEmbeddedPiAgent(
 
       const applyApiKeyInfo = async (candidate?: string): Promise<void> => {
         if (runtimeCredentialForProvider?.accessToken) {
-          // #region agent log
-          fetch("http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "cacf83" },
-            body: JSON.stringify({
-              sessionId: "cacf83",
-              location: "pi-embedded-runner/run.ts:applyApiKeyInfo",
-              message: "openclaw_using_runtime_credential",
-              data: {
-                provider: model.provider,
-                tokenLen: runtimeCredentialForProvider.accessToken.length,
-                tokenPrefix: runtimeCredentialForProvider.accessToken.slice(0, 15),
-                validPrefix: runtimeCredentialForProvider.accessToken.startsWith("sk-ant-oat01-"),
-              },
-              timestamp: Date.now(),
-              hypothesisId: "A,E",
-            }),
-          }).catch(() => {});
-          // #endregion
           apiKeyInfo = {
             apiKey: runtimeCredentialForProvider.accessToken,
             source: "runtime",

@@ -67,6 +67,7 @@ describe('OpenClawGatewayRequestService', () => {
       enabled_toolkits: ['brain'],
       disabled_native_actions: ['delete_everything'],
       lane: 'chat:conversation-1',
+      max_output_tokens: 32_768,
       skill_catalog: { entries: [{ name: 'skill' }] },
     })
     expect(secondPayload).not.toHaveProperty('enabled_toolkits')

@@ -4,19 +4,17 @@ import { ConfigService } from '@nestjs/config'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   defaultProbeReachable,
+  isModelStrategy,
   normalizeAgentToolFailureFields,
   resolveMachineProfileColumns,
   resolveMachineProfileRow,
+  resolveModelForStrategy,
   UserAgentApiClient,
   UserMachineCircuitOpenError,
   UserMachineUnreachableError,
   type AgentApiTarget,
-} from '@vibey/api-shared'
-import {
-  isModelStrategy,
-  resolveModelForStrategy,
   type TaskType,
-} from '../../../../lib/model-strategy'
+} from '@vibey/api-shared'
 import { DatabaseService } from '../../../../lib/services/database.service'
 import type { AgentKey } from '../../types'
 import { resolveLabel } from '../../utils/tool-labels'
@@ -31,6 +29,8 @@ import { consumeOpenResponsesSseStream } from './mission-openclaw-sse'
 
 export type OpenClawExecOptions = {
   abortSignal?: AbortSignal
+  maxOutputTokens?: number
+  toolChoice?: 'none'
   subtaskId?: string
   identitySuffix?: string
   onStreamHeartbeat?: () => void | Promise<void>
@@ -1676,16 +1676,17 @@ If the team is well-suited, omit capability_gap or set exists:false.
           missionOrgIdForRuntime,
         )
     const defaultResolution = resolveModelForStrategy('auto', taskType)
-    const selectedModel =
+    const strategyResolution =
       selectedModelOrStrategy && isModelStrategy(selectedModelOrStrategy)
-        ? resolveModelForStrategy(selectedModelOrStrategy, taskType).modelId
-        : selectedModelOrStrategy || defaultResolution.modelId
-    if (selectedModelOrStrategy && isModelStrategy(selectedModelOrStrategy)) {
-      const resolution = resolveModelForStrategy(selectedModelOrStrategy, taskType)
+        ? resolveModelForStrategy(selectedModelOrStrategy, taskType)
+        : null
+    const selectedModel =
+      strategyResolution?.modelId || selectedModelOrStrategy || defaultResolution.modelId
+    if (strategyResolution) {
       this.logger.log(
         `[ModelRouter] strategy=${selectedModelOrStrategy} source=${
           normalizedOverride ? 'override' : 'agent_config'
-        } task=${taskType} resolved=${resolution.modelId} reason=${resolution.reason}`,
+        } task=${taskType} resolved=${strategyResolution.modelId} reason=${strategyResolution.reason}`,
       )
     } else if (!selectedModelOrStrategy) {
       this.logger.log(
@@ -1832,7 +1833,15 @@ If the team is well-suited, omit capability_gap or set exists:false.
       lane,
       input,
       instructions,
-      max_output_tokens: 64_000,
+      max_output_tokens: execOptions?.maxOutputTokens ?? 32_768,
+      ...(execOptions?.toolChoice ? { tool_choice: execOptions.toolChoice } : {}),
+      ...(strategyResolution?.modelSettings?.context_window_tokens
+        ? { context_window_tokens: strategyResolution.modelSettings.context_window_tokens }
+        : {}),
+      ...(strategyResolution?.modelSettings?.reasoning_effort &&
+      strategyResolution.modelSettings.reasoning_effort !== 'none'
+        ? { reasoning: { effort: strategyResolution.modelSettings.reasoning_effort } }
+        : {}),
       metadata: {
         correlation_id: String(mission.correlation_id ?? ''),
         mission_id: String(mission.id),

@@ -690,6 +690,7 @@ async function runResponsesAgentCommand(params: {
   message: string;
   images: ImageContent[];
   clientTools: ClientToolDefinition[];
+  disableTools?: boolean;
   enabledToolkits?: string[];
   disabledNativeActions?: string[];
   skillCatalog?: CreateResponseBody["skill_catalog"];
@@ -714,6 +715,7 @@ async function runResponsesAgentCommand(params: {
       message: params.message,
       images: params.images.length > 0 ? params.images : undefined,
       clientTools: params.clientTools.length > 0 ? params.clientTools : undefined,
+      disableTools: params.disableTools,
       enabledToolkits: params.enabledToolkits,
       disabledNativeActions: params.disabledNativeActions,
       skillCatalog: params.skillCatalog,
@@ -977,33 +979,6 @@ export async function handleOpenResponsesHttpRequest(
     typeof payload.context_window_tokens === "number" ? payload.context_window_tokens : undefined;
   const lane = typeof payload.lane === "string" ? payload.lane : undefined;
 
-  // #region agent log
-  {
-    const creds = payload.runtime_credentials;
-    fetch("http://127.0.0.1:7681/ingest/94e24cc9-0e93-41a4-9d43-69640004018c", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "cacf83" },
-      body: JSON.stringify({
-        sessionId: "cacf83",
-        location: "openresponses-http.ts:handleOpenResponsesHttpRequest",
-        message: "gateway_runtime_credentials_received",
-        data: {
-          model,
-          credCount: creds?.length ?? 0,
-          creds: (creds ?? []).map((c) => ({
-            provider: c.provider,
-            tokenLen: c.access_token?.length ?? 0,
-            tokenPrefix: c.access_token?.slice(0, 15) ?? "",
-            validPrefix: c.access_token?.startsWith("sk-ant-oat01-") ?? false,
-          })),
-        },
-        timestamp: Date.now(),
-        hypothesisId: "D,E",
-      }),
-    }).catch(() => {});
-  }
-  // #endregion
-
   if (!stream) {
     ensureSentryGatewayInit();
     const nsMeta = readOpenResponsesMetadata(payload);
@@ -1032,6 +1007,7 @@ export async function handleOpenResponsesHttpRequest(
                 message: prompt.message,
                 images,
                 clientTools: resolvedClientTools,
+                disableTools: payload.tool_choice === "none",
                 enabledToolkits,
                 disabledNativeActions,
                 skillCatalog,
@@ -1851,6 +1827,7 @@ export async function handleOpenResponsesHttpRequest(
                   message: prompt.message,
                   images,
                   clientTools: resolvedClientTools,
+                  disableTools: payload.tool_choice === "none",
                   enabledToolkits,
                   disabledNativeActions,
                   skillCatalog,

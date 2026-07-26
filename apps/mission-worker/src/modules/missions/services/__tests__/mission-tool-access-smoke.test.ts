@@ -238,12 +238,41 @@ describe('Mission worker tool access smoke', () => {
     expect(JSON.parse(init.body).lane).toBe('mission:mission-2')
   })
 
+  it('preserves Opus, high reasoning, and 1M context for explicit Power missions', async () => {
+    const service = createService()
+    service['resolveAgentSelectedModel'] = vi.fn(async () => 'auto:power')
+    service['resolveAgentApiTargetStateForUser'] = vi.fn(async () => ({
+      target: {
+        baseUrl: 'https://agent-api.local',
+        machineId: null,
+      },
+      machineStatus: null,
+      hasMachine: false,
+    }))
+
+    await service.callOpenClawRaw(
+      {
+        id: 'mission-power',
+        user_id: 'user-power',
+        correlation_id: 'corr-power',
+      },
+      'analyst',
+      '',
+      'power mission prompt',
+    )
+
+    const [, init] = (global.fetch as any).mock.calls[1]
+    expect(JSON.parse(init.body)).toMatchObject({
+      model: 'openrouter/anthropic/claude-opus-4.8',
+      context_window_tokens: 1_000_000,
+      reasoning: { effort: 'high' },
+    })
+  })
+
   it('keeps subscription models off the OpenRouter namespace before proxying', () => {
     const service = createService()
 
-    expect(service['normalizeGatewayModel']('openai-codex/gpt-5.5')).toBe(
-      'openai-codex/gpt-5.5',
-    )
+    expect(service['normalizeGatewayModel']('openai-codex/gpt-5.5')).toBe('openai-codex/gpt-5.5')
     expect(service['normalizeGatewayModel']('anthropic-subscription/claude-sonnet-4-6')).toBe(
       'anthropic/claude-sonnet-4.6',
     )
@@ -277,7 +306,7 @@ describe('Mission worker tool access smoke', () => {
       'brain ops prompt',
       undefined,
       'mission_execute',
-      { channel: 'brain-ops' },
+      { channel: 'brain-ops', maxOutputTokens: 8_192, toolChoice: 'none' },
     )
 
     expect(global.fetch).toHaveBeenCalledTimes(2)
@@ -292,7 +321,11 @@ describe('Mission worker tool access smoke', () => {
     expect(init.headers['x-openclaw-session-key']).toBe(
       'agent:org-org-1-atlas:brain_ops:atlas:user-1:outbox-1::org:org-1',
     )
-    expect(JSON.parse(init.body).lane).toBe('brain:org-1:outbox-1')
+    expect(JSON.parse(init.body)).toMatchObject({
+      lane: 'brain:org-1:outbox-1',
+      max_output_tokens: 8_192,
+      tool_choice: 'none',
+    })
   })
 
   it('keeps provisioned users pinned when the cached machine status is not running', async () => {
