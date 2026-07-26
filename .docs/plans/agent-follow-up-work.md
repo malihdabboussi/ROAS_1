@@ -8523,3 +8523,35 @@ Evidence: `pnpm architecture:check` stops with `ENOENT` while following the trac
 Needed work: Remove the machine-specific test link from the repository or make the architecture walker safely ignore dangling links, then restore the global architecture gate.
 
 Reason not done now: The link arrived from newer `main` and is unrelated to the mission production recovery fix.
+
+## 2026-07-26 - [ARCH] Mission list component is near its frontend LOC limit
+
+Status: Open
+
+Found while: Moving Missions view persistence to the actual column-resize completion event
+
+Files:
+
+- `apps/web/src/features/mission-control/components/MissionList.tsx` (381 LOC; component limit 400)
+
+Evidence: The component remains below the 400-line limit after the resize lifecycle fix, but it now sits within 19 lines of the limit. The global architecture scan is independently blocked by the already logged dangling OpenClaw link.
+
+Needed work: Extract the column drag-and-resize interaction state into a focused private hook while preserving the current `MissionList` props contract and document-level release behavior.
+
+Reason not done now: The acceptance fix requires a small gesture-lifecycle correction. Structural extraction would broaden the production defect patch and increase interaction regression risk.
+
+## 2026-07-26 - [ARCH] Missions view list-state hook exceeds its frontend LOC limit
+
+Status: Open
+
+Found while: Wiring column-resize completion persistence through the Missions view list state
+
+Files:
+
+- `apps/web/src/features/spaces/components/useMissionsViewListState.ts` (310 LOC; hook limit 300)
+
+Evidence: The touched hook was already over the 300-line hook limit and remains 10 lines over after replacing the obsolete persistence callback with the resize-end callback. The global architecture scan is independently blocked by the already logged dangling OpenClaw link.
+
+Needed work: Extract view-selection or mission-filter orchestration into a focused private hook while preserving the current list-state return contract.
+
+Reason not done now: The requested fix changes one callback wire. Decomposing unrelated list-state responsibilities would broaden the production acceptance patch.
