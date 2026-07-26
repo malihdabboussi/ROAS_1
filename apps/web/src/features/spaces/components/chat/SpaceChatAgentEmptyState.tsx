@@ -1,6 +1,7 @@
 'use client'
 
 import { Bot } from 'lucide-react'
+import type { ShellChatQuickStart } from '@/components/shell/shell-empty-chat-prompts.config'
 import { ShellEmptyChatCapabilityScroller } from '@/components/shell/ShellEmptyChatCapabilityScroller'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 
@@ -30,7 +31,7 @@ interface SpaceChatAgentEmptyStateProps {
   agent: TeamRosterEntry
   /** When true, show capability chips under the hero (hidden once composer has text). */
   showCapabilities?: boolean
-  onSelectCapability?: (prompt: string) => void
+  onSelectCapability?: (quickStart: ShellChatQuickStart) => void
 }
 
 export function SpaceChatAgentEmptyState({

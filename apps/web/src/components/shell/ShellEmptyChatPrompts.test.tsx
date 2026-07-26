@@ -24,22 +24,63 @@ describe('shell empty chat prompts', () => {
       'prioritize',
       'schedule',
     ])
-    expect(SHELL_EMPTY_CHAT_CAPABILITIES.some((c) => c.id === 'image')).toBe(true)
+    expect(SHELL_EMPTY_CHAT_CAPABILITIES.map((capability) => capability.id)).toEqual([
+      'deep-search',
+      'task',
+      'image',
+      'slides',
+      'report',
+      'doc',
+      'daily-brief',
+      'delegate',
+    ])
+    expect(
+      [...SHELL_EMPTY_CHAT_ACTIONS, ...SHELL_EMPTY_CHAT_CAPABILITIES].every(
+        (quickStart) =>
+          quickStart.prompt.trim().length > 0 &&
+          quickStart.systemContext.includes('QUICK ACTION') &&
+          quickStart.iconName.length > 0,
+      ),
+    ).toBe(true)
   })
 
-  it('seeds composer from capability chips', () => {
+  it('selects every capability with its executable routing context', () => {
     const onSelect = vi.fn()
     render(<ShellEmptyChatCapabilityScroller onSelect={onSelect} />)
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Image' })[0]!)
-    expect(onSelect).toHaveBeenCalledWith('Generate an image of ')
+    for (const capability of SHELL_EMPTY_CHAT_CAPABILITIES) {
+      fireEvent.click(screen.getAllByRole('button', { name: capability.label })[0]!)
+      expect(onSelect).toHaveBeenLastCalledWith(capability)
+    }
   })
 
-  it('seeds composer from action pills', () => {
+  it('selects every action pill with its executable routing context', () => {
     const onSelect = vi.fn()
     render(<ShellEmptyChatActionPills onSelect={onSelect} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Research' }))
-    expect(onSelect).toHaveBeenCalledWith('Research ')
+    for (const action of SHELL_EMPTY_CHAT_ACTIONS) {
+      fireEvent.click(screen.getByRole('button', { name: action.label }))
+      expect(onSelect).toHaveBeenLastCalledWith(action)
+    }
+  })
+
+  it('routes artifact, scheduling, search, and delegation starters to real tools', () => {
+    const byId = new Map(
+      [...SHELL_EMPTY_CHAT_ACTIONS, ...SHELL_EMPTY_CHAT_CAPABILITIES].map((item) => [
+        item.id,
+        item.systemContext,
+      ]),
+    )
+
+    expect(byId.get('deep-search')).toMatch(/search_space_context/)
+    expect(byId.get('research')).toMatch(/web_search/)
+    expect(byId.get('task')).toMatch(/create_task/)
+    expect(byId.get('image')).toMatch(/generate_image/)
+    expect(byId.get('slides')).toMatch(/create_presentation/)
+    expect(byId.get('doc')).toMatch(/create_docx/)
+    expect(byId.get('schedule')).toMatch(/create_calendar_event/)
+    expect(byId.get('daily-brief')).toMatch(/get_person_briefing/)
+    expect(byId.get('delegate')).toMatch(/delegate_to_agent/)
+    expect(byId.has('standup')).toBe(false)
   })
 })

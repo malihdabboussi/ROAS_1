@@ -1,13 +1,14 @@
 'use client'
 
 import { SHELL_EMPTY_CHAT_ACTIONS } from '@/components/shell/shell-empty-chat-prompts.config'
+import type { ShellChatQuickStart } from '@/components/shell/shell-empty-chat-prompts.config'
 import { cn } from '@/lib/utils/cn'
 
 export function ShellEmptyChatActionPills({
   onSelect,
   className,
 }: {
-  onSelect: (prompt: string) => void
+  onSelect: (quickStart: ShellChatQuickStart) => void
   className?: string
 }) {
   return (
@@ -25,7 +26,7 @@ export function ShellEmptyChatActionPills({
           <button
             key={action.id}
             type="button"
-            onClick={() => onSelect(action.prompt)}
+            onClick={() => onSelect(action)}
             className="body-4 text-muted-foreground hover:text-foreground hover:bg-hover-subtle border-border gap-spacing-1 px-spacing-2 py-spacing-1 inline-flex items-center rounded-full border bg-transparent transition-colors"
           >
             <Icon className="icon-sm shrink-0" aria-hidden />

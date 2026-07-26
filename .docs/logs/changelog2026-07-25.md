@@ -117,3 +117,13 @@ What: Unified connected-account display and rename labels, surfaced account iden
 Why: Generic provider names and `Account 1` fallbacks made multiple connections ambiguous, while Meta incorrectly labeled the OAuth account with its first client Page.
 Impact: Settings consistently identifies the credential owner or endpoint; existing opaque ids are safely masked and future native connections persist better labels.
 Files: integration settings label helper/components/tests; Meta, Fathom, Higgsfield, and Page Grader connection services/tests; `documentation/features/integration-connections.md`
+
+## [2026-07-25 16:35] - [FEATURE]
+
+What: Turned every empty CEO chat action and capability chip into an executable quick-start workflow with visible composer state and hidden tool-routing context. Replaced the unsupported StandUp shortcut with a private Daily Brief and renamed Super Agents to the concrete Delegate workflow.
+
+Why: The ClickUp-inspired controls only inserted vague text prefixes, so the agent could answer conversationally without searching live data, creating an artifact, scheduling an event, or delegating work.
+
+Impact: Find, Research, Create, Edit, Analyze, Prioritize, Schedule, Deep Search, Task, Image, Slides, Report, Doc, Daily Brief, and Delegate now route completed requests to the appropriate real platform tools, retain context through queued sends, clear routing when the seed is replaced, and require tool receipts before claiming writes succeeded.
+
+Files: `apps/web/src/components/shell/ShellEmptyChat*`, `apps/web/src/components/shell/shell-empty-chat-prompts.config.ts`, `apps/web/src/components/shell/shell-chat-quick-start.logic.ts`, `apps/web/src/features/spaces/components/chat/SpaceChatAgentEmptyState.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `documentation/features/claude-chatgpt-shell.md`

@@ -1,25 +1,26 @@
 'use client'
 
 import { SHELL_EMPTY_CHAT_CAPABILITIES } from '@/components/shell/shell-empty-chat-prompts.config'
+import type { ShellChatQuickStart } from '@/components/shell/shell-empty-chat-prompts.config'
 import { cn } from '@/lib/utils/cn'
 
 function CapabilityChip({
   id,
   label,
   icon: Icon,
-  prompt,
+  quickStart,
   onSelect,
 }: {
   id: string
   label: string
   icon: (typeof SHELL_EMPTY_CHAT_CAPABILITIES)[number]['icon']
-  prompt: string
-  onSelect: (prompt: string) => void
+  quickStart: ShellChatQuickStart
+  onSelect: (quickStart: ShellChatQuickStart) => void
 }) {
   return (
     <button
       type="button"
-      onClick={() => onSelect(prompt)}
+      onClick={() => onSelect(quickStart)}
       className="shell-empty-capability-chip"
       data-capability-id={id}
     >
@@ -33,7 +34,7 @@ export function ShellEmptyChatCapabilityScroller({
   onSelect,
   className,
 }: {
-  onSelect: (prompt: string) => void
+  onSelect: (quickStart: ShellChatQuickStart) => void
   className?: string
 }) {
   // Duplicate the track so the CSS marquee can loop seamlessly.
@@ -54,7 +55,7 @@ export function ShellEmptyChatCapabilityScroller({
                 id={capability.id}
                 label={capability.label}
                 icon={capability.icon}
-                prompt={capability.prompt}
+                quickStart={capability}
                 onSelect={onSelect}
               />
             ))}
@@ -64,7 +65,7 @@ export function ShellEmptyChatCapabilityScroller({
                 id={capability.id}
                 label={capability.label}
                 icon={capability.icon}
-                prompt={capability.prompt}
+                quickStart={capability}
                 onSelect={onSelect}
               />
             ))}

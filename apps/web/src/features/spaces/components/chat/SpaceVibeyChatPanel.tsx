@@ -18,7 +18,6 @@ import {
   ConversationShareModal,
 } from '@/components/conversations'
 import { globalChatSeedMatchesPanel } from '@/components/global-chat/lib/global-chat-seed-match'
-import type { GlobalWorkSurface } from '@/components/global-chat/lib/global-chat-storage'
 import {
   GLOBAL_CHAT_AGENT_SWITCH_EVENT,
   GLOBAL_CHAT_SEED_EVENT,
@@ -30,6 +29,7 @@ import {
 } from '@/components/global-chat/store/use-global-chat-store'
 import { SHELL_EMPTY_CHAT_PLACEHOLDER } from '@/components/shell/shell-empty-chat-prompts.config'
 import { ShellEmptyChatActionPills } from '@/components/shell/ShellEmptyChatActionPills'
+import { useShellChatQuickStart } from '@/components/shell/use-shell-chat-quick-start'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
@@ -145,6 +145,7 @@ import {
   resolveSpaceChatSeedSendOptions,
   resolveSpaceChatSendAgentKey,
 } from './space-vibey-chat-panel.logic'
+import type { SpaceVibeyChatPanelProps } from './space-vibey-chat-panel.types'
 import {
   resolveSpaceChatEmptyStateAgent,
   SpaceChatAgentEmptyState,
@@ -156,31 +157,6 @@ import { SpaceUndoButton } from './SpaceUndoButton'
 import type { SpaceVoiceRunTask } from './SpaceVoiceRunsView'
 import { SpaceVoiceSessionView } from './SpaceVoiceSessionView'
 import { stripLegacySpacesConversationTitle } from './strip-legacy-spaces-conversation-title'
-
-interface SpaceVibeyChatPanelProps {
-  spaceId?: string
-  chatSurface?: GlobalWorkSurface
-  campaignId: string | null
-  campaignName: string | null
-  channelContext?: {
-    channelId: string
-    channelName: string
-    awarenessContext: string
-  } | null
-  brainContext?: {
-    brainId: string | null
-    scopeLabel: string
-    awarenessContext: string
-  } | null
-  teamOpsContext?: {
-    label: string
-    awarenessContext: string
-  } | null
-  onCollapseChat?: () => void
-  /** Agent picker + history chrome live in the shell Chat sidebar. */
-  shellSidebarChrome?: boolean
-  headerLayout?: 'full' | 'compact'
-}
 
 type ChatMode = SpaceChatMode
 type ConversationAgentScope = 'active' | 'all'
@@ -342,6 +318,7 @@ export function SpaceVibeyChatPanel({
   const setTextRef = useRef<((text: string) => void) | null>(null)
   const composerMirrorRef = useRef('')
   const [composerHasText, setComposerHasText] = useState(false)
+  const quickStart = useShellChatQuickStart(setTextRef, setComposerHasText)
   const previousMessageCountRef = useRef(0)
   const isProgrammaticScrollRef = useRef(false)
   const initialHydrationRef = useRef<string | null>(null)
@@ -984,7 +961,10 @@ export function SpaceVibeyChatPanel({
       const forceNew = Boolean(options?.forceNewConversation)
       const sendAgentKey = resolveSpaceChatSendAgentKey(activeAgentKey, options?.agentKey)
       if (!forceNew && selectedConversationId && isStopping) return
-      const systemContext = [buildContextForSend(), extraSystemContext]
+      const systemContext = [
+        buildContextForSend(),
+        extraSystemContext ?? quickStart.buildSendContext(content),
+      ]
         .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
         .join('\n\n')
       const msgsBefore =
@@ -1093,6 +1073,7 @@ export function SpaceVibeyChatPanel({
       selectedConversationId,
       spaceId,
       activeAgentKey,
+      quickStart,
       uiSelectedArtifact,
     ],
   )
@@ -1316,9 +1297,10 @@ export function SpaceVibeyChatPanel({
         references,
         model,
         modelSettings,
+        extraSystemContext: quickStart.buildSendContext(content),
       })
     },
-    [selectedConversationId, enqueueMessage],
+    [quickStart, selectedConversationId, enqueueMessage],
   )
 
   const processNextQueueItem = useCallback(async () => {
@@ -1375,14 +1357,6 @@ export function SpaceVibeyChatPanel({
     setEditingQueueItemId(item.id)
     setTextRef.current?.(item.content)
   }, [])
-  const handleEmptyChatPromptSeed = useCallback(
-    (prompt: string) => setTextRef.current?.(prompt),
-    [],
-  )
-  const handleComposerValueChange = useCallback(
-    (next: string) => setComposerHasText(next.trim().length > 0),
-    [],
-  )
   const handleComposerSendWithQueueEdit = useCallback(
     (
       content: string,
@@ -2139,7 +2113,7 @@ export function SpaceVibeyChatPanel({
                         <SpaceChatAgentEmptyState
                           agent={emptyStateAgent}
                           showCapabilities={!composerHasText}
-                          onSelectCapability={handleEmptyChatPromptSeed}
+                          onSelectCapability={quickStart.selectQuickStart}
                         />
                       ) : null}
                       <div className="flex flex-1 flex-col gap-3">
@@ -2338,7 +2312,7 @@ export function SpaceVibeyChatPanel({
                       {messages.length === 0 &&
                       !isLoadingMessages &&
                       !selectedConversationReadOnly ? (
-                        <ShellEmptyChatActionPills onSelect={handleEmptyChatPromptSeed} />
+                        <ShellEmptyChatActionPills onSelect={quickStart.selectQuickStart} />
                       ) : null}
                       <ComposerInputStack
                         stackActive={isStreaming && !selectedConversationReadOnly}
@@ -2363,7 +2337,9 @@ export function SpaceVibeyChatPanel({
                           conversationId={selectedConversationId}
                           setTextRef={setTextRef}
                           composerMirrorRef={composerMirrorRef}
-                          onComposerValueChange={handleComposerValueChange}
+                          onComposerValueChange={quickStart.handleComposerValueChange}
+                          activeCapabilityChip={quickStart.activeCapabilityChip}
+                          onClearCapabilityChip={quickStart.clearQuickStart}
                           onEnqueue={editingQueueItemId ? undefined : handleEnqueue}
                           onSendNow={handleQueueSendNowNext}
                           queueLength={queue.length}

@@ -4,8 +4,21 @@ import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { SpaceChatAgentEmptyState } from './SpaceChatAgentEmptyState'
 
 vi.mock('@/components/shell/ShellEmptyChatCapabilityScroller', () => ({
-  ShellEmptyChatCapabilityScroller: ({ onSelect }: { onSelect: (prompt: string) => void }) => (
-    <button type="button" onClick={() => onSelect('Generate an image of ')}>
+  ShellEmptyChatCapabilityScroller: ({
+    onSelect,
+  }: {
+    onSelect: (quickStart: { id: string; prompt: string; systemContext: string }) => void
+  }) => (
+    <button
+      type="button"
+      onClick={() =>
+        onSelect({
+          id: 'image',
+          prompt: 'Generate an image of ',
+          systemContext: 'QUICK ACTION: Generate with generate_image.',
+        })
+      }
+    >
       Image
     </button>
   ),
@@ -62,6 +75,12 @@ describe('SpaceChatAgentEmptyState', () => {
       />,
     )
     fireEvent.click(screen.getByRole('button', { name: 'Image' }))
-    expect(onSelectCapability).toHaveBeenCalledWith('Generate an image of ')
+    expect(onSelectCapability).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'image',
+        prompt: 'Generate an image of ',
+        systemContext: expect.stringContaining('generate_image'),
+      }),
+    )
   })
 })
