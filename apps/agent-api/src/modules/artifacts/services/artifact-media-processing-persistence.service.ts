@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import type { Logger } from '@nestjs/common'
 import { ArtifactMediaAssetsRepository } from '../repositories/artifact-media-assets.repository'
+import { ArtifactIgStoryMissionDeliverableService } from './artifact-ig-story-mission-deliverable.service'
 
 export interface PersistProcessedMediaInput {
   target: Record<string, any>
@@ -15,6 +16,8 @@ export interface PersistProcessedMediaInput {
 }
 
 export class ArtifactMediaProcessingPersistenceService {
+  private readonly igStoryMissionDeliverable = new ArtifactIgStoryMissionDeliverableService()
+
   constructor(private readonly repository: ArtifactMediaAssetsRepository) {}
 
   async persistProcessedMedia(input: PersistProcessedMediaInput) {
@@ -22,11 +25,14 @@ export class ArtifactMediaProcessingPersistenceService {
     const mimeType = this.mimeForFormat(input.outputFormat)
     const storagePath = `${input.userId}/processed/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${input.outputFormat}`
 
-    const { error: uploadErr } = await this.repository.uploadMediaObject(input.target.serviceClient, {
-      filePath: storagePath,
-      buffer: outputBuffer,
-      contentType: mimeType,
-    })
+    const { error: uploadErr } = await this.repository.uploadMediaObject(
+      input.target.serviceClient,
+      {
+        filePath: storagePath,
+        buffer: outputBuffer,
+        contentType: mimeType,
+      },
+    )
     if (uploadErr) {
       return { success: false, error: `Upload failed: ${uploadErr.message}` }
     }
@@ -72,7 +78,7 @@ export class ArtifactMediaProcessingPersistenceService {
     }
     mediaAssetId = typeof asset?.id === 'string' ? asset.id : null
 
-    return {
+    const result = {
       success: true,
       operation: input.operation,
       url: publicUrl,
@@ -82,6 +88,14 @@ export class ArtifactMediaProcessingPersistenceService {
       file_size: outputBuffer.length,
       campaign_id: input.campaignId ?? null,
     }
+    if (input.operation !== 'render_ig_story') return result
+    return this.igStoryMissionDeliverable.persist({
+      target: input.target,
+      userId: input.userId,
+      campaignId: input.campaignId,
+      sessionKey: input.sessionKey,
+      processed: result,
+    })
   }
 
   private mimeForFormat(format: string): string {
