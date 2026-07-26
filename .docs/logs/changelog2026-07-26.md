@@ -115,3 +115,10 @@ Why: Production acceptance proved the static playbook's final contract still poi
 Impact: AI image generation can provide clean source imagery but cannot satisfy the final static contract. A static mission completes only with the requested number of deterministic 1080×1350 or 1080×1920 PNGs, each represented once in Media and Deliverables.
 
 Files: Agent API static renderer, media processing schema/preflight/persistence/docs/tests, mission-worker static playbook and exact-count verifier/tests, pinned renderer fonts in `docker/Dockerfile`, `supabase/migrations/20260726215000_static_ad_server_renderer.sql`, and `documentation/features/missions.md`.
+
+## [2026-07-26 15:00] - [FIX]
+
+What: Packaged the IG Story Pillow renderer at a stable production path, configured the Agent API to use that exact path, and added an image-build readability check plus a focused packaging regression test.
+Why: Production acceptance reached `process_media/render_ig_story`, but the compiled service resolved beneath `dist/apps/agent-api/src` while the Docker image copied the Python asset beneath `dist/modules`, so the runtime could not open the renderer.
+Impact: Fly image builds now fail immediately if the renderer is absent, and successful images invoke the same explicit renderer path regardless of TypeScript output layout.
+Files: `docker/Dockerfile`, `apps/agent-api/src/modules/artifacts/services/artifact-runtime-packaging.test.ts`

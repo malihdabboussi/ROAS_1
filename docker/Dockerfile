@@ -157,7 +157,9 @@ COPY --from=openclaw-builder /openclaw/docs/reference/templates /app/docs/refere
 
 # ── Copy built agent-api ──────────────────────────────────────
 COPY --from=api-builder --chown=node:node /build/apps/agent-api/dist /app/agent-api/dist
-COPY --chown=node:node apps/agent-api/src/modules/artifacts/scripts/render_ig_story.py /app/agent-api/dist/modules/artifacts/scripts/render_ig_story.py
+COPY --chown=node:node apps/agent-api/src/modules/artifacts/scripts/render_ig_story.py /app/agent-api/renderers/render_ig_story.py
+ENV IG_STORY_RENDER_SCRIPT_PATH=/app/agent-api/renderers/render_ig_story.py
+RUN test -r "${IG_STORY_RENDER_SCRIPT_PATH}"
 COPY --from=api-builder --chown=node:node /build/apps/agent-api/package.json /app/agent-api/
 # Copy agent-api node_modules (symlinks) + pnpm virtual store.
 # pnpm links packages from apps/agent-api/node_modules into the workspace store at /node_modules/.pnpm.
