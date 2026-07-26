@@ -71,6 +71,14 @@ export function SidebarHqFlyouts({
   const [subOpen, setSubOpen] = useState(false)
   const [createMenuAnchor, setCreateMenuAnchor] = useState<DOMRect | null>(null)
   const flyoutCloseEpoch = useShellStore((s) => s.sidebarFlyoutCloseEpoch)
+  const favoriteCampaigns = useMemo(
+    () => c.manageCampaigns.filter((campaign) => campaign.isFavorite || campaign.isPinned),
+    [c.manageCampaigns],
+  )
+  const favoriteSpaces = useMemo(
+    () => c.sidebarLists.filter((space) => spaceUserState.favoriteIds.has(space.id)),
+    [c.sidebarLists, spaceUserState.favoriteIds],
+  )
 
   const hoverPanel =
     showHover && !c.isPanelClosing
@@ -177,7 +185,11 @@ export function SidebarHqFlyouts({
           pinned={pinned}
           onPinnedChange={setPinned}
         >
-          <SidebarHomeFlyout pathname={c.pathname} />
+          <SidebarHomeFlyout
+            pathname={c.pathname}
+            favoriteCampaigns={favoriteCampaigns}
+            favoriteSpaces={favoriteSpaces}
+          />
         </HubDockFlyout>
       ) : null}
 
@@ -303,6 +315,7 @@ export function SidebarHqFlyouts({
         <HubDockFlyout
           anchor={anchor}
           title="More"
+          compact
           onEnter={clearSpacesFlyoutCloseTimer}
           onLeave={() => {
             if (!pinned && !subOpen) scheduleSpacesFlyoutClose()

@@ -123,9 +123,13 @@ export function ShellTopBar() {
         aria-label={chatDrawerOpen ? 'Collapse AI Chats' : 'Open AI Chats'}
         aria-pressed={chatDrawerOpen}
         onClick={toggleAiChat}
-        className={cn('shell-topbar-icon-btn', chatDrawerOpen && 'shell-topbar-icon-btn-active')}
+        className={cn(
+          'shell-topbar-icon-btn',
+          chatDrawerOpen && 'shell-topbar-icon-btn-active w-auto gap-1 px-2',
+        )}
       >
         <PanelLeft />
+        {chatDrawerOpen ? <span className="body-3 whitespace-nowrap">AI chat</span> : null}
       </button>
 
       <button

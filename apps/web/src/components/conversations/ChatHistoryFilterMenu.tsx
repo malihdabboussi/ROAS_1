@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom'
 import { Check, ChevronDown, ListFilter, SquareArrowOutUpRight } from 'lucide-react'
 import {
   chatHistoryActivityLabel,
@@ -50,11 +52,20 @@ export function ChatHistoryFilterMenu({
   const [submenu, setSubmenu] = useState<SubmenuKey>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const menuId = useId()
+  const { refs, floatingStyles } = useFloating({
+    placement: 'bottom-end',
+    strategy: 'fixed',
+    middleware: [offset(4), flip({ padding: 8 }), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  })
 
   useEffect(() => {
     if (!open) return
     const onPointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
+      if (
+        !rootRef.current?.contains(event.target as Node) &&
+        !refs.floating.current?.contains(event.target as Node)
+      ) {
         setOpen(false)
         setSubmenu(null)
       }
@@ -71,7 +82,7 @@ export function ChatHistoryFilterMenu({
       document.removeEventListener('mousedown', onPointerDown)
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [open])
+  }, [open, refs.floating])
 
   const rowClass =
     'body-3 hover:bg-hover-subtle gap-spacing-3 flex w-full items-center justify-between rounded-spacing-2 px-spacing-3 py-spacing-2 text-left'
@@ -105,6 +116,7 @@ export function ChatHistoryFilterMenu({
         </button>
       ) : null}
       <button
+        ref={refs.setReference}
         type="button"
         onClick={() => {
           setOpen((prev) => !prev)
@@ -123,119 +135,125 @@ export function ChatHistoryFilterMenu({
         <ListFilter className="icon-sm" aria-hidden />
       </button>
 
-      {open ? (
-        <div
-          id={menuId}
-          role="menu"
-          className="dropdown-menu-solid border-border z-dropdown absolute right-0 top-full mt-1 w-[224px] overflow-hidden rounded-xl border p-1 shadow-lg"
-        >
-          <FilterRow
-            label="Type"
-            value={chatHistoryTypeLabel(value.type)}
-            expanded={submenu === 'type'}
-            onToggle={() => toggleSubmenu('type')}
-            className={rowClass}
-          />
-          {submenu === 'type'
-            ? TYPE_OPTIONS.map((option) => (
-                <SubmenuOption
-                  key={option}
-                  label={chatHistoryTypeLabel(option)}
-                  selected={value.type === option}
-                  onSelect={() => selectFilter({ ...value, type: option })}
-                />
-              ))
-            : null}
+      {open && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              ref={refs.setFloating}
+              id={menuId}
+              role="menu"
+              data-dropdown
+              className="dropdown-menu-solid border-border z-dropdown fixed w-56 overflow-hidden rounded-xl border p-1 shadow-lg"
+              style={floatingStyles}
+            >
+              <FilterRow
+                label="Type"
+                value={chatHistoryTypeLabel(value.type)}
+                expanded={submenu === 'type'}
+                onToggle={() => toggleSubmenu('type')}
+                className={rowClass}
+              />
+              {submenu === 'type'
+                ? TYPE_OPTIONS.map((option) => (
+                    <SubmenuOption
+                      key={option}
+                      label={chatHistoryTypeLabel(option)}
+                      selected={value.type === option}
+                      onSelect={() => selectFilter({ ...value, type: option })}
+                    />
+                  ))
+                : null}
 
-          <FilterRow
-            label="Status"
-            value={chatHistoryStatusLabel(value.status)}
-            expanded={submenu === 'status'}
-            onToggle={() => toggleSubmenu('status')}
-            className={rowClass}
-          />
-          {submenu === 'status'
-            ? STATUS_OPTIONS.map((option) => (
-                <SubmenuOption
-                  key={option}
-                  label={chatHistoryStatusLabel(option)}
-                  selected={value.status === option}
-                  onSelect={() => selectFilter({ ...value, status: option })}
-                />
-              ))
-            : null}
+              <FilterRow
+                label="Status"
+                value={chatHistoryStatusLabel(value.status)}
+                expanded={submenu === 'status'}
+                onToggle={() => toggleSubmenu('status')}
+                className={rowClass}
+              />
+              {submenu === 'status'
+                ? STATUS_OPTIONS.map((option) => (
+                    <SubmenuOption
+                      key={option}
+                      label={chatHistoryStatusLabel(option)}
+                      selected={value.status === option}
+                      onSelect={() => selectFilter({ ...value, status: option })}
+                    />
+                  ))
+                : null}
 
-          <FilterRow
-            label="Last activity"
-            value={chatHistoryActivityLabel(value.lastActivity)}
-            expanded={submenu === 'lastActivity'}
-            onToggle={() => toggleSubmenu('lastActivity')}
-            className={rowClass}
-          />
-          {submenu === 'lastActivity'
-            ? ACTIVITY_OPTIONS.map((option) => (
-                <SubmenuOption
-                  key={option}
-                  label={chatHistoryActivityLabel(option)}
-                  selected={value.lastActivity === option}
-                  onSelect={() => selectFilter({ ...value, lastActivity: option })}
-                />
-              ))
-            : null}
+              <FilterRow
+                label="Last activity"
+                value={chatHistoryActivityLabel(value.lastActivity)}
+                expanded={submenu === 'lastActivity'}
+                onToggle={() => toggleSubmenu('lastActivity')}
+                className={rowClass}
+              />
+              {submenu === 'lastActivity'
+                ? ACTIVITY_OPTIONS.map((option) => (
+                    <SubmenuOption
+                      key={option}
+                      label={chatHistoryActivityLabel(option)}
+                      selected={value.lastActivity === option}
+                      onSelect={() => selectFilter({ ...value, lastActivity: option })}
+                    />
+                  ))
+                : null}
 
-          <div className="border-border my-1 border-t" />
+              <div className="border-border my-1 border-t" />
 
-          <FilterRow
-            label="Group by"
-            value={chatHistoryGroupByLabel(value.groupBy)}
-            expanded={submenu === 'groupBy'}
-            onToggle={() => toggleSubmenu('groupBy')}
-            className={rowClass}
-          />
-          {submenu === 'groupBy'
-            ? GROUP_BY_OPTIONS.map((option) => (
-                <SubmenuOption
-                  key={option}
-                  label={chatHistoryGroupByLabel(option)}
-                  selected={value.groupBy === option}
-                  onSelect={() => selectFilter({ ...value, groupBy: option })}
-                />
-              ))
-            : null}
+              <FilterRow
+                label="Group by"
+                value={chatHistoryGroupByLabel(value.groupBy)}
+                expanded={submenu === 'groupBy'}
+                onToggle={() => toggleSubmenu('groupBy')}
+                className={rowClass}
+              />
+              {submenu === 'groupBy'
+                ? GROUP_BY_OPTIONS.map((option) => (
+                    <SubmenuOption
+                      key={option}
+                      label={chatHistoryGroupByLabel(option)}
+                      selected={value.groupBy === option}
+                      onSelect={() => selectFilter({ ...value, groupBy: option })}
+                    />
+                  ))
+                : null}
 
-          <FilterRow
-            label="Icon"
-            value={chatHistoryLeadingIconLabel(value.leadingIcon)}
-            expanded={submenu === 'leadingIcon'}
-            onToggle={() => toggleSubmenu('leadingIcon')}
-            className={rowClass}
-          />
-          {submenu === 'leadingIcon'
-            ? LEADING_ICON_OPTIONS.map((option) => (
-                <SubmenuOption
-                  key={option}
-                  label={chatHistoryLeadingIconLabel(option)}
-                  selected={value.leadingIcon === option}
-                  onSelect={() => selectFilter({ ...value, leadingIcon: option })}
-                />
-              ))
-            : null}
+              <FilterRow
+                label="Icon"
+                value={chatHistoryLeadingIconLabel(value.leadingIcon)}
+                expanded={submenu === 'leadingIcon'}
+                onToggle={() => toggleSubmenu('leadingIcon')}
+                className={rowClass}
+              />
+              {submenu === 'leadingIcon'
+                ? LEADING_ICON_OPTIONS.map((option) => (
+                    <SubmenuOption
+                      key={option}
+                      label={chatHistoryLeadingIconLabel(option)}
+                      selected={value.leadingIcon === option}
+                      onSelect={() => selectFilter({ ...value, leadingIcon: option })}
+                    />
+                  ))
+                : null}
 
-          <div className="border-border my-1 border-t" />
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              onChange({ ...DEFAULT_CHAT_HISTORY_FILTERS })
-              setOpen(false)
-              setSubmenu(null)
-            }}
-            className={rowClass}
-          >
-            <span className="text-foreground">Reset to defaults</span>
-          </button>
-        </div>
-      ) : null}
+              <div className="border-border my-1 border-t" />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  onChange({ ...DEFAULT_CHAT_HISTORY_FILTERS })
+                  setOpen(false)
+                  setSubmenu(null)
+                }}
+                className={rowClass}
+              >
+                <span className="text-foreground">Reset to defaults</span>
+              </button>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   )
 }

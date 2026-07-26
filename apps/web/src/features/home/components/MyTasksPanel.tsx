@@ -98,6 +98,7 @@ export function MyTasksPanel({
   items,
   onOpenItem,
   embedded = false,
+  presentation = 'dialog',
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -107,6 +108,7 @@ export function MyTasksPanel({
   items: YourTurnItem[]
   onOpenItem: (item: YourTurnItem) => void | Promise<void>
   embedded?: boolean
+  presentation?: 'dialog' | 'page'
 }) {
   const [search, setSearch] = useState('')
   const filtered = useMemo(() => filterMyTasksBySearch(items, search), [items, search])
@@ -117,6 +119,7 @@ export function MyTasksPanel({
   )
   const statusFieldsBySpaceId = useSpaceStatusFieldsBySpaceId(spaceIds)
   const totalCount = filtered.length
+  const pagePresentation = presentation === 'page'
 
   useEffect(() => {
     if (!open) setSearch('')
@@ -126,15 +129,17 @@ export function MyTasksPanel({
     <div
       className={cn(
         'surface-card wizard-container-border border-border bg-card flex w-full flex-col overflow-hidden',
-        embedded
+        pagePresentation
           ? 'h-full min-h-0 border-0 shadow-none'
-          : 'rounded-spacing-4 max-h-[88vh] max-w-3xl border shadow-2xl',
+          : embedded
+            ? 'h-full min-h-0 border-0 shadow-none'
+            : 'rounded-spacing-4 max-h-[88vh] max-w-3xl border shadow-2xl',
       )}
     >
       <div className="px-spacing-6 pt-spacing-5 pb-spacing-3 shrink-0">
         <div className="gap-spacing-3 flex items-start justify-between">
           <div className="min-w-0 flex-1">
-            {embedded ? (
+            {embedded || pagePresentation ? (
               <>
                 <h1 className="title-h6 text-foreground flex items-center gap-2">
                   <CheckSquare className="text-muted-foreground h-5 w-5 shrink-0" aria-hidden />
@@ -162,7 +167,7 @@ export function MyTasksPanel({
               </>
             )}
           </div>
-          {!embedded ? (
+          {!embedded && !pagePresentation ? (
             <button
               type="button"
               onClick={() => onOpenChange(false)}
@@ -175,7 +180,7 @@ export function MyTasksPanel({
         </div>
 
         <div className="mt-spacing-4 gap-spacing-2 flex flex-wrap items-center">
-          <div className="input-glass relative min-w-0 flex-1">
+          <div className="relative min-w-0 flex-1">
             <Search
               className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
               aria-hidden
@@ -187,7 +192,12 @@ export function MyTasksPanel({
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <HomeFeedScopePicker variant="my_tasks" scope={scope} onChange={updateScope} />
+          <HomeFeedScopePicker
+            variant="my_tasks"
+            scope={scope}
+            onChange={updateScope}
+            showSummary={pagePresentation}
+          />
         </div>
       </div>
 
@@ -288,7 +298,7 @@ export function MyTasksPanel({
     </div>
   )
 
-  if (embedded) return content
+  if (embedded || pagePresentation) return content
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>

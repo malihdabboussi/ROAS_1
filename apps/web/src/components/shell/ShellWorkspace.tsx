@@ -207,8 +207,9 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
           <div
             className={cn(
               'shell-work-area-body',
-              bodyAnchored && 'shell-work-area-body-anchored',
-              bodyAnchored && workAreaBodyCollapsed && 'shell-work-area-body-collapsed',
+              workAreaCollapsible && 'shell-work-area-body-anchored',
+              workAreaCollapsible && !bodyAnchored && 'invisible',
+              workAreaCollapsible && workAreaBodyCollapsed && 'shell-work-area-body-collapsed',
             )}
             style={bodyAnchored ? { width: `${anchoredWidth}px` } : undefined}
           >

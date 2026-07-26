@@ -35,6 +35,8 @@ type HubDockFlyoutProps = {
   /** Gap from trigger right edge. Primary = 2, nested = 0. */
   offsetPx?: number
   nested?: boolean
+  /** Natural-height primary flyout aligned to its trigger instead of filling the viewport. */
+  compact?: boolean
   /** Fixed panel width; long names truncate instead of growing the flyout. */
   fixedWidth?: boolean
   headerActions?: HubDockFlyoutHeaderAction[]
@@ -74,6 +76,7 @@ export function HubDockFlyout({
   leaveSuspended = false,
   offsetPx = HUB_DOCK_FLYOUT_OFFSET_PX,
   nested = false,
+  compact = false,
   fixedWidth = false,
   headerActions,
   searchOpen,
@@ -90,7 +93,7 @@ export function HubDockFlyout({
 
   const reposition = useCallback(() => {
     const el = rootRef.current
-    if (!nested) {
+    if (!nested && !compact) {
       const width = el?.offsetWidth ?? 360
       const maxLeft = Math.max(8, window.innerWidth - width - 8)
       setTop(52)
@@ -109,7 +112,7 @@ export function HubDockFlyout({
     if (nextLeft > maxLeft) nextLeft = maxLeft
     setTop(nextTop)
     setLeft(nextLeft)
-  }, [anchor.right, anchor.top, nested, offsetPx])
+  }, [anchor.right, anchor.top, compact, nested, offsetPx])
 
   useLayoutEffect(() => {
     reposition()
@@ -165,7 +168,7 @@ export function HubDockFlyout({
       data-hub-dock-flyout-nested={nested ? '' : undefined}
       className={cn(
         'hub-dock-flyout',
-        !nested && 'hub-dock-flyout-viewport',
+        !nested && !compact && 'hub-dock-flyout-viewport',
         nested && 'hub-dock-flyout-nested',
         fixedWidth && 'hub-dock-flyout-fixed',
       )}

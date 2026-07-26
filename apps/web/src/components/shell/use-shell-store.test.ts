@@ -25,6 +25,7 @@ describe('shell persisted prefs hydration', () => {
       sidebarPinned: false,
       menuMode: 'home',
       workAreaOpen: true,
+      chatHistoryCollapsed: false,
       rightPanel: { open: false, tab: 'tasks' },
     })
   })
@@ -45,12 +46,25 @@ describe('shell persisted prefs hydration', () => {
   })
 
   it('restores and clamps the chat history rail width', () => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ chatHistoryWidth: 900 }))
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ chatHistoryWidth: 900, chatHistoryCollapsed: true }),
+    )
     hydrateShellStoreFromStorage()
     expect(useShellStore.getState().chatHistoryWidth).toBe(420)
+    expect(useShellStore.getState().chatHistoryCollapsed).toBe(true)
 
     useShellStore.getState().setChatHistoryWidth(100)
     expect(useShellStore.getState().chatHistoryWidth).toBe(180)
+  })
+
+  it('persists independent chat history collapse state', () => {
+    useShellStore.getState().setChatHistoryCollapsed(true)
+
+    expect(useShellStore.getState().chatHistoryCollapsed).toBe(true)
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}')).toMatchObject({
+      chatHistoryCollapsed: true,
+    })
   })
 })
 

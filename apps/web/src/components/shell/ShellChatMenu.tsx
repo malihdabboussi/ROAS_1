@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { PanelLeftClose } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConversationShareModal } from '@/components/conversations'
 import { ChatHistoryFilterMenu } from '@/components/conversations/ChatHistoryFilterMenu'
@@ -31,7 +32,7 @@ import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 import { isShellHomeRoute } from './shell-route-policy'
 import { useShellStore } from './use-shell-store'
 
-export function ShellChatMenu() {
+export function ShellChatMenu({ onCollapse }: { onCollapse?: () => void }) {
   const pathname = usePathname() ?? '/home'
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -212,7 +213,20 @@ export function ShellChatMenu() {
   const selectedConversationId = chatDrawer.conversationId ?? activeConversationId ?? null
 
   const filterControls = (
-    <ChatHistoryFilterMenu value={filters} onChange={setFilters} onOpenAllChats={openAllChats} />
+    <div className="gap-spacing-1 flex items-center">
+      <ChatHistoryFilterMenu value={filters} onChange={setFilters} onOpenAllChats={openAllChats} />
+      {onCollapse ? (
+        <button
+          type="button"
+          onClick={onCollapse}
+          className="btn-icon-bare hover:bg-hover-subtle"
+          aria-label="Collapse chat history"
+          title="Collapse chat history"
+        >
+          <PanelLeftClose className="icon-sm" aria-hidden />
+        </button>
+      ) : null}
+    </div>
   )
 
   return (

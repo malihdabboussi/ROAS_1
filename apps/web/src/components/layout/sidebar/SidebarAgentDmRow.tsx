@@ -93,8 +93,8 @@ export function SidebarAgentDmRow({
     >
       <Link
         href={href}
-        className={`nav-glass-hover-purple flex w-full items-center gap-2 rounded-lg py-1.5 pl-3 pr-8 transition-all ${
-          isActive ? 'home-sidebar-item-active' : 'text-[var(--color-muted-foreground)]'
+        className={`hub-dock-flyout-row pr-spacing-8 ${
+          isActive ? 'hub-dock-flyout-row-active' : ''
         }`}
       >
         {agent.image_url ? (
@@ -108,7 +108,7 @@ export function SidebarAgentDmRow({
             {agent.name.slice(0, 1).toUpperCase()}
           </span>
         )}
-        <span className="body-3 min-w-0 flex-1 truncate">{agent.name}</span>
+        <span className="min-w-0 flex-1 truncate">{agent.name}</span>
         <span className={agentPresenceStatusDotClass(agent)} aria-hidden />
       </Link>
       <div className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center">

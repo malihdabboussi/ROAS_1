@@ -14,6 +14,7 @@ import {
   MailOpen,
   RotateCcw,
 } from 'lucide-react'
+import { SettingsSelect } from '@/components/ui/forms/SettingsSelect'
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
@@ -107,7 +108,7 @@ function InboxRow({
               <span className="typo-caption text-muted-foreground uppercase tracking-wide">
                 {notificationTypeLabel(notification.type)}
               </span>
-              <span className="typo-caption text-muted-foreground ml-auto shrink-0">
+              <span className="typo-caption text-muted-foreground w-spacing-12 ml-auto shrink-0 text-right tabular-nums">
                 {new Date(notification.created_at).toLocaleDateString(undefined, {
                   month: 'short',
                   day: 'numeric',
@@ -220,7 +221,13 @@ function InboxRow({
   )
 }
 
-export function InboxFeed({ initialView = 'primary' }: { initialView?: InboxView }) {
+export function InboxFeed({
+  initialView = 'primary',
+  presentation = 'card',
+}: {
+  initialView?: InboxView
+  presentation?: 'card' | 'page'
+}) {
   const router = useRouter()
   const inbox = useInboxTriage(initialView)
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -233,8 +240,12 @@ export function InboxFeed({ initialView = 'primary' }: { initialView?: InboxView
   }, [inbox.notifications, inbox.type])
 
   return (
-    <section className="section-card card-elevated flex h-full min-h-0 flex-col overflow-hidden">
-      <header className="border-border px-spacing-4 py-spacing-3 gap-spacing-3 flex flex-wrap items-center border-b">
+    <section
+      className={`flex h-full min-h-0 w-full flex-col overflow-hidden ${
+        presentation === 'card' ? 'section-card card-elevated' : 'bg-background'
+      }`}
+    >
+      <header className="border-border px-spacing-6 py-spacing-4 gap-spacing-3 flex flex-wrap items-center border-b">
         <div className="gap-spacing-2 flex min-w-0 items-center">
           <Inbox className="icon-md text-muted-foreground shrink-0" aria-hidden />
           <div className="min-w-0">
@@ -242,21 +253,23 @@ export function InboxFeed({ initialView = 'primary' }: { initialView?: InboxView
             <p className="typo-caption text-muted-foreground truncate">{INBOX_MESSAGES.SUBTITLE}</p>
           </div>
         </div>
-        <label className="ml-auto">
+        <div className="ml-auto">
           <span className="sr-only">{INBOX_MESSAGES.FILTER.label}</span>
-          <select
-            className="input-glass h-spacing-7 body-4 rounded-spacing-2 px-spacing-2 text-foreground"
+          <SettingsSelect
             value={inbox.type}
-            onChange={(event) => inbox.setType(event.target.value)}
-          >
-            <option value="all">{INBOX_MESSAGES.FILTER.all}</option>
-            {typeOptions.map((type) => (
-              <option key={type} value={type}>
-                {notificationTypeLabel(type)}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={[
+              { value: 'all', label: INBOX_MESSAGES.FILTER.all },
+              ...typeOptions.map((type) => ({
+                value: type,
+                label: notificationTypeLabel(type),
+              })),
+            ]}
+            onChange={inbox.setType}
+            wrapperClassName="relative w-spacing-40"
+            triggerClassName="input-glass rounded-spacing-2 gap-spacing-2 h-spacing-8 px-spacing-3 flex w-full items-center justify-between"
+            menuMinWidth={176}
+          />
+        </div>
       </header>
 
       <nav className="border-border px-spacing-3 py-spacing-2 gap-spacing-1 flex overflow-x-auto border-b">

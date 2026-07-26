@@ -88,10 +88,12 @@ export function HomeFeedScopePicker({
   variant: _variant,
   scope,
   onChange,
+  showSummary = false,
 }: {
   variant: HomeFeedScopePickerVariant
   scope: HomeFeedScopeState
   onChange: (patch: Partial<HomeFeedScopeState>) => void
+  showSummary?: boolean
 }) {
   const memberships = useOrgStore((s) => s.memberships)
   const isOrgOnly = useOrgStore((s) => s.isOrgOnly)
@@ -190,12 +192,17 @@ export function HomeFeedScopePicker({
           ref={buttonRef}
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="text-muted-foreground hover:text-foreground rounded-md p-1 transition-colors hover:bg-[var(--color-hover-subtle)]"
+          className={
+            showSummary
+              ? 'input-glass rounded-spacing-2 gap-spacing-2 h-spacing-9 px-spacing-3 body-3 text-foreground flex min-w-0 items-center'
+              : 'text-muted-foreground hover:text-foreground rounded-md p-1 transition-colors hover:bg-[var(--color-hover-subtle)]'
+          }
           aria-expanded={open}
           aria-haspopup="menu"
           aria-label={`Filter scope · ${summary}`}
         >
           <Filter className="h-3.5 w-3.5" aria-hidden />
+          {showSummary ? <span className="max-w-xs truncate">{summary}</span> : null}
         </button>
       </Tooltip>
 

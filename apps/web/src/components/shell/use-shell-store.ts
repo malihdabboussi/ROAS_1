@@ -31,6 +31,7 @@ type PersistedShell = {
   menuMode?: ShellMenuMode
   chatDrawerWidth?: number
   chatHistoryWidth?: number
+  chatHistoryCollapsed?: boolean
   rightPanelOpen?: boolean
   rightPanelTab?: ShellRightPanelTab
   workAreaOpen?: boolean
@@ -87,6 +88,7 @@ interface ShellStore {
   menuMode: ShellMenuMode
   chatDrawer: ShellChatDrawerState
   chatHistoryWidth: number
+  chatHistoryCollapsed: boolean
   /** Page work area (Space dock, Brain, Inbox, …) visible; false = chat full width. */
   workAreaOpen: boolean
   rightPanel: ShellRightPanelState
@@ -110,6 +112,7 @@ interface ShellStore {
   closeChatDrawer: () => void
   setChatDrawerWidth: (width: number) => void
   setChatHistoryWidth: (width: number) => void
+  setChatHistoryCollapsed: (collapsed: boolean) => void
   setWorkAreaOpen: (open: boolean) => void
   toggleWorkAreaOpen: () => void
   setRightPanelOpen: (open: boolean) => void
@@ -141,6 +144,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     minimized: false,
   },
   chatHistoryWidth: 200,
+  chatHistoryCollapsed: false,
   workAreaOpen: true,
   rightPanel: {
     open: false,
@@ -249,6 +253,10 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     const clamped = clampChatHistoryWidth(width)
     writePersisted({ chatHistoryWidth: clamped })
     set({ chatHistoryWidth: clamped })
+  },
+  setChatHistoryCollapsed: (collapsed) => {
+    writePersisted({ chatHistoryCollapsed: collapsed })
+    set({ chatHistoryCollapsed: collapsed })
   },
   setWorkAreaOpen: (open) => {
     writePersisted({ workAreaOpen: open })
@@ -364,6 +372,7 @@ export function hydrateShellStoreFromStorage(): void {
       width: clampChatDrawerWidth(persisted.chatDrawerWidth ?? 420),
     },
     chatHistoryWidth: clampChatHistoryWidth(persisted.chatHistoryWidth ?? 200),
+    chatHistoryCollapsed: persisted.chatHistoryCollapsed ?? false,
     workAreaOpen: persisted.workAreaOpen ?? true,
     rightPanel: {
       open: persisted.rightPanelOpen ?? false,

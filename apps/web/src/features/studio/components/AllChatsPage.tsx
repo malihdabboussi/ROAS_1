@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus, Search } from 'lucide-react'
 import { toast } from 'sonner'
@@ -30,7 +29,6 @@ import { cn } from '@/lib/utils/cn'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 
 export function AllChatsPage() {
-  const router = useRouter()
   const openChatDrawer = useShellStore((s) => s.openChatDrawer)
   const openFreshChatDrawer = useShellStore((s) => s.openFreshChatDrawer)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
@@ -147,19 +145,17 @@ export function AllChatsPage() {
         })
         return
       }
-      setWorkAreaOpen(false)
       openChatDrawer(id)
-      router.push('/home')
+      setWorkAreaOpen(true)
     },
-    [openChatDrawer, router, selectMode, setWorkAreaOpen],
+    [openChatDrawer, selectMode, setWorkAreaOpen],
   )
 
   const handleNew = useCallback(() => {
     setActiveConversationId(null)
-    setWorkAreaOpen(false)
     openFreshChatDrawer()
-    router.push('/home')
-  }, [openFreshChatDrawer, router, setActiveConversationId, setWorkAreaOpen])
+    setWorkAreaOpen(true)
+  }, [openFreshChatDrawer, setActiveConversationId, setWorkAreaOpen])
 
   const archiveSelected = useCallback(async () => {
     const ids = [...selectedIds]

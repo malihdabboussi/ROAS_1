@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type CSSProperties } from 'react'
+import { useShellStore } from '@/components/shell/use-shell-store'
 import type { AgentInfoPanelTab, MissionAgent } from '@/lib/agents'
 import type { Campaign } from '@/lib/campaigns'
 import { ChatTab } from './tabs/ChatTab'
@@ -32,10 +33,16 @@ export function Team2DetailView({
   generalCampaignId,
 }: Team2DetailViewProps) {
   const [infoPanelCollapsed, setInfoPanelCollapsed] = useState(false)
+  const minimizeChatDrawer = useShellStore((state) => state.minimizeChatDrawer)
 
   useEffect(() => {
     setInfoPanelCollapsed(false)
   }, [agent.agent_key])
+
+  useEffect(() => {
+    if (!useShellStore.getState().chatDrawer.open) return
+    minimizeChatDrawer()
+  }, [minimizeChatDrawer])
 
   const infoPanelWidthStyle: CSSProperties = {
     width: infoPanelCollapsed

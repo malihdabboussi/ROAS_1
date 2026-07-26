@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { PanelLeftOpen } from 'lucide-react'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { ResizableDivider } from '@/components/layout/ResizableDivider'
@@ -14,14 +15,17 @@ import { useShellStore } from './use-shell-store'
 /** Matches the drawer/HQ-rail transition in globals.css. */
 const DRAWER_SLIDE_MS = 300
 const DRAWER_COLLAPSE_EDGE_TOLERANCE = 24
+const HISTORY_COLLAPSE_THRESHOLD = 96
 
 export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
   const open = useShellStore((s) => s.chatDrawer.open)
   const width = useShellStore((s) => s.chatDrawer.width)
   const conversationId = useShellStore((s) => s.chatDrawer.conversationId)
   const historyWidth = useShellStore((s) => s.chatHistoryWidth)
+  const historyCollapsed = useShellStore((s) => s.chatHistoryCollapsed)
   const setChatDrawerWidth = useShellStore((s) => s.setChatDrawerWidth)
   const setChatHistoryWidth = useShellStore((s) => s.setChatHistoryWidth)
+  const setChatHistoryCollapsed = useShellStore((s) => s.setChatHistoryCollapsed)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
   const minimizeChatDrawer = useShellStore((s) => s.minimizeChatDrawer)
   const newChatNonce = useShellStore((s) => s.newChatNonce)
@@ -43,7 +47,7 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
   const dragRemainingWidth = useRef(Number.POSITIVE_INFINITY)
   const historyDragStartX = useRef(0)
   const historyDragStartWidth = useRef(historyWidth)
-  const historyDragStartDrawerWidth = useRef(width)
+  const historyDragRawWidth = useRef(historyWidth)
   const lastHandledNewChatNonceRef = useRef(0)
 
   useEffect(() => {
@@ -115,9 +119,9 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
       setIsHistoryDragging(true)
       historyDragStartX.current = e.clientX
       historyDragStartWidth.current = historyWidth
-      historyDragStartDrawerWidth.current = width
+      historyDragRawWidth.current = historyWidth
     },
-    [historyWidth, width],
+    [historyWidth],
   )
 
   useEffect(() => {
@@ -152,21 +156,22 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
     if (!isHistoryDragging) return
     const onMove = (e: PointerEvent) => {
       const delta = e.clientX - historyDragStartX.current
-      setChatHistoryWidth(historyDragStartWidth.current + delta)
-      // In docked mode, grow the whole drawer with the history rail so the
-      // active chat does not get squeezed by the same drag.
-      if (!expanded) {
-        setChatDrawerWidth(historyDragStartDrawerWidth.current + delta)
+      historyDragRawWidth.current = historyDragStartWidth.current + delta
+      setChatHistoryWidth(historyDragRawWidth.current)
+    }
+    const onUp = () => {
+      setIsHistoryDragging(false)
+      if (historyDragRawWidth.current <= HISTORY_COLLAPSE_THRESHOLD) {
+        setChatHistoryCollapsed(true)
       }
     }
-    const onUp = () => setIsHistoryDragging(false)
     document.addEventListener('pointermove', onMove)
     document.addEventListener('pointerup', onUp)
     return () => {
       document.removeEventListener('pointermove', onMove)
       document.removeEventListener('pointerup', onUp)
     }
-  }, [expanded, isHistoryDragging, setChatDrawerWidth, setChatHistoryWidth])
+  }, [isHistoryDragging, setChatHistoryCollapsed, setChatHistoryWidth])
 
   if (!mounted) return null
 
@@ -202,20 +207,39 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
           )}
           style={bodyStyle}
         >
-          <div
-            className="shell-chat-drawer-menu"
-            style={{ width: `${historyWidth}px` }}
-            data-shell-chat-history
-          >
-            <ShellChatMenu />
-          </div>
-          <ResizableDivider
-            onMouseDown={handleHistoryMouseDown}
-            isDragging={isHistoryDragging}
-            compact
-            showGrip={false}
-            ariaLabel="Resize chat history"
-          />
+          {historyCollapsed ? (
+            <div
+              className="border-border bg-card px-spacing-1 py-spacing-2 w-spacing-10 flex shrink-0 justify-center border-r"
+              data-shell-chat-history-collapsed
+            >
+              <button
+                type="button"
+                onClick={() => setChatHistoryCollapsed(false)}
+                className="btn-icon-bare hover:bg-hover-subtle"
+                aria-label="Show chat history"
+                title="Chat history"
+              >
+                <PanelLeftOpen className="icon-sm" aria-hidden />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div
+                className="shell-chat-drawer-menu"
+                style={{ width: `${historyWidth}px` }}
+                data-shell-chat-history
+              >
+                <ShellChatMenu onCollapse={() => setChatHistoryCollapsed(true)} />
+              </div>
+              <ResizableDivider
+                onMouseDown={handleHistoryMouseDown}
+                isDragging={isHistoryDragging}
+                compact
+                showGrip={false}
+                ariaLabel="Resize chat history"
+              />
+            </>
+          )}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <GlobalChatPanel shellSidebarChrome onCollapseChat={() => minimizeChatDrawer()} />
           </div>

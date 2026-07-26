@@ -126,6 +126,7 @@ describe('ShellTopBar', () => {
     mocks.shellState.chatDrawer = { open: true }
 
     render(<ShellTopBar />)
+    expect(screen.getByText('AI chat')).toBeInTheDocument()
     fireEvent.click(screen.getByTitle('Collapse AI Chats'))
 
     expect(mocks.shellState.minimizeChatDrawer).toHaveBeenCalledTimes(1)

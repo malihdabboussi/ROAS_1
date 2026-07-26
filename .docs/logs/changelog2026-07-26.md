@@ -139,3 +139,12 @@ What: Made IG Story post-render QA explicitly visual-only by requiring `analyze_
 Why: Production acceptance produced both correct final MP4s, but the agent used `analyze_video`'s transcript-enabled default for visual QA and blocked on an unrelated, unconfigured Deepgram dependency.
 Impact: Final-frame QA uses FFmpeg frame extraction without requiring a speech provider; Deepgram remains opt-in only when a spoken-audio transcript is actually requested.
 Files: `supabase/migrations/20260726222500_ig_organic_video_visual_qa.sql`, IG video playbook and contract tests, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `documentation/features/missions.md`
+## 2026-07-26 11:08 - [STYLE]
+
+What: Unified shell navigation and Home destination presentation, added independent chat-history collapse and restoration, surfaced real Favorites in Home, fixed chat filter layering and conversation selection behavior, aligned Inbox controls and metadata, and prevented duplicate global and agent-detail chat composers.
+
+Why: The shell mixed flyout scales, card and page layouts, native-looking empty selectors, overlapping menus, coupled resize boundaries, and duplicate chat surfaces. These inconsistencies made common navigation and review flows feel unstable.
+
+Impact: AI chat and right-side work surfaces now move predictably, Home destinations use cohesive full-page layouts, chat history can be hidden without closing the active chat, pinned work is reachable from Home, and agent details expose one authoritative composer.
+
+Files: `apps/web/src/components/shell/*`, `apps/web/src/components/layout/sidebar/*`, `apps/web/src/components/conversations/ChatHistoryFilterMenu.tsx`, `apps/web/src/components/notifications/InboxFeed.tsx`, `apps/web/src/features/home/components/*`, `apps/web/src/features/studio/components/AllChatsPage.tsx`, `apps/web/src/features/team-2/components/Team2DetailView.tsx`, `apps/web/src/app/(dashboard)/home/*`, `documentation/features/claude-chatgpt-shell.md`
