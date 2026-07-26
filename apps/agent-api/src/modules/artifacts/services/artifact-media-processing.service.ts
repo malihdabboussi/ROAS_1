@@ -7,6 +7,7 @@ import {
   parseConversationIdFromSessionKey,
   type ArtifactActionHandler,
 } from './artifact-action.registry'
+import { ArtifactIgStoryRendererService } from './artifact-ig-story-renderer.service'
 import { ArtifactLegacyMediaUploadService } from './artifact-legacy-media-upload.service'
 import {
   ArtifactMediaProcessingAdvancedOperationsService,
@@ -52,6 +53,7 @@ type ProcessOperation =
   | 'frame_extract'
   | 'waveform'
   | 'render_validate_messaging'
+  | 'render_ig_story'
 
 const VALID_OPERATIONS = new Set<ProcessOperation>([
   'trim',
@@ -83,6 +85,7 @@ const VALID_OPERATIONS = new Set<ProcessOperation>([
   'frame_extract',
   'waveform',
   'render_validate_messaging',
+  'render_ig_story',
 ])
 
 const MAX_VALIDATE_MESSAGING_LINES = 8
@@ -100,6 +103,7 @@ export class ArtifactMediaProcessingService {
   private readonly advancedOperations = new ArtifactMediaProcessingAdvancedOperationsService()
   private readonly coreOperations = new ArtifactMediaProcessingCoreOperationsService()
   private readonly editOperations = new ArtifactMediaProcessingEditOperationsService()
+  private readonly igStoryRenderer = new ArtifactIgStoryRendererService()
   private readonly operationRuntimeService = new ArtifactMediaProcessingOperationRuntimeService()
   private readonly persistenceService: ArtifactMediaProcessingPersistenceService
   private readonly mediaUploadService: ArtifactLegacyMediaUploadService
@@ -232,6 +236,9 @@ export class ArtifactMediaProcessingService {
         case 'waveform':
           ;({ outputPath, outputFormat } = await this.opWaveform(input, tempRoot, onProgress))
           break
+        case 'render_ig_story':
+          ;({ outputPath, outputFormat } = await this.opRenderIgStory(input, tempRoot, onProgress))
+          break
         default:
           return { success: false, error: `Unhandled operation: ${operation}` }
       }
@@ -258,6 +265,14 @@ export class ArtifactMediaProcessingService {
   }
 
   // --- Operations ---
+
+  private async opRenderIgStory(
+    input: Record<string, unknown>,
+    tempRoot: string,
+    onProgress?: (message: string) => void | Promise<void>,
+  ): Promise<{ outputPath: string; outputFormat: string }> {
+    return this.igStoryRenderer.render(input, tempRoot, onProgress, this.operationRuntime())
+  }
 
   private async renderValidateMessaging(
     target: Record<string, any>,

@@ -7,6 +7,7 @@ describe('ig-organic-video-ad skill migration', () => {
     '../../supabase/migrations/20260723204214_ig_organic_video_ad_skill.sql',
     '../../supabase/migrations/20260725153000_ig_organic_video_preapproved_copy.sql',
     '../../supabase/migrations/20260726122500_ig_organic_video_renderer_path.sql',
+    '../../supabase/migrations/20260726124500_ig_organic_video_server_renderer.sql',
   ]
     .map((filePath) => fs.readFileSync(path.resolve(process.cwd(), filePath), 'utf8'))
     .join('\n')
@@ -31,6 +32,8 @@ describe('ig-organic-video-ad skill migration', () => {
     expect(migration).toMatch(/render_ig_story\.py/i)
     expect(migration).toMatch(/skills\/ig-organic-video-ad\/assets\/render_ig_story\.py/)
     expect(migration).toMatch(/Do not look for it under the mission working directory/i)
+    expect(migration).toMatch(/operation.*render_ig_story/is)
+    expect(migration).toMatch(/Do not use shell execution/i)
     expect(migration).toMatch(/Pillow/i)
     expect(migration).toMatch(/👇.*⏰.*✅.*🚨.*🙌/s)
     expect(migration).toMatch(/embedded color/i)

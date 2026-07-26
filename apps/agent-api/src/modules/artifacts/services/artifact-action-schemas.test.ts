@@ -147,6 +147,32 @@ describe('PromptMode action schema and preflight coverage', () => {
         ],
       }),
     ).resolves.toBeNull()
+    await expect(
+      validateActionPreflight('process_media', {
+        operation: 'render_ig_story',
+        url: 'https://example.com/source.mp4',
+        pill_line: 'Free Training',
+        headline_lines: [
+          { text: 'Build launch-ready ads' },
+          { text: 'without the production drag', highlighted: true },
+        ],
+        cta_line: 'Tap Below To Build Faster',
+        emoji: '🙂',
+      }),
+    ).resolves.toMatchObject({ error: expect.stringMatching(/emoji/i) })
+    await expect(
+      validateActionPreflight('process_media', {
+        operation: 'render_ig_story',
+        url: 'https://example.com/source.mp4',
+        pill_line: 'Free Training',
+        headline_lines: [
+          { text: 'Build launch-ready ads' },
+          { text: 'without the production drag', highlighted: true },
+        ],
+        cta_line: 'Tap Below To Build Faster',
+        emoji: '⏰',
+      }),
+    ).resolves.toBeNull()
   })
 
   it('rejects analyze_video source and settings mistakes before runtime work', async () => {
