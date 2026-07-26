@@ -61,6 +61,8 @@ export function expandStaticAdProductionPlaybook(
     ...outputContract.expected,
     exact_count: kickoff.quantity,
     aspect_ratio: kickoff.aspectRatio,
+    width: 1080,
+    height: kickoff.aspectRatio === '4:5' ? 1350 : 1920,
     selected_format_ids: kickoff.selectedFormatIds,
   }
   const subtask: MissionPlaybookPlanResult['subtasks'][number] = {

@@ -246,6 +246,8 @@ export class ArtifactLegacyMediaGenerateService {
       mediaOrgId,
       spaceIdFromInput ?? spaceIdFromCtx,
       conversationId,
+      undefined,
+      aspectRatio,
     )
     if (!upload.success) return upload
     if (billingProvider === 'openai' && tokenUsage) {
@@ -328,7 +330,7 @@ export class ArtifactLegacyMediaGenerateService {
         upload,
         provider: billingProvider,
         model: billingModel,
-        aspectRatio: googleAspectRatio ?? aspectRatio,
+        aspectRatio,
         avatarId,
         avatarImageUrl: imageUrl,
         avatarUpdated: Boolean(avatarUpdate?.data),

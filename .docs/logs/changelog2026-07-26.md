@@ -71,3 +71,10 @@ Why: AI usage and provider spend were split across trace, billing-attempt, and r
 Impact: Admins can review one, seven, or thirty days of OpenAI/ChatGPT, OpenRouter, Gemini/Google, direct Anthropic, and other usage at `/admin/ai-usage`. The report calls out oversized contexts, failed paid traces, unlinked or unsettled provider attempts, missing trace usage, and stale reconciliation without changing model routing or output quality.
 
 Files: `apps/api/src/modules/admin`, `apps/web/src/app/(dashboard)/admin/ai-usage/page.tsx`, `apps/web/src/features/admin-ai-usage`, `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx`, `apps/web/src/middleware.ts`, and `documentation/features/chat-stream-recovery.md`.
+
+## [2026-07-26 13:34] - [FIX]
+
+What: Normalized generated 4:5 and 9:16 images to 1080×1350 and 1080×1920 before Media registration, persisted measured image dimensions, and made static mission output verification reject mismatched pixels.
+Why: Production acceptance produced an 896×1120 PNG while the agent and independent mission reviewer both claimed it was 1080×1350 because the contract trusted narrative evidence and Media stored no dimensions.
+Impact: Static-ad missions now deliver canonical placement pixels, Media and Deliverables carry authoritative width/height evidence, and a provider-size regression triggers corrective execution instead of a false pass.
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-generated-image-normalizer.ts`, image generation/upload/result services and tests, `apps/mission-worker/src/modules/missions/playbooks/static-ad-production.playbook.ts`, mission deliverable contract evaluation and tests, `documentation/features/missions.md`.

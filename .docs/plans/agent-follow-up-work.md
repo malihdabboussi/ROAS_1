@@ -8608,3 +8608,19 @@ Evidence: The global selector is split from the ad-specific fields and all three
 Needed work: Extract the legacy Webinar/Meta field groups and playbook request dispatch into focused private modules, then split static and video kickoff fields if either workflow gains more inputs.
 
 Reason not done now: The verified production blocker is the missing selector wiring. Further structural extraction would broaden a four-file UI fix without changing acceptance behavior.
+
+## 2026-07-26 - [ARCH] Legacy image generation service is again near its hard limit
+
+Status: Open
+
+Found while: Enforcing canonical static-ad image dimensions before Media registration
+
+File:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-generate.service.ts` (598 LOC; service limit 600)
+
+Evidence: The new pixel normalization remains isolated in a 41-line collaborator and the generator stays below the 600-line limit, but it has only 2 lines of headroom after forwarding the requested aspect ratio to Media upload.
+
+Needed work: Extract campaign/avatar setup or post-upload billing and result persistence into the existing focused collaborators so the generator facade regains meaningful headroom.
+
+Reason not done now: The in-scope production defect is incorrect static output pixels and unverifiable dimensions. A broader legacy generator decomposition would not change the acceptance result.

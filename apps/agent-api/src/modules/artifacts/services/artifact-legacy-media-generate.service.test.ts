@@ -123,6 +123,8 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
       null,
       'space-1',
       'conversation-1',
+      undefined,
+      '1:1',
     )
     expect(supabase.avatarUpdate).toHaveBeenCalledWith({
       persona_data: {
@@ -203,6 +205,8 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
       null,
       'space-1',
       'conversation-1',
+      undefined,
+      '1:1',
     )
   })
 
@@ -230,7 +234,12 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
       uploadMediaFromBytes: vi.fn(async () => ({
         success: true,
         url: 'https://cdn.example.com/mission-image.png',
-        asset: { id: 'asset-1', mime_type: 'image/png' },
+        asset: {
+          id: 'asset-1',
+          mime_type: 'image/png',
+          width: 1080,
+          height: 1350,
+        },
       })),
     }
 
@@ -240,6 +249,7 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
         prompt: 'Create a mission image',
         title: 'The Ceiling',
         space_id: 'space-1',
+        aspect_ratio: '4:5',
       },
       'agent:lux:mission:user-1:subtask-1',
     )
@@ -247,7 +257,7 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
     expect(openRouter).toHaveBeenCalledWith(
       target,
       'Create a mission image',
-      '1:1',
+      '4:5',
       'openai/gpt-5.4-image-2',
       undefined,
       expect.objectContaining({ conversationId: null }),
@@ -264,6 +274,8 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
       null,
       'space-1',
       null,
+      undefined,
+      '4:5',
     )
     expect(target.persistMissionDeliverable).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -271,6 +283,11 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
         type: 'image',
         title: 'The Ceiling',
         sourceAction: 'generate_image',
+        metadata: expect.objectContaining({
+          aspect_ratio: '4:5',
+          width: 1080,
+          height: 1350,
+        }),
       }),
     )
     expect(result).toEqual({ deliverable_id: 'deliverable-1' })
@@ -332,6 +349,8 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
       null,
       'space-1',
       'conversation-1',
+      undefined,
+      '1:1',
     )
   })
 })
