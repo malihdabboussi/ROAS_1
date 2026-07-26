@@ -1,5 +1,12 @@
 import type { AdminAiUsageReport } from '../types/admin-ai-usage.types'
 
+const MODEL_FAMILY_LABELS: Record<AdminAiUsageReport['models'][number]['routeId'], string> = {
+  openai: 'OpenAI',
+  openrouter: 'OpenRouter',
+  google: 'Gemini',
+  anthropic: 'Claude',
+  other: 'Other',
+}
 const integer = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 const compact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
 const usd = new Intl.NumberFormat('en-US', {
@@ -35,11 +42,11 @@ export function AiUsageTables({ report }: { report: AdminAiUsageReport }) {
       />
       <DataTable
         title="Model workload"
-        subtitle="All traced models, including subscription-backed OpenAI/Codex runs."
-        headers={['Model', 'Route', 'Runs', 'Tokens', 'Cost', 'Failed']}
+        subtitle="Model families from traces; this does not prove the underlying provider transport."
+        headers={['Model', 'Model family', 'Runs', 'Tokens', 'Cost', 'Failed']}
         rows={report.models.map((row) => [
           row.model,
-          row.routeId,
+          MODEL_FAMILY_LABELS[row.routeId],
           integer.format(row.traces),
           compact.format(row.tokens),
           usd.format(row.costUsd),

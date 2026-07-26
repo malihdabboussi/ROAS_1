@@ -61,9 +61,24 @@ describe('AdminAiUsageService', () => {
 
     expect(report.routes).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'openai', traceCount: 1, tokens: 1200 }),
-        expect.objectContaining({ id: 'openrouter', traceCount: 1, providerCostUsd: 2.5 }),
-        expect.objectContaining({ id: 'google', traceCount: 1, failed: 1 }),
+        expect.objectContaining({
+          id: 'openai',
+          traceCount: 1,
+          tokens: 1200,
+          providerVerified: false,
+        }),
+        expect.objectContaining({
+          id: 'openrouter',
+          traceCount: 1,
+          providerCostUsd: 2.5,
+          providerVerified: true,
+        }),
+        expect.objectContaining({
+          id: 'google',
+          traceCount: 1,
+          failed: 1,
+          providerVerified: false,
+        }),
       ]),
     )
     expect(report.openRouterModels).toEqual([
@@ -129,6 +144,13 @@ describe('AdminAiUsageService', () => {
     const report = await new AdminAiUsageService(repository as never).getReport(7)
 
     expect(report.opportunities.failedWithCost).toEqual({ count: 1, costUsd: 4 })
+    expect(report.routes).toContainEqual(
+      expect.objectContaining({
+        id: 'anthropic',
+        label: 'Claude / Anthropic',
+        providerVerified: true,
+      }),
+    )
     expect(report.opportunities.unlinkedPaidAttempts).toEqual({ count: 1, costUsd: 4 })
     expect(report.opportunities.unsettledAttempts).toBe(1)
     expect(report.opportunities.reconciliationStale).toBe(true)
