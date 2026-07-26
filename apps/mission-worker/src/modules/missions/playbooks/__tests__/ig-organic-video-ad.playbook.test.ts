@@ -27,10 +27,23 @@ describe('ig-organic-video-ad playbook', () => {
     expect(plan?.subtasks[0]?.intent.ecology).toMatch(/ig-organic-video-ad/)
     expect(plan?.subtasks[0]?.intent.ecology).toMatch(/exactly 2/)
     expect(plan?.subtasks[0]?.intent.ecology).toMatch(/write_for_me cannot bypass approval/i)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/preset.*reuse/i)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/direct Higgsfield MCP/i)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/never.*Google.*Veo/i)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/process_media.*operation.*render_ig_story/i)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/only.*returned.*MP4.*final.*Deliverable/i)
     expect(plan?.subtasks[0]?.outputContract).toMatchObject({
       artifact_kind: 'media_artifact',
+      required_action: 'process_media',
       required_artifact_type: 'video',
-      expected: { exact_count: 2 },
+      expected: {
+        exact_count: 2,
+        aspect_ratio: '9:16',
+        width: 1080,
+        height: 1920,
+        duration_seconds: 10,
+        operation: 'render_ig_story',
+      },
     })
   })
 

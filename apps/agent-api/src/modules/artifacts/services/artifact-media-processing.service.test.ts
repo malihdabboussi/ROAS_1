@@ -5,6 +5,10 @@ import { ArtifactMediaProcessingService } from './artifact-media-processing.serv
 
 function makeTarget() {
   const mediaAssetRows: Array<Record<string, unknown>> = []
+  const persistMissionDeliverable = vi.fn(async () => ({
+    success: true,
+    deliverable_id: 'deliverable-1',
+  }))
   const storageBucket = {
     createSignedUrl: vi.fn(async () => ({
       data: { signedUrl: 'https://cdn.example.com/processed.mp4' },
@@ -28,7 +32,15 @@ function makeTarget() {
   return {
     getUserClient: vi.fn(async () => ({ from: vi.fn() })),
     mediaAssetRows,
+    isMissionSessionKey: vi.fn(() => false),
+    parseAgentIdFromSessionKey: vi.fn(() => 'lux'),
+    persistMissionDeliverable,
     resolveCampaignId: vi.fn(async () => 'campaign-1'),
+    resolveMissionContext: vi.fn(async () => ({
+      missionId: 'mission-1',
+      campaignId: 'campaign-1',
+      orgId: 'org-1',
+    })),
     resolveOrgId: vi.fn(() => null),
     resolveUserId: vi.fn(() => 'user-1'),
     serviceClient,
@@ -145,6 +157,7 @@ describe('ArtifactMediaProcessingService data access behavior', () => {
       },
     )
     const target = makeTarget()
+    target.isMissionSessionKey.mockReturnValue(true)
 
     const result = await service.getHandlers(target).process_media(
       {
@@ -165,7 +178,35 @@ describe('ArtifactMediaProcessingService data access behavior', () => {
       success: true,
       operation: 'render_ig_story',
       media_asset_id: 'asset-1',
+      deliverable_id: 'deliverable-1',
       format: 'mp4',
+      width: 1080,
+      height: 1920,
+      duration_seconds: 10,
+    })
+    expect(target.persistMissionDeliverable).toHaveBeenCalledWith({
+      missionId: 'mission-1',
+      userId: 'user-1',
+      campaignId: 'campaign-1',
+      orgId: 'org-1',
+      agentKey: 'lux',
+      type: 'video',
+      title: 'IG Story video',
+      sourceAction: 'process_media',
+      content: 'render_ig_story',
+      fileUrl: 'https://cdn.example.com/processed.mp4',
+      fileName: 'output.mp4',
+      fileSize: 20,
+      mimeType: 'video/mp4',
+      metadata: {
+        media_asset_id: 'asset-1',
+        operation: 'render_ig_story',
+        aspect_ratio: '9:16',
+        width: 1080,
+        height: 1920,
+        duration_seconds: 10,
+        media_generation_status: 'succeeded',
+      },
     })
     expect(target.mediaAssetRows[0]).toEqual({
       table: 'media_assets',
