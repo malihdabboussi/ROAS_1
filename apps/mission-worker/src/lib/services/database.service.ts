@@ -28,15 +28,16 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   private async disablePgPoolFromError(error: unknown) {
     if (!this.pgPool || !this.isDirectDbTransportError(error)) return
+    const failedPool = this.pgPool
+    this.pgPool = null
     this.logger.warn(
       `Disabling direct Postgres pool after transport failure: ${(error as Error).message}`,
     )
     try {
-      await this.pgPool.end()
+      await failedPool.end()
     } catch {
       // ignore shutdown errors
     }
-    this.pgPool = null
   }
 
   private normalizeDirectDbConnectionString(raw: string): string {
@@ -98,10 +99,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    if (this.pgPool) {
-      await this.pgPool.end()
-      this.pgPool = null
-    }
+    const pool = this.pgPool
+    this.pgPool = null
+    if (pool) await pool.end()
   }
 
   getClient(): SupabaseClient {

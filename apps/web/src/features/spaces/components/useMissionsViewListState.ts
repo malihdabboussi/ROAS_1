@@ -69,7 +69,7 @@ export function useMissionsViewListState({
     missionListColWidths,
     missionsProgressDisplay,
     handleMissionListColumnResize,
-    persistMissionListColumnWidths,
+    handleMissionListColumnResizeEnd,
     handleReorderMissionColumns,
     handleMissionsProgressPatch,
   } = useMissionsViewColumns({ activeView, mc, onViewPatch })
@@ -284,7 +284,6 @@ export function useMissionsViewListState({
     missionsProgress: missionsProgressDisplay,
     deliverablesByMissionId,
     listColumnWidths: missionListColWidths,
-    onPersistColumnWidths: persistMissionListColumnWidths,
     onToggleGroup,
     onSelectMission,
     onSelectSubtask,
@@ -294,6 +293,7 @@ export function useMissionsViewListState({
     onMissionsProgressPatch: handleMissionsProgressPatch,
     onOpenDeliverable: setPreviewDeliverable,
     onListColumnResize: handleMissionListColumnResize,
+    onListColumnResizeEnd: handleMissionListColumnResizeEnd,
   }
   return {
     agents,

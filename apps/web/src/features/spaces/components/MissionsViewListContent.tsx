@@ -30,7 +30,6 @@ export interface MissionsViewListContentProps {
   }
   deliverablesByMissionId: Record<string, MissionDeliverable[]>
   listColumnWidths: Record<string, number>
-  onPersistColumnWidths: () => void
   onToggleGroup: (groupKey: string) => void
   onSelectMission: (missionId: string) => void
   onSelectSubtask: (missionId: string, subtaskId: string) => void
@@ -42,6 +41,7 @@ export interface MissionsViewListContentProps {
   ) => Promise<void>
   onOpenDeliverable: (deliverable: MissionDeliverable) => void
   onListColumnResize: (columnId: MissionColumnId, width: number) => void
+  onListColumnResizeEnd: (columnId: MissionColumnId, width: number) => void
   onStartPlaybook?: () => void
 }
 
@@ -62,7 +62,6 @@ export function MissionsViewListContent({
   missionsProgress,
   deliverablesByMissionId,
   listColumnWidths,
-  onPersistColumnWidths,
   onToggleGroup,
   onSelectMission,
   onSelectSubtask,
@@ -72,6 +71,7 @@ export function MissionsViewListContent({
   onMissionsProgressPatch,
   onOpenDeliverable,
   onListColumnResize,
+  onListColumnResizeEnd,
   onStartPlaybook,
 }: MissionsViewListContentProps) {
   const renderMissionList = (missions: Mission[]) => (
@@ -96,6 +96,7 @@ export function MissionsViewListContent({
       onOpenDeliverable={onOpenDeliverable}
       listColumnWidths={listColumnWidths}
       onListColumnResize={onListColumnResize}
+      onListColumnResizeEnd={onListColumnResizeEnd}
       enableContextMenu
     />
   )
@@ -106,7 +107,6 @@ export function MissionsViewListContent({
         'min-h-0 flex-1 overflow-y-auto pt-2',
         missionsForDisplay.length === 0 && sortedMissions.length === 0 && 'flex flex-col',
       )}
-      onMouseUp={onPersistColumnWidths}
     >
       {missionsForDisplay.length === 0 ? (
         <MissionsViewEmptyState

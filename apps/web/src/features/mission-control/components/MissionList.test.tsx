@@ -146,4 +146,79 @@ describe('MissionList', () => {
 
     expect(screen.getAllByRole('button', { name: 'Expand subtasks' }).length).toBeGreaterThan(0)
   })
+
+  it('does not finish a column resize when a mission is selected', () => {
+    const onSelect = vi.fn()
+    const onListColumnResizeEnd = vi.fn()
+    render(
+      <MissionList
+        missions={[baseMission]}
+        agents={agents}
+        campaigns={[]}
+        selectedMissionId={null}
+        onSelect={onSelect}
+        listColumnWidths={{ title: 380 }}
+        onListColumnResize={vi.fn()}
+        onListColumnResizeEnd={onListColumnResizeEnd}
+      />,
+    )
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open mission Launch plan' })[0]!)
+    fireEvent.mouseUp(document)
+
+    expect(onSelect).toHaveBeenCalledWith('mission-1')
+    expect(onListColumnResizeEnd).not.toHaveBeenCalled()
+  })
+
+  it('finishes a changed column resize once when the pointer is released outside the list', () => {
+    const onListColumnResize = vi.fn()
+    const onListColumnResizeEnd = vi.fn()
+    const { container } = render(
+      <MissionList
+        missions={[baseMission]}
+        agents={agents}
+        campaigns={[]}
+        selectedMissionId={null}
+        onSelect={vi.fn()}
+        visibleColumns={['title']}
+        listColumnWidths={{ title: 380 }}
+        onListColumnResize={onListColumnResize}
+        onListColumnResizeEnd={onListColumnResizeEnd}
+      />,
+    )
+    const resizeHandle = container.querySelector('.cursor-col-resize')
+    expect(resizeHandle).not.toBeNull()
+
+    fireEvent.mouseDown(resizeHandle!, { clientX: 100 })
+    fireEvent.mouseMove(document, { clientX: 140 })
+    fireEvent.mouseUp(document)
+
+    expect(onListColumnResize).toHaveBeenLastCalledWith('title', 420)
+    expect(onListColumnResizeEnd).toHaveBeenCalledTimes(1)
+    expect(onListColumnResizeEnd).toHaveBeenCalledWith('title', 420)
+  })
+
+  it('does not finish a column resize when the width did not change', () => {
+    const onListColumnResizeEnd = vi.fn()
+    const { container } = render(
+      <MissionList
+        missions={[baseMission]}
+        agents={agents}
+        campaigns={[]}
+        selectedMissionId={null}
+        onSelect={vi.fn()}
+        visibleColumns={['title']}
+        listColumnWidths={{ title: 380 }}
+        onListColumnResize={vi.fn()}
+        onListColumnResizeEnd={onListColumnResizeEnd}
+      />,
+    )
+    const resizeHandle = container.querySelector('.cursor-col-resize')
+    expect(resizeHandle).not.toBeNull()
+
+    fireEvent.mouseDown(resizeHandle!, { clientX: 100 })
+    fireEvent.mouseUp(document)
+
+    expect(onListColumnResizeEnd).not.toHaveBeenCalled()
+  })
 })

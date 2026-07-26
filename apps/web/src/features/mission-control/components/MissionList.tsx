@@ -62,6 +62,7 @@ interface MissionListProps {
   /** Spaces: px widths per column; enables drag resize (list-style blue edge). */
   listColumnWidths?: Record<string, number>
   onListColumnResize?: (colId: MissionColumnId, width: number) => void
+  onListColumnResizeEnd?: (colId: MissionColumnId, width: number) => void
   /** Spaces: right-click / row menu (copy link, archive, rename, delete, etc.). */
   enableContextMenu?: boolean
 }
@@ -86,6 +87,7 @@ export function MissionList({
   onOpenDeliverable,
   listColumnWidths,
   onListColumnResize,
+  onListColumnResizeEnd,
   enableContextMenu = false,
 }: MissionListProps) {
   const [actionMissionId, setActionMissionId] = useState<string | null>(null)
@@ -98,7 +100,12 @@ export function MissionList({
   const [overId, setOverId] = useState<MissionColumnId | null>(null)
   const [overSide, setOverSide] = useState<'left' | 'right'>('right')
   const [resizingColId, setResizingColId] = useState<MissionColumnId | null>(null)
-  const resizeStartRef = useRef<{ x: number; width: number } | null>(null)
+  const resizeStartRef = useRef<{
+    x: number
+    width: number
+    finalWidth: number
+    changed: boolean
+  } | null>(null)
 
   const rawCols = visibleColumns ?? DEFAULT_COLUMNS
   const cols = rawCols.filter((id) => id !== 'campaign' && id !== 'subtasks')
@@ -131,7 +138,7 @@ export function MissionList({
       e.stopPropagation()
       const w = mergedListColWidths[colId]
       if (typeof w !== 'number') return
-      resizeStartRef.current = { x: e.clientX, width: w }
+      resizeStartRef.current = { x: e.clientX, width: w, finalWidth: w, changed: false }
       setResizingColId(colId)
     },
     [onListColumnResize, usePxGrid, mergedListColWidths],
@@ -143,10 +150,16 @@ export function MissionList({
       if (!resizeStartRef.current) return
       const delta = e.clientX - resizeStartRef.current.x
       const minW = resizingColId === 'title' ? MIN_MISSION_RESIZE_TITLE : MIN_MISSION_RESIZE_COL
-      const next = Math.max(minW, resizeStartRef.current.width + delta)
-      onListColumnResize(resizingColId, Math.round(next))
+      const next = Math.round(Math.max(minW, resizeStartRef.current.width + delta))
+      resizeStartRef.current.finalWidth = next
+      resizeStartRef.current.changed = next !== resizeStartRef.current.width
+      onListColumnResize(resizingColId, next)
     }
     const handleUp = () => {
+      const resize = resizeStartRef.current
+      if (resize?.changed) {
+        onListColumnResizeEnd?.(resizingColId, resize.finalWidth)
+      }
       setResizingColId(null)
       resizeStartRef.current = null
     }
@@ -156,7 +169,7 @@ export function MissionList({
       document.removeEventListener('mousemove', handleMove)
       document.removeEventListener('mouseup', handleUp)
     }
-  }, [resizingColId, onListColumnResize])
+  }, [resizingColId, onListColumnResize, onListColumnResizeEnd])
 
   const progressShowNumber = missionsProgress?.showNumber !== false
   const progressBarFill = missionsProgress?.barFill ?? null

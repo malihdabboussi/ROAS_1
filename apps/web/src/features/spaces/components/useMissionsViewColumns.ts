@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { MissionColumnId, MissionsConfig, ViewDef } from '../types/space-schema'
 
@@ -24,13 +24,16 @@ export function useMissionsViewColumns({
 }: UseMissionsViewColumnsParams) {
   const visibleColumns = mc.visible_columns ?? DEFAULT_VISIBLE_COLUMNS
   const [missionListColWidths, setMissionListColWidths] = useState<Record<string, number>>({})
+  const missionListColWidthsRef = useRef<Record<string, number>>({})
   const persistedMissionListWidthsKey = useMemo(
     () => JSON.stringify(mc.list_column_widths ?? {}),
     [mc.list_column_widths],
   )
 
   useEffect(() => {
-    setMissionListColWidths(mc.list_column_widths ?? {})
+    const persistedWidths = mc.list_column_widths ?? {}
+    missionListColWidthsRef.current = persistedWidths
+    setMissionListColWidths(persistedWidths)
   }, [activeView.id, persistedMissionListWidthsKey, mc.list_column_widths])
 
   const handleReorderMissionColumns = useCallback(
@@ -68,24 +71,32 @@ export function useMissionsViewColumns({
   )
 
   const handleMissionListColumnResize = useCallback((colId: MissionColumnId, width: number) => {
-    setMissionListColWidths((prev) => ({ ...prev, [colId]: width }))
+    const next = { ...missionListColWidthsRef.current, [colId]: width }
+    missionListColWidthsRef.current = next
+    setMissionListColWidths(next)
   }, [])
 
-  const persistMissionListColumnWidths = useCallback(() => {
-    void onViewPatch({
-      missions_config: {
-        ...(activeView.missions_config ?? {}),
-        list_column_widths: { ...missionListColWidths },
-      },
-    })
-  }, [onViewPatch, activeView.missions_config, missionListColWidths])
+  const handleMissionListColumnResizeEnd = useCallback(
+    (colId: MissionColumnId, width: number) => {
+      const next = { ...missionListColWidthsRef.current, [colId]: width }
+      missionListColWidthsRef.current = next
+      setMissionListColWidths(next)
+      void onViewPatch({
+        missions_config: {
+          ...(activeView.missions_config ?? {}),
+          list_column_widths: next,
+        },
+      })
+    },
+    [onViewPatch, activeView.missions_config],
+  )
 
   return {
     visibleColumns,
     missionListColWidths,
     missionsProgressDisplay,
     handleMissionListColumnResize,
-    persistMissionListColumnWidths,
+    handleMissionListColumnResizeEnd,
     handleReorderMissionColumns,
     handleMissionsProgressPatch,
   }
