@@ -64,6 +64,7 @@ export async function middleware(request: NextRequest) {
   const user = authResult?.data?.user ?? sessionResult?.data?.session?.user ?? null
 
   const dashboardPaths = [
+    '/admin',
     '/artifacts',
     '/studio',
     '/dashboard',
@@ -133,6 +134,13 @@ export async function middleware(request: NextRequest) {
     )) as { data?: { role?: string } } | null
 
     const role = roleResult?.data?.role || 'user'
+    const requiresPlatformAdmin = request.nextUrl.pathname.startsWith('/admin')
+    if (requiresPlatformAdmin && role !== 'admin' && role !== 'superadmin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/home'
+      url.search = ''
+      return NextResponse.redirect(url)
+    }
 
     const profileResult = (await withTimeout(
       Promise.resolve(

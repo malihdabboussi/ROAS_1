@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FolderGit2, Layers3, Workflow } from 'lucide-react'
+import { Activity, FolderGit2, Layers3, Workflow } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { cn } from '@/lib/utils/cn'
 import {
@@ -86,23 +86,37 @@ export function SidebarHqMoreFlyoutBody({
   return (
     <>
       {showProjects ? (
-        <div
-          className={cn(
-            'hub-dock-flyout-row',
-            c.pathname.startsWith('/projects') && 'hub-dock-flyout-row-active',
-          )}
-          onMouseEnter={(e) => openProjects(e.currentTarget.getBoundingClientRect())}
-          onMouseLeave={(e) => {
-            const related = e.relatedTarget
-            if (related instanceof Element && related.closest('[data-hub-dock-flyout-nested]')) {
-              return
-            }
-            scheduleClose()
-          }}
-        >
-          <FolderGit2 />
-          <span className="min-w-0 flex-1 truncate">Projects</span>
-        </div>
+        <>
+          <Link
+            href="/admin/ai-usage"
+            data-hub-dock-navigate
+            onClick={onNavigate}
+            className={cn(
+              'hub-dock-flyout-row',
+              c.pathname.startsWith('/admin/ai-usage') && 'hub-dock-flyout-row-active',
+            )}
+          >
+            <Activity />
+            <span className="min-w-0 flex-1 truncate">AI usage</span>
+          </Link>
+          <div
+            className={cn(
+              'hub-dock-flyout-row',
+              c.pathname.startsWith('/projects') && 'hub-dock-flyout-row-active',
+            )}
+            onMouseEnter={(e) => openProjects(e.currentTarget.getBoundingClientRect())}
+            onMouseLeave={(e) => {
+              const related = e.relatedTarget
+              if (related instanceof Element && related.closest('[data-hub-dock-flyout-nested]')) {
+                return
+              }
+              scheduleClose()
+            }}
+          >
+            <FolderGit2 />
+            <span className="min-w-0 flex-1 truncate">Projects</span>
+          </div>
+        </>
       ) : null}
 
       <Link
