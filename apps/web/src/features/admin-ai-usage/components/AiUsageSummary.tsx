@@ -71,7 +71,8 @@ export function AiUsageSummary({ report }: { report: AdminAiUsageReport }) {
           <div>
             <h2 className="body-1 text-foreground font-semibold">Processing routes</h2>
             <p className="body-4 text-muted-foreground">
-              What ran through each connected model provider.
+              Verified calls come from the provider ledger. Trace-only cards show model family, not
+              direct transport.
             </p>
           </div>
         </div>
@@ -83,15 +84,25 @@ export function AiUsageSummary({ report }: { report: AdminAiUsageReport }) {
             >
               <div className="gap-spacing-2 flex items-center justify-between">
                 <p className="body-2 text-foreground font-medium">{route.label}</p>
-                <span className="badge-glass badge-glass-muted">
-                  {integer.format(route.traceCount)}
+                <span
+                  className={
+                    route.providerVerified
+                      ? 'badge-glass badge-glass-green'
+                      : 'badge-glass badge-glass-muted'
+                  }
+                >
+                  {route.providerVerified ? 'Verified provider' : 'Model family only'}
                 </span>
               </div>
               <p className="title-h6 text-foreground mt-spacing-3">
                 {compact.format(route.tokens)} tokens
               </p>
               <div className="body-4 text-muted-foreground mt-spacing-2 flex justify-between">
-                <span>{usd.format(route.providerCostUsd)} provider cost</span>
+                <span>
+                  {route.providerVerified
+                    ? `${integer.format(route.providerAttempts)} calls · ${usd.format(route.providerCostUsd)}`
+                    : `${integer.format(route.traceCount)} traces · route unrecorded`}
+                </span>
                 <span>{integer.format(route.failed)} failed</span>
               </div>
             </div>

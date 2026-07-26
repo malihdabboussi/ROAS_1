@@ -11,7 +11,7 @@ const ROUTE_LABELS: Record<AdminAiUsageRoute['id'], string> = {
   openai: 'OpenAI / ChatGPT',
   openrouter: 'OpenRouter',
   google: 'Gemini / Google',
-  anthropic: 'Anthropic direct',
+  anthropic: 'Claude / Anthropic',
   other: 'Other providers',
 }
 const SETTLED_STATUSES = new Set(['settled', 'no_charge'])
@@ -154,6 +154,7 @@ export class AdminAiUsageService {
         traceCostUsd: 0,
         providerAttempts: 0,
         providerCostUsd: 0,
+        providerVerified: false,
       }
       routeMap.set(id, route)
       return route
@@ -170,6 +171,7 @@ export class AdminAiUsageService {
       const route = getRoute(routeForAttempt(attempt))
       route.providerAttempts += 1
       route.providerCostUsd += attemptCost(attempt)
+      route.providerVerified = true
     }
     return [...routeMap.values()].sort((left, right) => right.tokens - left.tokens)
   }

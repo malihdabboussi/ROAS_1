@@ -22,6 +22,7 @@ export type AdminAiUsageReport = {
     traceCostUsd: number
     providerAttempts: number
     providerCostUsd: number
+    providerVerified: boolean
   }>
   models: Array<{
     model: string

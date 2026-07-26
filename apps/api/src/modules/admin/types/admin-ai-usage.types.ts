@@ -46,6 +46,7 @@ export type AdminAiUsageRoute = {
   traceCostUsd: number
   providerAttempts: number
   providerCostUsd: number
+  providerVerified: boolean
 }
 
 export type AdminAiUsageReport = {

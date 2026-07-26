@@ -68,7 +68,7 @@ What: Added an admin-only AI usage dashboard to the current web app with provide
 
 Why: AI usage and provider spend were split across trace, billing-attempt, and reconciliation records, making it difficult to see which integration processed work or identify expensive unproductive activity without querying production data manually.
 
-Impact: Admins can review one, seven, or thirty days of OpenAI/ChatGPT, OpenRouter, Gemini/Google, direct Anthropic, and other usage at `/admin/ai-usage`. The report calls out oversized contexts, failed paid traces, unlinked or unsettled provider attempts, missing trace usage, and stale reconciliation without changing model routing or output quality.
+Impact: Admins can review one, seven, or thirty days of model-family traces and provider-ledger usage at `/admin/ai-usage`. The report calls out oversized contexts, failed paid traces, unlinked or unsettled provider attempts, missing trace usage, and stale reconciliation without changing model routing or output quality.
 
 Files: `apps/api/src/modules/admin`, `apps/web/src/app/(dashboard)/admin/ai-usage/page.tsx`, `apps/web/src/features/admin-ai-usage`, `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx`, `apps/web/src/middleware.ts`, and `documentation/features/chat-stream-recovery.md`.
 
@@ -95,3 +95,13 @@ What: Changed IG Organic Video missions to require the final `process_media` Sto
 Why: Production acceptance showed the playbook contract still required `generate_video`, which sent both scenes through Google Veo, accepted raw generation placeholders, and left the deterministic rendered MP4 path unable to satisfy the mission Deliverables contract.
 Impact: Preset footage is reused, only missing presets spend Higgsfield generation, Google/Veo cannot substitute for the required source path, and only final deterministic Story MP4s registered in both Media and Deliverables can complete the mission.
 Files: `apps/mission-worker/src/modules/missions/playbooks/ig-organic-video-ad.playbook.ts`, its focused test, `apps/agent-api/src/modules/artifacts/services/artifact-media-processing.service.ts`, `artifact-media-processing-persistence.service.ts`, `artifact-ig-story-mission-deliverable.service.ts`, the media-processing test, and `documentation/features/missions.md`.
+
+## [2026-07-26 14:04] - [FIX]
+
+What: Removed the unsupported “Anthropic direct” claim from AI usage reporting and separated verified provider-ledger routes from trace-only model families.
+
+Why: Claude, Gemini, and OpenAI model identifiers identify a model family but do not prove whether transport used a direct API, subscription credential, or OpenRouter. Production provider records showed only OpenRouter calls during the reviewed window.
+
+Impact: Provider cards now identify verified calls and costs only when billing-attempt evidence exists. Legacy or uninstrumented traces are labeled as model-family-only with their provider route explicitly unrecorded.
+
+Files: `apps/api/src/modules/admin/services/admin-ai-usage.service.ts`, `apps/api/src/modules/admin/services/__tests__/admin-ai-usage.service.test.ts`, `apps/api/src/modules/admin/types/admin-ai-usage.types.ts`, `apps/web/src/features/admin-ai-usage/components/AiUsageSummary.tsx`, `apps/web/src/features/admin-ai-usage/components/AiUsageTables.tsx`, `apps/web/src/features/admin-ai-usage/types/admin-ai-usage.types.ts`, and `documentation/features/chat-stream-recovery.md`.
