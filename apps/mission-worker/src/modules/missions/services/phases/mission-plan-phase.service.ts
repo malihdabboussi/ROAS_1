@@ -299,18 +299,11 @@ export class MissionPlanPhaseService {
       const baseUrl = callbackUrl.replace('/api/internal/missions/callback', '')
       const planCallbackFullUrl = `${baseUrl}/api/internal/missions/plan`
 
-      const planRes = await fetch(planCallbackFullUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${internalToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mission_id: missionId,
-          user_id: mission.user_id,
-          org_id: mission.org_id ?? null,
-          ...planResult,
-        }),
+      const planRes = await this.postPlanCallback(planCallbackFullUrl, internalToken, {
+        mission_id: missionId,
+        user_id: mission.user_id,
+        org_id: mission.org_id ?? null,
+        ...planResult,
       })
       if (!planRes.ok) {
         const text = await planRes.text().catch(() => '')
@@ -355,6 +348,30 @@ export class MissionPlanPhaseService {
       this.logger.error(`Plan phase failed for mission ${missionId}: ${errorMessage}`)
       throw error
     }
+  }
+
+  private async postPlanCallback(
+    url: string,
+    internalToken: string,
+    body: Record<string, unknown>,
+  ): Promise<Response> {
+    const timeoutMs =
+      Number(this.configService.get<number>('missionApi.requestTimeoutMs')) || 30_000
+    const abortController = new AbortController()
+    return this.support.withTimeout(
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${internalToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: abortController.signal,
+      }),
+      timeoutMs,
+      `Plan creation API timed out after ${timeoutMs}ms`,
+      abortController,
+    )
   }
 
   private async ensureWebinarFulfillmentTeam(
