@@ -61,3 +61,13 @@ What: Added Static Ad Production and IG Organic Video to the global Missions pla
 Why: The deterministic playbooks existed in the worker and Ads Research handoff, but the Space-level Start playbook dialog recognized only Webinar and Meta workflows, making direct static/video playbook acceptance impossible.
 Impact: Users can start one or more production-ready static ads or exact-scene IG Story videos directly from a campaign Space without falling back to a generic Mission. Existing Webinar and Meta workflows are unchanged.
 Files: `apps/web/src/features/spaces/components/StartPlaybookModal.tsx`, `apps/web/src/features/spaces/components/StartAdProductionPlaybookFields.tsx`, `apps/web/src/features/spaces/components/StartPlaybookModal.test.tsx`, `apps/web/src/features/spaces/components/MissionsView.tsx`, `documentation/features/missions.md`.
+
+## [2026-07-26 13:25] - [FEATURE]
+
+What: Added an admin-only AI usage dashboard to the current web app with provider-route totals, OpenRouter workload and underlying-model detail, model workload, highest-cost traces, billing reconciliation coverage, and token-waste signals.
+
+Why: AI usage and provider spend were split across trace, billing-attempt, and reconciliation records, making it difficult to see which integration processed work or identify expensive unproductive activity without querying production data manually.
+
+Impact: Admins can review one, seven, or thirty days of OpenAI/ChatGPT, OpenRouter, Gemini/Google, direct Anthropic, and other usage at `/admin/ai-usage`. The report calls out oversized contexts, failed paid traces, unlinked or unsettled provider attempts, missing trace usage, and stale reconciliation without changing model routing or output quality.
+
+Files: `apps/api/src/modules/admin`, `apps/web/src/app/(dashboard)/admin/ai-usage/page.tsx`, `apps/web/src/features/admin-ai-usage`, `apps/web/src/components/layout/sidebar/SidebarHqMoreFlyoutBody.tsx`, `apps/web/src/middleware.ts`, and `documentation/features/chat-stream-recovery.md`.
