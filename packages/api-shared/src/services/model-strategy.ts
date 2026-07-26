@@ -35,13 +35,13 @@ const ECONOMY_MODEL_ID = 'openai/gpt-5.6-terra'
 const QUALITY_FALLBACK_MODEL_ID = 'anthropic/claude-sonnet-4.6'
 
 const QUALITY_MODEL_SETTINGS = {
-  context_window_tokens: 250_000,
+  context_window_tokens: 300_000,
   reasoning_effort: 'medium',
   speed_mode: 'standard',
 } satisfies StrategyModelSettings
 
 const ECONOMY_MODEL_SETTINGS = {
-  context_window_tokens: 250_000,
+  context_window_tokens: 272_000,
   reasoning_effort: 'low',
   speed_mode: 'standard',
 } satisfies StrategyModelSettings

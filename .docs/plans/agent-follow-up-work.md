@@ -1,3 +1,19 @@
+## 2026-07-26 - [ARCH] Chat access-context test fixture decomposition
+
+Status: Open
+
+Found while: Repairing production Chat model-capability routing
+
+Files:
+
+- `apps/agent-api/src/modules/chat/services/chat.service.access-context.test.ts` (1,427 LOC; over the 600 LOC file limit)
+
+Evidence: The file contains four direct Chat access-context cases plus a separate prewarm harness and its broader prewarm/session test suite. This fix added one shared capability fixture and three lookups without increasing production-service size.
+
+Needed work: Split the direct access-context/image cases from prewarm and session-integrity coverage, keeping shared Chat harness builders in a focused test helper.
+
+Reason not done now: The requested production outage fix is covered by a new 28-line capability contract test; decomposing the existing 1,400-line suite is a behavior-neutral architecture task outside this incident.
+
 ## 2026-07-25 - [ARCH] Studio chat.service still oversized (title scheduler external)
 
 Status: Open

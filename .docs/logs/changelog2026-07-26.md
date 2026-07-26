@@ -139,3 +139,10 @@ What: Made IG Story post-render QA explicitly visual-only by requiring `analyze_
 Why: Production acceptance produced both correct final MP4s, but the agent used `analyze_video`'s transcript-enabled default for visual QA and blocked on an unrelated, unconfigured Deepgram dependency.
 Impact: Final-frame QA uses FFmpeg frame extraction without requiring a speech provider; Deepgram remains opt-in only when a spoken-audio transcript is actually requested.
 Files: `supabase/migrations/20260726222500_ig_organic_video_visual_qa.sql`, IG video playbook and contract tests, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `documentation/features/missions.md`
+
+## [2026-07-26 16:09] - [FIX]
+
+What: Seeded verified capability and pricing contracts for Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, and GPT-5.6 Terra, then aligned Auto and Economy routing to supported 300K and 272K context tiers.
+Why: Production Chat accepted the request but ended its stream immediately because Auto routed to Opus 5 with model settings while `llm_model_capabilities` had no Opus 5 row; the newly introduced routed models had never been seeded.
+Impact: Auto, Economy, and Power Chat requests validate against an explicit capability tier before provider execution, and regression coverage fails if the strategy or capability migration drifts again.
+Files: `packages/api-shared/src/services/model-strategy.ts`, its test, `apps/agent-api/src/modules/chat/services/model-strategy-capability-contract.test.ts`, `apps/agent-api/src/modules/chat/services/chat.service.access-context.test.ts`, `supabase/migrations/20260726230500_model_strategy_capabilities.sql`, `scripts/roas/migration-order.txt`, `.docs/plans/agent-follow-up-work.md`, and `documentation/features/chat-stream-recovery.md`.

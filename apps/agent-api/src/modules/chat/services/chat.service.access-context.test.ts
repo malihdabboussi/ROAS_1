@@ -30,6 +30,14 @@ function makeChatRunEventsMock() {
   }
 }
 
+const AUTO_MODEL_CAPABILITY_ROW = {
+  capability_profile: {
+    reasoning: { transport: 'verbosity', levels: ['low', 'medium', 'high', 'xhigh', 'max'] },
+    context: { tiers: [{ tokens: 300_000, label: '300K' }] },
+    speed: { available: false },
+  },
+}
+
 function normalizeLivePayloadForStored(
   livePayload: Record<string, unknown>,
   storedPayload: Record<string, unknown>,
@@ -58,6 +66,7 @@ describe('ChatService access context', () => {
     const supabase = {
       from: vi.fn((table: string) => {
         if (table === 'agents_registry') return makeQuery({ config: {}, is_active: true })
+        if (table === 'llm_model_capabilities') return makeQuery(AUTO_MODEL_CAPABILITY_ROW)
         return makeQuery(null)
       }),
     }
@@ -194,6 +203,7 @@ describe('ChatService access context', () => {
     const supabase = {
       from: vi.fn((table: string) => {
         if (table === 'agents_registry') return makeQuery({ config: {}, is_active: true })
+        if (table === 'llm_model_capabilities') return makeQuery(AUTO_MODEL_CAPABILITY_ROW)
         return makeQuery(null)
       }),
     }
@@ -321,6 +331,7 @@ describe('ChatService access context', () => {
     const supabase = {
       from: vi.fn((table: string) => {
         if (table === 'agents_registry') return makeQuery({ config: {}, is_active: true })
+        if (table === 'llm_model_capabilities') return makeQuery(AUTO_MODEL_CAPABILITY_ROW)
         if (table === 'conversation_documents') {
           return makeQuery([
             {
