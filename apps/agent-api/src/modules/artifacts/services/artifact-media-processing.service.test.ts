@@ -49,6 +49,31 @@ function makeTarget() {
 }
 
 describe('ArtifactMediaProcessingService data access behavior', () => {
+  it('escapes ordinary static copy and rejects unsafe raw template markup', () => {
+    const service = new ArtifactMediaProcessingService()
+    const renderer = (service as any).staticAdRenderer
+    const rendered = renderer.materializeTemplate(
+      '<body><h1>{{HEADLINE}}</h1><div>{{HEADLINE_HTML}}</div></body>',
+      {
+        HEADLINE: '<Exact & safe>',
+        HEADLINE_HTML: '<span class="strike">THREE WEEKS</span>',
+      },
+      1080,
+      1350,
+    )
+
+    expect(rendered).toContain('&lt;Exact &amp; safe&gt;')
+    expect(rendered).toContain('<span class="strike">THREE WEEKS</span>')
+    expect(() =>
+      renderer.materializeTemplate(
+        '<body>{{HEADLINE_HTML}}</body>',
+        { HEADLINE_HTML: '<img src=x onerror=alert(1)>' },
+        1080,
+        1350,
+      ),
+    ).toThrow(/unsupported markup/i)
+  })
+
   it('renders and registers deterministic Validate Messaging statics as native campaign media', async () => {
     const service = new ArtifactMediaProcessingService()
     const target = makeTarget()
@@ -214,6 +239,65 @@ describe('ArtifactMediaProcessingService data access behavior', () => {
         asset_type: 'video',
         campaign_id: 'campaign-1',
         tags: ['process-media-render_ig_story'],
+      }),
+    })
+  })
+
+  it('renders a static ad through the deterministic server operation and persists one image deliverable', async () => {
+    const service = new ArtifactMediaProcessingService()
+    vi.spyOn(service as any, 'opRenderStaticAd').mockImplementation(
+      async (_target, _input, tempRoot: string) => {
+        const outputPath = join(tempRoot, 'output.png')
+        await writeFile(outputPath, Buffer.from('rendered-static-ad'))
+        return { outputPath, outputFormat: 'png' }
+      },
+    )
+    const target = makeTarget()
+    target.isMissionSessionKey.mockReturnValue(true)
+
+    const result = await service.getHandlers(target).process_media(
+      {
+        operation: 'render_static_ad',
+        template_id: 'myth_vs_system',
+        aspect_ratio: '4:5',
+        spec: { HEADLINE_HTML: 'YOUR NEXT CAMPAIGN SHOULD NOT TAKE THREE WEEKS' },
+      },
+      'session-1',
+    )
+
+    expect(result).toMatchObject({
+      success: true,
+      operation: 'render_static_ad',
+      media_asset_id: 'asset-1',
+      deliverable_id: 'deliverable-1',
+      format: 'png',
+      width: 1080,
+      height: 1350,
+    })
+    expect(target.persistMissionDeliverable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        missionId: 'mission-1',
+        type: 'image',
+        title: 'Static ad — myth_vs_system',
+        sourceAction: 'process_media',
+        content: 'render_static_ad',
+        mimeType: 'image/png',
+        metadata: expect.objectContaining({
+          media_asset_id: 'asset-1',
+          operation: 'render_static_ad',
+          template_id: 'myth_vs_system',
+          aspect_ratio: '4:5',
+          width: 1080,
+          height: 1350,
+        }),
+      }),
+    )
+    expect(target.mediaAssetRows[0]).toEqual({
+      table: 'media_assets',
+      payload: expect.objectContaining({
+        asset_type: 'image',
+        source_model: 'deterministic-renderer',
+        tags: ['process-media-render_static_ad'],
       }),
     })
   })

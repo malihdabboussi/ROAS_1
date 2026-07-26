@@ -8624,3 +8624,19 @@ Evidence: The new pixel normalization remains isolated in a 41-line collaborator
 Needed work: Extract campaign/avatar setup or post-upload billing and result persistence into the existing focused collaborators so the generator facade regains meaningful headroom.
 
 Reason not done now: The in-scope production defect is incorrect static output pixels and unverifiable dimensions. A broader legacy generator decomposition would not change the acceptance result.
+
+## 2026-07-26 - [ARCH] Media processing action facade remains near the service LOC limit
+
+Status: Open
+
+Found while: Adding the deterministic server-side static-ad operation
+
+File:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-media-processing.service.ts` (562 LOC; service limit 600)
+
+Evidence: The operation union/catalog was extracted into `artifact-media-processing-operation-catalog.ts`, and the new static renderer and Deliverable persistence are isolated collaborators. The remaining facade is below the hard limit but above the 480-line proactive split threshold.
+
+Needed work: Continue moving legacy operation dispatch families behind their existing focused core, edit, visual, and advanced collaborators until the facade contains only context resolution, dispatch, and persistence orchestration.
+
+Reason not done now: Reorganizing every unrelated FFmpeg operation would broaden a production static-ad acceptance fix. The new operation is already isolated and the touched facade is compliant.

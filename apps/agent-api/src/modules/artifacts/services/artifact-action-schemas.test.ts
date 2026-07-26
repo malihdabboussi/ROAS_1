@@ -173,6 +173,22 @@ describe('PromptMode action schema and preflight coverage', () => {
         emoji: '⏰',
       }),
     ).resolves.toBeNull()
+    await expect(
+      validateActionPreflight('process_media', {
+        operation: 'render_static_ad',
+        template_id: 'unknown',
+        aspect_ratio: '4:5',
+        spec: { HEADLINE_HTML: 'Exact copy' },
+      }),
+    ).resolves.toMatchObject({ error: expect.stringMatching(/template_id/i) })
+    await expect(
+      validateActionPreflight('process_media', {
+        operation: 'render_static_ad',
+        template_id: 'myth_vs_system',
+        aspect_ratio: '4:5',
+        spec: { HEADLINE_HTML: 'Exact copy' },
+      }),
+    ).resolves.toBeNull()
   })
 
   it('rejects analyze_video source and settings mistakes before runtime work', async () => {

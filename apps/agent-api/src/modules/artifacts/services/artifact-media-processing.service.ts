@@ -15,78 +15,18 @@ import {
 } from './artifact-media-processing-advanced-operations.service'
 import { ArtifactMediaProcessingCoreOperationsService } from './artifact-media-processing-core-operations.service'
 import { ArtifactMediaProcessingEditOperationsService } from './artifact-media-processing-edit-operations.service'
+import {
+  VALID_PROCESS_MEDIA_OPERATIONS,
+  type ProcessOperation,
+} from './artifact-media-processing-operation-catalog'
 import { ArtifactMediaProcessingOperationRuntimeService } from './artifact-media-processing-operation-runtime.service'
 import { ArtifactMediaProcessingPersistenceService } from './artifact-media-processing-persistence.service'
 import { ArtifactMediaProcessingVisualOperationsService } from './artifact-media-processing-visual-operations.service'
+import { ArtifactStaticAdRendererService } from './artifact-static-ad-renderer.service'
 import {
   ArtifactValidateMessagingRendererService,
   type ValidateMessagingLine,
 } from './artifact-validate-messaging-renderer.service'
-
-type ProcessOperation =
-  | 'trim'
-  | 'concat'
-  | 'convert'
-  | 'extract_audio'
-  | 'add_audio'
-  | 'resize'
-  | 'compose'
-  | 'audio_effect'
-  | 'color_grade'
-  | 'blur'
-  | 'vignette'
-  | 'sharpen'
-  | 'denoise'
-  | 'reverse'
-  | 'loop'
-  | 'probe'
-  | 'speed'
-  | 'overlay'
-  | 'crop'
-  | 'thumbnail'
-  | 'text_overlay'
-  | 'transition'
-  | 'chroma_key'
-  | 'split_screen'
-  | 'subtitle_burn'
-  | 'silence_remove'
-  | 'frame_extract'
-  | 'waveform'
-  | 'render_validate_messaging'
-  | 'render_ig_story'
-
-const VALID_OPERATIONS = new Set<ProcessOperation>([
-  'trim',
-  'concat',
-  'convert',
-  'extract_audio',
-  'add_audio',
-  'resize',
-  'compose',
-  'audio_effect',
-  'color_grade',
-  'blur',
-  'vignette',
-  'sharpen',
-  'denoise',
-  'reverse',
-  'loop',
-  'probe',
-  'speed',
-  'overlay',
-  'crop',
-  'thumbnail',
-  'text_overlay',
-  'transition',
-  'chroma_key',
-  'split_screen',
-  'subtitle_burn',
-  'silence_remove',
-  'frame_extract',
-  'waveform',
-  'render_validate_messaging',
-  'render_ig_story',
-])
 
 const MAX_VALIDATE_MESSAGING_LINES = 8
 
@@ -97,6 +37,7 @@ export class ArtifactMediaProcessingService {
   ) {
     this.persistenceService = new ArtifactMediaProcessingPersistenceService(repository)
     this.mediaUploadService = new ArtifactLegacyMediaUploadService(repository)
+    this.staticAdRenderer = new ArtifactStaticAdRendererService(repository)
   }
 
   private readonly logger = new Logger(ArtifactMediaProcessingService.name)
@@ -108,6 +49,7 @@ export class ArtifactMediaProcessingService {
   private readonly persistenceService: ArtifactMediaProcessingPersistenceService
   private readonly mediaUploadService: ArtifactLegacyMediaUploadService
   private readonly validateMessagingRenderer = new ArtifactValidateMessagingRendererService()
+  private readonly staticAdRenderer: ArtifactStaticAdRendererService
   private readonly visualOperations = new ArtifactMediaProcessingVisualOperationsService()
 
   getHandlers(target: Record<string, any>): Record<string, ArtifactActionHandler> {
@@ -124,10 +66,12 @@ export class ArtifactMediaProcessingService {
     onProgress?: (message: string) => void | Promise<void>,
   ) {
     const operation = String(input.operation ?? '').trim() as ProcessOperation
-    if (!VALID_OPERATIONS.has(operation)) {
+    if (!VALID_PROCESS_MEDIA_OPERATIONS.has(operation)) {
       return {
         success: false,
-        error: `Invalid operation "${operation}". Supported: ${[...VALID_OPERATIONS].join(', ')}`,
+        error: `Invalid operation "${operation}". Supported: ${[
+          ...VALID_PROCESS_MEDIA_OPERATIONS,
+        ].join(', ')}`,
       }
     }
 
@@ -239,6 +183,14 @@ export class ArtifactMediaProcessingService {
         case 'render_ig_story':
           ;({ outputPath, outputFormat } = await this.opRenderIgStory(input, tempRoot, onProgress))
           break
+        case 'render_static_ad':
+          ;({ outputPath, outputFormat } = await this.opRenderStaticAd(
+            target,
+            input,
+            tempRoot,
+            onProgress,
+          ))
+          break
         default:
           return { success: false, error: `Unhandled operation: ${operation}` }
       }
@@ -252,6 +204,7 @@ export class ArtifactMediaProcessingService {
         operation,
         outputPath,
         outputFormat,
+        actionInput: input,
         logger: this.logger,
       })
     } catch (error) {
@@ -272,6 +225,21 @@ export class ArtifactMediaProcessingService {
     onProgress?: (message: string) => void | Promise<void>,
   ): Promise<{ outputPath: string; outputFormat: string }> {
     return this.igStoryRenderer.render(input, tempRoot, onProgress, this.operationRuntime())
+  }
+
+  private async opRenderStaticAd(
+    target: Record<string, any>,
+    input: Record<string, unknown>,
+    tempRoot: string,
+    onProgress?: (message: string) => void | Promise<void>,
+  ): Promise<{ outputPath: string; outputFormat: string }> {
+    return this.staticAdRenderer.render(
+      target,
+      input,
+      tempRoot,
+      onProgress,
+      this.operationRuntime(),
+    )
   }
 
   private async renderValidateMessaging(

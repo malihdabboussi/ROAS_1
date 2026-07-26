@@ -10,6 +10,13 @@ describe('static-ad-book skill migration', () => {
     ),
     'utf8',
   )
+  const serverRendererMigration = fs.readFileSync(
+    path.resolve(
+      process.cwd(),
+      '../../supabase/migrations/20260726215000_static_ad_server_renderer.sql',
+    ),
+    'utf8',
+  )
 
   it('seeds the complete ten-format book and deterministic renderer', () => {
     for (const format of [
@@ -45,5 +52,12 @@ describe('static-ad-book skill migration', () => {
     expect(migration).toMatch(/Never invent a testimonial/i)
     expect(migration).toMatch(/Verify visually/i)
     expect(migration).toMatch(/Register every final PNG in campaign Space Media/i)
+  })
+
+  it('routes final typography through the deterministic server renderer', () => {
+    expect(serverRendererMigration).toMatch(/operation: render_static_ad/i)
+    expect(serverRendererMigration).toMatch(/only returned PNGs/i)
+    expect(serverRendererMigration).toMatch(/never call `generate_image` for a final/i)
+    expect(serverRendererMigration).toMatch(/UPDATE public\.agent_skills/i)
   })
 })

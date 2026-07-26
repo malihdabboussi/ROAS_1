@@ -597,6 +597,20 @@ const PROCESS_MEDIA_OPERATIONS = new Set([
   'waveform',
   'render_validate_messaging',
   'render_ig_story',
+  'render_static_ad',
+])
+
+const STATIC_AD_TEMPLATE_IDS = new Set([
+  'hero_framing',
+  'identity_callout',
+  'case_study',
+  'workshop_event',
+  'tweet_receipt',
+  'chat_receipt',
+  'press_authority',
+  'fake_news',
+  'myth_vs_system',
+  'offer_stack',
 ])
 
 const AUDIO_EFFECTS = new Set([
@@ -662,6 +676,20 @@ function validateProcessMediaPreflight(
         )
   }
   if (operation === 'render_ig_story') return validateIgStoryRenderPreflight(data)
+  if (operation === 'render_static_ad') {
+    const templateId = stringValue(data.template_id)
+    if (!STATIC_AD_TEMPLATE_IDS.has(templateId)) {
+      return failure('template_id must name one of the ten static-ad-book templates')
+    }
+    if (data.aspect_ratio !== '4:5' && data.aspect_ratio !== '9:16') {
+      return failure('aspect_ratio must be 4:5 or 9:16')
+    }
+    if (!isRecord(data.spec) || Object.keys(data.spec).length === 0) {
+      return failure('spec must be a non-empty object')
+    }
+    const invalidKey = Object.keys(data.spec).find((key) => !/^[A-Z][A-Z0-9_]*$/.test(key))
+    return invalidKey ? failure(`spec key ${invalidKey} must be an uppercase template token`) : null
+  }
   if (operation === 'trim')
     return requireString(data, 'url') ?? requirePositiveNumber(data, 'duration_seconds')
   if (operation === 'concat') return requireInputs(data, 2)

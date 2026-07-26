@@ -105,3 +105,13 @@ Why: Claude, Gemini, and OpenAI model identifiers identify a model family but do
 Impact: Provider cards now identify verified calls and costs only when billing-attempt evidence exists. Legacy or uninstrumented traces are labeled as model-family-only with their provider route explicitly unrecorded.
 
 Files: `apps/api/src/modules/admin/services/admin-ai-usage.service.ts`, `apps/api/src/modules/admin/services/__tests__/admin-ai-usage.service.test.ts`, `apps/api/src/modules/admin/types/admin-ai-usage.types.ts`, `apps/web/src/features/admin-ai-usage/components/AiUsageSummary.tsx`, `apps/web/src/features/admin-ai-usage/components/AiUsageTables.tsx`, `apps/web/src/features/admin-ai-usage/types/admin-ai-usage.types.ts`, and `documentation/features/chat-stream-recovery.md`.
+
+## [2026-07-26 14:35] - [FIX]
+
+What: Added `process_media` operation `render_static_ad`, which loads one approved static-ad-book template, safely materializes exact copy, renders a canonical PNG with pinned Anton/Inter fonts and Chromium, registers campaign Media, and creates one native image Deliverable. Static missions now require that final action, and output verification enforces `exact_count` instead of accepting extra matching artifacts.
+
+Why: Production acceptance proved the static playbook's final contract still pointed at `generate_image`, so the agent substituted Gemini for the unavailable shell renderer, altered exact copy, and left three draft images while an exact-one contract falsely passed.
+
+Impact: AI image generation can provide clean source imagery but cannot satisfy the final static contract. A static mission completes only with the requested number of deterministic 1080×1350 or 1080×1920 PNGs, each represented once in Media and Deliverables.
+
+Files: Agent API static renderer, media processing schema/preflight/persistence/docs/tests, mission-worker static playbook and exact-count verifier/tests, pinned renderer fonts in `docker/Dockerfile`, `supabase/migrations/20260726215000_static_ad_server_renderer.sql`, and `documentation/features/missions.md`.

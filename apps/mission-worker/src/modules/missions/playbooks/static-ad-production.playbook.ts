@@ -57,6 +57,7 @@ export function expandStaticAdProductionPlaybook(
   const scope = JSON.stringify(kickoff)
   const assertionKey = 'A-static-ad-production'
   const outputContract = imageContract({ minimumCount: kickoff.quantity })
+  outputContract.required_action = 'process_media'
   outputContract.expected = {
     ...outputContract.expected,
     exact_count: kickoff.quantity,
@@ -80,7 +81,7 @@ export function expandStaticAdProductionPlaybook(
       sensory: `Exactly ${kickoff.quantity} finished ${kickoff.aspectRatio} images are visible in Space Media, each labeled by format and variant.`,
       endState:
         'Every requested ad is a visually verified native image Deliverable attached to this mission.',
-      ecology: `Load static-ad-book and follow it as the production authority. Use the kickoff exactly: ${scope}. Produce exactly ${kickoff.quantity} outputs across only these formats: ${kickoff.selectedFormatIds.join(', ') || '(none supplied)'}. For write_for_me, use source Ads Research deliverables and dylans-super-voice before rendering. For use_my_copy, preserve supplied copy verbatim. Use only substantiated claims, real testimonials, and approved identities. If a selected person-led format uses use_uploaded, use the supplied person/reference asset; if it uses generate, create a clearly synthetic person with Higgsfield and never imply it is the client. Drive the bundled deterministic renderer for all typography. Visually inspect every final image at full size. Register each PNG immediately in campaign Space Media and return exactly ${kickoff.quantity} image Deliverables. Do not publish ads to Meta.`,
+      ecology: `Load static-ad-book and follow it as the production authority. Use the kickoff exactly: ${scope}. Produce exactly ${kickoff.quantity} outputs across only these formats: ${kickoff.selectedFormatIds.join(', ') || '(none supplied)'}. For write_for_me, use source Ads Research deliverables and dylans-super-voice before rendering. For use_my_copy, preserve supplied copy verbatim. Use only substantiated claims, real testimonials, and approved identities. If a selected person-led format uses use_uploaded, use the supplied person/reference asset; if it uses generate, create a clearly synthetic person with Higgsfield and never imply it is the client. For each final, call process_media with operation render_static_ad, the selected template_id, aspect_ratio, and exact template spec. Never call generate_image for the final; only a returned deterministic PNG is a mission Deliverable. Visually inspect every final image at full size. Register each PNG immediately in campaign Space Media and return exactly ${kickoff.quantity} image Deliverables. Do not publish ads to Meta.`,
     }),
     outputContract,
   }

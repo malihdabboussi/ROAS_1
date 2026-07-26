@@ -1,14 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import {
+  evaluateDeliverableContractRow,
+  type DeliverableContractRow,
+} from './mission-deliverable-contract-evaluator'
 import { verifyMissionDocumentContent } from './mission-document-content-verifier'
 import type {
   MissionContractVerificationResult,
   MissionOutputContract,
 } from './mission-output-contract.types'
-import {
-  evaluateDeliverableContractRow,
-  type DeliverableContractRow,
-} from './mission-deliverable-contract-evaluator'
 import { verifyMissionVisualEvidence } from './mission-visual-evidence-verifier'
 
 @Injectable()
@@ -86,6 +86,7 @@ export class MissionDeliverablesRepository {
 
     const preferredIds = [...new Set(preferredDeliverableIds.filter(Boolean))]
     const minimumCount = this.resolveMinimumCount(contract)
+    const exactCount = this.resolveExactCount(contract)
     if (preferredIds.length > 0) {
       const { data, error } = await supabase
         .from('mission_deliverables')
@@ -98,9 +99,7 @@ export class MissionDeliverablesRepository {
       const preferredIdSet = new Set(preferredIds)
       const rows = ((data || []) as DeliverableContractRow[]).filter((row) => {
         const metadataEntityId =
-          row.metadata && typeof row.metadata.entity_id === 'string'
-            ? row.metadata.entity_id
-            : ''
+          row.metadata && typeof row.metadata.entity_id === 'string' ? row.metadata.entity_id : ''
         return (
           preferredIdSet.has(String(row.id || '')) ||
           preferredIdSet.has(String(row.entity_id || '')) ||
@@ -114,6 +113,9 @@ export class MissionDeliverablesRepository {
           const result = await this.evaluateAndVerifyDeliverable(supabase, row, contract)
           if (result.ok) successes.push(result)
           else failures.push(result)
+        }
+        if (exactCount !== null && successes.length > 0 && successes.length !== exactCount) {
+          return this.exactCountFailure(contract, successes.length, exactCount)
         }
         if (successes.length >= minimumCount) return successes[0]
         if (successes.length > 0) {
@@ -143,7 +145,9 @@ export class MissionDeliverablesRepository {
 
     const latestRow = data as DeliverableContractRow | null
     const latestResult = await this.evaluateAndVerifyDeliverable(supabase, latestRow, contract)
-    if ((latestResult.ok && minimumCount === 1) || !latestRow?.id) return latestResult
+    if ((latestResult.ok && minimumCount === 1 && exactCount === null) || !latestRow?.id) {
+      return latestResult
+    }
 
     const { data: matchingData, error: matchingError } = await supabase
       .from('mission_deliverables')
@@ -152,7 +156,7 @@ export class MissionDeliverablesRepository {
       .contains('metadata', { source: 'agent_tool' })
       .eq('type', contract.required_artifact_type)
       .order('created_at', { ascending: false })
-      .limit(Math.max(20, minimumCount))
+      .limit(Math.max(20, minimumCount, exactCount === null ? 0 : exactCount + 1))
     if (matchingError) throw matchingError
 
     const matchingRows = (matchingData || []) as DeliverableContractRow[]
@@ -160,6 +164,9 @@ export class MissionDeliverablesRepository {
     for (const row of matchingRows) {
       const result = await this.evaluateAndVerifyDeliverable(supabase, row, contract)
       if (result.ok) successes.push(result)
+    }
+    if (exactCount !== null && successes.length > 0 && successes.length !== exactCount) {
+      return this.exactCountFailure(contract, successes.length, exactCount)
     }
     if (successes.length >= minimumCount) return successes[0]
     if (successes.length > 0) {
@@ -172,6 +179,23 @@ export class MissionDeliverablesRepository {
   private resolveMinimumCount(contract: MissionOutputContract): number {
     const value = contract.expected?.minimum_count
     return typeof value === 'number' && Number.isInteger(value) && value > 1 ? value : 1
+  }
+  private resolveExactCount(contract: MissionOutputContract): number | null {
+    const value = contract.expected?.exact_count
+    return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null
+  }
+  private exactCountFailure(
+    contract: MissionOutputContract,
+    foundCount: number,
+    exactCount: number,
+  ): MissionContractVerificationResult {
+    return {
+      ok: false,
+      reason: `Found ${foundCount} matching ${contract.required_artifact_type} deliverables, expected exactly ${exactCount}`,
+      expected_action: contract.required_action,
+      expected_artifact_type: contract.required_artifact_type,
+      recovery: 'corrective_run',
+    }
   }
   private minimumCountFailure(
     contract: MissionOutputContract,

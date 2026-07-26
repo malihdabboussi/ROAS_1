@@ -122,6 +122,22 @@ RUN apt-get update && \
       "https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/Montserrat-Italic%5Bwght%5D.ttf" \
       -o /usr/local/share/fonts/Montserrat-Italic.ttf && \
     echo "51607f316bc020e59f03cbf51543eecffbea501c0b31d73e5b82927c5cca442c  /usr/local/share/fonts/Montserrat-Italic.ttf" | sha256sum -c - && \
+    curl -L --fail --silent --show-error \
+      https://raw.githubusercontent.com/google/fonts/main/ofl/anton/Anton-Regular.ttf \
+      -o /usr/local/share/fonts/Anton-Regular.ttf && \
+    echo "a4ba3a92350ebb031da0cb47630ac49eb265082ca1bc0450442f4a83ab947cab  /usr/local/share/fonts/Anton-Regular.ttf" | sha256sum -c - && \
+    curl -L --fail --silent --show-error \
+      https://raw.githubusercontent.com/rsms/inter/master/docs/font-files/Inter-Regular.woff2 \
+      -o /usr/local/share/fonts/Inter-Regular.woff2 && \
+    echo "e06f6b1bc553aaea4e4668023ed0ab0a147129c3107f511bc7d03d361b0ae085  /usr/local/share/fonts/Inter-Regular.woff2" | sha256sum -c - && \
+    curl -L --fail --silent --show-error \
+      https://raw.githubusercontent.com/rsms/inter/master/docs/font-files/Inter-Bold.woff2 \
+      -o /usr/local/share/fonts/Inter-Bold.woff2 && \
+    echo "fa888127b6da015b65569f0351f3b5c391ad928904951f1c20e9f8462a8d95ea  /usr/local/share/fonts/Inter-Bold.woff2" | sha256sum -c - && \
+    curl -L --fail --silent --show-error \
+      https://raw.githubusercontent.com/rsms/inter/master/docs/font-files/Inter-Black.woff2 \
+      -o /usr/local/share/fonts/Inter-Black.woff2 && \
+    echo "12ed0eed6749099b46c7b2e8198dc30c2d7e0f2a4e5fb1d12f0b6ae2c4f33cc4  /usr/local/share/fonts/Inter-Black.woff2" | sha256sum -c - && \
     fc-cache -f && \
     curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
     chmod a+rx /usr/local/bin/yt-dlp && \

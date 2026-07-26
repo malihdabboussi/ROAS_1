@@ -5,6 +5,21 @@ type QueryError = { message: string }
 
 @Injectable()
 export class ArtifactMediaAssetsRepository {
+  async findStaticAdTemplate(
+    supabase: SupabaseClient,
+    templateId: string,
+  ): Promise<{ data: Record<string, unknown> | null; error: QueryError | null }> {
+    return (await supabase
+      .from('skill_library_resources')
+      .select('content')
+      .eq('skill_key', 'static-ad-book')
+      .eq('file_path', `assets/engine/templates/${templateId}.html`)
+      .maybeSingle()) as {
+      data: Record<string, unknown> | null
+      error: QueryError | null
+    }
+  }
+
   async uploadMediaObject(
     supabase: SupabaseClient,
     input: { filePath: string; buffer: Buffer; contentType: string },

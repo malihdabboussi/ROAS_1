@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import type { Logger } from '@nestjs/common'
 import { ArtifactMediaAssetsRepository } from '../repositories/artifact-media-assets.repository'
 import { ArtifactIgStoryMissionDeliverableService } from './artifact-ig-story-mission-deliverable.service'
+import { ArtifactStaticAdMissionDeliverableService } from './artifact-static-ad-mission-deliverable.service'
 
 export interface PersistProcessedMediaInput {
   target: Record<string, any>
@@ -12,11 +13,13 @@ export interface PersistProcessedMediaInput {
   operation: string
   outputPath: string
   outputFormat: string
+  actionInput: Record<string, unknown>
   logger: Pick<Logger, 'error'>
 }
 
 export class ArtifactMediaProcessingPersistenceService {
   private readonly igStoryMissionDeliverable = new ArtifactIgStoryMissionDeliverableService()
+  private readonly staticAdMissionDeliverable = new ArtifactStaticAdMissionDeliverableService()
 
   constructor(private readonly repository: ArtifactMediaAssetsRepository) {}
 
@@ -67,7 +70,7 @@ export class ArtifactMediaProcessingPersistenceService {
         campaign_id: input.campaignId ?? null,
         tags: [`process-media-${input.operation}`],
         source: 'generated',
-        source_model: 'ffmpeg',
+        source_model: input.operation.startsWith('render_') ? 'deterministic-renderer' : 'ffmpeg',
         source_prompt: `process_media: ${input.operation}`,
         public_url: publicUrl || null,
         is_public: false,
@@ -88,14 +91,29 @@ export class ArtifactMediaProcessingPersistenceService {
       file_size: outputBuffer.length,
       campaign_id: input.campaignId ?? null,
     }
-    if (input.operation !== 'render_ig_story') return result
-    return this.igStoryMissionDeliverable.persist({
-      target: input.target,
-      userId: input.userId,
-      campaignId: input.campaignId,
-      sessionKey: input.sessionKey,
-      processed: result,
-    })
+    if (input.operation === 'render_ig_story') {
+      return this.igStoryMissionDeliverable.persist({
+        target: input.target,
+        userId: input.userId,
+        campaignId: input.campaignId,
+        sessionKey: input.sessionKey,
+        processed: result,
+      })
+    }
+    if (input.operation === 'render_static_ad') {
+      const templateId = String(input.actionInput.template_id ?? '')
+      const aspectRatio = input.actionInput.aspect_ratio === '9:16' ? '9:16' : '4:5'
+      return this.staticAdMissionDeliverable.persist({
+        target: input.target,
+        userId: input.userId,
+        campaignId: input.campaignId,
+        sessionKey: input.sessionKey,
+        processed: result,
+        templateId,
+        aspectRatio,
+      })
+    }
+    return result
   }
 
   private mimeForFormat(format: string): string {

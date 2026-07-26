@@ -24,6 +24,8 @@ Generated static-ad images are normalized before Media registration to the canon
 
 IG Organic Video missions contract on `process_media` rather than raw video generation. With `reuse_when_available`, clean scene presets are reused and only missing presets go through the direct Higgsfield MCP; Google/Veo is not a valid substitute. Every resolved source must finish through `render_ig_story`. That operation registers the deterministic MP4 in campaign Media and, during a mission session, creates the corresponding video Deliverable with authoritative 1080×1920 and 10-second metadata. Mission verification therefore rejects raw generation placeholders and accepts only the final rendered outputs.
 
+Static Ad Production missions also contract on `process_media`. Each requested format finishes through `render_static_ad`, which loads the approved static-ad-book HTML template, escapes ordinary copy, permits only safe formatting tags in `_HTML` fields, renders one exact 1080-pixel-wide PNG, registers it in campaign Media, and creates one native image Deliverable. Image generation can supply clean source imagery when required, but it is never accepted as the final copy-bearing static.
+
 - Ads Research reuses its visual evidence report, linked source documents, concept selection, and persisted production handoff.
 - Webinar Fulfillment groups the existing subtasks and deliverables into Strategy, Copy, Creative, and Activation phases. Each phase links its native outputs and opens the exact subtask in Mission Details. The first unresolved human gate appears as the primary `Review now` action.
 - Meta Ads Launch groups preparation, paused build, and activation.
@@ -296,6 +298,7 @@ If the direct pool hits a transport failure, the worker removes it from service 
 
 ## Decision Log
 
+- 2026-07-26: Required Static Ad Production to finish through the deterministic server-side `render_static_ad` operation and made exact-count contracts reject both missing and extra matching Deliverables.
 - 2026-07-26: Made IG Organic Video contract on final `process_media` Story renders, persisted each render as both campaign Media and a mission Deliverable, and prohibited Google/Veo substitutes for missing Higgsfield footage.
 - 2026-07-26: Normalized generated static ads to canonical placement pixels and made mission verification compare recorded dimensions against the output contract.
 - 2026-07-26: Exposed Static Ad Production and IG Organic Video in the global Missions playbook selector so direct Space acceptance uses the canonical deterministic playbooks instead of generic missions.

@@ -32,9 +32,12 @@ describe('static-ad-production playbook', () => {
     expect(plan?.subtasks[0]?.intent.ecology).toMatch(/hero_framing/)
     expect(plan?.subtasks[0]?.intent.ecology).toMatch(/offer_stack/)
     expect(plan?.subtasks[0]?.intent.ecology).toMatch(/visual(?:ly)? inspect/i)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/process_media.*render_static_ad/i)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/never call generate_image for the final/i)
     expect(plan?.subtasks[0]?.outputContract).toMatchObject({
       artifact_kind: 'media_artifact',
       required_artifact_type: 'image',
+      required_action: 'process_media',
       expected: { minimum_count: 6, width: 1080, height: 1350 },
     })
   })
