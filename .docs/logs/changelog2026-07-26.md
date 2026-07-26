@@ -78,3 +78,13 @@ What: Normalized generated 4:5 and 9:16 images to 1080×1350 and 1080×1920 befo
 Why: Production acceptance produced an 896×1120 PNG while the agent and independent mission reviewer both claimed it was 1080×1350 because the contract trusted narrative evidence and Media stored no dimensions.
 Impact: Static-ad missions now deliver canonical placement pixels, Media and Deliverables carry authoritative width/height evidence, and a provider-size regression triggers corrective execution instead of a false pass.
 Files: `apps/agent-api/src/modules/artifacts/services/artifact-generated-image-normalizer.ts`, image generation/upload/result services and tests, `apps/mission-worker/src/modules/missions/playbooks/static-ad-production.playbook.ts`, mission deliverable contract evaluation and tests, `documentation/features/missions.md`.
+
+## [2026-07-26 13:51] - [FIX]
+
+What: Gave the AI usage dashboard its own full-height vertical scroll region inside the fixed dashboard shell.
+
+Why: The shared shell intentionally hides page-level overflow, but the new long-form admin dashboard did not establish the inner scroll container required by that layout contract.
+
+Impact: Admins can scroll through provider, efficiency, model, and costly-trace tables on desktop and mobile without changing other dashboard surfaces.
+
+Files: `apps/web/src/features/admin-ai-usage/containers/AdminAiUsageDashboard.tsx`.
