@@ -220,6 +220,13 @@ export function mergeConversationLists<T extends ConversationListLike>(...lists:
   )
 }
 
+export function resolvePendingConversationSelection<T extends ConversationListLike>(
+  conversations: T[],
+  conversationId: string,
+): T | null {
+  return conversations.find((conversation) => conversation.id === conversationId) ?? null
+}
+
 export function buildSpaceChatConversationUrl({
   origin,
   isChannelScope,

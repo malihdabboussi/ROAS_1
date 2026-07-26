@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import type { EntitySearchKind, EntitySearchResult } from '../services/entity-search.service'
 import { EntityMentionPicker } from './EntityMentionPicker'
 
 export type EntityMentionUiTab =
   | 'people'
+  | 'agents'
   | 'tasks'
   | 'docs'
   | 'channels'
@@ -15,7 +16,8 @@ export type EntityMentionUiTab =
   | 'conversations'
 
 export const ENTITY_MENTION_TAB_TYPES: Record<EntityMentionUiTab, EntitySearchKind[]> = {
-  people: ['person', 'agent'],
+  people: ['person'],
+  agents: ['agent'],
   tasks: ['task'],
   docs: ['doc'],
   channels: ['channel'],
@@ -26,6 +28,7 @@ export const ENTITY_MENTION_TAB_TYPES: Record<EntityMentionUiTab, EntitySearchKi
 
 const TABS: { id: EntityMentionUiTab; label: string }[] = [
   { id: 'people', label: 'People' },
+  { id: 'agents', label: 'Agents' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'docs', label: 'Docs' },
   { id: 'channels', label: 'Channels' },
@@ -47,6 +50,14 @@ interface TabbedEntityMentionMenuProps {
   onHover: (index: number) => void
 }
 
+type PeopleFilter = 'all' | 'internal' | 'external' | 'portal'
+
+function matchesPeopleFilter(item: EntitySearchResult, filter: PeopleFilter): boolean {
+  if (filter === 'all') return true
+  if (filter === 'portal') return item.personKind === 'portal_user'
+  return item.personKind === 'managed_person' && item.relationshipKind === filter
+}
+
 export function TabbedEntityMentionMenu({
   activeTab,
   onTabChange,
@@ -60,6 +71,15 @@ export function TabbedEntityMentionMenu({
   onHover,
 }: TabbedEntityMentionMenuProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [peopleFilter, setPeopleFilter] = useState<PeopleFilter>('all')
+  const visibleItems = useMemo(() => {
+    if (activeTab !== 'people') return items
+    return items.filter((item) => matchesPeopleFilter(item, peopleFilter))
+  }, [activeTab, items, peopleFilter])
+  const visibleSelectedIndex = Math.max(
+    0,
+    visibleItems.findIndex((item) => item === items[selectedIndex]),
+  )
 
   useEffect(() => {
     const el = scrollRef.current
@@ -105,12 +125,40 @@ export function TabbedEntityMentionMenu({
         className="scrollbar-thin overflow-y-auto"
         style={{ height: 'min(18rem, 45vh)' }}
       >
+        {activeTab === 'people' && (
+          <div className="border-border gap-spacing-1 px-spacing-3 py-spacing-2 flex border-b">
+            {(
+              [
+                ['all', 'All'],
+                ['internal', 'Internal'],
+                ['external', 'External'],
+                ['portal', 'Portal users'],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  setPeopleFilter(id)
+                  const firstIndex = items.findIndex((item) => matchesPeopleFilter(item, id))
+                  if (firstIndex >= 0) onHover(firstIndex)
+                }}
+                className={`button-compact px-spacing-3 ${
+                  peopleFilter === id ? 'button-glass-primary' : 'button-glass-neutral'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
         {showInitialLoading ? (
           <div className="body-3 text-muted-foreground px-spacing-3 py-spacing-6 gap-spacing-2 flex min-h-[min(18rem,45vh)] flex-col items-center justify-center text-center">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Loading…
           </div>
-        ) : showEmpty ? (
+        ) : showEmpty || visibleItems.length === 0 ? (
           <div className="body-3 text-muted-foreground px-spacing-3 py-spacing-6 flex min-h-[min(18rem,45vh)] flex-col items-center justify-center text-center">
             {queryLen === 0 ? 'Nothing here yet.' : 'No matches in this category.'}
           </div>
@@ -118,10 +166,14 @@ export function TabbedEntityMentionMenu({
           <>
             <EntityMentionPicker
               flat
-              items={items}
-              selectedIndex={selectedIndex}
+              items={visibleItems}
+              selectedIndex={visibleSelectedIndex}
               onSelect={onSelect}
-              onHover={onHover}
+              onHover={(visibleIndex) => {
+                const item = visibleItems[visibleIndex]
+                const sourceIndex = item ? items.indexOf(item) : -1
+                if (sourceIndex >= 0) onHover(sourceIndex)
+              }}
             />
             {loading && (
               <div className="px-spacing-3 py-spacing-2 gap-spacing-2 body-4 text-muted-foreground flex items-center justify-center">

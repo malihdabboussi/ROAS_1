@@ -140,6 +140,7 @@ import {
   isHomeChatSeedPending,
   mergeConversationLists,
   readHomeChatSeedForSpace,
+  resolvePendingConversationSelection,
   resolveSpaceChatAutoFocusTarget,
   resolveSpaceChatScope,
   resolveSpaceChatSeedSendOptions,
@@ -180,6 +181,7 @@ export function SpaceVibeyChatPanel({
   onCollapseChat,
   shellSidebarChrome = false,
   headerLayout = 'compact',
+  composerContextSlot,
 }: SpaceVibeyChatPanelProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -261,7 +263,9 @@ export function SpaceVibeyChatPanel({
   const [editingQueueItemId, setEditingQueueItemId] = useState<string | null>(null)
   const [userHasScrolledUp, setUserHasScrolledUp] = useState(false)
   const [shareConversation, setShareConversation] = useState<Conversation | null>(null)
-  const [draftAgentKey, setDraftAgentKey] = useState(DEFAULT_SPACE_CHAT_AGENT_KEY)
+  const [draftAgentKey, setDraftAgentKey] = useState(
+    () => useGlobalChatStore.getState().activeAgentKey || DEFAULT_SPACE_CHAT_AGENT_KEY,
+  )
   const [voiceActive, setVoiceActive] = useState(false)
   const spacesRoster = useSpacesStore((s) => s.roster)
   const spacesRosterLoaded = useSpacesStore((s) => s.rosterLoaded)
@@ -808,8 +812,12 @@ export function SpaceVibeyChatPanel({
   useEffect(() => {
     if (!pendingOpenConversationId || conversationsLoading) return
     const conversationId = pendingOpenConversationId
+    const conversation =
+      resolvePendingConversationSelection(conversations, conversationId) ??
+      resolvePendingConversationSelection(useChatStore.getState().conversations, conversationId)
+    if (!conversation) return
+    setConversations((current) => mergeConversationLists(current, [conversation]))
     clearPendingOpenConversation()
-    const conversation = conversations.find((item) => item.id === conversationId) ?? null
     const conversationAgentKey = getConversationAgentKey(conversation)
     setDraftAgentKey(conversationAgentKey)
     setSelectedConversationId(conversationId)
@@ -2341,6 +2349,7 @@ export function SpaceVibeyChatPanel({
                           activeCapabilityChip={quickStart.activeCapabilityChip}
                           onClearCapabilityChip={quickStart.clearQuickStart}
                           onEnqueue={editingQueueItemId ? undefined : handleEnqueue}
+                          composerFooterAfterIntegrationsSlot={composerContextSlot}
                           onSendNow={handleQueueSendNowNext}
                           queueLength={queue.length}
                           placeholder={

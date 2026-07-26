@@ -10,6 +10,7 @@ import {
   mergeConversationLists,
   messageHasTaskMutation,
   readHomeChatSeedForSpace,
+  resolvePendingConversationSelection,
   resolveSpaceChatAutoFocusTarget,
   resolveSpaceChatScope,
   resolveSpaceChatSeedSendOptions,
@@ -190,6 +191,18 @@ describe('space ROAS chat panel logic', () => {
 
     expect(merged.map((item) => item.id)).toEqual(['same', 'older'])
     expect(merged[0]?.title).toBe('Updated')
+  })
+
+  it('waits for a pending shell conversation to exist before resolving its agent', () => {
+    const luxConversation = conversation({
+      id: 'lux-conversation',
+      agent_id: 'lux',
+    })
+
+    expect(resolvePendingConversationSelection([], 'lux-conversation')).toBeNull()
+    expect(resolvePendingConversationSelection([luxConversation], 'lux-conversation')).toEqual(
+      luxConversation,
+    )
   })
 
   it('uses the requested seed agent for the first message in a fresh chat', () => {

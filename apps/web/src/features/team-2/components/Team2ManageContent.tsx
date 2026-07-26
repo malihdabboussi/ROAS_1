@@ -244,6 +244,39 @@ export function Team2ManageContent({
     [data, derived, handlers],
   )
 
+  const floor = (
+    <AgentsGrid
+      agents={data.agents}
+      teamFilterId={selectedTeamId}
+      onOpenAgent={handleOpenAgent}
+      onOpenAgentChat={(agentKey) => handleOpenAgent(agentKey)}
+      getAgentMenuContext={getAgentMenuContextForGrid}
+      onRenameAgent={onGridRename}
+      onChangeAgentModel={onGridModelChange}
+      onOpenAgentLibrary={onOpenAgentLibrary}
+      onStartAgentFromScratch={onStartAgentFromScratch}
+      selectedAgentKey={data.selectedAgentKey || null}
+      assignedCampaignIdsForSelected={assignedCampaignIdsForSelected}
+      hasBrainForSelected={data.hasBrain}
+      focusByAgentKey={focusByAgentKey}
+      onAssignWork={(agent) => setAssignAgent(agent)}
+      statusFilters={statusFilters}
+      onStatusFiltersChange={setStatusFilters}
+    />
+  )
+
+  const agentsOverview = vibeyAgent ? (
+    <VibeyOpsDesk
+      agents={data.agents}
+      missions={missions}
+      floor={floor}
+      statusFilters={statusFilters}
+      onStatusFilterClick={handleStatusFilterClick}
+    />
+  ) : (
+    floor
+  )
+
   const content = (() => {
     if (manageSection === 'people' && showOrgTeams) {
       return <SlackPeopleView />
@@ -269,9 +302,6 @@ export function Team2ManageContent({
           infoPanelTab={infoPanelTab}
           showAccessTab={showsAgentAccessTab(selectedFromUrl, derived.isSystemLikeAgent)}
           onInfoPanelTabChange={onInfoPanelTabChange}
-          assignedCampaigns={data.assignedCampaigns as Campaign[]}
-          nonGeneralCampaigns={data.nonGeneralCampaigns as Campaign[]}
-          generalCampaignId={data.generalCampaignId}
           infoPanel={(onRequestCollapse) => (
             <AgentInfoPanel
               {...(agentInfoBaseProps as AgentInfoPanelProps)}
@@ -294,44 +324,13 @@ export function Team2ManageContent({
               )}
             />
           )}
-        />
+        >
+          {agentsOverview}
+        </Team2DetailView>
       )
     }
 
-    const floor = (
-      <AgentsGrid
-        agents={data.agents}
-        teamFilterId={selectedTeamId}
-        onOpenAgent={handleOpenAgent}
-        onOpenAgentChat={(agentKey) => handleOpenAgent(agentKey)}
-        getAgentMenuContext={getAgentMenuContextForGrid}
-        onRenameAgent={onGridRename}
-        onChangeAgentModel={onGridModelChange}
-        onOpenAgentLibrary={onOpenAgentLibrary}
-        onStartAgentFromScratch={onStartAgentFromScratch}
-        selectedAgentKey={data.selectedAgentKey || null}
-        assignedCampaignIdsForSelected={assignedCampaignIdsForSelected}
-        hasBrainForSelected={data.hasBrain}
-        focusByAgentKey={focusByAgentKey}
-        onAssignWork={(agent) => setAssignAgent(agent)}
-        statusFilters={statusFilters}
-        onStatusFiltersChange={setStatusFilters}
-      />
-    )
-
-    if (vibeyAgent) {
-      return (
-        <VibeyOpsDesk
-          agents={data.agents}
-          missions={missions}
-          floor={floor}
-          statusFilters={statusFilters}
-          onStatusFilterClick={handleStatusFilterClick}
-        />
-      )
-    }
-
-    return floor
+    return agentsOverview
   })()
 
   return (

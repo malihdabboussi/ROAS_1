@@ -52,8 +52,8 @@ function GeneratedImageComponent({
   }, [mediaAssetId, prompt, spaceId, url])
 
   return (
-    <div className="card-glass my-3 w-full max-w-sm overflow-hidden">
-      <div className={`bg-muted relative w-full overflow-hidden ${aspectClass}`}>
+    <div className="my-spacing-3 w-full max-w-sm overflow-hidden">
+      <div className={`relative w-full overflow-hidden ${aspectClass}`}>
         {loadState === 'loading' && (
           <div className="absolute inset-0 z-10 flex items-center justify-center">
             <div className="bg-secondary flex h-10 w-10 items-center justify-center rounded-full">
@@ -95,7 +95,7 @@ function GeneratedImageComponent({
           <img
             src={imgSrc}
             alt={prompt ?? 'Generated image'}
-            className={`h-full w-full object-cover transition-opacity duration-500 ${
+            className={`h-full w-full object-contain transition-opacity duration-500 ${
               loadState === 'loaded' ? 'opacity-100' : 'opacity-0'
             }`}
             onLoad={onLoad}
@@ -103,12 +103,6 @@ function GeneratedImageComponent({
           />
         )}
       </div>
-
-      {prompt && loadState !== 'error' && (
-        <div className="bg-secondary px-3 py-1.5">
-          <p className="typo-caption text-muted-foreground truncate italic">{prompt}</p>
-        </div>
-      )}
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { useMemo } from 'react'
 import { SpaceVibeyChatPanel } from '@/features/spaces/components/chat/SpaceVibeyChatPanel'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
-import { surfaceFromPathname } from '../config/work-context.config'
+import { GlobalChatComposerFooter } from '../components/GlobalChatComposerFooter'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 
 export function GlobalChatPanel({
@@ -53,7 +53,7 @@ export function GlobalChatPanel({
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <SpaceVibeyChatPanel
           key={panelKey}
-          chatSurface={surfaceFromPathname(pathname)}
+          chatSurface={workContext.surface}
           spaceId={spaceId}
           campaignId={spaceId ? (workContext.campaignId ?? activeSpace?.campaign_id ?? null) : null}
           campaignName={isSpacesRoute ? (activeSpace?.title ?? null) : null}
@@ -85,6 +85,7 @@ export function GlobalChatPanel({
           }
           shellSidebarChrome={shellSidebarChrome}
           headerLayout={presentation}
+          composerContextSlot={<GlobalChatComposerFooter />}
           onCollapseChat={onCollapseChat ?? (() => setCollapsed(true))}
         />
       </div>

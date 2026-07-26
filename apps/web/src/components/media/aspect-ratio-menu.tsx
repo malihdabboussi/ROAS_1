@@ -29,14 +29,40 @@ export function aspectRatioLabel(ratio: string): string {
   return LABEL_BY_RATIO[ratio] ?? 'Custom'
 }
 
+/** Overlapping canvas shapes used for the collapsed aspect-ratio control. */
+export function AspectRatioPickerGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className={cn('text-muted-foreground h-4 w-4 shrink-0', className)}
+      aria-hidden
+    >
+      <rect
+        x="1.5"
+        y="4"
+        width="13"
+        height="8"
+        rx="1.75"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.25"
+      />
+      <rect
+        x="5"
+        y="1.5"
+        width="6"
+        height="13"
+        rx="1.75"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.25"
+      />
+    </svg>
+  )
+}
+
 /** Hollow rounded rect sized to the ratio (ChatGPT aspect picker). */
-export function AspectRatioGlyph({
-  ratio,
-  className,
-}: {
-  ratio: string
-  className?: string
-}) {
+export function AspectRatioGlyph({ ratio, className }: { ratio: string; className?: string }) {
   const parts = ratio.split(':').map(Number)
   const rawW = parts[0]
   const rawH = parts[1]

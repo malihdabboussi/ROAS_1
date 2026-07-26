@@ -8,6 +8,73 @@ import { parseSlackForwardedMessage } from './slack-forwarded-message-context'
 import { SlackMediaBase } from './slack-service-media.base'
 
 export abstract class SlackConversationBase extends SlackMediaBase {
+  protected async resolveFallbackRouting(
+    serviceSupabase: SupabaseClient,
+    teamId: string,
+  ): Promise<{
+    userId: string
+    agentKey: string
+    botToken: string
+    accessToken: string
+    orgId: string | null
+    ownerSlackUserId: string | null
+  } | null> {
+    const channel = await this.slackRepo.findFallbackChannelByTeam(serviceSupabase, teamId)
+    if (!channel) {
+      this.logger.warn(`[TRACE] resolveFallbackRouting EXIT: no active channel for team=${teamId}`)
+      return null
+    }
+
+    const providerConfig = channel.provider_config as Record<string, unknown>
+    const botToken = typeof providerConfig.bot_token === 'string' ? providerConfig.bot_token : ''
+    if (!botToken) {
+      this.logger.warn(
+        `[TRACE] resolveFallbackRouting EXIT: fallback channel ${channel.id} missing bot token`,
+      )
+      return null
+    }
+
+    this.logger.log(
+      `[TRACE] resolveFallbackRouting: channel=${channel.id} userId=${channel.user_id} agentKey=${channel.agent_key} orgId=${channel.org_id ?? 'personal'}`,
+    )
+    const accessToken = await this.userSessionMint.mintAccessToken(channel.user_id)
+    this.logger.log(
+      `[TRACE] resolveFallbackRouting OK: minted accessToken_len=${accessToken.length}`,
+    )
+    return {
+      userId: channel.user_id,
+      agentKey: channel.agent_key,
+      botToken,
+      accessToken,
+      orgId: channel.org_id ?? null,
+      ownerSlackUserId:
+        typeof providerConfig.authed_user_id === 'string' ? providerConfig.authed_user_id : null,
+    }
+  }
+
+  protected async buildSlackThreadReplyContext(
+    botToken: string,
+    channelId: string,
+    threadTs: string,
+    currentMessageTs?: string,
+  ): Promise<string> {
+    const messages = await this.slackApi.conversationsRepliesAll(botToken, channelId, threadTs)
+    const preceding = messages
+      .filter((message) => {
+        const text = String(message.text ?? '').trim()
+        return text.length > 0 && message.ts !== currentMessageTs
+      })
+      .slice(-12)
+    if (preceding.length === 0) return ''
+
+    const lines = preceding.map((message) => {
+      const sender = message.bot_id ? 'Pixel' : message.user ? `<@${message.user}>` : 'Unknown'
+      return `${sender}: ${String(message.text ?? '').trim()}`
+    })
+    const context = lines.join('\n')
+    return context.length > 12_000 ? context.slice(-12_000) : context
+  }
+
   protected async buildForwardedMessageContext(
     supabase: SupabaseClient,
     userId: string,
@@ -187,16 +254,6 @@ export abstract class SlackConversationBase extends SlackMediaBase {
   // Conversation management
   // ---------------------------------------------------------------------------
 
-  protected async getDefaultCampaignIdForUser(
-    supabase: SupabaseClient,
-    userId: string,
-  ): Promise<string | null> {
-    return (
-      (await this.slackRuntimeRepo.findRecentCampaignIdForUser(supabase, userId)) ??
-      (await this.slackRuntimeRepo.findGeneralCampaignIdForUser(supabase, userId))
-    )
-  }
-
   protected async getOrCreateSlackConversation(
     supabase: SupabaseClient,
     userId: string,
@@ -216,16 +273,12 @@ export abstract class SlackConversationBase extends SlackMediaBase {
       orgId,
     })
     if (existing) {
-      if (!existing.campaign_id) {
-        const campaignId = await this.getDefaultCampaignIdForUser(supabase, userId)
-        if (campaignId) {
-          await this.slackRuntimeRepo.updateConversationCampaign(supabase, existing.id, campaignId)
-        }
+      if (existing.campaign_id) {
+        await this.slackRuntimeRepo.updateConversationCampaign(supabase, existing.id, null)
       }
       return { id: existing.id, title: existing.title ?? null }
     }
 
-    const campaignId = await this.getDefaultCampaignIdForUser(supabase, userId)
     const metadata: Record<string, unknown> = {
       source: 'slack',
       slack_team_id: slackTeamId,
@@ -244,8 +297,6 @@ export abstract class SlackConversationBase extends SlackMediaBase {
       metadata,
       org_id: orgId ?? null,
     }
-    if (campaignId) insertPayload.campaign_id = campaignId
-
     const id = await this.slackRuntimeRepo.createSlackConversation(supabase, insertPayload)
     return { id, title: seedTitle }
   }

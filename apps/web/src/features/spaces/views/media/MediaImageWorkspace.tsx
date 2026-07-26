@@ -24,16 +24,19 @@ function assetDocument(asset: MediaAsset): DocumentAttachment | null {
   }
 }
 
-function downloadAsset(asset: MediaAsset) {
+async function downloadAsset(asset: MediaAsset) {
   if (typeof window === 'undefined' || !asset.public_url) return
-  const a = document.createElement('a')
-  a.href = asset.public_url
-  a.download = asset.original_filename || asset.name || ''
-  a.target = '_blank'
-  a.rel = 'noopener noreferrer'
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
+  const response = await fetch(asset.public_url)
+  if (!response.ok) throw new Error('download failed')
+  const blob = await response.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = objectUrl
+  anchor.download = asset.original_filename || asset.name || 'image'
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(objectUrl)
 }
 
 export function MediaImageWorkspace({
@@ -69,9 +72,11 @@ export function MediaImageWorkspace({
     let cancelled = false
     setHistoryLoading(true)
     void listAssets({
-      space_id: spaceId,
       asset_type: 'image',
       limit: 40,
+      ...(asset.conversation_id
+        ? { conversation_id: asset.conversation_id }
+        : { space_id: spaceId }),
     })
       .then((res) => {
         if (cancelled) return
@@ -97,7 +102,7 @@ export function MediaImageWorkspace({
     return () => {
       cancelled = true
     }
-  }, [spaceId, asset.id])
+  }, [spaceId, asset.id, asset.conversation_id])
 
   const historyItems = useMemo(() => {
     const seen = new Set<string>()
@@ -244,7 +249,11 @@ export function MediaImageWorkspace({
           <button
             type="button"
             disabled={!asset.public_url}
-            onClick={() => downloadAsset(asset)}
+            onClick={() => {
+              void downloadAsset(asset).catch(() =>
+                toast.error(MEDIA_TOAST_ERRORS.DOWNLOAD_FAILED.userMessage),
+              )
+            }}
             className="btn-icon-glass text-muted-foreground hover:text-foreground disabled:opacity-50"
             aria-label="Download"
           >
@@ -278,6 +287,7 @@ export function MediaImageWorkspace({
             assetUrl={asset.public_url}
             spaceId={spaceId}
             campaignId={campaignId}
+            conversationId={asset.conversation_id}
             onGenerated={({ assetId }) => setMediaQuery(assetId)}
           />
         ) : null}

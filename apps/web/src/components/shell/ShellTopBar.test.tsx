@@ -24,6 +24,10 @@ const mocks = vi.hoisted(() => ({
     rightPanel: { open: false, tab: 'tasks' as const },
     workAreaOpen: true,
     toggleWorkAreaOpen: vi.fn(),
+    artifactViewer: { target: null as { id: string } | null },
+    recentArtifactTargets: [],
+    recentWorkAreaPages: [],
+    recordWorkAreaPage: vi.fn(),
     setMenuMode: vi.fn(),
     pageBreadcrumb: null as ReactNode | null,
   },
@@ -58,6 +62,17 @@ vi.mock('./ShellRightPanelControl', () => ({
   ShellRightPanelControl: () => <button type="button" title="Open panel" />,
 }))
 
+vi.mock('./ShellWorkAreaControl', () => ({
+  ShellWorkAreaControl: ({ currentPage }: { currentPage: { title: string } }) => (
+    <button
+      type="button"
+      data-page-title={currentPage.title}
+      title={mocks.shellState.workAreaOpen ? 'Collapse page — chat full screen' : 'Show page'}
+      onClick={mocks.shellState.toggleWorkAreaOpen}
+    />
+  ),
+}))
+
 vi.mock('./use-shell-prefs-hydrated', () => ({
   useShellPrefsHydrated: () => true,
 }))
@@ -76,6 +91,7 @@ describe('ShellTopBar', () => {
     mocks.shellState.pageBreadcrumb = null
     mocks.shellState.chatDrawer = { open: false }
     mocks.shellState.workAreaOpen = true
+    mocks.shellState.artifactViewer = { target: null }
     vi.clearAllMocks()
   })
 
@@ -89,28 +105,44 @@ describe('ShellTopBar', () => {
     expect(screen.getByTitle('Search')).toBeInTheDocument()
     expect(screen.queryAllByTitle('Search')).toHaveLength(1)
     expect(screen.queryByTitle('New chat')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('Open AI Chats')).toBeInTheDocument()
+    const aiChatButton = screen.getByLabelText('Open AI Chats')
+    expect(aiChatButton).toBeInTheDocument()
+    expect(aiChatButton.querySelector('.lucide-panel-left-open')).toBeInTheDocument()
+    expect(screen.getByText('AI Chat')).toBeInTheDocument()
   })
 
-  it('offers the work-area collapse on every route, not just Spaces', () => {
+  it('hides the work-area control until chat creates something to collapse', () => {
     for (const route of ['/home', '/brain', '/campaigns', '/projects', '/flows', '/artifacts']) {
       mocks.pathname = route
       render(<ShellTopBar />)
 
-      fireEvent.click(screen.getByTitle('Collapse page — chat full screen'))
+      expect(screen.queryByTitle('Collapse page — chat full screen')).not.toBeInTheDocument()
       cleanup()
     }
 
-    expect(mocks.shellState.toggleWorkAreaOpen).toHaveBeenCalledTimes(6)
+    expect(mocks.shellState.toggleWorkAreaOpen).not.toHaveBeenCalled()
+  })
+
+  it('offers the work-area collapse while AI Chat is open', () => {
+    mocks.shellState.chatDrawer = { open: true }
+
+    render(<ShellTopBar />)
+    expect(screen.getByTitle('Collapse page — chat full screen')).toHaveAttribute(
+      'data-page-title',
+      'Agenda',
+    )
+    fireEvent.click(screen.getByTitle('Collapse page — chat full screen'))
+
+    expect(mocks.shellState.toggleWorkAreaOpen).toHaveBeenCalledTimes(1)
   })
 
   it('offers the reverse control once the work area is collapsed', () => {
-    mocks.pathname = '/brain'
+    mocks.pathname = '/team/skills'
     mocks.shellState.workAreaOpen = false
 
     render(<ShellTopBar />)
 
-    expect(screen.getByTitle('Show page')).toBeInTheDocument()
+    expect(screen.getByTitle('Show page')).toHaveAttribute('data-page-title', 'Skills')
   })
 
   it('expands and collapses AI Chats from the top-bar panel control', () => {
@@ -126,7 +158,10 @@ describe('ShellTopBar', () => {
     mocks.shellState.chatDrawer = { open: true }
 
     render(<ShellTopBar />)
-    fireEvent.click(screen.getByTitle('Collapse AI Chats'))
+    expect(screen.getByText('AI Chat')).toBeInTheDocument()
+    const aiChatButton = screen.getByTitle('Collapse AI Chats')
+    expect(aiChatButton.querySelector('.lucide-panel-left-close')).toBeInTheDocument()
+    fireEvent.click(aiChatButton)
 
     expect(mocks.shellState.minimizeChatDrawer).toHaveBeenCalledTimes(1)
   })

@@ -79,11 +79,6 @@
       "limit": 400,
       "lines": 1398
     },
-    "apps/web/src/features/channels/components/ChannelChat.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 468
-    },
     "apps/web/src/features/contacts/components/ContactInfoPanel.tsx": {
       "kind": "web-component",
       "limit": 400,

@@ -36,6 +36,7 @@ describe('ArtifactCalendarService', () => {
     await service.getHandlers(t).create_calendar_event(
       {
         provider: 'outlook',
+        user_integration_id: 'calendar-account-2',
         title: 'Review launch tasks',
         start: '2026-06-18T10:00:00.000Z',
         end: '2026-06-18T10:30:00.000Z',
@@ -50,6 +51,7 @@ describe('ArtifactCalendarService', () => {
       'session-key',
       {
         provider: 'outlook',
+        user_integration_id: 'calendar-account-2',
         title: 'Review launch tasks',
         start: '2026-06-18T10:00:00.000Z',
         end: '2026-06-18T10:30:00.000Z',
@@ -62,14 +64,18 @@ describe('ArtifactCalendarService', () => {
     const service = new ArtifactCalendarService()
     const t = target()
 
-    await service.getHandlers(t).update_calendar_event(
-      { provider: 'google_calendar', event_id: 'google:event/123', end: '2026-06-18T11:00:00Z' },
-      'session-key',
-    )
-    await service.getHandlers(t).delete_calendar_event(
-      { provider: 'google_calendar', event_id: 'google:event/123' },
-      'session-key',
-    )
+    await service
+      .getHandlers(t)
+      .update_calendar_event(
+        { provider: 'google_calendar', event_id: 'google:event/123', end: '2026-06-18T11:00:00Z' },
+        'session-key',
+      )
+    await service
+      .getHandlers(t)
+      .delete_calendar_event(
+        { provider: 'google_calendar', event_id: 'google:event/123' },
+        'session-key',
+      )
 
     expect(t.mainApiCall).toHaveBeenNthCalledWith(
       1,

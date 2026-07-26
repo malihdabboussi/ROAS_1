@@ -10873,17 +10873,11 @@ html.dark .chat-markdown-code-block__shadow {
   right: 0;
   bottom: 0;
   flex: none;
-  transform: translateX(0);
-  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-.shell-work-area-body-collapsed {
-  transform: translateX(100%);
 }
 @media (prefers-reduced-motion: reduce) {
   .shell-chat-drawer-animated,
   .shell-chat-drawer-body-animated,
-  .shell-work-area,
-  .shell-work-area-body-anchored {
+  .shell-work-area {
     transition: none;
   }
 }

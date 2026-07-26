@@ -41,7 +41,8 @@ export function SpaceChatAgentEmptyState({
 }: SpaceChatAgentEmptyStateProps) {
   const heroTitle = agent.display_name
   const heroAvatar = agent.avatar_url
-  const showAgentRole = Boolean(agent.role_label)
+  const showAgentRole =
+    agent.agent_key !== DEFAULT_SPACE_CHAT_AGENT_KEY && Boolean(agent.role_label)
   // Default agent (Pixel) keeps the hero to name + capabilities — no long greeting.
   const greeting =
     agent.agent_key === DEFAULT_SPACE_CHAT_AGENT_KEY ? null : buildSpaceChatAgentGreeting(agent)

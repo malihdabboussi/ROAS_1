@@ -41,6 +41,10 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
   ) => selector({ setActiveConversationId: mocks.setActiveConversationId }),
 }))
 
+vi.mock('@/features/studio/services/conversation-title-scheduler', () => ({
+  initConversationTitleAutogen: vi.fn(),
+}))
+
 vi.mock('@/components/layout/ResizableDivider', () => ({
   ResizableDivider: ({
     onMouseDown,
@@ -52,7 +56,14 @@ vi.mock('@/components/layout/ResizableDivider', () => ({
 }))
 
 vi.mock('./ShellChatMenu', () => ({
-  ShellChatMenu: () => <div>Chat history</div>,
+  ShellChatMenu: ({ onCollapse }: { onCollapse?: () => void }) => (
+    <div>
+      Chat history
+      <button type="button" onClick={onCollapse}>
+        Collapse history
+      </button>
+    </div>
+  ),
 }))
 
 describe('ShellChatDrawer', () => {
@@ -60,6 +71,7 @@ describe('ShellChatDrawer', () => {
     useShellStore.setState({
       chatDrawer: { open: false, conversationId: null, width: 280, minimized: false },
       chatHistoryWidth: 200,
+      chatHistoryCollapsed: false,
       workAreaOpen: true,
       newChatNonce: 0,
     })
@@ -168,6 +180,81 @@ describe('ShellChatDrawer', () => {
 
     expect(useShellStore.getState().chatHistoryWidth).toBe(280)
     expect(container.querySelector('[data-shell-chat-history]')).toHaveStyle({ width: '280px' })
+  })
+
+  it('does not resize the active chat drawer when resizing docked history', () => {
+    useShellStore.setState({
+      chatDrawer: {
+        open: true,
+        conversationId: 'conversation-1',
+        width: 420,
+        minimized: false,
+      },
+      chatHistoryWidth: 200,
+    })
+
+    const { container } = render(<ShellChatDrawer />)
+    const historyDivider = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Resize chat history"]',
+    )
+    expect(historyDivider).not.toBeNull()
+    fireEvent.mouseDown(historyDivider!, {
+      clientX: 200,
+    })
+    const moveEvent = new Event('pointermove', { bubbles: true })
+    Object.defineProperty(moveEvent, 'clientX', { value: 280 })
+    fireEvent(document, moveEvent)
+    fireEvent.pointerUp(document)
+
+    expect(useShellStore.getState().chatHistoryWidth).toBe(280)
+    expect(useShellStore.getState().chatDrawer.width).toBe(420)
+  })
+
+  it('collapses chat history when its divider is dragged fully left', () => {
+    useShellStore.setState({
+      chatDrawer: {
+        open: true,
+        conversationId: 'conversation-1',
+        width: 420,
+        minimized: false,
+      },
+      chatHistoryWidth: 200,
+    })
+
+    const { container } = render(<ShellChatDrawer />)
+    const historyDivider = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Resize chat history"]',
+    )
+    expect(historyDivider).not.toBeNull()
+    fireEvent.mouseDown(historyDivider!, {
+      clientX: 200,
+    })
+    const moveEvent = new Event('pointermove', { bubbles: true })
+    Object.defineProperty(moveEvent, 'clientX', { value: 40 })
+    fireEvent(document, moveEvent)
+    fireEvent.pointerUp(document)
+
+    expect(useShellStore.getState().chatHistoryCollapsed).toBe(true)
+    expect(useShellStore.getState().chatDrawer.width).toBe(420)
+    expect(screen.getByText('Chat panel')).toBeInTheDocument()
+    expect(container.querySelector('[aria-label="Show chat history"]')).toBeNull()
+  })
+
+  it('keeps collapsed history controls out of the active chat canvas', () => {
+    useShellStore.setState({
+      chatDrawer: {
+        open: true,
+        conversationId: 'conversation-1',
+        width: 420,
+        minimized: false,
+      },
+      chatHistoryCollapsed: true,
+    })
+
+    const { container } = render(<ShellChatDrawer />)
+    expect(container.querySelector('[data-shell-chat-history-collapsed]')).toBeNull()
+    expect(container.querySelector('[aria-label="Show chat history"]')).toBeNull()
+    expect(screen.getByText('Chat panel')).toBeInTheDocument()
   })
 
   it('collapses the work area when the drawer reaches the right edge', () => {

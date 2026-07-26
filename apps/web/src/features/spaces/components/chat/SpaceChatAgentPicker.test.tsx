@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { TeamRosterEntry } from '@/lib/team/team-roster-api'
 import { SpaceChatAgentPicker } from './SpaceChatAgentPicker'
@@ -35,5 +35,24 @@ describe('SpaceChatAgentPicker', () => {
 
     const trigger = screen.getByRole('button', { name: 'Talking with Vibey · CEO. Change agent.' })
     expect(trigger).toBeTruthy()
+  })
+
+  it('pins Pixel above a labeled list of other agents', () => {
+    const reed = {
+      ...agent,
+      participant_id: 'agent:reed',
+      agent_key: 'reed',
+      display_name: 'Reed',
+      role_label: 'Agency Strategist',
+    }
+    const pixel = { ...agent, display_name: 'Pixel' }
+
+    render(<SpaceChatAgentPicker agents={[reed, pixel]} value="vibey" onChange={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Talking with Pixel. Change agent.' }))
+
+    const options = screen.getAllByRole('option')
+    expect(options[0]).toHaveTextContent('Pixel')
+    expect(screen.getByText('Other agents')).toBeInTheDocument()
+    expect(options[1]).toHaveTextContent('Reed')
   })
 })

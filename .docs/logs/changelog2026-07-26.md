@@ -10,6 +10,26 @@ Impact: Image success now requires validated image bytes. Paid or possibly-paid 
 
 Files: `packages/api-shared/src/services/provider-billing`, `apps/api/src/modules/provider-billing`, `apps/api/src/modules/media/integrations/gemini-image.integration.ts`, `apps/agent-api/src/modules/artifacts/services`, `apps/agent-api/src/modules/billing/services/provider-billing-attempts.service.ts`, `apps/api/src/modules/admin`, `apps/web/src/features/admin-ai-usage`, and `documentation/features/chat-stream-recovery.md`.
 
+## 2026-07-26 13:18 - [FIX]
+
+What: Kept the image history rail mounted while switching versions, limited selection changes to the main preview and active outline, made the artifact editor replace the existing right work surface, made the expanded editor close action return to its docked state, and changed generated-image chat previews to show the full image without a caption card. OpenRouter image generation now retries one malformed successful response inside the provider boundary.
+
+Why: Selecting a thumbnail reloaded the entire history menu, the editor could compete with Agenda or another right-side surface, expanded close discarded the editor, chat previews cropped generated images, and an empty OpenRouter success body forced Pixel into a visible second tool attempt.
+
+Impact: Version browsing feels immediate and stable, right-side work remains mutually exclusive and recoverable, generated images are visible in full, and transient provider response corruption is repaired before it reaches the agent.
+
+Files: `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.tsx`, `apps/web/src/features/studio/components/preview/ShellMediaHistoryRail.tsx`, `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/ShellWorkAreaControl.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/chat/GeneratedMedia.tsx`, `apps/web/src/features/studio/components/chat/InlineImageGen.tsx`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-provider.service.ts`, focused tests, and `documentation/features/claude-chatgpt-shell.md`.
+
+## 2026-07-26 12:43 - [STYLE]
+
+What: Refined the shared image editor with stable chronological history selection, a scroll-following highlighted version, a multi-shape aspect-ratio control and explanatory menu, icon-led open destinations, and a compact floating edit composer with voice transcription.
+
+Why: Selecting an older image moved it to the top of history, destination actions were visually ambiguous, aspect-ratio choices lacked context, and the edit input did not match the polished chat editing experience.
+
+Impact: Image versions stay in a predictable timeline, the active version remains visible without reordering, aspect and destination actions are easier to scan, and users can type, attach a reference, or dictate an edit from the same compact control.
+
+Files: `apps/web/src/components/media/MediaImageEditComposer.tsx`, `apps/web/src/components/media/aspect-ratio-menu.tsx`, `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.tsx`, `apps/web/src/features/studio/components/preview/ShellMediaImageActions.tsx`, `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.test.tsx`, `apps/web/src/lib/config/media-toast-errors.config.ts`, and `documentation/features/claude-chatgpt-shell.md`.
+
 ## 2026-07-26 10:46 - [FIX]
 
 What: Bounded OpenRouter/OpenClaw context and output growth, made scheduled Customer Brain pattern analysis a single tool-free inference, restored the canonical Opus Power route for Mission runs, capped Gemini reranker reasoning/output, shortened Anthropic cache retention, and removed credential-bearing localhost debug requests.
@@ -139,10 +159,159 @@ What: Made IG Story post-render QA explicitly visual-only by requiring `analyze_
 Why: Production acceptance produced both correct final MP4s, but the agent used `analyze_video`'s transcript-enabled default for visual QA and blocked on an unrelated, unconfigured Deepgram dependency.
 Impact: Final-frame QA uses FFmpeg frame extraction without requiring a speech provider; Deepgram remains opt-in only when a spoken-audio transcript is actually requested.
 Files: `supabase/migrations/20260726222500_ig_organic_video_visual_qa.sql`, IG video playbook and contract tests, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `documentation/features/missions.md`
-
 ## [2026-07-26 16:09] - [FIX]
 
 What: Seeded verified capability and pricing contracts for Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, and GPT-5.6 Terra, then aligned Auto and Economy routing to supported 300K and 272K context tiers.
 Why: Production Chat accepted the request but ended its stream immediately because Auto routed to Opus 5 with model settings while `llm_model_capabilities` had no Opus 5 row; the newly introduced routed models had never been seeded.
 Impact: Auto, Economy, and Power Chat requests validate against an explicit capability tier before provider execution, and regression coverage fails if the strategy or capability migration drifts again.
 Files: `packages/api-shared/src/services/model-strategy.ts`, its test, `apps/agent-api/src/modules/chat/services/model-strategy-capability-contract.test.ts`, `apps/agent-api/src/modules/chat/services/chat.service.access-context.test.ts`, `supabase/migrations/20260726230500_model_strategy_capabilities.sql`, `scripts/roas/migration-order.txt`, `.docs/plans/agent-follow-up-work.md`, and `documentation/features/chat-stream-recovery.md`.
+
+## 2026-07-26 11:08 - [STYLE]
+
+What: Unified shell navigation and Home destination presentation, added independent chat-history collapse and restoration, surfaced real Favorites in Home, fixed chat filter layering and conversation selection behavior, aligned Inbox controls and metadata, and prevented duplicate global and agent-detail chat composers.
+
+Why: The shell mixed flyout scales, card and page layouts, native-looking empty selectors, overlapping menus, coupled resize boundaries, and duplicate chat surfaces. These inconsistencies made common navigation and review flows feel unstable.
+
+Impact: AI chat and right-side work surfaces now move predictably, Home destinations use cohesive full-page layouts, chat history can be hidden without closing the active chat, pinned work is reachable from Home, and agent details expose one authoritative composer.
+
+Files: `apps/web/src/components/shell/*`, `apps/web/src/components/layout/sidebar/*`, `apps/web/src/components/conversations/ChatHistoryFilterMenu.tsx`, `apps/web/src/components/notifications/InboxFeed.tsx`, `apps/web/src/features/home/components/*`, `apps/web/src/features/studio/components/AllChatsPage.tsx`, `apps/web/src/features/team-2/components/Team2DetailView.tsx`, `apps/web/src/app/(dashboard)/home/*`, `documentation/features/claude-chatgpt-shell.md`
+
+## 2026-07-26 10:33 - [FIX]
+
+What: Made calendar writes account-explicit, removed implicit recent-campaign scope from Slack conversations, preserved Slack thread ancestry for agent replies, and taught the generated agent contract to answer organization-wide campaign performance questions across accessible client campaigns.
+
+Why: Pixel guessed calendar identity, answered portfolio questions from one ambient campaign, and lost the proactive root message behind short Slack follow-ups.
+
+Impact: Calendar creation now returns the exact connected account used and cannot silently fall back from an unavailable requested account. Slack follow-ups retain their source thread, while broad campaign questions compare the organization portfolio and distinguish missing data from KPI failures.
+
+Files: `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `apps/agent-api/src/modules/agent-sync/services/vibey-api-skill-generator.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-calendar.service.ts`, `apps/api/src/modules/integrations/services/integrations-calendar-connections.ts`, `apps/api/src/modules/integrations/services/integrations-calendar-mutations.ts`, `apps/api/src/modules/integrations/services/integrations-calendar.service.ts`, `apps/api/src/modules/slack/repositories/slack-runtime.repository.ts`, `apps/api/src/modules/slack/services/slack-service-conversation.base.ts`, `apps/api/src/modules/slack/services/slack-service-events.base.ts`, focused tests, and `documentation/features/integration-connections.md`.
+
+## 2026-07-26 11:16 - [FEATURE]
+
+What: Added a visible, removable context chip to the global chat composer, added an adjacent context selector for restoring or replacing Team, Brain, Campaign, and Flows context, and unified route attachment, agent recommendations, and model runtime context behind the same store state.
+
+Why: Chat context was invisible and recommendations were inferred from the URL, so a user could not see or remove what the model was using and stale fields could survive when moving between surfaces.
+
+Impact: Opening a supported product surface attaches it visibly; removing the chip immediately returns chat to General and removes the related recommendation and awareness payload; adding context restores the attachment without leaving the chat.
+
+Files: `apps/web/src/components/global-chat/components/ChatSurfaceRecommendation.tsx`, `apps/web/src/components/global-chat/components/GlobalChatComposerFooter.tsx`, `apps/web/src/components/global-chat/config/work-context.config.ts`, `apps/web/src/components/global-chat/config/work-context.config.test.ts`, `apps/web/src/components/global-chat/containers/GlobalChatPanel.tsx`, `apps/web/src/components/global-chat/store/use-global-chat-store.ts`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.types.ts`, and `documentation/frontend-shared-surfaces.md`.
+
+## 2026-07-26 12:00 - [FEATURE]
+
+What: Turned the shared image viewer into a functional conversation-aware editing studio, routed GPT image edits through the same multimodal provider path as chat, added multi-image references and Portrait 3:4 support, moved aspect ratios and file actions into the top toolbar, restored the real Canva handoff, and fixed expanded portrait-image sizing.
+
+Why: Direct editor prompts were sent to a Gemini-only integration even when ChatGPT Images was selected, so edits and ratio changes failed while the same request worked in chat. The viewer also lost source-chat history, opened downloads in a tab, and expanded over or beyond the application shell.
+
+Impact: Images from chat, Campaigns, and Spaces now open one consistent mini-studio. Prompt edits, reference-image edits, and ratio versions persist to the originating conversation; the version rail stays scoped to that chat; download returns a file; tall images fit in the viewport; and users can open the image in a new tab, Canva, or its source chat.
+
+Files: `apps/api/src/modules/media/dto/index.ts`, `apps/api/src/modules/media/integrations/gemini-image.integration.ts`, `apps/api/src/modules/media/integrations/openrouter-image-generation.ts`, `apps/api/src/modules/media/repositories/media.repository.ts`, `apps/api/src/modules/media/services/media-service-01.base.ts`, `apps/api/src/modules/media/services/media-service-02.base.ts`, `apps/web/src/components/media/*`, `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/features/spaces/views/media/MediaImageWorkspace.tsx`, `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.tsx`, `apps/web/src/features/studio/components/preview/ShellMediaImageActions.tsx`, `apps/web/src/lib/services/media-api.ts`, focused tests, and `documentation/features/claude-chatgpt-shell.md`.
+
+## 2026-07-26 11:58 - [STYLE]
+
+What: Made the top-left AI Chat control permanently labeled and purple, hid the page expand/contract control when no page/chat relationship exists, moved visible work context into the composer footer beside Auto, removed the competing work-area width transition, corrected My Tasks search-input icon geometry, and bound jest-dom matchers to the app's active Vitest instance.
+
+Why: The shell exposed a page-collapse action with nothing to collapse, context floated above the composer, two simultaneous animations made right-side pages appear to enter from both directions, and the My Tasks search placeholder overlapped its icon.
+
+Impact: AI Chat remains discoverable in either drawer state, full-page chat closes back to Home, right-side work surfaces use one right-anchored reveal, context stays inside the input controls, My Tasks search text is legible, and focused DOM regressions execute instead of failing on missing matcher registration.
+
+Files: `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/global-chat/components/GlobalChatComposerFooter.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/home/components/MyTasksPanel.tsx`, `apps/web/tests/setup.ts`, focused tests, and `documentation/features/claude-chatgpt-shell.md`.
+
+## 2026-07-26 12:05 - [FIX]
+
+What: Replaced the separate Team agent-chat runtime with the canonical shell chat, selected the opened agent automatically, filtered the left conversation history to that agent, attached Team as removable chat context, and removed the obsolete duplicate Team chat components.
+
+Why: Team agent pages and the main AI Chat used different runtimes, so agent selection, history, and route context could diverge even though they represented the same conversation system.
+
+Impact: Opening an agent now shows the same chat experience used everywhere else, scoped to that agent's conversations, while retaining the agent profile in the work area. Moving through Team keeps its context visible and removable in the composer.
+
+Files: `apps/web/src/features/team-2/components/Team2DetailView.tsx`, `apps/web/src/features/team-2/components/Team2ManageContent.tsx`, `apps/web/src/features/team-2/components/Team2DetailView.test.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, removed `apps/web/src/features/team-2/components/Team2AgentChatWithConversations.tsx`, removed `apps/web/src/features/team-2/components/tabs/ChatTab.tsx`, and `documentation/features/claude-chatgpt-shell.md`.
+
+## 2026-07-26 12:07 - [STYLE]
+
+What: Made the AI Chat drawer icon reflect the action available in each state: expand while the drawer is collapsed and collapse while it is expanded.
+
+Why: Reusing one static drawer icon made it unclear whether the control would open or close the AI Chat area.
+
+Impact: The top-left AI Chat control now gives an immediate, accurate visual cue without changing its label, size, or behavior.
+
+Files: `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/shell/ShellTopBar.test.tsx`.
+
+## 2026-07-26 12:15 - [STYLE]
+
+What: Consolidated the chat work-context label, remove action, and add/change action into one compact composer control; added human-readable hover details for Team, agent, Space/campaign, Brain, Flows, and Slack-channel context; and made the empty Add context action transparent.
+
+Why: Separate context and add buttons made it unclear which information would reach the selected agent, while the empty control looked heavier than the rest of the composer chrome.
+
+Impact: Users can see one attached context, understand exactly what it contributes before sending, remove it with `×`, or open the context picker with `+`. With nothing attached, the composer stays visually clean.
+
+Files: `apps/web/src/components/global-chat/components/GlobalChatComposerFooter.tsx`, `apps/web/src/components/global-chat/config/work-context.config.ts`, `apps/web/src/components/global-chat/config/work-context.config.test.ts`, and `documentation/features/claude-chatgpt-shell.md`.
+
+## 2026-07-26 13:05 - [STYLE]
+
+What: Made the work-area wrapper the single owner of page reveal motion, removed the inner page transform, made chat-history search collapse on outside click, made visible filter chips control the actual history query, kept Pixel's default history unfiltered, compacted the context and filter controls, retained the Team agent grid behind right-side agent details, and removed Pixel's role subtitle.
+
+Why: Separate wrapper and card animations made the right page feel detached, while hidden/default filters and decorative chip removal made chat history state unclear.
+
+Impact: The right page now moves as one cohesive surface. Search, filters, agent selection, context, and agent details visibly match the state the chat runtime is actually using.
+
+Files: `apps/web/src/app/globals.css`, `apps/web/src/components/conversations/*`, `apps/web/src/components/global-chat/components/GlobalChatComposerFooter.tsx`, `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatAgentEmptyState.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatAgentPicker.tsx`, `apps/web/src/features/team-2/components/Team2DetailView.tsx`, `apps/web/src/features/team-2/components/Team2ManageContent.tsx`, focused tests, and `documentation/features/claude-chatgpt-shell.md`.
+
+## 2026-07-26 14:10 - [FIX]
+
+What: Kept organization-managed Person Brain names and avatars synchronized with their immutable linked Slack identity, and added a Team → People action that starts the existing shared 90-day Person Brain history backfill.
+
+Why: Slack profile renames left stale Brain labels and broken avatars, while creating a Person Brain only provisioned an empty container and gave admins no visible way to start historical channel ingestion.
+
+Impact: Anees changing his Slack profile to Alex updates the same linked Brain without merging Alex Pierce or any other same-name person. Admins can explicitly populate eligible Person Brains from enabled mapped Slack channels, while Ignored people and DMs remain excluded and recurring compounding stays incremental.
+
+Files: `supabase/migrations/20260726143000_sync_slack_person_brain_profiles.sql`, `apps/web/src/features/team-2/components/people/SlackPeopleHeader.tsx`, `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx`, `apps/web/src/features/team-2/components/people/SlackPeopleView.test.tsx`, `apps/web/src/features/team-2/hooks/use-slack-people.ts`, `apps/web/src/features/team-2/services/slack-people.service.ts`, `apps/web/src/features/team-2/config/messages.config.ts`, and `documentation/features/integration-connections.md`.
+
+## 2026-07-26 14:20 - [STYLE]
+
+What: Moved the collapsed chat-history restore control out of the chat canvas and replaced it with a tiny purple right arrow centered on the R-logo sidebar border, half inside and half outside the menu. Aligned it with a matching purple left-arrow collapse control so opening and closing history reads as one control moving with the drawer.
+
+Why: The original floating control covered Pixel's profile image, while reserving a full collapsed rail consumed unnecessary horizontal space.
+
+Impact: Collapsed chat history remains easy to restore from the exact sidebar boundary without covering the active agent identity, adding a container above Home, or leaving a column of dead space. Both drawer states now use the same size, color, and arrow language on one horizontal line.
+
+Files: `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqSection.test.tsx`, `apps/web/src/components/shell/ShellChatDrawer.tsx`, `apps/web/src/components/shell/ShellChatDrawer.test.tsx`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/components/shell/ShellChatMenuActiveFilters.tsx`, and `apps/web/src/components/shell/ShellChatMenu.test.tsx`.
+
+## 2026-07-26 14:36 - [FIX]
+
+What: Unified typed channel mentions with the full organization roster, added a confirmation flow that preselects non-member agents or portal users before sending, preserved structured mention metadata from both typed text and editor chips, split Agents into their own entity-picker tab, added Internal, External, and Portal user filters to People, fixed thread panels being rendered outside the clipped channel viewport, and removed ChannelChat's obsolete oversized-file exception after the component dropped below its architecture limit.
+
+Why: Typing `@vibey` only searched existing channel memberships, so it posted plain text and never invoked the agent, while selecting Vibey from the picker produced the structured mention required by the agent runtime.
+
+Impact: Typed and selected mentions now use the same invocation path. If an addable mentioned participant is not yet in the channel, the existing add-members dialog opens with that participant selected and the message sends only after confirmation. The entity picker now makes agents and each people category explicit, and clicking a reply summary visibly opens its thread instead of placing the panel beyond the right edge.
+
+Files: `apps/api/src/modules/entity-search/*`, `apps/web/src/components/channels/AddPeopleToChannelModal.tsx`, `apps/web/src/features/channels/components/*`, `apps/web/src/features/channels/containers/ChannelChatContainer.tsx`, `apps/web/src/features/channels/lib/*`, `apps/web/src/features/channels/services/entity-search.service.ts`, `scripts/arch/loc-allowlist.json`, and focused tests.
+
+## 2026-07-26 14:49 - [FIX]
+
+What: Replaced the work-area switcher's generic “Current page” entry with the active page's real name and added session history for recently viewed pages alongside recent artifacts.
+
+Why: The control only remembered artifact previews, so it could neither identify the active destination nor return users to other pages they had visited.
+
+Impact: The menu now names destinations such as Agenda, Inbox, Meetings, My Tasks, Skills, and active Campaign Spaces, keeps recently viewed pages unique and ordered by recency, and switches directly back to the selected page.
+
+Files: `apps/web/src/components/shell/ShellTopBar.tsx`, `apps/web/src/components/shell/ShellWorkAreaControl.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, and focused tests.
+
+## 2026-07-26 14:51 - [STYLE]
+
+What: Removed the visible container from both chat-history controls and positioned the collapsed restore chevron outside the ROAS rail's layout.
+
+Why: The purple pill made the collapsed rail look wider and shifted the otherwise centered ROAS logo.
+
+Impact: The ROAS logo stays centered in both drawer states while a small purple chevron remains available to expand or collapse chat history.
+
+Files: `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqSection.test.tsx`, `apps/web/src/components/shell/ShellChatMenu.tsx`, and `apps/web/src/components/shell/ShellChatMenu.test.tsx`.
+
+## 2026-07-26 15:14 - [FIX]
+
+What: Made chat-history selection publish the exact conversation to the canonical chat store before the drawer opens, made the chat panel wait for and merge that selected row before resolving its saved agent, kept the shell image-viewer event adapter mounted while its panel is hidden, removed the page's forced flex layout while the editor replaces it, and routed image URL resolution exclusively through the existing authenticated media backend.
+
+Why: A newly created Lux conversation could be missing from the panel's stale local page on the first click, while the image-open listener was mounted only after an image target already existed. The work page's custom flex class also overrode the generic hidden utility, leaving Agenda visible as an unintended third pane.
+
+Impact: Lux and other agent conversations load with the correct history and agent on the first click. Clicking either a generated image preview or its output card now opens the image editor in place of the current work page, including for older images; closing the editor restores the still-mounted page.
+
+Files: `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/ShellWorkspace.test.tsx`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/components/shell/ShellChatMenu.test.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.ts`, `apps/web/src/features/spaces/components/chat/space-vibey-chat-panel.logic.test.ts`, `apps/web/src/lib/services/media-api.ts`, and `documentation/features/claude-chatgpt-shell.md`.

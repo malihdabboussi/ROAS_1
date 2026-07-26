@@ -22,6 +22,7 @@ export interface UseMediaImageGenerationOptions {
   open: boolean
   campaignId?: string | null
   spaceId?: string | null
+  conversationId?: string | null
   extraTags?: string[]
   loadCreations?: boolean
   onGenerationComplete?: (result: { url: string; assetId: string }) => void

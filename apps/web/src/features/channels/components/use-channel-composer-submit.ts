@@ -6,7 +6,9 @@ import { toast } from 'sonner'
 import { pastedBlocksToHtml } from '@/components/chat/PastedTextComposerAdapter'
 import type { ChannelMention } from '@/lib/channels'
 import {
+  dedupeChannelMentions,
   parseEntityMentionsFromHtml,
+  parseMemberMentionsFromHtml,
   parseMentionsFromText,
 } from '../lib/mention-parser'
 import type { AttachedFile } from './ChannelComposerAttachments'
@@ -26,6 +28,7 @@ export function useChannelComposerSubmit({
   editor,
   disabled,
   onSend,
+  onBeforeSend,
   attachedFiles,
   attachedFilesRef,
   pastedBlocksRef,
@@ -39,7 +42,8 @@ export function useChannelComposerSubmit({
 }: {
   editor: Editor | null
   disabled: boolean
-  onSend: (payload: ChannelComposerPayload) => void
+  onSend: (payload: ChannelComposerPayload) => Promise<void> | void
+  onBeforeSend?: (payload: ChannelComposerPayload) => Promise<boolean>
   attachedFiles: AttachedFile[]
   attachedFilesRef: MutableRefObject<AttachedFile[]>
   pastedBlocksRef: MutableRefObject<PastedTextBlock[]>
@@ -61,10 +65,11 @@ export function useChannelComposerSubmit({
     const pasted = pastedBlocksRef.current
     if (!text.trim() && files.length === 0 && pasted.length === 0) return null
     if (files.some((file) => file.uploading)) return null
-    const mentions = [
+    const mentions = dedupeChannelMentions([
       ...parseMentionsFromText(text, candidatesRef.current),
+      ...parseMemberMentionsFromHtml(html, candidatesRef.current),
       ...parseEntityMentionsFromHtml(html),
-    ]
+    ])
     const knownSkillKeys = new Set(slashSkillItemsRef.current.map((skill) => skill.key))
     const skillKeys = extractSkillKeysFromText(text, knownSkillKeys)
     const driveUrls = files.filter((file) => file.isDriveLink && file.url).map((file) => file.url!)
@@ -93,14 +98,7 @@ export function useChannelComposerSubmit({
       localStorage.removeItem(composerAttachmentsKey)
     }
     clearAttachedFiles()
-  }, [
-    clearAttachedFiles,
-    clearDraft,
-    clearPastedBlocks,
-    composerAttachmentsKey,
-    editor,
-    embedded,
-  ])
+  }, [clearAttachedFiles, clearDraft, clearPastedBlocks, composerAttachmentsKey, editor, embedded])
 
   const triggerSend = useCallback(async () => {
     if (!editor || disabled || sending) return
@@ -112,12 +110,13 @@ export function useChannelComposerSubmit({
     if (!payload) return
     setSending(true)
     try {
-      onSend(payload)
+      if (onBeforeSend && !(await onBeforeSend(payload))) return
+      await onSend(payload)
       resetComposer()
     } finally {
       setSending(false)
     }
-  }, [attachedFiles, buildPayload, disabled, editor, onSend, resetComposer, sending])
+  }, [attachedFiles, buildPayload, disabled, editor, onBeforeSend, onSend, resetComposer, sending])
 
   const hasUploadingFiles = useCallback(
     () => attachedFilesRef.current.some((file) => file.uploading),

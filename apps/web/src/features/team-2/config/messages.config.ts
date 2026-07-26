@@ -38,6 +38,12 @@ export const SLACK_PEOPLE_MESSAGES = {
   IDENTITY_MAPPED: 'Portal user mapped. Their available Brain is now connected.',
   BRAIN_CREATE_ERROR: "I couldn't create that Person Brain. Refresh and try again.",
   BRAIN_CREATED: 'Person Brain is on. New knowledge can now compound around this identity.',
+  BRAIN_BACKFILL_ERROR:
+    "I couldn't start the Person Brain backfill. Check Slack channel mappings and try again.",
+  BRAIN_BACKFILL_EMPTY:
+    'No enabled Slack channel mappings were found. Map the channels Pixel should learn from first.',
+  BRAIN_BACKFILL_STARTED: (jobs: number, channels: number, days: number) =>
+    `Person Brain backfill started: ${jobs} channel ${jobs === 1 ? 'job' : 'jobs'} across ${channels} mapped ${channels === 1 ? 'channel' : 'channels'} for the last ${days} days.`,
   ACTIVITY_ERROR:
     "I couldn't open that Slack conversation. Check the Slack connection and try again.",
   DISCONNECTED: 'Connect Slack to discover teammates and external people.',

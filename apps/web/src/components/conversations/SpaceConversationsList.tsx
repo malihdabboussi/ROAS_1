@@ -73,6 +73,8 @@ export interface SpaceConversationsListProps {
   /** Parent-owned search control shown after agent/filter when `hideSearch` is true. */
   searchSlot?: ReactNode
   headerEndSlot?: ReactNode
+  /** Active query constraints rendered immediately below the New chat control. */
+  headerFooterSlot?: ReactNode
   /** Claude-style list organization. Default: flat (none). */
   groupBy?: ChatHistoryGroupBy
   campaignNameById?: Record<string, string>
@@ -121,6 +123,7 @@ export function SpaceConversationsList({
   hideSearch,
   searchSlot,
   headerEndSlot,
+  headerFooterSlot,
   headerStartSlot,
   groupBy = 'none',
   campaignNameById,
@@ -321,6 +324,7 @@ export function SpaceConversationsList({
         searchSlot={searchSlot}
         headerStartSlot={headerStartSlot}
         headerEndSlot={headerEndSlot}
+        headerFooterSlot={headerFooterSlot}
       />
       <div className="p-spacing-3 min-h-0 flex-1 overflow-y-auto">
         {loading ? (
@@ -328,9 +332,11 @@ export function SpaceConversationsList({
             Loading conversations...
           </div>
         ) : visible.length === 0 ? (
-          <div className="p-spacing-6 text-center">
-            <MessageSquare className="text-muted-foreground icon-lg mx-auto" />
-            <p className="body-3 mt-spacing-2 font-semibold">No conversations yet</p>
+          <div className="p-spacing-4 text-center">
+            <div className="gap-spacing-1 flex items-center justify-center">
+              <MessageSquare className="text-muted-foreground icon-sm shrink-0" aria-hidden />
+              <p className="body-4 whitespace-nowrap font-semibold">No conversations yet</p>
+            </div>
             <p className="body-4 text-muted-foreground mt-spacing-1">
               Start a chat and it will show up here.
             </p>

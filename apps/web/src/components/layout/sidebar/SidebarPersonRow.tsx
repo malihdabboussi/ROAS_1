@@ -126,8 +126,8 @@ export function SidebarPersonRow({
       <Link
         href={href}
         onClick={() => onOpenMessage?.()}
-        className={`nav-glass-hover-purple flex w-full items-center gap-2 rounded-lg py-1.5 pl-3 pr-8 transition-all ${
-          isActive ? 'home-sidebar-item-active' : 'text-[var(--color-muted-foreground)]'
+        className={`hub-dock-flyout-row pr-spacing-8 ${
+          isActive ? 'hub-dock-flyout-row-active' : ''
         }`}
       >
         {person.avatar_url ? (
@@ -142,7 +142,7 @@ export function SidebarPersonRow({
           </span>
         )}
         <span
-          className={`body-3 min-w-0 flex-1 truncate ${unreadCount > 0 ? 'text-foreground font-semibold' : ''}`}
+          className={`min-w-0 flex-1 truncate ${unreadCount > 0 ? 'text-foreground font-semibold' : ''}`}
         >
           {person.display_name}
         </span>

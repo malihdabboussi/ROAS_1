@@ -45,5 +45,6 @@ export interface EntitySearchResult {
   sequenceId?: string
   funnelId?: string
   personKind?: 'portal_user' | 'managed_person'
+  relationshipKind?: 'internal' | 'external' | 'unknown'
   brainId?: string | null
 }

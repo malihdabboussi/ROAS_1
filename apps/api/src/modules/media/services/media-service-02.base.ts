@@ -45,7 +45,6 @@ const EDITOR_ROLES = ['editor', 'admin', 'owner'] as const
 const DELETER_ROLES = ['admin', 'owner'] as const
 
 export abstract class MediaServiceBase02 extends MediaServiceBase01 {
-
   async uploadFile(
     rawBuffer: Buffer,
     mimeType: string,
@@ -482,6 +481,7 @@ export abstract class MediaServiceBase02 extends MediaServiceBase01 {
       category: input.category ?? 'generated',
       campaign_id: input.campaign_id ?? null,
       space_id: spaceId,
+      conversation_id: input.conversation_id ?? null,
       tags: input.tags ?? ['ai-generated'],
       source: 'generated',
       source_model: input.model ?? 'gemini-3.1-flash-image-preview',

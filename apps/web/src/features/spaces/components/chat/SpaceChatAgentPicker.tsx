@@ -46,6 +46,15 @@ export function SpaceChatAgentPicker({
     () => agents.find((entry) => entry.agent_key === value) ?? null,
     [agents, value],
   )
+  const orderedAgents = useMemo(
+    () =>
+      [...agents].sort((left, right) => {
+        if (left.agent_key === 'vibey') return -1
+        if (right.agent_key === 'vibey') return 1
+        return left.display_name.localeCompare(right.display_name)
+      }),
+    [agents],
+  )
 
   const label = selected?.display_name ?? value
   useLayoutEffect(() => {
@@ -122,44 +131,52 @@ export function SpaceChatAgentPicker({
             aria-label="Choose agent"
           >
             <div className="dropdown-menu-solid py-spacing-1 max-h-72 overflow-y-auto">
-              {agents.length === 0 ? (
+              {orderedAgents.length === 0 ? (
                 <div className="body-3 text-muted-foreground px-spacing-3 py-spacing-2">
                   No agents
                 </div>
               ) : (
-                agents.map((entry) => {
+                orderedAgents.map((entry, index) => {
                   const key = entry.agent_key!
                   const isSelected = value === key
                   return (
-                    <button
-                      key={entry.participant_id}
-                      type="button"
-                      role="option"
-                      aria-selected={isSelected}
-                      onClick={() => {
-                        onChange(key)
-                        setOpen(false)
-                      }}
-                      className={cn(
-                        'gap-spacing-2 px-spacing-3 py-spacing-2 flex w-full items-center text-left transition-colors',
-                        isSelected ? 'bg-hover-subtle' : 'hover:bg-hover-subtle',
-                      )}
-                    >
-                      <div className="h-spacing-8 w-spacing-8 rounded-spacing-2 shrink-0 overflow-hidden">
-                        <AgentAvatar entry={entry} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="body-3 text-foreground truncate font-medium">
-                          {entry.display_name}
+                    <div key={entry.participant_id}>
+                      {index === 1 && orderedAgents[0]?.agent_key === 'vibey' ? (
+                        <div className="border-border mx-spacing-2 mt-spacing-1 border-t">
+                          <p className="typo-caption text-muted-foreground px-spacing-1 pb-spacing-1 pt-spacing-2 font-medium uppercase tracking-wide">
+                            Other agents
+                          </p>
                         </div>
-                        {entry.role_label ? (
-                          <div className="typo-caption text-muted-foreground truncate">
-                            {entry.role_label}
+                      ) : null}
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        onClick={() => {
+                          onChange(key)
+                          setOpen(false)
+                        }}
+                        className={cn(
+                          'gap-spacing-2 px-spacing-3 py-spacing-2 flex w-full items-center text-left transition-colors',
+                          isSelected ? 'bg-hover-subtle' : 'hover:bg-hover-subtle',
+                        )}
+                      >
+                        <div className="h-spacing-8 w-spacing-8 rounded-spacing-2 shrink-0 overflow-hidden">
+                          <AgentAvatar entry={entry} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="body-3 text-foreground truncate font-medium">
+                            {entry.display_name}
                           </div>
-                        ) : null}
-                      </div>
-                      {isSelected ? <Check className="icon-sm text-foreground shrink-0" /> : null}
-                    </button>
+                          {entry.role_label ? (
+                            <div className="typo-caption text-muted-foreground truncate">
+                              {entry.role_label}
+                            </div>
+                          ) : null}
+                        </div>
+                        {isSelected ? <Check className="icon-sm text-foreground shrink-0" /> : null}
+                      </button>
+                    </div>
                   )
                 })
               )}

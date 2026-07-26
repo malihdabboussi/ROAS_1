@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { surfaceFromPathname } from '@/components/global-chat/config/work-context.config'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { shellSidebarExpanded, useShellStore } from '@/components/shell/use-shell-store'
@@ -36,6 +37,9 @@ export function SidebarHqRail({
   const holdSidebarPeek = useShellStore((s) => s.holdSidebarPeek)
   const scheduleSidebarPeekClose = useShellStore((s) => s.scheduleSidebarPeekClose)
   const setSidebarPinned = useShellStore((s) => s.setSidebarPinned)
+  const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
+  const chatHistoryCollapsed = useShellStore((s) => s.chatHistoryCollapsed)
+  const setChatHistoryCollapsed = useShellStore((s) => s.setChatHistoryCollapsed)
   const shellExpanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
 
   // Keep the HQ rail icon-only — never promote the expanded hub menu.
@@ -105,8 +109,19 @@ export function SidebarHqRail({
           hubExpanded ? 'bg-background shell-sidebar-panel' : 'card-glass rounded-2xl',
         )}
       >
-        <div className="hub-sidebar-logo-header shrink-0">
+        <div className="hub-sidebar-logo-header relative shrink-0">
           <SidebarHqHubLogoButton hubOpen={hubExpanded} onToggle={goHome} />
+          {chatDrawerOpen && chatHistoryCollapsed ? (
+            <button
+              type="button"
+              onClick={() => setChatHistoryCollapsed(false)}
+              className="nav-glass-text-purple z-dropdown p-spacing-1 hover:text-foreground absolute right-0 top-1/2 flex -translate-y-1/2 translate-x-full items-center justify-center transition-colors"
+              aria-label="Show chat history"
+              title="Show chat history"
+            >
+              <ChevronRight className="icon-xs" aria-hidden />
+            </button>
+          ) : null}
         </div>
 
         <div className="relative min-h-0 flex-1 overflow-hidden">

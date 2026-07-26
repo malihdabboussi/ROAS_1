@@ -7,6 +7,13 @@ const hookMocks = vi.hoisted(() => ({
   createProposal: vi.fn().mockResolvedValue(undefined),
   mapIdentity: vi.fn().mockResolvedValue(undefined),
   createPersonBrain: vi.fn().mockResolvedValue(undefined),
+  backfillPersonBrains: vi.fn().mockResolvedValue({
+    provisioned_person_brains: 3,
+    mapped_channels: 2,
+    queued_jobs: 2,
+    deduped_jobs: 0,
+    lookback_days: 90,
+  }),
   reviewAction: vi.fn().mockResolvedValue(undefined),
   sendAction: vi.fn().mockResolvedValue(undefined),
   updateRelationshipKind: vi.fn().mockResolvedValue(undefined),
@@ -126,6 +133,7 @@ vi.mock('../../hooks/use-slack-people', () => ({
     confirmSuggestedIdentity: hookMocks.confirmSuggestedIdentity,
     mapIdentity: hookMocks.mapIdentity,
     createPersonBrain: hookMocks.createPersonBrain,
+    backfillPersonBrains: hookMocks.backfillPersonBrains,
     loadPersonActivity: hookMocks.loadPersonActivity,
     createTestProposal: hookMocks.createTestProposal,
     createProposal: hookMocks.createProposal,
@@ -158,6 +166,14 @@ describe('SlackPeopleView', () => {
     expect(
       shadowInbox.compareDocumentPosition(slackPeople) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
+  })
+
+  it('starts one shared historical backfill for all Person Brains', async () => {
+    render(<SlackPeopleView />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Populate brains' }))
+
+    await waitFor(() => expect(hookMocks.backfillPersonBrains).toHaveBeenCalledWith(90))
   })
 
   it('navigates to a dedicated person screen instead of opening inline', () => {

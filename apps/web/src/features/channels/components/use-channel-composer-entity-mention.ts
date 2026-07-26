@@ -29,7 +29,16 @@ const EMPTY_ENTITY_MENTION: EntityMentionState = {
 
 const ENTITY_PAGE_SIZE = 15
 
-const ENTITY_TAB_CYCLE: EntityMentionUiTab[] = ['people', 'tasks', 'docs', 'channels', 'spaces', 'missions']
+const ENTITY_TAB_CYCLE: EntityMentionUiTab[] = [
+  'people',
+  'agents',
+  'tasks',
+  'docs',
+  'channels',
+  'spaces',
+  'missions',
+  'conversations',
+]
 
 function cycleEntityTab(current: EntityMentionUiTab, dir: -1 | 1): EntityMentionUiTab {
   const i = ENTITY_TAB_CYCLE.indexOf(current)
@@ -57,6 +66,7 @@ function buildEntityMentionPeopleItems(
         subtitle: candidate.type === 'agent' ? 'Agent' : 'Person',
         iconUrl: candidate.avatarUrl ?? null,
         url: null,
+        ...(candidate.type === 'user' ? { personKind: 'portal_user' as const } : {}),
       },
     ]
   })
@@ -106,8 +116,14 @@ export function useChannelComposerEntityMention({
   )
   const getLocalEntityMentionItems = useCallback(
     (query: string, tab: EntityMentionUiTab, offset: number) => {
-      if (tab !== 'people' || !entityMentionPeopleItems) return null
-      return filterEntityMentionItems(entityMentionPeopleItems, query, ENTITY_PAGE_SIZE, offset)
+      if ((tab !== 'people' && tab !== 'agents') || !entityMentionPeopleItems) return null
+      const kind = tab === 'agents' ? 'agent' : 'person'
+      return filterEntityMentionItems(
+        entityMentionPeopleItems.filter((item) => item.kind === kind),
+        query,
+        ENTITY_PAGE_SIZE,
+        offset,
+      )
     },
     [entityMentionPeopleItems],
   )

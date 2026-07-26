@@ -1,4 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { SlackBlock, SlackEventEnvelope } from '../types/slack.types'
 import { SlackConversationBase } from './slack-service-conversation.base'
 import {
@@ -177,6 +176,24 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     if (!fullMessage && documents.length > 0) {
       fullMessage = '[User sent a file]'
     }
+    if (event.thread_ts) {
+      const threadContext = await this.buildSlackThreadReplyContext(
+        botToken,
+        channelId,
+        event.thread_ts,
+        event.ts,
+      ).catch((error) => {
+        this.logger.warn(
+          `Failed to load Slack reply context: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        )
+        return ''
+      })
+      if (threadContext) {
+        fullMessage = `[Slack thread context]\n${threadContext}\n\n[Current message]\n${fullMessage}`
+      }
+    }
 
     this.logger.log(
       `[TRACE] handleMessageEvent CALLING_processAndReply: userId=${userId} slackUser=${principal.sender.slackUserId} agentKey=${agentKey} message_len=${fullMessage.length} documents=${documents.length}`,
@@ -263,13 +280,24 @@ export abstract class SlackEventsBase extends SlackConversationBase {
     const messageWithContext = channelContext
       ? `${channelContext}\n\n[You were mentioned with]: ${mentionText}`
       : mentionText
+    const threadContext = event.thread_ts
+      ? await this.buildSlackThreadReplyContext(
+          fallback.botToken,
+          channelId,
+          event.thread_ts,
+          event.ts,
+        ).catch(() => '')
+      : ''
+    const mentionWithThreadContext = threadContext
+      ? `[Slack thread context]\n${threadContext}\n\n[Current message]\n${messageWithContext}`
+      : messageWithContext
 
     await this.processAndReply({
       userId: fallback.userId,
       agentKey: fallback.agentKey,
       botToken: fallback.botToken,
       channelId,
-      message: messageWithContext,
+      message: mentionWithThreadContext,
       teamId,
       threadTs: event.thread_ts ?? event.ts,
       messageTs: event.ts,
@@ -284,50 +312,6 @@ export abstract class SlackEventsBase extends SlackConversationBase {
       orgId: fallback.orgId,
       documents: documents.length > 0 ? documents : undefined,
     })
-  }
-
-  protected async resolveFallbackRouting(
-    serviceSupabase: SupabaseClient,
-    teamId: string,
-  ): Promise<{
-    userId: string
-    agentKey: string
-    botToken: string
-    accessToken: string
-    orgId: string | null
-    ownerSlackUserId: string | null
-  } | null> {
-    const channel = await this.slackRepo.findFallbackChannelByTeam(serviceSupabase, teamId)
-    if (!channel) {
-      this.logger.warn(`[TRACE] resolveFallbackRouting EXIT: no active channel for team=${teamId}`)
-      return null
-    }
-
-    const providerConfig = channel.provider_config as Record<string, unknown>
-    const botToken = typeof providerConfig.bot_token === 'string' ? providerConfig.bot_token : ''
-    if (!botToken) {
-      this.logger.warn(
-        `[TRACE] resolveFallbackRouting EXIT: fallback channel ${channel.id} missing bot token`,
-      )
-      return null
-    }
-
-    this.logger.log(
-      `[TRACE] resolveFallbackRouting: channel=${channel.id} userId=${channel.user_id} agentKey=${channel.agent_key} orgId=${channel.org_id ?? 'personal'}`,
-    )
-    const accessToken = await this.userSessionMint.mintAccessToken(channel.user_id)
-    this.logger.log(
-      `[TRACE] resolveFallbackRouting OK: minted accessToken_len=${accessToken.length}`,
-    )
-    return {
-      userId: channel.user_id,
-      agentKey: channel.agent_key,
-      botToken,
-      accessToken,
-      orgId: channel.org_id ?? null,
-      ownerSlackUserId:
-        typeof providerConfig.authed_user_id === 'string' ? providerConfig.authed_user_id : null,
-    }
   }
 
   protected async processAndReply(params: {

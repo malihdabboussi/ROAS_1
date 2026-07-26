@@ -158,9 +158,7 @@ const messages = [
   }),
 ]
 
-function renderChannelChat(
-  overrides: Partial<React.ComponentProps<typeof ChannelChat>> = {},
-) {
+function renderChannelChat(overrides: Partial<React.ComponentProps<typeof ChannelChat>> = {}) {
   return render(
     <ChannelChat
       channel={channel}
@@ -190,17 +188,16 @@ describe('ChannelChat', () => {
     const onClearDeliverableFilter = vi.fn()
     const onViewStateChange = vi.fn()
 
-    const { rerender } = renderChannelChat({
+    const { container, rerender } = renderChannelChat({
       onOpenThread,
       onClearDeliverableFilter,
       onViewStateChange,
     })
 
+    expect(container.querySelector('section')?.classList.contains('min-w-0')).toBe(true)
     expect(screen.getByTestId('channel-header').textContent).toContain('Launch')
     expect(screen.getByText('1 pinned message')).toBeTruthy()
-    expect(screen.getByTestId('channel-composer').getAttribute('data-channel-id')).toBe(
-      'channel-1',
-    )
+    expect(screen.getByTestId('channel-composer').getAttribute('data-channel-id')).toBe('channel-1')
 
     const parentMessage = screen.getByTestId('message-msg-1')
     expect(parentMessage.getAttribute('data-sender')).toBe('atlas')

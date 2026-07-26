@@ -37,10 +37,12 @@ export function AgendaCard({
   onOpenItem,
   onOpenMeeting,
   fullHeight = false,
+  presentation = 'card',
 }: {
   onOpenItem?: (item: YourTurnItem) => void | Promise<void>
   onOpenMeeting?: (event: CalendarAgendaEvent) => void
   fullHeight?: boolean
+  presentation?: 'card' | 'page'
 } = {}) {
   const { openWorkspaceSettings } = useWorkspaceSettingsModal()
   const {
@@ -204,9 +206,9 @@ export function AgendaCard({
 
   return (
     <div
-      className={`section-card card-elevated flex flex-col overflow-hidden ${
-        fullHeight ? 'h-full min-h-0' : 'h-[420px]'
-      }`}
+      className={`flex w-full flex-col overflow-hidden ${
+        presentation === 'card' ? 'section-card card-elevated' : 'bg-background'
+      } ${fullHeight ? 'h-full min-h-0' : 'h-[420px]'}`}
     >
       <AgendaCardHeader
         showAgendaSurface={showAgendaSurface || showTeamToggle}

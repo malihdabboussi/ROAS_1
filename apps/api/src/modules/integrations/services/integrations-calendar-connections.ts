@@ -6,6 +6,24 @@ export type CalendarConnectionRef = {
   provider: 'google_calendar' | 'outlook'
 }
 
+export type CalendarAccountReceipt = {
+  user_integration_id: string
+  label: string
+  provider: 'google_calendar' | 'outlook'
+  is_default: boolean
+}
+
+export function toCalendarAccountReceipt(
+  connection: CalendarConnectionRef,
+): CalendarAccountReceipt {
+  return {
+    user_integration_id: connection.userIntegrationId,
+    label: connection.label,
+    provider: connection.provider,
+    is_default: connection.isDefault,
+  }
+}
+
 export function getRowComposioAccountId(row: Record<string, unknown>): string {
   const meta =
     row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
@@ -20,9 +38,7 @@ export function pickBestCalendarConnectionRow(
   orgId: string | null,
 ): Record<string, unknown> | null {
   if (rows.length === 0) return null
-  const connectedRows = rows.filter(
-    (row) => String(row.status ?? '').toLowerCase() === 'connected',
-  )
+  const connectedRows = rows.filter((row) => String(row.status ?? '').toLowerCase() === 'connected')
   const pool = connectedRows.length > 0 ? connectedRows : rows
 
   if (!orgId) {
@@ -86,9 +102,33 @@ export function listConnectedCalendarAccounts(
       provider,
     })
   }
-  accounts.sort((a, b) => Number(b.isDefault) - Number(a.isDefault) || a.label.localeCompare(b.label))
+  accounts.sort(
+    (a, b) => Number(b.isDefault) - Number(a.isDefault) || a.label.localeCompare(b.label),
+  )
   if (accounts.length > 0 && !accounts.some((account) => account.isDefault)) {
     accounts[0]!.isDefault = true
   }
   return accounts
+}
+
+export function resolveCalendarConnection(
+  rows: Array<Record<string, unknown>>,
+  userId: string,
+  orgId: string | null,
+  provider: 'google_calendar' | 'outlook',
+  requestedId?: string,
+): CalendarConnectionRef | null {
+  const preferredId = String(requestedId ?? '').trim()
+  const preferred = preferredId ? rows.find((row) => String(row.id ?? '') === preferredId) : null
+  if (preferredId && (!preferred || String(preferred.status ?? '').toLowerCase() !== 'connected')) {
+    return null
+  }
+  const row = preferred ?? pickBestCalendarConnectionRow(rows, userId, orgId)
+  if (!row || String(row.status ?? '').toLowerCase() !== 'connected') return null
+  const selectedId = String(row.id ?? '').trim()
+  return (
+    listConnectedCalendarAccounts(rows, provider).find(
+      (account) => account.userIntegrationId === selectedId,
+    ) ?? null
+  )
 }

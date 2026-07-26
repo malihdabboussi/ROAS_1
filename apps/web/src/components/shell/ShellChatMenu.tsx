@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConversationShareModal } from '@/components/conversations'
 import { ChatHistoryFilterMenu } from '@/components/conversations/ChatHistoryFilterMenu'
@@ -29,9 +30,16 @@ import {
 } from '@/lib/conversations'
 import { openInNewTab } from '@/lib/utils/open-in-new-tab'
 import { isShellHomeRoute } from './shell-route-policy'
+import { ShellChatMenuActiveFilters } from './ShellChatMenuActiveFilters'
 import { useShellStore } from './use-shell-store'
 
-export function ShellChatMenu() {
+const PIXEL_AGENT_KEY = 'vibey'
+
+function historyScopeForAgent(agentKey: string | null) {
+  return agentKey === PIXEL_AGENT_KEY ? null : agentKey
+}
+
+export function ShellChatMenu({ onCollapse }: { onCollapse?: () => void }) {
   const pathname = usePathname() ?? '/home'
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -50,7 +58,10 @@ export function ShellChatMenu() {
   const isOrgContext = Boolean(activeOrgId)
 
   const [filters, setFilters] = useState<ChatHistoryFilterState>(DEFAULT_CHAT_HISTORY_FILTERS)
-  const allAgentsMode = filters.leadingIcon === 'agent'
+  const [historyAgentKey, setHistoryAgentKey] = useState<string | null>(() =>
+    historyScopeForAgent(activeAgentKey),
+  )
+  const allAgentsMode = historyAgentKey === null
   const [listQuery, setListQuery] = useState('')
   const [shareConversation, setShareConversation] = useState<Conversation | null>(null)
   const [campaignNameById, setCampaignNameById] = useState<Record<string, string>>({})
@@ -64,6 +75,10 @@ export function ShellChatMenu() {
   useEffect(() => {
     void loadRoster()
   }, [loadRoster])
+
+  useEffect(() => {
+    setHistoryAgentKey(historyScopeForAgent(activeAgentKey))
+  }, [activeAgentKey])
 
   useEffect(() => {
     if (filters.groupBy !== 'campaign') return
@@ -117,8 +132,27 @@ export function ShellChatMenu() {
     return map
   }, [chatAgents])
 
+  const agentOptions = useMemo(() => {
+    const options: Array<{ key: string; label: string }> = []
+    for (const agent of chatAgents) {
+      const key = agent.agent_key?.trim()
+      if (!key) continue
+      options.push({ key, label: agent.display_name })
+    }
+    return options.sort((left, right) => {
+      if (left.key === PIXEL_AGENT_KEY) return -1
+      if (right.key === PIXEL_AGENT_KEY) return 1
+      return left.label.localeCompare(right.label)
+    })
+  }, [chatAgents])
+
+  const selectedHistoryAgent = useMemo(
+    () => chatAgents.find((agent) => agent.agent_key?.trim() === historyAgentKey) ?? null,
+    [chatAgents, historyAgentKey],
+  )
+
   const reloadConversations = useCallback(async () => {
-    const cacheKey = `shell-conversations:${allAgentsMode ? 'all' : activeAgentKey}`
+    const cacheKey = `shell-conversations:${historyAgentKey ?? 'all'}`
     const peeked = peekCachedFetch<Conversation[]>(cacheKey)
     if (peeked) {
       setConversations(peeked)
@@ -129,7 +163,7 @@ export function ShellChatMenu() {
     try {
       const rows = await cachedFetch(
         cacheKey,
-        () => fetchConversations(undefined, allAgentsMode ? null : activeAgentKey),
+        () => fetchConversations(undefined, historyAgentKey),
         { ttlMs: 30_000 },
       )
       setConversations(rows)
@@ -138,7 +172,7 @@ export function ShellChatMenu() {
     } finally {
       setLoading(false)
     }
-  }, [activeAgentKey, allAgentsMode])
+  }, [historyAgentKey])
 
   useEffect(() => {
     void reloadConversations()
@@ -188,12 +222,14 @@ export function ShellChatMenu() {
 
   const openConversation = useCallback(
     (id: string) => {
+      const conversation = conversations.find((row) => row.id === id)
+      if (conversation) useChatStore.getState().addConversation(conversation)
       if (isShellHomeRoute(pathname) && (searchParams.get('conv') || searchParams.get('chat'))) {
         router.push('/home')
       }
       openChatDrawer(id)
     },
-    [openChatDrawer, pathname, router, searchParams],
+    [conversations, openChatDrawer, pathname, router, searchParams],
   )
 
   const handleNewConversation = useCallback(() => {
@@ -212,7 +248,38 @@ export function ShellChatMenu() {
   const selectedConversationId = chatDrawer.conversationId ?? activeConversationId ?? null
 
   const filterControls = (
-    <ChatHistoryFilterMenu value={filters} onChange={setFilters} onOpenAllChats={openAllChats} />
+    <div className="gap-spacing-1 flex items-center">
+      <ChatHistoryFilterMenu
+        value={filters}
+        onChange={setFilters}
+        agentKey={historyAgentKey}
+        agentOptions={agentOptions}
+        onAgentKeyChange={setHistoryAgentKey}
+        onOpenAllChats={openAllChats}
+      />
+      {onCollapse ? (
+        <button
+          type="button"
+          onClick={onCollapse}
+          className="nav-glass-text-purple p-spacing-1 hover:text-foreground flex items-center justify-center transition-colors"
+          aria-label="Collapse chat history"
+          title="Collapse chat history"
+        >
+          <ChevronLeft className="icon-xs" aria-hidden />
+        </button>
+      ) : null}
+    </div>
+  )
+
+  const activeFilters = (
+    <ShellChatMenuActiveFilters
+      historyAgentKey={historyAgentKey}
+      agentByKey={agentByKey}
+      selectedAgentRole={selectedHistoryAgent?.role_label}
+      filters={filters}
+      onAgentKeyChange={setHistoryAgentKey}
+      onFiltersChange={setFilters}
+    />
   )
 
   return (
@@ -310,6 +377,7 @@ export function ShellChatMenu() {
           groupBy={filters.groupBy}
           campaignNameById={campaignNameById}
           headerEndSlot={filterControls}
+          headerFooterSlot={activeFilters}
         />
       </div>
       {isOrgContext ? (

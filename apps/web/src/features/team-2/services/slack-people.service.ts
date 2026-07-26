@@ -109,6 +109,14 @@ export interface SlackShadowAction {
   created_at: string
 }
 
+export interface SlackPersonBrainBackfillResult {
+  provisioned_person_brains: number
+  mapped_channels: number
+  queued_jobs: number
+  deduped_jobs: number
+  lookback_days: number
+}
+
 export function fetchSlackPeople() {
   return backendGet<{
     connected: boolean
@@ -164,6 +172,13 @@ export function createSlackPersonBrain(id: string) {
   return backendPost<{ person: SlackDiscoveredPerson }>(
     `/api/integrations/slack/people/${id}/person-brain`,
     {},
+  )
+}
+
+export function backfillSlackPersonBrains(lookbackDays = 90) {
+  return backendPost<SlackPersonBrainBackfillResult>(
+    '/api/integrations/slack/brain-mappings/backfill-person-brains',
+    { lookback_days: lookbackDays },
   )
 }
 

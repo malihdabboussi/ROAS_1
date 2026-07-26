@@ -23,6 +23,9 @@ export interface EntitySearchResult {
   statusColor?: string | null
   /** For tasks: status option label from the space schema (e.g. 'In Progress'). */
   statusLabel?: string | null
+  personKind?: 'portal_user' | 'managed_person'
+  relationshipKind?: 'internal' | 'external' | 'unknown'
+  brainId?: string | null
 }
 
 export async function searchEntities(

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type MutableRefObject } from 'react'
 import { usePastedTextBlocks } from '@/components/chat/PastedTextComposerAdapter'
 import type { ChannelMember } from '@/lib/channels'
 import { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
+import type { TeamRosterEntry } from '@/lib/team'
 import { ChannelComposerMainControls } from './ChannelComposerMainControls'
 import { ChannelComposerPortals } from './ChannelComposerPortals'
 import { useChannelComposerAttachments } from './use-channel-composer-attachments'
@@ -11,13 +12,25 @@ import { useChannelComposerDraft } from './use-channel-composer-draft'
 import { useChannelComposerDropzone } from './use-channel-composer-dropzone'
 import { useChannelComposerEditor } from './use-channel-composer-editor'
 import { useChannelComposerEntityMention } from './use-channel-composer-entity-mention'
-import { useChannelComposerHandle, type ChannelComposerHandleValue } from './use-channel-composer-handle'
 import { useChannelComposerFloatingControls } from './use-channel-composer-floating-controls'
+import {
+  useChannelComposerHandle,
+  type ChannelComposerHandleValue,
+} from './use-channel-composer-handle'
 import { useChannelComposerLink } from './use-channel-composer-link'
 import { useChannelComposerMemberMention } from './use-channel-composer-member-mention'
-import { useChannelComposerSlashSkills, type SlashSkillEntry } from './use-channel-composer-slash-skills'
-import { useChannelComposerSlashMenu, type ChannelComposerCommandContext } from './use-channel-composer-slash-menu'
-import { useChannelComposerSubmit, type ChannelComposerPayload } from './use-channel-composer-submit'
+import {
+  useChannelComposerSlashMenu,
+  type ChannelComposerCommandContext,
+} from './use-channel-composer-slash-menu'
+import {
+  useChannelComposerSlashSkills,
+  type SlashSkillEntry,
+} from './use-channel-composer-slash-skills'
+import {
+  useChannelComposerSubmit,
+  type ChannelComposerPayload,
+} from './use-channel-composer-submit'
 import { useChannelComposerVisibleState } from './use-channel-composer-visible-state'
 
 export type { ChannelComposerPayload } from './use-channel-composer-submit'
@@ -42,6 +55,7 @@ export function ChannelComposer({
   rosterAvatars,
   draftStorageKey,
   onSend,
+  onBeforeSend,
   disabled = false,
   commandContext,
   embedded = false,
@@ -50,6 +64,7 @@ export function ChannelComposer({
   onVisibleStateChange,
   skillAgentKeys,
   entityMentionPeopleMembers,
+  mentionRoster,
 }: {
   channelId: string
   /** Resolved campaign for the active space — scopes channel uploads so generated
@@ -58,7 +73,8 @@ export function ChannelComposer({
   members: ChannelMember[]
   rosterAvatars?: Map<string, string>
   draftStorageKey?: string
-  onSend: (payload: ChannelComposerPayload) => void
+  onSend: (payload: ChannelComposerPayload) => Promise<void> | void
+  onBeforeSend?: (payload: ChannelComposerPayload) => Promise<boolean>
   disabled?: boolean
   commandContext?: ChannelComposerCommandContext
   /** Embedded in a parent form (e.g. send-to-agent modal): no send button, Enter = newline, no draft persistence. */
@@ -70,6 +86,8 @@ export function ChannelComposer({
   skillAgentKeys?: string[]
   /** Optional source for @@ People, used when the caller already has scoped people/agents. */
   entityMentionPeopleMembers?: ChannelMember[]
+  /** Full addable roster so typed @ mentions can resolve before someone joins the channel. */
+  mentionRoster?: TeamRosterEntry[]
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [recordingState, setRecordingState] = useState<'idle' | 'recording' | 'finishing'>('idle')
@@ -86,7 +104,7 @@ export function ChannelComposer({
     MemberMentionExtension,
     selectMemberMention,
     setMemberMentionHoverIndex,
-  } = useChannelComposerMemberMention({ members, rosterAvatars })
+  } = useChannelComposerMemberMention({ members, rosterAvatars, roster: mentionRoster })
   const {
     attachDropdownOpen,
     setAttachDropdownOpen,
@@ -241,27 +259,23 @@ export function ChannelComposer({
     setEntityMentionEditor(editor)
   }, [editor, setEntityMentionEditor])
 
-  const {
-    sending,
-    buildPayload,
-    resetComposer,
-    triggerSend,
-    hasUploadingFiles,
-  } = useChannelComposerSubmit({
-    editor,
-    disabled,
-    onSend,
-    attachedFiles,
-    attachedFilesRef,
-    pastedBlocksRef,
-    candidatesRef,
-    slashSkillItemsRef,
-    clearPastedBlocks,
-    clearDraft,
-    clearAttachedFiles,
-    embedded,
-    composerAttachmentsKey,
-  })
+  const { sending, buildPayload, resetComposer, triggerSend, hasUploadingFiles } =
+    useChannelComposerSubmit({
+      editor,
+      disabled,
+      onSend,
+      onBeforeSend,
+      attachedFiles,
+      attachedFilesRef,
+      pastedBlocksRef,
+      candidatesRef,
+      slashSkillItemsRef,
+      clearPastedBlocks,
+      clearDraft,
+      clearAttachedFiles,
+      embedded,
+      composerAttachmentsKey,
+    })
 
   useEffect(() => {
     triggerSendRef.current = triggerSend
@@ -279,14 +293,8 @@ export function ChannelComposer({
     handleFileSelectRef.current = handleFileSelect
   }, [handleFileSelect])
 
-  const {
-    linkInputOpen,
-    linkUrl,
-    setLinkUrl,
-    toggleLinkInput,
-    closeLinkInput,
-    applyLink,
-  } = useChannelComposerLink(editor)
+  const { linkInputOpen, linkUrl, setLinkUrl, toggleLinkInput, closeLinkInput, applyLink } =
+    useChannelComposerLink(editor)
 
   const isEmpty = editor?.isEmpty ?? true
   const canSend = (!isEmpty || attachedFiles.length > 0 || hasPastedBlocks) && !disabled && !sending

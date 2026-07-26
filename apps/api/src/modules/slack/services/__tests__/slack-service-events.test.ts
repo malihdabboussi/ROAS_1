@@ -38,6 +38,15 @@ class TestSlackEvents extends SlackEventsBase {
     return this.collectSseResponse(response)
   }
 
+  async threadContext(
+    botToken: string,
+    channelId: string,
+    threadTs: string,
+    messageTs: string,
+  ): Promise<string> {
+    return this.buildSlackThreadReplyContext(botToken, channelId, threadTs, messageTs)
+  }
+
   protected async routeToAgent(): Promise<string | null> {
     if (this.routeError) throw this.routeError
     return this.response
@@ -58,6 +67,7 @@ function createHarness() {
     addReaction: vi.fn(async () => true),
     removeReaction: vi.fn(async () => undefined),
     postMessage: vi.fn(async () => ({ ok: true })),
+    conversationsRepliesAll: vi.fn(async () => []),
   }
   return { slackApi, service: new TestSlackEvents(slackApi) }
 }
@@ -141,5 +151,29 @@ describe('SlackEventsBase reply lifecycle', () => {
     const response = sseResponse('data: {"type":"error","code":"no_answer"}\n\ndata: [DONE]\n\n')
 
     await expect(service.collect(response)).rejects.toThrow('no_answer')
+  })
+
+  it('includes the proactive root message when a user replies with a pronoun', async () => {
+    const { service, slackApi } = createHarness()
+    slackApi.conversationsRepliesAll.mockResolvedValueOnce([
+      {
+        ts: '100.1',
+        bot_id: 'B1',
+        text: 'Fathom needs to be reconnected before meeting processing can resume.',
+      },
+      {
+        ts: '100.2',
+        user: 'U1',
+        thread_ts: '100.1',
+        text: "It was connected. Are you sure it's not?",
+      },
+    ])
+
+    const context = await service.threadContext('xoxb-token', 'D123', '100.1', '100.2')
+
+    expect(context).toContain(
+      'Pixel: Fathom needs to be reconnected before meeting processing can resume.',
+    )
+    expect(context).not.toContain("It was connected. Are you sure it's not?")
   })
 })

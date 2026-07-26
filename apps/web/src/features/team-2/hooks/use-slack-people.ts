@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOrgStore } from '@/lib/org'
 import {
+  backfillSlackPersonBrains,
   confirmSlackPersonIdentity,
   createSlackPersonBrain,
   createSlackProposal,
@@ -137,6 +138,11 @@ export function useSlackPeople() {
     return result.person
   }, [])
 
+  const backfillPersonBrains = useCallback(
+    (lookbackDays = 90) => backfillSlackPersonBrains(lookbackDays),
+    [],
+  )
+
   const loadPersonActivity = useCallback((id: string) => fetchSlackPersonActivity(id), [])
 
   const createTestProposal = useCallback(async (personId: string) => {
@@ -197,6 +203,7 @@ export function useSlackPeople() {
     confirmSuggestedIdentity,
     mapIdentity,
     createPersonBrain,
+    backfillPersonBrains,
     loadPersonActivity,
     createTestProposal,
     createProposal,

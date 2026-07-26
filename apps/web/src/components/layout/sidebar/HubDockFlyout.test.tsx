@@ -76,6 +76,25 @@ describe('HubDockFlyout', () => {
     expect(flyout?.classList.contains('hub-dock-flyout-viewport')).toBe(false)
   })
 
+  it('keeps compact primary flyouts natural-height and aligned to their trigger', () => {
+    render(
+      <HubDockFlyout
+        anchor={anchor}
+        title="More"
+        compact
+        onClose={() => {}}
+        onEnter={() => {}}
+        onLeave={() => {}}
+      >
+        <p>Flyout body</p>
+      </HubDockFlyout>,
+    )
+
+    const flyout = screen.getByText('More').closest('[data-hub-dock-flyout]')
+    expect(flyout).not.toHaveClass('hub-dock-flyout-viewport')
+    expect(flyout).toHaveStyle({ top: '40px' })
+  })
+
   it('closes when mousedown lands outside the flyout and portaled menus', () => {
     const onClose = vi.fn()
 

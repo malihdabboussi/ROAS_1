@@ -16,8 +16,8 @@ import type {
   PresignUploadResult,
 } from '../dto'
 import { GeminiImageIntegration } from '../integrations/gemini-image.integration'
-import { MediaRepository } from '../repositories/media.repository'
 import { MediaUploadRepository } from '../repositories/media-upload.repository'
+import { MediaRepository } from '../repositories/media.repository'
 import { buildMediaAssetRef } from '../utils/media-asset-ref'
 import { MediaIndexerService } from './media-indexer.service'
 
@@ -222,7 +222,7 @@ export abstract class MediaServiceBase01 {
         progress: 0.1,
       })
 
-      const parent = await this.resolveParentImageBuffer(input, user, orgId)
+      const source = await this.resolveImageEditInputs(input, user, orgId)
 
       await send('generation_progress', {
         stage: 'generating',
@@ -231,10 +231,15 @@ export abstract class MediaServiceBase01 {
       })
 
       const { buffer, mimeType } = await this.gemini.editImage(
-        parent,
+        source.images,
         input.prompt,
         input.aspect_ratio,
-        { model: input.model },
+        {
+          model: input.model,
+          userId: user.id,
+          orgId,
+          campaignId: input.campaign_id,
+        },
       )
 
       await send('generation_progress', {
@@ -251,6 +256,7 @@ export abstract class MediaServiceBase01 {
           aspect_ratio: input.aspect_ratio,
           campaign_id: input.campaign_id,
           space_id: input.space_id,
+          conversation_id: input.conversation_id ?? source.conversationId ?? undefined,
           category: input.category ?? 'generated',
           tags: input.tags ?? ['ai-edited'],
           model: input.model,
@@ -278,7 +284,7 @@ export abstract class MediaServiceBase01 {
       const msg = err instanceof Error ? err.message : 'Unknown error'
       this.logger.error(`Streaming image edit failed: ${msg}`)
       this.reportMediaFailure('streaming_image_edit_failed', msg, user.id)
-      await send('error', { error: msg })
+      await send('error', { error: 'We couldn’t create that edit. Try again.' })
     }
   }
 
@@ -292,12 +298,17 @@ export abstract class MediaServiceBase01 {
     }
 
     try {
-      const parent = await this.resolveParentImageBuffer(input, user, orgId)
+      const source = await this.resolveImageEditInputs(input, user, orgId)
       const { buffer, mimeType } = await this.gemini.editImage(
-        parent,
+        source.images,
         input.prompt,
         input.aspect_ratio,
-        { model: input.model },
+        {
+          model: input.model,
+          userId: user.id,
+          orgId,
+          campaignId: input.campaign_id,
+        },
       )
       return this.saveGeneratedImage(
         buffer,
@@ -307,6 +318,7 @@ export abstract class MediaServiceBase01 {
           aspect_ratio: input.aspect_ratio,
           campaign_id: input.campaign_id,
           space_id: input.space_id,
+          conversation_id: input.conversation_id ?? source.conversationId ?? undefined,
           category: input.category ?? 'generated',
           tags: input.tags ?? ['ai-edited'],
           model: input.model,
@@ -322,11 +334,17 @@ export abstract class MediaServiceBase01 {
     }
   }
 
-  protected async resolveParentImageBuffer(
+  protected async resolveImageEditInputs(
     input: EditImageParsed,
     user: { id: string },
     orgId?: string | null,
-  ): Promise<{ buffer: Buffer; mimeType: string }> {
+  ): Promise<{
+    images: Array<{ buffer: Buffer; mimeType: string }>
+    conversationId: string | null
+  }> {
+    const images: Array<{ buffer: Buffer; mimeType: string }> = []
+    let conversationId: string | null = null
+
     if (input.parent_image_asset_id) {
       const asset = await this.getAsset(input.parent_image_asset_id, user, orgId)
       if (!asset) throw new Error('Parent image asset not found')
@@ -337,19 +355,44 @@ export abstract class MediaServiceBase01 {
       )
       if (!data) throw new Error('Failed to download parent image asset')
 
-      const buffer = Buffer.from(await data.arrayBuffer())
-      return { buffer, mimeType: asset.mime_type || 'image/png' }
-    }
-
-    if (input.parent_image_url) {
+      images.push({
+        buffer: Buffer.from(await data.arrayBuffer()),
+        mimeType: asset.mime_type || 'image/png',
+      })
+      conversationId = asset.conversation_id ?? null
+    } else if (input.parent_image_url) {
       const res = await fetch(input.parent_image_url)
       if (!res.ok) throw new Error(`Failed to fetch parent image: ${res.status}`)
       const contentType = res.headers.get('content-type')?.split(';')[0]?.trim() || 'image/png'
-      const buffer = Buffer.from(await res.arrayBuffer())
-      return { buffer, mimeType: contentType }
+      images.push({ buffer: Buffer.from(await res.arrayBuffer()), mimeType: contentType })
+    } else {
+      throw new Error('parent_image_url or parent_image_asset_id is required')
     }
 
-    throw new Error('parent_image_url or parent_image_asset_id is required')
+    const referenceIds = Array.from(
+      new Set(
+        (input.reference_image_asset_ids ?? []).filter(
+          (assetId) => assetId !== input.parent_image_asset_id,
+        ),
+      ),
+    )
+    for (const assetId of referenceIds) {
+      const asset = await this.getAsset(assetId, user, orgId)
+      if (!asset || asset.asset_type !== 'image') {
+        throw new Error('Reference image asset not found')
+      }
+      const data = await this.mediaUploadRepository.downloadStorageObject(
+        asset.bucket_name,
+        asset.file_path,
+      )
+      if (!data) throw new Error('Failed to download reference image asset')
+      images.push({
+        buffer: Buffer.from(await data.arrayBuffer()),
+        mimeType: asset.mime_type || 'image/png',
+      })
+    }
+
+    return { images, conversationId }
   }
 
   // ── Upload User File ────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { CircleUserRound, RefreshCw, UserRoundCheck, UsersRound } from 'lucide-react'
+import { CircleUserRound, UserRoundCheck, UsersRound } from 'lucide-react'
 import { toast } from 'sonner'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { SLACK_PEOPLE_MESSAGES } from '../../config/messages.config'
@@ -13,6 +13,7 @@ import type {
   SlackRelationshipKind,
 } from '../../services/slack-people.service'
 import { SlackChannelsView } from './SlackChannelsView'
+import { SlackPeopleHeader } from './SlackPeopleHeader'
 import { SlackPeopleRoster } from './SlackPeopleRoster'
 import { SlackPeopleViewsNav, type SlackPeopleViewKey } from './SlackPeopleViewsNav'
 import { SlackPersonScreen } from './SlackPersonScreen'
@@ -31,6 +32,7 @@ export function SlackPeopleView() {
   const selectedChannelId = searchParams.get('slackChannel')
   const [activity, setActivity] = useState<SlackPersonActivity | null>(null)
   const [activityLoading, setActivityLoading] = useState(false)
+  const [populatingBrains, setPopulatingBrains] = useState(false)
   const {
     connected,
     people,
@@ -43,6 +45,7 @@ export function SlackPeopleView() {
     confirmSuggestedIdentity,
     mapIdentity,
     createPersonBrain,
+    backfillPersonBrains,
     loadPersonActivity,
     createProposal,
     reviewAction,
@@ -120,6 +123,27 @@ export function SlackPeopleView() {
     )
   }
 
+  const populateBrains = () => {
+    setPopulatingBrains(true)
+    void backfillPersonBrains(90)
+      .then((result) => {
+        const jobs = result.queued_jobs + result.deduped_jobs
+        if (result.mapped_channels === 0) {
+          toast.error(SLACK_PEOPLE_MESSAGES.BRAIN_BACKFILL_EMPTY)
+          return
+        }
+        toast.success(
+          SLACK_PEOPLE_MESSAGES.BRAIN_BACKFILL_STARTED(
+            jobs,
+            result.mapped_channels,
+            result.lookback_days,
+          ),
+        )
+      })
+      .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.BRAIN_BACKFILL_ERROR))
+      .finally(() => setPopulatingBrains(false))
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -175,27 +199,15 @@ export function SlackPeopleView() {
         }
       >
         {!selectedPersonId && !showShadowInbox && !showChannels && !showSignals ? (
-          <header className="gap-spacing-4 flex flex-wrap items-start justify-between">
-            <div>
-              <p className="eyebrow text-muted-foreground">Managed team intelligence</p>
-              <h1 className="title-h4 text-foreground mt-spacing-1">PEOPLE & SHADOW MODE</h1>
-              <p className="body-3 text-muted-foreground mt-spacing-2 max-w-2xl">
-                Classify active Slack people, connect portal identities and User Brains, then review
-                every proposed message before it can reach Slack.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                void refresh()
-                  .then(() => toast.success(SLACK_PEOPLE_MESSAGES.REFRESH_SUCCESS))
-                  .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.REFRESH_ERROR))
-              }
-              className="button-compact button-glass-neutral"
-            >
-              <RefreshCw className="icon-xs" /> Refresh Slack
-            </button>
-          </header>
+          <SlackPeopleHeader
+            populating={populatingBrains}
+            onPopulate={populateBrains}
+            onRefresh={() =>
+              void refresh()
+                .then(() => toast.success(SLACK_PEOPLE_MESSAGES.REFRESH_SUCCESS))
+                .catch(() => toast.error(SLACK_PEOPLE_MESSAGES.REFRESH_ERROR))
+            }
+          />
         ) : null}
 
         {error ? (

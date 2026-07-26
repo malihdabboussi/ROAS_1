@@ -184,6 +184,18 @@ function buildImportantPatterns(sections: Set<string>, availableActions: Set<str
     patterns.push(
       `**Calendar events vs tasks**: Google Calendar and Outlook events are provider-owned integration records. Use \`list_calendar_events\`, \`create_calendar_event\`, \`update_calendar_event\`, and \`delete_calendar_event\` for connected calendar events. Use \`create_task\` or \`update_task\` with \`start_date\` and \`due_date\` when the user wants a Space task shown on the calendar. Calendar writes are for timed events only in v1; all-day provider events can be listed but should not be edited unless the backend contract adds all-day write support.`,
     )
+    patterns.push(
+      `**Calendar account identity**: \`list_calendar_events\` returns connected accounts. When more than one connected calendar account exists, resolve the user's requested account to its exact \`user_integration_id\` before calling \`create_calendar_event\`; if "personal", "work", or another label is still ambiguous, ask before writing. After creation, report the exact account label returned by the mutation receipt. Never guess which email/calendar was used and never tell the user to inspect their calendars to discover where the write landed.`,
+    )
+  }
+
+  if (
+    availableActions.has('list_campaigns') &&
+    availableActions.has('get_campaign_main_dashboard')
+  ) {
+    patterns.push(
+      `**Organization-wide campaign questions**: interpret plural, portfolio, client-wide, or "any campaigns" performance questions as organization scope, not the active or most recent campaign. Call \`list_campaigns\` with \`mode: "accessible"\`, exclude personal/general/system containers and inactive campaigns, then call \`get_campaign_main_dashboard\` for the eligible campaigns. Rank warning/critical alerts and separate missing or partial data from actual KPI failures. Drill only the flagged campaigns with provider-specific actions such as \`get_meta_ads_insights\`. Never present one campaign as the organization-wide answer unless the user explicitly narrowed the scope.`,
+    )
   }
 
   if (sections.has('Flows')) {
@@ -365,7 +377,7 @@ Contactless source-anchored customer signal:
   if (availableActions.has('create_calendar_event')) {
     examples.push(`Create a provider calendar event:
 \`\`\`json
-{ "action": "create_calendar_event", "label": "Adding calendar event", "data": { "provider": "google_calendar", "title": "Review launch tasks", "start": "2026-06-18T10:00:00.000Z", "end": "2026-06-18T10:30:00.000Z", "timezone": "Asia/Nicosia" } }
+{ "action": "create_calendar_event", "label": "Adding calendar event", "data": { "provider": "google_calendar", "user_integration_id": "UUID_FROM_LIST_CALENDAR_EVENTS", "title": "Review launch tasks", "start": "2026-06-18T10:00:00.000Z", "end": "2026-06-18T10:30:00.000Z", "timezone": "Asia/Nicosia" } }
 \`\`\``)
   }
 

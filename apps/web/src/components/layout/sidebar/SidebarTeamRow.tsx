@@ -142,8 +142,8 @@ export function SidebarTeamRow({
     >
       <Link
         href={teamHref}
-        className={`nav-glass-hover-purple flex w-full items-center gap-2 rounded-lg py-1.5 pl-3 pr-8 transition-all ${
-          isActive ? 'home-sidebar-item-active' : 'text-[var(--color-muted-foreground)]'
+        className={`hub-dock-flyout-row pr-spacing-8 ${
+          isActive ? 'hub-dock-flyout-row-active' : ''
         }`}
       >
         <span
@@ -151,7 +151,7 @@ export function SidebarTeamRow({
         >
           <LucideIcon name={team.icon || 'users'} className={`h-3 w-3 ${palette.textColor}`} />
         </span>
-        <span className="body-3 min-w-0 flex-1 truncate">{team.name}</span>
+        <span className="min-w-0 flex-1 truncate">{team.name}</span>
       </Link>
       <div className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center">
         <button

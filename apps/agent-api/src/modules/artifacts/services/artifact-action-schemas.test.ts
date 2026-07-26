@@ -612,6 +612,7 @@ describe('validateActionData', () => {
       expect(
         validateActionData('create_calendar_event', {
           provider: 'google_calendar',
+          user_integration_id: '54bb44de-fb32-4db8-8876-d8aa6f59e58b',
           title: 'Review launch tasks',
           start: '2026-06-18T10:00:00.000Z',
           end: '2026-06-18T10:30:00.000Z',
