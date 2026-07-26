@@ -4,6 +4,7 @@ import {
   parseConversationIdFromSessionKey,
   parseDreamOpsSessionKey,
 } from './artifact-action.registry'
+import { validateIgStoryRenderPreflight } from './artifact-ig-story-preflight'
 import {
   PRESENTATION_ACTION_PREFLIGHT_OVERRIDES,
   PRESENTATION_ACTION_PREFLIGHTS,
@@ -595,6 +596,7 @@ const PROCESS_MEDIA_OPERATIONS = new Set([
   'frame_extract',
   'waveform',
   'render_validate_messaging',
+  'render_ig_story',
 ])
 
 const AUDIO_EFFECTS = new Set([
@@ -659,6 +661,7 @@ function validateProcessMediaPreflight(
           `lines[${invalidIndex}] must contain identity-callout text and an exact highlight substring`,
         )
   }
+  if (operation === 'render_ig_story') return validateIgStoryRenderPreflight(data)
   if (operation === 'trim')
     return requireString(data, 'url') ?? requirePositiveNumber(data, 'duration_seconds')
   if (operation === 'concat') return requireInputs(data, 2)

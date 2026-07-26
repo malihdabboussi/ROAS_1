@@ -455,7 +455,6 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
     date: 'iso_date',
     ...stringType(campaignScope),
   }),
-
   process_media: schema(
     ['operation'],
     [
@@ -473,6 +472,7 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
       'brand_color',
       'brand_bg_light',
       'brand_bg_dark',
+      ...['pill_line', 'headline_lines', 'cta_line', 'emoji'],
       'space_id',
       'campaign_id',
       'duration_seconds',
@@ -512,6 +512,8 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
       brand_color: 'string',
       brand_bg_light: 'string',
       brand_bg_dark: 'string',
+      headline_lines: 'object_array',
+      ...stringType(['pill_line', 'cta_line', 'emoji']),
       space_id: 'string',
       campaign_id: 'string',
       duration_seconds: 'number',

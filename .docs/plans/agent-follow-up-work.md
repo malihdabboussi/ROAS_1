@@ -8572,3 +8572,21 @@ Evidence: The change adds bounded targeted-evidence helpers to the existing Brai
 Needed work: Continue the registered decomposition by extracting Customer Brain pattern orchestration into a focused service and model request construction/tracing into a smaller gateway collaborator.
 
 Reason not done now: Moving these established runtime chokepoints would substantially widen a model-routing and evidence-discipline correction that is already isolated behind focused tests.
+
+## 2026-07-26 - [ARCH] Media processing dispatcher and schema are at their service limits
+
+Status: Open
+
+Found while: Adding the deterministic server-side IG Story renderer
+
+Files:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-media-processing.service.ts` (594 LOC; service limit 600)
+- `apps/agent-api/src/modules/artifacts/services/artifact-action-additional-schemas.ts` (600 LOC; service limit 600)
+- `apps/agent-api/src/modules/artifacts/services/artifact-action-preflight.ts` (1,024 LOC; pre-existing service-limit violation, reduced by this change)
+
+Evidence: The renderer and its preflight are isolated in new 144-line and 48-line collaborators, focused tests pass, and the existing hosts remain at or below their prior size except for the one-line operation registrations. The oversized preflight host is 29 lines smaller after extracting the new validation.
+
+Needed work: Split media operation registration/schema groups and the remaining preflight families into focused domain modules, then reduce the central media dispatcher below the near-limit threshold.
+
+Reason not done now: Decomposing every existing media operation and action family would broaden a production acceptance blocker fix across unrelated contracts. The new operation itself is already isolated.

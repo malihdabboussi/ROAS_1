@@ -134,4 +134,46 @@ describe('ArtifactMediaProcessingService data access behavior', () => {
     })
     expect(progress).toHaveBeenCalledWith('Uploading processed media')
   })
+
+  it('renders an IG Story overlay through the deterministic server operation', async () => {
+    const service = new ArtifactMediaProcessingService()
+    vi.spyOn(service as any, 'opRenderIgStory').mockImplementation(
+      async (_input, tempRoot: string) => {
+        const outputPath = join(tempRoot, 'output.mp4')
+        await writeFile(outputPath, Buffer.from('rendered-story-video'))
+        return { outputPath, outputFormat: 'mp4' }
+      },
+    )
+    const target = makeTarget()
+
+    const result = await service.getHandlers(target).process_media(
+      {
+        operation: 'render_ig_story',
+        url: 'https://example.com/source.mp4',
+        pill_line: 'Free Training',
+        headline_lines: [
+          { text: 'Build launch-ready ads' },
+          { text: 'without the production drag', highlighted: true },
+        ],
+        cta_line: 'Tap Below To Build Faster',
+        emoji: '⏰',
+      },
+      'session-1',
+    )
+
+    expect(result).toMatchObject({
+      success: true,
+      operation: 'render_ig_story',
+      media_asset_id: 'asset-1',
+      format: 'mp4',
+    })
+    expect(target.mediaAssetRows[0]).toEqual({
+      table: 'media_assets',
+      payload: expect.objectContaining({
+        asset_type: 'video',
+        campaign_id: 'campaign-1',
+        tags: ['process-media-render_ig_story'],
+      }),
+    })
+  })
 })

@@ -107,9 +107,22 @@ RUN apt-get update && \
       ffmpeg \
       curl \
       ca-certificates \
+      fontconfig \
+      python3 \
+      python3-pil \
       chromium \
       xvfb \
       squid && \
+    mkdir -p /usr/local/share/fonts && \
+    curl -L --fail --silent --show-error \
+      https://github.com/samuelngs/apple-emoji-linux/releases/download/macos-26-20260219-2aa12422/AppleColorEmoji-Linux.ttf \
+      -o /usr/local/share/fonts/AppleColorEmoji-Linux.ttf && \
+    echo "535a043af04706d24471059e64745bfc80d6617ada2eea3435dc5620dc0f5318  /usr/local/share/fonts/AppleColorEmoji-Linux.ttf" | sha256sum -c - && \
+    curl -L --fail --silent --show-error \
+      "https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/Montserrat-Italic%5Bwght%5D.ttf" \
+      -o /usr/local/share/fonts/Montserrat-Italic.ttf && \
+    echo "51607f316bc020e59f03cbf51543eecffbea501c0b31d73e5b82927c5cca442c  /usr/local/share/fonts/Montserrat-Italic.ttf" | sha256sum -c - && \
+    fc-cache -f && \
     curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
     chmod a+rx /usr/local/bin/yt-dlp && \
     rm -rf /var/lib/apt/lists/*
@@ -128,6 +141,7 @@ COPY --from=openclaw-builder /openclaw/docs/reference/templates /app/docs/refere
 
 # ── Copy built agent-api ──────────────────────────────────────
 COPY --from=api-builder --chown=node:node /build/apps/agent-api/dist /app/agent-api/dist
+COPY --chown=node:node apps/agent-api/src/modules/artifacts/scripts/render_ig_story.py /app/agent-api/dist/modules/artifacts/scripts/render_ig_story.py
 COPY --from=api-builder --chown=node:node /build/apps/agent-api/package.json /app/agent-api/
 # Copy agent-api node_modules (symlinks) + pnpm virtual store.
 # pnpm links packages from apps/agent-api/node_modules into the workspace store at /node_modules/.pnpm.
