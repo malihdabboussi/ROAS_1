@@ -82,6 +82,21 @@ export function evaluateDeliverableContractRow(
     )
   }
 
+  const expectedWidth =
+    typeof contract.expected?.width === 'number' ? contract.expected.width : null
+  const expectedHeight =
+    typeof contract.expected?.height === 'number' ? contract.expected.height : null
+  if (expectedWidth !== null && expectedHeight !== null) {
+    const actualWidth = typeof metadata.width === 'number' ? metadata.width : null
+    const actualHeight = typeof metadata.height === 'number' ? metadata.height : null
+    if (actualWidth !== expectedWidth || actualHeight !== expectedHeight) {
+      return failure(
+        contract,
+        `Found ${foundType} deliverable at ${actualWidth ?? 'unknown'}x${actualHeight ?? 'unknown'}, expected ${expectedWidth}x${expectedHeight}`,
+      )
+    }
+  }
+
   return {
     ok: true,
     expected_action: contract.required_action,

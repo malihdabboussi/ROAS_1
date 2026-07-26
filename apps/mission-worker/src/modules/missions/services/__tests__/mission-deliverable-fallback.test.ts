@@ -119,6 +119,31 @@ describe('Mission deliverable repository', () => {
     })
   })
 
+  it('rejects image dimensions that do not match the output contract', async () => {
+    const result = evaluateDeliverableContractRow(
+      {
+        id: 'deliverable-image',
+        type: 'image',
+        metadata: {
+          source_action: 'generate_image',
+          width: 896,
+          height: 1120,
+        },
+      },
+      {
+        artifact_kind: 'media_artifact',
+        required_action: 'generate_image',
+        required_artifact_type: 'image',
+        expected: { width: 1080, height: 1350 },
+      },
+    )
+
+    expect(result).toMatchObject({
+      ok: false,
+      reason: 'Found image deliverable at 896x1120, expected 1080x1350',
+    })
+  })
+
   it('verifies preferred artifact-manifest deliverable ids before mission-wide latest fallback', async () => {
     const service = createService()
     const query: any = {

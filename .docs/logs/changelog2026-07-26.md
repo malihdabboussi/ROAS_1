@@ -61,3 +61,10 @@ What: Added Static Ad Production and IG Organic Video to the global Missions pla
 Why: The deterministic playbooks existed in the worker and Ads Research handoff, but the Space-level Start playbook dialog recognized only Webinar and Meta workflows, making direct static/video playbook acceptance impossible.
 Impact: Users can start one or more production-ready static ads or exact-scene IG Story videos directly from a campaign Space without falling back to a generic Mission. Existing Webinar and Meta workflows are unchanged.
 Files: `apps/web/src/features/spaces/components/StartPlaybookModal.tsx`, `apps/web/src/features/spaces/components/StartAdProductionPlaybookFields.tsx`, `apps/web/src/features/spaces/components/StartPlaybookModal.test.tsx`, `apps/web/src/features/spaces/components/MissionsView.tsx`, `documentation/features/missions.md`.
+
+## [2026-07-26 13:34] - [FIX]
+
+What: Normalized generated 4:5 and 9:16 images to 1080×1350 and 1080×1920 before Media registration, persisted measured image dimensions, and made static mission output verification reject mismatched pixels.
+Why: Production acceptance produced an 896×1120 PNG while the agent and independent mission reviewer both claimed it was 1080×1350 because the contract trusted narrative evidence and Media stored no dimensions.
+Impact: Static-ad missions now deliver canonical placement pixels, Media and Deliverables carry authoritative width/height evidence, and a provider-size regression triggers corrective execution instead of a false pass.
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-generated-image-normalizer.ts`, image generation/upload/result services and tests, `apps/mission-worker/src/modules/missions/playbooks/static-ad-production.playbook.ts`, mission deliverable contract evaluation and tests, `documentation/features/missions.md`.

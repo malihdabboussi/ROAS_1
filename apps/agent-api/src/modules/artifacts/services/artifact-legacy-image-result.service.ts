@@ -65,6 +65,8 @@ export function persistMissionImageResult({
       model,
       aspect_ratio: aspectRatio,
       media_asset_id: (asset?.id as string | undefined) ?? null,
+      width: typeof asset?.width === 'number' ? asset.width : null,
+      height: typeof asset?.height === 'number' ? asset.height : null,
       media_generation_status: 'succeeded',
       ...(avatarUpdated ? { avatar_id: avatarId, avatar_image_url: avatarImageUrl } : {}),
     },

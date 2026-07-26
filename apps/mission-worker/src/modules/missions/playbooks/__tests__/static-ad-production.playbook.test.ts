@@ -35,7 +35,7 @@ describe('static-ad-production playbook', () => {
     expect(plan?.subtasks[0]?.outputContract).toMatchObject({
       artifact_kind: 'media_artifact',
       required_artifact_type: 'image',
-      expected: { minimum_count: 6 },
+      expected: { minimum_count: 6, width: 1080, height: 1350 },
     })
   })
 })

@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common'
+import sharp from 'sharp'
 import { buildVibeyAssetRef, type VibeyAssetRef } from '@vibey/api-shared'
 import { ArtifactMediaAssetsRepository } from '../repositories/artifact-media-assets.repository'
+import { normalizeGeneratedImage } from './artifact-generated-image-normalizer'
 
 @Injectable()
 export class ArtifactLegacyMediaUploadService {
@@ -116,6 +118,7 @@ export class ArtifactLegacyMediaUploadService {
     spaceId?: string | null,
     conversationId?: string | null,
     assetName?: string,
+    imageAspectRatio?: string,
   ): Promise<{
     success: boolean
     url?: string
@@ -123,11 +126,27 @@ export class ArtifactLegacyMediaUploadService {
     asset_ref?: VibeyAssetRef
     error?: string
   }> {
-    const ext = contentType.includes('jpeg')
+    const normalized =
+      assetType === 'image' && imageAspectRatio
+        ? await normalizeGeneratedImage(buffer, contentType, imageAspectRatio)
+        : { buffer, contentType }
+    const storedBuffer = normalized.buffer
+    const storedContentType = normalized.contentType
+    const dimensions =
+      assetType === 'image'
+        ? await sharp(storedBuffer)
+            .metadata()
+            .then((metadata) => ({
+              width: metadata.width ?? null,
+              height: metadata.height ?? null,
+            }))
+            .catch(() => ({ width: null, height: null }))
+        : { width: null, height: null }
+    const ext = storedContentType.includes('jpeg')
       ? 'jpg'
-      : contentType.includes('webp')
+      : storedContentType.includes('webp')
         ? 'webp'
-        : contentType.includes('mp4') || contentType.includes('video')
+        : storedContentType.includes('mp4') || storedContentType.includes('video')
           ? 'mp4'
           : assetType === 'video'
             ? 'mp4'
@@ -139,8 +158,8 @@ export class ArtifactLegacyMediaUploadService {
 
     const { error: uploadErr } = await this.repository.uploadMediaObject(target.serviceClient, {
       filePath,
-      buffer,
-      contentType,
+      buffer: storedBuffer,
+      contentType: storedContentType,
     })
 
     if (uploadErr) {
@@ -163,8 +182,10 @@ export class ArtifactLegacyMediaUploadService {
         original_filename: filename,
         file_path: filePath,
         bucket_name: 'media',
-        file_size: buffer.length,
-        mime_type: contentType,
+        file_size: storedBuffer.length,
+        mime_type: storedContentType,
+        width: dimensions.width,
+        height: dimensions.height,
         asset_type: assetType,
         category: 'generated',
         campaign_id: campaignId ?? null,
