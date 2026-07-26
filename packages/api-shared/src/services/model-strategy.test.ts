@@ -21,7 +21,7 @@ describe('model strategy routing', () => {
         modelId: 'anthropic/claude-opus-5',
         reason: expect.stringMatching(/^auto_/),
         modelSettings: {
-          context_window_tokens: 250_000,
+          context_window_tokens: 300_000,
           reasoning_effort: 'medium',
           speed_mode: 'standard',
         },
@@ -35,7 +35,7 @@ describe('model strategy routing', () => {
         modelId: 'openai/gpt-5.6-terra',
         reason: expect.stringMatching(/^economy_/),
         modelSettings: {
-          context_window_tokens: 250_000,
+          context_window_tokens: 272_000,
           reasoning_effort: 'low',
           speed_mode: 'standard',
         },
@@ -49,7 +49,7 @@ describe('model strategy routing', () => {
         modelId: 'anthropic/claude-fable-5',
         reason: expect.stringMatching(/^power_/),
         modelSettings: {
-          context_window_tokens: 250_000,
+          context_window_tokens: 300_000,
           reasoning_effort: 'medium',
           speed_mode: 'standard',
         },
