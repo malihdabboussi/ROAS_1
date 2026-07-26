@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: July 25, 2026 (connected-account identity labels)
+Last Modified: July 26, 2026 (Slack Person Brain identity and historical population)
 
 ## Data Flow
 
@@ -47,6 +47,11 @@ Last Modified: July 25, 2026 (connected-account identity labels)
 41. Pixel's native Slack conversation action accepts either one recipient or up to eight unique recipients. A multi-recipient request opens or reuses a Slack group DM, including the requesting Slack user when the request says “with me.” The action returns each participant's resolved Slack display name so Pixel never needs to expose a raw Slack user ID in its response.
 42. Multiple Slack accounts can represent one durable person. Accounts linked by a confirmed portal user, contact, or managed Person Brain inherit that person's manual Internal/External/Ignored classification while retaining separate Slack delivery ids. Slack Connect is transport metadata, not a relationship classification; an unlinked Slack Connect account remains fail-closed until an admin links or classifies it. Display-name similarity never grants trust.
 43. Integration Manage and Library resolve one stable account identity for both display and rename mode. Provider identity wins over generic numbering: Meta uses the Facebook login profile rather than the first client Page, Fathom uses its team, Higgsfield uses OIDC email/name when supplied, Page Grader uses its host, and opaque Codex/Higgsfield ids are masked. Group headers summarize the connected identities so collapsed rows remain distinguishable.
+44. Calendar event creation can target an exact connected account with `user_integration_id`. The mutation receipt returns that account's id, label, provider, and default status; an unavailable requested account fails before provider execution instead of silently falling back to another calendar.
+45. Slack-origin agent conversations are organization-scoped. They no longer inherit a recent campaign id. Portfolio questions enumerate accessible client campaigns and compare their dashboard alerts, while named campaign questions still resolve the relevant campaign explicitly.
+46. Slack thread replies load the preceding root and replies before invoking Pixel. Pronouns and short confirmations therefore retain proactive-message context without requiring the user to resend a screenshot.
+47. Slack profile refreshes preserve the immutable Slack identity and its existing `person_brain_id`. For organization-managed Person Brains only, an updated Slack display name or avatar refreshes the auto-generated Brain profile without overwriting a custom Brain name or image. Names are never used to merge people, so a renamed internal teammate and a separate external client with the same display name remain distinct.
+48. Creating a Person Brain provisions its durable identity container; it does not replay Slack history by itself. Team → People exposes **Populate brains**, which starts one bounded 90-day backfill across enabled Slack Brain channel mappings. Each channel is fetched once by the existing import runtime and then fanned out to the linked Person Brains, while recurring Team Intelligence continues adding only new, high-confidence facts.
 
 ## Code Examples
 
@@ -128,6 +133,11 @@ Reconnect result:
 - Multiple personal connections per integration are allowed; reuse is skipped when `force_new` is set.
 - Overview must sync personal Composio accounts by `composio_connected_account_id`, not by collapsing to one account per `integration_id` (that stamped the newest account onto the wrong row and showed duplicate emails).
 - Home Agenda merges events from every connected Google Calendar / Outlook account (not only the first). Events carry `account_label`; sending/invites use the personal or org `is_default` connection (star in Integrations).
+- A calendar write with multiple connected accounts must resolve the intended account first and pass its `user_integration_id`. Creation reports the exact returned account label; Pixel must never guess the account or ask the user to inspect calendars after the write.
+- Slack is an organization surface, not an implicit campaign surface. Plural or portfolio performance questions inspect accessible client campaigns and distinguish missing/partial reporting from genuine KPI alerts. Explicit client names may narrow the scope.
+- Slack reply context includes the thread root and preceding replies. Short follow-ups such as “it,” “yes,” or “this” are interpreted against that source thread rather than a detached agent conversation.
+- Person Brain ownership follows `channel_members.person_brain_id`, never a mutable Slack name. A profile rename updates only auto-managed Brain presentation metadata; it cannot connect that teammate to another same-name contact.
+- **Populate brains** is the explicit historical ingestion control. It excludes DMs and Ignored people, respects enabled channel mappings, and queues shared channel imports instead of fetching the same channel once per person. Continuous compounding remains incremental and evidence-gated.
 - Library and Manage show the same connected-account list + “Add another account” for providers that already have a connection (Library is not Connect/trash-only once connected).
 - Expired Composio accounts are treated as `needs_reconnect`, not silently kept as healthy connected rows.
 - The repair-card action contract stays small: `connect`, `reconnect`, `open_settings`, and `use_connection`.

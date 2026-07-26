@@ -2,10 +2,14 @@
 
 import { useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, ChevronDown, ChevronRight } from 'lucide-react'
+import { Check, ChevronRight, Plus, X } from 'lucide-react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { useCachedSpaces } from '@/features/spaces/hooks/use-cached-spaces'
-import { WORK_SURFACE_LABELS } from '../config/work-context.config'
+import {
+  WORK_SURFACE_LABELS,
+  workContextAttachmentDescription,
+  workContextAttachmentLabel,
+} from '../config/work-context.config'
 import type { GlobalWorkSurface } from '../lib/global-chat-storage'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 import { useGlobalChatWorkContextMenu } from './use-global-chat-work-context-menu'
@@ -16,40 +20,78 @@ const SPACE_SUBMENU_WIDTH = 220
 export function GlobalChatComposerFooter() {
   const workContext = useGlobalChatStore((s) => s.workContext)
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
+  const activeAgentKey = useGlobalChatStore((s) => s.activeAgentKey)
+  const roster = useGlobalChatStore((s) => s.roster)
   const { data: spaceRows } = useCachedSpaces()
   const spaces = useMemo(() => spaceRows ?? [], [spaceRows])
   const menu = useGlobalChatWorkContextMenu()
 
-  const surfaces = Object.keys(WORK_SURFACE_LABELS) as GlobalWorkSurface[]
-  const selectedSpaceTitle =
-    spaces.find((space) => space.id === workContext.spaceId)?.title ?? 'Select space'
-
-  const triggerLabel =
-    workContext.surface === 'spaces' && workContext.spaceId
-      ? selectedSpaceTitle
-      : workContext.surface === 'team' && workContext.teamOpsLabel
-        ? workContext.teamOpsLabel
-        : WORK_SURFACE_LABELS[workContext.surface]
+  const surfaces = (Object.keys(WORK_SURFACE_LABELS) as GlobalWorkSurface[]).filter(
+    (surface) => surface !== 'general',
+  )
+  const selectedSpaceTitle = spaces.find((space) => space.id === workContext.spaceId)?.title
+  const attachmentLabel = workContextAttachmentLabel(workContext, selectedSpaceTitle)
+  const activeAgentName =
+    roster.find((entry) => entry.agent_key === activeAgentKey)?.display_name?.trim() ||
+    activeAgentKey
+  const attachmentDescription = workContextAttachmentDescription(workContext, {
+    activeAgentName,
+    spaceTitle: selectedSpaceTitle,
+  })
 
   const portalTarget = typeof document === 'undefined' ? null : document.body
 
   return (
-    <div className="relative flex min-w-0 items-center">
-      <Tooltip label="Work context">
-        <button
-          ref={menu.buttonRef}
-          type="button"
-          onClick={menu.toggle}
-          className="text-muted-foreground hover:text-foreground flex h-8 max-w-[160px] items-center gap-1 rounded-full px-2 transition-colors"
-          aria-expanded={menu.open}
-          aria-haspopup="listbox"
-        >
-          <span className="typo-caption text-foreground min-w-0 truncate font-medium">
-            {triggerLabel}
-          </span>
-          <ChevronDown className="h-3 w-3 shrink-0" aria-hidden />
-        </button>
-      </Tooltip>
+    <div className="gap-spacing-1 flex min-w-0 items-center">
+      {attachmentLabel ? (
+        <>
+          <div className="badge-glass badge-glass-sm badge-glass-purple gap-spacing-1 flex min-w-0 items-center font-medium">
+            <button
+              type="button"
+              onClick={() => setWorkContext({ surface: 'general' })}
+              className="hover:text-foreground shrink-0"
+              aria-label={`Detach ${attachmentLabel} from chat`}
+            >
+              <X className="icon-xs" aria-hidden />
+            </button>
+            <Tooltip
+              label={attachmentDescription ?? attachmentLabel}
+              wide
+              delayMs={200}
+              triggerClassName="min-w-0"
+            >
+              <span className="block min-w-0 truncate">{attachmentLabel}</span>
+            </Tooltip>
+          </div>
+          <Tooltip label="Add or change context">
+            <button
+              ref={menu.buttonRef}
+              type="button"
+              onClick={menu.toggle}
+              className="btn-icon-bare-sm text-muted-foreground hover:text-foreground shrink-0"
+              aria-label="Add or change context"
+              aria-expanded={menu.open}
+              aria-haspopup="listbox"
+            >
+              <Plus className="icon-xs" aria-hidden />
+            </button>
+          </Tooltip>
+        </>
+      ) : (
+        <Tooltip label="Add context">
+          <button
+            ref={menu.buttonRef}
+            type="button"
+            onClick={menu.toggle}
+            className="body-4 text-muted-foreground hover:text-foreground gap-spacing-1 px-spacing-1 py-spacing-1 flex items-center bg-transparent transition-colors"
+            aria-expanded={menu.open}
+            aria-haspopup="listbox"
+          >
+            <Plus className="icon-xs shrink-0" aria-hidden />
+            <span className="font-medium">Add context</span>
+          </button>
+        </Tooltip>
+      )}
 
       {menu.open && portalTarget
         ? createPortal(

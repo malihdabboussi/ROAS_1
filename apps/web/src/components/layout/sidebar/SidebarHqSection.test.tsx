@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactNode } from 'react'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { SidebarHqSection } from './SidebarHqSection'
@@ -289,5 +289,29 @@ describe('SidebarHqSection', () => {
 
     expect(screen.queryByRole('button', { name: 'Open AI Chats' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Collapse AI Chats' })).not.toBeInTheDocument()
+  })
+
+  it('peeks the chat-history restore control from the R sidebar when history is collapsed', () => {
+    useShellStore.setState({
+      chatDrawer: { open: true, conversationId: null, width: 420, minimized: false },
+      chatHistoryCollapsed: true,
+    })
+    const controller = makeSidebarHqController({
+      mobileDrawerOpen: false,
+      pathname: '/home',
+    })
+
+    render(<SidebarHqSection c={controller} />)
+
+    const restoreHistory = screen.getByRole('button', { name: 'Show chat history' })
+    expect(restoreHistory).toHaveClass(
+      'absolute',
+      'right-0',
+      'translate-x-full',
+      'nav-glass-text-purple',
+    )
+    expect(restoreHistory).not.toHaveClass('btn-icon-bare-sm', 'nav-glass-selected-purple')
+    fireEvent.click(restoreHistory)
+    expect(useShellStore.getState().chatHistoryCollapsed).toBe(false)
   })
 })

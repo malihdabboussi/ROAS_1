@@ -14,6 +14,7 @@ export interface AddPeopleToChannelModalProps {
   channel: Channel | null
   purpose?: AddPeopleToChannelPurpose
   existingMemberKeys?: Set<string>
+  initialSelectedEntries?: TeamRosterEntry[]
   onMembersAdded?: () => void
   roster: TeamRosterEntry[]
   currentUserId: string | null
@@ -31,6 +32,7 @@ export function channelMembersToRosterKeys(members: ChannelMember[]): Set<string
 }
 
 const EMPTY_KEY_SET = new Set<string>()
+const EMPTY_ROSTER: TeamRosterEntry[] = []
 
 function rosterKey(entry: TeamRosterEntry): string | null {
   if (entry.kind === 'human' && entry.user_id) return `human:${entry.user_id}`
@@ -66,6 +68,7 @@ export function AddPeopleToChannelModal({
   channel,
   purpose = 'afterCreate',
   existingMemberKeys,
+  initialSelectedEntries,
   onMembersAdded,
   roster,
   currentUserId,
@@ -73,6 +76,7 @@ export function AddPeopleToChannelModal({
   onAddMembers,
 }: AddPeopleToChannelModalProps) {
   const blockedMemberKeys = existingMemberKeys ?? EMPTY_KEY_SET
+  const initialSelection = initialSelectedEntries ?? EMPTY_ROSTER
   const [selected, setSelected] = useState<TeamRosterEntry[]>([])
   const [search, setSearch] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -90,13 +94,13 @@ export function AddPeopleToChannelModal({
   )
 
   const reset = useCallback(() => {
-    setSelected([])
+    setSelected(initialSelection)
     setSearch('')
     setDropdownOpen(false)
     setSkipPanelVisible(false)
     setSubmitting(false)
     setActionError(null)
-  }, [])
+  }, [initialSelection])
 
   useEffect(() => {
     reset()
@@ -204,7 +208,7 @@ export function AddPeopleToChannelModal({
           }}
         >
           <div
-            className="surface-card wizard-container-border rounded-spacing-4 relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-visible border bg-card shadow-2xl"
+            className="surface-card wizard-container-border rounded-spacing-4 bg-card relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-visible border shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="px-spacing-6 pt-spacing-4 pb-spacing-2 shrink-0">
@@ -267,7 +271,7 @@ export function AddPeopleToChannelModal({
                 {dropdownOpen && filteredResults.length > 0 && (
                   <div
                     ref={dropdownRef}
-                    className="border-border bg-card rounded-spacing-2 z-dropdown absolute left-0 right-0 top-full mt-spacing-1 max-h-56 overflow-y-auto border shadow-lg"
+                    className="border-border bg-card rounded-spacing-2 z-dropdown mt-spacing-1 absolute left-0 right-0 top-full max-h-56 overflow-y-auto border shadow-lg"
                   >
                     {filteredResults.map((entry) => {
                       const key = rosterKey(entry)
@@ -288,9 +292,7 @@ export function AddPeopleToChannelModal({
                               {entry.display_name}
                             </p>
                             {entry.email && (
-                              <p className="body-4 text-muted-foreground truncate">
-                                {entry.email}
-                              </p>
+                              <p className="body-4 text-muted-foreground truncate">{entry.email}</p>
                             )}
                           </div>
                           {entry.kind === 'agent' && (
@@ -305,7 +307,7 @@ export function AddPeopleToChannelModal({
                 )}
 
                 {dropdownOpen && search.trim() && filteredResults.length === 0 && (
-                  <div className="border-border bg-card rounded-spacing-2 z-dropdown absolute left-0 right-0 top-full mt-spacing-1 border shadow-lg">
+                  <div className="border-border bg-card rounded-spacing-2 z-dropdown mt-spacing-1 absolute left-0 right-0 top-full border shadow-lg">
                     <p className="body-3 text-muted-foreground px-spacing-4 py-spacing-3">
                       No results for "{search}"
                     </p>
@@ -351,7 +353,9 @@ export function AddPeopleToChannelModal({
                 disabled={submitting || selected.length === 0}
                 className="button-default button-glass-primary disabled:pointer-events-none disabled:opacity-40"
               >
-                {submitting ? 'Adding...' : `Add${selected.length > 0 ? ` ${selected.length}` : ''}`}
+                {submitting
+                  ? 'Adding...'
+                  : `Add${selected.length > 0 ? ` ${selected.length}` : ''}`}
               </button>
             </div>
 

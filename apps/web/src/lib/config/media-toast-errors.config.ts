@@ -54,6 +54,15 @@ export const MEDIA_TOAST_ERRORS = {
   CANVA_HANDOFF_FAILED: {
     userMessage: "Couldn't open in Canva. Try again.",
   },
+  IMAGE_EDIT_FAILED: {
+    userMessage: "Couldn't create that edit. Try again.",
+  },
+  IMAGE_GENERATION_FAILED: {
+    userMessage: "Couldn't create that image. Try again.",
+  },
+  VOICE_INPUT_FAILED: {
+    userMessage: "Couldn't capture voice input. Try again.",
+  },
 } as const
 
 /** User-facing toast messages for media success */

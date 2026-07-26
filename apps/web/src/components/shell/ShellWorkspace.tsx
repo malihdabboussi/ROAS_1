@@ -29,6 +29,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const openChatDrawer = useShellStore((s) => s.openChatDrawer)
   const requestNewChat = useShellStore((s) => s.requestNewChat)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
+  const artifactTarget = useShellStore((s) => s.artifactViewer.target)
 
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
   const activeConversationId = useChatStore((s) => s.activeConversationId)
@@ -112,12 +113,11 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   // drawer expands to fill the freed space so chat history never disappears.
   const showChatDrawer = workAreaCollapsible
 
-  // Remember the open page width so the body can stay right-anchored while the
-  // clip shrinks/grows — otherwise flex growth reveals the page from the left.
-  const WORK_AREA_SLIDE_MS = 300
+  // Remember the open page width so one right-anchored surface can be clipped by
+  // the work-area transition without the page and its background moving separately.
+  const WORK_AREA_TRANSITION_MS = 300
   const workAreaRef = useRef<HTMLDivElement>(null)
   const [anchoredWidth, setAnchoredWidth] = useState<number | null>(null)
-  const [workAreaBodyCollapsed, setWorkAreaBodyCollapsed] = useState(workAreaCollapsed)
   const wasWorkAreaCollapsedRef = useRef(workAreaCollapsed)
   const workAreaAnimatingRef = useRef(false)
 
@@ -160,56 +160,46 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     const wasCollapsed = wasWorkAreaCollapsedRef.current
     wasWorkAreaCollapsedRef.current = workAreaCollapsed
+    if (wasCollapsed === workAreaCollapsed) return
 
+    workAreaAnimatingRef.current = true
     if (workAreaCollapsed) {
       const width = measureWorkAreaTargetWidth()
       if (width > 0) setAnchoredWidth(width)
-      workAreaAnimatingRef.current = true
-      setWorkAreaBodyCollapsed(true)
-      return
     }
-    if (!wasCollapsed) {
-      workAreaAnimatingRef.current = false
-      return
-    }
-    // Collapsed → open: keep the page beyond the right edge for one frame.
-    // Removing the class in the same render as the wrapper expands skips the
-    // transform transition and makes the page appear to enter from the left.
-    workAreaAnimatingRef.current = true
-    setWorkAreaBodyCollapsed(true)
-    const frame = window.requestAnimationFrame(() => {
-      setWorkAreaBodyCollapsed(false)
-    })
+
     const timer = setTimeout(() => {
-      const width = measureWorkAreaTargetWidth()
-      if (width > 0) setAnchoredWidth(width)
+      if (!workAreaCollapsed) {
+        const width = measureWorkAreaTargetWidth()
+        if (width > 0) setAnchoredWidth(width)
+      }
       workAreaAnimatingRef.current = false
-    }, WORK_AREA_SLIDE_MS)
-    return () => {
-      window.cancelAnimationFrame(frame)
-      clearTimeout(timer)
-    }
+    }, WORK_AREA_TRANSITION_MS)
+    return () => clearTimeout(timer)
   }, [measureWorkAreaTargetWidth, workAreaCollapsed])
 
   const bodyAnchored = anchoredWidth != null && anchoredWidth > 0
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+      <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden">
         {showChatDrawer ? <ShellChatDrawer expanded={workAreaCollapsed} /> : null}
 
         {/* Keep the page mounted while collapsed so docs/tasks/tabs survive expand. */}
         <div
           ref={workAreaRef}
-          className={cn('shell-work-area', workAreaCollapsed && 'shell-work-area-collapsed')}
-          aria-hidden={workAreaCollapsed}
+          className={cn(
+            artifactTarget ? 'hidden' : 'shell-work-area',
+            !artifactTarget && workAreaCollapsed && 'shell-work-area-collapsed',
+          )}
+          aria-hidden={workAreaCollapsed || Boolean(artifactTarget)}
+          data-shell-work-area
         >
           <div
             className={cn(
               'shell-work-area-body',
               workAreaCollapsible && 'shell-work-area-body-anchored',
               workAreaCollapsible && !bodyAnchored && 'invisible',
-              workAreaCollapsible && workAreaBodyCollapsed && 'shell-work-area-body-collapsed',
             )}
             style={bodyAnchored ? { width: `${anchoredWidth}px` } : undefined}
           >
@@ -217,7 +207,15 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <ShellArtifactViewerAdapter />
+        <div
+          className={cn(
+            'min-w-0 flex-1',
+            artifactTarget && 'flex',
+            (!artifactTarget || workAreaCollapsed) && 'hidden',
+          )}
+        >
+          <ShellArtifactViewerAdapter />
+        </div>
         <ShellRightPanel conversationId={summaryConversationId} />
       </div>
     </div>

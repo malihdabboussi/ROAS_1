@@ -237,10 +237,10 @@ describe('ShellChatDrawer', () => {
     expect(useShellStore.getState().chatHistoryCollapsed).toBe(true)
     expect(useShellStore.getState().chatDrawer.width).toBe(420)
     expect(screen.getByText('Chat panel')).toBeInTheDocument()
-    expect(container.querySelector('[aria-label="Show chat history"]')).not.toBeNull()
+    expect(container.querySelector('[aria-label="Show chat history"]')).toBeNull()
   })
 
-  it('restores collapsed chat history without closing the active chat', () => {
+  it('keeps collapsed history controls out of the active chat canvas', () => {
     useShellStore.setState({
       chatDrawer: {
         open: true,
@@ -252,14 +252,8 @@ describe('ShellChatDrawer', () => {
     })
 
     const { container } = render(<ShellChatDrawer />)
-    const showHistory = container.querySelector<HTMLButtonElement>(
-      '[aria-label="Show chat history"]',
-    )
-    expect(showHistory).not.toBeNull()
-    fireEvent.click(showHistory!)
-
-    expect(useShellStore.getState().chatHistoryCollapsed).toBe(false)
-    expect(screen.getByText('Chat history')).toBeInTheDocument()
+    expect(container.querySelector('[data-shell-chat-history-collapsed]')).toBeNull()
+    expect(container.querySelector('[aria-label="Show chat history"]')).toBeNull()
     expect(screen.getByText('Chat panel')).toBeInTheDocument()
   })
 

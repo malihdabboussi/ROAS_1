@@ -4,11 +4,12 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { ArrowRight, Component, X } from 'lucide-react'
 import type { ChannelMember, ChannelMention, ChannelMessage } from '@/lib/channels'
 import type { MissionDeliverable } from '@/lib/missions'
+import type { TeamRosterEntry } from '@/lib/team'
+import { extractDeliverablesFromMessage } from '../lib/channel-deliverables'
 import { ChannelComposer } from './ChannelComposer'
 import { ChannelMessageBubble } from './ChannelMessageBubble'
 import { ThreadParticipants, type ThreadParticipant } from './ChannelThreadParticipants'
 import { ThreadInlineProgress } from './ThreadInlineProgress'
-import { extractDeliverablesFromMessage } from '../lib/channel-deliverables'
 
 function getSenderMeta(
   message: ChannelMessage,
@@ -35,7 +36,6 @@ function getSenderMeta(
     avatarUrl: member?.profile?.avatar_url ?? rosterAvatar,
   }
 }
-
 export function ChannelThreadPanel({
   parentMessageId,
   messages,
@@ -44,6 +44,8 @@ export function ChannelThreadPanel({
   channelId,
   campaignId,
   rosterAvatars,
+  mentionRoster,
+  onEnsureMentionMembers,
   onClose,
   onSendReply,
   onEditMessage,
@@ -61,6 +63,8 @@ export function ChannelThreadPanel({
   /** Resolved campaign for the active space — used to scope channel uploads. */
   campaignId?: string | null
   rosterAvatars?: Map<string, string>
+  mentionRoster?: TeamRosterEntry[]
+  onEnsureMentionMembers?: (mentions: ChannelMention[]) => Promise<boolean>
   onClose: () => void
   onSendReply: (payload: {
     content: string
@@ -94,12 +98,10 @@ export function ChannelThreadPanel({
     }
     requestAnimationFrame(() => attempt(6))
   }, [])
-
   const parentMessage = useMemo(
     () => messages.find((m) => m.id === parentMessageId) ?? null,
     [messages, parentMessageId],
   )
-
   const replies = useMemo(
     () =>
       messages
@@ -385,6 +387,12 @@ export function ChannelThreadPanel({
             draftStorageKey={`vibey-channel-draft:${channelId}:thread:${parentMessageId}`}
             members={members}
             rosterAvatars={rosterAvatars}
+            mentionRoster={mentionRoster}
+            onBeforeSend={(payload) =>
+              onEnsureMentionMembers
+                ? onEnsureMentionMembers(payload.mentions)
+                : Promise.resolve(true)
+            }
             onSend={(payload) => void onSendReply(payload)}
           />
         </div>

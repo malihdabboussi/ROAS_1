@@ -56,7 +56,7 @@ describe('SpaceChatAgentEmptyState', () => {
   it('shows the active agent identity as the hero', () => {
     const { container } = render(<SpaceChatAgentEmptyState agent={agent} />)
     expect(screen.getByText('Pixel')).toBeInTheDocument()
-    expect(screen.getByText('Marketing OS')).toBeInTheDocument()
+    expect(screen.queryByText('Marketing OS')).not.toBeInTheDocument()
     expect(container.querySelector('img')).toHaveAttribute('src', '/pixel-avatar.png')
   })
 

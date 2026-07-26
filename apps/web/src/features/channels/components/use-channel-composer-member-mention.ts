@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Mention } from '@tiptap/extension-mention'
 import type { ChannelMember } from '@/lib/channels'
+import type { TeamRosterEntry } from '@/lib/team'
 import { buildMentionCandidates } from '../lib/mention-parser'
 
 interface MemberMentionItem {
@@ -30,19 +31,21 @@ const EMPTY_MEMBER_MENTION: MemberMentionState = {
 export function useChannelComposerMemberMention({
   members,
   rosterAvatars,
+  roster,
 }: {
   members: ChannelMember[]
   rosterAvatars?: Map<string, string>
+  roster?: TeamRosterEntry[]
 }) {
   const [mention, setMention] = useState<MemberMentionState>(EMPTY_MEMBER_MENTION)
   const [mentionPos, setMentionPos] = useState({ top: 0, left: 0 })
   const mentionRef = useRef<HTMLDivElement>(null)
-  const candidatesRef = useRef(buildMentionCandidates(members, rosterAvatars))
+  const candidatesRef = useRef(buildMentionCandidates(members, rosterAvatars, roster))
   const mentionStateRef = useRef<MemberMentionState>(EMPTY_MEMBER_MENTION)
 
   useEffect(() => {
-    candidatesRef.current = buildMentionCandidates(members, rosterAvatars)
-  }, [members, rosterAvatars])
+    candidatesRef.current = buildMentionCandidates(members, rosterAvatars, roster)
+  }, [members, rosterAvatars, roster])
 
   useEffect(() => {
     mentionStateRef.current = mention

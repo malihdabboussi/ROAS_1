@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { MEDIA_TOAST_ERRORS } from '@/lib/config/media-toast-errors.config'
 import {
   deleteAsset,
   fetchImageGenerationModels,
@@ -27,6 +28,7 @@ export function useMediaImageGeneration({
   open,
   campaignId,
   spaceId,
+  conversationId,
   extraTags,
   loadCreations = true,
   onGenerationComplete,
@@ -39,6 +41,7 @@ export function useMediaImageGeneration({
   const [isLoadingModels, setIsLoadingModels] = useState(false)
   const [referenceAssetId, setReferenceAssetId] = useState<string | null>(null)
   const [referencePreviewUrl, setReferencePreviewUrl] = useState<string | null>(null)
+  const [additionalReferenceAssetIds, setAdditionalReferenceAssetIds] = useState<string[]>([])
 
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -53,11 +56,23 @@ export function useMediaImageGeneration({
   const clearReference = useCallback(() => {
     setReferenceAssetId(null)
     setReferencePreviewUrl(null)
+    setAdditionalReferenceAssetIds([])
   }, [])
 
   const setReference = useCallback((assetId: string, previewUrl: string) => {
     setReferenceAssetId(assetId)
     setReferencePreviewUrl(previewUrl)
+    setAdditionalReferenceAssetIds([])
+  }, [])
+
+  const addReferenceAsset = useCallback((assetId: string) => {
+    setAdditionalReferenceAssetIds((current) =>
+      current.includes(assetId) ? current : [...current, assetId].slice(0, 4),
+    )
+  }, [])
+
+  const removeReferenceAsset = useCallback((assetId: string) => {
+    setAdditionalReferenceAssetIds((current) => current.filter((id) => id !== assetId))
   }, [])
 
   const fetchCreations = useCallback(async () => {
@@ -129,9 +144,17 @@ export function useMediaImageGeneration({
 
   const supportedAspectRatios = useMemo(() => {
     const fromApi = selectedModelInfo?.supportedAspectRatios
-    if (fromApi?.length) return fromApi as CoverAspectRatio[]
-    return ['1:1', '16:9', '9:16', '3:2', '4:3'] as CoverAspectRatio[]
-  }, [selectedModelInfo])
+    const knownModel = FALLBACK_IMAGE_MODELS.find((model) => model.id === selectedModel)
+    if (fromApi?.length) {
+      return Array.from(
+        new Set([...(fromApi as CoverAspectRatio[]), ...(knownModel?.supportedAspectRatios ?? [])]),
+      ) as CoverAspectRatio[]
+    }
+    if (knownModel?.supportedAspectRatios.length) {
+      return knownModel.supportedAspectRatios as CoverAspectRatio[]
+    }
+    return ['1:1', '16:9', '9:16', '3:4', '3:2', '4:3'] as CoverAspectRatio[]
+  }, [selectedModel, selectedModelInfo])
 
   useEffect(() => {
     if (!supportedAspectRatios.length) return
@@ -185,7 +208,7 @@ export function useMediaImageGeneration({
         },
         onComplete: applyComplete,
         onError: (msg: string) => {
-          setProgressMessage(msg)
+          setProgressMessage(msg || MEDIA_TOAST_ERRORS.IMAGE_EDIT_FAILED.userMessage)
         },
       }
 
@@ -200,7 +223,9 @@ export function useMediaImageGeneration({
           referenceAssetId,
           campaignId,
           spaceId,
+          conversationId,
           extraTags,
+          additionalReferenceAssetIds,
           handlers: streamHandlers,
           signal: controller.signal,
         })
@@ -211,9 +236,9 @@ export function useMediaImageGeneration({
         setProgressMessage(
           aborted
             ? 'Image generation timed out. Try again or switch models.'
-            : err instanceof Error
-              ? err.message
-              : 'Image generation failed',
+            : referenceAssetId
+              ? MEDIA_TOAST_ERRORS.IMAGE_EDIT_FAILED.userMessage
+              : MEDIA_TOAST_ERRORS.IMAGE_GENERATION_FAILED.userMessage,
         )
       } finally {
         clearTimeout(timeout)
@@ -226,11 +251,13 @@ export function useMediaImageGeneration({
       aspectRatio,
       campaignId,
       spaceId,
+      conversationId,
       fetchCreations,
       selectedModel,
       imageCount,
       extraTags,
       referenceAssetId,
+      additionalReferenceAssetIds,
       applyComplete,
     ],
   )
@@ -296,5 +323,8 @@ export function useMediaImageGeneration({
     referencePreviewUrl,
     setReference,
     clearReference,
+    additionalReferenceAssetIds,
+    addReferenceAsset,
+    removeReferenceAsset,
   }
 }

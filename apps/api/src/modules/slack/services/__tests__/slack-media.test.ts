@@ -407,17 +407,15 @@ describe('SlackService media helpers', () => {
       expect(updateQuery.eq).toHaveBeenCalledWith('org_id', 'org-1')
     })
 
-    it('backfills a default campaign on an existing Slack conversation without one', async () => {
+    it('keeps Slack conversations organization-scoped instead of attaching a recent campaign', async () => {
       const service = createServiceWithRepository()
       const conversationLookup = createThenableQuery({
-        data: { id: 'conversation-1', campaign_id: null, title: 'Slack Chat' },
+        data: { id: 'conversation-1', campaign_id: 'campaign-1', title: 'Slack Chat' },
         error: null,
       })
-      const campaignLookup = createThenableQuery({ data: { id: 'campaign-1' }, error: null })
       const conversationUpdate = createThenableQuery({ error: null })
       const supabase = {
         from: vi.fn((table: string) => {
-          if (table === 'campaigns') return campaignLookup
           if (table === 'conversations') {
             return supabase.from.mock.calls.filter(([name]) => name === 'conversations').length ===
               1
@@ -440,8 +438,8 @@ describe('SlackService media helpers', () => {
 
       expect(result).toEqual({ id: 'conversation-1', title: expect.anything() })
       expect(result.id).toBe('conversation-1')
-      expect(conversationUpdate.update).toHaveBeenCalledWith({ campaign_id: 'campaign-1' })
-      expect(conversationUpdate.eq).toHaveBeenCalledWith('id', 'conversation-1')
+      expect(supabase.from).not.toHaveBeenCalledWith('campaigns')
+      expect(conversationUpdate.update).toHaveBeenCalledWith({ campaign_id: null })
     })
   })
 

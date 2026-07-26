@@ -32,7 +32,9 @@ describe('MyTasksPanel', () => {
 
     const search = screen.getByPlaceholderText('Search tasks…')
     expect(search).toHaveClass('input-glass')
+    expect(search).toHaveClass('input-leading')
     expect(search.parentElement).not.toHaveClass('input-glass')
+    expect(search.parentElement?.querySelector('svg')).toHaveClass('icon-left-center')
     expect(container.firstElementChild).toHaveClass('border-0')
   })
 })

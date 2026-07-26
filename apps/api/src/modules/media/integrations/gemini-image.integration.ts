@@ -117,6 +117,7 @@ export class GeminiImageIntegration {
     aspectRatio: string,
     openRouterModelSlug: string,
     options?: { userId?: string; orgId?: string | null; campaignId?: string | null },
+    inputImages?: Array<{ buffer: Buffer; mimeType: string }>,
   ): Promise<{ buffer: Buffer; mimeType: string }> {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 120_000)
@@ -134,10 +135,15 @@ export class GeminiImageIntegration {
         model: openRouterModelSlug,
         prompt,
         aspectRatio,
+        inputReferences: inputImages?.map((image) => ({
+          base64: image.buffer.toString('base64'),
+          mimeType: image.mimeType,
+        })),
         signal: controller.signal,
         metadata: {
           aspect_ratio: aspectRatio,
           fixed_price_customer_billing: true,
+          input_images_count: inputImages?.length ?? 0,
         },
       })
       this.logger.log(
@@ -275,14 +281,37 @@ export class GeminiImageIntegration {
   }
 
   async editImage(
-    parentImage: { buffer: Buffer; mimeType: string },
+    inputImages: Array<{ buffer: Buffer; mimeType: string }>,
     prompt: string,
     aspectRatio: string = '16:9',
-    options?: { model?: ImageGenerationModelId },
+    options?: {
+      model?: ImageGenerationModelId
+      userId?: string
+      orgId?: string | null
+      campaignId?: string | null
+    },
   ): Promise<{ buffer: Buffer; mimeType: string }> {
     const model = options?.model ?? this.primaryModel
+    if (inputImages.length === 0) {
+      throw new Error('At least one source image is required')
+    }
+    if (model === 'gpt-5.4-image-2') {
+      if (!this.openRouterConfigured) {
+        throw new Error('OPENROUTER_API_KEY not configured')
+      }
+      this.logger.log(
+        `Editing image (model=${model} via OpenRouter): "${prompt.slice(0, 80)}..." [${aspectRatio}]`,
+      )
+      return this.generateViaOpenRouter(
+        prompt,
+        aspectRatio,
+        this.openRouterGptImageSlug,
+        options,
+        inputImages,
+      )
+    }
     if (!this.isGeminiImageModel(model)) {
-      throw new Error(`Image edit is only supported for Gemini models (got ${model})`)
+      throw new Error(`Unsupported image edit model: ${model}`)
     }
     if (!this.apiKey) {
       throw new Error('GEMINI_API_KEY not configured')
@@ -295,12 +324,12 @@ export class GeminiImageIntegration {
       contents: [
         {
           parts: [
-            {
+            ...inputImages.map((image) => ({
               inlineData: {
-                mimeType: parentImage.mimeType,
-                data: parentImage.buffer.toString('base64'),
+                mimeType: image.mimeType,
+                data: image.buffer.toString('base64'),
               },
-            },
+            })),
             { text: `${prompt}\n\nAspect ratio: ${aspectRatio}` },
           ],
         },

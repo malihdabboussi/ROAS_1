@@ -32,6 +32,80 @@ export function surfaceFromPathname(pathname: string): GlobalWorkSurface {
   return 'general'
 }
 
+export function mergeAttachedWorkContext(
+  current: GlobalWorkContext,
+  patch: Partial<GlobalWorkContext>,
+): GlobalWorkContext {
+  if (patch.surface && (patch.surface !== current.surface || patch.surface === 'general')) {
+    return { surface: patch.surface, ...patch }
+  }
+  return { ...current, ...patch }
+}
+
+export function workContextAttachmentLabel(
+  workContext: GlobalWorkContext,
+  spaceTitle?: string | null,
+): string | null {
+  if (workContext.channelId) {
+    return workContext.channelName?.trim() || 'Slack channel'
+  }
+
+  switch (workContext.surface) {
+    case 'spaces':
+      return spaceTitle?.trim() || WORK_SURFACE_LABELS.spaces
+    case 'brain':
+      return workContext.brainScopeLabel?.trim() || WORK_SURFACE_LABELS.brain
+    case 'team':
+      return workContext.teamOpsLabel?.trim() || WORK_SURFACE_LABELS.team
+    case 'flows':
+      return WORK_SURFACE_LABELS.flows
+    case 'general':
+    default:
+      return null
+  }
+}
+
+interface WorkContextAttachmentDescriptionOptions {
+  activeAgentName?: string | null
+  spaceTitle?: string | null
+}
+
+export function workContextAttachmentDescription(
+  workContext: GlobalWorkContext,
+  options: WorkContextAttachmentDescriptionOptions = {},
+): string | null {
+  const activeAgentName = options.activeAgentName?.trim()
+  const agentDetail = activeAgentName
+    ? ` ${activeAgentName} can use this context while answering.`
+    : ''
+
+  if (workContext.channelId) {
+    const channelName = workContext.channelName?.trim()
+    const label = channelName ? `#${channelName.replace(/^#/, '')}` : 'this Slack channel'
+    return `${label} is attached. The chat can use the channel conversation and available Slack context.${agentDetail}`
+  }
+
+  switch (workContext.surface) {
+    case 'spaces': {
+      const label = options.spaceTitle?.trim() || 'Campaigns'
+      return `${label} is attached as the Space or campaign context. The chat can use its work, artifacts, and campaign knowledge.${agentDetail}`
+    }
+    case 'brain': {
+      const label = workContext.brainScopeLabel?.trim() || 'Brain'
+      return `${label} is attached as the Brain scope. The chat can use knowledge available inside that Brain.${agentDetail}`
+    }
+    case 'team': {
+      const label = workContext.teamOpsLabel?.trim() || 'Team'
+      return `${label} is attached as the team context. The chat can use team members, roles, status, and relevant team operations.${agentDetail}`
+    }
+    case 'flows':
+      return `Flows is attached as the automation context. The chat can use available workflow configuration and run context.${agentDetail}`
+    case 'general':
+    default:
+      return null
+  }
+}
+
 export interface SurfaceRouteRecommendation {
   headline: string
   agentName: string

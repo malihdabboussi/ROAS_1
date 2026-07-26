@@ -62,6 +62,7 @@ export class ArtifactCalendarService {
       location: data.location === null ? null : this.optionalString(data, 'location'),
       attendees: this.attendees(data),
       calendar_id: this.optionalString(data, 'calendar_id'),
+      user_integration_id: this.optionalString(data, 'user_integration_id'),
       create_video_meeting:
         typeof data.create_video_meeting === 'boolean' ? data.create_video_meeting : undefined,
     }

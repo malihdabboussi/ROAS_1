@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import type { AgentInfoPanelTab, MissionAgent } from '@/lib/agents'
-import type { Campaign } from '@/lib/campaigns'
-import { ChatTab } from './tabs/ChatTab'
 import { Team2AgentInfoCollapsedRail } from './Team2AgentInfoCollapsedRail'
 
 const COLLAPSED_INFO_PANEL_WIDTH_PX = 56
@@ -13,36 +12,37 @@ const INFO_PANEL_WIDTH_TRANSITION_MS = 250
 
 interface Team2DetailViewProps {
   agent: MissionAgent
+  children: ReactNode
   infoPanelTab: AgentInfoPanelTab
   showAccessTab: boolean
   onInfoPanelTabChange: (tab: AgentInfoPanelTab) => void
   infoPanel: (onRequestCollapse: () => void) => React.ReactNode
-  assignedCampaigns?: Campaign[]
-  nonGeneralCampaigns?: Campaign[]
-  generalCampaignId?: string
 }
 
 export function Team2DetailView({
   agent,
+  children,
   infoPanelTab,
   showAccessTab,
   onInfoPanelTabChange,
   infoPanel,
-  assignedCampaigns = [],
-  nonGeneralCampaigns = [],
-  generalCampaignId,
 }: Team2DetailViewProps) {
   const [infoPanelCollapsed, setInfoPanelCollapsed] = useState(false)
-  const minimizeChatDrawer = useShellStore((state) => state.minimizeChatDrawer)
+  const openChatDrawer = useShellStore((state) => state.openChatDrawer)
+  const setChatHistoryCollapsed = useShellStore((state) => state.setChatHistoryCollapsed)
+  const requestAgentSwitch = useGlobalChatStore((state) => state.requestAgentSwitch)
+  const setWorkContext = useGlobalChatStore((state) => state.setWorkContext)
 
   useEffect(() => {
     setInfoPanelCollapsed(false)
   }, [agent.agent_key])
 
   useEffect(() => {
-    if (!useShellStore.getState().chatDrawer.open) return
-    minimizeChatDrawer()
-  }, [minimizeChatDrawer])
+    setWorkContext({ surface: 'team' })
+    requestAgentSwitch(agent.agent_key)
+    setChatHistoryCollapsed(false)
+    openChatDrawer(null)
+  }, [agent.agent_key, openChatDrawer, requestAgentSwitch, setChatHistoryCollapsed, setWorkContext])
 
   const infoPanelWidthStyle: CSSProperties = {
     width: infoPanelCollapsed
@@ -53,16 +53,7 @@ export function Team2DetailView({
 
   return (
     <div className="gap-spacing-3 px-spacing-3 pb-spacing-3 pt-spacing-3 flex h-full min-h-0 flex-1 flex-row overflow-hidden">
-      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-          <ChatTab
-            agent={agent}
-            assignedCampaigns={assignedCampaigns}
-            nonGeneralCampaigns={nonGeneralCampaigns}
-            generalCampaignId={generalCampaignId}
-          />
-        </div>
-      </div>
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
       <div
         data-team-agent-info-sidebar
         className="md:pb-spacing-3 relative hidden min-h-0 min-w-0 shrink-0 overflow-hidden will-change-[width] md:flex md:flex-col"

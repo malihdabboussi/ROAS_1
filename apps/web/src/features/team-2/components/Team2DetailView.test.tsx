@@ -1,12 +1,9 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import type { MissionAgent } from '@/lib/agents'
 import { Team2DetailView } from './Team2DetailView'
-
-vi.mock('./tabs/ChatTab', () => ({
-  ChatTab: () => <div>Agent chat</div>,
-}))
 
 vi.mock('./Team2AgentInfoCollapsedRail', () => ({
   Team2AgentInfoCollapsedRail: () => <div>Collapsed agent details</div>,
@@ -28,11 +25,15 @@ describe('Team2DetailView', () => {
       },
       workAreaOpen: true,
     })
+    useGlobalChatStore.setState({
+      activeAgentKey: 'vibey',
+      workContext: { surface: 'general' },
+    })
   })
 
   afterEach(cleanup)
 
-  it('minimizes the global AI chat so the agent page has one composer', () => {
+  it('opens the canonical chat filtered to the selected agent', () => {
     render(
       <Team2DetailView
         agent={agent}
@@ -40,11 +41,17 @@ describe('Team2DetailView', () => {
         showAccessTab={false}
         onInfoPanelTabChange={vi.fn()}
         infoPanel={() => <div>Agent details</div>}
-      />,
+      >
+        <div>Agents grid remains visible</div>
+      </Team2DetailView>,
     )
 
-    expect(screen.getByText('Agent chat')).toBeInTheDocument()
-    expect(useShellStore.getState().chatDrawer.open).toBe(false)
-    expect(useShellStore.getState().chatDrawer.minimized).toBe(true)
+    expect(screen.getByText('Agent details')).toBeTruthy()
+    expect(screen.getByText('Agents grid remains visible')).toBeTruthy()
+    expect(useShellStore.getState().chatDrawer.open).toBe(true)
+    expect(useShellStore.getState().chatDrawer.conversationId).toBeNull()
+    expect(useShellStore.getState().chatHistoryCollapsed).toBe(false)
+    expect(useGlobalChatStore.getState().activeAgentKey).toBe('reed')
+    expect(useGlobalChatStore.getState().workContext.surface).toBe('team')
   })
 })

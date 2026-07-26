@@ -26,6 +26,12 @@ export type ShellArtifactViewerState = {
   width: number
 }
 
+export type ShellWorkAreaPageTarget = {
+  id: string
+  title: string
+  href: string
+}
+
 type PersistedShell = {
   sidebarPinned?: boolean
   menuMode?: ShellMenuMode
@@ -93,6 +99,8 @@ interface ShellStore {
   workAreaOpen: boolean
   rightPanel: ShellRightPanelState
   artifactViewer: ShellArtifactViewerState
+  recentArtifactTargets: ShellArtifactViewerTarget[]
+  recentWorkAreaPages: ShellWorkAreaPageTarget[]
   newChatNonce: number
   /** Bumped to close HQ dock flyouts (Home/Work, pin). */
   sidebarFlyoutCloseEpoch: number
@@ -122,6 +130,7 @@ interface ShellStore {
   openArtifactViewer: (target: ShellArtifactViewerTarget) => void
   closeArtifactViewer: () => void
   setArtifactViewerWidth: (width: number) => void
+  recordWorkAreaPage: (target: ShellWorkAreaPageTarget) => void
   requestNewChat: () => void
   /** Fresh chat in the docked left drawer (workspace routes); stays on current page. */
   openFreshChatDrawer: () => void
@@ -154,6 +163,8 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     target: null,
     width: 480,
   },
+  recentArtifactTargets: [],
+  recentWorkAreaPages: [],
   newChatNonce: 0,
   sidebarFlyoutCloseEpoch: 0,
   pageBreadcrumb: null,
@@ -264,7 +275,6 @@ export const useShellStore = create<ShellStore>((set, get) => ({
       set((s) => ({
         workAreaOpen: false,
         chatDrawer: { ...s.chatDrawer, open: true, minimized: false },
-        artifactViewer: { ...s.artifactViewer, target: null },
       }))
       return
     }
@@ -298,8 +308,14 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     writePersisted({ rightPanelOpen: false })
     set((s) => ({
       artifactViewer: { ...s.artifactViewer, target },
+      recentArtifactTargets: [
+        target,
+        ...s.recentArtifactTargets.filter((entry) => entry.id !== target.id),
+      ].slice(0, 6),
       rightPanel: { ...s.rightPanel, open: false },
+      workAreaOpen: true,
     }))
+    writePersisted({ workAreaOpen: true })
   },
   closeArtifactViewer: () => {
     set((s) => ({ artifactViewer: { ...s.artifactViewer, target: null } }))
@@ -308,6 +324,14 @@ export const useShellStore = create<ShellStore>((set, get) => ({
     const clamped = clampArtifactViewerWidth(width)
     writePersisted({ artifactViewerWidth: clamped })
     set((s) => ({ artifactViewer: { ...s.artifactViewer, width: clamped } }))
+  },
+  recordWorkAreaPage: (target) => {
+    set((s) => ({
+      recentWorkAreaPages: [
+        target,
+        ...s.recentWorkAreaPages.filter((entry) => entry.id !== target.id),
+      ].slice(0, 8),
+    }))
   },
   requestNewChat: () => {
     set((s) => ({

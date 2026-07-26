@@ -87,4 +87,25 @@ describe('vibey-api skill generator', () => {
     expect(output).toContain('date_preset')
     expect(output).toContain('Never put a Meta numeric ID in campaign_id')
   })
+
+  it('teaches exact calendar account selection and organization-wide campaign health scope', () => {
+    const { skillMd, referenceFiles } = generateScopedVibeyApiSkill(
+      new Set([
+        'list_calendar_events',
+        'create_calendar_event',
+        'list_campaigns',
+        'get_campaign_main_dashboard',
+        'get_meta_ads_insights',
+      ]),
+      'operations',
+    )
+    const output = [skillMd, ...Object.values(referenceFiles)].join('\n')
+
+    expect(output).toContain('user_integration_id')
+    expect(output).toContain('more than one connected calendar account')
+    expect(output).toContain('exact account label')
+    expect(output).toContain('Organization-wide campaign questions')
+    expect(output).toContain('mode: "accessible"')
+    expect(output).toContain('missing or partial data')
+  })
 })

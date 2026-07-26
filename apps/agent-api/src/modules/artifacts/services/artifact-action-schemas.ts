@@ -3932,6 +3932,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       'location',
       'attendees',
       'calendar_id',
+      'user_integration_id',
       'create_video_meeting',
     ],
     types: {
@@ -3944,9 +3945,12 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
       location: 'string',
       attendees: 'object_array',
       calendar_id: 'string',
+      user_integration_id: 'string',
       create_video_meeting: 'boolean',
     },
-    useWhen: ['Create a timed event in connected Google Calendar or Outlook.'],
+    useWhen: [
+      'Create a timed event in connected Google Calendar or Outlook. When more than one account is connected, first list events to resolve the exact user_integration_id.',
+    ],
     examples: [
       {
         intent: 'create a Google Calendar meeting',

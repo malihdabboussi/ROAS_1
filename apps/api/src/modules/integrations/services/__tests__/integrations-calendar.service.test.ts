@@ -258,10 +258,23 @@ describe('IntegrationsCalendarService team+Mine merge', () => {
 
 describe('IntegrationsCalendarService calendar mutations', () => {
   it('maps Google event creates to the create event tool payload', async () => {
-    const { service, composio } = makeService()
+    const { service, composio } = makeService({
+      orgRows: [
+        {
+          id: 'calendar-account-2',
+          user_id: 'user-1',
+          status: 'connected',
+          scope_mode: 'personal',
+          is_default: false,
+          connection_label: 'dylan@dylanvanas.com',
+          metadata: { composio_connected_account_id: 'google-calendar-2' },
+        },
+      ],
+    })
 
-    await service.createEvent({} as any, { id: 'user-1' }, { orgId: null } as any, {
+    const result = await service.createEvent({} as any, { id: 'user-1' }, { orgId: null } as any, {
       provider: 'google_calendar',
+      user_integration_id: 'calendar-account-2',
       title: 'Review launch tasks',
       start: '2026-06-18T10:00:00.000Z',
       end: '2026-06-18T10:30:00.000Z',
@@ -280,8 +293,41 @@ describe('IntegrationsCalendarService calendar mutations', () => {
         timezone: 'Asia/Nicosia',
         location: 'Office',
       }),
-      'google_calendar-conn',
+      'google-calendar-2',
     )
+    expect(result.account).toEqual({
+      user_integration_id: 'calendar-account-2',
+      label: 'dylan@dylanvanas.com',
+      provider: 'google_calendar',
+      is_default: true,
+    })
+  })
+
+  it('does not fall back to another calendar when the requested account is unavailable', async () => {
+    const { service, composio } = makeService({
+      orgRows: [
+        {
+          id: 'calendar-account-1',
+          user_id: 'user-1',
+          status: 'connected',
+          scope_mode: 'personal',
+          is_default: true,
+          connection_label: 'dylan@dylanvanas.com',
+          metadata: { composio_connected_account_id: 'google-calendar-1' },
+        },
+      ],
+    })
+
+    await expect(
+      service.createEvent({} as any, { id: 'user-1' }, { orgId: null } as any, {
+        provider: 'google_calendar',
+        user_integration_id: 'missing-calendar-account',
+        title: 'Review launch tasks',
+        start: '2026-06-18T10:00:00.000Z',
+        end: '2026-06-18T10:30:00.000Z',
+      }),
+    ).rejects.toThrow('Selected google_calendar account is not connected')
+    expect(composio.executeTool).not.toHaveBeenCalled()
   })
 
   it('maps Outlook updates and Google deletes to provider tools', async () => {

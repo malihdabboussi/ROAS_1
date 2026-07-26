@@ -72,6 +72,7 @@ describe('shell artifact viewer state', () => {
   beforeEach(() => {
     useShellStore.setState({
       artifactViewer: { target: null, width: 480 },
+      recentArtifactTargets: [],
       chatDrawer: { open: false, conversationId: null, width: 280, minimized: false },
       rightPanel: { open: true, tab: 'files' },
     })
@@ -89,6 +90,10 @@ describe('shell artifact viewer state', () => {
     useShellStore.getState().openArtifactViewer({ ...target, id: 'doc-2', title: 'Second doc' })
 
     expect(useShellStore.getState().artifactViewer.target?.id).toBe('doc-2')
+    expect(useShellStore.getState().recentArtifactTargets.map((entry) => entry.id)).toEqual([
+      'doc-2',
+      'doc-1',
+    ])
   })
 
   it('closes the artifact viewer when the summary panel or chat opens', () => {
@@ -115,6 +120,7 @@ describe('shell work area', () => {
     useShellStore.setState({
       workAreaOpen: false,
       chatDrawer: { open: false, conversationId: null, width: 420, minimized: true },
+      recentWorkAreaPages: [],
     })
   })
 
@@ -130,5 +136,23 @@ describe('shell work area', () => {
     useShellStore.getState().setWorkAreaOpen(false)
     expect(useShellStore.getState().chatDrawer.open).toBe(true)
     expect(useShellStore.getState().chatDrawer.minimized).toBe(false)
+  })
+
+  it('preserves the current artifact while its work surface is collapsed', () => {
+    useShellStore.getState().openArtifactViewer(target)
+    useShellStore.getState().setWorkAreaOpen(false)
+
+    expect(useShellStore.getState().artifactViewer.target).toEqual(target)
+  })
+
+  it('keeps named page history unique and most-recent-first', () => {
+    const agenda = { id: '/home', title: 'Agenda', href: '/home' }
+    const skills = { id: '/team/skills', title: 'Skills', href: '/team/skills' }
+
+    useShellStore.getState().recordWorkAreaPage(agenda)
+    useShellStore.getState().recordWorkAreaPage(skills)
+    useShellStore.getState().recordWorkAreaPage(agenda)
+
+    expect(useShellStore.getState().recentWorkAreaPages).toEqual([agenda, skills])
   })
 })

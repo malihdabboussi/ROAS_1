@@ -27,8 +27,7 @@ describe('ShellArtifactViewerPanel', () => {
       </ShellArtifactViewerPanel>,
     )
 
-    expect(screen.getByRole('link', { name: 'Q3 Launch' })).toHaveAttribute(
-      'href',
+    expect(screen.getByRole('link', { name: 'Q3 Launch' }).getAttribute('href')).toBe(
       target.contextUrl,
     )
     expect(screen.getByText('/ files /')).toBeTruthy()
@@ -43,8 +42,7 @@ describe('ShellArtifactViewerPanel', () => {
       </ShellArtifactViewerPanel>,
     )
 
-    expect(screen.getByRole('link', { name: 'Open in Space' })).toHaveAttribute(
-      'href',
+    expect(screen.getByRole('link', { name: 'Open in Space' }).getAttribute('href')).toBe(
       target.internalUrl,
     )
     expect(screen.queryByRole('button', { name: 'Open' })).toBeNull()
@@ -75,7 +73,33 @@ describe('ShellArtifactViewerPanel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Expand artifact viewer' }))
 
-    expect(container.querySelector('[data-shell-artifact-viewer]')?.className).toContain('fixed')
+    expect(container.querySelector('[data-shell-artifact-viewer]')?.className).toContain('absolute')
     expect(screen.getByRole('button', { name: 'Collapse artifact viewer' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Close artifact viewer' })).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse artifact viewer' }))
+    expect(container.querySelector('[data-shell-artifact-viewer]')?.className).not.toContain(
+      'absolute',
+    )
+    expect(useShellStore.getState().artifactViewer.target).toEqual(target)
+  })
+
+  it('gives the title all remaining toolbar space without shrinking controls', () => {
+    render(
+      <ShellArtifactViewerPanel
+        target={{ ...target, title: 'A very long artifact title that must truncate first' }}
+        actions={<button type="button">Toolbar action</button>}
+      >
+        <div />
+      </ShellArtifactViewerPanel>,
+    )
+
+    expect(screen.getByText(/A very long artifact title/).parentElement).toHaveClass(
+      'min-w-0',
+      'flex-1',
+      'truncate',
+    )
+    expect(screen.getByRole('button', { name: 'Expand artifact viewer' })).toHaveClass('shrink-0')
+    expect(screen.getByRole('button', { name: 'Close artifact viewer' })).toHaveClass('shrink-0')
   })
 })

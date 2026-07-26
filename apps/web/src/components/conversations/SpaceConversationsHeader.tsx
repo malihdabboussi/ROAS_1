@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { RxDoubleArrowLeft } from 'react-icons/rx'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Plus, Search, UsersRound, X } from 'lucide-react'
@@ -27,6 +27,8 @@ interface SpaceConversationsHeaderProps {
   searchSlot?: ReactNode
   /** Extra controls after all-agents, before search (e.g. list filter). */
   headerEndSlot?: ReactNode
+  /** Active query constraints shown below the New chat control. */
+  headerFooterSlot?: ReactNode
   compactHeader?: boolean
   compactSearchOpen: boolean
   onCompactSearchOpenChange: (open: boolean) => void
@@ -49,6 +51,7 @@ export function SpaceConversationsHeader({
   searchSlot,
   headerStartSlot,
   headerEndSlot,
+  headerFooterSlot,
   compactHeader,
   compactSearchOpen,
   onCompactSearchOpenChange,
@@ -59,6 +62,18 @@ export function SpaceConversationsHeader({
 }: SpaceConversationsHeaderProps) {
   const showInlineNew = !hideNewButton && !newButtonBelowSearch
   const showBelowNew = !hideNewButton && newButtonBelowSearch
+  const compactSearchRef = useRef<HTMLLabelElement>(null)
+
+  useEffect(() => {
+    if (!hideHeaderBottomBorder || !compactSearchOpen) return
+    const onPointerDown = (event: MouseEvent) => {
+      if (compactSearchRef.current?.contains(event.target as Node)) return
+      onCompactSearchOpenChange(false)
+      onQueryChange('')
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    return () => document.removeEventListener('mousedown', onPointerDown)
+  }, [compactSearchOpen, hideHeaderBottomBorder, onCompactSearchOpenChange, onQueryChange])
 
   const allAgentsButton = showAllAgentsToggle ? (
     <button
@@ -80,16 +95,32 @@ export function SpaceConversationsHeader({
 
   const inlineSearch = !hideSearch ? (
     hideHeaderBottomBorder ? (
-      <label className="shell-chat-history-search text-muted-foreground relative min-w-0 flex-1 cursor-text">
-        <Search className="shrink-0" aria-hidden />
-        <input
-          value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
-          placeholder="Search"
-          aria-label="Search"
-          className="body-3 text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent outline-none"
-        />
-      </label>
+      compactSearchOpen ? (
+        <label
+          ref={compactSearchRef}
+          className="text-muted-foreground gap-spacing-1 flex min-w-0 flex-1 cursor-text items-center"
+        >
+          <Search className="icon-sm shrink-0" aria-hidden />
+          <input
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="Search"
+            aria-label="Search conversations"
+            autoFocus
+            className="body-4 text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent outline-none"
+          />
+        </label>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onCompactSearchOpenChange(true)}
+          className="btn-icon-bare hover:bg-hover-subtle shrink-0"
+          aria-label="Search conversations"
+          title="Search conversations"
+        >
+          <Search className="icon-sm" aria-hidden />
+        </button>
+      )
     ) : (
       <div className="relative min-w-0 flex-1">
         <Search className="icon-left-center text-muted-foreground icon-sm pointer-events-none" />
@@ -227,20 +258,22 @@ export function SpaceConversationsHeader({
         ) : hideHeaderBottomBorder ? (
           <div className="group/chat-history-header gap-spacing-1 flex min-w-0 flex-1 items-center">
             {inlineSearch}
-            {headerStartSlot}
-            {headerEndSlot}
-            {showInlineNew ? (
-              <button
-                type="button"
-                onClick={onNewConversation}
-                className="button-compact button-glass-primary gap-spacing-1 shrink-0"
-                aria-label="New chat"
-                title="New chat"
-              >
-                <Plus className="icon-sm" aria-hidden />
-                <span>New</span>
-              </button>
-            ) : null}
+            <div className="gap-spacing-1 ml-auto flex shrink-0 items-center">
+              {headerStartSlot}
+              {headerEndSlot}
+              {showInlineNew ? (
+                <button
+                  type="button"
+                  onClick={onNewConversation}
+                  className="button-compact button-glass-primary gap-spacing-1 shrink-0"
+                  aria-label="New chat"
+                  title="New chat"
+                >
+                  <Plus className="icon-sm" aria-hidden />
+                  <span>New</span>
+                </button>
+              ) : null}
+            </div>
           </div>
         ) : (
           <>
@@ -262,6 +295,7 @@ export function SpaceConversationsHeader({
         )}
       </div>
       {belowSearchNew}
+      {headerFooterSlot}
     </div>
   )
 }

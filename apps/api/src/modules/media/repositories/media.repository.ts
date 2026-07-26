@@ -136,6 +136,7 @@ export class MediaRepository {
     }
 
     if (!input.sharedCampaign && query.campaign_id) qb = qb.eq('campaign_id', query.campaign_id)
+    if (query.conversation_id) qb = qb.eq('conversation_id', query.conversation_id)
     if (query.asset_type) qb = qb.eq('asset_type', query.asset_type)
     if (query.category) qb = qb.eq('category', query.category)
     if (query.search) qb = qb.ilike('name', `%${query.search}%`)
@@ -226,7 +227,9 @@ export class MediaRepository {
     await uq
   }
 
-  async listStalePendingAssets(cutoff: string): Promise<Array<Pick<MediaAssetRow, 'id' | 'bucket_name' | 'file_path'>>> {
+  async listStalePendingAssets(
+    cutoff: string,
+  ): Promise<Array<Pick<MediaAssetRow, 'id' | 'bucket_name' | 'file_path'>>> {
     const { data, error } = await this.supabase
       .from('media_assets')
       .select('id, bucket_name, file_path')
@@ -236,14 +239,21 @@ export class MediaRepository {
     return data as Array<Pick<MediaAssetRow, 'id' | 'bucket_name' | 'file_path'>>
   }
 
-  async markAssetDeleted(assetId: string, options: { clearPublicUrl?: boolean } = {}): Promise<void> {
+  async markAssetDeleted(
+    assetId: string,
+    options: { clearPublicUrl?: boolean } = {},
+  ): Promise<void> {
     await this.supabase
       .from('media_assets')
-      .update(options.clearPublicUrl ? { status: 'deleted', public_url: null } : { status: 'deleted' })
+      .update(
+        options.clearPublicUrl ? { status: 'deleted', public_url: null } : { status: 'deleted' },
+      )
       .eq('id', assetId)
   }
 
-  async listExpiredAiAnalysisAssets(now: string): Promise<Array<Pick<MediaAssetRow, 'id' | 'bucket_name' | 'file_path'>>> {
+  async listExpiredAiAnalysisAssets(
+    now: string,
+  ): Promise<Array<Pick<MediaAssetRow, 'id' | 'bucket_name' | 'file_path'>>> {
     const { data, error } = await this.supabase
       .from('media_assets')
       .select('id, bucket_name, file_path')

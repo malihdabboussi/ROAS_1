@@ -192,37 +192,6 @@ export class SlackRuntimeRepository {
     return data ?? []
   }
 
-  async findRecentCampaignIdForUser(
-    supabase: SupabaseClient,
-    userId: string,
-  ): Promise<string | null> {
-    const { data: recent } = await supabase
-      .from('campaigns')
-      .select('id')
-      .eq('user_id', userId)
-      .is('deleted_at', null)
-      .neq('status', 'archived')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    return recent?.id ?? null
-  }
-
-  async findGeneralCampaignIdForUser(
-    supabase: SupabaseClient,
-    userId: string,
-  ): Promise<string | null> {
-    const { data: general } = await supabase
-      .from('campaigns')
-      .select('id')
-      .eq('user_id', userId)
-      .contains('config', { system_kind: 'general' })
-      .neq('status', 'archived')
-      .limit(1)
-      .maybeSingle()
-    return general?.id ?? null
-  }
-
   async findSlackConversation(
     supabase: SupabaseClient,
     input: {
@@ -255,7 +224,7 @@ export class SlackRuntimeRepository {
   async updateConversationCampaign(
     supabase: SupabaseClient,
     conversationId: string,
-    campaignId: string,
+    campaignId: string | null,
   ): Promise<void> {
     await supabase
       .from('conversations')

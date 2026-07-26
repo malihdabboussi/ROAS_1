@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ShellWorkspace } from './ShellWorkspace'
 
@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   setWorkAreaOpen: vi.fn(),
   workAreaOpen: true,
   chatDrawerOpen: false,
+  artifactTarget: null as { id: string } | null,
 }))
 
 vi.mock('next/navigation', () => ({
@@ -23,7 +24,16 @@ vi.mock('next/navigation', () => ({
 }))
 
 vi.mock('@/components/global-chat/containers/GlobalChatPanel', () => ({
-  GlobalChatPanel: () => <div>Global chat panel</div>,
+  GlobalChatPanel: ({ onCollapseChat }: { onCollapseChat?: () => void }) => (
+    <div>
+      Global chat panel
+      {onCollapseChat ? (
+        <button type="button" onClick={onCollapseChat}>
+          Close full chat
+        </button>
+      ) : null}
+    </div>
+  ),
 }))
 
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
@@ -53,7 +63,11 @@ vi.mock('@/features/studio/store/use-chat-store', () => ({
 }))
 
 vi.mock('@/features/studio/components/preview/ShellArtifactViewerAdapter', () => ({
-  ShellArtifactViewerAdapter: () => null,
+  ShellArtifactViewerAdapter: () => (
+    <div data-testid="artifact-viewer-adapter">
+      {mocks.artifactTarget ? 'Artifact editor' : null}
+    </div>
+  ),
 }))
 
 vi.mock('./ShellChatDrawer', () => ({
@@ -80,6 +94,7 @@ vi.mock('./use-shell-store', () => ({
   useShellStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
       workAreaOpen: mocks.workAreaOpen,
+      artifactViewer: { target: mocks.artifactTarget },
       chatDrawer: {
         open: !mocks.workAreaOpen || mocks.chatDrawerOpen,
         conversationId: null,
@@ -100,12 +115,12 @@ describe('ShellWorkspace', () => {
     mocks.activeConversationId = null
     mocks.workAreaOpen = true
     mocks.chatDrawerOpen = false
+    mocks.artifactTarget = null
   })
 
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
-    vi.restoreAllMocks()
     vi.useRealTimers()
   })
 
@@ -116,6 +131,15 @@ describe('ShellWorkspace', () => {
     expect(screen.queryByText('New chat greeting')).not.toBeInTheDocument()
   })
 
+  it('keeps the artifact event adapter mounted before an artifact is selected', () => {
+    mocks.params = new Map()
+
+    render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
+
+    expect(screen.getByTestId('artifact-viewer-adapter')).toBeInTheDocument()
+    expect(screen.queryByText('Artifact editor')).not.toBeInTheDocument()
+  })
+
   it('replaces the temporary starting route with the created conversation route', async () => {
     mocks.activeConversationId = 'conversation-123'
 
@@ -124,6 +148,16 @@ describe('ShellWorkspace', () => {
     await waitFor(() => {
       expect(mocks.replace).toHaveBeenCalledWith('/home?conv=conversation-123')
     })
+  })
+
+  it('returns to Home when the full-page conversation is closed', () => {
+    mocks.params = new Map([['conv', 'conversation-123']])
+
+    render(<ShellWorkspace>Home dashboard</ShellWorkspace>)
+    fireEvent.click(screen.getByRole('button', { name: 'Close full chat' }))
+
+    expect(mocks.setActiveConversationId).toHaveBeenCalledWith(null)
+    expect(mocks.push).toHaveBeenCalledWith('/home')
   })
 
   it('reveals the work area after navigating to another surface', async () => {
@@ -155,10 +189,10 @@ describe('ShellWorkspace', () => {
     expect(screen.getByText('Brain page').closest('[aria-hidden="true"]')).not.toBeNull()
   })
 
-  it('slides the work area in from beyond the right edge when reopening', async () => {
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
-      new DOMRect(0, 0, 800, 600),
-    )
+  it('uses one work-area transition while keeping the page right anchored', () => {
+    const boundingRectSpy = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue(new DOMRect(0, 0, 800, 600))
     mocks.pathname = '/brain'
     mocks.params = new Map()
     mocks.workAreaOpen = false
@@ -167,18 +201,51 @@ describe('ShellWorkspace', () => {
     const { rerender } = render(<ShellWorkspace>Brain page</ShellWorkspace>)
     const pageBody = screen
       .getByText('Brain page')
-      .closest('.shell-work-area')
+      .closest('[data-shell-work-area]')
       ?.querySelector('.shell-work-area-body')
     expect(pageBody).not.toBeNull()
-    expect(pageBody).toHaveClass('shell-work-area-body-collapsed')
+    expect(screen.getByText('Brain page').closest('[data-shell-work-area]')).toHaveClass(
+      'shell-work-area',
+      'shell-work-area-collapsed',
+    )
+    expect(pageBody).toHaveClass('shell-work-area-body-anchored')
 
     mocks.workAreaOpen = true
     rerender(<ShellWorkspace>Brain page</ShellWorkspace>)
 
+    expect(screen.getByText('Brain page').closest('[data-shell-work-area]')).toHaveClass(
+      'shell-work-area',
+    )
+    expect(screen.getByText('Brain page').closest('[data-shell-work-area]')).not.toHaveClass(
+      'shell-work-area-collapsed',
+    )
     expect(pageBody).toHaveClass('shell-work-area-body-anchored')
-    expect(pageBody).toHaveClass('shell-work-area-body-collapsed')
-    await waitFor(() => {
-      expect(pageBody).not.toHaveClass('shell-work-area-body-collapsed')
-    })
+    boundingRectSpy.mockRestore()
+  })
+
+  it('replaces the page work surface while an artifact is open', () => {
+    mocks.pathname = '/home'
+    mocks.params = new Map()
+    mocks.artifactTarget = { id: 'image-1' }
+
+    const { rerender } = render(<ShellWorkspace>Agenda dashboard</ShellWorkspace>)
+
+    expect(screen.getByText('Artifact editor')).toBeInTheDocument()
+    expect(screen.getByText('Agenda dashboard').closest('[data-shell-work-area]')).toHaveClass(
+      'hidden',
+    )
+    expect(screen.getByText('Agenda dashboard').closest('[data-shell-work-area]')).not.toHaveClass(
+      'shell-work-area',
+    )
+
+    mocks.artifactTarget = null
+    rerender(<ShellWorkspace>Agenda dashboard</ShellWorkspace>)
+
+    expect(screen.getByText('Agenda dashboard').closest('[data-shell-work-area]')).toHaveClass(
+      'shell-work-area',
+    )
+    expect(screen.getByText('Agenda dashboard').closest('[data-shell-work-area]')).not.toHaveClass(
+      'hidden',
+    )
   })
 })

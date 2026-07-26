@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { PanelLeftOpen } from 'lucide-react'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { ResizableDivider } from '@/components/layout/ResizableDivider'
@@ -207,22 +206,7 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
           )}
           style={bodyStyle}
         >
-          {historyCollapsed ? (
-            <div
-              className="border-border bg-card px-spacing-1 py-spacing-2 w-spacing-10 flex shrink-0 justify-center border-r"
-              data-shell-chat-history-collapsed
-            >
-              <button
-                type="button"
-                onClick={() => setChatHistoryCollapsed(false)}
-                className="btn-icon-bare hover:bg-hover-subtle"
-                aria-label="Show chat history"
-                title="Chat history"
-              >
-                <PanelLeftOpen className="icon-sm" aria-hidden />
-              </button>
-            </div>
-          ) : (
+          {!historyCollapsed ? (
             <>
               <div
                 className="shell-chat-drawer-menu"
@@ -239,7 +223,7 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
                 ariaLabel="Resize chat history"
               />
             </>
-          )}
+          ) : null}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <GlobalChatPanel shellSidebarChrome onCollapseChat={() => minimizeChatDrawer()} />
           </div>

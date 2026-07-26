@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
 import {
@@ -8,10 +8,15 @@ import {
   channelMembersToRosterKeys,
 } from '@/components/channels/AddPeopleToChannelModal'
 import { StartBrainstormModal } from '@/components/channels/StartBrainstormModal'
-import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { renderDeliverableEntityPreview } from '@/components/deliverables/deliverable-entity-preview-renderer'
+import { DeliverablePreviewModal } from '@/components/deliverables/DeliverablePreviewModal'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
-import { addRosterEntriesToChannel, channelsService, type Channel } from '@/lib/channels'
+import {
+  addRosterEntriesToChannel,
+  channelsService,
+  type Channel,
+  type ChannelMention,
+} from '@/lib/channels'
 import type { MissionDeliverable } from '@/lib/missions'
 import { useOrgStore } from '@/lib/org'
 import { createClient } from '@/lib/supabase/client'
@@ -28,11 +33,13 @@ import {
   unregisterSpaceChannelBrainstormHandlers,
   type SpaceChannelBrainstormHandlers,
 } from '../lib/channel-space-brainstorm-toolbar'
+import { getMissingMentionRosterEntries } from '../lib/mention-membership'
 import { consumePendingChannelAddPeople } from '../lib/pending-add-people'
 
 type AddPeopleFlow =
   | { kind: 'postCreate'; channel: Channel }
   | { kind: 'header'; channel: Channel }
+  | { kind: 'mention'; channel: Channel; entries: TeamRosterEntry[] }
   | null
 
 export function ChannelChatContainer({
@@ -60,6 +67,7 @@ export function ChannelChatContainer({
   const getActiveOrg = useOrgStore((state) => state.getActiveOrg)
   const workspaceName = getActiveOrg()?.organizations.name ?? 'your workspace'
   const [addPeopleFlow, setAddPeopleFlow] = useState<AddPeopleFlow>(null)
+  const mentionMembershipResolverRef = useRef<((added: boolean) => void) | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [roster, setRoster] = useState<TeamRosterEntry[]>([])
   const [rosterLoaded, setRosterLoaded] = useState(false)
@@ -191,8 +199,35 @@ export function ChannelChatContainer({
     async (entries: TeamRosterEntry[]) => {
       if (!addPeopleFlow?.channel) return
       await addRosterEntriesToChannel(addPeopleFlow.channel.id, entries)
+      if (addPeopleFlow.kind === 'mention') {
+        mentionMembershipResolverRef.current?.(true)
+        mentionMembershipResolverRef.current = null
+      }
     },
     [addPeopleFlow],
+  )
+
+  const ensureMentionMembers = useCallback(
+    async (mentions: ChannelMention[]): Promise<boolean> => {
+      if (!selectedChannel) return false
+      const entries = getMissingMentionRosterEntries(mentions, roster, existingMemberKeys)
+      if (entries.length === 0) return true
+
+      return new Promise<boolean>((resolve) => {
+        mentionMembershipResolverRef.current?.(false)
+        mentionMembershipResolverRef.current = resolve
+        setAddPeopleFlow({ kind: 'mention', channel: selectedChannel, entries })
+      })
+    },
+    [existingMemberKeys, roster, selectedChannel],
+  )
+
+  useEffect(
+    () => () => {
+      mentionMembershipResolverRef.current?.(false)
+      mentionMembershipResolverRef.current = null
+    },
+    [],
   )
 
   return (
@@ -200,8 +235,15 @@ export function ChannelChatContainer({
       <AddPeopleToChannelModal
         open={!!addPeopleFlow}
         channel={addPeopleFlow?.channel ?? null}
-        purpose={addPeopleFlow?.kind === 'header' ? 'addMembers' : 'afterCreate'}
-        existingMemberKeys={addPeopleFlow?.kind === 'header' ? existingMemberKeys : undefined}
+        purpose={addPeopleFlow?.kind === 'postCreate' ? 'afterCreate' : 'addMembers'}
+        existingMemberKeys={
+          addPeopleFlow?.kind === 'header' || addPeopleFlow?.kind === 'mention'
+            ? existingMemberKeys
+            : undefined
+        }
+        initialSelectedEntries={
+          addPeopleFlow?.kind === 'mention' ? addPeopleFlow.entries : undefined
+        }
         roster={roster}
         currentUserId={currentUserId}
         workspaceName={workspaceName}
@@ -212,6 +254,10 @@ export function ChannelChatContainer({
         }}
         onOpenChange={(next) => {
           if (!next) {
+            if (addPeopleFlow?.kind === 'mention') {
+              mentionMembershipResolverRef.current?.(false)
+              mentionMembershipResolverRef.current = null
+            }
             void reloadMembers()
             void reloadMessages()
             setAddPeopleFlow(null)
@@ -233,6 +279,8 @@ export function ChannelChatContainer({
             currentUserId={currentUserId}
             campaignId={campaignId ?? null}
             rosterAvatars={rosterAvatars}
+            mentionRoster={roster}
+            onEnsureMentionMembers={ensureMentionMembers}
             onSendMessage={async ({ content, mentions, attachments }) => {
               await sendMessage({
                 content,
@@ -286,6 +334,8 @@ export function ChannelChatContainer({
                   channelId={channelId}
                   campaignId={campaignId ?? null}
                   rosterAvatars={rosterAvatars}
+                  mentionRoster={roster}
+                  onEnsureMentionMembers={ensureMentionMembers}
                   onClose={() => setOpenThreadId(null)}
                   onSendReply={async ({ content, mentions, attachments }) => {
                     await sendMessage({

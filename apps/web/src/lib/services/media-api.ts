@@ -59,9 +59,10 @@ export interface ImageGenerationModelMeta {
 
 export interface GenerateImageParams {
   prompt: string
-  aspect_ratio?: '1:1' | '16:9' | '9:16' | '3:2' | '4:3'
+  aspect_ratio?: '1:1' | '16:9' | '9:16' | '3:4' | '3:2' | '4:3'
   campaign_id?: string
   space_id?: string
+  conversation_id?: string
   category?: string
   tags?: string[]
   /** Gemini image model id (same list as GET /api/media/generate/models). */
@@ -95,6 +96,7 @@ export interface GenerationResult {
 export interface ListAssetsParams {
   campaign_id?: string
   space_id?: string
+  conversation_id?: string
   asset_type?: string
   category?: string
   search?: string
@@ -212,6 +214,7 @@ export async function generateImageStream(
 export interface EditImageParams extends GenerateImageParams {
   parent_image_url?: string
   parent_image_asset_id?: string
+  reference_image_asset_ids?: string[]
 }
 
 export async function editImageStream(
@@ -307,6 +310,7 @@ export async function listAssets(
   const query = new URLSearchParams()
   if (params?.campaign_id) query.set('campaign_id', params.campaign_id)
   if (params?.space_id) query.set('space_id', params.space_id)
+  if (params?.conversation_id) query.set('conversation_id', params.conversation_id)
   if (params?.asset_type) query.set('asset_type', params.asset_type)
   if (params?.category) query.set('category', params.category)
   if (params?.search) query.set('search', params.search)
@@ -377,43 +381,7 @@ export async function resolveMediaAssetIdByUrl(url: string): Promise<string | nu
       `/api/media/assets/resolve-by-url?url=${encodeURIComponent(trimmed)}`,
     )
     if (typeof res?.id === 'string' && res.id.trim()) return res.id
-  } catch {
-    // Fall through to client lookup (API may not have resolve-by-url yet).
-  }
-  return resolveMediaAssetIdByUrlClient(trimmed)
-}
-
-function extractMediaStoragePath(url: string): string | null {
-  try {
-    const parsed = new URL(url)
-    const markers = ['/object/sign/media/', '/object/public/media/', '/object/authenticated/media/']
-    for (const marker of markers) {
-      const idx = parsed.pathname.indexOf(marker)
-      if (idx >= 0) {
-        return decodeURIComponent(parsed.pathname.slice(idx + marker.length)).split('?')[0] || null
-      }
-    }
-  } catch {
     return null
-  }
-  return null
-}
-
-async function resolveMediaAssetIdByUrlClient(url: string): Promise<string | null> {
-  const filePath = extractMediaStoragePath(url)
-  if (!filePath) return null
-  try {
-    const { createClient } = await import('@/lib/supabase/client')
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('media_assets')
-      .select('id')
-      .eq('file_path', filePath)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (error || !data?.id) return null
-    return String(data.id)
   } catch {
     return null
   }

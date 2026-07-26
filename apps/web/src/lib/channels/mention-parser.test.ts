@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
+import type { TeamRosterEntry } from '@/lib/team'
+import type { ChannelMember } from './channel-types'
 import {
   applyMentionToText,
   buildMentionCandidates,
+  dedupeChannelMentions,
   getMentionQuery,
   parseEntityMentionsFromHtml,
+  parseMemberMentionsFromHtml,
   parseMentionsFromText,
 } from './mention-parser'
-import type { ChannelMember } from './channel-types'
 
 const members: ChannelMember[] = [
   {
@@ -89,6 +92,51 @@ describe('mention parser', () => {
         },
       ),
     ).toEqual({ value: 'hello @ada-lovelace ', caretPosition: 20 })
+  })
+
+  it('resolves typed agents from the full roster before they join the channel', () => {
+    const vibey = {
+      participant_id: 'agent:vibey',
+      kind: 'agent',
+      org_id: 'org-1',
+      user_id: null,
+      agent_key: 'vibey',
+      display_name: 'Vibey',
+      avatar_url: null,
+      role_label: 'CEO',
+      specialties: [],
+      accepts_assignments: true,
+      delegation_notes: null,
+      timezone: null,
+      working_hours: null,
+      out_of_office_until: null,
+      current_load: 0,
+      is_ready: true,
+      agent_level: null,
+      org_role: null,
+      email: null,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: null,
+    } satisfies TeamRosterEntry
+    const candidates = buildMentionCandidates(members, undefined, [vibey])
+
+    expect(parseMentionsFromText('@vibey take a look', candidates)).toContainEqual({
+      type: 'agent',
+      user_id: undefined,
+      agent_key: 'vibey',
+      label: 'Vibey',
+    })
+  })
+
+  it('parses selected member chips and dedupes them against rendered text', () => {
+    const candidates = buildMentionCandidates(members)
+    const fromHtml = parseMemberMentionsFromHtml(
+      '<span data-type="mention" class="channel-mention" data-id="member-user-1" data-label="Ada Lovelace"></span>',
+      candidates,
+    )
+    const fromText = parseMentionsFromText('@ada-lovelace', candidates)
+
+    expect(dedupeChannelMentions([...fromText, ...fromHtml])).toEqual([fromText[0]])
   })
 
   it('parses deduped entity chips from html', () => {

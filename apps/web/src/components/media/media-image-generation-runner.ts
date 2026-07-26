@@ -16,7 +16,7 @@ export const FALLBACK_IMAGE_MODELS: ImageGenerationModelMeta[] = [
     name: 'ChatGPT',
     tier: 'pro',
     description: 'OpenAI GPT Image 2 — ChatGPT images (not GPT-5.6 chat).',
-    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:2', '4:3'],
+    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:4', '3:2', '4:3'],
     defaultAspectRatio: '16:9',
   },
   {
@@ -24,7 +24,7 @@ export const FALLBACK_IMAGE_MODELS: ImageGenerationModelMeta[] = [
     name: 'Nano Banana 2',
     tier: 'free',
     description: 'Best for fast drafts and iteration.',
-    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:2', '4:3'],
+    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:4', '3:2', '4:3'],
     defaultAspectRatio: '16:9',
   },
   {
@@ -32,7 +32,7 @@ export const FALLBACK_IMAGE_MODELS: ImageGenerationModelMeta[] = [
     name: 'Nano Banana',
     tier: 'pro',
     description: 'Best for polished, final assets.',
-    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:2', '4:3'],
+    supportedAspectRatios: ['1:1', '16:9', '9:16', '3:4', '3:2', '4:3'],
     defaultAspectRatio: '16:9',
   },
 ]
@@ -51,6 +51,8 @@ interface RunMediaImageGenerationInput {
   referenceAssetId: string | null
   campaignId?: string | null
   spaceId?: string | null
+  conversationId?: string | null
+  additionalReferenceAssetIds?: string[]
   extraTags?: string[]
   handlers: {
     onStart: () => void
@@ -72,8 +74,10 @@ export function runMediaImageGeneration(input: RunMediaImageGenerationInput) {
         tags: [...tags, 'ai-edited'],
         model: input.model,
         parent_image_asset_id: input.referenceAssetId,
+        reference_image_asset_ids: input.additionalReferenceAssetIds,
         ...(input.campaignId ? { campaign_id: input.campaignId } : {}),
         ...(input.spaceId ? { space_id: input.spaceId } : {}),
+        ...(input.conversationId ? { conversation_id: input.conversationId } : {}),
       },
       input.handlers,
       input.signal,
@@ -89,6 +93,7 @@ export function runMediaImageGeneration(input: RunMediaImageGenerationInput) {
       count: input.imageCount,
       ...(input.campaignId ? { campaign_id: input.campaignId } : {}),
       ...(input.spaceId ? { space_id: input.spaceId } : {}),
+      ...(input.conversationId ? { conversation_id: input.conversationId } : {}),
     },
     input.handlers,
     input.signal,

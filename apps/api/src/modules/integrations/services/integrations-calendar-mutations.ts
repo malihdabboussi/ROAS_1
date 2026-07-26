@@ -45,8 +45,27 @@ export function assertTimedRange(start: string, end: string): void {
   }
 }
 
+export function assertOptionalTimedRange(input: CalendarUpdateEventInput): void {
+  if (input.start && input.end) assertTimedRange(input.start, input.end)
+  if (input.start && !isTimedDateTime(input.start)) {
+    throw new BadRequestException('start must be a timed ISO 8601 datetime')
+  }
+  if (input.end && !isTimedDateTime(input.end)) {
+    throw new BadRequestException('end must be a timed ISO 8601 datetime')
+  }
+}
+
 export function isTimedDateTime(value: string): boolean {
   return Boolean(value?.trim()) && !/^\d{4}-\d{2}-\d{2}$/.test(value.trim())
+}
+
+export function ensureZSuffix(iso: string): string {
+  if (/[zZ]$/.test(iso)) return iso
+  if (/[+-]\d{2}:\d{2}$/.test(iso)) {
+    const date = new Date(iso)
+    if (!Number.isNaN(date.getTime())) return date.toISOString().replace(/\.\d{3}Z$/, 'Z')
+  }
+  return `${iso.endsWith('Z') ? iso.slice(0, -1) : iso}Z`
 }
 
 export function normalizeProviderEventId(provider: CalendarProvider, rawEventId: string): string {

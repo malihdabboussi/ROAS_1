@@ -905,6 +905,18 @@ Files:
   Needed work: Phase 4 click-to-pin comments; persist `parent_media_asset_id` for version trees; verify Canva handoff against a live connected account after API deploy.
   Deferred because: This pass shipped chat + Generate image and Canva `edit_url` handoff; pin comments and DB lineage remain separate.
 
+## 2026-07-26 - [INTEGRATION] Verify live image-to-Canva handoff
+
+Status: Open
+Found while: Rebuilding the shared image editing studio
+Files:
+
+- `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.tsx`
+- Existing Canva media handoff service and provider
+  Evidence: The editor now exposes the existing real **Open in Canva** target only when the connected provider supplies it, and the local authenticated UI renders the action. A live click was intentionally not performed because it creates an external Canva design.
+  Needed work: Dylan should click **Open in Canva** on a generated image in production and confirm the resulting design opens correctly. If the real handoff is unreliable, evaluate the alternate OpenAI-assisted Canva workflow discussed with Dylan.
+  Deferred because: Live Canva design creation requires the user's connected production Canva account and explicit review of the created design.
+
 ## 2026-07-16 - [REFACTOR] SpaceMediaView at 400 LOC limit
 
 Status: Open
@@ -7859,6 +7871,14 @@ Files:
 - Needed work: Extract each surface's repeated body/row or state-controller responsibility before adding behavior. Prioritize shared copy/open actions from media previews and modal body orchestration from Brain training.
 - Why not now: The requested cleanup fixed proven behavior/accessibility issues and already extracted the activity variants needed to pass lint; further splits would be behavior-neutral follow-up work.
 
+## 2026-07-26 — AI Chat shell interaction surfaces need decomposition
+
+- Feature/app: web / AI Chat shell
+- Files: `apps/web/src/components/shell/ShellChatMenu.tsx` (449 LOC), `apps/web/src/components/conversations/SpaceConversationsList.tsx` (378 LOC), and `apps/web/src/features/team-2/components/Team2ManageContent.tsx` (363 LOC)
+- Evidence: The requested history filtering, compact controls, context indicators, and Team detail behavior fit the existing ownership boundaries, but these three touched components now exceed the 320-line extraction threshold; `ShellChatMenu.tsx` also exceeds the enforced 400-line component target.
+- Needed work: Extract the history filter-chip controller and filtered-list state from `ShellChatMenu`, then separate list empty/loading presentation and Team roster/detail orchestration before adding more behavior.
+- Why not now: The requested work changes intertwined shell behavior in an already heavily modified shared workspace; splitting the components in the same patch would materially widen the regression surface beyond the verified interaction fixes.
+
 ## 2026-07-17 — App cleanup follow-up: remaining false-link and modal debt
 
 - Feature/app: web / email sender identity, campaign deletion, and Cortex Max
@@ -8672,3 +8692,55 @@ Evidence: The provider-output failure contract was placed in a new focused colla
 Needed work: Extract campaign/avatar setup or post-upload billing and result persistence into focused collaborators while preserving the existing action contract.
 
 Reason not done now: The requested production-safety change is isolated to provider output validation and retry suppression; decomposing unrelated legacy orchestration would broaden the risk surface.
+
+## 2026-07-26 - [ARCH] Calendar service remains over the file limit
+
+Status: Open
+
+Found while: Fixing account-explicit calendar writes and Slack thread continuity
+
+Files:
+
+- `apps/api/src/modules/integrations/services/integrations-calendar.service.ts` (725 LOC; service limit 600, reduced from its 736-line allowlisted baseline)
+
+Evidence: The service was already above the architecture limit before this change and still combines agenda reads, mutations, connection resolution, provider parsing, and enrichment. Slack fallback routing was moved out of `slack-service-events.base.ts`, reducing that touched service to 594 LOC.
+
+Needed work: Extract calendar mutations/account resolution into a focused service while preserving the current tests and public contract.
+
+Reason not done now: This change fixes shared runtime context and mutation correctness. Decomposing the entire high-risk calendar provider runtime in the same patch would materially broaden the regression surface beyond those behaviors.
+
+## 2026-07-26 - [ARCH] Slack People view is near the component limit
+
+Status: Open
+
+Found while: Adding the explicit Person Brain historical population control
+
+Files:
+
+- `apps/web/src/features/team-2/components/people/SlackPeopleView.tsx` (395 LOC; component limit 400)
+
+Evidence: The page still owns URL-backed People subview routing, selected-person activity loading, identity mapping, proposal review, and the new shared backfill trigger. Its visual header was extracted, but the controller remains five lines below the enforced component limit.
+
+Needed work: Extract the selected-person activity/proposal controller into a focused hook before adding another behavior to this view.
+
+Reason not done now: The requested change uses the existing backfill API and adds one bounded control. Moving the intertwined activity and routing state in the same change would broaden the regression surface beyond Person Brain identity and population.
+
+## 2026-07-26 - [ARCH] Channel composition controllers remain over component limits
+
+Status: Open
+
+Found while: Unifying typed and selected channel mentions
+
+Files:
+
+- `apps/web/src/features/channels/components/ChannelComposer.tsx` (400 LOC)
+- `apps/web/src/features/channels/containers/ChannelChatContainer.tsx` (398 LOC)
+- `apps/web/src/components/channels/AddPeopleToChannelModal.tsx` (398 LOC)
+- `apps/web/src/features/channels/components/ChannelThreadPanel.tsx` (405 LOC)
+- `apps/web/src/features/channels/components/ChannelChat.tsx` (367 LOC)
+
+Evidence: These pre-existing channel components are at or above the 300-line component limit and distribute composer, membership, thread, and tab orchestration across large controllers. The new mention membership decision was extracted into a pure helper with focused coverage rather than increasing that logic inline.
+
+Needed work: Split channel membership confirmation, composer orchestration, and thread rendering into focused hooks/components while retaining the current public component contracts.
+
+Reason not done now: A full channel UI decomposition would materially broaden the requested mention-routing and picker fix across unrelated messages, deliverables, threads, uploads, and brainstorm behavior.

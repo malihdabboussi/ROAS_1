@@ -134,6 +134,7 @@ describe('EntitySearchService', () => {
           iconUrl: 'https://example.com/carol.png',
           url: null,
           personKind: 'managed_person',
+          relationshipKind: 'external',
           brainId: 'brain-carol',
         },
       ],

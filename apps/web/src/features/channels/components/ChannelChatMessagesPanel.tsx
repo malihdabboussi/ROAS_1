@@ -1,6 +1,7 @@
 import type { Dispatch, RefObject, SetStateAction } from 'react'
 import type { ChannelMember, ChannelMention, ChannelMessage } from '@/lib/channels'
 import type { MissionDeliverable } from '@/lib/missions'
+import type { TeamRosterEntry } from '@/lib/team'
 import { ChannelComposer, type ChannelComposerVisibleState } from './ChannelComposer'
 import { ChannelDateSeparator } from './ChannelDateSeparator'
 import { ChannelMessageBubble } from './ChannelMessageBubble'
@@ -18,6 +19,8 @@ export function ChannelChatMessagesPanel({
   senderMeta,
   currentUserId,
   rosterAvatars,
+  mentionRoster,
+  onEnsureMentionMembers,
   scrollRef,
   onJumpToDate,
   onSendMessage,
@@ -37,6 +40,8 @@ export function ChannelChatMessagesPanel({
   senderMeta: Map<string, SenderMeta>
   currentUserId: string | null
   rosterAvatars?: Map<string, string>
+  mentionRoster?: TeamRosterEntry[]
+  onEnsureMentionMembers?: (mentions: ChannelMention[]) => Promise<boolean>
   scrollRef: RefObject<HTMLDivElement | null>
   onJumpToDate: (dateKey: string) => void
   onSendMessage: (payload: {
@@ -112,6 +117,12 @@ export function ChannelChatMessagesPanel({
           draftStorageKey={`vibey-channel-draft:${channelId}:main`}
           members={members}
           rosterAvatars={rosterAvatars}
+          mentionRoster={mentionRoster}
+          onBeforeSend={(payload) =>
+            onEnsureMentionMembers
+              ? onEnsureMentionMembers(payload.mentions)
+              : Promise.resolve(true)
+          }
           onSend={(payload) => void onSendMessage(payload)}
           onVisibleStateChange={onComposerDraftChange}
         />

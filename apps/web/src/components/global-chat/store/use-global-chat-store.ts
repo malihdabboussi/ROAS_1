@@ -8,6 +8,7 @@ import {
   defaultAgentForSurface,
   GLOBAL_CHAT_DEFAULT_AGENT,
   isAgentAllowedForWorkContext,
+  mergeAttachedWorkContext,
   surfaceFromPathname,
 } from '../config/work-context.config'
 import {
@@ -49,14 +50,6 @@ export interface GlobalChatSeedDetail {
 
 function defaultWorkContext(): GlobalWorkContext {
   return { surface: 'general' }
-}
-
-function mergeWorkContext(
-  base: GlobalWorkContext,
-  patch?: Partial<GlobalWorkContext>,
-): GlobalWorkContext {
-  if (!patch) return base
-  return { ...base, ...patch }
 }
 
 interface GlobalChatStore {
@@ -149,7 +142,7 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
   },
 
   setWorkContext: (patch) => {
-    const next = mergeWorkContext(get().workContext, patch)
+    const next = mergeAttachedWorkContext(get().workContext, patch)
     writePersistedGlobalChat({ workContext: next })
     set({ workContext: next })
   },
@@ -172,22 +165,21 @@ export const useGlobalChatStore = create<GlobalChatStore>((set, get) => ({
     if (channelMatch?.[1]) {
       suggested.channelId = channelMatch[1]
     }
+    get().setWorkContext(suggested)
     set({ suggestedWorkContext: suggested })
   },
 
   loadRoster: async () => {
-    const rows = await cachedFetch(
-      'team-roster:all',
-      () => fetchTeamRoster({ kind: 'all' }),
-      { ttlMs: 60_000 },
-    )
+    const rows = await cachedFetch('team-roster:all', () => fetchTeamRoster({ kind: 'all' }), {
+      ttlMs: 60_000,
+    })
     set({ roster: rows, rosterLoaded: true })
     useSpacesStore.setState({ roster: rows, rosterLoaded: true })
   },
 
   expandAndFocus: (opts) => {
     const nextWork = opts?.workContext
-      ? mergeWorkContext(get().workContext, opts.workContext)
+      ? mergeAttachedWorkContext(get().workContext, opts.workContext)
       : get().workContext
     if (opts?.workContext) {
       get().setWorkContext(opts.workContext)

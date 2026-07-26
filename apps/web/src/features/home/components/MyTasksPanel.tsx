@@ -182,11 +182,11 @@ export function MyTasksPanel({
         <div className="mt-spacing-4 gap-spacing-2 flex flex-wrap items-center">
           <div className="relative min-w-0 flex-1">
             <Search
-              className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
+              className="icon-left-center text-muted-foreground pointer-events-none h-3.5 w-3.5"
               aria-hidden
             />
             <input
-              className="input-glass body-3 h-spacing-9 rounded-spacing-2 w-full pl-9 pr-3"
+              className="input-glass input-leading body-3 h-spacing-9 rounded-spacing-2 pr-spacing-3 w-full"
               placeholder="Search tasks…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}

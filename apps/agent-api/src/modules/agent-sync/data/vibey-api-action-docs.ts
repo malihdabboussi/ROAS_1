@@ -903,9 +903,9 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   create_calendar_event: {
     section: 'Integrations',
     description:
-      'Creates one timed provider-owned calendar event in Google Calendar or Outlook. Use create_task/update_task with start_date/due_date for task scheduling.',
+      'Creates one timed provider-owned calendar event in Google Calendar or Outlook. When multiple accounts are connected, first use list_calendar_events and pass the selected account as user_integration_id. The result identifies the exact account used. Use create_task/update_task with start_date/due_date for task scheduling.',
     parameters:
-      '```json\n{"action":"create_calendar_event","label":"Adding calendar event","data":{"provider":"google_calendar","title":"Review launch tasks","start":"2026-06-18T10:00:00.000Z","end":"2026-06-18T10:30:00.000Z","timezone":"Asia/Nicosia"}}\n```',
+      '```json\n{"action":"create_calendar_event","label":"Adding calendar event","data":{"provider":"google_calendar","user_integration_id":"UUID_FROM_LIST_CALENDAR_EVENTS","title":"Review launch tasks","start":"2026-06-18T10:00:00.000Z","end":"2026-06-18T10:30:00.000Z","timezone":"Asia/Nicosia"}}\n```',
   },
   update_calendar_event: {
     section: 'Integrations',
@@ -2526,7 +2526,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   list_campaigns: {
     section: 'Campaign',
     description:
-      'Lists campaigns relevant to the current context. Use when the user names a campaign but you need its id, asks what campaigns exist, or you need to resolve a campaign before a campaign-scoped action. Optional mode can request a broader accessible list.',
+      'Lists campaigns relevant to the current context. Use when the user names a campaign but you need its id, asks what campaigns exist, or you need to resolve a campaign before a campaign-scoped action. For plural, portfolio, client-wide, or organization-wide questions use mode:"accessible" rather than inheriting one active campaign.',
     parameters:
       '```json\n{"action":"list_campaigns","label":"Reviewing campaigns","data":{}}\n```\nAll accessible campaigns:\n```json\n{"action":"list_campaigns","label":"Reviewing campaigns","data":{"mode":"accessible"}}\n```',
   },
@@ -2634,7 +2634,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   get_campaign_main_dashboard: {
     section: 'Analytics',
     description:
-      'Returns the aggregated campaign dashboard in one call: executive KPIs (leads, conversion, open rate, engagement, reach, visitors), per-channel summaries (funnels / emails / ads / social), unified daily timeseries, contribution breakdown by source, and threshold-based alerts. Same numbers the user sees on the Studio > Dashboard > Overview tab. Start here for any "how is my campaign doing" question before drilling into social or revenue.',
+      'Returns the aggregated campaign dashboard in one call: executive KPIs (leads, conversion, open rate, engagement, reach, visitors), per-channel summaries (funnels / emails / ads / social), unified daily timeseries, contribution breakdown by source, and threshold-based alerts. Same numbers the user sees on the Studio > Dashboard > Overview tab. Start here for any "how is my campaign doing" question. For organization-wide health, first list accessible campaigns, call this once per eligible active client campaign, and distinguish missing or partial data from a real KPI alert.',
     parameters:
       '```json\n{"action":"get_campaign_main_dashboard","label":"Loading your dashboard","data":{}}\n```\n```json\n{"action":"get_campaign_main_dashboard","label":"Loading this month\'s performance","data":{"since":"2026-04-01T00:00:00Z","until":"2026-04-30T23:59:59Z"}}\n```',
   },

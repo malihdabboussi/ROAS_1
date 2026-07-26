@@ -1,6 +1,10 @@
-import '@testing-library/jest-dom/vitest'
 import { TextEncoder as NodeTextEncoder, TextDecoder } from 'util'
-import { vi } from 'vitest'
+import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
+import { expect, vi } from 'vitest'
+
+// Extend the Vitest instance executing this app. Importing jest-dom's `/vitest`
+// entry can bind to a second physical Vitest install in a pnpm workspace.
+expect.extend(jestDomMatchers)
 
 class TextEncoder extends NodeTextEncoder {
   override encode(input?: string): Uint8Array {

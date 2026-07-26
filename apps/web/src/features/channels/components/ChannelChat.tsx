@@ -3,24 +3,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Tabs, TabsContent } from '@/components/ui/navigation/tabs'
-import type {
-  Channel,
-  ChannelMember,
-  ChannelMention,
-  ChannelMessage,
-} from '@/lib/channels'
+import type { Channel, ChannelMember, ChannelMention, ChannelMessage } from '@/lib/channels'
 import type { MissionDeliverable } from '@/lib/missions'
-import type { ChannelComposerVisibleState } from './ChannelComposer'
-import { ChannelChatMessagesPanel } from './ChannelChatMessagesPanel'
-import { ChannelChatTabs } from './ChannelChatTabs'
-import { ChannelContextTab } from './ChannelContextTab'
-import { groupMessagesByDate } from './ChannelDateSeparator'
-import { ChannelHeader } from './ChannelHeader'
+import type { TeamRosterEntry } from '@/lib/team'
 import {
   formatChannelJumpLabel,
   getChannelSenderMeta,
   type ChannelChatActiveTab,
 } from './channel-chat-utils'
+import { ChannelChatMessagesPanel } from './ChannelChatMessagesPanel'
+import { ChannelChatTabs } from './ChannelChatTabs'
+import type { ChannelComposerVisibleState } from './ChannelComposer'
+import { ChannelContextTab } from './ChannelContextTab'
+import { groupMessagesByDate } from './ChannelDateSeparator'
+import { ChannelHeader } from './ChannelHeader'
 import { DeliverablesView } from './DeliverablesView'
 
 export type { ChannelChatActiveTab } from './channel-chat-utils'
@@ -39,6 +35,8 @@ export function ChannelChat({
   currentUserId,
   campaignId,
   rosterAvatars,
+  mentionRoster,
+  onEnsureMentionMembers,
   onSendMessage,
   onEditMessage,
   onDeleteMessage,
@@ -61,6 +59,8 @@ export function ChannelChat({
   /** Resolved campaign for the active space — used to scope channel uploads. */
   campaignId?: string | null
   rosterAvatars?: Map<string, string>
+  mentionRoster?: TeamRosterEntry[]
+  onEnsureMentionMembers?: (mentions: ChannelMention[]) => Promise<boolean>
   onSendMessage: (payload: {
     content: string
     mentions: ChannelMention[]
@@ -273,7 +273,7 @@ export function ChannelChat({
 
   if (!channel) {
     return (
-      <section className="bg-background flex h-full min-h-0 flex-1 items-center justify-center">
+      <section className="bg-background flex h-full min-h-0 min-w-0 flex-1 items-center justify-center">
         <p className="body-2 text-muted-foreground max-w-md text-center">
           This channel isn&apos;t available. Open{' '}
           <span className="text-foreground font-medium">Home</span> and choose another channel under
@@ -287,8 +287,8 @@ export function ChannelChat({
     <section
       className={
         omitChatTrailingInset
-          ? 'bg-background flex h-full min-h-0 flex-1'
-          : 'bg-background flex h-full min-h-0 flex-1 pb-3 pr-1.5 pt-3'
+          ? 'bg-background flex h-full min-h-0 min-w-0 flex-1'
+          : 'bg-background flex h-full min-h-0 min-w-0 flex-1 pb-3 pr-1.5 pt-3'
       }
     >
       <div className="border-border flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border">
@@ -328,6 +328,8 @@ export function ChannelChat({
               senderMeta={senderMeta}
               currentUserId={currentUserId}
               rosterAvatars={rosterAvatars}
+              mentionRoster={mentionRoster}
+              onEnsureMentionMembers={onEnsureMentionMembers}
               scrollRef={scrollRef}
               onJumpToDate={jumpToDate}
               onSendMessage={onSendMessage}

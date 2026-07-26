@@ -20,11 +20,14 @@ import {
 } from '@/lib/conversations'
 import { cn } from '@/lib/utils/cn'
 
-type SubmenuKey = 'type' | 'status' | 'lastActivity' | 'groupBy' | 'leadingIcon' | null
+type SubmenuKey = 'agent' | 'type' | 'status' | 'lastActivity' | 'groupBy' | 'leadingIcon' | null
 
 interface ChatHistoryFilterMenuProps {
   value: ChatHistoryFilterState
   onChange: (next: ChatHistoryFilterState) => void
+  agentKey?: string | null
+  agentOptions?: Array<{ key: string; label: string }>
+  onAgentKeyChange?: (agentKey: string | null) => void
   onOpenAllChats?: () => void
   className?: string
 }
@@ -45,6 +48,9 @@ const LEADING_ICON_OPTIONS: ChatHistoryLeadingIcon[] = ['agent', 'logo', 'status
 export function ChatHistoryFilterMenu({
   value,
   onChange,
+  agentKey,
+  agentOptions,
+  onAgentKeyChange,
   onOpenAllChats,
   className,
 }: ChatHistoryFilterMenuProps) {
@@ -145,6 +151,47 @@ export function ChatHistoryFilterMenu({
               className="dropdown-menu-solid border-border z-dropdown fixed w-56 overflow-hidden rounded-xl border p-1 shadow-lg"
               style={floatingStyles}
             >
+              {onAgentKeyChange ? (
+                <>
+                  <FilterRow
+                    label="Agent"
+                    value={
+                      agentKey
+                        ? (agentOptions?.find((option) => option.key === agentKey)?.label ??
+                          agentKey)
+                        : 'All'
+                    }
+                    expanded={submenu === 'agent'}
+                    onToggle={() => toggleSubmenu('agent')}
+                    className={rowClass}
+                  />
+                  {submenu === 'agent' ? (
+                    <>
+                      <SubmenuOption
+                        label="All agents"
+                        selected={agentKey == null}
+                        onSelect={() => {
+                          onAgentKeyChange(null)
+                          setSubmenu(null)
+                        }}
+                      />
+                      {agentOptions?.map((option) => (
+                        <SubmenuOption
+                          key={option.key}
+                          label={option.label}
+                          selected={agentKey === option.key}
+                          onSelect={() => {
+                            onAgentKeyChange(option.key)
+                            setSubmenu(null)
+                          }}
+                        />
+                      ))}
+                    </>
+                  ) : null}
+                  <div className="border-border my-1 border-t" />
+                </>
+              ) : null}
+
               <FilterRow
                 label="Type"
                 value={chatHistoryTypeLabel(value.type)}
@@ -243,6 +290,7 @@ export function ChatHistoryFilterMenu({
                 role="menuitem"
                 onClick={() => {
                   onChange({ ...DEFAULT_CHAT_HISTORY_FILTERS })
+                  onAgentKeyChange?.(null)
                   setOpen(false)
                   setSubmenu(null)
                 }}

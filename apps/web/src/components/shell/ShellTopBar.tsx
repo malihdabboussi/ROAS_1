@@ -4,16 +4,18 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Brain,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
+  ContactRound,
   FolderGit2,
   Inbox,
   Layers3,
   List,
   ListChecks,
   MessageSquare,
-  PanelLeft,
-  PanelRight,
+  PanelLeftClose,
+  PanelLeftOpen,
   Search,
   Users,
   Workflow,
@@ -23,6 +25,7 @@ import { dispatchOpenStudioSearch } from '@/features/studio/utils/open-studio-se
 import { cn } from '@/lib/utils/cn'
 import { ShellOpenInMenu } from './ShellOpenInMenu'
 import { useShellOpenIn } from './ShellOpenInProvider'
+import { ShellWorkAreaControl } from './ShellWorkAreaControl'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
 import { useShellStore } from './use-shell-store'
 
@@ -30,9 +33,14 @@ function breadcrumbFromPath(
   pathname: string,
   spaceTitle: string | null,
 ): { label: string; Icon: typeof Inbox } {
-  if (pathname === '/home' || pathname.startsWith('/home/')) {
-    return { label: 'Inbox', Icon: Inbox }
-  }
+  if (pathname === '/home') return { label: 'Agenda', Icon: CalendarDays }
+  if (pathname.startsWith('/home/inbox')) return { label: 'Inbox', Icon: Inbox }
+  if (pathname.startsWith('/home/meetings')) return { label: 'Meetings', Icon: CalendarDays }
+  if (pathname.startsWith('/home/my-tasks')) return { label: 'My Tasks', Icon: ListChecks }
+  if (pathname.startsWith('/home/channels')) return { label: 'Channels', Icon: MessageSquare }
+  if (pathname.startsWith('/team/skills')) return { label: 'Skills', Icon: Layers3 }
+  if (pathname.startsWith('/team/teams')) return { label: 'Teams', Icon: Users }
+  if (pathname.startsWith('/team/people')) return { label: 'People', Icon: ContactRound }
   if (pathname.startsWith('/team')) return { label: 'Team', Icon: Users }
   if (pathname.startsWith('/brain')) return { label: 'Brain', Icon: Brain }
   if (pathname.startsWith('/chats')) return { label: 'Chats', Icon: MessageSquare }
@@ -62,8 +70,9 @@ export function ShellTopBar() {
   const toggleRightPanel = useShellStore((s) => s.toggleRightPanel)
   const rightPanelOpen = useShellStore((s) => s.rightPanel.open)
   const workAreaOpen = useShellStore((s) => s.workAreaOpen)
-  const toggleWorkAreaOpen = useShellStore((s) => s.toggleWorkAreaOpen)
+  const artifactTarget = useShellStore((s) => s.artifactViewer.target)
   const pageBreadcrumb = useShellStore((s) => s.pageBreadcrumb)
+  const recordWorkAreaPage = useShellStore((s) => s.recordWorkAreaPage)
 
   const { targets } = useShellOpenIn()
 
@@ -77,11 +86,17 @@ export function ShellTopBar() {
   const crumb = breadcrumbFromPath(pathname, activeSpaceTitle)
   const CrumbIcon = crumb.Icon
   const visiblePageBreadcrumb = pageBreadcrumb
+  const showWorkAreaControl = chatDrawerOpen || !workAreaOpen || Boolean(artifactTarget)
+  const currentPage = { id: pathname, title: crumb.label, href: pathname }
 
   // Nav stays icon-rail only — clear any legacy pinned expand.
   useEffect(() => {
     setSidebarPinned(false)
   }, [setSidebarPinned])
+
+  useEffect(() => {
+    recordWorkAreaPage(currentPage)
+  }, [currentPage.href, currentPage.id, currentPage.title, recordWorkAreaPage])
 
   const histIndex = useRef(0)
   const histMax = useRef(0)
@@ -123,13 +138,14 @@ export function ShellTopBar() {
         aria-label={chatDrawerOpen ? 'Collapse AI Chats' : 'Open AI Chats'}
         aria-pressed={chatDrawerOpen}
         onClick={toggleAiChat}
-        className={cn(
-          'shell-topbar-icon-btn',
-          chatDrawerOpen && 'shell-topbar-icon-btn-active w-auto gap-1 px-2',
-        )}
+        className="button-glass-purple h-spacing-8 px-spacing-3 gap-spacing-1 rounded-spacing-2 flex shrink-0 items-center"
       >
-        <PanelLeft />
-        {chatDrawerOpen ? <span className="body-3 whitespace-nowrap">AI chat</span> : null}
+        {chatDrawerOpen ? (
+          <PanelLeftClose className="icon-sm" aria-hidden />
+        ) : (
+          <PanelLeftOpen className="icon-sm" aria-hidden />
+        )}
+        <span className="body-3 whitespace-nowrap font-medium">AI Chat</span>
       </button>
 
       <button
@@ -192,15 +208,7 @@ export function ShellTopBar() {
           <List />
         </button>
 
-        <button
-          type="button"
-          title={workAreaOpen ? 'Collapse page — chat full screen' : 'Show page'}
-          aria-pressed={!workAreaOpen}
-          onClick={() => toggleWorkAreaOpen()}
-          className={cn('shell-topbar-icon-btn', !workAreaOpen && 'shell-topbar-icon-btn-active')}
-        >
-          <PanelRight />
-        </button>
+        {showWorkAreaControl ? <ShellWorkAreaControl currentPage={currentPage} /> : null}
       </div>
     </header>
   )

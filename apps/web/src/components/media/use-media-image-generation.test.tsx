@@ -38,6 +38,7 @@ describe('useMediaImageGeneration', () => {
         open: true,
         spaceId: 'space-1',
         campaignId: 'campaign-1',
+        conversationId: 'conversation-1',
         loadCreations: false,
         onGenerationComplete,
       }),
@@ -46,6 +47,7 @@ describe('useMediaImageGeneration', () => {
     await waitFor(() => expect(fetchImageGenerationModels).toHaveBeenCalled())
     act(() => {
       result.current.setReference('parent-asset', 'https://example.com/original.png')
+      result.current.addReferenceAsset('reference-asset')
       result.current.setPrompt('Put the dog in a city park')
     })
     await act(async () => {
@@ -56,8 +58,10 @@ describe('useMediaImageGeneration', () => {
       expect.objectContaining({
         prompt: 'Put the dog in a city park',
         parent_image_asset_id: 'parent-asset',
+        reference_image_asset_ids: ['reference-asset'],
         space_id: 'space-1',
         campaign_id: 'campaign-1',
+        conversation_id: 'conversation-1',
       }),
       expect.any(Object),
       expect.any(AbortSignal),
@@ -66,5 +70,33 @@ describe('useMediaImageGeneration', () => {
       url: 'https://example.com/edited.png',
       assetId: 'edited-asset',
     })
+  })
+
+  it('keeps current model aspect ratios when the API returns stale capabilities', async () => {
+    vi.mocked(fetchImageGenerationModels).mockResolvedValue({
+      success: true,
+      models: [
+        {
+          id: 'gpt-5.4-image-2',
+          name: 'ChatGPT',
+          tier: 'pro',
+          description: 'ChatGPT images',
+          supportedAspectRatios: ['1:1', '16:9', '9:16', '4:3'],
+          defaultAspectRatio: '16:9',
+        },
+      ],
+      defaultModel: 'gpt-5.4-image-2',
+      tier: 'pro',
+    })
+
+    const { result } = renderHook(() =>
+      useMediaImageGeneration({
+        open: true,
+        loadCreations: false,
+      }),
+    )
+
+    await waitFor(() => expect(result.current.availableModels).toHaveLength(1))
+    expect(result.current.supportedAspectRatios).toContain('3:4')
   })
 })

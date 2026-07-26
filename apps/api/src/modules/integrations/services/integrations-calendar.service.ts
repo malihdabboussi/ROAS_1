@@ -11,7 +11,9 @@ import { MeetingsPrecallPrepService } from '../../spaces/services/meetings-preca
 import { IntegrationsRepository } from '../repositories/integrations.repository'
 import {
   listConnectedCalendarAccounts,
-  pickBestCalendarConnectionRow,
+  resolveCalendarConnection,
+  toCalendarAccountReceipt,
+  type CalendarAccountReceipt,
   type CalendarConnectionRef,
 } from './integrations-calendar-connections'
 import {
@@ -22,6 +24,7 @@ import {
 import { fetchGoogleMultiCalendarAgenda } from './integrations-calendar-google-agenda'
 import {
   assertCalendarProvider,
+  assertOptionalTimedRange,
   assertTimedRange,
   buildGoogleCreateParams,
   buildGoogleDeleteParams,
@@ -29,7 +32,7 @@ import {
   buildOutlookCreateParams,
   buildOutlookDeleteParams,
   buildOutlookUpdateParams,
-  isTimedDateTime,
+  ensureZSuffix,
   normalizeProviderEventId,
 } from './integrations-calendar-mutations'
 import { IntegrationsCalendarTeamService } from './integrations-calendar-team.service'
@@ -95,10 +98,10 @@ export type CalendarUpdateEventInput = {
 export type CalendarDeleteEventInput = {
   calendar_id?: string
 }
-
 export type CalendarEventMutationResponse = {
   success: boolean
   event?: CalendarAgendaEvent | null
+  account?: CalendarAccountReceipt
 }
 
 @Injectable()
@@ -197,8 +200,8 @@ export class IntegrationsCalendarService {
       const outlookJobs = wantOutlook
         ? outlookAccounts.map(async (account) => {
             try {
-              const startZ = this.ensureZSuffix(start)
-              const endZ = this.ensureZSuffix(end)
+              const startZ = ensureZSuffix(start)
+              const endZ = ensureZSuffix(end)
               const raw = await this.composio.executeTool(
                 'OUTLOOK_LIST_EVENTS',
                 user.id,
@@ -298,7 +301,7 @@ export class IntegrationsCalendarService {
   ): Promise<CalendarEventMutationResponse> {
     const provider = assertCalendarProvider(input.provider)
     assertTimedRange(input.start, input.end)
-    const connectionId = await this.requireConnection(
+    const connection = await this.requireConnection(
       supabase,
       user.id,
       scope,
@@ -311,10 +314,19 @@ export class IntegrationsCalendarService {
       provider === 'google_calendar'
         ? buildGoogleCreateParams(input)
         : buildOutlookCreateParams(input),
-      connectionId,
+      connection.composioAccountId,
     )
 
-    return { success: true, event: this.parseMutationEvent(provider, raw) }
+    const event = this.parseMutationEvent(provider, raw)
+    if (event) {
+      event.account_id = connection.userIntegrationId
+      event.account_label = connection.label
+    }
+    return {
+      success: true,
+      event,
+      account: toCalendarAccountReceipt(connection),
+    }
   }
 
   async updateEvent(
@@ -326,15 +338,9 @@ export class IntegrationsCalendarService {
     input: CalendarUpdateEventInput,
   ): Promise<CalendarEventMutationResponse> {
     const provider = assertCalendarProvider(providerInput)
-    if (input.start && input.end) assertTimedRange(input.start, input.end)
-    if (input.start && !isTimedDateTime(input.start)) {
-      throw new BadRequestException('start must be a timed ISO 8601 datetime')
-    }
-    if (input.end && !isTimedDateTime(input.end)) {
-      throw new BadRequestException('end must be a timed ISO 8601 datetime')
-    }
+    assertOptionalTimedRange(input)
     const eventId = normalizeProviderEventId(provider, eventIdInput)
-    const connectionId = await this.requireConnection(supabase, user.id, scope, provider)
+    const connection = await this.requireConnection(supabase, user.id, scope, provider)
     const raw = await this.composio.executeTool(
       provider === 'google_calendar'
         ? 'GOOGLECALENDAR_PATCH_EVENT'
@@ -343,7 +349,7 @@ export class IntegrationsCalendarService {
       provider === 'google_calendar'
         ? buildGoogleUpdateParams(eventId, input)
         : buildOutlookUpdateParams(eventId, input),
-      connectionId,
+      connection.composioAccountId,
     )
 
     return { success: true, event: this.parseMutationEvent(provider, raw) }
@@ -359,7 +365,7 @@ export class IntegrationsCalendarService {
   ): Promise<CalendarEventMutationResponse> {
     const provider = assertCalendarProvider(providerInput)
     const eventId = normalizeProviderEventId(provider, eventIdInput)
-    const connectionId = await this.requireConnection(supabase, user.id, scope, provider)
+    const connection = await this.requireConnection(supabase, user.id, scope, provider)
     await this.composio.executeTool(
       provider === 'google_calendar'
         ? 'GOOGLECALENDAR_DELETE_EVENT'
@@ -368,19 +374,10 @@ export class IntegrationsCalendarService {
       provider === 'google_calendar'
         ? buildGoogleDeleteParams(input.calendar_id, eventId)
         : buildOutlookDeleteParams(eventId),
-      connectionId,
+      connection.composioAccountId,
     )
 
     return { success: true }
-  }
-
-  private ensureZSuffix(iso: string): string {
-    if (/[zZ]$/.test(iso)) return iso
-    if (/[+-]\d{2}:\d{2}$/.test(iso)) {
-      const d = new Date(iso)
-      if (!Number.isNaN(d.getTime())) return d.toISOString().replace(/\.\d{3}Z$/, 'Z')
-    }
-    return `${iso.endsWith('Z') ? iso.slice(0, -1) : iso}Z`
   }
 
   private async requireConnection(
@@ -389,18 +386,21 @@ export class IntegrationsCalendarService {
     scope: RequestScope,
     provider: CalendarProvider,
     userIntegrationId?: string,
-  ): Promise<string> {
-    const connectionId = await this.resolveConnection(
+  ): Promise<CalendarConnectionRef> {
+    const connection = await this.resolveConnection(
       supabase,
       userId,
       scope,
       provider,
       userIntegrationId,
     )
-    if (!connectionId) {
-      throw new BadRequestException(`${provider} is not connected`)
+    if (!connection) {
+      const message = userIntegrationId
+        ? `Selected ${provider} account is not connected`
+        : `${provider} is not connected`
+      throw new BadRequestException(message)
     }
-    return connectionId
+    return connection
   }
 
   private parseMutationEvent(provider: CalendarProvider, raw: unknown): CalendarAgendaEvent | null {
@@ -422,7 +422,7 @@ export class IntegrationsCalendarService {
     supabase: SupabaseClient,
     userId: string,
     scope: RequestScope,
-    integrationId: string,
+    integrationId: CalendarProvider,
   ): Promise<Array<Record<string, unknown>>> {
     const q = this.repository
       .table(supabase, 'user_integrations')
@@ -469,28 +469,17 @@ export class IntegrationsCalendarService {
     supabase: SupabaseClient,
     userId: string,
     scope: RequestScope,
-    integrationId: string,
+    integrationId: CalendarProvider,
     userIntegrationId?: string,
-  ): Promise<string | null> {
+  ): Promise<CalendarConnectionRef | null> {
     const scopedRows = await this.listScopedIntegrationRows(supabase, userId, scope, integrationId)
-    const preferredId = String(userIntegrationId ?? '').trim()
-    const preferred = preferredId
-      ? scopedRows.find((row) => String(row.id ?? '') === preferredId)
-      : null
-    const row =
-      preferred && String(preferred.status ?? '').toLowerCase() === 'connected'
-        ? preferred
-        : pickBestCalendarConnectionRow(scopedRows, userId, scope.orgId)
-    if (!row || String(row.status ?? '').toLowerCase() !== 'connected') return null
-    const meta =
-      row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
-        ? (row.metadata as Record<string, unknown>)
-        : {}
-    const id =
-      typeof meta.composio_connected_account_id === 'string'
-        ? meta.composio_connected_account_id.trim()
-        : ''
-    return id.length > 0 ? id : null
+    return resolveCalendarConnection(
+      scopedRows,
+      userId,
+      scope.orgId,
+      integrationId,
+      userIntegrationId,
+    )
   }
 
   private parseGoogleEventsListResponse(raw: unknown): CalendarAgendaEvent[] {

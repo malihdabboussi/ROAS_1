@@ -450,6 +450,10 @@ export class EntitySearchService {
           iconUrl: row.avatar_url ?? null,
           url: null,
           personKind: 'managed_person',
+          relationshipKind:
+            row.relationship_kind === 'internal' || row.relationship_kind === 'external'
+              ? row.relationship_kind
+              : 'unknown',
           brainId: row.person_brain_id ?? null,
         }))
       return [...rosterResults, ...managedResults].slice(0, limit)

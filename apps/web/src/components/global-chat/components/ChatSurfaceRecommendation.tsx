@@ -1,14 +1,8 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
-import { useMemo, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { cn } from '@/lib/utils/cn'
-import {
-  routeRecommendation,
-  surfaceFromPathname,
-  WORK_SURFACE_LABELS,
-} from '../config/work-context.config'
+import { routeRecommendation } from '../config/work-context.config'
 import {
   addRecDismissedSurface,
   readRecDismissedSurfaces,
@@ -17,8 +11,8 @@ import {
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 
 export function ChatSurfaceRecommendation() {
-  const pathname = usePathname() ?? ''
   const activeAgentKey = useGlobalChatStore((s) => s.activeAgentKey)
+  const surface = useGlobalChatStore((s) => s.workContext.surface)
   const requestAgentSwitch = useGlobalChatStore((s) => s.requestAgentSwitch)
   const roster = useGlobalChatStore((s) => s.roster)
   const [dismissedSurfaces, setDismissedSurfaces] = useState<GlobalWorkSurface[]>(() =>
@@ -31,8 +25,13 @@ export function ChatSurfaceRecommendation() {
   const openNameDetail = () => setNameDetailOpen(true)
   const closeNameDetail = () => setNameDetailOpen(false)
 
-  const surface = surfaceFromPathname(pathname)
   const rec = routeRecommendation(surface, activeAgentKey)
+
+  useEffect(() => {
+    setDismissedForSession(false)
+    setShowFollowUpActions(false)
+    setNameDetailOpen(false)
+  }, [surface])
 
   const agentLabel = useMemo(() => {
     if (!rec) return ''
@@ -47,9 +46,7 @@ export function ChatSurfaceRecommendation() {
 
   const suggestedInstalled =
     rec.suggestedAgentKey === 'vibey' ||
-    roster.some(
-      (entry) => entry.kind === 'agent' && entry.agent_key === rec.suggestedAgentKey,
-    )
+    roster.some((entry) => entry.kind === 'agent' && entry.agent_key === rec.suggestedAgentKey)
   if (!suggestedInstalled) return null
 
   const handleDontShowAgain = () => {
@@ -124,58 +121,21 @@ export function ChatSurfaceRecommendation() {
       ) : null}
       {dismissedForSession && showFollowUpActions ? (
         <div className="chat-surface-rec-follow-up">
-          <button type="button" className="chat-surface-rec-follow-up-action" onClick={handleDontShowAgain}>
+          <button
+            type="button"
+            className="chat-surface-rec-follow-up-action"
+            onClick={handleDontShowAgain}
+          >
             Don&apos;t show this again
           </button>
-          <button type="button" className="chat-surface-rec-follow-up-action" onClick={handleRemindLater}>
+          <button
+            type="button"
+            className="chat-surface-rec-follow-up-action"
+            onClick={handleRemindLater}
+          >
             Remind me later
           </button>
         </div>
-      ) : null}
-    </div>
-  )
-}
-
-export function WorkContextPicker() {
-  const workContext = useGlobalChatStore((s) => s.workContext)
-  const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
-  const [open, setOpen] = useState(false)
-
-  const surfaces = Object.keys(WORK_SURFACE_LABELS) as GlobalWorkSurface[]
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="text-muted-foreground hover:text-foreground body-4 border-border inline-flex items-center gap-0.5 rounded-md border px-2 py-1 font-medium"
-      >
-        {WORK_SURFACE_LABELS[workContext.surface]}
-        <ChevronDown className="h-3 w-3 opacity-70" aria-hidden />
-      </button>
-      {open ? (
-        <>
-          <div className="z-modal-backdrop-inert" onClick={() => setOpen(false)} />
-          <div className="dropdown-menu-solid absolute bottom-full left-0 z-10 mb-1 min-w-[140px] py-1">
-            {surfaces.map((surface) => (
-              <button
-                key={surface}
-                type="button"
-                className={`body-4 hover:bg-hover-subtle flex w-full px-3 py-1.5 text-left ${
-                  workContext.surface === surface
-                    ? 'text-foreground font-semibold'
-                    : 'text-foreground'
-                }`}
-                onClick={() => {
-                  setWorkContext({ surface })
-                  setOpen(false)
-                }}
-              >
-                {WORK_SURFACE_LABELS[surface]}
-              </button>
-            ))}
-          </div>
-        </>
       ) : null}
     </div>
   )

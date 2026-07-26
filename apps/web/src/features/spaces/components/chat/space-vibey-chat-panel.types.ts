@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { GlobalWorkSurface } from '@/components/global-chat/lib/global-chat-storage'
 
 export interface SpaceVibeyChatPanelProps {
@@ -23,4 +24,5 @@ export interface SpaceVibeyChatPanelProps {
   /** Agent picker + history chrome live in the shell Chat sidebar. */
   shellSidebarChrome?: boolean
   headerLayout?: 'full' | 'compact'
+  composerContextSlot?: ReactNode
 }

@@ -135,6 +135,11 @@ describe('ArtifactLegacyMediaProviderService OpenRouter image generation', () =>
       'fetch',
       vi.fn(async () => new Response(' ', { status: 200 })),
     )
+  })
+
+  it('fails clearly after two malformed HTTP 200 responses', async () => {
+    const fetchMock = vi.fn(async () => new Response(' ', { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
 
     const service = new ArtifactLegacyMediaProviderService()
     const target = makeTarget()
