@@ -8506,3 +8506,20 @@ Evidence: The scoped fix uses the existing provider request, Brain-operation, Mi
 Needed work: Continue existing decomposition plans for the Brain processor, Mission gateway, OpenResponses handler, and embedded runner. Repair the workspace typecheck dependency/build contract and the OpenResponses history fixture independently.
 
 Reason not done now: Structural decomposition and unrelated baseline test repair would expand a production cost-control change across multiple execution systems. The in-scope paths are covered by targeted tests and remain behaviorally isolated.
+
+## 2026-07-26 - [ARCH] Architecture scan follows a machine-specific dangling OpenClaw link
+
+Status: Open
+
+Found while: Re-verifying the mission plan callback timeout after rebasing onto current `main`
+
+Files:
+
+- `apps/openclaw/src/canvas-host/a2ui/test-link-1782116645255-348bba5dc9fbd.txt`
+- `scripts/arch/check-loc.mjs`
+
+Evidence: `pnpm architecture:check` stops with `ENOENT` while following the tracked link, whose target is `/Users/2fun/Documents/1 - Creation/vibey2.0/apps/openclaw/package.json`. The three code files changed by the mission fix are 140, 422, and 47 lines, all below the 600-line limit.
+
+Needed work: Remove the machine-specific test link from the repository or make the architecture walker safely ignore dangling links, then restore the global architecture gate.
+
+Reason not done now: The link arrived from newer `main` and is unrelated to the mission production recovery fix.

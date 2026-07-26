@@ -31,6 +31,7 @@ Active subtask execution uses `mission_subtasks.updated_at` as a renewable lease
 
 Recovery behavior:
 
+- The deterministic plan phase gives its internal Main API plan-persistence callback 30 seconds by default (`MISSION_API_REQUEST_TIMEOUT_MS`). A callback that stops responding is aborted and enters the existing Bull retry/failure lifecycle instead of leaving the Mission in `planning` indefinitely.
 - The mission worker runs a stalled-work sweep immediately on startup and then every 30 seconds by default (`MISSIONS_RECOVERY_POLL_MS`). Operational loops and digests remain on the slower `MISSIONS_WATCHDOG_MS` schedule.
 - Queued work and runtime startup have a six-minute lease by default (`MISSIONS_EXECUTION_START_LEASE_TIMEOUT_MS`) to cover queue delay, machine wake, and readiness before the first stream event. The state switches from `starting` to `streaming` on that first event.
 - An active streaming execution lease expires after 90 seconds by default (`MISSIONS_EXECUTION_LEASE_TIMEOUT_MS`). Lease writes are throttled to 15 seconds by default (`MISSIONS_EXECUTION_LEASE_WRITE_MS`).
@@ -285,6 +286,7 @@ When the mission worker starts **without** a direct DB pool, it logs a **single 
 ## Decision Log
 
 - 2026-07-26: Made Customer Brain pattern analysis a bounded, tool-free inference because the worker already supplies its full evidence packet. Kept normal Mission tools and explicit Power model routing unchanged while reducing the default Mission output ceiling from 64K to 32K.
+- 2026-07-26: Bounded and aborted the plan phase's internal Main API callback so a stalled callback cannot strand deterministic static-ad or IG organic video missions in Planning before execution.
 - 2026-07-22: Applied the deterministic no-em-dash verifier to every Meta Audit and Meta Launch Doc rather than relying on the agent's claimed Dylan Super Voice compliance.
 - 2026-07-22: Made corrective execution remove only the failed contract action and stale partial output from its checkpoint so agents can replace rejected artifacts without repeating valid reads or research.
 - 2026-07-22: Added a dedicated Meta Ads Audit & Optimization playbook, native-to-Composio Meta routing, explicit human-gated mutations, post-change verification, and strict unique visual evidence plus single-save assembly for Ads Research.

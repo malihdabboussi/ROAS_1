@@ -122,6 +122,7 @@ export default () => ({
       process.env.MISSION_CALLBACK_URL ||
       `${process.env.BACKEND_URL || 'http://localhost:3001'}/api/internal/missions/callback`,
     internalToken: process.env.INTERNAL_API_TOKEN || '',
+    requestTimeoutMs: parseInt(process.env.MISSION_API_REQUEST_TIMEOUT_MS || '30000', 10),
     agentApiUrl: process.env.AGENT_API_URL || 'http://localhost:3003',
   },
 
