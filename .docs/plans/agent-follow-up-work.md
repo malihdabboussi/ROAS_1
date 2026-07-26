@@ -8590,3 +8590,21 @@ Evidence: The renderer and its preflight are isolated in new 144-line and 48-lin
 Needed work: Split media operation registration/schema groups and the remaining preflight families into focused domain modules, then reduce the central media dispatcher below the near-limit threshold.
 
 Reason not done now: Decomposing every existing media operation and action family would broaden a production acceptance blocker fix across unrelated contracts. The new operation itself is already isolated.
+
+## 2026-07-26 - [ARCH] Missions playbook selector components are near the frontend LOC limit
+
+Status: Open
+
+Found while: Exposing static and IG video production in the global Missions playbook dialog
+
+Files:
+
+- `apps/web/src/features/spaces/components/StartPlaybookModal.tsx` (393 LOC; component limit 400)
+- `apps/web/src/features/spaces/components/StartAdProductionPlaybookFields.tsx` (352 LOC; component limit 400)
+- `apps/web/src/features/spaces/components/MissionsView.tsx` (366 LOC; component limit 400)
+
+Evidence: The global selector is split from the ad-specific fields and all three components remain below the 400-line limit. Nine focused tests and the full web type-check pass, but each host is now within 48 lines of the limit.
+
+Needed work: Extract the legacy Webinar/Meta field groups and playbook request dispatch into focused private modules, then split static and video kickoff fields if either workflow gains more inputs.
+
+Reason not done now: The verified production blocker is the missing selector wiring. Further structural extraction would broaden a four-file UI fix without changing acceptance behavior.
