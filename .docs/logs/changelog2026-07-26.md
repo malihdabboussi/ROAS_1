@@ -132,3 +132,10 @@ What: Packaged the IG Story Pillow renderer at a stable production path, configu
 Why: Production acceptance reached `process_media/render_ig_story`, but the compiled service resolved beneath `dist/apps/agent-api/src` while the Docker image copied the Python asset beneath `dist/modules`, so the runtime could not open the renderer.
 Impact: Fly image builds now fail immediately if the renderer is absent, and successful images invoke the same explicit renderer path regardless of TypeScript output layout.
 Files: `docker/Dockerfile`, `apps/agent-api/src/modules/artifacts/services/artifact-runtime-packaging.test.ts`
+
+## [2026-07-26 15:24] - [FIX]
+
+What: Made IG Story post-render QA explicitly visual-only by requiring `analyze_video` with frame extraction enabled and transcription disabled, and clarified the generic video-analysis action guidance.
+Why: Production acceptance produced both correct final MP4s, but the agent used `analyze_video`'s transcript-enabled default for visual QA and blocked on an unrelated, unconfigured Deepgram dependency.
+Impact: Final-frame QA uses FFmpeg frame extraction without requiring a speech provider; Deepgram remains opt-in only when a spoken-audio transcript is actually requested.
+Files: `supabase/migrations/20260726222500_ig_organic_video_visual_qa.sql`, IG video playbook and contract tests, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `documentation/features/missions.md`

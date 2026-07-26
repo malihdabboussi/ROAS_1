@@ -8641,6 +8641,22 @@ Needed work: Continue moving legacy operation dispatch families behind their exi
 
 Reason not done now: Reorganizing every unrelated FFmpeg operation would broaden a production static-ad acceptance fix. The new operation is already isolated and the touched facade is compliant.
 
+## 2026-07-26 - [ARCH] Agent action documentation registry remains oversized
+
+Status: Open
+
+Found while: Clarifying visual-only IG Story QA
+
+File:
+
+- `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts` (2,711 LOC; pre-existing oversized agent-action documentation registry)
+
+Evidence: The in-scope change updates only the existing `analyze_video` entry and is protected by a focused skill/action-guidance contract test. The IG video playbook remains 118 LOC, and all other changed TypeScript files remain below their applicable limits.
+
+Needed work: Split action documentation into domain-scoped registries while preserving the generated catalog and existing capability-drift coverage.
+
+Reason not done now: Decomposing documentation for every unrelated agent action would substantially broaden a production visual-QA blocker fix.
+
 ## 2026-07-26 - [ARCH] Legacy image generation service remains near its hard limit
 
 Status: Open

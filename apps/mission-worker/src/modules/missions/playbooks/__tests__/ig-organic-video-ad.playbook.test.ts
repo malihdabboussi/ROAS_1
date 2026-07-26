@@ -32,6 +32,7 @@ describe('ig-organic-video-ad playbook', () => {
     expect(plan?.subtasks[0]?.intent.ecology).toMatch(/never.*Google.*Veo/i)
     expect(plan?.subtasks[0]?.intent.ecology).toMatch(/process_media.*operation.*render_ig_story/i)
     expect(plan?.subtasks[0]?.intent.ecology).toMatch(/only.*returned.*MP4.*final.*Deliverable/i)
+    expect(plan?.subtasks[0]?.intent.ecology).toMatch(/analyze_video.*transcribe false/i)
     expect(plan?.subtasks[0]?.outputContract).toMatchObject({
       artifact_kind: 'media_artifact',
       required_action: 'process_media',

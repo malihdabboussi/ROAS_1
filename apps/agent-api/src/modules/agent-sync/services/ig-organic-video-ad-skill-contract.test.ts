@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { VIBEY_API_ACTION_DOCS } from '../data/vibey-api-action-docs'
 
 describe('ig-organic-video-ad skill migration', () => {
   const migration = [
@@ -8,6 +9,7 @@ describe('ig-organic-video-ad skill migration', () => {
     '../../supabase/migrations/20260725153000_ig_organic_video_preapproved_copy.sql',
     '../../supabase/migrations/20260726122500_ig_organic_video_renderer_path.sql',
     '../../supabase/migrations/20260726124500_ig_organic_video_server_renderer.sql',
+    '../../supabase/migrations/20260726222500_ig_organic_video_visual_qa.sql',
   ]
     .map((filePath) => fs.readFileSync(path.resolve(process.cwd(), filePath), 'utf8'))
     .join('\n')
@@ -37,5 +39,18 @@ describe('ig-organic-video-ad skill migration', () => {
     expect(migration).toMatch(/Pillow/i)
     expect(migration).toMatch(/👇.*⏰.*✅.*🚨.*🙌/s)
     expect(migration).toMatch(/embedded color/i)
+  })
+
+  it('keeps visual QA independent from optional transcription', () => {
+    expect(migration).toMatch(/analyze_video/)
+    expect(migration).toMatch(/extract_frames: true/)
+    expect(migration).toMatch(/transcribe: false/)
+    expect(migration).toMatch(/never enable transcription or require Deepgram/i)
+    expect(VIBEY_API_ACTION_DOCS.analyze_video.description).toMatch(
+      /visual-only QA.*frame extraction does not require Deepgram/i,
+    )
+    expect(VIBEY_API_ACTION_DOCS.analyze_video.parameters).toMatch(
+      /"extract_frames":true,"transcribe":false,"frame_count":12/,
+    )
   })
 })

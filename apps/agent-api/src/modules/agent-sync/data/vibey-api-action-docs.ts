@@ -1871,9 +1871,9 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   analyze_video: {
     section: 'Media',
     description:
-      'Analyzes a video asset for creative workflows. Accepts media_url or asset_ref with a URL. Videos can extract frames and transcript. Use transcribe_audio for audio-only files.',
+      'Analyzes a video asset for creative workflows. Accepts media_url or asset_ref with a URL. Set extract_frames: true and transcribe: false for visual-only QA; frame extraction does not require Deepgram. Enable transcribe only when a spoken-audio transcript is needed. Use transcribe_audio for audio-only files.',
     parameters:
-      '```json\n{"action":"analyze_video","label":"Analyzing your video","data":{"asset_ref":{"kind":"external_asset","url":"https://..."},"media_url":"https://...","extract_frames":true,"transcribe":true}}\n```',
+      '```json\n{"action":"analyze_video","label":"Checking final video frames","data":{"media_url":"https://...","extract_frames":true,"transcribe":false,"frame_count":12}}\n```',
   },
   transcribe_audio: {
     section: 'Media',
