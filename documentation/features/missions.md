@@ -18,6 +18,8 @@ The header displays `Mission > Subtask`. Selecting the Mission breadcrumb return
 
 The Missions Space view now has **Mission List** and **Mission Views** surfaces. The list remains the operational table. Mission Views presents supported deterministic playbooks as action-oriented reports using one registry-backed phase contract rather than a custom page per mission.
 
+The global **Start playbook** dialog exposes the same canonical Static Ad Production and IG Organic Video payload builders used by Ads Research. Static runs collect format, size, quantity, and exact-copy or write-for-me context. Video runs collect one or more scenes, footage strategy, exact sticker copy or write-for-me context, CTA, and an approved emoji. The dialog cannot submit either production playbook until its required copy and output selections are present.
+
 - Ads Research reuses its visual evidence report, linked source documents, concept selection, and persisted production handoff.
 - Webinar Fulfillment groups the existing subtasks and deliverables into Strategy, Copy, Creative, and Activation phases. Each phase links its native outputs and opens the exact subtask in Mission Details. The first unresolved human gate appears as the primary `Review now` action.
 - Meta Ads Launch groups preparation, paused build, and activation.
@@ -290,6 +292,7 @@ If the direct pool hits a transport failure, the worker removes it from service 
 
 ## Decision Log
 
+- 2026-07-26: Exposed Static Ad Production and IG Organic Video in the global Missions playbook selector so direct Space acceptance uses the canonical deterministic playbooks instead of generic missions.
 - 2026-07-26: Moved IG Story sticker rendering behind the existing server-side media action so production missions receive a registered MP4 without depending on agent shell execution or workspace-relative files.
 - 2026-07-26: Made direct Postgres pool disablement atomic so concurrent mission jobs cannot acquire an ending pool, and pinned IG organic video rendering to the materialized agent-workspace skill path.
 - 2026-07-26: Routed compact Customer Brain synthesis through Opus 5, added bounded targeted older-evidence requests and conditional Fable 5 review for high-impact changes, and routed full-worldview/Avatar synthesis through medium-effort Fable while preserving targeted Brain retrieval.

@@ -18,6 +18,10 @@ import { MissionViewsSurface } from './mission-views/MissionViewsSurface'
 import { MissionCaptureModal } from './MissionCaptureModal'
 import { MissionsViewListContent } from './MissionsViewListContent'
 import {
+  buildIgOrganicVideoMissionPayload,
+  IG_ORGANIC_VIDEO_PLAYBOOK_ID,
+} from './playbooks/ig-organic-video'
+import {
   buildMetaAdsAuditMissionPayload,
   META_ADS_AUDIT_PLAYBOOK_ID,
 } from './playbooks/meta-ads-audit'
@@ -25,6 +29,10 @@ import {
   buildMetaAdsLaunchMissionPayload,
   META_ADS_LAUNCH_PLAYBOOK_ID,
 } from './playbooks/meta-ads-launch'
+import {
+  buildStaticAdProductionMissionPayload,
+  STATIC_AD_PRODUCTION_PLAYBOOK_ID,
+} from './playbooks/static-ad-production'
 import { buildWebinarFulfillmentMissionPayload } from './playbooks/webinar-fulfillment'
 import { StartPlaybookModal, type PlaybookStartRequest } from './StartPlaybookModal'
 import { useMissionsViewListState } from './useMissionsViewListState'
@@ -231,6 +239,12 @@ export const MissionsView = forwardRef<MissionsViewHandle, MissionsViewProps>(fu
           }
           if (request.playbookId === META_ADS_AUDIT_PLAYBOOK_ID) {
             return buildMetaAdsAuditMissionPayload(request.fields, pageGraderContext)
+          }
+          if (request.playbookId === STATIC_AD_PRODUCTION_PLAYBOOK_ID) {
+            return buildStaticAdProductionMissionPayload(request.fields)
+          }
+          if (request.playbookId === IG_ORGANIC_VIDEO_PLAYBOOK_ID) {
+            return buildIgOrganicVideoMissionPayload(request.fields)
           }
           return buildWebinarFulfillmentMissionPayload(request.fields)
         })()
