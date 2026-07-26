@@ -238,7 +238,7 @@ describe('Mission worker tool access smoke', () => {
     expect(JSON.parse(init.body).lane).toBe('mission:mission-2')
   })
 
-  it('preserves Opus, high reasoning, and 1M context for explicit Power missions', async () => {
+  it('routes explicit Power missions to bounded medium-effort Fable review', async () => {
     const service = createService()
     service['resolveAgentSelectedModel'] = vi.fn(async () => 'auto:power')
     service['resolveAgentApiTargetStateForUser'] = vi.fn(async () => ({
@@ -263,9 +263,9 @@ describe('Mission worker tool access smoke', () => {
 
     const [, init] = (global.fetch as any).mock.calls[1]
     expect(JSON.parse(init.body)).toMatchObject({
-      model: 'openrouter/anthropic/claude-opus-4.8',
-      context_window_tokens: 1_000_000,
-      reasoning: { effort: 'high' },
+      model: 'openrouter/anthropic/claude-fable-5',
+      context_window_tokens: 250_000,
+      reasoning: { effort: 'medium' },
     })
   })
 

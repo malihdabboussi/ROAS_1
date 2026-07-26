@@ -1,4 +1,6 @@
 export const DEFAULT_ENABLED_LLM_MODEL_IDS = [
+  'anthropic/claude-opus-5',
+  'openai/gpt-5.6-terra',
   'anthropic/claude-opus-4.8',
   'google/gemini-3.5-flash',
   'google/gemini-3.1-pro-preview',

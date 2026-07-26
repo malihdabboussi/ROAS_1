@@ -159,7 +159,7 @@ describe('BrainRerankerService', () => {
     expect(cost).toBeNull()
   })
 
-  it('caps reranker output and uses minimal reasoning', async () => {
+  it('caps reranker output and preserves low reasoning for relevance judgment', async () => {
     vi.stubEnv('BRAIN_LLM_RERANKER', '1')
     vi.stubEnv('BRAIN_LLM_RERANKER_MODEL', 'google/gemini-3.5-flash')
     vi.stubEnv('OPENROUTER_API_KEY', 'test-key')
@@ -197,7 +197,7 @@ describe('BrainRerankerService', () => {
     const payload = JSON.parse(String(request?.body)) as Record<string, unknown>
     expect(payload).toMatchObject({
       max_completion_tokens: 1200,
-      reasoning: { effort: 'minimal', exclude: true },
+      reasoning: { effort: 'low', exclude: true },
     })
     expect(result[0]?.id).toBe('candidate')
     expect(recordAttempt).toHaveBeenCalledTimes(2)

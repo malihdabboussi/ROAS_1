@@ -76,7 +76,15 @@ type BrainJobScopeRow = {
 const CUSTOMER_BELIEF_MIN_DISTINCT_UNITS = 3
 const CUSTOMER_PERSPECTIVE_MIN_BELIEFS = 3
 const CUSTOMER_PATTERN_MEMORY_LIMIT = 200
+const CUSTOMER_PATTERN_TARGETED_MEMORY_LIMIT = 80
 const CUSTOMER_PATTERN_PROMPT_BUDGET_CHARS = 60_000
+const CUSTOMER_PATTERN_TARGETED_PROMPT_BUDGET_CHARS = 40_000
+const BRAIN_HIGH_STAKES_MODEL_ID = 'anthropic/claude-fable-5'
+const BRAIN_HIGH_STAKES_MODEL_SETTINGS = {
+  context_window_tokens: 250_000,
+  reasoning_effort: 'medium',
+  speed_mode: 'standard',
+} as const
 const VALID_EVIDENCE_TYPES = new Set<string>(['stated', 'revealed', 'behavioral'])
 const EVIDENCE_TYPE_RANK: Record<string, number> = {
   stated: 0,
@@ -97,11 +105,18 @@ const VALID_DISCRIMINATOR_AXES = new Set<string>([
 
 interface PatternAnalysisDecision {
   brain_id: string
+  evidence_requests: PatternEvidenceRequest[]
   new_beliefs: NewBeliefDraft[]
   belief_updates: BeliefUpdateDraft[]
   new_perspectives: NewPerspectiveDraft[]
   perspective_updates: PerspectiveUpdateDraft[]
   log_event: { summary: string } | null
+}
+
+interface PatternEvidenceRequest {
+  belief_ids: string[]
+  perspective_ids: string[]
+  reason: string
 }
 
 interface NewBeliefDraft {
@@ -324,16 +339,17 @@ This is the Dispenza layer of your brain — memories form beliefs, beliefs clus
 2. Read the narrative pages from your workspace — focus on recently updated ones
 3. Call get_brain_belief_patterns with brain_type=user_default to see existing beliefs
 4. Call get_brain_perspectives with brain_type=user_default to see existing perspectives
-5. Detect new patterns across pages (repeated emotional themes, behavioral consistency, stated beliefs, contradictions)
-6. Run border control on existing beliefs:
+5. Keep retrieval targeted: do not load the entire library. Start from INDEX, recently changed pages, and the compact belief/perspective lists. When a contradiction, resolution, or worldview rewrite is uncertain, search for that exact belief or tension and read only the older pages needed to decide safely.
+6. Detect new patterns across pages (repeated emotional themes, behavioral consistency, stated beliefs, contradictions)
+7. Run border control on existing beliefs:
    - reinforce beliefs when the new pages support them
    - mark beliefs challenged when new evidence contradicts them
    - archive beliefs only when the user's newer evidence clearly resolves them
-7. Surface tensions deliberately. A tension is not a bug — it is a belief under pressure. Use update_brain_belief_pattern(status="challenged") when the evidence is clear.
-8. For each pattern: create_brain_belief_pattern (new), update_brain_belief_pattern (reinforce/challenge), or archive_brain_belief_pattern (resolved)
-9. Check if 3+ beliefs now align into a new perspective → create_brain_perspective
-10. Check if existing perspectives need updating → update_brain_perspective
-11. Log what you did via log_brain_event`
+8. Surface tensions deliberately. A tension is not a bug — it is a belief under pressure. Use update_brain_belief_pattern(status="challenged") when the evidence is clear.
+9. For each pattern: create_brain_belief_pattern (new), update_brain_belief_pattern (reinforce/challenge), or archive_brain_belief_pattern (resolved)
+10. Check if 3+ beliefs now align into a new perspective → create_brain_perspective
+11. Check if existing perspectives need updating → update_brain_perspective
+12. Log what you did via log_brain_event`
 
 const TIMELINE_SYNTHESIS_PROMPT = `/brain-timeline-synthesis
 
@@ -738,9 +754,9 @@ export class BrainOpsProcessor extends WorkerHost {
       'atlas',
       '',
       taskUserMessage,
-      undefined,
+      BRAIN_HIGH_STAKES_MODEL_ID,
       'mission_execute',
-      { channel: 'brain-ops' },
+      { channel: 'brain-ops', modelSettings: BRAIN_HIGH_STAKES_MODEL_SETTINGS },
     )
 
     const decision = this.parseAvatarDecision(String(result.content ?? ''), brainId)
@@ -2320,24 +2336,77 @@ export class BrainOpsProcessor extends WorkerHost {
       'atlas',
       '',
       taskUserMessage,
-      undefined,
+      'auto',
       'mission_execute',
       { channel: 'brain-ops', maxOutputTokens: 8_192, toolChoice: 'none' },
     )
 
-    const decision = this.parsePatternAnalysisDecision(String(result.content ?? ''), brainId)
-    if (!decision) {
+    const firstDecision = this.parsePatternAnalysisDecision(String(result.content ?? ''), brainId)
+    if (!firstDecision) {
       throw new Error('customer pattern-analysis: Atlas response did not parse to decision JSON')
     }
 
+    let decision = firstDecision
+    let targetedMemories: CustomerMemoryRow[] = []
+    let escalatedToFable = false
+    if (this.shouldEscalatePatternDecision(firstDecision)) {
+      const targetedMemoryIds = this.collectTargetedPatternMemoryIds({
+        decision: firstDecision,
+        existingBeliefs,
+        existingPerspectives,
+        currentMemoryIds: new Set(memories.map((memory) => memory.id)),
+      })
+      targetedMemories = await this.loadCustomerBrainMemoriesByIds(
+        supabase,
+        brainId,
+        targetedMemoryIds,
+      )
+      const reviewPrompt = this.buildCustomerPatternReviewPrompt({
+        initialPrompt: taskUserMessage,
+        initialDecision: firstDecision,
+        targetedMemories,
+      })
+      const reviewResult = await this.openclawGateway.callOpenClawRaw(
+        fakeMission,
+        'atlas',
+        '',
+        reviewPrompt,
+        BRAIN_HIGH_STAKES_MODEL_ID,
+        'mission_execute',
+        {
+          channel: 'brain-ops',
+          maxOutputTokens: 8_192,
+          toolChoice: 'none',
+          modelSettings: BRAIN_HIGH_STAKES_MODEL_SETTINGS,
+        },
+      )
+      const reviewedDecision = this.parsePatternAnalysisDecision(
+        String(reviewResult.content ?? ''),
+        brainId,
+      )
+      if (!reviewedDecision) {
+        throw new Error('customer pattern-analysis: Fable review did not parse to decision JSON')
+      }
+      if (reviewedDecision.evidence_requests.length > 0) {
+        throw new Error(
+          'customer pattern-analysis: Fable review still requires unresolved older evidence',
+        )
+      }
+      decision = reviewedDecision
+      escalatedToFable = true
+    }
+
+    const decisionMemories = [...memories, ...targetedMemories].filter(
+      (memory, index, all) => all.findIndex((candidate) => candidate.id === memory.id) === index,
+    )
     const writeOutcome = await this.applyPatternAnalysisDecision(supabase, {
       decision,
       brainId,
       existingBeliefs,
       existingPerspectives,
-      memories,
-      validMemoryIds: new Set(memories.map((m) => m.id)),
-      validCustomerUnitIds: this.validCustomerUnitIdsForMemories(memories),
+      memories: decisionMemories,
+      validMemoryIds: new Set(decisionMemories.map((m) => m.id)),
+      validCustomerUnitIds: this.validCustomerUnitIdsForMemories(decisionMemories),
     })
 
     await this.touchPatternAnalysisTimestamp(brainId)
@@ -2358,6 +2427,8 @@ export class BrainOpsProcessor extends WorkerHost {
       output: {
         memories: memories.length,
         distinct_customer_units: distinctCustomerUnitIds.size,
+        targeted_older_memories: targetedMemories.length,
+        escalated_to_fable: escalatedToFable,
         ...writeOutcome,
       },
     }
@@ -2378,6 +2449,24 @@ export class BrainOpsProcessor extends WorkerHost {
       .order('created_at', { ascending: true })
       .limit(CUSTOMER_PATTERN_MEMORY_LIMIT)
     return ((data ?? []) as CustomerMemoryRow[]).filter((m) => !!customerUnitIdForMemory(m))
+  }
+
+  private async loadCustomerBrainMemoriesByIds(
+    supabase: SupabaseClient,
+    brainId: string,
+    memoryIds: string[],
+  ): Promise<CustomerMemoryRow[]> {
+    if (memoryIds.length === 0) return []
+    const { data } = await supabase
+      .from('ns_memories')
+      .select(
+        'id, content, contact_id, customer_entity_id, customer_source_identity_id, customer_resolution_status, source_type, source_title, emotional_valence, emotional_intensity, created_at, occurred_at, occurred_until, asserted_at',
+      )
+      .eq('brain_id', brainId)
+      .in('id', memoryIds.slice(0, CUSTOMER_PATTERN_TARGETED_MEMORY_LIMIT))
+    return ((data ?? []) as CustomerMemoryRow[]).filter(
+      (memory) => !!customerUnitIdForMemory(memory),
+    )
   }
 
   private validCustomerUnitIdsForMemories(memories: CustomerMemoryRow[]): Set<string> {
@@ -2504,29 +2593,19 @@ export class BrainOpsProcessor extends WorkerHost {
           .join('\n\n')
       : '(none)'
 
-    // Memory block — apply a soft character budget so the prompt stays under model limits.
-    const memoryLines: string[] = []
-    let usedChars = 0
-    for (const m of input.memories) {
-      const valence = m.emotional_valence ?? null
-      const intensity = m.emotional_intensity ?? null
-      const emoTag =
-        valence !== null || intensity !== null
-          ? ` [valence=${valence ?? 'n/a'} intensity=${intensity ?? 'n/a'}]`
-          : ''
-      const happened = m.occurred_at ?? m.created_at
-      const unitId = customerUnitIdForMemory(m) ?? '(none)'
-      const line = `- id=${m.id} customer_unit_id=${unitId} contact_id=${m.contact_id ?? '(none)'} source_identity_id=${m.customer_source_identity_id ?? '(none)'} resolution=${m.customer_resolution_status ?? 'unknown'} source=${m.source_type ?? '?'} happened=${happened} learned=${m.asserted_at ?? m.created_at}${emoTag}\n  ${m.content}`
-      if (usedChars + line.length > CUSTOMER_PATTERN_PROMPT_BUDGET_CHARS) break
-      memoryLines.push(line)
-      usedChars += line.length
-    }
-    const memoriesBlock = memoryLines.length ? memoryLines.join('\n\n') : '(no memories)'
+    const memoriesBlock = this.buildCustomerPatternMemoryBlock(
+      input.memories,
+      CUSTOMER_PATTERN_PROMPT_BUDGET_CHARS,
+    )
 
     return [
       '/customer-brain-pattern-analysis',
       '',
-      'Run one cross-customer pattern analysis pass on this customer brain. All required inputs are included below: do not call tools, search, delegate, or fetch more context. Emit only the JSON decision described in your skill markdown. The worker validates ids and thresholds before writing.',
+      'Run one cross-customer pattern analysis pass on this customer brain. Do not call tools, search, or delegate. Use the compact evidence below first. If an existing belief or perspective cannot be safely challenged, resolved, archived, or rewritten without its older trail, request only targeted older evidence by existing belief or perspective id in evidence_requests. Emit only the JSON decision described in your skill markdown. The worker validates ids and thresholds before writing.',
+      '',
+      'Required request field:',
+      '"evidence_requests": [{"belief_ids": ["existing-belief-id"], "perspective_ids": [], "reason": "why older evidence is required"}]',
+      'Use an empty array when the compact packet is sufficient.',
       '',
       '## BRAIN',
       `brain_id: ${input.brainId}`,
@@ -2547,6 +2626,101 @@ export class BrainOpsProcessor extends WorkerHost {
     ].join('\n')
   }
 
+  private buildCustomerPatternMemoryBlock(
+    memories: CustomerMemoryRow[],
+    budgetChars: number,
+  ): string {
+    const memoryLines: string[] = []
+    let usedChars = 0
+    for (const m of memories) {
+      const valence = m.emotional_valence ?? null
+      const intensity = m.emotional_intensity ?? null
+      const emoTag =
+        valence !== null || intensity !== null
+          ? ` [valence=${valence ?? 'n/a'} intensity=${intensity ?? 'n/a'}]`
+          : ''
+      const happened = m.occurred_at ?? m.created_at
+      const unitId = customerUnitIdForMemory(m) ?? '(none)'
+      const line = `- id=${m.id} customer_unit_id=${unitId} contact_id=${m.contact_id ?? '(none)'} source_identity_id=${m.customer_source_identity_id ?? '(none)'} resolution=${m.customer_resolution_status ?? 'unknown'} source=${m.source_type ?? '?'} happened=${happened} learned=${m.asserted_at ?? m.created_at}${emoTag}\n  ${m.content}`
+      if (usedChars + line.length > budgetChars) break
+      memoryLines.push(line)
+      usedChars += line.length
+    }
+    return memoryLines.length ? memoryLines.join('\n\n') : '(no memories)'
+  }
+
+  private buildCustomerPatternReviewPrompt(input: {
+    initialPrompt: string
+    initialDecision: PatternAnalysisDecision
+    targetedMemories: CustomerMemoryRow[]
+  }): string {
+    const targetedEvidence = this.buildCustomerPatternMemoryBlock(
+      input.targetedMemories,
+      CUSTOMER_PATTERN_TARGETED_PROMPT_BUDGET_CHARS,
+    )
+    return [
+      input.initialPrompt,
+      '',
+      '## HIGH-STAKES REVIEW',
+      'Review the initial Opus decision below. This pass is required because it requested older evidence or proposes a challenge, resolution, archive, or perspective synthesis. Correct duplicate beliefs, unsupported lifecycle changes, invented specificity, and conclusions that exceed the supplied evidence.',
+      'Do not call tools, search, or delegate. Return a complete replacement decision. evidence_requests must be [] in the final decision; if the evidence is still insufficient, remove the unsafe operation instead of guessing.',
+      '',
+      '## INITIAL_OPUS_DECISION',
+      JSON.stringify(input.initialDecision),
+      '',
+      '## TARGETED_OLDER_EVIDENCE',
+      targetedEvidence,
+    ].join('\n')
+  }
+
+  private shouldEscalatePatternDecision(decision: PatternAnalysisDecision): boolean {
+    return (
+      decision.evidence_requests.length > 0 ||
+      decision.belief_updates.some(
+        (update) => update.op === 'challenge' || update.op === 'resolve',
+      ) ||
+      decision.new_perspectives.length > 0 ||
+      decision.perspective_updates.length > 0
+    )
+  }
+
+  private collectTargetedPatternMemoryIds(input: {
+    decision: PatternAnalysisDecision
+    existingBeliefs: ExistingBeliefRow[]
+    existingPerspectives: ExistingPerspectiveRow[]
+    currentMemoryIds: Set<string>
+  }): string[] {
+    const beliefById = new Map(input.existingBeliefs.map((belief) => [belief.id, belief]))
+    const perspectiveById = new Map(
+      input.existingPerspectives.map((perspective) => [perspective.id, perspective]),
+    )
+    const beliefIds = new Set<string>()
+    for (const request of input.decision.evidence_requests) {
+      request.belief_ids.forEach((id) => beliefIds.add(id))
+      for (const perspectiveId of request.perspective_ids) {
+        perspectiveById.get(perspectiveId)?.beliefs?.forEach((beliefId) => beliefIds.add(beliefId))
+      }
+    }
+    for (const update of input.decision.belief_updates) {
+      if (update.op === 'challenge' || update.op === 'resolve') beliefIds.add(update.id)
+    }
+    for (const perspective of input.decision.new_perspectives) {
+      perspective.belief_ids.forEach((id) => beliefIds.add(id))
+    }
+    for (const update of input.decision.perspective_updates) {
+      perspectiveById.get(update.id)?.beliefs?.forEach((beliefId) => beliefIds.add(beliefId))
+    }
+
+    const memoryIds = new Set<string>()
+    for (const beliefId of beliefIds) {
+      for (const memoryId of beliefById.get(beliefId)?.supporting_memories ?? []) {
+        if (!input.currentMemoryIds.has(memoryId)) memoryIds.add(memoryId)
+        if (memoryIds.size >= CUSTOMER_PATTERN_TARGETED_MEMORY_LIMIT) return [...memoryIds]
+      }
+    }
+    return [...memoryIds]
+  }
+
   private parsePatternAnalysisDecision(
     content: string,
     expectedBrainId: string,
@@ -2563,6 +2737,12 @@ export class BrainOpsProcessor extends WorkerHost {
     }
     if (!parsed || typeof parsed !== 'object') return null
     const obj = parsed as Record<string, unknown>
+    const evidenceRequests = Array.isArray(obj.evidence_requests)
+      ? obj.evidence_requests
+          .map((request) => this.normalizePatternEvidenceRequest(request))
+          .filter((request): request is PatternEvidenceRequest => !!request)
+          .slice(0, 5)
+      : []
 
     const brainId = String(obj.brain_id ?? '').trim()
     if (brainId !== expectedBrainId) {
@@ -2599,12 +2779,34 @@ export class BrainOpsProcessor extends WorkerHost {
 
     return {
       brain_id: expectedBrainId,
+      evidence_requests: evidenceRequests,
       new_beliefs: newBeliefs,
       belief_updates: beliefUpdates,
       new_perspectives: newPerspectives,
       perspective_updates: perspectiveUpdates,
       log_event: logEvent,
     }
+  }
+
+  private normalizePatternEvidenceRequest(raw: unknown): PatternEvidenceRequest | null {
+    if (!raw || typeof raw !== 'object') return null
+    const request = raw as Record<string, unknown>
+    const beliefIds = Array.isArray(request.belief_ids)
+      ? [...new Set(request.belief_ids.map((id) => String(id ?? '').trim()).filter(Boolean))].slice(
+          0,
+          10,
+        )
+      : []
+    const perspectiveIds = Array.isArray(request.perspective_ids)
+      ? [
+          ...new Set(request.perspective_ids.map((id) => String(id ?? '').trim()).filter(Boolean)),
+        ].slice(0, 10)
+      : []
+    const reason = String(request.reason ?? '')
+      .trim()
+      .slice(0, 500)
+    if (!reason || beliefIds.length + perspectiveIds.length === 0) return null
+    return { belief_ids: beliefIds, perspective_ids: perspectiveIds, reason }
   }
 
   private normalizeNewBelief(raw: unknown): NewBeliefDraft | null {
@@ -3168,9 +3370,9 @@ export class BrainOpsProcessor extends WorkerHost {
       'atlas',
       '',
       taskUserMessage,
-      undefined,
+      BRAIN_HIGH_STAKES_MODEL_ID,
       'mission_execute',
-      { channel: 'brain-ops' },
+      { channel: 'brain-ops', modelSettings: BRAIN_HIGH_STAKES_MODEL_SETTINGS },
     )
 
     await this.updateBrainAnalysisTimestamp(brainId)

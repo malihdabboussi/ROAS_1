@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common'
 import type { RequestScope } from '@vibey/api-shared'
-import {
-  DEFAULT_ENABLED_LLM_MODEL_IDS,
-  LLM_MODELS_SETTINGS_KEY,
-  type LlmModelsOrgSettings,
-} from '../model-workspace.constants'
 import { PLATFORM_ADMIN_ROLES, SUBSCRIPTION_MODEL_CATALOG } from '../model-subscription-catalog'
 import {
   isConnectedIntegration,
   readVaultLabel,
   toSubscriptionModel,
 } from '../model-subscription-helpers'
+import {
+  DEFAULT_ENABLED_LLM_MODEL_IDS,
+  LLM_MODELS_SETTINGS_KEY,
+  type LlmModelsOrgSettings,
+} from '../model-workspace.constants'
 import { ModelsRepository } from '../repositories/models.repository'
 
 export interface LlmModel {
@@ -55,7 +55,9 @@ const CACHE_CERTIFIED_MODELS = new Set<string>([
   'anthropic/claude-opus-4.6',
   'anthropic/claude-opus-4.7',
   'anthropic/claude-opus-4.8',
+  'anthropic/claude-opus-5',
   'anthropic/claude-sonnet-4.6',
+  'anthropic/claude-sonnet-5',
   'deepseek/deepseek-v4-flash',
   'google/gemini-3.5-flash',
   'google/gemini-3.1-pro-preview',
@@ -64,6 +66,8 @@ const CACHE_CERTIFIED_MODELS = new Set<string>([
   'openai/gpt-5.4',
   'openai/gpt-5.4-pro',
   'openai/gpt-5.5',
+  'openai/gpt-5.6-sol',
+  'openai/gpt-5.6-terra',
 ])
 
 export interface ModelContextOption {

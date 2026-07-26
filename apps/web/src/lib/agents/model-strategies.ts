@@ -16,7 +16,7 @@ export const MODEL_STRATEGIES = [
   {
     id: 'auto:power',
     label: 'Power',
-    description: 'Opus 4.8, 1M context, high thinking',
+    description: 'Fable 5 for highest-stakes synthesis',
     chipClass: 'chip-glass-purple',
     textClass: 'text-chip-strategy-purple',
   },

@@ -29,81 +29,95 @@ export interface ResolvedStrategyModel {
   modelSettings?: StrategyModelSettings
 }
 
-const POWER_MODEL_ID = 'anthropic/claude-opus-4.8'
-const POWER_MODEL_SETTINGS = {
-  context_window_tokens: 1_000_000,
-  reasoning_effort: 'high',
+const QUALITY_MODEL_ID = 'anthropic/claude-opus-5'
+const HIGH_STAKES_MODEL_ID = 'anthropic/claude-fable-5'
+const ECONOMY_MODEL_ID = 'openai/gpt-5.6-terra'
+const QUALITY_FALLBACK_MODEL_ID = 'anthropic/claude-sonnet-4.6'
+
+const QUALITY_MODEL_SETTINGS = {
+  context_window_tokens: 250_000,
+  reasoning_effort: 'medium',
   speed_mode: 'standard',
 } satisfies StrategyModelSettings
 
-function powerModel(reason: string): ResolvedStrategyModel {
+const ECONOMY_MODEL_SETTINGS = {
+  context_window_tokens: 250_000,
+  reasoning_effort: 'low',
+  speed_mode: 'standard',
+} satisfies StrategyModelSettings
+
+function routedModel(
+  modelId: string,
+  modelSettings: StrategyModelSettings,
+  reason: string,
+): ResolvedStrategyModel {
   return {
-    modelId: POWER_MODEL_ID,
+    modelId,
     reason,
-    modelSettings: POWER_MODEL_SETTINGS,
+    modelSettings,
   }
 }
 
 const STRATEGY_MATRIX: Record<ModelStrategy, Record<TaskType, ResolvedStrategyModel>> = {
   'auto:economy': {
-    chat: {
-      modelId: 'google/gemini-3.5-flash',
-      reason: 'economy_chat',
-    },
-    mission_plan: {
-      modelId: 'google/gemini-3.1-pro-preview',
-      reason: 'economy_mission_plan',
-    },
-    mission_execute: {
-      modelId: 'google/gemini-3.5-flash',
-      reason: 'economy_mission_execute',
-    },
-    mission_review: {
-      modelId: 'google/gemini-3.1-pro-preview',
-      reason: 'economy_mission_review',
-    },
-    mission_awareness: {
-      modelId: 'google/gemini-3.1-pro-preview',
-      reason: 'economy_mission_awareness',
-    },
-    mission_quality_eval: {
-      modelId: 'google/gemini-3.1-pro-preview',
-      reason: 'economy_mission_quality_eval',
-    },
+    chat: routedModel(ECONOMY_MODEL_ID, ECONOMY_MODEL_SETTINGS, 'economy_chat'),
+    mission_plan: routedModel(ECONOMY_MODEL_ID, ECONOMY_MODEL_SETTINGS, 'economy_mission_plan'),
+    mission_execute: routedModel(
+      ECONOMY_MODEL_ID,
+      ECONOMY_MODEL_SETTINGS,
+      'economy_mission_execute',
+    ),
+    mission_review: routedModel(ECONOMY_MODEL_ID, ECONOMY_MODEL_SETTINGS, 'economy_mission_review'),
+    mission_awareness: routedModel(
+      ECONOMY_MODEL_ID,
+      ECONOMY_MODEL_SETTINGS,
+      'economy_mission_awareness',
+    ),
+    mission_quality_eval: routedModel(
+      ECONOMY_MODEL_ID,
+      ECONOMY_MODEL_SETTINGS,
+      'economy_mission_quality_eval',
+    ),
   },
   auto: {
-    chat: {
-      modelId: 'anthropic/claude-sonnet-4.6',
-      reason: 'auto_chat',
-    },
-    mission_plan: {
-      modelId: 'anthropic/claude-sonnet-4.6',
-      reason: 'auto_mission_plan',
-    },
-    mission_execute: {
-      modelId: 'anthropic/claude-sonnet-4.6',
-      reason: 'auto_mission_execute',
-    },
-    mission_review: {
-      modelId: 'anthropic/claude-sonnet-4.6',
-      reason: 'auto_mission_review',
-    },
-    mission_awareness: {
-      modelId: 'anthropic/claude-sonnet-4.6',
-      reason: 'auto_mission_awareness',
-    },
-    mission_quality_eval: {
-      modelId: 'anthropic/claude-sonnet-4.6',
-      reason: 'auto_mission_quality_eval',
-    },
+    chat: routedModel(QUALITY_MODEL_ID, QUALITY_MODEL_SETTINGS, 'auto_chat'),
+    mission_plan: routedModel(QUALITY_MODEL_ID, QUALITY_MODEL_SETTINGS, 'auto_mission_plan'),
+    mission_execute: routedModel(QUALITY_MODEL_ID, QUALITY_MODEL_SETTINGS, 'auto_mission_execute'),
+    mission_review: routedModel(QUALITY_MODEL_ID, QUALITY_MODEL_SETTINGS, 'auto_mission_review'),
+    mission_awareness: routedModel(
+      QUALITY_MODEL_ID,
+      QUALITY_MODEL_SETTINGS,
+      'auto_mission_awareness',
+    ),
+    mission_quality_eval: routedModel(
+      QUALITY_MODEL_ID,
+      QUALITY_MODEL_SETTINGS,
+      'auto_mission_quality_eval',
+    ),
   },
   'auto:power': {
-    chat: powerModel('power_chat'),
-    mission_plan: powerModel('power_mission_plan'),
-    mission_execute: powerModel('power_mission_execute'),
-    mission_review: powerModel('power_mission_review'),
-    mission_awareness: powerModel('power_mission_awareness'),
-    mission_quality_eval: powerModel('power_mission_quality_eval'),
+    chat: routedModel(HIGH_STAKES_MODEL_ID, QUALITY_MODEL_SETTINGS, 'power_chat'),
+    mission_plan: routedModel(HIGH_STAKES_MODEL_ID, QUALITY_MODEL_SETTINGS, 'power_mission_plan'),
+    mission_execute: routedModel(
+      HIGH_STAKES_MODEL_ID,
+      QUALITY_MODEL_SETTINGS,
+      'power_mission_execute',
+    ),
+    mission_review: routedModel(
+      HIGH_STAKES_MODEL_ID,
+      QUALITY_MODEL_SETTINGS,
+      'power_mission_review',
+    ),
+    mission_awareness: routedModel(
+      HIGH_STAKES_MODEL_ID,
+      QUALITY_MODEL_SETTINGS,
+      'power_mission_awareness',
+    ),
+    mission_quality_eval: routedModel(
+      HIGH_STAKES_MODEL_ID,
+      QUALITY_MODEL_SETTINGS,
+      'power_mission_quality_eval',
+    ),
   },
 }
 
@@ -120,59 +134,65 @@ export function resolveModelForStrategy(
 
 const FALLBACK_MATRIX: Record<ModelStrategy, Record<TaskType, ResolvedStrategyModel>> = {
   'auto:economy': {
-    chat: { modelId: 'anthropic/claude-haiku-4.5', reason: 'economy_chat_fallback' },
+    chat: { modelId: QUALITY_FALLBACK_MODEL_ID, reason: 'economy_chat_fallback' },
     mission_plan: {
-      modelId: 'anthropic/claude-haiku-4.5',
+      modelId: QUALITY_FALLBACK_MODEL_ID,
       reason: 'economy_mission_plan_fallback',
     },
     mission_execute: {
-      modelId: 'anthropic/claude-haiku-4.5',
+      modelId: QUALITY_FALLBACK_MODEL_ID,
       reason: 'economy_mission_execute_fallback',
     },
     mission_review: {
-      modelId: 'anthropic/claude-haiku-4.5',
+      modelId: QUALITY_FALLBACK_MODEL_ID,
       reason: 'economy_mission_review_fallback',
     },
     mission_awareness: {
-      modelId: 'anthropic/claude-haiku-4.5',
+      modelId: QUALITY_FALLBACK_MODEL_ID,
       reason: 'economy_mission_awareness_fallback',
     },
     mission_quality_eval: {
-      modelId: 'anthropic/claude-haiku-4.5',
+      modelId: QUALITY_FALLBACK_MODEL_ID,
       reason: 'economy_mission_quality_eval_fallback',
     },
   },
   auto: {
-    chat: { modelId: 'openai/gpt-5.4', reason: 'auto_chat_fallback' },
-    mission_plan: { modelId: 'openai/gpt-5.4', reason: 'auto_mission_plan_fallback' },
-    mission_execute: { modelId: 'openai/gpt-5.4', reason: 'auto_mission_execute_fallback' },
-    mission_review: { modelId: 'openai/gpt-5.4', reason: 'auto_mission_review_fallback' },
-    mission_awareness: { modelId: 'openai/gpt-5.4', reason: 'auto_mission_awareness_fallback' },
+    chat: { modelId: QUALITY_FALLBACK_MODEL_ID, reason: 'auto_chat_fallback' },
+    mission_plan: { modelId: QUALITY_FALLBACK_MODEL_ID, reason: 'auto_mission_plan_fallback' },
+    mission_execute: {
+      modelId: QUALITY_FALLBACK_MODEL_ID,
+      reason: 'auto_mission_execute_fallback',
+    },
+    mission_review: { modelId: QUALITY_FALLBACK_MODEL_ID, reason: 'auto_mission_review_fallback' },
+    mission_awareness: {
+      modelId: QUALITY_FALLBACK_MODEL_ID,
+      reason: 'auto_mission_awareness_fallback',
+    },
     mission_quality_eval: {
-      modelId: 'openai/gpt-5.4',
+      modelId: QUALITY_FALLBACK_MODEL_ID,
       reason: 'auto_mission_quality_eval_fallback',
     },
   },
   'auto:power': {
-    chat: { modelId: 'google/gemini-3.1-pro-preview', reason: 'power_chat_fallback' },
+    chat: { modelId: QUALITY_FALLBACK_MODEL_ID, reason: 'power_chat_fallback' },
     mission_plan: {
-      modelId: 'google/gemini-3.1-pro-preview',
+      modelId: QUALITY_FALLBACK_MODEL_ID,
       reason: 'power_mission_plan_fallback',
     },
     mission_execute: {
-      modelId: 'google/gemini-3.1-pro-preview',
+      modelId: QUALITY_FALLBACK_MODEL_ID,
       reason: 'power_mission_execute_fallback',
     },
     mission_review: {
-      modelId: 'google/gemini-3.1-pro-preview',
+      modelId: QUALITY_FALLBACK_MODEL_ID,
       reason: 'power_mission_review_fallback',
     },
     mission_awareness: {
-      modelId: 'google/gemini-3.1-pro-preview',
+      modelId: QUALITY_FALLBACK_MODEL_ID,
       reason: 'power_mission_awareness_fallback',
     },
     mission_quality_eval: {
-      modelId: 'google/gemini-3.1-pro-preview',
+      modelId: QUALITY_FALLBACK_MODEL_ID,
       reason: 'power_mission_quality_eval_fallback',
     },
   },

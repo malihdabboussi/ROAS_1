@@ -252,7 +252,7 @@ export class BrainRerankerService {
           model,
           temperature: 0,
           max_completion_tokens: 1200,
-          reasoning: { effort: 'minimal', exclude: true },
+          reasoning: { effort: 'low', exclude: true },
           response_format: { type: 'json_object' },
           messages: [
             {

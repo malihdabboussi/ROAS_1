@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
-  MODEL_STRATEGIES,
   agentModelId,
   isModelStrategyId,
+  MODEL_STRATEGIES,
   resolveAgentModelDisplay,
 } from './model-strategies'
 
@@ -26,7 +26,7 @@ describe('model strategies', () => {
       {
         id: 'auto:power',
         label: 'Power',
-        description: 'Opus 4.8, 1M context, high thinking',
+        description: 'Fable 5 for highest-stakes synthesis',
         chipClass: 'chip-glass-purple',
         textClass: 'text-chip-strategy-purple',
       },
@@ -53,7 +53,9 @@ describe('model strategies', () => {
       label: 'Power',
       chipClass: 'chip-glass-purple',
     })
-    expect(resolveAgentModelDisplay('claude-sonnet-4', [{ id: 'claude-sonnet-4', label: 'sonnet' }])).toEqual({
+    expect(
+      resolveAgentModelDisplay('claude-sonnet-4', [{ id: 'claude-sonnet-4', label: 'sonnet' }]),
+    ).toEqual({
       id: 'claude-sonnet-4',
       label: 'Sonnet',
       chipClass: 'chip-glass-neutral',

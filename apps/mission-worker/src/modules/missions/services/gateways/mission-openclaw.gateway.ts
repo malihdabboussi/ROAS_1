@@ -13,6 +13,7 @@ import {
   UserMachineCircuitOpenError,
   UserMachineUnreachableError,
   type AgentApiTarget,
+  type StrategyModelSettings,
   type TaskType,
 } from '@vibey/api-shared'
 import { DatabaseService } from '../../../../lib/services/database.service'
@@ -31,6 +32,7 @@ export type OpenClawExecOptions = {
   abortSignal?: AbortSignal
   maxOutputTokens?: number
   toolChoice?: 'none'
+  modelSettings?: StrategyModelSettings
   subtaskId?: string
   identitySuffix?: string
   onStreamHeartbeat?: () => void | Promise<void>
@@ -1682,6 +1684,7 @@ If the team is well-suited, omit capability_gap or set exists:false.
         : null
     const selectedModel =
       strategyResolution?.modelId || selectedModelOrStrategy || defaultResolution.modelId
+    const modelSettings = execOptions?.modelSettings ?? strategyResolution?.modelSettings
     if (strategyResolution) {
       this.logger.log(
         `[ModelRouter] strategy=${selectedModelOrStrategy} source=${
@@ -1793,6 +1796,7 @@ If the team is well-suited, omit capability_gap or set exists:false.
         sessionKey,
         agentKey,
         taskType,
+        model,
         systemPrompt: instructions,
         userPrompt: tracePayload,
         channel: execOptions?.channel ?? 'mission',
@@ -1835,12 +1839,11 @@ If the team is well-suited, omit capability_gap or set exists:false.
       instructions,
       max_output_tokens: execOptions?.maxOutputTokens ?? 32_768,
       ...(execOptions?.toolChoice ? { tool_choice: execOptions.toolChoice } : {}),
-      ...(strategyResolution?.modelSettings?.context_window_tokens
-        ? { context_window_tokens: strategyResolution.modelSettings.context_window_tokens }
+      ...(modelSettings?.context_window_tokens
+        ? { context_window_tokens: modelSettings.context_window_tokens }
         : {}),
-      ...(strategyResolution?.modelSettings?.reasoning_effort &&
-      strategyResolution.modelSettings.reasoning_effort !== 'none'
-        ? { reasoning: { effort: strategyResolution.modelSettings.reasoning_effort } }
+      ...(modelSettings?.reasoning_effort && modelSettings.reasoning_effort !== 'none'
+        ? { reasoning: { effort: modelSettings.reasoning_effort } }
         : {}),
       metadata: {
         correlation_id: String(mission.correlation_id ?? ''),

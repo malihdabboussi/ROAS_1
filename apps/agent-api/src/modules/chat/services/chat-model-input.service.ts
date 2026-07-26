@@ -65,13 +65,17 @@ const IMAGE_CAPABLE_CHAT_MODELS = new Set([
   'anthropic/claude-opus-4.6',
   'anthropic/claude-opus-4.7',
   'anthropic/claude-opus-4.8',
+  'anthropic/claude-opus-5',
   'anthropic/claude-sonnet-4.6',
+  'anthropic/claude-sonnet-5',
   'google/gemini-3.5-flash',
   'google/gemini-3.1-pro-preview',
   'openai/gpt-5.3-codex',
   'openai/gpt-5.4',
   'openai/gpt-5.4-pro',
   'openai/gpt-5.5',
+  'openai/gpt-5.6-sol',
+  'openai/gpt-5.6-terra',
 ])
 
 const PAUSED_MODEL_REDIRECTS = new Map<string, string>([['anthropic/claude-fable-5', 'auto:power']])

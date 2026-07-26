@@ -23,6 +23,8 @@
     "architecture:parity": "node scripts/arch/parity-diff.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "report:model-efficiency": "node scripts/evals/model-efficiency-report.mjs",
+    "eval:model-quality": "node scripts/evals/model-quality-benchmark.mjs",
     "smoke:chat-context": "tsx scripts/smoke/chat-context-window-smoke.ts",
     "smoke:railway-chat-autoscale": "tsx scripts/smoke/railway-chat-autoscale-smoke.ts",
     "smoke:customer-signal": "tsx scripts/smoke/customer-signal-loop-smoke.ts",

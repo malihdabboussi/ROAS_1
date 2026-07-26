@@ -60,23 +60,27 @@ The worker hands you these labeled blocks:
 4. **EXISTING_PERSPECTIVES** — current `ns_perspectives` rows, same shape.
 5. **MEMORIES** — the new customer-brain memories since the last analysis pass. Each carries `id`, `content`, `customer_unit_id`, optional `contact_id`, optional `source_identity_id`, `source_type`, `created_at`, temporal fields such as `occurred_at` / `occurred_until`, and any prior `emotional_valence` / `emotional_intensity` scores. Group by `customer_unit_id` to find the cross-customer themes — you need at least 3 distinct customer units on the supporting set for any new belief.
 
+The first pass is intentionally compact. You do not receive every historical memory or any tools. When an existing belief or perspective cannot be safely challenged, resolved, archived, or rewritten without its older evidence trail, use `evidence_requests` to ask the worker for only the relevant history by existing belief or perspective id. Do not request the whole Brain. Routine reinforcement and new patterns that are fully supported by the supplied memories should use an empty request array.
+
 ## The workflow
 
-1. **Cluster memories by theme**, ignoring identity for semantic clustering but tracking which `customer_unit_id`s contribute to each cluster. Use `occurred_at` for sequence and recency when present; fall back to `created_at` only when the event time is unknown. Skip clusters with fewer than 3 distinct customer units — the bar exists for a reason.
+1. **Check evidence sufficiency.** If a high-impact lifecycle decision depends on history omitted from the compact packet, add one bounded `evidence_requests` entry naming the existing belief or perspective ids and explain why. Continue drafting only what the current packet safely supports. Never use a broad topic or whole-library request.
 
-2. **For each qualifying cluster, decide:**
+2. **Cluster memories by theme**, ignoring identity for semantic clustering but tracking which `customer_unit_id`s contribute to each cluster. Use `occurred_at` for sequence and recency when present; fall back to `created_at` only when the event time is unknown. Skip clusters with fewer than 3 distinct customer units — the bar exists for a reason.
+
+3. **For each qualifying cluster, decide:**
    - Reinforces an existing belief → `belief_updates` entry with `op: "reinforce"`, the belief's id, and the new supporting memory ids. Don't restate the belief description; the worker keeps existing wording and just appends.
    - Contradicts an existing belief → `belief_updates` entry with `op: "challenge"`, the id, and the contradicting memory ids. The worker flips status to `challenged`.
    - The belief is fully resolved (the population has moved on; no more memories support it and the contradicting evidence has settled) → `op: "resolve"` with rationale. Use sparingly.
    - New belief → `new_beliefs` entry with `pattern_name`, `description`, `emotional_signature`, `supporting_memory_ids`, `supporting_customer_unit_ids`, optional `supporting_contact_ids`, `evidence_type`, `discriminator_axis` if it maps to one.
 
-3. **Synthesize perspectives** when 3+ active beliefs in this brain align into a coherent frame:
+4. **Synthesize perspectives** when 3+ active beliefs in this brain align into a coherent frame:
    - New cluster → `new_perspectives` with `name`, `description`, `narrative_md` (prose, not bullet points — this is the *story* of the worldview), `belief_ids`, `blind_spots`, `evidence_distribution` summarizing the stated/revealed/behavioral mix of supporting beliefs.
    - Existing perspective shifts → `perspective_updates` with `op: "update"` or `"archive"` and rationale.
 
 When belief or perspective evidence shows a formation, shift, contradiction, or resolution over time, make that explicit in `narrative_md` and log it as timeline-worthy. Do not treat late-imported old calls as fresh customer movement.
 
-4. **Don't pre-compute decay or archival timestamps.** The Night Janitor handles `last_reinforced_at` and `decayed_at`. Your job is to write today's signal honestly; decay is bookkeeping.
+5. **Don't pre-compute decay or archival timestamps.** The Night Janitor handles `last_reinforced_at` and `decayed_at`. Your job is to write today's signal honestly; decay is bookkeeping.
 
 ## Output schema
 
@@ -85,6 +89,13 @@ Wrap the entire response in a single fenced ` ```json ... ``` ` block. The worke
 ```json
 {
   "brain_id": "uuid (echo from BRAIN block)",
+  "evidence_requests": [
+    {
+      "belief_ids": ["existing belief uuid"],
+      "perspective_ids": ["existing perspective uuid"],
+      "reason": "why the older evidence trail is required"
+    }
+  ],
   "new_beliefs": [
     {
       "pattern_name": "string (3-8 words)",
@@ -147,6 +158,7 @@ Wrap the entire response in a single fenced ` ```json ... ``` ` block. The worke
 ```json
 {
   "brain_id": "<brain-id>",
+  "evidence_requests": [],
   "new_beliefs": [
     {
       "pattern_name": "Hiring is a tax, not leverage",
@@ -183,6 +195,7 @@ Wrap the entire response in a single fenced ` ```json ... ``` ` block. The worke
 ```json
 {
   "brain_id": "<brain-id>",
+  "evidence_requests": [],
   "new_beliefs": [],
   "belief_updates": [],
   "new_perspectives": [
@@ -213,6 +226,13 @@ Wrap the entire response in a single fenced ` ```json ... ``` ` block. The worke
 ```json
 {
   "brain_id": "<brain-id>",
+  "evidence_requests": [
+    {
+      "belief_ids": ["b_existing"],
+      "perspective_ids": [],
+      "reason": "The compact packet contradicts an active belief, so its older supporting trail is required before changing lifecycle state."
+    }
+  ],
   "new_beliefs": [],
   "belief_updates": [
     {
@@ -236,6 +256,8 @@ The worker parses the first fenced ` ```json ... ``` ` block via regex. These ru
 
 - Wrap the entire response in a single fenced ` ```json ... ``` ` block. Anything outside is dropped before parsing.
 - Echo the `brain_id` from the BRAIN input block. The worker uses it to scope writes; an empty or missing field fails validation.
+- `evidence_requests` is always present. Use `[]` when the compact packet is sufficient. Each request may name only ids from EXISTING_BELIEFS or EXISTING_PERSPECTIVES. The worker resolves those ids to a bounded older evidence packet and never exposes the full Brain or a tool suite.
+- On the high-stakes review pass, `evidence_requests` must be `[]`. If the targeted trail is still insufficient, remove the unsafe lifecycle operation instead of guessing or requesting another loop.
 - `supporting_memory_ids`, `supporting_customer_unit_ids`, and optional `supporting_contact_ids` reference real ids from the MEMORIES block. Inventing ids creates orphan rows.
 - `belief_updates[].id` and `perspective_updates[].id` reference real ids from EXISTING_BELIEFS / EXISTING_PERSPECTIVES. The worker rejects unknown ids.
 - `evidence_type` is one of the three enum values exactly. Other strings are dropped.

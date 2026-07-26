@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { BrainOpsProcessor } from './brain-ops.processor'
 
@@ -57,6 +59,70 @@ function makeRecordingSupabase() {
 }
 
 describe('BrainOpsProcessor customer pattern analysis', () => {
+  it('keeps the targeted-evidence skill contract database-first', () => {
+    const skill = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        'docker/agents/templates/brain_scholar/skills/customer-brain-pattern-analysis/SKILL.md',
+      ),
+      'utf8',
+    )
+    const migration = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        'supabase/migrations/20260726123000_customer_brain_targeted_evidence.sql',
+      ),
+      'utf8',
+    )
+
+    expect(skill).toContain('The first pass is intentionally compact')
+    expect(skill).toContain('`evidence_requests` is always present')
+    expect(migration).toContain("skill_key = 'customer-brain-pattern-analysis'")
+    expect(migration).toContain('The first pass is intentionally compact')
+  })
+
+  it('routes full-worldview pattern synthesis to bounded Fable with retrieval tools intact', async () => {
+    const callOpenClawRaw = vi.fn().mockResolvedValue({ content: 'ok' })
+    const processor = new BrainOpsProcessor(
+      { callOpenClawRaw } as any,
+      { getClient: vi.fn(() => ({})) } as any,
+      {} as any,
+      {} as any,
+      { extractAndSave: vi.fn() } as any,
+    ) as any
+    processor.updateBrainAnalysisTimestamp = vi.fn()
+    processor.markOutboxDone = vi.fn()
+
+    await processor.processPatternAnalysis(
+      {
+        data: {
+          outboxId: 'outbox-1',
+          brainId: 'brain-1',
+          userId: 'user-1',
+          orgId: null,
+        },
+      },
+      'user',
+    )
+
+    expect(callOpenClawRaw).toHaveBeenCalledWith(
+      expect.any(Object),
+      'atlas',
+      '',
+      expect.stringContaining('Keep retrieval targeted'),
+      'anthropic/claude-fable-5',
+      'mission_execute',
+      {
+        channel: 'brain-ops',
+        modelSettings: {
+          context_window_tokens: 250_000,
+          reasoning_effort: 'medium',
+          speed_mode: 'standard',
+        },
+      },
+    )
+  })
+
   it('builds a self-contained tool-free analysis prompt', () => {
     const processor = makeProcessor()
 
@@ -70,9 +136,82 @@ describe('BrainOpsProcessor customer pattern analysis', () => {
       memories: [makeMemory('memory-1', 'contact-1')],
     })
 
-    expect(prompt).toContain('All required inputs are included below')
-    expect(prompt).toContain('do not call tools, search, delegate, or fetch more context')
+    expect(prompt).toContain('Do not call tools, search, or delegate')
+    expect(prompt).toContain('request only targeted older evidence')
+    expect(prompt).toContain('"evidence_requests"')
     expect(prompt).toContain('Emit only the JSON decision')
+  })
+
+  it('parses bounded targeted evidence requests', () => {
+    const processor = makeProcessor()
+
+    const decision = processor.parsePatternAnalysisDecision(
+      JSON.stringify({
+        brain_id: 'brain-1',
+        evidence_requests: [
+          {
+            belief_ids: ['belief-1', 'belief-1'],
+            perspective_ids: ['perspective-1'],
+            reason: 'Need the older contradiction trail before resolving this belief.',
+          },
+          {
+            belief_ids: [],
+            perspective_ids: [],
+            reason: 'Unbounded request should be discarded.',
+          },
+        ],
+        new_beliefs: [],
+        belief_updates: [],
+        new_perspectives: [],
+        perspective_updates: [],
+      }),
+      'brain-1',
+    )
+
+    expect(decision?.evidence_requests).toEqual([
+      {
+        belief_ids: ['belief-1'],
+        perspective_ids: ['perspective-1'],
+        reason: 'Need the older contradiction trail before resolving this belief.',
+      },
+    ])
+  })
+
+  it('escalates only requested or high-impact synthesis', () => {
+    const processor = makeProcessor()
+    const routine = {
+      brain_id: 'brain-1',
+      evidence_requests: [],
+      new_beliefs: [],
+      belief_updates: [
+        {
+          id: 'belief-1',
+          op: 'reinforce',
+          supporting_memory_ids: ['memory-1'],
+          evidence_type: 'stated',
+          rationale: 'More support.',
+        },
+      ],
+      new_perspectives: [],
+      perspective_updates: [],
+      log_event: null,
+    }
+
+    expect(processor.shouldEscalatePatternDecision(routine)).toBe(false)
+    expect(
+      processor.shouldEscalatePatternDecision({
+        ...routine,
+        belief_updates: [{ ...routine.belief_updates[0], op: 'challenge' }],
+      }),
+    ).toBe(true)
+    expect(
+      processor.shouldEscalatePatternDecision({
+        ...routine,
+        evidence_requests: [
+          { belief_ids: ['belief-1'], perspective_ids: [], reason: 'Need history.' },
+        ],
+      }),
+    ).toBe(true)
   })
 
   it('parses evidence_type on belief updates and drops invalid tiers', () => {

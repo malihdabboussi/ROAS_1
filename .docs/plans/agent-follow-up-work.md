@@ -8555,3 +8555,20 @@ Evidence: The touched hook was already over the 300-line hook limit and remains 
 Needed work: Extract view-selection or mission-filter orchestration into a focused private hook while preserving the current list-state return contract.
 
 Reason not done now: The requested fix changes one callback wire. Decomposing unrelated list-state responsibilities would broaden the production acceptance patch.
+
+## 2026-07-26 - [ARCH] Model-quality routing extends oversized runtime chokepoints
+
+Status: Open
+
+Found while: Adding compact-first Brain evidence retrieval and model-specific mission settings
+
+Files:
+
+- `apps/mission-worker/src/modules/brain-ops/brain-ops.processor.ts` (3,838 LOC; over the 600-line service limit)
+- `apps/mission-worker/src/modules/missions/services/gateways/mission-openclaw.gateway.ts` (2,515 LOC; over the 600-line service limit)
+
+Evidence: The change adds bounded targeted-evidence helpers to the existing Brain processor and carries explicit model settings through the existing Mission gateway. All other changed implementation files are below their applicable LOC limits; focused tests and all five affected package typechecks pass.
+
+Needed work: Continue the registered decomposition by extracting Customer Brain pattern orchestration into a focused service and model request construction/tracing into a smaller gateway collaborator.
+
+Reason not done now: Moving these established runtime chokepoints would substantially widen a model-routing and evidence-discipline correction that is already isolated behind focused tests.

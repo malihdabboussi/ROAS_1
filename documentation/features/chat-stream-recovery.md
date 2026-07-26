@@ -69,10 +69,12 @@ Chat streaming uses Supabase messages as the canonical record and Redis as the l
 - Autoscaler state and the cross-replica lock live in the same Redis connection used by Agent Runtime queues.
 - Public widget agent prewarm is conversation-independent. It may include runtime readiness, model routing, policy, agent registration, user/team/integration summaries, and agent Brain presence, but conversation history, campaign team/theme, and previous images wait for the conversation-level prewarm or Send path.
 - Conversation-level public widget prewarm and Send must join an in-flight agent prewarm or reuse the completed agent cache entry before building conversation-scoped stable context.
-- The default OpenClaw runtime context is capped at 65,536 tokens with safeguard compaction and five-minute stale-tool pruning. A validated per-request context selection can still override that default for work that explicitly needs a larger window.
+- The default OpenClaw runtime context is capped at 250,000 tokens with safeguard compaction and five-minute stale-tool pruning. A validated per-request context selection can still override that default for work that explicitly needs a different window.
 - Chat response ceilings are 32,768 tokens for standard models, 16,384 for Haiku, and 65,536 for Codex work. These are safety ceilings; they do not change the selected model or reasoning quality.
-- The runtime default is Claude Sonnet 4.6. Claude Opus remains available through explicit Power/manual selection and as the final fallback, rather than being charged for every unclassified request.
+- Auto uses Claude Opus 5 with medium reasoning and a 250,000-token request window. Economy uses GPT-5.6 Terra with low reasoning. Explicit Power uses Fable 5 with medium reasoning for highest-stakes work. Sonnet 4.6 is the stable fallback for every strategy. Sonnet 5 and GPT-5.6 Sol remain certified experimental choices rather than production defaults.
+- OpenClaw bootstrap context is capped at 30,000 characters. Existing five-minute stale-tool pruning, giant tool-result trimming, safeguard compaction, bounded JSON outputs, and tool-free routine Brain analysis remain active.
 - OpenRouter-backed Anthropic requests use the short prompt-cache retention tier. This aligns cache lifetime with five-minute context pruning and avoids paying the higher one-hour cache-write multiplier for inactive sessions.
+- Mission traces persist the resolved gateway model for every run. `pnpm report:model-efficiency -- --days=7` summarizes real run volume, tokens, cost, failures, latency, and directly matched human feedback by model; add `--include-output` for a local review of the ten highest-token output excerpts. `pnpm eval:model-quality` runs the paid curated model benchmark, including Opus 4.6 as a regression baseline.
 
 ## Recovery Behavior
 
@@ -84,6 +86,7 @@ Context-window failures are model failures, not transport failures. OpenClaw own
 
 ## Decision Log
 
+- 2026-07-26: Promoted Auto to medium-effort Opus 5, routed Economy to low-effort GPT-5.6 Terra and explicit Power to medium-effort Fable 5, retained Sonnet 4.6 as the stable fallback, raised ordinary context to 250K and bootstrap to 30K, and added repeatable real-output efficiency and paid quality benchmark commands. Sonnet 5 and GPT-5.6 Sol remain experimental pending representative production evidence.
 - 2026-07-26: Kept Sonnet as the quality default, retained explicit Opus/Power access, capped ordinary context/output growth, aligned Anthropic cache retention with pruning, and reduced stale tool-result retention. The change targets repeated payload growth rather than downgrading high-value work.
 - 2026-06-29: Mapped missing OpenAI Codex subscription auth to `openai_codex_not_connected` and the existing OpenAI Codex reconnect banner, preventing generic resend failures for subscription-model chats.
 - 2026-06-25: Persisted chat model routing observability before gateway execution and added first-class OpenAI Codex/Claude subscription gate classifications so failed runs show the right admin action and traces do not inherit the database default model.

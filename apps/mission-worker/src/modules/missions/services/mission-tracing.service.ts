@@ -11,6 +11,7 @@ export interface MissionTraceStartInput {
   sessionKey: string
   agentKey: string
   taskType: string
+  model: string
   systemPrompt: string
   userPrompt: string
   /** Stored on vb_agent_traces.channel — default mission */
@@ -97,6 +98,7 @@ export class MissionTracingService {
         history_length: 1,
         channel: input.channel ?? 'mission',
         agent_key: input.agentKey ?? null,
+        model: input.model,
         status: 'streaming',
       })
       .select('id')
