@@ -132,6 +132,11 @@ export function AiUsageSummary({ report }: { report: AdminAiUsageReport }) {
             detail={`${usd.format(report.opportunities.failedWithCost.costUsd)} spent`}
           />
           <Opportunity
+            label="Paid image outputs not validated"
+            value={`${integer.format(report.opportunities.paidOutputInvalid.count)} calls`}
+            detail={`${usd.format(report.opportunities.paidOutputInvalid.costUsd)} protected from automatic retry`}
+          />
+          <Opportunity
             label="Paid calls missing usage links"
             value={`${integer.format(report.opportunities.unlinkedPaidAttempts.count)} calls`}
             detail={`${usd.format(report.opportunities.unlinkedPaidAttempts.costUsd)} unlinked`}

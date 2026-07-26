@@ -203,12 +203,22 @@ export {
   OpenRouterGenerationLookupError,
   OPENROUTER_GENERATION_LOOKUP_URL,
 } from './services/provider-billing/openrouter-generation-client'
+export {
+  parseOpenRouterImageOutput,
+  ProviderOutputValidationError,
+  summarizeOpenRouterImageResponse,
+} from './services/provider-billing/openrouter-image-output'
+export type {
+  OpenRouterImageOutput,
+  OpenRouterImageResponseShape,
+} from './services/provider-billing/openrouter-image-output'
 export type {
   OpenRouterGenerationSettlement,
   ProviderBillingAttemptInput,
   ProviderBillingAttemptRow,
   ProviderBillingAttemptStatus,
   ProviderBillingOwnerType,
+  ProviderOutputValidationState,
   ProviderBillingServiceType,
   ProviderBillingUsage,
   ZeroCostValidationResult,

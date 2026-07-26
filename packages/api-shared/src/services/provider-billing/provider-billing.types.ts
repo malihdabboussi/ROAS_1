@@ -9,12 +9,22 @@ export const PROVIDER_BILLING_ATTEMPT_STATUSES = [
   'charge_failed',
 ] as const
 
-export type ProviderBillingAttemptStatus =
-  (typeof PROVIDER_BILLING_ATTEMPT_STATUSES)[number]
+export type ProviderBillingAttemptStatus = (typeof PROVIDER_BILLING_ATTEMPT_STATUSES)[number]
 
 export type ProviderBillingOwnerType = 'personal' | 'org' | 'platform' | 'subscription'
 
 export type ProviderBillingServiceType = 'text' | 'image' | 'audio' | 'fixed' | string
+
+export const PROVIDER_OUTPUT_VALIDATION_STATES = [
+  'not_required',
+  'pending',
+  'validated',
+  'provider_failed',
+  'output_invalid',
+  'paid_output_invalid',
+] as const
+
+export type ProviderOutputValidationState = (typeof PROVIDER_OUTPUT_VALIDATION_STATES)[number]
 
 export interface ProviderBillingAttemptInput {
   attemptKey: string

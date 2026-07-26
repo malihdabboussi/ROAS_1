@@ -51,7 +51,10 @@ describe('AdminAiUsageService', () => {
           provider_cost_usd: 2.5,
           estimated_cost_usd: null,
           ai_usage_event_id: 'usage-1',
-          metadata_json: { trace_id: 'trace-openrouter' },
+          metadata_json: {
+            trace_id: 'trace-openrouter',
+            image_output_validation: { state: 'validated' },
+          },
         },
       ]),
       findRecentBillingChecks: vi.fn(async () => []),
@@ -126,7 +129,7 @@ describe('AdminAiUsageService', () => {
           provider_cost_usd: 4,
           estimated_cost_usd: null,
           ai_usage_event_id: null,
-          metadata_json: {},
+          metadata_json: { image_output_validation: { state: 'paid_output_invalid' } },
         },
       ]),
       findRecentBillingChecks: vi.fn(async () => [
@@ -152,6 +155,7 @@ describe('AdminAiUsageService', () => {
       }),
     )
     expect(report.opportunities.unlinkedPaidAttempts).toEqual({ count: 1, costUsd: 4 })
+    expect(report.opportunities.paidOutputInvalid).toEqual({ count: 1, costUsd: 4 })
     expect(report.opportunities.unsettledAttempts).toBe(1)
     expect(report.opportunities.reconciliationStale).toBe(true)
   })

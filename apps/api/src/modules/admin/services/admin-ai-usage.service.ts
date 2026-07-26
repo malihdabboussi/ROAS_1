@@ -26,6 +26,13 @@ function attemptCost(row: AdminAiUsageAttemptRow): number {
   return number(row.final_cost_usd ?? row.provider_cost_usd ?? row.estimated_cost_usd)
 }
 
+function outputValidationState(row: AdminAiUsageAttemptRow): string | null {
+  const validation = row.metadata_json?.image_output_validation
+  if (!validation || typeof validation !== 'object' || Array.isArray(validation)) return null
+  const state = (validation as Record<string, unknown>).state
+  return typeof state === 'string' ? state : null
+}
+
 function routeForModel(model: string | null | undefined): AdminAiUsageRoute['id'] {
   const value = String(model ?? '').toLowerCase()
   if (value.startsWith('openrouter/')) return 'openrouter'
@@ -68,6 +75,9 @@ export class AdminAiUsageService {
     const costlyFailed = traces.filter((row) => row.status === 'failed' && number(row.cost_usd) > 0)
     const oversized = traces.filter((row) => number(row.total_tokens) >= OVERSIZED_CONTEXT_TOKENS)
     const unlinkedPaid = attempts.filter((row) => !row.ai_usage_event_id && attemptCost(row) > 0)
+    const paidOutputInvalid = attempts.filter(
+      (row) => outputValidationState(row) === 'paid_output_invalid',
+    )
     const latestCheckAt = billingChecks[0]?.created_at ?? billingChecks[0]?.check_date ?? null
 
     return {
@@ -98,6 +108,10 @@ export class AdminAiUsageService {
         unlinkedPaidAttempts: {
           count: unlinkedPaid.length,
           costUsd: unlinkedPaid.reduce((sum, row) => sum + attemptCost(row), 0),
+        },
+        paidOutputInvalid: {
+          count: paidOutputInvalid.length,
+          costUsd: paidOutputInvalid.reduce((sum, row) => sum + attemptCost(row), 0),
         },
         missingTraceUsage: traces.filter(
           (row) => row.status === 'completed' && number(row.total_tokens) === 0,
@@ -215,11 +229,17 @@ export class AdminAiUsageService {
         tokens: 0,
         costUsd: 0,
         unsettled: 0,
+        outputIssues: 0,
       }
       existing.attempts += 1
       existing.tokens += number(attempt.total_tokens)
       existing.costUsd += attemptCost(attempt)
       existing.unsettled += SETTLED_STATUSES.has(attempt.status) ? 0 : 1
+      existing.outputIssues +=
+        outputValidationState(attempt) === 'output_invalid' ||
+        outputValidationState(attempt) === 'paid_output_invalid'
+          ? 1
+          : 0
       models.set(key, existing)
     }
     return [...models.values()].sort((left, right) => right.costUsd - left.costUsd)

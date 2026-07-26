@@ -8640,3 +8640,19 @@ Evidence: The operation union/catalog was extracted into `artifact-media-process
 Needed work: Continue moving legacy operation dispatch families behind their existing focused core, edit, visual, and advanced collaborators until the facade contains only context resolution, dispatch, and persistence orchestration.
 
 Reason not done now: Reorganizing every unrelated FFmpeg operation would broaden a production static-ad acceptance fix. The new operation is already isolated and the touched facade is compliant.
+
+## 2026-07-26 - [ARCH] Legacy image generation service remains near its hard limit
+
+Status: Open
+
+Found while: Adding terminal paid-output validation for OpenRouter image generation
+
+File:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-generate.service.ts` (594 LOC; service limit 600)
+
+Evidence: The provider-output failure contract was placed in a new focused collaborator, leaving the legacy generator below its hard limit but with only 6 lines of headroom.
+
+Needed work: Extract campaign/avatar setup or post-upload billing and result persistence into focused collaborators while preserving the existing action contract.
+
+Reason not done now: The requested production-safety change is isolated to provider output validation and retry suppression; decomposing unrelated legacy orchestration would broaden the risk surface.

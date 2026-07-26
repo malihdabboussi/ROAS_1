@@ -8,6 +8,7 @@ import {
   type ProviderBillingAttemptInput,
   type ProviderBillingAttemptRow,
   type ProviderBillingUsage,
+  type ProviderOutputValidationState,
 } from '@vibey/api-shared'
 import { CreditsService } from '../../billing/services/credits.service'
 import { ProviderBillingRepository } from '../repositories/provider-billing.repository'
@@ -26,6 +27,42 @@ export class ProviderBillingSettlementService {
   async recordAttempt(input: ProviderBillingAttemptInput): Promise<ProviderBillingAttemptRow> {
     const status = input.providerGenerationId ? 'pending_settlement' : 'pending_provider_id'
     return this.repository.upsertAttempt(input, status)
+  }
+
+  async recordOutputValidation(input: {
+    attemptId: string
+    state: ProviderOutputValidationState
+    error?: string | null
+    metadata?: Record<string, unknown>
+  }): Promise<ProviderBillingAttemptRow> {
+    const attempt = await this.repository.findById(input.attemptId)
+    if (!attempt) {
+      throw new Error(`Provider billing attempt not found: ${input.attemptId}`)
+    }
+    const existingValidation = this.asRecord(attempt.metadata_json.image_output_validation)
+    const incomingValidation = this.asRecord(input.metadata?.image_output_validation)
+    return this.repository.updateAttempt(input.attemptId, {
+      ...(input.state === 'provider_failed'
+        ? {
+            status: 'no_charge',
+            final_cost_usd: 0,
+            settled_at: new Date().toISOString(),
+            locked_by: null,
+            locked_at: null,
+          }
+        : {}),
+      metadata_json: {
+        ...attempt.metadata_json,
+        ...(input.metadata ?? {}),
+        image_output_validation: {
+          ...existingValidation,
+          ...incomingValidation,
+          state: input.state,
+          validated_at: new Date().toISOString(),
+          error: input.error?.slice(0, 2000) ?? null,
+        },
+      },
+    })
   }
 
   async reconcileDue(input: {
@@ -48,7 +85,7 @@ export class ProviderBillingSettlementService {
     return { claimed: attempts.length, settled, failed, skipped }
   }
 
- async settleByIdOrGeneration(input: {
+  async settleByIdOrGeneration(input: {
     attemptId?: string
     providerGenerationId?: string
   }): Promise<ProviderBillingAttemptRow | null> {
@@ -91,7 +128,8 @@ export class ProviderBillingSettlementService {
       return this.settleProviderReportedCost(attempt)
     }
 
-    const apiKey = this.configService.get<string>('OPENROUTER_API_KEY') || process.env.OPENROUTER_API_KEY
+    const apiKey =
+      this.configService.get<string>('OPENROUTER_API_KEY') || process.env.OPENROUTER_API_KEY
     if (!apiKey) {
       await this.markRetryable(attempt, 'OPENROUTER_API_KEY is not configured')
       return 'failed'
@@ -192,7 +230,10 @@ export class ProviderBillingSettlementService {
       metadata?: Record<string, unknown>
     },
   ): Promise<'settled' | 'failed' | 'skipped'> {
-    if (attempt.billing_owner_type === 'platform' || attempt.billing_owner_type === 'subscription') {
+    if (
+      attempt.billing_owner_type === 'platform' ||
+      attempt.billing_owner_type === 'subscription'
+    ) {
       await this.repository.updateAttempt(attempt.id, {
         status: 'settled',
         final_cost_usd: settlement.costUsd,
@@ -237,7 +278,11 @@ export class ProviderBillingSettlementService {
         feature: attempt.feature,
         action: attempt.action,
         provider: attempt.provider,
-        modelName: settlement.resolvedModel ?? attempt.resolved_model ?? attempt.requested_model ?? 'unknown',
+        modelName:
+          settlement.resolvedModel ??
+          attempt.resolved_model ??
+          attempt.requested_model ??
+          'unknown',
         serviceType: attempt.service_type,
         usage: settlement.usage,
         providerCostUsd: settlement.costUsd,
@@ -343,5 +388,11 @@ export class ProviderBillingSettlementService {
       return Number.isFinite(parsed) ? parsed : null
     }
     return null
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {}
   }
 }

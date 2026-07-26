@@ -4,9 +4,13 @@ import { ConfigService } from '@nestjs/config'
 import {
   coerceFiniteNumber,
   extractOpenRouterGenerationId,
+  fetchOpenRouterGeneration,
   normalizeProviderBillingUsage,
+  parseOpenRouterImageOutput,
+  ProviderOutputValidationError,
   readOpenRouterGenerationId,
   readOpenRouterRequestId,
+  summarizeOpenRouterImageResponse,
   type ProviderBillingAttemptInput,
   type ProviderBillingAttemptRow,
   type ProviderBillingOwnerType,
@@ -15,6 +19,7 @@ import {
 import { ProviderBillingSettlementService } from './provider-billing-settlement.service'
 
 const OPENROUTER_CHAT_COMPLETIONS_URL = 'https://openrouter.ai/api/v1/chat/completions'
+const OPENROUTER_IMAGES_URL = 'https://openrouter.ai/api/v1/images'
 
 export type OpenRouterBillingOwner = {
   userId?: string | null
@@ -55,6 +60,29 @@ export type OpenRouterChatCompletionResult<T extends OpenRouterChatCompletionJso
   providerCostUsd: number | null
 }
 
+export type OpenRouterImageInput = {
+  owner: OpenRouterBillingOwner
+  feature: string
+  action: string
+  sourcePath: string
+  model: string
+  prompt: string
+  aspectRatio: string
+  inputReferences?: Array<{ base64: string; mimeType: string }>
+  metadata?: Record<string, unknown>
+  signal?: AbortSignal
+}
+
+export type OpenRouterImageResult = {
+  buffer: Buffer
+  mimeType: string
+  attempt: ProviderBillingAttemptRow
+  providerGenerationId: string | null
+  providerRequestId: string | null
+  usage: ProviderBillingUsage
+  providerCostUsd: number | null
+}
+
 @Injectable()
 export class OpenRouterBillingClientService {
   private readonly logger = new Logger(OpenRouterBillingClientService.name)
@@ -64,13 +92,162 @@ export class OpenRouterBillingClientService {
     private readonly settlement: ProviderBillingSettlementService,
   ) {}
 
+  async createImage(input: OpenRouterImageInput): Promise<OpenRouterImageResult> {
+    const apiKey = this.getApiKey()
+    const baseAttemptInput = this.buildAttemptInput({
+      owner: input.owner,
+      feature: input.feature,
+      action: input.action,
+      sourcePath: input.sourcePath,
+      serviceType: 'image',
+      model: input.model,
+      body: {},
+      metadata: input.metadata,
+    })
+    baseAttemptInput.metadata = {
+      ...(baseAttemptInput.metadata ?? {}),
+      image_output_validation: {
+        state: 'pending',
+        endpoint: '/api/v1/images',
+      },
+    }
+    const initialAttempt = await this.settlement.recordAttempt(baseAttemptInput)
+
+    const response = await fetch(OPENROUTER_IMAGES_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://vibey.ai',
+        'X-Title': 'Vibey',
+      },
+      body: JSON.stringify({
+        model: input.model,
+        prompt: input.prompt,
+        n: 1,
+        aspect_ratio: input.aspectRatio,
+        output_format: 'png',
+        ...(input.inputReferences?.length
+          ? {
+              input_references: input.inputReferences.map((image) => ({
+                type: 'image_url',
+                image_url: { url: `data:${image.mimeType};base64,${image.base64}` },
+              })),
+            }
+          : {}),
+      }),
+      signal: input.signal,
+    })
+    const raw = await response.text()
+    const providerGenerationId = readOpenRouterGenerationId(response.headers)
+    const providerRequestId = readOpenRouterRequestId(response.headers)
+
+    if (!response.ok) {
+      await this.settlement.recordOutputValidation({
+        attemptId: initialAttempt.id,
+        state: 'provider_failed',
+        error: `OpenRouter image request failed with status ${response.status}`,
+        metadata: {
+          image_output_validation: {
+            endpoint: '/api/v1/images',
+            response_status: response.status,
+          },
+        },
+      })
+      this.logger.error(
+        `OpenRouter image generation failed sourcePath=${input.sourcePath} status=${response.status} body=${raw.slice(0, 400)}`,
+      )
+      throw new ServiceUnavailableException('AI image provider failed')
+    }
+
+    const payload = this.tryParseJson(raw)
+    const parsed = parseOpenRouterImageOutput(payload)
+    const responseGenerationId =
+      providerGenerationId ??
+      (payload && typeof payload.id === 'string' ? extractOpenRouterGenerationId(payload.id) : null)
+    const responseUsage = parsed?.usage ?? this.extractUsage(payload ?? {})
+    const providerCostUsd = parsed?.providerCostUsd ?? this.extractCost(payload ?? {})
+    const responseAttempt = await this.settlement.recordAttempt({
+      ...baseAttemptInput,
+      resolvedModel: parsed?.resolvedModel ?? input.model,
+      providerGenerationId: responseGenerationId,
+      providerRequestId,
+      inputTokens: responseUsage.input,
+      outputTokens: responseUsage.output,
+      cacheReadTokens: responseUsage.cacheRead,
+      cacheWriteTokens: responseUsage.cacheWrite,
+      totalTokens: responseUsage.totalTokens,
+      providerCostUsd,
+      metadata: {
+        ...(baseAttemptInput.metadata ?? {}),
+        openrouter_response_id: payload && typeof payload.id === 'string' ? payload.id : null,
+        openrouter_usage: payload && typeof payload.usage === 'object' ? payload.usage : null,
+        image_output_validation: {
+          state: 'pending',
+          endpoint: '/api/v1/images',
+        },
+      },
+    })
+
+    if (parsed) {
+      const validatedAttempt = await this.settlement.recordOutputValidation({
+        attemptId: responseAttempt.id,
+        state: 'validated',
+        metadata: {
+          image_output_validation: {
+            endpoint: '/api/v1/images',
+            parser_version: 1,
+            response_shape: summarizeOpenRouterImageResponse(payload),
+          },
+        },
+      })
+      await this.settleImageAttempt(validatedAttempt)
+      return {
+        buffer: Buffer.from(parsed.imageBytesB64, 'base64'),
+        mimeType: parsed.mimeType,
+        attempt: validatedAttempt,
+        providerGenerationId: responseGenerationId,
+        providerRequestId,
+        usage: parsed.usage,
+        providerCostUsd,
+      }
+    }
+
+    const providerVerification = await this.verifyImageProviderEffect({
+      apiKey,
+      providerGenerationId: responseGenerationId,
+      providerCostUsd,
+    })
+    const state = providerVerification.confirmed ? 'paid_output_invalid' : 'output_invalid'
+    const invalidAttempt = await this.settlement.recordOutputValidation({
+      attemptId: responseAttempt.id,
+      state,
+      error: 'OpenRouter returned HTTP 200 without a valid image payload',
+      metadata: {
+        image_output_validation: {
+          endpoint: '/api/v1/images',
+          parser_version: 1,
+          provider_effect_confirmed: providerVerification.confirmed,
+          verification_source: providerVerification.source,
+          response_shape: summarizeOpenRouterImageResponse(payload),
+          generation: providerVerification.generation,
+        },
+      },
+    })
+    await this.settleImageAttempt(invalidAttempt)
+    throw new ProviderOutputValidationError({
+      attemptId: invalidAttempt.id,
+      providerGenerationId: responseGenerationId,
+      providerCostUsd: providerVerification.costUsd ?? providerCostUsd,
+      providerEffectConfirmed: providerVerification.confirmed,
+    })
+  }
+
   async createChatCompletion<T extends OpenRouterChatCompletionJson = OpenRouterChatCompletionJson>(
     input: OpenRouterChatCompletionInput,
   ): Promise<OpenRouterChatCompletionResult<T>> {
-    const apiKey = this.config.get<string>('OPENROUTER_API_KEY') || process.env.OPENROUTER_API_KEY
-    if (!apiKey) {
-      throw new ServiceUnavailableException('OPENROUTER_API_KEY is not configured')
-    }
+    const apiKey = this.getApiKey()
 
     const baseAttempt = this.buildAttemptInput(input)
     await this.settlement.recordAttempt(baseAttempt)
@@ -168,6 +345,79 @@ export class OpenRouterBillingClientService {
       requestedModel: input.model,
       resolvedModel: null,
       metadata: input.metadata ?? {},
+    }
+  }
+
+  private getApiKey(): string {
+    const apiKey = this.config.get<string>('OPENROUTER_API_KEY') || process.env.OPENROUTER_API_KEY
+    if (!apiKey) {
+      throw new ServiceUnavailableException('OPENROUTER_API_KEY is not configured')
+    }
+    return apiKey
+  }
+
+  private tryParseJson(raw: string): OpenRouterChatCompletionJson | null {
+    try {
+      return JSON.parse(raw) as OpenRouterChatCompletionJson
+    } catch {
+      return null
+    }
+  }
+
+  private async settleImageAttempt(attempt: ProviderBillingAttemptRow): Promise<void> {
+    if (!attempt.provider_generation_id && coerceFiniteNumber(attempt.provider_cost_usd) === null) {
+      return
+    }
+    try {
+      await this.settlement.settleByIdOrGeneration({ attemptId: attempt.id })
+    } catch (error) {
+      this.logger.warn(
+        `OpenRouter image settlement deferred attemptId=${attempt.id} error=${error instanceof Error ? error.message : String(error)}`,
+      )
+    }
+  }
+
+  private async verifyImageProviderEffect(input: {
+    apiKey: string
+    providerGenerationId: string | null
+    providerCostUsd: number | null
+  }): Promise<{
+    confirmed: boolean
+    source: 'response_cost' | 'generation_lookup' | 'unconfirmed'
+    costUsd: number | null
+    generation: Record<string, unknown> | null
+  }> {
+    if (input.providerCostUsd !== null && input.providerCostUsd > 0) {
+      return {
+        confirmed: true,
+        source: 'response_cost',
+        costUsd: input.providerCostUsd,
+        generation: null,
+      }
+    }
+    if (!input.providerGenerationId) {
+      return { confirmed: false, source: 'unconfirmed', costUsd: null, generation: null }
+    }
+    try {
+      const generation = await fetchOpenRouterGeneration({
+        apiKey: input.apiKey,
+        generationId: input.providerGenerationId,
+        appTitle: 'Vibey',
+        referer: 'https://vibey.ai',
+      })
+      const confirmed =
+        !generation.cancelled && generation.costUsd !== null && generation.costUsd > 0
+      return {
+        confirmed,
+        source: 'generation_lookup',
+        costUsd: generation.costUsd,
+        generation: generation.raw,
+      }
+    } catch (error) {
+      this.logger.warn(
+        `OpenRouter image verification deferred generationId=${input.providerGenerationId} error=${error instanceof Error ? error.message : String(error)}`,
+      )
+      return { confirmed: false, source: 'unconfirmed', costUsd: null, generation: null }
     }
   }
 

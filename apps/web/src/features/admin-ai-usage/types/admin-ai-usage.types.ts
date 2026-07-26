@@ -41,11 +41,13 @@ export type AdminAiUsageReport = {
     tokens: number
     costUsd: number
     unsettled: number
+    outputIssues: number
   }>
   opportunities: {
     oversizedContext: { count: number; tokens: number; costUsd: number }
     failedWithCost: { count: number; costUsd: number }
     unlinkedPaidAttempts: { count: number; costUsd: number }
+    paidOutputInvalid: { count: number; costUsd: number }
     missingTraceUsage: number
     unsettledAttempts: number
     reconciliationStale: boolean

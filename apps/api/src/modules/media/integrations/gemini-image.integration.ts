@@ -44,7 +44,12 @@ export class GeminiImageIntegration {
   async generate(
     prompt: string,
     aspectRatio: string = '16:9',
-    options?: { model?: ImageGenerationModelId; userId?: string; orgId?: string | null; campaignId?: string | null },
+    options?: {
+      model?: ImageGenerationModelId
+      userId?: string
+      orgId?: string | null
+      campaignId?: string | null
+    },
   ): Promise<{ buffer: Buffer; mimeType: string }> {
     const explicit = options?.model
 
@@ -82,7 +87,12 @@ export class GeminiImageIntegration {
         this.logger.warn(
           `[Image] Google rate-limited, routing to OpenRouter (${this.openRouterGeminiFlashSlug}): ${errMsg}`,
         )
-        return this.generateViaOpenRouter(prompt, aspectRatio, this.openRouterGeminiFlashSlug, options)
+        return this.generateViaOpenRouter(
+          prompt,
+          aspectRatio,
+          this.openRouterGeminiFlashSlug,
+          options,
+        )
       }
 
       this.logger.error(
@@ -102,77 +112,16 @@ export class GeminiImageIntegration {
     )
   }
 
-  private extractOpenRouterImage(message: {
-    content?:
-      | string
-      | Array<{
-          type?: string
-          image_url?: { url?: string }
-          inlineData?: { mimeType?: string; data?: string }
-        }>
-    images?: Array<{ image_url?: { url?: string }; inlineData?: { mimeType?: string; data?: string } }>
-  }): { buffer: Buffer; mimeType: string } | null {
-    const fromImages = message.images ?? []
-    for (const part of fromImages) {
-      if (part.inlineData?.data) {
-        return {
-          buffer: Buffer.from(part.inlineData.data, 'base64'),
-          mimeType: part.inlineData.mimeType || 'image/png',
-        }
-      }
-      const url = part.image_url?.url
-      if (url?.startsWith('data:')) {
-        const match = url.match(/^data:([^;]+);base64,(.+)$/)
-        if (match) {
-          return { buffer: Buffer.from(match[2], 'base64'), mimeType: match[1] || 'image/png' }
-        }
-      }
-    }
-
-    const content = message.content
-    if (Array.isArray(content)) {
-      for (const part of content) {
-        if (part.inlineData?.data) {
-          return {
-            buffer: Buffer.from(part.inlineData.data, 'base64'),
-            mimeType: part.inlineData.mimeType || 'image/png',
-          }
-        }
-        const url = part.image_url?.url
-        if (url?.startsWith('data:')) {
-          const match = url.match(/^data:([^;]+);base64,(.+)$/)
-          if (match) {
-            return { buffer: Buffer.from(match[2], 'base64'), mimeType: match[1] || 'image/png' }
-          }
-        }
-      }
-    }
-
-    if (typeof content === 'string') {
-      const dataUrlMatch = content.match(/data:([^;]+);base64,([A-Za-z0-9+/=]+)/)
-      if (dataUrlMatch) {
-        return {
-          buffer: Buffer.from(dataUrlMatch[2], 'base64'),
-          mimeType: dataUrlMatch[1] || 'image/png',
-        }
-      }
-    }
-
-    return null
-  }
-
   private async generateViaOpenRouter(
     prompt: string,
     aspectRatio: string,
     openRouterModelSlug: string,
     options?: { userId?: string; orgId?: string | null; campaignId?: string | null },
   ): Promise<{ buffer: Buffer; mimeType: string }> {
-    // OpenRouter image models require modalities — without them the call can hang
-    // or return text-only (agent path already passes these; media API was missing them).
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 120_000)
     try {
-      const completion = await this.openRouterBilling.createChatCompletion({
+      const result = await this.openRouterBilling.createImage({
         owner: {
           userId: options?.userId ?? null,
           orgId: options?.orgId ?? null,
@@ -182,54 +131,19 @@ export class GeminiImageIntegration {
         feature: 'media',
         action: 'generate_image',
         sourcePath: 'media/gemini-image-openrouter',
-        serviceType: 'image',
         model: openRouterModelSlug,
+        prompt,
+        aspectRatio,
         signal: controller.signal,
-        body: {
-          messages: [{ role: 'user', content: prompt }],
-          modalities: ['image', 'text'],
-          image_config: { aspect_ratio: aspectRatio },
-          stream: false,
-        },
         metadata: {
           aspect_ratio: aspectRatio,
           fixed_price_customer_billing: true,
         },
       })
-
-      const message = (
-        completion.data as {
-          choices?: Array<{
-            message?: {
-              content?:
-                | string
-                | Array<{
-                    type?: string
-                    image_url?: { url?: string }
-                    inlineData?: { mimeType?: string; data?: string }
-                  }>
-              images?: Array<{
-                image_url?: { url?: string }
-                inlineData?: { mimeType?: string; data?: string }
-              }>
-            }
-          }>
-        }
-      ).choices?.[0]?.message
-
-      if (!message) {
-        throw new Error('No message in OpenRouter response')
-      }
-
-      const extracted = this.extractOpenRouterImage(message)
-      if (!extracted) {
-        throw new Error('No image data in OpenRouter response')
-      }
-
       this.logger.log(
-        `[Image] Generated via OpenRouter: ${extracted.buffer.length} bytes, ${extracted.mimeType}`,
+        `[Image] Generated via OpenRouter: ${result.buffer.length} bytes, ${result.mimeType}`,
       )
-      return extracted
+      return { buffer: result.buffer, mimeType: result.mimeType }
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         throw new Error('Image generation timed out after 120s')

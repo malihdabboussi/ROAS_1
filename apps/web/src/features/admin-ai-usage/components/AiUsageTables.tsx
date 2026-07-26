@@ -28,6 +28,7 @@ export function AiUsageTables({ report }: { report: AdminAiUsageReport }) {
           'Calls',
           'Tokens',
           'Cost',
+          'Output issues',
           'Unsettled',
         ]}
         rows={report.openRouterModels.map((row) => [
@@ -37,6 +38,7 @@ export function AiUsageTables({ report }: { report: AdminAiUsageReport }) {
           integer.format(row.attempts),
           compact.format(row.tokens),
           usd.format(row.costUsd),
+          integer.format(row.outputIssues),
           integer.format(row.unsettled),
         ])}
       />

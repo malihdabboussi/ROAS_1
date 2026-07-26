@@ -29,6 +29,7 @@ export type ArtifactErrorObservability = AgentToolErrorObservability
 export interface ArtifactErrorContractOptions {
   errorCode?: string
   errorClass?: ArtifactErrorClass
+  workflowClass?: string
   reliability?: ArtifactErrorReliability
   effectState?: ArtifactErrorEffectState
   retryPolicy?: Partial<ArtifactRetryPolicy>
@@ -391,6 +392,7 @@ export function buildErrorEnvelope(
     error: message,
     error_code: errorCode,
     error_class: errorClass,
+    workflow_class: options.workflowClass,
     reliability:
       options.reliability ??
       (options.errorClass ? 'high_confidence' : RELIABILITY_BY_CLASS[errorClass]),

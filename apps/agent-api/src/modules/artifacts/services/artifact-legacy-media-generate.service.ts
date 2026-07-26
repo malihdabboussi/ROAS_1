@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { ArtifactLegacyMediaGenerateRepository } from '../repositories/artifact-legacy-media-generate.repository'
+import { buildOpenRouterImageFailure } from './artifact-image-output-failure'
 import {
   buildGeneratedImageResult,
   persistMissionImageResult,
@@ -18,6 +19,7 @@ export class ArtifactLegacyMediaGenerateService {
 
   private readonly jobsService = new ArtifactLegacyMediaJobsService()
   private readonly uploadService = new ArtifactLegacyMediaUploadService()
+
   async generateGoogleImageViaRest(
     target: Record<string, any>,
     model: string,
@@ -157,10 +159,7 @@ export class ArtifactLegacyMediaGenerateService {
           modelEntry?.billingModel ??
           (isOpenAiModel ? orModel.replace(/^openai\//, '') : orModel.replace(/^google\//, ''))
       } catch (orErr) {
-        return {
-          success: false,
-          error: orErr instanceof Error ? orErr.message : 'OpenRouter image generation failed',
-        }
+        return buildOpenRouterImageFailure(orErr)
       }
     } else {
       if (!target.geminiApiKey) {
@@ -212,10 +211,7 @@ export class ArtifactLegacyMediaGenerateService {
             imageBytesB64 = orResult.imageBytesB64
             mimeType = orResult.mimeType
           } catch (orErr) {
-            return {
-              success: false,
-              error: orErr instanceof Error ? orErr.message : 'OpenRouter image generation failed',
-            }
+            return buildOpenRouterImageFailure(orErr)
           }
         } else {
           return {

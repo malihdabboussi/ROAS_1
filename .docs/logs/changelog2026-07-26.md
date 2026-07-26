@@ -1,5 +1,15 @@
 # Changelog - July 26, 2026
 
+## [2026-07-26 15:00] - [FIX]
+
+What: Moved OpenRouter image generation to its dedicated image API, added explicit provider-output validation states to the billing ledger, verified ambiguous paid results through OpenRouter generation metadata, stopped agent retries when provider effect may already have occurred, and surfaced paid invalid outputs in the admin AI usage report.
+
+Why: OpenRouter could successfully generate and bill an image while Vibey failed to parse the returned shape, causing the failure to look retryable and allowing thousands of duplicate paid requests.
+
+Impact: Image success now requires validated image bytes. Paid or possibly-paid invalid output is recorded independently from settlement, emits a terminal media-generation error, preserves safe response-shape and provider verification evidence, and is visible to admins without storing image bytes in billing metadata.
+
+Files: `packages/api-shared/src/services/provider-billing`, `apps/api/src/modules/provider-billing`, `apps/api/src/modules/media/integrations/gemini-image.integration.ts`, `apps/agent-api/src/modules/artifacts/services`, `apps/agent-api/src/modules/billing/services/provider-billing-attempts.service.ts`, `apps/api/src/modules/admin`, `apps/web/src/features/admin-ai-usage`, and `documentation/features/chat-stream-recovery.md`.
+
 ## 2026-07-26 10:46 - [FIX]
 
 What: Bounded OpenRouter/OpenClaw context and output growth, made scheduled Customer Brain pattern analysis a single tool-free inference, restored the canonical Opus Power route for Mission runs, capped Gemini reranker reasoning/output, shortened Anthropic cache retention, and removed credential-bearing localhost debug requests.

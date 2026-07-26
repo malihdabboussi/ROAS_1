@@ -2,16 +2,15 @@ import { randomUUID } from 'node:crypto'
 import { Injectable } from '@nestjs/common'
 import {
   coerceFiniteNumber,
+  fetchOpenRouterGeneration,
   normalizeProviderBillingUsage,
+  parseOpenRouterImageOutput,
+  ProviderOutputValidationError,
   readOpenRouterGenerationId,
   readOpenRouterRequestId,
+  summarizeOpenRouterImageResponse,
 } from '@vibey/api-shared'
 import type { ProviderBillingAttemptsService } from '../../billing/services/provider-billing-attempts.service'
-
-type OpenRouterImagePart = {
-  image_url?: { url?: string }
-  inlineData?: { mimeType?: string; data?: string }
-}
 
 @Injectable()
 export class ArtifactLegacyMediaProviderService {
@@ -288,25 +287,6 @@ export class ArtifactLegacyMediaProviderService {
     )
   }
 
-  private extractOpenRouterImagePart(
-    parts: OpenRouterImagePart[] | undefined,
-  ): { imageBytesB64: string; mimeType: string } | null {
-    const imagePart = parts?.find(
-      (p) => p.inlineData?.data || (p.image_url?.url && p.image_url.url.startsWith('data:')),
-    )
-    if (imagePart?.inlineData?.data) {
-      return {
-        imageBytesB64: imagePart.inlineData.data,
-        mimeType: imagePart.inlineData.mimeType || 'image/png',
-      }
-    }
-    if (imagePart?.image_url?.url) {
-      const match = imagePart.image_url.url.match(/^data:([^;]+);base64,(.+)$/)
-      if (match) return { imageBytesB64: match[2], mimeType: match[1] || 'image/png' }
-    }
-    return null
-  }
-
   async generateImageViaOpenRouter(
     target: Record<string, any>,
     prompt: string,
@@ -324,13 +304,15 @@ export class ArtifactLegacyMediaProviderService {
     mimeType: string
     usage?: { input: number; output: number }
   }> {
-    const url = `${target.OPENROUTER_BASE_URL}/chat/completions`
+    const url = `${target.OPENROUTER_BASE_URL}/images`
     const orModel = modelOverride ?? target.OPENROUTER_IMAGE_MODEL
     const providerBillingAttempts = target.providerBillingAttempts as
       | ProviderBillingAttemptsService
       | undefined
     if (!providerBillingAttempts) {
-      throw new Error('Provider billing attempts service is required for OpenRouter media generation')
+      throw new Error(
+        'Provider billing attempts service is required for OpenRouter media generation',
+      )
     }
 
     const attemptKey = [
@@ -356,19 +338,13 @@ export class ArtifactLegacyMediaProviderService {
         aspect_ratio: aspectRatio,
         fixed_price_customer_billing: true,
         input_images_count: inputImages?.length ?? 0,
+        image_output_validation: {
+          state: 'pending',
+          endpoint: '/api/v1/images',
+        },
       },
     }
     await providerBillingAttempts.recordAttempt(baseAttempt)
-    const requestContent = inputImages?.length
-      ? [
-          { type: 'text', text: prompt },
-          ...inputImages.map((image) => ({
-            type: 'image_url',
-            image_url: { url: `data:${image.mimeType};base64,${image.base64}` },
-          })),
-        ]
-      : prompt
-
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -378,10 +354,18 @@ export class ArtifactLegacyMediaProviderService {
       },
       body: JSON.stringify({
         model: orModel,
-        messages: [{ role: 'user', content: requestContent }],
-        modalities: ['image', 'text'],
-        image_config: { aspect_ratio: aspectRatio },
-        stream: false,
+        prompt,
+        n: 1,
+        aspect_ratio: aspectRatio,
+        output_format: 'png',
+        ...(inputImages?.length
+          ? {
+              input_references: inputImages.map((image) => ({
+                type: 'image_url',
+                image_url: { url: `data:${image.mimeType};base64,${image.base64}` },
+              })),
+            }
+          : {}),
       }),
     })
     const providerGenerationId = readOpenRouterGenerationId(response.headers)
@@ -389,90 +373,136 @@ export class ArtifactLegacyMediaProviderService {
 
     const rawText = await response.text()
     if (!response.ok) {
+      await providerBillingAttempts.recordOutputValidation({
+        attemptKey,
+        state: 'provider_failed',
+        error: `OpenRouter image request failed with status ${response.status}`,
+        metadata: {
+          image_output_validation: {
+            endpoint: '/api/v1/images',
+            response_status: response.status,
+          },
+        },
+      })
       target.logger.error(`[Image] OpenRouter error ${response.status}: ${rawText}`)
       throw new Error(`OpenRouter image generation failed: ${response.status}`)
     }
 
-    let data: {
-      id?: string
-      model?: string
-      choices?: Array<{
-        message?: {
-          content?:
-            | string
-            | Array<{
-                type?: string
-                image_url?: { url?: string }
-                inlineData?: { mimeType?: string; data?: string }
-              }>
-          images?: OpenRouterImagePart[]
-        }
-      }>
-      usage?: {
-        prompt_tokens?: number
-        completion_tokens?: number
-        total_tokens?: number
-        cost?: number
-        total_cost?: number
-      }
-    }
+    let data: Record<string, unknown> | null = null
     try {
-      data = JSON.parse(rawText)
+      const parsedJson = JSON.parse(rawText)
+      data =
+        parsedJson && typeof parsedJson === 'object' && !Array.isArray(parsedJson)
+          ? (parsedJson as Record<string, unknown>)
+          : null
     } catch {
-      throw new Error('Invalid JSON in OpenRouter image response')
+      data = null
     }
 
-    const usage = data.usage
-      ? { input: data.usage.prompt_tokens ?? 0, output: data.usage.completion_tokens ?? 0 }
-      : undefined
+    const imageOutput = parseOpenRouterImageOutput(data)
+    const rawUsage =
+      data?.usage && typeof data.usage === 'object' && !Array.isArray(data.usage)
+        ? (data.usage as Record<string, unknown>)
+        : {}
+    const usage =
+      imageOutput && Object.keys(rawUsage).length > 0
+        ? { input: imageOutput.usage.input, output: imageOutput.usage.output }
+        : undefined
     const normalizedUsage = normalizeProviderBillingUsage({
-      inputTokens: data.usage?.prompt_tokens,
-      outputTokens: data.usage?.completion_tokens,
-      totalTokens: data.usage?.total_tokens,
+      inputTokens: rawUsage.prompt_tokens,
+      outputTokens: rawUsage.completion_tokens,
+      totalTokens: rawUsage.total_tokens,
     })
+    const responseCost =
+      imageOutput?.providerCostUsd ??
+      coerceFiniteNumber(rawUsage.total_cost) ??
+      coerceFiniteNumber(rawUsage.cost)
+    const responseId = typeof data?.id === 'string' ? data.id : null
+    const resolvedGenerationId = providerGenerationId ?? responseId
     await providerBillingAttempts.recordAttempt({
       ...baseAttempt,
-      resolvedModel: data.model ?? orModel,
-      providerGenerationId: providerGenerationId ?? data.id ?? null,
+      resolvedModel:
+        imageOutput?.resolvedModel ?? (typeof data?.model === 'string' ? data.model : orModel),
+      providerGenerationId: resolvedGenerationId,
       providerRequestId,
       inputTokens: normalizedUsage.input,
       outputTokens: normalizedUsage.output,
       cacheReadTokens: normalizedUsage.cacheRead,
       cacheWriteTokens: normalizedUsage.cacheWrite,
       totalTokens: normalizedUsage.totalTokens,
-      providerCostUsd:
-        coerceFiniteNumber(data.usage?.total_cost) ?? coerceFiniteNumber(data.usage?.cost),
+      providerCostUsd: responseCost,
       metadata: {
         ...baseAttempt.metadata,
-        openrouter_response_id: data.id ?? null,
-        openrouter_usage: data.usage ?? null,
+        openrouter_response_id: responseId,
+        openrouter_usage: data?.usage ?? null,
+        image_output_validation: {
+          state: 'pending',
+          endpoint: '/api/v1/images',
+        },
       },
     })
 
-    const message = data.choices?.[0]?.message
-    const imageFromImages = this.extractOpenRouterImagePart(message?.images)
-    if (imageFromImages) {
-      target.logger.log(`[Image] Generated via OpenRouter (message.images)`)
-      return { ...imageFromImages, usage }
-    }
-
-    const content = message?.content
-    if (Array.isArray(content)) {
-      const imageFromContent = this.extractOpenRouterImagePart(content)
-      if (imageFromContent) {
-        target.logger.log(`[Image] Generated via OpenRouter (content image)`)
-        return { ...imageFromContent, usage }
+    if (imageOutput) {
+      await providerBillingAttempts.recordOutputValidation({
+        attemptKey,
+        state: 'validated',
+        metadata: {
+          image_output_validation: {
+            endpoint: '/api/v1/images',
+            parser_version: 1,
+            response_shape: summarizeOpenRouterImageResponse(data),
+          },
+        },
+      })
+      target.logger.log('[Image] Generated via OpenRouter dedicated image API')
+      return {
+        imageBytesB64: imageOutput.imageBytesB64,
+        mimeType: imageOutput.mimeType,
+        usage,
       }
     }
 
-    if (typeof content === 'string') {
-      const dataUrlMatch = content.match(/data:([^;]+);base64,([A-Za-z0-9+/=]+)/)
-      if (dataUrlMatch) {
-        target.logger.log(`[Image] Generated via OpenRouter (string data URL)`)
-        return { imageBytesB64: dataUrlMatch[2], mimeType: dataUrlMatch[1] || 'image/png', usage }
+    let verifiedCost = responseCost
+    let verificationSource =
+      responseCost !== null && responseCost > 0 ? 'response_cost' : 'unconfirmed'
+    let generation: Record<string, unknown> | null = null
+    if (!(verifiedCost !== null && verifiedCost > 0) && resolvedGenerationId) {
+      try {
+        const verification = await fetchOpenRouterGeneration({
+          apiKey: target.openRouterApiKey,
+          generationId: resolvedGenerationId,
+          appTitle: 'Vibey',
+        })
+        verifiedCost = verification.costUsd
+        generation = verification.raw
+        verificationSource = 'generation_lookup'
+      } catch (error) {
+        target.logger.warn?.(
+          `[Image] OpenRouter output verification deferred generationId=${resolvedGenerationId}: ${error instanceof Error ? error.message : String(error)}`,
+        )
       }
     }
-
-    throw new Error('No image data in OpenRouter response')
+    const providerEffectConfirmed = verifiedCost !== null && verifiedCost > 0
+    await providerBillingAttempts.recordOutputValidation({
+      attemptKey,
+      state: providerEffectConfirmed ? 'paid_output_invalid' : 'output_invalid',
+      error: 'OpenRouter returned HTTP 200 without a valid image payload',
+      metadata: {
+        image_output_validation: {
+          endpoint: '/api/v1/images',
+          parser_version: 1,
+          provider_effect_confirmed: providerEffectConfirmed,
+          verification_source: verificationSource,
+          response_shape: summarizeOpenRouterImageResponse(data),
+          generation,
+        },
+      },
+    })
+    throw new ProviderOutputValidationError({
+      attemptId: attemptKey,
+      providerGenerationId: resolvedGenerationId,
+      providerCostUsd: verifiedCost,
+      providerEffectConfirmed,
+    })
   }
 }

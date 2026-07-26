@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { ProviderOutputValidationError } from '@vibey/api-shared'
 import { ArtifactLegacyMediaGenerateService } from './artifact-legacy-media-generate.service'
 
 function makeSupabase() {
@@ -208,6 +209,40 @@ describe('ArtifactLegacyMediaGenerateService data access behavior', () => {
       undefined,
       '1:1',
     )
+  })
+
+  it('returns a terminal workflow error when a paid image output cannot be validated', async () => {
+    const supabase = makeSupabase()
+    const target = makeTarget(supabase)
+    target.geminiApiKey = ''
+    target.openRouterApiKey = 'openrouter-key'
+    const service = new ArtifactLegacyMediaGenerateService()
+    vi.spyOn((service as any).mediaProvider, 'generateImageViaOpenRouter').mockRejectedValue(
+      new ProviderOutputValidationError({
+        attemptId: 'attempt-1',
+        providerGenerationId: 'gen-1',
+        providerCostUsd: 0.067,
+        providerEffectConfirmed: true,
+      }),
+    )
+
+    const result = await service.generateImage(
+      target,
+      { prompt: 'Create an avatar portrait', aspect_ratio: '1:1' },
+      'session-1',
+    )
+
+    expect(result).toMatchObject({
+      success: false,
+      error_code: 'ARTIFACT_IMAGE_OUTPUT_VALIDATION_FAILED',
+      workflow_class: 'media_generation',
+      effect_state: 'succeeded_delivery_failed',
+      retry_policy: {
+        mode: 'do_not_retry_terminal',
+        max_attempts: 0,
+        stop_after_same_error: true,
+      },
+    })
   })
 
   it('does not persist a mission subtask id as a media conversation id', async () => {

@@ -76,6 +76,9 @@ Chat streaming uses Supabase messages as the canonical record and Redis as the l
 - OpenRouter-backed Anthropic requests use the short prompt-cache retention tier. This aligns cache lifetime with five-minute context pruning and avoids paying the higher one-hour cache-write multiplier for inactive sessions.
 - Mission traces persist the resolved gateway model for every run. `pnpm report:model-efficiency -- --days=7` summarizes real run volume, tokens, cost, failures, latency, and directly matched human feedback by model; add `--include-output` for a local review of the ten highest-token output excerpts. `pnpm eval:model-quality` runs the paid curated model benchmark, including Opus 4.6 as a regression baseline.
 - The current web app exposes an admin-only AI usage dashboard at `/admin/ai-usage`. It joins trace, provider billing-attempt, and reconciliation data while keeping provider-ledger evidence separate from trace-only model families. A model identifier alone never claims direct transport. OpenRouter rows retain their feature/action workload plus requested and resolved underlying models. The dashboard also highlights oversized contexts, failed paid traces, unlinked provider spend, unsettled attempts, missing trace usage, correlation coverage, and stale billing reconciliation.
+- OpenRouter image generation uses the dedicated `/api/v1/images` endpoint. A successful tool result requires validated base64 image bytes; HTTP success or a settled provider charge alone is never treated as image success.
+- `provider_billing_attempts.metadata_json.image_output_validation` records image-output validation independently from billing settlement. `paid_output_invalid` means OpenRouter cost or generation metadata confirmed provider effect but the application could not validate the returned image.
+- A paid or possibly-paid invalid image result returns the agent tool error contract with `workflow_class = media_generation`, `effect_state = succeeded_delivery_failed` or `unknown_effect`, and `retry_policy.mode = do_not_retry_terminal`. The agent must not repeat `generate_image` automatically.
 
 ## Recovery Behavior
 
@@ -87,6 +90,7 @@ Context-window failures are model failures, not transport failures. OpenClaw own
 
 ## Decision Log
 
+- 2026-07-26: Moved OpenRouter image calls to the dedicated image API, persisted output validation separately from settlement, verified ambiguous paid results against generation metadata, and made invalid paid output terminal for agent retries. The admin AI usage report now counts paid image outputs that failed validation.
 - 2026-07-26: Added the current-app admin AI usage dashboard and API report so provider routes, OpenRouter workload/model detail, costly traces, token totals, billing coverage, and silent observability gaps can be reviewed without using the legacy admin app.
 - 2026-07-26: Made provider verification evidence-based: billing-attempt rows can verify transport, while legacy/uninstrumented traces show model family only and cannot claim direct Anthropic, OpenAI, or Google routing.
 - 2026-07-26: Promoted Auto to medium-effort Opus 5, routed Economy to low-effort GPT-5.6 Terra and explicit Power to medium-effort Fable 5, retained Sonnet 4.6 as the stable fallback, raised ordinary context to 250K and bootstrap to 30K, and added repeatable real-output efficiency and paid quality benchmark commands. Sonnet 5 and GPT-5.6 Sol remain experimental pending representative production evidence.

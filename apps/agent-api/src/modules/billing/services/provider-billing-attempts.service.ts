@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { SupabaseServiceClient, type ProviderBillingAttemptInput } from '@vibey/api-shared'
+import {
+  SupabaseServiceClient,
+  type ProviderBillingAttemptInput,
+  type ProviderOutputValidationState,
+} from '@vibey/api-shared'
 
 @Injectable()
 export class ProviderBillingAttemptsService {
@@ -47,5 +51,57 @@ export class ProviderBillingAttemptsService {
     const message = `Provider billing attempt write failed attemptKey=${input.attemptKey} providerGenerationId=${input.providerGenerationId ?? 'none'} error=${error.message}`
     this.logger.error(message)
     throw new Error(message)
+  }
+
+  async recordOutputValidation(input: {
+    attemptKey: string
+    state: ProviderOutputValidationState
+    error?: string | null
+    metadata?: Record<string, unknown>
+  }): Promise<void> {
+    const { data: existing, error: readError } = await this.svc.client
+      .from('provider_billing_attempts')
+      .select('metadata_json')
+      .eq('attempt_key', input.attemptKey)
+      .maybeSingle<{ metadata_json: Record<string, unknown> | null }>()
+    if (readError) {
+      throw new Error(`Provider output validation read failed: ${readError.message}`)
+    }
+    const existingValidation = this.asRecord(existing?.metadata_json?.image_output_validation)
+    const incomingValidation = this.asRecord(input.metadata?.image_output_validation)
+    const { error } = await this.svc.client
+      .from('provider_billing_attempts')
+      .update({
+        ...(input.state === 'provider_failed'
+          ? {
+              status: 'no_charge',
+              final_cost_usd: 0,
+              settled_at: new Date().toISOString(),
+              locked_by: null,
+              locked_at: null,
+            }
+          : {}),
+        metadata_json: {
+          ...(existing?.metadata_json ?? {}),
+          ...(input.metadata ?? {}),
+          image_output_validation: {
+            ...existingValidation,
+            ...incomingValidation,
+            state: input.state,
+            validated_at: new Date().toISOString(),
+            error: input.error?.slice(0, 2000) ?? null,
+          },
+        },
+      })
+      .eq('attempt_key', input.attemptKey)
+    if (error) {
+      throw new Error(`Provider output validation write failed: ${error.message}`)
+    }
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {}
   }
 }

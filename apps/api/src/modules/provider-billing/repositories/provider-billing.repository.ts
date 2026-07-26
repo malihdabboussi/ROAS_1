@@ -137,9 +137,9 @@ export class ProviderBillingRepository {
   private isTerminal(attempt: ProviderBillingAttemptRow): boolean {
     return Boolean(
       attempt.ai_usage_event_id ||
-        attempt.status === 'settled' ||
-        attempt.status === 'no_charge' ||
-        attempt.status === 'unrecoverable',
+      attempt.status === 'settled' ||
+      attempt.status === 'no_charge' ||
+      attempt.status === 'unrecoverable',
     )
   }
 }
