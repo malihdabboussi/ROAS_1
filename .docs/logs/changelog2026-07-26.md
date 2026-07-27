@@ -341,3 +341,13 @@ Why: A newer admin dashboard could receive an older API or in-memory cache shape
 Impact: AI Usage remains renderable across rollout version skew, and both fresh and already-cached legacy reports safely show zero for image-output metrics that were not previously reported.
 
 Files: `apps/web/src/features/admin-ai-usage/services/admin-ai-usage.service.ts`, `apps/web/src/features/admin-ai-usage/services/admin-ai-usage.service.test.ts`.
+
+## [2026-07-26 19:00] - [FEATURE]
+
+What: Added preset and custom UTC date ranges, equal-length previous-period comparisons, metric sparklines, and a daily provider-spend chart stacked by model to the current-app admin AI usage dashboard.
+
+Why: The existing report exposed only rolling current-window totals, so admins could not inspect exact calendar ranges, distinguish daily spend by resolved model, or compare usage with the immediately preceding period.
+
+Impact: `/admin/ai-usage` now supports inclusive one- to 366-day reporting with continuous daily series and compatibility defaults for mixed-version rollouts. Provider billing attempts remain authoritative for spend and request analytics, while traces remain authoritative for tokens and failures; all existing route, opportunity, reconciliation, workload, and costly-trace detail remains available.
+
+Files: `apps/api/src/modules/admin/controllers/admin-ai-usage.controller.ts`, `apps/api/src/modules/admin/services/admin-ai-usage.service.ts`, `apps/api/src/modules/admin/repositories/admin-ai-usage.repository.ts`, `apps/api/src/modules/admin/types/admin-ai-usage.types.ts`, backend tests, `apps/web/src/features/admin-ai-usage/`, and `documentation/features/chat-stream-recovery.md`.

@@ -3,6 +3,27 @@ export type AiUsageRouteId = 'openai' | 'openrouter' | 'google' | 'anthropic' | 
 export type AdminAiUsageReport = {
   generatedAt: string
   days: number
+  range: {
+    startDate: string
+    endDate: string
+    previousStartDate: string
+    previousEndDate: string
+  }
+  comparison: {
+    providerCostUsd: AiUsageComparison
+    providerAttempts: AiUsageComparison
+    tokens: AiUsageComparison
+    failureRate: AiUsageComparison
+  }
+  daily: Array<{
+    date: string
+    providerCostUsd: number
+    providerAttempts: number
+    tokens: number
+    failed: number
+  }>
+  modelSpend: Array<{ model: string; costUsd: number }>
+  dailyModelSpend: Array<{ date: string; model: string; costUsd: number }>
   summary: {
     traces: number
     completed: number
@@ -73,4 +94,16 @@ export type AdminAiUsageReport = {
     tokens: number
     costUsd: number
   }>
+}
+
+export type AiUsageComparison = {
+  current: number
+  previous: number
+  changePercent: number | null
+}
+
+export type AiUsageRange = {
+  days?: number
+  startDate?: string
+  endDate?: string
 }

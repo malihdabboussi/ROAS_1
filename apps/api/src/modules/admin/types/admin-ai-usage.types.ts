@@ -52,6 +52,27 @@ export type AdminAiUsageRoute = {
 export type AdminAiUsageReport = {
   generatedAt: string
   days: number
+  range: {
+    startDate: string
+    endDate: string
+    previousStartDate: string
+    previousEndDate: string
+  }
+  comparison: {
+    providerCostUsd: AdminAiUsageComparison
+    providerAttempts: AdminAiUsageComparison
+    tokens: AdminAiUsageComparison
+    failureRate: AdminAiUsageComparison
+  }
+  daily: Array<{
+    date: string
+    providerCostUsd: number
+    providerAttempts: number
+    tokens: number
+    failed: number
+  }>
+  modelSpend: Array<{ model: string; costUsd: number }>
+  dailyModelSpend: Array<{ date: string; model: string; costUsd: number }>
   summary: {
     traces: number
     completed: number
@@ -111,4 +132,16 @@ export type AdminAiUsageReport = {
     tokens: number
     costUsd: number
   }>
+}
+
+export type AdminAiUsageComparison = {
+  current: number
+  previous: number
+  changePercent: number | null
+}
+
+export type AdminAiUsageRangeQuery = {
+  days?: string
+  start?: string
+  end?: string
 }
