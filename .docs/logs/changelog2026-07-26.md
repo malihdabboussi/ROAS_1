@@ -431,3 +431,13 @@ Why: Ads and video views became cramped beside the app’s chat panels, empty st
 Impact: Paid Ads remains readable at narrower workspace widths, empty creative and ad-set states give users a direct next step, and image, video, and mixed media views now present the correct title, uploader, preview behavior, and creation controls.
 
 Files: `apps/web/src/features/spaces/components/artifacts/paid-ads/PaidAdsSpaceView.tsx`, `PaidAdsCreativesPane.tsx`, `PaidAdsAdSetsPane.tsx`, `apps/web/src/features/spaces/views/artifacts/paid-ads-toolbar/PaidAdsWorkspaceModeToggle.tsx`, and `apps/web/src/features/spaces/views/media`.
+
+## [2026-07-26 21:46] - [DOCS]
+
+What: Documented that bulk-send “The ROAS Portal” wording in `BulkActionBar` / `PageGraderBulkSendPanel` remains deferred behind an architecture LOC/import repair.
+
+Why: Pre-commit architecture gate blocks staging those already-oversized files for a string-only pass.
+
+Impact: Portal language already shipped in commit `40b0cda9` across other surfaces; bulk-send buttons/toasts stay as a follow-up PR after extraction.
+
+Files: `.docs/plans/agent-follow-up-work.md`.
