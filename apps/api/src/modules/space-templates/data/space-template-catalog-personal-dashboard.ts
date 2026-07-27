@@ -50,6 +50,9 @@ const fields = [
     options: [
       { id: 'personal', label: 'Personal', color: 'emerald' },
       { id: 'team', label: 'Team', color: 'violet' },
+      { id: 'executive', label: 'Executive', color: 'amber' },
+      { id: 'external', label: 'External', color: 'cyan' },
+      { id: 'sales', label: 'Sales', color: 'orange' },
     ],
   },
   PRIORITY_FIELD,

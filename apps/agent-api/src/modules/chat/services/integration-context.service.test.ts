@@ -76,7 +76,14 @@ describe('IntegrationContextService', () => {
     })
     expect(repository.listPersonalIntegrations).toHaveBeenCalledWith(client, {
       userId: 'user-1',
-      integrationIds: ['fathom', 'fireflies', 'slack', 'page_grader'],
+      integrationIds: [
+        'fathom',
+        'fireflies',
+        'slack',
+        'page_grader',
+        'google_calendar',
+        'outlook',
+      ],
     })
   })
 
@@ -117,7 +124,14 @@ describe('IntegrationContextService', () => {
     expect(context).toContain('slack: ROAS(personal,non_default)')
     expect(repository.listPersonalIntegrations).toHaveBeenCalledWith(client, {
       userId: 'user-1',
-      integrationIds: ['fathom', 'fireflies', 'slack', 'page_grader'],
+      integrationIds: [
+        'fathom',
+        'fireflies',
+        'slack',
+        'page_grader',
+        'google_calendar',
+        'outlook',
+      ],
     })
   })
 

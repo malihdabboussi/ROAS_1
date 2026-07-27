@@ -2,6 +2,16 @@
 
 Resolved by splitting `BulkActionBar` into `bulk-action-bar/*` modules and `PageGraderBulkSendPanel` into `page-grader-bulk-send/*` step components, switching the settings hook to `@/lib/settings`, and shipping The ROAS Portal public copy.
 
+## 2026-07-27 - [ARCH] Split space-automation-service-13 after portal grounding
+
+Status: Open
+Found while: Agent A Feedback Fathom truth (portal-grounded task names)
+Files:
+- `apps/api/src/modules/spaces/services/space-automation-service-13.base.ts` (706 LOC; limit 600)
+Evidence: Already over limit before this change (~683); portal grounding adds ~23 LOC via imports + title rewrite in `execAgentSuggestTasks`.
+Needed work: Extract `execAgentSuggestTasks` (+ portal people load/grounding) into a dedicated mixin/file under the automation service split pattern.
+Deferred because: In-scope grounding is required for Anis→Anees; full base-13 split is adjacent cleanup outside the feedback item deliverable.
+
 ## 2026-07-26 - [ARCH] Finish ROAS Portal renames in over-limit Spaces bulk-send files
 
 Status: Open
