@@ -216,6 +216,18 @@ export class ArtifactTasksRepository {
       .order('created_at', { ascending: true })) as QueryListResult<Record<string, unknown>>
   }
 
+  async listItemDeliverables(
+    supabase: SupabaseClient,
+    input: { spaceId: string; itemId: string },
+  ): Promise<QueryListResult<Record<string, unknown>>> {
+    return (await supabase
+      .from('space_item_deliverables')
+      .select('*')
+      .eq('space_id', input.spaceId)
+      .eq('item_id', input.itemId)
+      .order('created_at', { ascending: false })) as QueryListResult<Record<string, unknown>>
+  }
+
   async createTask(
     supabase: SupabaseClient,
     payload: Record<string, unknown>,

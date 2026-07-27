@@ -23,8 +23,8 @@ export function ToolContentPreview({ content, isActive }: ToolContentPreviewProp
   if (!displayText.trim()) return null
 
   return (
-    <div className="card-glass my-1.5 overflow-hidden">
-      <div ref={scrollRef} className="max-h-64 overflow-y-auto px-3 py-2">
+    <div className="card-glass relative my-1.5 min-w-0 overflow-x-hidden overflow-hidden">
+      <div ref={scrollRef} className="max-h-64 min-w-0 overflow-x-hidden overflow-y-auto px-3 py-2 break-words">
         <ChatMarkdownView html={html} />
       </div>
       {isActive && (

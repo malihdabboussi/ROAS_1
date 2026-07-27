@@ -75,7 +75,7 @@ export function DocumentCard({
           style={{ height: ARTIFACT_CHAT_PREVIEW_PANE_PX }}
         >
           {snippet ? (
-            <p className="body-3 text-muted-foreground h-full overflow-y-auto whitespace-pre-line pr-1">
+            <p className="body-3 text-muted-foreground h-full min-w-0 overflow-x-hidden overflow-y-auto break-words whitespace-pre-wrap pr-1">
               {snippet}
             </p>
           ) : (

@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils/cn'
 
 export function ChatMarkdownCodeBlockChrome({ blockEl }: { blockEl: HTMLElement }) {
-  const [wrapped, setWrapped] = useState(false)
+  const [wrapped, setWrapped] = useState(true)
 
   useEffect(() => {
     blockEl.classList.toggle('chat-markdown-code-block--wrap', wrapped)

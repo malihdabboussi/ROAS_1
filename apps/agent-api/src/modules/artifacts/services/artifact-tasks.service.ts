@@ -8,6 +8,7 @@ import { ArtifactTaskActivityHelper } from './artifact-task-activity-helper'
 import { pickTaskPayload } from './artifact-task-payload-helper'
 import { ArtifactTaskSchemaHelper } from './artifact-task-schema-helper'
 import { ArtifactTaskSpaceResolver } from './artifact-task-space-resolver'
+import { buildHydratedSpaceItemResponse } from './artifact-space-item-get.helper'
 import { parseSpaceItemLimit, shouldIncludeSpaceItemCount } from './space-item-query.util'
 
 @Injectable()
@@ -252,18 +253,16 @@ export class ArtifactTasksService {
     if (!itemId) return { success: false, error: 'item_id is required' }
     const { userId } = this.resolveContext(target, sessionKey)
     const supabase = await this.getUserClient(target, userId, sessionKey)
-    const item = await this.loadTask(supabase, spaceId, itemId)
-    if (!item) return { success: false, error: 'Space item not found' }
-    if (input.include_activity === false || input.include_activity === 'false') {
-      return { success: true, item }
-    }
-
-    const { data: activity, error: activityError } = await this.tasksRepository.listActivity(
+    return buildHydratedSpaceItemResponse({
       supabase,
-      { spaceId, itemId },
-    )
-    if (activityError) throw activityError
-    return { success: true, item, activity: activity ?? [] }
+      spaceId,
+      itemId,
+      query: input,
+      tasksRepository: this.tasksRepository,
+      taskSchema: this.taskSchema,
+      loadTask: (client, sid, tid) => this.loadTask(client, sid, tid),
+      loadSpace: (client, sid) => this.loadSpace(client, sid),
+    })
   }
 
   private async listTasks(

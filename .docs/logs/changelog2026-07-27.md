@@ -1,5 +1,16 @@
 # Changelog - July 27, 2026
 
+
+## [2026-07-27 15:17] - [FIX]
+
+What: Wired Space list/meeting row drag into chat (`getRowChatDragPayload` + `application/x-vibey-artifact`), hydrated `get_space_item` with meeting/transcript/deliverables/action items, fixed long drafted Slack/message packages wrapping in chat bubbles, and made context-limit Resume/Continue start a compact+continue turn instead of dead-run polling.
+
+Why: Feedback phase items 4, 5, 7, and 8 — drag attach, agent read of attached meetings/tasks, clipped draft packages, and unreliable context-window resume.
+
+Impact: Meetings/tasks drag into chat; agents can open attached items with full meeting context; long draft packages wrap without horizontal clip; Resume after context overflow continues work after compaction.
+
+Files: `SpaceContentRouter.tsx`, `space-item-values.chat-drag.test.ts`, `artifact-tasks.service.ts`, `artifact-space-item-*.helper.ts`, `artifact-action-schemas.ts`, `artifact-tasks.repository.ts`, LockedIn/message wrap surfaces, `chat.service.ts` (studio), `chat-stream-recovery.service.ts`, `StreamInterruptedBar.tsx`
+
 ## [2026-07-27 15:00] - [FIX]
 
 What: Moved `statusField` `useMemo` above the loading early-return in `HomeSpaceTaskDetailHost` so opening a home task (including meeting prep from agenda) no longer violates Rules of Hooks.

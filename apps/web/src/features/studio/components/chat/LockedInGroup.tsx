@@ -242,7 +242,7 @@ export function LockedInGroup({
   const label = summaryLabel ?? buildActivityGroupLabel(blocks, hasActiveBlock)
 
   return (
-    <div className={isSummaryMode ? 'overflow-hidden' : 'overflow-hidden rounded-lg'}>
+    <div className={isSummaryMode ? 'min-w-0 overflow-hidden' : 'min-w-0 overflow-hidden rounded-lg'}>
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
@@ -270,14 +270,14 @@ export function LockedInGroup({
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
-            <div className="relative">
+            <div className="relative min-w-0">
               <div
                 ref={scrollRef}
                 onScroll={handleScroll}
                 className={
                   hasCustomContent
-                    ? 'flex max-h-48 flex-col overflow-y-auto py-1'
-                    : 'flex max-h-48 flex-col gap-1 overflow-y-auto py-1'
+                    ? 'flex max-h-48 min-w-0 flex-col overflow-x-hidden overflow-y-auto py-1'
+                    : 'flex max-h-48 min-w-0 flex-col gap-1 overflow-x-hidden overflow-y-auto py-1'
                 }
               >
                 {hasCustomContent
@@ -338,8 +338,7 @@ function ThinkingInner({ content, isActive }: { content: string; isActive: boole
 
   return (
     <div
-      className="text-muted-foreground body-3 py-0.5 pl-0 pr-3"
-      style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+      className="text-muted-foreground body-3 min-w-0 overflow-x-hidden py-0.5 pl-0 pr-3 break-words whitespace-pre-wrap"
     >
       {displayText}
     </div>
