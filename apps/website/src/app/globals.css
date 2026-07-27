@@ -4020,6 +4020,12 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
   border-color: var(--color-primary);
   background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
+.shell-menu-dock-target-work {
+  top: var(--shell-menu-dock-work-top, 0);
+  left: var(--shell-menu-dock-work-left, 0);
+  width: var(--shell-menu-dock-work-band, 7.5rem);
+  height: var(--shell-menu-dock-work-height, 100%);
+}
 .shell-menu-dock-lifted-logo {
   position: absolute;
   top: var(--shell-menu-dock-y, 50%);

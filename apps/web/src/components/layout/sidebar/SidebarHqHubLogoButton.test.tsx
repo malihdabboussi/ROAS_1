@@ -19,6 +19,7 @@ describe('SidebarHqHubLogoButton', () => {
       candidate: 'left',
       pointerX: 0,
       pointerY: 0,
+      workHostAvailable: false,
     })
   })
 

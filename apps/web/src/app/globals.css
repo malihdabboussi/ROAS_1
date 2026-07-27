@@ -10717,6 +10717,12 @@ html.dark .chat-markdown-code-block__shadow {
   border-color: var(--color-primary);
   background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
+.shell-menu-dock-target-work {
+  top: var(--shell-menu-dock-work-top, 0);
+  left: var(--shell-menu-dock-work-left, 0);
+  width: var(--shell-menu-dock-work-band, 7.5rem);
+  height: var(--shell-menu-dock-work-height, 100%);
+}
 .shell-menu-dock-lifted-logo {
   position: absolute;
   top: var(--shell-menu-dock-y, 50%);
@@ -10979,6 +10985,23 @@ html.dark .chat-markdown-code-block__shadow {
   min-height: 0;
   min-width: 0;
   width: 100%;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+.shell-work-area-body-with-menu {
+  flex-direction: row;
+  align-items: stretch;
+}
+.shell-work-area-body-with-menu > .shell-menu-dock-sidebar {
+  flex: 0 0 auto;
+  height: 100%;
+  min-height: 0;
+}
+.shell-work-area-body-main {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
   flex: 1 1 auto;
   flex-direction: column;
   overflow: hidden;
