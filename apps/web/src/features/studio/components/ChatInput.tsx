@@ -141,8 +141,10 @@ export function ChatInput({
     syncSlashMenuFromComposer,
   } = useChatInputSlashData({ agentKey, valueRef })
   const {
+    slashPlaybooksExpanded: _slashPlaybooksExpanded,
     slashSkillsExpanded,
     slashWorkflowsExpanded,
+    setSlashPlaybooksExpanded,
     setSlashSkillsExpanded,
     setSlashWorkflowsExpanded,
     slashMenuLayout,
@@ -483,6 +485,7 @@ export function ChatInput({
         slashHighlight,
         onSelect: handleSlashSelect,
         onHighlight: setSlashHighlight,
+        onShowMorePlaybooks: () => setSlashPlaybooksExpanded(true),
         onShowMoreSkills: () => setSlashSkillsExpanded(true),
         onShowMoreWorkflows: () => setSlashWorkflowsExpanded(true),
       }}

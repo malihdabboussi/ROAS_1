@@ -313,9 +313,16 @@ export class MemoriesRepository {
     return data
   }
 
-  async checkDuplicate(client: SupabaseClient, contentHash: string, ownerId?: string) {
+  async checkDuplicate(
+    client: SupabaseClient,
+    contentHash: string,
+    ownerId?: string,
+    brainIdOverride?: string,
+  ) {
     let query = client.from('ns_memories').select('id').eq('content_hash', contentHash).limit(1)
-    if (ownerId) {
+    if (brainIdOverride?.trim()) {
+      query = query.eq('brain_id', brainIdOverride.trim())
+    } else if (ownerId) {
       const brainId = await this.resolveDefaultBrainId(client, ownerId)
       query = query.eq('brain_id', brainId)
     }

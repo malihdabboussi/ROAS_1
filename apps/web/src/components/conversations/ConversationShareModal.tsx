@@ -14,6 +14,7 @@ import type {
 import {
   deleteConversationShare,
   fetchConversationShares,
+  passOffConversationShare,
   upsertConversationShare,
 } from '@/lib/conversations/conversations-api'
 import { sanitizeUserError } from '@/lib/utils/sanitize-user-error'
@@ -48,6 +49,8 @@ export function ConversationShareModal({
   const [shares, setShares] = useState<ConversationShareRecord[]>([])
   const [inviteQuery, setInviteQuery] = useState('')
   const [inviteLevel, setInviteLevel] = useState<ConversationShareLevel>('view')
+  const [notifyOnInvite, setNotifyOnInvite] = useState(true)
+  const [passOffNote, setPassOffNote] = useState('')
   const [sharingOpen, setSharingOpen] = useState(true)
   const [orgRowOpen, setOrgRowOpen] = useState(false)
   const [busyShareIds, setBusyShareIds] = useState<Record<string, boolean>>({})
@@ -127,12 +130,19 @@ export function ConversationShareModal({
   }, [inviteCandidates, inviteQuery, roster])
 
   const upsertShare = useCallback(
-    async (entityType: 'user' | 'org', entityId: string, level: ConversationShareLevel) => {
+    async (
+      entityType: 'user' | 'org',
+      entityId: string,
+      level: ConversationShareLevel,
+      options?: { notify?: boolean; note?: string },
+    ) => {
       if (!conversationId) return null
       const share = await upsertConversationShare(conversationId, {
         entity_type: entityType,
         entity_id: entityId,
         level,
+        notify: options?.notify,
+        note: options?.note,
       })
       setShares((prev) => {
         const exists = prev.some((row) => row.id === share.id)
@@ -145,6 +155,23 @@ export function ConversationShareModal({
     [conversationId, onSharesChanged],
   )
 
+  const conversationHandoffLink = useMemo(() => {
+    if (!conversationId || typeof window === 'undefined') return ''
+    return `${window.location.origin}/home?conversation=${encodeURIComponent(conversationId)}`
+  }, [conversationId])
+
+  const handleCopyHandoffLink = useCallback(async () => {
+    if (!conversationHandoffLink) return
+    try {
+      await navigator.clipboard.writeText(conversationHandoffLink)
+      toast.success(CONVERSATION_SHARE_TOAST_SUCCESS.LINK_COPIED.userMessage)
+    } catch (error) {
+      toast.error(
+        sanitizeUserError(error, CONVERSATION_SHARE_TOAST_ERRORS.COPY_LINK_FAILED.userMessage),
+      )
+    }
+  }, [conversationHandoffLink])
+
   const handleInvite = useCallback(async () => {
     const target = resolveInviteTarget()
     if (!target?.user_id) {
@@ -155,17 +182,45 @@ export function ConversationShareModal({
     const shareId = existing?.id ?? `invite:${target.user_id}`
     setBusyShareIds((prev) => ({ ...prev, [shareId]: true }))
     try {
-      await upsertShare('user', target.user_id, inviteLevel)
+      if (notifyOnInvite) {
+        await passOffConversationShare(conversationId!, {
+          user_id: target.user_id,
+          level: inviteLevel,
+          note: passOffNote.trim() || undefined,
+          notify: true,
+        })
+        await loadShares()
+        onSharesChanged?.()
+        toast.success(CONVERSATION_SHARE_TOAST_SUCCESS.PASSED_OFF.userMessage)
+      } else {
+        await upsertShare('user', target.user_id, inviteLevel)
+        toast.success(CONVERSATION_SHARE_TOAST_SUCCESS.SHARE_UPDATED.userMessage)
+      }
       setInviteQuery('')
-      toast.success(CONVERSATION_SHARE_TOAST_SUCCESS.SHARE_UPDATED.userMessage)
+      setPassOffNote('')
     } catch (error) {
       toast.error(
-        sanitizeUserError(error, CONVERSATION_SHARE_TOAST_ERRORS.INVITE_USER_FAILED.userMessage),
+        sanitizeUserError(
+          error,
+          notifyOnInvite
+            ? CONVERSATION_SHARE_TOAST_ERRORS.PASS_OFF_FAILED.userMessage
+            : CONVERSATION_SHARE_TOAST_ERRORS.INVITE_USER_FAILED.userMessage,
+        ),
       )
     } finally {
       setBusyShareIds((prev) => ({ ...prev, [shareId]: false }))
     }
-  }, [inviteLevel, resolveInviteTarget, shareByUserId, upsertShare])
+  }, [
+    conversationId,
+    inviteLevel,
+    loadShares,
+    notifyOnInvite,
+    onSharesChanged,
+    passOffNote,
+    resolveInviteTarget,
+    shareByUserId,
+    upsertShare,
+  ])
 
   const handleLevelChange = useCallback(
     async (share: ConversationShareRecord, level: ConversationShareLevel) => {
@@ -307,6 +362,34 @@ export function ConversationShareModal({
             onInviteLevelChange={setInviteLevel}
             onInviteQueryChange={setInviteQuery}
           />
+
+          <div className="px-spacing-6 pb-spacing-3 space-y-spacing-2">
+            <label className="gap-spacing-2 body-4 text-muted-foreground flex items-center">
+              <input
+                type="checkbox"
+                checked={notifyOnInvite}
+                onChange={(event) => setNotifyOnInvite(event.target.checked)}
+                className="accent-primary"
+              />
+              Notify teammate with handoff link
+            </label>
+            {notifyOnInvite ? (
+              <textarea
+                className="input-glass body-3 text-foreground h-spacing-12 w-full resize-y"
+                placeholder="Optional note for the handoff"
+                value={passOffNote}
+                onChange={(event) => setPassOffNote(event.target.value)}
+                aria-label="Pass-off note"
+              />
+            ) : null}
+            <button
+              type="button"
+              className="button-glass-neutral body-4 rounded-spacing-2 px-spacing-3 py-spacing-1"
+              onClick={() => void handleCopyHandoffLink()}
+            >
+              Copy handoff link
+            </button>
+          </div>
 
           <ConversationSharePeopleList
             activeOrgId={activeOrgId}

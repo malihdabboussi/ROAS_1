@@ -69,6 +69,17 @@ export function useChatInputSelectionHandlers({
 
   const handleSlashSelect = useCallback(
     (item: SlashItem) => {
+      if (item.type === 'playbook') {
+        setSlashMenuOpen(false)
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('vibey:open-quick-missions', {
+              detail: { playbookKey: item.key },
+            }),
+          )
+        }
+        return
+      }
       const t = textareaRef.current
       const text = recordingState === 'idle' ? value : displayText
       const cursor = Math.min(t?.selectionStart ?? text.length, text.length)

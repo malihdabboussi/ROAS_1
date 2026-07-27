@@ -126,10 +126,25 @@ export class ConversationProcessingService {
     const sourceTitle = normalizeOptional(data.source_title)
     const agentId =
       normalizeOptional(data.agent_id) ?? normalizeOptional(data.agent_name) ?? 'vibey'
+    const campaignId = normalizeOptional(data.campaign_id)
+    const targetBrainId =
+      normalizeOptional(data.brain_id) ??
+      (campaignId
+        ? await this.resolveOrCreateCampaignBrainId(supabase, {
+            ownerId,
+            orgId: data.org_id,
+            campaignId,
+          })
+        : null)
 
     for (const item of significant) {
       const contentHash = this.embedding.computeContentHash(item.content)
-      const isDuplicate = await this.memoriesRepo.checkDuplicate(supabase, contentHash, ownerId)
+      const isDuplicate = await this.memoriesRepo.checkDuplicate(
+        supabase,
+        contentHash,
+        ownerId,
+        targetBrainId ?? undefined,
+      )
 
       if (isDuplicate) {
         duplicateCount++
@@ -152,10 +167,12 @@ export class ConversationProcessingService {
         confidence: item.confidence ?? 0.8,
         significance: item.significance ?? 0.6,
         tags: item.tags ?? [],
+        ...(targetBrainId ? { brain_id: targetBrainId } : {}),
         metadata: {
           user_id: ownerId,
           import_source: sourceType,
           ...(sourceTitle ? { source_title: sourceTitle } : {}),
+          ...(campaignId ? { campaign_id: campaignId } : {}),
         },
       }
       if (vector) {
@@ -345,6 +362,50 @@ ${conversationText}`
     if (!ownerId) return undefined
     if (!UUID_V4_LIKE_PATTERN.test(ownerId)) return undefined
     return ownerId
+  }
+
+  private async resolveOrCreateCampaignBrainId(
+    supabase: SupabaseClient,
+    input: { ownerId: string; orgId?: string | null; campaignId: string },
+  ): Promise<string> {
+    const { data: existing, error: existingError } = await supabase
+      .from('ns_brains')
+      .select('id')
+      .eq('campaign_id', input.campaignId)
+      .limit(1)
+      .maybeSingle()
+    if (existingError) throw new BadRequestException(`Could not load campaign brain: ${existingError.message}`)
+    if (existing?.id) return String(existing.id)
+
+    const { data: created, error } = await supabase
+      .from('ns_brains')
+      .insert({
+        owner_id: input.ownerId,
+        org_id: input.orgId ?? null,
+        campaign_id: input.campaignId,
+        name: 'Campaign Brain',
+        scope: 'campaign',
+        is_default: false,
+        color: '#6366F1',
+        icon: 'campaign',
+        tags: [],
+      })
+      .select('id')
+      .maybeSingle()
+    if (created?.id) return String(created.id)
+    if (error && error.code !== '23505') {
+      throw new BadRequestException(`Could not create campaign brain: ${error.message}`)
+    }
+
+    const { data: fallback, error: fallbackError } = await supabase
+      .from('ns_brains')
+      .select('id')
+      .eq('campaign_id', input.campaignId)
+      .limit(1)
+      .maybeSingle()
+    if (fallbackError) throw new BadRequestException(`Could not load campaign brain: ${fallbackError.message}`)
+    if (fallback?.id) return String(fallback.id)
+    throw new BadRequestException('Failed creating or finding campaign brain')
   }
 
   private addUsage(target: GeminiTokenUsage, current: GeminiTokenUsage): void {

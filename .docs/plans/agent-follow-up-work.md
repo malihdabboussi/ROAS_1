@@ -8944,3 +8944,23 @@ Evidence: `pnpm lint` reports 351 existing architecture, line-limit, and cross-f
 Needed work: Remediate the repository-wide lint backlog in architecture-scoped batches without mixing unrelated feature behavior into UI polish changes.
 
 Reason not done now: The reported violations predate and sit outside this change set; expanding this pass to hundreds of unrelated files would make the verified UI work unsafe to integrate.
+
+## 2026-07-27 - [FEATURE] Home deep-link for conversation pass-off
+
+Status: Open
+Found while: Agent C feedback — share pass-off notifies with `/home?conversation=<id>`
+Files:
+- `apps/web/src/components/shell` / home conversation open path
+Evidence: Pass-off writes `user_notifications.action_url` to `/home?conversation=…`, but Home may not yet select that conversation on load.
+Needed work: Honor `?conversation=` (or equivalent) when opening Home / global chat so the handoff link lands on the shared thread.
+Deferred because: Out of Agent C scope (Agent D owns shell polish); share + notify still grants access via the People share list without the deep-link.
+
+## 2026-07-27 - [ARCH] QuickMissionsHubModal near component limit
+
+Status: Open
+Found while: Agent C feedback — Quick Missions hub
+Files:
+- `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` (~437 LOC)
+Evidence: Under 600 service/component hard limit for services but above preferred 400 for feature components.
+Needed work: Split step panels (mission / client / context) into sibling files if it grows further.
+Deferred because: In-scope hub shipped; further split not required for the deliverable.

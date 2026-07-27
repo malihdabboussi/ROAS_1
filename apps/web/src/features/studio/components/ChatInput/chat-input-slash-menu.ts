@@ -4,7 +4,7 @@ export interface SlashItem {
   name: string
   description: string
   is_enabled?: boolean
-  type: 'skill' | 'workflow'
+  type: 'skill' | 'workflow' | 'playbook'
 }
 
 /** If the caret is right after a full `/key` or `/key ` that matches a known slash item, return its start index. */

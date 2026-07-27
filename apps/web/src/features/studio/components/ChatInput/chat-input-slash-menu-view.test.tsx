@@ -25,13 +25,17 @@ function layout(overrides: Partial<SlashMenuLayout> = {}): SlashMenuLayout {
     type: 'workflow',
   })
   return {
+    playbookItems: [],
     skillItems: [skill],
     workflowItems: [workflow],
+    playbookVisible: [],
     skillVisible: [skill],
     workflowVisible: [workflow],
     visibleFlat: [skill, workflow],
+    playbookMoreCount: 0,
     skillMoreCount: 0,
     workflowMoreCount: 2,
+    showPlaybookMore: false,
     showSkillMore: false,
     showWorkflowMore: true,
     ...overrides,
@@ -42,11 +46,18 @@ describe('SlashCommandMenuView', () => {
   it('renders empty state when no commands match', () => {
     render(
       <SlashCommandMenuView
-        layout={layout({ skillItems: [], workflowItems: [], skillVisible: [], workflowVisible: [], visibleFlat: [] })}
+        layout={layout({
+          skillItems: [],
+          workflowItems: [],
+          skillVisible: [],
+          workflowVisible: [],
+          visibleFlat: [],
+        })}
         slashItemsCount={0}
         slashHighlight={-1}
         onSelect={vi.fn()}
         onHighlight={vi.fn()}
+        onShowMorePlaybooks={vi.fn()}
         onShowMoreSkills={vi.fn()}
         onShowMoreWorkflows={vi.fn()}
       />,
@@ -63,6 +74,7 @@ describe('SlashCommandMenuView', () => {
         slashHighlight={0}
         onSelect={vi.fn()}
         onHighlight={vi.fn()}
+        onShowMorePlaybooks={vi.fn()}
         onShowMoreSkills={vi.fn()}
         onShowMoreWorkflows={vi.fn()}
       />,
@@ -85,6 +97,7 @@ describe('SlashCommandMenuView', () => {
         slashHighlight={-1}
         onSelect={onSelect}
         onHighlight={onHighlight}
+        onShowMorePlaybooks={vi.fn()}
         onShowMoreSkills={vi.fn()}
         onShowMoreWorkflows={vi.fn()}
       />,
@@ -106,6 +119,7 @@ describe('SlashCommandMenuView', () => {
         slashHighlight={-1}
         onSelect={vi.fn()}
         onHighlight={vi.fn()}
+        onShowMorePlaybooks={vi.fn()}
         onShowMoreSkills={vi.fn()}
         onShowMoreWorkflows={onShowMoreWorkflows}
       />,

@@ -81,3 +81,13 @@ Impact: Hold-R can drop onto the work seam; desktop flyouts from `work` open int
 
 Files: `use-shell-menu-dock.ts`, `ShellSidebarSlot.tsx`, `ShellMenuDockLayout.tsx`, `ShellWorkspace.tsx`, `ShellMenuDockOverlay.tsx`, `SidebarHqHubLogoButton.tsx`, both product `globals.css`, shell docs/tests.
 
+
+## [2026-07-27 15:19] - [FEATURE]
+
+What: Mid-conversation campaign+brain soft prompt (after N user turns, explicit confirm), conversation share pass-off with teammate notify + handoff link, and Quick Missions hub with `/` playbook slash entries.
+
+Why: Valuable General chats were stuck off-campaign without a durable brain save path; share was invite-only; playbooks were missing from slash discovery and had no pick-mission → client → context → run flow.
+
+Impact: Users can attach mid-chat work to a client campaign and save extracted memories into that campaign brain; share can notify a teammate; slash and composer expose Quick Missions playbooks.
+
+Files: `ChatCampaignBrainNudge.tsx`, `work-context.config.ts`, `conversation-processing.service.ts` (api + agent-api), `ConversationShareModal.tsx`, `conversation-shares.controller.ts`, `QuickMissionsHubModal.tsx`, `use-chat-input-slash-data.ts`, related tests/changelog.

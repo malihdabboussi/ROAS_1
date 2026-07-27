@@ -29,6 +29,8 @@ export interface PersistedGlobalChat {
   workContext?: GlobalWorkContext
   /** Surfaces where the user checked "Don't show this again" on the agent recommendation. */
   recDismissedSurfaces?: GlobalWorkSurface[]
+  /** Conversation ids where the campaign+brain soft prompt was dismissed. */
+  campaignBrainNudgeDismissedConversationIds?: string[]
 }
 
 export function readPersistedGlobalChat(): PersistedGlobalChat {
@@ -60,6 +62,20 @@ export function addRecDismissedSurface(surface: GlobalWorkSurface): GlobalWorkSu
   if (current.includes(surface)) return current
   const next = [...current, surface]
   writePersistedGlobalChat({ recDismissedSurfaces: next })
+  return next
+}
+
+export function readCampaignBrainNudgeDismissedConversationIds(): string[] {
+  return readPersistedGlobalChat().campaignBrainNudgeDismissedConversationIds ?? []
+}
+
+export function addCampaignBrainNudgeDismissedConversationId(conversationId: string): string[] {
+  const id = conversationId.trim()
+  if (!id) return readCampaignBrainNudgeDismissedConversationIds()
+  const current = readCampaignBrainNudgeDismissedConversationIds()
+  if (current.includes(id)) return current
+  const next = [...current, id].slice(-50)
+  writePersistedGlobalChat({ campaignBrainNudgeDismissedConversationIds: next })
   return next
 }
 
