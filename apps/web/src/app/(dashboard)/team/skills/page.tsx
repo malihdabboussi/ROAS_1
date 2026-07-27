@@ -10,7 +10,7 @@ export default function ManageSkillsPage() {
       <div className="flex min-h-0 w-full flex-1 flex-col">
         <Suspense
           fallback={
-            <div className="flex min-h-0 w-full flex-1 items-center justify-center rounded-2xl border border-[var(--border)]">
+            <div className="border-border rounded-spacing-3 flex min-h-0 w-full flex-1 items-center justify-center border">
               <VibeyLoadingOrb state="processing" size="sm" />
             </div>
           }

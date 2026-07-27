@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
 import { useShellPrefsHydrated } from '@/components/shell/use-shell-prefs-hydrated'
 import { useShellStore } from '@/components/shell/use-shell-store'
 import { useOrgStore } from '@/features/org/store/use-org-store'
@@ -10,6 +11,7 @@ import { FeatureUpdateDetailModal } from '@/features/updates/components/FeatureU
 import { FeatureUpdatesPanel } from '@/features/updates/components/FeatureUpdatesPanel'
 import { useFeatureUpdates } from '@/features/updates/hooks/useFeatureUpdates'
 import type { FeatureUpdate } from '@/features/updates/types'
+import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { createProgram, invalidateProgramsListCache } from '@/lib/programs'
 import { DeleteCampaignDialog } from './DeleteCampaignDialog'
 import { NewCampaignModal } from './NewCampaignModal'
@@ -28,11 +30,20 @@ export function Sidebar(props: SidebarProps) {
   const shellPrefsHydrated = useShellPrefsHydrated()
   const sidebarPinnedRaw = useShellStore((s) => s.sidebarPinned)
   const sidebarPeekRaw = useShellStore((s) => s.sidebarPeek)
+  const desktop = useMediaQuery('(min-width: 768px)')
   const sidebarPinned = shellPrefsHydrated ? sidebarPinnedRaw : false
   const sidebarPeek = shellPrefsHydrated ? sidebarPeekRaw : false
+  const savedMenuDock = useShellMenuDock((state) => state.dock)
+  const menuDock = shellPrefsHydrated && desktop ? savedMenuDock : 'left'
   // Menu pin/peek still works while AI chat is open — drawer sits beside the rail.
   const hqDesktopWidth =
-    c.sidebarMode === 'hq' ? (sidebarPinned ? 'md:w-[272px]' : 'md:w-[72px]') : c.desktopWidth
+    c.sidebarMode === 'hq'
+      ? menuDock === 'top' || menuDock === 'bottom'
+        ? 'md:w-full'
+        : sidebarPinned
+          ? 'md:w-[272px]'
+          : 'md:w-[72px]'
+      : c.desktopWidth
   const hqPeeking = c.sidebarMode === 'hq' && sidebarPeek && !sidebarPinned
   const {
     updates: featureUpdateRows,
@@ -83,13 +94,14 @@ export function Sidebar(props: SidebarProps) {
         />
       )}
       <aside
+        data-shell-menu-dock={menuDock}
         className={`relative flex flex-col transition-all duration-300 ease-in-out ${
           c.sidebarMode === 'hq' ? '' : 'md:!bg-transparent'
         } ${
           c.mobileDrawerOpen
             ? 'surface-card border-r-glass fixed inset-y-0 left-0 z-[999] h-dvh w-[280px]'
             : 'hidden h-full'
-        } md:relative md:flex md:h-full ${hqPeeking ? 'md:z-40' : 'md:z-10'} ${
+        } shell-menu-dock-sidebar md:relative md:flex ${hqPeeking ? 'md:z-40' : 'md:z-10'} ${
           c.sidebarMode === 'hq' ? 'md:overflow-visible' : 'md:overflow-hidden'
         } ${c.sidebarMode === 'hq' ? hqDesktopWidth : c.desktopWidth}`}
       >

@@ -49,8 +49,16 @@ describe('shell empty chat prompts', () => {
     render(<ShellEmptyChatCapabilityScroller onSelect={onSelect} />)
 
     for (const capability of SHELL_EMPTY_CHAT_CAPABILITIES) {
-      fireEvent.click(screen.getAllByRole('button', { name: capability.label })[0]!)
+      fireEvent.click(screen.getByRole('button', { name: capability.label }))
       expect(onSelect).toHaveBeenLastCalledWith(capability)
+    }
+  })
+
+  it('renders each capability once without a clipped duplicate track', () => {
+    render(<ShellEmptyChatCapabilityScroller onSelect={vi.fn()} />)
+
+    for (const capability of SHELL_EMPTY_CHAT_CAPABILITIES) {
+      expect(screen.getAllByRole('button', { name: capability.label })).toHaveLength(1)
     }
   })
 

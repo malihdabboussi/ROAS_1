@@ -72,7 +72,7 @@ describe('buildLoopFlowsAwarenessContext', () => {
     expect(context).toContain('flow_build_has_plan: yes')
     expect(context).toContain('flow_build_required_next_action: compile_flow_plan')
     expect(context).toContain(
-      'If flow_build_required_next_action is compile_flow_plan, call compile_flow_plan.',
+      'If flow_build_required_next_action is compile_flow_plan, call compile_flow_plan',
     )
   })
 })

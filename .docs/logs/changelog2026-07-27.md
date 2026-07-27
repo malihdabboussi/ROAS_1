@@ -1,0 +1,31 @@
+# Changelog - July 27, 2026
+
+## [2026-07-27 00:01] - [FIX]
+
+What: Replaced the duplicated, edge-clipped AI capability marquee with a stable responsive capability group, and made selected-agent layouts give the agent profile the work area while the canonical AI Chat is open.
+
+Why: Authenticated browser testing showed half-rendered capability labels in narrow chat layouts and a redundant team overview compressed between the selected-agent chat and profile.
+
+Impact: Every AI capability remains fully visible at shared-screen widths. Agent pages now use one composer and one clear detail surface while AI Chat is open, then restore the team overview when chat is collapsed.
+
+Files: `apps/web/src/components/shell/ShellEmptyChatCapabilityScroller.tsx`, `ShellEmptyChatPrompts.test.tsx`, `apps/web/src/features/team-2/components/Team2DetailView.tsx`, `Team2DetailView.test.tsx`, and both product `globals.css` files.
+
+## [2026-07-27 08:55] - [FEATURE]
+
+What: Added persisted HQ menu docking (left/right/top/bottom via hold-on-R-logo), simplified right-panel motion ownership, and aligned feature toolbars/filters with the shared shell chrome. Also fixed clipped AI capability labels and selected-agent work-area layout while chat is open.
+
+Why: Users need a movable menu without losing Home on click, and feature toolbars were inconsistently dense/clipped against the new shell.
+
+Impact: Desktop menu placement is a personal preference; mobile stays left. Toolbars across Campaigns, Programs, Tasks, Brain, Contacts, Flows, Artifacts, Media, and Paid Ads share denser scoped controls. Capability chips stay fully readable.
+
+Files: `ShellMenuDockLayout`, `use-shell-menu-dock`, sidebar HQ rail/logo overlay, feature toolbar/filter modules, both product `globals.css`, and `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-07-27 08:56] - [ARCH]
+
+What: Removed `CrmContactsContainer.tsx` from `loc-allowlist.json` after it dropped under the 400 LOC component limit.
+
+Why: Architecture gate requires allowlist shrink when a file recovers under its limit.
+
+Impact: Contacts list container is no longer permanently allowlisted.
+
+Files: `scripts/arch/loc-allowlist.json`

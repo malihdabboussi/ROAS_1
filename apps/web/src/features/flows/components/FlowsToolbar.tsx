@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
 import {
   ArrowUpDown,
   CircleAlert,
@@ -31,13 +30,6 @@ import type {
 } from '../types/flows-page.types'
 import { FlowsGroupByButton } from './FlowsGroupByButton'
 import { FlowsGroupByToolbarPopover } from './FlowsGroupByToolbarPopover'
-
-const TOOLBAR_DOCK_SLOT_SPRING = {
-  type: 'spring' as const,
-  stiffness: 460,
-  damping: 40,
-  mass: 0.78,
-}
 
 const SORT_OPTIONS = [
   { id: 'recent', label: 'Newest first' },
@@ -144,14 +136,15 @@ export function FlowsToolbar({
             <button
               type="button"
               onClick={() => onViewChange('grid')}
+              aria-label="Grid view"
               aria-pressed={view === 'grid'}
-              className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
+              className={`h-spacing-7 rounded-spacing-2 flex aspect-square shrink-0 items-center justify-center transition-colors ${
                 view === 'grid'
-                  ? 'bg-[var(--color-hover-subtle)] text-[var(--foreground)]'
-                  : 'text-[var(--color-muted-foreground)] hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]'
+                  ? 'bg-hover-subtle text-foreground'
+                  : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground'
               }`}
             >
-              <Grid3x3 className="h-3.5 w-3.5" />
+              <Grid3x3 className="icon-sm" />
             </button>
           </span>
         </Tooltip>
@@ -160,73 +153,57 @@ export function FlowsToolbar({
             <button
               type="button"
               onClick={() => onViewChange('list')}
+              aria-label="List view"
               aria-pressed={view === 'list'}
-              className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
+              className={`h-spacing-7 rounded-spacing-2 flex aspect-square shrink-0 items-center justify-center transition-colors ${
                 view === 'list'
-                  ? 'bg-[var(--color-hover-subtle)] text-[var(--foreground)]'
-                  : 'text-[var(--color-muted-foreground)] hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]'
+                  ? 'bg-hover-subtle text-foreground'
+                  : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground'
               }`}
             >
-              <List className="h-3.5 w-3.5" />
+              <List className="icon-sm" />
             </button>
           </span>
         </Tooltip>
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-        <div className="flex h-7 shrink-0 items-center justify-center">
-          <AnimatePresence mode="popLayout" initial={false}>
-            {searchOpen ? (
-              <motion.div
-                key="flows-search-field"
-                initial={{ opacity: 0, scale: 0.94 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={TOOLBAR_DOCK_SLOT_SPRING}
-                className="flex h-7 items-center justify-center"
+        {searchOpen ? (
+          <label className="relative block w-40">
+            <Search className="icon-left-center icon-sm text-muted-foreground pointer-events-none" />
+            <input
+              autoFocus
+              type="search"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              onBlur={() => {
+                if (!search.trim()) onSearchOpenChange(false)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  onSearchChange('')
+                  onSearchOpenChange(false)
+                }
+              }}
+              placeholder="Search flows…"
+              aria-label="Search flows"
+              className="input-leading h-spacing-7 pr-spacing-2 body-4 rounded-spacing-2 border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:border-foreground w-full border outline-none"
+            />
+          </label>
+        ) : (
+          <Tooltip label="Search" side="bottom" triggerClassName="flex h-full items-center">
+            <span className="inline-flex">
+              <button
+                type="button"
+                onClick={() => onSearchOpenChange(true)}
+                className="btn-icon-bare hover:bg-hover-subtle"
+                aria-label="Search flows"
               >
-                <input
-                  autoFocus
-                  type="search"
-                  value={search}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  onBlur={() => {
-                    if (!search.trim()) onSearchOpenChange(false)
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      onSearchChange('')
-                      onSearchOpenChange(false)
-                    }
-                  }}
-                  placeholder="Search flows…"
-                  className="w-[160px] rounded-md border border-[var(--color-border)] bg-[var(--background)] px-2.5 py-1 text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-primary)]"
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="flows-search-icon"
-                initial={{ opacity: 0, scale: 0.94 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={TOOLBAR_DOCK_SLOT_SPRING}
-                className="flex h-7 items-center justify-center"
-              >
-                <Tooltip label="Search" side="bottom" triggerClassName="flex h-full items-center">
-                  <span className="inline-flex">
-                    <button
-                      type="button"
-                      onClick={() => onSearchOpenChange(true)}
-                      className="rounded-md p-1.5 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-hover-subtle)] hover:text-[var(--foreground)]"
-                    >
-                      <Search className="h-3.5 w-3.5" />
-                    </button>
-                  </span>
-                </Tooltip>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                <Search className="icon-sm" />
+              </button>
+            </span>
+          </Tooltip>
+        )}
 
         <AutomationSolidSelect
           variant="icon"
@@ -302,7 +279,7 @@ export function FlowsToolbar({
           currentId={sort}
           onSelect={(id) => onSortChange(id as FlowsSort)}
           trigger="icon"
-          icon={<ArrowUpDown className="h-3.5 w-3.5" />}
+          icon={<ArrowUpDown className="icon-sm" />}
           align="right"
         />
       </div>

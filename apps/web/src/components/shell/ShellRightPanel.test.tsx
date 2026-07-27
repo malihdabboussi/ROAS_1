@@ -48,18 +48,21 @@ describe('ShellRightPanel', () => {
   it('shows only generic tasks when no chat is active', () => {
     render(<ShellRightPanel conversationId={null} />)
 
-    expect(screen.getByRole('button', { name: 'Tasks' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Files' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Sources' })).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Tasks' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Files' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Sources' })).not.toBeInTheDocument()
     expect(screen.getByTestId('tasks-context')).toHaveTextContent('home')
   })
 
   it('shows all chat-specific summary tabs for an active conversation', () => {
     render(<ShellRightPanel conversationId="conversation-1" />)
 
-    expect(screen.getByRole('button', { name: 'Tasks' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Files' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Sources' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Tasks' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Files' })).toHaveAttribute('aria-selected', 'false')
+    expect(screen.getByRole('tab', { name: 'Sources' })).toBeInTheDocument()
+    expect(screen.getByRole('complementary', { name: 'Work summary' })).toHaveClass(
+      'motion-reduce:transition-none',
+    )
     expect(screen.getByTestId('tasks-context')).toHaveTextContent('conversation-1')
   })
 })

@@ -1,9 +1,8 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, FolderKanban, Plus, Search } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ChevronRight, FolderKanban } from 'lucide-react'
 import { toast } from 'sonner'
 import { ShareModal } from '@/components/org'
 import { ConfirmDialog } from '@/components/ui/dialogs/ConfirmDialog'
@@ -26,6 +25,7 @@ import { cn } from '@/lib/utils/cn'
 import { fetchAllCampaignSpaces } from '../_lib/fetch-all-campaign-spaces'
 import { defaultOrgProgramId, groupCampaignsByProgram } from '../_lib/group-campaigns-by-program'
 import { spaceIconName } from './CampaignsHubCampaignCard'
+import { CampaignsHubHeaderControls } from './CampaignsHubHeaderControls'
 import { CampaignsHubProgramSection } from './CampaignsHubProgramSection'
 
 function campaignIconName(campaign: Campaign): string {
@@ -52,6 +52,7 @@ export function CampaignsHub({
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set())
   const [expandedProgramIds, setExpandedProgramIds] = useState<Set<string>>(() => new Set())
   const [creatingCampaign, setCreatingCampaign] = useState(false)
+  const [showCampaignComposer, setShowCampaignComposer] = useState(false)
   const [creatingInProgram, setCreatingInProgram] = useState<string | null>(null)
   const [newCampaignName, setNewCampaignName] = useState('')
   const [creatingSpaceFor, setCreatingSpaceFor] = useState<string | null>(null)
@@ -59,8 +60,6 @@ export function CampaignsHub({
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [shareCampaign, setShareCampaign] = useState<{ id: string; name: string } | null>(null)
-  const newNameRef = useRef<HTMLInputElement>(null)
-
   const reload = useCallback(async () => {
     setLoading(true)
     try {
@@ -195,6 +194,7 @@ export function CampaignsHub({
           setExpandedProgramIds((prev) => new Set(prev).add(created.program_id as string))
         }
         setNewCampaignName('')
+        setShowCampaignComposer(false)
         setCreatingInProgram(null)
         toast.success('Campaign created')
         openCampaign(created)
@@ -263,87 +263,26 @@ export function CampaignsHub({
   return (
     <div className="h-full min-h-0 overflow-y-auto">
       <div className="p-spacing-4 md:p-spacing-6 mx-auto w-full max-w-3xl">
-        <div className="mb-spacing-4 flex flex-wrap items-start justify-between gap-3">
-          {!embedded ? (
-            <div className="min-w-0">
-              <h1 className="title-h3 text-foreground">
-                {focusProgram ? focusProgram.name.toUpperCase() : 'CAMPAIGNS'}
-              </h1>
-              <p className="body-3 text-muted-foreground mt-spacing-1">
-                {focusProgram
-                  ? 'Campaigns and spaces in this program.'
-                  : 'Programs group campaigns. Create a campaign inside a program to land it there.'}
-              </p>
-            </div>
-          ) : null}
-          <div className="gap-spacing-2 flex flex-wrap items-center">
-            {focusProgram && !embedded ? (
-              <Link
-                href="/campaigns"
-                className="button-glass-neutral body-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-medium"
-              >
-                All campaigns
-              </Link>
-            ) : null}
-            {!embedded ? (
-              <Link
-                href="/all-tasks"
-                className="button-glass-neutral body-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-medium"
-              >
-                All Tasks
-              </Link>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => {
-                setCreatingInProgram(null)
-                setNewCampaignName('')
-                newNameRef.current?.focus()
-              }}
-              className="button-glass-primary body-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-medium"
-            >
-              <Plus className="h-4 w-4" />
-              New campaign
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-spacing-4 gap-spacing-2 flex flex-col sm:flex-row">
-          <label className="relative min-w-0 flex-1">
-            <Search className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search campaigns or spaces…"
-              className="input-glass body-3 text-foreground placeholder:text-muted-foreground w-full rounded-lg py-2 pl-9 pr-3 outline-none"
-            />
-          </label>
-          <div className="gap-spacing-2 flex min-w-0 flex-1 sm:max-w-xs">
-            <input
-              ref={newNameRef}
-              value={creatingInProgram ? '' : newCampaignName}
-              onChange={(e) => {
-                setCreatingInProgram(null)
-                setNewCampaignName(e.target.value)
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !creatingInProgram) void handleCreateCampaign()
-              }}
-              placeholder={creatingInProgram ? 'Creating in a program…' : 'Campaign name'}
-              disabled={!!creatingInProgram}
-              className="input-glass body-3 text-foreground placeholder:text-muted-foreground min-w-0 flex-1 rounded-lg px-3 py-2 outline-none disabled:opacity-50"
-            />
-            <button
-              type="button"
-              disabled={creatingCampaign || !newCampaignName.trim() || !!creatingInProgram}
-              onClick={() => void handleCreateCampaign()}
-              className="button-glass-accent body-3 shrink-0 rounded-lg px-3 py-2 font-medium disabled:opacity-50"
-            >
-              {creatingCampaign ? 'Creating…' : 'Create'}
-            </button>
-          </div>
-        </div>
+        <CampaignsHubHeaderControls
+          embedded={embedded}
+          focusProgram={focusProgram}
+          query={query}
+          newCampaignName={newCampaignName}
+          showComposer={showCampaignComposer}
+          creatingCampaign={creatingCampaign}
+          onQueryChange={setQuery}
+          onStartCreate={() => {
+            setCreatingInProgram(null)
+            setNewCampaignName('')
+            setShowCampaignComposer(true)
+          }}
+          onCancelCreate={() => {
+            setNewCampaignName('')
+            setShowCampaignComposer(false)
+          }}
+          onNewCampaignNameChange={setNewCampaignName}
+          onSubmitCreate={() => void handleCreateCampaign()}
+        />
 
         {empty ? (
           <div className="surface-card border-border rounded-spacing-3 p-spacing-6 border text-center">
@@ -386,6 +325,7 @@ export function CampaignsHub({
                   void handleMoveToProgram(campaign, programId)
                 }
                 onStartCreateInProgram={() => {
+                  setShowCampaignComposer(false)
                   setCreatingInProgram(group.key)
                   setNewCampaignName('')
                 }}

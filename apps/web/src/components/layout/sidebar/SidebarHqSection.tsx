@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
 import { CreateSpaceModal } from '@/features/spaces/components/CreateSpaceModal'
 import { SpaceTemplatesBrowsePanel } from '@/features/spaces/components/templates/SpaceTemplatesBrowsePanel'
 import { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-state'
@@ -21,6 +22,7 @@ export function SidebarHqSection({
   c: SidebarControllerReturn
   featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
 }) {
+  const menuDock = useShellMenuDock((state) => state.dock)
   const [spacesSearchOpen, setSpacesSearchOpen] = useState(false)
   const [spacesSearchQuery, setSpacesSearchQuery] = useState('')
   const [hiddenMenuOpen, setHiddenMenuOpen] = useState(false)
@@ -127,12 +129,12 @@ export function SidebarHqSection({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-1 overflow-visible">
+    <div className="shell-menu-dock-section" data-shell-menu-dock={menuDock}>
       {c.mobileDrawerOpen ? (
         <SidebarHqMobileDrawer c={c} featureUpdates={featureUpdates} hubMenuProps={hubMenuProps} />
       ) : (
         <div
-          className="flex h-full min-h-0 flex-1 flex-row overflow-visible"
+          className="shell-menu-dock-section-inner"
           onMouseEnter={clearSpacesFlyoutCloseTimer}
           onMouseLeave={(e) => {
             if (
@@ -144,7 +146,7 @@ export function SidebarHqSection({
             scheduleSpacesFlyoutClose()
           }}
         >
-          <div className="relative z-10 flex h-full shrink-0 flex-col">
+          <div className="shell-menu-dock-rail-wrap">
             <SidebarHqRail
               c={c}
               featureUpdates={featureUpdates}

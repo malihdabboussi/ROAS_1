@@ -193,7 +193,7 @@ describe('PaidAdsToolbar', () => {
       />,
     )
 
-    const searchInput = screen.getByPlaceholderText('Search...')
+    const searchInput = screen.getByRole('textbox', { name: 'Search ads' })
     fireEvent.change(searchInput, { target: { value: 'new query' } })
     expect(actions.handleArtifactConfigPatch).toHaveBeenCalledWith({ search_query: 'new query' })
 

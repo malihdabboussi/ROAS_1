@@ -58,10 +58,6 @@ vi.mock('./ShellOpenInMenu', () => ({
   ShellOpenInMenu: () => null,
 }))
 
-vi.mock('./ShellRightPanelControl', () => ({
-  ShellRightPanelControl: () => <button type="button" title="Open panel" />,
-}))
-
 vi.mock('./ShellWorkAreaControl', () => ({
   ShellWorkAreaControl: ({ currentPage }: { currentPage: { title: string } }) => (
     <button

@@ -201,7 +201,7 @@ describe('useAgentMenuActions', () => {
       toggleFavorite: mocks.toggleFavorite,
     })
     mocks.useTeams.mockReturnValue({
-      teams: [{ id: 'team-growth', name: 'Growth' }],
+      teams: [{ id: 'team-growth', name: 'Growth', team_kind: 'agent' }],
     })
     mocks.canEditAgent.mockReturnValue(true)
     mocks.canFireAgent.mockReturnValue(true)

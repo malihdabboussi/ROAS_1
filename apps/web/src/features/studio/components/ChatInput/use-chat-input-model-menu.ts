@@ -45,12 +45,13 @@ export function useChatInputModelMenu({ modelOptionsLength }: { modelOptionsLeng
       measured && measured > 0 ? measured : MODEL_DROPDOWN_HEIGHT_CAP,
       MODEL_DROPDOWN_HEIGHT_CAP,
     )
-    const nextPosition = positionFloatingMenuFromAnchorRect(rect, {
+    const { top, left } = positionFloatingMenuFromAnchorRect(rect, {
       menuWidth: MODEL_DROPDOWN_WIDTH,
       menuHeight,
       gap: PLUS_MENU_GAP,
       viewportMargin: VIEWPORT_MARGIN,
     })
+    const nextPosition = { top, left }
     setModelDropdownPos((prev) => (samePosition(prev, nextPosition) ? prev : nextPosition))
   }, [])
 

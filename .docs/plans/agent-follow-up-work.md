@@ -8887,3 +8887,34 @@ Evidence: The component currently owns data loading, search and type filtering, 
 Needed work: Extract the artifact row/card preview rendering before adding more artifact types or interactions.
 
 Reason not done now: The requested video category is complete and the file remains compliant; a behavior-neutral extraction is separate work.
+
+## 2026-07-26 - [ARCH] Campaigns hub and HQ rail are near component limits
+
+Status: Open
+
+Found while: Polishing standard-user navigation, Campaigns filters, and the dockable four-edge menu.
+
+Files:
+
+- `apps/web/src/app/(dashboard)/campaigns/_components/CampaignsHub.tsx` (398 LOC; 400-line component limit)
+- `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx` (387 LOC; 400-line component limit)
+
+Evidence: The current work extracted Campaigns header controls and kept dock-specific menu behavior in focused modules, but these two orchestrators remain close to the component limit because they still coordinate loading, responsive layout, selection, navigation, and nested menu state.
+
+Needed work: Extract Campaigns data/view-state orchestration and split HQ rail footer/profile rendering from navigation orchestration before either surface receives another feature.
+
+Reason not done now: Both files remain compliant and the requested interaction polish is complete and regression-covered; further extraction would be behavior-neutral architecture work beyond this UI pass.
+
+## 2026-07-26 - [ARCH] Repository-wide web lint baseline remains above zero
+
+Status: Open
+
+Found while: Running final validation for the cross-surface UI polish pass.
+
+Files: Legacy web source files outside the changed-file set.
+
+Evidence: `pnpm lint` reports 351 existing architecture, line-limit, and cross-feature import violations. Targeted lint over every TypeScript and TSX file changed in this pass succeeds with zero errors.
+
+Needed work: Remediate the repository-wide lint backlog in architecture-scoped batches without mixing unrelated feature behavior into UI polish changes.
+
+Reason not done now: The reported violations predate and sit outside this change set; expanding this pass to hundreds of unrelated files would make the verified UI work unsafe to integrate.

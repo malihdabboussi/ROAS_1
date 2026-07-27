@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { surfaceFromPathname } from '@/components/global-chat/config/work-context.config'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
+import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
 import { shellSidebarExpanded, useShellStore } from '@/components/shell/use-shell-store'
 import { cn } from '@/lib/utils/cn'
 import { isManageRailItemActive, workContextSurfaceForPanel } from './sidebar-hq-rail.helpers'
@@ -40,6 +41,7 @@ export function SidebarHqRail({
   const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
   const chatHistoryCollapsed = useShellStore((s) => s.chatHistoryCollapsed)
   const setChatHistoryCollapsed = useShellStore((s) => s.setChatHistoryCollapsed)
+  const menuDock = useShellMenuDock((state) => state.dock)
   const shellExpanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
 
   // Keep the HQ rail icon-only — never promote the expanded hub menu.
@@ -68,9 +70,13 @@ export function SidebarHqRail({
 
   const closeHubIfOpen = () => {
     if (c.hubMenuOpen || c.hubMenuClosing) c.forceCloseHubMenu()
-    useShellStore.getState().setSidebarPinned(false)
-    useShellStore.getState().setSidebarPeek(false)
-    useShellStore.getState().clearSidebarPeekClose()
+    const shell = useShellStore.getState()
+    // setSidebarPinned broadcasts a global flyout-close epoch. Only call it for
+    // a real pin transition or it will cancel the rail flyout being opened by
+    // this same gesture.
+    if (shell.sidebarPinned) shell.setSidebarPinned(false)
+    if (shell.sidebarPeek) shell.setSidebarPeek(false)
+    shell.clearSidebarPeekClose()
   }
 
   /** Home always clears chat query params so the dashboard shows. */
@@ -89,6 +95,7 @@ export function SidebarHqRail({
 
   return (
     <div
+      data-shell-menu-dock={menuDock}
       className={cn(
         'hub-sidebar-shell relative box-border flex h-full min-h-0 shrink-0 flex-col transition-[width] duration-200 ease-out',
         hubExpanded ? 'hub-sidebar-shell-expanded' : 'hub-sidebar-shell-collapsed',
@@ -105,7 +112,7 @@ export function SidebarHqRail({
     >
       <div
         className={cn(
-          'flex min-h-0 flex-1 flex-col overflow-visible',
+          'hub-sidebar-rail-layout flex min-h-0 flex-1 flex-col overflow-visible',
           hubExpanded ? 'bg-background shell-sidebar-panel' : 'card-glass rounded-2xl',
         )}
       >
@@ -124,7 +131,7 @@ export function SidebarHqRail({
           ) : null}
         </div>
 
-        <div className="relative min-h-0 flex-1 overflow-hidden">
+        <div className="hub-sidebar-rail-body relative min-h-0 flex-1 overflow-hidden">
           <div
             className={cn(
               'hub-sidebar-layer flex h-full w-full flex-col',
@@ -135,7 +142,7 @@ export function SidebarHqRail({
             )}
             aria-hidden={hubExpanded}
           >
-            <nav className="flex flex-1 flex-col items-center gap-0.5 px-0.5 pb-2 pt-0">
+            <nav className="hub-sidebar-rail-nav flex flex-1 flex-col items-center gap-0.5 px-0.5 pb-2 pt-0">
               {visibleRailItems.map((item) => {
                 const isItemActive = isManageRailItemActive(item, c.pathname, c.isActive)
                 const iconSpan = (

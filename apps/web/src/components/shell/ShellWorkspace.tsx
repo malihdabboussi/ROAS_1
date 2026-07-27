@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
@@ -24,7 +24,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
 
   const workAreaOpen = useShellStore((s) => s.workAreaOpen)
   const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
-  const chatDrawerWidth = useShellStore((s) => s.chatDrawer.width)
   const chatDrawerConversationId = useShellStore((s) => s.chatDrawer.conversationId)
   const openChatDrawer = useShellStore((s) => s.openChatDrawer)
   const requestNewChat = useShellStore((s) => s.requestNewChat)
@@ -113,73 +112,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   // drawer expands to fill the freed space so chat history never disappears.
   const showChatDrawer = workAreaCollapsible
 
-  // Remember the open page width so one right-anchored surface can be clipped by
-  // the work-area transition without the page and its background moving separately.
-  const WORK_AREA_TRANSITION_MS = 300
-  const workAreaRef = useRef<HTMLDivElement>(null)
-  const [anchoredWidth, setAnchoredWidth] = useState<number | null>(null)
-  const wasWorkAreaCollapsedRef = useRef(workAreaCollapsed)
-  const workAreaAnimatingRef = useRef(false)
-
-  const measureWorkAreaTargetWidth = useCallback(() => {
-    const el = workAreaRef.current
-    const row = el?.parentElement
-    if (!el || !row) return 0
-
-    let occupiedWidth = chatDrawerOpen ? chatDrawerWidth : 0
-    let hasDrawerDivider = false
-    for (const child of Array.from(row.children)) {
-      if (child === el || child.hasAttribute('data-shell-chat-drawer')) continue
-      if (child.getAttribute('aria-label') === 'Resize AI chat drawer') {
-        hasDrawerDivider = true
-      }
-      occupiedWidth += child.getBoundingClientRect().width
-    }
-    // Expanded chat removes its divider; reserve its docked hit target so the
-    // restored page width matches the post-transition flex layout exactly.
-    if (chatDrawerOpen && !hasDrawerDivider) occupiedWidth += 8
-
-    return Math.max(0, row.getBoundingClientRect().width - occupiedWidth)
-  }, [chatDrawerOpen, chatDrawerWidth])
-
-  useEffect(() => {
-    const el = workAreaRef.current
-    if (!el) return
-    const sync = () => {
-      if (workAreaAnimatingRef.current) return
-      const width = measureWorkAreaTargetWidth()
-      if (width > 0) setAnchoredWidth(width)
-    }
-    sync()
-    if (typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(sync)
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [measureWorkAreaTargetWidth])
-
-  useLayoutEffect(() => {
-    const wasCollapsed = wasWorkAreaCollapsedRef.current
-    wasWorkAreaCollapsedRef.current = workAreaCollapsed
-    if (wasCollapsed === workAreaCollapsed) return
-
-    workAreaAnimatingRef.current = true
-    if (workAreaCollapsed) {
-      const width = measureWorkAreaTargetWidth()
-      if (width > 0) setAnchoredWidth(width)
-    }
-
-    const timer = setTimeout(() => {
-      if (!workAreaCollapsed) {
-        const width = measureWorkAreaTargetWidth()
-        if (width > 0) setAnchoredWidth(width)
-      }
-      workAreaAnimatingRef.current = false
-    }, WORK_AREA_TRANSITION_MS)
-    return () => clearTimeout(timer)
-  }, [measureWorkAreaTargetWidth, workAreaCollapsed])
-
-  const bodyAnchored = anchoredWidth != null && anchoredWidth > 0
-
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden">
@@ -187,7 +119,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
 
         {/* Keep the page mounted while collapsed so docs/tasks/tabs survive expand. */}
         <div
-          ref={workAreaRef}
           className={cn(
             artifactTarget ? 'hidden' : 'shell-work-area',
             !artifactTarget && workAreaCollapsed && 'shell-work-area-collapsed',
@@ -195,14 +126,7 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
           aria-hidden={workAreaCollapsed || Boolean(artifactTarget)}
           data-shell-work-area
         >
-          <div
-            className={cn(
-              'shell-work-area-body',
-              workAreaCollapsible && 'shell-work-area-body-anchored',
-              workAreaCollapsible && !bodyAnchored && 'invisible',
-            )}
-            style={bodyAnchored ? { width: `${anchoredWidth}px` } : undefined}
-          >
+          <div className="shell-work-area-body">
             {onSpaces ? <SpaceWorkDock>{children}</SpaceWorkDock> : homeOrDefaultMain}
           </div>
         </div>

@@ -54,13 +54,13 @@ export default function ContactDetailPage() {
   if (error) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="surface-card border-border rounded-spacing-2 p-spacing-6 max-w-[600px] border">
+        <div className="surface-card border-border rounded-spacing-2 p-spacing-6 max-w-xl border">
           <div className="title-h6">Error</div>
           <div className="body-3 text-muted-foreground mt-spacing-2 break-words">{error}</div>
           <button
             type="button"
             onClick={() => router.push('/contacts')}
-            className="button-glass-neutral mt-spacing-4 rounded-lg px-4 py-2 text-sm font-medium"
+            className="button-glass-neutral button-compact mt-spacing-4"
           >
             Back to Contacts
           </button>
@@ -77,7 +77,7 @@ export default function ContactDetailPage() {
           <button
             type="button"
             onClick={() => router.push('/contacts')}
-            className="button-glass-neutral mt-spacing-4 rounded-lg px-4 py-2 text-sm font-medium"
+            className="button-glass-neutral button-compact mt-spacing-4"
           >
             Back to Contacts
           </button>
@@ -92,7 +92,7 @@ export default function ContactDetailPage() {
         <button
           type="button"
           onClick={() => router.push('/contacts')}
-          className="badge-glass badge-glass-muted typo-caption gap-spacing-2 flex items-center font-medium"
+          className="button-glass-neutral button-compact"
         >
           <ChevronLeft className="icon-sm" />
           Back to Contacts

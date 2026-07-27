@@ -479,3 +479,83 @@ Why: Concurrent extraction left duplicate entrypoints and mid-rename step module
 Impact: Release tip stays architecture-compliant with one BulkActionBar implementation and smaller portal send steps.
 
 Files: `apps/web/src/features/spaces/components/BulkActionBar.tsx`, `bulk-action-bar/*`, `PageGraderBulkSendPanel.tsx`, `page-grader-bulk-send/*`, `scripts/arch/loc-allowlist.json`.
+
+## [2026-07-26 22:06] - [FIX]
+
+What: Consolidated shell motion so the outer AI drawer width, page work area, and right summary overlay each have one transition owner. Removed the duplicate inner chat transform and measured page-width animation, and normalized the Home loading skeleton to existing spacing and radius utilities.
+
+Why: Competing width and transform animations made right-side content appear to enter from both directions and caused the page background to animate separately from the panel.
+
+Impact: Opening and closing chat, page work, and right-side summaries now follow one predictable direction without duplicate background motion. Focused shell tests and the web typecheck pass.
+
+Files: `apps/web/src/components/shell/ShellWorkspace.tsx`, `ShellChatDrawer.tsx`, `ShellRightPanel.tsx`, `ShellWorkspace.test.tsx`, `apps/web/src/app/(dashboard)/home/page.tsx`, `apps/web/src/app/globals.css`, and `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-07-26 22:18] - [FEATURE]
+
+What: Added a persisted four-edge HQ menu dock. A normal R-logo click keeps its Home behavior, while holding the logo enters a temporary left/right/top/bottom drop mode. The dashboard frame, icon rail, footer, and submenu flyouts adapt to the selected edge; mobile keeps the standard left drawer.
+
+Why: The fixed left menu competed with AI Chat and made navigation feel disconnected from the work surface. Docking needed to be a direct spatial interaction without adding permanent controls to the already dense shell.
+
+Impact: Users can place the primary app menu on the edge that best fits their workflow, retain that preference across sessions, and continue using every submenu from the chosen edge. Twenty-nine focused shell/navigation tests and the web typecheck pass.
+
+Files: `apps/web/src/components/shell/use-shell-menu-dock.ts`, `ShellMenuDockLayout.tsx`, `ShellStoreHydrator.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqHubLogoButton.tsx`, `ShellMenuDockOverlay.tsx`, `SidebarHqRail.tsx`, `SidebarHqSection.tsx`, `HubDockFlyout.tsx`, `apps/web/src/components/layout/Sidebar.tsx`, `apps/web/src/app/(dashboard)/dashboard-frame.client.tsx`, both product `globals.css` files, tests, and `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-07-26 22:54] - [STYLE]
+
+What: Completed a cross-surface UI consistency pass across Home agenda, Inbox-adjacent work, My Tasks, Programs, Campaigns, All Tasks, Brain, Contacts, Flows, Paid Ads, Media, and artifact toolbars. Extracted dense header filters into focused components, removed competing nested toolbar animations, standardized search fields and icon/button states, and improved responsive wrapping and accessible labels.
+
+Why: Several major screens still used one-off search controls, system-looking selects, overlapping animated toolbar slots, or inconsistent pressed/selected states. Those differences made the application feel less cohesive and could conflict with the shell’s single transition owner.
+
+Impact: Primary workspaces now use stable, tokenized controls with predictable focus and Escape behavior, consistent compact actions, clearer selected states, and no secondary left/right toolbar motion competing with the page shell. Nineteen focused suites pass with 63 tests, focused lint passes, and the full web typecheck passes.
+
+Files: `apps/web/src/app/(dashboard)/campaigns/_components`, `apps/web/src/app/(dashboard)/programs/[id]/_components`, `apps/web/src/features/{all-tasks,brain,contacts,flows,home}`, `apps/web/src/features/spaces/components/ads-research`, `apps/web/src/features/spaces/views/{artifacts,media}`, `apps/web/src/components/ui/forms/SettingsSelect.tsx`, tests, and `documentation/frontend-shared-surfaces.md`.
+
+## [2026-07-26 23:07] - [FIX]
+
+What: Updated navigation and Paid Ads regression coverage to assert the current Programs rail label and The ROAS Portal recommendation copy.
+
+Why: The full web regression run exposed two stale product-name expectations after the corresponding user-facing labels had already changed.
+
+Impact: The affected navigation and Paid Ads suites now pass with nine tests, while the full-suite report cleanly separates this UI batch from pre-existing failures in untouched files.
+
+Files: `apps/web/tests/components.test.tsx` and `apps/web/src/features/spaces/components/artifacts/paid-ads/PaidAdsMetaSetupBar.test.tsx`.
+
+## [2026-07-26 23:31] - [FIX]
+
+What: Fixed local parsing for date-only calendar values, stabilized floating chat-menu coordinates, and aligned stale regression expectations with the consolidated UI contracts.
+
+Why: The complete web test run exposed a timezone-dependent all-day date shift, avoidable floating-menu state churn, and several tests that still asserted superseded labels, routes, or catalog endpoints.
+
+Impact: The complete web suite now passes with 738 active test files, 2,242 passing tests, and zero failures. Web type safety, changed-file lint, formatting, and diff integrity also pass.
+
+Files: `apps/web/src/components/calendar/calendar-utils.ts`, `apps/web/src/features/studio/components/ChatInput/use-chat-input-{model,plus}-menu.ts`, and the affected regression tests across Brain, Contacts, Flows, Missions, Spaces, Studio, and Team.
+
+## [2026-07-26 23:38] - [FIX]
+
+What: Made R-logo menu docking commit the exact release edge atomically instead of reading a candidate state update from the preceding pointer event.
+
+Why: Authenticated browser testing showed that a fast cross-screen drag could visually target the right edge but persist the previous left-edge candidate because React and the external store had not committed the last pointer move before pointer-up.
+
+Impact: Left, right, top, and bottom drops now resolve from the pointer-up coordinates themselves, so the menu lands on the edge where the user releases it.
+
+Files: `apps/web/src/components/shell/use-shell-menu-dock.ts`, `apps/web/src/components/layout/sidebar/SidebarHqHubLogoButton.tsx`, and focused tests.
+
+## [2026-07-26 23:41] - [FIX]
+
+What: Prevented an open navigation flyout from treating another rail-menu trigger as an outside click, stopped no-op unpin calls from broadcasting a global flyout close, and added regression coverage for both rail-to-rail transitions.
+
+Why: Switching directly from Brain to More could race the old flyout's document-level close handler and the shell's global close epoch against the new trigger, leaving More selected with no menu visible.
+
+Impact: Hovering or clicking between Home, Programs, Team, Brain, and More now hands off the visible flyout without a selected-but-empty state.
+
+Files: `apps/web/src/components/layout/sidebar/HubDockFlyout.tsx`, `apps/web/src/components/layout/sidebar/HubDockFlyout.test.tsx`, `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx`, and `apps/web/src/components/layout/sidebar/SidebarHqSection.test.tsx`.
+
+## [2026-07-26 22:17] - [FIX]
+
+What: Completed PR #62 production cutover on main `827dd6b77c829db32b6afee2a40b71a8aeb41269`: applied `20260726233000_roas_portal_public_language` to Supabase `lhfgtsjetcardinpgouq`, redeployed Fly `roas-runtimes` from a clean detached worktree of that SHA, confirmed Vercel `roas-web` + `roas-api` production READY on the same SHA, and passed `SMOKE_FLY=1` smoke (5/5).
+
+Why: Overnight mandate after merge required migration + Fly runtime pin + smoke verification before morning handoff.
+
+Impact: Production policy rows use "The ROAS Portal" user-facing language; Fly deep health ok on image `deployment-01KYH004EQSV243QGV3H1H40W2`; smoke URLs healthy.
+
+Files: `supabase/migrations/20260726233000_roas_portal_public_language.sql` (applied), Fly `roas-runtimes`, Vercel `roas-web`/`roas-api`

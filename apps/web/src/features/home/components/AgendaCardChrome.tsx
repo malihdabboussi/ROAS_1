@@ -103,15 +103,15 @@ export function AgendaCardHeader(props: {
       {showAgendaSurface && (
         <div className="flex flex-wrap items-center justify-end gap-1">
           {showTeamToggle ? (
-            <div className="bg-muted/50 mr-1 flex rounded-lg p-0.5">
+            <div className="bg-secondary rounded-spacing-2 p-spacing-0-5 mr-spacing-1 flex">
               {(['personal', 'team'] as const).map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => setAgendaScope(s)}
-                  className={`typo-caption rounded-md px-2 py-1 ${
+                  className={`button-compact ${
                     agendaScope === s
-                      ? 'bg-background text-foreground shadow-sm'
+                      ? 'nav-glass-selected-purple text-foreground'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -125,7 +125,7 @@ export function AgendaCardHeader(props: {
               type="button"
               onClick={() => void runPrepToday()}
               disabled={prepRunning}
-              className="button-glass-secondary rounded-spacing-2 typo-caption inline-flex items-center gap-1 px-2 py-1 font-medium disabled:opacity-50"
+              className="button-compact button-glass-secondary disabled:opacity-50"
               title="Generate pre-call prep docs for today’s meetings"
             >
               <FileText className="h-3.5 w-3.5" aria-hidden />
@@ -133,15 +133,15 @@ export function AgendaCardHeader(props: {
             </button>
           ) : null}
           {bothConnected && agendaScope === 'personal' && (
-            <div className="bg-muted/50 mr-1 flex rounded-lg p-0.5">
+            <div className="bg-secondary rounded-spacing-2 p-spacing-0-5 mr-spacing-1 flex">
               {(['all', 'google_calendar', 'outlook'] as const).map((p) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => setProvider(p)}
-                  className={`typo-caption rounded-md px-2 py-1 ${
+                  className={`button-compact ${
                     provider === p
-                      ? 'bg-background text-foreground shadow-sm'
+                      ? 'nav-glass-selected-purple text-foreground'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -153,7 +153,7 @@ export function AgendaCardHeader(props: {
           <button
             type="button"
             onClick={() => setView('list')}
-            className={`rounded-md p-1.5 ${view === 'list' ? 'btn-icon-glass--active' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`btn-icon-glass ${view === 'list' ? 'btn-icon-glass--active' : 'text-muted-foreground hover:text-foreground'}`}
             aria-label="List view"
           >
             <LayoutList className="h-4 w-4" />
@@ -161,7 +161,7 @@ export function AgendaCardHeader(props: {
           <button
             type="button"
             onClick={() => setView('board')}
-            className={`rounded-md p-1.5 ${view === 'board' ? 'btn-icon-glass--active' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`btn-icon-glass ${view === 'board' ? 'btn-icon-glass--active' : 'text-muted-foreground hover:text-foreground'}`}
             aria-label="Calendar views"
           >
             <CalendarDays className="h-4 w-4" />
@@ -185,7 +185,7 @@ export function AgendaCardRangeNav(props: {
     <div className="border-border flex items-center justify-between gap-2 border-b px-4 py-2 sm:px-5">
       <button
         type="button"
-        className="text-muted-foreground hover:text-foreground rounded-md p-1"
+        className="btn-icon-bare-sm"
         aria-label={`Previous ${range}`}
         onClick={() => setDay((d) => stepAgendaDate(d, range, -1))}
       >
@@ -194,7 +194,7 @@ export function AgendaCardRangeNav(props: {
       <div className="relative" data-range-dropdown>
         <button
           type="button"
-          className="body-3 text-foreground flex items-center gap-1 rounded-md px-2 py-0.5 font-medium transition-colors hover:bg-[var(--color-hover-subtle)]"
+          className="button-compact text-foreground hover:bg-hover-subtle"
           onClick={() => setRangeOpen((v) => !v)}
         >
           {formatAgendaNavDate(day, range)}
@@ -203,7 +203,7 @@ export function AgendaCardRangeNav(props: {
         {rangeOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setRangeOpen(false)} />
-            <div className="dropdown-menu-solid absolute left-1/2 top-full mt-1 min-w-[220px] -translate-x-1/2 py-1">
+            <div className="dropdown-menu-solid w-spacing-48 py-spacing-1 mt-spacing-1 absolute left-1/2 top-full -translate-x-1/2">
               {(['day', 'week', 'month'] as const).map((r) => (
                 <button
                   key={r}
@@ -217,7 +217,7 @@ export function AgendaCardRangeNav(props: {
                   }}
                 >
                   <span className="capitalize">{r}</span>
-                  <span className="text-muted-foreground text-[11px]">
+                  <span className="typo-caption text-muted-foreground">
                     {agendaRangeDetail(day, r)}
                   </span>
                 </button>
@@ -228,7 +228,7 @@ export function AgendaCardRangeNav(props: {
       </div>
       <button
         type="button"
-        className="text-muted-foreground hover:text-foreground rounded-md p-1"
+        className="btn-icon-bare-sm"
         aria-label={`Next ${range}`}
         onClick={() => setDay((d) => stepAgendaDate(d, range, 1))}
       >
@@ -248,10 +248,10 @@ export function AgendaCardDisconnected(props: {
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-4 py-8 sm:px-6">
       <AgendaEmptyIllustration />
       <div className="max-w-md text-center">
-        <p className="body-3 font-semibold text-[var(--foreground)]">
+        <p className="body-3 text-foreground font-semibold">
           {isTeam ? 'Team calendar not connected yet' : 'Calendar not connected yet'}
         </p>
-        <p className="body-3 mt-2 leading-relaxed text-[var(--color-muted-foreground)]">
+        <p className="body-3 text-muted-foreground mt-spacing-2 leading-relaxed">
           {isTeam
             ? 'Connect Google Workspace in Integrations so Vibey can show teammate agendas with the same Fathom and prep context.'
             : 'Tap a provider to open its integration and connect.'}
@@ -274,7 +274,7 @@ export function AgendaCardDisconnected(props: {
                 key={integrationId}
                 type="button"
                 onClick={() => props.openCalendarIntegration(integrationId)}
-                className="rounded-spacing-2 relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden bg-white p-1.5 transition-opacity hover:opacity-90"
+                className="surface-card rounded-spacing-2 border-border p-spacing-1-5 relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden border transition-opacity hover:opacity-90"
                 aria-label={label}
               >
                 {src ? (

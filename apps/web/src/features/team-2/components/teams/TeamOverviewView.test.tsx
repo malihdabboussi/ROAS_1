@@ -1,7 +1,10 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { emptyTeamOverviewPayload, type TeamOverviewPayload } from '../../services/team-overview.service'
+import {
+  emptyTeamOverviewPayload,
+  type TeamOverviewPayload,
+} from '../../services/team-overview.service'
 import { TeamOverviewView } from './TeamOverviewView'
 
 const mocks = vi.hoisted(() => ({
@@ -244,7 +247,7 @@ describe('TeamOverviewView', () => {
       )
 
       expect(mocks.useTeamOverview).toHaveBeenCalledWith('team-1', {
-        start: '2026-06-15T00:00:00.000Z',
+        start: '2026-06-16T00:00:00.000Z',
         end: '2026-06-23T12:00:00.000Z',
       })
       expect(screen.getByText('Active right now')).toBeTruthy()

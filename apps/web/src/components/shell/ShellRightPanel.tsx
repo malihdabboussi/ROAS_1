@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { cn } from '@/lib/utils/cn'
 import { ShellRightPanelFiles } from './ShellRightPanelFiles'
@@ -15,6 +15,7 @@ const TABS: { id: ShellRightPanelTab; label: string }[] = [
 ]
 
 const EMPTY_MESSAGES: never[] = []
+const PANEL_TRANSITION_MS = 300
 
 export function ShellRightPanel({ conversationId }: { conversationId: string | null }) {
   const open = useShellStore((s) => s.rightPanel.open)
@@ -25,21 +26,47 @@ export function ShellRightPanel({ conversationId }: { conversationId: string | n
   )
   const tabs = conversationId ? TABS : TABS.slice(0, 1)
   const activeTab = conversationId ? tab : 'tasks'
+  const [mounted, setMounted] = useState(open)
+  const [visible, setVisible] = useState(open)
 
   useEffect(() => {
     if (open && !conversationId && tab !== 'tasks') setRightPanelTab('tasks')
   }, [conversationId, open, setRightPanelTab, tab])
 
-  if (!open) return null
+  useEffect(() => {
+    if (open) {
+      setMounted(true)
+      const frame = requestAnimationFrame(() => setVisible(true))
+      return () => cancelAnimationFrame(frame)
+    }
+    setVisible(false)
+    const timer = setTimeout(() => setMounted(false), PANEL_TRANSITION_MS)
+    return () => clearTimeout(timer)
+  }, [open])
+
+  if (!mounted) return null
 
   return (
-    <aside className="border-border bg-background w-spacing-72 flex h-full shrink-0 flex-col overflow-hidden border-l">
-      <div className="border-border gap-spacing-1 p-spacing-2 flex shrink-0 border-b">
+    <aside
+      className={cn(
+        'border-border bg-background w-spacing-72 z-dropdown absolute inset-y-0 right-0 flex h-full shrink-0 flex-col overflow-hidden border-l shadow-xl transition-transform duration-300 ease-out motion-reduce:transition-none',
+        visible ? 'translate-x-0' : 'translate-x-full',
+      )}
+      aria-label="Work summary"
+      aria-hidden={!visible}
+    >
+      <div
+        className="border-border gap-spacing-1 p-spacing-2 flex shrink-0 border-b"
+        role="tablist"
+        aria-label="Work summary sections"
+      >
         {tabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setRightPanelTab(t.id)}
+            role="tab"
+            aria-selected={activeTab === t.id}
             className={cn(
               'body-3 px-spacing-2 py-spacing-1 flex-1 rounded-lg transition-colors',
               activeTab === t.id

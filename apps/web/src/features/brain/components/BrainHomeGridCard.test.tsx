@@ -32,7 +32,7 @@ function health(overrides: Partial<BrainHealthData> = {}): BrainHealthData {
     total_memories: 123,
     total_connections: 4,
     embedding_queue: 0,
-    last_capture: '2026-06-20T00:00:00.000Z',
+    last_capture: new Date().toISOString(),
     last_recall: null,
     ...overrides,
   }

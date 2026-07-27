@@ -67,7 +67,7 @@ export function sameDay(a: Date, b: Date): boolean {
 
 export function parseCalendarDate(iso: string | null | undefined): Date | null {
   if (!iso) return null
-  const parsed = new Date(iso)
+  const parsed = new Date(/^\d{4}-\d{2}-\d{2}$/.test(iso) ? `${iso}T00:00:00` : iso)
   if (Number.isNaN(parsed.getTime())) return null
   return parsed
 }

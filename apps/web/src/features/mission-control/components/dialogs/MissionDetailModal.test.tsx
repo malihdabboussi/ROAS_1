@@ -253,7 +253,7 @@ describe('MissionDetailModal', () => {
 
     expect(screen.getByRole('heading', { name: 'Draft launch copy' })).toBeTruthy()
     expect(screen.getByText('Finished copy')).toBeTruthy()
-    expect(screen.getByText('Launch copy')).toBeTruthy()
+    expect(screen.getByText('Task 1 — Launch copy')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Launch Mission' }))
 
@@ -279,7 +279,7 @@ describe('MissionDetailModal', () => {
 
     expect(screen.getByText('Your approval is needed')).toBeTruthy()
     expect(screen.getByText('Draft launch copy')).toBeTruthy()
-    expect(screen.getByText('Launch copy')).toBeTruthy()
+    expect(screen.getByText('Task 1 — Launch copy')).toBeTruthy()
     expect(screen.getByText('Gate 1 is completed and market research starts.')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Approve & continue' }))

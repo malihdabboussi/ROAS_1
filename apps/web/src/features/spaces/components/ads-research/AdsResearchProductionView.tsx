@@ -12,6 +12,7 @@ import {
   type Mission,
   type MissionDeliverable,
 } from '@/lib/missions'
+import { cn } from '@/lib/utils/cn'
 import { ADS_RESEARCH_MESSAGES } from '../../config/ads-research-messages.config'
 import { AdsResearchProductionPath } from './AdsResearchProductionPath'
 import { IgOrganicVideoProductionLauncher } from './IgOrganicVideoProductionLauncher'
@@ -95,16 +96,22 @@ export function AdsResearchProductionView({
         <div className="gap-spacing-2 flex">
           <button
             type="button"
-            className={
-              productionType === 'static' ? 'button-glass-primary' : 'button-glass-neutral'
-            }
+            className={cn(
+              'button-compact',
+              productionType === 'static' ? 'button-glass-primary' : 'button-glass-neutral',
+            )}
+            aria-pressed={productionType === 'static'}
             onClick={() => setProductionType('static')}
           >
             Static ads
           </button>
           <button
             type="button"
-            className={productionType === 'video' ? 'button-glass-primary' : 'button-glass-neutral'}
+            className={cn(
+              'button-compact',
+              productionType === 'video' ? 'button-glass-primary' : 'button-glass-neutral',
+            )}
+            aria-pressed={productionType === 'video'}
             onClick={() => setProductionType('video')}
           >
             Video ads
@@ -147,7 +154,10 @@ export function AdsResearchProductionView({
               <button
                 key={run.id}
                 type="button"
-                className="button-glass-neutral button-compact gap-spacing-2 inline-flex items-center"
+                className={cn(
+                  'button-compact gap-spacing-2 inline-flex items-center',
+                  selected ? 'button-glass-primary' : 'button-glass-neutral',
+                )}
                 aria-pressed={selected}
                 onClick={() => setSelectedRunId(run.id)}
               >
@@ -166,14 +176,22 @@ export function AdsResearchProductionView({
       <div className="gap-spacing-2 flex">
         <button
           type="button"
-          className={productionType === 'static' ? 'button-glass-primary' : 'button-glass-neutral'}
+          className={cn(
+            'button-compact',
+            productionType === 'static' ? 'button-glass-primary' : 'button-glass-neutral',
+          )}
+          aria-pressed={productionType === 'static'}
           onClick={() => setProductionType('static')}
         >
           Static ads
         </button>
         <button
           type="button"
-          className={productionType === 'video' ? 'button-glass-primary' : 'button-glass-neutral'}
+          className={cn(
+            'button-compact',
+            productionType === 'video' ? 'button-glass-primary' : 'button-glass-neutral',
+          )}
+          aria-pressed={productionType === 'video'}
           onClick={() => setProductionType('video')}
         >
           Video ads

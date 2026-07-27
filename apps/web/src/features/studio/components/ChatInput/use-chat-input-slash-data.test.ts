@@ -1,5 +1,5 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
 import { type MutableRefObject } from 'react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { useChatInputSlashData } from './use-chat-input-slash-data'
 
@@ -18,7 +18,7 @@ function defaultFetch(path: string): unknown {
       },
     ]
   }
-  if (path === '/api/agents/vibey/skills') {
+  if (path === '/api/agents/skill-catalog/skills') {
     return [
       {
         id: 'skill-1',
@@ -64,16 +64,14 @@ describe('useChatInputSlashData', () => {
     expect(result.current.slashMenuOpen).toBe(true)
     expect(result.current.slashHighlight).toBe(0)
     expect(result.current.slashItems.map((item) => item.id)).toEqual(['skill-1', 'workflow-1'])
-    expect(loadCached).toHaveBeenCalledWith(
-      'agent-workflows:vibey',
-      expect.any(Function),
-      { ttlMs: 300_000 },
-    )
-    expect(loadCached).toHaveBeenCalledWith('agent-skills:vibey', expect.any(Function), {
+    expect(loadCached).toHaveBeenCalledWith('agent-workflows:vibey', expect.any(Function), {
+      ttlMs: 300_000,
+    })
+    expect(loadCached).toHaveBeenCalledWith('skill-catalog:skills', expect.any(Function), {
       ttlMs: 300_000,
     })
     expect(fetchJson).toHaveBeenCalledWith('/api/agents/vibey/workflows')
-    expect(fetchJson).toHaveBeenCalledWith('/api/agents/vibey/skills')
+    expect(fetchJson).toHaveBeenCalledWith('/api/agents/skill-catalog/skills')
   })
 
   it('keeps fulfilled skills when workflow loading fails', async () => {

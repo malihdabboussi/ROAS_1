@@ -20,9 +20,9 @@ describe('agent widget route ownership', () => {
   })
 
   it('uses /api/agents for public-page toggles', () => {
-    const teamContainer = read('src/features/team-2/containers/Team2Container.tsx')
+    const teamManageContent = read('src/features/team-2/components/Team2ManageContent.tsx')
 
-    expect(teamContainer).toContain('/api/agents/${agentKey}/public-page')
-    expect(teamContainer).not.toContain('/api/missions/agents/${agentKey}/public-page')
+    expect(teamManageContent).toContain('/api/agents/${agentKey}/public-page')
+    expect(teamManageContent).not.toContain('/api/missions/agents/${agentKey}/public-page')
   })
 })

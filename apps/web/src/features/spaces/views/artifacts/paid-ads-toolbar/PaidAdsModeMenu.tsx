@@ -51,10 +51,10 @@ export function PaidAdsModeMenu({
             ref={modeBtnRef}
             type="button"
             onClick={() => setModeMenuOpen((open) => !open)}
-            className={`inline-flex h-spacing-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
+            className={`btn-icon-glass ${
               modeMenuOpen
-                ? 'bg-hover-subtle text-foreground'
-                : 'text-muted-foreground hover:bg-hover-subtle hover:text-foreground'
+                ? 'btn-icon-glass--active text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
             aria-label="Campaigns, Ad sets, or Ad Creatives"
             aria-expanded={modeMenuOpen}
@@ -64,7 +64,7 @@ export function PaidAdsModeMenu({
         </span>
       </Tooltip>
       {modeMenuOpen ? (
-        <div className="dropdown-menu-solid z-dropdown absolute left-0 top-full mt-1 w-44 rounded-xl py-spacing-1 shadow-lg">
+        <div className="dropdown-menu-solid z-dropdown w-spacing-44 rounded-spacing-3 py-spacing-1 mt-spacing-1 absolute left-0 top-full shadow-lg">
           {PAID_ADS_MODE_OPTIONS.map((option) => {
             const Icon = MODE_ICONS[option.id]
             const selected = hierarchyMode === option.id
@@ -75,13 +75,13 @@ export function PaidAdsModeMenu({
                 type="button"
                 disabled={disabled}
                 onClick={() => handleModeSelect(option.id)}
-                className="body-4 flex w-full items-center justify-between px-spacing-3 py-spacing-1 transition-colors hover:bg-hover-subtle disabled:pointer-events-none disabled:opacity-40"
+                className="hub-dock-flyout-row body-4 flex w-full items-center justify-between disabled:pointer-events-none disabled:opacity-40"
               >
-                <span className="flex items-center gap-spacing-2 text-foreground">
+                <span className="gap-spacing-2 text-foreground flex items-center">
                   <Icon className="icon-sm text-muted-foreground" />
                   {option.label}
                 </span>
-                {selected ? <Check className="icon-xs shrink-0 text-primary" /> : null}
+                {selected ? <Check className="icon-xs text-primary shrink-0" /> : null}
               </button>
             )
           })}

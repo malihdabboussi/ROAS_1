@@ -117,6 +117,30 @@ describe('HubDockFlyout', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
+  it('lets another rail trigger replace the current flyout without closing it first', () => {
+    const onClose = vi.fn()
+
+    render(
+      <>
+        <button type="button" data-hub-rail-trigger="more">
+          More
+        </button>
+        <HubDockFlyout
+          anchor={anchor}
+          title="Brain"
+          onClose={onClose}
+          onEnter={() => {}}
+          onLeave={() => {}}
+        >
+          <p>Flyout body</p>
+        </HubDockFlyout>
+      </>,
+    )
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'More' }))
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
   it('does not close when mousedown lands on a dialog opened from the flyout', () => {
     const onClose = vi.fn()
 

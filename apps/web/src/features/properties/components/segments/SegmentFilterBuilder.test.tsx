@@ -1,5 +1,5 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { backendGet, backendPost } from '@/lib/api/backend-client'
 import type { SegmentFilters } from '@/lib/properties/segments'
@@ -105,7 +105,7 @@ describe('SegmentFilterBuilder', () => {
       expect(mockedBackendPost).toHaveBeenLastCalledWith('/api/segments/preview', {
         filters: {
           funnels: ['funnel-1'],
-          date_range: { from: '2026-06-15', to: undefined },
+          date_range: { from: '2026-06-16', to: undefined },
         },
       })
 

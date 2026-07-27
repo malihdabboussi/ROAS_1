@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { TeamRosterEntry } from '@/lib/team'
 import type { SpaceItem } from '../../types'
-import type { FieldDef, SpaceSchema, SelectOption, ViewDef } from '../../types/space-schema'
+import type { FieldDef, SelectOption, SpaceSchema, ViewDef } from '../../types/space-schema'
 import { TaskMetaFields } from './TaskMetaFields'
 
 const cellMocks = vi.hoisted(() => ({
@@ -242,7 +242,7 @@ describe('TaskMetaFields', () => {
     )
 
     expect(screen.getByText('To do')).toBeInTheDocument()
-    expect(screen.getByText('Jordan Lee')).toBeInTheDocument()
+    expect(screen.getByText('Me')).toBeInTheDocument()
     expect(screen.getByText('High')).toBeInTheDocument()
     expect(screen.getByText('Launch')).toBeInTheDocument()
     expect(screen.getByText('Ops')).toBeInTheDocument()

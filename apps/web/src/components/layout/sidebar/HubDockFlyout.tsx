@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, Search, X } from 'lucide-react'
+import { useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
 import { HUB_DOCK_PORTAL_GUARD } from '@/lib/ui/floating-control-attrs'
 import { cn } from '@/lib/utils/cn'
 
@@ -53,6 +54,9 @@ function isHubDockFlyoutTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false
   return Boolean(
     target.closest('[data-hub-dock-flyout]') ||
+    // A rail trigger owns the next flyout state. Let it replace this flyout
+    // instead of racing the document-level outside-click close.
+    target.closest('[data-hub-rail-trigger]') ||
     target.closest(`[${HUB_DOCK_PORTAL_GUARD}]`) ||
     // Modals / Radix portals hosted from flyout children (Share, settings, delete confirm).
     target.closest('[data-radix-portal]') ||
@@ -87,32 +91,49 @@ export function HubDockFlyout({
   searchInputRef,
   children,
 }: HubDockFlyoutProps) {
+  const menuDock = useShellMenuDock((state) => state.dock)
   const rootRef = useRef<HTMLDivElement>(null)
   const [top, setTop] = useState(anchor.top)
   const [left, setLeft] = useState(anchor.right + offsetPx)
 
   const reposition = useCallback(() => {
     const el = rootRef.current
-    if (!nested && !compact) {
-      const width = el?.offsetWidth ?? 360
-      const maxLeft = Math.max(8, window.innerWidth - width - 8)
-      setTop(52)
-      setLeft(Math.min(anchor.right + offsetPx, maxLeft))
-      return
-    }
+    const width = el?.offsetWidth ?? 360
     const height = el?.offsetHeight ?? 0
+    const maxLeft = Math.max(8, window.innerWidth - width - 8)
     const maxTop =
       height > 0
         ? Math.max(8, window.innerHeight - height - 8)
         : Math.max(8, window.innerHeight - 48)
+
+    if (!nested && (menuDock === 'top' || menuDock === 'bottom')) {
+      setLeft(Math.min(Math.max(8, anchor.left), maxLeft))
+      setTop(
+        menuDock === 'top'
+          ? Math.min(anchor.bottom + offsetPx, maxTop)
+          : Math.max(8, anchor.top - height - offsetPx),
+      )
+      return
+    }
+
+    if (!nested && !compact) {
+      setTop(52)
+      setLeft(
+        menuDock === 'right'
+          ? Math.max(8, anchor.left - width - offsetPx)
+          : Math.min(anchor.right + offsetPx, maxLeft),
+      )
+      return
+    }
     const nextTop = Math.min(Math.max(8, anchor.top), maxTop)
-    let nextLeft = anchor.right + offsetPx
-    const width = el?.offsetWidth ?? 240
-    const maxLeft = Math.max(8, window.innerWidth - width - 8)
+    let nextLeft =
+      !nested && menuDock === 'right'
+        ? Math.max(8, anchor.left - width - offsetPx)
+        : anchor.right + offsetPx
     if (nextLeft > maxLeft) nextLeft = maxLeft
     setTop(nextTop)
     setLeft(nextLeft)
-  }, [anchor.right, anchor.top, compact, nested, offsetPx])
+  }, [anchor.bottom, anchor.left, anchor.right, anchor.top, compact, menuDock, nested, offsetPx])
 
   useLayoutEffect(() => {
     reposition()
@@ -166,6 +187,7 @@ export function HubDockFlyout({
       ref={rootRef}
       data-hub-dock-flyout
       data-hub-dock-flyout-nested={nested ? '' : undefined}
+      data-shell-menu-dock={menuDock}
       className={cn(
         'hub-dock-flyout',
         !nested && !compact && 'hub-dock-flyout-viewport',
