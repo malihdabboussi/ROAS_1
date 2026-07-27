@@ -7,12 +7,16 @@ import { useGlobalChatStore } from '@/components/global-chat/store/use-global-ch
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { ShellArtifactViewerAdapter } from '@/features/studio/components/preview/ShellArtifactViewerAdapter'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
+import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils/cn'
 import { isShellHomeRoute, isShellWorkspaceRoute } from './shell-route-policy'
 import { ShellChatDrawer } from './ShellChatDrawer'
 import { ShellNewChatGreeting } from './ShellNewChatGreeting'
 import { ShellRightPanel } from './ShellRightPanel'
+import { ShellSidebarSlot } from './ShellSidebarSlot'
 import { SpaceWorkDock } from './SpaceWorkDock'
+import { useShellMenuDock } from './use-shell-menu-dock'
+import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
 import { useShellStore } from './use-shell-store'
 
 export function ShellWorkspace({ children }: { children: ReactNode }) {
@@ -29,6 +33,10 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const requestNewChat = useShellStore((s) => s.requestNewChat)
   const setWorkAreaOpen = useShellStore((s) => s.setWorkAreaOpen)
   const artifactTarget = useShellStore((s) => s.artifactViewer.target)
+  const shellPrefsHydrated = useShellPrefsHydrated()
+  const desktop = useMediaQuery('(min-width: 768px)')
+  const menuDock = useShellMenuDock((s) => s.dock)
+  const setWorkHostAvailable = useShellMenuDock((s) => s.setWorkHostAvailable)
 
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
   const activeConversationId = useChatStore((s) => s.activeConversationId)
@@ -111,6 +119,19 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   // Left AI drawer (history + chat) stays mounted when the page collapses — the
   // drawer expands to fill the freed space so chat history never disappears.
   const showChatDrawer = workAreaCollapsible
+  const hostWorkMenu =
+    shellPrefsHydrated &&
+    desktop &&
+    menuDock === 'work' &&
+    !artifactTarget &&
+    !workAreaCollapsed &&
+    !showFullNewChat &&
+    !showFullConversation
+
+  useEffect(() => {
+    setWorkHostAvailable(hostWorkMenu)
+    return () => setWorkHostAvailable(false)
+  }, [hostWorkMenu, setWorkHostAvailable])
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -126,8 +147,13 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
           aria-hidden={workAreaCollapsed || Boolean(artifactTarget)}
           data-shell-work-area
         >
-          <div className="shell-work-area-body">
-            {onSpaces ? <SpaceWorkDock>{children}</SpaceWorkDock> : homeOrDefaultMain}
+          <div
+            className={cn('shell-work-area-body', hostWorkMenu && 'shell-work-area-body-with-menu')}
+          >
+            {hostWorkMenu ? <ShellSidebarSlot /> : null}
+            <div className={cn(hostWorkMenu && 'shell-work-area-body-main')}>
+              {onSpaces ? <SpaceWorkDock>{children}</SpaceWorkDock> : homeOrDefaultMain}
+            </div>
           </div>
         </div>
 

@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { shellMenuDockForPoint, useShellMenuDock } from '@/components/shell/use-shell-menu-dock'
+import {
+  shellMenuDockForClientPoint,
+  useShellMenuDock,
+} from '@/components/shell/use-shell-menu-dock'
 import { SidebarWordmark } from '../sidebar/SidebarWordmark'
 import { ShellMenuDockOverlay } from './ShellMenuDockOverlay'
 
@@ -38,11 +41,7 @@ export function SidebarHqHubLogoButton({
 
   const updateCandidate = (clientX: number, clientY: number) => {
     if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return
-    setCandidate(
-      shellMenuDockForPoint(clientX, clientY, window.innerWidth, window.innerHeight),
-      clientX,
-      clientY,
-    )
+    setCandidate(shellMenuDockForClientPoint(clientX, clientY), clientX, clientY)
   }
 
   return (
@@ -78,13 +77,7 @@ export function SidebarHqHubLogoButton({
           pointerActiveRef.current = false
           event.currentTarget.releasePointerCapture?.(event.pointerId)
           if (draggedRef.current) {
-            const dock = shellMenuDockForPoint(
-              event.clientX,
-              event.clientY,
-              window.innerWidth,
-              window.innerHeight,
-            )
-            finishDragging(dock)
+            finishDragging(shellMenuDockForClientPoint(event.clientX, event.clientY))
             draggedRef.current = false
             return
           }
