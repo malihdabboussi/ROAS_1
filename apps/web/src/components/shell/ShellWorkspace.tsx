@@ -15,7 +15,7 @@ import { ShellNewChatGreeting } from './ShellNewChatGreeting'
 import { ShellRightPanel } from './ShellRightPanel'
 import { ShellSidebarSlot } from './ShellSidebarSlot'
 import { SpaceWorkDock } from './SpaceWorkDock'
-import { useShellMenuDock } from './use-shell-menu-dock'
+import { isWorkAttachedDock, useShellMenuDock } from './use-shell-menu-dock'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
 import { useShellStore } from './use-shell-store'
 
@@ -36,7 +36,8 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
   const shellPrefsHydrated = useShellPrefsHydrated()
   const desktop = useMediaQuery('(min-width: 768px)')
   const menuDock = useShellMenuDock((s) => s.dock)
-  const setWorkHostAvailable = useShellMenuDock((s) => s.setWorkHostAvailable)
+  const setWorkCardHostAvailable = useShellMenuDock((s) => s.setWorkCardHostAvailable)
+  const setWorkCollapsedHostAvailable = useShellMenuDock((s) => s.setWorkCollapsedHostAvailable)
 
   const setCollapsed = useGlobalChatStore((s) => s.setCollapsed)
   const activeConversationId = useChatStore((s) => s.activeConversationId)
@@ -52,9 +53,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     setCollapsed(true)
   }, [pathname, setCollapsed])
 
-  // Navigating to a different surface should reveal it, so a collapse from the
-  // previous page never leaves the destination stuck behind full-width chat.
-  // The first render is skipped so a persisted collapse survives a reload.
   const spaceParam = searchParams.get('space')
   const lastRouteKey = useRef<string | null>(null)
   useEffect(() => {
@@ -96,7 +94,6 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     chatParam !== 'new'
 
   const onSpaces = pathname.startsWith('/spaces')
-  // Full-page Home chat already owns the viewport, so there is nothing to collapse there.
   const workAreaCollapsible = !showFullNewChat && !showFullConversation
   const workAreaCollapsed = workAreaCollapsible && !workAreaOpen
   const summaryConversationId = showFullConversation
@@ -116,29 +113,40 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
     )
   }
 
-  // Left AI drawer (history + chat) stays mounted when the page collapses — the
-  // drawer expands to fill the freed space so chat history never disappears.
   const showChatDrawer = workAreaCollapsible
-  const hostWorkMenu =
-    shellPrefsHydrated &&
-    desktop &&
-    menuDock === 'work' &&
-    !artifactTarget &&
-    !workAreaCollapsed &&
-    !showFullNewChat &&
-    !showFullConversation
+  const workAttached = isWorkAttachedDock(menuDock)
+  const workColumnPresent =
+    shellPrefsHydrated && desktop && !artifactTarget && !showFullNewChat && !showFullConversation
+  const hostInsideWork = workColumnPresent && workAttached && !workAreaCollapsed
+  const hostCollapsedRight = workColumnPresent && workAttached && workAreaCollapsed
 
   useEffect(() => {
-    setWorkHostAvailable(hostWorkMenu)
-    return () => setWorkHostAvailable(false)
-  }, [hostWorkMenu, setWorkHostAvailable])
+    setWorkCardHostAvailable(hostInsideWork)
+    setWorkCollapsedHostAvailable(hostCollapsedRight)
+    return () => {
+      setWorkCardHostAvailable(false)
+      setWorkCollapsedHostAvailable(false)
+    }
+  }, [hostInsideWork, hostCollapsedRight, setWorkCardHostAvailable, setWorkCollapsedHostAvailable])
+
+  const workBodyDockClass =
+    hostInsideWork && menuDock === 'work'
+      ? 'shell-work-area-body-dock-work'
+      : hostInsideWork && menuDock === 'work-right'
+        ? 'shell-work-area-body-dock-work-right'
+        : hostInsideWork && menuDock === 'work-top'
+          ? 'shell-work-area-body-dock-work-top'
+          : hostInsideWork && menuDock === 'work-bottom'
+            ? 'shell-work-area-body-dock-work-bottom'
+            : null
+
+  const workMain = onSpaces ? <SpaceWorkDock>{children}</SpaceWorkDock> : homeOrDefaultMain
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden">
         {showChatDrawer ? <ShellChatDrawer expanded={workAreaCollapsed} /> : null}
 
-        {/* Keep the page mounted while collapsed so docs/tasks/tabs survive expand. */}
         <div
           className={cn(
             artifactTarget ? 'hidden' : 'shell-work-area',
@@ -147,15 +155,22 @@ export function ShellWorkspace({ children }: { children: ReactNode }) {
           aria-hidden={workAreaCollapsed || Boolean(artifactTarget)}
           data-shell-work-area
         >
-          <div
-            className={cn('shell-work-area-body', hostWorkMenu && 'shell-work-area-body-with-menu')}
-          >
-            {hostWorkMenu ? <ShellSidebarSlot /> : null}
-            <div className={cn(hostWorkMenu && 'shell-work-area-body-main')}>
-              {onSpaces ? <SpaceWorkDock>{children}</SpaceWorkDock> : homeOrDefaultMain}
-            </div>
+          <div className={cn('shell-work-area-body', workBodyDockClass)}>
+            {hostInsideWork && (menuDock === 'work' || menuDock === 'work-top') ? (
+              <ShellSidebarSlot />
+            ) : null}
+            <div className={cn(hostInsideWork && 'shell-work-area-body-main')}>{workMain}</div>
+            {hostInsideWork && (menuDock === 'work-right' || menuDock === 'work-bottom') ? (
+              <ShellSidebarSlot />
+            ) : null}
           </div>
         </div>
+
+        {hostCollapsedRight ? (
+          <div className="shell-menu-dock-collapsed-right" data-shell-menu-dock="work-right">
+            <ShellSidebarSlot />
+          </div>
+        ) : null}
 
         <div
           className={cn(

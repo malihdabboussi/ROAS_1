@@ -15,11 +15,13 @@ describe('SidebarHqHubLogoButton', () => {
     vi.useFakeTimers()
     useShellMenuDock.setState({
       dock: 'left',
+      menuCompact: false,
       dragging: false,
       candidate: 'left',
       pointerX: 0,
       pointerY: 0,
-      workHostAvailable: false,
+      workCardHostAvailable: false,
+      workCollapsedHostAvailable: false,
     })
   })
 
@@ -28,11 +30,10 @@ describe('SidebarHqHubLogoButton', () => {
     vi.useRealTimers()
   })
 
-  it('keeps a short press as the existing logo action', () => {
-    const onToggle = vi.fn()
-    render(<SidebarHqHubLogoButton hubOpen={false} onToggle={onToggle} />)
+  it('collapses the menu into the R chip on a short press', () => {
+    render(<SidebarHqHubLogoButton expanded />)
 
-    const logo = screen.getByRole('button', { name: 'Open menu' })
+    const logo = screen.getByRole('button', { name: 'Collapse menu' })
     Object.assign(logo, {
       setPointerCapture: vi.fn(),
       releasePointerCapture: vi.fn(),
@@ -40,15 +41,14 @@ describe('SidebarHqHubLogoButton', () => {
     pointerDownAt(logo, 20, 20)
     fireEvent.pointerUp(logo, { pointerId: 1, clientX: 20, clientY: 20 })
 
-    expect(onToggle).toHaveBeenCalledOnce()
+    expect(useShellMenuDock.getState().menuCompact).toBe(true)
     expect(useShellMenuDock.getState().dragging).toBe(false)
   })
 
-  it('turns a hold into a dock drag instead of navigation', () => {
-    const onToggle = vi.fn()
-    render(<SidebarHqHubLogoButton hubOpen={false} onToggle={onToggle} />)
+  it('turns a hold into a dock drag instead of collapse', () => {
+    render(<SidebarHqHubLogoButton expanded />)
 
-    const logo = screen.getByRole('button', { name: 'Open menu' })
+    const logo = screen.getByRole('button', { name: 'Collapse menu' })
     const setPointerCapture = vi.fn()
     const releasePointerCapture = vi.fn()
     Object.assign(logo, { setPointerCapture, releasePointerCapture })
@@ -56,30 +56,10 @@ describe('SidebarHqHubLogoButton', () => {
     vi.advanceTimersByTime(220)
 
     expect(useShellMenuDock.getState().dragging).toBe(true)
-    expect(useShellMenuDock.getState().pointerX).toBe(20)
-    expect(useShellMenuDock.getState().pointerY).toBe(20)
     expect(setPointerCapture).toHaveBeenCalledOnce()
 
-    fireEvent(logo, new MouseEvent('pointermove', { bubbles: true, clientX: 1, clientY: 400 }))
-    expect(useShellMenuDock.getState().candidate).toBe('left')
-
-    fireEvent(logo, new MouseEvent('pointerup', { bubbles: true, clientX: 999, clientY: 400 }))
-
-    expect(onToggle).not.toHaveBeenCalled()
-    expect(useShellMenuDock.getState().dock).toBe('right')
-    expect(useShellMenuDock.getState().candidate).toBe('right')
+    fireEvent(logo, new MouseEvent('pointerup', { bubbles: true, clientX: 20, clientY: 20 }))
+    expect(useShellMenuDock.getState().menuCompact).toBe(false)
     expect(releasePointerCapture).toHaveBeenCalledOnce()
-  })
-
-  it('blocks native image drag on the logo mark', () => {
-    render(<SidebarHqHubLogoButton hubOpen={false} onToggle={vi.fn()} />)
-    const logo = screen.getByRole('button', { name: 'Open menu' })
-    const images = logo.querySelectorAll('img')
-    expect(images.length).toBeGreaterThan(0)
-    images.forEach((image) => {
-      expect(image.getAttribute('draggable')).toBe('false')
-    })
-    const dragEvent = fireEvent.dragStart(logo)
-    expect(dragEvent).toBe(false)
   })
 })

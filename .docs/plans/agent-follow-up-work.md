@@ -8918,3 +8918,19 @@ Evidence: `pnpm lint` reports 351 existing architecture, line-limit, and cross-f
 Needed work: Remediate the repository-wide lint backlog in architecture-scoped batches without mixing unrelated feature behavior into UI polish changes.
 
 Reason not done now: The reported violations predate and sit outside this change set; expanding this pass to hundreds of unrelated files would make the verified UI work unsafe to integrate.
+
+## 2026-07-27 - [ARCH] SidebarHqRail.tsx still near the 400-line component limit
+
+Status: Open
+
+Found while: Finishing the five-zone HQ menu dock redesign (`feat/shell-menu-dock-five-zones`) — added `menuCompact` (Option A) branching and removed the chat-history restore peek.
+
+Files:
+
+- `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx` (393 LOC; 400-line component limit — was 391 LOC pre-existing on `origin/main`, net +2 from this pass)
+
+Evidence: The compact/expanded branch and dock-attribute wiring added by this change kept the file essentially flat (+2 LOC) but it remains ~98% of the component limit; this repeats the same near-limit finding logged 2026-07-26.
+
+Needed work: Extract the rail-items nav list (`visibleRailItems.map(...)`, ~250 LOC of per-item-type button/link branches) into a focused `SidebarHqRailNav` (or similar) child component so `SidebarHqRail` only orchestrates dock/compact/peek state.
+
+Reason not done now: Out of scope for the requested five-zone dock + R-compact + test-green pass; the file is still under its hard limit and the change here is behavior-additive, not a refactor.

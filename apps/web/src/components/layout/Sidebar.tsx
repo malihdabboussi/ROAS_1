@@ -34,15 +34,18 @@ export function Sidebar(props: SidebarProps) {
   const sidebarPinned = shellPrefsHydrated ? sidebarPinnedRaw : false
   const sidebarPeek = shellPrefsHydrated ? sidebarPeekRaw : false
   const savedMenuDock = useShellMenuDock((state) => state.dock)
+  const menuCompact = useShellMenuDock((state) => state.menuCompact)
   const menuDock = shellPrefsHydrated && desktop ? savedMenuDock : 'left'
   // Menu pin/peek still works while AI chat is open — drawer sits beside the rail.
   const hqDesktopWidth =
     c.sidebarMode === 'hq'
-      ? menuDock === 'top' || menuDock === 'bottom'
-        ? 'md:w-full'
-        : sidebarPinned
-          ? 'md:w-[272px]'
-          : 'md:w-[72px]'
+      ? menuCompact
+        ? 'md:w-[56px]'
+        : menuDock === 'work-top' || menuDock === 'work-bottom'
+          ? 'md:w-auto'
+          : sidebarPinned
+            ? 'md:w-[272px]'
+            : 'md:w-[72px]'
       : c.desktopWidth
   const hqPeeking = c.sidebarMode === 'hq' && sidebarPeek && !sidebarPinned
   const {

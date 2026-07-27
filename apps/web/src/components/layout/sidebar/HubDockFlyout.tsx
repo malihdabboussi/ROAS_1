@@ -106,10 +106,10 @@ export function HubDockFlyout({
         ? Math.max(8, window.innerHeight - height - 8)
         : Math.max(8, window.innerHeight - 48)
 
-    if (!nested && (menuDock === 'top' || menuDock === 'bottom')) {
+    if (!nested && (menuDock === 'work-top' || menuDock === 'work-bottom')) {
       setLeft(Math.min(Math.max(8, anchor.left), maxLeft))
       setTop(
-        menuDock === 'top'
+        menuDock === 'work-top'
           ? Math.min(anchor.bottom + offsetPx, maxTop)
           : Math.max(8, anchor.top - height - offsetPx),
       )
@@ -119,7 +119,7 @@ export function HubDockFlyout({
     if (!nested && !compact) {
       setTop(52)
       setLeft(
-        menuDock === 'right'
+        menuDock === 'work-right'
           ? Math.max(8, anchor.left - width - offsetPx)
           : Math.min(anchor.right + offsetPx, maxLeft),
       )
@@ -127,7 +127,7 @@ export function HubDockFlyout({
     }
     const nextTop = Math.min(Math.max(8, anchor.top), maxTop)
     let nextLeft =
-      !nested && menuDock === 'right'
+      !nested && menuDock === 'work-right'
         ? Math.max(8, anchor.left - width - offsetPx)
         : anchor.right + offsetPx
     if (nextLeft > maxLeft) nextLeft = maxLeft
