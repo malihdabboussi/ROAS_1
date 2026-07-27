@@ -1,3 +1,18 @@
+## 2026-07-27 - [ARCH] meetings-precall-prep.helpers over service limit
+
+Status: Open
+
+Found while: Meeting detail modal + transcript durability
+
+Files:
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.helpers.ts` (590 LOC)
+
+Evidence: Agenda related DTO helpers + Fathom synthetic row builders grew while adding summary/transcript/assignee fields.
+
+Needed work: Extract agenda-related matching + Fathom synthetic row builders into `meetings-agenda-related.helpers.ts`.
+
+Reason not done now: In-scope change was enrich + modal UX + transcript persistence; full helpers split is adjacent debt.
+
 ## 2026-07-26 - [ARCH] Finish ROAS Portal renames in over-limit Spaces bulk-send files — RESOLVED
 
 Resolved by splitting `BulkActionBar` into `bulk-action-bar/*` modules and `PageGraderBulkSendPanel` into `page-grader-bulk-send/*` step components, switching the settings hook to `@/lib/settings`, and shipping The ROAS Portal public copy.

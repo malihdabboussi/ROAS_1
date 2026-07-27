@@ -1,5 +1,15 @@
 # Changelog - July 27, 2026
 
+## [2026-07-27 16:20] - [FEATURE]
+
+What: Redesigned the Home meeting detail modal (summary → full transcript disclosure → meeting links → your/other action items) and made transcripts durable + lazy-loaded. Fathom ingest stores `custom_data.summary` + `custom_data.transcript_text`; agenda `related` returns summary, has_transcript, and assignee fields without shipping full transcripts in the agenda list.
+
+Why: The old modal mashed recording + tasks with opaque `logged` status, and transcripts were either dumped into description or dropped when a summary existed.
+
+Impact: New Fathom calls keep a full transcript for on-demand “Full transcript”. Existing calls still work via legacy description detection or Fathom link. Requires API + web production deploy.
+
+Files: `HomeMeetingDetailHost.tsx`, `extract-call-transcript.ts`, `calendar-api.ts`, `meetings-precall-prep.service.ts`, `meetings-precall-prep.helpers.ts`, `space-automation-service-06.base.ts`, related tests.
+
 ## [2026-07-27 15:00] - [FIX]
 
 What: Moved `statusField` `useMemo` above the loading early-return in `HomeSpaceTaskDetailHost` so opening a home task (including meeting prep from agenda) no longer violates Rules of Hooks.

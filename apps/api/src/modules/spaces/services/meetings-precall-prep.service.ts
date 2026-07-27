@@ -16,6 +16,8 @@ import {
   mapPrepItemToAgendaLink,
   resolvePreferredMeetingsSpaceId,
   scoreRelatedCallMatch,
+  toAgendaFollowUp,
+  toAgendaRelatedCall,
   type AgendaPrepLink,
   type AgendaRelatedCall,
   type PrecallAgendaEventLike,
@@ -257,7 +259,7 @@ export class MeetingsPrecallPrepService {
 
     const { data: callRows } = await input.supabase
       .from('space_items')
-      .select('id, space_id, title, status, custom_data, created_at')
+      .select('id, space_id, title, status, description, custom_data, created_at')
       .eq('space_id', spaceId)
       .eq('custom_data->>entry_type', 'call')
       .gte('custom_data->>call_date', matchPadStart)
@@ -269,6 +271,7 @@ export class MeetingsPrecallPrepService {
       id: string
       space_id: string
       title?: string | null
+      description?: string | null
       custom_data?: Record<string, unknown> | null
     }>
     if (calls.length === 0) return { relatedByEventId, unmatchedFathomEvents }
@@ -276,7 +279,7 @@ export class MeetingsPrecallPrepService {
     const callIdSet = new Set(calls.map((c) => c.id))
     const { data: followUpRows } = await input.supabase
       .from('space_items')
-      .select('id, title, status, custom_data, parent_item_id')
+      .select('id, title, status, assignee_id, assignee_type, custom_data, parent_item_id')
       .eq('space_id', spaceId)
       .eq('custom_data->>entry_type', 'follow_up')
       .order('created_at', { ascending: false })
@@ -287,6 +290,8 @@ export class MeetingsPrecallPrepService {
       id: string
       title?: string | null
       status?: string | null
+      assignee_id?: string | null
+      assignee_type?: string | null
       custom_data?: Record<string, unknown> | null
       parent_item_id?: string | null
     }>) {
@@ -295,11 +300,7 @@ export class MeetingsPrecallPrepService {
       ).trim()
       if (!sourceId || !callIdSet.has(sourceId)) continue
       const list = followUpsByCall.get(sourceId) ?? []
-      list.push({
-        id: row.id,
-        title: String(row.title ?? 'Untitled').slice(0, 200),
-        status: String(row.status ?? ''),
-      })
+      list.push(toAgendaFollowUp(row))
       followUpsByCall.set(sourceId, list)
     }
     const callsById = new Map(calls.map((call) => [call.id, call]))
@@ -331,35 +332,34 @@ export class MeetingsPrecallPrepService {
       const call = callsById.get(callId)
       if (!call) continue
       matchedCallIds.add(call.id)
-      const custom = call.custom_data ?? {}
-      relatedByEventId.set(eventId, {
-        space_id: String(call.space_id),
-        call_item_id: call.id,
-        title: String(call.title ?? 'Call').slice(0, 200),
-        recording_url:
-          typeof custom.recording_url === 'string' && custom.recording_url.trim()
-            ? custom.recording_url.trim()
-            : null,
-        follow_ups: followUpsByCall.get(call.id) ?? [],
-      })
+      relatedByEventId.set(
+        eventId,
+        toAgendaRelatedCall({
+          call,
+          followUps: followUpsByCall.get(call.id) ?? [],
+        }),
+      )
     }
 
     for (const call of calls) {
       if (matchedCallIds.has(call.id)) continue
-      const custom = call.custom_data ?? {}
-      const callDate = typeof custom.call_date === 'string' ? custom.call_date : null
+      const callDate =
+        typeof call.custom_data?.call_date === 'string' ? call.custom_data.call_date : null
       if (!callDateInAgendaWindow(callDate, input.start, input.end)) continue
+      const related = toAgendaRelatedCall({
+        call,
+        followUps: followUpsByCall.get(call.id) ?? [],
+      })
       unmatchedFathomEvents.push(
         buildFathomAgendaEvent({
-          spaceId: String(call.space_id),
-          callItemId: call.id,
-          title: String(call.title ?? 'Call'),
+          spaceId: related.space_id,
+          callItemId: related.call_item_id,
+          title: related.title,
           callDate: callDate!,
-          recordingUrl:
-            typeof custom.recording_url === 'string' && custom.recording_url.trim()
-              ? custom.recording_url.trim()
-              : null,
-          followUps: followUpsByCall.get(call.id) ?? [],
+          recordingUrl: related.recording_url,
+          summary: related.summary,
+          hasTranscript: related.has_transcript,
+          followUps: related.follow_ups,
         }),
       )
     }

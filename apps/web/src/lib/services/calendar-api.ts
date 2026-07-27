@@ -19,12 +19,16 @@ export type CalendarAgendaRelatedFollowUp = {
   id: string
   title: string
   status: string
+  assignee_id?: string | null
+  assignee_type?: string | null
 }
 
 export type CalendarAgendaRelatedCall = {
   space_id: string
   call_item_id: string
   title: string
+  summary?: string | null
+  has_transcript?: boolean
   recording_url: string | null
   follow_ups: CalendarAgendaRelatedFollowUp[]
 }
