@@ -227,7 +227,7 @@
     "apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx": {
       "kind": "web-container",
       "limit": 600,
-      "lines": 1476
+      "lines": 1481
     },
     "apps/web/src/features/spaces/services/spaces.service.ts": {
       "kind": "service",

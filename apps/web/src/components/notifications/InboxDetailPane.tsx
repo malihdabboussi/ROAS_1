@@ -56,7 +56,7 @@ export function InboxDetailPane({
 }) {
   if (!notification) {
     return (
-      <div className="gap-spacing-3 px-spacing-8 flex h-full flex-col items-center justify-center text-center">
+      <div className="gap-spacing-3 px-spacing-8 flex h-full min-h-0 w-full flex-col items-center justify-center overflow-hidden text-center">
         <Inbox className="icon-lg text-muted-foreground" aria-hidden />
         <div>
           <p className="body-2 text-foreground font-medium">{INBOX_MESSAGES.DETAIL.emptyTitle}</p>
@@ -78,8 +78,8 @@ export function InboxDetailPane({
   const currentView = notificationInboxView(notification)
 
   return (
-    <article className="flex h-full min-h-0 flex-col">
-      <header className="border-border px-spacing-5 py-spacing-3 gap-spacing-3 flex items-center border-b">
+    <article className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+      <header className="border-border px-spacing-5 py-spacing-3 gap-spacing-3 flex shrink-0 items-center border-b">
         <button
           type="button"
           className="btn-icon-bare md:hidden"
@@ -144,7 +144,7 @@ export function InboxDetailPane({
         </section>
       </div>
 
-      <footer className="border-border px-spacing-5 py-spacing-4 gap-spacing-3 flex flex-col border-t">
+      <footer className="border-border px-spacing-5 py-spacing-4 gap-spacing-3 flex shrink-0 flex-col border-t">
         {detailLabel || sourceLabel ? (
           <div className="gap-spacing-2 flex flex-wrap">
             {detailLabel ? (

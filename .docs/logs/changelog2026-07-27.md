@@ -1,6 +1,5 @@
 # Changelog - July 27, 2026
 
-
 ## [2026-07-27 15:19] - [FIX]
 
 What: Agent A Fathom truth — portal-grounded follow-up name prefixes (Anis→Anees), Speaker N remap API + minimal UI, personal Fathom auto-resolve/pull in org scope, and expanded call kinds (personal|team|executive|external|sales) with migration + classifier.
@@ -10,6 +9,26 @@ Why: Feedback: wrong task owner names, junk Speaker labels, false "Fathom not co
 Impact: New Fathom follow-ups ground titles on portal People/roster; Speaker N can be bound and persisted; agents auto-use personal Fathom to pull transcripts in org workspaces; Meetings call kinds include executive/external/sales.
 
 Files: fathom-portal-people-grounding/loader, fathom-meeting-item-enrichment, fathom-call-kind, space-automation-service-06/13, artifact-integration-connection-resolution, space speaker-remaps API + SpeakerRemapPanel, personal-dashboard catalog, migration 20260727153000
+
+## [2026-07-27 15:19] - [FEATURE]
+
+What: Mid-conversation campaign+brain soft prompt (after N user turns, explicit confirm), conversation share pass-off with teammate notify + handoff link, and Quick Missions hub with `/` playbook slash entries.
+
+Why: Valuable General chats were stuck off-campaign without a durable brain save path; share was invite-only; playbooks were missing from slash discovery and had no pick-mission → client → context → run flow.
+
+Impact: Users can attach mid-chat work to a client campaign and save extracted memories into that campaign brain; share can notify a teammate; slash and composer expose Quick Missions playbooks.
+
+Files: `ChatCampaignBrainNudge.tsx`, `work-context.config.ts`, `conversation-processing.service.ts` (api + agent-api), `ConversationShareModal.tsx`, `conversation-shares.controller.ts`, `QuickMissionsHubModal.tsx`, `use-chat-input-slash-data.ts`, related tests/changelog.
+
+## [2026-07-27 15:18] - [FIX]
+
+What: Shell polish for Inbox two-pane contained scroll, Cmd+K idle recents/presets (chats, campaigns, missions, Meetings), and Spaces click-to-open without refresh-to-edit.
+
+Why: Inbox scrolled as one page blob with empty-feeling detail; Cmd+K idle showed only “Start typing…”; Spaces deep-link/open cleared selection during view/query swaps or marked missing items as handled too early.
+
+Impact: Inbox list and detail scroll independently with filled detail on select; Cmd+K opens with recents + Go-to presets; space items open immediately from click and `?item=` deep links once loaded.
+
+Files: `InboxFeed.tsx`, `InboxDetailPane.tsx`, `InboxListRow.tsx`, `use-inbox-triage.ts`, `StudioSearchModal.tsx`, `studio-search-api.service.ts`, `studio-search-messages.config.ts`, `use-space-item-navigation-events.ts`, `SpaceItemsContainer.tsx`, related tests
 
 ## [2026-07-27 15:17] - [FIX]
 
@@ -80,14 +99,3 @@ Why: Users want the HQ menu attached to the work/Space card beside AI Chat for a
 Impact: Hold-R can drop onto the work seam; desktop flyouts from `work` open into the card like `left`. Mobile and collapsed/full-chat cases keep the previous left-rail fallback without clearing the saved preference.
 
 Files: `use-shell-menu-dock.ts`, `ShellSidebarSlot.tsx`, `ShellMenuDockLayout.tsx`, `ShellWorkspace.tsx`, `ShellMenuDockOverlay.tsx`, `SidebarHqHubLogoButton.tsx`, both product `globals.css`, shell docs/tests.
-
-
-## [2026-07-27 15:19] - [FEATURE]
-
-What: Mid-conversation campaign+brain soft prompt (after N user turns, explicit confirm), conversation share pass-off with teammate notify + handoff link, and Quick Missions hub with `/` playbook slash entries.
-
-Why: Valuable General chats were stuck off-campaign without a durable brain save path; share was invite-only; playbooks were missing from slash discovery and had no pick-mission → client → context → run flow.
-
-Impact: Users can attach mid-chat work to a client campaign and save extracted memories into that campaign brain; share can notify a teammate; slash and composer expose Quick Missions playbooks.
-
-Files: `ChatCampaignBrainNudge.tsx`, `work-context.config.ts`, `conversation-processing.service.ts` (api + agent-api), `ConversationShareModal.tsx`, `conversation-shares.controller.ts`, `QuickMissionsHubModal.tsx`, `use-chat-input-slash-data.ts`, related tests/changelog.

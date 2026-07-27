@@ -22,6 +22,8 @@ export type StudioGlobalSearchResultKind =
   | 'conversation'
   | 'campaign'
   | 'artifact'
+  | 'mission'
+  | 'preset'
 
 export interface StudioGlobalSearchResult {
   kind: StudioGlobalSearchResultKind
@@ -45,12 +47,40 @@ export interface StudioSearchArtifactHit {
   funnel_id?: string
 }
 
+export interface StudioSearchIdlePayload {
+  recents: StudioGlobalSearchResult[]
+  presets: StudioGlobalSearchResult[]
+}
+
 const STUDIO_CORE_SEARCH_KINDS: StudioGlobalSearchResultKind[] = [
   'task',
   'doc',
   'deliverable',
   'conversation',
   'campaign',
+]
+
+const STUDIO_IDLE_RECENT_KINDS: StudioGlobalSearchResultKind[] = [
+  'conversation',
+  'campaign',
+  'mission',
+]
+
+export const STUDIO_SEARCH_IDLE_PRESETS: StudioGlobalSearchResult[] = [
+  {
+    kind: 'preset',
+    id: 'meetings',
+    label: 'Meetings',
+    subtitle: 'Home',
+    url: '/home/meetings',
+  },
+  {
+    kind: 'preset',
+    id: 'mission-control',
+    label: 'Mission Control',
+    subtitle: 'Missions',
+    url: '/mission-control',
+  },
 ]
 
 export async function fetchStudioGlobalSearch(
@@ -69,10 +99,7 @@ export async function fetchStudioGlobalSearch(
     return items
   }
 
-  const settled = await Promise.allSettled([
-    search(STUDIO_CORE_SEARCH_KINDS),
-    search(['artifact']),
-  ])
+  const settled = await Promise.allSettled([search(STUDIO_CORE_SEARCH_KINDS), search(['artifact'])])
   const successful = settled.flatMap((result) =>
     result.status === 'fulfilled' ? result.value : [],
   )
@@ -81,4 +108,23 @@ export async function fetchStudioGlobalSearch(
     throw failure.status === 'rejected' ? failure.reason : new Error('Search failed')
   }
   return successful
+}
+
+/** Empty-query recents (chats, campaigns, missions) plus Go-to presets. */
+export async function fetchStudioSearchIdle(
+  signal?: AbortSignal,
+): Promise<StudioSearchIdlePayload> {
+  const query = new URLSearchParams({
+    q: '',
+    types: STUDIO_IDLE_RECENT_KINDS.join(','),
+    limit: '6',
+  })
+  const response = await backendGet<{ results: StudioGlobalSearchResult[] }>(
+    `/api/entity-search?${query.toString()}`,
+    { signal },
+  )
+  const recents = (response.results ?? []).filter((item) =>
+    STUDIO_IDLE_RECENT_KINDS.includes(item.kind),
+  )
+  return { recents, presets: STUDIO_SEARCH_IDLE_PRESETS }
 }

@@ -29,8 +29,9 @@ function openSpaceItemFromDeepLink({
     setDocEditorItem(item)
   } else {
     setDocEditorItem(null)
-    focusTaskCapableViewIfNeeded(spaceParam)
+    // Open first so selection survives view/query swaps from focusTaskCapableViewIfNeeded.
     openSpaceItemModal(item)
+    focusTaskCapableViewIfNeeded(spaceParam)
   }
 }
 
@@ -67,7 +68,7 @@ export function useSpaceItemNavigationEvents({
 
     const item = items.find((i) => i.id === itemParam)
     if (!item) {
-      urlSpaceItemDeepLinkRef.current = sig
+      // Wait for items to settle — do not mark handled or a later load never opens.
       return
     }
 
@@ -115,8 +116,9 @@ export function useSpaceItemNavigationEvents({
       }
       const item = items.find((i) => i.id === d.itemId)
       if (item) {
-        focusTaskCapableViewIfNeeded(targetSpaceId)
         openSpaceItemModal(item)
+        focusTaskCapableViewIfNeeded(targetSpaceId)
+        urlSpaceItemDeepLinkRef.current = `${targetSpaceId}:${d.itemId}`
         return
       }
       urlSpaceItemDeepLinkRef.current = null
@@ -142,6 +144,11 @@ export function useSpaceItemNavigationEvents({
   return { urlSpaceItemDeepLinkRef }
 }
 
+/**
+ * Keep the open modal item fresh from the store.
+ * Never auto-close when the row is briefly missing during view/query swaps —
+ * that caused click-to-open lag / refresh-to-edit.
+ */
 export function useSpaceSelectedItemSync(
   items: SpaceItem[],
   selectedItem: SpaceItem | null,
@@ -150,7 +157,6 @@ export function useSpaceSelectedItemSync(
   useEffect(() => {
     if (!selectedItem) return
     const fresh = items.find((i) => i.id === selectedItem.id)
-    if (fresh) setSelectedItem(fresh)
-    else setSelectedItem(null)
+    if (fresh && fresh !== selectedItem) setSelectedItem(fresh)
   }, [items, selectedItem, setSelectedItem])
 }

@@ -1,11 +1,19 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CheckSquare, FileText, MessageSquare, Package, Search, X } from 'lucide-react'
-import { LucideIcon } from '@/components/ui/IconPicker'
+import { Search, X } from 'lucide-react'
+import {
+  isAbortError,
+  mergeSearchResults,
+  resultBadge,
+  ResultIcon,
+  useDebouncedValue,
+} from '@/features/studio/components/studio-search-modal-helpers'
 import { STUDIO_SEARCH_MESSAGES } from '@/features/studio/config/studio-search-messages.config'
 import {
   fetchStudioGlobalSearch,
+  fetchStudioSearchIdle,
+  STUDIO_SEARCH_IDLE_PRESETS,
   type StudioGlobalSearchResult,
   type StudioSearchArtifactHit,
 } from '@/features/studio/services/studio-search-api.service'
@@ -15,80 +23,7 @@ import {
 } from '@/features/studio/utils/open-studio-search-result'
 
 type SearchableCampaign = { id: string; name: string; icon: string }
-type Row = { key: string; index: number; result: StudioGlobalSearchResult }
-
-const ARTIFACT_BADGE_LABEL: Record<
-  NonNullable<StudioGlobalSearchResult['artifactKind']>,
-  string
-> = {
-  offer: 'Offer',
-  funnel: 'Funnel',
-  website: 'Website',
-  sequence: 'Sequence',
-  email: 'Email',
-  presentation: 'Presentation',
-  avatar: 'Avatar',
-  ad: 'Ad',
-  ad_campaign: 'Ads',
-  ad_set: 'Ad set',
-  social_post: 'Social',
-  blog_post: 'Blog',
-  page: 'Page',
-}
-
-function useDebouncedValue<T>(value: T, ms: number): T {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const timeout = setTimeout(() => setDebounced(value), ms)
-    return () => clearTimeout(timeout)
-  }, [value, ms])
-  return debounced
-}
-
-function isAbortError(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'name' in error &&
-    (error as { name?: unknown }).name === 'AbortError'
-  )
-}
-
-function mergeSearchResults(
-  current: StudioGlobalSearchResult[],
-  incoming: StudioGlobalSearchResult[],
-): StudioGlobalSearchResult[] {
-  const merged = new Map(current.map((item) => [`${item.kind}-${item.id}`, item]))
-  for (const item of incoming) merged.set(`${item.kind}-${item.id}`, item)
-  return [...merged.values()]
-}
-
-function resultBadge(result: StudioGlobalSearchResult): string {
-  if (result.kind === 'artifact' && result.artifactKind) {
-    return ARTIFACT_BADGE_LABEL[result.artifactKind]
-  }
-  const labels: Record<Exclude<StudioGlobalSearchResult['kind'], 'artifact'>, string> = {
-    task: 'Task',
-    doc: 'Doc',
-    deliverable: 'Deliverable',
-    conversation: 'Conversation',
-    campaign: 'Campaign',
-  }
-  return result.kind === 'artifact' ? 'Artifact' : labels[result.kind]
-}
-
-function ResultIcon({ result }: { result: StudioGlobalSearchResult }) {
-  const className = 'h-4 w-4'
-  if (result.kind === 'task') return <CheckSquare className={className} />
-  if (result.kind === 'doc') return <FileText className={className} />
-  if (result.kind === 'deliverable' || result.kind === 'artifact') {
-    return <Package className={className} />
-  }
-  if (result.kind === 'campaign') {
-    return <LucideIcon name={result.campaignIcon ?? 'folder-kanban'} className={className} />
-  }
-  return <MessageSquare className={className} />
-}
+type Row = { key: string; index: number; result: StudioGlobalSearchResult; section?: string }
 
 interface StudioSearchModalProps {
   open: boolean
@@ -101,6 +36,10 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   const [results, setResults] = useState<StudioGlobalSearchResult[]>([])
+  const [idleRecents, setIdleRecents] = useState<StudioGlobalSearchResult[]>([])
+  const [idlePresets, setIdlePresets] = useState<StudioGlobalSearchResult[]>(
+    STUDIO_SEARCH_IDLE_PRESETS,
+  )
   const [loading, setLoading] = useState(false)
   const [failed, setFailed] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -123,7 +62,19 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
       setResults([])
       setLoading(false)
       setFailed(false)
-      return
+      const controller = new AbortController()
+      void fetchStudioSearchIdle(controller.signal)
+        .then((payload) => {
+          if (controller.signal.aborted) return
+          setIdleRecents(payload.recents)
+          setIdlePresets(payload.presets)
+        })
+        .catch((error: unknown) => {
+          if (isAbortError(error)) return
+          setIdleRecents([])
+          setIdlePresets(STUDIO_SEARCH_IDLE_PRESETS)
+        })
+      return () => controller.abort()
     }
 
     const controller = new AbortController()
@@ -148,10 +99,33 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
     return () => controller.abort()
   }, [open, debouncedQuery])
 
-  const rows = useMemo<Row[]>(
-    () => results.map((result, index) => ({ key: `${result.kind}-${result.id}`, index, result })),
-    [results],
-  )
+  const rows = useMemo<Row[]>(() => {
+    if (query.trim()) {
+      return results.map((result, index) => ({
+        key: `${result.kind}-${result.id}`,
+        index,
+        result,
+      }))
+    }
+    const next: Row[] = []
+    for (const result of idleRecents) {
+      next.push({
+        key: `recent-${result.kind}-${result.id}`,
+        index: next.length,
+        result,
+        section: next.length === 0 ? STUDIO_SEARCH_MESSAGES.RECENTS : undefined,
+      })
+    }
+    for (const result of idlePresets) {
+      next.push({
+        key: `preset-${result.kind}-${result.id}`,
+        index: next.length,
+        result,
+        section: next.length === idleRecents.length ? STUDIO_SEARCH_MESSAGES.PRESETS : undefined,
+      })
+    }
+    return next
+  }, [idlePresets, idleRecents, query, results])
 
   useEffect(() => {
     if (activeIndex >= rows.length) setActiveIndex(Math.max(0, rows.length - 1))
@@ -161,7 +135,7 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
     const list = listRef.current
     if (!list) return
     const activeElement = list.querySelector(`[data-index="${activeIndex}"]`) as HTMLElement | null
-    activeElement?.scrollIntoView({ block: 'nearest' })
+    activeElement?.scrollIntoView?.({ block: 'nearest' })
   }, [activeIndex])
 
   const handleSelectRow = useCallback(
@@ -228,6 +202,9 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
 
   if (!open) return null
 
+  const idleMode = !query.trim()
+  const showIdleEmpty = idleMode && !loading && rows.length === 0
+
   return (
     <>
       <div
@@ -241,12 +218,12 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
         role="presentation"
       >
         <div
-          className="rounded-spacing-4 w-full max-w-[560px] overflow-hidden border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl"
+          className="border-border surface-card rounded-spacing-4 w-full max-w-[560px] overflow-hidden border shadow-2xl"
           onClick={(event) => event.stopPropagation()}
           onKeyDown={handleKeyDown}
         >
-          <div className="gap-spacing-2 px-spacing-4 py-spacing-3 flex items-center border-b border-[var(--color-border)]">
-            <Search className="icon-sm flex-shrink-0 text-[var(--color-muted-foreground)]" />
+          <div className="gap-spacing-2 px-spacing-4 py-spacing-3 border-border flex items-center border-b">
+            <Search className="icon-sm text-muted-foreground flex-shrink-0" />
             <input
               ref={inputRef}
               type="text"
@@ -256,12 +233,12 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
                 setQuery(event.target.value)
                 setActiveIndex(0)
               }}
-              className="body-2 flex-1 bg-transparent text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none"
+              className="body-2 text-foreground placeholder:text-muted-foreground flex-1 bg-transparent focus:outline-none"
             />
             <button
               type="button"
               onClick={onClose}
-              className="flex h-6 w-6 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
+              className="text-muted-foreground hover:text-foreground flex h-6 w-6 items-center justify-center rounded transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -277,7 +254,7 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
               <div className="px-spacing-4 py-spacing-8 text-center">
                 <p className="body-2 text-destructive">{STUDIO_SEARCH_MESSAGES.FAILED}</p>
               </div>
-            ) : !loading && !query.trim() ? (
+            ) : showIdleEmpty ? (
               <div className="px-spacing-4 py-spacing-8 text-center">
                 <p className="body-2 text-muted-foreground">{STUDIO_SEARCH_MESSAGES.IDLE}</p>
               </div>
@@ -292,43 +269,47 @@ export function StudioSearchModal({ open, onClose, campaigns, onSelect }: Studio
                 const disabled =
                   result.kind === 'artifact' && !campaigns.some((c) => c.id === result.campaignId)
                 return (
-                  <button
-                    key={row.key}
-                    type="button"
-                    data-index={row.index}
-                    disabled={disabled}
-                    onClick={() => handleSelectRow(row)}
-                    onMouseEnter={() => setActiveIndex(row.index)}
-                    className={`gap-spacing-3 px-spacing-4 py-spacing-2 flex w-full items-center text-left transition-colors disabled:opacity-40 ${
-                      active ? 'bg-[var(--color-secondary)]' : 'hover:bg-[var(--color-secondary)]'
-                    }`}
-                  >
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--color-muted-foreground)]">
-                      <ResultIcon result={result} />
-                    </div>
-                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="body-2 truncate text-[var(--color-foreground)]">
-                        {result.label}
+                  <div key={row.key}>
+                    {row.section ? (
+                      <p className="typo-caption text-muted-foreground px-spacing-4 py-spacing-1 uppercase tracking-wide">
+                        {row.section}
+                      </p>
+                    ) : null}
+                    <button
+                      type="button"
+                      data-index={row.index}
+                      disabled={disabled}
+                      onClick={() => handleSelectRow(row)}
+                      onMouseEnter={() => setActiveIndex(row.index)}
+                      className={`gap-spacing-3 px-spacing-4 py-spacing-2 flex w-full items-center text-left transition-colors disabled:opacity-40 ${
+                        active ? 'bg-hover-subtle' : 'hover:bg-hover-subtle'
+                      }`}
+                    >
+                      <div className="text-muted-foreground flex h-7 w-7 items-center justify-center rounded-lg">
+                        <ResultIcon result={result} />
+                      </div>
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <span className="body-2 text-foreground truncate">{result.label}</span>
+                        {result.subtitle && (
+                          <span className="typo-caption text-muted-foreground truncate">
+                            {result.subtitle}
+                          </span>
+                        )}
+                      </div>
+                      <span className="typo-caption border-border text-muted-foreground shrink-0 rounded border px-1.5 py-0.5">
+                        {resultBadge(result)}
                       </span>
-                      {result.subtitle && (
-                        <span className="typo-caption truncate text-[var(--color-muted-foreground)]">
-                          {result.subtitle}
-                        </span>
-                      )}
-                    </div>
-                    <span className="typo-caption shrink-0 rounded border border-[var(--color-border)] px-1.5 py-0.5 text-[var(--color-muted-foreground)]">
-                      {resultBadge(result)}
-                    </span>
-                  </button>
+                    </button>
+                  </div>
                 )
               })
             )}
           </div>
 
-          <div className="gap-spacing-3 px-spacing-4 py-spacing-2 flex items-center border-t border-[var(--color-border)]">
-            <span className="typo-caption text-[var(--color-muted-foreground)]">↑↓ navigate</span>
-            <span className="typo-caption text-[var(--color-muted-foreground)]">↵ select</span>
-            <span className="typo-caption text-[var(--color-muted-foreground)]">esc close</span>
+          <div className="gap-spacing-3 px-spacing-4 py-spacing-2 border-border flex items-center border-t">
+            <span className="typo-caption text-muted-foreground">↑↓ navigate</span>
+            <span className="typo-caption text-muted-foreground">↵ select</span>
+            <span className="typo-caption text-muted-foreground">esc close</span>
           </div>
         </div>
       </div>

@@ -33,34 +33,41 @@ export function useInboxTriage(initialView: InboxView = 'primary') {
   const orgLoaded = useOrgStore((state) => state.isLoaded)
   const viewRef = useRef(view)
   const typeRef = useRef(type)
+  const hasLoadedOnceRef = useRef(false)
 
   useEffect(() => {
     viewRef.current = view
     typeRef.current = type
   }, [type, view])
 
-  const load = useCallback(async () => {
-    if (!orgLoaded) return
-    setLoading(true)
-    try {
-      const [rows, nextCounts] = await Promise.all([
-        fetchNotifications({
-          limit: 200,
-          view,
-          types: type === 'all' ? [] : [type],
-        }),
-        fetchInboxTriageCounts(),
-      ])
-      setNotifications(rows)
-      setCounts(nextCounts)
-    } catch {
-      toast.error(INBOX_MESSAGES.ERRORS.load)
-    } finally {
-      setLoading(false)
-    }
-  }, [orgLoaded, type, view])
+  const load = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!orgLoaded) return
+      const silent = Boolean(options?.silent && hasLoadedOnceRef.current)
+      if (!silent) setLoading(true)
+      try {
+        const [rows, nextCounts] = await Promise.all([
+          fetchNotifications({
+            limit: 200,
+            view,
+            types: type === 'all' ? [] : [type],
+          }),
+          fetchInboxTriageCounts(),
+        ])
+        setNotifications(rows)
+        setCounts(nextCounts)
+        hasLoadedOnceRef.current = true
+      } catch {
+        toast.error(INBOX_MESSAGES.ERRORS.load)
+      } finally {
+        if (!silent) setLoading(false)
+      }
+    },
+    [orgLoaded, type, view],
+  )
 
   useEffect(() => {
+    hasLoadedOnceRef.current = false
     void load()
   }, [activeOrgId, load])
 
@@ -85,7 +92,7 @@ export function useInboxTriage(initialView: InboxView = 'primary') {
           },
           (payload) => {
             if (payload.eventType !== 'INSERT') {
-              void load()
+              void load({ silent: true })
               return
             }
             const inserted = payload.new as UserNotification

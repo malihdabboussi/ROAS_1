@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Archive, Check, CheckCheck, Inbox, Search } from 'lucide-react'
 import { InboxDetailPane } from '@/components/notifications/InboxDetailPane'
 import { InboxListRow } from '@/components/notifications/InboxListRow'
@@ -70,6 +70,13 @@ export function InboxFeed({
 
   const selectedNotification =
     inbox.notifications.find((notification) => notification.id === selectedId) ?? null
+
+  useEffect(() => {
+    if (!selectedId) return
+    if (!inbox.notifications.some((notification) => notification.id === selectedId)) {
+      setSelectedId(null)
+    }
+  }, [inbox.notifications, selectedId])
 
   const selectNotification = (notification: UserNotification) => {
     setSelectedId(notification.id)
@@ -186,7 +193,7 @@ export function InboxFeed({
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <div
           className={`min-h-0 flex-col overflow-y-auto ${
             selectedNotification
@@ -195,18 +202,18 @@ export function InboxFeed({
           }`}
         >
           {inbox.loading ? (
-            <div className="flex h-full items-center justify-center">
+            <div className="flex h-full min-h-0 items-center justify-center">
               <VibeyLoadingOrb size="md" text={INBOX_MESSAGES.LOADING} />
             </div>
           ) : visibleNotifications.length === 0 ? (
-            <div className="gap-spacing-3 px-spacing-6 py-spacing-16 flex h-full flex-col items-center justify-center text-center">
+            <div className="gap-spacing-3 px-spacing-6 py-spacing-16 flex h-full min-h-0 flex-col items-center justify-center text-center">
               <Check className="icon-lg text-success" aria-hidden />
               <p className="body-3 text-muted-foreground">
                 {search.trim() ? INBOX_MESSAGES.EMPTY.search : INBOX_MESSAGES.EMPTY[inbox.view]}
               </p>
             </div>
           ) : (
-            <ul>
+            <ul className="min-h-0">
               {visibleNotifications.map((notification) => (
                 <InboxListRow
                   key={notification.id}
@@ -225,7 +232,9 @@ export function InboxFeed({
         </div>
 
         <div
-          className={`min-h-0 min-w-0 flex-1 ${selectedNotification ? 'flex' : 'hidden md:block'}`}
+          className={`min-h-0 min-w-0 flex-1 overflow-hidden ${
+            selectedNotification ? 'flex flex-col' : 'hidden md:flex md:flex-col'
+          }`}
         >
           <InboxDetailPane
             notification={selectedNotification}
