@@ -12,7 +12,13 @@ describe('shell menu dock', () => {
   beforeEach(() => {
     window.localStorage.removeItem(STORAGE_KEY)
     resetShellMenuDockHydrationForTests()
-    useShellMenuDock.setState({ dock: 'left', dragging: false, candidate: 'left' })
+    useShellMenuDock.setState({
+      dock: 'left',
+      dragging: false,
+      candidate: 'left',
+      pointerX: 0,
+      pointerY: 0,
+    })
   })
 
   it('persists a valid dock placement', () => {
@@ -53,6 +59,18 @@ describe('shell menu dock', () => {
       dock: 'right',
       candidate: 'right',
       dragging: false,
+    })
+  })
+
+  it('tracks pointer while choosing a dock edge', () => {
+    useShellMenuDock.getState().startDragging(40, 60)
+    useShellMenuDock.getState().setCandidate('right', 900, 420)
+
+    expect(useShellMenuDock.getState()).toMatchObject({
+      candidate: 'right',
+      pointerX: 900,
+      pointerY: 420,
+      dragging: true,
     })
   })
 

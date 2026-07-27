@@ -38,23 +38,34 @@ export function SidebarHqHubLogoButton({
 
   const updateCandidate = (clientX: number, clientY: number) => {
     if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return
-    setCandidate(shellMenuDockForPoint(clientX, clientY, window.innerWidth, window.innerHeight))
+    setCandidate(
+      shellMenuDockForPoint(clientX, clientY, window.innerWidth, window.innerHeight),
+      clientX,
+      clientY,
+    )
   }
 
   return (
     <>
       <button
         type="button"
+        draggable={false}
+        onDragStart={(event) => {
+          event.preventDefault()
+        }}
         onPointerDown={(event) => {
           if (event.button > 0) return
+          // Block native image/text drag so hold-to-dock owns the gesture.
+          event.preventDefault()
           event.currentTarget.setPointerCapture?.(event.pointerId)
           pointerActiveRef.current = true
           draggedRef.current = false
           clearHoldTimer()
+          const { clientX, clientY } = event
           holdTimerRef.current = setTimeout(() => {
             draggedRef.current = true
-            startDragging()
-            updateCandidate(event.clientX, event.clientY)
+            startDragging(clientX, clientY)
+            updateCandidate(clientX, clientY)
           }, HOLD_TO_DOCK_MS)
         }}
         onPointerMove={(event) => {
@@ -96,10 +107,16 @@ export function SidebarHqHubLogoButton({
           <>
             <img
               src="/Logos/roas/icon-white.png"
-              alt="ROAS"
+              alt=""
+              draggable={false}
               className="hidden h-10 w-10 dark:block"
             />
-            <img src="/Logos/roas/icon-black.png" alt="ROAS" className="h-10 w-10 dark:hidden" />
+            <img
+              src="/Logos/roas/icon-black.png"
+              alt=""
+              draggable={false}
+              className="h-10 w-10 dark:hidden"
+            />
           </>
         )}
       </button>

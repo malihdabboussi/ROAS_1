@@ -4022,8 +4022,8 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
 }
 .shell-menu-dock-lifted-logo {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: var(--shell-menu-dock-y, 50%);
+  left: var(--shell-menu-dock-x, 50%);
   display: flex;
   width: calc(var(--spacing-16) + var(--spacing-2));
   height: calc(var(--spacing-16) + var(--spacing-2));
@@ -4034,11 +4034,15 @@ html[data-transient-scrollbars='true'][data-scrolling='true'] *::-webkit-scrollb
   border-radius: var(--spacing-4);
   background: var(--color-card);
   box-shadow: var(--shadow-2);
+  pointer-events: none;
 }
 .shell-menu-dock-lifted-logo img {
   width: var(--spacing-10);
   height: var(--spacing-10);
   object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 .hub-dock-flyout-viewport[data-shell-menu-dock='top'],
 .hub-dock-flyout-viewport[data-shell-menu-dock='bottom'] {

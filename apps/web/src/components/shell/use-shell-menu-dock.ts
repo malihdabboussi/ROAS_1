@@ -10,9 +10,11 @@ type ShellMenuDockStore = {
   dock: ShellMenuDock
   dragging: boolean
   candidate: ShellMenuDock
+  pointerX: number
+  pointerY: number
   setDock: (dock: ShellMenuDock) => void
-  startDragging: () => void
-  setCandidate: (candidate: ShellMenuDock) => void
+  startDragging: (pointerX?: number, pointerY?: number) => void
+  setCandidate: (candidate: ShellMenuDock, pointerX?: number, pointerY?: number) => void
   finishDragging: (dock?: ShellMenuDock) => void
   cancelDragging: () => void
 }
@@ -36,12 +38,25 @@ export const useShellMenuDock = create<ShellMenuDockStore>((set, get) => ({
   dock: 'left',
   dragging: false,
   candidate: 'left',
+  pointerX: 0,
+  pointerY: 0,
   setDock: (dock) => {
     persistDock(dock)
     set({ dock, candidate: dock, dragging: false })
   },
-  startDragging: () => set((state) => ({ dragging: true, candidate: state.dock })),
-  setCandidate: (candidate) => set({ candidate }),
+  startDragging: (pointerX, pointerY) =>
+    set((state) => ({
+      dragging: true,
+      candidate: state.dock,
+      pointerX: pointerX ?? state.pointerX,
+      pointerY: pointerY ?? state.pointerY,
+    })),
+  setCandidate: (candidate, pointerX, pointerY) =>
+    set((state) => ({
+      candidate,
+      pointerX: pointerX ?? state.pointerX,
+      pointerY: pointerY ?? state.pointerY,
+    })),
   finishDragging: (dock) => get().setDock(dock ?? get().candidate),
   cancelDragging: () => set((state) => ({ dragging: false, candidate: state.dock })),
 }))
