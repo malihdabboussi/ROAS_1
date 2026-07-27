@@ -281,9 +281,12 @@ export class MemoriesRepository {
     contentHash: string,
     ownerId?: string,
     orgId?: string | null,
+    brainIdOverride?: string | null,
   ) {
     let query = client.from('ns_memories').select('id').eq('content_hash', contentHash).limit(1)
-    if (ownerId) {
+    if (brainIdOverride?.trim()) {
+      query = query.eq('brain_id', brainIdOverride.trim())
+    } else if (ownerId) {
       const brainId = await this.brainResolver.resolveDefaultBrainId(client, ownerId, orgId)
       query = query.eq('brain_id', brainId)
     }

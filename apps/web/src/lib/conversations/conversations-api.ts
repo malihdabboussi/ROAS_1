@@ -246,9 +246,31 @@ export async function upsertConversationShare(
     entity_type: ConversationShareEntityType
     entity_id: string
     level: ConversationShareLevel
+    notify?: boolean
+    note?: string
   },
 ): Promise<ConversationShareRecord> {
   return backendPost<ConversationShareRecord>(`/api/conversations/${conversationId}/shares`, input)
+}
+
+export async function passOffConversationShare(
+  conversationId: string,
+  input: {
+    user_id: string
+    level?: ConversationShareLevel
+    note?: string
+    notify?: boolean
+  },
+): Promise<ConversationShareRecord> {
+  return backendPost<ConversationShareRecord>(
+    `/api/conversations/${conversationId}/shares/pass-off`,
+    {
+      user_id: input.user_id,
+      level: input.level ?? 'edit',
+      note: input.note,
+      notify: input.notify ?? true,
+    },
+  )
 }
 
 export async function deleteConversationShare(

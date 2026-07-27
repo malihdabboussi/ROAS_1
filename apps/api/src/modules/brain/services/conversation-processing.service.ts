@@ -1,6 +1,7 @@
-import { BadRequestException, Inject, Injectable, Logger, Optional } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { MemoriesRepository } from '../repositories/memories.repository'
+import { MemoryBrainResolver } from '../repositories/memory-brain-resolver'
 import type { ProcessConversationDto } from '../types/brain.types'
 import { BrainOpsHookService } from './brain-ops-hook.service'
 import { EmbeddingService, type BrainGeminiBillingContext } from './embedding.service'
@@ -44,6 +45,7 @@ export class ConversationProcessingService {
     private readonly memoriesRepo: MemoriesRepository,
     private readonly emotionalTagging: EmotionalTaggingService,
     private readonly scholarContext: ScholarContextService,
+    private readonly brainResolver: MemoryBrainResolver,
     @Optional() private readonly brainOpsHook?: BrainOpsHookService,
   ) {}
 
@@ -116,10 +118,31 @@ export class ConversationProcessingService {
     // ── Step 4: Dedup, embed, save ─────────────────────────────────────
     const savedMemories: Record<string, unknown>[] = []
     let duplicateCount = 0
+    const sourceTypeForSave = normalizeOptional(data.source_type) ?? 'conversation'
+    const sourceId = normalizeOptional(data.source_id) ?? normalizeOptional(data.session_key)
+    const sourceTitle = normalizeOptional(data.source_title)
+    const agentId = normalizeOptional(data.agent_id)
+    const campaignId = normalizeOptional(data.campaign_id)
+    const explicitBrainId = normalizeOptional(data.brain_id)
+    const targetBrainId =
+      explicitBrainId ??
+      (campaignId
+        ? await this.brainResolver.resolveOrCreateCampaignBrainId(supabase, {
+            ownerId,
+            orgId: data.org_id,
+            campaignId,
+          })
+        : null)
 
     for (const item of significant) {
       const contentHash = this.embedding.computeContentHash(item.content)
-      const isDuplicate = await this.memoriesRepo.checkDuplicate(supabase, contentHash, ownerId)
+      const isDuplicate = await this.memoriesRepo.checkDuplicate(
+        supabase,
+        contentHash,
+        ownerId,
+        data.org_id,
+        targetBrainId,
+      )
 
       if (isDuplicate) {
         duplicateCount++
@@ -130,16 +153,12 @@ export class ConversationProcessingService {
         taskType: 'RETRIEVAL_DOCUMENT',
         billing,
       })
-      const sourceType = normalizeOptional(data.source_type) ?? 'conversation'
-      const sourceId = normalizeOptional(data.source_id) ?? normalizeOptional(data.session_key)
-      const sourceTitle = normalizeOptional(data.source_title)
-      const agentId = normalizeOptional(data.agent_id)
 
       const record: Record<string, unknown> = {
         content: item.content,
         content_hash: contentHash,
         memory_type: item.type,
-        source_type: sourceType,
+        source_type: sourceTypeForSave,
         source_id: sourceId,
         source_title: sourceTitle,
         project_id: null,
@@ -148,13 +167,14 @@ export class ConversationProcessingService {
         confidence: item.confidence ?? 0.8,
         significance: item.significance ?? 0.6,
         tags: item.tags ?? [],
-        metadata: ownerId
-          ? {
-              user_id: ownerId,
-              ...(sourceType ? { import_source: sourceType } : {}),
-              ...(sourceTitle ? { source_title: sourceTitle } : {}),
-            }
-          : {},
+        owner_id: ownerId,
+        ...(targetBrainId ? { brain_id: targetBrainId } : {}),
+        metadata: {
+          user_id: ownerId,
+          import_source: sourceTypeForSave,
+          ...(sourceTitle ? { source_title: sourceTitle } : {}),
+          ...(campaignId ? { campaign_id: campaignId } : {}),
+        },
       }
       if (vector) {
         record.embedding = JSON.stringify(vector)

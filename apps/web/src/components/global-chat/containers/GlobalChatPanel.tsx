@@ -5,7 +5,9 @@ import { useMemo } from 'react'
 import { SpaceVibeyChatPanel } from '@/features/spaces/components/chat/SpaceVibeyChatPanel'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { ChatSurfaceRecommendation } from '../components/ChatSurfaceRecommendation'
+import { ChatCampaignBrainNudge } from '../components/ChatCampaignBrainNudge'
 import { GlobalChatComposerFooter } from '../components/GlobalChatComposerFooter'
+import { QuickMissionsHubHost } from '../components/QuickMissionsHubHost'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 
 export function GlobalChatPanel({
@@ -46,6 +48,7 @@ export function GlobalChatPanel({
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <ChatSurfaceRecommendation />
+      <ChatCampaignBrainNudge />
       {/*
         Bound height for SpaceVibeyChatPanel: without overflow-hidden + flex column here,
         the thread spacer can grow the panel past the rail and clip the composer off-screen.
@@ -89,6 +92,7 @@ export function GlobalChatPanel({
           onCollapseChat={onCollapseChat ?? (() => setCollapsed(true))}
         />
       </div>
+      <QuickMissionsHubHost />
     </div>
   )
 }

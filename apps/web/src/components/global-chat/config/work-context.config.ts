@@ -233,3 +233,26 @@ export const WORK_SURFACE_LABELS: Record<GlobalWorkSurface, string> = {
   team: 'Team',
   flows: 'Flows',
 }
+
+/** Mid-conversation campaign+brain soft prompt — not at chat start. */
+export const CAMPAIGN_BRAIN_NUDGE_MIN_USER_TURNS = 3
+
+export function countUserMessageTurns(
+  messages: ReadonlyArray<{ role?: string | null }>,
+): number {
+  return messages.filter((message) => message.role === 'user').length
+}
+
+export function shouldOfferCampaignBrainNudge(input: {
+  surface: GlobalWorkSurface
+  spaceId?: string | null
+  userTurnCount: number
+  minUserTurns?: number
+  dismissed?: boolean
+}): boolean {
+  if (input.dismissed) return false
+  if (input.surface !== 'general') return false
+  if (typeof input.spaceId === 'string' && input.spaceId.trim().length > 0) return false
+  const minTurns = input.minUserTurns ?? CAMPAIGN_BRAIN_NUDGE_MIN_USER_TURNS
+  return input.userTurnCount >= minTurns
+}

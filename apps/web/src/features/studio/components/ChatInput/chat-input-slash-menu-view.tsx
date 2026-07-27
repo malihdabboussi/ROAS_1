@@ -1,13 +1,17 @@
 import type { SlashItem } from './chat-input-slash-menu'
 
 export interface SlashMenuLayout {
+  playbookItems: SlashItem[]
   skillItems: SlashItem[]
   workflowItems: SlashItem[]
+  playbookVisible: SlashItem[]
   skillVisible: SlashItem[]
   workflowVisible: SlashItem[]
   visibleFlat: SlashItem[]
+  playbookMoreCount: number
   skillMoreCount: number
   workflowMoreCount: number
+  showPlaybookMore: boolean
   showSkillMore: boolean
   showWorkflowMore: boolean
 }
@@ -18,6 +22,7 @@ interface SlashCommandMenuViewProps {
   slashHighlight: number
   onSelect: (item: SlashItem) => void
   onHighlight: (index: number) => void
+  onShowMorePlaybooks: () => void
   onShowMoreSkills: () => void
   onShowMoreWorkflows: () => void
 }
@@ -28,17 +33,22 @@ export function SlashCommandMenuView({
   slashHighlight,
   onSelect,
   onHighlight,
+  onShowMorePlaybooks,
   onShowMoreSkills,
   onShowMoreWorkflows,
 }: SlashCommandMenuViewProps) {
   const {
+    playbookItems,
     skillItems,
     workflowItems,
+    playbookVisible,
     skillVisible,
     workflowVisible,
     visibleFlat,
+    playbookMoreCount,
     skillMoreCount,
     workflowMoreCount,
+    showPlaybookMore,
     showSkillMore,
     showWorkflowMore,
   } = layout
@@ -52,35 +62,58 @@ export function SlashCommandMenuView({
     )
   }
 
+  const sections: Array<{
+    title: string
+    items: SlashItem[]
+    visible: SlashItem[]
+    moreCount: number
+    showMore: boolean
+    onShowMore: () => void
+  }> = [
+    {
+      title: 'Playbooks',
+      items: playbookItems,
+      visible: playbookVisible,
+      moreCount: playbookMoreCount,
+      showMore: showPlaybookMore,
+      onShowMore: onShowMorePlaybooks,
+    },
+    {
+      title: 'Skills',
+      items: skillItems,
+      visible: skillVisible,
+      moreCount: skillMoreCount,
+      showMore: showSkillMore,
+      onShowMore: onShowMoreSkills,
+    },
+    {
+      title: 'Workflows',
+      items: workflowItems,
+      visible: workflowVisible,
+      moreCount: workflowMoreCount,
+      showMore: showWorkflowMore,
+      onShowMore: onShowMoreWorkflows,
+    },
+  ].filter((section) => section.items.length > 0)
+
   return (
     <>
-      {skillItems.length > 0 && (
-        <SlashCommandSection
-          title="Skills"
-          items={skillVisible}
-          flatIndexById={flatIndexById}
-          slashHighlight={slashHighlight}
-          moreCount={skillMoreCount}
-          showMore={showSkillMore}
-          onSelect={onSelect}
-          onHighlight={onHighlight}
-          onShowMore={onShowMoreSkills}
-        />
-      )}
-      {skillItems.length > 0 && workflowItems.length > 0 && <div className="border-border border-t" />}
-      {workflowItems.length > 0 && (
-        <SlashCommandSection
-          title="Workflows"
-          items={workflowVisible}
-          flatIndexById={flatIndexById}
-          slashHighlight={slashHighlight}
-          moreCount={workflowMoreCount}
-          showMore={showWorkflowMore}
-          onSelect={onSelect}
-          onHighlight={onHighlight}
-          onShowMore={onShowMoreWorkflows}
-        />
-      )}
+      {sections.map((section, index) => (
+        <div key={section.title}>
+          {index > 0 ? <div className="border-border border-t" /> : null}
+          <SlashCommandSection
+            title={section.title}
+            items={section.visible}
+            flatIndexById={flatIndexById}
+            slashHighlight={slashHighlight}
+            moreCount={section.moreCount}
+            showMore={section.showMore}
+            onSelect={onSelect}
+            onHighlight={onHighlight}
+            onShowMore={section.onShowMore}
+          />
+        </div>
+      ))}
     </>
   )
 }
@@ -127,9 +160,7 @@ function SlashCommandSection({
             }`}
           >
             <span className="body-3 text-foreground font-medium">/{item.key}</span>
-            <span className="body-4 text-muted-foreground line-clamp-1">
-              {item.description}
-            </span>
+            <span className="body-4 text-muted-foreground line-clamp-1">{item.description}</span>
           </button>
         )
       })}
