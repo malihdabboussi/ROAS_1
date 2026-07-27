@@ -1,12 +1,22 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StudioSearchModal } from './StudioSearchModal'
 
-const searchMock = vi.hoisted(() => vi.fn())
-
-vi.mock('@/features/studio/services/studio-search-api.service', () => ({
-  fetchStudioGlobalSearch: searchMock,
+const mocks = vi.hoisted(() => ({
+  searchMock: vi.fn(),
+  idleMock: vi.fn(),
 }))
+
+vi.mock('@/features/studio/services/studio-search-api.service', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/features/studio/services/studio-search-api.service')
+  >('@/features/studio/services/studio-search-api.service')
+  return {
+    ...actual,
+    fetchStudioGlobalSearch: mocks.searchMock,
+    fetchStudioSearchIdle: mocks.idleMock,
+  }
+})
 
 vi.mock('@/components/ui/IconPicker', () => ({
   LucideIcon: ({ name }: { name: string }) => <span>{name}</span>,
@@ -19,18 +29,61 @@ afterEach(() => {
 })
 
 describe('StudioSearchModal', () => {
-  it('shows an idle hint when opened with an empty query', () => {
+  it('shows recents and presets when opened with an empty query', async () => {
+    mocks.idleMock.mockResolvedValue({
+      recents: [
+        {
+          kind: 'conversation',
+          id: 'conv-1',
+          label: 'Offer strategy chat',
+          subtitle: 'Vibey',
+          url: null,
+        },
+        {
+          kind: 'campaign',
+          id: 'camp-1',
+          label: 'Webinar Offer',
+          subtitle: 'Campaign',
+          url: null,
+          campaignIcon: 'target',
+        },
+        {
+          kind: 'mission',
+          id: 'mission-1',
+          label: 'Research mission',
+          subtitle: 'active',
+          url: '/missions/mission-1',
+        },
+      ],
+      presets: [
+        {
+          kind: 'preset',
+          id: 'meetings',
+          label: 'Meetings',
+          subtitle: 'Home',
+          url: '/home/meetings',
+        },
+      ],
+    })
+
     render(<StudioSearchModal open onClose={vi.fn()} campaigns={[]} onSelect={vi.fn()} />)
 
-    expect(
-      screen.getByText('Start typing to search tasks, docs, chats, and campaigns.'),
-    ).toBeTruthy()
-    expect(searchMock).not.toHaveBeenCalled()
+    await waitFor(() => {
+      expect(screen.getByText('Offer strategy chat')).toBeTruthy()
+    })
+    expect(screen.getByText('Recents')).toBeTruthy()
+    expect(screen.getByText('Webinar Offer')).toBeTruthy()
+    expect(screen.getByText('Research mission')).toBeTruthy()
+    expect(screen.getByText('Go to')).toBeTruthy()
+    expect(screen.getByText('Meetings')).toBeTruthy()
+    expect(mocks.searchMock).not.toHaveBeenCalled()
+    expect(mocks.idleMock).toHaveBeenCalled()
   })
 
   it('renders server-backed tasks, docs, deliverables, conversations, campaigns, and artifacts', async () => {
     vi.useFakeTimers()
-    searchMock.mockResolvedValue([
+    mocks.idleMock.mockResolvedValue({ recents: [], presets: [] })
+    mocks.searchMock.mockResolvedValue([
       {
         kind: 'task',
         id: 'task-1',
@@ -99,7 +152,8 @@ describe('StudioSearchModal', () => {
 
   it('shows a useful failure state when global search fails', async () => {
     vi.useFakeTimers()
-    searchMock.mockRejectedValue(new Error('network down'))
+    mocks.idleMock.mockResolvedValue({ recents: [], presets: [] })
+    mocks.searchMock.mockRejectedValue(new Error('network down'))
 
     render(<StudioSearchModal open onClose={vi.fn()} campaigns={[]} onSelect={vi.fn()} />)
 

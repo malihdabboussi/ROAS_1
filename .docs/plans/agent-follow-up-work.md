@@ -1,3 +1,19 @@
+## 2026-07-27 - [ARCH] SpaceItemsContainer + StudioSearchModal LOC after shell open/search polish
+
+Status: Open
+
+Found while: Agent D feedback shell (Inbox panes, Cmd+K idle, Spaces open lag)
+
+Files:
+- `apps/web/src/features/spaces/containers/SpaceItemsContainer.tsx` (1,481 LOC; pre-existing over 600 container limit)
+- `apps/web/src/features/studio/components/StudioSearchModal.tsx` (402 LOC; at/over 400 component soft limit)
+
+Evidence: Container already far over limit; idle recents/presets UI pushed the search modal just over 400.
+
+Needed work: Split SpaceItemsContainer toolbar/modals/open-path orchestration; extract StudioSearchModal idle/results list into a presentational child.
+
+Reason not done now: In-scope fix was open-path + idle search behavior only; full splits are adjacent debt.
+
 ## 2026-07-26 - [ARCH] Finish ROAS Portal renames in over-limit Spaces bulk-send files — RESOLVED
 
 Resolved by splitting `BulkActionBar` into `bulk-action-bar/*` modules and `PageGraderBulkSendPanel` into `page-grader-bulk-send/*` step components, switching the settings hook to `@/lib/settings`, and shipping The ROAS Portal public copy.

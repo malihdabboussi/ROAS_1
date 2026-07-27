@@ -71,18 +71,26 @@ describe('InboxFeed', () => {
 
   it('selects a task, marks it read, and exposes details separately from its source', () => {
     const onOpenDetails = vi.fn()
-    render(<InboxFeed presentation="page" onOpenDetails={onOpenDetails} />)
+    const { container } = render(<InboxFeed presentation="page" onOpenDetails={onOpenDetails} />)
 
     fireEvent.click(screen.getByRole('button', { name: /Launch checklist/i }))
 
     expect(mocks.toggleRead).toHaveBeenCalledWith(taskNotification)
     expect(screen.getByRole('button', { name: /Open task details/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /View in Space/i })).toBeInTheDocument()
+    expect(container.querySelector('article')).toHaveClass('overflow-hidden')
+    expect(container.querySelector('.overflow-y-auto')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: /Open task details/i }))
     expect(onOpenDetails).toHaveBeenCalledWith(taskNotification)
 
     fireEvent.click(screen.getByRole('button', { name: /View in Space/i }))
     expect(mocks.push).toHaveBeenCalledWith('/spaces?space=space-1&item=task-1')
+  })
+
+  it('keeps the two-pane body height-constrained so panes scroll independently', () => {
+    const { container } = render(<InboxFeed presentation="page" />)
+    const panes = container.querySelector('.flex.min-h-0.flex-1.overflow-hidden')
+    expect(panes).toBeTruthy()
   })
 })

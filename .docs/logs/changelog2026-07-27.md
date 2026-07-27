@@ -1,5 +1,15 @@
 # Changelog - July 27, 2026
 
+## [2026-07-27 15:18] - [FIX]
+
+What: Shell polish for Inbox two-pane contained scroll, Cmd+K idle recents/presets (chats, campaigns, missions, Meetings), and Spaces click-to-open without refresh-to-edit.
+
+Why: Inbox scrolled as one page blob with empty-feeling detail; Cmd+K idle showed only “Start typing…”; Spaces deep-link/open cleared selection during view/query swaps or marked missing items as handled too early.
+
+Impact: Inbox list and detail scroll independently with filled detail on select; Cmd+K opens with recents + Go-to presets; space items open immediately from click and `?item=` deep links once loaded.
+
+Files: `InboxFeed.tsx`, `InboxDetailPane.tsx`, `InboxListRow.tsx`, `use-inbox-triage.ts`, `StudioSearchModal.tsx`, `studio-search-api.service.ts`, `studio-search-messages.config.ts`, `use-space-item-navigation-events.ts`, `SpaceItemsContainer.tsx`, related tests
+
 ## [2026-07-27 15:00] - [FIX]
 
 What: Moved `statusField` `useMemo` above the loading early-return in `HomeSpaceTaskDetailHost` so opening a home task (including meeting prep from agenda) no longer violates Rules of Hooks.
