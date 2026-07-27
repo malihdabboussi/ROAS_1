@@ -325,6 +325,12 @@ function HomeSpaceTaskDetailHost({
     [onClose, router, space],
   )
 
+  // Must stay above the loading early-return — conditional hooks crash the home shell.
+  const statusField = useMemo(
+    () => fieldsForUi.find((field) => field.id === 'status'),
+    [fieldsForUi],
+  )
+
   if (loading || !space || !schema || !activeView || !selectedItem) {
     return (
       <div className="fixed inset-0 z-[50] flex items-center justify-center bg-black/40">
@@ -332,11 +338,6 @@ function HomeSpaceTaskDetailHost({
       </div>
     )
   }
-
-  const statusField = useMemo(
-    () => fieldsForUi.find((field) => field.id === 'status'),
-    [fieldsForUi],
-  )
 
   return (
     <SpaceStatusCascadeConfirmProvider statusField={statusField} spaceId={spaceId}>

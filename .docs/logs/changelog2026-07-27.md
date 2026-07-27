@@ -1,5 +1,16 @@
 # Changelog - July 27, 2026
 
+## [2026-07-27 15:00] - [FIX]
+
+What: Moved `statusField` `useMemo` above the loading early-return in `HomeSpaceTaskDetailHost` so opening a home task (including meeting prep from agenda) no longer violates Rules of Hooks.
+
+Why: Production crashed with a blank client-side exception when agenda → open meeting → start/open prep mounted the host through loading → ready.
+
+Impact: Home meeting prep and Fathom-related agenda opens load the task detail instead of killing the app shell.
+
+Files: `apps/web/src/features/home/components/HomeTaskDetailHost.tsx`, `HomeTaskDetailHost.test.tsx`
+
+
 ## [2026-07-27 00:01] - [FIX]
 
 What: Replaced the duplicated, edge-clipped AI capability marquee with a stable responsive capability group, and made selected-agent layouts give the agent profile the work area while the canonical AI Chat is open.
