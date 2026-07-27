@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ExternalLink, MapPin, MessageSquare, Video, X } from 'lucide-react'
 import { askAboutMeetingInChat } from '@/features/home/lib/ask-meeting-in-chat'
 import type {
@@ -53,7 +53,7 @@ function isYours(followUp: CalendarAgendaRelatedFollowUp, currentUserId: string 
   return followUp.assignee_type === 'human' && followUp.assignee_id === currentUserId
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function SectionLabel({ children }: { children: ReactNode }) {
   return (
     <p className="typo-caption text-muted-foreground mb-1.5 font-medium uppercase tracking-wide">
       {children}
@@ -99,7 +99,12 @@ export function HomeMeetingDetailHost({
     : isHttpUrl(event.video_url) && event.source === 'fathom'
       ? event.video_url.trim()
       : null
+  const joinUrl =
+    isHttpUrl(event.video_url) && event.video_url.trim() !== recordingUrl
+      ? event.video_url.trim()
+      : null
   const summary = related?.summary?.trim() || null
+  const showMeetingLinks = Boolean(relatedHref || recordingUrl || joinUrl)
 
   useEffect(() => {
     let cancelled = false
@@ -167,7 +172,7 @@ export function HomeMeetingDetailHost({
             </section>
           ) : null}
 
-          {(relatedHref || recordingUrl || event.video_url) && event.source !== 'fathom' ? (
+          {showMeetingLinks ? (
             <section className="flex flex-col gap-2">
               <SectionLabel>Meeting</SectionLabel>
               {relatedHref ? (
@@ -195,46 +200,15 @@ export function HomeMeetingDetailHost({
                   {recordingLinkLabel(recordingUrl)}
                 </a>
               ) : null}
-              {event.video_url && event.video_url !== recordingUrl ? (
+              {joinUrl ? (
                 <a
-                  href={event.video_url}
+                  href={joinUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="border-border hover:bg-hover-subtle body-3 text-foreground inline-flex items-center gap-2 rounded-lg border px-3 py-2 font-medium"
                 >
                   <Video className="h-3.5 w-3.5 shrink-0" aria-hidden />
                   {event.video_label ? `Join ${event.video_label}` : 'Join meeting'}
-                </a>
-              ) : null}
-            </section>
-          ) : null}
-
-          {event.source === 'fathom' && (relatedHref || recordingUrl) ? (
-            <section className="flex flex-col gap-2">
-              <SectionLabel>Meeting</SectionLabel>
-              {relatedHref ? (
-                <button
-                  type="button"
-                  onClick={openCallTask}
-                  className="border-border hover:bg-hover-subtle body-3 rounded-lg border px-3 py-2 text-left"
-                >
-                  <span className="text-foreground font-medium">
-                    {related?.title?.trim() || event.title}
-                  </span>
-                  <span className="text-muted-foreground mt-0.5 block font-normal">
-                    Open the meeting task in Spaces
-                  </span>
-                </button>
-              ) : null}
-              {recordingUrl ? (
-                <a
-                  href={recordingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="border-border hover:bg-hover-subtle body-3 text-foreground inline-flex items-center gap-2 rounded-lg border px-3 py-2 font-medium"
-                >
-                  <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                  {recordingLinkLabel(recordingUrl)}
                 </a>
               ) : null}
             </section>

@@ -8,6 +8,8 @@ import {
   isEligiblePrecallEvent,
   localDayBounds,
   mapPrepItemToAgendaLink,
+  resolveAgendaCallSummary,
+  resolveAgendaRecordingUrl,
   resolvePreferredMeetingsSpaceId,
   scoreRelatedCallMatch,
 } from '../meetings-precall-prep.helpers'
@@ -258,10 +260,12 @@ describe('meetings-precall-prep.helpers', () => {
       title: 'Weekly sync',
       callDate: '2026-07-16T23:00:00.000Z',
       recordingUrl: 'https://fathom.video/x',
+      summary: 'Align on launch readiness.',
     })
     expect(row.source).toBe('fathom')
     expect(row.id).toBe('fathom:call-1')
     expect(row.related.call_item_id).toBe('call-1')
+    expect(row.related.summary).toBe('Align on launch readiness.')
     expect(row.video_label).toBe('Fathom')
     expect(new Date(row.end).getTime()).toBeGreaterThan(new Date(row.start).getTime())
   })
@@ -281,5 +285,36 @@ describe('meetings-precall-prep.helpers', () => {
         '2026-07-17T00:00:00.000Z',
       ),
     ).toBe(false)
+  })
+
+  it('resolves recording url from recording_url or fathom_url', () => {
+    expect(resolveAgendaRecordingUrl({ recording_url: 'https://fathom.video/a' })).toBe(
+      'https://fathom.video/a',
+    )
+    expect(resolveAgendaRecordingUrl({ fathom_url: 'https://fathom.video/b' })).toBe(
+      'https://fathom.video/b',
+    )
+    expect(resolveAgendaRecordingUrl({ recording_url: 'not-a-url' })).toBeNull()
+  })
+
+  it('keeps short summaries and drops transcript-like descriptions', () => {
+    expect(
+      resolveAgendaCallSummary({
+        description: null,
+        custom: { summary: 'Bridge AM and builders.' },
+      }),
+    ).toBe('Bridge AM and builders.')
+    expect(
+      resolveAgendaCallSummary({
+        description: 'Short purpose note about launch readiness.',
+        custom: {},
+      }),
+    ).toBe('Short purpose note about launch readiness.')
+    expect(
+      resolveAgendaCallSummary({
+        description: `${'x'.repeat(2000)}\nDylan: hello\nNate: hi`,
+        custom: {},
+      }),
+    ).toBeNull()
   })
 })
