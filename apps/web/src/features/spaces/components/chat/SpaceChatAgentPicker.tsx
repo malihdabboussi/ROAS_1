@@ -11,6 +11,7 @@ interface SpaceChatAgentPickerProps {
   value: string
   onChange: (agentKey: string) => void
   disabled?: boolean
+  variant?: 'header' | 'hero'
 }
 
 function AgentAvatar({ entry, className }: { entry: TeamRosterEntry; className?: string }) {
@@ -36,6 +37,7 @@ export function SpaceChatAgentPicker({
   value,
   onChange,
   disabled = false,
+  variant = 'header',
 }: SpaceChatAgentPickerProps) {
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -57,6 +59,7 @@ export function SpaceChatAgentPicker({
   )
 
   const label = selected?.display_name ?? value
+  const hero = variant === 'hero'
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) return
     const rect = triggerRef.current.getBoundingClientRect()
@@ -95,27 +98,42 @@ export function SpaceChatAgentPicker({
           setOpen((o) => !o)
         }}
         className={cn(
-          'hover:bg-hover-subtle rounded-spacing-2 gap-spacing-2 px-spacing-1 py-spacing-1 flex max-w-full shrink-0 items-center text-left transition-colors',
+          'hover:bg-hover-subtle rounded-spacing-2 gap-spacing-2 px-spacing-1 py-spacing-1 group flex max-w-full shrink-0 items-center text-left transition-colors',
+          hero && 'flex-col',
           disabled && 'cursor-not-allowed opacity-60',
         )}
         aria-label={`Talking with ${label}. Change agent.`}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <div className="h-spacing-10 w-spacing-10 rounded-spacing-2 shrink-0 overflow-hidden">
+        <div
+          className={cn(
+            'shrink-0 overflow-hidden',
+            hero
+              ? 'h-spacing-16 w-spacing-16 rounded-full'
+              : 'h-spacing-10 w-spacing-10 rounded-spacing-2',
+          )}
+        >
           {selected ? <AgentAvatar entry={selected} /> : null}
         </div>
-        <span className="body-2 text-foreground max-w-[10rem] truncate font-semibold leading-tight">
-          {label}
-        </span>
-        <span className="h-spacing-4 w-spacing-4 flex shrink-0 items-center justify-center">
-          <ChevronDown
+        <span className="gap-spacing-1 flex min-w-0 max-w-full items-center">
+          <span
             className={cn(
-              'icon-sm text-muted-foreground transition-opacity duration-200 ease-out',
-              open ? 'rotate-180 opacity-70' : 'opacity-0 group-hover:opacity-70',
+              'text-foreground min-w-0 truncate font-semibold leading-tight',
+              hero ? 'body-1 max-w-xs' : 'body-2 max-w-[10rem]',
             )}
-            aria-hidden
-          />
+          >
+            {label}
+          </span>
+          <span className="h-spacing-4 w-spacing-4 flex shrink-0 items-center justify-center">
+            <ChevronDown
+              className={cn(
+                'icon-sm text-muted-foreground transition-[opacity,transform] duration-200 ease-out',
+                open ? 'rotate-180 opacity-70' : 'opacity-0 group-hover:opacity-70',
+              )}
+              aria-hidden
+            />
+          </span>
         </span>
       </button>
 

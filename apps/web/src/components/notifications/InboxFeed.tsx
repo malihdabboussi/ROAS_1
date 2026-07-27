@@ -1,21 +1,11 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useMemo, useState, type ReactNode } from 'react'
-import {
-  Archive,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Clock3,
-  ExternalLink,
-  Inbox,
-  Mail,
-  MailOpen,
-  RotateCcw,
-} from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Archive, Check, CheckCheck, Inbox, Search } from 'lucide-react'
+import { InboxDetailPane } from '@/components/notifications/InboxDetailPane'
+import { InboxListRow } from '@/components/notifications/InboxListRow'
 import { SettingsSelect } from '@/components/ui/forms/SettingsSelect'
-import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import { Tooltip } from '@/components/ui/tooltip'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
@@ -33,204 +23,28 @@ const VIEW_OPTIONS: Array<{ id: Exclude<InboxView, 'all'>; label: string }> = [
   { id: 'cleared', label: INBOX_MESSAGES.VIEWS.cleared },
 ]
 
-function InboxAction({
-  label,
-  onClick,
-  children,
-}: {
-  label: string
-  onClick: () => void
-  children: ReactNode
-}) {
-  return (
-    <Tooltip label={label} side="bottom">
-      <button
-        type="button"
-        className="btn-icon-bare text-muted-foreground hover:text-foreground"
-        aria-label={label}
-        onClick={(event) => {
-          event.stopPropagation()
-          onClick()
-        }}
-      >
-        {children}
-      </button>
-    </Tooltip>
-  )
-}
-
-function InboxRow({
-  notification,
-  expanded,
-  onToggle,
-  onClear,
-  onRestore,
-  onSnooze,
-  onUnsnooze,
-  onMove,
-  onToggleRead,
-  onOpen,
-}: {
-  notification: UserNotification
-  expanded: boolean
-  onToggle: () => void
-  onClear: () => void
-  onRestore: () => void
-  onSnooze: () => void
-  onUnsnooze: () => void
-  onMove: (bucket: 'primary' | 'other') => void
-  onToggleRead: () => void
-  onOpen: () => void
-}) {
-  const cleared = notification.cleared_at !== null
-  const snoozed =
-    notification.snoozed_until !== null &&
-    new Date(notification.snoozed_until).getTime() > Date.now()
-  const read = notification.read_at !== null
-
-  return (
-    <li className="border-border border-b last:border-b-0">
-      <div className="group/inbox-row hover:bg-hover-subtle flex min-w-0 items-start transition-colors">
-        <button
-          type="button"
-          onClick={onToggle}
-          className="gap-spacing-3 px-spacing-4 py-spacing-3 flex min-w-0 flex-1 items-start text-left"
-          aria-expanded={expanded}
-        >
-          <span
-            className={`mt-spacing-2 h-spacing-2 w-spacing-2 shrink-0 rounded-full ${
-              read ? 'bg-border' : 'bg-primary'
-            }`}
-            aria-hidden
-          />
-          <span className="min-w-0 flex-1">
-            <span className="gap-spacing-2 flex items-center">
-              <span className="typo-caption text-muted-foreground uppercase tracking-wide">
-                {notificationTypeLabel(notification.type)}
-              </span>
-              <span className="typo-caption text-muted-foreground w-spacing-12 ml-auto shrink-0 text-right tabular-nums">
-                {new Date(notification.created_at).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </span>
-            </span>
-            <MarkdownRenderer
-              compact
-              className={`body-3 text-foreground mt-spacing-1 max-w-none ${
-                expanded ? '' : 'line-clamp-2'
-              }`}
-            >
-              {notification.title}
-            </MarkdownRenderer>
-          </span>
-          {expanded ? (
-            <ChevronUp className="icon-sm text-muted-foreground mt-spacing-1 shrink-0" />
-          ) : (
-            <ChevronDown className="icon-sm text-muted-foreground mt-spacing-1 shrink-0" />
-          )}
-        </button>
-        <span className="gap-spacing-1 py-spacing-3 pr-spacing-3 hidden shrink-0 items-center opacity-0 transition-opacity group-hover/inbox-row:opacity-100 md:flex">
-          <span className="flex items-center">
-            {cleared ? (
-              <InboxAction label={INBOX_MESSAGES.ACTIONS.restore} onClick={onRestore}>
-                <RotateCcw className="icon-sm" />
-              </InboxAction>
-            ) : (
-              <InboxAction label={INBOX_MESSAGES.ACTIONS.clear} onClick={onClear}>
-                <Archive className="icon-sm" />
-              </InboxAction>
-            )}
-            {snoozed ? (
-              <InboxAction label={INBOX_MESSAGES.ACTIONS.unsnooze} onClick={onUnsnooze}>
-                <RotateCcw className="icon-sm" />
-              </InboxAction>
-            ) : (
-              <InboxAction label={INBOX_MESSAGES.ACTIONS.snooze} onClick={onSnooze}>
-                <Clock3 className="icon-sm" />
-              </InboxAction>
-            )}
-            <InboxAction
-              label={read ? INBOX_MESSAGES.ACTIONS.unread : INBOX_MESSAGES.ACTIONS.read}
-              onClick={onToggleRead}
-            >
-              {read ? <Mail className="icon-sm" /> : <MailOpen className="icon-sm" />}
-            </InboxAction>
-            {notification.action_url ? (
-              <InboxAction label={INBOX_MESSAGES.ACTIONS.open} onClick={onOpen}>
-                <ExternalLink className="icon-sm" />
-              </InboxAction>
-            ) : null}
-          </span>
-        </span>
-      </div>
-
-      {expanded ? (
-        <div className="bg-secondary px-spacing-4 py-spacing-3 ml-spacing-7 mr-spacing-4 mb-spacing-3 rounded-spacing-2">
-          {notification.body ? (
-            <MarkdownRenderer compact muted className="body-3 max-w-none">
-              {notification.body}
-            </MarkdownRenderer>
-          ) : (
-            <p className="body-3 text-muted-foreground">{INBOX_MESSAGES.NO_DETAIL}</p>
-          )}
-          <div className="gap-spacing-2 mt-spacing-3 flex flex-wrap">
-            <button
-              type="button"
-              className="button-compact button-glass-neutral"
-              onClick={() => onMove(notification.inbox_bucket === 'primary' ? 'other' : 'primary')}
-            >
-              {notification.inbox_bucket === 'primary'
-                ? INBOX_MESSAGES.ACTIONS.other
-                : INBOX_MESSAGES.ACTIONS.primary}
-            </button>
-            <button
-              type="button"
-              className="button-compact button-glass-neutral"
-              onClick={cleared ? onRestore : onClear}
-            >
-              {cleared ? INBOX_MESSAGES.ACTIONS.restore : INBOX_MESSAGES.ACTIONS.clear}
-            </button>
-            <button
-              type="button"
-              className="button-compact button-glass-neutral"
-              onClick={snoozed ? onUnsnooze : onSnooze}
-            >
-              {snoozed ? INBOX_MESSAGES.ACTIONS.unsnooze : INBOX_MESSAGES.ACTIONS.snooze}
-            </button>
-            <button
-              type="button"
-              className="button-compact button-glass-neutral"
-              onClick={onToggleRead}
-            >
-              {read ? INBOX_MESSAGES.ACTIONS.unread : INBOX_MESSAGES.ACTIONS.read}
-            </button>
-            {notification.action_url ? (
-              <button
-                type="button"
-                className="button-compact button-glass-primary"
-                onClick={onOpen}
-              >
-                {INBOX_MESSAGES.ACTIONS.open}
-              </button>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-    </li>
-  )
+function navigateToSource(router: ReturnType<typeof useRouter>, url: string) {
+  if (/^https?:\/\//i.test(url)) {
+    window.open(url, '_blank', 'noopener,noreferrer')
+    return
+  }
+  router.push(url)
 }
 
 export function InboxFeed({
   initialView = 'primary',
   presentation = 'card',
+  onOpenDetails,
 }: {
   initialView?: InboxView
   presentation?: 'card' | 'page'
+  onOpenDetails?: (notification: UserNotification) => void | Promise<void>
 }) {
   const router = useRouter()
   const inbox = useInboxTriage(initialView)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+
   const typeOptions = useMemo(() => {
     const types = new Set(inbox.notifications.map((notification) => notification.type))
     if (inbox.type !== 'all') types.add(inbox.type as UserNotification['type'])
@@ -239,13 +53,42 @@ export function InboxFeed({
     )
   }, [inbox.notifications, inbox.type])
 
+  const visibleNotifications = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase()
+    if (!query) return inbox.notifications
+    return inbox.notifications.filter((notification) => {
+      const haystack = [
+        notification.title,
+        notification.body ?? '',
+        notificationTypeLabel(notification.type),
+      ]
+        .join(' ')
+        .toLocaleLowerCase()
+      return haystack.includes(query)
+    })
+  }, [inbox.notifications, search])
+
+  const selectedNotification =
+    inbox.notifications.find((notification) => notification.id === selectedId) ?? null
+
+  const selectNotification = (notification: UserNotification) => {
+    setSelectedId(notification.id)
+    if (!notification.read_at) void inbox.toggleRead(notification)
+  }
+
+  const updateView = (view: Exclude<InboxView, 'all'>) => {
+    setSelectedId(null)
+    setSearch('')
+    inbox.setView(view)
+  }
+
   return (
     <section
       className={`flex h-full min-h-0 w-full flex-col overflow-hidden ${
         presentation === 'card' ? 'section-card card-elevated' : 'bg-background'
       }`}
     >
-      <header className="border-border px-spacing-6 py-spacing-4 gap-spacing-3 flex flex-wrap items-center border-b">
+      <header className="border-border px-spacing-5 py-spacing-4 gap-spacing-3 flex flex-wrap items-center border-b">
         <div className="gap-spacing-2 flex min-w-0 items-center">
           <Inbox className="icon-md text-muted-foreground shrink-0" aria-hidden />
           <div className="min-w-0">
@@ -253,7 +96,35 @@ export function InboxFeed({
             <p className="typo-caption text-muted-foreground truncate">{INBOX_MESSAGES.SUBTITLE}</p>
           </div>
         </div>
-        <div className="ml-auto">
+
+        <div className="gap-spacing-2 ml-auto flex items-center">
+          {inbox.counts.primary + inbox.counts.other + inbox.counts.later > 0 ? (
+            <Tooltip label={INBOX_MESSAGES.ACTIONS.readAll} side="bottom">
+              <button
+                type="button"
+                className="btn-icon-glass text-muted-foreground hover:text-foreground"
+                aria-label={INBOX_MESSAGES.ACTIONS.readAll}
+                onClick={() => void inbox.markAllRead()}
+              >
+                <CheckCheck className="icon-sm" />
+              </button>
+            </Tooltip>
+          ) : null}
+          {inbox.view !== 'cleared' && inbox.view !== 'all' && inbox.notifications.length > 0 ? (
+            <Tooltip label={INBOX_MESSAGES.ACTIONS.clearView} side="bottom">
+              <button
+                type="button"
+                className="btn-icon-glass text-muted-foreground hover:text-foreground"
+                aria-label={INBOX_MESSAGES.ACTIONS.clearView}
+                onClick={() => {
+                  setSelectedId(null)
+                  void inbox.clearCurrentView()
+                }}
+              >
+                <Archive className="icon-sm" />
+              </button>
+            </Tooltip>
+          ) : null}
           <span className="sr-only">{INBOX_MESSAGES.FILTER.label}</span>
           <SettingsSelect
             value={inbox.type}
@@ -264,7 +135,10 @@ export function InboxFeed({
                 label: notificationTypeLabel(type),
               })),
             ]}
-            onChange={inbox.setType}
+            onChange={(type) => {
+              setSelectedId(null)
+              inbox.setType(type)
+            }}
             wrapperClassName="relative w-spacing-40"
             triggerClassName="input-glass rounded-spacing-2 gap-spacing-2 h-spacing-8 px-spacing-3 flex w-full items-center justify-between"
             menuMinWidth={176}
@@ -279,7 +153,7 @@ export function InboxFeed({
             <button
               key={option.id}
               type="button"
-              onClick={() => inbox.setView(option.id)}
+              onClick={() => updateView(option.id)}
               className={`button-compact gap-spacing-1 shrink-0 ${
                 active
                   ? 'nav-glass-selected-purple text-foreground'
@@ -295,39 +169,95 @@ export function InboxFeed({
         })}
       </nav>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        {inbox.loading ? (
-          <div className="flex h-full items-center justify-center">
-            <VibeyLoadingOrb size="md" text={INBOX_MESSAGES.LOADING} />
-          </div>
-        ) : inbox.notifications.length === 0 ? (
-          <div className="gap-spacing-3 px-spacing-6 py-spacing-16 flex h-full flex-col items-center justify-center text-center">
-            <Check className="icon-lg text-success" aria-hidden />
-            <p className="body-3 text-muted-foreground">{INBOX_MESSAGES.EMPTY[inbox.view]}</p>
-          </div>
-        ) : (
-          <ul>
-            {inbox.notifications.map((notification) => (
-              <InboxRow
-                key={notification.id}
-                notification={notification}
-                expanded={expandedId === notification.id}
-                onToggle={() =>
-                  setExpandedId((current) => (current === notification.id ? null : notification.id))
-                }
-                onClear={() => void inbox.clear(notification)}
-                onRestore={() => void inbox.restore(notification)}
-                onSnooze={() => void inbox.snooze(notification)}
-                onUnsnooze={() => void inbox.unsnooze(notification)}
-                onMove={(bucket) => void inbox.move(notification, bucket)}
-                onToggleRead={() => void inbox.toggleRead(notification)}
-                onOpen={() => {
-                  if (notification.action_url) router.push(notification.action_url)
-                }}
-              />
-            ))}
-          </ul>
-        )}
+      <div className="border-border px-spacing-4 py-spacing-2 border-b">
+        <div className="relative">
+          <Search
+            className="icon-left-center icon-sm text-muted-foreground pointer-events-none"
+            aria-hidden
+          />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={INBOX_MESSAGES.FILTER.search}
+            aria-label={INBOX_MESSAGES.FILTER.search}
+            className="input-glass input-leading h-spacing-7 body-4 rounded-spacing-2 border-border text-foreground placeholder:text-muted-foreground focus:border-primary w-full border outline-none"
+          />
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-1">
+        <div
+          className={`min-h-0 flex-col overflow-y-auto ${
+            selectedNotification
+              ? 'border-border hidden w-full border-r md:flex md:w-1/2 lg:w-2/5'
+              : 'md:border-border flex w-full md:w-1/2 md:border-r lg:w-2/5'
+          }`}
+        >
+          {inbox.loading ? (
+            <div className="flex h-full items-center justify-center">
+              <VibeyLoadingOrb size="md" text={INBOX_MESSAGES.LOADING} />
+            </div>
+          ) : visibleNotifications.length === 0 ? (
+            <div className="gap-spacing-3 px-spacing-6 py-spacing-16 flex h-full flex-col items-center justify-center text-center">
+              <Check className="icon-lg text-success" aria-hidden />
+              <p className="body-3 text-muted-foreground">
+                {search.trim() ? INBOX_MESSAGES.EMPTY.search : INBOX_MESSAGES.EMPTY[inbox.view]}
+              </p>
+            </div>
+          ) : (
+            <ul>
+              {visibleNotifications.map((notification) => (
+                <InboxListRow
+                  key={notification.id}
+                  notification={notification}
+                  selected={selectedId === notification.id}
+                  onSelect={() => selectNotification(notification)}
+                  onClear={() => void inbox.clear(notification)}
+                  onRestore={() => void inbox.restore(notification)}
+                  onSnooze={() => void inbox.snooze(notification)}
+                  onUnsnooze={() => void inbox.unsnooze(notification)}
+                  onToggleRead={() => void inbox.toggleRead(notification)}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div
+          className={`min-h-0 min-w-0 flex-1 ${selectedNotification ? 'flex' : 'hidden md:block'}`}
+        >
+          <InboxDetailPane
+            notification={selectedNotification}
+            onBack={() => setSelectedId(null)}
+            onOpenDetails={() => {
+              if (selectedNotification) void onOpenDetails?.(selectedNotification)
+            }}
+            onViewSource={() => {
+              if (selectedNotification?.action_url) {
+                navigateToSource(router, selectedNotification.action_url)
+              }
+            }}
+            onClear={() => {
+              if (selectedNotification) void inbox.clear(selectedNotification)
+            }}
+            onRestore={() => {
+              if (selectedNotification) void inbox.restore(selectedNotification)
+            }}
+            onSnooze={() => {
+              if (selectedNotification) void inbox.snooze(selectedNotification)
+            }}
+            onUnsnooze={() => {
+              if (selectedNotification) void inbox.unsnooze(selectedNotification)
+            }}
+            onMove={(bucket) => {
+              if (selectedNotification) void inbox.move(selectedNotification, bucket)
+            }}
+            onToggleRead={() => {
+              if (selectedNotification) void inbox.toggleRead(selectedNotification)
+            }}
+          />
+        </div>
       </div>
     </section>
   )

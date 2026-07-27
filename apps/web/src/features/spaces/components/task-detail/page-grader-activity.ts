@@ -22,6 +22,6 @@ export function formatPageGraderFieldChangeLabel(
   payload: Record<string, unknown> | undefined,
 ): string {
   return getPageGraderWorkUrlFromActivityPayload(payload)
-    ? 'sent this to Page Grader'
-    : 'updated Page Grader sync'
+    ? 'sent this to The ROAS Portal'
+    : 'updated The ROAS Portal sync'
 }

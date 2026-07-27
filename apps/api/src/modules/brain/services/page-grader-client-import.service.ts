@@ -42,10 +42,10 @@ export class PageGraderClientImportService {
     const uniqueClientId = stringValue(pkg.envelope?.unique_client_id, pkg.client?.unique_client_id)
     const clientName =
       stringValue(pkg.client?.friendly_name, pkg.client?.name, pkg.client?.legal_business_name) ||
-      'Page Grader Client'
+      'ROAS Portal Client'
 
     if (!pageGraderClientId && !uniqueClientId) {
-      throw new BadRequestException('package must include a Page Grader client id')
+      throw new BadRequestException('The package must include a ROAS Portal client ID')
     }
 
     const campaignName =
@@ -130,7 +130,7 @@ export class PageGraderClientImportService {
         space: spacePlan,
         brainImport: {
           action: 'deterministic_ingest',
-          title: `Page Grader Client Intel - ${clientName}`,
+          title: `ROAS Portal Client Intel - ${clientName}`,
           contentChars: content.length,
           contentHash,
           sourceItems: pkg.source_items?.length ?? 0,
@@ -190,7 +190,7 @@ export class PageGraderClientImportService {
       },
       brainImport: {
         action: ingested.skippedUnchanged ? 'skipped_unchanged' : 'ingested',
-        title: `Page Grader Client Intel - ${clientName}`,
+        title: `ROAS Portal Client Intel - ${clientName}`,
         status: 'succeeded',
         ...ingested,
       },
@@ -269,7 +269,7 @@ export class PageGraderClientImportService {
         : query.eq('user_id', input.userId).is('org_id', null)
       const { data, error } = await query.maybeSingle()
       if (error)
-        throw new BadRequestException(`Could not look up Page Grader campaign: ${error.message}`)
+        throw new BadRequestException(`Could not look up ROAS Portal campaign: ${error.message}`)
       if (data) return data
     }
 
@@ -288,7 +288,7 @@ export class PageGraderClientImportService {
           .limit(1)
           .maybeSingle()
         if (error)
-          throw new BadRequestException(`Could not look up Page Grader campaign: ${error.message}`)
+          throw new BadRequestException(`Could not look up ROAS Portal campaign: ${error.message}`)
         if (data) return data
       }
     }
@@ -452,7 +452,7 @@ export class PageGraderClientImportService {
         org_id: input.orgId,
         campaign_id: input.campaignId,
         title: input.title,
-        description: `Client workspace synced from Page Grader for ${input.clientName}.`,
+        description: `Client workspace synced from The ROAS Portal for ${input.clientName}.`,
         visibility: input.orgId ? 'team' : 'private',
         is_template: false,
         schema: buildPageGraderGeneralSpaceSchema({
@@ -498,11 +498,11 @@ export class PageGraderClientImportService {
     },
   ) {
     const lines: string[] = [
-      `# Page Grader Client Intel Package`,
+      `# ROAS Portal Client Intel Package`,
       ``,
       `Client: ${meta.clientName}`,
       `Campaign: ${meta.campaignName}`,
-      `Page Grader client id: ${meta.pageGraderClientId || 'unknown'}`,
+      `ROAS Portal client ID: ${meta.pageGraderClientId || 'unknown'}`,
       `Unique client id: ${meta.uniqueClientId || 'unknown'}`,
       `Exported at: ${stringValue(pkg.envelope?.exported_at) || new Date().toISOString()}`,
       ``,

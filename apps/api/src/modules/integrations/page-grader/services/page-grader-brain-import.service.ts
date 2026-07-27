@@ -24,7 +24,7 @@ export class PageGraderBrainImportService {
       this.vault.getSecret(userId, PROVIDER, LABEL_BASE_URL),
       this.vault.getSecret(userId, PROVIDER, LABEL_API_KEY),
     ])
-    if (!baseUrl || !apiKey) throw new BadRequestException('Page Grader is not connected')
+    if (!baseUrl || !apiKey) throw new BadRequestException('The ROAS Portal is not connected')
     return { baseUrl, apiKey }
   }
 

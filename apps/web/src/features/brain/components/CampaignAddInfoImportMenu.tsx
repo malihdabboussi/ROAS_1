@@ -81,7 +81,7 @@ export function CampaignAddInfoImportMenu({
                 <RefreshCw
                   className={`icon-sm flex-shrink-0 ${pageGraderResyncing ? 'animate-spin' : ''}`}
                 />
-                {pageGraderResyncing ? 'Re-syncing…' : 'Re-sync from Page Grader'}
+                {pageGraderResyncing ? 'Re-syncing…' : 'Re-sync from The ROAS Portal'}
               </button>
             ) : null}
             <CloudAttachMenuItems

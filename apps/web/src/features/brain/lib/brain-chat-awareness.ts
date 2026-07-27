@@ -28,7 +28,7 @@ export function buildBrainChatAwarenessContext(input: {
 
   if (isCampaignKnowledge && campaignId) {
     lines.push(
-      'This is Campaign Knowledge (client package / Page Grader intel), not a user or agent Brain.',
+      'This is Campaign Knowledge (client package / The ROAS Portal intel), not a user or agent Brain.',
     )
     lines.push(
       'When answering from this scope, call search_campaign_brain with this campaign_id and query terms from the user question. Do not use search_user_brain, search_agent_brain, or list_brain_domains — campaign brains have no SK domains.',

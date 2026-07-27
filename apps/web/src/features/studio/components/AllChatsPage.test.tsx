@@ -8,25 +8,33 @@ const mocks = vi.hoisted(() => ({
   setWorkAreaOpen: vi.fn(),
   setActiveConversationId: vi.fn(),
   loadRoster: vi.fn().mockResolvedValue(undefined),
+  listProps: vi.fn(),
 }))
 
 vi.mock('@/components/conversations/SpaceConversationsListAdapter', () => ({
   SpaceConversationsList: ({
     onSelectConversation,
     onNewConversation,
+    showUpdatedAt,
+    dividedRows,
   }: {
     onSelectConversation: (id: string) => void
     onNewConversation: () => void
-  }) => (
-    <>
-      <button type="button" onClick={() => onSelectConversation('conversation-1')}>
-        Open conversation
-      </button>
-      <button type="button" onClick={onNewConversation}>
-        Start conversation
-      </button>
-    </>
-  ),
+    showUpdatedAt?: boolean
+    dividedRows?: boolean
+  }) => {
+    mocks.listProps({ showUpdatedAt, dividedRows })
+    return (
+      <>
+        <button type="button" onClick={() => onSelectConversation('conversation-1')}>
+          Open conversation
+        </button>
+        <button type="button" onClick={onNewConversation}>
+          Start conversation
+        </button>
+      </>
+    )
+  },
 }))
 
 vi.mock('@/components/global-chat/store/use-global-chat-store', () => ({
@@ -109,5 +117,15 @@ describe('AllChatsPage', () => {
     expect(mocks.setActiveConversationId).toHaveBeenCalledWith(null)
     expect(mocks.openFreshChatDrawer).toHaveBeenCalled()
     expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
+  })
+
+  it('uses the dated, divided full-page conversation treatment', () => {
+    render(<AllChatsPage />)
+
+    expect(mocks.listProps).toHaveBeenCalledWith({
+      showUpdatedAt: true,
+      dividedRows: true,
+    })
+    expect(screen.getByRole('heading', { name: 'CHATS AND TASKS' })).toHaveClass('title-h6')
   })
 })

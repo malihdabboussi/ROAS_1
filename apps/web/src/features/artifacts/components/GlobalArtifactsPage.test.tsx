@@ -55,6 +55,23 @@ const presentationItem = {
   viewer: { id: 'presentation-1', title: 'Account sales deck', type: 'presentation' as const },
 }
 
+const videoItem = {
+  id: 'video-1',
+  title: 'Launch teaser',
+  badge: 'Video',
+  category: 'videos' as const,
+  contextLabel: 'Creative Space',
+  updatedAt: '2026-07-18T20:00:00.000Z',
+  sourceKind: 'generated' as const,
+  viewer: {
+    id: 'video-1',
+    title: 'Launch teaser',
+    type: 'video' as const,
+    fileUrl: 'https://example.com/launch-teaser.mp4',
+    mimeType: 'video/mp4',
+  },
+}
+
 describe('GlobalArtifactsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -63,6 +80,7 @@ describe('GlobalArtifactsPage', () => {
       imageItem,
       uploadedImageItem,
       presentationItem,
+      videoItem,
     ])
   })
 
@@ -76,6 +94,7 @@ describe('GlobalArtifactsPage', () => {
     expect(await screen.findByText('Webinar registration copy')).toBeInTheDocument()
     expect(screen.getByText('Clock concept')).toBeInTheDocument()
     expect(screen.getByText('Account sales deck')).toBeInTheDocument()
+    expect(screen.getByText('Launch teaser')).toBeInTheDocument()
     expect(screen.queryByText('Uploaded screenshot')).not.toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Clock concept preview' })).toHaveAttribute(
       'src',
@@ -96,6 +115,26 @@ describe('GlobalArtifactsPage', () => {
     fireEvent.click(screen.getByText('Clock concept'))
 
     expect(openArtifactInShell).toHaveBeenCalledWith(imageItem.viewer)
+  })
+
+  it('filters videos and renders their first-frame preview', async () => {
+    render(<GlobalArtifactsPage />)
+
+    await screen.findByText('Launch teaser')
+    fireEvent.click(screen.getByRole('button', { name: 'Videos' }))
+
+    expect(screen.getByText('Launch teaser')).toBeInTheDocument()
+    expect(screen.queryByText('Clock concept')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Launch teaser preview')).toHaveAttribute(
+      'src',
+      'https://example.com/launch-teaser.mp4',
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Card view' }))
+    expect(screen.getByLabelText('Launch teaser preview')).toHaveAttribute(
+      'src',
+      'https://example.com/launch-teaser.mp4',
+    )
   })
 
   it('switches between list and card views without wrapping the search field twice', async () => {

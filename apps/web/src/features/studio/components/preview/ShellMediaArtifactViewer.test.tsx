@@ -128,7 +128,14 @@ describe('ShellMediaArtifactViewer', () => {
     vi.mocked(listAssets).mockClear()
 
     const { rerender } = render(
-      <ShellMediaArtifactViewer target={{ ...target, mediaAssetId: 'image-b' }} />,
+      <ShellMediaArtifactViewer
+        target={{
+          ...target,
+          mediaAssetId: 'image-b',
+          conversationId: null,
+          spaceId: null,
+        }}
+      />,
     )
 
     const history = await screen.findByRole('complementary', { name: 'Image history' })
@@ -142,6 +149,9 @@ describe('ShellMediaArtifactViewer', () => {
     expect(
       within(history).getByRole('button', { name: 'Open Selected version' }).className,
     ).toContain('ring-2')
+    expect(listAssets).toHaveBeenCalledWith(
+      expect.objectContaining({ conversation_id: 'conversation-old' }),
+    )
     expect(within(history).getByRole('button', { name: 'Open First version' }).className).toContain(
       'opacity-50',
     )

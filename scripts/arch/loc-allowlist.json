@@ -124,11 +124,6 @@
       "limit": 400,
       "lines": 491
     },
-    "apps/web/src/features/spaces/components/BulkActionBar.tsx": {
-      "kind": "web-component",
-      "limit": 400,
-      "lines": 1145
-    },
     "apps/web/src/features/spaces/components/DocsView.tsx": {
       "kind": "web-component",
       "limit": 400,
@@ -1180,13 +1175,6 @@
       "count": 1,
       "imports": {
         "@/features/studio/types": 1
-      }
-    },
-    "apps/web/src/features/spaces/components/BulkActionBar.tsx": {
-      "sourceFeature": "spaces",
-      "count": 1,
-      "imports": {
-        "@/features/org/services/org.service": 1
       }
     },
     "apps/web/src/features/spaces/components/contacts/ContactCommunicationPanel.tsx": {

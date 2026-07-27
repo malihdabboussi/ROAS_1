@@ -186,41 +186,43 @@ export function AllChatsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="border-border gap-spacing-3 px-spacing-6 py-spacing-4 flex shrink-0 flex-wrap items-center border-b">
-        <h1 className="typo-title text-foreground min-w-0 flex-1">CHATS AND TASKS</h1>
-        <div className="gap-spacing-2 flex flex-wrap items-center">
-          <label className="border-border bg-card gap-spacing-2 rounded-spacing-2 px-spacing-3 relative flex h-9 min-w-[200px] items-center border">
-            <Search className="text-muted-foreground icon-sm shrink-0" aria-hidden />
-            <input
-              value={listQuery}
-              onChange={(event) => setListQuery(event.target.value)}
-              placeholder="Search"
-              aria-label="Search chats"
-              className="body-3 text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent outline-none"
-            />
-          </label>
-          <ChatHistoryFilterMenu value={filters} onChange={setFilters} />
-          <button
-            type="button"
-            onClick={() => {
-              setSelectMode((prev) => !prev)
-              setSelectedIds(new Set())
-            }}
-            className={cn(
-              'body-3 border-border rounded-spacing-2 px-spacing-3 h-9 border font-medium',
-              selectMode ? 'bg-secondary text-foreground' : 'bg-card text-foreground',
-            )}
-          >
-            {selectMode ? 'Cancel' : 'Select'}
-          </button>
-          <button
-            type="button"
-            onClick={handleNew}
-            className="body-3 bg-foreground text-background rounded-spacing-2 gap-spacing-1 px-spacing-3 inline-flex h-9 items-center font-semibold"
-          >
-            <Plus className="icon-sm" aria-hidden />
-            New
-          </button>
+      <div className="px-spacing-6 py-spacing-4 shrink-0">
+        <div className="gap-spacing-3 mx-auto flex w-full max-w-3xl flex-wrap items-center">
+          <h1 className="title-h6 text-foreground min-w-0 flex-1">CHATS AND TASKS</h1>
+          <div className="gap-spacing-2 flex flex-wrap items-center">
+            <label className="border-border bg-card gap-spacing-2 rounded-spacing-2 px-spacing-3 relative flex h-9 min-w-[200px] items-center border">
+              <Search className="text-muted-foreground icon-sm shrink-0" aria-hidden />
+              <input
+                value={listQuery}
+                onChange={(event) => setListQuery(event.target.value)}
+                placeholder="Search"
+                aria-label="Search chats"
+                className="body-3 text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent outline-none"
+              />
+            </label>
+            <ChatHistoryFilterMenu value={filters} onChange={setFilters} />
+            <button
+              type="button"
+              onClick={() => {
+                setSelectMode((prev) => !prev)
+                setSelectedIds(new Set())
+              }}
+              className={cn(
+                'body-3 border-border rounded-spacing-2 px-spacing-3 h-9 border font-medium',
+                selectMode ? 'bg-secondary text-foreground' : 'bg-card text-foreground',
+              )}
+            >
+              {selectMode ? 'Cancel' : 'Select'}
+            </button>
+            <button
+              type="button"
+              onClick={handleNew}
+              className="body-3 bg-foreground text-background rounded-spacing-2 gap-spacing-1 px-spacing-3 inline-flex h-9 items-center font-semibold"
+            >
+              <Plus className="icon-sm" aria-hidden />
+              New
+            </button>
+          </div>
         </div>
       </div>
 
@@ -322,6 +324,8 @@ export function AllChatsPage() {
           agentByKey={agentByKey}
           groupBy={filters.groupBy}
           campaignNameById={campaignNameById}
+          showUpdatedAt
+          dividedRows
         />
       </div>
     </div>

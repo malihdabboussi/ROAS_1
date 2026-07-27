@@ -107,7 +107,7 @@ export function HomeCardRenderer({
     case 'agenda':
       return <AgendaCard onOpenItem={onOpenItem} onOpenMeeting={onOpenMeeting} />
     case 'inbox_feed':
-      return <InboxFeedCard />
+      return <InboxFeedCard onOpenDetails={onNotificationClick} />
     case 'chat_composer':
       return <ChatComposerCard />
     default:

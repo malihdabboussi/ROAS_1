@@ -56,7 +56,7 @@ export class PageGraderBrainPackageIngestService {
       pkg.client?.id,
     )
     if (!pageGraderClientId) {
-      throw new BadRequestException('package must include a Page Grader client id')
+      throw new BadRequestException('The package must include a ROAS Portal client ID')
     }
 
     const contentHash = computePageGraderPackageContentHash(pkg)
@@ -355,7 +355,7 @@ export class PageGraderBrainPackageIngestService {
       user_id: input.userId,
       org_id: input.orgId,
       job_type: 'page_grader_brain_sync',
-      title: `Page Grader Client Intel - ${input.clientName}`,
+      title: `ROAS Portal Client Intel - ${input.clientName}`,
       dedupe_key: `page-grader-sync:${input.campaignId}:${input.contentHash}:${now}`,
       payload: {
         campaignId: input.campaignId,

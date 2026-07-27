@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
+import { Megaphone } from 'lucide-react'
 import { AdsPerformanceView } from '@/components/artifacts/paid-ads/AdsPerformanceViewAdapter'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import {
@@ -21,8 +22,16 @@ import { usePaidAdsData } from './use-paid-ads-data'
 
 function MissingCampaign() {
   return (
-    <div className="body-3 text-muted-foreground flex flex-1 items-center justify-center p-8 text-center">
-      Link this space to a campaign to manage paid ads.
+    <div className="gap-spacing-4 p-spacing-8 flex flex-1 flex-col items-center justify-center text-center">
+      <div className="surface-card border-border h-spacing-12 w-spacing-12 flex items-center justify-center rounded-full border shadow-sm">
+        <Megaphone className="icon-md text-muted-foreground" />
+      </div>
+      <div className="space-y-spacing-1 max-w-artifact-wide">
+        <p className="title-h6 text-foreground">Connect a campaign first</p>
+        <p className="body-3 text-muted-foreground">
+          Paid Ads needs a campaign so reporting, ad sets, creatives, and publishing stay connected.
+        </p>
+      </div>
     </div>
   )
 }

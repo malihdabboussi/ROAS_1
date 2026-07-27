@@ -5,8 +5,10 @@ import { useInboxTriage } from './use-inbox-triage'
 
 const mocks = vi.hoisted(() => ({
   clearNotification: vi.fn(),
+  clearNotificationView: vi.fn(),
   fetchInboxTriageCounts: vi.fn(),
   fetchNotifications: vi.fn(),
+  markNotificationsReadAll: vi.fn(),
   markNotificationRead: vi.fn(),
   markNotificationUnread: vi.fn(),
   moveNotificationBucket: vi.fn(),
@@ -18,8 +20,10 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('./notifications-api', () => ({
   clearNotification: mocks.clearNotification,
+  clearNotificationView: mocks.clearNotificationView,
   fetchInboxTriageCounts: mocks.fetchInboxTriageCounts,
   fetchNotifications: mocks.fetchNotifications,
+  markNotificationsReadAll: mocks.markNotificationsReadAll,
   markNotificationRead: mocks.markNotificationRead,
   markNotificationUnread: mocks.markNotificationUnread,
   moveNotificationBucket: mocks.moveNotificationBucket,
@@ -76,6 +80,8 @@ describe('useInboxTriage optimistic actions', () => {
       cleared: 0,
     })
     mocks.clearNotification.mockResolvedValue({ ok: true })
+    mocks.clearNotificationView.mockResolvedValue({ ok: true })
+    mocks.markNotificationsReadAll.mockResolvedValue({ ok: true })
   })
 
   it('moves a cleared row out of Primary and adjusts unread counts immediately', async () => {
@@ -110,5 +116,37 @@ describe('useInboxTriage optimistic actions', () => {
     expect(result.current.counts.primary).toBe(1)
     expect(result.current.counts.cleared).toBe(0)
     expect(mocks.toastError).toHaveBeenCalledOnce()
+  })
+
+  it('clears the active view in one optimistic action', async () => {
+    const { result } = renderHook(() => useInboxTriage())
+    await waitFor(() => expect(result.current.notifications).toHaveLength(1))
+
+    await act(async () => {
+      await result.current.clearCurrentView()
+    })
+
+    expect(result.current.notifications).toEqual([])
+    expect(result.current.counts.primary).toBe(0)
+    expect(result.current.counts.cleared).toBe(1)
+    expect(mocks.clearNotificationView).toHaveBeenCalledWith('primary')
+  })
+
+  it('marks the loaded inbox and all unread counts read immediately', async () => {
+    const { result } = renderHook(() => useInboxTriage())
+    await waitFor(() => expect(result.current.notifications).toHaveLength(1))
+
+    await act(async () => {
+      await result.current.markAllRead()
+    })
+
+    expect(result.current.notifications[0]?.read_at).not.toBeNull()
+    expect(result.current.counts).toEqual({
+      primary: 0,
+      other: 0,
+      later: 0,
+      cleared: 0,
+    })
+    expect(mocks.markNotificationsReadAll).toHaveBeenCalledOnce()
   })
 })

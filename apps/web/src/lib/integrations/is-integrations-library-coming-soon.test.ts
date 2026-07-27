@@ -59,4 +59,11 @@ describe('integration catalog connectability', () => {
       expect(byId.get(id)?.is_active, id).toBe(true)
     }
   })
+
+  it('uses the public product name for the internal Page Grader integration', () => {
+    const portal = getAvailableIntegrations(false).find((item) => item.id === 'page_grader')
+
+    expect(portal?.name).toBe('The ROAS Portal')
+    expect(portal?.description).not.toContain('Page Grader')
+  })
 })

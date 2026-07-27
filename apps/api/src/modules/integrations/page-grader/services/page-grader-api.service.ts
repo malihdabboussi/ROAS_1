@@ -69,9 +69,9 @@ export class PageGraderApiService {
     await this.connections.ensureAvailable({
       id: PAGE_GRADER_PROVIDER,
       provider: PAGE_GRADER_PROVIDER,
-      name: 'Page Grader',
+      name: 'The ROAS Portal',
       description:
-        'Send Space tasks to Page Grader as workload for client funnel, copy, and design teams.',
+        'Send Space tasks to The ROAS Portal as workload for client funnel, copy, and design teams.',
       auth_type: 'api_key',
       is_available: true,
       metadata: {
@@ -385,7 +385,7 @@ export class PageGraderApiService {
       .eq('integration_id', PAGE_GRADER_PROVIDER)
       .is('org_id', null)
       .maybeSingle()
-    if (!data?.id) throw new BadRequestException('Page Grader is not connected')
+    if (!data?.id) throw new BadRequestException('The ROAS Portal is not connected')
     const metadata =
       data.metadata && typeof data.metadata === 'object'
         ? (data.metadata as Record<string, unknown>)

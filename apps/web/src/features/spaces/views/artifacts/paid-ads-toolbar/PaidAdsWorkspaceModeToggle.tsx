@@ -17,7 +17,7 @@ export function PaidAdsWorkspaceModeToggle({
 }) {
   return (
     <div
-      className="border-border bg-secondary rounded-spacing-2 p-spacing-1 flex shrink-0 items-center border"
+      className="border-border bg-secondary rounded-spacing-2 p-spacing-1 flex max-w-full shrink items-center overflow-x-auto border"
       aria-label="Paid Ads workspace mode"
     >
       {OPTIONS.map((option) => {

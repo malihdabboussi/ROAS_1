@@ -58,9 +58,7 @@ export function normalizeAdminAiUsageReport(report: AdminAiUsageWireReport): Adm
       providerAttempts: { current: report.summary.providerAttempts, ...zeroComparison },
       tokens: { current: report.summary.tokens, ...zeroComparison },
       failureRate: {
-        current: report.summary.traces
-          ? (report.summary.failed / report.summary.traces) * 100
-          : 0,
+        current: report.summary.traces ? (report.summary.failed / report.summary.traces) * 100 : 0,
         ...zeroComparison,
       },
     },
@@ -78,10 +76,7 @@ export function normalizeAdminAiUsageReport(report: AdminAiUsageWireReport): Adm
   }
 }
 
-export function loadAdminAiUsage(
-  range: AiUsageRange,
-  force = false,
-): Promise<AdminAiUsageReport> {
+export function loadAdminAiUsage(range: AiUsageRange, force = false): Promise<AdminAiUsageReport> {
   if (force) invalidateCachedFetch(CACHE_PREFIX)
   const params = new URLSearchParams()
   if (range.startDate && range.endDate) {

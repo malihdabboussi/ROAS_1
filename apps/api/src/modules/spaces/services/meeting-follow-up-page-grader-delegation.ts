@@ -71,7 +71,9 @@ export async function delegateConfirmedPageGraderCandidates(
     assignees = assigneeResult.assignees
   } catch (err) {
     await markCandidatesBlocked(deps, input, candidates, {
-      error: `Page Grader connection unavailable: ${err instanceof Error ? err.message : String(err)}`,
+      error: `The ROAS Portal connection is unavailable: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
     })
     return
   }
@@ -95,7 +97,7 @@ export async function delegateConfirmedPageGraderCandidates(
     if (!client) {
       await writeLedgerResult(deps, input, itemId, ledger, {
         status: 'blocked',
-        error: 'No unambiguous Page Grader client mapping was found for this action item.',
+        error: 'No unambiguous ROAS Portal client mapping was found for this action item.',
       })
       continue
     }
@@ -107,7 +109,7 @@ export async function delegateConfirmedPageGraderCandidates(
         clientId: client.id,
         clientName: client.name,
         error: ledger.owner_name
-          ? `No unambiguous Page Grader assignee mapping was found for ${ledger.owner_name}.`
+          ? `No unambiguous ROAS Portal assignee mapping was found for ${ledger.owner_name}.`
           : 'The action item has no fulfillment owner.',
       })
       continue
@@ -145,7 +147,7 @@ export async function delegateConfirmedPageGraderCandidates(
           status: 'failed',
           clientId: client.id,
           clientName: client.name,
-          error: sent?.error || 'Page Grader did not return a work record.',
+          error: sent?.error || 'The ROAS Portal did not return a work record.',
         })
         continue
       }

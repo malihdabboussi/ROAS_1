@@ -14,6 +14,7 @@ interface SpaceConversationSectionsProps {
   renderConversationRow: (conversation: Conversation, sectionId: string) => ReactNode
   /** When true, skip section headers (flat list / groupBy none). */
   hideEmptyLabels?: boolean
+  dividedRows?: boolean
 }
 
 export function SpaceConversationSections({
@@ -24,6 +25,7 @@ export function SpaceConversationSections({
   onShowMoreInSection,
   renderConversationRow,
   hideEmptyLabels = true,
+  dividedRows = false,
 }: SpaceConversationSectionsProps) {
   return (
     <div className="flex flex-col">
@@ -56,7 +58,7 @@ export function SpaceConversationSections({
               </button>
             ) : null}
             {!collapsed ? (
-              <div className="gap-spacing-2 flex flex-col">
+              <div className={cn('flex flex-col', !dividedRows && 'gap-spacing-1')}>
                 {visibleItems.map((conversation) => renderConversationRow(conversation, group.id))}
                 {hiddenRemaining > 0 ? (
                   <button

@@ -103,17 +103,20 @@ export function ShellChatMenu({ onCollapse }: { onCollapse?: () => void }) {
   useEffect(() => {
     if (storeConversations.length === 0) return
     setConversations((prev) => {
-      let changed = false
-      const next = prev.map((row) => {
-        const storeRow = storeConversations.find((c) => c.id === row.id)
-        if (!storeRow?.title || storeRow.title === row.title) return row
-        changed = true
-        return { ...row, title: storeRow.title, updated_at: storeRow.updated_at }
+      const scopedStoreRows = storeConversations.filter(
+        (row) => historyAgentKey === null || row.agent_id === historyAgentKey,
+      )
+      if (scopedStoreRows.length === 0) return prev
+      const previousIds = new Set(prev.map((row) => row.id))
+      const storeRowById = new Map(scopedStoreRows.map((row) => [row.id, row]))
+      const insertedRows = scopedStoreRows.filter((row) => !previousIds.has(row.id))
+      const mergedRows = prev.map((row) => {
+        const storeRow = storeRowById.get(row.id)
+        return storeRow ? { ...row, ...storeRow } : row
       })
-      return changed ? next : prev
+      return [...insertedRows, ...mergedRows]
     })
-  }, [storeConversations])
-
+  }, [historyAgentKey, storeConversations])
   const chatAgents = useMemo(
     () => roster.filter((entry) => entry.kind === 'agent' && Boolean(entry.agent_key?.trim())),
     [roster],

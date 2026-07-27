@@ -49,8 +49,8 @@ describe('ShellWorkAreaControl', () => {
     render(<ShellWorkAreaControl currentPage={currentPage} />)
 
     fireEvent.mouseEnter(screen.getByRole('button', { name: 'Collapse page — chat full screen' }))
-    expect(screen.getByRole('menu', { name: 'Recent work surfaces' })).toBeInTheDocument()
-    expect(screen.getByRole('menuitem', { name: 'Agenda' })).toBeInTheDocument()
+    expect(screen.getByRole('menu', { name: 'Recent work surfaces' })).toHaveClass('w-spacing-64')
+    expect(screen.getByRole('menuitem', { name: 'Agenda' })).toHaveClass('text-left')
     expect(screen.getByRole('menuitem', { name: 'Skills' })).toBeInTheDocument()
     expect(screen.getByRole('menuitem', { name: 'Campaign image' })).toBeInTheDocument()
 

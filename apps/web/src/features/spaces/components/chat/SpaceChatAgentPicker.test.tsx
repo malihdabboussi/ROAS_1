@@ -37,6 +37,18 @@ describe('SpaceChatAgentPicker', () => {
     expect(trigger).toBeTruthy()
   })
 
+  it('uses the centered hero trigger for an empty chat', () => {
+    render(
+      <SpaceChatAgentPicker agents={[agent]} value="vibey" onChange={vi.fn()} variant="hero" />,
+    )
+
+    const trigger = screen.getByRole('button', {
+      name: 'Talking with Vibey · CEO. Change agent.',
+    })
+    expect(trigger).toHaveClass('flex-col')
+    expect(trigger.querySelector('.rounded-full')).toBeInTheDocument()
+  })
+
   it('pins Pixel above a labeled list of other agents', () => {
     const reed = {
       ...agent,

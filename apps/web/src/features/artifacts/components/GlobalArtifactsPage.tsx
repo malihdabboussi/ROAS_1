@@ -9,6 +9,7 @@ import {
   FileImage,
   FileSpreadsheet,
   FileText,
+  Film,
   Layers3,
   LayoutGrid,
   List,
@@ -41,6 +42,7 @@ type ArtifactView = 'list' | 'cards'
 function ArtifactIcon({ category }: { category: GlobalArtifactCategory }) {
   if (category === 'docs') return <FileText />
   if (category === 'images') return <FileImage />
+  if (category === 'videos') return <Film />
   if (category === 'sheets') return <FileSpreadsheet />
   if (category === 'presentations') return <Presentation />
   if (category === 'funnels') return <Workflow />
@@ -51,6 +53,7 @@ function ArtifactIcon({ category }: { category: GlobalArtifactCategory }) {
 function badgeClass(category: GlobalArtifactCategory): string {
   if (category === 'docs') return 'badge-glass-blue'
   if (category === 'images') return 'badge-glass-purple'
+  if (category === 'videos') return 'badge-glass-purple'
   if (category === 'sheets') return 'badge-glass-green'
   if (category === 'presentations') return 'badge-glass-purple'
   if (category === 'funnels') return 'badge-glass-orange'
@@ -273,6 +276,15 @@ export function GlobalArtifactsPage() {
                       unoptimized
                       className="h-spacing-12 w-spacing-16 rounded-spacing-2 border-border shrink-0 border object-cover"
                     />
+                  ) : item.category === 'videos' && item.viewer.fileUrl ? (
+                    <video
+                      src={item.viewer.fileUrl}
+                      aria-label={`${item.title} preview`}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="h-spacing-12 w-spacing-16 rounded-spacing-2 border-border shrink-0 border object-cover"
+                    />
                   ) : (
                     <span className="surface-card border-border text-muted-foreground rounded-spacing-2 h-spacing-9 w-spacing-9 flex shrink-0 items-center justify-center border [&>svg]:h-4 [&>svg]:w-4">
                       <ArtifactIcon category={item.category} />
@@ -318,6 +330,15 @@ export function GlobalArtifactsPage() {
                       width={640}
                       height={360}
                       unoptimized
+                      className="h-full w-full object-cover"
+                    />
+                  ) : item.category === 'videos' && item.viewer.fileUrl ? (
+                    <video
+                      src={item.viewer.fileUrl}
+                      aria-label={`${item.title} preview`}
+                      muted
+                      playsInline
+                      preload="metadata"
                       className="h-full w-full object-cover"
                     />
                   ) : (

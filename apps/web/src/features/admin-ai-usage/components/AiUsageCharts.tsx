@@ -142,7 +142,10 @@ export function AiUsageCharts({ report }: { report: AdminAiUsageReport }) {
             <div className="gap-spacing-3 mt-spacing-4 flex flex-wrap">
               {spendChart.series.map((series, index) => (
                 <div key={series.key} className="gap-spacing-2 body-4 flex min-w-0 items-center">
-                  <span aria-hidden="true" className={cn('body-3 shrink-0', LEGEND_DOT_CLASSES[index])}>
+                  <span
+                    aria-hidden="true"
+                    className={cn('body-3 shrink-0', LEGEND_DOT_CLASSES[index])}
+                  >
                     ●
                   </span>
                   <span className="text-muted-foreground max-w-48 truncate">{series.model}</span>
@@ -151,7 +154,7 @@ export function AiUsageCharts({ report }: { report: AdminAiUsageReport }) {
               ))}
             </div>
             <div className="mt-spacing-4 overflow-x-auto">
-              <ChartContainer config={chartConfig} className="h-80 min-w-160 aspect-auto w-full">
+              <ChartContainer config={chartConfig} className="min-w-160 aspect-auto h-80 w-full">
                 <BarChart data={spendChart.rows} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
                   <CartesianGrid
                     vertical={false}

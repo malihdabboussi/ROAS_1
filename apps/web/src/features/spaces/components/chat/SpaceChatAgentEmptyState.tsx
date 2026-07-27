@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { Bot } from 'lucide-react'
 import type { ShellChatQuickStart } from '@/components/shell/shell-empty-chat-prompts.config'
 import { ShellEmptyChatCapabilityScroller } from '@/components/shell/ShellEmptyChatCapabilityScroller'
@@ -32,12 +33,14 @@ interface SpaceChatAgentEmptyStateProps {
   /** When true, show capability chips under the hero (hidden once composer has text). */
   showCapabilities?: boolean
   onSelectCapability?: (quickStart: ShellChatQuickStart) => void
+  agentPicker?: ReactNode
 }
 
 export function SpaceChatAgentEmptyState({
   agent,
   showCapabilities = false,
   onSelectCapability,
+  agentPicker,
 }: SpaceChatAgentEmptyStateProps) {
   const heroTitle = agent.display_name
   const heroAvatar = agent.avatar_url
@@ -49,16 +52,20 @@ export function SpaceChatAgentEmptyState({
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 py-16">
-      <div className="mb-spacing-4 h-spacing-16 w-spacing-16 shrink-0 overflow-hidden rounded-full">
-        {heroAvatar ? (
-          <img src={heroAvatar} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <span className="bg-primary/20 text-primary flex h-full w-full items-center justify-center">
-            <Bot className="icon-lg" aria-hidden />
-          </span>
-        )}
-      </div>
-      <p className="body-1 text-foreground text-center font-semibold">{heroTitle}</p>
+      {agentPicker ?? (
+        <>
+          <div className="mb-spacing-4 h-spacing-16 w-spacing-16 shrink-0 overflow-hidden rounded-full">
+            {heroAvatar ? (
+              <img src={heroAvatar} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="bg-primary/20 text-primary flex h-full w-full items-center justify-center">
+                <Bot className="icon-lg" aria-hidden />
+              </span>
+            )}
+          </div>
+          <p className="body-1 text-foreground text-center font-semibold">{heroTitle}</p>
+        </>
+      )}
       {showAgentRole ? (
         <p className="body-4 text-muted-foreground mt-spacing-1 text-center">{agent.role_label}</p>
       ) : null}

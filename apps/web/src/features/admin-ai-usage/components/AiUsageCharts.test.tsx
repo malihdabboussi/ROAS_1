@@ -52,6 +52,8 @@ describe('AiUsageCharts', () => {
 
   it('renders the verified-spend empty state', () => {
     render(<AiUsageCharts report={{ ...report, dailyModelSpend: [] } as never} />)
-    expect(screen.getByText('No verified provider spend occurred in this range.')).toBeInTheDocument()
+    expect(
+      screen.getByText('No verified provider spend occurred in this range.'),
+    ).toBeInTheDocument()
   })
 })

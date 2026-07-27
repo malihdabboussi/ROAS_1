@@ -2,8 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { AdminAiUsageRepository } from '../repositories/admin-ai-usage.repository'
 import type {
   AdminAiUsageAttemptRow,
-  AdminAiUsageReport,
   AdminAiUsageRangeQuery,
+  AdminAiUsageReport,
   AdminAiUsageRoute,
   AdminAiUsageTraceRow,
 } from '../types/admin-ai-usage.types'
@@ -141,10 +141,7 @@ export class AdminAiUsageService {
   ): Promise<AdminAiUsageReport> {
     const range = resolveRange(query, now)
     const [combinedTraces, combinedAttempts, billingChecks] = await Promise.all([
-      this.repository.findTracesInRange(
-        range.combinedStartIso,
-        range.currentEndExclusiveIso,
-      ),
+      this.repository.findTracesInRange(range.combinedStartIso, range.currentEndExclusiveIso),
       this.repository.findProviderAttemptsInRange(
         range.combinedStartIso,
         range.currentEndExclusiveIso,
@@ -154,7 +151,9 @@ export class AdminAiUsageService {
     const traces = combinedTraces.filter((row) => row.created_at >= range.currentStartIso)
     const attempts = combinedAttempts.filter((row) => row.created_at >= range.currentStartIso)
     const previousTraces = combinedTraces.filter((row) => row.created_at < range.currentStartIso)
-    const previousAttempts = combinedAttempts.filter((row) => row.created_at < range.currentStartIso)
+    const previousAttempts = combinedAttempts.filter(
+      (row) => row.created_at < range.currentStartIso,
+    )
 
     const routes = this.buildRoutes(traces, attempts)
     const traceCostUsd = traces.reduce((sum, row) => sum + number(row.cost_usd), 0)
@@ -166,10 +165,7 @@ export class AdminAiUsageService {
       (row) => outputValidationState(row) === 'paid_output_invalid',
     )
     const latestCheckAt = billingChecks[0]?.created_at ?? billingChecks[0]?.check_date ?? null
-    const previousProviderCostUsd = previousAttempts.reduce(
-      (sum, row) => sum + attemptCost(row),
-      0,
-    )
+    const previousProviderCostUsd = previousAttempts.reduce((sum, row) => sum + attemptCost(row), 0)
     const previousTokens = previousTraces.reduce((sum, row) => sum + number(row.total_tokens), 0)
     const daily = this.buildDaily(range.start, range.end, traces, attempts)
     const dailyModelSpend = this.buildDailyModelSpend(attempts)
@@ -295,9 +291,7 @@ export class AdminAiUsageService {
     return [...rows.values()]
   }
 
-  private buildModelSpend(
-    attempts: AdminAiUsageAttemptRow[],
-  ): AdminAiUsageReport['modelSpend'] {
+  private buildModelSpend(attempts: AdminAiUsageAttemptRow[]): AdminAiUsageReport['modelSpend'] {
     const totals = new Map<string, number>()
     for (const attempt of attempts) {
       const model = attempt.resolved_model ?? attempt.requested_model ?? 'unknown'

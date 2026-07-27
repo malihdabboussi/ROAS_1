@@ -85,8 +85,8 @@ export function PaidAdsCreativesPane({
       loading={loading}
       error={error}
       config={config}
-      emptyTitle="No ads yet"
-      emptyDescription="Create ad creative inside an ad set, or assign ungrouped ads in Campaigns view."
+      emptyTitle="No ad creatives yet"
+      emptyDescription="Create an ad set first, then add or assign creative from the Ads toolbar."
       emptyMockup={<AdEmptyMockup />}
       previewType="ad"
       selection={selection}

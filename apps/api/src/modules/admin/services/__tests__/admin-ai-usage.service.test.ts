@@ -291,9 +291,7 @@ describe('AdminAiUsageService', () => {
       },
     ])
     expect(report.modelSpend).toEqual([{ model: 'resolved', costUsd: 3 }])
-    expect(report.dailyModelSpend).toEqual([
-      { date: '2026-07-10', model: 'resolved', costUsd: 3 },
-    ])
+    expect(report.dailyModelSpend).toEqual([{ date: '2026-07-10', model: 'resolved', costUsd: 3 }])
   })
 
   it.each([
@@ -306,9 +304,9 @@ describe('AdminAiUsageService', () => {
       findProviderAttemptsInRange: vi.fn(),
       findRecentBillingChecks: vi.fn(),
     }
-    await expect(
-      new AdminAiUsageService(repository as never).getReport(query),
-    ).rejects.toThrow(message)
+    await expect(new AdminAiUsageService(repository as never).getReport(query)).rejects.toThrow(
+      message,
+    )
   })
 
   it('defaults to the latest seven UTC calendar days', async () => {

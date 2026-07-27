@@ -451,9 +451,9 @@ const STANDARD_INTEGRATIONS: Integration[] = [
   {
     id: 'page_grader',
     provider: 'page_grader',
-    name: 'Page Grader',
+    name: 'The ROAS Portal',
     description:
-      'Connect Page Grader to send Space tasks as client workload (funnel, copy, design).',
+      'Connect The ROAS Portal to send Space tasks as client workload (funnel, copy, design).',
     category: 'productivity',
     auth_type: 'api_key',
     connection_fields: [
@@ -466,7 +466,7 @@ const STANDARD_INTEGRATIONS: Integration[] = [
       {
         name: 'generic_api_key',
         label: 'API Key',
-        placeholder: 'Enter your Page Grader ROAS API key',
+        placeholder: 'Enter your ROAS Portal API key',
         required: true,
       },
     ],

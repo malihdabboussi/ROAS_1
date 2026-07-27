@@ -11,6 +11,7 @@ export const ARTIFACT_LIBRARY_FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'docs', label: 'Docs' },
   { id: 'images', label: 'Images' },
+  { id: 'videos', label: 'Videos' },
   { id: 'sheets', label: 'Sheets' },
   { id: 'presentations', label: 'Presentations' },
   { id: 'funnels', label: 'Funnels' },

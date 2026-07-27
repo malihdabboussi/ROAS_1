@@ -104,7 +104,7 @@ export class PageGraderIntegration {
     if (!res.ok) {
       const text = await res.text().catch(() => '')
       throw new BadRequestException(
-        `Page Grader connection failed (${res.status}): ${text || res.statusText}`,
+        `The ROAS Portal connection failed (${res.status}): ${text || res.statusText}`,
       )
     }
     return { ok: true }
@@ -125,7 +125,7 @@ export class PageGraderIntegration {
     if (!res.ok) {
       const text = await res.text().catch(() => '')
       throw new BadRequestException(
-        `Page Grader list clients failed (${res.status}): ${text || res.statusText}`,
+        `The ROAS Portal client list failed (${res.status}): ${text || res.statusText}`,
       )
     }
     const body = (await res.json()) as { clients?: PageGraderClient[] }
@@ -138,7 +138,7 @@ export class PageGraderIntegration {
     if (!res.ok) {
       const text = await res.text().catch(() => '')
       throw new BadRequestException(
-        `Page Grader list task types failed (${res.status}): ${text || res.statusText}`,
+        `The ROAS Portal task type list failed (${res.status}): ${text || res.statusText}`,
       )
     }
     const body = (await res.json()) as { task_types?: PageGraderTaskType[] }
@@ -167,7 +167,7 @@ export class PageGraderIntegration {
     if (!res.ok) {
       const text = await res.text().catch(() => '')
       throw new BadRequestException(
-        `Page Grader list assignees failed (${res.status}): ${text || res.statusText}`,
+        `The ROAS Portal assignee list failed (${res.status}): ${text || res.statusText}`,
       )
     }
     const body = (await res.json()) as { assignees?: PageGraderAssignee[] }
@@ -203,10 +203,14 @@ export class PageGraderIntegration {
       const errMsg =
         typeof body.error === 'string' ? body.error : text || res.statusText || 'Request failed'
       this.logger.warn(`Page Grader create work failed: ${res.status} ${errMsg}`)
-      throw new BadRequestException(`Page Grader create work failed (${res.status}): ${errMsg}`)
+      throw new BadRequestException(
+        `The ROAS Portal could not create the work (${res.status}): ${errMsg}`,
+      )
     }
     const work = body.work as PageGraderWorkResult | undefined
-    if (!work?.id) throw new BadRequestException('Page Grader create work returned no work id')
+    if (!work?.id) {
+      throw new BadRequestException('The ROAS Portal did not return a work ID')
+    }
     return { work, status: res.status }
   }
 
@@ -232,11 +236,13 @@ export class PageGraderIntegration {
     if (!res.ok) {
       const message =
         typeof body.error === 'string' ? body.error : text || res.statusText || 'Request failed'
-      throw new BadRequestException(`Page Grader meeting sync failed (${res.status}): ${message}`)
+      throw new BadRequestException(
+        `The ROAS Portal meeting sync failed (${res.status}): ${message}`,
+      )
     }
     const meeting = body.meeting as PageGraderMeetingResult | undefined
     if (!meeting?.id)
-      throw new BadRequestException('Page Grader meeting sync returned no meeting id')
+      throw new BadRequestException('The ROAS Portal meeting sync returned no meeting ID')
     return {
       meeting,
       created: body.created === true,
@@ -250,7 +256,7 @@ export class PageGraderIntegration {
     clientId: string,
   ): Promise<PageGraderClientPackage> {
     const id = clientId.trim()
-    if (!id) throw new BadRequestException('Page Grader client id is required')
+    if (!id) throw new BadRequestException('The ROAS Portal client ID is required')
     const url = `${this.normalizeBaseUrl(baseUrl)}/clients/${encodeURIComponent(id)}/brain-package`
     const res = await fetch(url, { headers: this.authHeaders(apiKey) })
     const text = await res.text().catch(() => '')
@@ -264,12 +270,12 @@ export class PageGraderIntegration {
       const errMsg =
         typeof body.error === 'string' ? body.error : text || res.statusText || 'Request failed'
       throw new BadRequestException(
-        `Page Grader client package fetch failed (${res.status}): ${errMsg}`,
+        `The ROAS Portal client package fetch failed (${res.status}): ${errMsg}`,
       )
     }
     const pkg = body.package
     if (!pkg || typeof pkg !== 'object' || Array.isArray(pkg)) {
-      throw new BadRequestException('Page Grader client package response was empty')
+      throw new BadRequestException('The ROAS Portal client package response was empty')
     }
     return pkg as PageGraderClientPackage
   }
@@ -280,7 +286,7 @@ export class PageGraderIntegration {
     clientId: string,
   ): Promise<PageGraderMetaContext> {
     const id = clientId.trim()
-    if (!id) throw new BadRequestException('Page Grader client id is required')
+    if (!id) throw new BadRequestException('The ROAS Portal client ID is required')
     const url = `${this.normalizeBaseUrl(baseUrl)}/clients/${encodeURIComponent(id)}/meta-context`
     const res = await fetch(url, { headers: this.authHeaders(apiKey) })
     const text = await res.text().catch(() => '')
@@ -294,12 +300,12 @@ export class PageGraderIntegration {
       const errMsg =
         typeof body.error === 'string' ? body.error : text || res.statusText || 'Request failed'
       throw new BadRequestException(
-        `Page Grader Meta context fetch failed (${res.status}): ${errMsg}`,
+        `The ROAS Portal Meta context fetch failed (${res.status}): ${errMsg}`,
       )
     }
     const context = body.meta_context
     if (!isPageGraderMetaContext(context)) {
-      throw new BadRequestException('Page Grader Meta context response was invalid')
+      throw new BadRequestException('The ROAS Portal Meta context response was invalid')
     }
     return context
   }

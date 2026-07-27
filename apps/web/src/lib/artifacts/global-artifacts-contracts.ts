@@ -3,6 +3,7 @@ import type { ShellArtifactViewerTarget } from './shell-artifact-viewer'
 export type GlobalArtifactCategory =
   | 'docs'
   | 'images'
+  | 'videos'
   | 'sheets'
   | 'presentations'
   | 'funnels'

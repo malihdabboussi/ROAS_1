@@ -1,5 +1,55 @@
 # Changelog - July 26, 2026
 
+## [2026-07-26 18:42] - [FEATURE]
+
+What: Added Videos as a first-class account and campaign artifact category with a dedicated filter, video icon, muted preview, and shared-viewer target.
+
+Why: Generated video assets were grouped under generic Files, making them difficult to discover and impossible to preview from artifact libraries.
+
+Impact: Users can filter and preview video deliverables in both the global Artifacts page and campaign Assets tab without changing upload or playback behavior.
+
+Files: `apps/web/src/lib/artifacts/global-artifacts-contracts.ts`, `apps/web/src/lib/artifacts/global-artifacts-api.ts`, `apps/web/src/features/artifacts/`, `apps/web/src/app/(dashboard)/campaigns/[id]/_components/tabs/CampaignAssetsTab.tsx`, focused tests, and `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-07-26 18:42] - [FIX]
+
+What: Standardized user-facing Page Grader references as **The ROAS Portal** across integration UI, API errors, task handoffs, agent policy, and system-agent skills while retaining internal service and tool identifiers. Added the database migration that updates the production agent policy rows.
+
+Why: The internal Page Grader name was still leaking through customer-visible controls, errors, and agent replies despite the product-facing portal language contract.
+
+Impact: Users now see one consistent product name without changing existing integration routes, credentials, MCP identifiers, or fulfillment behavior.
+
+Files: `apps/web/src/features/brain/`, `apps/web/src/features/settings/`, `apps/web/src/features/spaces/`, `apps/web/src/lib/integrations/integration-catalog.ts`, `apps/api/src/modules/brain/`, `apps/api/src/modules/integrations/page-grader/`, `apps/api/src/modules/spaces/`, `apps/agent-api/src/modules/agent-sync/services/pixel-user-facing-tool-language.test.ts`, `packages/agent-policy/src/platform-tools-template.ts`, `docker/agents/{vibey,atlas}/skills/page-grader-operator/SKILL.md`, `supabase/migrations/20260726233000_roas_portal_public_language.sql`, and `documentation/features/page-grader-mcp-bridge.md`.
+
+## [2026-07-26 18:33] - [STYLE]
+
+What: Consolidated empty-chat agent switching into the centered identity with a hover chevron, retained header switching for established conversations, and restyled Chats and Tasks with an aligned compact heading and list, updated dates, and row dividers.
+
+Why: Empty chats rendered the active agent twice, while the full chat-history page lacked scan-friendly dates, dividers, and alignment.
+
+Impact: New chats have one clear agent control, established chats remain switchable, and the full chat history is denser and easier to scan without changing embedded history sidebars.
+
+Files: `apps/web/src/features/spaces/components/chat/SpaceChatAgentPicker.tsx`, `apps/web/src/features/spaces/components/chat/SpaceChatAgentEmptyState.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/components/conversations/SpaceConversationRows.tsx`, `apps/web/src/components/conversations/SpaceConversationSections.tsx`, `apps/web/src/components/conversations/SpaceConversationsList.tsx`, `apps/web/src/features/studio/components/AllChatsPage.tsx`, focused tests, and `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-07-26 17:59] - [FIX]
+
+What: Restored compact ChatGPT-style history typography and spacing, removed the always-visible age from the title width, retained timestamps as row tooltips, and made newly created store conversations merge immediately into the active agent's sidebar list.
+
+Why: A prior spacing pass enlarged every title and row while the relative age permanently reduced usable title width. The sidebar's store sync also updated only rows that had already been fetched, so a new conversation remained absent until a reload.
+
+Impact: The history sidebar fits substantially more chats, preserves more of titles such as “Consolidate and improve Spaces,” keeps hover actions available, and inserts a newly started chat immediately while its generated title updates in place.
+
+Files: `apps/web/src/components/conversations/SpaceConversationRows.tsx`, `apps/web/src/components/conversations/SpaceConversationSections.tsx`, `apps/web/src/components/conversations/SpaceConversationsList.tsx`, `apps/web/src/components/conversations/SpaceConversationsList.test.tsx`, `apps/web/src/components/shell/ShellChatMenu.tsx`, `apps/web/src/components/shell/ShellChatMenu.test.tsx`, and `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-07-26 16:14] - [FIX]
+
+What: Made image history query with the conversation and Space resolved from the opened media asset instead of the incomplete click target.
+
+Why: Chat image clicks intentionally send only the asset id. The viewer resolved the asset's conversation afterward, but the history rail continued using the original empty conversation value and therefore showed only the active image.
+
+Impact: Opening an image from chat now loads the other images belonging to that same chat while keeping the current image selected.
+
+Files: `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.tsx` and `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.test.tsx`.
+
 ## [2026-07-26 15:00] - [FIX]
 
 What: Moved OpenRouter image generation to its dedicated image API, added explicit provider-output validation states to the billing ledger, verified ambiguous paid results through OpenRouter generation metadata, stopped agent retries when provider effect may already have occurred, and surfaced paid invalid outputs in the admin AI usage report.
@@ -12,11 +62,11 @@ Files: `packages/api-shared/src/services/provider-billing`, `apps/api/src/module
 
 ## 2026-07-26 13:18 - [FIX]
 
-What: Kept the image history rail mounted while switching versions, limited selection changes to the main preview and active outline, made the artifact editor replace the existing right work surface, made the expanded editor close action return to its docked state, and changed generated-image chat previews to show the full image without a caption card. OpenRouter image generation now retries one malformed successful response inside the provider boundary.
+What: Kept the image history rail mounted while switching versions, limited selection changes to the main preview and active outline, made the artifact editor replace the existing right work surface, made the expanded editor close action return to its docked state, and changed generated-image chat previews to show the full image without a caption card.
 
-Why: Selecting a thumbnail reloaded the entire history menu, the editor could compete with Agenda or another right-side surface, expanded close discarded the editor, chat previews cropped generated images, and an empty OpenRouter success body forced Pixel into a visible second tool attempt.
+Why: Selecting a thumbnail reloaded the entire history menu, the editor could compete with Agenda or another right-side surface, expanded close discarded the editor, and chat previews cropped generated images.
 
-Impact: Version browsing feels immediate and stable, right-side work remains mutually exclusive and recoverable, generated images are visible in full, and transient provider response corruption is repaired before it reaches the agent.
+Impact: Version browsing feels immediate and stable, right-side work remains mutually exclusive and recoverable, and generated images are visible in full.
 
 Files: `apps/web/src/features/studio/components/preview/ShellMediaArtifactViewer.tsx`, `apps/web/src/features/studio/components/preview/ShellMediaHistoryRail.tsx`, `apps/web/src/components/shell/ShellArtifactViewerPanel.tsx`, `apps/web/src/components/shell/ShellWorkspace.tsx`, `apps/web/src/components/shell/ShellWorkAreaControl.tsx`, `apps/web/src/components/shell/use-shell-store.ts`, `apps/web/src/components/chat/GeneratedMedia.tsx`, `apps/web/src/features/studio/components/chat/InlineImageGen.tsx`, `apps/agent-api/src/modules/artifacts/services/artifact-legacy-media-provider.service.ts`, focused tests, and `documentation/features/claude-chatgpt-shell.md`.
 
@@ -342,6 +392,46 @@ Impact: AI Usage remains renderable across rollout version skew, and both fresh 
 
 Files: `apps/web/src/features/admin-ai-usage/services/admin-ai-usage.service.ts`, `apps/web/src/features/admin-ai-usage/services/admin-ai-usage.service.test.ts`.
 
+## 2026-07-26 18:20 - [STYLE]
+
+What: Fixed the top-right recent-page menu to a compact 256px width and explicitly left-aligned every page and artifact row.
+
+Why: The menu only declared a minimum width, so long artifact names expanded it across most of the screen, while button text inherited centered alignment.
+
+Impact: Page names such as `Campaigns / General` and recent artifact names now share a consistent compact row width, align from the left, and truncate instead of widening the menu.
+
+Files: `apps/web/src/components/shell/ShellWorkAreaControl.tsx` and `apps/web/src/components/shell/ShellWorkAreaControl.test.tsx`.
+
+## [2026-07-26 18:51] - [FIX]
+
+What: Standardized the internal Page Grader integration as “The ROAS Portal” in every user-visible app label, Pixel response rule, Slack recap, task handoff, Brain import message, and integration error. Added a database migration that updates the global Pixel policy and the Vibey/Atlas fulfillment skills while preserving internal tool identifiers.
+
+Why: Page Grader is an internal implementation name that customers and team members do not recognize, and inconsistent portal naming made Pixel and Slack messages sound like they referred to a separate product.
+
+Impact: Users now see and hear one exact product name—The ROAS Portal—while code, logs, MCP routing, and internal operator terminology can continue using Page Grader safely.
+
+Files: `packages/agent-policy/src/platform-tools-template.ts`, `docker/agents/vibey/TOOLS.md`, `docker/agents/{vibey,atlas}/skills/page-grader-operator/SKILL.md`, `apps/agent-api/src/modules/agent-sync/services/pixel-user-facing-tool-language.test.ts`, `apps/api/src/modules/{brain,integrations,spaces}`, `apps/web/src/features/{brain,settings,spaces}`, `apps/web/src/lib/integrations`, `supabase/migrations/20260726233000_roas_portal_public_language.sql`, and `documentation/features/meeting-follow-up-slack.md`.
+
+## [2026-07-26 18:56] - [FEATURE]
+
+What: Rebuilt Inbox interaction as a responsive list/detail workspace with search, mark-all-read, clear-current-view, complete triage controls, native task/mission detail opening, and separate source navigation.
+
+Why: Selecting a notification only expanded a small body block, so task updates did not provide a real details workflow and the single Open action forced users to leave Inbox without distinguishing details from source context.
+
+Impact: Users can review notification context and process the queue in place, open full task, subtask, or mission details without losing Inbox position, and deliberately jump to the originating Space, Mission Control item, DM, invitation, or integration when needed.
+
+Files: `apps/web/src/components/notifications`, `apps/web/src/features/home/containers/HomeInboxWorkspace.tsx`, `apps/web/src/features/home/components/cards/InboxFeedCard.tsx`, `apps/web/src/features/home/lib/home-notification-action.ts`, `apps/web/src/lib/notifications`, `apps/web/src/features/mission-control/types/index.ts`, `apps/web/src/app/(dashboard)/home/inbox/page.tsx`, and `documentation/features/claude-chatgpt-shell.md`.
+
+## [2026-07-26 19:09] - [STYLE]
+
+What: Refined the Paid Ads and Media workspaces with clearer empty states, view-specific upload controls, a responsive Paid Ads mode switcher, roomier media grids, and a dedicated accessible media asset card with proper video previews. Video-only views no longer expose the image-generation composer or image upload language.
+
+Why: Ads and video views became cramped beside the app’s chat panels, empty states did not explain the next action, and video workspaces reused image-oriented controls that did not match what the view could actually do.
+
+Impact: Paid Ads remains readable at narrower workspace widths, empty creative and ad-set states give users a direct next step, and image, video, and mixed media views now present the correct title, uploader, preview behavior, and creation controls.
+
+Files: `apps/web/src/features/spaces/components/artifacts/paid-ads/PaidAdsSpaceView.tsx`, `PaidAdsCreativesPane.tsx`, `PaidAdsAdSetsPane.tsx`, `apps/web/src/features/spaces/views/artifacts/paid-ads-toolbar/PaidAdsWorkspaceModeToggle.tsx`, and `apps/web/src/features/spaces/views/media`.
+
 ## [2026-07-26 19:00] - [FEATURE]
 
 What: Added preset and custom UTC date ranges, equal-length previous-period comparisons, metric sparklines, and a daily provider-spend chart stacked by model to the current-app admin AI usage dashboard.
@@ -351,3 +441,41 @@ Why: The existing report exposed only rolling current-window totals, so admins c
 Impact: `/admin/ai-usage` now supports inclusive one- to 366-day reporting with continuous daily series and compatibility defaults for mixed-version rollouts. Provider billing attempts remain authoritative for spend and request analytics, while traces remain authoritative for tokens and failures; all existing route, opportunity, reconciliation, workload, and costly-trace detail remains available.
 
 Files: `apps/api/src/modules/admin/controllers/admin-ai-usage.controller.ts`, `apps/api/src/modules/admin/services/admin-ai-usage.service.ts`, `apps/api/src/modules/admin/repositories/admin-ai-usage.repository.ts`, `apps/api/src/modules/admin/types/admin-ai-usage.types.ts`, backend tests, `apps/web/src/features/admin-ai-usage/`, and `documentation/features/chat-stream-recovery.md`.
+
+
+## [2026-07-26 21:46] - [DOCS]
+
+What: Documented that bulk-send “The ROAS Portal” wording in `BulkActionBar` / `PageGraderBulkSendPanel` remains deferred behind an architecture LOC/import repair.
+
+Why: Pre-commit architecture gate blocks staging those already-oversized files for a string-only pass.
+
+Impact: Portal language already shipped in commit `40b0cda9` across other surfaces; bulk-send buttons/toasts stay as a follow-up PR after extraction.
+
+Files: `.docs/plans/agent-follow-up-work.md`.
+
+## [2026-07-26 21:53] - [REFACTOR]
+
+What: Split Spaces bulk-action and Page Grader bulk-send panels under LOC limits, moved settings modal import to `@/lib/settings`, and finished user-facing ROAS Portal wording in those surfaces.
+Why: Architecture gates blocked committing the remaining Page Grader → The ROAS Portal public copy.
+Impact: Bulk send UI and toasts say The ROAS Portal; allowlist for BulkActionBar shrinks; internal tool ids unchanged.
+Files: apps/web/src/features/spaces/components/BulkActionBar.tsx, apps/web/src/features/spaces/components/PageGraderBulkSendPanel.tsx, apps/web/src/features/spaces/components/bulk-action-bar/*, apps/web/src/features/spaces/components/page-grader-bulk-send/*, scripts/arch/loc-allowlist.json, .docs/logs/changelog2026-07-26.md, .docs/plans/agent-follow-up-work.md
+
+## [2026-07-26 21:54] - [FIX]
+
+What: Trimmed `PageGraderBulkSendPanel.tsx` back under the 400-line component limit after Prettier re-expanded it during commit.
+
+Why: Architecture gate had passed on the pre-format staged file; the committed tip was 401 LOC.
+
+Impact: Keep the release tip architecture-clean for subsequent deploys.
+
+Files: `apps/web/src/features/spaces/components/PageGraderBulkSendPanel.tsx`.
+
+## [2026-07-26 21:55] - [REFACTOR]
+
+What: Consolidated BulkActionBar back to a single client component under limit, replaced page-grader step barrels with focused step files, and kept The ROAS Portal wording.
+
+Why: Concurrent extraction left duplicate entrypoints and mid-rename step modules unpushed.
+
+Impact: Release tip stays architecture-compliant with one BulkActionBar implementation and smaller portal send steps.
+
+Files: `apps/web/src/features/spaces/components/BulkActionBar.tsx`, `bulk-action-bar/*`, `PageGraderBulkSendPanel.tsx`, `page-grader-bulk-send/*`, `scripts/arch/loc-allowlist.json`.
