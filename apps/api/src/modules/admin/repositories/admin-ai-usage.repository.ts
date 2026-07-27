@@ -13,16 +13,20 @@ const MAX_ROWS = 50000
 export class AdminAiUsageRepository {
   constructor(private readonly serviceClient: SupabaseServiceClient) {}
 
-  findRecentTraces(since: string): Promise<AdminAiUsageTraceRow[]> {
-    return this.findRecentRows<AdminAiUsageTraceRow>(
+  findTracesInRange(startIso: string, endExclusiveIso: string): Promise<AdminAiUsageTraceRow[]> {
+    return this.findRowsInRange<AdminAiUsageTraceRow>(
       'vb_agent_traces',
       'id, created_at, status, channel, model, total_tokens, cost_usd',
-      since,
+      startIso,
+      endExclusiveIso,
     )
   }
 
-  findRecentProviderAttempts(since: string): Promise<AdminAiUsageAttemptRow[]> {
-    return this.findRecentRows<AdminAiUsageAttemptRow>(
+  findProviderAttemptsInRange(
+    startIso: string,
+    endExclusiveIso: string,
+  ): Promise<AdminAiUsageAttemptRow[]> {
+    return this.findRowsInRange<AdminAiUsageAttemptRow>(
       'provider_billing_attempts',
       [
         'id',
@@ -42,7 +46,8 @@ export class AdminAiUsageRepository {
         'ai_usage_event_id',
         'metadata_json',
       ].join(', '),
-      since,
+      startIso,
+      endExclusiveIso,
     )
   }
 
@@ -58,22 +63,25 @@ export class AdminAiUsageRepository {
     return (data ?? []) as AdminAiUsageBillingCheckRow[]
   }
 
-  private async findRecentRows<T extends { created_at: string }>(
+  private async findRowsInRange<T extends { created_at: string }>(
     table: string,
     columns: string,
-    since: string,
+    startIso: string,
+    endExclusiveIso: string,
   ): Promise<T[]> {
     const rows: T[] = []
     for (let from = 0; from < MAX_ROWS; from += PAGE_SIZE) {
       const { data, error } = await this.serviceClient.client
         .from(table)
         .select(columns)
+        .gte('created_at', startIso)
+        .lt('created_at', endExclusiveIso)
         .order('created_at', { ascending: false })
         .range(from, from + PAGE_SIZE - 1)
       if (error) throw error
       const page = (data ?? []) as unknown as T[]
-      rows.push(...page.filter((row) => row.created_at >= since))
-      if (page.length < PAGE_SIZE || page.at(-1)!.created_at < since) break
+      rows.push(...page)
+      if (page.length < PAGE_SIZE) break
     }
     return rows
   }

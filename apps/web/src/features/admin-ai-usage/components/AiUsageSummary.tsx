@@ -1,4 +1,4 @@
-import { AlertTriangle, CircleDollarSign, Link2, Route, Sparkles, Zap } from 'lucide-react'
+import { Route, Sparkles } from 'lucide-react'
 import type { AdminAiUsageReport } from '../types/admin-ai-usage.types'
 
 const integer = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
@@ -9,62 +9,9 @@ const usd = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 })
 
-function SummaryCard({
-  label,
-  value,
-  detail,
-  icon,
-}: {
-  label: string
-  value: string
-  detail: string
-  icon: React.ReactNode
-}) {
-  return (
-    <div className="surface-card rounded-spacing-3 border-border p-spacing-4 border">
-      <div className="gap-spacing-2 text-muted-foreground flex items-center">
-        {icon}
-        <span className="body-4">{label}</span>
-      </div>
-      <p className="title-h6 text-foreground mt-spacing-2">{value}</p>
-      <p className="body-4 text-muted-foreground mt-spacing-1">{detail}</p>
-    </div>
-  )
-}
-
 export function AiUsageSummary({ report }: { report: AdminAiUsageReport }) {
-  const correlationPercent = report.coverage.attempts
-    ? (report.coverage.correlatedAttempts / report.coverage.attempts) * 100
-    : 100
   return (
     <>
-      <div className="gap-spacing-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard
-          label="Tokens processed"
-          value={compact.format(report.summary.tokens)}
-          detail={`${integer.format(report.summary.traces)} traced runs`}
-          icon={<Zap className="icon-md" />}
-        />
-        <SummaryCard
-          label="Provider spend"
-          value={usd.format(report.summary.providerCostUsd)}
-          detail={`${integer.format(report.summary.providerAttempts)} provider calls`}
-          icon={<CircleDollarSign className="icon-md" />}
-        />
-        <SummaryCard
-          label="Failed runs"
-          value={integer.format(report.summary.failed)}
-          detail={`${usd.format(report.opportunities.failedWithCost.costUsd)} spent after failure`}
-          icon={<AlertTriangle className="icon-md" />}
-        />
-        <SummaryCard
-          label="Trace correlation"
-          value={`${correlationPercent.toFixed(1)}%`}
-          detail={`${integer.format(report.coverage.usageLinkedAttempts)} calls linked to usage`}
-          icon={<Link2 className="icon-md" />}
-        />
-      </div>
-
       <section className="surface-card rounded-spacing-3 border-border p-spacing-4 border">
         <div className="gap-spacing-2 flex items-center">
           <Route className="icon-md text-muted-foreground" />

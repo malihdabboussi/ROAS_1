@@ -2,16 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
+import { AiUsageCharts } from '../components/AiUsageCharts'
+import { AiUsageDateRangeControls } from '../components/AiUsageDateRangeControls'
 import { AiUsageSummary } from '../components/AiUsageSummary'
 import { AiUsageTables } from '../components/AiUsageTables'
 import { ADMIN_AI_USAGE_MESSAGES } from '../config/messages.config'
 import { loadAdminAiUsage } from '../services/admin-ai-usage.service'
-import type { AdminAiUsageReport } from '../types/admin-ai-usage.types'
-
-const WINDOWS = [1, 7, 30] as const
+import type { AdminAiUsageReport, AiUsageRange } from '../types/admin-ai-usage.types'
 
 export function AdminAiUsageDashboard() {
-  const [days, setDays] = useState<number>(7)
+  const [range, setRange] = useState<AiUsageRange>({ days: 7 })
   const [report, setReport] = useState<AdminAiUsageReport | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -21,14 +21,14 @@ export function AdminAiUsageDashboard() {
       setLoading(true)
       setError(false)
       try {
-        setReport(await loadAdminAiUsage(days, force))
+        setReport(await loadAdminAiUsage(range, force))
       } catch {
         setError(true)
       } finally {
         setLoading(false)
       }
     },
-    [days],
+    [range],
   )
 
   useEffect(() => {
@@ -46,28 +46,17 @@ export function AdminAiUsageDashboard() {
               Provider routing, trace coverage, spend, and token-efficiency gaps.
             </p>
           </div>
-          <div className="gap-spacing-2 flex items-center">
-            <div className="surface-card rounded-spacing-2 border-border p-spacing-1 flex border">
-              {WINDOWS.map((windowDays) => (
-                <button
-                  key={windowDays}
-                  type="button"
-                  onClick={() => setDays(windowDays)}
-                  className={
-                    days === windowDays
-                      ? 'button-compact button-glass-purple'
-                      : 'button-compact text-muted-foreground hover:bg-hover-subtle'
-                  }
-                >
-                  {windowDays}d
-                </button>
-              ))}
-            </div>
+          <div className="gap-spacing-2 flex flex-col items-stretch md:items-end">
+            <AiUsageDateRangeControls
+              value={range}
+              displayedRange={report?.range}
+              onChange={setRange}
+            />
             <button
               type="button"
               onClick={() => void load(true)}
               disabled={loading}
-              className="button-compact button-glass-neutral"
+              className="button-compact button-glass-neutral self-end"
             >
               <RefreshCw className={loading ? 'icon-sm animate-spin' : 'icon-sm'} />
               Refresh
@@ -85,6 +74,7 @@ export function AdminAiUsageDashboard() {
           </div>
         ) : report ? (
           <div className="gap-spacing-4 flex flex-col">
+            <AiUsageCharts report={report} />
             <AiUsageSummary report={report} />
             <AiUsageTables report={report} />
             <p className="body-4 text-muted-foreground text-right">
