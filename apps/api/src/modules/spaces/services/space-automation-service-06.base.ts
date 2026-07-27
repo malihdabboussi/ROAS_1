@@ -446,7 +446,8 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
         spaceId,
         {
           title: provisionalTitle,
-          description: meeting.summary || meeting.transcriptText || null,
+          // Keep description as the short purpose summary; full transcript lives in custom_data.
+          description: meeting.summary || null,
           source: 'fathom',
           ...(hasProcessingStatus ? { status: 'processing' as const } : {}),
           custom_data: {
@@ -454,6 +455,8 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
             call_kind: callKind,
             ...(meeting.callDate ? { call_date: meeting.callDate } : {}),
             ...(meeting.url ? { recording_url: meeting.url, fathom_url: meeting.url } : {}),
+            ...(meeting.summary ? { summary: meeting.summary } : {}),
+            ...(meeting.transcriptText ? { transcript_text: meeting.transcriptText } : {}),
             ...(optionIds.length > 0 ? { attendees: optionIds } : {}),
             ...(Object.keys(resolvedAttendees.speakerRemaps).length > 0
               ? { speaker_remaps: resolvedAttendees.speakerRemaps }

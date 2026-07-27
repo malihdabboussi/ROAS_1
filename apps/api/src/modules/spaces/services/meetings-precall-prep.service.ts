@@ -14,10 +14,10 @@ import {
   isEligiblePrecallEvent,
   localDayBounds,
   mapPrepItemToAgendaLink,
-  resolveAgendaCallSummary,
-  resolveAgendaRecordingUrl,
   resolvePreferredMeetingsSpaceId,
   scoreRelatedCallMatch,
+  toAgendaFollowUp,
+  toAgendaRelatedCall,
   type AgendaPrepLink,
   type AgendaRelatedCall,
   type PrecallAgendaEventLike,
@@ -300,13 +300,7 @@ export class MeetingsPrecallPrepService {
       ).trim()
       if (!sourceId || !callIdSet.has(sourceId)) continue
       const list = followUpsByCall.get(sourceId) ?? []
-      list.push({
-        id: row.id,
-        title: String(row.title ?? 'Untitled').slice(0, 200),
-        status: String(row.status ?? ''),
-        assignee_id: typeof row.assignee_id === 'string' ? row.assignee_id : null,
-        assignee_type: typeof row.assignee_type === 'string' ? row.assignee_type : null,
-      })
+      list.push(toAgendaFollowUp(row))
       followUpsByCall.set(sourceId, list)
     }
     const callsById = new Map(calls.map((call) => [call.id, call]))
@@ -338,31 +332,34 @@ export class MeetingsPrecallPrepService {
       const call = callsById.get(callId)
       if (!call) continue
       matchedCallIds.add(call.id)
-      const custom = call.custom_data ?? {}
-      relatedByEventId.set(eventId, {
-        space_id: String(call.space_id),
-        call_item_id: call.id,
-        title: String(call.title ?? 'Call').slice(0, 200),
-        summary: resolveAgendaCallSummary({ description: call.description, custom }),
-        recording_url: resolveAgendaRecordingUrl(custom),
-        follow_ups: followUpsByCall.get(call.id) ?? [],
-      })
+      relatedByEventId.set(
+        eventId,
+        toAgendaRelatedCall({
+          call,
+          followUps: followUpsByCall.get(call.id) ?? [],
+        }),
+      )
     }
 
     for (const call of calls) {
       if (matchedCallIds.has(call.id)) continue
-      const custom = call.custom_data ?? {}
-      const callDate = typeof custom.call_date === 'string' ? custom.call_date : null
+      const callDate =
+        typeof call.custom_data?.call_date === 'string' ? call.custom_data.call_date : null
       if (!callDateInAgendaWindow(callDate, input.start, input.end)) continue
+      const related = toAgendaRelatedCall({
+        call,
+        followUps: followUpsByCall.get(call.id) ?? [],
+      })
       unmatchedFathomEvents.push(
         buildFathomAgendaEvent({
-          spaceId: String(call.space_id),
-          callItemId: call.id,
-          title: String(call.title ?? 'Call'),
+          spaceId: related.space_id,
+          callItemId: related.call_item_id,
+          title: related.title,
           callDate: callDate!,
-          recordingUrl: resolveAgendaRecordingUrl(custom),
-          summary: resolveAgendaCallSummary({ description: call.description, custom }),
-          followUps: followUpsByCall.get(call.id) ?? [],
+          recordingUrl: related.recording_url,
+          summary: related.summary,
+          hasTranscript: related.has_transcript,
+          followUps: related.follow_ups,
         }),
       )
     }

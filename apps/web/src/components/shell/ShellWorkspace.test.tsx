@@ -15,6 +15,9 @@ const mocks = vi.hoisted(() => ({
   workAreaOpen: true,
   chatDrawerOpen: false,
   artifactTarget: null as { id: string } | null,
+  desktop: false,
+  shellPrefsHydrated: false,
+  menuDock: 'left' as 'left' | 'work' | 'work-top' | 'work-bottom' | 'work-right',
 }))
 
 vi.mock('next/navigation', () => ({
@@ -22,6 +25,28 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.push, replace: mocks.replace }),
   useSearchParams: () => ({ get: (key: string) => mocks.params.get(key) ?? null }),
 }))
+
+vi.mock('@/lib/hooks/use-media-query', () => ({
+  useMediaQuery: () => mocks.desktop,
+}))
+
+vi.mock('./use-shell-prefs-hydrated', () => ({
+  useShellPrefsHydrated: () => mocks.shellPrefsHydrated,
+}))
+
+vi.mock('./use-shell-menu-dock', async () => {
+  const actual =
+    await vi.importActual<typeof import('./use-shell-menu-dock')>('./use-shell-menu-dock')
+  return {
+    ...actual,
+    useShellMenuDock: (selector: (state: Record<string, unknown>) => unknown) =>
+      selector({
+        dock: mocks.menuDock,
+        setWorkCardHostAvailable: vi.fn(),
+        setWorkCollapsedHostAvailable: vi.fn(),
+      }),
+  }
+})
 
 vi.mock('@/components/global-chat/containers/GlobalChatPanel', () => ({
   GlobalChatPanel: ({ onCollapseChat }: { onCollapseChat?: () => void }) => (
@@ -116,6 +141,9 @@ describe('ShellWorkspace', () => {
     mocks.workAreaOpen = true
     mocks.chatDrawerOpen = false
     mocks.artifactTarget = null
+    mocks.desktop = false
+    mocks.shellPrefsHydrated = false
+    mocks.menuDock = 'left'
   })
 
   afterEach(() => {
@@ -244,5 +272,34 @@ describe('ShellWorkspace', () => {
     expect(screen.getByText('Agenda dashboard').closest('[data-shell-work-area]')).not.toHaveClass(
       'hidden',
     )
+  })
+
+  it('shows a bottom expand arrow on the collapsed work-attached rail that restores the work card', () => {
+    mocks.pathname = '/brain'
+    mocks.params = new Map()
+    mocks.workAreaOpen = false
+    mocks.desktop = true
+    mocks.shellPrefsHydrated = true
+    mocks.menuDock = 'work-right'
+
+    render(<ShellWorkspace>Brain page</ShellWorkspace>)
+
+    const expandButton = screen.getByRole('button', { name: 'Show page' })
+    fireEvent.click(expandButton)
+
+    expect(mocks.setWorkAreaOpen).toHaveBeenCalledWith(true)
+  })
+
+  it('omits the collapsed-rail expand arrow when the menu dock is not work-attached', () => {
+    mocks.pathname = '/brain'
+    mocks.params = new Map()
+    mocks.workAreaOpen = false
+    mocks.desktop = true
+    mocks.shellPrefsHydrated = true
+    mocks.menuDock = 'left'
+
+    render(<ShellWorkspace>Brain page</ShellWorkspace>)
+
+    expect(screen.queryByRole('button', { name: 'Show page' })).toBeNull()
   })
 })

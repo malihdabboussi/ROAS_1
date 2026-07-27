@@ -2,16 +2,16 @@
 
 Status: Open
 
-Found while: Meeting detail modal redesign (summary + assignee enrich)
+Found while: Meeting detail modal redesign + transcript durability (summary + assignee enrich)
 
 Files:
-- `apps/api/src/modules/spaces/services/meetings-precall-prep.helpers.ts` (515 LOC; pre-existing ~474, now further over common service helper budget)
+- `apps/api/src/modules/spaces/services/meetings-precall-prep.helpers.ts` (590 LOC; pre-existing ~474, now further over common service helper budget)
 
-Evidence: Added `resolveAgendaCallSummary` / `resolveAgendaRecordingUrl` and expanded related DTO fields for the Home meeting modal.
+Evidence: Added `resolveAgendaCallSummary` / `resolveAgendaRecordingUrl`, expanded related DTO fields for the Home meeting modal, and grew agenda related DTO helpers + Fathom synthetic row builders while adding summary/transcript/assignee fields.
 
 Needed work: Extract agenda-related matching + Fathom synthetic row builders into a dedicated `meetings-agenda-related.helpers.ts`.
 
-Reason not done now: In-scope change was enrich + modal UX; full helpers split is adjacent debt.
+Reason not done now: In-scope change was enrich + modal UX + transcript persistence; full helpers split is adjacent debt.
 
 ## 2026-07-27 - [ARCH] Feedback-b-chat over-limit files after resume/hydrate/drag
 
@@ -9005,3 +9005,19 @@ Files:
 Evidence: Notify toggle + note + handoff link pushed past 400.
 Needed work: Extract pass-off / notify subsection into a sibling presentational component.
 Deferred because: Behavior merge onto local main; split is adjacent cleanup.
+
+## 2026-07-27 - [ARCH] SidebarHqRail.tsx still near the 400-line component limit
+
+Status: Open
+
+Found while: Finishing the five-zone HQ menu dock redesign (`feat/shell-menu-dock-five-zones`) — added `menuCompact` (Option A) branching and removed the chat-history restore peek.
+
+Files:
+
+- `apps/web/src/components/layout/sidebar/SidebarHqRail.tsx` (393 LOC; 400-line component limit — was 391 LOC pre-existing on `origin/main`, net +2 from this pass)
+
+Evidence: The compact/expanded branch and dock-attribute wiring added by this change kept the file essentially flat (+2 LOC) but it remains ~98% of the component limit; this repeats the same near-limit finding logged 2026-07-26.
+
+Needed work: Extract the rail-items nav list (`visibleRailItems.map(...)`, ~250 LOC of per-item-type button/link branches) into a focused `SidebarHqRailNav` (or similar) child component so `SidebarHqRail` only orchestrates dock/compact/peek state.
+
+Reason not done now: Out of scope for the requested five-zone dock + R-compact + test-green pass; the file is still under its hard limit and the change here is behavior-additive, not a refactor.

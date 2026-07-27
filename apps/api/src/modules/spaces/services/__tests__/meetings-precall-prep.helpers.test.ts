@@ -9,6 +9,7 @@ import {
   localDayBounds,
   mapPrepItemToAgendaLink,
   resolveAgendaCallSummary,
+  resolveAgendaHasTranscript,
   resolveAgendaRecordingUrl,
   resolvePreferredMeetingsSpaceId,
   scoreRelatedCallMatch,
@@ -261,11 +262,13 @@ describe('meetings-precall-prep.helpers', () => {
       callDate: '2026-07-16T23:00:00.000Z',
       recordingUrl: 'https://fathom.video/x',
       summary: 'Align on launch readiness.',
+      hasTranscript: true,
     })
     expect(row.source).toBe('fathom')
     expect(row.id).toBe('fathom:call-1')
     expect(row.related.call_item_id).toBe('call-1')
     expect(row.related.summary).toBe('Align on launch readiness.')
+    expect(row.related.has_transcript).toBe(true)
     expect(row.video_label).toBe('Fathom')
     expect(new Date(row.end).getTime()).toBeGreaterThan(new Date(row.start).getTime())
   })
@@ -306,15 +309,24 @@ describe('meetings-precall-prep.helpers', () => {
     ).toBe('Bridge AM and builders.')
     expect(
       resolveAgendaCallSummary({
-        description: 'Short purpose note about launch readiness.',
-        custom: {},
-      }),
-    ).toBe('Short purpose note about launch readiness.')
-    expect(
-      resolveAgendaCallSummary({
         description: `${'x'.repeat(2000)}\nDylan: hello\nNate: hi`,
         custom: {},
       }),
     ).toBeNull()
+  })
+
+  it('flags transcript availability from custom_data or legacy description', () => {
+    expect(
+      resolveAgendaHasTranscript({
+        description: null,
+        custom: { transcript_text: 'Dylan: hi' },
+      }),
+    ).toBe(true)
+    expect(
+      resolveAgendaHasTranscript({
+        description: 'Short purpose note',
+        custom: {},
+      }),
+    ).toBe(false)
   })
 })

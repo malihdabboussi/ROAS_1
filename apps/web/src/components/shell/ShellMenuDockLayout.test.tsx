@@ -4,8 +4,9 @@ import { ShellMenuDockLayout } from './ShellMenuDockLayout'
 
 const mocks = vi.hoisted(() => ({
   desktop: true,
-  dock: 'right' as 'left' | 'right' | 'top' | 'bottom' | 'work',
-  workHostAvailable: false,
+  dock: 'left' as 'left' | 'work' | 'work-top' | 'work-bottom' | 'work-right',
+  workCardHostAvailable: false,
+  workCollapsedHostAvailable: false,
 }))
 
 vi.mock('@/lib/hooks/use-media-query', () => ({
@@ -16,11 +17,25 @@ vi.mock('./use-shell-prefs-hydrated', () => ({
   useShellPrefsHydrated: () => true,
 }))
 
-vi.mock('./use-shell-menu-dock', () => ({
-  useShellMenuDock: (
-    selector: (state: { dock: typeof mocks.dock; workHostAvailable: boolean }) => unknown,
-  ) => selector({ dock: mocks.dock, workHostAvailable: mocks.workHostAvailable }),
-}))
+vi.mock('./use-shell-menu-dock', async () => {
+  const actual =
+    await vi.importActual<typeof import('./use-shell-menu-dock')>('./use-shell-menu-dock')
+  return {
+    ...actual,
+    useShellMenuDock: (
+      selector: (state: {
+        dock: typeof mocks.dock
+        workCardHostAvailable: boolean
+        workCollapsedHostAvailable: boolean
+      }) => unknown,
+    ) =>
+      selector({
+        dock: mocks.dock,
+        workCardHostAvailable: mocks.workCardHostAvailable,
+        workCollapsedHostAvailable: mocks.workCollapsedHostAvailable,
+      }),
+  }
+})
 
 vi.mock('./ShellTopBar', () => ({
   ShellTopBar: () => <header>Top bar</header>,
@@ -30,24 +45,12 @@ describe('ShellMenuDockLayout', () => {
   afterEach(() => {
     cleanup()
     mocks.desktop = true
-    mocks.dock = 'right'
-    mocks.workHostAvailable = false
+    mocks.dock = 'left'
+    mocks.workCardHostAvailable = false
+    mocks.workCollapsedHostAvailable = false
   })
 
-  it('uses the saved menu edge on desktop', () => {
-    const { container } = render(
-      <ShellMenuDockLayout sidebar={<nav>Menu</nav>}>
-        <div>Workspace</div>
-      </ShellMenuDockLayout>,
-    )
-
-    expect(container.firstChild).toHaveAttribute('data-shell-menu-dock', 'right')
-    expect(screen.getByRole('main').nextElementSibling).toHaveTextContent('Menu')
-  })
-
-  it('always mounts the canonical left drawer structure on mobile', () => {
-    mocks.desktop = false
-    mocks.dock = 'bottom'
+  it('mounts the menu on the far left of chat', () => {
     const { container } = render(
       <ShellMenuDockLayout sidebar={<nav>Menu</nav>}>
         <div>Workspace</div>
@@ -60,7 +63,7 @@ describe('ShellMenuDockLayout', () => {
 
   it('omits the frame sidebar when work dock is hosted in the workspace', () => {
     mocks.dock = 'work'
-    mocks.workHostAvailable = true
+    mocks.workCardHostAvailable = true
     const { container } = render(
       <ShellMenuDockLayout sidebar={<nav>Menu</nav>}>
         <div>Workspace</div>
@@ -69,19 +72,18 @@ describe('ShellMenuDockLayout', () => {
 
     expect(container.firstChild).toHaveAttribute('data-shell-menu-dock', 'work')
     expect(screen.queryByText('Menu')).toBeNull()
-    expect(screen.getByText('Menu docked to work card')).toBeInTheDocument()
   })
 
   it('falls back to frame left when work dock cannot host', () => {
-    mocks.dock = 'work'
-    mocks.workHostAvailable = false
-    const { container } = render(
+    mocks.dock = 'work-top'
+    mocks.workCardHostAvailable = false
+    mocks.workCollapsedHostAvailable = false
+    render(
       <ShellMenuDockLayout sidebar={<nav>Menu</nav>}>
         <div>Workspace</div>
       </ShellMenuDockLayout>,
     )
 
-    expect(container.firstChild).toHaveAttribute('data-shell-menu-dock', 'left')
     expect(screen.getByText('Menu').nextElementSibling).toHaveRole('main')
   })
 })

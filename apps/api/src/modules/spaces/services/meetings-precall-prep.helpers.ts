@@ -143,6 +143,8 @@ export type AgendaRelatedCall = {
   title: string
   /** Short meeting summary for the agenda detail modal (not a full transcript). */
   summary: string | null
+  /** True when a full transcript can be loaded from the call item. */
+  has_transcript: boolean
   recording_url: string | null
   follow_ups: AgendaRelatedFollowUp[]
 }
@@ -173,11 +175,84 @@ export function resolveAgendaCallSummary(input: {
   }
   const description = typeof input.description === 'string' ? input.description.trim() : ''
   if (!description) return null
-  // Transcript dumps are long / multi-speaker; keep those out of the modal.
+  // Transcript dumps are long / multi-speaker; keep those out of the summary slot.
   if (description.length > 1800 || /\n\s*[A-Z][a-z]+:\s/.test(description.slice(0, 400))) {
     return null
   }
   return description.slice(0, MAX_AGENDA_SUMMARY_CHARS)
+}
+
+/** Detect whether the call item has a full transcript available for on-demand load. */
+export function resolveAgendaHasTranscript(input: {
+  description?: string | null
+  custom?: Record<string, unknown> | null
+}): boolean {
+  const custom = input.custom ?? {}
+  if (typeof custom.transcript_text === 'string' && custom.transcript_text.trim().length > 0) {
+    return true
+  }
+  const description = typeof input.description === 'string' ? input.description.trim() : ''
+  if (!description) return false
+  // Legacy rows stored the transcript in description when no summary existed.
+  return description.length > 1800 || /\n\s*[A-Z][a-z]+:\s/.test(description.slice(0, 400))
+}
+
+/** Extract full transcript text from a loaded call space item (lazy modal load). */
+export function extractCallTranscriptText(input: {
+  description?: string | null
+  custom_data?: Record<string, unknown> | null
+}): string | null {
+  const custom = input.custom_data ?? {}
+  if (typeof custom.transcript_text === 'string' && custom.transcript_text.trim()) {
+    return custom.transcript_text.trim()
+  }
+  const description = typeof input.description === 'string' ? input.description.trim() : ''
+  if (!description) return null
+  if (description.length > 1800 || /\n\s*[A-Z][a-z]+:\s/.test(description.slice(0, 400))) {
+    return description
+  }
+  return null
+}
+
+export function toAgendaFollowUp(row: {
+  id: string
+  title?: string | null
+  status?: string | null
+  assignee_id?: string | null
+  assignee_type?: string | null
+}): AgendaRelatedFollowUp {
+  return {
+    id: row.id,
+    title: String(row.title ?? 'Untitled').slice(0, 200),
+    status: String(row.status ?? ''),
+    assignee_id: typeof row.assignee_id === 'string' ? row.assignee_id : null,
+    assignee_type: typeof row.assignee_type === 'string' ? row.assignee_type : null,
+  }
+}
+
+export function toAgendaRelatedCall(input: {
+  call: {
+    id: string
+    space_id: string
+    title?: string | null
+    description?: string | null
+    custom_data?: Record<string, unknown> | null
+  }
+  followUps: AgendaRelatedFollowUp[]
+}): AgendaRelatedCall {
+  const custom = input.call.custom_data ?? {}
+  return {
+    space_id: String(input.call.space_id),
+    call_item_id: input.call.id,
+    title: String(input.call.title ?? 'Call').slice(0, 200),
+    summary: resolveAgendaCallSummary({ description: input.call.description, custom }),
+    has_transcript: resolveAgendaHasTranscript({
+      description: input.call.description,
+      custom,
+    }),
+    recording_url: resolveAgendaRecordingUrl(custom),
+    follow_ups: input.followUps,
+  }
 }
 
 /** Pad around the calendar event when deciding whether a Fathom call_date overlaps. */
@@ -306,6 +381,7 @@ export function buildFathomAgendaEvent(input: {
   callDate: string
   recordingUrl: string | null
   summary?: string | null
+  hasTranscript?: boolean
   followUps?: AgendaRelatedCall['follow_ups']
 }): {
   id: string
@@ -351,6 +427,7 @@ export function buildFathomAgendaEvent(input: {
       summary: input.summary?.trim()
         ? input.summary.trim().slice(0, MAX_AGENDA_SUMMARY_CHARS)
         : null,
+      has_transcript: Boolean(input.hasTranscript),
       recording_url: input.recordingUrl,
       follow_ups: input.followUps ?? [],
     },

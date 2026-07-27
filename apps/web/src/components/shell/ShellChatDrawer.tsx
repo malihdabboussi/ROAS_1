@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { GlobalChatPanel } from '@/components/global-chat/containers/GlobalChatPanel'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { ResizableDivider } from '@/components/layout/ResizableDivider'
@@ -207,7 +208,19 @@ export function ShellChatDrawer({ expanded = false }: { expanded?: boolean }) {
                 ariaLabel="Resize chat history"
               />
             </>
-          ) : null}
+          ) : (
+            <div className="shell-chat-history-restore">
+              <button
+                type="button"
+                onClick={() => setChatHistoryCollapsed(false)}
+                className="nav-glass-text-purple p-spacing-1 hover:text-foreground flex items-center justify-center transition-colors"
+                aria-label="Show chat history"
+                title="Show chat history"
+              >
+                <ChevronRight className="icon-xs" aria-hidden />
+              </button>
+            </div>
+          )}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <GlobalChatPanel shellSidebarChrome onCollapseChat={() => minimizeChatDrawer()} />
           </div>

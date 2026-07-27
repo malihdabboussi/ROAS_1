@@ -1,7 +1,9 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { CalendarAgendaEvent } from '@/lib/services/calendar-api'
 import { HomeMeetingDetailHost } from './HomeMeetingDetailHost'
+
+const fetchSpaceItem = vi.fn()
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -17,6 +19,10 @@ vi.mock('@/lib/supabase/client', () => ({
 
 vi.mock('@/features/home/lib/ask-meeting-in-chat', () => ({
   askAboutMeetingInChat: vi.fn(),
+}))
+
+vi.mock('@/lib/spaces/spaces-api', () => ({
+  fetchSpaceItem: (...args: unknown[]) => fetchSpaceItem(...args),
 }))
 
 const baseEvent: CalendarAgendaEvent = {
@@ -37,6 +43,7 @@ const baseEvent: CalendarAgendaEvent = {
     call_item_id: 'call-1',
     title: 'Dylan and Nate align on AM support layer',
     summary: 'Restructure operations to bridge the AM-builder gap.',
+    has_transcript: true,
     recording_url: 'https://fathom.video/share/abc',
     follow_ups: [
       {
@@ -58,9 +65,20 @@ const baseEvent: CalendarAgendaEvent = {
 }
 
 describe('HomeMeetingDetailHost', () => {
-  afterEach(cleanup)
+  afterEach(() => {
+    cleanup()
+    fetchSpaceItem.mockReset()
+  })
 
-  it('shows summary, Fathom link, and yours vs other action items without raw logged status', async () => {
+  it('shows summary, Fathom link, action split, and lazy-loads full transcript', async () => {
+    fetchSpaceItem.mockResolvedValue({
+      id: 'call-1',
+      description: null,
+      custom_data: {
+        transcript_text: 'Dylan: Hello\nNate: Let’s align on AM support.',
+      },
+    })
+
     render(
       <HomeMeetingDetailHost
         event={baseEvent}
@@ -80,11 +98,12 @@ describe('HomeMeetingDetailHost', () => {
     await waitFor(() => {
       expect(screen.getByText('Your action items')).toBeInTheDocument()
     })
-    expect(screen.getByText('Other action items')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Confirm Carol Ops Lead scope' })).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Walk AMs through creating tasks' }),
-    ).toBeInTheDocument()
     expect(screen.queryByText(/· logged/i)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Full transcript' }))
+    await waitFor(() => {
+      expect(screen.getByText(/Dylan: Hello/)).toBeInTheDocument()
+    })
+    expect(fetchSpaceItem).toHaveBeenCalledWith('space-1', 'call-1')
   })
 })

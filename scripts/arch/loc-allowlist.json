@@ -442,7 +442,7 @@
     "apps/api/src/modules/spaces/services/meetings-precall-prep.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 605
+      "lines": 602
     },
     "apps/api/src/modules/integrations/services/integrations-calendar-dedupe.ts": {
       "kind": "utility",
@@ -452,7 +452,7 @@
     "apps/api/src/modules/spaces/services/meetings-precall-prep.helpers.ts": {
       "kind": "utility",
       "limit": 300,
-      "lines": 463
+      "lines": 590
     },
     "apps/api/src/modules/spaces/repositories/space-items.repository.ts": {
       "kind": "repository",

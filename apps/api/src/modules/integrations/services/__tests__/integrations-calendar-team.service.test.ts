@@ -92,6 +92,8 @@ describe('IntegrationsCalendarTeamService', () => {
               space_id: 'sp-1',
               call_item_id: 'call-1',
               title: 'Kickoff',
+              summary: null,
+              has_transcript: false,
               recording_url: null,
               follow_ups: [],
             },

@@ -38,10 +38,9 @@ export function SidebarHqRail({
   const holdSidebarPeek = useShellStore((s) => s.holdSidebarPeek)
   const scheduleSidebarPeekClose = useShellStore((s) => s.scheduleSidebarPeekClose)
   const setSidebarPinned = useShellStore((s) => s.setSidebarPinned)
-  const chatDrawerOpen = useShellStore((s) => s.chatDrawer.open)
-  const chatHistoryCollapsed = useShellStore((s) => s.chatHistoryCollapsed)
-  const setChatHistoryCollapsed = useShellStore((s) => s.setChatHistoryCollapsed)
   const menuDock = useShellMenuDock((state) => state.dock)
+  const menuCompact = useShellMenuDock((state) => state.menuCompact)
+  const setMenuCompact = useShellMenuDock((state) => state.setMenuCompact)
   const shellExpanded = shellSidebarExpanded({ sidebarPinned, sidebarPeek })
 
   // Keep the HQ rail icon-only — never promote the expanded hub menu.
@@ -117,274 +116,277 @@ export function SidebarHqRail({
         )}
       >
         <div className="hub-sidebar-logo-header relative shrink-0">
-          <SidebarHqHubLogoButton hubOpen={hubExpanded} onToggle={goHome} />
-          {chatDrawerOpen && chatHistoryCollapsed ? (
-            <button
-              type="button"
-              onClick={() => setChatHistoryCollapsed(false)}
-              className="nav-glass-text-purple z-dropdown p-spacing-1 hover:text-foreground absolute right-0 top-1/2 flex -translate-y-1/2 translate-x-full items-center justify-center transition-colors"
-              aria-label="Show chat history"
-              title="Show chat history"
-            >
-              <ChevronRight className="icon-xs" aria-hidden />
-            </button>
-          ) : null}
+          <SidebarHqHubLogoButton expanded={!menuCompact} />
         </div>
 
-        <div className="hub-sidebar-rail-body relative min-h-0 flex-1 overflow-hidden">
-          <div
-            className={cn(
-              'hub-sidebar-layer flex h-full w-full flex-col',
-              // Keep rail/menu mutual exclusion on the same signal as shell width
-              // (hubExpanded). hubMenuOpen alone lags pin/peek by a frame and can
-              // flash both layers — Chat menu crushed beside the icon rail.
-              !hubExpanded && 'hub-sidebar-layer-visible',
-            )}
-            aria-hidden={hubExpanded}
+        {!menuCompact ? (
+          <>
+            <div className="hub-sidebar-rail-body relative min-h-0 flex-1 overflow-hidden">
+              <div
+                className={cn(
+                  'hub-sidebar-layer flex h-full w-full flex-col',
+                  // Keep rail/menu mutual exclusion on the same signal as shell width
+                  // (hubExpanded). hubMenuOpen alone lags pin/peek by a frame and can
+                  // flash both layers — Chat menu crushed beside the icon rail.
+                  !hubExpanded && 'hub-sidebar-layer-visible',
+                )}
+                aria-hidden={hubExpanded}
+              >
+                <nav className="hub-sidebar-rail-nav flex flex-1 flex-col items-center gap-0.5 px-0.5 pb-2 pt-0">
+                  {visibleRailItems.map((item) => {
+                    const isItemActive = isManageRailItemActive(item, c.pathname, c.isActive)
+                    const iconSpan = (
+                      <span
+                        className={`flex items-center justify-center rounded-lg border border-transparent p-1.5 transition-all ${
+                          isItemActive
+                            ? 'nav-glass-selected-purple nav-glass-text-purple'
+                            : 'text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]'
+                        }`}
+                      >
+                        {item.icon}
+                      </span>
+                    )
+                    const labelSpan = (
+                      <span
+                        className={`text-[10px] leading-tight transition-colors ${
+                          isItemActive
+                            ? 'nav-glass-text-purple'
+                            : 'text-[var(--color-muted-foreground)]'
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                    )
+
+                    if (item.type === 'link') {
+                      return (
+                        <Link
+                          key={item.id}
+                          href={item.href}
+                          onMouseEnter={closeHoverManageFlyout}
+                          onFocus={closeHoverManageFlyout}
+                          onClick={(e) => {
+                            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
+                              return
+                            e.preventDefault()
+                            if (item.id === 'home') {
+                              goHome()
+                              return
+                            }
+                            closeHubIfOpen()
+                            syncWorkContextForPath(item.href)
+                            c.setActiveManagePanel(null)
+                            setCollapsed(true)
+                            pushIfNeeded(item.href)
+                          }}
+                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                        >
+                          {iconSpan}
+                          {labelSpan}
+                        </Link>
+                      )
+                    }
+
+                    if (item.type === 'mode-switch') {
+                      return (
+                        <Link
+                          key={item.id}
+                          href="/team"
+                          onMouseEnter={closeHoverManageFlyout}
+                          onFocus={closeHoverManageFlyout}
+                          onClick={(e) => {
+                            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
+                              return
+                            setWorkContext({ surface: 'team' })
+                            setCollapsed(true)
+                            c.setActiveManagePanel(null)
+                          }}
+                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                        >
+                          {iconSpan}
+                          {labelSpan}
+                        </Link>
+                      )
+                    }
+                    if (item.type === 'panel' && item.panelId === 'home') {
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          data-hub-rail-trigger="home"
+                          onMouseEnter={() => {
+                            clearSpacesFlyoutCloseTimer()
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('home')
+                          }}
+                          onFocus={() => {
+                            clearSpacesFlyoutCloseTimer()
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('home')
+                          }}
+                          onClick={() => {
+                            closeHubIfOpen()
+                            syncWorkContextForPanel('home')
+                            setCollapsed(true)
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('home')
+                            pushIfNeeded(item.href ?? '/home')
+                          }}
+                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                        >
+                          {iconSpan}
+                          {labelSpan}
+                        </button>
+                      )
+                    }
+                    if (item.type === 'panel' && item.panelId === 'spaces') {
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          data-hub-rail-trigger="spaces"
+                          onMouseEnter={() => {
+                            clearSpacesFlyoutCloseTimer()
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('spaces')
+                          }}
+                          onFocus={() => {
+                            clearSpacesFlyoutCloseTimer()
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('spaces')
+                          }}
+                          onClick={() => {
+                            closeHubIfOpen()
+                            syncWorkContextForPanel('spaces')
+                            setCollapsed(true)
+                            pushIfNeeded('/campaigns')
+                            if (c.activeManagePanel === 'spaces' && !c.isPanelClosing) {
+                              c.setIsPanelClosing(true)
+                            }
+                          }}
+                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                        >
+                          {iconSpan}
+                          {labelSpan}
+                        </button>
+                      )
+                    }
+                    if (item.type === 'panel' && item.panelId === 'team2') {
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          data-hub-rail-trigger="team2"
+                          onMouseEnter={() => {
+                            clearSpacesFlyoutCloseTimer()
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('team2')
+                          }}
+                          onFocus={() => {
+                            clearSpacesFlyoutCloseTimer()
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('team2')
+                          }}
+                          onClick={() => {
+                            closeHubIfOpen()
+                            syncWorkContextForPanel('team2')
+                            setCollapsed(true)
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('team2')
+                            pushIfNeeded(item.href ?? '/team')
+                          }}
+                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                        >
+                          {iconSpan}
+                          {labelSpan}
+                        </button>
+                      )
+                    }
+                    if (item.type === 'panel' && item.panelId === 'brain') {
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          data-hub-rail-trigger="brain"
+                          onMouseEnter={() => {
+                            clearSpacesFlyoutCloseTimer()
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('brain')
+                          }}
+                          onFocus={() => {
+                            clearSpacesFlyoutCloseTimer()
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('brain')
+                          }}
+                          onClick={() => {
+                            closeHubIfOpen()
+                            syncWorkContextForPanel('brain')
+                            setCollapsed(true)
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('brain')
+                            pushIfNeeded(item.href ?? '/brain')
+                          }}
+                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                        >
+                          {iconSpan}
+                          {labelSpan}
+                        </button>
+                      )
+                    }
+                    if (item.type === 'panel' && item.panelId === 'more') {
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          data-hub-rail-trigger="more"
+                          onMouseEnter={() => {
+                            clearSpacesFlyoutCloseTimer()
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('more')
+                          }}
+                          onFocus={() => {
+                            clearSpacesFlyoutCloseTimer()
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('more')
+                          }}
+                          onClick={() => {
+                            closeHubIfOpen()
+                            syncWorkContextForPanel('more')
+                            setCollapsed(true)
+                            c.setIsPanelClosing(false)
+                            c.setActiveManagePanel('more')
+                          }}
+                          className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
+                        >
+                          {iconSpan}
+                          {labelSpan}
+                        </button>
+                      )
+                    }
+                    return null
+                  })}
+                </nav>
+              </div>
+            </div>
+            <SidebarHqShellFooter
+              c={c}
+              expanded={hubExpanded}
+              pathname={c.pathname}
+              featureUpdates={featureUpdates}
+              onChatHover={closeHoverManageFlyout}
+            />
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setMenuCompact(false)}
+            className="nav-glass-text-purple p-spacing-2 hover:text-foreground mt-auto flex w-full items-center justify-center transition-colors"
+            aria-label="Expand menu"
+            title="Expand menu"
           >
-            <nav className="hub-sidebar-rail-nav flex flex-1 flex-col items-center gap-0.5 px-0.5 pb-2 pt-0">
-              {visibleRailItems.map((item) => {
-                const isItemActive = isManageRailItemActive(item, c.pathname, c.isActive)
-                const iconSpan = (
-                  <span
-                    className={`flex items-center justify-center rounded-lg border border-transparent p-1.5 transition-all ${
-                      isItemActive
-                        ? 'nav-glass-selected-purple nav-glass-text-purple'
-                        : 'text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]'
-                    }`}
-                  >
-                    {item.icon}
-                  </span>
-                )
-                const labelSpan = (
-                  <span
-                    className={`text-[10px] leading-tight transition-colors ${
-                      isItemActive
-                        ? 'nav-glass-text-purple'
-                        : 'text-[var(--color-muted-foreground)]'
-                    }`}
-                  >
-                    {item.label}
-                  </span>
-                )
-
-                if (item.type === 'link') {
-                  return (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      onMouseEnter={closeHoverManageFlyout}
-                      onFocus={closeHoverManageFlyout}
-                      onClick={(e) => {
-                        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
-                          return
-                        e.preventDefault()
-                        if (item.id === 'home') {
-                          goHome()
-                          return
-                        }
-                        closeHubIfOpen()
-                        syncWorkContextForPath(item.href)
-                        c.setActiveManagePanel(null)
-                        setCollapsed(true)
-                        pushIfNeeded(item.href)
-                      }}
-                      className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
-                    >
-                      {iconSpan}
-                      {labelSpan}
-                    </Link>
-                  )
-                }
-
-                if (item.type === 'mode-switch') {
-                  return (
-                    <Link
-                      key={item.id}
-                      href="/team"
-                      onMouseEnter={closeHoverManageFlyout}
-                      onFocus={closeHoverManageFlyout}
-                      onClick={(e) => {
-                        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
-                          return
-                        setWorkContext({ surface: 'team' })
-                        setCollapsed(true)
-                        c.setActiveManagePanel(null)
-                      }}
-                      className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
-                    >
-                      {iconSpan}
-                      {labelSpan}
-                    </Link>
-                  )
-                }
-                if (item.type === 'panel' && item.panelId === 'home') {
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      data-hub-rail-trigger="home"
-                      onMouseEnter={() => {
-                        clearSpacesFlyoutCloseTimer()
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('home')
-                      }}
-                      onFocus={() => {
-                        clearSpacesFlyoutCloseTimer()
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('home')
-                      }}
-                      onClick={() => {
-                        closeHubIfOpen()
-                        syncWorkContextForPanel('home')
-                        setCollapsed(true)
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('home')
-                        pushIfNeeded(item.href ?? '/home')
-                      }}
-                      className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
-                    >
-                      {iconSpan}
-                      {labelSpan}
-                    </button>
-                  )
-                }
-                if (item.type === 'panel' && item.panelId === 'spaces') {
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      data-hub-rail-trigger="spaces"
-                      onMouseEnter={() => {
-                        clearSpacesFlyoutCloseTimer()
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('spaces')
-                      }}
-                      onFocus={() => {
-                        clearSpacesFlyoutCloseTimer()
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('spaces')
-                      }}
-                      onClick={() => {
-                        closeHubIfOpen()
-                        syncWorkContextForPanel('spaces')
-                        setCollapsed(true)
-                        pushIfNeeded('/campaigns')
-                        if (c.activeManagePanel === 'spaces' && !c.isPanelClosing) {
-                          c.setIsPanelClosing(true)
-                        }
-                      }}
-                      className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
-                    >
-                      {iconSpan}
-                      {labelSpan}
-                    </button>
-                  )
-                }
-                if (item.type === 'panel' && item.panelId === 'team2') {
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      data-hub-rail-trigger="team2"
-                      onMouseEnter={() => {
-                        clearSpacesFlyoutCloseTimer()
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('team2')
-                      }}
-                      onFocus={() => {
-                        clearSpacesFlyoutCloseTimer()
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('team2')
-                      }}
-                      onClick={() => {
-                        closeHubIfOpen()
-                        syncWorkContextForPanel('team2')
-                        setCollapsed(true)
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('team2')
-                        pushIfNeeded(item.href ?? '/team')
-                      }}
-                      className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
-                    >
-                      {iconSpan}
-                      {labelSpan}
-                    </button>
-                  )
-                }
-                if (item.type === 'panel' && item.panelId === 'brain') {
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      data-hub-rail-trigger="brain"
-                      onMouseEnter={() => {
-                        clearSpacesFlyoutCloseTimer()
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('brain')
-                      }}
-                      onFocus={() => {
-                        clearSpacesFlyoutCloseTimer()
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('brain')
-                      }}
-                      onClick={() => {
-                        closeHubIfOpen()
-                        syncWorkContextForPanel('brain')
-                        setCollapsed(true)
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('brain')
-                        pushIfNeeded(item.href ?? '/brain')
-                      }}
-                      className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
-                    >
-                      {iconSpan}
-                      {labelSpan}
-                    </button>
-                  )
-                }
-                if (item.type === 'panel' && item.panelId === 'more') {
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      data-hub-rail-trigger="more"
-                      onMouseEnter={() => {
-                        clearSpacesFlyoutCloseTimer()
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('more')
-                      }}
-                      onFocus={() => {
-                        clearSpacesFlyoutCloseTimer()
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('more')
-                      }}
-                      onClick={() => {
-                        closeHubIfOpen()
-                        syncWorkContextForPanel('more')
-                        setCollapsed(true)
-                        c.setIsPanelClosing(false)
-                        c.setActiveManagePanel('more')
-                      }}
-                      className="flex w-full flex-col items-center gap-1.5 px-1 py-2 transition-all"
-                    >
-                      {iconSpan}
-                      {labelSpan}
-                    </button>
-                  )
-                }
-                return null
-              })}
-            </nav>
-          </div>
-        </div>
-        <SidebarHqShellFooter
-          c={c}
-          expanded={hubExpanded}
-          pathname={c.pathname}
-          featureUpdates={featureUpdates}
-          onChatHover={closeHoverManageFlyout}
-        />
+            <ChevronRight className="icon-sm rotate-90" aria-hidden />
+          </button>
+        )}
       </div>
     </div>
   )

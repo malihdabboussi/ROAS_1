@@ -28,6 +28,7 @@ export type CalendarAgendaRelatedCall = {
   call_item_id: string
   title: string
   summary?: string | null
+  has_transcript?: boolean
   recording_url: string | null
   follow_ups: CalendarAgendaRelatedFollowUp[]
 }

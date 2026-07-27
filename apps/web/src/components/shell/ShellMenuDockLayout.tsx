@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { ShellSidebarSlot, ShellSidebarSlotProvider } from './ShellSidebarSlot'
 import { ShellTopBar } from './ShellTopBar'
-import { useShellMenuDock } from './use-shell-menu-dock'
+import { isWorkAttachedDock, useShellMenuDock } from './use-shell-menu-dock'
 import { useShellPrefsHydrated } from './use-shell-prefs-hydrated'
 
 export function ShellMenuDockLayout({
@@ -17,28 +17,32 @@ export function ShellMenuDockLayout({
   const hydrated = useShellPrefsHydrated()
   const desktop = useMediaQuery('(min-width: 768px)')
   const savedDock = useShellMenuDock((state) => state.dock)
-  const workHostAvailable = useShellMenuDock((state) => state.workHostAvailable)
+  const workCardHostAvailable = useShellMenuDock((state) => state.workCardHostAvailable)
+  const workCollapsedHostAvailable = useShellMenuDock((state) => state.workCollapsedHostAvailable)
   const dock = hydrated && desktop ? savedDock : 'left'
-  // Prefer work-card mount when available; otherwise keep HQ on frame left.
-  const resolvedFrameDock = dock === 'work' ? (workHostAvailable ? null : 'left') : dock
-  const horizontal = resolvedFrameDock === 'top' || resolvedFrameDock === 'bottom'
-  const frameAttr = dock === 'work' && workHostAvailable ? 'work' : (resolvedFrameDock ?? 'left')
+  const workAttached = isWorkAttachedDock(dock)
+  const hostedOnWork = workAttached && (workCardHostAvailable || workCollapsedHostAvailable)
+  // Frame only hosts far-left (or fallback when work cannot host).
+  const resolvedFrameDock =
+    !desktop || !hydrated
+      ? 'left'
+      : dock === 'left'
+        ? 'left'
+        : workAttached && !hostedOnWork
+          ? 'left'
+          : null
+  const frameAttr = hostedOnWork ? dock : (resolvedFrameDock ?? 'left')
 
   return (
     <ShellSidebarSlotProvider sidebar={sidebar}>
       <div className="shell-menu-dock-frame" data-shell-menu-dock={frameAttr}>
-        {resolvedFrameDock === 'top' ? <ShellSidebarSlot /> : null}
         <ShellTopBar />
         <div className="shell-menu-dock-body">
           {resolvedFrameDock === 'left' ? <ShellSidebarSlot /> : null}
           <main className="shell-menu-dock-content">{children}</main>
-          {resolvedFrameDock === 'right' ? <ShellSidebarSlot /> : null}
         </div>
-        {resolvedFrameDock === 'bottom' ? <ShellSidebarSlot /> : null}
-        {horizontal ? <span className="sr-only">Menu docked {resolvedFrameDock}</span> : null}
-        {dock === 'work' && workHostAvailable ? (
-          <span className="sr-only">Menu docked to work card</span>
-        ) : null}
+        {dock === 'left' ? <span className="sr-only">Menu docked left of chat</span> : null}
+        {hostedOnWork ? <span className="sr-only">Menu docked on work card</span> : null}
       </div>
     </ShellSidebarSlotProvider>
   )

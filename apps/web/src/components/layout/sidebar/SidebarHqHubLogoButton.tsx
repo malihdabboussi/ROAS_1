@@ -5,17 +5,15 @@ import {
   shellMenuDockForClientPoint,
   useShellMenuDock,
 } from '@/components/shell/use-shell-menu-dock'
-import { SidebarWordmark } from '../sidebar/SidebarWordmark'
 import { ShellMenuDockOverlay } from './ShellMenuDockOverlay'
 
 const HOLD_TO_DOCK_MS = 200
 
 export function SidebarHqHubLogoButton({
-  hubOpen,
-  onToggle,
+  expanded,
 }: {
-  hubOpen: boolean
-  onToggle: () => void
+  /** Whether the HQ menu rail is expanded (not compact). */
+  expanded: boolean
 }) {
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pointerActiveRef = useRef(false)
@@ -24,6 +22,7 @@ export function SidebarHqHubLogoButton({
   const setCandidate = useShellMenuDock((state) => state.setCandidate)
   const finishDragging = useShellMenuDock((state) => state.finishDragging)
   const cancelDragging = useShellMenuDock((state) => state.cancelDragging)
+  const toggleMenuCompact = useShellMenuDock((state) => state.toggleMenuCompact)
 
   const clearHoldTimer = () => {
     if (holdTimerRef.current === null) return
@@ -54,7 +53,6 @@ export function SidebarHqHubLogoButton({
         }}
         onPointerDown={(event) => {
           if (event.button > 0) return
-          // Block native image/text drag so hold-to-dock owns the gesture.
           event.preventDefault()
           event.currentTarget.setPointerCapture?.(event.pointerId)
           pointerActiveRef.current = true
@@ -81,7 +79,8 @@ export function SidebarHqHubLogoButton({
             draggedRef.current = false
             return
           }
-          onToggle()
+          // Option A: click collapses/expands into the R chip.
+          toggleMenuCompact()
         }}
         onPointerCancel={(event) => {
           clearHoldTimer()
@@ -91,27 +90,21 @@ export function SidebarHqHubLogoButton({
           cancelDragging()
         }}
         className="hub-sidebar-logo-button cursor-pointer rounded-lg p-1 transition-all hover:opacity-80"
-        aria-label={hubOpen ? 'Close menu' : 'Open menu'}
-        aria-expanded={hubOpen}
+        aria-label={expanded ? 'Collapse menu' : 'Expand menu'}
+        aria-expanded={expanded}
       >
-        {hubOpen ? (
-          <SidebarWordmark />
-        ) : (
-          <>
-            <img
-              src="/Logos/roas/icon-white.png"
-              alt=""
-              draggable={false}
-              className="hidden h-10 w-10 dark:block"
-            />
-            <img
-              src="/Logos/roas/icon-black.png"
-              alt=""
-              draggable={false}
-              className="h-10 w-10 dark:hidden"
-            />
-          </>
-        )}
+        <img
+          src="/Logos/roas/icon-white.png"
+          alt=""
+          draggable={false}
+          className="hidden h-10 w-10 dark:block"
+        />
+        <img
+          src="/Logos/roas/icon-black.png"
+          alt=""
+          draggable={false}
+          className="h-10 w-10 dark:hidden"
+        />
       </button>
       <ShellMenuDockOverlay />
     </>
