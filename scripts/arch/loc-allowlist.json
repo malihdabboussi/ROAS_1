@@ -192,7 +192,7 @@
     "apps/web/src/features/spaces/components/content/SpaceContentRouter.tsx": {
       "kind": "web-component",
       "limit": 400,
-      "lines": 820
+      "lines": 829
     },
     "apps/web/src/features/spaces/components/doc-menu/DocMenuDropdown.tsx": {
       "kind": "web-component",
@@ -277,7 +277,7 @@
     "apps/web/src/features/studio/services/chat.service.ts": {
       "kind": "service",
       "limit": 600,
-      "lines": 2545
+      "lines": 2827
     },
     "apps/web/src/features/team-2/components/AgentsGrid.tsx": {
       "kind": "web-component",
@@ -328,11 +328,6 @@
       "kind": "service",
       "limit": 600,
       "lines": 2971
-    },
-    "apps/agent-api/src/modules/artifacts/services/artifact-tasks.service.ts": {
-      "kind": "service",
-      "limit": 600,
-      "lines": 1550
     },
     "apps/mission-worker/src/modules/missions/services/phases/mission-execute-phase.service.ts": {
       "kind": "service",

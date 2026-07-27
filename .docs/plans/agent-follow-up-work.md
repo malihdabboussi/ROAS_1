@@ -1,3 +1,19 @@
+## 2026-07-27 - [ARCH] Feedback-b-chat over-limit files after resume/hydrate/drag
+
+Status: Open
+
+Found while: Feedback phase Agent B (items 4/5/7/8)
+
+Files:
+- `apps/web/src/features/spaces/components/content/SpaceContentRouter.tsx` (829 LOC; component limit 400)
+- `apps/web/src/features/studio/services/chat.service.ts` (2827 LOC; pre-existing mega-service)
+
+Evidence: Drag wiring added ~9 lines to SpaceContentRouter; context-window continue branch added ~30 lines to studio chat.service. `artifact-tasks.service.ts` brought back under 600 via `artifact-space-item-get.helper.ts`.
+
+Needed work: Split SpaceContentRouter view branches into dedicated content hosts; extract recoverConversation / stream recovery from studio chat.service into a focused module.
+
+Reason not done now: Out of scope for feedback reliability fixes; only drag prop + recover branch were required.
+
 ## 2026-07-26 - [ARCH] Finish ROAS Portal renames in over-limit Spaces bulk-send files — RESOLVED
 
 Resolved by splitting `BulkActionBar` into `bulk-action-bar/*` modules and `PageGraderBulkSendPanel` into `page-grader-bulk-send/*` step components, switching the settings hook to `@/lib/settings`, and shipping The ROAS Portal public copy.

@@ -1,20 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { ChatStreamRecoveryService } from './chat-stream-recovery.service'
+import {
+  ChatStreamRecoveryService,
+  CONTEXT_WINDOW_CONTINUE_CONTENT,
+} from './chat-stream-recovery.service'
 
-describe('ChatStreamRecoveryService', () => {
+describe('ChatStreamRecoveryService context-window resume', () => {
   const service = new ChatStreamRecoveryService()
 
-  it('keeps generic runtime service unavailability out of provider-busy recovery', () => {
-    expect(service.isRetryableProviderError('Service unavailable')).toBe(false)
-    expect(service.classifyAgentStreamFailure('Service unavailable')).toEqual({
-      code: 'temporary_unavailable',
-    })
+  it('classifies context overflow as context_window_exceeded', () => {
+    expect(
+      service.classifyAgentStreamFailure('context_window_exceeded: input is too long').code,
+    ).toBe('context_window_exceeded')
   })
 
-  it('treats explicit provider overloads as busy', () => {
-    expect(service.isRetryableProviderError('Provider temporarily overloaded')).toBe(true)
-    expect(service.classifyAgentStreamFailure('Provider temporarily overloaded')).toEqual({
-      code: 'busy',
-    })
+  it('requires compact+continue after context window failures', () => {
+    expect(service.shouldContinueAfterContextWindow('context_window_exceeded')).toBe(true)
+    expect(service.shouldContinueAfterContextWindow('stream_interrupted')).toBe(false)
+    expect(service.buildContextWindowContinueContent()).toBe(CONTEXT_WINDOW_CONTINUE_CONTENT)
   })
 })

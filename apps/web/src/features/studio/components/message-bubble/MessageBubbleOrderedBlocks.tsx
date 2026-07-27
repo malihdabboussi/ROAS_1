@@ -194,8 +194,11 @@ export function MessageBubbleOrderedBlocks({
   }
 
   return (
-    <div data-message={message.id} className="body-1 text-chat group mx-2 flex flex-col">
-      <div className="gap-spacing-3 flex flex-col">
+    <div
+      data-message={message.id}
+      className="body-1 text-chat group mx-2 flex min-w-0 flex-col overflow-x-hidden"
+    >
+      <div className="gap-spacing-3 flex min-w-0 flex-col overflow-x-hidden">
         {renderLayoutSegments(segments, 'main')}
         {uniqueSseImages.map((evt, i) => (
           <GeneratedImage
